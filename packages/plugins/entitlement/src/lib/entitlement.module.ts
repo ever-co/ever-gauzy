@@ -12,6 +12,7 @@ import {
 } from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
 import { EntitlementGrantConsumer } from './events/entitlement-grant.consumer';
+import { EntitlementOrderLinePolicyAdapter } from './events/entitlement-order-line-policy.adapter';
 import { Entitlement } from './entitlement/entitlement.entity';
 import { EntitlementController } from './entitlement/entitlement.controller';
 import { EntitlementService } from './entitlement/entitlement.service';
@@ -81,6 +82,9 @@ export const ALL_ENTITLEMENT_ENTITIES = [Entitlement, EntitlementKey, Entitlemen
 		// order or subscription event is what grants a right without this package reading another
 		// package's tables.
 		EntitlementGrantConsumer,
+		// What right an order line grants, asked by the order at placement through its
+		// `ORDER_LINE_ENTITLEMENT_POLICY` port (bound by the installation's composition module, Q7-W5).
+		EntitlementOrderLinePolicyAdapter,
 		// The GraphQL resolvers are providers here because they inject the same services the REST
 		// controllers do; the plugin hands the composition pass the same classes through
 		// `extensions.resolvers`, so there is one implementation per rule rather than one per surface.
@@ -97,7 +101,8 @@ export const ALL_ENTITLEMENT_ENTITIES = [Entitlement, EntitlementKey, Entitlemen
 		TypeOrmEntitlementKeyRepository,
 		MikroOrmEntitlementKeyRepository,
 		TypeOrmEntitlementActivationRepository,
-		MikroOrmEntitlementActivationRepository
+		MikroOrmEntitlementActivationRepository,
+		EntitlementOrderLinePolicyAdapter
 	]
 })
 export class EntitlementModule {}

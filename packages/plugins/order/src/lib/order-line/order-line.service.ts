@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
@@ -13,6 +13,14 @@ import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repos
 import { OrderLine } from './order-line.entity';
 import { TypeOrmOrderLineRepository } from './repository/type-orm-order-line.repository';
 import { MikroOrmOrderLineRepository } from './repository/mikro-orm-order-line.repository';
+import {
+	IOrderLineEntitlementPolicy,
+	IOrderLineEntitlementPolicyPort,
+	IOrderPlacedLines,
+	ORDER_LINE_ENTITLEMENT_POLICY,
+	placedLinesOf,
+	statedEntitlementOf
+} from './order-line-entitlement';
 
 /** One refund as the payment side records it against a line. */
 export interface IRecordLineRefundInput {
@@ -45,9 +53,93 @@ export class OrderLineService extends TenantAwareCrudService<OrderLine> {
 	constructor(
 		readonly typeOrmOrderLineRepository: TypeOrmOrderLineRepository,
 		readonly mikroOrmOrderLineRepository: MikroOrmOrderLineRepository,
-		private readonly typeOrmOrderRepository: TypeOrmOrderRepository
+		private readonly typeOrmOrderRepository: TypeOrmOrderRepository,
+		/**
+		 * What right each line grants (Q7-W5). Optional and last: bound by the installation that hosts the
+		 * entitlement package; unbound, an order announces no lines.
+		 */
+		@Optional()
+		@Inject(ORDER_LINE_ENTITLEMENT_POLICY)
+		private readonly entitlementPolicy?: IOrderLineEntitlementPolicyPort
 	) {
 		super(typeOrmOrderLineRepository, mikroOrmOrderLineRepository);
+	}
+
+	private readonly logger = new Logger(OrderLineService.name);
+
+	/**
+	 * The `lines` an order's `order.placed` event carries, with the right each line grants (Q7-W5).
+	 *
+	 * The policy is the line's own `metadata.entitlement` (copied from its cart line at checkout) or, when the
+	 * line states none, the variant's and then the product's — the entitlement package answers which. A
+	 * policy that came from the catalogue is snapshotted onto the line (`metadata.entitlement`), so what was
+	 * bought does not change when the catalogue does, and a replayed placement announces the same right.
+	 *
+	 * Asked before the placement is committed, so it never fails it: an unbound port, a capability that is
+	 * off for the order's scope, or a port that throws all answer `undefined` and the order announces no
+	 * lines — what every order did before. A snapshot that cannot be written is logged; the event still
+	 * carries the policy.
+	 *
+	 * @param order The order being placed.
+	 * @param lines Its lines.
+	 * @returns The projection, or undefined when the entitlement capability does not answer for the order.
+	 */
+	public async placedLinesFor(
+		order: Pick<Order, 'id' | 'tenantId' | 'organizationId'>,
+		lines: readonly OrderLine[]
+	): Promise<IOrderPlacedLines | undefined> {
+		if (!this.entitlementPolicy || lines.length === 0) {
+			return undefined;
+		}
+
+		let policies: Record<string, IOrderLineEntitlementPolicy | null> | null;
+
+		try {
+			policies = await this.entitlementPolicy.policiesFor({
+				tenantId: order.tenantId ?? null,
+				organizationId: order.organizationId ?? null,
+				lines: lines.map((line) => ({
+					orderLineId: line.id,
+					productId: line.productId ?? null,
+					variantId: line.variantId ?? null,
+					quantity: Number(line.quantity ?? 1),
+					stated: statedEntitlementOf(line.metadata)
+				}))
+			});
+		} catch (error) {
+			this.logger.warn(
+				`ORDER_ENTITLEMENT_POLICY_UNAVAILABLE: order ${order.id} is placed without its lines: ${
+					(error as Error)?.message ?? error
+				}`
+			);
+			return undefined;
+		}
+
+		if (!policies) {
+			return undefined;
+		}
+
+		for (const line of lines) {
+			const policy = policies[line.id];
+
+			if (!policy || statedEntitlementOf(line.metadata)) {
+				continue;
+			}
+
+			try {
+				await this.update(line.id, {
+					metadata: { ...((line.metadata as Record<string, unknown>) ?? {}), entitlement: policy }
+				} as any);
+			} catch (error) {
+				this.logger.warn(
+					`ORDER_LINE_ENTITLEMENT_NOT_SNAPSHOTTED: line ${line.id} of order ${order.id}: ${
+						(error as Error)?.message ?? error
+					}`
+				);
+			}
+		}
+
+		return placedLinesOf(lines, policies);
 	}
 
 	/**

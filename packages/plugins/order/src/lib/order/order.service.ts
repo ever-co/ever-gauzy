@@ -344,6 +344,10 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			paymentStatus: order.paymentStatus
 		});
 
+		// What each line grants, when the entitlement capability answers for the order (Q7-W5): the event
+		// carries the lines so the grant path can issue a right per line without reading this package's tables.
+		const placedLines = await this.lineService.placedLinesFor(order, lines);
+
 		// The move is committed before the timeline records it: an entry written first would describe a
 		// placement the conditional update then refused, and a reader of the timeline would believe it.
 		const placed = await this.totalsService.recompute(order.id, 'PLACED', {
@@ -353,7 +357,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			// either commits and appends the event beside the row, or refuses and appends nothing. An
 			// `order.placed` published from here after the call returned would be lost by any crash in
 			// between, which is exactly what the outbox exists to prevent.
-			event: { name: ORDER_EVENTS.PLACED, data: { ...placedWith } }
+			event: { name: ORDER_EVENTS.PLACED, data: { ...placedWith, ...(placedLines ?? {}) } }
 		});
 
 		// The entry carries the order's own tenancy, because a placement is also made with no request
