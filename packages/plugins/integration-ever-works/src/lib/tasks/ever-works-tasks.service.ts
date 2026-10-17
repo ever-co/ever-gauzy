@@ -1342,7 +1342,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	 * The task sweep (plan 03 §C.2, the durable backstop), run by the sync loop for a connection it holds:
 	 * watchers and linked issues are often removed with a bulk delete the ORM hooks cannot see, so a linked
 	 * task whose watchers or edges drifted from its snapshot, or that has something pending that can go out
-	 * now, is queued for a push.
+	 * now, is queued for a push. The orphan sweep: a linked task that is gone from Gauzy without a captured
+	 * delete (a bulk or raw delete, a lost event) has its link marked `orphaned` and the delete policy queued
+	 * (Ever Works cancels the task; the push then unlinks it).
 	 */
 	async sweep(connection: EverWorksConnection): Promise<void> {
 		for (const context of await this.contexts.forConnection(connection)) {
@@ -1351,9 +1353,18 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			for (let start = 0; start < links.length; start += TASK_SWEEP_PAGE) {
 				const page = links.slice(start, start + TASK_SWEEP_PAGE);
 				const ids = page.map((link) => link.gauzyId as ID);
-				const [watchers, edges] = await Promise.all([this.store.watchersOf(context.tenantId, ids), this.store.edgesOf(context.tenantId, ids)]);
+				const [watchers, edges, present] = await Promise.all([
+					this.store.watchersOf(context.tenantId, ids),
+					this.store.edgesOf(context.tenantId, ids),
+					this.store.presentTaskIds(context.tenantId, ids)
+				]);
 				for (const link of page) {
 					const id = link.gauzyId as ID;
+					if (!present.has(id)) {
+						const queued = await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: id, op: 'delete' });
+						if (queued) await this.links.markOrphaned(link, 'the Gauzy task is gone without a captured delete; its delete is pushed');
+						continue;
+					}
 					const g = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(link)).g;
 					const ewOnly = this.everWorksOnly(link);
 					const edge = edges.get(id) ?? { blockedBy: [], relations: [] };

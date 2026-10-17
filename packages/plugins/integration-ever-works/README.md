@@ -70,7 +70,9 @@ the seed) and answers the routes below.
 - `EVER_WORKS_WEBHOOK_REQUESTS_PER_MINUTE`: per-process limit of the public
   webhook route (default 1200).
 - `EVER_WORKS_SYNC_LOOP=off`: keeps this process out of the sync loop (it still
-  serves the API).
+  serves the API). A process that does not host Gauzy's task, project and
+  employee services, which the sync's writes go through, stays out on its own
+  and logs why once: today that is the worker (see Runtime below).
 - `EVER_WORKS_HEALTH_CHECK=off`: keeps this process out of the daily key check.
 
 ## Configure the integration
@@ -135,6 +137,8 @@ below use the `INTEGRATION_` prefix; paths share the
 | PUT | `/mappings/:integrationTenantId/teams` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/projects` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/projects` | `EDIT` |
+| GET | `/mappings/:integrationTenantId/initiatives` | `VIEW` |
+| PUT | `/mappings/:integrationTenantId/initiatives` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/sync/status` | `VIEW` |
 | GET | `/mappings/:integrationTenantId/sync/preview` | `VIEW` |
 | POST | `/mappings/:integrationTenantId/sync/start` | `EDIT` |
@@ -237,9 +241,8 @@ and answered `202`.
   else the default "Ever Works" project. A delete in Ever Works soft-deletes
   the Gauzy task; a Gauzy delete cancels the Ever Works task with a comment.
   Private tasks, recurring templates, Idea tasks (synced as ideas) and, unless
-  the setting is on, triage tasks are not synced. Task writes need a process
-  that serves the API (it has the request context the task commands read);
-  where the worker also runs the plugin, set `EVER_WORKS_SYNC_LOOP=off` there.
+  the setting is on, triage tasks are not synced. Each task write runs in a
+  tenant-scoped request context of its own (see Runtime below).
 - **Ideas ↔ Idea tasks (G-P2-3).** An Ever Works idea is a Gauzy task of
   the organization's "Idea" issue type in the "Ever Works — Ideas" project
   (created when first needed): title, description (plain text, escaped),
@@ -252,6 +255,42 @@ and answered `202`.
   Ever Works: no other status move is pushed, and a refused move writes Ever
   Works' status back. A task whose type changes away from Idea is unlinked
   (both kept); a deleted idea archives its task; private ideas never sync.
+- **Goals ↔ Goal + key results (G-P2-1).** An Ever Works goal is a Gauzy
+  goal: title, description, deadline (the narrowest active time frame that
+  contains it, else a new `Q<n> <yyyy>` time frame), scope (its first team →
+  level Team, no team → Organization; a Gauzy Employee goal stays one), lead
+  (its agent, else its owner), progress, archived and the primary mission's
+  initiative. Criteria, a metric and the Definition of Done become key results
+  (numeric with bucketed weights, True/False for Definition-of-Done items); a
+  key result Ever Works drops is archived. A Gauzy goal becomes an Ever Works
+  goal that is **always a draft** (numeric key results → a metric goal on the
+  external source, else a delivery goal from its True/False key results);
+  edits, criteria and the Definition of Done follow, and key result values are
+  pushed as samples (`POST /goals/:id/samples`). Gauzy never activates,
+  resumes or completes an Ever Works goal: no status is sent.
+- **Missions ↔ strategic initiatives (G-P2-2).** The Initiatives tab
+  (`GET`/`PUT …/initiatives`) pairs missions and initiatives (same-title
+  suggestions the admin confirms, or "create on the other side"); missions
+  and initiatives created after the mapping pair without a review. From Ever
+  Works: title, description → intent, status (active → active, paused →
+  active with momentum "stalled", completed/failed → resolved with the
+  outcome in the strategic notes), owner → steward, teams (scope team or
+  organization), works → projects and the primary goals → the goals'
+  initiative. To Ever Works (only with the missions direction `both`): a
+  mission Ever Works creates **paused**, then title, intent, teams, works and
+  goals; resolving or retiring the initiative completes the mission. Gauzy
+  never activates a mission. Drafts wait until active, and **leadership
+  initiatives never sync** (one that turns leadership stops syncing, flagged).
+- **Inbox (where the Gauzy Inbox is loaded).** Ever Works inbox items
+  (questions, approvals, escalations, notices; `inbox.item.*`, served to a key
+  with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
+  Gauzy user paired with the recipient, with the linked task, project and
+  agent. An item whose recipient is not paired yet waits (deferred, retried
+  hourly) until the People tab pairs them. A reply in Gauzy goes to Ever Works
+  at once, acting as the recipient (`inbox:write`); an item already decided
+  there shows the answer Ever Works holds. Read / unread and archive follow
+  to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
+  events are skipped.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
@@ -288,6 +327,23 @@ and answered `202`.
 - **Runtime.** Every process that loads the plugin ticks; a database lease on
   the connection row lets one process work a connection at a time, on every
   database, with or without Redis. A daily `whoami` checks every key.
+- **Writes in any process.** Gauzy's services read the tenant, the
+  organization and the author from the request context, which a background
+  sync does not have, so every Gauzy write of the sync runs inside a request
+  context of its own: signed in as the attributed person, agent or connecting
+  admin, in the mapping's tenant and organization, with no employee and no
+  permission. A process built without the platform's request context store
+  (the worker builds its own module graph without core's application module)
+  gets the process-wide store attached first; outside these writes nothing
+  changes for the rest of that process. The writes also go through the
+  platform's task, project and employee services and their commands. The API
+  hosts them; the worker does not (its module graph is the documents pipeline
+  and the commerce sweeps), so the sync loop runs only in a process that hosts
+  them and the worker stays out on its own, logging once which services it
+  lacks. The connection's lease therefore always goes to a process that can
+  apply every change, and no change waits on a process that could only defer
+  it. Should a write still reach a process without its write path, it is
+  deferred and retried, never failed.
 
 ## Build and verification
 
@@ -306,7 +362,9 @@ suite (`.scripts/ever-works-integration.test.cjs`, `node:test`): migrations
 up/up/down/up on SQLite, and on Postgres when `EVER_WORKS_TEST_DATABASE_URL`
 names a loopback `_test` database; tenant and organization isolation; webhook
 signatures; dedupe; loop suppression; the 412 merge; an initial sync resumed by
-another process; and record scope. The Build workflow runs all three.
+another process; record scope; a refused status move put back (transition
+revert); and the orphan sweep (a linked task deleted without a captured event
+is cancelled in Ever Works). The Build workflow runs all three.
 
 Both packages participate in the workspace and Docker builds. The backend is
 listed, behind `EVER_WORKS_ENABLED`, in the API and worker plugin lists and

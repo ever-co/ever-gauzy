@@ -224,6 +224,17 @@ export interface IInboxItemUpsertResult {
 	skippedUserIds: ID[];
 }
 
+/** What a source did with a reply (`IInboxSourceHandler.onReply`). */
+export interface IInboxSourceReplyResult {
+	/** What the source did with the reply (for example "resumed the agent run"); stored as `response.routed`. */
+	routed: string;
+	/**
+	 * The answer the source holds, when it is not the reply that was sent: another answer won the race there
+	 * (for example `routed: 'already-decided'`). The inbox then records this answer instead of the caller's.
+	 */
+	response?: { text?: string | null; optionId?: string | null; answeredAt?: Date | string | null } | null;
+}
+
 /**
  * A source of inbox items that acts on their replies — the Ever Works integration registers `EVER_WORKS`
  * (plan 04 §4). The inbox calls `onReply` synchronously, so the source's own refusal (for example
@@ -231,7 +242,11 @@ export interface IInboxItemUpsertResult {
  */
 export interface IInboxSourceHandler {
 	readonly source: InboxItemSourceEnum | string;
-	onReply(item: IInboxItem, reply: IInboxReplyInput, actor: { id: ID; tenantId?: ID }): Promise<{ routed: string }>;
+	onReply(
+		item: IInboxItem,
+		reply: IInboxReplyInput,
+		actor: { id: ID; tenantId?: ID }
+	): Promise<IInboxSourceReplyResult>;
 	/** Read / unread / archive / snooze of one recipient (best effort: a failure is logged, the state stays). */
 	onStateChange?(item: IInboxItem, recipient: IInboxItemRecipient, change: IInboxRecipientStateInput): Promise<void>;
 }
