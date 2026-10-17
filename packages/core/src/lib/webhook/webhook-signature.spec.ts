@@ -171,3 +171,17 @@ describe('a rotation', () => {
 		expect(signWebhookPayload(SECRET, BODY, { timestamp: TS }).header.split('v1=')).toHaveLength(2);
 	});
 });
+
+describe('the timestamp', () => {
+	const signed = signWebhookPayload(SECRET, BODY, { timestamp: TS });
+	const signature = signed.header.split(',')[1];
+
+	it('is read only in the canonical form the signer writes, so a delivery has one valid header', () => {
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},${signature}`, { now: TS })).toBe(true);
+		// Every other spelling of the same instant would verify under Number() and re-send one captured delivery
+		// past a receiver's single-use guard.
+		for (const spelling of [`0${TS}`, `+${TS}`, `${TS}.0`, '1.7e9', `${TS}e0`, `0x${TS.toString(16)}`, ` ${TS}x`]) {
+			expect(verifyWebhookSignature(SECRET, BODY, `t=${spelling},${signature}`, { now: TS })).toBe(false);
+		}
+	});
+});
