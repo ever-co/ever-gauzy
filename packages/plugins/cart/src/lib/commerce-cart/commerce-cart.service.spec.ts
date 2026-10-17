@@ -694,6 +694,32 @@ function cartFixture(
 	/** The price capability double (R3-07b): a mutable table, so a case can move a price between two calls. */
 	const priceTable: Record<string, PriceGrant> =
 		options.prices && options.prices !== 'unbound' ? { ...options.prices } : {};
+	/**
+	 * In the suite's money cases (`prices` absent) the lines carry the prices their in-process callers stated,
+	 * and checkout prices every line again (R3-07b): the capability there answers with the price the cart's
+	 * line of that variant states, which is the price those callers resolved.
+	 */
+	const statedPort =
+		options.prices === undefined
+			? {
+					resolvePrices: jest.fn(async (query: any): Promise<any[]> =>
+						(query.variantIds ?? [])
+							.map((variantId: string) =>
+								tables.commerce_cart_line.find(
+									(row: any) => row.variantId === variantId && !row.deletedAt
+								)
+							)
+							.filter(Boolean)
+							.map((row: any) => ({
+								variantId: row.variantId,
+								currency: query.currency,
+								amount: String(row.unitPrice),
+								originalAmount: String(row.originalUnitPrice ?? row.unitPrice),
+								taxInclusive: Boolean(row.isTaxInclusive)
+							}))
+					)
+				}
+			: undefined;
 	const pricePort =
 		options.prices && options.prices !== 'unbound'
 			? {
@@ -728,7 +754,7 @@ function cartFixture(
 		stockPort as never,
 		taxPort as never,
 		promotionPort as never,
-		pricePort as never
+		(pricePort ?? statedPort) as never
 	);
 
 	if (options.prices === undefined) {
@@ -2579,8 +2605,10 @@ describe('CommerceCartService — a line is priced by the pricing package (R3-07
 		expect(Number(line.unitPrice)).toBe(7);
 	});
 
-	it('prices the cart again at checkout: a moved price and an old line, never a stated one', async () => {
-		const fixture = cartFixture({ prices: { v1: 20, v2: 30 } });
+	it('prices every line again at checkout: a moved price, an old line and a stated one', async () => {
+		// The stated marker is line metadata, which a direct write to the line resource can set, so checkout
+		// trusts no line's price: the order is built from the capability's prices only.
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30, v3: 6 } });
 		const cart = await openCart(fixture);
 		await fixture.service.addLine(cart.id, {
 			variantId: 'v1',
@@ -2618,8 +2646,8 @@ describe('CommerceCartService — a line is priced by the pricing package (R3-07
 		expect(Number(byVariant('v1').unitPrice)).toBe(25);
 		expect(Number(byVariant('v2').unitPrice)).toBe(30);
 		expect(byVariant('v2').metadata).toMatchObject({ priceSource: 'ENGINE' });
-		expect(Number(byVariant('v3').unitPrice)).toBe(5);
-		expect(completed.cart.itemSubtotal).toBe(60);
+		expect(Number(byVariant('v3').unitPrice)).toBe(6);
+		expect(completed.cart.itemSubtotal).toBe(61);
 		expect(checkoutCalls).toBe(1);
 	});
 
@@ -2640,6 +2668,45 @@ describe('CommerceCartService — a line is priced by the pricing package (R3-07
 		});
 		expect(checkoutCalls).toBe(0);
 		expect(fixture.tables.commerce_cart[0].checkoutClaimId ?? null).toBeNull();
+	});
+
+	it('refuses a merge whose lines cannot all be priced for the surviving cart, before copying any', async () => {
+		// Production `merge` adds the copied lines without a stated price, so the capability prices them for the
+		// surviving cart; a line it cannot price there refuses the merge with nothing copied.
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const target = await openCart(fixture);
+		const source = await openCart(fixture);
+		await fixture.service.addLine(source.id, { variantId: 'v1', title: 'A', quantity: 1 } as any);
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-unpriced',
+			cartId: source.id,
+			variantId: 'v9',
+			title: 'Z',
+			quantity: 1,
+			unitPrice: 1,
+			originalUnitPrice: 1,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false
+		});
+
+		await expect(fixture.service.merge(target.id, source.id)).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+		expect(fixture.tables.commerce_cart_line.filter((row: any) => row.cartId === target.id)).toHaveLength(0);
+
+		// Priced, the merge copies the lines at the capability's price for the surviving cart.
+		fixture.priceTable.v9 = 3;
+		fixture.priceTable.v1 = 18;
+		await fixture.service.merge(target.id, source.id);
+
+		const copied = fixture.tables.commerce_cart_line.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+		expect(copied.map((row: any) => [row.variantId, Number(row.unitPrice)]).sort()).toEqual([
+			['v1', 18],
+			['v9', 3]
+		]);
 	});
 
 	it('records a price an in-process caller states, and keeps it', async () => {

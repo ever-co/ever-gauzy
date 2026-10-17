@@ -1168,6 +1168,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			await this.shippingMethodService.assertReferences(method);
 		}
 
+		// R3-07b: every copied line is priced for the surviving cart before the first one is written, so a line
+		// the capability cannot price there refuses the merge with the target untouched — rather than after the
+		// lines before it were copied, which a retry would copy again.
+		await this.assertLinesPriceable(target, lines);
+
 		for (const line of lines) {
 			await this.addLine(target.id, line, spend());
 		}
@@ -2271,11 +2276,44 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Prices every line again at checkout, except the ones an in-process caller stated (R3-07b).
+	 * Refuses a set of lines the price capability cannot price on a cart, before any of them is written.
 	 *
-	 * A line the capability priced is resolved again for its quantity, and a line that predates the rule — whose
-	 * price may be one its caller stated — is priced for the first time. A line whose price moved is rewritten;
-	 * a variant the capability cannot price any more refuses the checkout.
+	 * Each line is resolved for the quantity it will hold on that cart — with the line it merges into, when
+	 * there is one — which is the resolution `addLine` makes for it next.
+	 *
+	 * @param cart The cart the lines are about to be added to, with its lines.
+	 * @param lines The lines.
+	 */
+	private async assertLinesPriceable(cart: CommerceCart, lines: DeepPartial<CommerceCartLine>[]): Promise<void> {
+		for (const line of lines) {
+			if (!line.variantId) {
+				throw new BadRequestException('CART_LINE_VARIANT_REQUIRED: a line needs a variant.');
+			}
+
+			const into = (cart.lines ?? []).find(
+				(candidate) =>
+					candidate.variantId === line.variantId &&
+					(candidate.warehouseId ?? null) === (line.warehouseId ?? null) &&
+					(candidate.subscriptionPlanId ?? null) === (line.subscriptionPlanId ?? null) &&
+					this.priceSourceOf(candidate) !== 'STATED'
+			);
+
+			const quantity = Number(line.quantity) + Number(into?.quantity ?? 0);
+
+			await this.resolveLinePrice(cart, line.variantId as ID, quantity);
+		}
+	}
+
+	/**
+	 * Prices **every** line again at checkout (R3-07b).
+	 *
+	 * Nothing a line carries is trusted at the moment it becomes an order: not its stored price, and not its
+	 * `metadata.priceSource`, which a direct write to the line resource can set. The cart a buyer completes is
+	 * therefore priced entirely by the capability, for each line's quantity — a line the capability priced, a
+	 * line that predates the rule and a line marked stated alike. (The one cart built from stated prices, the
+	 * subscription cycle's, never goes through checkout: it becomes its order directly.) A line whose price
+	 * moved is rewritten; a line with no variant, or a variant the capability cannot price any more, refuses
+	 * the checkout.
 	 *
 	 * @param cart The cart being checked out.
 	 */
@@ -2285,8 +2323,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		).items;
 
 		for (const line of lines) {
-			if (this.priceSourceOf(line) === 'STATED' || !line.variantId) {
-				continue;
+			if (!line.variantId) {
+				throw new BadRequestException({
+					message: `CART_LINE_PRICE_UNRESOLVED: line ${line.id} names no variant, so nothing can price it.`,
+					code: 'CART_LINE_PRICE_UNRESOLVED',
+					details: { lineId: line.id }
+				});
 			}
 
 			const priced = await this.resolveLinePrice(cart, line.variantId, Number(line.quantity));
