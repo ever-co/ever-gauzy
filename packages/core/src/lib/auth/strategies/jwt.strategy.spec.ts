@@ -1,7 +1,10 @@
 // cspell:ignore verif
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { environment } from '@gauzy/config';
 import { sign } from 'jsonwebtoken';
+import { DatabaseError } from 'pg';
+import { QueryFailedError } from 'typeorm';
+import { DATABASE_UNAVAILABLE_MESSAGE } from '../../core/errors/database-unavailable';
 
 // The strategy only needs these for DI metadata; loading the real modules drags in the whole core
 // entity graph, which cannot be required in isolation (pre-existing circular import).
@@ -383,6 +386,108 @@ describe('JwtStrategy.validate', () => {
 			second.userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
 			await run(second.strategy, { id: 'first-user', tenantId: 'tenant', organizationId: 'org-1' });
 			expect(second.employeeService.findOneByIdString).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * A token that could not be judged because the database was unreachable is answered 503, not 401: a 401
+	 * tells the client its valid token is bad, so it drops it and re-authenticates — during pool saturation,
+	 * a refresh storm on top of the outage. Only errors positively identified as connection/pool/timeout
+	 * failures are mapped; every refusal and every other error keeps its 401.
+	 */
+	describe('database outages', () => {
+		const payload = { id: 'first-user', tenantId: 'tenant', employeeId: 'emp-1', organizationId: 'org-1' };
+		const activeEmployee = {
+			id: 'emp-1',
+			userId: 'first-user',
+			organizationId: 'org-1',
+			isActive: true,
+			isArchived: false
+		};
+
+		const adminShutdown = () => {
+			const error = new DatabaseError('terminating connection due to administrator command', 0, 'error');
+			error.code = '57P01';
+			return error;
+		};
+		const outages: Array<[string, () => unknown]> = [
+			['an exhausted pool', () => new Error('timeout exceeded when trying to connect')],
+			[
+				'a lost connection (TypeORM)',
+				() => new QueryFailedError('SELECT 1', [], new Error('Connection terminated unexpectedly'))
+			],
+			['a server shutting down (57P01)', () => new QueryFailedError('SELECT 1', [], adminShutdown())],
+			[
+				'a refused connection',
+				() =>
+					Object.assign(new Error('connect ECONNREFUSED 10.0.0.5:5432'), {
+						code: 'ECONNREFUSED',
+						syscall: 'connect'
+					})
+			]
+		];
+
+		/** A strategy whose every lookup succeeds for `payload`, with the one named lookup failing. */
+		function buildFailing(lookup: string, error: unknown) {
+			const built = build();
+			built.employeeService.findOneByIdString.mockResolvedValue(activeEmployee);
+			built.userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
+			const failing = {
+				user: built.authService.getAuthenticatedUser,
+				role: built.roleAuthorizationService.attachAuthorizationState,
+				employee: built.employeeService.findOneByIdString,
+				membership: built.userOrganizationService.findOneByOptions
+			}[lookup] as jest.Mock;
+			failing.mockRejectedValue(error);
+			return built;
+		}
+
+		describe.each(['user', 'role', 'employee', 'membership'])('in the %s lookup', (lookup) => {
+			it.each(outages)('answers %s with a 503 that names no driver detail', async (_label, outage) => {
+				const { strategy } = buildFailing(lookup, outage());
+
+				const exception = await strategy.validate(payload).catch((error) => error);
+				expect(exception).toBeInstanceOf(ServiceUnavailableException);
+				expect(exception.getStatus()).toBe(503);
+				expect(exception.getResponse()).toEqual({
+					statusCode: 503,
+					message: DATABASE_UNAVAILABLE_MESSAGE,
+					error: 'Service Unavailable'
+				});
+			});
+
+			it('still answers any other failure with a 401', async () => {
+				const { strategy } = buildFailing(lookup, new Error('database is down'));
+				await expect(strategy.validate(payload)).rejects.toMatchObject({
+					response: { statusCode: 401, message: 'unauthorized', error: 'database is down' }
+				});
+			});
+		});
+
+		it('still answers a missing record with a 401', async () => {
+			const { strategy } = buildFailing('employee', new NotFoundException('The requested record was not found'));
+			await expect(strategy.validate(payload)).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'unauthorized', error: 'The requested record was not found' }
+			});
+		});
+
+		it('still refuses with a 401 when a check fails before the unreachable lookup is consulted', async () => {
+			const { strategy, employeeService } = buildFailing(
+				'membership',
+				new Error('timeout exceeded when trying to connect')
+			);
+			employeeService.findOneByIdString.mockResolvedValue({ ...activeEmployee, isActive: false });
+
+			await expect(strategy.validate(payload)).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'unauthorized', error: 'Unauthorized' }
+			});
+		});
+
+		it('reports the 503 to passport once, as the error', async () => {
+			const { strategy } = buildFailing('user', new Error('timeout exceeded when trying to connect'));
+			const { err, user } = await run(strategy, payload);
+			expect(err).toBeInstanceOf(ServiceUnavailableException);
+			expect(user).toBeNull();
 		});
 	});
 

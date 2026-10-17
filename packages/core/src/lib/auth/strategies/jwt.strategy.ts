@@ -1,9 +1,10 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
 import { IAuthenticatedUser } from '../../core/context/types';
+import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../../core/errors/database-unavailable';
 import { AuthService } from '../auth.service';
 import { isAccessTokenPayload, JWT_ALGORITHMS } from '../purpose-token';
 import { EmployeeService } from '../../employee/employee.service';
@@ -42,6 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 * @param {JwtPayload} payload - The JWT payload to validate.
 	 * @returns {Promise<IAuthenticatedUser>} The authenticated user.
 	 * @throws {UnauthorizedException} When the token does not authenticate a user.
+	 * @throws {ServiceUnavailableException} When the database could not be reached to judge the token.
 	 */
 	async validate(payload: JwtPayload): Promise<IAuthenticatedUser> {
 		let outcome: IAuthenticatedUser | UnauthorizedException;
@@ -49,6 +51,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			outcome = await this.resolveAuthenticatedUser(payload);
 		} catch (error) {
 			this.logger.error(`Error occurred during JWT validation: ${error?.message}`, error?.stack, 'JwtStrategy');
+			// The token was never judged: the database could not be reached (pool exhausted, connection lost,
+			// server restarting). A 401 would tell the client its valid token is bad, so it would drop it and
+			// re-authenticate, multiplying the load that caused the outage; a 503 is retried with the same token.
+			if (isDatabaseUnavailableError(error)) {
+				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: error });
+			}
 			throw new UnauthorizedException('unauthorized', error.message);
 		}
 

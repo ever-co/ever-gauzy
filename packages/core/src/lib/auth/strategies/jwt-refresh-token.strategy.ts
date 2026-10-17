@@ -1,10 +1,11 @@
 import { environment } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../../core/errors/database-unavailable';
 import { RefreshTokenService } from '../../refresh-token/refresh-token.service';
 import { UserService } from './../../user/user.service';
 import { JWT_ALGORITHMS } from '../purpose-token';
@@ -32,12 +33,18 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 	 * @param payload - The JWT payload to validate.
 	 * @returns The user the refresh token belongs to.
 	 * @throws {UnauthorizedException} When the refresh token does not authenticate a user.
+	 * @throws {ServiceUnavailableException} When the database could not be reached to judge the token.
 	 */
 	async validate(request: Request, payload: JwtPayload): Promise<IUser> {
 		let outcome: IUser | UnauthorizedException;
 		try {
 			outcome = await this.resolveUser(request, payload);
 		} catch (err) {
+			// The refresh token was never judged: the database could not be reached. A 401 here ends the
+			// session (the client discards its tokens), so an outage would sign everyone out; see JwtStrategy.
+			if (isDatabaseUnavailableError(err)) {
+				throw new ServiceUnavailableException(DATABASE_UNAVAILABLE_MESSAGE, { cause: err });
+			}
 			// Handle errors and provide a meaningful response
 			const message = err instanceof Error ? err.message : String(err);
 			throw new UnauthorizedException('Unauthorized', message);

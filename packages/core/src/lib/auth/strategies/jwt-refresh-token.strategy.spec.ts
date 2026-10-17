@@ -1,4 +1,6 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { QueryFailedError } from 'typeorm';
+import { DATABASE_UNAVAILABLE_MESSAGE } from '../../core/errors/database-unavailable';
 
 // Only DI metadata is needed here; the real modules drag in the whole core entity graph, which cannot
 // be required in isolation (pre-existing circular import).
@@ -101,6 +103,45 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 			await expect(result).rejects.toBeInstanceOf(UnauthorizedException);
 			await expect(result).rejects.toMatchObject({
 				response: { statusCode: 401, message: 'Unauthorized', error: 'lookup failed' }
+			});
+		});
+	});
+
+	/**
+	 * A refresh that could not be judged because the database was unreachable is a 503: a 401 here makes the
+	 * client discard its tokens, so an outage would sign every user out. Other failures keep their 401.
+	 */
+	describe('database outages', () => {
+		const request = { body: { refresh_token: 'refresh-token' } } as any;
+
+		it('answers an unreachable database while verifying the refresh token with a 503', async () => {
+			const { strategy, refreshTokenService } = build();
+			refreshTokenService.verify.mockRejectedValue(new Error('timeout exceeded when trying to connect'));
+
+			const result = strategy.validate(request, { id: 'user-1' });
+			await expect(result).rejects.toBeInstanceOf(ServiceUnavailableException);
+			await expect(result).rejects.toMatchObject({
+				response: { statusCode: 503, message: DATABASE_UNAVAILABLE_MESSAGE }
+			});
+		});
+
+		it('answers an unreachable database while loading the user with a 503', async () => {
+			const { strategy, userService } = build();
+			userService.findOneByIdString.mockRejectedValue(
+				new QueryFailedError('SELECT 1', [], new Error('Connection terminated unexpectedly'))
+			);
+
+			await expect(strategy.validate(request, { id: 'user-1' })).rejects.toBeInstanceOf(
+				ServiceUnavailableException
+			);
+		});
+
+		it('still answers any other failure with a 401', async () => {
+			const { strategy, refreshTokenService } = build();
+			refreshTokenService.verify.mockRejectedValue(new Error('database is down'));
+
+			await expect(strategy.validate(request, { id: 'user-1' })).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'Unauthorized', error: 'database is down' }
 			});
 		});
 	});
