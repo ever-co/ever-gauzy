@@ -136,6 +136,7 @@ import { FindOperator } from 'typeorm';
 import { Payment, RequestContext } from '@gauzy/core';
 import { RefundStatus } from '../payment.types';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
+import { PaymentCapture } from '../payment-capture/payment-capture.entity';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollection } from '../payment-collection/payment-collection.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
@@ -212,7 +213,9 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[RefundLine, 'refund_line'],
 	[Payment, 'payment'],
 	[PaymentCollection, 'payment_collection'],
-	[RefundReason, 'refund_reason']
+	[RefundReason, 'refund_reason'],
+	// The ceiling is re-read on the writing transaction's own manager (#10889), captures included.
+	[PaymentCapture, 'payment_capture']
 ]);
 
 /**
@@ -1728,6 +1731,31 @@ describe('RefundService — two refunds of one order are measured one after the 
 			.reduce((sum, row) => sum + Number(row.amount), 0);
 
 		expect(total).toBeLessThanOrEqual(20);
+	});
+
+	it('counts a refund that names no payment even when it is approved while the order is being read', async () => {
+		// Greptile, #10889: read as two statements (succeeded, then pending), a refund that moved from pending to
+		// succeeded between them was counted by neither. The order's refunds are one read now.
+		const fixture = order([
+			refundRow('return-refund', {
+				paymentId: undefined,
+				returnId: 'return-a',
+				amount: '15',
+				status: RefundStatus.PENDING
+			})
+		]);
+		const read = fixture.service.find.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'find').mockImplementation(async (options: any) => {
+			const rows = await read(options);
+
+			// The approval lands right after this read.
+			fixture.tables.refund[0].status = RefundStatus.SUCCEEDED;
+
+			return rows;
+		});
+
+		expect(await fixture.service.sumUnattributedForOrder(ORDER, 'USD')).toBe('15');
 	});
 
 	it('takes no row lock on a dialect that has none, and still measures the refund', async () => {

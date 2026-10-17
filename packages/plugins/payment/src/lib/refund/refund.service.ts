@@ -230,7 +230,7 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 				// the headroom is read again — a refund another call committed meanwhile is counted — and the row is
 				// written before the lock is released, so the second of two such refunds is measured against the first.
 				await this.lockOrderPayments(manager, input.orderId);
-				await this.assertOrderCeiling(input.orderId, currency, amount);
+				await this.assertOrderCeiling(input.orderId, currency, amount, manager);
 			}
 
 			const row = manager.create(Refund, {
@@ -450,6 +450,12 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		// still pending, and the collection's total was read and replaced with no lock, so two approvals
 		// against one collection that overlapped both read the same total and one increment was lost.
 		await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (!payment && refund.orderId) {
+				// A refund that names no payment moves from pending to succeeded under the order's lock as well, so
+				// no ceiling read that holds the lock can see it change status half way (Greptile, #10889).
+				await this.lockOrderPayments(manager, refund.orderId);
+			}
+
 			if (payment && captured && refunded) {
 				if (payment.orderId) {
 					// The payment's own figure is guarded by the compare-and-swap below; the order's — which a refund
@@ -457,6 +463,7 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 					// approval and a return refund of the same order cannot both pass on what they read before (R3-08r1).
 					await this.lockOrderPayments(manager, payment.orderId);
 					await this.assertRefundable(payment, refund.amount, refund.currency, {
+						manager,
 						excludeRefundId: refund.id
 					});
 				}
@@ -772,12 +779,11 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * Sums the refunds of a payment that succeeded.
 	 *
 	 * @param paymentId The payment to sum for.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
 	 * @returns The refunded total as an exact decimal.
 	 */
-	async sumSucceededForPayment(paymentId: ID): Promise<DecimalString> {
-		const refunds: IRefund[] = await this.find({
-			where: { paymentId, status: RefundStatus.SUCCEEDED, ...this.scope } as never
-		});
+	async sumSucceededForPayment(paymentId: ID, manager?: EntityManager): Promise<DecimalString> {
+		const refunds: IRefund[] = await this.readRefunds({ paymentId, status: RefundStatus.SUCCEEDED }, manager);
 		const currency = refunds.length ? refunds[0].currency : undefined;
 
 		if (!currency) {
@@ -818,13 +824,19 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		payment: Payment,
 		amount: DecimalString | number,
 		currency: string,
-		options: { excludeRefundId?: ID } = {}
+		options: { excludeRefundId?: ID; manager?: EntityManager } = {}
 	): Promise<void> {
+		const { manager } = options;
 		const requested = this.toMoney(amount, currency);
-		const captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), currency);
-		const succeeded = Money.of(await this.sumSucceededForPayment(payment.id), currency);
+		const captured = Money.of(
+			await this.paymentCaptureService.sumCapturedForPayment(payment.id, manager),
+			currency
+		);
+		const succeeded = Money.of(await this.sumSucceededForPayment(payment.id, manager), currency);
 		const committed = options.excludeRefundId
-			? succeeded.add(Money.of(await this.sumPendingForPayment(payment.id, options.excludeRefundId), currency))
+			? succeeded.add(
+					Money.of(await this.sumPendingForPayment(payment.id, options.excludeRefundId, manager), currency)
+				)
 			: succeeded;
 		const refundable = captured.subtract(committed);
 
@@ -839,11 +851,14 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		// 10 — 35 back on 20 taken (review R3-08). When the order has such refunds, the request is measured
 		// against what the order's payments can still give back between them, less those refunds.
 		if (payment.orderId) {
-			const unattributed = Money.of(await this.sumUnattributedForOrder(payment.orderId, currency), currency);
+			const unattributed = Money.of(
+				await this.sumUnattributedForOrder(payment.orderId, currency, manager),
+				currency
+			);
 
 			if (unattributed.isPositive()) {
 				const orderRefundable = Money.of(
-					await this.sumOrderHeadroom(payment.orderId, currency, options.excludeRefundId),
+					await this.sumOrderHeadroom(payment.orderId, currency, options.excludeRefundId, manager),
 					currency
 				).subtract(unattributed);
 
@@ -895,11 +910,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * @param orderId The order.
 	 * @param currency The refund's currency.
 	 * @param amount The refund's amount.
+	 * @param manager The transaction holding the order's lock, which every read here runs on.
 	 * @throws BadRequestException with `REFUND_AMOUNT_EXCEEDS_CAPTURED` when the order cannot carry it.
 	 */
-	private async assertOrderCeiling(orderId: ID, currency: string, amount: Money): Promise<void> {
-		const payments: Payment[] =
-			(await this.paymentRepository.find({ where: { orderId, ...this.scope } as never })) ?? [];
+	private async assertOrderCeiling(
+		orderId: ID,
+		currency: string,
+		amount: Money,
+		manager?: EntityManager
+	): Promise<void> {
+		const payments = await this.readOrderPayments(orderId, manager);
 
 		if (
 			!payments.some((payment) => String(payment.currency ?? currency).toUpperCase() === currency.toUpperCase())
@@ -907,9 +927,10 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			return;
 		}
 
-		const refundable = Money.of(await this.sumOrderHeadroom(orderId, currency), currency).subtract(
-			Money.of(await this.sumUnattributedForOrder(orderId, currency), currency)
-		);
+		const refundable = Money.of(
+			await this.sumOrderHeadroom(orderId, currency, undefined, manager),
+			currency
+		).subtract(Money.of(await this.sumUnattributedForOrder(orderId, currency, manager), currency));
 
 		if (amount.greaterThan(refundable)) {
 			throw new BadRequestException({
@@ -937,22 +958,23 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * `cancelRefund`, which is what makes its money count again. A cancelled or failed one moved nothing and
 	 * does not count.
 	 *
-	 * The rows are read by order, status and scope and the missing payment is filtered here, so the read is
-	 * the plain criteria both ORMs answer alike.
+	 * **One read, not one per status.** The order's refunds are read in one statement and the standing ones -
+	 * no payment, succeeded or pending, this currency - are picked here: read as two statements, a refund that
+	 * moved from pending to succeeded between them was counted by neither (Greptile, #10889). The criteria stay
+	 * plain, so the read is the one both ORMs answer alike.
 	 *
 	 * @param orderId The order to sum for.
 	 * @param currency The currency the ceiling is measured in; a refund in another currency is not comparable.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
 	 * @returns The total, as an exact decimal.
 	 */
-	async sumUnattributedForOrder(orderId: ID, currency: string): Promise<DecimalString> {
-		const standing: IRefund[] = [];
-
-		for (const status of [RefundStatus.SUCCEEDED, RefundStatus.PENDING]) {
-			standing.push(...((await this.find({ where: { orderId, status, ...this.scope } as never })) ?? []));
-		}
-
-		const unattributed = standing.filter(
-			(refund) => !refund.paymentId && String(refund.currency ?? '').toUpperCase() === currency.toUpperCase()
+	async sumUnattributedForOrder(orderId: ID, currency: string, manager?: EntityManager): Promise<DecimalString> {
+		const standing = new Set<string>([RefundStatus.SUCCEEDED, RefundStatus.PENDING]);
+		const unattributed = (await this.readRefunds({ orderId }, manager)).filter(
+			(refund) =>
+				standing.has(refund.status as string) &&
+				!refund.paymentId &&
+				String(refund.currency ?? '').toUpperCase() === currency.toUpperCase()
 		);
 
 		if (!unattributed.length) {
@@ -974,11 +996,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * @param orderId The order.
 	 * @param currency The currency to measure in; a payment in another currency is left out.
 	 * @param excludeRefundId On an approval, the refund being approved, whose own pending row is not counted.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
 	 * @returns The headroom, as an exact decimal.
 	 */
-	private async sumOrderHeadroom(orderId: ID, currency: string, excludeRefundId?: ID): Promise<DecimalString> {
-		const payments: Payment[] =
-			(await this.paymentRepository.find({ where: { orderId, ...this.scope } as never })) ?? [];
+	private async sumOrderHeadroom(
+		orderId: ID,
+		currency: string,
+		excludeRefundId?: ID,
+		manager?: EntityManager
+	): Promise<DecimalString> {
+		const payments = await this.readOrderPayments(orderId, manager);
 		let total = Money.zero(currency as CurrencyCode);
 
 		for (const payment of payments) {
@@ -987,13 +1014,13 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			}
 
 			let headroom = Money.of(
-				await this.paymentCaptureService.sumCapturedForPayment(payment.id),
+				await this.paymentCaptureService.sumCapturedForPayment(payment.id, manager),
 				currency
-			).subtract(Money.of(await this.sumSucceededForPayment(payment.id), currency));
+			).subtract(Money.of(await this.sumSucceededForPayment(payment.id, manager), currency));
 
 			if (excludeRefundId) {
 				headroom = headroom.subtract(
-					Money.of(await this.sumPendingForPayment(payment.id, excludeRefundId), currency)
+					Money.of(await this.sumPendingForPayment(payment.id, excludeRefundId, manager), currency)
 				);
 			}
 
@@ -1127,12 +1154,15 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 *
 	 * @param paymentId The payment to sum for.
 	 * @param exceptRefundId A refund to leave out, which is the one being approved.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
 	 * @returns The pending total as an exact decimal.
 	 */
-	private async sumPendingForPayment(paymentId: ID, exceptRefundId: ID): Promise<DecimalString> {
-		const refunds: IRefund[] = await this.find({
-			where: { paymentId, status: RefundStatus.PENDING, ...this.scope } as never
-		});
+	private async sumPendingForPayment(
+		paymentId: ID,
+		exceptRefundId: ID,
+		manager?: EntityManager
+	): Promise<DecimalString> {
+		const refunds: IRefund[] = await this.readRefunds({ paymentId, status: RefundStatus.PENDING }, manager);
 		const others = refunds.filter((refund) => refund.id !== exceptRefundId);
 		const currency = others.length ? others[0].currency : undefined;
 
@@ -1144,6 +1174,44 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			others.map((refund) => Money.of(refund.amount, currency)),
 			currency
 		).amount;
+	}
+
+	/**
+	 * Reads refunds of the caller's organization.
+	 *
+	 * **Inside a transaction, on that transaction's connection** (CodeRabbit + Greptile, #10889). The ceiling is
+	 * re-read under the order's lock, and a read through the injected repository there takes a second pool
+	 * connection while the transaction holds the first: with a pool of one it waits for itself, and a burst of
+	 * refunds waiting on one order's lock can exhaust a larger pool the same way. The transaction's manager is
+	 * the TypeORM one this write path already runs on (`recordRefund`, `settleRefund`). Outside a transaction -
+	 * the early answers before the lock - the ordinary read is used, which travels the configured ORM.
+	 *
+	 * @param where The criteria, merged with the tenancy scope.
+	 * @param manager The transaction to read on, when the caller holds one.
+	 * @returns The refunds.
+	 */
+	private async readRefunds(where: Record<string, unknown>, manager?: EntityManager): Promise<IRefund[]> {
+		const criteria = { ...where, ...this.scope } as never;
+		const rows = manager ? await manager.find(Refund, { where: criteria }) : await this.find({ where: criteria });
+
+		return (rows ?? []) as IRefund[];
+	}
+
+	/**
+	 * Reads the payments of an order in the caller's organization, on the caller's transaction when it holds one
+	 * (see `readRefunds`).
+	 *
+	 * @param orderId The order.
+	 * @param manager The transaction to read on, when the caller holds one.
+	 * @returns The payments.
+	 */
+	private async readOrderPayments(orderId: ID, manager?: EntityManager): Promise<Payment[]> {
+		const criteria = { orderId, ...this.scope } as never;
+		const rows = manager
+			? await manager.find(Payment, { where: criteria })
+			: await this.paymentRepository.find({ where: criteria });
+
+		return rows ?? [];
 	}
 
 	/**
