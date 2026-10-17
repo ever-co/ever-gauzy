@@ -2583,6 +2583,43 @@ describe('OrderReturnService — a refund claims the return before the money mov
 		expect(warn).toHaveBeenCalledWith(expect.stringContaining('RETURN_REFUND_OUTCOME_UNKNOWN'));
 	});
 
+	it('gives the claimed total back even when another write moved the version while the refund was asked for', async () => {
+		// Greptile, #10895: a close landing while the payment capability was being asked moved the version, and a
+		// release predicated on the version the claim wrote failed — the return then reported money that never moved.
+		const fixture = received({ refundAmount: '5.000000' });
+
+		(fixture.service as any).refundGateway.createRefund = async () => {
+			const row = fixture.returnRow('return-1') as Row;
+
+			row.version = Number(row.version) + 1;
+
+			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+		};
+
+		await expect(fixture.service.refund('return-1', '10.00')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('5.000000');
+	});
+
+	it('records what was actually refunded when the payment capability settles less than was asked for', async () => {
+		// Greptile, #10895: the port may answer a smaller amount; the total and the event must state the same one.
+		const fixture = received({ refundAmount: '0.000000' });
+
+		(fixture.service as any).refundGateway.createRefund = async (request: Row) => ({
+			refundId: 'refund-partial',
+			amount: '6.000000',
+			currency: request.currency
+		});
+
+		const outcome = await fixture.service.refund('return-1', '10.00');
+
+		expect(outcome).toMatchObject({ amount: '6.000000' });
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('6.000000');
+
+		const refunded = fixture.events.find((event) => event.name === 'return.refunded');
+
+		expect(refunded?.data).toMatchObject({ refundedAmount: '6.000000', refundId: 'refund-partial' });
+	});
+
 	it('announces the refund with the refund it produced and the version the claim wrote', async () => {
 		const fixture = received();
 
