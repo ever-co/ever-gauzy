@@ -234,8 +234,9 @@ describe('JwtStrategy.validate', () => {
 
 			expect(err).toBeInstanceOf(UnauthorizedException);
 			expect(user).toBeNull();
-			// Refused before the membership lookup: the claims contradict each other.
-			expect(userOrganizationService.findOneByOptions).not.toHaveBeenCalled();
+			// The membership lookup runs concurrently and SUCCEEDS here, but its result is never consulted: the
+			// claims contradict each other, and that is what refuses the token, as it always did.
+			expect(err).toMatchObject({ message: 'Employee does not belong to the claimed organization' });
 		});
 
 		it('attaches the organization the user is an active member of', async () => {
@@ -259,6 +260,129 @@ describe('JwtStrategy.validate', () => {
 					isArchived: false
 				}
 			});
+		});
+	});
+
+	/**
+	 * The employee and membership lookups are independent round trips, so they run concurrently — but their
+	 * outcomes are still judged in the original order, so a token that fails several checks is refused with
+	 * the same exception as before, whichever lookup happens to settle first.
+	 */
+	describe('employee and membership lookups', () => {
+		const payload = { id: 'first-user', tenantId: 'tenant', employeeId: 'emp-1', organizationId: 'org-1' };
+		const activeEmployee = {
+			id: 'emp-1',
+			userId: 'first-user',
+			organizationId: 'org-1',
+			isActive: true,
+			isArchived: false
+		};
+
+		/** A promise that settles only when the test says so. */
+		function deferred<T>() {
+			let resolve!: (value: T) => void;
+			let reject!: (reason: unknown) => void;
+			const promise = new Promise<T>((res, rej) => {
+				resolve = res;
+				reject = rej;
+			});
+			return { promise, resolve, reject };
+		}
+
+		it('issues both lookups before either one has answered', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			const employee = deferred<any>();
+			const membership = deferred<any>();
+			employeeService.findOneByIdString.mockReturnValue(employee.promise);
+			userOrganizationService.findOneByOptions.mockReturnValue(membership.promise);
+
+			const result = run(strategy, payload);
+			await new Promise((resolve) => setImmediate(resolve));
+
+			expect(employeeService.findOneByIdString).toHaveBeenCalledWith('emp-1');
+			expect(userOrganizationService.findOneByOptions).toHaveBeenCalledWith({
+				where: {
+					userId: 'first-user',
+					organizationId: 'org-1',
+					tenantId: 'tenant',
+					isActive: true,
+					isArchived: false
+				}
+			});
+
+			employee.resolve(activeEmployee);
+			membership.resolve({ id: 'user-org-1' });
+			const { err, user } = await result;
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ employeeId: 'emp-1', lastOrganizationId: 'org-1' });
+		});
+
+		it('refuses with the employee check when both checks fail, even if the membership lookup fails first', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			const employee = deferred<any>();
+			employeeService.findOneByIdString.mockReturnValue(employee.promise);
+			// Settles (rejects, as the CRUD service does on a miss) before the employee lookup answers.
+			userOrganizationService.findOneByOptions.mockRejectedValue(new Error('The requested record was not found'));
+
+			const unhandled = jest.fn();
+			process.on('unhandledRejection', unhandled);
+			try {
+				const result = run(strategy, payload);
+				await new Promise((resolve) => setImmediate(resolve));
+				employee.resolve({ ...activeEmployee, isActive: false });
+
+				const { err, user } = await result;
+				expect(user).toBeNull();
+				// The deactivated-employee refusal (no description), not the wrapped membership miss.
+				expect(err).toBeInstanceOf(UnauthorizedException);
+				expect(err).toMatchObject({
+					response: { statusCode: 401, message: 'unauthorized', error: 'Unauthorized' }
+				});
+
+				await new Promise((resolve) => setImmediate(resolve));
+				expect(unhandled).not.toHaveBeenCalled();
+			} finally {
+				process.off('unhandledRejection', unhandled);
+			}
+		});
+
+		it('propagates the employee lookup error when both lookups throw, whichever throws first', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			const employee = deferred<any>();
+			employeeService.findOneByIdString.mockReturnValue(employee.promise);
+			userOrganizationService.findOneByOptions.mockRejectedValue(new Error('membership lookup failed'));
+
+			const result = run(strategy, payload);
+			await new Promise((resolve) => setImmediate(resolve));
+			employee.reject(new Error('employee lookup failed'));
+
+			const { err } = await result;
+			expect(err).toMatchObject({
+				response: { statusCode: 401, message: 'unauthorized', error: 'employee lookup failed' }
+			});
+		});
+
+		it('refuses with the membership check when the employee passes', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			employeeService.findOneByIdString.mockResolvedValue(activeEmployee);
+			userOrganizationService.findOneByOptions.mockResolvedValue(null);
+
+			const { err } = await run(strategy, payload);
+			expect(err).toMatchObject({ message: 'User does not have access to organization' });
+		});
+
+		it('does not look up a claim the token does not carry', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			employeeService.findOneByIdString.mockResolvedValue({ ...activeEmployee });
+
+			const { err } = await run(strategy, { id: 'first-user', tenantId: 'tenant', employeeId: 'emp-1' });
+			expect(err).toBeNull();
+			expect(userOrganizationService.findOneByOptions).not.toHaveBeenCalled();
+
+			const second = build();
+			second.userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
+			await run(second.strategy, { id: 'first-user', tenantId: 'tenant', organizationId: 'org-1' });
+			expect(second.employeeService.findOneByIdString).not.toHaveBeenCalled();
 		});
 	});
 

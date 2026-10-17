@@ -133,6 +133,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 * to another user or another organization, and an organization the user is no longer a member of
 	 * all stop granting the context the token was minted with.
 	 *
+	 * The two lookups are independent — each reads only the token's claims and the user's `id` / `tenantId`,
+	 * which neither of them changes — so both are issued up front and run concurrently: one database round
+	 * trip of latency instead of two when a token carries both claims. Their OUTCOMES are still judged one
+	 * after the other in the original order (employee record, then the cross-check, then membership), so a
+	 * token that fails several checks is refused with exactly the exception it always was — including when
+	 * a lookup itself throws: the employee lookup's error is still the one that propagates.
+	 *
 	 * @param user - The authenticated user, mutated with the validated claims.
 	 * @param claims - The `employeeId`, `organizationId` and `tenantId` claims of the token.
 	 * @returns The `UnauthorizedException` that rejects the request, or `null` when both claims pass.
@@ -143,10 +150,26 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	): Promise<UnauthorizedException | null> {
 		const { employeeId, organizationId, tenantId } = claims;
 
+		const employeeLookup = employeeId ? this._employeeService.findOneByIdString(employeeId) : null;
+		const membershipLookup = organizationId
+			? this._userOrganizationService.findOneByOptions({
+					where: {
+						userId: user.id,
+						organizationId,
+						tenantId: tenantId || user.tenantId,
+						isActive: true,
+						isArchived: false
+					}
+				})
+			: null;
+		// The membership lookup is not awaited when the employee check refuses the token first (or its
+		// lookup throws); a rejection it settles with then is moot, and must not surface as unhandled.
+		membershipLookup?.catch(() => undefined);
+
 		// Validate and assign employeeId from JWT
 		let validatedEmployee = null;
 		if (employeeId) {
-			const employee = await this._employeeService.findOneByIdString(employeeId);
+			const employee = await employeeLookup;
 
 			// Same reasoning as for the user above: a deactivated or archived employee record must not
 			// keep granting the employee context its token was minted with.
@@ -170,15 +193,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 				return new UnauthorizedException('Employee does not belong to the claimed organization');
 			}
 
-			const userOrganization = await this._userOrganizationService.findOneByOptions({
-				where: {
-					userId: user.id,
-					organizationId,
-					tenantId: tenantId || user.tenantId,
-					isActive: true,
-					isArchived: false
-				}
-			});
+			const userOrganization = await membershipLookup;
 
 			if (!userOrganization) {
 				return new UnauthorizedException('User does not have access to organization');
