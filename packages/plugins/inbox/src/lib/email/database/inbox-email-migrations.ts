@@ -4,6 +4,7 @@ import { CreateInboxMailboxMemberTable1791000002600 } from './migrations/1791000
 import { CreateInboxEmailThreadTable1791000002700 } from './migrations/1791000002700-CreateInboxEmailThreadTable';
 import { CreateInboxEmailTable1791000002800 } from './migrations/1791000002800-CreateInboxEmailTable';
 import { CreateInboxEmailAttachmentTable1791000002900 } from './migrations/1791000002900-CreateInboxEmailAttachmentTable';
+import { CreateInboxOrganizationSettingTable1791000003000 } from './migrations/1791000003000-CreateInboxOrganizationSettingTable';
 
 /** The Inbox email features' migrations, oldest first (ordered with the platform's by their timestamps). */
 export const INBOX_EMAIL_MIGRATIONS = [
@@ -12,5 +13,6 @@ export const INBOX_EMAIL_MIGRATIONS = [
 	CreateInboxMailboxMemberTable1791000002600,
 	CreateInboxEmailThreadTable1791000002700,
 	CreateInboxEmailTable1791000002800,
-	CreateInboxEmailAttachmentTable1791000002900
+	CreateInboxEmailAttachmentTable1791000002900,
+	CreateInboxOrganizationSettingTable1791000003000
 ];

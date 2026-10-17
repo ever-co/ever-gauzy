@@ -7,6 +7,7 @@ import { EverWorksNotifier } from '../../connection/ever-works-notifier.service'
 import { EverWorksSyncContext } from '../ever-works-sync.context';
 import { EverWorksInboundEvent, EverWorksInboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
+import { EverWorksStaleLinkError } from '../links/ever-works-link.service';
 import { compareSeq } from './ever-works-envelope';
 
 /** What a handler decided for one event. */
@@ -60,6 +61,8 @@ export class EverWorksLeaseLostError extends Error {
  *   handler later applies it. An event without a mapped organization is `skipped`.
  * - A failure is retried with back-off and is `dead` after {@link INBOUND_MAX_ATTEMPTS}; the rest of
  *   that aggregate waits, so a later event never overtakes an earlier one.
+ * - A handler whose link write was refused as older than the recorded version (`EverWorksStaleLinkError`,
+ *   the link service's monotonic version) is `skipped` when that link is the event's own record.
  */
 @Injectable()
 export class EverWorksInboundApplier {
@@ -251,6 +254,13 @@ export class EverWorksInboundApplier {
 			return true;
 		} catch (error) {
 			if (error instanceof EverWorksLeaseLostError) throw error;
+			// The event's own record already has a newer version on its link (another process applied it, or
+			// a push recorded what Ever Works answered): the event is covered, as if its handler had skipped it.
+			// A refused link of another record (a dependency) is retried like any failure below.
+			if (error instanceof EverWorksStaleLinkError && error.ewId === event.aggregateId) {
+				await this.settle(connection, id, { status: EverWorksInboundStatus.SKIPPED, error: `superseded: ${error.message}`.slice(0, 2000), appliedAt: now }, owner);
+				return true;
+			}
 			const attempts = (event.attempts ?? 0) + 1;
 			const dead = attempts >= INBOUND_MAX_ATTEMPTS;
 			const reason = error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 2000) : 'error';

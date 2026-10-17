@@ -75,6 +75,7 @@ COPY --chown=node:node packages/plugins/integration-plane/package.json ./package
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
 COPY --chown=node:node packages/plugins/integration-ever-works/package.json ./packages/plugins/integration-ever-works/
 COPY --chown=node:node packages/plugins/inbox/package.json ./packages/plugins/inbox/
+COPY --chown=node:node packages/plugins/email-provider-resend/package.json ./packages/plugins/email-provider-resend/
 COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
 COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
@@ -214,6 +215,7 @@ COPY --chown=node:node packages/plugins/integration-plane/package.json ./package
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
 COPY --chown=node:node packages/plugins/integration-ever-works/package.json ./packages/plugins/integration-ever-works/
 COPY --chown=node:node packages/plugins/inbox/package.json ./packages/plugins/inbox/
+COPY --chown=node:node packages/plugins/email-provider-resend/package.json ./packages/plugins/email-provider-resend/
 COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
 COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
@@ -440,6 +442,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     if [ -d /mnt/packages/plugins/integration-ever-async/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-async/node_modules ./node_modules/@gauzy/plugin-integration-ever-async/; fi && \
     if [ -d /mnt/packages/plugins/integration-ever-works/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-works/node_modules ./node_modules/@gauzy/plugin-integration-ever-works/; fi && \
     if [ -d /mnt/packages/plugins/inbox/node_modules ]; then cp -r /mnt/packages/plugins/inbox/node_modules ./node_modules/@gauzy/plugin-inbox/; fi && \
+    if [ -d /mnt/packages/plugins/email-provider-resend/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-resend/node_modules ./node_modules/@gauzy/plugin-email-provider-resend/; fi && \
     if [ -d /mnt/packages/plugins/auth-keycloak/node_modules ]; then cp -r /mnt/packages/plugins/auth-keycloak/node_modules ./node_modules/@gauzy/plugin-auth-keycloak/; fi && \
     if [ -d /mnt/packages/plugins/auth-zitadel/node_modules ]; then cp -r /mnt/packages/plugins/auth-zitadel/node_modules ./node_modules/@gauzy/plugin-auth-zitadel/; fi && \
     if [ -d /mnt/packages/plugins/ever-instance/node_modules ]; then cp -r /mnt/packages/plugins/ever-instance/node_modules ./node_modules/@gauzy/plugin-ever-instance/; fi && \
