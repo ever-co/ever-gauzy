@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DeepPartial, Like } from 'typeorm';
+import { DeepPartial, In, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService, environment } from '@gauzy/config';
 import {
@@ -299,8 +299,15 @@ export class ZapierService {
 					throw new BadRequestException('State has expired');
 				}
 
-				// Delete the state
-				await this._integrationSettingService.delete(stateSetting.id);
+				// Consume the state. The callback is public, so there is no user for the tenant-aware delete;
+				// matching id and value also keeps the state single-use under concurrent callbacks.
+				const result = await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
+					id: stateSetting.id,
+					settingsValue: stateSetting.settingsValue
+				});
+				if (result.affected !== 1) {
+					throw new BadRequestException('Invalid state parameter');
+				}
 
 				return { ...parsedState, integrationId: stateSetting.integrationId ?? parsedState.integrationId };
 			} catch (error) {
@@ -593,18 +600,14 @@ export class ZapierService {
 				'oauth_access_token',
 				'oauth_refresh_token'
 			];
-			const staleTokens = settings.filter((s) => allTokenSettingNames.includes(s.settingsName));
-			await Promise.all(
-				staleTokens
-					.map((s) => s.id)
-					.filter((id): id is string => id != null)
-					.map((id) => this._integrationSettingService.delete(id))
-			);
+			// No user on the public callback, so go through the repository, bounded by integration and tenant
+			await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
+				integrationId: integrationTenant.id,
+				tenantId: resolvedTenantId,
+				settingsName: In(allTokenSettingNames)
+			});
 
-			const filteredSettings = settings.filter((s) => !allTokenSettingNames.includes(s.settingsName));
-
-			const updatedSettings = [
-				...filteredSettings,
+			await this._integrationSettingService.typeOrmIntegrationSettingRepository.save([
 				{
 					settingsName: 'zapier_access_token',
 					settingsValue: response.access_token,
@@ -619,9 +622,7 @@ export class ZapierService {
 					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				}
-			] as any;
-
-			await this._integrationSettingService.save(updatedSettings);
+			]);
 
 			return integrationTenant;
 		} catch (error) {
