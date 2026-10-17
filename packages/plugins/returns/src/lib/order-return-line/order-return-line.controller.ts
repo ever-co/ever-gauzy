@@ -1,11 +1,13 @@
 import {
 	BadRequestException,
 	Body,
+	ConflictException,
 	Controller,
 	Delete,
 	Get,
 	HttpCode,
 	HttpStatus,
+	NotFoundException,
 	Param,
 	Post,
 	Put,
@@ -98,11 +100,17 @@ export class OrderReturnLineController extends CrudController<OrderReturnLine> {
 	 * unit may only have its note and metadata changed — the promise `UpdateOrderReturnLineDTO` makes,
 	 * which nothing enforced: the quantities a receipt was posted against must not move under it.
 	 *
+	 * The check and the write are one statement for anything but the note and metadata: the update is
+	 * predicated on the counters the check read, so a receipt posted between the read and the write leaves
+	 * the statement matching no row, and the request is answered `409 RETURN_LINE_RECEIVED_CONCURRENTLY`
+	 * instead of moving a quantity a receipt has just been posted against.
+	 *
 	 * @param id The line to update.
 	 * @param entity The fields to change.
 	 * @returns The updated line.
 	 * @throws BadRequestException `RETURN_LINE_RECEIPT_COUNTERS_READ_ONLY` for a counter in the body, and
 	 * `RETURN_LINE_RECEIVED` for any other field than the note or metadata of a line that has received units.
+	 * @throws ConflictException `RETURN_LINE_RECEIVED_CONCURRENTLY` when a receipt landed during the update.
 	 */
 	@ApiOperation({ summary: 'Update a return line' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was updated.' })
@@ -132,7 +140,11 @@ export class OrderReturnLineController extends CrudController<OrderReturnLine> {
 			});
 		}
 
-		await this.orderReturnLineService.update(id, entity as any);
+		if (line && changed.length > 0) {
+			await this.updateUnlessReceived(line, entity, changed);
+		} else {
+			await this.orderReturnLineService.update(id, entity as any);
+		}
 
 		return await this.orderReturnLineService.findOneByIdString(id);
 	}
@@ -239,6 +251,55 @@ export class OrderReturnLineController extends CrudController<OrderReturnLine> {
 				code: 'RETURN_LINE_RECEIPT_COUNTERS_READ_ONLY',
 				details: { fields: stated }
 			});
+		}
+	}
+
+	/**
+	 * Writes the update predicated on the receipt counters the check read. See {@link update}.
+	 *
+	 * The tenant-aware update reads the row by the same criteria before it writes, and answers a miss with
+	 * a 404; either a miss there or an update that matched no row means the counters moved in between.
+	 *
+	 * @param line The line as the check read it.
+	 * @param entity The body.
+	 * @param changed The members other than note and metadata the body states.
+	 * @throws ConflictException `RETURN_LINE_RECEIVED_CONCURRENTLY`.
+	 */
+	private async updateUnlessReceived(
+		line: OrderReturnLine,
+		entity: UpdateOrderReturnLineDTO,
+		changed: string[]
+	): Promise<void> {
+		const conflict = () =>
+			new ConflictException({
+				message:
+					'RETURN_LINE_RECEIVED_CONCURRENTLY: a receipt was posted against this line while it was being changed; read it again.',
+				code: 'RETURN_LINE_RECEIVED_CONCURRENTLY',
+				details: { fields: changed }
+			});
+		let result: unknown;
+
+		try {
+			result = await this.orderReturnLineService.update(
+				{
+					id: line.id,
+					receivedQuantity: line.receivedQuantity,
+					damagedQuantity: line.damagedQuantity
+				} as any,
+				entity as any
+			);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				throw conflict();
+			}
+
+			throw error;
+		}
+
+		const affected = (result as { affected?: number } | undefined)?.affected;
+
+		if (typeof affected === 'number' && affected === 0) {
+			throw conflict();
 		}
 	}
 

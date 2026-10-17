@@ -30,6 +30,7 @@ import { CommerceCartShippingMethod } from './commerce-cart-shipping-method.enti
 import { CommerceCartShippingMethodService } from './commerce-cart-shipping-method.service';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { cartOfBody } from '../commerce-cart/cart-of-body';
+import { idsOf, newestOf, publishCartVersion } from '../commerce-cart/cart-child-answer';
 import { CART_PERMISSIONS } from '../cart.permissions';
 import { CreateCommerceCartShippingMethodDTO, UpdateCommerceCartShippingMethodDTO } from './dto';
 
@@ -69,11 +70,13 @@ export class CommerceCartShippingMethodController extends CrudController<Commerc
 	 * both go through `CommerceCartService.setShippingMethod`, which refuses all of that and retires the
 	 * previous choice; this route now does the same, under the same cart version (the `If-Match` header
 	 * states the version of the cart the body's `cartId` names, as on the nested route). The answer is
-	 * still the delivery choice: the one the cart now holds.
+	 * still the delivery choice — the row this request wrote, told from a concurrent request's by the rows
+	 * the cart held before the call and by the body it names, and answered even when a later choice has
+	 * since retired it. The `ETag` is the cart's new version, the one the next write to this cart states.
 	 *
 	 * @param entity The chosen method, naming its cart.
 	 * @param request The request, which carries the version the caller read the cart at.
-	 * @returns The delivery choice the cart now holds.
+	 * @returns The delivery choice this request set.
 	 */
 	@ApiOperation({ summary: 'Create a cart shipping method' })
 	@ApiResponse({
@@ -89,22 +92,43 @@ export class CommerceCartShippingMethodController extends CrudController<Commerc
 	async create(
 		@Body() entity: CreateCommerceCartShippingMethodDTO,
 		@Req() request?: Request
-	): Promise<CommerceCartShippingMethod> {
-		await this.commerceCartService.setShippingMethod(entity.cartId, entity as any, versionExpectationOf(request));
+	): Promise<CommerceCartShippingMethod | undefined> {
+		const before = idsOf(await this.methodsOf(entity.cartId, false));
+		const cart = await this.commerceCartService.setShippingMethod(
+			entity.cartId,
+			entity as any,
+			versionExpectationOf(request)
+		);
 
-		const { items } = (await this.commerceCartShippingMethodService.findAll({
-			where: { cartId: entity.cartId }
+		publishCartVersion(request, cart);
+
+		// `setShippingMethod` answers the cart, so the row is found by difference: one that did not exist
+		// before the call and carries the choice this body named. Retired rows are read too, because a
+		// concurrent choice that landed after this one retires this one's row.
+		const written = (await this.methodsOf(entity.cartId, true)).filter(
+			(method) =>
+				!before.has(method.id) &&
+				method.name === entity.name &&
+				(method.shippingOptionId ?? null) === (entity.shippingOptionId ?? null)
+		);
+
+		return newestOf(written, 'createdAt');
+	}
+
+	/**
+	 * The delivery choices of a cart.
+	 *
+	 * @param cartId The cart.
+	 * @param withDeleted Whether retired choices are read too.
+	 * @returns The choices.
+	 */
+	private async methodsOf(cartId: ID, withDeleted: boolean): Promise<CommerceCartShippingMethod[]> {
+		const page = (await this.commerceCartShippingMethodService.findAll({
+			where: { cartId },
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<CommerceCartShippingMethod>;
 
-		// `setShippingMethod` retires every earlier choice before it writes this one, so the cart's one live
-		// row is the answer; the newest is taken should a concurrent choice have landed in between.
-		return (items ?? []).reduce<CommerceCartShippingMethod | undefined>(
-			(found, method) =>
-				!found || new Date(method.createdAt ?? 0).getTime() >= new Date(found.createdAt ?? 0).getTime()
-					? method
-					: found,
-			undefined
-		);
+		return page?.items ?? [];
 	}
 
 	/**

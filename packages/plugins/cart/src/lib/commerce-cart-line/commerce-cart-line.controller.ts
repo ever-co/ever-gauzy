@@ -30,6 +30,7 @@ import { CommerceCartLine } from './commerce-cart-line.entity';
 import { CommerceCartLineService } from './commerce-cart-line.service';
 import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { cartOfBody } from '../commerce-cart/cart-of-body';
+import { idsOf, newestOf, publishCartVersion } from '../commerce-cart/cart-child-answer';
 import { CART_PERMISSIONS } from '../cart.permissions';
 import { CreateCommerceCartLineDTO, UpdateCommerceCartLineDTO } from './dto';
 
@@ -69,11 +70,12 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	 * which refuses every one of those; this route now does the same, under the same cart version (the
 	 * `If-Match` header states the version of the cart the body's `cartId` names, as on the nested route).
 	 * The answer is still the line: the row the addition created, or the existing line it merged into when
-	 * the two describe the same purchase.
+	 * the two describe the same purchase (see {@link lineAddedBy}). The `ETag` is the cart's new version —
+	 * the version the next write to this cart states — because the line itself carries none.
 	 *
 	 * @param entity The line to add, naming its cart.
 	 * @param request The request, which carries the version the caller read the cart at.
-	 * @returns The line the cart now holds for that purchase.
+	 * @returns The line the addition produced.
 	 */
 	@ApiOperation({ summary: 'Create a cart line' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The cart line was created', type: CommerceCartLine })
@@ -82,10 +84,20 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateCommerceCartLineDTO, @Req() request?: Request): Promise<CommerceCartLine> {
-		await this.commerceCartService.addLine(entity.cartId, entity as any, versionExpectationOf(request));
+	async create(
+		@Body() entity: CreateCommerceCartLineDTO,
+		@Req() request?: Request
+	): Promise<CommerceCartLine | undefined> {
+		const before = await this.linesOf(entity.cartId, false);
+		const cart = await this.commerceCartService.addLine(
+			entity.cartId,
+			entity as any,
+			versionExpectationOf(request)
+		);
 
-		return this.lineFor(entity);
+		publishCartVersion(request, cart);
+
+		return this.lineAddedBy(entity, before);
 	}
 
 	/**
@@ -176,36 +188,54 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	}
 
 	/**
-	 * The line the cart holds for the purchase a create described.
+	 * The lines of a cart.
 	 *
-	 * `addLine` merges an addition into an existing line when the variant, warehouse, unit price, tax
-	 * mode and plan all match, so the row to answer with is the one carrying those attributes — the newest
-	 * of them, should two exist from before the merge rule. Any line of the cart is the fallback, which can
-	 * only be reached if the cart re-priced the line between the write and this read.
+	 * @param cartId The cart.
+	 * @param withDeleted Whether retired lines are read too.
+	 * @returns The lines.
+	 */
+	private async linesOf(cartId: ID, withDeleted: boolean): Promise<CommerceCartLine[]> {
+		const page = (await this.commerceCartLineService.findAll({
+			where: { cartId },
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<CommerceCartLine>;
+
+		return page?.items ?? [];
+	}
+
+	/**
+	 * The line an addition produced, told apart from the lines the cart held before it.
+	 *
+	 * `addLine` answers the cart, not the line, so the line is found by difference against the lines read
+	 * before the call: a row that did not exist before is the one the addition created; otherwise it is the
+	 * existing line of the same purchase (variant, warehouse, plan) whose quantity grew — the one the addition
+	 * merged into. Retired rows are read as well, so a row a concurrent request retired after this one created
+	 * it is still answered as this request's own. The purchase key is the part of `addLine`'s merge key that
+	 * does not depend on who priced the line; the only rows it cannot tell apart are two identical purchases
+	 * added at the same instant, which describe the same thing.
 	 *
 	 * @param entity The created line's body.
+	 * @param before The ids and quantities of the cart's lines before the addition.
 	 * @returns The line.
 	 */
-	private async lineFor(entity: CreateCommerceCartLineDTO): Promise<CommerceCartLine> {
-		const { items } = (await this.commerceCartLineService.findAll({
-			where: { cartId: entity.cartId }
-		})) as IPagination<CommerceCartLine>;
-		const same = (items ?? []).filter(
+	private async lineAddedBy(
+		entity: CreateCommerceCartLineDTO,
+		before: CommerceCartLine[]
+	): Promise<CommerceCartLine | undefined> {
+		const existed = idsOf(before);
+		const quantityBefore = new Map(before.map((line) => [line.id, Number(line.quantity)]));
+		const purchase = (await this.linesOf(entity.cartId, true)).filter(
 			(line) =>
 				line.variantId === entity.variantId &&
 				(line.warehouseId ?? null) === (entity.warehouseId ?? null) &&
-				(line.subscriptionPlanId ?? null) === (entity.subscriptionPlanId ?? null) &&
-				Number(line.unitPrice) === Number(entity.unitPrice)
+				(line.subscriptionPlanId ?? null) === (entity.subscriptionPlanId ?? null)
 		);
-		const newest = (rows: CommerceCartLine[]) =>
-			rows.reduce<CommerceCartLine | undefined>(
-				(found, line) =>
-					!found || new Date(line.updatedAt ?? 0).getTime() >= new Date(found.updatedAt ?? 0).getTime()
-						? line
-						: found,
-				undefined
-			);
+		const created = purchase.filter((line) => !existed.has(line.id));
+		const merged = purchase.filter(
+			(line) =>
+				existed.has(line.id) && !line.deletedAt && Number(line.quantity) > (quantityBefore.get(line.id) ?? 0)
+		);
 
-		return newest(same) ?? newest(items ?? []);
+		return newestOf(created, 'createdAt') ?? newestOf(merged, 'updatedAt');
 	}
 }

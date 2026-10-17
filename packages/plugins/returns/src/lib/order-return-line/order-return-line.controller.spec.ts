@@ -42,6 +42,7 @@ jest.mock('@gauzy/common', () => ({ FeatureFlag: () => () => undefined }));
 jest.mock('./order-return-line.service', () => ({ OrderReturnLineService: class OrderReturnLineService {} }));
 jest.mock('./order-return-line.entity', () => ({ OrderReturnLine: class OrderReturnLine {} }));
 
+import { NotFoundException } from '@nestjs/common';
 import { OrderReturnLineController } from './order-return-line.controller';
 
 const LINE_ID = '00000000-0000-4000-8000-0000000000d1';
@@ -79,12 +80,29 @@ describe('OrderReturnLineController — the receipt counters are the receiving a
 		expect(service.create).not.toHaveBeenCalled();
 	});
 
-	it('still updates a line nothing was received against', async () => {
+	it('still updates a line nothing was received against, predicated on the counters it read', async () => {
 		const { service, controller } = fixture();
 
 		await controller.update(LINE_ID, { quantity: '1', note: 'one only' } as any);
 
-		expect(service.update).toHaveBeenCalledWith(LINE_ID, { quantity: '1', note: 'one only' });
+		// One statement: a receipt posted between the check and the write leaves it matching no row.
+		expect(service.update).toHaveBeenCalledWith(
+			{ id: LINE_ID, receivedQuantity: '0', damagedQuantity: '0' },
+			{ quantity: '1', note: 'one only' }
+		);
+	});
+
+	it.each([
+		['the read-before-write finds no row', () => Promise.reject(new NotFoundException())],
+		['the update matches no row', () => Promise.resolve({ affected: 0 })]
+	])('answers 409 when a receipt lands during the update (%s)', async (_case, outcome) => {
+		const { service, controller } = fixture();
+		service.update.mockImplementationOnce(outcome as any);
+
+		await expect(controller.update(LINE_ID, { quantity: '1' } as any)).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'RETURN_LINE_RECEIVED_CONCURRENTLY' }
+		});
 	});
 
 	it('lets a received line change only its note and metadata', async () => {

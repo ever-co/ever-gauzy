@@ -75,6 +75,8 @@ jest.mock('@gauzy/core', () => {
 			),
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		formatEntityTag: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').formatEntityTag,
+		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
 			.connectionFromOffsetPage,
 		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
@@ -219,6 +221,25 @@ describe('R2-G25 — PUT /carts/:id does not move the status', () => {
 	});
 });
 
+/** A request whose response records the headers set on it. */
+function requestWithResponse() {
+	const headers: Record<string, string> = {};
+	const res = { headersSent: false, setHeader: jest.fn((name: string, value: string) => (headers[name] = value)) };
+
+	return { request: { ...REQUEST, res } as any, headers };
+}
+
+/** A child service whose `findAll` answers the rows before the write, then the rows after it. */
+function childService(before: any[], after: any[]) {
+	return {
+		create: jest.fn(),
+		findAll: jest
+			.fn()
+			.mockResolvedValueOnce({ items: before, total: before.length })
+			.mockResolvedValueOnce({ items: after, total: after.length })
+	};
+}
+
 describe('R2-G25 — POST /cart-lines adds the line through the cart', () => {
 	const body = {
 		cartId: CART_ID,
@@ -226,35 +247,58 @@ describe('R2-G25 — POST /cart-lines adds the line through the cart', () => {
 		quantity: 2,
 		unitPrice: '5.000000'
 	} as any;
+	const other = { id: 'line-0', cartId: CART_ID, variantId: 'variant-0', quantity: 1, createdAt: new Date(1) };
 
-	function fixture() {
-		const lines = [
-			{ id: 'line-0', cartId: CART_ID, variantId: 'variant-0', unitPrice: '1.000000', updatedAt: new Date(2) },
-			{ id: 'line-1', cartId: CART_ID, variantId: 'variant-1', unitPrice: '5.000000', updatedAt: new Date(1) }
-		];
-		const lineService = {
-			create: jest.fn(),
-			findAll: jest.fn().mockResolvedValue({ items: lines, total: lines.length })
-		};
-		const cartService = { addLine: jest.fn().mockResolvedValue({ id: CART_ID }) };
+	function fixture(before: any[], after: any[]) {
+		const lineService = childService(before, after);
+		const cartService = { addLine: jest.fn().mockResolvedValue({ id: CART_ID, version: 9 }) };
 		const controller = new CommerceCartLineController(lineService as any, cartService as any);
 
 		return { lineService, cartService, controller };
 	}
 
 	it('reaches addLine — the call addCartLine makes — and never the bare create', async () => {
-		const { lineService, cartService, controller } = fixture();
+		const created = { id: 'line-1', cartId: CART_ID, variantId: 'variant-1', quantity: 2, createdAt: new Date(5) };
+		const { lineService, cartService, controller } = fixture([other], [other, created]);
+		const { request, headers } = requestWithResponse();
 
-		const answer = await controller.create(body, REQUEST);
+		const answer = await controller.create(body, request);
 
 		expect(cartService.addLine).toHaveBeenCalledWith(CART_ID, body, EXPECTATION);
 		expect(lineService.create).not.toHaveBeenCalled();
-		// The answer is still the line the addition produced, not the cart.
-		expect(answer).toMatchObject({ id: 'line-1', variantId: 'variant-1' });
+		// The answer is still the line the addition produced, not the cart …
+		expect(answer).toBe(created);
+		// … and the ETag is the cart's new version, the one the next write to the cart states.
+		expect(headers['ETag']).toBe('"9"');
+	});
+
+	it('answers the line the addition merged into when the purchase was already in the cart', async () => {
+		const held = { id: 'line-1', cartId: CART_ID, variantId: 'variant-1', quantity: 1, updatedAt: new Date(1) };
+		const grown = { ...held, quantity: 3, updatedAt: new Date(6) };
+		const { controller } = fixture([other, held], [other, grown]);
+
+		expect(await controller.create(body, requestWithResponse().request)).toBe(grown);
+	});
+
+	it('answers its own row, not one a concurrent request added, even once that request retired it', async () => {
+		const mine = {
+			id: 'line-2',
+			cartId: CART_ID,
+			variantId: 'variant-1',
+			quantity: 2,
+			createdAt: new Date(5),
+			deletedAt: new Date(7)
+		};
+		const theirs = { id: 'line-3', cartId: CART_ID, variantId: 'variant-9', quantity: 1, createdAt: new Date(6) };
+		const { lineService, controller } = fixture([other], [other, mine, theirs]);
+
+		expect(await controller.create(body, requestWithResponse().request)).toBe(mine);
+		// The second read includes retired rows.
+		expect(lineService.findAll).toHaveBeenLastCalledWith({ where: { cartId: CART_ID }, withDeleted: true });
 	});
 
 	it('propagates the cart refusing the addition (an immutable cart, short stock), writing nothing', async () => {
-		const { lineService, cartService, controller } = fixture();
+		const { lineService, cartService, controller } = fixture([], []);
 		cartService.addLine.mockRejectedValueOnce(new Error('CART_STATUS_INVALID: a COMPLETED cart is immutable.'));
 
 		await expect(controller.create(body, REQUEST)).rejects.toThrow(/CART_STATUS_INVALID/);
@@ -274,27 +318,38 @@ describe('R2-G25 — POST /cart-lines adds the line through the cart', () => {
 
 describe('R2-G25 — POST /cart-shipping-methods sets the choice through the cart', () => {
 	const body = { cartId: CART_ID, name: 'Courier', amount: '4.000000' } as any;
+	const previous = { id: 'ship-1', cartId: CART_ID, name: 'Post', createdAt: new Date(1) };
 
-	function fixture() {
-		const live = [{ id: 'ship-2', cartId: CART_ID, name: 'Courier', createdAt: new Date(5) }];
-		const shippingService = {
-			create: jest.fn(),
-			findAll: jest.fn().mockResolvedValue({ items: live, total: live.length })
-		};
-		const cartService = { setShippingMethod: jest.fn().mockResolvedValue({ id: CART_ID }) };
+	function fixture(before: any[], after: any[]) {
+		const shippingService = childService(before, after);
+		const cartService = { setShippingMethod: jest.fn().mockResolvedValue({ id: CART_ID, version: 4 }) };
 		const controller = new CommerceCartShippingMethodController(shippingService as any, cartService as any);
 
 		return { shippingService, cartService, controller };
 	}
 
 	it('reaches setShippingMethod — the call setCartShippingMethod makes — and never the bare create', async () => {
-		const { shippingService, cartService, controller } = fixture();
+		const mine = { id: 'ship-2', cartId: CART_ID, name: 'Courier', createdAt: new Date(5) };
+		const { shippingService, cartService, controller } = fixture(
+			[previous],
+			[{ ...previous, deletedAt: new Date(5) }, mine]
+		);
+		const { request, headers } = requestWithResponse();
 
-		const answer = await controller.create(body, REQUEST);
+		const answer = await controller.create(body, request);
 
 		expect(cartService.setShippingMethod).toHaveBeenCalledWith(CART_ID, body, EXPECTATION);
 		expect(shippingService.create).not.toHaveBeenCalled();
-		expect(answer).toMatchObject({ id: 'ship-2' });
+		expect(answer).toBe(mine);
+		expect(headers['ETag']).toBe('"4"');
+	});
+
+	it('answers its own choice when a concurrent choice landed after it and retired it', async () => {
+		const mine = { id: 'ship-2', cartId: CART_ID, name: 'Courier', createdAt: new Date(5), deletedAt: new Date(6) };
+		const theirs = { id: 'ship-3', cartId: CART_ID, name: 'Express', createdAt: new Date(6) };
+		const { controller } = fixture([previous], [{ ...previous, deletedAt: new Date(5) }, mine, theirs]);
+
+		expect(await controller.create(body, requestWithResponse().request)).toBe(mine);
 	});
 
 	it('is versioned against the cart its body names', () => {
