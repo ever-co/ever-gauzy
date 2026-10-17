@@ -1,5 +1,11 @@
 // cspell:ignore dmarc
-import { Injectable, OnModuleDestroy, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import {
+	Injectable,
+	OnModuleDestroy,
+	OnModuleInit,
+	PayloadTooLargeException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { createHmac } from 'node:crypto';
 import { verifyWebhookSignature, WEBHOOK_SIGNATURE_TOLERANCE_SECONDS } from '@gauzy/core';
 import {
@@ -149,8 +155,12 @@ export class GenericWebhookProvider
 	async parse(request: IInboundWebhookRequest): Promise<ParsedInboundEmail[]> {
 		const body = isObject(request.body) ? request.body : {};
 		const list = Array.isArray(body['messages']) ? (body['messages'] as unknown[]) : [body];
+		// An oversized batch is refused whole (the sender splits it and retries), never cut short with a success.
+		if (list.length > GENERIC_MAX_MESSAGES) {
+			throw new PayloadTooLargeException(`A delivery carries at most ${GENERIC_MAX_MESSAGES} messages.`);
+		}
 		const messages: ParsedInboundEmail[] = [];
-		for (const entry of list.slice(0, GENERIC_MAX_MESSAGES)) {
+		for (const entry of list) {
 			if (isObject(entry)) messages.push(await this.parseOne(entry));
 		}
 		return messages;

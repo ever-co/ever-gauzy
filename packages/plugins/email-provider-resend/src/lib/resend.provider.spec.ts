@@ -23,7 +23,8 @@ import {
 } from './testing/resend-payloads';
 
 const SECRET = `whsec_${Buffer.alloc(24, 5).toString('base64')}`;
-const API_KEY = 're_fixture_key_123';
+// A placeholder in the key's shape (no real key is used anywhere in these tests).
+const API_KEY = `re_${'x'.repeat(8)}`;
 const account = {
 	id: 'a0000000-0000-4000-8000-00000000000a',
 	providerId: 'resend',
@@ -221,9 +222,12 @@ describe('Resend email provider', () => {
 			});
 			const resend = new ResendProvider(undefined, fetcher);
 			const download = jest.spyOn(ResendApiClient.prototype, 'download');
-			await resend.parse(webhook(EMAIL_RECEIVED_EVENT), account);
-			expect(download).toHaveBeenCalledWith(ATTACHMENT_URL, RESEND_MAX_DOWNLOAD_BYTES);
-			download.mockRestore();
+			try {
+				await resend.parse(webhook(EMAIL_RECEIVED_EVENT), account);
+				expect(download).toHaveBeenCalledWith(ATTACHMENT_URL, RESEND_MAX_DOWNLOAD_BYTES);
+			} finally {
+				download.mockRestore();
+			}
 		});
 
 		it('refuses a download URL to a private address', async () => {

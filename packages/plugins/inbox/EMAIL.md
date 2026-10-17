@@ -84,26 +84,30 @@ Worker of the platform domain (`GAUZY_INBOX_DOMAIN`) posts there.
 2. Per message, only the envelope recipients (else `To` / `Cc`) that are active mailboxes **of this account** count: a
    mailbox receives only through the account it points at (the platform route: mailboxes without an account), in the
    account's tenant and, for an organization's account, organization; a custom-domain mailbox only once its domain is
-   verified; and only from senders its allowlist admits (an allowlist match needs a DMARC `pass` from the provider:
-   the `From` header alone is forgeable). The mailbox row decides the tenant, never the payload. Everything
-   else is dropped. A `+tag` is kept in the message's headers.
+   verified; and only from senders its allowlist admits. The `From` header alone is forgeable: an allowlisted sender
+   without a DMARC `pass` from the provider (a relay that reports no verdict, or a failed one) is stored but **held in
+   the quarantine** (`x-gauzy-inbox-hold: unverified-sender`) until a manager releases it. The mailbox row decides the
+   tenant, never the payload. Everything else is dropped. A `+tag` is kept in the message's headers.
 3. The raw message is stored (`.eml`, or the normalized `.json` when the provider delivers no MIME; FileStorage, or with
    local storage a private directory, `GAUZY_INBOX_LOCAL_STORAGE_PATH`, never the public asset root), and
    one `inbox_email` row per mailbox (`RECEIVED`; unique on `(mailboxId, messageId)`, so a retry is a duplicate).
+   Email files always use the deployment's storage settings (`FILE_PROVIDER`, `AWS_*` and co.), never a tenant's own
+   storage overrides, so the webhook, the worker and a signed-in download read and write the same place.
 4. The answer is 202 `{ accepted, duplicates, dropped }`, and the rows go to the worker.
 
 The **worker** runs in the API process (a background task right after the webhook, plus a sweep every two minutes for a
 message whose hand-over was lost; `GAUZY_INBOX_EMAIL_WORKER=off` keeps a process out). Each message is claimed with a
 conditional update, so replicas never process one twice. It parses the stored message again, **sanitizes the HTML on the
 server** (`sanitize-html`: no scripts, handlers, forms, frames, `svg`, style sheets; links open without a referrer;
-remote images are blocked into `data-remote-src`), stores the attachments (SHA-256; active content such as HTML or SVG is
-never offered as what it claims), threads the message (`In-Reply-To` / `References`, else the normalized subject with a
+remote images are blocked into `data-remote-src`), stores the attachments (SHA-256, at most 100; active content such as
+HTML or SVG is never offered as what it claims; their rows are written with the claimed state in one transaction, so a
+worker another replica took over changes nothing), threads the message (`In-Reply-To` / `References`, else the normalized subject with a
 shared participant within 30 days), decides the spam verdict (authentication failures and the provider's score against
 `GAUZY_INBOX_SPAM_SUSPECT_SCORE` / `GAUZY_INBOX_SPAM_QUARANTINE_SCORE`), and creates the `EMAIL` inbox item
 (`source = EMAIL`, linked to the mailbox and the message) for the mailbox's recipients: the employee's user, or the
 members of a shared mailbox (with none: a team's members, or the organization's users whose role grants
-`INBOX_MAILBOX_MANAGE`). A quarantined message gets no item until a manager releases it. A failure is retried three times,
-then left `FAILED` with its error.
+`INBOX_MAILBOX_MANAGE`), counting only users who are still active members of the mailbox's organization. A quarantined
+message gets no item until a manager releases it. A failure is retried three times, then left `FAILED` with its error.
 
 ## Messages (`/api/inbox/emails`, `INBOX_VIEW` plus access to the mailbox)
 
@@ -119,7 +123,9 @@ then left `FAILED` with its error.
 | POST   | `/api/inbox/emails/:id/release`           | Release a quarantined message into the recipients' inboxes (managers)                          |
 
 A message is readable by its inbox item's recipients, the mailbox's recipients, and holders of `INBOX_MAILBOX_READ_ALL`
-in the tenant. Replies and forwards go out through the core transport seam with the mailbox's provider account first
+in the tenant. Replies and forwards send as the mailbox, so they need current access to it (a former member still reads
+what was addressed to them). A reply to a sent message follows up with its recipients. A forward carries every stored
+attachment. Replies and forwards go out through the core transport seam with the mailbox's provider account first
 (then the organization's and the tenant's default outbound accounts, then Custom SMTP / `MAIL_*`), and are kept as `OUT`
 messages of the thread (`SENT`, or `FAILED` with the error).
 
