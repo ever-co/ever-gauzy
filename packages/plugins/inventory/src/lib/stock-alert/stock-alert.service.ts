@@ -91,7 +91,7 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 		}
 
 		if (Object.keys(values).length > 0) {
-			await this.update(id, values as Partial<StockAlert>);
+			await this.update(id, values as any);
 		}
 
 		return await this.findOneByIdString(id);

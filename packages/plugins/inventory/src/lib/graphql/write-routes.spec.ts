@@ -648,9 +648,8 @@ describe('the inventory document — consumption reason and the partial alert ed
 	it('hands the stated consumption reason to the service, as the route does', async () => {
 		const stub = { consume: jest.fn().mockResolvedValue(undefined) };
 		const controller = new StockReservationController(stub as never) as unknown as Row;
-		const resolver = new StockReservationResolver(stub as never, {
-			ofType: () => null
-		} as unknown as EventBus) as unknown as Row;
+		const events = { ofType: () => null } as unknown as EventBus;
+		const resolver = new StockReservationResolver(stub as never, events) as unknown as Row;
 
 		await controller.consume(DOCUMENT, 'DAMAGED_IN_PICK');
 		await resolver.consumeStockReservation(DOCUMENT, 'DAMAGED_IN_PICK');
