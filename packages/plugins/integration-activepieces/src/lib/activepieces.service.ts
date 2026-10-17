@@ -12,6 +12,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { firstValueFrom, catchError, throwError } from 'rxjs';
 import { AxiosError } from 'axios';
+import { IsNull } from 'typeorm';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
@@ -710,8 +711,8 @@ export class ActivepiecesService {
 				}
 			];
 
-			// Reuse the integration tenant created by setupIntegration so the connection keeps its API key
-			const existingTenant = await this.findExistingIntegrationTenant(tenantId, organizationId);
+			// Reuse the integration tenant created by setupIntegration for the same scope so the connection keeps its API key
+			const existingTenant = await this.findExistingIntegrationTenant(tenantId, organizationId, true);
 
 			let integrationTenant: any;
 
@@ -744,13 +745,26 @@ export class ActivepiecesService {
 
 	/**
 	 * Find the ActivePieces integration tenant of the tenant, scoped to the organization when one is given.
+	 * With `exactScope`, a call without an organization only matches the tenant-level row (organizationId IS NULL),
+	 * so a tenant-level connection never lands on an organization's row.
 	 */
-	private async findExistingIntegrationTenant(tenantId: string, organizationId?: string): Promise<any> {
+	private async findExistingIntegrationTenant(
+		tenantId: string,
+		organizationId?: string,
+		exactScope = false
+	): Promise<any> {
+		let organizationFilter: Record<string, unknown> = {};
+		if (organizationId) {
+			organizationFilter = { organizationId };
+		} else if (exactScope) {
+			organizationFilter = { organizationId: IsNull() };
+		}
+
 		try {
 			return await this.integrationTenantService.findOneByOptions({
 				where: {
 					tenantId,
-					...(organizationId ? { organizationId } : {}),
+					...organizationFilter,
 					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
 				},
 				relations: ['settings']
