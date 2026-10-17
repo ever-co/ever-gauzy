@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, Subscription, finalize, firstValueFrom, interval } from 'rxjs';
@@ -14,6 +14,7 @@ import { AuthService, ErrorHandlingService } from '@gauzy/ui-core/core';
 	selector: 'ngx-login-magic',
 	templateUrl: './login-magic.component.html',
 	styleUrls: ['./login-magic.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {

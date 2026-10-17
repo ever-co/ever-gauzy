@@ -9,7 +9,7 @@ import {
 	NbDialogModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	RecordViewModule,
 	RecurringExpenseBlockModule,
@@ -28,7 +28,7 @@ import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbDialogModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		SharedModule,
 		RecurringExpensesEmployeeRoutingModule,

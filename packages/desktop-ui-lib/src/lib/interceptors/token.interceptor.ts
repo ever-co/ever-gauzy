@@ -1,5 +1,5 @@
 import { Inject, inject, Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import { HttpRequest, HttpHandler, type HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Store } from '../services';
 import { TokenRequestCloner } from '../auth';

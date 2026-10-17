@@ -16,7 +16,7 @@
 		<div class="list-scroll">
 			@for (task of rows(); track task.id) {
 				<div class="list-row progress-row">
-					<span class="cell-text" [title]="task?.title">{{ task?.title }}</span>
+					<span class="cell-text" [title]="$safeNavigationMigration(task?.title)">{{ task?.title }}</span>
 
 					<div class="cell-progress">
 						<span class="progress-value">{{ sharePercentage(task) }}%</span>

@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { IExpenseCategory } from '@gauzy/contracts';
 
@@ -13,6 +13,7 @@ import { IExpenseCategory } from '@gauzy/contracts';
 			(onChanged)="selectedExpenseCategoryEvent($event)"
 		></ga-expense-category-select>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnChanges {

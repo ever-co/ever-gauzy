@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, firstValueFrom, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
@@ -52,6 +52,7 @@ import { ProjectModuleMutationComponent } from '../../project-module/project-mod
 	selector: 'ga-project-mutation',
 	templateUrl: './project-mutation.component.html',
 	styleUrls: ['./project-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProjectMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

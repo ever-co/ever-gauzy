@@ -1,10 +1,11 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
     selector: 'ga-status-badge',
     templateUrl: './status-badge.component.html',
     styleUrls: ['./status-badge.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class StatusBadgeComponent implements OnInit {

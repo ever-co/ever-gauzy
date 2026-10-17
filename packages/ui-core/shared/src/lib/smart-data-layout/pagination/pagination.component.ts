@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -9,6 +9,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
     selector: 'ga-pagination',
     templateUrl: './pagination.component.html',
     styleUrls: ['./pagination.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PaginationComponent implements OnInit {

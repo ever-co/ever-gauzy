@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnInit, OnDestroy, Input, OnChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, OnDestroy, Input, OnChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
@@ -97,6 +97,7 @@ import { IEmployeeChartLegendItem } from '../employee-chart-legend/employee-char
 		`
     ],
     providers: [CurrencyPipe, CurrencyPositionPipe],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeDoughnutChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {

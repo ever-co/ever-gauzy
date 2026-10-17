@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CurrenciesEnum, IPluginSubscription, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { SubscriptionStatusService } from '../shared';
 import { NbCardModule, NbIconModule, NbBadgeModule } from '@nebular/theme';
@@ -17,6 +17,7 @@ interface SubscriptionNode {
     selector: 'gauzy-plugin-subscription-hierarchy',
     templateUrl: './plugin-subscription-hierarchy.component.html',
     styleUrls: ['./plugin-subscription-hierarchy.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, SubscriptionStatusBadgeComponent, NbIconModule, NbBadgeModule, TitleCasePipe, TranslatePipe]
 })
 export class PluginSubscriptionHierarchyComponent implements OnInit {

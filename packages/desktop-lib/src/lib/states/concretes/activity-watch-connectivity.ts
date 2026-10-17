@@ -15,7 +15,8 @@ export class ActivityWatchConnectivity implements INetworkState {
 				headers: {
 					'Cache-Control': 'no-cache'
 				},
-				timeout: 5000
+				// node-fetch 3 removed `timeout`; an AbortSignal bounds the request the same way.
+				signal: AbortSignal.timeout(5000)
 			});
 
 			if (res.ok) {

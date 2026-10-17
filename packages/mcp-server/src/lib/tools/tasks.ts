@@ -6,6 +6,7 @@ import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { TaskStatusEnum, TaskPriorityEnum, TaskSizeEnum, TaskTypeEnum } from '../input-schemas';
 import { registerTool } from './tool-helper';
+import { applyInTurn, buildListQuery, countByGroup, isWithinDates, readAllPages } from './utils';
 
 const logger = new Logger('TaskTools');
 
@@ -28,6 +29,39 @@ const convertDateFields = (data: TaskDateFields) => ({
 			: new Date(data.startDate)
 		: undefined
 });
+
+type TaskWithMembers = { title: string; status: string; members?: { id: string }[] };
+
+/**
+ * Changes the task's assignees through `PUT /api/tasks/:id`, the task API's only way to assign. That
+ * route requires `title` and `status`, so they are sent back as the task has them.
+ */
+const updateTaskMembers = async (
+	taskId: string,
+	defaultParams: { tenantId?: string; organizationId?: string },
+	change: (memberIds: string[]) => string[]
+) => {
+	const task = await apiClient.get<TaskWithMembers>(`/api/tasks/${taskId}`, { params: { relations: ['members'] } });
+	const memberIds = (task.members ?? []).map(({ id }) => id);
+
+	return apiClient.put(`/api/tasks/${taskId}`, {
+		title: task.title,
+		status: task.status,
+		members: change(memberIds).map((id) => ({ id })),
+		organizationId: defaultParams.organizationId,
+		...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+	});
+};
+
+/** `PUT /api/tasks/:id` requires `title` and `status`: an update that leaves them out sends the task's own. */
+const withRequiredTaskFields = async (id: string, data: Record<string, unknown>) => {
+	if (data.title !== undefined && data.status !== undefined) {
+		return data;
+	}
+
+	const task = await apiClient.get<TaskWithMembers>(`/api/tasks/${id}`);
+	return { ...data, title: data.title ?? task.title, status: data.status ?? task.status };
+};
 
 export const registerTaskTools = (server: McpServer) => {
 	// Get tasks tool
@@ -333,15 +367,13 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					page,
-					limit
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ teams: [teamId], status },
+					{ page, limit, skipIsPage: true }
+				);
 
-				const response = await apiClient.get(`/api/tasks/team/${teamId}`, { params });
+				const response = await apiClient.get('/api/tasks/team', { params });
 
 				return {
 					content: [
@@ -526,7 +558,7 @@ export const registerTaskTools = (server: McpServer) => {
 					})
 				);
 
-				const response = await apiClient.post('/api/tasks/bulk', { tasks: tasksWithDefaults });
+				const response = await apiClient.post('/api/tasks/bulk', { items: tasksWithDefaults });
 
 				return {
 					content: [
@@ -566,7 +598,9 @@ export const registerTaskTools = (server: McpServer) => {
 					data: convertDateFields(update.data)
 				}));
 
-				const response = await apiClient.put('/api/tasks/bulk', { updates: processedUpdates });
+				const response = await applyInTurn(processedUpdates, async ({ id, data }) =>
+					apiClient.put(`/api/tasks/${id}`, await withRequiredTaskFields(id, data))
+				);
 
 				return {
 					content: [
@@ -593,7 +627,7 @@ export const registerTaskTools = (server: McpServer) => {
 		},
 		async ({ ids }) => {
 			try {
-				const response = await apiClient.delete('/api/tasks/bulk', { data: { ids } });
+				await applyInTurn(ids, (id) => apiClient.delete(`/api/tasks/${id}`));
 
 				return {
 					content: [
@@ -636,16 +670,22 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(projectId && { projectId }),
-					...(employeeId && { employeeId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
+				// No statistics route: count the tasks the pagination route lists, created in the date range
+				const where = { projectId, ...(employeeId && { members: { id: employeeId } }) };
+				const tasks = (
+					await readAllPages<Record<string, string>>('/api/tasks/pagination', (page, take) =>
+						buildListQuery(defaultParams, where, { page, limit: take, skipIsPage: true })
+					)
+				).filter(({ createdAt }) => isWithinDates(createdAt, startDate, endDate));
+				const response = {
+					total: tasks.length,
+					...countByGroup(tasks, {
+						byStatus: ({ status }) => status,
+						byPriority: ({ priority }) => priority,
+						bySize: ({ size }) => size,
+						byIssueType: ({ issueType }) => issueType
+					})
 				};
-
-				const response = await apiClient.get('/api/tasks/statistics', { params });
 
 				return {
 					content: [
@@ -682,11 +722,9 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const response = await apiClient.post(`/api/tasks/${taskId}/assign`, {
-					employeeId,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-				});
+				const response = await updateTaskMembers(taskId, defaultParams, (memberIds) => [
+					...new Set([...memberIds, employeeId])
+				]);
 
 				return {
 					content: [
@@ -723,13 +761,9 @@ export const registerTaskTools = (server: McpServer) => {
 					);
 				}
 
-				const response = await apiClient.delete(`/api/tasks/${taskId}/assign`, {
-					data: {
-						employeeId,
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-					}
-				});
+				const response = await updateTaskMembers(taskId, defaultParams, (memberIds) =>
+					memberIds.filter((id) => id !== employeeId)
+				);
 
 				return {
 					content: [

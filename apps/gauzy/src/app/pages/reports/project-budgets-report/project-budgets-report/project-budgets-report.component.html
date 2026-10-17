@@ -17,7 +17,7 @@
 						[hasActivityLevelFilter]="false"
 						[hasSourceFilter]="false"
 						[hasLogTypeFilter]="false"
-						[saveFilters]="(datePickerConfig$ | async)?.isSaveDatePicker"
+						[saveFilters]="$safeNavigationMigration((datePickerConfig$ | async)?.isSaveDatePicker)"
 						(filtersChange)="filtersChange($event)"
 					></ngx-gauzy-filters>
 				</div>
@@ -78,7 +78,7 @@
 												<div class="responsive-table-content day-col project-cell">
 													<ng-container
 														[ngTemplateOutlet]="projectEl"
-														[ngTemplateOutletContext]="{ $implicit: project?.project }"
+														[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(project?.project) }"
 													>
 													</ng-container>
 												</div>
@@ -103,16 +103,16 @@
 													@switch (project.budgetType) {
 														@case (OrganizationProjectBudgetTypeEnum.HOURS) {
 															<span>
-																{{ project?.spent * 3600 | durationFormat }}
+																{{ $safeNavigationMigration(project?.spent) * 3600 | durationFormat }}
 																{{ 'REPORT_PAGE.HOURS' | translate }}
 															</span>
 														}
 														@case (OrganizationProjectBudgetTypeEnum.COST) {
 															<span>
 																{{
-																	project?.spent
-																		| currency: organization?.currency : 'symbol'
-																		| position: organization?.currencyPosition
+																	$safeNavigationMigration(project?.spent)
+																		| currency: $safeNavigationMigration(organization?.currency) : 'symbol'
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}
 															</span>
 														}
@@ -138,8 +138,8 @@
 															<span>
 																{{
 																	project.remainingBudget
-																		| currency: organization?.currency
-																		| position: organization?.currencyPosition
+																		| currency: $safeNavigationMigration(organization?.currency)
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}
 															</span>
 														}
@@ -157,7 +157,7 @@
 													@switch (project.budgetType) {
 														@case (OrganizationProjectBudgetTypeEnum.HOURS) {
 															<span class="currency-span">
-																{{ project?.budget * 3600 | durationFormat }}
+																{{ $safeNavigationMigration(project?.budget) * 3600 | durationFormat }}
 																{{ 'REPORT_PAGE.HOURS' | translate }}
 															</span>
 														}
@@ -165,8 +165,8 @@
 															<span class="currency-span">
 																{{
 																	project.budget
-																		| currency: organization?.currency : 'symbol'
-																		| position: organization?.currencyPosition
+																		| currency: $safeNavigationMigration(organization?.currency) : 'symbol'
+																		| position: $safeNavigationMigration(organization?.currencyPosition)
 																}}
 															</span>
 														}
@@ -177,7 +177,7 @@
 													<div class="progress-wrapper">
 														<ngx-progress-status
 															class="report-progress"
-															[percentage]="project?.spentPercentage"
+															[percentage]="$safeNavigationMigration(project?.spentPercentage)"
 															defaultStatus="success"
 														>
 														</ngx-progress-status>

@@ -44,7 +44,7 @@ import {
  *
  * The mock's issuer is an https name (`MOCK_ISSUER`, `https://mock-platform.test`: Ever Platform's
  * documents always name an https issuer) served on a local address; `EVER_PLATFORM_ISSUER` tells the
- * plugin, which honours it for a loopback address only.
+ * plugin, which honours it for a local or private address only.
  *
  * Without `EVER_CONNECT_MOCK_PLATFORM_URL` the suite is skipped, unless
  * `EVER_CONNECT_MOCK_PLATFORM_REQUIRED=true` (CI), where a missing mock fails it.
@@ -351,7 +351,7 @@ suite('Ever Platform connection against the mock platform', () => {
 		);
 		expect(link.status).toBe(200);
 		expect(link.body.url).toMatch(/^https:\/\/app\.ever\.co\/connect\/consent\?/);
-		expect(new URL(link.body.url).searchParams.get('return')).toBe('http://localhost:4200/');
+		expect(new URL(link.body.url).searchParams.get('return')).toBe('http://localhost:4200/#/pages/integrations/ever-connect');
 		expect(
 			(
 				await call(

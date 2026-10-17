@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
-import { ID, IDateRangePicker, IIncome, IPagination } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IDateRangePicker, IIncome, IPagination } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { LIKE_OPERATOR } from '../core/util';
 import { Income } from './income.entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Income)
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(

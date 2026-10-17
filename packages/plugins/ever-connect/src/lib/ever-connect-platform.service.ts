@@ -102,8 +102,8 @@ export class EverConnectPlatformService {
 			registryInstanceId: () => this.registryId,
 			fetch: this.fetchImpl,
 			...(this.config.issuer ? { issuer: this.config.issuer } : {}),
-			// Test root keys only for a platform on a loopback address.
-			env: this.config.loopback ? this.env : withoutTestKeys(this.env),
+			// Test root keys only for a platform on a local or private address (the contract's list).
+			env: this.config.localPlatform ? this.env : withoutTestKeys(this.env),
 			onWarning: (message) => this.logger.warn(message)
 		});
 		this.clientKid = signer.kid;
@@ -187,7 +187,7 @@ export class EverConnectPlatformService {
 	}
 }
 
-/** The environment without the test root keys file (honoured for a loopback platform only). */
+/** The environment without the test root keys file (honoured for a local platform only). */
 function withoutTestKeys(env: Record<string, string | undefined>): Record<string, string | undefined> {
 	const copy = { ...env };
 	delete copy['EVER_PLATFORM_ROOT_KEYS_FILE'];

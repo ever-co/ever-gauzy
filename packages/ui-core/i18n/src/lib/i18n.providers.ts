@@ -8,7 +8,7 @@ import { provideTranslateHttpLoader, HttpLoaderOptions, DEFAULT_HTTP_LOADER_OPTI
  * Uses ngx-translate v17 naming conventions:
  * - `lang` — the initial language to activate on startup
  * - `fallbackLang` — the language used when a translation key is missing
- * - `extend` — whether child services inherit and extend parent translations
+ * - `extend` — deprecated, ignored since ngx-translate 18
  *
  * **Important:** `lang` and `fallbackLang` are intentionally NOT set by default.
  * Setting them in the provider config causes `TranslateService` to eagerly load
@@ -26,7 +26,10 @@ export interface I18nProviderOptions {
 	lang?: string;
 	/** The fallback language when a translation is not found. Maps to ngx-translate v17 `fallbackLang`. */
 	fallbackLang?: string;
-	/** Whether child translate services should extend parent translations. Default: false. */
+	/**
+	 * @deprecated Ignored. ngx-translate 18 removed the option: a child translate service always extends its
+	 * parent's translations (and the apps use the root service only).
+	 */
 	extend?: boolean;
 	/** HTTP loader options for translation files. */
 	loader?: HttpLoaderOptions;
@@ -93,7 +96,6 @@ export function provideI18n(options?: I18nProviderOptions): EnvironmentProviders
 	// Build the translate service config, only including lang/fallbackLang
 	// when explicitly provided to avoid eager translation loading (NG0200).
 	const translateConfig: RootTranslateServiceConfig = {
-		extend: config.extend,
 		loader: config.customLoader ?? provideTranslateHttpLoader(config.loader)
 	};
 

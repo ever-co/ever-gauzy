@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
@@ -13,6 +13,7 @@ import { BaseCandidateSelectorComponent } from '../base-candidate-selector.compo
     selector: 'ga-candidate-select',
     templateUrl: './candidate-select.component.html',
     styleUrls: ['../base-candidate-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateSelectComponent extends BaseCandidateSelectorComponent implements OnInit {

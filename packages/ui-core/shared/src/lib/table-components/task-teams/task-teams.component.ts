@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Grid cell renderer for the teams on a record. Accepts either team objects or
@@ -8,6 +8,7 @@ import { Component, Input } from '@angular/core';
 	selector: 'ngx-task-teams',
 	templateUrl: './task-teams.component.html',
 	styleUrls: ['./task-teams.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TaskTeamsComponent {

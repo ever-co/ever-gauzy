@@ -6,7 +6,8 @@ import {
 	forwardRef,
 	Input,
 	OnInit,
-	Output
+	Output,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { filter, Observable } from 'rxjs';
@@ -31,6 +32,7 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CurrencyComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {

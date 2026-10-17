@@ -16,28 +16,34 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 	 * @param _accessToken - The access token obtained from the OAuth2 provider.
 	 * @param _refreshToken - The refresh token obtained from the OAuth2 provider.
 	 * @param profile - The user's profile information obtained from the OAuth2 provider.
-	 * @param done - Passport callback function to indicate success or failure.
+	 *
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
+	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
+	 * method never calls `done` itself (doing both reported every sign-in twice: a success, then a failure).
+	 *
+	 * @returns The user object built from the profile.
 	 */
-	async validate(
-		_request: Request,
-		_accessToken: string,
-		_refreshToken: string,
-		profile: Profile,
-		done: (error: any, user: any, info?: any) => void
-	) {
+	async validate(_request: Request, _accessToken: string, _refreshToken: string, profile: Profile) {
 		try {
 			// Extract relevant information from the user's profile
 			const { id: providerId, provider, emails, displayName, username, photos } = profile;
 
-			// Extract first name and last name from the display name
-			const [firstName, lastName] = displayName.split(' ');
+			// Extract first name and last name from the display name (null when the GitHub account has no name)
+			const [firstName, lastName] = (displayName ?? '').split(' ');
 
 			// Extract the user's profile picture
 			const [photo] = photos;
 
+			// With allRawEmails, each address keeps GitHub's own primary and verified flags. Only the primary address
+			// is offered, as the token sign-in (verifyGithubToken) accepts only that one, and it signs in only when
+			// GitHub reports it verified. A secondary address can stay verified on GitHub long after its owner lost it.
+			const githubEmails: Array<{ value: string; primary?: boolean; verified?: boolean }> = emails ?? [];
+
 			// Construct user object
 			const user = {
-				emails,
+				emails: githubEmails
+					.filter(({ primary }) => primary === true)
+					.map(({ value, verified }) => ({ value, verified: verified === true })),
 				firstName,
 				lastName,
 				username,
@@ -46,12 +52,12 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 				provider
 			};
 
-			// Pass the user object to the callback to indicate successful authentication
-			done(null, user);
+			// The returned user is what passport authenticates
+			return user;
 		} catch (error) {
-			// Pass the error to the callback to indicate authentication failure
+			// The thrown error is what passport reports as the authentication failure
 			console.error('Error during Github OAuth validation:', error);
-			done(error, false);
+			throw error;
 		}
 	}
 }
@@ -95,6 +101,8 @@ export const parseGithubConfig = (configService: ConfigService): StrategyOptions
 		// Specify the scope for GitHub OAuth (read user data and user email).
 		scope: ['read:user', 'user:email'],
 		// Retrieve the GitHub user agent from the configuration.
-		userAgent: userAgent
+		userAgent: userAgent,
+		// Keep GitHub's primary and verified flags on every email, so sign-in can refuse an unverified primary address.
+		allRawEmails: true
 	};
 };

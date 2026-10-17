@@ -39,7 +39,7 @@
       } @else {
         <ga-card-grid
           [loading]="loading"
-          [totalItems]="pagination?.totalItems"
+          [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
           [settings]="settingsSmartTable"
           [source]="merchants"
           (onSelectedItem)="selectStore($event)"
@@ -49,7 +49,7 @@
       <ng-template #gridLayout>
         <ga-card-grid
           [loading]="loading"
-          [totalItems]="pagination?.totalItems"
+          [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
           [settings]="settingsSmartTable"
           [source]="merchants"
           (onSelectedItem)="selectStore($event)"
@@ -125,8 +125,9 @@
      so the record renderer is built fresh for each merchant that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedMerchant"
+  [fullViewLink]="viewedMerchant ? '/pages/organization/inventory/merchants/view/' + viewedMerchant.id : null"
   heading="INVENTORY_PAGE.MERCHANTS"
-  [subtitle]="viewedMerchant?.name"
+  [subtitle]="$safeNavigationMigration(viewedMerchant?.name)"
   (closed)="closeView()"
   >
   @if (viewedMerchant) {

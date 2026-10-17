@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { TableComponentsModule } from '../../table-components/table-components.module';
 import { DailyGridComponent } from './daily-grid.component';
@@ -28,7 +28,7 @@ import { NoDataMessageModule } from '../../smart-data-layout/no-data-message/no-
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		ProjectColumnViewModule,
 		TableComponentsModule,

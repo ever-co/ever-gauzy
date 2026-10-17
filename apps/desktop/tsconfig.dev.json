@@ -4,6 +4,7 @@
         "outDir": "../..",
         "sourceMap": true,
         "declaration": false,
+        "types": ["node"],
         "moduleResolution": "node",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,

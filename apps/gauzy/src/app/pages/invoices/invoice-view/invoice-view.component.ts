@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,6 +16,7 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
     selector: 'ga-invoice-view',
     templateUrl: './invoice-view.component.html',
     styleUrls: ['./invoice-view.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceViewComponent extends TranslationBaseComponent implements OnInit {

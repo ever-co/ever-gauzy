@@ -1,5 +1,5 @@
 @if (rowData?.taskStatus) {
-  <gauzy-task-badge-view [taskBadge]="rowData?.taskStatus"></gauzy-task-badge-view>
+  <gauzy-task-badge-view [taskBadge]="$safeNavigationMigration(rowData?.taskStatus)"></gauzy-task-badge-view>
 } @else {
   <nb-badge
     [status]="status"

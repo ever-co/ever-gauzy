@@ -1,0 +1,292 @@
+# The tenant setting's object types.
+#
+# One row is one configurable knob, addressed by scope, instead of a column per option on the tenant,
+# the organization and the channel. The **scope members are the whole point of this type**, so each is
+# stated rather than left to be inferred from a null:
+#
+# - `tenantId` — the tenant the row belongs to. It is stamped from the credential by both delivered
+#   write paths and is never stated by a caller, so a row cannot be written into another tenant.
+# - `organizationId` — `null` means the row is **tenant-wide**, which is what every row created before
+#   the column existed is, and what a caller that states no organization gets. Set, it is that one
+#   organization's row. This is the difference between "every organization of this tenant" and "this
+#   organization", and it cannot be read off anything else on the row.
+# - `channelId` — set exactly when `scope` is `CHANNEL`, and null otherwise. It is the most specific
+#   scope there is: one channel of one organization.
+# - `scope` — the scope the row is *addressed* at. A reader that layered the three scopes and the
+#   compiled default is the reason a missing row is never an error; this column says which layer the
+#   row was written for.
+#
+# The value has two columns and both are carried, because which one holds the answer is a property of
+# the row rather than of the read: `value` is the scalar form every delivered write stores, and
+# `valueJson` is the structured form — an object, an array, a number or a boolean — that the row type
+# has carried since settings became structured. `valueJson` wins where both are present, and a client
+# that knows only the scalar form observes exactly what it always did.
+#
+# **Two writes reach this row and they are not the same write.** The settings *document* writes — the
+# delivered `POST /tenant-setting` and its dynamic sibling — name keys and store the scalar value of
+# each, which is why their input is a list of keys and scalar values. The *row* edit — the CRUD base's
+# own `PUT /tenant-setting/:id`, mounted without a validation pipe — is a partial body that reaches
+# every writable column, and its input states them. A member that no delivered route writes is
+# therefore offered nowhere: this surface mirrors routes rather than inventing a third write path.
+
+"""
+One configurable knob, addressed by scope.
+"""
+type TenantSetting {
+	id: ID!
+	"""
+	The key. The column is named `name` and it stays named `name`: renaming a NOT NULL core column is
+	not an additive change, so the delivered uniqueness rules name it, and so does this type.
+	"""
+	name: String!
+	"""
+	The structured value: an object, an array, a number or a boolean. A document is carried as `JSON`
+	and never as a string of JSON, so a client reads it as the document it is.
+	"""
+	valueJson: JSON
+	"The scalar value, on a row written by any delivered route."
+	value: String
+	"How the stored value must be read. Validated against the value on write."
+	valueType: String!
+	"The value is sensitive: masked in the settings document and excluded from the settings dump."
+	isEncrypted: Boolean!
+	"Admin-facing explanation of the key."
+	description: String
+	"The tenant-wide scope: null means this row is the answer for every organization of the tenant."
+	organizationId: ID
+	"The channel scope: set exactly when `scope` is `CHANNEL`."
+	channelId: ID
+	"""
+	The scope the row is addressed at: `TENANT` for every organization of the tenant, `ORGANIZATION`
+	for one of them, `CHANNEL` for one channel of one of them. The resolution layers them most specific
+	first, so the most specific row that exists is the answer.
+	"""
+	scope: TenantSettingScope!
+	"The tenant the row belongs to."
+	tenantId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are inherited
+	delivered routes and this column is the whole of what they write, so without it a caller could not
+	tell a live row from a withdrawn one on the answer to the write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The scope a setting row is addressed at.
+"""
+enum TenantSettingScope {
+	TENANT
+	ORGANIZATION
+	CHANNEL
+}
+
+"""
+Comparison on the scope.
+"""
+input TenantSettingScopeFilter {
+	eq: TenantSettingScope
+	ne: TenantSettingScope
+	in: [TenantSettingScope!]
+	nin: [TenantSettingScope!]
+	isNull: Boolean
+}
+
+"""
+The boundary of one page of settings.
+"""
+type TenantSettingEdge {
+	node: TenantSetting!
+	cursor: String!
+}
+
+"""
+One page of settings, with the total the filters select and the boundary cursors.
+"""
+type TenantSettingConnection {
+	nodes: [TenantSetting!]!
+	edges: [TenantSettingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a settings list may be sorted by.
+"""
+enum TenantSettingSortField {
+	createdAt
+	updatedAt
+	name
+	scope
+	isEncrypted
+}
+
+"""
+The order the settings are returned in. At most three keys are accepted.
+"""
+input TenantSettingSort {
+	field: TenantSettingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a settings list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+The three scope columns are filterable, and `organizationId: { isNull: true }` is how a caller reads
+the tenant-wide rows alone — the delivered global route's selection, stated as the filter it is.
+"""
+input TenantSettingFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	valueJson: JSONFilter
+	valueType: StringFilter
+	isEncrypted: BooleanFilter
+	description: StringFilter
+	organizationId: IDFilter
+	channelId: IDFilter
+	scope: TenantSettingScopeFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TenantSettingFilter!]
+	or: [TenantSettingFilter!]
+	not: TenantSettingFilter
+}
+
+"""
+One key and the value to store under it.
+
+The delivered dynamic route accepts any key-value pairs, and a GraphQL input is a closed shape — a
+map cannot be stated as one. A list of pairs is what a map *is* once it has to be written out, so the
+write takes the pairs and the resolver folds them into the document the service reads. The scalar
+column is what every delivered write stores, which is why the value member is a string and not a
+document: offering a structured member here would promise a column no delivered route writes.
+"""
+input TenantSettingValueInput {
+	"The setting key, as it is stored in the `name` column."
+	name: String!
+	"The value to store for the key."
+	value: String!
+}
+
+"""
+What a caller states when it saves the tenant's settings document.
+
+The members are the delivered body's own: the file storage provider this tenant uses, and the
+credentials of each provider the platform can be configured with. They are all nullable here although
+the delivered DTO validates the chosen provider's members, because the validation the route performs
+is conditional on `fileStorageProvider` — a caller that states one provider's credentials and no
+provider name is a body the route accepts, and a schema that refused it would refuse a caller REST
+serves.
+"""
+input UpdateTenantSettingInput {
+	"The file storage provider this tenant's files are written to."
+	fileStorageProvider: String
+	"Wasabi credentials and bucket, read when the provider is Wasabi."
+	wasabi_aws_access_key_id: String
+	wasabi_aws_secret_access_key: String
+	wasabi_aws_bucket: String
+	wasabi_aws_default_region: String
+	wasabi_aws_service_url: String
+	wasabi_aws_force_path_style: Boolean
+	"DigitalOcean Spaces credentials and bucket, read when the provider is DigitalOcean."
+	digitalocean_access_key_id: String
+	digitalocean_secret_access_key: String
+	digitalocean_s3_bucket: String
+	digitalocean_service_url: String
+	digitalocean_cdn_url: String
+	digitalocean_default_region: String
+	digitalocean_s3_force_path_style: Boolean
+	"AWS S3 credentials and bucket, read when the provider is S3."
+	aws_access_key_id: String
+	aws_secret_access_key: String
+	aws_default_region: String
+	aws_bucket: String
+	aws_force_path_style: Boolean
+	"Cloudinary credentials, read when the provider is Cloudinary."
+	cloudinary_cloud_name: String
+	cloudinary_api_key: String
+	cloudinary_api_secret: String
+	cloudinary_api_secure: String
+}
+
+"""
+What a caller states when it saves settings it names itself.
+
+The delivered dynamic route accepts any pairs at all — the monitoring keys and the UI preference
+travel through this door — so the input is a list of pairs rather than the closed member list above.
+"""
+input UpdateDynamicTenantSettingInput {
+	"The settings to save, one member per key."
+	settings: [TenantSettingValueInput!]!
+}
+
+"""
+What a caller states when it edits one settings row.
+
+The delivered edit is the CRUD base's own — a partial body with no validation pipe — so it can write
+every writable column of the row, and this input states them. `id` is required because the delivered
+route takes the identifier from the path; stating it in the body as well is what keeps the two
+readings of one identifier from disagreeing.
+"""
+input UpdateTenantSettingRowInput {
+	id: ID!
+	name: String
+	value: String
+	valueJson: JSON
+	valueType: String
+	isEncrypted: Boolean
+	description: String
+	"The organization the row belongs to. Null makes the row tenant-wide."
+	organizationId: ID
+	"The channel the row is scoped to; state it exactly when `scope` is `CHANNEL`."
+	channelId: ID
+	scope: TenantSettingScope
+}
+
+"""
+What a caller states when it asks the platform to verify a Wasabi configuration.
+
+Every member is nullable, and that is the delivered route's own shape rather than a relaxation: the
+DTO it binds validates each member only when a `fileStorageProvider` member it does not itself declare
+equals Wasabi, so nothing in the body is required there either. The service is what refuses a
+configuration missing the two credentials, and its refusal is what a caller reads from this field too.
+"""
+input WasabiFileStorageConfigInput {
+	wasabi_aws_access_key_id: String
+	wasabi_aws_secret_access_key: String
+	wasabi_aws_bucket: String
+	wasabi_aws_default_region: String
+	wasabi_aws_service_url: String
+	wasabi_aws_force_path_style: Boolean
+}
+
+"""
+The UI flavour this tenant's users are served.
+
+One member, because that is the whole of what the preference is today: which of the two flavours of a
+page that ships in both is rendered. It is a plain tenant setting — no secret, no masking — and it
+surfaces in the settings document like any other row.
+"""
+type TenantUiPreferences {
+	"""
+	The preferred flavour. Carried as its value rather than declared as a schema enum: the vocabulary
+	is the platform contract's own `PreferredUiEnum`, whose wire values are lowercase, and a second
+	domain that reads the same preference would then collide with this file rather than reuse it.
+	"""
+	preferredUi: String!
+}
+
+"""
+What a caller states when it changes the tenant's UI flavour.
+"""
+input UpdateTenantUiPreferencesInput {
+	"The flavour to serve. Omit to leave the preference as it is."
+	preferredUi: String
+}

@@ -9,7 +9,7 @@ import {
 	NbDialogModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EventTypeService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -40,7 +40,7 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		UserFormsModule,
 		CardGridModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule
 	],
 	declarations: [EventTypeComponent],

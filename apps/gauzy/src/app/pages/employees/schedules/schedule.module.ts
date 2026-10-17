@@ -4,7 +4,7 @@ import { ScheduleRoutingModule } from './schedule-routing.module';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { LayoutComponent } from './layout/layout.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AvailabilitySlotsService } from '@gauzy/ui-core/core';
 
 @NgModule({
@@ -16,7 +16,7 @@ import { AvailabilitySlotsService } from '@gauzy/ui-core/core';
 		SharedModule,
 		NbRouteTabsetModule,
 		NbCardModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	providers: [AvailabilitySlotsService]
 })

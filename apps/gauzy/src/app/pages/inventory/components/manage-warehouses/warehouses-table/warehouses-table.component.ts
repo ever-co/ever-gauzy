@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
@@ -24,6 +24,7 @@ import { DescriptionComponent } from '../../inventory-table-components/descripti
     selector: 'ga-warehouses',
     templateUrl: './warehouses-table.component.html',
     styleUrls: ['./warehouses-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class WarehousesTableComponent

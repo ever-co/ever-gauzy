@@ -45,3 +45,4 @@ export * from './plugin-tenant.service';
 export * from './plugin-user-assignment.service';
 export * from './plugin-version.service';
 export * from './plugin.service';
+export * from './registry-crud.service';

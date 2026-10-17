@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IGoalTimeFrame, IOrganization, TimeFrameStatusEnum } from '@gauzy/contracts';
@@ -25,6 +25,7 @@ import { GoalSettingsService } from '@gauzy/ui-core/core';
     selector: 'ga-edit-time-frame',
     templateUrl: './edit-time-frame.component.html',
     styleUrls: ['./edit-time-frame.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditTimeFrameComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -22,6 +22,7 @@ import { InventoryStore, ProductService, ProductVariantService, Store, ToastrSer
 	selector: 'ngx-product-form',
 	templateUrl: './product-form.component.html',
 	styleUrls: ['./product-form.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProductFormComponent extends TranslationBaseComponent implements OnInit {

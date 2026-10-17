@@ -1,0 +1,224 @@
+# The employee notification's object type.
+#
+# A notification is one in-app message addressed to one employee: `receiverEmployeeId` names who is to
+# read it, `sentByEmployeeId` names who sent it, and `entity`/`entityId` name the record it is about,
+# so an inbox can open the thing the notification is talking about without a second lookup table.
+#
+# `type` is carried as its value rather than declared as a schema enum, and the reason is the column's.
+# The entity stores the `EmployeeNotificationTypeEnum` value through a transformer — the store keeps the
+# ordinal, the column reads back as the value — so what a caller receives here is the vocabulary's own
+# text (`Payment`, `Assignment`, …). This file does not re-declare that enum: the vocabulary belongs to
+# the model the platform ships, and a second declaration here could diverge from the column's the moment
+# either one gained a member. A client branches on the same strings over both protocols.
+#
+# `entity` is text for the same reason: it carries the platform's own entity-type vocabulary, which types
+# the column of every entity-linked row in the schema rather than being this domain's to declare.
+#
+# **`sentByEmployee` and `receiverEmployee` are not members, and the identifiers beside them are.** The
+# delivered list read asks the service for its rows without naming `relations`, so the two relations are
+# never joined on the rows this surface answers; a member for either would be absent on every row, which
+# is worse than no member. What always travels is the foreign key, and the employee behind it is read
+# from the employee surface by that identifier.
+
+"""
+One in-app notification addressed to one employee.
+"""
+type EmployeeNotification {
+	id: ID!
+	"The notification's heading, as the sender wrote it."
+	title: String
+	"The notification's body, as the sender wrote it."
+	message: String
+	"""
+	The kind of notification, as the vocabulary's own value: `Payment`, `Assignment`, `Invitation`,
+	`Mention`, `Comment`, `Message` or `Broadcast`. The value is the column's own, which is why it is
+	carried as text rather than as an enum declared here.
+	"""
+	type: String
+	"Whether the receiver has read it."
+	isRead: Boolean
+	"When the receiver read it, or null while it is unread."
+	readAt: DateTime
+	"""
+	When the notification stops being held back — the snooze column. A time in the past means it is not
+	being held at all.
+	"""
+	onHoldUntil: DateTime
+	"The employee who sent it. The relation is not joined; the sender is read from the employee surface."
+	sentByEmployeeId: ID
+	"The employee who is to read it. The relation is not joined; the receiver is read from the employee surface."
+	receiverEmployeeId: ID
+	"The kind of record the notification is about."
+	entity: String
+	"The record the notification is about, by identifier."
+	entityId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"When the notification was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the notification was withdrawn, or null while it is live. Withdrawing and restoring are
+	delivered routes — the two removals this resource serves — and this column is the whole of what they
+	write, so without it a caller could not tell a live row from a withdrawn one on the answer to the
+	write that withdrew it.
+	"""
+	deletedAt: DateTime
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of notifications.
+"""
+type EmployeeNotificationEdge {
+	node: EmployeeNotification!
+	cursor: String!
+}
+
+"""
+One page of notifications, with the total the filters select and the boundary cursors.
+"""
+type EmployeeNotificationConnection {
+	nodes: [EmployeeNotification!]!
+	edges: [EmployeeNotificationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a notification list may be sorted by.
+"""
+enum EmployeeNotificationSortField {
+	createdAt
+	updatedAt
+	readAt
+	onHoldUntil
+	isRead
+	title
+	type
+}
+
+"""
+The order the notifications are returned in. At most three keys are accepted.
+"""
+input EmployeeNotificationSort {
+	field: EmployeeNotificationSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a notification list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`type` is a text filter over the vocabulary's own value, for the reason the object type states: the
+column reads back as that value, so a caller narrows an inbox to `Assignment` by naming it, exactly as
+it would over the delivered query string.
+"""
+input EmployeeNotificationFilter {
+	id: IDFilter
+	title: StringFilter
+	message: StringFilter
+	type: StringFilter
+	isRead: BooleanFilter
+	readAt: DateTimeFilter
+	onHoldUntil: DateTimeFilter
+	sentByEmployeeId: IDFilter
+	receiverEmployeeId: IDFilter
+	entity: StringFilter
+	entityId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeNotificationFilter!]
+	or: [EmployeeNotificationFilter!]
+	not: EmployeeNotificationFilter
+}
+
+"""
+What a caller states when it files a notification.
+
+There is no member for the tenant: the delivered create stamps the caller's own tenant from the
+credential and overwrites whatever a body states, so an argument here would be one that is accepted and
+then ignored. The organization is a member, because the delivered create reads it — it is half of the key
+the receiver's notification settings are looked up under, and it decides whether the notification is
+wanted at all.
+
+**The read state is not a member either.** `isRead` and `readAt` are set by the platform when a
+notification is read, never by the caller filing one: the delivered write takes the payload minus those
+two columns, and a body that states them would be accepted and dropped. The delivered input type states
+the same omission.
+"""
+input CreateEmployeeNotificationInput {
+	"The notification's heading. A notification with none is one the platform generated without a title."
+	title: String
+	"The notification's body."
+	message: String
+	"The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message` or `Broadcast`."
+	type: String
+	"When the notification should stop being held back, when the sender wants it snoozed."
+	onHoldUntil: DateTime
+	"The employee sending it. Omitted for a notification the platform itself raises."
+	sentByEmployeeId: ID
+	"The employee who is to read it."
+	receiverEmployeeId: ID
+	"The kind of record the notification is about."
+	entity: String!
+	"The record the notification is about, by identifier."
+	entityId: ID!
+	"The organization the notification belongs to. The receiver's settings are looked up under it."
+	organizationId: ID!
+	"The tenant to file it under. The delivered create overwrites this with the caller's own tenant."
+	tenantId: ID
+}
+
+"""
+What a caller states when it edits a notification that exists.
+
+**The sender and the receiver are not members.** The delivered create fixes both when the notification is
+filed, and the delivered update writes columns of the row rather than re-addressing it: a notification
+that could be re-pointed at another employee would be a different notification wearing the same
+identifier, and the two relations being immutable after creation is the delivered input type's own
+statement.
+
+**A member that is absent is left as it is.** The delivered update is a partial column write — it reads
+the row to prove it is the caller's and then updates the columns the caller stated — so an inbox client
+can set the read state without restating the title, the message or the record the notification is about.
+The two members the row is keyed by and the organization are the exception: they are stated because the
+delivered input type requires them, and a caller sends the values the notification already carries.
+"""
+input UpdateEmployeeNotificationInput {
+	id: ID!
+	title: String
+	message: String
+	type: String
+	"The read state, which this write does set: an inbox marks one notification read through it."
+	isRead: Boolean
+	"When it was read. The platform sets both this and `isRead` together."
+	readAt: DateTime
+	onHoldUntil: DateTime
+	entity: String!
+	entityId: ID!
+	organizationId: ID!
+	tenantId: ID
+}
+
+"""
+What the mark-all write answers.
+
+Both members are the delivered answer's own, and neither is a row: `success` says whether the write was
+performed — a caller with no unread notifications, or none it could name, is answered a successful no-op
+— and `count` says how many notifications it changed. There is deliberately no node member: the write
+reports what it did rather than answering a row, and a resource projection here would be a second answer
+to a question the inbox already answers.
+"""
+type EmployeeNotificationMarkAllAsReadResult {
+	"Whether the write was performed."
+	success: Boolean!
+	"How many notifications it changed."
+	count: Int!
+}

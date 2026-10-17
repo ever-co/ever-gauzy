@@ -120,7 +120,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.17.0
+          node-version: 26.11.1
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell

@@ -1,9 +1,13 @@
-import { argv } from 'yargs';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import * as fs from 'fs';
 import { isUndefined } from 'underscore';
 import { DownloadContext } from '../context/download-context';
 import { DownloadAssetStrategy } from '../concrete-download-strategy/download-asset-strategy';
 import { DownloadHttpsStrategy } from '../concrete-download-strategy/download-https-strategy';
+
+// yargs 18 has no `argv` singleton: the process arguments are parsed explicitly.
+const argv = yargs(hideBin(process.argv)).parseSync();
 
 export abstract class IconGenerator {
 	private downloadContext: DownloadContext;

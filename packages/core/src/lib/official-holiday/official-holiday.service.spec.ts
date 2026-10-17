@@ -208,7 +208,13 @@ describe('OfficialHolidayService by-id organization scope', () => {
 
 		// The membership check is an unlocked read and the base class otherwise writes by raw id, so the
 		// organization it was decided on has to reach the UPDATE's own WHERE.
-		expect(repository.update.mock.calls[0][0]).toEqual({ id: HOLIDAY_ID, organizationId: ORGANIZATION_ID });
+		// The tenant-aware base also pins the caller's tenant onto the UPDATE's WHERE on this branch, so the
+		// statement is predicated on the tenant as well as on the organization the membership check decided.
+		expect(repository.update.mock.calls[0][0]).toEqual({
+			id: HOLIDAY_ID,
+			organizationId: ORGANIZATION_ID,
+			tenantId: TENANT_ID
+		});
 		expect(repository.manager.count).toHaveBeenCalledTimes(1);
 	});
 

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -20,6 +20,7 @@ export interface SelectAssetSettings {
     selector: 'ngx-select-asset',
     templateUrl: './select-asset.component.html',
     styleUrls: ['./select-asset.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SelectAssetComponent extends TranslationBaseComponent implements OnInit {

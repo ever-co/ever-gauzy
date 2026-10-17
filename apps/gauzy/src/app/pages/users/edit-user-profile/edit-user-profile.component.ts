@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { filter, firstValueFrom, tap } from 'rxjs';
@@ -14,6 +14,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ngx-edit-user-profile',
     templateUrl: './edit-user-profile.component.html',
     styleUrls: ['./edit-user-profile.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditUserProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

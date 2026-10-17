@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { NbButtonModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EverConnectIntegration } from '../../services/ever-connect.service';
 
 /** The operator's decision on one installation-wide integration. */
@@ -17,7 +17,7 @@ export interface ApprovalDecision {
 @Component({
 	selector: 'ngx-ever-connect-pending-approvals',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbButtonModule, TranslateModule],
+	imports: [NbButtonModule, TranslatePipe],
 	template: `
 		@if (items.length) {
 			<section data-test="pending-approvals">

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import moment from 'moment';
 import { IOrganizationSprint } from '@gauzy/contracts';
@@ -12,6 +12,7 @@ const DEFAULTS = {
 	selector: 'ngx-sprint-dialog',
 	templateUrl: './sprint-dialog.component.html',
 	styleUrls: ['./sprint-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SprintDialogComponent implements OnInit {

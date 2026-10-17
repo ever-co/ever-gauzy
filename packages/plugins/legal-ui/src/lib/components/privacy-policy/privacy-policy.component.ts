@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,6 +16,7 @@ import { LegalService } from '../../providers/legal.service';
 @Component({
 	templateUrl: './privacy-policy.component.html',
 	styleUrls: ['./privacy-policy.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PrivacyPolicyComponent implements OnInit, OnDestroy {
@@ -79,7 +80,7 @@ export class PrivacyPolicyComponent implements OnInit, OnDestroy {
 	 * that cannot fail because of a network problem or a lapsed third-party subscription.
 	 */
 	private loadPolicies(): void {
-		const locale = this.translateService.currentLang;
+		const locale = this.translateService.getCurrentLang();
 
 		this.privacy = this.legalService.getDocument('privacy', locale);
 		this.privacy_policy = this.privacy?.html ?? '';

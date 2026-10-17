@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { isNotEmpty } from '@gauzy/ui-core/common';
 import { saveAs } from 'file-saver';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { ExportAllService, Store } from '@gauzy/ui-core/core';
 	selector: 'ngx-export',
 	templateUrl: './export.component.html',
 	styleUrls: ['./export.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ExportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

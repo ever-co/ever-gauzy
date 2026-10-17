@@ -107,9 +107,13 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 			const tenantSettings = await this.tenantSettingService.getSettings({ where: { tenantId } });
 			settings = { ...globalSettings, ...tenantSettings };
 
-			if (Object.keys(settings).length > 0) {
-				await this.cacheManager.set(cacheKey, settings, 5 * 60 * 1000);
-			}
+			// Cached even when empty. It used to be cached only when something was set, so a tenant with no
+			// settings of its own on an installation with no global ones — the common case — paid these two
+			// queries again on EVERY request it made. Nothing evicts this key when a setting is saved (settings
+			// already apply within the 5-minute TTL), so an empty answer is kept for one minute only: a tenant's
+			// first setting still applies within a minute, and the two queries run at most once a minute.
+			const isEmpty = Object.keys(settings).length === 0;
+			await this.cacheManager.set(cacheKey, settings, isEmpty ? 60 * 1000 : 5 * 60 * 1000);
 		}
 
 		return Object.keys(settings).length > 0 ? settings : null;

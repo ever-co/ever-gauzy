@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -13,6 +13,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ga-invoice-download',
     templateUrl: './invoice-download-mutation.component.html',
     styleUrls: ['./invoice-download-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {

@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ITask } from '@gauzy/contracts';
 
 @Component({
     selector: 'ngx-assigned-to',
     templateUrl: './assigned-to.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AssignedToComponent {

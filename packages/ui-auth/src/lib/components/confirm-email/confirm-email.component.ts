@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpStatusCode } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { IConfirmEmailOutcome } from './confirm-email.resolver';
 @Component({
 	selector: 'ngx-confirm-email',
 	templateUrl: './confirm-email.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ConfirmEmailComponent extends TranslationBaseComponent implements OnInit {

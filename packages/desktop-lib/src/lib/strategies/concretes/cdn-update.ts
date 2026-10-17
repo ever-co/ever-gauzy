@@ -48,10 +48,12 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
 						Accept: 'application/vnd.github+json'
 					},
 					// This lookup now runs before every check; never let a hung connection stall it.
-					timeout: LOOKUP_TIMEOUT_MS
+					// (node-fetch 3 removed `timeout`; an AbortSignal bounds it the same way.)
+					signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS)
 				}
 			);
-			const releases = await response.json();
+			// node-fetch 3 types a JSON body as unknown; it is checked just below.
+			const releases: any = await response.json();
 			// Errors, e.g. the unauthenticated 60 requests/hour rate limit, answer with an object.
 			if (!Array.isArray(releases)) {
 				throw new Error(`GitHub API ${response.status}: ${releases?.message}`);

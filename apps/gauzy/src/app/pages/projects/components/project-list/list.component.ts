@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -53,6 +53,7 @@ import {
 	selector: 'ga-project-list',
 	templateUrl: './list.component.html',
 	styleUrls: ['./list.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {

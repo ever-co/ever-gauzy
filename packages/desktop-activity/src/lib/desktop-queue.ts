@@ -1,7 +1,7 @@
 import * as Queue from 'better-queue';
 import * as path from 'path';
 import { QueueStore } from './queue-store';
-import * as isOnline from 'is-online';
+import isOnline from 'is-online';
 import { IScreenshotQueuePayload, ITimerCallbackPayload, ITimeslotQueuePayload, IQueueUpdatePayload, TQueueName } from './i-queue';
 import { EventEmitter } from 'events';
 
@@ -313,6 +313,18 @@ export class DesktopQueue {
 
 		if (drainPromises.length > 0) {
 			await Promise.all(drainPromises);
+		}
+	}
+
+	public resumeQueue() {
+		this.timerQueue?.resume();
+		this.timeSlotQueue?.resume();
+		this.screenshotQueue?.resume();
+		// While offline, the retry queues stay paused until handleIsOnline sees the network back
+		if (this.online) {
+			this.timerQueueRetry?.resume();
+			this.timeSlotQueueRetry?.resume();
+			this.screenshotQueueRetry?.resume();
 		}
 	}
 

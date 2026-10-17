@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/core';
@@ -6,6 +6,7 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
     selector: 'ga-sign-in-success',
     templateUrl: './sign-in-success.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SignInSuccessComponent {

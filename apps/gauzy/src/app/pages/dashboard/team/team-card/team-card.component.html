@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header class="team-header">
-		<h6 class="team-name">{{'ORGANIZATIONS_PAGE.TEAM_NAME' | translate : {name: team?.name} }}</h6>
+		<h6 class="team-name">{{'ORGANIZATIONS_PAGE.TEAM_NAME' | translate : {name: $safeNavigationMigration(team?.name)} }}</h6>
 	</nb-card-header>
 	<nb-card-body class="team-container">
 		<div class="d-flex align-items-center">
@@ -11,7 +11,7 @@
 		</div>
 		<div class="counter-container">
 			<gauzy-counter-point
-				[total]="team?.statistics?.countTotal"
+				[total]="$safeNavigationMigration(team?.statistics?.countTotal)"
 				[value]="team?.statistics?.countWorking || 0"
 			></gauzy-counter-point>
 		</div>

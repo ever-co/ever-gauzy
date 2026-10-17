@@ -18,7 +18,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationSimRoutes } from './integration-sim.routes';
 import { IntegrationSimLayoutComponent } from './integration-sim.layout.component';
@@ -56,7 +56,7 @@ import { SimEventTriggersComponent } from './components/sim-event-triggers/sim-e
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		IntegrationSimRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

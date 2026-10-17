@@ -12,7 +12,12 @@
 jest.mock('@gauzy/core', () => ({
 	ActivityLogModule: class ActivityLogModule {},
 	DatabaseModule: class DatabaseModule {},
+	EventOutboxDispatchScheduleModule: class EventOutboxDispatchScheduleModule {},
+	EventOutboxMaintenanceModule: class EventOutboxMaintenanceModule {},
+	IdempotencyMaintenanceModule: class IdempotencyMaintenanceModule {},
+	JobExecutionModule: class JobExecutionModule {},
 	MentionModule: class MentionModule {},
+	WebhookMaintenanceModule: class WebhookMaintenanceModule {},
 	TokenModule: { forRoot: jest.fn(() => ({ module: class TokenModule {} })) }
 }));
 
@@ -84,12 +89,28 @@ describe('worker AppModule', () => {
 	 * The consuming side of the split introduced with the API's producer-only root. The API
 	 * registers `{ enabled: false, enableQueueing: true }`; the worker must register BOTH halves,
 	 * or the queue fills up with nothing draining it and the reconcile cron never fires.
+	 *
+	 * **The environment this asserts about is stated here rather than inherited.** Both halves are
+	 * read from `process.env` when `worker.constants.ts` is first evaluated, so a developer whose
+	 * `.env.local` says `WORKER_QUEUE_ENABLED=false` — the ordinary state on a machine with no
+	 * Redis, and this repository ships that line — was failing a test about *wiring* with an answer
+	 * about *deployment*. The module is isolated and re-imported with the values the case is about,
+	 * so the assertion is the same one it always was and no longer depends on whose machine runs it.
 	 */
-	it('registers a BullMQ root with BOTH queueing and the job runner enabled', () => {
-		const [options] = (SchedulerModule.forRoot as jest.Mock).mock.calls.at(-1) ?? [];
+	it('registers a BullMQ root with BOTH queueing and the job runner enabled', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+		process.env.WORKER_SCHEDULER_ENABLED = 'true';
 
-		expect(options.enableQueueing).toBe(true);
-		expect(options.enabled).toBe(true);
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+			const [options] = (SchedulerModule.forRoot as jest.Mock).mock.calls.at(-1) ?? [];
+
+			// A control first: the isolated module is the real one, so the options below are its own.
+			expect(order.some((imported) => imported?.module === PluginModule)).toBe(true);
+			expect(options.enableQueueing).toBe(true);
+			expect(options.enabled).toBe(true);
+		});
 	});
 
 	it('declares the scheduler root BEFORE PluginModule, so plugin queues find a root', () => {
@@ -101,5 +122,34 @@ describe('worker AppModule', () => {
 
 		expect(rootIndex).toBeGreaterThanOrEqual(0);
 		expect(pluginIndex).toBeGreaterThan(rootIndex);
+	});
+
+	/**
+	 * The outbox dispatch pass runs where every event consumer is registered, and that is not here
+	 * (PR #10254 review: "Events skip required consumers").
+	 *
+	 * The registry a pass consults is the one of the process that runs it. This process does not load
+	 * the entitlement or search plugins, so a pass it took published `order.placed` once the consumers
+	 * it did know had settled, and `EntitlementGrantConsumer` never saw the event. The worker fires the
+	 * schedule (the API's scheduler root is `enabled: false`) and the API, which loads every
+	 * consumer-bearing module, runs the pass. The full maintenance module would also register the
+	 * queue's consumer here, which is exactly what must not happen.
+	 */
+	it('fires the outbox dispatch schedule and never hosts the pass that delivers it', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const core = await import('@gauzy/core');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+			// A control first: the queue-gated maintenance modules are present, so an absence below is the
+			// wiring's choice and not a gate that evaluated to "no queue".
+			expect(order).toContain(core.IdempotencyMaintenanceModule);
+			expect(order).toContain(core.WebhookMaintenanceModule);
+
+			expect(order).toContain(core.EventOutboxDispatchScheduleModule);
+			expect(order).not.toContain(core.EventOutboxMaintenanceModule);
+		});
 	});
 });

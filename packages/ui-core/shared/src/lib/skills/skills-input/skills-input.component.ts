@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { NgModel, UntypedFormGroup } from '@angular/forms';
 import { SkillsService } from '@gauzy/ui-core/core';
 
@@ -6,6 +6,7 @@ import { SkillsService } from '@gauzy/ui-core/core';
     selector: 'ngx-skills-input',
     templateUrl: './skills-input.component.html',
     styleUrls: ['./skills-input.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SkillsInputComponent implements OnInit {

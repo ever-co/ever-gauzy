@@ -108,6 +108,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@Get('/')
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ITimeOffRequest>> {
 		const { relations, findInput } = data;
+		// Outside the read's own try / catch, which would turn the refusal into a 400
+		await this.timeOffRequestService.assertOrganizationMember(findInput?.organizationId);
 		return await this.timeOffRequestService.getAllTimeOffRequests(relations, findInput);
 	}
 

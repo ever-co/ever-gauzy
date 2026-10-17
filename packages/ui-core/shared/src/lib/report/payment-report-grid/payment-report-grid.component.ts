@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,6 +19,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 	selector: 'ga-payment-report-grid',
 	templateUrl: './payment-report-grid.component.html',
 	styleUrls: ['./payment-report-grid.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PaymentReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

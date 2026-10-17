@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { InviteStatusEnum } from '@gauzy/contracts';
 
@@ -19,6 +19,7 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 		  }
 		</ng-select>
 		`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InviteStatusFilterComponent extends DefaultFilter {

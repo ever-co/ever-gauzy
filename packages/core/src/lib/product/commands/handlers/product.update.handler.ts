@@ -54,7 +54,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		 */
 
 		const optionsGroupsCreate: IProductOptionGroupTranslatable[] = await Promise.all(
-			optionGroupCreateInputs.map(async (group: IProductOptionGroupTranslatable) => {
+			(optionGroupCreateInputs || []).map(async (group: IProductOptionGroupTranslatable) => {
 				let newGroup = new ProductOptionGroup();
 				newGroup.name = group.name;
 				newGroup.productId = productUpdateRequest.id;
@@ -187,13 +187,14 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		product.productType = <any>productUpdateRequest.type;
 		product.tags = productUpdateRequest.tags;
 
-		const productTranslations = <any>await Promise.all(
-			(productUpdateRequest.translations || []).map((optionTranslation) => {
-				return this.productService.saveProductTranslation(<any>optionTranslation);
-			})
-		);
-
-		product.translations = productTranslations;
+		// An omitted list keeps the existing translations, an explicit empty list still clears them
+		if (productUpdateRequest.translations) {
+			product.translations = <any>await Promise.all(
+				productUpdateRequest.translations.map((optionTranslation) => {
+					return this.productService.saveProductTranslation(<any>optionTranslation);
+				})
+			);
+		}
 
 		const updatedProduct = await this.productService.saveProduct(product as any);
 

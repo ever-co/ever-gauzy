@@ -12,7 +12,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -48,7 +48,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
 		TableComponentsModule

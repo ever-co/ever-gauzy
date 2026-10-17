@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	ICreateEmailInvitesOutput,
@@ -28,6 +28,7 @@ import { FormHelpers } from '../../../forms/helpers';
     selector: 'ga-email-invite-form',
     templateUrl: 'email-invite-form.component.html',
     styleUrls: ['email-invite-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmailInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

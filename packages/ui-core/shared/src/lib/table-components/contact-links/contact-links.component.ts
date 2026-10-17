@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 		      }
 		      @if (value.imageUrl) {
 		        <div class="avatar">
-		          <img [src]="value?.imageUrl" />
+		          <img [src]="$safeNavigationMigration(value?.imageUrl)" />
 		        </div>
 		      }
 		      <div class="names-wrapper">
@@ -25,6 +25,7 @@ import { Router } from '@angular/router';
 		</div>
 		`,
 	styleUrls: ['./contact-links.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ContactLinksComponent {

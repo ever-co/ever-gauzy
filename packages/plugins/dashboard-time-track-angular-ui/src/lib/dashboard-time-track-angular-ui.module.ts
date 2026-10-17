@@ -12,7 +12,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import {
@@ -53,7 +53,7 @@ const STANDALONE_MODULES = [
 		...NB_MODULES,
 		...STANDALONE_MODULES,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 
 		// Feature Modules
 		SharedModule,

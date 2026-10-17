@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,6 +11,7 @@ import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
     selector: 'ga-employee-rates',
     templateUrl: 'employee-rates.component.html',
     styleUrls: ['employee-rates.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeRatesComponent implements OnInit, OnDestroy {

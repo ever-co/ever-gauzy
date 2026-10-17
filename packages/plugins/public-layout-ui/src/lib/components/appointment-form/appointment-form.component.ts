@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -10,6 +10,7 @@ import { EmployeesService } from '@gauzy/ui-core/core';
 @UntilDestroy()
 @Component({
     templateUrl: './appointment-form.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AppointmentFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

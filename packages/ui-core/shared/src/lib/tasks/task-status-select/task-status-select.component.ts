@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject, combineLatest, debounceTime, filter, firstValueFrom, map, Subject, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TaskStatusSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

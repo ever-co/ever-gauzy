@@ -6,3 +6,5 @@ export * from './create-employee.dto';
 export * from './user-input-dto';
 export * from './employee-feature.dto';
 export * from './find-member-input.dto';
+export * from './employee-presence.dto';
+export * from './employee-list-query.dto';

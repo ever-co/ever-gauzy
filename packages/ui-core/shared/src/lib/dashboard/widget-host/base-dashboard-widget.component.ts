@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, OnInit, Signal, inject, signal } from '@angular/core';
+import { DestroyRef, Directive, OnInit, type Signal, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';

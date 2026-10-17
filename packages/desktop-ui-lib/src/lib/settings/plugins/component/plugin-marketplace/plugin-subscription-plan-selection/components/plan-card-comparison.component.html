@@ -104,7 +104,7 @@
   <div class="plan-action">
     <button
       nbButton
-      [disabled]="comparisonInfo?.isDisabled"
+      [disabled]="$safeNavigationMigration(comparisonInfo?.isDisabled)"
       fullWidth
       size="medium"
       [attr.status]="comparisonInfo?.buttonVariant || 'basic'"

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -44,6 +44,7 @@ import { CandidateStatusComponent, CandidateSourceComponent } from './table-comp
 @Component({
 	templateUrl: './candidates.component.html',
 	styleUrls: ['./candidates.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CandidatesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

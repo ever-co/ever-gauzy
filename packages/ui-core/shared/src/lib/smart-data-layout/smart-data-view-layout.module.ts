@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule, NbSelectModule, NbToggleModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from '../shared.module';
@@ -25,7 +25,7 @@ const DIRECTIVES = [SmartTableSettlingDirective, SmartTableFilterToggleDirective
 		NbToggleModule,
 		NbIconModule,
 		NbSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		Angular2SmartTableModule,
 		SharedModule,

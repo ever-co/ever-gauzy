@@ -60,6 +60,7 @@ import * as moment from 'moment';
 import { DeepPartial, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
 import { AccessTokenService } from '../access-token/access-token.service';
+import { accessTokenCarriesPermissions } from './access-token-claims';
 import { IAccessTokenMetadata } from '../access-token/type.token';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
@@ -243,7 +244,8 @@ export class AuthService extends SocialAuthService {
 		const cacheKey = `${AuthService.OAUTH_REQUEST_CACHE_PREFIX}${requestId}`;
 		let value: string | null;
 		if (this.redisClient) {
-			value = await this.redisClient.get(cacheKey);
+			// node-redis 6 types a reply as string | Buffer.
+			value = (await this.redisClient.get(cacheKey))?.toString() ?? null;
 		} else {
 			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
 		}
@@ -403,7 +405,7 @@ export class AuthService extends SocialAuthService {
 
 		if (this.redisClient) {
 			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
-			codeState = await this.redisClient.getDel(cacheKey);
+			codeState = (await this.redisClient.getDel(cacheKey))?.toString() ?? null;
 		} else if (this.consumedOAuthCodes.has(payload.jti)) {
 			// Already claimed by an exchange that is still in flight, or by one that completed.
 			codeState = null;
@@ -1788,7 +1790,15 @@ export class AuthService extends SocialAuthService {
 				organizationId: organizationId ?? employee?.organizationId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
-				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null,
+				// The permission list stays out of the token unless an integration asks for it back (see
+				// access-token-claims.ts): requests are authorized against the role's CURRENT permissions, loaded
+				// by JwtStrategy, and the list made a super admin's token 11.5 KB — past nginx's 8 KB header line.
+				...(accessTokenCarriesPermissions()
+					? {
+							permissions:
+								user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
+					  }
+					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
 				...(metadata?.clientId && { clientId: metadata.clientId })

@@ -9,6 +9,25 @@ import { version } from '../../version';
  */
 export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> {
 	return Sentry.init({
+		// Sentry 11 replaced `sendDefaultPii` with `dataCollection`, whose defaults now send cookies, request and
+		// response bodies, user info and more. This is the migration guide's "keep the v10 default" baseline, so the
+		// upgrade collects nothing it did not collect before (and `attachStacktrace`, now true by default, stays off).
+		// https://github.com/getsentry/sentry-javascript/blob/develop/MIGRATION.md
+		dataCollection: {
+			userInfo: false,
+			cookies: false,
+			httpHeaders: {
+				request: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+				response: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] }
+			},
+			httpBodies: [],
+			urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+			genAI: { inputs: false, outputs: false },
+			databaseQueryData: false,
+			queues: false,
+			graphQL: { document: false, variables: false }
+		},
+		attachStacktrace: false,
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
 		debug: !environment.production,

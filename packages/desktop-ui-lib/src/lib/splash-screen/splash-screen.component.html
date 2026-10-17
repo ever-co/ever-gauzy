@@ -6,7 +6,7 @@
                     <div class="row">
                         <div class="col-12 d-flex justify-content-center">
                             <div class="ga-logo">
-                                <img [src]="application?.iconPath" />
+                                <img [src]="$safeNavigationMigration(application?.iconPath)" />
                             </div>
                         </div>
                         <div class="col-12 name-text text-center mt-3 mb-3">
@@ -15,14 +15,14 @@
                                     <div class="col-12 version-text">
 										<button nbButton status="basic">
 											<nb-icon *gauzySpinnerButton="true"></nb-icon>
-											{{'TIMER_TRACKER.VERSION' | translate: {version: application?.version} }}
+											{{'TIMER_TRACKER.VERSION' | translate: {version: $safeNavigationMigration(application?.version)} }}
 										</button>
                                     </div>
                                 </nb-card-body>
                             </nb-card>
                         </div>
                         <div class="col-12 copyright-text text-center mt-2">
-                            {{'TIMER_TRACKER.WAIT_FOR' | translate: { name: application?.name } }}
+                            {{'TIMER_TRACKER.WAIT_FOR' | translate: { name: $safeNavigationMigration(application?.name) } }}
                         </div>
                     </div>
                 </nb-card-body>

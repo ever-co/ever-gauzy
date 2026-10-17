@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, Type, Inject } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Type, Inject, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -9,6 +9,9 @@ import { isNotEmpty, deduplicate } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
+
+// Per-request trace lines: printed at debug level, i.e. only when LOG_LEVEL is debug/verbose (or unset).
+const logger = new Logger('TenantPermissionGuard');
 
 @Injectable()
 export class TenantPermissionGuard extends TenantBaseGuard implements CanActivate {
@@ -26,7 +29,7 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 	 * @returns
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		console.log('TenantPermissionGuard canActivate called');
+		logger.debug('TenantPermissionGuard canActivate called');
 
 		// Check if the route or controller has the PUBLIC decorator
 		const isPublic =
@@ -70,12 +73,12 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 		if (isNotEmpty(permissions)) {
 			const cacheKey = `tenantPermissions_${tenantId}_${roleId}_${permissions.join('_')}`;
 
-			console.log('Checking Tenant Permissions from Cache with key:', cacheKey);
+			logger.debug(`Checking Tenant Permissions from Cache with key: ${cacheKey}`);
 
 			const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
 
 			if (fromCache == null) {
-				console.log('Tenant Permissions NOT loaded from Cache with key:', cacheKey);
+				logger.debug(`Tenant Permissions NOT loaded from Cache with key: ${cacheKey}`);
 
 				// Check if the tenant has the required permissions
 				isAuthorized = await this._rolePermissionService.checkRolePermission(tenantId, roleId, permissions);
@@ -87,7 +90,7 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 				);
 			} else {
 				isAuthorized = fromCache;
-				console.log(`Tenant Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`);
+				logger.debug(`Tenant Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`);
 			}
 		}
 
@@ -99,7 +102,7 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 				)}`
 			);
 		} else {
-			console.log(
+			logger.debug(
 				`Authorized access granted. Tenant ID: ${tenantId}, Role ID: ${roleId}, Permissions Checked: ${permissions.join(
 					', '
 				)}`

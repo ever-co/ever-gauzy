@@ -6,6 +6,8 @@ import { MerchantComponent } from './merchant.component';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
 import { MerchantFormResolver } from './merchant-form/merchant-form.resolver';
+import { RecordViewRoutePageComponent } from '@gauzy/ui-core/shared';
+import { MERCHANT_RECORD_VIEW } from './merchant-record-view';
 
 const routes: Routes = [
 	{
@@ -53,6 +55,15 @@ const routes: Routes = [
 				},
 				resolve: {
 					merchant: MerchantFormResolver
+				}
+			},
+			{
+				// One merchant, full width: where the merchants drawer's "expand to full width" icon leads.
+				path: 'view/:id',
+				component: RecordViewRoutePageComponent,
+				data: {
+					selectors: { organization: false, date: false, employee: false, project: false },
+					recordView: MERCHANT_RECORD_VIEW
 				}
 			}
 		]

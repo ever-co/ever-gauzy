@@ -2,16 +2,16 @@
 	<div class="soundshot-info">
 		@if (soundshot()?.uploadedBy?.user?.imageUrl) {
 		<div class="soundshot-cover">
-			<img [src]="soundshot()?.uploadedBy?.user?.imageUrl" alt="Cover Image" class="cover-image" />
+			<img [src]="$safeNavigationMigration(soundshot()?.uploadedBy?.user?.imageUrl)" alt="Cover Image" class="cover-image" />
 		</div>
 		}
 		<div class="soundshot-details">
 			<div class="soundshot-title">{{ soundshot()?.name }}</div>
 			<div class="soundshot-meta">
 				@if (soundshot()?.duration) {
-				<span>{{ soundshot()?.duration | durationFormat }}s</span>
+				<span>{{ $safeNavigationMigration(soundshot()?.duration) | durationFormat }}s</span>
 				} @if (soundshot()?.size) {
-				<span>&bull; {{ soundshot()?.size | fileSize }}</span>
+				<span>&bull; {{ $safeNavigationMigration(soundshot()?.size) | fileSize }}</span>
 				}
 			</div>
 		</div>
@@ -53,7 +53,7 @@
 	</div>
 	<audio
 		#player
-		[src]="soundshot()?.fullUrl"
+		[src]="$safeNavigationMigration(soundshot()?.fullUrl)"
 		(timeupdate)="onTimeUpdate()"
 		(loadedmetadata)="onLoadedMetadata()"
 		(ended)="onEnded()"

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { debounceTime, filter, tap, catchError, finalize, map } from 'rxjs/operators';
 import { Observable, EMPTY, of, combineLatest } from 'rxjs';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -14,6 +14,7 @@ import { Store, AuthService, ToastrService, WorkspaceResetService } from '@gauzy
 	selector: 'ngx-gauzy-workspaces',
 	templateUrl: './workspaces.component.html',
 	styleUrls: ['./workspaces.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

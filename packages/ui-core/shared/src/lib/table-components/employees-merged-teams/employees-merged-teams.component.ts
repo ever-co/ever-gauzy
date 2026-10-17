@@ -1,10 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IEmployee } from '@gauzy/contracts';
 
 @Component({
     selector: 'ngx-employees-merged-teams',
     templateUrl: './employees-merged-teams.component.html',
     styleUrls: ['./employees-merged-teams.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeesMergedTeamsComponent implements OnInit {

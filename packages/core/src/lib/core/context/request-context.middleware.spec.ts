@@ -186,8 +186,21 @@ describe('RequestContextMiddleware — correlation id propagation', () => {
 			res.end();
 		}
 
-		it('logs the start and the end of an ordinary request', () => {
+		it('prints the lifecycle lines at the log level when API_REQUEST_LIFECYCLE_LOG=true', () => {
 			const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+			const debug = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+			process.env.API_REQUEST_LIFECYCLE_LOG = 'true';
+			try {
+				runRequest('/api/employee');
+			} finally {
+				delete process.env.API_REQUEST_LIFECYCLE_LOG;
+			}
+			expect(log).toHaveBeenCalledTimes(2);
+			expect(debug).not.toHaveBeenCalled();
+		});
+
+		it('logs the start and the end of an ordinary request', () => {
+			const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
 
 			runRequest('/api/employee');
 
@@ -200,7 +213,7 @@ describe('RequestContextMiddleware — correlation id propagation', () => {
 		it.each(['/api/health', '/api/health?full=true', '/api/health/database'])(
 			'does not log the health check %s',
 			(url) => {
-				const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+				const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
 
 				runRequest(url);
 
@@ -210,7 +223,7 @@ describe('RequestContextMiddleware — correlation id propagation', () => {
 
 		// The User-Agent is client-controlled: a probe-like one must not hide an ordinary request.
 		it('still logs an ordinary request that claims to be a Kubernetes probe', () => {
-			const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+			const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
 
 			runRequest('/api/auth/login', { 'user-agent': 'kube-probe/1.33' });
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
@@ -128,6 +128,7 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmptyStateComponent {

@@ -106,3 +106,106 @@
   text-align: left;
   color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 }
+
+// ── Polish, same layout (Export page only) ──────────────────────────────
+// Scoped to `.export-page`: this stylesheet is also `@forward`ed by the Import page, which
+// must not pick these up. Settings scale — 12px body, hairline cards, quieter checkboxes.
+$export-border: var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+
+:host nb-card.export-page {
+  // The card fills the page frame (`.card-scroll`, as Settings > File Storage) and the entity
+  // list takes the rest of it, so the list reaches the bottom of the page. It used a fixed
+  // `calc(100vh - 21rem)`, which left a band of empty page under the card.
+  > nb-card-body.card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: auto;
+  }
+
+  // Header: title, then its instruction beside it at 12px; was a 50px gap below.
+  .header-title-with-back {
+    margin-bottom: 0.75rem;
+  }
+
+  .info-text {
+    gap: 1.5rem;
+  }
+
+  .message {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+
+  // Toolbar: "All entities" and Export on one line; the tray around the button is gone.
+  > nb-card-header .row {
+    align-items: center;
+
+    .mt-3 {
+      margin-top: 0 !important;
+    }
+  }
+
+  .download {
+    padding: 0;
+    background-color: transparent;
+
+    .action {
+      box-shadow: none;
+      text-transform: none;
+    }
+  }
+
+  // Checkbox labels: 12px in the body colour (was 11px, and primary-coloured once checked,
+  // so a page of checked boxes read as a page of links).
+  nb-checkbox ::ng-deep {
+    span.text {
+      font-size: 0.75rem;
+      line-height: 1.125rem;
+      color: var(--gauzy-text-color-1, var(--text-basic-color));
+    }
+
+    span.checked + span.text {
+      color: var(--gauzy-text-color-1, var(--text-basic-color));
+    }
+  }
+
+  // "All entities" leads the list.
+  > nb-card-header nb-checkbox ::ng-deep span.text {
+    font-weight: 600;
+  }
+
+  // One entity per card: hairline, no fill of its own, compact (was ~75px tall).
+  nb-card-body.card-body nb-card {
+    margin-bottom: 0.5rem;
+    border: 0;
+    border-radius: var(--gauzy-radius-sm, 0.5rem);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px $export-border;
+
+    > nb-card-header {
+      padding: 0.5rem 1rem;
+      border-bottom: 0;
+      background-color: transparent;
+    }
+
+    // A group's sub-entities: a grid instead of floated quarter columns.
+    > nb-card-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+      gap: 0.25rem 1rem;
+      padding: 0.625rem 1rem 0.75rem;
+      border-top: 1px solid $export-border;
+      background-color: transparent;
+      // `.card-scroll` gives every nested card body `height: 100%; overflow: hidden`.
+      height: auto;
+      overflow: visible;
+
+      > .float-left {
+        float: none !important;
+        width: auto;
+        max-width: none;
+      }
+    }
+  }
+}

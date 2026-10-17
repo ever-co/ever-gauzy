@@ -1,4 +1,14 @@
-import { AfterViewInit, Component, ElementRef, inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	ElementRef,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseChartDirective } from 'ng2-charts';
@@ -81,7 +91,9 @@ export interface IEmployeeHoursDay {
 			}
 		`
 	],
-	standalone: false
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: true,
+	imports: [BaseChartDirective]
 })
 export class EmployeeHoursChartComponent implements OnInit, AfterViewInit, OnDestroy {
 	/*

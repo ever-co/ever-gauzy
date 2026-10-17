@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthZitadelUiService, EverIdIdentity, EverIdLinkPreview } from '../services/auth-zitadel-ui.service';
 
 /** Error codes the API puts in the URL of this page (never anything personal). */
@@ -19,7 +19,7 @@ const KNOWN_ERRORS = new Set(['email_unverified', 'reauth_required', 'link_faile
 @Component({
 	selector: 'ngx-ever-id-connected-identities',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, FormsModule, NbAlertModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbInputModule, TranslateModule],
+	imports: [DatePipe, FormsModule, NbAlertModule, NbButtonModule, NbCardModule, NbCheckboxModule, NbInputModule, TranslatePipe],
 	template: `
 		<nb-card>
 			<nb-card-header>{{ 'AUTH_ZITADEL.SETTINGS.TITLE' | translate }}</nb-card-header>

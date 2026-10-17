@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChildren } from '@angular/core';
+import { Component, EventEmitter, Input, Output, QueryList, ViewChildren, ChangeDetectionStrategy } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
@@ -21,6 +21,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ga-dashboard-tab-strip',
 	templateUrl: './dashboard-tab-strip.component.html',
 	styleUrls: ['./dashboard-tab-strip.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DashboardTabStripComponent extends TranslationBaseComponent {

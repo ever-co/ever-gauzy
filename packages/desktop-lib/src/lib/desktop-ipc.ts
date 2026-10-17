@@ -27,12 +27,7 @@ import { notifyScreenshot, takeshot } from './desktop-screenshot';
 import { LocalStore } from './desktop-store';
 import TimerHandler from './desktop-timer';
 import { UIError } from './error-handler';
-import {
-	ActivityWatchAfkService,
-	ActivityWatchEventAdapter,
-	ActivityWatchEventManager,
-	ActivityWatchEventTableList
-} from './integrations';
+import { ActivityWatchEventAdapter, ActivityWatchEventManager, ActivityWatchEventTableList } from './integrations';
 import { IDesktopEvent, IOfflineMode, IPowerManager } from './interfaces';
 import {
 	DesktopOfflineModeHandler,
@@ -125,6 +120,24 @@ export function setupAkitaStorageHandler() {
 	return new AkitaStorageHandler(new AkitaStorageEngine());
 }
 
+/** Whether the display listeners below are registered: `ipcMainHandler` may run more than once */
+let displayListenersRegistered = false;
+
+/**
+ * Tells the settings page when a display is added, removed or re-arranged, so the displays it offers for
+ * the screenshot notification stay current while the page is open.
+ */
+function watchDisplays(): void {
+	if (displayListenersRegistered) return;
+	displayListenersRegistered = true;
+	const notify = () =>
+		getAppWindowManager().settingWindow?.webContents?.send?.('setting_page_ipc', { type: 'displays_changed' });
+	// One call per event: `screen.on` is overloaded per event name, so a union of the three names matches no overload.
+	screen.on('display-added', notify);
+	screen.on('display-removed', notify);
+	screen.on('display-metrics-changed', notify);
+}
+
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	log.info('IPC Main Handler');
 
@@ -132,6 +145,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
+	watchDisplays();
 
 	ipcMain.handle('START_SERVER', async (event, arg: DesktopSetupConfig) => {
 		log.info('Handle Start Server');
@@ -276,7 +290,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 				isOffline: getOfflineMode().enabled
 			});
 			await countIntervalQueue(timeTrackerWindow, false);
-			await sequentialSyncQueue(timeTrackerWindow);
+			await sequentialSyncQueue(timeTrackerWindow, knex);
 			await screenshotErrorSync(timeTrackerWindow);
 
 			await latestScreenshots(timeTrackerWindow);
@@ -433,7 +447,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 			if (!isQueueThreadTimerLocked) {
 				console.log('sequentialSyncQueue');
-				await sequentialSyncQueue(timeTrackerWindow);
+				await sequentialSyncQueue(timeTrackerWindow, knex);
 			}
 		} catch (error) {
 			log.error('Error on update synced timer', error);
@@ -788,7 +802,7 @@ export function ipcTimer(
 			for (const window of windows) {
 				getWindowManager().webContents(window)?.send?.('offline-handler', false);
 			}
-			await sequentialSyncQueue(timeTrackerWindow);
+			await sequentialSyncQueue(timeTrackerWindow, knex);
 			await screenshotErrorSync(timeTrackerWindow);
 			await getAuditLogHandler().logAudit('info', 'timer', 'Connectivity restored, Offline mode deactivated');
 		} catch (error) {
@@ -996,8 +1010,8 @@ export function ipcTimer(
 
 	ActivityWatchEventManager.onRemoveAfkLocalData(async (_, value: any) => {
 		try {
-			const afkService = new ActivityWatchAfkService();
-			await afkService.clear();
+			// Behind the AFK saves still queued when the asynchronous sync is on; right away otherwise, as before.
+			await getTimerHandler().clearActivityEvents(knex, [ActivityWatchEventTableList.AFK]);
 		} catch (error) {
 			log.error('Error on remove afk local data', error);
 			throw new UIError('500', error, 'IPCRMAFK');
@@ -1371,7 +1385,7 @@ export function ipcTimer(
 			log.info('Last Capture Time Start Tracking Time (Desktop Try):', lastTime);
 
 			if (!isQueueThreadTimerLocked) {
-				await sequentialSyncQueue(timeTrackerWindow);
+				await sequentialSyncQueue(timeTrackerWindow, knex);
 			}
 
 			if (!isScreenshotTreadLocked) {
@@ -1429,7 +1443,7 @@ export function ipcTimer(
 	ipcMain.on('check-interrupted-sequences', async (event, arg) => {
 		try {
 			log.info(`Check Interrupted Sequences: ${moment().format()}`);
-			await sequentialSyncInterruptionsQueue(timeTrackerWindow);
+			await sequentialSyncInterruptionsQueue(timeTrackerWindow, knex);
 		} catch (error) {
 			log.error('Error on check interrupted sequences', error);
 			throw new UIError('500', error, 'IPCCIS');
@@ -1439,7 +1453,7 @@ export function ipcTimer(
 	ipcMain.on('check-waiting-sequences', async (event, arg) => {
 		try {
 			log.info(`Check Waiting Sequences: ${moment().format()}`);
-			await sequentialSyncQueue(timeTrackerWindow);
+			await sequentialSyncQueue(timeTrackerWindow, knex);
 		} catch (error) {
 			log.error('Error on check waiting sequences', error);
 			throw new UIError('500', error, 'IPCWS');
@@ -1679,9 +1693,27 @@ export function removeTimerHandlers() {
 
 let isQueueThreadTimerLocked = false;
 
+/** How long offline sync waits for the stored timer jobs (asynchronous sync) before reading what to upload. */
+const SYNC_SETTLE_MS = 10_000;
+
+/*
+ * Offline sync reads the local timers only once the timer jobs stored so far have been applied: a stored duration update
+ * that ran after the upload would leave the API with the timer as it was before it. While they are still pending the
+ * attempt is skipped (the lock released) and made again on the next trigger; `TimerHandler.readyForOfflineSync` bounds
+ * how many attempts in a row are skipped.
+ */
+async function readyForOfflineSync(knex): Promise<boolean> {
+	if (await getTimerHandler().readyForOfflineSync(knex, SYNC_SETTLE_MS)) {
+		return true;
+	}
+	log.warn(`Offline sync deferred: stored timer jobs were not all applied within ${SYNC_SETTLE_MS} ms`);
+	isQueueThreadTimerLocked = false;
+	return false;
+}
+
 let isScreenshotTreadLocked = false;
 
-async function sequentialSyncQueue(window: BrowserWindow) {
+async function sequentialSyncQueue(window: BrowserWindow, knex?) {
 	try {
 		if (!window) return;
 
@@ -1697,6 +1729,8 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		if (getOfflineMode().enabled) return;
 
 		isQueueThreadTimerLocked = true;
+
+		if (!(await readyForOfflineSync(knex))) return;
 
 		const sequences = await getTimerService().findToSynced();
 
@@ -1782,7 +1816,7 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 	}
 }
 
-async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
+async function sequentialSyncInterruptionsQueue(window: BrowserWindow, knex?) {
 	log.info(`Sequential Sync Interruptions Queue: ${moment().format()}`);
 
 	if (!window) return;
@@ -1801,6 +1835,8 @@ async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 		if (getOfflineMode().enabled) return;
 
 		isQueueThreadTimerLocked = true;
+
+		if (!(await readyForOfflineSync(knex))) return;
 
 		const sequences = await getTimerService().interruptions();
 

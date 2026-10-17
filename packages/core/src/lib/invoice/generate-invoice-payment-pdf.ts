@@ -1,7 +1,7 @@
 import { IPayment, IOrganization, IOrganizationContact, IInvoice } from '@gauzy/contracts';
 
-import * as moment from 'moment';
 import { formatCurrencyAmount } from './invoice-currency.util';
+import { formatInvoiceDay } from './invoice-date.util';
 
 export async function generateInvoicePaymentPdfDefinition(
 	invoice: IInvoice,
@@ -19,7 +19,8 @@ export async function generateInvoicePaymentPdfDefinition(
 
 	for (const payment of payments) {
 		const currentPayment = [
-			`${moment(invoice.dueDate).format(organization.dateFormat)}`,
+			// The column is headed "Payment Date": print the payment's own date, not the invoice due date.
+			formatInvoiceDay(payment.paymentDate ?? payment.createdAt, organization),
 			amount(payment.amount),
 			`${payment.createdByUser.name}`,
 			`${payment.note ? payment.note : '-'}`,
@@ -85,7 +86,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.dueDate}: `
 							},
-							`${moment(invoice.dueDate).format(organization.dateFormat)}`
+							formatInvoiceDay(invoice.dueDate, organization)
 						]
 					}
 				]

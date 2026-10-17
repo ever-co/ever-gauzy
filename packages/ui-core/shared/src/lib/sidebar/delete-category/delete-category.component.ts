@@ -1,5 +1,5 @@
 import { IHelpCenter } from '@gauzy/contracts';
-import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
+import { Component, OnDestroy, Input, ErrorHandler, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -9,6 +9,7 @@ import { HelpCenterService } from '@gauzy/ui-core/core';
     selector: 'ga-delete-category',
     templateUrl: 'delete-category.component.html',
     styleUrls: ['delete-category.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DeleteCategoryComponent extends TranslationBaseComponent implements OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -23,6 +23,7 @@ import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
     selector: 'ngx-view-screenshots-modal',
     templateUrl: './view-screenshots-modal.component.html',
     styleUrls: ['./view-screenshots-modal.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ViewScreenshotsModalComponent implements OnInit {

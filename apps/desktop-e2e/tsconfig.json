@@ -1,0 +1,9 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"types": ["node"],
+		"esModuleInterop": true,
+		"noEmit": true
+	},
+	"include": ["playwright.config.ts", "src/**/*.ts"]
+}

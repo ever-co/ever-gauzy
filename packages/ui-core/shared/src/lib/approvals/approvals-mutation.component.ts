@@ -1,4 +1,4 @@
-import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { OnInit, Component, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -29,6 +29,7 @@ import { FormHelpers } from '../forms/helpers';
 	selector: 'ngx-approval-mutation',
 	templateUrl: './approvals-mutation.component.html',
 	styleUrls: ['./approvals-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RequestApprovalMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

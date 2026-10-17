@@ -40,7 +40,7 @@
 <ngx-record-view-drawer
   [open]="!!viewedTrigger"
   heading="INTEGRATIONS.ZAPIER_PAGE.TRIGGERS.TITLE"
-  [subtitle]="viewedTrigger?.name"
+  [subtitle]="$safeNavigationMigration(viewedTrigger?.name)"
   (closed)="closeView()"
 >
   @if (viewedTrigger) {

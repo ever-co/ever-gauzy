@@ -1,0 +1,299 @@
+/**
+ * `@gauzy/core` boots the whole application graph from its barrel, and the calendar and the
+ * arithmetic of a subscription need none of it: the three names this module imports are taken from
+ * their own source files, exactly as the service suites in this package do.
+ */
+jest.mock('@gauzy/core', () => ({
+	Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+	compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
+	divideDecimalUnits: jest.requireActual('@gauzy/core/src/lib/money/decimal').divideDecimalUnits,
+	formatDecimalUnits: jest.requireActual('@gauzy/core/src/lib/money/decimal').formatDecimalUnits
+}));
+
+import { Money } from '@gauzy/core';
+import { SubscriptionBillingPeriod } from './subscription.types';
+import {
+	addCalendarMonths,
+	addDays,
+	cycleDiscountOf,
+	endOfPeriod,
+	nextCyclePeriod,
+	normalizeDiscountFraction,
+	periodLengthMs,
+	priceCycle,
+	prorate,
+	ratioOf,
+	remainingMs,
+	resumedNextBillingAt,
+	subscriptionDiscountOverrideOf
+} from './subscription.cycle';
+
+/**
+ * The calendar and the arithmetic a recurring subscription is billed by.
+ *
+ * Three properties are asserted, all of them ones the module states about itself:
+ *
+ * - **period arithmetic is calendar arithmetic**: a monthly subscription anchored on the 31st bills on
+ *   the last day of a shorter month and returns to the 31st afterwards, rather than sliding backwards
+ *   one month at a time;
+ * - **the arithmetic is on UTC instants**, so a period that spans a daylight-saving boundary is the
+ *   same length as one that does not and no customer is billed for an hour more or less than another;
+ * - **the proration share is an exact decimal**, not a binary division rounded at the end, and the
+ *   three amounts `prorate` answers with always satisfy `net = charge - credit`.
+ *
+ * There is no database, no service and no clock here: every case is a function of its arguments.
+ */
+describe('ratioOf — the share of a period that is left', () => {
+	it('divides on the digits rather than on a double', () => {
+		// The defect this pins: `part / whole` is binary floating point and `toFixed` rounds the *binary*
+		// value. Ten days of thirty came out as `0.333333333333`, which is 3.33e-13 below the exact third
+		// — and that share multiplies a recurring amount that may be six figures.
+		const day = 24 * 60 * 60 * 1000;
+
+		expect(ratioOf(10 * day, 30 * day)).toBe('0.333333333333');
+		expect(ratioOf(20 * day, 30 * day)).toBe('0.666666666666');
+		expect(ratioOf(1, 3)).toBe('0.333333333333');
+		// Two thirds truncates rather than rounding up, so `a/c + b/c` never exceeds `(a+b)/c`: the two
+		// halves of a proration can never sum to more than the whole they were taken from.
+		expect(ratioOf(2, 3)).toBe('0.666666666666');
+	});
+
+	it('answers the exact fractions exactly', () => {
+		expect(ratioOf(1, 2)).toBe('0.500000000000');
+		expect(ratioOf(1, 4)).toBe('0.250000000000');
+		expect(ratioOf(3, 3)).toBe('1.000000000000');
+	});
+
+	it('clamps into the period and refuses a whole that cannot be divided by', () => {
+		expect(ratioOf(-5, 10)).toBe('0.000000000000');
+		expect(ratioOf(50, 10)).toBe('1.000000000000');
+		expect(ratioOf(1, 0)).toBe('0');
+		expect(ratioOf(Number.NaN, 10)).toBe('0');
+		expect(ratioOf(1, Number.POSITIVE_INFINITY)).toBe('0');
+	});
+});
+
+describe('prorate — what a mid-cycle change is worth', () => {
+	const period = { start: new Date('2026-03-01T00:00:00.000Z'), end: new Date('2026-04-01T00:00:00.000Z') };
+
+	it('splits the remaining time between the plan being left and the one being taken up', () => {
+		// Doc 11 §10.8's own worked example: 120.00 a month upgraded to 300.00 on 16 March.
+		const { credit, charge, net } = prorate({
+			oldRecurring: Money.of('120.000000', 'EUR'),
+			newRecurring: Money.of('300.000000', 'EUR'),
+			period,
+			at: new Date('2026-03-16T00:00:00.000Z')
+		});
+
+		expect(credit.toStorageString()).toBe('61.940000');
+		expect(charge.toStorageString()).toBe('154.840000');
+		expect(net.toStorageString()).toBe('92.900000');
+	});
+
+	it('answers three values that balance, because the net is the difference of the two that rounded', () => {
+		// `credit` and `charge` each cross exactly one boundary, and the net is their difference rather
+		// than a third rounding of it — so a caller that posts all three to a ledger posts a balanced
+		// triple whatever the amounts are.
+		for (const [oldAmount, newAmount] of [
+			['99.990000', '149.990000'],
+			['0.010000', '0.030000'],
+			['1234.560000', '0.990000'],
+			['120.000000', '60.000000']
+		]) {
+			const { credit, charge, net } = prorate({
+				oldRecurring: Money.of(oldAmount, 'EUR'),
+				newRecurring: Money.of(newAmount, 'EUR'),
+				period,
+				at: new Date('2026-03-16T12:34:56.000Z')
+			});
+
+			expect(net.toStorageString()).toBe(charge.subtract(credit).toStorageString());
+		}
+	});
+
+	it('is worth nothing once the period has run out', () => {
+		const { credit, charge, net } = prorate({
+			oldRecurring: Money.of('120.000000', 'EUR'),
+			newRecurring: Money.of('300.000000', 'EUR'),
+			period,
+			at: new Date('2026-05-01T00:00:00.000Z')
+		});
+
+		expect(credit.toStorageString()).toBe('0.000000');
+		expect(charge.toStorageString()).toBe('0.000000');
+		expect(net.toStorageString()).toBe('0.000000');
+	});
+});
+
+describe('the billing anchor across month ends and daylight saving', () => {
+	it('keeps a month-end anchor rather than sliding it backwards', () => {
+		// A subscription anchored on the 31st bills on the last day of a shorter month and RETURNS to the
+		// 31st: clamping the day of the month each time, from the original anchor, is what makes January
+		// 31 → February 28 → March 31 rather than → February 28 → March 28.
+		const anchor = new Date('2026-01-31T09:00:00.000Z');
+
+		expect(addCalendarMonths(anchor, 1).toISOString()).toBe('2026-02-28T09:00:00.000Z');
+		expect(addCalendarMonths(anchor, 2).toISOString()).toBe('2026-03-31T09:00:00.000Z');
+		expect(addCalendarMonths(anchor, 13).toISOString()).toBe('2027-02-28T09:00:00.000Z');
+		// A leap February takes the 29th.
+		expect(addCalendarMonths(new Date('2028-01-31T09:00:00.000Z'), 1).toISOString()).toBe(
+			'2028-02-29T09:00:00.000Z'
+		);
+	});
+
+	it('adds a year to 29 February without rolling into March', () => {
+		expect(addCalendarMonths(new Date('2028-02-29T00:00:00.000Z'), 12).toISOString()).toBe(
+			'2029-02-28T00:00:00.000Z'
+		);
+	});
+
+	it('measures a period in UTC, so a daylight-saving boundary changes no length', () => {
+		// Every instant here is UTC and every span is exact milliseconds, so the European clock change on
+		// 29 March 2026 and the American one on 8 March are both invisible to the calendar. A monthly
+		// period that contains one is exactly as long as the same month in a year that does not.
+		const across = { start: new Date('2026-03-01T00:00:00.000Z'), end: new Date('2026-04-01T00:00:00.000Z') };
+		const clear = { start: new Date('2026-05-01T00:00:00.000Z'), end: new Date('2026-06-01T00:00:00.000Z') };
+
+		expect(periodLengthMs(across)).toBe(31 * 24 * 60 * 60 * 1000);
+		expect(periodLengthMs(clear)).toBe(31 * 24 * 60 * 60 * 1000);
+		expect(addDays(new Date('2026-03-28T23:00:00.000Z'), 1).toISOString()).toBe('2026-03-29T23:00:00.000Z');
+	});
+
+	it('computes the next period from the period start, never from the moment the job ran', () => {
+		// A billing run that is six hours late produces the same next period as one that is on time, so
+		// lateness never accumulates into a drifting calendar.
+		const start = new Date('2026-01-31T00:00:00.000Z');
+		const cadence = { period: SubscriptionBillingPeriod.MONTHLY, interval: 1 };
+
+		expect(endOfPeriod(start, cadence).toISOString()).toBe('2026-02-28T00:00:00.000Z');
+		expect(endOfPeriod(new Date('2026-02-28T00:00:00.000Z'), cadence).toISOString()).toBe(
+			'2026-03-28T00:00:00.000Z'
+		);
+		// Weekly and daily add exact days, because a day is a day.
+		expect(
+			endOfPeriod(start, { period: SubscriptionBillingPeriod.WEEKLY, interval: 2 }).toISOString()
+		).toBe('2026-02-14T00:00:00.000Z');
+		expect(
+			endOfPeriod(start, { period: SubscriptionBillingPeriod.DAILY, interval: 3 }).toISOString()
+		).toBe('2026-02-03T00:00:00.000Z');
+	});
+
+	it('clamps the remaining time into the period it is measured against', () => {
+		const period = { start: new Date('2026-03-01T00:00:00.000Z'), end: new Date('2026-04-01T00:00:00.000Z') };
+
+		expect(remainingMs(period, new Date('2026-02-01T00:00:00.000Z'))).toBe(periodLengthMs(period));
+		expect(remainingMs(period, new Date('2026-05-01T00:00:00.000Z'))).toBe(0);
+		expect(remainingMs(period, new Date('2026-03-16T00:00:00.000Z'))).toBe(16 * 24 * 60 * 60 * 1000);
+	});
+});
+
+/**
+ * The one computation of what a cycle bills.
+ *
+ * `billCycle` bills what `priceCycle` answers and the upcoming-billing preview reports what it answers,
+ * so these cases are the contract both of them stand on: the lines summed exactly, the discount the
+ * subscription was sold with taking precedence over its plan's, and one rounding boundary at the end.
+ */
+describe('priceCycle — what one cycle bills', () => {
+	const lines = [
+		{ quantity: '1', unitPrice: '120' },
+		{ quantity: '2', unitPrice: '15.5' }
+	];
+
+	it('sums the recurring lines exactly, with no discount when neither the plan nor the subscription grants one', () => {
+		const price = priceCycle({ items: lines, currency: 'USD' as any, plan: {} });
+
+		expect(price.gross.toStorageString()).toBe('151.000000');
+		expect(price.discount.toStorageString()).toBe('0.000000');
+		expect(price.net.toStorageString()).toBe('151.000000');
+	});
+
+	it('applies the plan’s discount, and the subscription’s own in its place when it was sold with one', () => {
+		const plan = { discountPercentage: '0.1' };
+
+		expect(priceCycle({ items: lines, currency: 'USD' as any, plan }).net.toStorageString()).toBe('135.900000');
+		expect(
+			priceCycle({ items: lines, currency: 'USD' as any, plan, metadata: { discountPercentage: '0.5' } }).net.toStorageString()
+		).toBe('75.500000');
+		// A subscription that records no discount of its own is billed with the plan's.
+		expect(priceCycle({ items: lines, currency: 'USD' as any, plan, metadata: { note: 'x' } }).net.toStorageString()).toBe(
+			'135.900000'
+		);
+	});
+
+	it('rounds once, at the currency’s scale, so the discount and the net add back to the gross', () => {
+		const price = priceCycle({ items: [{ quantity: '1', unitPrice: '99.99' }], currency: 'USD' as any, plan: { discountPercentage: '0.1' } });
+
+		expect(price.discount.toStorageString()).toBe('10.000000');
+		expect(price.net.toStorageString()).toBe('89.990000');
+		expect(price.discount.add(price.net).toStorageString()).toBe(price.gross.toStorageString());
+	});
+});
+
+describe('the discount rule a cycle is billed with', () => {
+	it('prefers a discount stated for the subscription over the plan’s, and treats an empty one as none', () => {
+		expect(cycleDiscountOf({ discountPercentage: '0.1' })).toBe('0.1');
+		expect(cycleDiscountOf({ discountPercentage: '0.1' }, '0.2')).toBe('0.2');
+		expect(cycleDiscountOf({ discountPercentage: '0.1' }, '')).toBe('0.1');
+		expect(cycleDiscountOf({}, undefined)).toBeUndefined();
+		expect(cycleDiscountOf({ discountPercentage: null }, null)).toBeUndefined();
+	});
+
+	it('reads the subscription’s own discount from where the sale recorded it', () => {
+		expect(subscriptionDiscountOverrideOf({ discountPercentage: '0.25' })).toBe('0.25');
+		expect(subscriptionDiscountOverrideOf({ discountPercentage: 0.25 })).toBe('0.25');
+		expect(subscriptionDiscountOverrideOf({})).toBeUndefined();
+		expect(subscriptionDiscountOverrideOf(undefined)).toBeUndefined();
+	});
+
+	/**
+	 * CodeRabbit on #10655: the bounds were checked on `Number(text)` and the text was returned, so a value one digit
+	 * past a bound that rounds onto it as a double passed — and the stored text is what a cycle multiplies by.
+	 */
+	it('checks a discount against 0 and 1 on its digits, not on the double it rounds to', () => {
+		expect(() => normalizeDiscountFraction('1.00000000000000001')).toThrow(/SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE/);
+		expect(() => normalizeDiscountFraction('-0.00000000000000001')).toThrow(/SUBSCRIPTION_DISCOUNT_OUT_OF_RANGE/);
+		// Both bounds belong to the range, however many zeroes state them.
+		expect(normalizeDiscountFraction('1.00000000000000000')).toBe('1.00000000000000000');
+		expect(normalizeDiscountFraction('0')).toBe('0');
+		expect(normalizeDiscountFraction('0.99999999999999999')).toBe('0.99999999999999999');
+	});
+
+	it('bills a stored override just past 1 on the plan’s own terms rather than below zero', () => {
+		const metadata = { discountPercentage: '1.00000000000000001' };
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+		try {
+			expect(subscriptionDiscountOverrideOf(metadata)).toBeUndefined();
+			expect(
+				priceCycle({
+					items: [{ quantity: '1', unitPrice: '100' }],
+					currency: 'USD' as any,
+					plan: { discountPercentage: '0.1' },
+					metadata
+				}).net.toStorageString()
+			).toBe('90.000000');
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('the period the next cycle covers', () => {
+	const monthly = { period: SubscriptionBillingPeriod.MONTHLY, interval: 1 };
+	const APRIL = new Date('2026-04-01T00:00:00.000Z');
+	const MAY = new Date('2026-05-01T00:00:00.000Z');
+	const NOW = new Date('2026-03-16T00:00:00.000Z');
+
+	it('starts at the next billing instant, else at the end of the paid period, else at the instant asked about', () => {
+		expect(nextCyclePeriod({ nextBillingAt: APRIL, currentPeriodEnd: MAY }, monthly, NOW)).toEqual({ start: APRIL, end: MAY });
+		expect(nextCyclePeriod({ nextBillingAt: null, currentPeriodEnd: APRIL }, monthly, NOW)).toEqual({ start: APRIL, end: MAY });
+		expect(nextCyclePeriod({}, monthly, NOW)).toEqual({ start: NOW, end: new Date('2026-04-16T00:00:00.000Z') });
+	});
+
+	it('resumes a paused subscription at the end of the paid period, or at the resume when that has passed', () => {
+		expect(resumedNextBillingAt(APRIL, NOW)).toEqual(APRIL);
+		expect(resumedNextBillingAt(APRIL, MAY)).toEqual(MAY);
+		expect(resumedNextBillingAt(undefined, NOW)).toEqual(NOW);
+	});
+});

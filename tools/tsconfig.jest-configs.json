@@ -12,6 +12,10 @@
 	// also why `types` is empty and `tools/jest-config-globals.d.ts` supplies `module`/`require`
 	// for the CommonJS configs.
 	"compilerOptions": {
+		"ignoreDeprecations": "6.0",
+		// TypeScript 5 defaults, which TypeScript 6 changed
+		"strict": false,
+		"noUncheckedSideEffectImports": false,
 		"noEmit": true,
 		"skipLibCheck": true,
 		"target": "ES2022",

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnDestroy, OnInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
@@ -23,6 +23,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	templateUrl: './edit-employee-profile.component.html',
 	styleUrls: ['./edit-employee-profile.component.scss'],
 	providers: [EmployeeStore],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

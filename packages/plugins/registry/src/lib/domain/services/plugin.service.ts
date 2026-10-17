@@ -1,13 +1,13 @@
-import { CrudService } from '@gauzy/core';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AutoTagPluginCommand } from '../../application';
 import { IPlugin } from '../../shared';
 import { Plugin } from '../entities';
 import { MikroOrmPluginRepository, TypeOrmPluginRepository } from '../repositories';
+import { RegistryCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginService extends CrudService<Plugin> {
+export class PluginService extends RegistryCrudService<Plugin> {
 	private readonly logger = new Logger(PluginService.name);
 
 	constructor(

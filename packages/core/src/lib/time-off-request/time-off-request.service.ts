@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
-import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, LessThanOrEqual, Like, MoreThanOrEqual, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
@@ -23,6 +23,7 @@ import {
 	splitKeywords
 } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { assertCurrentUserBelongsToSentOrganization } from '../user-organization/assert-organization-membership';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
@@ -78,6 +79,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		return timeOffRequest;
 	}
 
+	/**
+	 * Refuses a `GET /time-off-request` list scoped to an organization the current user is not a member of.
+	 *
+	 * The route reads its filter from a `?data=` JSON parameter that no DTO validates, and
+	 * `getAllTimeOffRequests` filters on the organization it is given. Without one, the list matches nothing.
+	 *
+	 * @param organizationId the organization the request names
+	 */
+	async assertOrganizationMember(organizationId: unknown): Promise<void> {
+		await assertCurrentUserBelongsToSentOrganization(this.typeOrmRepository.manager, organizationId);
+	}
+
 	async getAllTimeOffRequests(
 		relations: string[],
 		findInput: ITimeOffFindInput
@@ -86,15 +99,23 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
 
-			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
-			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
+			// Both dates are optional, and the appointment calendar and the availability slots send none:
+			// `moment(undefined)` is "now", so the window collapsed to a single instant and no time off was
+			// ever listed. The format also used `hh`, the 12-hour clock without AM / PM, which moved an
+			// afternoon bound 12 hours back. Same bounds as `pagination()` now, and only when both are given.
+			// A plain presence check: `isNotEmpty` treats a Date (no enumerable property) as empty
+			const isGiven = (value: unknown) => value !== undefined && value !== null && value !== '';
+			const hasRange = isGiven(startDate) && isGiven(endDate);
+			const start = hasRange ? moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
+			const end = hasRange ? moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const where: any = {
 						tenantId,
 						organizationId,
-						start: { $gte: start, $lte: end }
+						// Every time off overlapping the window, including one starting before it
+						...(hasRange ? { start: { $lte: end }, end: { $gte: start } } : {})
 					};
 					if (employeeId) {
 						where.employees = { id: employeeId };
@@ -126,10 +147,14 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						});
 					}
 
-					query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
-						begin: start,
-						end: end
-					});
+					if (hasRange) {
+						// Every time off overlapping the window: one starting before it (a leave from the 28th of
+						// the previous month) was left out when only its start was checked
+						query.andWhere(p(`"${query.alias}"."start" <= :end AND "${query.alias}"."end" >= :begin`), {
+							begin: start,
+							end: end
+						});
+					}
 					const items = await query.getMany();
 					return { items, total: items.length };
 				}
@@ -228,7 +253,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							sd = moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss');
 							ed = moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss');
 						}
-						where.$or = [{ start: { $gte: sd, $lte: ed } }, { end: { $gte: sd, $lte: ed } }];
+						// Every time off overlapping the window: checking only whether its start or its end falls inside
+						// left out one spanning the whole window (a leave from January 25 to March 5, listed for February)
+						where.start = { $lte: ed };
+						where.end = { $gte: sd };
 
 						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
 						if (isNotEmpty(user) && isNotEmpty(user.name)) {
@@ -241,10 +269,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 								);
 							});
 							// Only whitespace typed: no keyword, nothing to filter on
-							if (userFilters.length > 0 && where.$or) {
-								where.$and = [{ $or: where.$or }, { $or: userFilters }];
-								delete where.$or;
-							} else if (userFilters.length > 0) {
+							// The date window no longer takes the `$or`: the name keywords have it to themselves
+							if (userFilters.length > 0) {
 								where.$or = userFilters;
 							}
 						}
@@ -320,14 +346,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							}
 							qb.andWhere(
 								new Brackets((web: WhereExpressionBuilder) => {
-									web.where([
-										{
-											start: Between(startDate, endDate)
-										},
-										{
-											end: Between(startDate, endDate)
-										}
-									]);
+									// Every time off overlapping the window, including one spanning all of it
+									web.where({
+										start: LessThanOrEqual(endDate),
+										end: MoreThanOrEqual(startDate)
+									});
 								})
 							);
 							if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {

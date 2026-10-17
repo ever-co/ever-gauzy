@@ -7,7 +7,8 @@ import '../../core/entities/internal';
 import { ForbiddenException, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus } from '@nestjs/cqrs';
-import { PIPES_METADATA } from '@nestjs/common/constants';
+import { GUARDS_METADATA, PIPES_METADATA } from '@nestjs/common/constants';
+import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
@@ -16,7 +17,9 @@ import { ManagedEmployeeService } from '../../employee/managed-employee.service'
 import { mockRequestContext, nextMacrotask } from '../testing/recording-query-builder';
 import { IGetConflictTimeLogCommand } from './commands';
 import { GetTimeLogConflictQueryDTO } from './dto/query';
+import { TimeLogConflictAccessGuard } from './guards/time-log-conflict-access.guard';
 import { TimeLogController } from './time-log.controller';
+import { TimeLogResolver } from './time-log.resolver';
 import { TimeLogService } from './time-log.service';
 
 const TENANT_ID = '5a1c2f0e-6d3b-4c8a-9e2f-1b7d4a6c8e90';
@@ -270,6 +273,154 @@ describe('GET /timesheet/time-log/conflict is scoped and validated (GHSA-6qvm-3w
 					PermissionsEnum.ALL_ORG_VIEW
 				])
 			);
+		});
+	});
+
+	/**
+	 * #10732: the `timeLogConflicts` GraphQL field dispatched the conflict command with the employee it was
+	 * given, while the route refused the same input with 403. Both now carry `TimeLogConflictAccessGuard`.
+	 * The field is run here through the guards its handler declares, then the handler itself, so a field
+	 * that loses the guard reaches the command again and these cases fail.
+	 */
+	describe('the timeLogConflicts GraphQL field and the route carry TimeLogConflictAccessGuard', () => {
+		let service: TimeLogService;
+		let canManageEmployees: jest.Mock;
+		let execute: jest.Mock;
+		let resolver: TimeLogResolver;
+
+		beforeEach(async () => {
+			canManageEmployees = jest.fn();
+			execute = jest.fn().mockResolvedValue([]);
+
+			const module: TestingModule = await Test.createTestingModule({ providers: [TimeLogService] })
+				.useMocker((token) => {
+					if (token === ManagedEmployeeService) {
+						return { canManageEmployees };
+					}
+					if (token === CommandBus) {
+						return { execute };
+					}
+					return {};
+				})
+				.compile();
+
+			service = module.get<TimeLogService>(TimeLogService);
+			Object.defineProperty(service, 'ormType', { value: MultiORMEnum.TypeORM });
+			resolver = new TimeLogResolver(service, { execute } as unknown as CommandBus, {} as never, {} as never);
+		});
+
+		afterEach(() => jest.restoreAllMocks());
+
+		const actAs = (canChangeSelectedEmployee: boolean, employeeId: string | null = OWN_EMPLOYEE_ID) =>
+			mockRequestContext({
+				tenantId: TENANT_ID,
+				user: { id: USER_ID, employeeId },
+				canChangeSelectedEmployee
+			});
+
+		/** Builds each guard the handler declares, as Nest does, over the service under test. */
+		const guardsOf = (handler: Function) =>
+			((Reflect.getMetadata(GUARDS_METADATA, handler) ?? []) as Function[]).map((guard) => {
+				if (guard !== TimeLogConflictAccessGuard) {
+					throw new Error(`Unexpected guard on the handler: ${guard.name}`);
+				}
+				return new TimeLogConflictAccessGuard(service);
+			});
+
+		/** Runs `timeLogConflicts` as GraphQL does: the handler's guards first, then the field. */
+		const queryTimeLogConflicts = async (employeeId: string) => {
+			const handler = TimeLogResolver.prototype.timeLogConflicts;
+			const args = {
+				startDate: new Date('2000-01-01T00:00:00.000Z'),
+				endDate: new Date('2100-01-01T00:00:00.000Z'),
+				employeeId,
+				organizationId: ORGANIZATION_ID
+			};
+			const context = new ExecutionContextHost([{}, args, {}, {}], TimeLogResolver as never, handler);
+			context.setType('graphql');
+
+			for (const guard of guardsOf(handler)) {
+				if (!(await guard.canActivate(context))) {
+					throw new ForbiddenException();
+				}
+			}
+
+			return await resolver.timeLogConflicts(args.startDate, args.endDate, args.employeeId, args.organizationId);
+		};
+
+		/** The route's guard alone, over an HTTP request carrying the given raw query. */
+		const routeGuardAllows = async (query: Record<string, unknown>) => {
+			const [guard] = guardsOf(TimeLogController.prototype.getConflict);
+			const context = new ExecutionContextHost(
+				[{ query }, {}, () => undefined],
+				TimeLogController as never,
+				TimeLogController.prototype.getConflict
+			);
+			context.setType('http');
+
+			return await guard.canActivate(context);
+		};
+
+		const resolveLater = (value: boolean) => async () => {
+			await nextMacrotask();
+			return value;
+		};
+
+		it('refuses a plain employee asking for a colleague’s logs before the command runs', async () => {
+			actAs(false);
+			canManageEmployees.mockImplementation(resolveLater(false));
+
+			await expect(queryTimeLogConflicts(COLLEAGUE_EMPLOYEE_ID)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(canManageEmployees).toHaveBeenCalledWith([COLLEAGUE_EMPLOYEE_ID], []);
+			expect(execute).not.toHaveBeenCalled();
+		});
+
+		it('refuses a caller with neither the permission nor an employee identity', async () => {
+			actAs(false, null);
+			canManageEmployees.mockImplementation(resolveLater(false));
+
+			await expect(queryTimeLogConflicts(COLLEAGUE_EMPLOYEE_ID)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(execute).not.toHaveBeenCalled();
+		});
+
+		it('answers a plain employee’s own logs without consulting the manager check', async () => {
+			actAs(false);
+
+			await queryTimeLogConflicts(OWN_EMPLOYEE_ID);
+
+			expect(canManageEmployees).not.toHaveBeenCalled();
+			expect(execute).toHaveBeenCalledTimes(1);
+			expect(execute.mock.calls[0][0]).toBeInstanceOf(IGetConflictTimeLogCommand);
+			expect(execute.mock.calls[0][0].input).toMatchObject({ employeeId: OWN_EMPLOYEE_ID });
+		});
+
+		it('answers a team manager the logs of an employee they manage', async () => {
+			actAs(false);
+			canManageEmployees.mockImplementation(resolveLater(true));
+
+			await queryTimeLogConflicts(COLLEAGUE_EMPLOYEE_ID);
+
+			expect(canManageEmployees).toHaveBeenCalledWith([COLLEAGUE_EMPLOYEE_ID], []);
+			expect(execute.mock.calls[0][0].input).toMatchObject({ employeeId: COLLEAGUE_EMPLOYEE_ID });
+		});
+
+		it('answers a CHANGE_SELECTED_EMPLOYEE holder any employee’s logs', async () => {
+			actAs(true, null);
+
+			await queryTimeLogConflicts(COLLEAGUE_EMPLOYEE_ID);
+
+			expect(canManageEmployees).not.toHaveBeenCalled();
+			expect(execute.mock.calls[0][0].input).toMatchObject({ employeeId: COLLEAGUE_EMPLOYEE_ID });
+		});
+
+		it('refuses a colleague on the route too, and leaves a value its DTO rejects to the validation pipe', async () => {
+			actAs(false);
+			canManageEmployees.mockImplementation(resolveLater(false));
+
+			await expect(routeGuardAllows(conflictQuery())).rejects.toBeInstanceOf(ForbiddenException);
+			await expect(routeGuardAllows(conflictQuery({ employeeId: OWN_EMPLOYEE_ID }))).resolves.toBe(true);
+			await expect(routeGuardAllows(conflictQuery({ employeeId: 'not-a-uuid' }))).resolves.toBe(true);
+			expect(canManageEmployees).toHaveBeenCalledTimes(1);
 		});
 	});
 });

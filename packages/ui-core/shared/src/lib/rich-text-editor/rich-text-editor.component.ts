@@ -13,7 +13,7 @@ import {
 	Output,
 	PLATFORM_ID,
 	SecurityContext,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild,
 	forwardRef
 } from '@angular/core';

@@ -12,7 +12,7 @@ import {
 	OnDestroy,
 	Output,
 	PLATFORM_ID,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild,
 	afterNextRender,
 	inject

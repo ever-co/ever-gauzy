@@ -19,7 +19,7 @@ import {
 } from '@nebular/theme';
 import { ColorPickerComponent, ColorPickerDirective } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	EmployeeStore,
 	InviteService,
@@ -71,7 +71,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		ColorPickerDirective,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		OrganizationsMutationModule,
 		UserFormsModule,
 		ImageUploaderModule,

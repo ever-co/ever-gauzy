@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	AuthService,
@@ -28,7 +28,7 @@ import { OnboardingCompleteComponent } from './components/onboarding-complete/on
 		NbLayoutModule,
 		NbSpinnerModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ThemeModule,
 		ThemeSelectorModule,
 		ThemeSettingsModule,

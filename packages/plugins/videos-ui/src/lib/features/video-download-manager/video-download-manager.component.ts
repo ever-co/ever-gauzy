@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Actions } from '@ngneat/effects-ng';
 import { Observable } from 'rxjs';
 import { VideoActions } from '../../+state/video.action';
@@ -11,6 +11,7 @@ import { extractFilenameFromUrl } from '../../shared/utilities/extract-filename-
 	selector: 'plug-video-download-manager',
 	templateUrl: './video-download-manager.component.html',
 	styleUrl: './video-download-manager.component.scss',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class VideoDownloadManagerComponent {

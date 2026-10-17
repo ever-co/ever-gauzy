@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbIconModule, NbStepperModule, NbTagModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationsService, RoleService } from '@gauzy/ui-core/core';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { FileUploaderModule } from '../../file-uploader-input';
@@ -18,7 +18,7 @@ import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 		NbIconModule,
 		NbStepperModule,
 		NbTagModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		UserFormsModule,
 		FileUploaderModule
 	],

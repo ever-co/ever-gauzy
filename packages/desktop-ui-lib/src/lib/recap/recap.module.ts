@@ -18,7 +18,7 @@ import {
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ToastrNotificationService } from '../services';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { AutoRefreshQuery } from './+state/auto-refresh/auto-refresh.query';
 import { AutoRefreshService } from './+state/auto-refresh/auto-refresh.service';
@@ -52,7 +52,7 @@ import { GauzyFiltersModule } from './shared/features/gauzy-filters';
 		NbBadgeModule,
 		NbToggleModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		RouterModule.forChild(recapRoutes)
 	],
 	providers: [

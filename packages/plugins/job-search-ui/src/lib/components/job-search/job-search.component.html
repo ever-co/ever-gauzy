@@ -122,7 +122,7 @@
 												formControlName="jobSource"
 											>
 												@for (source of JobPostSourceEnum | keyvalue; track source) {
-													<nb-option [value]="source?.value | lowercase">
+													<nb-option [value]="$safeNavigationMigration(source?.value) | lowercase">
 														{{ 'JOBS.' + source.key | translate }}
 													</nb-option>
 												}

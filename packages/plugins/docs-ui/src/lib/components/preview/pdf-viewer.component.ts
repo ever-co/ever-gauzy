@@ -6,8 +6,9 @@ import {
 	OnChanges,
 	OnDestroy,
 	Output,
-	SimpleChanges,
-	ViewChild
+	type SimpleChanges,
+	ViewChild,
+	ChangeDetectionStrategy
 } from '@angular/core';
 
 /** Minimal structural typings for the parts of pdfjs-dist the viewer touches. */
@@ -21,6 +22,11 @@ interface PdfPageProxy {
 interface PdfDocumentProxy {
 	numPages: number;
 	getPage(page: number): Promise<PdfPageProxy>;
+}
+
+/** pdfjs-dist 6 releases a document through its loading task (the document proxy no longer has `destroy`). */
+interface PdfLoadingTask {
+	promise: Promise<unknown>;
 	destroy(): Promise<void>;
 }
 
@@ -57,6 +63,7 @@ interface PdfDocumentProxy {
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PdfViewerComponent implements OnChanges, OnDestroy {
@@ -76,6 +83,7 @@ export class PdfViewerComponent implements OnChanges, OnDestroy {
 	public scale = 1.25;
 
 	private pdf: PdfDocumentProxy | null = null;
+	private loadingTask: PdfLoadingTask | null = null;
 	private destroyed = false;
 
 	async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -86,7 +94,8 @@ export class PdfViewerComponent implements OnChanges, OnDestroy {
 
 	ngOnDestroy(): void {
 		this.destroyed = true;
-		void this.pdf?.destroy();
+		void this.loadingTask?.destroy();
+		this.loadingTask = null;
 		this.pdf = null;
 	}
 
@@ -123,11 +132,13 @@ export class PdfViewerComponent implements OnChanges, OnDestroy {
 		try {
 			const pdfjs = await this.loadPdfjs();
 			const data = new Uint8Array(await blob.arrayBuffer());
-			const document = (await pdfjs.getDocument({ data }).promise) as PdfDocumentProxy;
+			const loadingTask = pdfjs.getDocument({ data });
+			const document = (await loadingTask.promise) as PdfDocumentProxy;
 			if (this.destroyed) {
-				void document.destroy();
+				void loadingTask.destroy();
 				return;
 			}
+			this.loadingTask = loadingTask;
 			this.pdf = document;
 			this.totalPages = document.numPages;
 			this.page = Math.min(Math.max(1, this.initialPage), this.totalPages);
@@ -142,11 +153,11 @@ export class PdfViewerComponent implements OnChanges, OnDestroy {
 
 	/** Dynamic import + worker setup; falls back to the main-thread fake worker. */
 	private async loadPdfjs(): Promise<{
-		getDocument(params: { data: Uint8Array }): { promise: Promise<unknown> };
+		getDocument(params: { data: Uint8Array }): PdfLoadingTask;
 	}> {
 		const pdfjs = (await import('pdfjs-dist')) as unknown as {
 			GlobalWorkerOptions: { workerSrc: string; workerPort: Worker | null };
-			getDocument(params: { data: Uint8Array }): { promise: Promise<unknown> };
+			getDocument(params: { data: Uint8Array }): PdfLoadingTask;
 		};
 		if (!pdfjs.GlobalWorkerOptions.workerSrc && !pdfjs.GlobalWorkerOptions.workerPort) {
 			try {

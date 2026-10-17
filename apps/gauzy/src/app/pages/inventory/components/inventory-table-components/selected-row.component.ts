@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-selected-row-table-selector',
@@ -11,6 +11,7 @@ import { Component, Input } from '@angular/core';
             ></nb-checkbox>
         </div>
     `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SelectedRowComponent {

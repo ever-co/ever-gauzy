@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren, ChangeDetectionStrategy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, of } from 'rxjs';
@@ -53,6 +53,7 @@ export enum SyncTabsEnum {
 	styleUrls: ['./view.component.scss'],
 	templateUrl: './view.component.html',
 	providers: [TitleCasePipe],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {

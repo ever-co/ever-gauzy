@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 
 export interface ICandidateCriterionCardItem {
@@ -14,6 +14,7 @@ export interface ICandidateCriterionCardItem {
 	selector: 'ga-candidate-criterion-card',
 	templateUrl: './candidate-criterion-card.component.html',
 	styleUrls: ['./candidate-criterion-card.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CandidateCriterionCardComponent {

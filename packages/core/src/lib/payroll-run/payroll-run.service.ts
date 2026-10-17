@@ -6,6 +6,7 @@ import {
 	IPagination,
 	IPayrollItem,
 	IPayrollItemCreateInput,
+	IPayrollItemFindInput,
 	IPayrollRun,
 	IPayrollRunCreateInput,
 	IPayrollRunFindInput,
@@ -13,7 +14,9 @@ import {
 	IPayrollStatistics,
 	IPayrollSummary,
 	PayrollItemCategoryEnum,
-	PayrollRunStatusEnum
+	PayrollItemTypeEnum,
+	PayrollRunStatusEnum,
+	EmployeeKindEnum
 } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -23,6 +26,17 @@ import { TypeOrmPayrollItemRepository } from './../payroll-item/repository/type-
 import { PayrollRun } from './payroll-run.entity';
 import { MikroOrmPayrollRunRepository } from './repository/mikro-orm-payroll-run.repository';
 import { TypeOrmPayrollRunRepository } from './repository/type-orm-payroll-run.repository';
+
+/** The members of a line `updateItem` may change; a member left out is left as it is. */
+export type IPayrollItemUpdateInput = Partial<
+	Pick<
+		IPayrollItemCreateInput,
+		'employeeId' | 'type' | 'category' | 'description' | 'amount' | 'quantity' | 'unitPrice' | 'taxable'
+	>
+>;
+
+/** The largest amount a line may carry: the column is `numeric(14, 2)`. */
+const MAX_LINE_AMOUNT = 999999999999;
 
 /** States a run may still be edited or cancelled from. */
 const OPEN_STATUSES: PayrollRunStatusEnum[] = [
@@ -268,6 +282,31 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 	}
 
 	/**
+	 * The employee a payroll line pays must be an employee of the run's organization, and a person: an agent
+	 * employee (`kind = 'agent'`, e.g. an Ever Works agent) is never paid.
+	 *
+	 * @param employeeId the employee the line pays
+	 * @param tenantId the caller's tenant
+	 * @param organizationId the run's organization
+	 * @throws NotFoundException when the employee is not one of the organization's
+	 * @throws BadRequestException when the employee is an agent
+	 */
+	private async assertPayableEmployee(employeeId: ID, tenantId: ID, organizationId: ID): Promise<void> {
+		const employee = await this.typeOrmRepository.manager.findOne(Employee, {
+			where: { id: employeeId, tenantId, organizationId },
+			select: { id: true, kind: true }
+		});
+
+		if (!employee) {
+			throw new NotFoundException(`Employee with id '${employeeId}' was not found in this organization`);
+		}
+
+		if (employee.kind === EmployeeKindEnum.AGENT) {
+			throw new BadRequestException(`Employee with id '${employeeId}' is an agent and cannot be paid`);
+		}
+	}
+
+	/**
 	 * Add an earning or deduction line to a run that has not been paid.
 	 *
 	 * @param payrollRunId the run to add the line to
@@ -286,14 +325,8 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 		}
 
 		// The employee must belong to the same organization, or a caller could pay somebody
-		// outside their own company out of their own payroll run.
-		const employees = await this.typeOrmRepository.manager.count(Employee, {
-			where: { id: employeeId, tenantId, organizationId }
-		});
-
-		if (employees === 0) {
-			throw new NotFoundException(`Employee with id '${employeeId}' was not found in this organization`);
-		}
+		// outside their own company out of their own payroll run; and it must be a person.
+		await this.assertPayableEmployee(employeeId, tenantId, organizationId);
 
 		const item = this.typeOrmPayrollItemRepository.create({
 			...input,
@@ -306,6 +339,110 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 		await this.recalculateTotals(this.typeOrmRepository.manager, run);
 
 		return saved;
+	}
+
+	/**
+	 * Edit one line of a draft run, and recompute the run's totals from its lines.
+	 *
+	 * The same rules `addItem` and `removeItem` hold: the run is read under the caller's tenant and the
+	 * organization named, a line may only change while its run is a `DRAFT`, and a line moved to another
+	 * employee must move to an employee of the same organization. The totals are then recomputed from the
+	 * lines in integer cents, exactly as an added or removed line recomputes them — never accepted from a
+	 * caller. The members are checked here as well as by the REST DTO, because the GraphQL input reaches
+	 * this method without one.
+	 *
+	 * @param payrollRunId the run the line belongs to
+	 * @param itemId the line to edit
+	 * @param organizationId the organization the run belongs to
+	 * @param input the members to change
+	 * @returns the edited line
+	 */
+	async updateItem(
+		payrollRunId: ID,
+		itemId: ID,
+		organizationId: ID,
+		input: IPayrollItemUpdateInput
+	): Promise<IPayrollItem> {
+		const tenantId = RequestContext.currentTenantId();
+		const run = await this.findOneRun(payrollRunId, organizationId);
+
+		if (run.status !== PayrollRunStatusEnum.DRAFT) {
+			throw new BadRequestException(
+				`Line items can only be edited while a payroll run is a draft, this one is ${run.status}`
+			);
+		}
+
+		const item = await this.typeOrmPayrollItemRepository.findOne({
+			where: { id: itemId, payrollRunId, tenantId, organizationId } as FindOptionsWhere<PayrollItem>
+		});
+
+		if (!item) {
+			throw new NotFoundException(`Payroll item with id '${itemId}' was not found in this payroll run`);
+		}
+
+		const changes = this.itemChanges(input);
+
+		if (changes.employeeId !== undefined && changes.employeeId !== item.employeeId) {
+			// The same check `addItem` makes: a line may not be paid to somebody outside the organization,
+			// nor to an agent employee.
+			await this.assertPayableEmployee(changes.employeeId, tenantId, organizationId);
+		}
+
+		Object.assign(item, changes);
+
+		const saved = await this.typeOrmPayrollItemRepository.save(item);
+		await this.recalculateTotals(this.typeOrmRepository.manager, run);
+
+		return saved;
+	}
+
+	/**
+	 * Payroll lines of one organization across its runs, newest first — optionally narrowed to one run or
+	 * one employee.
+	 *
+	 * Scoped by the caller's tenant and the organization named, like every read of this service; the
+	 * organization is required, so the read can never widen to the whole tenant. Paged at the store with the
+	 * same 1-based `page` and `limit` the run list takes (default 10, at most 100).
+	 *
+	 * @param filter the organization, and optionally the run, the employee, the type, the category and the page
+	 * @returns the matching lines and the total row count
+	 */
+	async findItems(
+		filter: IPayrollItemFindInput & { organizationId: ID; tenantId?: ID }
+	): Promise<IPagination<IPayrollItem>> {
+		const { organizationId, payrollRunId, employeeId, type, category, page, limit } = filter ?? ({} as never);
+		const tenantId = RequestContext.currentTenantId() ?? filter?.tenantId;
+
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException('Payroll lines are read within one organization');
+		}
+
+		const where = { tenantId, organizationId } as FindOptionsWhere<PayrollItem>;
+
+		if (payrollRunId) {
+			where.payrollRunId = payrollRunId;
+		}
+		if (employeeId) {
+			where.employeeId = employeeId;
+		}
+		if (type) {
+			where.type = type;
+		}
+		if (category) {
+			where.category = category;
+		}
+
+		const take = Math.min(Math.max(1, limit ?? 10), 100);
+		const skip = Math.max(0, (page ?? 1) - 1) * take;
+
+		const [items, total] = await this.typeOrmPayrollItemRepository.findAndCount({
+			where,
+			order: { createdAt: 'DESC' } as never,
+			skip,
+			take
+		});
+
+		return { items, total };
 	}
 
 	/**
@@ -449,6 +586,55 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 	}
 
 	/**
+	 * The members of a line edit, checked: the vocabulary is the contracts' own, and every amount is a
+	 * non-negative number within the column (a GraphQL `Decimal` arrives as text and is read as a number,
+	 * which is what the column's transformer stores).
+	 */
+	private itemChanges(input: IPayrollItemUpdateInput): IPayrollItemUpdateInput {
+		const changes: IPayrollItemUpdateInput = {};
+
+		if (input?.employeeId !== undefined && input.employeeId !== null) {
+			changes.employeeId = input.employeeId;
+		}
+		if (input?.type !== undefined && input.type !== null) {
+			if (!Object.values(PayrollItemTypeEnum).includes(input.type)) {
+				throw new BadRequestException(`'${input.type}' is not a payroll item type`);
+			}
+			changes.type = input.type;
+		}
+		if (input?.category !== undefined && input.category !== null) {
+			if (!Object.values(PayrollItemCategoryEnum).includes(input.category)) {
+				throw new BadRequestException(`'${input.category}' is not a payroll item category`);
+			}
+			changes.category = input.category;
+		}
+		if (input?.description !== undefined) {
+			changes.description = input.description;
+		}
+		if (input?.taxable !== undefined && input.taxable !== null) {
+			changes.taxable = Boolean(input.taxable);
+		}
+
+		for (const member of ['amount', 'quantity', 'unitPrice'] as const) {
+			const value = input?.[member];
+
+			if (value === undefined || value === null) {
+				continue;
+			}
+
+			const number = Number(value);
+
+			if (!Number.isFinite(number) || number < 0 || number > MAX_LINE_AMOUNT) {
+				throw new BadRequestException(`'${member}' must be a non-negative amount`);
+			}
+
+			changes[member] = number;
+		}
+
+		return changes;
+	}
+
+	/**
 	 * Move a run from one of `from` to `to`, or refuse.
 	 */
 	private async transition(
@@ -520,6 +706,14 @@ export class PayrollRunService extends TenantAwareCrudService<PayrollRun> {
 		run.totalDeductions = deductionCents / 100;
 		run.totalNet = (grossCents - deductionCents) / 100;
 
-		return manager.save(PayrollRun, run);
+		// Only the totals are written. Saving the whole run would also save the `items` it was read with,
+		// and TypeORM deletes any line missing from that list, such as the one `addItem` has just added.
+		await manager.update(
+			PayrollRun,
+			{ id: run.id, tenantId: run.tenantId, organizationId: run.organizationId } as FindOptionsWhere<PayrollRun>,
+			{ totalGross: run.totalGross, totalDeductions: run.totalDeductions, totalNet: run.totalNet }
+		);
+
+		return run;
 	}
 }

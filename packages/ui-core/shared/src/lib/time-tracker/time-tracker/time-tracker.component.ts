@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
@@ -35,6 +35,7 @@ import { TimeTrackerStatusService } from '../components/time-tracker-status/time
 	selector: 'ngx-web-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
+import { HttpClient, type HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ID, IPagination, IPlugin, IPluginInstallation, IPluginSource, IPluginVersion } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';

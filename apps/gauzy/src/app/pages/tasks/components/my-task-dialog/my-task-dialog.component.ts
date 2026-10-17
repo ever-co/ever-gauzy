@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { BaseEntityEnum, IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -30,6 +30,7 @@ const initialTaskValue = {
 	selector: 'ngx-my-task-dialog',
 	templateUrl: './my-task-dialog.component.html',
 	styleUrls: ['./my-task-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class MyTaskDialogComponent extends TranslationBaseComponent implements OnInit {

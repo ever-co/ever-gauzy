@@ -23,6 +23,7 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 	 * @description
 	 * This method updates the status of multiple timesheets based on the provided `ids`.
 	 * If the status is changed to `APPROVED`, it records the approver's ID and approval timestamp.
+	 * If the status is changed to `DENIED`, it records the given reason.
 	 * After updating, it fetches the updated timesheets and sends email notifications to employees.
 	 */
 	public async execute(command: TimesheetUpdateStatusCommand): Promise<ITimesheet[]> {
@@ -40,8 +41,12 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 		// Prepare update payload
 		const updatePayload: Partial<ITimesheet> = {
 			status,
-			approvedById: status === TimesheetStatus.APPROVED ? RequestContext.currentUserId() : undefined,
-			approvedAt: status === TimesheetStatus.APPROVED ? new Date() : null
+			// `undefined` is left out of the update, so the previous approver used to remain on a
+			// timesheet that was denied or sent back after its approval
+			approvedById: status === TimesheetStatus.APPROVED ? RequestContext.currentUserId() : null,
+			approvedAt: status === TimesheetStatus.APPROVED ? new Date() : null,
+			// A denial without a reason clears the one left by an earlier denial.
+			...(status === TimesheetStatus.DENIED ? { reason: input.reason?.trim() || null } : {})
 		};
 
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;

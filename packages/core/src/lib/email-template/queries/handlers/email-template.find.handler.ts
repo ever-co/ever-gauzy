@@ -108,7 +108,7 @@ export class FindEmailTemplateHandler implements IQueryHandler<FindEmailTemplate
 						 * Fetch missing templates for production environment
 						 * Save it to the database for global tenant
 						 */
-						const templates = this.emailTemplateReaderService.readEmailTemplate(name);
+						const templates = await this.emailTemplateReaderService.readEmailTemplate(name);
 						const emailTemplates = templates.filter(
 							(template: IEmailTemplate) => template.name === `${name}/${type}`
 						).map(

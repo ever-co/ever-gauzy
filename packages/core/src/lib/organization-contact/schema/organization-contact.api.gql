@@ -1,0 +1,129 @@
+# The party row's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-contact` routes already serve, under the
+# same guard chain and with the same permission — read from the controller's own metadata rather than
+# restated — so a client that reaches a capability over one protocol is not given a narrower or a
+# wider one than the client that reaches it over the other. That parity is field by field and it is
+# not uniform, which is the point: the list, the one row, the employee look-up and the two lifecycle
+# moves are served without a permission and are mirrored without one, while the count, the create,
+# the edit and the employee assignment carry the permission their own route carries.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `GET /organization-contact/pagination` has no field
+# of its own: it is the same rows under the same filters, and the page it slices by `take`/`skip` is
+# what the connection's `page`, `limit` and `offset` state. Its narrowing by a `like` pattern on the
+# name, the e-mail and the phone is the connection's `StringFilter` on those three members, which is
+# the same question asked in the query protocol's own vocabulary.
+#
+# **The employee look-up is a root field of its own rather than a filter on the connection**, and
+# that is a decision about the delivered read rather than a second spelling of the same one. The
+# route answers a projection of the row — `id`, `name` and `imageUrl`, with the member pivot joined —
+# so every other member of the type is null on its answers, and the pivot it joins is not a relation
+# the list read loads: a `members` filter on the connection would be evaluated against rows that
+# carry no members at all and would therefore select nothing, which is the worst answer a filter can
+# give. The field mirrors the route instead, projection and all.
+
+extend type Query {
+	"""
+	The parties of the caller's organization, newest first.
+	"""
+	organizationContacts(
+		filter: OrganizationContactFilter
+		sort: [OrganizationContactSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OrganizationContactConnection!
+
+	"""
+	One party of the caller's organization, or null when there is none.
+	"""
+	organizationContact(id: ID!): OrganizationContact
+
+	"""
+	The parties one employee works, as the delivered route answers them.
+
+	The answer is a projection rather than the whole row — the identifier, the name and the avatar URL,
+	which is what the route selects — so every other member of the type is null here, and the caller
+	that needs one reads the party by its identifier. `contactType` narrows the set the way the route's
+	own query parameter does, and `organizationId` is required because the route's query DTO requires
+	it and the read is scoped by it.
+	"""
+	organizationContactsByEmployee(
+		employeeId: ID!
+		organizationId: ID!
+		contactType: ContactType
+	): [OrganizationContact!]!
+
+	"""
+	How many parties the caller's organization holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+	on a customer base has to keep apart. The delivered count route binds its query string to the
+	store's own `where`, a shape no schema can state, so the field offers no narrowing of its own
+	rather than an argument the resolver could not pass on.
+	"""
+	organizationContactCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records a party, together with the detail row it is stored with.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller. The organization is stated, because the delivered body validates it against the caller's
+	own memberships and the handler stamps it onto the detail row as well as onto the party.
+	"""
+	createOrganizationContact(input: CreateOrganizationContactInput!): OrganizationContact!
+
+	"""
+	Changes a party that exists, and the detail row it carries.
+
+	The delivered write reads the row first and writes the members stated onto it, so a member the
+	caller leaves out is left as it is and a party that is not there is a miss rather than a write that
+	creates one.
+	"""
+	updateOrganizationContact(input: UpdateOrganizationContactInput!): OrganizationContact!
+
+	"""
+	Moves a set of parties into or out of one employee's book, in one call.
+
+	Both directions are one operation because they are one fact about one employee, and the delivered
+	command applies both lists together; the answer is the write's own success, which is what the
+	route answers with.
+	"""
+	updateOrganizationContactsByEmployee(input: UpdateOrganizationContactsByEmployeeInput!): Boolean!
+
+	"""
+	Removes a party outright: the row is gone and nothing reads it back.
+
+	The two removals this resource serves are not the same operation, so both are stated rather than
+	one of them being left to a client to discover on the other protocol. A party an order, an invoice
+	or a payment already names is deactivated rather than removed — that rule is the service's, and it
+	refuses the removal here exactly as it refuses it over REST.
+	"""
+	deleteOrganizationContact(id: ID!): Boolean!
+
+	"""
+	Withdraws a party without removing it: the row stays in the table, marked as removed, and the
+	recovery below reads it back. The answer is the row as it now stands, which is what the delivered
+	route answers with, and the parties that pointed at it keep resolving because the row is still
+	there.
+	"""
+	softDeleteOrganizationContact(id: ID!): OrganizationContact!
+
+	"""
+	Puts a withdrawn party back, clearing the marker the withdrawal set.
+	"""
+	recoverOrganizationContact(id: ID!): OrganizationContact!
+}

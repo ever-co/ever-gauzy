@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { NbThemeService } from '@nebular/theme';
@@ -10,6 +10,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'gz-doughnut-chart',
     templateUrl: './chart.component.html',
     styleUrls: ['./chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ChartComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {

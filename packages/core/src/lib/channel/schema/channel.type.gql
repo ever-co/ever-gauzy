@@ -1,0 +1,216 @@
+# The channel domain's GraphQL types.
+#
+# A channel is the sales context everything commercial is resolved *for*, so this file declares the
+# concept, the vocabulary its lifecycle and currency use, the connection its list root field returns,
+# and the two pivots that hang off it: a hostname that resolves a request to the channel, and the
+# publication of a region to it. The region itself is declared by its own domain and referenced here.
+#
+# Money is never a `Float` anywhere in this schema: `defaultCurrency` is a three-letter code, not an
+# amount, and the amounts that follow from it are `Decimal` when they arrive.
+
+"""
+The sales context: a storefront, a marketplace listing, a point of sale, a B2B portal.
+"""
+type Channel {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	name: String!
+	"""
+	Stable key, unique per organization among the live rows. Written once: it is what a storefront
+	URL, a seed file and an import mapping name.
+	"""
+	code: String!
+	description: String
+	"""Only `ACTIVE` serves requests. `ARCHIVED` is terminal."""
+	status: ChannelStatus!
+	"""Whether this is the organization's default channel. At most one live row carries it."""
+	isDefault: Boolean!
+	"""Currency of a cart created without an explicit currency. A three-letter ISO code."""
+	defaultCurrency: String!
+	"""The region applied when a request does not resolve one. When set, it is also a member of `regions`."""
+	defaultRegionId: ID
+	defaultRegion: Region
+	"""BCP-47 locale for translated content."""
+	defaultLocale: String
+	"""Prefix handed to the numbering series this channel numbers its documents with."""
+	orderNumberPrefix: String
+	"""Zero-padding width of the numeric part of an order number."""
+	orderNumberPadding: Int!
+	"""Channel-scoped overrides read by the checkout, tax and fulfilment strategies."""
+	settings: JSON
+	"""Tenant extras. Read whole; nothing here is filtered on."""
+	metadata: JSON
+	"""The hostnames that resolve to this channel, primary first when they are expanded."""
+	domains: [ChannelDomain!]
+	"""The regions published to this channel, fallback region first when they are expanded."""
+	regions: [ChannelRegion!]
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+Where a channel and a region stand in their life.
+"""
+enum ChannelStatus {
+	DRAFT
+	ACTIVE
+	INACTIVE
+	ARCHIVED
+}
+
+"""
+The publication of one region to one channel.
+"""
+type ChannelRegion {
+	id: ID!
+	channelId: ID!
+	channel: Channel
+	regionId: ID!
+	region: Region
+	"""
+	Whether this is the region the channel falls back to when its own default region is unset.
+	Distinct from `Channel.defaultRegionId`, which is the region a request that resolved none is
+	priced in.
+	"""
+	isDefault: Boolean!
+	tenantId: ID
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of channels.
+"""
+type ChannelEdge {
+	node: Channel!
+	cursor: String!
+}
+
+"""
+One page of channels, with the total the filters select and the boundary cursors.
+"""
+type ChannelConnection {
+	nodes: [Channel!]!
+	edges: [ChannelEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a channel may be sorted by.
+"""
+enum ChannelSortField {
+	createdAt
+	updatedAt
+	name
+	code
+	status
+	isDefault
+}
+
+"""
+The order the channels are returned in. At most three keys are accepted.
+"""
+input ChannelSort {
+	field: ChannelSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the lifecycle status.
+"""
+input ChannelStatusFilter {
+	eq: ChannelStatus
+	ne: ChannelStatus
+	in: [ChannelStatus!]
+	nin: [ChannelStatus!]
+	isNull: Boolean
+}
+
+"""
+The fields a channel list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input ChannelFilter {
+	id: IDFilter
+	name: StringFilter
+	code: StringFilter
+	status: ChannelStatusFilter
+	isDefault: BooleanFilter
+	defaultCurrency: StringFilter
+	defaultLocale: StringFilter
+	defaultRegionId: IDFilter
+	orderNumberPrefix: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ChannelFilter!]
+	or: [ChannelFilter!]
+	not: ChannelFilter
+}
+
+"""
+What a caller states when it opens a sales context.
+
+The lifecycle members are absent by construction: the channel is created `DRAFT` by the service, its
+default flag is claimed through `setDefaultChannel`, and its default region is named by the write
+that publishes it. `code` is required here and never editable afterwards.
+"""
+input CreateChannelInput {
+	organizationId: ID!
+	name: String!
+	code: String!
+	description: String
+	defaultCurrency: String
+	defaultLocale: String
+	orderNumberPrefix: String
+	orderNumberPadding: Int
+	settings: JSON
+	metadata: JSON
+}
+
+"""
+What a caller may change on a channel that exists.
+
+`code` is absent, and a write that carries it is refused rather than silently ignored.
+"""
+input UpdateChannelInput {
+	id: ID!
+	organizationId: ID!
+	name: String
+	description: String
+	defaultCurrency: String
+	defaultLocale: String
+	orderNumberPrefix: String
+	orderNumberPadding: Int
+	settings: JSON
+	metadata: JSON
+}
+
+"""
+The lifecycle move a caller asks for.
+"""
+input SetChannelStatusInput {
+	id: ID!
+	status: ChannelStatus!
+}
+
+"""
+One member of a channel's region set.
+"""
+input ChannelRegionInput {
+	regionId: ID!
+	isDefault: Boolean
+}
+
+"""
+The region set a channel sells into afterwards.
+
+A set rather than a member-per-call pair: the regions stated are published and the ones left out are
+withdrawn in one transaction, so a half-applied replacement is not a state a client can observe.
+"""
+input ReplaceChannelRegionsInput {
+	id: ID!
+	items: [ChannelRegionInput!]!
+}

@@ -1,0 +1,11 @@
+:host {
+	display: block;
+}
+
+.document-file-preview {
+	display: block;
+	// The preview fills the content area below the page header: the viewport less the app header, the page
+	// header and the margins around them, never less than a usable height.
+	height: calc(100vh - 15rem);
+	min-height: 24rem;
+}

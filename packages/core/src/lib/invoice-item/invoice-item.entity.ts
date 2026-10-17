@@ -2,6 +2,7 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import {
+	ID,
 	IEmployee,
 	IExpense,
 	IInvoice,
@@ -20,9 +21,20 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 
+/**
+ * One billed line.
+ *
+ * `purchaseOrderLineId` is the bill line's own provenance and the third of the three quantities a
+ * three-way match needs; a separate match table would hold the same quantity twice. It is meaningful
+ * only for a purchase bill, and the rule that keeps the sale-side bridge from setting it is a service
+ * rule, because the database cannot express a check across three tables.
+ */
+@ColumnIndex('IDX_invoice_item_purchase_line', ['purchaseOrderLineId'], {
+	where: '"purchaseOrderLineId" IS NOT NULL'
+})
 @MultiORMEntity('invoice_item', { mikroOrmRepository: () => MikroOrmInvoiceItemRepository })
 export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoiceItem {
 	@ApiProperty({ type: () => String })
@@ -63,6 +75,18 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	applyDiscount?: boolean;
+
+	/**
+	 * Which ordered line this bill line settles. Null on every existing row, and on a sales line: the
+	 * match is what a purchase bill states, and a bill imported before the column existed is
+	 * reconciled by the three-way audit rather than backfilled with a guessed match. The constraint is
+	 * added by the purchasing package's set.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	purchaseOrderLineId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

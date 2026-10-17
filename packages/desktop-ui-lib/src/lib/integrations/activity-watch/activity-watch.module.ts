@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ActivityWatchEventService } from './activity-watch-event.service';
 import { ActivityWatchComponent } from './view/activity-watch.component';
 import { NbIconModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ActivityWatchViewService } from './activity-watch-view.service';
 import { ActivityWatchElectronService } from './activity-watch-electron.service';
 
 @NgModule({
     exports: [ActivityWatchComponent],
-    imports: [CommonModule, NbIconModule, NbTooltipModule, NbToggleModule, TranslateModule, ActivityWatchComponent],
+    imports: [CommonModule, NbIconModule, NbTooltipModule, NbToggleModule, TranslatePipe, ActivityWatchComponent],
     providers: [ActivityWatchEventService, ActivityWatchViewService, ActivityWatchElectronService]
 })
 export class ActivityWatchModule {}

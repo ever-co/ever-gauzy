@@ -79,7 +79,7 @@
 			(scroll)="loadMoreDeals()"
 			[settings]="smartTableSettings"
 			[source]="deals"
-			[totalItems]="pagination?.totalItems"
+			[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 		></ga-card-grid>
 	</div>
 </ng-template>
@@ -88,7 +88,7 @@
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
 			<button
-				[routerLink]="['./', selectedDeal?.id, 'edit']"
+				[routerLink]="['./', $safeNavigationMigration(selectedDeal?.id), 'edit']"
 				[disabled]="disableButton"
 				class="action primary"
 				nbButton

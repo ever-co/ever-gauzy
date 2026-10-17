@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbComponentStatus } from '@nebular/theme';
 import { TaskStatusEnum } from '@gauzy/contracts';
 
@@ -32,6 +32,7 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 			}
 		`
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class StatusViewComponent implements OnInit {

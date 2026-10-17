@@ -32,7 +32,7 @@ import {
     NbTooltipModule,
     NbUserModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 
 import { provideEffects } from '@ngneat/effects-ng';
@@ -169,7 +169,7 @@ import { PluginDeepLinkService } from './services/plugin-deep-link.service';
 		NbCardModule,
 		NbIconModule,
 		TablerIconsModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		RouterModule,
 		NbBadgeModule,
 		FormsModule,

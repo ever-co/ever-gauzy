@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbButtonModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,7 +23,7 @@ import { TimeTrackWidgetStateComponent } from './time-track-widget-state.compone
 	templateUrl: './apps-urls-widget.component.html',
 	styleUrls: ['./time-track-list-widget.scss'],
 	standalone: true,
-	imports: [NbButtonModule, TranslateModule, ActivityItemModule, TimeTrackWidgetStateComponent],
+	imports: [NbButtonModule, TranslatePipe, ActivityItemModule, TimeTrackWidgetStateComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppsUrlsWidgetComponent extends BaseTimeTrackListWidgetComponent<IActivitiesStatistics> {

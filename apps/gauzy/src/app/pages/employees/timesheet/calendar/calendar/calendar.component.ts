@@ -1,5 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, TemplateRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, TemplateRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import {
 	CalendarOptions,
@@ -38,6 +38,7 @@ import {
 	selector: 'ngx-calendar-timesheet',
 	templateUrl: './calendar.component.html',
 	styleUrls: ['./calendar.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CalendarComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {

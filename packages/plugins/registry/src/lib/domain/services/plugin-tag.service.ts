@@ -1,5 +1,5 @@
 import { ID, IPagination } from '@gauzy/contracts';
-import { MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum, RequestContext } from '@gauzy/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindOptionsWhere, In } from 'typeorm';
 import {
@@ -17,6 +17,7 @@ import {
 import { PluginTag } from '../entities/plugin-tag.entity';
 import { MikroOrmPluginTagRepository } from '../repositories/mikro-orm-plugin-tag.repository';
 import { TypeOrmPluginTagRepository } from '../repositories/type-orm-plugin-tag.repository';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 /**
  * PluginTag Service
@@ -34,7 +35,7 @@ import { TypeOrmPluginTagRepository } from '../repositories/type-orm-plugin-tag.
  * - Data integrity validation
  */
 @Injectable()
-export class PluginTagService extends TenantAwareCrudService<PluginTag> {
+export class PluginTagService extends RegistryTenantAwareCrudService<PluginTag> {
 	constructor(
 		public readonly typeOrmPluginTagRepository: TypeOrmPluginTagRepository,
 		public readonly mikroOrmPluginTagRepository: MikroOrmPluginTagRepository

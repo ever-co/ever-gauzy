@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterModule } from '@angular/router';
 import { CoreModule, LanguagesService } from '@gauzy/ui-core/core';
@@ -14,7 +14,7 @@ describe('AppComponent', () => {
 			declarations: [AppComponent],
 			teardown: { destroyAfterEach: false },
 			imports: [CoreModule.forRoot(), RouterModule, ComponentsModule],
-			providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), LanguagesService]
+			providers: [provideHttpClient(withXhr(), withInterceptorsFromDi()), provideHttpClientTesting(), LanguagesService]
 		}).compileComponents();
 	});
 	it('should create the app', () => {

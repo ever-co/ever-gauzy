@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, UpdateResult } from 'typeorm';
@@ -6,11 +6,12 @@ import { IBroadcast, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
-import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
+import { UseValidationPipe, UUIDValidationPipe, AbstractValidationPipe } from '../shared/pipes';
 import { Broadcast } from './broadcast.entity';
 import { BroadcastService } from './broadcast.service';
 import { BroadcastCreateCommand, BroadcastUpdateCommand } from './commands';
 import { CreateBroadcastDTO, UpdateBroadcastDTO } from './dto';
+import { TenantOrganizationBaseDTO } from '../core/dto';
 
 @ApiTags('Broadcast')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -142,5 +143,51 @@ export class BroadcastController extends CrudController<Broadcast> {
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.broadcastService.delete(id);
+	}
+
+	/**
+	 * Soft deletes a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could retire the row. It now states `BROADCAST_DELETE`: the grant its own delete route states
+	 * (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted record.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.BROADCAST_DELETE)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Broadcast> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could restore the row. It now states `BROADCAST_DELETE`: the grant its own delete route states
+	 * (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored record.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.BROADCAST_DELETE)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<Broadcast> {
+		return await super.softRecover(id, ...options);
 	}
 }

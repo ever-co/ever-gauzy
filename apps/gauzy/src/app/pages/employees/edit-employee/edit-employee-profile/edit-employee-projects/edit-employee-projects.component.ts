@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject } from 'rxjs';
@@ -25,6 +25,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-edit-employee-projects',
     templateUrl: './edit-employee-projects.component.html',
     styleUrls: ['./edit-employee-projects.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditEmployeeProjectsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

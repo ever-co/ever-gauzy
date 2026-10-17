@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
 import { EverIdWorkspacesComponent } from '../components/ever-id-workspaces.component';
 import { AuthZitadelUiService, EverIdWorkspaceResponse } from '../services/auth-zitadel-ui.service';
@@ -17,7 +17,7 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 @Component({
 	selector: 'ngx-ever-id-confirm',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbAlertModule, NbButtonModule, NbInputModule, RouterLink, TranslateModule, EverIdWorkspacesComponent],
+	imports: [FormsModule, NbAlertModule, NbButtonModule, NbInputModule, RouterLink, TranslatePipe, EverIdWorkspacesComponent],
 	template: `
 		<section class="ever-id-page">
 			<h2 class="title">{{ 'AUTH_ZITADEL.CONFIRM.TITLE' | translate }}</h2>

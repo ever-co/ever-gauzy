@@ -7,9 +7,9 @@
 					<div class="block-item-big">
 						@if (currentEmployee) {
 						<ngx-avatar
-							[src]="currentEmployee?.user?.imageUrl"
-							[name]="currentEmployee?.user?.name"
-							[id]="currentEmployee?.id"
+							[src]="$safeNavigationMigration(currentEmployee?.user?.imageUrl)"
+							[name]="$safeNavigationMigration(currentEmployee?.user?.name)"
+							[id]="$safeNavigationMigration(currentEmployee?.id)"
 							[employee]="currentEmployee"
 							class="report-table"
 						></ngx-avatar>
@@ -17,7 +17,7 @@
 					</div>
 					}
 					<div class="block-item-big">
-						{{ getCategoryName(recurringExpense?.categoryName) }}
+						{{ getCategoryName($safeNavigationMigration(recurringExpense?.categoryName)) }}
 					</div>
 					<div class="block-item">
 						{{ getStartDate() }}
@@ -25,9 +25,9 @@
 					<div class="block-item">
 						<span class="block-amount">
 							{{
-								recurringExpense?.value
-									| currency : recurringExpense?.currency
-									| position : selectedOrganization?.currencyPosition
+								$safeNavigationMigration(recurringExpense?.value)
+									| currency : $safeNavigationMigration(recurringExpense?.currency)
+									| position : $safeNavigationMigration(selectedOrganization?.currencyPosition)
 							}}
 							@if (splitExpense) {
 							<nb-icon

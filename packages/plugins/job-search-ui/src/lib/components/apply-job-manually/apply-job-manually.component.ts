@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
@@ -30,6 +30,7 @@ import { EmployeeSelectorComponent, FormHelpers, RichTextEditorComponent } from 
     templateUrl: './apply-job-manually.component.html',
     styleUrls: ['./apply-job-manually.component.scss'],
     providers: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

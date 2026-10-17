@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialogRef } from '@nebular/theme';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
@@ -50,6 +50,7 @@ import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } f
 	selector: 'ngx-header',
 	styleUrls: ['./header.component.scss'],
 	templateUrl: './header.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {

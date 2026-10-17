@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { IImageAsset } from '@gauzy/contracts';
 
@@ -6,6 +6,7 @@ import { IImageAsset } from '@gauzy/contracts';
     selector: 'ga-attach-receipt',
     templateUrl: './attach-receipt.component.html',
     styleUrls: ['./attach-receipt.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AttachReceiptComponent implements OnInit {

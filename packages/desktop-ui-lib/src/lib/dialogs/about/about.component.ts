@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, NgZone } from '@angular/core';
+import { Component, Inject, OnInit, NgZone, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { GAUZY_ENV } from '../../constants';
@@ -12,6 +12,7 @@ import { IOSInfo } from '@gauzy/contracts';
     selector: 'gauzy-about',
     templateUrl: './about.component.html',
     styleUrls: ['./about.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbLayoutModule, NbCardModule, TranslatePipe]
 })
 export class AboutComponent implements OnInit {

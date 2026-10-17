@@ -14,7 +14,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InviteService, RoleService } from '@gauzy/ui-core/core';
 import { SharedModule } from '../../shared.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
@@ -37,7 +37,7 @@ import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.
 		NbTagModule,
 		NbTooltipModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		ContactSelectModule,
 		RoleFormFieldModule

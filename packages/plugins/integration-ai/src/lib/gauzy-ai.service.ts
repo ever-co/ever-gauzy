@@ -9,7 +9,6 @@ import {
 	CreateEmployeeJobApplication,
 	User,
 	Employee,
-	EmployeeJobPostsDocument,
 	EmployeeJobPostsQuery,
 	EmployeeQuery,
 	UpdateEmployee,
@@ -27,17 +26,8 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
 import fetch from 'cross-fetch';
 import * as chalk from 'chalk';
 import FormData from 'form-data';
-import {
-	ApolloClient,
-	ApolloQueryResult,
-	NormalizedCacheObject,
-	InMemoryCache,
-	DefaultOptions,
-	// NetworkStatus,
-	gql,
-	createHttpLink,
-	ApolloLink
-} from '@apollo/client/core';
+import { ApolloClient, CombinedGraphQLErrors, InMemoryCache, gql, HttpLink, ApolloLink } from '@apollo/client/core';
+import type { GraphQLFormattedError } from 'graphql';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IEmployee,
@@ -57,6 +47,14 @@ import {
 import { RequestConfigProvider } from './request-config.provider';
 import { AxiosRequestHeaders, HttpMethodEnum } from './configuration.interface';
 
+/**
+ * The GraphQL errors of a query result. Apollo Client 4 reports them as the result's single `error` (a
+ * `CombinedGraphQLErrors`) instead of an `errors` array.
+ */
+function graphQLErrorsOf(result: { error?: unknown }): ReadonlyArray<GraphQLFormattedError> {
+	return CombinedGraphQLErrors.is(result.error) ? result.error.errors : [];
+}
+
 export interface ImageAnalysisResult {
 	success: boolean;
 	data: {
@@ -74,26 +72,47 @@ export interface ImageAnalysisResult {
 @Injectable()
 export class GauzyAIService {
 	private readonly _logger = new Logger(GauzyAIService.name);
-	private _client: ApolloClient<NormalizedCacheObject>;
+	private _client: ApolloClient;
 	public logging: boolean = false;
 
-	// For now, we disable Apollo client caching for all GraphQL queries and mutations
-	private readonly defaultOptions: DefaultOptions = {
+	// For now, we disable Apollo client caching for all GraphQL queries and mutations.
+	// Apollo Client 4 types a default `errorPolicy` as `never` unless it is declared through module augmentation, so
+	// the error policies ('all' for queries and mutations) are passed by `query` and `mutate` below instead. Nothing
+	// here uses `watchQuery`, whose default policy was 'ignore'.
+	private readonly defaultOptions: ApolloClient.DefaultOptions = {
 		watchQuery: {
-			fetchPolicy: 'no-cache',
-			errorPolicy: 'ignore'
+			fetchPolicy: 'no-cache'
 		},
 		query: {
-			fetchPolicy: 'no-cache',
-			errorPolicy: 'all'
+			fetchPolicy: 'no-cache'
 		},
 		mutate: {
-			fetchPolicy: 'no-cache',
-			errorPolicy: 'all'
+			fetchPolicy: 'no-cache'
 		}
 	};
 
 	private gauzyAIGraphQLEndpoint: string;
+
+	/*
+	 * Queries and mutations run through these two. Apollo Client 4 applies the `errorPolicy` ('all' here) to network
+	 * errors too and resolves with them as the result's `error`; Apollo Client 3 rejected, which every caller here relies
+	 * on (they read `result.data` straight away). So a network error still rejects; GraphQL errors stay on the result.
+	 */
+	private async query<TData>(options: ApolloClient.QueryOptions<TData>): Promise<ApolloClient.QueryResult<TData>> {
+		const result = await this._client.query<TData>({ errorPolicy: 'all', ...options });
+		if (result.error && !CombinedGraphQLErrors.is(result.error)) {
+			throw result.error;
+		}
+		return result as ApolloClient.QueryResult<TData>;
+	}
+
+	private async mutate<TData>(options: ApolloClient.MutateOptions<TData>): Promise<ApolloClient.MutateResult<TData>> {
+		const result = await this._client.mutate<TData>({ errorPolicy: 'all', ...options });
+		if (result.error && !CombinedGraphQLErrors.is(result.error)) {
+			throw result.error;
+		}
+		return result as ApolloClient.MutateResult<TData>;
+	}
 
 	constructor(
 		private readonly _configService: ConfigService,
@@ -340,7 +359,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		await this._client.mutate({
+		await this.mutate({
 			mutation: updateEmployeeMutation,
 			variables: {
 				input: {
@@ -477,7 +496,7 @@ export class GauzyAIService {
 					}
 				`;
 
-				await this._client.mutate({
+				await this.mutate({
 					mutation: updateEmployeeJobPostMutation,
 					variables: {
 						input: {
@@ -579,7 +598,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			await this._client.mutate({
+			await this.mutate({
 				mutation: createOneEmployeeJobApplicationMutation,
 				variables: {
 					input: {
@@ -611,7 +630,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			await this._client.mutate({
+			await this.mutate({
 				mutation: updateEmployeeJobPostMutation,
 				variables: {
 					input: {
@@ -697,7 +716,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			const deleteMutationResult = await this._client.mutate({
+			const deleteMutationResult = await this.mutate({
 				mutation: deleteAllCriteriaMutation,
 				variables: {
 					input: {
@@ -749,7 +768,7 @@ export class GauzyAIService {
 					}
 				`;
 
-				const createNewCriteriaResult = await this._client.mutate({
+				const createNewCriteriaResult = await this.mutate({
 					mutation: createManyUpworkJobsSearchCriteriaMutation,
 					variables: {
 						input: {
@@ -1030,8 +1049,8 @@ export class GauzyAIService {
 			let totalCount: number;
 
 			do {
-				const result: ApolloQueryResult<EmployeeJobPostsQuery> =
-					await this._client.query<EmployeeJobPostsQuery>({
+				const result: ApolloClient.QueryResult<EmployeeJobPostsQuery> =
+					await this.query<EmployeeJobPostsQuery>({
 						query: employeesQuery,
 						variables: {
 							after: after,
@@ -1046,7 +1065,7 @@ export class GauzyAIService {
 						}
 					});
 
-				console.log(result.errors);
+				console.log(graphQLErrorsOf(result));
 				console.log(result.data);
 
 				const jobsResponse = result.data.employeeJobPosts.edges.map((it) => {
@@ -1129,7 +1148,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		const employeeJobPostsQueryResult = await this._client.query<any>({
+		const employeeJobPostsQueryResult = await this.query<any>({
 			query: employeeJobPostsQuery,
 			variables: {
 				employeeIdFilter: employeeId,
@@ -1163,7 +1182,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		const jobPostsQueryResult = await this._client.query<any>({
+		const jobPostsQueryResult = await this.query<any>({
 			query: jobPostsQuery,
 			variables: {
 				providerCodeFilter: providerCode,
@@ -1195,7 +1214,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>({
+		const employeesQueryResult: ApolloClient.QueryResult<EmployeeQuery> = await this.query<EmployeeQuery>({
 			query: employeesQuery,
 			variables: {
 				externalEmployeeIdFilter: externalEmployeeId
@@ -1250,13 +1269,12 @@ export class GauzyAIService {
 		});
 
 		/** */
-		const httpLink = createHttpLink({
+		const httpLink = new HttpLink({
 			uri: this.gauzyAIGraphQLEndpoint,
 			fetch
 		});
 
 		this._client = new ApolloClient({
-			typeDefs: EmployeeJobPostsDocument,
 			link: authLink.concat(httpLink),
 			cache: new InMemoryCache(),
 			defaultOptions: this.defaultOptions
@@ -1294,7 +1312,7 @@ export class GauzyAIService {
 				// 		`;
 
 				// 		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> =
-				// 			await this._client.query<EmployeeQuery>({
+				// 			await this.query<EmployeeQuery>({
 				// 				query: employeesQuery,
 				// 			});
 
@@ -1344,7 +1362,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			let employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<EmployeeQuery>({
+			let employeesQueryResult: ApolloClient.QueryResult<EmployeeQuery> = await this.query<EmployeeQuery>({
 				query: employeesQuery,
 				variables: {
 					externalEmployeeIdFilter: employee.externalEmployeeId
@@ -1378,7 +1396,7 @@ export class GauzyAIService {
 					}
 				`;
 
-				employeesQueryResult = await this._client.query<EmployeeQuery>({
+				employeesQueryResult = await this.query<EmployeeQuery>({
 					query: employeesQuery,
 					variables: {
 						firstNameFilter: employee.firstName,
@@ -1413,7 +1431,7 @@ export class GauzyAIService {
 						}
 					`;
 					try {
-						const newEmployee = await this._client.mutate({
+						const newEmployee = await this.mutate({
 							mutation: createEmployeeMutation,
 							variables: {
 								input: {
@@ -1450,7 +1468,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			await this._client.mutate({
+			await this.mutate({
 				mutation: updateEmployeeMutation,
 				variables: {
 					input: {
@@ -1497,7 +1515,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		let usersQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+		let usersQueryResult: ApolloClient.QueryResult<Query> = await this.query<Query>({
 			query: userFilterByExternalFieldsQuery,
 			variables: {
 				externalUserIdFilter: user.externalUserId,
@@ -1507,9 +1525,9 @@ export class GauzyAIService {
 
 		try {
 			// Check if there are any GraphQL errors
-			if (usersQueryResult.errors && usersQueryResult.errors.length > 0) {
+			if (graphQLErrorsOf(usersQueryResult).length > 0) {
 				// Handle GraphQL errors
-				const [error] = usersQueryResult.errors;
+				const [error] = graphQLErrorsOf(usersQueryResult);
 				// You can also access error.extensions for additional error details
 
 				// Use this (using the "options" parameter):
@@ -1545,7 +1563,7 @@ export class GauzyAIService {
 							}
 						}
 					`;
-					const newUser = await this._client.mutate({
+					const newUser = await this.mutate({
 						mutation: createOneUserMutation,
 						variables: {
 							input: {
@@ -1579,7 +1597,7 @@ export class GauzyAIService {
 						}
 					}
 				`;
-				const updateUserResponse = await this._client.mutate({
+				const updateUserResponse = await this.mutate({
 					mutation: updateUserMutation,
 					variables: {
 						input: {
@@ -1624,7 +1642,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		let tenantApiKeysQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+		let tenantApiKeysQueryResult: ApolloClient.QueryResult<Query> = await this.query<Query>({
 			query: tenantApiKeyFilterByExternalFieldsQuery,
 			variables: {
 				externalApiKeyFilter: input.apiKey
@@ -1633,9 +1651,9 @@ export class GauzyAIService {
 
 		try {
 			// Check if there are any GraphQL errors
-			if (tenantApiKeysQueryResult.errors && tenantApiKeysQueryResult.errors.length > 0) {
+			if (graphQLErrorsOf(tenantApiKeysQueryResult).length > 0) {
 				// Handle GraphQL errors
-				const [error] = tenantApiKeysQueryResult.errors;
+				const [error] = graphQLErrorsOf(tenantApiKeysQueryResult);
 				// You can also access error.extensions for additional error details
 
 				// Use this (using the "options" parameter):
@@ -1660,7 +1678,7 @@ export class GauzyAIService {
 					}
 				`;
 
-				const updateOneTenantApiKeyResponse = await this._client.mutate({
+				const updateOneTenantApiKeyResponse = await this.mutate({
 					mutation: updateOneTenantApiKeyMutation,
 					variables: {
 						input: {
@@ -1719,7 +1737,7 @@ export class GauzyAIService {
 
 		try {
 			// Make the GraphQL query
-			const tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+			const tenantsQueryResult: ApolloClient.QueryResult<Query> = await this.query<Query>({
 				query: tenantByExternalTenantIdQuery,
 				variables: {
 					externalTenantIdFilter: externalTenantId
@@ -1727,9 +1745,9 @@ export class GauzyAIService {
 			});
 
 			// Check if there are any GraphQL errors
-			if (tenantsQueryResult.errors && tenantsQueryResult.errors.length > 0) {
+			if (graphQLErrorsOf(tenantsQueryResult).length > 0) {
 				// Handle GraphQL errors
-				const [error] = tenantsQueryResult.errors;
+				const [error] = graphQLErrorsOf(tenantsQueryResult);
 				// You can also access error.extensions for additional error details
 
 				// Use this (using the "options" parameter):

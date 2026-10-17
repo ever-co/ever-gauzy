@@ -25,7 +25,14 @@ import {
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { CreatePayrollItemDTO, CreatePayrollRunDTO, PayrollRunQueryDTO, UpdatePayrollRunDTO } from './dto';
+import {
+	CreatePayrollItemDTO,
+	CreatePayrollRunDTO,
+	PayrollItemQueryDTO,
+	PayrollRunQueryDTO,
+	UpdatePayrollItemDTO,
+	UpdatePayrollRunDTO
+} from './dto';
 import { PayrollRunService } from './payroll-run.service';
 
 /**
@@ -41,6 +48,22 @@ import { PayrollRunService } from './payroll-run.service';
 @Controller('/payroll-run')
 export class PayrollRunController {
 	constructor(private readonly payrollRunService: PayrollRunService) {}
+
+	/**
+	 * Payroll lines of one organization across its runs, newest first, optionally narrowed to one run,
+	 * one employee, one type or one category. Declared before `/:id` so the path is not read as a run.
+	 *
+	 * @param filter the organization (checked against the caller's memberships), the narrowing and the page
+	 * @returns the matching lines and the total row count
+	 */
+	@ApiOperation({ summary: 'List payroll lines across runs' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The matching lines and the total row count' })
+	@Permissions(PermissionsEnum.ORG_PAYROLL_VIEW)
+	@Get('/items')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findItems(@Query() filter: PayrollItemQueryDTO): Promise<IPagination<IPayrollItem>> {
+		return this.payrollRunService.findItems(filter);
+	}
 
 	/**
 	 * Totals across every paid payroll run of an organization, grouped by currency.
@@ -242,6 +265,42 @@ export class PayrollRunController {
 		@Body() entity: CreatePayrollItemDTO
 	): Promise<IPayrollItem> {
 		return this.payrollRunService.addItem(id, entity);
+	}
+
+	/**
+	 * Edit one line of a draft run; the run's totals are recomputed from its lines.
+	 *
+	 * @param id the run the line belongs to
+	 * @param itemId the line to edit
+	 * @param entity the organization and the members to change
+	 * @returns the edited line
+	 */
+	@ApiOperation({ summary: 'Edit a line item of a draft payroll run' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line item has been edited.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The run is not a draft, or the input is invalid' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_PAYROLL_EDIT)
+	@Put('/:id/items/:itemId')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async updateItem(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('itemId', UUIDValidationPipe) itemId: ID,
+		@Body() entity: UpdatePayrollItemDTO
+	): Promise<IPayrollItem> {
+		// The scope members are the run's, not the line's: only the line's own members are handed on.
+		const { employeeId, type, category, description, amount, quantity, unitPrice, taxable } = entity;
+
+		return this.payrollRunService.updateItem(id, itemId, entity.organizationId, {
+			employeeId,
+			type,
+			category,
+			description,
+			amount,
+			quantity,
+			unitPrice,
+			taxable
+		});
 	}
 
 	/**

@@ -69,7 +69,7 @@
               [attr.id]="'section-search-header'"
               [attr.aria-controls]="'section-search-content'">
               <div class="section-title">
-                <nb-icon [icon]="filterSections[0]?.icon"></nb-icon>
+                <nb-icon [icon]="$safeNavigationMigration(filterSections[0]?.icon)"></nb-icon>
                 <span>{{ filterSections[0]?.label }}</span>
               </div>
               <nb-icon
@@ -165,7 +165,7 @@
                 [attr.id]="'section-categories-header'"
                 [attr.aria-controls]="'section-categories-content'">
                 <div class="section-title">
-                  <nb-icon [icon]="filterSections[1]?.icon"></nb-icon>
+                  <nb-icon [icon]="$safeNavigationMigration(filterSections[1]?.icon)"></nb-icon>
                   <span>{{ filterSections[1]?.label }}</span>
                 </div>
                 <nb-icon
@@ -251,7 +251,7 @@
                 [attr.id]="'section-properties-header'"
                 [attr.aria-controls]="'section-properties-content'">
                 <div class="section-title">
-                  <nb-icon [icon]="filterSections[2]?.icon"></nb-icon>
+                  <nb-icon [icon]="$safeNavigationMigration(filterSections[2]?.icon)"></nb-icon>
                   <span>{{ filterSections[2]?.label }}</span>
                 </div>
                 <nb-icon
@@ -347,7 +347,7 @@
                 [attr.id]="'section-pricing-header'"
                 [attr.aria-controls]="'section-pricing-content'">
                 <div class="section-title">
-                  <nb-icon [icon]="filterSections[3]?.icon"></nb-icon>
+                  <nb-icon [icon]="$safeNavigationMigration(filterSections[3]?.icon)"></nb-icon>
                   <span>{{ filterSections[3]?.label }}</span>
                 </div>
                 <nb-icon
@@ -413,7 +413,7 @@
                     [attr.id]="'section-advanced-header'"
                     [attr.aria-controls]="'section-advanced-content'">
                     <div class="section-title">
-                      <nb-icon [icon]="filterSections[4]?.icon"></nb-icon>
+                      <nb-icon [icon]="$safeNavigationMigration(filterSections[4]?.icon)"></nb-icon>
                       <span>{{ filterSections[4]?.label }}</span>
                     </div>
                     <nb-icon
@@ -503,7 +503,7 @@
                     }
                     @if((filterForm.get('search')?.value)) {
                       <nb-tag
-                        [text]="'Search: ' + filterForm.get('search')?.value"
+                        [text]="'Search: ' + $safeNavigationMigration(filterForm.get('search')?.value)"
                         removable
                         (remove)="filterForm.patchValue({search: ''})"
                         size="tiny">
@@ -511,7 +511,7 @@
                     }
                     @if((filterForm.get('categories')?.value?.length)) {
                       <nb-tag
-                        [text]="filterForm.get('categories')?.value.length + ' categories'"
+                        [text]="$safeNavigationMigration(filterForm.get('categories')?.value.length) + ' categories'"
                         removable
                         (remove)="filterForm.patchValue({categories: []})"
                         size="tiny">
@@ -519,7 +519,7 @@
                     }
                     @if((filterForm.get('status')?.value?.length)) {
                       <nb-tag
-                        [text]="filterForm.get('status')?.value.length + ' statuses'"
+                        [text]="$safeNavigationMigration(filterForm.get('status')?.value.length) + ' statuses'"
                         removable
                         (remove)="filterForm.patchValue({status: []})"
                         size="tiny">

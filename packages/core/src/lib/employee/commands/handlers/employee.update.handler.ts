@@ -70,6 +70,16 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const changes: IEmployeeUpdateInput = { ...input };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
 
+		// An external id the request leaves out keeps its stored value, and one sent empty is cleared.
+		// The key is dropped rather than left undefined, because the MikroORM assign copies undefined onto the row.
+		for (const key of ['upworkId', 'linkedInId'] as const) {
+			if (changes[key] === undefined) {
+				delete changes[key];
+			} else {
+				changes[key] = changes[key] || null;
+			}
+		}
+
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
 		if (newRestrictions.length > 0) {
 			await recordAgentRestrictionAcknowledgement(this._activityLogService, {
@@ -86,8 +96,6 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
 			return await this._employeeService.create({
 				...changes,
-				upworkId: changes.upworkId || null,
-				linkedInId: changes.linkedInId || null,
 				id
 			});
 		} catch (error) {

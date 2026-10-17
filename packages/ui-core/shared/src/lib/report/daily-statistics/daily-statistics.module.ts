@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DailyStatisticsComponent } from './daily-statistics/daily-statistics.component';
 import { CounterPointComponent } from '../../counter-point/counter-point.component';
 import { SharedModule } from '../../shared.module';
@@ -17,7 +17,7 @@ import { SharedModule } from '../../shared.module';
 		NbIconModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		CounterPointComponent
 	]

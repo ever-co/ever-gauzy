@@ -13,7 +13,7 @@ import {
 import { NgxDaterangepickerMd as NgxDateRangePickerMd } from 'ngx-daterangepicker-material';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { WeekDaysEnum } from '@gauzy/contracts';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EmployeeStore, EmployeesService, OrganizationEditStore, OrganizationsService } from '@gauzy/ui-core/core';
 import { DirectivesModule } from '../directives/directives.module';
 import { DateSelectorComponent } from './date/date.component';
@@ -22,6 +22,7 @@ import { DateRangePickerComponent, dayOfWeekAsString } from './date-range-picker
 import { EmployeeSelectorComponent } from './employee/employee.component';
 import { ProjectSelectModule } from './project/project.module';
 import { TeamSelectModule } from './team/team.module';
+import { EntitySelectPanelDirective } from './entity-select-panel.directive';
 
 const COMPONENTS = [
 	DateRangePickerComponent,
@@ -48,8 +49,9 @@ const MODULES = [ProjectSelectModule, TeamSelectModule];
 		NbIconModule,
 		NbInputModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		DirectivesModule,
+		EntitySelectPanelDirective,
 		...MODULES
 	],
 	exports: [...COMPONENTS, ...MODULES],

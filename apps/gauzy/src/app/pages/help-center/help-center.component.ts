@@ -1,5 +1,5 @@
 import { IHelpCenterArticle, IHelpCenter, IHelpCenterAuthor, IEmployee, IOrganization } from '@gauzy/contracts';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
@@ -23,7 +23,7 @@ import {
 	NbTooltipModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
@@ -32,6 +32,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 	templateUrl: './help-center.component.html',
 	styleUrls: ['./help-center.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -43,7 +44,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		NbIconModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslatePipe,
 		SidebarModule,
 		EmployeeMultiSelectModule,
 		UserFormsModule,

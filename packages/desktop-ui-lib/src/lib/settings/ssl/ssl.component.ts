@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, NgZone, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IProxyConfig } from '@gauzy/contracts';
 import { ElectronService } from '../../electron/services/electron/electron.service';
@@ -17,6 +17,7 @@ interface ICheckSslResponse {
     selector: 'gauzy-ssl',
     templateUrl: './ssl.component.html',
     styleUrls: ['./ssl.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, NbToggleModule, FormsModule, NbIconModule, NbTooltipModule, NbInputModule, NbButtonModule, SpinnerButtonDirective, AsyncPipe, TranslatePipe]
 })
 export class SslComponent implements OnInit {

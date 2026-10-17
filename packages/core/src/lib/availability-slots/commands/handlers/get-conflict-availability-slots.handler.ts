@@ -9,6 +9,18 @@ import { prepareSQLQuery as p } from './../../../database/database.helper';
 import { TypeOrmAvailabilitySlotRepository } from '../../repository/type-orm-availability-slot.repository';
 import { MikroOrmAvailabilitySlotRepository } from '../../repository/mikro-orm-availability-slot.repository';
 
+/**
+ * SQLite condition: the availability slot under `alias` overlaps the [startedAt, stoppedAt) range, as
+ * PostgreSQL's `OVERLAPS` does.
+ *
+ * The previous condition only checked that the new start fell inside an existing slot, as text: SQLite
+ * stores the columns as 'YYYY-MM-DD HH:MM:SS.SSS', which sorts before an ISO bound of the same day
+ * ('T' > ' '), so no conflict was ever found and overlapping slots were saved instead of merged.
+ */
+export function sqliteOverlapCondition(alias: string, startedAt: string, stoppedAt: string): string {
+	return `julianday("${alias}"."startTime") < julianday('${stoppedAt}') AND julianday("${alias}"."endTime") > julianday('${startedAt}')`;
+}
+
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
 export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
 	constructor(
@@ -36,9 +48,7 @@ export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetC
 		switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
-				query.andWhere(
-					`'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
-				);
+				query.andWhere(sqliteOverlapCondition(query.alias, startedAt, stoppedAt));
 				break;
 			case DatabaseTypeEnum.postgres:
 				query.andWhere(

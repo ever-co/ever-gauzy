@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { UploadQueueItem } from '../../services/upload-queue.service';
 
 /**
@@ -173,6 +173,7 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class UploadProgressComponent {

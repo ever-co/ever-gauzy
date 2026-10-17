@@ -1,0 +1,92 @@
+# The membership domain's GraphQL types.
+#
+# One row of the pivot: a party, a group, when the membership was granted, when it lapses and which
+# provenance wrote it. The row has no meaning without either peer, which is why the two identifiers are
+# required here and why the group's own type is the only place it is reached from — the membership is a
+# child of the group and not a resource with a root field of its own.
+#
+# An expired row is **absent** to every reader: the field is returned only for a live membership, and
+# `expiresAt` is present on the ones that will lapse.
+
+"""
+One explicit group membership — the pivot between a party and a group.
+"""
+type ContactGroupMember {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"""The party that is a member."""
+	customerId: ID!
+	"""The group the party belongs to."""
+	groupId: ID!
+	"""When the membership was granted."""
+	assignedAt: DateTime!
+	"""
+	When the membership lapses, for a temporary one. Null means it does not lapse.
+
+	An expired row is treated as absent by every reader even before the cleanup job removes it, so a
+	lapsed membership never grants anything.
+	"""
+	expiresAt: DateTime
+	"""
+	Who wrote the row, which is also what may remove it: an operator removes the hand-written
+	membership, the segment materialiser replaces its own, and an import replaces its own.
+	"""
+	source: ContactGroupSource!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+How one membership row came to exist.
+"""
+enum ContactGroupSource {
+	"""Written by an operator. Never removed by the segment materialiser or by an import."""
+	MANUAL
+	"""Written by the segment materialiser; may be replaced wholesale by the next evaluation."""
+	RULE
+	"""Written by a bulk import; removed or superseded by a later import of the same source."""
+	IMPORT
+}
+
+"""
+One party joining a group.
+"""
+input ContactGroupMemberInput {
+	contactId: ID!
+	"""
+	When the membership lapses. Omitted means it does not lapse, and a stated instant in the past is
+	refused: a membership that lapses immediately grants nothing, and the caller would be told it had
+	granted something.
+	"""
+	expiresAt: DateTime
+}
+
+"""
+One party leaving a group, and which of its memberships is meant.
+"""
+input ContactGroupMemberRemoveInput {
+	contactId: ID!
+	"""Which membership row is meant. Defaults to the hand-written one."""
+	source: ContactGroupSource
+}
+
+"""
+The parties joining one group.
+
+A list rather than a member-per-call mutation for the reason the service states: the whole list is
+validated before any of it is written, so a body naming a party twice, or one that already holds a live
+membership, is refused as a whole rather than half-applied.
+"""
+input AddContactGroupMembersInput {
+	groupId: ID!
+	members: [ContactGroupMemberInput!]!
+}
+
+"""
+The parties leaving one group, each of the provenance the caller states.
+"""
+input RemoveContactGroupMembersInput {
+	groupId: ID!
+	members: [ContactGroupMemberRemoveInput!]!
+}

@@ -31,8 +31,8 @@
           >
           <ga-team-selector
             dropdownClass="header-entity-select"
-            [employeeId]="(employee$ | async)?.id"
-            [projectId]="(project$ | async)?.id"
+            [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
+            [projectId]="$safeNavigationMigration((project$ | async)?.id)"
             [shortened]="true"
             class="header-selector team-selector"
           ></ga-team-selector>
@@ -45,7 +45,7 @@
           >
           <ga-project-selector
             dropdownClass="header-entity-select"
-            [employeeId]="(employee$ | async)?.id"
+            [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
             [shortened]="true"
             class="header-selector project-selector"
           ></ga-project-selector>
@@ -109,6 +109,16 @@
            (`.ai-agent-launch` in one-column.layout.html); a second copy here was
            redundant, so the header no longer carries a chat control. -->
 
+      <!-- Actions plugins add (NavigationBuilderService.registerHeaderAction), e.g. the Inbox badge;
+           none unless a plugin registered one. -->
+      @for (action of navigationBuilderService.headerActions$ | async; track action.id) {
+        @if (navigationBuilderService.hasPermissions(action.permissions ?? [])) {
+          <nb-action [class]="action.class ?? ''">
+            <ng-container *ngComponentOutlet="action.component"></ng-container>
+          </nb-action>
+        }
+      }
+
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {
         <nb-action
           [icon]="action.icon"
@@ -127,8 +137,8 @@
         </div>
         <ga-team-selector
           dropdownClass="header-entity-select"
-          [employeeId]="(employee$ | async)?.id"
-          [projectId]="(project$ | async)?.id"
+          [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
+          [projectId]="$safeNavigationMigration((project$ | async)?.id)"
           [shortened]="true"
           class="header-selector team-selector"
         ></ga-team-selector>
@@ -139,7 +149,7 @@
         </div>
         <ga-project-selector
           dropdownClass="header-entity-select"
-          [employeeId]="(employee$ | async)?.id"
+          [employeeId]="$safeNavigationMigration((employee$ | async)?.id)"
           [shortened]="true"
           class="header-selector project-selector"
         ></ga-project-selector>

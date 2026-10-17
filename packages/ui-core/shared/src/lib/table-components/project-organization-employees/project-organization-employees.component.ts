@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { IPersonListItem } from '../people-list/people-list.component';
 
@@ -13,6 +13,7 @@ import { IPersonListItem } from '../people-list/people-list.component';
 	selector: 'gauzy-project-organization-employees',
 	templateUrl: './project-organization-employees.component.html',
 	styleUrls: ['./project-organization-employees.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProjectOrganizationEmployeesComponent {

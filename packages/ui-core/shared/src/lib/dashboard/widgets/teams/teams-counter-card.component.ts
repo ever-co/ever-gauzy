@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CounterPointComponent } from '../../../counter-point/counter-point.component';
 
 /**
@@ -25,7 +25,7 @@ import { CounterPointComponent } from '../../../counter-point/counter-point.comp
 	templateUrl: './teams-counter-card.component.html',
 	styleUrls: ['./teams-counter-card.component.scss'],
 	standalone: true,
-	imports: [NbButtonModule, NbIconModule, TranslateModule, CounterPointComponent],
+	imports: [NbButtonModule, NbIconModule, TranslatePipe, CounterPointComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamsCounterCardComponent {

@@ -2,6 +2,9 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BulkExecutor } from '../../api/bulk-executor.service';
+import { FieldVisibility } from '../../api/field-visibility.service';
+import { OrganizationPermissionGuard } from '../../shared/guards/organization-permission.guard';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { EmployeeModule } from './../../employee/employee.module';
 import { OrganizationProjectModule } from './../../organization-project/organization-project.module';
@@ -13,6 +16,7 @@ import { MikroOrmOrganizationRepository } from './../../organization/repository/
 import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
+import { TimeLogResolver } from './time-log.resolver';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
@@ -33,12 +37,22 @@ import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repos
 	],
 	providers: [
 		TimeLogService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them — the service every
+		// field calls, and the command bus the conflict read and the three writes dispatch through.
+		TimeLogResolver,
+		// Both surfaces apply a batch of manual time with the platform's executor, which authorises it
+		// through the platform's field visibility. The organization-policy guard is also a provider, because
+		// the batch route asks it about every item as the single route asks it about its body.
+		BulkExecutor,
+		FieldVisibility,
+		OrganizationPermissionGuard,
 		TypeOrmTimeLogRepository,
 		MikroOrmTimeLogRepository,
 		TypeOrmOrganizationRepository,
 		MikroOrmOrganizationRepository,
 		...CommandHandlers
 	],
-	exports: [TimeLogService, TypeOrmTimeLogRepository, MikroOrmTimeLogRepository]
+	exports: [TimeLogService, TypeOrmTimeLogRepository, MikroOrmTimeLogRepository, BulkExecutor]
 })
 export class TimeLogModule {}

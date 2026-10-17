@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 @Component({
@@ -35,6 +35,7 @@ import { DEFAULT_SVG } from '@gauzy/ui-core/common';
 			}
 		`
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ImageRowComponent {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization, PermissionsEnum, IOrganizationContact, IEmployee } from '@gauzy/contracts';
@@ -24,6 +24,7 @@ import { PublicPageOrganizationMutationComponent } from '../mutation/public-page
 	selector: 'ngx-public-organization',
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OrganizationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

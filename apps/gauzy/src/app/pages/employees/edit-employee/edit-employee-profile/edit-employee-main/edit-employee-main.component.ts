@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IEmployee, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,6 +16,7 @@ import { EmployeeStore, ErrorHandlingService } from '@gauzy/ui-core/core';
     selector: 'ga-edit-employee-main',
     templateUrl: './edit-employee-main.component.html',
     styleUrls: ['./edit-employee-main.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {

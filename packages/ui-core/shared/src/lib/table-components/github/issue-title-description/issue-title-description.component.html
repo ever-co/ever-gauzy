@@ -3,14 +3,14 @@
     <div class="issue-labels">
       @if (rowData?.labels) {
         <ga-only-tags
-          [value]="rowData?.labels"
+          [value]="$safeNavigationMigration(rowData?.labels)"
           [rowData]="rowData"
         ></ga-only-tags>
       }
     </div>
     <div class="issue-title">
       <a href="javascript:void(0)" (click)="openIssue()">
-        <nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.title"></nb-icon>
+        <nb-icon icon="eye-outline" pack="eva" [nbTooltip]="$safeNavigationMigration(rowData?.title)"></nb-icon>
         {{ rowData?.title }}
       </a>
     </div>
@@ -18,7 +18,7 @@
   <div class="issue-body">
     <div class="issue-description">
       <ngx-security-trust-html
-        [value]="rowData?.body"
+        [value]="$safeNavigationMigration(rowData?.body)"
       ></ngx-security-trust-html>
     </div>
   </div>

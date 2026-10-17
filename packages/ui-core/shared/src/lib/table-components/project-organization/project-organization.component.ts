@@ -1,10 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, IProject } from '@gauzy/contracts';
 
 @Component({
     selector: 'gauzy-project-organization',
     templateUrl: './project-organization.component.html',
     styleUrls: ['./project-organization.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProjectOrganizationComponent implements OnInit {

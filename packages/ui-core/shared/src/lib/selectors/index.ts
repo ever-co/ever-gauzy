@@ -6,3 +6,5 @@ export * from './organization';
 export * from './project';
 export * from './team';
 export * from './entity-select-panel-class';
+export * from './entity-select-panel.directive';
+export * from './ng-select-panel-sizing.service';

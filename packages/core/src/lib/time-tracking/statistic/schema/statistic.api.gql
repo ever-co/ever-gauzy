@@ -1,0 +1,234 @@
+# The time-tracking statistic domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **Every field below is a computed answer, and that is why the whole domain is root fields.** The
+# platform stores time logs, time slots and activities; it stores no statistic, so there is no row for
+# a field to hang off — no identifier to read one by, nothing to withdraw, nothing to recover. This
+# file therefore extends `Query` and never `Mutation`, and declares no node field and no count field.
+# None of those is missing by oversight: the controller serves no `GET /:id`, no `GET /count` and no
+# write of any kind, and a surface that invented one would be answering a question the platform does
+# not answer today.
+#
+# **Seven reads, one of which the REST controller serves as a `POST`.** `timeTrackingTasks` mirrors
+# `POST /timesheet/statistics/tasks`, and it is a `Query` here because the verb there is a transport
+# decision rather than a semantic one: that filter travels in the body because it is too wide for a
+# query string, and what the route answers is a computation over time logs. GraphQL states the same
+# capability as the read it is.
+#
+# **Every field runs under the controller's own guard chain and its own permission.** `StatisticController`
+# carries `TenantPermissionGuard` and `PermissionGuard` with
+# `ADMIN_DASHBOARD_VIEW, TIME_TRACKER, ALL_ORG_EDIT, ALL_ORG_VIEW` on the class, and not one of its
+# seven handlers states a permission of its own — so all seven run under that list, and every field
+# below states the same four rather than a narrower or a wider one.
+#
+# **What each field computes, route for route:**
+#
+# - `timeTrackingCounts` mirrors `GET /counts`: how many employees and how many projects tracked time
+#   over a range, the same two figures for today, and the average activity and tracked duration behind
+#   each of the two periods.
+# - `timeTrackingMembers` mirrors `GET /members`: one answer per member who tracked time, with the
+#   hours behind them over the range, the same hours for today, and the per-day-of-week split.
+# - `timeTrackingProjects` mirrors `GET /projects`: the five projects with the most tracked time.
+# - `timeTrackingTasks` mirrors `POST /tasks`: the tasks that were worked on, with the time each took
+#   today and the share it is of the range.
+# - `timeTrackingManualTimes` mirrors `GET /manual-times`: the five most recently started manual logs.
+# - `timeTrackingTimeSlots` mirrors `GET /time-slots`: the three most recently active members with up
+#   to nine of their most recent slots and the screenshots filed against them.
+# - `timeTrackingActivities` mirrors `GET /activities`: the five activity titles the range spent the
+#   most time on.
+#
+# **Where a read takes a fixed number of rows, that number is the delivered answer rather than a page.**
+# Five projects, five tasks, three members with nine slots each, five activity titles: a caller that
+# wants the whole set asks the domain that owns the rows — the project surface, the task surface, the
+# time-slot surface — for it. The statistics surface is what a dashboard reads, and a dashboard reads
+# the top of a ranked list.
+#
+# **The organization is required; the range is not.** Every read resolves its rows through one
+# organization and none of them has a default for it. A range, by contrast, has a delivered default
+# inside the read — the current week, or the current day for the two `today` members — and each
+# argument's description states which default applies, because an absent range and a stated one are
+# different answers rather than the same answer paginated.
+#
+# **Durations are seconds.** Every duration below comes out of a store expression that converts a
+# timestamp difference to seconds (`extract(epoch …)`, `julianday(…) * 86400`,
+# `TIMESTAMPDIFF(SECOND, …)`) or out of a millisecond value the delivered answer divides by a thousand,
+# and each field's description says so. Money does not appear on this surface at all: a tracked second
+# is not an amount, and what a second is worth is a rate the invoicing domain states.
+
+extend type Query {
+	"""
+	How much of one organization worked over a range, and how actively: two counts for the range, the
+	same two for today, and the average activity and tracked duration behind each period.
+	"""
+	timeTrackingCounts(
+		"The organization whose tracked time is counted. Every delivered read resolves its rows through it and none has a default."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read answers the current week."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current week."
+		endDate: DateTime
+		"The start of the period the two `today` figures cover, which is not the range's start. Omit it and the delivered read answers the current day."
+		todayStart: DateTime
+		"The end of the period the two `today` figures cover. Omit it and the delivered read answers the current day."
+		todayEnd: DateTime
+		"Narrows the read to these engagements. Omitted, every engagement the caller may see is read."
+		employeeIds: [ID!]
+		"Narrows the read to these projects."
+		projectIds: [ID!]
+		"Narrows the read to these teams."
+		teamIds: [ID!]
+		"Narrows the read to the time slots whose activity falls in this band. Omitted, every slot counts."
+		activityLevel: TimeTrackingActivityLevelInput
+		"Narrows the read to these time-log types, by value: `TRACKED`, `MANUAL`, `IDLE` or `RESUMED`. Carried as a value rather than declared as an enum because the vocabulary belongs to the contracts package."
+		logType: [String!]
+		"Narrows the read to these time-log sources, by value: `DESKTOP`, `BROWSER`, `BROWSER_EXTENSION`, `MOBILE`, `HUBSTAFF`, `UPWORK`, `TEAMS` or `CLOC`."
+		source: [String!]
+		"Reads only the caller's own engagement. The delivered read applies it in addition to the caller's permissions, never instead of them."
+		onlyMe: Boolean
+	): TimeTrackingCounts!
+
+	"""
+	The members of one organization who tracked time over a range, each with the hours behind them.
+	"""
+	timeTrackingMembers(
+		"The organization whose members are read."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read answers the current week."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current week."
+		endDate: DateTime
+		"The start of the period the two today figures cover, which is not the range's start. Omit it and the delivered read answers the current day."
+		todayStart: DateTime
+		"The end of the period the two today figures cover. Omit it and the delivered read answers the current day."
+		todayEnd: DateTime
+		"Narrows the read to these engagements."
+		employeeIds: [ID!]
+		"Narrows the read to these projects."
+		projectIds: [ID!]
+		"Narrows the read to these teams."
+		teamIds: [ID!]
+	): [TimeTrackingMemberStatistic!]!
+
+	"""
+	The projects of one organization that were worked on over a range, the five with the most tracked
+	time first.
+	"""
+	timeTrackingProjects(
+		"The organization whose projects are read."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read answers the current week."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current week."
+		endDate: DateTime
+		"Narrows the read to these engagements."
+		employeeIds: [ID!]
+		"Narrows the read to these projects. A project outside the list is not read, whatever time was tracked against it."
+		projectIds: [ID!]
+		"Narrows the read to these teams."
+		teamIds: [ID!]
+		"Reads only the caller's own engagement, in addition to the caller's permissions."
+		onlyMe: Boolean
+	): [TimeTrackingProjectStatistic!]!
+
+	"""
+	The tasks of one organization that were worked on, each with the time it took today and its share of
+	the range.
+
+	Mirrors `POST /timesheet/statistics/tasks`, and is a query because that route is a read: the verb
+	there carries a filter that does not fit a query string, not a change.
+	"""
+	timeTrackingTasks(
+		"The organization whose tasks are read."
+		organizationId: ID!
+		"The start of the range. With no range and no `defaultRange`, the read answers every task the organization has ever tracked time against."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The start of the period the today figure covers, which is not the range's start."
+		todayStart: DateTime
+		"The end of the period the today figure covers."
+		todayEnd: DateTime
+		"Narrows the read to these engagements."
+		employeeIds: [ID!]
+		"Narrows the read to these projects."
+		projectIds: [ID!]
+		"Selects which tasks are read. Omitted, every task the range touched is read."
+		taskIds: [ID!]
+		"Narrows the read to these teams. The delivered criterion is an either-or over this list and `organizationTeamId`, so stating both widens the read rather than intersecting it."
+		teamIds: [ID!]
+		"Narrows the read to one team, beside `teamIds` rather than instead of it, for the reason stated there."
+		organizationTeamId: ID
+		"Keeps the first N answers after the per-task totals have been aggregated, so it truncates a ranked answer rather than narrowing the read. Omitted, every task the range touched is answered."
+		take: Int
+		"With no range stated, computes one: the current week, or the unit `unitOfTime` names. The delivered read's own default is `false`, which answers the whole history instead."
+		defaultRange: Boolean
+		"The unit `defaultRange` computes its range in — the read's own default is `week` for the range and `day` for the today figures — stated as a value rather than declared as an enum because the vocabulary belongs to the moment library."
+		unitOfTime: String
+		"Reads only the caller's own engagement, in addition to the caller's permissions."
+		onlyMe: Boolean
+	): [TimeTrackingTaskStatistic!]!
+
+	"""
+	The manual time logs of one organization over a range, the five most recently started first.
+	"""
+	timeTrackingManualTimes(
+		"The organization whose manual logs are read."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read answers the current week."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current week."
+		endDate: DateTime
+		"Narrows the read to these engagements."
+		employeeIds: [ID!]
+		"Narrows the read to these projects."
+		projectIds: [ID!]
+		"Narrows the read to these teams."
+		teamIds: [ID!]
+		"Reads only the caller's own engagement, in addition to the caller's permissions."
+		onlyMe: Boolean
+	): [TimeTrackingManualTimeStatistic!]!
+
+	"""
+	The three members of one organization who tracked time most recently over a range, each with up to
+	nine of their most recent time slots and the screenshots filed against them.
+	"""
+	timeTrackingTimeSlots(
+		"The organization whose slots are read."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read answers the current week."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current week."
+		endDate: DateTime
+		"Narrows the read to these engagements."
+		employeeIds: [ID!]
+		"Narrows the slots to those whose logs were tracked against these projects."
+		projectIds: [ID!]
+		"Narrows the slots to those whose logs were tracked in these teams."
+		teamIds: [ID!]
+		"Reads only the caller's own engagement, in addition to the caller's permissions."
+		onlyMe: Boolean
+	): [TimeTrackingTimeSlotStatistic!]!
+
+	"""
+	What one organization spent its time on over a range, the five activity titles with the most tracked
+	time first.
+	"""
+	timeTrackingActivities(
+		"The organization whose activity is read."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read answers the current week."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read answers the current week."
+		endDate: DateTime
+		"Narrows the read to these engagements."
+		employeeIds: [ID!]
+		"Narrows the read to these projects."
+		projectIds: [ID!]
+		"Narrows the read to these teams, through the logs of the slots the activity was recorded in."
+		teamIds: [ID!]
+		"Reads only the caller's own engagement, in addition to the caller's permissions."
+		onlyMe: Boolean
+	): [TimeTrackingActivityStatistic!]!
+}

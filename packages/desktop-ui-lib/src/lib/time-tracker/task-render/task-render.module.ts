@@ -10,7 +10,7 @@ import {
 	NbProgressBarModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { PipeModule } from '../pipes/pipe.module';
 import { TaskBadgeDefaultComponent } from './task-badge-default/task-badge-default.component';
@@ -33,7 +33,7 @@ import { TaskStatusComponent } from './task-status/task-status.component';
     NbIconModule,
     NbTooltipModule,
     NbButtonModule,
-    TranslateModule,
+    TranslatePipe,
     NbPopoverModule,
     NbBadgeModule,
     NbCardModule,

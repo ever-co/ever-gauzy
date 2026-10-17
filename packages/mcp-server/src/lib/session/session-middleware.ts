@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Logger } from '@nestjs/common';
 import { sessionManager, UserContext, SessionValidationResult } from './session-manager';
 import { rateLimit } from 'express-rate-limit';
+import { minimatch } from 'minimatch';
 import crypto from 'node:crypto';
 import type { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
 
@@ -425,7 +426,7 @@ class SessionMiddleware {
 				// Simple glob pattern matching
 				// Escape special regex characters except *
 				// Use a safe glob matcher instead of dynamic RegExp
-            	return require('minimatch')(path, excludedPath, { nocase: false, dot: true });
+				return minimatch(path, excludedPath, { nocase: false, dot: true });
 			}
 			return path === excludedPath;
 		});

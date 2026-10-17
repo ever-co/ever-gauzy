@@ -1,12 +1,12 @@
 <div class="gallery-inner" tabindex="-1" #galleryInner [@fadeInOut]>
-	@let recordedTime = item?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async);
+	@let recordedTime = $safeNavigationMigration(item?.recordedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async);
 	<!-- When the active screenshot was taken, its place in the set, and the actions. -->
 	<header class="gallery-header">
 		<!-- Product images (Inventory) carry no recorded time; only the counter shows. -->
 		<div class="gallery-heading">
 			@if (item?.recordedAt) {
 			<span class="gallery-title">
-				{{ item?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+				{{ $safeNavigationMigration(item?.recordedAt) | utcToTimezone : (timeZone$ | async) | dateFormat }}
 			</span>
 			}
 			<span class="gallery-subtitle">
@@ -23,7 +23,7 @@
 			<button
 				type="button"
 				class="gallery-button"
-				[nbTooltip]="item?.description"
+				[nbTooltip]="$safeNavigationMigration(item?.description)"
 				[attr.aria-label]="'REPORT_PAGE.DESCRIPTION' | translate"
 			>
 				<nb-icon icon="info-outline"></nb-icon>
@@ -32,7 +32,7 @@
 			<button
 				type="button"
 				class="gallery-button"
-				(click)="downloadFile(item?.fullUrl)"
+				(click)="downloadFile($safeNavigationMigration(item?.fullUrl))"
 				[nbTooltip]="'BUTTONS.DOWNLOAD' | translate"
 				[attr.aria-label]="'BUTTONS.DOWNLOAD' | translate"
 			>
@@ -77,7 +77,7 @@
 				<img
 					class="media"
 					draggable="false"
-					[src]="media?.fullUrl"
+					[src]="$safeNavigationMigration(media?.fullUrl)"
 					[alt]="media?.description || ((media?.recordedAt ? 'TIMESHEET.SCREENSHOTS.TAKEN_AT' : 'TIMESHEET.SCREENSHOTS.POSITION') | translate : { time: recordedTime, position: active_index + 1, total: items.length })"
 				/>
 			</div>
@@ -97,7 +97,7 @@
 	<footer class="gallery-footer">
 		<div class="thumb-items custom-scroll" #customScroll>
 			@for (thumb of items; track trackByThumbId(index, thumb); let index = $index) {
-			@let thumbTime = thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
+			@let thumbTime = $safeNavigationMigration(thumb?.recordedAt) | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) : false;
 			<!-- Named by its place in the set, which stays unique when there is no time. -->
 			<button
 				type="button"
@@ -110,7 +110,7 @@
 			>
 				<span class="thumb-frame">
 					@if (thumb) {
-					<img draggable="false" [src]="thumb?.thumbUrl" alt="" />
+					<img draggable="false" [src]="$safeNavigationMigration(thumb?.thumbUrl)" alt="" />
 					}
 				</span>
 				@if (thumb?.recordedAt) {

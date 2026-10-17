@@ -1,9 +1,15 @@
 # cspell:words DOTENV
-# Egress audit only (see README.md): the Gauzy API from the image under test, with its database.
+# Egress audit only (see README.md): the Gauzy API and web app from the images under test, with the
+# API's database.
 #
-# - GAUZY_API_IMAGE: the image under test (the workflow pulls it first); never pulled here.
+# - GAUZY_API_IMAGE: the API image under test (the workflow pulls it first); never pulled here.
+# - GAUZY_WEBAPP_IMAGE: the web app image under test (nginx serving the built Angular app; the
+#   audit's browser opens it by its service name and it calls the API by its service name).
 # - GAUZY_AUDIT_SECRET: a random value the workflow makes per run (never committed); the production
-#   image refuses to start without its token and session secrets, and to seed with known passwords.
+#   image refuses to start without its token and session secrets.
+# - The seeded accounts get addresses under example.com; the Super Admin's password is made per run
+#   by the adapter (the browser signs in with it). They exist only in this throw-away database, on
+#   networks with no route out.
 # - GAUZY_AUDIT_DOTENV: the API's .env.local of the mode (empty, or EVER_STATS_ENABLED=false for
 #   `off_env_file`), mounted in the API's working directory.
 # - PostgreSQL (throw-away, on the sealed networks): the migrations of a new database run far faster
@@ -16,6 +22,10 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            # The web app first: its entrypoint writes the settings into the built bundle before
+            # nginx serves it, and the browser walk starts as soon as the API answers.
+            webapp:
+                condition: service_healthy
         environment:
             NODE_ENV: production
             DEMO: 'false'
@@ -24,13 +34,17 @@ services:
             JWT_VERIFICATION_TOKEN_SECRET: ${GAUZY_AUDIT_SECRET}-verification
             EXPRESS_SESSION_SECRET: ${GAUZY_AUDIT_SECRET}-session
             # The first start seeds the default accounts, which production refuses with known passwords.
+            DEMO_SUPER_ADMIN_EMAIL: admin@example.com
+            # The audit's adapter gives each run its own (see adapter.mjs); this is the fallback.
             DEMO_SUPER_ADMIN_PASSWORD: ${GAUZY_AUDIT_SECRET}-super-admin
+            DEMO_ADMIN_EMAIL: local.admin@example.com
             DEMO_ADMIN_PASSWORD: ${GAUZY_AUDIT_SECRET}-admin
+            DEMO_EMPLOYEE_EMAIL: employee@example.com
             DEMO_EMPLOYEE_PASSWORD: ${GAUZY_AUDIT_SECRET}-employee
             API_HOST: 0.0.0.0
             API_PORT: '3000'
             API_BASE_URL: http://api:3000
-            CLIENT_BASE_URL: http://localhost:4200
+            CLIENT_BASE_URL: http://webapp:4200
             DB_TYPE: postgres
             DB_HOST: db
             DB_PORT: '5432'
@@ -43,8 +57,23 @@ services:
         volumes:
             - ${GAUZY_AUDIT_DOTENV:?set GAUZY_AUDIT_DOTENV to the API .env.local file of this run}:/srv/gauzy/.env.local:ro
 
+    # The web app as it ships: only the addresses of the API and of itself are set (both by service
+    # name inside the sealed networks); every other setting keeps the image's default.
+    webapp:
+        image: ${GAUZY_WEBAPP_IMAGE:?set GAUZY_WEBAPP_IMAGE to the web app image under test}
+        pull_policy: never
+        environment:
+            API_BASE_URL: http://api:3000
+            CLIENT_BASE_URL: http://webapp:4200
+        healthcheck:
+            test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:4200/ || exit 1']
+            interval: 5s
+            timeout: 5s
+            retries: 60
+
     db:
-        image: postgres:18-alpine
+        # The public mirror of the official image: Docker Hub limits anonymous pulls.
+        image: public.ecr.aws/docker/library/postgres:18-alpine
         environment:
             POSTGRES_DB: gauzy
             POSTGRES_USER: gauzy

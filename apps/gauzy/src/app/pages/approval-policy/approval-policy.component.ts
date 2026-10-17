@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -21,6 +21,7 @@ import {
     selector: 'ngx-approval-policy',
     templateUrl: './approval-policy.component.html',
     styleUrls: ['./approval-policy.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ApprovalPolicyComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

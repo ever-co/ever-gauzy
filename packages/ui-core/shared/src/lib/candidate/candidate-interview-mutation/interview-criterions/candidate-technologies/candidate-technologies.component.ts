@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { CommunicationService } from '../../communication.service';
     selector: 'ga-candidate-technologies',
     templateUrl: './candidate-technologies.component.html',
     styleUrls: ['./candidate-technologies.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateTechnologiesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

@@ -4,7 +4,11 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { environment } from '@gauzy/config';
 import { isAccessTokenPayload, JWT_ALGORITHMS } from '@gauzy/core';
 import { verify } from 'jsonwebtoken';
-import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
+import {
+	mountPlaneProxy,
+	MountPlaneProxyResult,
+	readSessionTokenFromCookieHeader
+} from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneIntegrationService } from './plane-integration.service';
 
 const PROXY_PREFIX = '/api/plane';
@@ -304,34 +308,15 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Reassemble the chunked `auth-proxy-plane-token-{0,1,...}` cookie into the
-	 * raw JWT string from the raw `Cookie` header (cookies are not parsed yet at
-	 * the HTTP-server interception layer).
+	 * Read the Gauzy JWT from the chunked `auth-proxy-plane-token-{0,1,...}`
+	 * cookie in the raw `Cookie` header (cookies are not parsed yet at the
+	 * HTTP-server interception layer). The proxy owns the cookie format — since
+	 * 0.1.7 the payload is deflated so an admin token fits in one cookie — so it
+	 * is decoded with the proxy's own reader, which also accepts legacy raw-JWT
+	 * cookies.
 	 */
 	private readSessionToken(req: http.IncomingMessage): string | undefined {
-		const cookieHeader = req.headers['cookie'];
-		if (!cookieHeader) {
-			return undefined;
-		}
-
-		const jar: Record<string, string> = {};
-		for (const part of cookieHeader.split(';')) {
-			const eq = part.indexOf('=');
-			if (eq === -1) {
-				continue;
-			}
-			const key = part.slice(0, eq).trim();
-			if (key) {
-				jar[key] = part.slice(eq + 1).trim();
-			}
-		}
-
-		const chunks: string[] = [];
-		for (let index = 0; jar[`auth-proxy-plane-token-${index}`] !== undefined; index++) {
-			chunks.push(jar[`auth-proxy-plane-token-${index}`]);
-		}
-
-		return chunks.length > 0 ? chunks.join('') : undefined;
+		return readSessionTokenFromCookieHeader(req.headers['cookie']);
 	}
 
 	// ── JWT validation ────────────────────────────────────────────────

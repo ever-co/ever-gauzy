@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { QueueItem } from '../../models/logs.models';
 import { StatusMapper } from '../../../shared/utils/queue-status-mapper.util';
@@ -8,6 +8,7 @@ import { StatusMapper } from '../../../shared/utils/queue-status-mapper.util';
     selector: 'app-activity-sync-detail-modal',
     templateUrl: './activity-sync-detail-modal.component.html',
     styleUrls: ['./activity-sync-detail-modal.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, NbButtonModule, NbIconModule]
 })
 export class ActivitySyncDetailModalComponent {
