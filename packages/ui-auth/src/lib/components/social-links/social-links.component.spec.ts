@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { environment } from '@gauzy/ui-config';
 import { AppService } from '@gauzy/ui-core/core';
@@ -95,12 +96,68 @@ describe('"Login with Ever ID" label', () => {
 	const mark = (text: string) => text.replace('{{ everId }}', '\u2063EVER_ID\u2063');
 
 	it('keeps the words around the wordmark in the order of each language', () => {
-		expect(everIdLoginLabelParts(mark('Login with {{ everId }}'))).toEqual({ before: 'Login with', after: '' });
-		expect(everIdLoginLabelParts(mark('Mit {{ everId }} anmelden'))).toEqual({ before: 'Mit', after: 'anmelden' });
-		expect(everIdLoginLabelParts(mark('使用 {{ everId }} 登录'))).toEqual({ before: '使用', after: '登录' });
+		expect(everIdLoginLabelParts(mark('Login with {{ everId }}'))).toEqual({
+			before: 'Login with',
+			after: '',
+			label: 'Login with Ever ID'
+		});
+		expect(everIdLoginLabelParts(mark('Mit {{ everId }} anmelden'))).toEqual({
+			before: 'Mit',
+			after: 'anmelden',
+			label: 'Mit Ever ID anmelden'
+		});
+		expect(everIdLoginLabelParts(mark('使用 {{ everId }} 登录'))).toEqual({
+			before: '使用',
+			after: '登录',
+			label: '使用 Ever ID 登录'
+		});
 	});
 
-	it('reads "Login with" when the translation is missing', () => {
-		expect(everIdLoginLabelParts('LOGIN_PAGE.LOGIN_WITH_EVER_ID')).toEqual({ before: 'Login with', after: '' });
+	it('reads "Login with Ever ID" when the translation is missing', () => {
+		expect(everIdLoginLabelParts('LOGIN_PAGE.LOGIN_WITH_EVER_ID')).toEqual({
+			before: 'Login with',
+			after: '',
+			label: 'Login with Ever ID'
+		});
+	});
+});
+
+describe('EverIdLoginLabelComponent (rendered)', () => {
+	function render(language: string) {
+		TestBed.configureTestingModule({
+			imports: [EverIdLoginLabelComponent],
+			providers: [provideTranslateService()]
+		});
+		const translate = TestBed.inject(TranslateService);
+		translate.setTranslation('en', { LOGIN_PAGE: { LOGIN_WITH_EVER_ID: 'Login with {{ everId }}' } });
+		translate.setTranslation('de', { LOGIN_PAGE: { LOGIN_WITH_EVER_ID: 'Mit {{ everId }} anmelden' } });
+		translate.use(language);
+		const fixture = TestBed.createComponent(EverIdLoginLabelComponent);
+		fixture.detectChanges();
+		return { element: fixture.nativeElement as HTMLElement, fixture, translate };
+	}
+
+	afterEach(() => TestBed.resetTestingModule());
+
+	it('gives screen readers the whole label once and only draws the star, the words and the wordmark', () => {
+		const { element } = render('en');
+
+		expect(element.querySelector('.visually-hidden')?.textContent?.trim()).toBe('Login with Ever ID');
+		expect(element.querySelector('.label')?.getAttribute('aria-hidden')).toBe('true');
+		expect(element.querySelector('.label')?.textContent?.trim()).toBe('Login with');
+		const svgs = Array.from(element.querySelectorAll('svg'));
+		expect(svgs.map((svg) => svg.getAttribute('viewBox'))).toEqual(['0 0 40 42', '0 0 92 17']);
+		expect(svgs.every((svg) => svg.getAttribute('aria-hidden') === 'true')).toBe(true);
+	});
+
+	it('follows the language, keeping its word order', () => {
+		const { element, fixture, translate } = render('en');
+
+		translate.use('de');
+		fixture.detectChanges();
+
+		expect(element.querySelector('.visually-hidden')?.textContent?.trim()).toBe('Mit Ever ID anmelden');
+		const words = Array.from(element.querySelectorAll('.label > span')).map((span) => span.textContent?.trim());
+		expect(words).toEqual(['Mit', 'anmelden']);
 	});
 });

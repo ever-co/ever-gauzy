@@ -85,10 +85,10 @@ export function emailBranding(body: ZitadelEmailBranding | undefined): ZitadelEm
  * Every token is verified locally against the issuer's keys; its `aud` (or `azp` / `client_id`) must
  * be one of `ZITADEL_ALLOWED_AUDIENCES`, so a token another operator's client received is refused.
  * An access token never leads to a userinfo call and can only sign in to an existing link; the
- * e-mail-dependent paths need an ID token with a verified e-mail. Every refusal of a token answers the same
- * bare 401. A valid ID token whose e-mail Ever ID has not verified yet answers 401 `{ code: 'email_unverified' }`,
- * so the client can ask the person to verify it: the claim is in the token the caller holds, so the code tells
- * it nothing new.
+ * e-mail-dependent paths need an ID token with a verified e-mail. A token that fails verification gets a bare
+ * 401. An accepted access token without a linked user gets 401 `{ code: 'id_token_required' }`. A valid ID token
+ * whose e-mail Ever ID has not verified yet gets 401 `{ code: 'email_unverified' }`, so the client can ask the
+ * person to verify it: the claim is in the token the caller holds, so the code tells it nothing new.
  *
  * The client may present itself (its name, logo, signature and links) for the one-time code e-mail
  * Gauzy sends when a link must be confirmed: the same display fields Gauzy's own sign-in and register

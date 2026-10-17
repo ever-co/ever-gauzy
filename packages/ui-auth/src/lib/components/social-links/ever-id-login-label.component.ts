@@ -11,6 +11,8 @@ const WORDMARK_MARK = '\u2063EVER_ID\u2063';
 export interface IEverIdLoginLabelParts {
 	before: string;
 	after: string;
+	/** The whole label as text, for screen readers: "Login with Ever ID", "Mit Ever ID anmelden". */
+	label: string;
 }
 
 /**
@@ -23,9 +25,11 @@ export interface IEverIdLoginLabelParts {
 export function everIdLoginLabelParts(text: string): IEverIdLoginLabelParts {
 	const at = typeof text === 'string' ? text.indexOf(WORDMARK_MARK) : -1;
 	if (at < 0) {
-		return { before: 'Login with', after: '' };
+		return { before: 'Login with', after: '', label: 'Login with Ever ID' };
 	}
-	return { before: text.slice(0, at).trim(), after: text.slice(at + WORDMARK_MARK.length).trim() };
+	const before = text.slice(0, at).trim();
+	const after = text.slice(at + WORDMARK_MARK.length).trim();
+	return { before, after, label: [before, 'Ever ID', after].filter(Boolean).join(' ') };
 }
 
 let nextStarId = 0;
@@ -56,12 +60,12 @@ export class EverIdLoginLabelComponent {
 	private readonly _translate = inject(TranslateService);
 
 	/** One gradient per star: several stars on a page must not share an id. */
-	public readonly gradientId = `ever-star-${++nextStarId}`;
+	protected readonly gradientId = `ever-star-${++nextStarId}`;
 
-	public readonly starPath = EVER_STAR_PATH;
-	public readonly wordmarkPath = EVER_ID_WORDMARK_PATH;
+	protected readonly starPath = EVER_STAR_PATH;
+	protected readonly wordmarkPath = EVER_ID_WORDMARK_PATH;
 
-	public readonly parts$: Observable<IEverIdLoginLabelParts> = this._translate
+	protected readonly parts$: Observable<IEverIdLoginLabelParts> = this._translate
 		.stream('LOGIN_PAGE.LOGIN_WITH_EVER_ID', { everId: WORDMARK_MARK })
 		.pipe(map((text: string) => everIdLoginLabelParts(text)));
 }

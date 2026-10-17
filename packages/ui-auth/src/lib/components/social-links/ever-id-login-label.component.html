@@ -23,7 +23,9 @@
 	</defs>
 </svg>
 @if (parts$ | async; as parts) {
-	<span class="label">
+	<!-- The accessible name, read once and in full; the row below is only drawn. -->
+	<span class="visually-hidden">{{ parts.label }}</span>
+	<span class="label" aria-hidden="true">
 		@if (parts.before) {
 			<span>{{ parts.before }}</span>
 		}
@@ -38,7 +40,6 @@
 		>
 			<path fill="currentColor" [attr.d]="wordmarkPath" />
 		</svg>
-		<span class="visually-hidden">Ever ID</span>
 		@if (parts.after) {
 			<span>{{ parts.after }}</span>
 		}

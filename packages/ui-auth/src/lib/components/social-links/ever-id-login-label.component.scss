@@ -23,11 +23,15 @@
   }
 }
 
+// Words and wordmark stay on one row in the 40 px button, and wrap (the button grows) only when the text is
+// enlarged or a translation is long, so nothing is pushed out of the button.
 .label {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 8px;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .ever-id-wordmark {
