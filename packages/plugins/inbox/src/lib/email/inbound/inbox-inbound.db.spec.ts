@@ -659,6 +659,11 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect(email.status).toBe(InboxEmailStatusEnum.QUARANTINED);
 			expect(email.inboxItemId ?? null).toBeNull();
 			expect(await dataSource.getRepository(InboxItem).count()).toBe(0);
+			// The thread view does not show it, nor does its count.
+			const threadCount = async () =>
+				(await dataSource.getRepository(InboxEmailThread).findOneByOrFail({ id: email.threadId as string }))
+					.messageCount;
+			expect(await threadCount()).toBe(0);
 
 			// Not the business of a reader.
 			as(EVE);
@@ -668,6 +673,7 @@ describe('Inbound email pipeline on SQLite', () => {
 			const released = await emails.release(email.id as string);
 			expect(released.status).toBe(InboxEmailStatusEnum.PROCESSED);
 			expect(released.inboxItemId).toBeTruthy();
+			expect(await threadCount()).toBe(1);
 		});
 
 		it('puts a reply processed before its parent into one thread with it', async () => {

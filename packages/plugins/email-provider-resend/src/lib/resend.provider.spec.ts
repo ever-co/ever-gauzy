@@ -12,6 +12,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { isResendEnabled } from './resend-enabled';
 import { FetchLike, RESEND_MAX_DOWNLOAD_BYTES, ResendApiClient } from './resend-api.client';
 import { ResendProvider } from './resend.provider';
+import { displayName } from './resend-transport';
 import { svixSignature, verifySvixSignature } from './svix-signature';
 import {
 	ATTACHMENT_URL,
@@ -243,6 +244,12 @@ describe('Resend email provider', () => {
 	});
 
 	describe('outbound transport', () => {
+		it('quotes a display name with a special character, so a comma never splits the address', () => {
+			expect(displayName('Support')).toBe('Support');
+			expect(displayName('Support, Europe')).toBe('"Support, Europe"');
+			expect(displayName('A "Q" \\ B')).toBe('"A \\"Q\\" \\\\ B"');
+		});
+
 		it('sends through POST /emails with the threading headers, attachments and an idempotency key', async () => {
 			const { calls, fetcher } = recorder({
 				'POST https://api.resend.com/emails': { body: { id: 'resend-id-1' } }
