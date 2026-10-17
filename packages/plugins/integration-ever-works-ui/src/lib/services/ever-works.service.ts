@@ -181,6 +181,30 @@ export interface EverWorksProjectsDecision {
 	createInGauzy?: string[];
 }
 
+/** Initiatives ↔ Missions tab (missions ↔ strategic initiatives, plan 06 G-P2-2). */
+export interface EverWorksMissionRow {
+	ewMissionId: string;
+	title: string;
+	status: string | null;
+	linkedInitiativeId: string | null;
+	/** A same-title Gauzy initiative the admin may confirm (never paired silently). */
+	suggestion: { initiativeId: string; reason: 'same_title' } | null;
+}
+export interface EverWorksInitiativesView {
+	missions: EverWorksMissionRow[];
+	/** Initiatives of the organization paired with no mission (leadership ones are never offered). */
+	unmatchedInitiatives: Array<{ initiativeId: string; title: string; state: string }>;
+}
+export interface EverWorksInitiativesDecision {
+	links?: Array<{ ewMissionId: string; initiativeId: string }>;
+	unlinks?: string[];
+	acceptSuggestions?: boolean;
+	/** Ever Works missions to create as Gauzy initiatives. */
+	createInGauzy?: string[];
+	/** Gauzy initiatives to create in Ever Works (as paused missions; the missions direction must be "both"). */
+	createInEverWorks?: string[];
+}
+
 /** The dry run of one phase. */
 export interface EverWorksSyncPhasePreview {
 	phase: string;
@@ -395,6 +419,14 @@ export class EverWorksUiService {
 
 	decideProjects(organizationId: string | null, integrationTenantId: string, decision: EverWorksProjectsDecision): Observable<EverWorksProjectsView> {
 		return this.http.put<EverWorksProjectsView>(`${this.mapping(integrationTenantId)}/projects`, decision, this.org(organizationId));
+	}
+
+	initiatives(organizationId: string | null, integrationTenantId: string): Observable<EverWorksInitiativesView> {
+		return this.http.get<EverWorksInitiativesView>(`${this.mapping(integrationTenantId)}/initiatives`, this.org(organizationId));
+	}
+
+	decideInitiatives(organizationId: string | null, integrationTenantId: string, decision: EverWorksInitiativesDecision): Observable<EverWorksInitiativesView> {
+		return this.http.put<EverWorksInitiativesView>(`${this.mapping(integrationTenantId)}/initiatives`, decision, this.org(organizationId));
 	}
 
 	// ── Sync ──────────────────────────────────────────────────────────────────────────────────────
