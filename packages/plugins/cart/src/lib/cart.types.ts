@@ -173,3 +173,191 @@ export const CART_STOCK_AVAILABILITY = Symbol('CART_STOCK_AVAILABILITY');
  * other.
  */
 export const CART_TAX_CALCULATION = Symbol('CART_TAX_CALCULATION');
+
+/*
+|--------------------------------------------------------------------------
+| The promotion capability (R3-07)
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * One line the promotion capability may discount.
+ *
+ * The promotion package's own `IPromotionEvaluationLine`, restated for the reason the tax shapes above
+ * are: the cart does not depend on the promotion package, and a structural type is what lets the
+ * installation bind the engine to this port without either package importing the other.
+ */
+export interface ICartPromotionLineQuery {
+	/** The cart line, echoed back on the allocations. */
+	readonly id: ID;
+	/** What the line costs before any promotion: its unit price times its quantity. */
+	readonly amount: DecimalString;
+	readonly quantity: number;
+	readonly variantId?: ID;
+	readonly sku?: string;
+}
+
+/** One delivery choice the promotion capability may discount. */
+export interface ICartPromotionShippingQuery {
+	readonly id: ID;
+	readonly amount: DecimalString;
+}
+
+/** What the cart asks the promotion capability to evaluate: the cart as it is, and the codes presented. */
+export interface ICartPromotionQuery {
+	readonly currency: string;
+	readonly channelId?: ID;
+	readonly customerId?: ID;
+	/** Every code the cart carries, the one being applied included, so stacking is judged on all of them. */
+	readonly codes?: string[];
+	readonly lines: ICartPromotionLineQuery[];
+	readonly shipping?: ICartPromotionShippingQuery[];
+	readonly at?: Date;
+}
+
+/** One promotion the capability granted, with the amount it gives away. */
+export interface ICartPromotionApplication {
+	readonly promotionId: ID;
+	readonly couponId?: ID;
+	readonly code?: string;
+	readonly isAutomatic: boolean;
+	/** The discount, as a positive decimal string in the cart's currency. */
+	readonly amount: DecimalString;
+	readonly currency: string;
+}
+
+/** Why the capability did not grant a promotion (an unknown code, a stacking conflict, a spent budget …). */
+export interface ICartPromotionNotice {
+	readonly promotionId: ID;
+	readonly code: string;
+	readonly notice: string;
+	readonly message: string;
+}
+
+/**
+ * One amount the capability takes off one owner: a cart line (`LINE`) or a delivery choice (`SHIPPING`).
+ *
+ * The cart records only the `LINE` part of a promotion for now - it spreads a promotion's amount across its
+ * lines - so a `SHIPPING` part is never moved onto the items.
+ */
+export interface ICartPromotionAllocation {
+	readonly ownerType: 'LINE' | 'SHIPPING';
+	readonly ownerId: ID;
+	readonly promotionId: ID;
+	readonly code?: string;
+	readonly amount: DecimalString;
+}
+
+/** What the capability decided. */
+export interface ICartPromotionEvaluation {
+	readonly result: {
+		readonly applications: ICartPromotionApplication[];
+		readonly notices: ICartPromotionNotice[];
+		readonly discountTotal: DecimalString;
+		readonly currency: string;
+	};
+	/** Where each granted amount was taken from. */
+	readonly allocations?: ICartPromotionAllocation[];
+}
+
+/**
+ * The promotion capability as this package sees it.
+ *
+ * **It is the only source of a cart's discount (R3-07).** The cart used to record whatever amount the
+ * caller stated beside a code — `POST /carts/:id/promotions` and `applyCartPromotion` both took it — so a
+ * buyer could grant themselves any discount. The cart now hands the capability the cart itself and the
+ * codes it carries, and records only what the capability granted. The capability computes and persists
+ * nothing: it answers, and the cart writes the answer into its own promotion snapshot and the platform's
+ * `adjustment` ledger, exactly as it does with tax.
+ *
+ * The capability is the promotion package's `PromotionService`, whose `evaluate` is structurally this
+ * interface, so the installation binds the two with one provider.
+ */
+export interface ICartPromotionPort {
+	/**
+	 * @param query The cart's lines, delivery choices, currency, buyer and codes.
+	 * @returns The promotions granted, and the reasons for the ones that were not.
+	 */
+	evaluate(query: ICartPromotionQuery): Promise<ICartPromotionEvaluation>;
+}
+
+/**
+ * Token the promotion capability is injected under.
+ *
+ * Optional, like the stock and tax ports — but **unbound, it fails closed**: an installation with no
+ * promotion engine refuses to apply a promotion (`CART_PROMOTION_ENGINE_MISSING`) rather than falling back
+ * to an amount the caller stated, because that fallback is the defect this port exists to close.
+ */
+export const CART_PROMOTION_EVALUATION = Symbol('CART_PROMOTION_EVALUATION');
+
+
+/*
+|--------------------------------------------------------------------------
+| The price capability (R3-07b)
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * What the cart asks the price capability to resolve: the pricing package's own `IPriceContext`, restated.
+ *
+ * Restated for the reason the tax and promotion shapes above are: the cart does not depend on the pricing
+ * package, and a structural type is what lets the installation bind `ProductPriceService` to this port.
+ * Customer groups are not stated: the platform has no server-side record of a customer's groups, and a
+ * group stated by the caller is exactly the kind of input this port exists to stop trusting. A price list
+ * bound to a group is therefore not applied to a cart line.
+ */
+export interface ICartPriceQuery {
+	readonly variantIds: ID[];
+	readonly currency: CurrencyCode;
+	/** Units being priced; quantity bands are selected by it. */
+	readonly quantity?: DecimalString | number;
+	readonly date?: Date;
+	readonly channelId?: ID;
+	readonly regionId?: ID;
+	readonly customerId?: ID;
+}
+
+/** One resolved price, as the cart reads it. */
+export interface ICartResolvedPrice {
+	readonly variantId: ID;
+	/** The winning `product_price` row, absent for the legacy variant price. */
+	readonly priceId?: ID;
+	/** The winning price list, absent for a default price. */
+	readonly priceListId?: ID;
+	readonly currency: CurrencyCode;
+	/** What one unit costs. */
+	readonly amount: DecimalString;
+	/** What it would cost without the winning list: the "was" price. */
+	readonly originalAmount?: DecimalString;
+	/** Whether `amount` already contains tax. */
+	readonly taxInclusive: boolean;
+}
+
+/**
+ * The price capability as this package sees it.
+ *
+ * **It is the only source of a cart line's price (R3-07b).** A line used to carry whatever `unitPrice` the
+ * caller stated — `POST /carts/:id/lines`, `addCartLine` and `updateCartLine` all took one — so a buyer could
+ * name their own price. A line added or changed through a route is now priced by this capability, for the
+ * cart's currency, channel, region and buyer and for the line's quantity, and re-priced at checkout; the
+ * stated price is accepted for compatibility and ignored. Only an in-process caller that resolved the price
+ * itself (the subscription cycle's cart) states one, explicitly.
+ *
+ * The capability is the pricing package's `ProductPriceService`, whose `resolvePrices` is structurally this
+ * interface.
+ */
+export interface ICartPricePort {
+	/**
+	 * @param query The variants, the currency, the quantity and who is buying.
+	 * @returns One price per variant that has one; a variant with none is omitted.
+	 */
+	resolvePrices(query: ICartPriceQuery): Promise<ICartResolvedPrice[]>;
+}
+
+/**
+ * Token the price capability is injected under.
+ *
+ * Optional like the other ports, and **unbound it fails closed**: a line added or changed through a route is
+ * refused (`CART_PRICE_ENGINE_MISSING`) rather than priced at what its caller stated.
+ */
+export const CART_PRICE_RESOLUTION = Symbol('CART_PRICE_RESOLUTION');

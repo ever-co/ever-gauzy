@@ -24,7 +24,9 @@ export enum EverWorksLinkType {
 	DOC_FOLDER = 'DOC_FOLDER',
 	DOC = 'DOC',
 	/** A Gauzy mailbox message handed to an Ever Works agent (P4c): the inbox email ↔ the EW email message. */
-	AGENT_EMAIL = 'AGENT_EMAIL'
+	AGENT_EMAIL = 'AGENT_EMAIL',
+	/** An Ever Works agent email mirrored into the Gauzy Inbox (P4c, read-only): the EW message ↔ the inbox item. */
+	AGENT_EMAIL_MIRROR = 'AGENT_EMAIL_MIRROR'
 }
 
 export enum EverWorksLinkState {

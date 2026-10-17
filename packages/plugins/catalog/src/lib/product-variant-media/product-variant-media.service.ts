@@ -113,6 +113,58 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 	}
 
 	/**
+	 * Reorders a variant's gallery without changing what it holds.
+	 *
+	 * The order is written row by row inside one transaction that first reads the gallery: a list that is not
+	 * exactly its images, each once, is refused, and nothing is inserted or deleted — so a reorder that overlaps
+	 * an attach or a detach can neither drop the image just attached nor bring back the one just detached, which
+	 * a reorder written through {@link replaceMedia} did (Greptile on #10887, review sweep R2-G4). The primary
+	 * image is left as it is.
+	 *
+	 * @param variantId The variant whose gallery is reordered.
+	 * @param imageAssetIds The gallery's images, in their new order.
+	 * @returns The gallery rows after the write.
+	 * @throws BadRequestException When the list adds to, drops from or repeats an image of the gallery.
+	 * @throws NotFoundException When the variant is not the caller's.
+	 */
+	public async reorderMedia(variantId: ID, imageAssetIds: ID[]): Promise<ProductVariantMedia[]> {
+		const stated = imageAssetIds ?? [];
+
+		await assertInCallerScope(
+			this.typeOrmProductVariantMediaRepository.manager,
+			ProductVariant,
+			variantId,
+			'variant'
+		);
+
+		await this.typeOrmProductVariantMediaRepository.manager.transaction(async (manager) => {
+			const rows = await manager.find(ProductVariantMedia, { where: { variantId, ...callerScope() } as never });
+			const byImage = new Map(rows.map((row) => [row.imageAssetId, row]));
+
+			if (
+				new Set(stated).size !== stated.length ||
+				stated.length !== byImage.size ||
+				stated.some((id) => !byImage.has(id))
+			) {
+				throw new BadRequestException(
+					'A reorder states each image of the variant gallery once, and only those. Attach or detach images ' +
+						'with attachProductVariantMedia / detachProductVariantMedia.'
+				);
+			}
+
+			for (const [position, imageAssetId] of stated.entries()) {
+				const row = byImage.get(imageAssetId) as ProductVariantMedia;
+
+				if (row.position !== position) {
+					await manager.update(ProductVariantMedia, { id: row.id, ...callerScope() } as never, { position });
+				}
+			}
+		});
+
+		return this.findByVariant(variantId);
+	}
+
+	/**
 	 * Makes one image of a variant's gallery the thumbnail and clears the previous one.
 	 *
 	 * @param variantId The variant.

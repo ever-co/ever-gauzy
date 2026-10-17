@@ -303,6 +303,49 @@ describe('SellerOfferingService — authoring an offering (doc 20 §3.2, §3.3)'
 		expect(fixture.events()).toEqual(['seller_offering.created']);
 	});
 
+	it('refuses a create that states a status other than DRAFT, or an approval stamp (R2-G45)', async () => {
+		// Both doors carried `status` straight into the row, so `{status: "ACTIVE"}` listed an offering without
+		// the publication clauses `publish` checks. The edit refuses the same members (R4-19).
+		const fixture = offeringFixture({ offerings: [] });
+		const body = { sellerId: SELLER, variantId: VARIANT, priceAmount: '10.00', priceCurrency: 'EUR' };
+
+		for (const status of [OfferingStatus.ACTIVE, OfferingStatus.PENDING_REVIEW, OfferingStatus.PAUSED]) {
+			await expect(fixture.service.createOffering({ ...body, status } as never)).rejects.toThrow(
+				/SELLER_OFFERING_FIELD_NOT_WRITABLE: status/
+			);
+		}
+		await expect(fixture.service.createOffering({ ...body, approvedAt: new Date() } as never)).rejects.toThrow(
+			/SELLER_OFFERING_FIELD_NOT_WRITABLE: approvedAt/
+		);
+		await expect(
+			fixture.service.createOffering({ ...body, approvedByUserId: 'user-1' } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(fixture.tables.seller_offering).toEqual([]);
+		expect(fixture.events()).toEqual([]);
+	});
+
+	it('accepts a create that restates DRAFT, or states no status at all', async () => {
+		const fixture = offeringFixture({ offerings: [] });
+
+		const body = { sellerId: SELLER, priceAmount: '10.00', priceCurrency: 'EUR' };
+
+		const restated = await fixture.service.createOffering({
+			...body,
+			variantId: VARIANT,
+			status: OfferingStatus.DRAFT
+		} as never);
+		const omitted = await fixture.service.createOffering({ ...body, variantId: 'variant-omitted' } as never);
+		const nulled = await fixture.service.createOffering({
+			...body,
+			variantId: 'variant-null',
+			status: null
+		} as never);
+
+		expect(restated).toMatchObject({ status: OfferingStatus.DRAFT });
+		expect(omitted).toMatchObject({ status: OfferingStatus.DRAFT });
+		expect(nulled).toMatchObject({ status: OfferingStatus.DRAFT });
+	});
+
 	it('refuses an offering with no seller or no variant', async () => {
 		const fixture = offeringFixture({ offerings: [] });
 

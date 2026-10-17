@@ -372,6 +372,57 @@ describe('SellerAccessGuard — the same scope on both transports', () => {
 		expect(gqlContext.sellerScope).toMatchObject({ sellerId: SELLER, staff: true });
 	});
 
+	it('reads the seller a field names inside its input object, for a staff caller (R2-G43)', async () => {
+		// `createSellerOffering(input: {sellerId})`: the guard read only a top-level `sellerId`, so a staff
+		// caller got a scope naming no seller and `createOffering` refused it against the input's seller.
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
+		const fixture = guardFixture({ role: null });
+		const request: any = {};
+
+		expect(
+			await fixture.guard.canActivate(
+				graphqlContext({ input: { sellerId: SELLER, variantId: 'variant-1' } }, { req: request })
+			)
+		).toBe(true);
+		expect(request.sellerScope).toMatchObject({ sellerId: SELLER, staff: true });
+	});
+
+	it('narrows a seller member that names its seller inside the input object (R2-G43)', async () => {
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+		const fixture = guardFixture({ role: 'OWNER' });
+		const request: any = {};
+
+		expect(await fixture.guard.canActivate(graphqlContext({ input: { sellerId: SELLER } }, { req: request }))).toBe(
+			true
+		);
+		expect(request.sellerScope).toMatchObject({ sellerId: SELLER, staff: false, role: 'OWNER' });
+		expect(fixture.asked).toEqual([{ contactId: PARTY, callerUserId: CALLER }]);
+	});
+
+	it('refuses, by name, a caller with no scope over the seller its input names (R2-G43)', async () => {
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+		const fixture = guardFixture({ role: null });
+
+		await expect(
+			fixture.guard.canActivate(graphqlContext({ input: { sellerId: OTHER_SELLER } }, { req: {} }))
+		).rejects.toThrow(new RegExp(OTHER_SELLER));
+	});
+
+	it('lets a top-level seller argument win over the input object, and ignores an input that is not an object', async () => {
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
+		const fixture = guardFixture({ role: null });
+		const first: any = {};
+		const second: any = {};
+
+		await fixture.guard.canActivate(
+			graphqlContext({ sellerId: SELLER, input: { sellerId: OTHER_SELLER } }, { req: first })
+		);
+		await fixture.guard.canActivate(graphqlContext({ input: [{ sellerId: OTHER_SELLER }] }, { req: second }));
+
+		expect(first.sellerScope).toMatchObject({ sellerId: SELLER, staff: true });
+		expect(second.sellerScope?.sellerId).toBeUndefined();
+	});
+
 	it('refuses a GraphQL field the caller has no scope for, rather than failing inside the guard', async () => {
 		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
 		const fixture = guardFixture({ role: null });

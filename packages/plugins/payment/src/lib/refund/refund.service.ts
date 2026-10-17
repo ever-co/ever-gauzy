@@ -7,11 +7,13 @@ import {
 	Optional
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository, SaveOptions } from 'typeorm';
+import { EntityManager, IsNull, Repository, SaveOptions } from 'typeorm';
 import * as chalk from 'chalk';
-import { DecimalString, ID, IPagination } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
+import { CurrencyCode, DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { BaseEvent, EventBus, LegacyFindOneOptions, Money, Payment, readAffectedRows } from '@gauzy/core';
 import { Refund } from './refund.entity';
+import { RefundReason } from '../refund-reason/refund-reason.entity';
 import { TypeOrmRefundRepository } from './repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './repository/mikro-orm-refund.repository';
 import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
@@ -34,6 +36,36 @@ import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
  * `RefundService.softRemove`.
  */
 const RETIRABLE_REFUND_STATUSES: readonly RefundStatus[] = Object.freeze([RefundStatus.FAILED, RefundStatus.CANCELED]);
+
+/**
+ * The documents a refund names that live in another package's table: the order it gives money back for,
+ * and the return or the claim that caused it. Each is read by name (this package imports neither the order
+ * nor the returns package), inside the caller's tenant and organization, before a refund may cite it.
+ */
+const REFUND_SUBJECTS = Object.freeze({
+	order: { table: 'order', code: 'REFUND_ORDER_NOT_FOUND', noun: 'order' },
+	return: { table: 'order_return', code: 'REFUND_RETURN_NOT_FOUND', noun: 'return' },
+	claim: { table: 'order_claim', code: 'REFUND_CLAIM_NOT_FOUND', noun: 'claim' }
+});
+
+type RefundSubjectKind = keyof typeof REFUND_SUBJECTS;
+
+/** The drivers a refund's ceiling is serialised on with a row lock (`SELECT … FOR UPDATE`); see `lockOrderPayments`. */
+const ROW_LOCKING_DRIVERS: readonly string[] = Object.freeze([
+	'postgres',
+	'aurora-postgres',
+	'cockroachdb',
+	'mysql',
+	'mariadb',
+	'aurora-mysql'
+]);
+
+/** What a refund says it is for — the members whose ownership is checked before they are written. */
+interface IRefundAttribution {
+	orderId?: ID | null;
+	returnId?: ID | null;
+	claimId?: ID | null;
+}
 
 /**
  * Money given back.
@@ -148,6 +180,12 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			throw new BadRequestException('REFUND_NOT_ALLOWED');
 		}
 
+		// What the refund cites has to be the caller's before it is written: the order, the return or the claim
+		// and the governed reason. They were plain identifiers before, so a refund could name another
+		// organization's (or tenant's) order, return or claim, or a return of a different order (review R3-08).
+		await this.assertAttributionInScope(input);
+		await this.assertReasonInScope(input.reasonId);
+
 		let currency = input.currency;
 
 		if (input.paymentId) {
@@ -185,6 +223,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		const { lines, ...fields } = input;
 
 		const refund = await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (!input.paymentId && input.orderId) {
+				// **A refund that names no payment is measured against its order under the order's lock** (review
+				// R3-08r1). The return or claim flow measured it already, but two of them for one order could both read
+				// the order's headroom before either wrote, and both pass. The order's payment rows are locked first,
+				// the headroom is read again — a refund another call committed meanwhile is counted — and the row is
+				// written before the lock is released, so the second of two such refunds is measured against the first.
+				await this.lockOrderPayments(manager, input.orderId);
+				await this.assertOrderCeiling(input.orderId, currency, amount, manager);
+			}
+
 			const row = manager.create(Refund, {
 				...fields,
 				amount: amount.amount,
@@ -223,10 +271,20 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * routes — a breakdown changed from here would be a second, quieter way to say what the refund is
 	 * for.
 	 *
+	 * **What the refund is for is checked again when it changes, and where it lives does not change.** The REST
+	 * body carries the whole create shape, so `orderId`, `returnId`, `claimId` and `reasonId` reached the row
+	 * unchecked here even after creation had learned to check them — an update could re-point a refund at
+	 * another organization's order, or at an order its payment was never taken for. A changed attribution is
+	 * held to the same rules creation holds it to; `tenantId` / `organizationId` (and their objects) are never
+	 * written from this body, because moving a refund out of the organization would take its money out of
+	 * every ceiling the organization measures (review R3-08).
+	 *
 	 * @param id The refund to update.
 	 * @param input The fields to change.
 	 * @returns The stored refund.
-	 * @throws BadRequestException when the refund can no longer change.
+	 * @throws BadRequestException when the refund can no longer change, or when a changed order, return or
+	 * claim is not the caller's or not the refund's order's.
+	 * @throws NotFoundException when a changed reason is not in the caller's organization.
 	 */
 	async updateRefund(id: ID, input: IRefundUpdateInput): Promise<IRefund> {
 		const refund = await this.findRefundOrFail(id);
@@ -235,12 +293,68 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			throw new BadRequestException('REFUND_ALREADY_SETTLED');
 		}
 
-		const { status, amount, currency, paymentId, lines, ...changes } = input;
+		const {
+			status,
+			amount,
+			currency,
+			paymentId,
+			lines,
+			tenantId,
+			organizationId,
+			tenant,
+			organization,
+			...changes
+		} = input as IRefundUpdateInput & Record<string, unknown>;
 		void status;
 		void amount;
 		void currency;
 		void paymentId;
 		void lines;
+		void tenantId;
+		void organizationId;
+		void tenant;
+		void organization;
+
+		const changed = (field: 'orderId' | 'returnId' | 'claimId' | 'reasonId'): boolean =>
+			changes[field] !== undefined &&
+			changes[field] !== null &&
+			String(changes[field]) !== String((refund as unknown as Record<string, unknown>)[field] ?? '');
+
+		// What the row will say once written: an explicit `null` clears a return or a claim, and only a member
+		// the body leaves out keeps the stored value. The order is required and cannot be cleared.
+		const next: IRefundAttribution = {
+			orderId: (changes.orderId as ID) ?? refund.orderId,
+			returnId: changes.returnId !== undefined ? (changes.returnId as ID | null) : refund.returnId,
+			claimId: changes.claimId !== undefined ? (changes.claimId as ID | null) : refund.claimId
+		};
+
+		// A refund with no payment is explained by its return or its claim alone; clearing both would leave a
+		// movement nobody can explain, which creation refuses as well.
+		const clears = changes.returnId !== undefined || changes.claimId !== undefined;
+
+		if (clears && !refund.paymentId && !next.returnId && !next.claimId) {
+			throw new BadRequestException('REFUND_NOT_ALLOWED');
+		}
+
+		if (changed('orderId') || changed('returnId') || changed('claimId')) {
+			// Ownership first, as on creation; then the payment the refund is paid back from.
+			await this.assertAttributionInScope(next);
+
+			if (changed('orderId') && refund.paymentId) {
+				const payment = await this.paymentCaptureService.findPaymentOrFail(refund.paymentId);
+
+				if (payment.orderId && String(next.orderId) !== String(payment.orderId)) {
+					throw new BadRequestException({
+						message: `REFUND_ORDER_MISMATCH: payment '${payment.id}' was not taken for order '${next.orderId}'.`,
+						code: 'REFUND_ORDER_MISMATCH'
+					});
+				}
+			}
+		}
+
+		if (changed('reasonId')) {
+			await this.assertReasonInScope(changes.reasonId as ID);
+		}
 
 		await this.update(id, { ...changes } as never);
 
@@ -322,6 +436,7 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 
 		if (refund.paymentId) {
 			payment = await this.paymentCaptureService.findPaymentOrFail(refund.paymentId);
+			// Measured here for an early answer, and again under the order's lock inside the write below.
 			await this.assertRefundable(payment, refund.amount, refund.currency, { excludeRefundId: refund.id });
 
 			captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), refund.currency);
@@ -335,7 +450,24 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		// still pending, and the collection's total was read and replaced with no lock, so two approvals
 		// against one collection that overlapped both read the same total and one increment was lost.
 		await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (!payment && refund.orderId) {
+				// A refund that names no payment moves from pending to succeeded under the order's lock as well, so
+				// no ceiling read that holds the lock can see it change status half way (Greptile, #10889).
+				await this.lockOrderPayments(manager, refund.orderId);
+			}
+
 			if (payment && captured && refunded) {
+				if (payment.orderId) {
+					// The payment's own figure is guarded by the compare-and-swap below; the order's — which a refund
+					// naming no payment spends from too — is not. Under the order's lock it is measured again, so an
+					// approval and a return refund of the same order cannot both pass on what they read before (R3-08r1).
+					await this.lockOrderPayments(manager, payment.orderId);
+					await this.assertRefundable(payment, refund.amount, refund.currency, {
+						manager,
+						excludeRefundId: refund.id
+					});
+				}
+
 				const written = await manager.update(
 					Payment,
 					{
@@ -360,13 +492,21 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 					throw new ConflictException({
 						message: `REFUND_APPROVAL_CONFLICT: payment '${payment.id}' was refunded by another write between this approval reading its running total and writing it, so nothing was overwritten. Read the payment and approve again.`,
 						code: 'REFUND_APPROVAL_CONFLICT',
-						details: { paymentId: payment.id, refundId: refund.id, refundedAmount: payment.refundedAmount ?? '0' }
+						details: {
+							paymentId: payment.id,
+							refundId: refund.id,
+							refundedAmount: payment.refundedAmount ?? '0'
+						}
 					});
 				}
 
 				if (payment.paymentCollectionId) {
 					// Under the collection's row lock and conditional on its totals, on this transaction.
-					await this.paymentCollectionService.recordRefund(payment.paymentCollectionId, refund.amount, manager);
+					await this.paymentCollectionService.recordRefund(
+						payment.paymentCollectionId,
+						refund.amount,
+						manager
+					);
 				}
 			}
 
@@ -578,7 +718,11 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * @throws NotFoundException when the refund is not in the caller's organization.
 	 * @throws BadRequestException with `REFUND_NOT_RETIRABLE` when the refund succeeded or is still pending.
 	 */
-	public async softRemove(id: ID, options?: LegacyFindOneOptions<Refund>, saveOptions?: SaveOptions): Promise<Refund> {
+	public async softRemove(
+		id: ID,
+		options?: LegacyFindOneOptions<Refund>,
+		saveOptions?: SaveOptions
+	): Promise<Refund> {
 		const refund = await this.findRefundOrFail(id);
 
 		if (!RETIRABLE_REFUND_STATUSES.includes(refund.status as RefundStatus)) {
@@ -635,12 +779,11 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 * Sums the refunds of a payment that succeeded.
 	 *
 	 * @param paymentId The payment to sum for.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
 	 * @returns The refunded total as an exact decimal.
 	 */
-	async sumSucceededForPayment(paymentId: ID): Promise<DecimalString> {
-		const refunds: IRefund[] = await this.find({
-			where: { paymentId, status: RefundStatus.SUCCEEDED, ...this.scope } as never
-		});
+	async sumSucceededForPayment(paymentId: ID, manager?: EntityManager): Promise<DecimalString> {
+		const refunds: IRefund[] = await this.readRefunds({ paymentId, status: RefundStatus.SUCCEEDED }, manager);
 		const currency = refunds.length ? refunds[0].currency : undefined;
 
 		if (!currency) {
@@ -681,21 +824,329 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		payment: Payment,
 		amount: DecimalString | number,
 		currency: string,
-		options: { excludeRefundId?: ID } = {}
+		options: { excludeRefundId?: ID; manager?: EntityManager } = {}
 	): Promise<void> {
+		const { manager } = options;
 		const requested = this.toMoney(amount, currency);
-		const captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), currency);
-		const succeeded = Money.of(await this.sumSucceededForPayment(payment.id), currency);
+		const captured = Money.of(
+			await this.paymentCaptureService.sumCapturedForPayment(payment.id, manager),
+			currency
+		);
+		const succeeded = Money.of(await this.sumSucceededForPayment(payment.id, manager), currency);
 		const committed = options.excludeRefundId
 			? succeeded.add(
-					Money.of(await this.sumPendingForPayment(payment.id, options.excludeRefundId), currency)
-			  )
+					Money.of(await this.sumPendingForPayment(payment.id, options.excludeRefundId, manager), currency)
+				)
 			: succeeded;
 		const refundable = captured.subtract(committed);
 
 		if (requested.greaterThan(refundable)) {
 			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
 		}
+
+		// **The order's money is one ceiling, and a refund that names no payment spends from it too.** A return
+		// or a claim refund that no single payment could carry is recorded against the return or the claim with
+		// no payment (`createAttributedRefund`), so no payment's own figure ever counts it. Measured per payment
+		// only, an order paid 10 + 10 that already gave 15 back that way still let each payment refund its own
+		// 10 — 35 back on 20 taken (review R3-08). When the order has such refunds, the request is measured
+		// against what the order's payments can still give back between them, less those refunds.
+		if (payment.orderId) {
+			const unattributed = Money.of(
+				await this.sumUnattributedForOrder(payment.orderId, currency, manager),
+				currency
+			);
+
+			if (unattributed.isPositive()) {
+				const orderRefundable = Money.of(
+					await this.sumOrderHeadroom(payment.orderId, currency, options.excludeRefundId, manager),
+					currency
+				).subtract(unattributed);
+
+				if (requested.greaterThan(orderRefundable)) {
+					throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+				}
+			}
+		}
+	}
+
+	/**
+	 * Locks the payment rows of an order for the rest of the caller's transaction.
+	 *
+	 * The order's payments are the money its refunds are measured against, and every write that spends that
+	 * money — a refund that names no payment, an approval that moves a payment — takes this lock before it reads
+	 * the ceiling, so two of them for one order run one after the other instead of both passing on the same read.
+	 * It is a `SELECT … FOR UPDATE` on PostgreSQL and MySQL (rows ordered by id, so two lockers take them in the
+	 * same order). SQLite has no row lock and admits one writer at a time: a transaction that read before another
+	 * committed cannot commit a write of its own, so there the transaction is the serialisation and nothing is
+	 * stated. A read is not blocked by the lock on any of the three, so the ceiling reads below see what the last
+	 * holder committed.
+	 *
+	 * @param manager The manager of the transaction the refund is being written in.
+	 * @param orderId The order whose payments are locked.
+	 */
+	private async lockOrderPayments(manager: EntityManager, orderId: ID): Promise<void> {
+		const type = String((manager?.dataSource?.options as { type?: string } | undefined)?.type ?? '');
+
+		if (!ROW_LOCKING_DRIVERS.includes(type)) {
+			return;
+		}
+
+		await manager
+			.createQueryBuilder(Payment, 'payment')
+			.select('payment.id', 'id')
+			.where('payment.orderId = :orderId', { orderId })
+			.andWhere('payment.tenantId = :tenantId', { tenantId: this.scope.tenantId })
+			.andWhere('payment.organizationId = :organizationId', { organizationId: this.scope.organizationId })
+			.orderBy('payment.id', 'ASC')
+			.setLock('pessimistic_write')
+			.getRawMany();
+	}
+
+	/**
+	 * Refuses a refund that names no payment past what the order's payments can still give back, net of the
+	 * order's other refunds that name no payment. An order with no payment in this currency has no recorded money
+	 * to measure against, which is the documented escape the return and claim flows keep.
+	 *
+	 * @param orderId The order.
+	 * @param currency The refund's currency.
+	 * @param amount The refund's amount.
+	 * @param manager The transaction holding the order's lock, which every read here runs on.
+	 * @throws BadRequestException with `REFUND_AMOUNT_EXCEEDS_CAPTURED` when the order cannot carry it.
+	 */
+	private async assertOrderCeiling(
+		orderId: ID,
+		currency: string,
+		amount: Money,
+		manager?: EntityManager
+	): Promise<void> {
+		const payments = await this.readOrderPayments(orderId, manager);
+
+		if (
+			!payments.some((payment) => String(payment.currency ?? currency).toUpperCase() === currency.toUpperCase())
+		) {
+			return;
+		}
+
+		const refundable = Money.of(
+			await this.sumOrderHeadroom(orderId, currency, undefined, manager),
+			currency
+		).subtract(Money.of(await this.sumUnattributedForOrder(orderId, currency, manager), currency));
+
+		if (amount.greaterThan(refundable)) {
+			throw new BadRequestException({
+				message:
+					'REFUND_AMOUNT_EXCEEDS_CAPTURED: the order captured less than this refund would give back, ' +
+					'so there is no money on it to pay the amount from.',
+				code: 'REFUND_AMOUNT_EXCEEDS_CAPTURED',
+				details: {
+					orderId,
+					requested: amount.amount,
+					refundable: refundable.isNegative() ? '0' : refundable.amount,
+					currency
+				}
+			});
+		}
+	}
+
+	/**
+	 * Sums the refunds of an order that name no payment and still stand — succeeded, or pending.
+	 *
+	 * These are the refunds a return or a claim recorded against itself because no single payment could carry
+	 * them (`createAttributedRefund`): no payment's own ledger counts them, so the order-wide ceiling has to.
+	 * A pending one counts as well, because that path records and settles in one call — a pending row is a
+	 * settlement still in flight beside this one, or one that failed half way and is withdrawn with
+	 * `cancelRefund`, which is what makes its money count again. A cancelled or failed one moved nothing and
+	 * does not count.
+	 *
+	 * **One read, not one per status.** The order's refunds are read in one statement and the standing ones -
+	 * no payment, succeeded or pending, this currency - are picked here: read as two statements, a refund that
+	 * moved from pending to succeeded between them was counted by neither (Greptile, #10889). The criteria stay
+	 * plain, so the read is the one both ORMs answer alike.
+	 *
+	 * @param orderId The order to sum for.
+	 * @param currency The currency the ceiling is measured in; a refund in another currency is not comparable.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
+	 * @returns The total, as an exact decimal.
+	 */
+	async sumUnattributedForOrder(orderId: ID, currency: string, manager?: EntityManager): Promise<DecimalString> {
+		const standing = new Set<string>([RefundStatus.SUCCEEDED, RefundStatus.PENDING]);
+		const unattributed = (await this.readRefunds({ orderId }, manager)).filter(
+			(refund) =>
+				standing.has(refund.status as string) &&
+				!refund.paymentId &&
+				String(refund.currency ?? '').toUpperCase() === currency.toUpperCase()
+		);
+
+		if (!unattributed.length) {
+			return '0';
+		}
+
+		return Money.sum(
+			unattributed.map((refund) => Money.of(refund.amount, currency)),
+			currency
+		).amount;
+	}
+
+	/**
+	 * What every payment of an order can still give back between them, in one currency — the same two figures
+	 * per payment that `assertRefundable` reads (captures less succeeded refunds, less the other pending ones
+	 * on an approval), each floored at zero so a payment that gave back more than it took does not reduce the
+	 * others.
+	 *
+	 * @param orderId The order.
+	 * @param currency The currency to measure in; a payment in another currency is left out.
+	 * @param excludeRefundId On an approval, the refund being approved, whose own pending row is not counted.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
+	 * @returns The headroom, as an exact decimal.
+	 */
+	private async sumOrderHeadroom(
+		orderId: ID,
+		currency: string,
+		excludeRefundId?: ID,
+		manager?: EntityManager
+	): Promise<DecimalString> {
+		const payments = await this.readOrderPayments(orderId, manager);
+		let total = Money.zero(currency as CurrencyCode);
+
+		for (const payment of payments) {
+			if (String(payment.currency ?? currency).toUpperCase() !== currency.toUpperCase()) {
+				continue;
+			}
+
+			let headroom = Money.of(
+				await this.paymentCaptureService.sumCapturedForPayment(payment.id, manager),
+				currency
+			).subtract(Money.of(await this.sumSucceededForPayment(payment.id, manager), currency));
+
+			if (excludeRefundId) {
+				headroom = headroom.subtract(
+					Money.of(await this.sumPendingForPayment(payment.id, excludeRefundId, manager), currency)
+				);
+			}
+
+			total = total.add(headroom.isNegative() ? Money.zero(currency as CurrencyCode) : headroom);
+		}
+
+		return total.amount;
+	}
+
+	/**
+	 * Refuses an order, a return or a claim that is not the caller's, and a return or a claim of another order.
+	 *
+	 * The three are other packages' rows, read by table name through the writing manager — the way the line
+	 * breakdown reads `order_line` — inside the caller's tenant and organization. Ownership is the question,
+	 * not liveness, so a retired row of the caller's still answers. A table the installation does not register
+	 * (the order or the returns package is not installed) has nothing to check against and no other tenant's
+	 * row to leak into, and the identifier is kept as the plain attribution it always was.
+	 *
+	 * @param attribution The order, return and claim the refund names.
+	 * @throws BadRequestException with `REFUND_ORDER_NOT_FOUND` / `REFUND_RETURN_NOT_FOUND` /
+	 * `REFUND_CLAIM_NOT_FOUND` when one is not the caller's, and `REFUND_RETURN_ORDER_MISMATCH` /
+	 * `REFUND_CLAIM_ORDER_MISMATCH` when a return or a claim belongs to another order.
+	 */
+	private async assertAttributionInScope(attribution: IRefundAttribution): Promise<void> {
+		const manager = this.typeOrmRefundRepository.manager;
+
+		if (attribution.orderId) {
+			await this.findSubjectInScope(manager, 'order', attribution.orderId);
+		}
+
+		for (const kind of ['return', 'claim'] as const) {
+			const id = kind === 'return' ? attribution.returnId : attribution.claimId;
+
+			if (!id) {
+				continue;
+			}
+
+			const subject = await this.findSubjectInScope(manager, kind, id);
+
+			if (subject?.orderId && attribution.orderId && String(subject.orderId) !== String(attribution.orderId)) {
+				const code = `REFUND_${kind.toUpperCase()}_ORDER_MISMATCH`;
+
+				throw new BadRequestException({
+					message: `${code}: ${REFUND_SUBJECTS[kind].noun} '${id}' was not raised against order '${attribution.orderId}'.`,
+					code
+				});
+			}
+		}
+	}
+
+	/**
+	 * Reads one order, return or claim inside the caller's scope.
+	 *
+	 * @param manager The manager to read through.
+	 * @param kind Which document.
+	 * @param id Its identifier.
+	 * @returns The row's id and, for a return or a claim, its order — or `null` when the installation does
+	 * not register the table.
+	 * @throws BadRequestException when the row is not the caller's.
+	 */
+	private async findSubjectInScope(
+		manager: EntityManager,
+		kind: RefundSubjectKind,
+		id: ID
+	): Promise<{ id: ID; orderId?: ID | null } | null> {
+		const { table, code, noun } = REFUND_SUBJECTS[kind];
+
+		if (!manager?.dataSource?.hasMetadata?.(table)) {
+			return null;
+		}
+
+		const { tenantId, organizationId } = this.scope;
+		const subject = this.q('subject');
+		const query = manager
+			.createQueryBuilder()
+			.select(`${subject}.${this.q('id')}`, 'id')
+			.from(table, 'subject')
+			.where(`${subject}.${this.q('id')} = :refundSubjectId`, { refundSubjectId: id })
+			.andWhere(`${subject}.${this.q('tenantId')} = :tenantId`, { tenantId })
+			.andWhere(`${subject}.${this.q('organizationId')} = :organizationId`, { organizationId });
+
+		if (kind !== 'order') {
+			query.addSelect(`${subject}.${this.q('orderId')}`, 'orderId');
+		}
+
+		const rows: Array<{ id: ID; orderId?: ID | null }> = (await query.getRawMany()) ?? [];
+
+		if (!rows.length) {
+			throw new BadRequestException({
+				message: `${code}: ${noun} '${id}' is not a ${noun} of this organization.`,
+				code
+			});
+		}
+
+		return rows[0];
+	}
+
+	/**
+	 * Refuses a governed reason that is not the caller's. The reason is this package's own row and the refund
+	 * holds a foreign key to it, so another tenant's reason was accepted and then answered with the refund.
+	 *
+	 * @param reasonId The reason the refund cites, when it cites one.
+	 * @throws NotFoundException with `REFUND_REASON_NOT_FOUND` when it is not in the caller's organization.
+	 */
+	private async assertReasonInScope(reasonId?: ID | null): Promise<void> {
+		if (!reasonId) {
+			return;
+		}
+
+		const reason = await this.typeOrmRefundRepository.manager.findOne(RefundReason, {
+			where: { id: reasonId, ...this.scope } as never
+		});
+
+		if (!reason) {
+			throw new NotFoundException('REFUND_REASON_NOT_FOUND');
+		}
+	}
+
+	/**
+	 * Quotes an identifier for the active dialect, as the line breakdown's read of `order_line` does.
+	 *
+	 * @param identifier The column or alias name to quote.
+	 * @returns The quoted identifier.
+	 */
+	private q(identifier: string): string {
+		return isMySQL() ? `\`${identifier}\`` : `"${identifier}"`;
 	}
 
 	/**
@@ -703,12 +1154,15 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 	 *
 	 * @param paymentId The payment to sum for.
 	 * @param exceptRefundId A refund to leave out, which is the one being approved.
+	 * @param manager The transaction to read on, when the caller holds one (see `readRefunds`).
 	 * @returns The pending total as an exact decimal.
 	 */
-	private async sumPendingForPayment(paymentId: ID, exceptRefundId: ID): Promise<DecimalString> {
-		const refunds: IRefund[] = await this.find({
-			where: { paymentId, status: RefundStatus.PENDING, ...this.scope } as never
-		});
+	private async sumPendingForPayment(
+		paymentId: ID,
+		exceptRefundId: ID,
+		manager?: EntityManager
+	): Promise<DecimalString> {
+		const refunds: IRefund[] = await this.readRefunds({ paymentId, status: RefundStatus.PENDING }, manager);
 		const others = refunds.filter((refund) => refund.id !== exceptRefundId);
 		const currency = others.length ? others[0].currency : undefined;
 
@@ -720,6 +1174,44 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			others.map((refund) => Money.of(refund.amount, currency)),
 			currency
 		).amount;
+	}
+
+	/**
+	 * Reads refunds of the caller's organization.
+	 *
+	 * **Inside a transaction, on that transaction's connection** (CodeRabbit + Greptile, #10889). The ceiling is
+	 * re-read under the order's lock, and a read through the injected repository there takes a second pool
+	 * connection while the transaction holds the first: with a pool of one it waits for itself, and a burst of
+	 * refunds waiting on one order's lock can exhaust a larger pool the same way. The transaction's manager is
+	 * the TypeORM one this write path already runs on (`recordRefund`, `settleRefund`). Outside a transaction -
+	 * the early answers before the lock - the ordinary read is used, which travels the configured ORM.
+	 *
+	 * @param where The criteria, merged with the tenancy scope.
+	 * @param manager The transaction to read on, when the caller holds one.
+	 * @returns The refunds.
+	 */
+	private async readRefunds(where: Record<string, unknown>, manager?: EntityManager): Promise<IRefund[]> {
+		const criteria = { ...where, ...this.scope } as never;
+		const rows = manager ? await manager.find(Refund, { where: criteria }) : await this.find({ where: criteria });
+
+		return (rows ?? []) as IRefund[];
+	}
+
+	/**
+	 * Reads the payments of an order in the caller's organization, on the caller's transaction when it holds one
+	 * (see `readRefunds`).
+	 *
+	 * @param orderId The order.
+	 * @param manager The transaction to read on, when the caller holds one.
+	 * @returns The payments.
+	 */
+	private async readOrderPayments(orderId: ID, manager?: EntityManager): Promise<Payment[]> {
+		const criteria = { orderId, ...this.scope } as never;
+		const rows = manager
+			? await manager.find(Payment, { where: criteria })
+			: await this.paymentRepository.find({ where: criteria });
+
+		return rows ?? [];
 	}
 
 	/**

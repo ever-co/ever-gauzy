@@ -63,6 +63,32 @@ export class CollectionProductResolver {
 	}
 
 	/**
+	 * Replaces the manual product set of one collection, in the order the caller states.
+	 *
+	 * The route it mirrors is `PUT /collection-products/by-collection/:collectionId`, which writes the whole
+	 * set — additions, removals and the new positions — inside one transaction. The add and the removal below
+	 * reach the same service call but can only append or drop: neither can move a product, so a shelf could be
+	 * reordered over REST and not over GraphQL (review sweep R2-G1). The variant membership has had this door
+	 * since `replaceCollectionVariants`; this is its product twin.
+	 *
+	 * The permission is the route's own — `COLLECTIONS_EDIT` — and the call is the one the route makes: the
+	 * same method, the same two arguments. The route declares no `@Idempotent` scope and no `@Versioned`
+	 * expectation, so neither does the field.
+	 *
+	 * @param collectionId The collection whose membership is being written.
+	 * @param productIds The complete set of product ids the collection should contain, in order.
+	 * @returns The membership rows after the write.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('replaceCollectionProducts')
+	async replaceCollectionProducts(
+		@Args('collectionId') collectionId: ID,
+		@Args('productIds') productIds: ID[]
+	): Promise<CollectionProduct[]> {
+		return this.collectionProductService.replaceProducts(collectionId, productIds ?? []);
+	}
+
+	/**
 	 * Curates products into a collection, appending them to the manual set.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))

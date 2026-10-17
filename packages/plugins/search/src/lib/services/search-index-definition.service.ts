@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { FindOptionsWhere, IsNull } from 'typeorm';
-import { ID, ISearchIndexField, ISearchIndexRegistration, JsonData } from '@gauzy/contracts';
+import { ID, ISearchIndexField, ISearchIndexRegistration, JsonData, SearchFieldKind } from '@gauzy/contracts';
 import {
 	CrudService,
 	MikroOrmSearchIndexDefinitionRepository,
@@ -34,6 +34,29 @@ interface IDefinitionShape {
 	defaultWeight: number;
 	sourceUpdatedAtField: string;
 }
+
+/** The kinds a field may declare — the registry's own list (`registry/search-index.registry.ts`). */
+const FIELD_KINDS: ReadonlySet<string> = new Set<string>(Object.values(SearchFieldKind));
+
+/**
+ * Refuses a text member longer than the REST contract allows.
+ *
+ * @param value The member, when stated.
+ * @param max Its longest form.
+ * @param what How the refusal names it.
+ * @throws BadRequestException When it is longer.
+ */
+function assertMaxLength(value: unknown, max: number, what: string): void {
+	if (value !== undefined && value !== null && String(value).length > max) {
+		throw new BadRequestException(`An index definition's ${what} is at most ${max} characters.`);
+	}
+}
+
+/** A field name's longest form, as `SearchIndexFieldDTO.name` caps it on REST. */
+const MAX_FIELD_NAME_LENGTH = 128;
+
+/** A field source path's longest form, as `SearchIndexFieldDTO.source` caps it on REST. */
+const MAX_FIELD_SOURCE_LENGTH = 255;
 
 /**
  * The persisted half of the index declarations.
@@ -245,6 +268,40 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	}
 
 	/**
+	 * The shipped (platform) definition of one entity, whatever organization the caller has selected.
+	 *
+	 * A sweep is the tenant's, not the caller's organization's: it reads every organization's rows and writes each one
+	 * under its own organization's definition (Q16). Resolving the sweep's definition through `findFor` stamped the
+	 * whole tenant with the version — and the switch — of whichever organization the operator happened to have
+	 * selected.
+	 *
+	 * @param entity The entity key.
+	 * @returns The platform row, or `null` when the entity has no persisted definition.
+	 */
+	async platformDefinitionOf(entity: string): Promise<SearchIndexDefinition | null> {
+		// No organization AND no tenant: a tenant's own row with no organization is not every tenant's shipped
+		// definition (CodeRabbit on #10850).
+		return await this.typeOrmSearchIndexDefinitionRepository.findOne({
+			where: { entity, organizationId: IsNull(), tenantId: IsNull() } as any
+		});
+	}
+
+	/**
+	 * Every organization's own definition of one entity, switched on or off.
+	 *
+	 * @param entity The entity key.
+	 * @param tenantId The tenant whose copies are read; every tenant's when none is named (a system sweep).
+	 * @returns The copies, each naming its tenant and organization.
+	 */
+	async organizationCopies(entity: string, tenantId?: ID | null): Promise<SearchIndexDefinition[]> {
+		const rows = await this.typeOrmSearchIndexDefinitionRepository.find({
+			where: { entity, ...(tenantId ? { tenantId } : {}) } as any
+		});
+
+		return rows.filter((row) => !!row.organizationId);
+	}
+
+	/**
 	 * The definitions a caller may see: its organization's rows and the platform's.
 	 *
 	 * @param entity Narrows the list to one entity.
@@ -367,6 +424,12 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	 */
 	private async saveChanges(row: SearchIndexDefinition, changes: IDefinitionChanges): Promise<SearchIndexDefinition> {
 		const shapeBefore = this.serialiseShape(this.shapeOfRow(row));
+
+		// The caps `UpdateSearchIndexDefinitionDTO` puts on REST, applied to GraphQL too (R2-G5).
+		assertMaxLength(changes.label, 255, 'label');
+		assertMaxLength(changes.titleTemplate, 512, 'title template');
+		assertMaxLength(changes.bodyTemplate, 1024, 'body template');
+		assertMaxLength(changes.sourceUpdatedAtField, 64, 'source timestamp field');
 
 		if (changes.label !== undefined) {
 			row.label = String(changes.label);
@@ -524,6 +587,12 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	 * The rules are the same ones the in-memory registry applies, restated here because this is the
 	 * path an operator writes through and the registry never sees that input.
 	 *
+	 * It is also the one place both doors meet (review sweep R2-G5): `PUT /search/index-definitions/:id`
+	 * validated a field's weight (`@Min(0)`) and its lengths but took any `kind` string, while
+	 * `updateSearchIndexDefinition` checked the kind (an SDL enum) but stored a negative weight — which the
+	 * document builder then silently ignored — and any length. Kind, weight, source and the name/source
+	 * lengths are now checked here, for both.
+	 *
 	 * @param entity The entity key, for the message.
 	 * @param fields The declared fields.
 	 * @returns The fields.
@@ -544,6 +613,47 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 
 			if (!name) {
 				throw new BadRequestException(`An index definition for "${entity}" declares a field with no name.`);
+			}
+
+			if (name.length > MAX_FIELD_NAME_LENGTH) {
+				throw new BadRequestException(
+					`The index definition for "${entity}" declares a field name longer than ${MAX_FIELD_NAME_LENGTH} characters.`
+				);
+			}
+
+			if (!FIELD_KINDS.has(String(field.kind))) {
+				throw new BadRequestException(
+					`The index definition for "${entity}" declares the kind "${field.kind}" for the field ` +
+						`"${name}". A kind is one of ${Array.from(FIELD_KINDS).join(', ')}.`
+				);
+			}
+
+			if (field.weight !== undefined && field.weight !== null) {
+				const weight = Number(field.weight);
+
+				if (!Number.isFinite(weight) || weight < 0) {
+					throw new BadRequestException(
+						`The index definition for "${entity}" gives the field "${name}" the weight ` +
+							`"${field.weight}". A weight is a non-negative number.`
+					);
+				}
+			}
+
+			if (field.source !== undefined && field.source !== null) {
+				const source = String(field.source);
+
+				if (!source.trim()) {
+					throw new BadRequestException(
+						`The index definition for "${entity}" gives the field "${name}" an empty source path.`
+					);
+				}
+
+				if (source.length > MAX_FIELD_SOURCE_LENGTH) {
+					throw new BadRequestException(
+						`The index definition for "${entity}" gives the field "${name}" a source path longer than ` +
+							`${MAX_FIELD_SOURCE_LENGTH} characters.`
+					);
+				}
 			}
 
 			if (names.has(name)) {

@@ -54,6 +54,7 @@ onModuleInit() {
 | POST   | `/api/inbox/provider-accounts`            | `{ providerId, name, scope?, organizationId?, config, isDefaultOutbound? }`; generated secrets are answered this once                                                           |
 | GET    | `/api/inbox/provider-accounts/:id`        | One account                                                                                                                                                                     |
 | PATCH  | `/api/inbox/provider-accounts/:id`        | `{ name?, config?, status? (ACTIVE / DISABLED), isDefaultOutbound? }`; a secret left out or empty keeps its value; a generated secret sent as `null` is rotated (answered once) |
+| DELETE | `/api/inbox/provider-accounts/:id`        | Removes the account: kept as deleted and disabled, no longer the outbound default; 409 while a mailbox receives through it                                                      |
 | POST   | `/api/inbox/provider-accounts/:id/verify` | "Test connection" through the plugin's `verifyAccount`; the result is kept on the account                                                                                       |
 
 A tenant-wide account (`scope: TENANT`) also needs `ALL_ORG_EDIT` to be created, changed or tested. Every answer is
@@ -104,13 +105,17 @@ replicas, so two requests for one address never both succeed).
 | GET         | `/api/inbox/mailboxes/mine`              | `INBOX_VIEW`           |
 | GET / POST  | `/api/inbox/mailboxes`                   | `INBOX_MAILBOX_MANAGE` |
 | GET / PATCH | `/api/inbox/mailboxes/:id`               | `INBOX_MAILBOX_MANAGE` |
+| GET         | `/api/inbox/mailboxes/:id/verification`  | `INBOX_MAILBOX_MANAGE` |
 | POST        | `/api/inbox/mailboxes/:id/verify`        | `INBOX_MAILBOX_MANAGE` |
 | POST        | `/api/inbox/mailboxes/:id/rotate-secret` | `INBOX_MAILBOX_MANAGE` |
 | GET / PUT   | `/api/inbox/mailboxes/:id/members`       | `INBOX_MAILBOX_MANAGE` |
 | POST        | `/api/inbox/mailboxes/provision`         | `INBOX_MAILBOX_MANAGE` |
 | GET / PUT   | `/api/inbox/mailboxes/settings`          | `INBOX_MAILBOX_MANAGE` |
 
-Management also needs an active membership of the organization; the tenant is always the caller's.
+Management also needs an active membership of the organization; the tenant is always the caller's. `GET /:id/verification`
+answers a custom-domain mailbox's TXT record and its last status without a DNS lookup (`POST /:id/verify` looks it up);
+the settings answer `platformDomain` too (`GAUZY_INBOX_DOMAIN`, or `null`). The Settings → Inbox pages of
+`@gauzy/plugin-inbox-ui` are built on these routes.
 
 ## Inbound: the provider webhook and the worker
 

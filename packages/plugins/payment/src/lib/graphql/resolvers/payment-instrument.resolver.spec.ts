@@ -235,7 +235,9 @@ function surfaces(granted: string[] = []) {
 		holderKernel,
 		tokens,
 		accounts,
-		accountResolver: new PaymentAccountHolderResolver(holderKernel as never, accounts, tokens),
+		// The fourth collaborator is the same field-visibility decision the token resolver asks, which is
+		// what gates `PaymentAccountHolder.methodTokens` (R2-G10).
+		accountResolver: new PaymentAccountHolderResolver(holderKernel as never, accounts, tokens, visibility),
 		// The third collaborator is the instrument's own kernel service, which the resolver injects for
 		// the recoverable lifecycle pair §3.1 requires of it; `kernel` is that service's stub here.
 		tokenResolver: new PaymentMethodTokenResolver(tokens, visibility, kernel as never)
@@ -410,7 +412,10 @@ describe('PaymentMethodTokenResolver — the gate on the stored reference (17 §
 	});
 
 	it('never carries the reference in a list, for any caller', async () => {
-		const { tokenResolver, accountResolver } = surfaces([PaymentPermission.PAYMENT_METHOD_TOKENS_CHARGE]);
+		const { tokenResolver, accountResolver } = surfaces([
+			PaymentPermission.PAYMENT_METHOD_TOKENS_CHARGE,
+			PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW
+		]);
 
 		const connection = await tokenResolver.paymentMethodTokens({ accountHolderId: HOLDER });
 
@@ -419,8 +424,48 @@ describe('PaymentMethodTokenResolver — the gate on the stored reference (17 §
 
 		const related = await accountResolver.methodTokens({ id: HOLDER } as never);
 
-		expect(Object.prototype.hasOwnProperty.call(related[0], 'token')).toBe(false);
+		expect(Object.prototype.hasOwnProperty.call(related?.[0], 'token')).toBe(false);
 		expect(JSON.stringify(related)).not.toContain(REFERENCE);
+	});
+});
+
+// R2-G10: the GraphQL module sets no `fieldResolverEnhancers`, so a `@ResolveField` runs no guard and its
+// `@Permissions` line was metadata only — a caller with the account grant alone read the instruments.
+describe('PaymentAccountHolderResolver — the gate on the instruments beneath an account', () => {
+	it('declares the field gated on the read permission of the instruments', () => {
+		expect(
+			Reflect.getMetadata(VISIBLE_WITH_METADATA, PaymentAccountHolderResolver.prototype, 'methodTokens')
+		).toBe(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW);
+	});
+
+	it('withholds the instruments from a caller holding the account grant only, and reads none for it', async () => {
+		const { accountResolver, kernel } = surfaces([PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_VIEW]);
+
+		await expect(accountResolver.methodTokens({ id: HOLDER } as never)).rejects.toMatchObject({
+			code: 'PERMISSION_DENIED',
+			status: 403,
+			details: {
+				resource: 'paymentAccountHolder',
+				field: 'methodTokens',
+				requiredPermission: PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW
+			},
+			message: "Field 'PaymentAccountHolder.methodTokens' is not readable by this caller."
+		});
+		expect(kernel.findAll).not.toHaveBeenCalled();
+		expect(kernel.listByHolder).not.toHaveBeenCalled();
+	});
+
+	it('answers the masked instruments to a caller holding the read permission of the instruments', async () => {
+		const { accountResolver } = surfaces([
+			PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_VIEW,
+			PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW
+		]);
+
+		const related = await accountResolver.methodTokens({ id: HOLDER } as never);
+
+		expect(related).toHaveLength(1);
+		expect(related?.[0]).toMatchObject({ id: TOKEN, last4: '4242' });
+		expect(Object.prototype.hasOwnProperty.call(related?.[0], 'token')).toBe(false);
 	});
 });
 
@@ -445,6 +490,73 @@ describe('the stored-instrument mutations (17 §9.7)', () => {
 		});
 		// The refusal is a validation failure: the request never reaches the provider adapter or a table.
 		expect(kernel.recordProviderInstrument).not.toHaveBeenCalled();
+	});
+
+	// R2-G9: the account mutations whose routes carry `@UseCardDataRefusal()` stored a card number nested in
+	// the free-form `metadata` over GraphQL, because the resolver ran no refusal at all.
+	it('refuses a card member in the metadata of a recorded account, before the kernel is reached', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.createPaymentAccountHolder({
+				providerKey: 'a-provider',
+				metadata: { card: { number: '4242424242424242' } }
+			} as never)
+		).rejects.toMatchObject({
+			response: {
+				statusCode: 400,
+				code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
+				details: { field: 'metadata.card.number' }
+			}
+		});
+		expect(holderKernel.createHolder).not.toHaveBeenCalled();
+	});
+
+	it('refuses a card member in the metadata of an account change, whatever the spelling', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.updatePaymentAccountHolder({
+				id: HOLDER,
+				metadata: { payment: [{ card_number: '4242424242424242' }] }
+			} as never)
+		).rejects.toMatchObject({
+			response: {
+				statusCode: 400,
+				code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
+				details: { field: 'metadata.payment[0].card_number' }
+			}
+		});
+		expect(holderKernel.findHolderOrFail).not.toHaveBeenCalled();
+		expect(holderKernel.updateHolder).not.toHaveBeenCalled();
+	});
+
+	it('refuses a card member on a recorded verification, as the verify route does', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.verifyPaymentAccountHolder({
+				id: HOLDER,
+				verificationStatus: 'VERIFIED',
+				cvc: '123'
+			} as never)
+		).rejects.toMatchObject({
+			response: { statusCode: 400, code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED, details: { field: 'cvc' } }
+		});
+		expect(holderKernel.findHolderOrFail).not.toHaveBeenCalled();
+		expect(holderKernel.transitionStatus).not.toHaveBeenCalled();
+	});
+
+	it('records an account whose metadata carries no card member', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.createPaymentAccountHolder({
+				providerKey: 'a-provider',
+				metadata: { onboarding: { step: 'kyc' }, last4: '4242' }
+			} as never)
+		).resolves.toMatchObject({ paymentAccountHolder: { id: HOLDER }, userErrors: [] });
+		expect(holderKernel.createHolder).toHaveBeenCalledTimes(1);
 	});
 
 	it('answers a business rejection as a payload rather than as a transport error', async () => {

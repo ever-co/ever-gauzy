@@ -272,6 +272,8 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 	): Promise<void> {
 		const state = everWorksStateOf(change);
 		if (!state) return;
+		// Only Ever Works inbox items have a state there (a mirrored agent email, for one, does not).
+		if (item.externalSource !== EVER_WORKS_INBOX_EXTERNAL_SOURCE) return;
 		const { context, ewItemId } = await this.contextOf(item);
 		const ewUserId = await this.everWorksUserOf(context, recipient.userId as ID);
 		if (!ewUserId) {

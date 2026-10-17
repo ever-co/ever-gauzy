@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { OrderStatus } from '@gauzy/contracts';
 import {
 	CommerceCart,
 	CommerceCartService,
@@ -49,9 +50,26 @@ export class OrderCheckoutHandler implements ICartCheckoutHandler {
 			);
 		}
 
+		// R3-10: a checkout that placed this cart's order and then died before the cart recorded it left a
+		// placed order behind. The completion that comes next answers with that order rather than placing a
+		// second one — which the unique index over a cart's placed orders would refuse at placement anyway,
+		// leaving the cart impossible to complete.
+		const placed = await this.orderService.findPlacedForCart(cart.id);
+
+		if (placed) {
+			// `createFromCart` places and then confirms; a checkout that died between the two left the order
+			// `PENDING`, and the recovery finishes what it started rather than completing the cart over it.
+			const recovered =
+				placed.status === OrderStatus.PENDING ? await this.orderService.confirm(placed.id, 'SYSTEM') : placed;
+
+			return { orderId: recovered.id, orderNumber: recovered.number };
+		}
+
 		const order = await this.orderService.createFromCart(cart as any, {
 			idempotencyKey: context.idempotencyKey,
-			source: 'CHANNEL'
+			source: 'CHANNEL',
+			// The buyer was quoted the cart's discounts and taxes; the order is placed with them (Q7-W1a).
+			carryCartLedgers: true
 		});
 
 		return { orderId: order.id, orderNumber: order.number };

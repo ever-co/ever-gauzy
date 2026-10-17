@@ -122,6 +122,15 @@ export interface IInboxProviderAccountCreated extends IInboxProviderAccount {
 	oneTimeWebhookUrl?: string | null;
 }
 
+/**
+ * `DELETE /api/inbox/provider-accounts/:id`: the account is removed (soft: kept, marked deleted and disabled). Refused
+ * with 409 while a mailbox receives through it.
+ */
+export interface IInboxProviderAccountRemoved {
+	id: ID;
+	deleted: true;
+}
+
 /** `POST /api/inbox/provider-accounts/:id/verify` ("Test connection"). */
 export interface IInboxProviderAccountCheck {
 	ok: boolean;
@@ -389,6 +398,11 @@ export interface IInboxOrganizationEmailSettings {
 	organizationId: ID;
 	/** Create a mailbox for every new employee (agents never get one). */
 	autoProvisionEmployees: boolean;
+	/**
+	 * The platform mailbox domain of this server (`GAUZY_INBOX_DOMAIN`), the one platform addresses are allocated on;
+	 * `null` when none is set (then only custom-domain mailboxes can be created).
+	 */
+	platformDomain?: string | null;
 }
 
 /**

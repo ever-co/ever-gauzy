@@ -3182,7 +3182,27 @@
 			"SELLER_PAYOUTS_CREATE": "Criar repasses a vendedores",
 			"SELLER_PAYOUTS_APPROVE": "Aprovar repasses a vendedores",
 			"SELLER_PAYOUTS_CANCEL": "Cancelar repasses a vendedores",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Excluir Iniciativa Estratégica da Organização"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Excluir Iniciativa Estratégica da Organização",
+			"INTEGRATION_ADD": "Adicionar integrações",
+			"INTEGRATION_EDIT": "Editar integrações",
+			"INTEGRATION_DELETE": "Excluir integrações",
+			"AI_CHAT_ACCESS": "Acessar o chat de IA",
+			"AI_CHAT_SETTINGS": "Gerenciar configurações do chat de IA",
+			"ORG_JOB_APPLY": "Candidatar-se a vagas",
+			"ORG_JOB_SEARCH": "Visualizar vagas",
+			"ORG_JOB_EDIT": "Editar vagas",
+			"ORG_EMPLOYEES_ADD": "Criar funcionários da organização",
+			"ORG_EMPLOYEES_DELETE": "Excluir funcionários da organização",
+			"DAILY_PLAN_CREATE": "Criar planos diários",
+			"DAILY_PLAN_READ": "Visualizar planos diários",
+			"DAILY_PLAN_UPDATE": "Atualizar planos diários",
+			"DAILY_PLAN_DELETE": "Excluir planos diários",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Remover conta como membro da equipe",
+			"CUSTOM_SMTP_EDIT": "Editar SMTP personalizado",
+			"IMPORT_ADD": "Importar seus dados",
+			"EXPORT_ADD": "Exportar seus dados",
+			"OAUTH_CLIENT_VIEW": "Visualizar clientes OAuth",
+			"OAUTH_CLIENT_EDIT": "Gerenciar clientes OAuth"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",
@@ -4732,7 +4752,7 @@
 			"": ""
 		},
 		"EMAIL_HISTORY": {
-			"CUSTOM_EMAIL_TEMPLATE": ""
+			"CUSTOM_EMAIL_TEMPLATE": "Modelo de e-mail personalizado"
 		},
 		"SETTING": {
 			"FILE_STORAGE": "Armazenamento de arquivo",

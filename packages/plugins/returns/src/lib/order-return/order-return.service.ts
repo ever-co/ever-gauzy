@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	HttpException,
 	HttpStatus,
 	Inject,
 	Injectable,
@@ -7,7 +8,7 @@ import {
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, SaveOptions } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, IsNull, SaveOptions } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
 	IOrderLineReceiptMove,
@@ -909,30 +910,155 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			throw new BadRequestException('A refund must be for a positive amount.');
 		}
 
-		const result = await this.refundGateway.createRefund({
-			orderId: orderReturn.orderId,
-			returnId: orderReturn.id,
-			amount: refundable.toStorageString(),
-			currency: orderReturn.currency,
-			reasonId,
-			note
-		});
+		// A caller who may not settle a refund is refused before the return is written at all.
+		await this.refundGateway.assertMayRefund?.();
 
-		const runningTotal = Money.of(orderReturn.refundAmount ?? '0', orderReturn.currency)
-			.add(Money.of(result.amount, result.currency))
+		/**
+		 * **Claim, then pay** (review R3-09r1). The return's header used to be written after the money had gone
+		 * back: a version that moved meanwhile (a second refund of the same return, a close) answered `409` for a
+		 * refund that had happened, and the running total `refundAmount` missed it — the caller retried and paid
+		 * again. The header is now written first, conditionally on the version the caller stated *and* on the
+		 * running total this call read, so of two overlapping refunds one wins the write and the other is refused
+		 * before any money moves; the winner then asks the payment capability for the refund.
+		 */
+		const previous = orderReturn.refundAmount ?? null;
+		const runningTotal = Money.of(previous ?? '0', orderReturn.currency)
+			.add(refundable)
 			.round()
 			.toStorageString();
-
-		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, {
-			name: RETURN_EVENTS.REFUNDED,
-			data: { refundedAmount: result.amount, refundId: result.refundId ?? null }
+		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, undefined, {
+			precondition: { refundAmount: previous === null ? IsNull() : previous }
 		});
+
+		let result: IRefundResult;
+
+		try {
+			result = await this.refundGateway.createRefund({
+				orderId: orderReturn.orderId,
+				returnId: orderReturn.id,
+				amount: refundable.toStorageString(),
+				currency: orderReturn.currency,
+				reasonId,
+				note
+			});
+		} catch (error) {
+			if (isRefusal(error)) {
+				// Refused before any money moved (4xx): the running total this call claimed is given back.
+				await this.adjustClaimedTotal(orderReturn, runningTotal, refundable.negate(), {
+					restore: previous,
+					reason: 'RETURN_REFUND_RELEASE_FAILED'
+				});
+			} else {
+				// Anything else may have come after the refund committed; the claimed total stays, so a retry is
+				// measured against it rather than paying the return back twice.
+				this.logger.warn(
+					`RETURN_REFUND_OUTCOME_UNKNOWN: return ${orderReturn.id} keeps refundAmount ${runningTotal} because its ` +
+						`refund failed with a non-refusal (${describe(error)}); check the return's refunds before correcting it.`
+				);
+			}
+
+			throw error;
+		}
+
+		// The port answers what was actually refunded, which may be less than was asked for: the claim is
+		// corrected to it, so the running total and the event state the same figure (Greptile, #10895).
+		let settledTotal = runningTotal;
+		let settledVersion = version;
+		const refunded = Money.of(result.amount, orderReturn.currency).round();
+
+		if (!refunded.equals(refundable)) {
+			const corrected = await this.adjustClaimedTotal(orderReturn, runningTotal, refunded.subtract(refundable), {
+				reason: 'RETURN_REFUND_TOTAL_CORRECTION_FAILED'
+			});
+
+			if (corrected) {
+				settledTotal = corrected.total;
+				settledVersion = corrected.version;
+			}
+		}
+
+		await this.announce(
+			RETURN_EVENTS.REFUNDED,
+			{ ...orderReturn, refundAmount: settledTotal } as OrderReturn,
+			settledVersion,
+			{ refundedAmount: result.amount, refundId: result.refundId ?? null }
+		);
 
 		// The refund is on the order's ledger now, and the order's totals, its payment status and its
 		// summary row are all derived from that ledger — so they are refreshed before this returns.
 		await this.refreshOrderTotals(orderReturn.orderId);
 
-		return { refund: result, version };
+		return { refund: result, version: settledVersion };
+	}
+
+	/**
+	 * Moves the running total a refund claimed by `delta` — back out after a refusal, or down to what was actually
+	 * refunded — conditionally on the total it reads, retried a few times.
+	 *
+	 * **Predicated on the total, not on the version the claim wrote** (Greptile, #10895). A write that does not
+	 * touch the total (a close) moves the version while the payment capability is being asked, and a release
+	 * predicated on the claimed version then failed and left the return reporting money that never moved. Each
+	 * attempt reads the return, computes the new total from the one it read and writes it only while the total is
+	 * still that one, so another refund's claim in between is kept and this one's amount is the only one moved.
+	 * When nothing else touched the total since the claim and a value to restore is given, that value is written
+	 * back exactly (an absent total stays absent).
+	 *
+	 * @param orderReturn The return as the refund read it.
+	 * @param claimedTotal The running total the claim wrote.
+	 * @param delta How much to move it by (negative to give back).
+	 * @param options The value to restore when the total is untouched, and the code a failure is logged under.
+	 * @returns The total and the version written, or `undefined` when it could not be written (logged).
+	 */
+	private async adjustClaimedTotal(
+		orderReturn: OrderReturn,
+		claimedTotal: string,
+		delta: Money,
+		options: { restore?: unknown; reason: string }
+	): Promise<{ total: string; version: number } | undefined> {
+		const currency = orderReturn.currency;
+		let failure: unknown;
+
+		for (let attempt = 0; attempt < 3; attempt++) {
+			try {
+				const current = await this.findOneScoped(orderReturn.id);
+				const read = current.refundAmount ?? null;
+				const untouched =
+					read !== null && Money.of(String(read), currency).equals(Money.of(claimedTotal, currency));
+				let total: string;
+				let patch: unknown;
+
+				if (untouched && options.restore !== undefined) {
+					patch = options.restore;
+					total = options.restore === null ? '0' : String(options.restore);
+				} else {
+					const moved = Money.of(String(read ?? '0'), currency)
+						.add(delta)
+						.round();
+
+					total = (moved.isNegative() ? Money.zero(currency) : moved).toStorageString();
+					patch = total;
+				}
+
+				const version = await this.commitHeader(current, { refundAmount: patch }, ANY_VERSION, undefined, {
+					precondition: { refundAmount: read === null ? IsNull() : read }
+				});
+
+				return { total, version };
+			} catch (error) {
+				failure = error;
+
+				if (!(error instanceof HttpException) || error.getStatus() !== HttpStatus.CONFLICT) {
+					break;
+				}
+			}
+		}
+
+		this.logger.warn(
+			`${options.reason}: return ${orderReturn.id} could not move the refund total it claimed by ${delta.toStorageString()} ` +
+				`(${describe(failure)}); its refundAmount needs a correction.`
+		);
+
+		return undefined;
 	}
 
 	/**
@@ -1705,4 +1831,21 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
  */
 function describe(error: unknown): string {
 	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
+}
+
+/**
+ * Whether an error is a refusal answered before anything was written — an HTTP 4xx — rather than a fault whose
+ * effect is unknown (see `settleRefund`).
+ *
+ * @param error What the payment capability threw.
+ * @returns True for a 4xx `HttpException`.
+ */
+function isRefusal(error: unknown): boolean {
+	if (!(error instanceof HttpException)) {
+		return false;
+	}
+
+	const status = error.getStatus();
+
+	return status >= 400 && status < 500;
 }

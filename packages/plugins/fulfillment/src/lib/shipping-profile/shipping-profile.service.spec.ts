@@ -146,6 +146,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { NotFoundException } from '@nestjs/common';
+import { RequestContext } from '@gauzy/core';
 import { ShippingProfileVariant } from '../shipping-profile-variant/shipping-profile-variant.entity';
 import { ShippingProfileVariantService } from '../shipping-profile-variant/shipping-profile-variant.service';
 import { ShippingProfileService } from './shipping-profile.service';
@@ -646,5 +647,29 @@ describe('ShippingProfileService — attaching variants to a profile (doc 09 §1
 		);
 		expect(fixture.attachments(VARIANT_A)).toHaveLength(1);
 		expect(fixture.tables.shipping_profile_variant).toHaveLength(1);
+	});
+});
+
+describe('ShippingProfileService — the organization a profile is created in (review R2-G37)', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the caller’s organization on a profile created without one', async () => {
+		// The GraphQL input declares no organization and the base stamps only the tenant, so a profile created
+		// over GraphQL was written with a NULL organization that no organization-scoped read ever found.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-caller' as never);
+		const fixture = profileFixture();
+
+		await fixture.service.create({ name: 'Standard', code: 'STANDARD' } as never);
+
+		expect(fixture.byCode('STANDARD')).toMatchObject({ organizationId: 'org-caller' });
+	});
+
+	it('keeps an organization the request stated', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-caller' as never);
+		const fixture = profileFixture();
+
+		await fixture.service.create({ name: 'Standard', code: 'STANDARD', organizationId: 'org-stated' } as never);
+
+		expect(fixture.byCode('STANDARD')).toMatchObject({ organizationId: 'org-stated' });
 	});
 });

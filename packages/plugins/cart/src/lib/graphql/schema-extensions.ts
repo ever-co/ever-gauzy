@@ -206,7 +206,9 @@ export const cartSchemaExtensions = gql`
 		sku: String
 		thumbnail: String
 		quantity: Decimal!
-		unitPrice: Decimal!
+		# Ignored (R3-07b): the line is priced by the pricing package. Optional so an existing client that
+		# still sends it keeps validating.
+		unitPrice: Decimal
 		originalUnitPrice: Decimal
 		isTaxInclusive: Boolean
 		taxCategoryId: ID
@@ -248,7 +250,9 @@ export const cartSchemaExtensions = gql`
 		promotionId: ID
 		couponId: ID
 		code: String
-		amount: Decimal!
+		# Ignored (R3-07): the discount is what the promotion engine grants for the named promotion.
+		# Optional so an existing client that still sends it keeps validating.
+		amount: Decimal
 		isAutomatic: Boolean
 		version: Int
 		idempotencyKey: String
