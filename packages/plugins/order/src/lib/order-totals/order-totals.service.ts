@@ -1187,6 +1187,20 @@ export class OrderTotalsService {
 			}
 		}
 
+		// The order-level ledger: `AdjustmentOwnerType.ORDER` is "the order-level counterpart of `CART`" — an
+		// order-wide discount, a fee, a rounding correction. A checkout now carries the cart's document rows
+		// onto it (Q7-W1a), and a row that is written and then read by nothing is a discount the buyer was
+		// quoted and the order forgot, which is exactly the defect the cart's own chain had before it read
+		// its `CART` rows. Nothing wrote an `ORDER` row before the carry-over, so no existing order moves.
+		const documentAdjustments: ITotalsAdjustment[] = (
+			(await reader.adjustments(order, AdjustmentOwnerType.ORDER, order.id)) ?? []
+		).map((adjustment) => ({
+			ownerId: order.id,
+			amount: Number(adjustment.amount),
+			isTaxInclusive: Boolean(adjustment.isTaxInclusive),
+			netAmount: this.netAmountOf(adjustment.metadata)
+		}));
+
 		const context: ITotalsContext = {
 			currency: order.currency,
 			currencyDecimals: order.currencyDecimals ?? 2,
@@ -1203,6 +1217,7 @@ export class OrderTotalsService {
 			})),
 			lineAdjustments,
 			shippingAdjustments,
+			documentAdjustments,
 			lineTaxLines,
 			shippingTaxLines,
 			creditLines: creditLines.map((creditLine) => Number(creditLine.amount)),
