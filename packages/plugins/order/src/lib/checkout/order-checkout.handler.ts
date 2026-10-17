@@ -67,7 +67,9 @@ export class OrderCheckoutHandler implements ICartCheckoutHandler {
 
 		const order = await this.orderService.createFromCart(cart as any, {
 			idempotencyKey: context.idempotencyKey,
-			source: 'CHANNEL'
+			source: 'CHANNEL',
+			// The buyer was quoted the cart's discounts and taxes; the order is placed with them (Q7-W1a).
+			carryCartLedgers: true
 		});
 
 		return { orderId: order.id, orderNumber: order.number };
