@@ -18,7 +18,15 @@ const SAVE = process.env.SAVE;
 const AGAINST = process.env.AGAINST;
 // Optional: write a summary of the comparison (no response bodies) for the benchmark's provenance.
 const OUT = process.env.OUT;
-const EMAIL = process.env.EMAIL || 'admin@ever.co';
+// The seeded super admin's sign-in. Its email is not named here: the egress audit allows Ever hosts only in the
+// Ever Platform modules, and the seed reads it from DEMO_SUPER_ADMIN_EMAIL (shipped default in .env.sample).
+const EMAIL = process.env.EMAIL || process.env.DEMO_SUPER_ADMIN_EMAIL;
+if (!EMAIL) {
+	console.error(
+		'Set EMAIL (or DEMO_SUPER_ADMIN_EMAIL) to the seeded super admin email; see DEMO_SUPER_ADMIN_EMAIL in .env.sample.'
+	);
+	process.exit(2);
+}
 const PASSWORD = process.env.PASSWORD || 'admin';
 const scenarioFile = process.argv[2] || 'tools/perf/scenarios.json';
 const scenarios = JSON.parse(fs.readFileSync(scenarioFile, 'utf8'));

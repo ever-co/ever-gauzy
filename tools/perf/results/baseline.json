@@ -12,7 +12,7 @@
     "command": "C:\\Coding\\Worktrees\\ever-gauzy-perf\\tools\\perf\\api-bench.mjs",
     "env": {
       "BASE": "http://localhost:3999/api",
-      "EMAIL": "admin@ever.co",
+      "EMAIL": "<redacted>",
       "SEQ": 60,
       "WARMUP": 10,
       "CONCURRENCY": 16,
