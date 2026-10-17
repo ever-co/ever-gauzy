@@ -11125,7 +11125,13 @@ type Mutation {
   """Restores a soft-deleted gift-card movement."""
   recoverGiftCardTransaction(id: ID!): RecoverGiftCardTransactionPayload!
   createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
-  updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
+
+  """
+  Updates a shipping profile. State the changes once: as `patch`, whose every member is optional, or as the
+  older `input`, the create's shape, which restates `name` and `code` and keeps working. Both, or neither,
+  is refused.
+  """
+  updateShippingProfile(id: ID!, input: CreateShippingProfileInput, patch: UpdateShippingProfileInput): ShippingProfile!
   deleteShippingProfile(id: ID!): Boolean!
 
   """
@@ -11145,7 +11151,13 @@ type Mutation {
   """Restore a soft-deleted variant attachment."""
   recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
   createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
-  updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
+
+  """
+  Updates a shipping option. State the changes once: as `patch`, whose every member is optional, or as the
+  older `input`, the create's shape, which restates `name`, `code` and `priceType` and keeps working. Both, or
+  neither, is refused.
+  """
+  updateShippingOption(id: ID!, input: CreateShippingOptionInput, patch: UpdateShippingOptionInput): ShippingOption!
   deleteShippingOption(id: ID!): Boolean!
 
   """
@@ -11157,6 +11169,13 @@ type Mutation {
   recoverShippingOption(id: ID!): ShippingOption!
   createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
   updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+
+  """
+  Append a line to a shipment that has not left yet: the shipment must still be PENDING, the order line must be
+  one of its order's and still have the quantity to ship, and on an outbound shipment the order line's counter
+  moves with the line (a return-direction shipment moves none).
+  """
+  addFulfillmentLine(id: ID!, input: AddFulfillmentLineInput!): Fulfillment!
 
   """
   Correct one shipment line: the quantity, the location, the order line it covers, or its payload.
@@ -11479,7 +11498,9 @@ type Mutation {
   """Ends a subscription."""
   cancelSubscription(id: ID!, input: CancelSubscriptionInput): CustomerSubscriptionPayload!
 
-  """Withdraws a cancellation at the end of the period, so the subscription keeps billing."""
+  """
+  Withdraws a cancellation at the end of the period, so the subscription keeps billing.
+  """
   undoSubscriptionCancellation(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 
   """Ends a subscription because it ran out."""
@@ -32549,9 +32570,9 @@ type OrganizationTeamJoinRequest {
   email: String!
 
   """
-  The name the applicant stated. The delivered write does not persist a stated name — see
-  `CreateOrganizationTeamJoinRequestInput` — so this member is read on a row some other write filled
-  in, and is null on a request filed over either protocol.
+  The name the applicant stated. The REST create stores the name its body carries.
+  `CreateOrganizationTeamJoinRequestInput` does not offer one yet, so a request filed over GraphQL
+  leaves it null.
   """
   fullName: String
 
@@ -32745,12 +32766,12 @@ What a caller states when it asks to join one team.
 
 **Only the members the delivered write actually reads are offered.** `email` and `organizationTeamId`
 are the address and the team the row is filed under, and the six branding members are what the
-confirmation message is composed with — those are the whole of the payload the delivered create builds
-its row from, and it builds it explicitly: the team, the address, the tenant and organization of the
-team, the generated code and token, and a null status. A body member for the applicant's own name, link
-or position is validated by the delivered body and then dropped, so offering one here would be offering
-a write that is accepted and silently discarded; a member for the state would be dropped the same way,
-and the state a new ask is in is what the delivered write decides rather than what a caller states.
+confirmation message is composed with. The delivered create builds its row explicitly: the team, the
+address, the applicant's name, link and position, the tenant and organization of the team, the
+generated code and token, and a null status. The REST body carries the name, link and position; this
+input does not offer them yet, so a request filed over GraphQL stores them as null. A member for the
+state would be dropped, since the state a new ask is in is what the delivered write decides rather
+than what a caller states.
 
 Nothing names the tenant or the organization. Both are taken from the team the request names — the
 delivered write reads the team and stamps its tenant and organization — so a caller cannot file a
@@ -49901,8 +49922,16 @@ input UpdateOrderInput {
   email: String
   phone: String
   locale: String
+
+  """
+  Not a field of an order: a stated note is refused (ORDER_NOTE_NOT_A_FIELD); a change carries one.
+  """
   note: String
   externalId: String
+
+  """
+  Recorded by cancelOrder only: a stated reason is refused (ORDER_CANCEL_REASON_NOT_WRITABLE).
+  """
   cancelReason: String
   paymentTermId: ID
 
@@ -49960,6 +49989,11 @@ input RequestOrderEditInput {
   Retry key: a repeat of this input under the same key is answered from the first attempt.
   """
   idempotencyKey: String
+
+  """
+  The version of the order this change was reasoned about; omitted, the change is refused.
+  """
+  version: Int
 }
 
 """
@@ -53494,6 +53528,55 @@ input CreateFulfillmentInput {
   created twice ships the same goods twice, so the mutation is refused without one.
   """
   idempotencyKey: String
+}
+
+"""
+What a caller changes on a shipping profile. Every member is optional; `idempotencyKey` is absent, because an
+edit is not a create a retry could duplicate.
+"""
+input UpdateShippingProfileInput {
+  name: String
+  code: String
+  isDefault: Boolean
+  description: String
+}
+
+"""
+What a caller changes on a shipping option. Every member is optional; `idempotencyKey` is absent, because an
+edit is not a create a retry could duplicate.
+"""
+input UpdateShippingOptionInput {
+  name: String
+  code: String
+  priceType: String
+  amount: Decimal
+  currency: String
+  isTaxInclusive: Boolean
+  taxCategoryId: ID
+  providerKey: String
+  profileId: ID
+  channelId: ID
+  regionId: ID
+  priority: Int
+  estimatedMinDays: Int
+  estimatedMaxDays: Int
+  requiresShippingAddress: Boolean
+  allowPickup: Boolean
+  maxWeight: Decimal
+  maxItemCount: Int
+}
+
+"""
+A line appended to a shipment that has not left yet. `idempotencyKey` makes a retry safe; `version` is the
+version the caller read the shipment at, honoured when stated.
+"""
+input AddFulfillmentLineInput {
+  orderLineId: ID!
+  quantity: Decimal!
+  warehouseId: ID
+  metadata: JSON
+  idempotencyKey: String
+  version: Int
 }
 
 input UpdateFulfillmentInput {

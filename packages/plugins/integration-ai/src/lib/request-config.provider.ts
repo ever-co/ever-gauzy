@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { Inject, Injectable } from '@nestjs/common';
 import { GAUZY_AI_CONFIG_TOKEN } from '@gauzy/constants';
 import { IConfigurationOptions } from './configuration.interface';
@@ -5,14 +6,14 @@ import { IConfigurationOptions } from './configuration.interface';
 @Injectable()
 export class RequestConfigProvider {
 	private defaultConfig: IConfigurationOptions = new Object();
-	private config: IConfigurationOptions = new Object();
+	// One provider serves concurrent requests, so each request keeps its own keys in its async context.
+	private readonly storage = new AsyncLocalStorage<IConfigurationOptions>();
 
 	constructor(
 		@Inject(GAUZY_AI_CONFIG_TOKEN)
 		protected readonly options: IConfigurationOptions
 	) {
 		this.setDefaultConfig(options);
-		this.resetConfig();
 	}
 
 	/**
@@ -27,7 +28,7 @@ export class RequestConfigProvider {
 	 * Reset the configuration options to the default values.
 	 */
 	resetConfig() {
-		this.config = { ...this.defaultConfig };
+		this.storage.enterWith({ ...this.defaultConfig });
 	}
 
 	/**
@@ -35,7 +36,7 @@ export class RequestConfigProvider {
 	 * @param config - The configuration options to set.
 	 */
 	setConfig(config: IConfigurationOptions) {
-		this.config = { ...this.defaultConfig, ...config };
+		this.storage.enterWith({ ...this.defaultConfig, ...config });
 	}
 
 	/**
@@ -43,6 +44,6 @@ export class RequestConfigProvider {
 	 * @returns The current configuration options.
 	 */
 	getConfig(): IConfigurationOptions {
-		return this.config;
+		return this.storage.getStore() ?? this.defaultConfig;
 	}
 }

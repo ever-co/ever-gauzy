@@ -28,6 +28,6 @@ export class PluginOwnerGuard implements CanActivate {
 	}
 
 	private getPluginIdFromRequest(request: any): string | undefined {
-		return request.params?.id || request.body?.id || request.params?.pluginId || request.body?.pluginId;
+		return request.params?.id || request.params?.pluginId || request.body?.id || request.body?.pluginId;
 	}
 }

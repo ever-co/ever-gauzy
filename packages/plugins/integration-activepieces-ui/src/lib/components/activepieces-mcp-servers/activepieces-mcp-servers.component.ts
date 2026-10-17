@@ -58,7 +58,7 @@ export class ActivepiecesMcpServersComponent extends TranslationBaseComponent im
 
 	/**
 	 * Load MCP servers for a specific project
-	 * GET /integration/activepieces/mcp-servers/:integrationId?projectId={projectId}
+	 * GET /integration/activepieces/mcp?projectId={projectId}
 	 */
 	loadMcpServers() {
 		if (!this.projectId) {

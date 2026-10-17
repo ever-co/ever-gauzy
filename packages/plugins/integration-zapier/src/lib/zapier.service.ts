@@ -2,7 +2,8 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DeepPartial, Like } from 'typeorm';
+import { DataSource, In, Like } from 'typeorm';
+import { isUUID } from 'class-validator';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService, environment } from '@gauzy/config';
 import {
@@ -23,7 +24,8 @@ import {
 	IntegrationTenantService,
 	parseFindOptionsRelations,
 	isAccessTokenPayload,
-	JWT_ALGORITHMS
+	JWT_ALGORITHMS,
+	assertCurrentUserBelongsToOrganization
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
 import {
@@ -45,7 +47,8 @@ export class ZapierService {
 		private readonly _integrationSettingService: IntegrationSettingService,
 		private readonly _integrationService: IntegrationService,
 		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly config: ConfigService
+		private readonly config: ConfigService,
+		private readonly _dataSource: DataSource
 	) {}
 
 	/**
@@ -140,6 +143,28 @@ export class ZapierService {
 		} catch (error) {
 			throw new NotFoundException(`Access token for integration ID ${integrationId} not found`);
 		}
+	}
+
+	/**
+	 * The stored Zapier access token of an integration, for a caller who is a member of the organization
+	 * the integration belongs to. The settings lookup alone is scoped to the tenant, so without this check
+	 * a member of one organization could call Zapier with the account of another organization.
+	 *
+	 * @param {ID} integrationId - The ID of the integration.
+	 * @returns {Promise<IIntegrationSetting>} - The integration setting containing the access token.
+	 * @throws {NotFoundException} - If the integration or its access token is not found.
+	 * @throws {ForbiddenException} - If the caller is not a member of the integration's organization.
+	 */
+	async getZapierTokenForCurrentUser(integrationId: ID): Promise<IIntegrationSetting> {
+		// A malformed ID is a missing integration, not a lookup failure: PostgreSQL rejects it as a uuid.
+		const integration = isUUID(integrationId)
+			? await this._integrationTenantService.findOneByOptions({ where: { id: integrationId } })
+			: null;
+		if (!integration) {
+			throw new NotFoundException(`Access token for integration ID ${integrationId} not found`);
+		}
+		await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
+		return this.getZapierToken(integrationId);
 	}
 
 	/**
@@ -253,29 +278,19 @@ export class ZapierService {
 	 * @param tenantId The tenant ID
 	 * @returns The parsed state if valid, null otherwise
 	 */
-	async validateAndDeleteState(state: string, tenantId: string): Promise<{ state: string; expiresAt?: string }> {
+	async validateAndDeleteState(
+		state: string,
+		tenantId: string
+	): Promise<{ state: string; tenantId?: string; integrationId?: string; expiresAt?: string }> {
 		try {
 			// Basic validation - state should be a non-empty string
 			if (!state || typeof state !== 'string' || state.trim().length === 0) {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
-			// Find the integration by tenant and Zapier provider
-			const integration = await this._integrationService.findOneByOptions({
-				where: {
-					tenantId,
-					name: IntegrationEnum.ZAPIER
-				} as IIntegrationFilter
-			});
-
-			if (!integration) {
-				throw new NotFoundException('Zapier integration not found for current tenant');
-			}
-
-			// Find the state setting
+			// Find the state setting; its row carries the tenant's Zapier integration (integration_tenant) id
 			const stateSettings = await this._integrationSettingService.find({
 				where: {
-					integration: { id: integration.id },
 					settingsName: 'state',
 					tenantId,
 					settingsValue: Like(`%"state":"${state}"%`)
@@ -309,10 +324,17 @@ export class ZapierService {
 					throw new BadRequestException('State has expired');
 				}
 
-				// Delete the state
-				await this._integrationSettingService.delete(stateSetting.id);
+				// Consume the state. The callback is public, so there is no user for the tenant-aware delete;
+				// matching id and value also keeps the state single-use under concurrent callbacks.
+				const result = await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
+					id: stateSetting.id,
+					settingsValue: stateSetting.settingsValue
+				});
+				if (result.affected !== 1) {
+					throw new BadRequestException('Invalid state parameter');
+				}
 
-				return parsedState;
+				return { ...parsedState, integrationId: stateSetting.integrationId ?? parsedState.integrationId };
 			} catch (error) {
 				if (error instanceof BadRequestException) {
 					throw error;
@@ -523,16 +545,18 @@ export class ZapierService {
 			}
 
 			// Validate and atomically delete the state
-			await this.validateAndDeleteState(state, resolvedTenantId);
+			const { integrationId } = await this.validateAndDeleteState(state, resolvedTenantId);
 
-			// Find the integration by tenant and Zapier provider
-			const integration = await this._integrationService.findOneByOptions({
-				where: {
-					tenantId: resolvedTenantId,
-					name: IntegrationEnum.ZAPIER
-				} as IIntegrationFilter,
-				relations: ['settings']
-			});
+			// Find the tenant's Zapier integration the state was issued for
+			const integration = integrationId
+				? await this._integrationTenantService.findOneByIdString(integrationId, {
+						where: {
+							tenantId: resolvedTenantId,
+							name: IntegrationEnum.ZAPIER
+						} as IIntegrationFilter,
+						relations: ['settings']
+					})
+				: undefined;
 
 			if (!integration) {
 				throw new NotFoundException('Zapier integration not found for current tenant');
@@ -601,18 +625,14 @@ export class ZapierService {
 				'oauth_access_token',
 				'oauth_refresh_token'
 			];
-			const staleTokens = settings.filter((s) => allTokenSettingNames.includes(s.settingsName));
-			await Promise.all(
-				staleTokens
-					.map((s) => s.id)
-					.filter((id): id is string => id != null)
-					.map((id) => this._integrationSettingService.delete(id))
-			);
+			// No user on the public callback, so go through the repository, bounded by integration and tenant
+			await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
+				integrationId: integrationTenant.id,
+				tenantId: resolvedTenantId,
+				settingsName: In(allTokenSettingNames)
+			});
 
-			const filteredSettings = settings.filter((s) => !allTokenSettingNames.includes(s.settingsName));
-
-			const updatedSettings = [
-				...filteredSettings,
+			await this._integrationSettingService.typeOrmIntegrationSettingRepository.save([
 				{
 					settingsName: 'zapier_access_token',
 					settingsValue: response.access_token,
@@ -627,9 +647,7 @@ export class ZapierService {
 					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				}
-			] as any;
-
-			await this._integrationSettingService.save(updatedSettings);
+			]);
 
 			return integrationTenant;
 		} catch (error) {
@@ -820,7 +838,7 @@ export class ZapierService {
 		}
 
 		// 3) Load the integration tenant, scoped to Zapier, including its settings
-		const integrationTenant = await this._integrationService.findOneByIdString(setting.integrationId, {
+		const integrationTenant = await this._integrationTenantService.findOneByIdString(setting.integrationId, {
 			where: { name: IntegrationEnum.ZAPIER },
 			relations: ['settings']
 		});
@@ -993,7 +1011,7 @@ export class ZapierService {
 			if (e instanceof BadRequestException) throw e;
 		}
 
-		const integrationTenant = await this._integrationService.findOneByIdString(codeSetting.integrationId, {
+		const integrationTenant = await this._integrationTenantService.findOneByIdString(codeSetting.integrationId, {
 			where: { name: IntegrationEnum.ZAPIER },
 			relations: ['settings']
 		});
@@ -1031,7 +1049,7 @@ export class ZapierService {
 			throw new NotFoundException('Invalid refresh token');
 		}
 
-		const integrationTenant = await this._integrationService.findOneByIdString(tokenSetting.integrationId, {
+		const integrationTenant = await this._integrationTenantService.findOneByIdString(tokenSetting.integrationId, {
 			where: { name: IntegrationEnum.ZAPIER },
 			relations: ['settings']
 		});
@@ -1074,6 +1092,11 @@ export class ZapierService {
 	 * @param refreshToken - The refresh token to store
 	 */
 	async storeTokens(integrationId: ID, accessToken: string, refreshToken: string): Promise<void> {
+		// The repository delete below is bounded by this id, so it must be set
+		if (!integrationId) {
+			throw new BadRequestException('Integration ID is required');
+		}
+
 		// Get existing settings
 		const existingSettings = await this._integrationSettingService.find({
 			where: {
@@ -1108,21 +1131,15 @@ export class ZapierService {
 			'oauth_access_token',
 			'oauth_refresh_token'
 		];
-		const staleTokens = existingSettings.filter((setting) => oauthTokenSettingNames.includes(setting.settingsName));
-		await Promise.all(
-			staleTokens
-				.map((s) => s.id)
-				.filter((id): id is string => id != null)
-				.map((id) => this._integrationSettingService.delete(id))
-		);
+		// The token endpoints are public, so there is no user for the tenant-aware delete and save:
+		// go through the repository, bounded by integration and tenant, as completeOAuthFlow does
+		await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
+			integrationId,
+			...(tenantId ? { tenantId } : {}),
+			settingsName: In(oauthTokenSettingNames)
+		});
 
-		const filteredExistingSettings = existingSettings.filter(
-			(setting) => !oauthTokenSettingNames.includes(setting.settingsName)
-		);
-
-		const allSettings = [...filteredExistingSettings, ...tokenSettings] as DeepPartial<IIntegrationEntitySetting>;
-
-		await this._integrationSettingService.save(allSettings);
+		await this._integrationSettingService.typeOrmIntegrationSettingRepository.save(tokenSettings);
 	}
 
 	/**

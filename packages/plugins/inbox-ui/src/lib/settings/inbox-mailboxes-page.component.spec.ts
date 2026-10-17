@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import {
 	IInboxMailbox,
@@ -53,7 +54,7 @@ describe('InboxMailboxesPageComponent', () => {
 	const toastr = { success: jest.fn(), warning: jest.fn(), danger: jest.fn() };
 	let organization$: BehaviorSubject<{ id: string; tenantId: string }>;
 
-	function render() {
+	function render(beforeCreate?: () => void) {
 		TestBed.configureTestingModule({
 			imports: [InboxMailboxesPageComponent],
 			providers: [
@@ -71,6 +72,7 @@ describe('InboxMailboxesPageComponent', () => {
 				}
 			]
 		});
+		beforeCreate?.();
 		const fixture = TestBed.createComponent(InboxMailboxesPageComponent);
 		fixture.detectChanges();
 		const el: HTMLElement = fixture.nativeElement;
@@ -117,9 +119,18 @@ describe('InboxMailboxesPageComponent', () => {
 			mailbox('support', { isDefault: true }),
 			mailbox('ada', { ownerType: InboxMailboxOwnerTypeEnum.EMPLOYEE, ownerEmployeeId: 'e1' })
 		]);
-		const { find } = render();
+		// The spec's translations are the keys; this sentence is loaded so the rendered domain can be checked.
+		const { find } = render(() => {
+			const translate = TestBed.inject(TranslateService);
+			translate.setTranslation('en', {
+				INBOX: {
+					SETTINGS: { MAILBOXES: { PLATFORM_DOMAIN: 'Platform addresses are allocated on {{ domain }}.' } }
+				}
+			});
+			translate.use('en');
+		});
 		expect(api.mailboxes).toHaveBeenCalledWith('org-1');
-		expect(find('platform-domain')?.textContent).toContain(DOMAIN);
+		expect(find('platform-domain')?.textContent).toContain(`Platform addresses are allocated on ${DOMAIN}.`);
 		expect(find('group-SHARED')?.querySelector('[data-test="mailbox-support"]')).not.toBeNull();
 		expect(find('group-PERSONAL')?.querySelector('[data-test="mailbox-ada"]')).not.toBeNull();
 		expect(find('default-support')).not.toBeNull();

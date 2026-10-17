@@ -1,13 +1,23 @@
 import { AnalyticsInterface } from '@jitsu/js';
 import { Logger } from '@nestjs/common';
-import { EventSubscriber } from 'typeorm';
+import {
+	EntityMetadata,
+	EventSubscriber,
+	InsertEvent,
+	RemoveEvent,
+	UpdateEvent,
+	getMetadataArgsStorage
+} from 'typeorm';
 import * as chalk from 'chalk';
-import { BaseEntityEventSubscriber } from '@gauzy/core';
+import { BaseEntityEventSubscriber, ExportEntityClass, redactForExport } from '@gauzy/core';
 import { environment } from '@gauzy/config';
 import { createJitsu } from './jitsu-helper';
 
 // Extract configuration values from environment
 const { jitsu } = environment;
+
+/** What `afterUpdate` receives: a MikroORM `EventArgs` or a TypeORM `UpdateEvent`. */
+type AfterUpdateEvent = Parameters<BaseEntityEventSubscriber['afterUpdate']>[0];
 
 /* Global Entity Subscriber - Listens to all entity inserts updates and removal then sends to Jitsu */
 @EventSubscriber()
@@ -17,6 +27,15 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = false;
+
+	/**
+	 * The entity class of each TypeORM event row. A query builder write (`repository.update(id, { code })`)
+	 * hands its hooks the plain values it sets, and nothing else in them says which entity they belong to.
+	 */
+	private readonly eventRowClasses = new WeakMap<object, ExportEntityClass>();
+
+	/** The entity class each relation property points to, per entity class; `null` for a class that is not an entity. */
+	private readonly entityRelations = new Map<unknown, Map<string, ExportEntityClass> | null>();
 
 	constructor() {
 		super();
@@ -43,6 +62,21 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 		}
 	}
 
+	afterInsert(event: InsertEvent<unknown>): Promise<void> {
+		this.rememberRowClass(event.entity, event.metadata);
+		return super.afterInsert(event);
+	}
+
+	afterUpdate(event: AfterUpdateEvent): Promise<void> {
+		this.rememberRowClass(event.entity, (event as UpdateEvent<unknown>).metadata);
+		return super.afterUpdate(event);
+	}
+
+	afterRemove(event: RemoveEvent<unknown>): Promise<void> {
+		this.rememberRowClass(event.entity, event.metadata);
+		return super.afterRemove(event);
+	}
+
 	/**
 	 * This method is called after an entity has been created and inserted into the database.
 	 * It can be used to perform additional operations or processing on the newly persisted entity.
@@ -59,7 +93,9 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 
 			// Track an event with Jitsu Analytics
 			// NOTE: we do not await before we want to track events asynchronously
-			this.analyticsTrack('afterEntityCreate', { data: { ...entity } });
+			if (this.jitsuAnalytics) {
+				this.analyticsTrack('afterEntityCreate', { data: { ...this.redactRow(entity, true) } });
+			}
 		} catch (error) {
 			// Error handling logic
 			console.error('JitsuEventsSubscriber: Error during the afterEntityCreate process:', error);
@@ -81,7 +117,9 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 			}
 
 			// Track the update event with Jitsu Analytics asynchronously
-			this.analyticsTrack('afterEntityUpdate', { data: { entity } });
+			if (this.jitsuAnalytics) {
+				this.analyticsTrack('afterEntityUpdate', { data: { entity: this.redactRow(entity) } });
+			}
 		} catch (error) {
 			// Error handling logic
 			console.error('JitsuEventsSubscriber: Error during the afterEntityUpdate process:', error);
@@ -104,7 +142,9 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 			}
 
 			// Track the deletion event with Jitsu Analytics asynchronously
-			this.analyticsTrack('afterEntityDelete', { data: { entity } });
+			if (this.jitsuAnalytics) {
+				this.analyticsTrack('afterEntityDelete', { data: { entity: this.redactRow(entity) } });
+			}
 		} catch (error) {
 			console.error('JitsuEventsSubscriber: Error during the afterEntityDelete process:', error);
 		}
@@ -169,5 +209,108 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 	 */
 	async group(id: string | object, traits?: Record<string, any> | null): Promise<any> {
 		return await this.jitsuAnalytics.group(id, traits);
+	}
+
+	private rememberRowClass(row: unknown, metadata?: EntityMetadata): void {
+		if (row && typeof row === 'object' && typeof metadata?.target === 'function') {
+			this.eventRowClasses.set(row, metadata.target as ExportEntityClass);
+		}
+	}
+
+	/**
+	 * Copies an event row with the columns marked `@ExportRedacted` masked, the way a CSV export masks them,
+	 * in the row and in the relations loaded on it. The row itself is left as it is: the ORM, the caller and
+	 * the other subscribers still hold it.
+	 *
+	 * @param row - The entity, or the plain values a query builder wrote.
+	 * @param ownProperties - Copy the row's own properties, as spreading it does, rather than its `toJSON()`.
+	 */
+	private redactRow(row: object, ownProperties = false): Record<string, unknown> {
+		const rowClass = this.eventRowClasses.get(row);
+		return this.redactValue(row, rowClass, ownProperties, new WeakMap()) as Record<string, unknown>;
+	}
+
+	/**
+	 * Masks one value of an event the way {@link redactRow} does, keeping the shape `JSON.stringify` gives it.
+	 *
+	 * @param value - A row, a relation, or any value inside one.
+	 * @param entityClass - The entity class `value` belongs to when the value does not say it itself: a plain
+	 * query builder row, a relation serialized by `toJSON()`, the items of a relation.
+	 * @param ownProperties - See {@link redactRow}.
+	 * @param copies - The copies made so far, so a cycle between relations stays a cycle instead of recursing forever.
+	 */
+	private redactValue(
+		value: unknown,
+		entityClass: ExportEntityClass | undefined,
+		ownProperties: boolean,
+		copies: WeakMap<object, unknown>
+	): unknown {
+		if (!value || typeof value !== 'object' || value instanceof Date) {
+			return value;
+		}
+		if (copies.has(value)) {
+			return copies.get(value);
+		}
+		if (Array.isArray(value)) {
+			const items: unknown[] = [];
+			copies.set(value, items);
+			for (const item of value) {
+				items.push(this.redactValue(item, entityClass, false, copies));
+			}
+			return items;
+		}
+
+		const type = Object.getPrototypeOf(value)?.constructor;
+		const rowClass = this.getEntityRelations(type) ? (type as ExportEntityClass) : entityClass;
+
+		// JSON.stringify sends what toJSON() returns (a MikroORM entity or collection), so that is what gets masked.
+		if (!ownProperties && typeof (value as { toJSON?: unknown }).toJSON === 'function') {
+			const json = this.redactValue((value as { toJSON(): unknown }).toJSON(), rowClass, true, copies);
+			copies.set(value, json);
+			return json;
+		}
+		if (!rowClass) {
+			return value;
+		}
+
+		const row = redactForExport(rowClass, value);
+		copies.set(value, row);
+		const relations = this.getEntityRelations(rowClass);
+		for (const [property, nested] of Object.entries(row)) {
+			row[property] = this.redactValue(nested, relations?.get(property), false, copies);
+		}
+		return row;
+	}
+
+	/**
+	 * The entity class each relation of `type` points to, by property name. Read from the TypeORM
+	 * decorators, which every entity registers under both ORMs, so it needs no entity manager.
+	 *
+	 * @returns `null` when `type` is not an entity class.
+	 */
+	private getEntityRelations(type: unknown): Map<string, ExportEntityClass> | null {
+		if (typeof type !== 'function') {
+			return null;
+		}
+		let relations = this.entityRelations.get(type);
+		if (relations === undefined) {
+			relations = null;
+			const storage = getMetadataArgsStorage();
+			if (storage.filterTables(type).length > 0) {
+				const ancestors: ExportEntityClass[] = [];
+				for (let cursor: unknown = type; typeof cursor === 'function'; cursor = Object.getPrototypeOf(cursor)) {
+					ancestors.push(cursor as ExportEntityClass);
+				}
+				relations = new Map();
+				for (const relation of storage.filterRelations(ancestors)) {
+					const target = typeof relation.type === 'function' ? (relation.type as () => unknown)() : undefined;
+					if (typeof target === 'function') {
+						relations.set(relation.propertyName, target as ExportEntityClass);
+					}
+				}
+			}
+			this.entityRelations.set(type, relations);
+		}
+		return relations;
 	}
 }

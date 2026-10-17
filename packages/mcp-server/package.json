@@ -52,7 +52,8 @@
 		"ioredis": "^6.0.0",
 		"helmet": "^8.3.0",
 		"escape-html": "^1.0.3",
-		"zod-to-json-schema": "^3.25.2"
+		"zod-to-json-schema": "^3.25.2",
+		"minimatch": "^10.2.6"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",

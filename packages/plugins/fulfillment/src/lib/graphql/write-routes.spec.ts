@@ -836,7 +836,9 @@ describe('the fulfilment document — the three routes no field answered are dec
 		const names = rootFieldNames('Mutation');
 
 		expect(new Set(names).size).toBe(names.length);
-		expect(names).toHaveLength(27);
+		// 27, plus `addFulfillmentLine` (review R2-G40).
+		expect(names).toHaveLength(28);
+		expect(names).toContain('addFulfillmentLine');
 	});
 });
 

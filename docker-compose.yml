@@ -81,3 +81,30 @@ services:
       - '4200:${UI_PORT:-4200}'
     networks:
       - overlay
+
+  # Fires every scheduled job (outbox dispatch, webhook retries, sweeps): with Redis on, the API only enqueues.
+  worker:
+    container_name: worker
+    image: ghcr.io/ever-co/gauzy-worker:latest
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: db
+      # Uploads stay in the api container with FILE_PROVIDER=LOCAL, so the API keeps consuming docs-processing.
+      GAUZY_DOCS_QUEUE_WORKER_ENABLED: 'false'
+    env_file:
+      - .env.compose
+    entrypoint: './entrypoint.compose.sh'
+    command: ['node', 'main.js']
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      api:
+        condition: service_started
+    links:
+      - db:${DB_HOST:-db}
+      - redis:${REDIS_HOST:-redis}
+    networks:
+      - overlay

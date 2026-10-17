@@ -30,6 +30,9 @@ import { assertNoLifecycleMembers } from '../lifecycle-members';
 /** The sequence key payout numbers are drawn from. */
 const SELLER_PAYOUT_SEQUENCE = 'SELLER_PAYOUT';
 
+/** The prefix the series is created with when an organization has none (`1791000000790`'s, the seed's). */
+const SELLER_PAYOUT_SEQUENCE_PREFIX = 'SP-';
+
 /**
  * The members of a payout only its own operations write, which an edit therefore refuses.
  *
@@ -1052,12 +1055,81 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	/**
 	 * Draws the next payout number from the platform's sequence.
 	 *
+	 * The `SELLER_PAYOUT` series is seeded for every organization (`1791000000790` for the ones that existed,
+	 * the commerce-defaults seed for the ones created since). An organization that still has none — created
+	 * between the two, or whose seed step was skipped — gets the default series created here
+	 * (`SequenceService.ensure`, idempotent) and the allocation is retried once, so its first payout is
+	 * numbered instead of failing with 404 (Q7-W3). Only a missing series is repaired: an inactive one, or any
+	 * other failure, is answered as before.
+	 *
 	 * @returns The formatted number.
 	 */
 	private async allocateNumber(): Promise<string> {
-		const allocated = (await this.sequenceService.allocate(SELLER_PAYOUT_SEQUENCE)) as any;
+		let allocated: any;
+
+		try {
+			allocated = await this.sequenceService.allocate(SELLER_PAYOUT_SEQUENCE);
+		} catch (error) {
+			if (!this.isMissingSeries(error)) {
+				throw error;
+			}
+
+			await this.ensureSeries();
+			allocated = await this.sequenceService.allocate(SELLER_PAYOUT_SEQUENCE);
+		}
 
 		return allocated?.formatted ?? allocated?.number ?? String(allocated?.value ?? Date.now());
+	}
+
+	/** Whether an allocation failed because the organization has no `SELLER_PAYOUT` series at all. */
+	private isMissingSeries(error: unknown): boolean {
+		return error instanceof NotFoundException || (error as { status?: number } | null)?.status === 404;
+	}
+
+	/**
+	 * Creates the organization's default `SELLER_PAYOUT` series when it has none.
+	 *
+	 * Its width follows the organization's `ORDER` series, which both seed paths pad from the default channel
+	 * (so a payout number is as wide as the seed would have made it), and 6 when there is none.
+	 *
+	 * A concurrent first payout of the same organization may create it a moment earlier; the unique series
+	 * index then refuses this insert, which is fine — the retried allocation numbers from that row. Any other
+	 * cause surfaces through the retried allocation, which fails exactly as it did before. Nothing is created
+	 * without an organization in context: a series attached to no organization is one no scoped allocation reads.
+	 */
+	private async ensureSeries(): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (!tenantId || !organizationId) {
+			return;
+		}
+
+		let padding = 6;
+
+		try {
+			const orderSeries = await this.sequenceService.findSeries('ORDER');
+
+			if (orderSeries?.padding != null && Number(orderSeries.padding) > 0) {
+				padding = Number(orderSeries.padding);
+			}
+		} catch {
+			// No ORDER series either: the documented default width.
+		}
+
+		try {
+			await this.sequenceService.ensure({
+				tenantId,
+				organizationId,
+				key: SELLER_PAYOUT_SEQUENCE,
+				prefix: SELLER_PAYOUT_SEQUENCE_PREFIX,
+				padding,
+				nextValue: 1,
+				step: 1
+			});
+		} catch {
+			// See above: the retried allocation answers.
+		}
 	}
 
 	/**
