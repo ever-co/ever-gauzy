@@ -1,14 +1,16 @@
-import { UseGuards } from '@nestjs/common';
+import { Optional, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentAccountHolder, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
+	FieldVisibility,
 	Idempotent,
 	PaymentAccountHolderService,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	VisibleWith,
 	IConnectionPageSelection,
 	resolveConnectionWindow
 } from '@gauzy/core';
@@ -66,7 +68,13 @@ export class PaymentAccountHolderResolver {
 	constructor(
 		private readonly paymentAccountHolderService: PaymentAccountHolderService,
 		private readonly accountHolders: PaymentAccountHolderLifecycleService,
-		private readonly paymentMethodTokens: PaymentMethodTokenLifecycleService
+		private readonly paymentMethodTokens: PaymentMethodTokenLifecycleService,
+		/**
+		 * The platform's field-level visibility decision, which gates `methodTokens` below. Optional and
+		 * defaulted rather than required, exactly as `PaymentMethodTokenResolver` takes it: it is a pure
+		 * decision over the caller's grants and owns no state.
+		 */
+		@Optional() private readonly visibility: FieldVisibility = new FieldVisibility()
 	) {}
 
 	/**
@@ -251,12 +259,31 @@ export class PaymentAccountHolderResolver {
 	 * `PAYMENT_ACCOUNT_HOLDERS_VIEW` here instead would have copied the REST account-holder read, which
 	 * returns the same instrument summaries under the account grant; that route is the looser of the two
 	 * and is reported as such rather than mirrored into the resolver.
+	 *
+	 * **The permission is checked here, in the body, because nothing else checks it (R2-G10).** The
+	 * `@Permissions` line above is metadata only: the GraphQL module sets no `fieldResolverEnhancers`, so
+	 * Nest runs the guard chain for root fields and never for a `@ResolveField` — a caller holding
+	 * `PAYMENT_ACCOUNT_HOLDERS_VIEW` alone was answered the instruments. The read now goes through
+	 * `FieldVisibility.guard`, the platform's gate for a withheld GraphQL field (`@VisibleWith`, "resolves
+	 * to `null` with a typed error"): a caller without `PAYMENT_METHOD_TOKENS_VIEW` gets `null` — the field
+	 * is nullable, so the account itself still resolves — plus `403 PERMISSION_DENIED` naming
+	 * `PaymentAccountHolder.methodTokens`, and no instrument is read for it. That is the REST rule (the
+	 * routes leave the member out without the grant) in the GraphQL contract's shape. Turning on
+	 * `fieldResolverEnhancers` globally would also fix it, but it puts every guard and interceptor on every
+	 * field of every type — the idempotency and organization interceptors included — so it is not done here.
 	 */
 	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)
+	@VisibleWith(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)
 	@ResolveField('methodTokens')
-	async methodTokens(@Parent() holder: IPaymentAccountHolder): Promise<IPaymentMethodToken[]> {
-		const instruments = await this.paymentMethodTokens.list({ accountHolderId: holder.id });
+	async methodTokens(@Parent() holder: IPaymentAccountHolder): Promise<IPaymentMethodToken[] | null> {
+		return this.visibility.guard(
+			PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum,
+			async () => {
+				const instruments = await this.paymentMethodTokens.list({ accountHolderId: holder.id });
 
-		return instruments.items;
+				return instruments.items;
+			},
+			{ resource: 'PaymentAccountHolder', field: 'methodTokens' }
+		);
 	}
 }
