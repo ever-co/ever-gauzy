@@ -447,6 +447,73 @@ describe('the stored-instrument mutations (17 §9.7)', () => {
 		expect(kernel.recordProviderInstrument).not.toHaveBeenCalled();
 	});
 
+	// R2-G9: the account mutations whose routes carry `@UseCardDataRefusal()` stored a card number nested in
+	// the free-form `metadata` over GraphQL, because the resolver ran no refusal at all.
+	it('refuses a card member in the metadata of a recorded account, before the kernel is reached', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.createPaymentAccountHolder({
+				providerKey: 'a-provider',
+				metadata: { card: { number: '4242424242424242' } }
+			} as never)
+		).rejects.toMatchObject({
+			response: {
+				statusCode: 400,
+				code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
+				details: { field: 'metadata.card.number' }
+			}
+		});
+		expect(holderKernel.createHolder).not.toHaveBeenCalled();
+	});
+
+	it('refuses a card member in the metadata of an account change, whatever the spelling', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.updatePaymentAccountHolder({
+				id: HOLDER,
+				metadata: { payment: [{ card_number: '4242424242424242' }] }
+			} as never)
+		).rejects.toMatchObject({
+			response: {
+				statusCode: 400,
+				code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED,
+				details: { field: 'metadata.payment[0].card_number' }
+			}
+		});
+		expect(holderKernel.findHolderOrFail).not.toHaveBeenCalled();
+		expect(holderKernel.updateHolder).not.toHaveBeenCalled();
+	});
+
+	it('refuses a card member on a recorded verification, as the verify route does', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.verifyPaymentAccountHolder({
+				id: HOLDER,
+				verificationStatus: 'VERIFIED',
+				cvc: '123'
+			} as never)
+		).rejects.toMatchObject({
+			response: { statusCode: 400, code: PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED, details: { field: 'cvc' } }
+		});
+		expect(holderKernel.findHolderOrFail).not.toHaveBeenCalled();
+		expect(holderKernel.transitionStatus).not.toHaveBeenCalled();
+	});
+
+	it('records an account whose metadata carries no card member', async () => {
+		const { accountResolver, holderKernel } = surfaces();
+
+		await expect(
+			accountResolver.createPaymentAccountHolder({
+				providerKey: 'a-provider',
+				metadata: { onboarding: { step: 'kyc' }, last4: '4242' }
+			} as never)
+		).resolves.toMatchObject({ paymentAccountHolder: { id: HOLDER }, userErrors: [] });
+		expect(holderKernel.createHolder).toHaveBeenCalledTimes(1);
+	});
+
 	it('answers a business rejection as a payload rather than as a transport error', async () => {
 		const { tokenResolver, kernel } = surfaces();
 
