@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
@@ -49,13 +49,33 @@ export class CommerceCartShippingMethodService extends TenantAwareCrudService<Co
 	/**
 	 * Records a delivery choice, refusing a shipping option or tax class of another tenant.
 	 *
+	 * **The organization is the request's when the payload states none (R2-G19).** The GraphQL inputs declare
+	 * no organization, and the tenant-aware base stamps the tenant only, so a row written over GraphQL had
+	 * `organizationId = NULL` and every organization-scoped read missed it. A stated organization is kept (REST
+	 * states it, validated against the caller).
+	 *
+	 * **A choice is rated by the cart, not stored as stated (R3-07c).** The cart's `setShippingMethod` writes the
+	 * configured option's name and rate; a row reaching this method without them was not rated — a direct write to
+	 * the child resource — and is refused rather than stored half-empty.
+	 *
 	 * @param entity The choice to create.
 	 * @returns The created choice.
 	 */
 	public async create(entity: DeepPartial<CommerceCartShippingMethod>): Promise<CommerceCartShippingMethod> {
+		if (!entity?.name || entity.amount === undefined || entity.amount === null) {
+			throw new BadRequestException({
+				message:
+					'CART_SHIPPING_OPTION_REQUIRED: a delivery choice is set on its cart (POST /carts/:id/shipping-methods), which rates the configured shipping option it names.',
+				code: 'CART_SHIPPING_OPTION_REQUIRED'
+			});
+		}
+
 		await this.assertReferences(entity);
 
-		return super.create(entity);
+		return super.create({
+			...entity,
+			organizationId: entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as DeepPartial<CommerceCartShippingMethod>);
 	}
 
 	/**

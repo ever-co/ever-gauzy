@@ -47,6 +47,8 @@ import { TypeOrmRefundReasonRepository } from './refund-reason/repository/type-o
 import { MikroOrmRefundReasonRepository } from './refund-reason/repository/mikro-orm-refund-reason.repository';
 import { TypeOrmPaymentWebhookEventRepository } from './payment-webhook-event/repository/type-orm-payment-webhook-event.repository';
 import { MikroOrmPaymentWebhookEventRepository } from './payment-webhook-event/repository/mikro-orm-payment-webhook-event.repository';
+import { PaymentOrderLedgerMirror } from './payment-order-ledger/payment-order-ledger.mirror';
+import { PaymentOrderLinkService } from './payment-order-ledger/payment-order-link.service';
 import { resolvers } from './graphql/resolvers';
 
 /**
@@ -124,6 +126,11 @@ export const ALL_PAYMENT_ENTITIES = [
 		RefundReasonService,
 		PaymentWebhookEventService,
 		ReturnRefundService,
+		// The order's money ledger, told after every authorisation, capture, void and refund (Q7-W1b), and the
+		// hand-over of a cart's payments to the order it became — reached by the order through its
+		// `ORDER_CHECKOUT_PAYMENTS` port, bound in the installation's composition module.
+		PaymentOrderLedgerMirror,
+		PaymentOrderLinkService,
 		// The sequencing the two stored-instrument resources need, shared by both surfaces.
 		PaymentAccountHolderLifecycleService,
 		PaymentMethodTokenLifecycleService,
@@ -156,7 +163,8 @@ export const ALL_PAYMENT_ENTITIES = [
 		PaymentWebhookEventService,
 		ReturnRefundService,
 		PaymentAccountHolderLifecycleService,
-		PaymentMethodTokenLifecycleService
+		PaymentMethodTokenLifecycleService,
+		PaymentOrderLinkService
 	]
 })
 export class PaymentModule {}

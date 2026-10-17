@@ -1,27 +1,43 @@
 import { Global, Module } from '@nestjs/common';
 import { PaymentInstrumentEligibilityService, PaymentInstrumentModule } from '@gauzy/core';
-import { CART_PROMOTION_EVALUATION, CART_STOCK_AVAILABILITY, CART_TAX_CALCULATION } from '@gauzy/plugin-cart';
+import {
+	CART_PRICE_RESOLUTION,
+	CART_PROMOTION_EVALUATION,
+	CART_SHIPPING_RATE,
+	CART_STOCK_AVAILABILITY,
+	CART_TAX_CALCULATION,
+	CART_TAX_CATEGORY
+} from '@gauzy/plugin-cart';
 import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
 import {
 	FulfillmentModule,
 	ReturnShipmentService,
+	ShippingOptionService,
 	WarehouseFulfillmentService
 } from '@gauzy/plugin-fulfillment';
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
 import {
 	ORDER_APPROVAL,
+	ORDER_CHECKOUT_PAYMENTS,
 	ORDER_INVOICING,
 	OrderApprovalAdapter,
 	OrderInvoicingAdapter,
 	OrderLineFulfillmentService,
 	OrderLineService,
 	OrderModule,
+	OrderPaymentLedgerService,
 	OrderPlatformAdaptersModule,
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
-import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
-import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
+import { PricingModule, ProductPriceService, RecurringPriceService } from '@gauzy/plugin-pricing';
+import {
+	PAYMENT_ORDER_LEDGER,
+	PAYMENT_ORDER_LINE_REFUND,
+	PaymentModule,
+	PaymentOrderLinkService,
+	ReturnRefundService
+} from '@gauzy/plugin-payment';
 import { PromotionModule, PromotionService } from '@gauzy/plugin-promotion';
 import {
 	PURCHASING_APPROVAL,
@@ -43,7 +59,7 @@ import {
 	SUBSCRIPTION_ORDER_GATEWAY,
 	SUBSCRIPTION_PRICING
 } from '@gauzy/plugin-subscription';
-import { TaxModule, TaxRateService } from '@gauzy/plugin-tax';
+import { TaxCategoryService, TaxModule, TaxRateService } from '@gauzy/plugin-tax';
 import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-warehouse';
 
 /**
@@ -121,6 +137,13 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// The payment package reports what a succeeded refund paid back per line; the order package is
 		// the only writer of `order_line.refundedQuantity` / `refundedAmount`.
 		{ provide: PAYMENT_ORDER_LINE_REFUND, useExisting: OrderLineService },
+		// Every authorisation, capture, void and refund is a row of the order's own money ledger, which only the
+		// order package writes; the payment package reports each one after its money moved (Q7-W1b). Unbound, an
+		// order paid in full answered NOT_PAID for ever and could never complete.
+		{ provide: PAYMENT_ORDER_LEDGER, useExisting: OrderPaymentLedgerService },
+		// A buyer pays before the order exists, on a collection opened for the cart; the checkout hands that
+		// collection and its payments to the order the cart became (Q7-W1b).
+		{ provide: ORDER_CHECKOUT_PAYMENTS, useExisting: PaymentOrderLinkService },
 		// A return cannot exceed what was sent, and only the order package knows how much that is.
 		{ provide: RETURNS_ORDER_FULFILLMENT, useExisting: OrderLineFulfillmentService },
 		// A billing period is priced by the pricing package, so a subscription asks it rather than
@@ -158,6 +181,18 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// rather than recording an amount the caller stated — which is what it did before (R3-07): a buyer
 		// could name any code and any discount, and the cart re-priced from it.
 		{ provide: CART_PROMOTION_EVALUATION, useExisting: PromotionService },
+		// What a cart line costs is the pricing package's resolution — its price lists, sale and override
+		// lists, quantity bands and currency — for the cart and the line's quantity. Unbound, the cart refuses a
+		// line rather than recording the price its caller stated, which is what it did before (R3-07b).
+		{ provide: CART_PRICE_RESOLUTION, useExisting: ProductPriceService },
+		// What a delivery choice costs is the configured shipping option's rate on the cart, and how it is taxed
+		// is the option's too; the fulfilment package owns both. Unbound, the cart refuses a delivery choice
+		// rather than recording the amount its caller stated, which is what it did before (R3-07c).
+		{ provide: CART_SHIPPING_RATE, useExisting: ShippingOptionService },
+		// What a line is taxed under is the variant's category, or the organization's default: the tax package
+		// reads both. Unbound, a line carries no category (the rate resolution then applies the default), never
+		// the one its caller named (R3-07c).
+		{ provide: CART_TAX_CATEGORY, useExisting: TaxCategoryService },
 		// The warehouse reads bin contents from the ledger and writes every physical move back through
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
@@ -200,6 +235,9 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		CART_STOCK_AVAILABILITY,
 		CART_TAX_CALCULATION,
 		CART_PROMOTION_EVALUATION,
+		CART_PRICE_RESOLUTION,
+		CART_SHIPPING_RATE,
+		CART_TAX_CATEGORY,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,
 		PURCHASING_INVENTORY,
@@ -207,7 +245,9 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		RETURNS_SHIPMENT_GATEWAY,
 		RETURNS_REFUND_GATEWAY,
 		ORDER_INVOICING,
-		ORDER_APPROVAL
+		ORDER_APPROVAL,
+		PAYMENT_ORDER_LEDGER,
+		ORDER_CHECKOUT_PAYMENTS
 	]
 })
 export class PluginCompositionModule {}

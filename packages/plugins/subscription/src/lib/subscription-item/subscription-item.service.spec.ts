@@ -679,3 +679,65 @@ describe('SubscriptionItemService — the refusals a caller has to be able to te
 		await expect(notFound.service.resolveUnitPrice(VARIANT, 'USD', '3')).resolves.toBe('3.000000');
 	});
 });
+
+// R2-G15: `PUT /subscription-items/:id` handed its DTO to the base class's `update`, and the DTO declares
+// `subscriptionId`, `variantId` and the scope members, so a correction moved a billed line to another
+// subscription, variant or organization with no proration. `updateSubscriptionItem`'s input never declared them.
+describe('SubscriptionItemService — a correction moves the quantity and the price, never the line', () => {
+	const LINE = 'item-billed';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to move a line to another subscription, variant or organization, and writes nothing', async () => {
+		for (const patch of [
+			{ subscriptionId: '00000000-0000-4000-8000-000000000011' },
+			{ variantId: SECOND_VARIANT },
+			{ organizationId: OTHER_ORG },
+			{ organization: { id: OTHER_ORG } },
+			{ quantity: '5', variantId: SECOND_VARIANT }
+		]) {
+			const fixture = itemFixture({ items: [itemRow(LINE)] });
+			const before = { ...fixture.item(LINE) };
+
+			await expect(fixture.service.update(LINE, patch)).rejects.toMatchObject({
+				response: { code: 'SUBSCRIPTION_ITEM_FIELD_NOT_WRITABLE' }
+			});
+			expect(fixture.item(LINE)).toEqual(before);
+		}
+	});
+
+	it('corrects the quantity and the price, and accepts a client that echoes the line back', async () => {
+		const fixture = itemFixture({ items: [itemRow(LINE)] });
+
+		await fixture.service.update(LINE, {
+			subscriptionId: SUBSCRIPTION,
+			variantId: VARIANT,
+			organizationId: ORG,
+			organization: { id: ORG },
+			tenantId: TENANT,
+			quantity: '3',
+			unitPrice: '12.500000'
+		});
+
+		expect(fixture.item(LINE)).toMatchObject({
+			subscriptionId: SUBSCRIPTION,
+			variantId: VARIANT,
+			organizationId: ORG,
+			quantity: '3',
+			unitPrice: '12.500000'
+		});
+		expect(fixture.item(LINE)).not.toHaveProperty('organization');
+	});
+
+	it('does not find a line of another organization of the tenant', async () => {
+		const fixture = itemFixture({ items: [itemRow(LINE, { organizationId: OTHER_ORG })] });
+
+		await expect(fixture.service.update(LINE, { quantity: '2' })).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.item(LINE)?.quantity).not.toBe('2');
+	});
+});

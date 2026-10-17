@@ -127,7 +127,7 @@ jest.mock('@gauzy/config', () => ({
 
 import { NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
-import { RequestContext } from '@gauzy/core';
+import { Payment, RequestContext } from '@gauzy/core';
 import { PaymentCollectionStatus, PaymentSessionStatus } from '../payment.types';
 import { PaymentAuthorizedEvent, PaymentCanceledEvent, PaymentFailedEvent } from '../events';
 import { PaymentCollection } from '../payment-collection/payment-collection.entity';
@@ -139,7 +139,9 @@ import { PaymentSessionService } from './payment-session.service';
 /** The entity classes the services hand a transaction's manager, resolved to tables. */
 const ENTITY_TABLES = new Map<unknown, string>([
 	[PaymentSession, 'payment_session'],
-	[PaymentCollection, 'payment_collection']
+	[PaymentCollection, 'payment_collection'],
+	// The core payment row an authorisation writes (Q7-W1b).
+	[Payment, 'payment']
 ]);
 
 /**
@@ -253,6 +255,19 @@ function repository(tables: Record<string, Row[]>, tableName: string) {
 
 			try {
 				return await run({
+					create: (_entity: unknown, partial: Row) => ({ ...partial }),
+					save: async (entity: unknown, row: Row) => {
+						const created = { id: `payment-new-${rowsOf(entity).length + 1}`, ...row };
+
+						rowsOf(entity).push(created);
+						undo.push(() => {
+							const index = rowsOf(entity).indexOf(created);
+
+							if (index >= 0) rowsOf(entity).splice(index, 1);
+						});
+
+						return created;
+					},
 					findOne: async (entity: unknown, options: any = {}) => {
 						const row = rowsOf(entity).find((one) => matches(one, options.where));
 
@@ -384,13 +399,12 @@ const sessionRow = (id: string, overrides: Row = {}) => ({
  *
  * @param options The rows the fixture starts with.
  */
-function world(
-	options: { collections?: Row[]; providers?: Row[]; sessions?: Row[] } = {}
-) {
+function world(options: { collections?: Row[]; providers?: Row[]; sessions?: Row[]; orderLedger?: any } = {}) {
 	const tables: Record<string, Row[]> = {
 		payment_collection: options.collections ?? [collectionRow(COLLECTION), collectionRow(OTHER_COLLECTION)],
 		payment_provider: options.providers ?? [providerRow(PROVIDER), providerRow(OTHER_PROVIDER)],
-		payment_session: options.sessions ?? []
+		payment_session: options.sessions ?? [],
+		payment: []
 	};
 	const published: any[] = [];
 	const collectionService = new PaymentCollectionService(
@@ -409,7 +423,8 @@ function world(
 
 				return event;
 			}
-		} as never
+		} as never,
+		options.orderLedger
 	);
 
 	return {
@@ -774,6 +789,72 @@ describe('PaymentSessionService — the provider answers (doc 10 §8.5, §8.7, �
 
 		expect(fixture.collection().authorizedAmount).toBe('40');
 		expect(fixture.published).toHaveLength(1);
+	});
+
+	// Q7-W1b. Nothing wrote the core `payment` row an authorisation stands for, so every capture — taken
+	// against that row — was refused PAYMENT_NOT_AUTHORIZED, and the order never learned it was paid.
+	it('writes the payment an authorisation stands for, once, and tells the order', async () => {
+		const orderLedger = { mirror: jest.fn(async (_fact: any, _label?: string) => ({ recorded: true })) };
+		const fixture = world({ orderLedger });
+		const opened = await fixture.service.openSession(attempt({ amount: '40' }) as never);
+
+		await fixture.service.authorizeSession(opened.id);
+		await fixture.service.authorizeSession(opened.id);
+
+		expect(fixture.tables.payment).toHaveLength(1);
+		expect(fixture.tables.payment[0]).toMatchObject({
+			orderId: 'order-1',
+			paymentCollectionId: COLLECTION,
+			paymentSessionId: opened.id,
+			paymentProviderId: PROVIDER,
+			amount: '40',
+			authorizedAmount: '40',
+			currency: 'USD',
+			status: 'AUTHORIZED'
+		});
+		expect(orderLedger.mirror).toHaveBeenCalledTimes(1);
+		expect(orderLedger.mirror.mock.calls[0][0]).toMatchObject({
+			orderId: 'order-1',
+			type: 'AUTHORIZATION',
+			amount: '40',
+			currency: 'USD',
+			referenceType: 'PAYMENT',
+			referenceId: fixture.tables.payment[0].id
+		});
+	});
+
+	it('writes no order fact for a collection opened for a cart, which the checkout attaches later', async () => {
+		const orderLedger = { mirror: jest.fn() };
+		const fixture = world({
+			orderLedger,
+			collections: [collectionRow(COLLECTION, { orderId: null, cartId: 'cart-1' })]
+		});
+		const opened = await fixture.service.openSession(attempt({ amount: '40' }) as never);
+
+		await fixture.service.authorizeSession(opened.id);
+
+		expect(fixture.tables.payment).toHaveLength(1);
+		expect(fixture.tables.payment[0].orderId).toBeNull();
+		expect(orderLedger.mirror).not.toHaveBeenCalled();
+	});
+
+	it('releases what the payment held when its session is voided, and tells the order', async () => {
+		const orderLedger = { mirror: jest.fn(async (_fact: any, _label?: string) => ({ recorded: true })) };
+		const fixture = world({ orderLedger });
+		const opened = await fixture.service.openSession(attempt({ amount: '40' }) as never);
+
+		await fixture.service.authorizeSession(opened.id);
+		await fixture.service.voidSession(opened.id);
+
+		expect(fixture.tables.payment[0]).toMatchObject({ canceledAmount: '40', status: 'CANCELED' });
+		expect(orderLedger.mirror).toHaveBeenCalledTimes(2);
+		expect(orderLedger.mirror.mock.calls[1][0]).toMatchObject({
+			orderId: 'order-1',
+			type: 'VOID',
+			amount: '40',
+			referenceType: 'PAYMENT',
+			referenceId: fixture.tables.payment[0].id
+		});
 	});
 
 	it('records a refusal, frees the pair for a retry and announces the reason', async () => {

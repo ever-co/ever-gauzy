@@ -11,9 +11,16 @@ import {
 import { normalizeDecimal, recurringAmount } from '../subscription.cycle';
 import { normalizeQuantity, toQuantityUnits } from '../subscription.quantity';
 import { currentScope } from '../subscription.scope';
+import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
 import { SubscriptionItem } from './subscription-item.entity';
 import { MikroOrmSubscriptionItemRepository } from './repository/mikro-orm-subscription-item.repository';
 import { TypeOrmSubscriptionItemRepository } from './repository/type-orm-subscription-item.repository';
+
+/**
+ * The members a correction of a recurring line may move: `PUT /subscription-items/:id` and
+ * `updateSubscriptionItem` both "correct a recurring line's quantity or price" (R2-G15).
+ */
+export const SUBSCRIPTION_ITEM_WRITABLE_MEMBERS: readonly string[] = ['quantity', 'unitPrice', 'position', 'metadata'];
 
 /**
  * The recurring line set: what each cycle bills.
@@ -196,12 +203,15 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 	): Promise<SubscriptionItem> {
 		const written = await this.replaceItems(
 			subscriptionId,
-			[...(await this.findForSubscription(subscriptionId)).map((row) => ({
-				variantId: row.variantId,
-				quantity: row.quantity,
-				unitPrice: row.unitPrice,
-				position: row.position
-			})), item],
+			[
+				...(await this.findForSubscription(subscriptionId)).map((row) => ({
+					variantId: row.variantId,
+					quantity: row.quantity,
+					unitPrice: row.unitPrice,
+					position: row.position
+				})),
+				item
+			],
 			currency,
 			customerId
 		);
@@ -240,6 +250,95 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 		await super.update(current.id, { quantity: this.storeQuantity(normalizeDecimal(quantity, '1')) } as any);
 
 		return await this.findOneScoped(current.id);
+	}
+
+	/**
+	 * Corrects a recurring line: its quantity, its unit price, its position, its metadata (R2-G15).
+	 *
+	 * `PUT /subscription-items/:id` and `updateSubscriptionItem` reach this method. The route's DTO also declares
+	 * `subscriptionId`, `variantId` and the tenant/organization members, and the base class wrote them verbatim, so
+	 * a correction could move a billed line to another subscription, swap the variant it delivers or carry it into
+	 * another organization of the tenant — with no proration, and past the one-row-per-`(subscription, variant)`
+	 * rule the add/remove path keeps. The GraphQL input never declared those members. A change of subscription
+	 * or variant is a removal and an addition through the subscription's own item routes (`/subscriptions/:id/items`),
+	 * which prorate. The DTO shape is kept: a member that restates the stored value (a client that echoes the
+	 * record back) is accepted, and a member that would move is refused with
+	 * `SUBSCRIPTION_ITEM_FIELD_NOT_WRITABLE`. The line is read inside the caller's tenant and organization first,
+	 * so a line of another organization is not found rather than corrected.
+	 *
+	 * The internal writes of this class (`replaceItems`, `changeQuantity`) call the base class directly and are
+	 * not affected.
+	 *
+	 * @param id The line.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException `SUBSCRIPTION_ITEM_FIELD_NOT_WRITABLE` when the write would move a member other
+	 * than the quantity, the unit price, the position or the metadata.
+	 * @throws NotFoundException when the line is not the caller's.
+	 */
+	public async update(id: any, partialEntity: any): Promise<any> {
+		if (typeof id !== 'string') {
+			throw notWritable(
+				'SUBSCRIPTION_ITEM_FIELD_NOT_WRITABLE',
+				'a recurring line is corrected one at a time, by its id.',
+				{
+					criteria: id
+				}
+			);
+		}
+
+		const item = await this.findOneScoped(id);
+		const patch: Record<string, unknown> = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+		const moved: string[] = [];
+
+		// The relation spellings of the scope are compared by the id they carry, because the stored row holds the id
+		// column and not the related object: `organization: { id }` of the line's own organization is an echo.
+		for (const [relation, column] of [
+			['organization', 'organizationId'],
+			['tenant', 'tenantId']
+		] as const) {
+			const related = patch[relation];
+
+			if (related !== undefined && related !== null) {
+				const relatedId = typeof related === 'object' ? (related as { id?: unknown }).id : related;
+
+				if (String(relatedId ?? '') !== String((item as unknown as Record<string, unknown>)[column] ?? '')) {
+					moved.push(relation);
+				}
+			}
+
+			delete patch[relation];
+		}
+
+		// `sentTo` is a request member of the base DTO, not a column of the line.
+		delete patch['sentTo'];
+
+		moved.push(
+			...movedReadOnlyMembers(
+				item as unknown as Record<string, unknown>,
+				patch,
+				SUBSCRIPTION_ITEM_WRITABLE_MEMBERS
+			)
+		);
+
+		if (moved.length > 0) {
+			throw notWritable(
+				'SUBSCRIPTION_ITEM_FIELD_NOT_WRITABLE',
+				`${moved.join(', ')} of recurring line '${id}' ${moved.length === 1 ? 'is' : 'are'} not moved by a ` +
+					`correction: a line changes subscription or variant by being removed and added through ` +
+					`/subscriptions/:id/items, which prorates.`,
+				{ subscriptionItemId: id, fields: moved, writable: SUBSCRIPTION_ITEM_WRITABLE_MEMBERS }
+			);
+		}
+
+		const correction = writableOnly(patch, SUBSCRIPTION_ITEM_WRITABLE_MEMBERS);
+
+		// A write that only restated the stored scope or line moves nothing, and an empty SET is not a statement.
+		if (Object.keys(correction).length === 0) {
+			return item;
+		}
+
+		return super.update(id, correction as any);
 	}
 
 	/**
@@ -405,7 +504,9 @@ export class SubscriptionItemService extends TenantAwareCrudService<Subscription
 		const money = Money.of(value, currency).round();
 
 		if (money.isNegative()) {
-			throw new BadRequestException('SUBSCRIPTION_AMOUNT_INVALID: a recurring quantity or price cannot be negative.');
+			throw new BadRequestException(
+				'SUBSCRIPTION_AMOUNT_INVALID: a recurring quantity or price cannot be negative.'
+			);
 		}
 
 		return money.toStorageString();

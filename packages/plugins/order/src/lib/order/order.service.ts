@@ -21,7 +21,7 @@ import {
 	OrderChangeStatus,
 	OrderStatus
 } from '@gauzy/contracts';
-import { SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { Money, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { Order } from './order.entity';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
@@ -44,6 +44,7 @@ import { OrderShippingMethod } from '../order-shipping-method/order-shipping-met
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
+import { ICartToOrderRowMap, OrderCartLedgerCarryover } from '../checkout/order-cart-ledger-carryover.service';
 
 /** The series every order number is allocated from. */
 const ORDER_SEQUENCE_KEY = 'ORDER';
@@ -107,7 +108,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		 */
 		@Optional()
 		@Inject(ORDER_APPROVAL)
-		private readonly approvals?: IOrderApprovalPort
+		private readonly approvals?: IOrderApprovalPort,
+		/**
+		 * Copies a cart's discount and tax rows onto the order it became (Q7-W1a). Optional, and last, so a
+		 * suite that constructs this service by position is unchanged; without it a checkout order is
+		 * placed with the lines alone, which is what every order was before the carry-over existed.
+		 */
+		@Optional()
+		private readonly cartLedgerCarryover?: OrderCartLedgerCarryover
 	) {
 		super(typeOrmOrderRepository, mikroOrmOrderRepository);
 	}
@@ -164,7 +172,18 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// Naming the shape it is actually handed is what lets the conversion below be the one place the
 		// two vocabularies meet.
 		cart: ICommerceCart & { lines?: ICommerceCartLine[]; shippingMethods?: ICommerceCartShippingMethod[] },
-		options: { idempotencyKey?: string; source?: string; parentOrderId?: ID } = {}
+		options: {
+			idempotencyKey?: string;
+			source?: string;
+			parentOrderId?: ID;
+			/**
+			 * Copy the cart's adjustment and tax rows onto the order before it is placed (Q7-W1a).
+			 *
+			 * Stated by the checkout handler only. The subscription path builds a cart and then writes the
+			 * cycle's own discount and tax onto the order itself, so the cart's would be charged twice.
+			 */
+			carryCartLedgers?: boolean;
+		} = {}
 	): Promise<Order> {
 		if (cart.orderId) {
 			throw new BadRequestException(
@@ -192,11 +211,17 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		const cartLines = cart.lines ?? [];
 		const cartShipping = cart.shippingMethods ?? [];
+		// Which order row each cart row became — the only place that knows it is the loop that creates them,
+		// and the ledger carry-over below needs it to move each cart row's discount and tax to the right owner.
+		const carried = options.carryCartLedgers === true;
+		const lineMap = new Map<ID, ID>();
+		const lineWeights = new Map<ID, string>();
+		const shippingMap = new Map<ID, ID>();
 
 		let position = 0;
 
 		for (const line of cartLines) {
-			await this.lineService.create({
+			const created = await this.lineService.create({
 				orderId: order.id,
 				productId: line.productId,
 				variantId: line.variantId,
@@ -215,14 +240,23 @@ export class OrderService extends TenantAwareCrudService<Order> {
 				position: line.position ?? position++,
 				note: line.note,
 				warehouseId: line.warehouseId,
-				metadata: line.metadata
+				metadata: carried && line.id ? { ...(line.metadata ?? {}), cartLineId: line.id } : line.metadata
 			} as DeepPartial<OrderLine>);
+
+			if (line.id && created?.id) {
+				lineMap.set(line.id, created.id);
+				// What the line is worth, which a document-level discount or fee is spread over in proportion to.
+				lineWeights.set(
+					created.id,
+					lineValueOf(line.unitPrice, line.quantity, cart.currency, cart.currencyDecimals)
+				);
+			}
 		}
 
 		position = 0;
 
 		for (const method of cartShipping) {
-			await this.shippingMethodService.create({
+			const created = await this.shippingMethodService.create({
 				orderId: order.id,
 				shippingOptionId: method.shippingOptionId,
 				name: method.name,
@@ -233,6 +267,10 @@ export class OrderService extends TenantAwareCrudService<Order> {
 				position: method.position ?? position++,
 				metadata: method.metadata
 			} as DeepPartial<OrderShippingMethod>);
+
+			if (method.id && created?.id) {
+				shippingMap.set(method.id, created.id);
+			}
 		}
 
 		for (const [index, snapshot] of [
@@ -248,6 +286,15 @@ export class OrderService extends TenantAwareCrudService<Order> {
 				type: index === 0 ? AddressType.SHIPPING : AddressType.BILLING,
 				...snapshot
 			} as DeepPartial<OrderAddress>);
+		}
+
+		if (carried) {
+			await this.carryCartLedgers(cart.id, order, {
+				lines: lineMap,
+				shippingMethods: shippingMap,
+				lineWeights,
+				currencyDecimals: cart.currencyDecimals
+			});
 		}
 
 		// The timeline entry is written once, by the step that actually places the order, and it
@@ -656,6 +703,54 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
+	 * Completes an order on an operator's request, or says why it cannot be completed yet (Q7-W1b).
+	 *
+	 * The same rule as `completeIfSettled` — confirmed or processing, nothing left to ship, nothing
+	 * outstanding, no change open — stated as a refusal rather than a silent no-op, because an operator who
+	 * asked for a completion is owed the reason it did not happen. An order that is already completed is
+	 * answered as it is, so a retried request is not refused.
+	 *
+	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The completed order.
+	 * @throws NotFoundException when the order is not in the caller's tenant.
+	 * @throws ConflictException with `ORDER_NOT_COMPLETABLE` and what still stands in the way.
+	 */
+	public async complete(orderId: ID, expectation: OrderVersionExpectation = ANY_ORDER_VERSION): Promise<Order> {
+		const order = await this.findOneByIdString(orderId);
+
+		if (!order) {
+			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
+		}
+
+		if (order.status === OrderStatus.COMPLETED) {
+			return order;
+		}
+
+		const completed = await this.completeIfSettled(orderId, expectation);
+
+		if (completed?.status === OrderStatus.COMPLETED) {
+			return completed;
+		}
+
+		const statusAllows = this.totalsService.canComplete(order);
+
+		throw new ConflictException({
+			message: `ORDER_NOT_COMPLETABLE: order ${orderId} cannot be completed yet.`,
+			code: 'ORDER_NOT_COMPLETABLE',
+			details: {
+				status: order.status,
+				statusAllows,
+				hasOpenShippableLines: statusAllows ? await this.totalsService.hasOpenShippableLines(order) : undefined,
+				paymentSettled: statusAllows ? await this.totalsService.isPaymentSettled(order) : undefined,
+				hasOpenChange: statusAllows
+					? (await this.changeService.findOpenForOrder(orderId)).length > 0
+					: undefined
+			}
+		});
+	}
+
+	/**
 	 * Completes an order whose lines are all fulfilled and whose money side is settled.
 	 *
 	 * @param orderId The order.
@@ -700,6 +795,85 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		await this.historyService.record(order.id, 'ORDER_COMPLETED', 'Order completed', {}, scopeOfOrderRow(order));
 
 		return completed;
+	}
+
+	/**
+	 * Copies the cart's money ledgers onto the order before it is placed.
+	 *
+	 * A failure here leaves a draft that would be placed without the discount and the tax the buyer was
+	 * quoted, so the draft is cancelled and the error rethrown: the checkout fails, the cart was never
+	 * attached to the order, and the buyer can complete it again. The draft is cancelled rather than left
+	 * as a stray `DRAFT` because nothing else would ever close it.
+	 *
+	 * @param cartId The cart the order came from.
+	 * @param order The draft order.
+	 * @param rows Which order row each cart row became.
+	 */
+	private async carryCartLedgers(cartId: ID, order: Order, rows: ICartToOrderRowMap): Promise<void> {
+		if (!this.cartLedgerCarryover) {
+			this.logger.warn(
+				`Order ${order.id} was created from cart ${cartId} without its discount and tax rows: the ledger carry-over is not provided.`
+			);
+
+			return;
+		}
+
+		try {
+			await this.cartLedgerCarryover.carry(cartId, order.id, rows);
+		} catch (error) {
+			try {
+				await this.cancelUnplacedDraft(order.id, 'CART_LEDGER_CARRYOVER_FAILED');
+			} catch (cancelError) {
+				this.logger.error(
+					`Draft order ${order.id} could not be cancelled after its ledger carry-over failed: ${describeError(cancelError)}`
+				);
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Cancels a draft the checkout built and could not place.
+	 *
+	 * Not `cancel()`: that move reads "has anything shipped" from the derived fulfilment status, and a draft
+	 * whose lines need no shipping derives as fulfilled, so the operator's move would refuse to cancel a
+	 * draft nothing was ever sent from. A draft that was never placed has shipped nothing by construction.
+	 * And it announces nothing: no `order.placed` went out for it, so an `order.canceled` would describe an
+	 * order no consumer ever heard of.
+	 *
+	 * @param orderId The draft.
+	 * @param reason Why it was cancelled, recorded on the row and the timeline.
+	 */
+	private async cancelUnplacedDraft(orderId: ID, reason: string): Promise<void> {
+		const order = await this.findOneByIdString(orderId);
+
+		if (!order || order.status !== OrderStatus.DRAFT) {
+			return;
+		}
+
+		const move = OrderStateMachine.transition(order, OrderStatus.CANCELED, {
+			actor: 'SYSTEM',
+			hasCapture: false,
+			hasShipped: false,
+			isSettled: false,
+			hasOpenApproval: false,
+			hasShippableLines: false,
+			fulfillmentStatus: order.fulfillmentStatus,
+			paymentStatus: order.paymentStatus
+		});
+
+		await this.totalsService.recompute(order.id, 'CANCEL', {
+			patch: { ...move, cancelReason: reason }
+		});
+
+		await this.historyService.record(
+			order.id,
+			'ORDER_CANCELED',
+			'Order canceled',
+			{ reason },
+			scopeOfOrderRow(order)
+		);
 	}
 
 	/**
@@ -763,3 +937,33 @@ export class OrderService extends TenantAwareCrudService<Order> {
  * restating it.
  */
 export const COMPLETABLE_CART_STATUSES = [CommerceCartStatus.ACTIVE, CommerceCartStatus.ABANDONED];
+
+/**
+ * The first line of an error's message, for a log line.
+ *
+ * @param error What was thrown.
+ * @returns A short description.
+ */
+function describeError(error: unknown): string {
+	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
+}
+
+/**
+ * A cart line's value — unit price × quantity — as exact decimal text, or zero when it cannot be read.
+ *
+ * @param unitPrice The line's unit price.
+ * @param quantity The line's quantity.
+ * @param currency The cart's currency.
+ * @param decimals The currency's decimal places.
+ * @returns The value.
+ */
+function lineValueOf(unitPrice: unknown, quantity: unknown, currency: string, decimals?: number): string {
+	try {
+		return Money.fromStorage(String(unitPrice ?? '0'), currency as never, decimals)
+			.multiply(String(quantity ?? '0'))
+			.abs()
+			.toStorageString();
+	} catch {
+		return '0';
+	}
+}

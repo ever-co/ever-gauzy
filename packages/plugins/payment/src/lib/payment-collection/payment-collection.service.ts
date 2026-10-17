@@ -215,6 +215,38 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	}
 
 	/**
+	 * Attaches a cart's collection to the order the cart became (Q7-W1b).
+	 *
+	 * `orderId` is a server-owned member (`PAYMENT_COLLECTION_SERVER_OWNED_MEMBERS`) and `updateCollection`
+	 * refuses it on purpose; this is the one writer, and it writes only a collection that belongs to no order
+	 * yet, so a second checkout of the same cart cannot move money that already pays another order.
+	 *
+	 * @param id The collection.
+	 * @param orderId The order.
+	 * @returns The stored collection.
+	 * @throws BadRequestException with `PAYMENT_COLLECTION_ALREADY_ATTACHED` when it pays another order.
+	 */
+	async attachToOrder(id: ID, orderId: ID): Promise<IPaymentCollection> {
+		const collection = await this.findCollectionOrFail(id);
+
+		if (collection.orderId === orderId) {
+			return collection;
+		}
+
+		if (collection.orderId) {
+			throw new BadRequestException({
+				message: `PAYMENT_COLLECTION_ALREADY_ATTACHED: collection '${id}' already pays order '${collection.orderId}'.`,
+				code: 'PAYMENT_COLLECTION_ALREADY_ATTACHED',
+				details: { paymentCollectionId: id, orderId: collection.orderId }
+			});
+		}
+
+		await this.update(id, { orderId } as never);
+
+		return this.findCollectionOrFail(id);
+	}
+
+	/**
 	 * Resolves the live collection of a cart.
 	 *
 	 * The same fail-soft read as `findCollectionForOrder`, and the same reason: the caller that asks
@@ -564,7 +596,7 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 		const merged: IPaymentCollection = { ...current, ...changes };
 		const status = changes.status ?? this.deriveStatus(merged);
 		const completedAt =
-			status === PaymentCollectionStatus.COMPLETED ? current.completedAt ?? new Date() : current.completedAt;
+			status === PaymentCollectionStatus.COMPLETED ? (current.completedAt ?? new Date()) : current.completedAt;
 
 		const written = await manager.update(
 			PaymentCollection,
@@ -663,4 +695,3 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 		return currency.trim().toUpperCase();
 	}
 }
-

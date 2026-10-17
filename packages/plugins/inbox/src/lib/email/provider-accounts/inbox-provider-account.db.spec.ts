@@ -44,6 +44,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	NotFoundException,
 	ServiceUnavailableException
@@ -477,6 +478,51 @@ describe('Email provider accounts on SQLite', () => {
 			expect(mockTransportRegistry.register).toHaveBeenCalledWith(resolver);
 			resolver.onModuleDestroy();
 			expect(mockTransportRegistry.unregister).toHaveBeenCalledWith(resolver.id);
+		});
+	});
+
+	describe('removal', () => {
+		it('removes an account softly: gone from the lists, disabled, no longer the default, never resolved', async () => {
+			const account = await create({ isDefaultOutbound: true });
+			expect(await service.remove(account.id as string)).toEqual({ id: account.id, deleted: true });
+
+			expect(await service.list()).toEqual([]);
+			await expect(service.get(account.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			const [row] = await dataSource.query(
+				`SELECT "deletedAt", "status", "isDefaultOutbound" FROM "inbox_provider_account" WHERE "id" = ?`,
+				[account.id]
+			);
+			// The row is kept (no-removal rule), marked deleted.
+			expect(row.deletedAt).not.toBeNull();
+			expect([row.status, !!row.isDefaultOutbound]).toEqual([InboxProviderAccountStatusEnum.DISABLED, false]);
+			expect(await service.findUsable(account.id as string, TENANT)).toBeNull();
+			expect(await resolver.resolve({ tenantId: TENANT, organizationId: ORG })).toBeNull();
+			// A second removal finds nothing.
+			await expect(service.remove(account.id as string)).rejects.toBeInstanceOf(NotFoundException);
+		});
+
+		it('is refused while a mailbox receives through the account', async () => {
+			const account = await create();
+			await dataSource.query(
+				`INSERT INTO "inbox_mailbox" ("id", "tenantId", "organizationId", "address", "kind", "ownerType", "providerAccountId") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				[randomUUID(), TENANT, ORG, 'billing@acme.test', 'CUSTOM_DOMAIN', 'ORGANIZATION', account.id]
+			);
+			await expect(service.remove(account.id as string)).rejects.toBeInstanceOf(ConflictException);
+			expect((await service.get(account.id as string)).status).toBe(InboxProviderAccountStatusEnum.ACTIVE);
+
+			// Once that mailbox is gone, the account can go.
+			await dataSource.query(`UPDATE "inbox_mailbox" SET "deletedAt" = datetime('now')`);
+			expect((await service.remove(account.id as string)).deleted).toBe(true);
+		});
+
+		it('needs ALL_ORG_EDIT for a tenant-wide account, and another organization cannot reach one of this', async () => {
+			as(ADA, TENANT, ORG, [PermissionsEnum.ALL_ORG_EDIT]);
+			const tenantWide = await create({ scope: InboxProviderAccountScopeEnum.TENANT });
+			const own = await create({ name: 'Own' });
+			as(ADA);
+			await expect(service.remove(tenantWide.id as string)).rejects.toBeInstanceOf(ForbiddenException);
+			await expect(service.remove(own.id as string, OTHER_ORG)).rejects.toBeInstanceOf(NotFoundException);
+			expect((await service.list()).map((entry) => entry.id).sort()).toEqual([tenantWide.id, own.id].sort());
 		});
 	});
 });

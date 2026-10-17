@@ -9,6 +9,8 @@ import { resolvers } from './graphql/resolvers';
 import { CreatePromotionTables1791000000260 } from './migrations/1791000000260-CreatePromotionTables';
 import { AddPromotionCheckConstraints1791000000433 } from './migrations/1791000000433-AddPromotionCheckConstraints';
 import { AddPromotionFundingColumns1791000000653 } from './migrations/1791000000653-AddPromotionFundingColumns';
+import { HashGiftCardPins1791000000785 } from './migrations/1791000000785-HashGiftCardPins';
+import { KeyGiftCardPinDigests1791000000786 } from './migrations/1791000000786-KeyGiftCardPinDigests';
 import { ALL_PROMOTION_ENTITIES } from './promotion.entities';
 
 /**
@@ -40,7 +42,9 @@ type PluginDependencies = NonNullable<Parameters<typeof Plugin>[0]['dependsOn']>
 	migrations: [
 		CreatePromotionTables1791000000260,
 		AddPromotionCheckConstraints1791000000433,
-		AddPromotionFundingColumns1791000000653
+		AddPromotionFundingColumns1791000000653,
+		HashGiftCardPins1791000000785,
+		KeyGiftCardPinDigests1791000000786
 	],
 	permissions: PROMOTION_PERMISSIONS,
 	features: PROMOTION_FEATURES,

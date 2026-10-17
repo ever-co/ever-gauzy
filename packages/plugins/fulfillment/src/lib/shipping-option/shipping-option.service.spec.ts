@@ -147,6 +147,7 @@ jest.mock('@gauzy/core', () => {
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ShippingPriceType } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { ShippingOptionService } from './shipping-option.service';
 
 /**
@@ -854,5 +855,29 @@ describe('ShippingOptionService — editing an option (doc 09 §12.2)', () => {
 			fixture.service.update('standard', { estimatedMaxDays: 0 } as never)
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(fixture.row('standard')).toMatchObject({ estimatedMaxDays: 4 });
+	});
+});
+
+describe('ShippingOptionService — the organization an option is created in (review R2-G37)', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the caller’s organization on an option created without one', async () => {
+		// The GraphQL input declares no organization and the base stamps only the tenant, so an option created
+		// over GraphQL was written with a NULL organization that no organization-scoped read ever found.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-caller' as never);
+		const fixture = optionFixture();
+
+		await fixture.service.create(flatOption() as never);
+
+		expect(fixture.byCode('STANDARD')).toMatchObject({ organizationId: 'org-caller' });
+	});
+
+	it('keeps an organization the request stated', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-caller' as never);
+		const fixture = optionFixture();
+
+		await fixture.service.create(flatOption({ organizationId: 'org-stated' }) as never);
+
+		expect(fixture.byCode('STANDARD')).toMatchObject({ organizationId: 'org-stated' });
 	});
 });

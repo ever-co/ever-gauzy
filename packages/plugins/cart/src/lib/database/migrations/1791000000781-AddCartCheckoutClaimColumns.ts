@@ -32,21 +32,12 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	private static readonly TABLE = 'commerce_cart';
 
 	/**
-	 * The two columns, in the order `up` adds them, with each dialect's type.
-	 *
-	 * `checkoutClaimId` carries a UUID, stored as the 36-character varchar every identifier column of this
-	 * set uses; `checkoutClaimedAt` is the dialect's own timestamp type, as `completedAt` beside it is.
+	 * The two columns are written out literally in every statement below, rather than assembled from a list:
+	 * the plugin contract gate (`tools/scripts/plugin-contract-check.mjs`) reads a table's `ALTER TABLE`
+	 * statements for the columns its entity declares, and a column name interpolated into the statement is
+	 * one it cannot see. `checkoutClaimId` is the 36-character varchar every identifier of this set uses;
+	 * `checkoutClaimedAt` is the dialect's own timestamp type, as `completedAt` beside it is.
 	 */
-	private static readonly COLUMNS: ReadonlyArray<{ name: string; postgres: string; sqlite: string; mysql: string }> =
-		[
-			{
-				name: 'checkoutClaimId',
-				postgres: 'character varying(36)',
-				sqlite: 'varchar(36)',
-				mysql: 'varchar(36) NULL'
-			},
-			{ name: 'checkoutClaimedAt', postgres: 'TIMESTAMP', sqlite: 'datetime', mysql: 'datetime NULL' }
-		];
 
 	/**
 	 * Up Migration
@@ -102,13 +93,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of AddCartCheckoutClaimColumns1791000000781.COLUMNS) {
-			await this.addColumn(
-				queryRunner,
-				column.name,
-				`ALTER TABLE "commerce_cart" ADD COLUMN "${column.name}" ${column.postgres}`
-			);
-		}
+		await this.addColumn(
+			queryRunner,
+			'checkoutClaimId',
+			`ALTER TABLE "commerce_cart" ADD COLUMN "checkoutClaimId" character varying(36)`
+		);
+		await this.addColumn(
+			queryRunner,
+			'checkoutClaimedAt',
+			`ALTER TABLE "commerce_cart" ADD COLUMN "checkoutClaimedAt" TIMESTAMP`
+		);
 	}
 
 	/**
@@ -117,9 +111,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of [...AddCartCheckoutClaimColumns1791000000781.COLUMNS].reverse()) {
-			await this.dropColumn(queryRunner, column.name, `ALTER TABLE "commerce_cart" DROP COLUMN "${column.name}"`);
-		}
+		await this.dropColumn(
+			queryRunner,
+			'checkoutClaimedAt',
+			`ALTER TABLE "commerce_cart" DROP COLUMN "checkoutClaimedAt"`
+		);
+		await this.dropColumn(
+			queryRunner,
+			'checkoutClaimId',
+			`ALTER TABLE "commerce_cart" DROP COLUMN "checkoutClaimId"`
+		);
 	}
 
 	/**
@@ -128,13 +129,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of AddCartCheckoutClaimColumns1791000000781.COLUMNS) {
-			await this.addColumn(
-				queryRunner,
-				column.name,
-				`ALTER TABLE "commerce_cart" ADD COLUMN "${column.name}" ${column.sqlite}`
-			);
-		}
+		await this.addColumn(
+			queryRunner,
+			'checkoutClaimId',
+			`ALTER TABLE "commerce_cart" ADD COLUMN "checkoutClaimId" varchar(36)`
+		);
+		await this.addColumn(
+			queryRunner,
+			'checkoutClaimedAt',
+			`ALTER TABLE "commerce_cart" ADD COLUMN "checkoutClaimedAt" datetime`
+		);
 	}
 
 	/**
@@ -143,9 +147,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of [...AddCartCheckoutClaimColumns1791000000781.COLUMNS].reverse()) {
-			await this.dropColumn(queryRunner, column.name, `ALTER TABLE "commerce_cart" DROP COLUMN "${column.name}"`);
-		}
+		await this.dropColumn(
+			queryRunner,
+			'checkoutClaimedAt',
+			`ALTER TABLE "commerce_cart" DROP COLUMN "checkoutClaimedAt"`
+		);
+		await this.dropColumn(
+			queryRunner,
+			'checkoutClaimId',
+			`ALTER TABLE "commerce_cart" DROP COLUMN "checkoutClaimId"`
+		);
 	}
 
 	/**
@@ -154,13 +165,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of AddCartCheckoutClaimColumns1791000000781.COLUMNS) {
-			await this.addColumn(
-				queryRunner,
-				column.name,
-				`ALTER TABLE \`commerce_cart\` ADD COLUMN \`${column.name}\` ${column.mysql}`
-			);
-		}
+		await this.addColumn(
+			queryRunner,
+			'checkoutClaimId',
+			'ALTER TABLE `commerce_cart` ADD COLUMN `checkoutClaimId` varchar(36) NULL'
+		);
+		await this.addColumn(
+			queryRunner,
+			'checkoutClaimedAt',
+			'ALTER TABLE `commerce_cart` ADD COLUMN `checkoutClaimedAt` datetime NULL'
+		);
 	}
 
 	/**
@@ -169,13 +183,16 @@ export class AddCartCheckoutClaimColumns1791000000781 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		for (const column of [...AddCartCheckoutClaimColumns1791000000781.COLUMNS].reverse()) {
-			await this.dropColumn(
-				queryRunner,
-				column.name,
-				`ALTER TABLE \`commerce_cart\` DROP COLUMN \`${column.name}\``
-			);
-		}
+		await this.dropColumn(
+			queryRunner,
+			'checkoutClaimedAt',
+			'ALTER TABLE `commerce_cart` DROP COLUMN `checkoutClaimedAt`'
+		);
+		await this.dropColumn(
+			queryRunner,
+			'checkoutClaimId',
+			'ALTER TABLE `commerce_cart` DROP COLUMN `checkoutClaimId`'
+		);
 	}
 
 	/**

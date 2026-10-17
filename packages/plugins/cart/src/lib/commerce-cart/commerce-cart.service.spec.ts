@@ -212,7 +212,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { createHash } from 'node:crypto';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { AdjustmentOwnerType, CommerceCartStatus, CommerceCheckoutSessionStatus, TaxLineOwnerType } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { CommerceCartService } from './commerce-cart.service';
@@ -476,11 +476,43 @@ const DEFAULT_PROMOTION_GRANTS: Record<string, PromotionGrant> = {
 	PENNIES: '0.1'
 };
 
+/** One configured shipping option of the delivery-rate capability double (R3-07c). */
+interface ShippingOptionStub {
+	name: string;
+	amount: number | string;
+	currency?: string;
+	isTaxInclusive?: boolean;
+	taxCategoryId?: string;
+	eligible?: boolean;
+	providerKey?: string;
+	reason?: string;
+}
+
+/** What the price capability double charges for one unit of a variant: an amount, or one per quantity. */
+type PriceGrant = number | ((quantity: number) => number);
+
 function cartFixture(
 	options: {
 		stock?: Record<string, StockLevel> | false;
 		taxRate?: number;
 		promotions?: Record<string, PromotionGrant> | false;
+		/**
+		 * The price capability (R3-07b). Absent: the suite's money cases, which add lines at the prices they
+		 * state, are in-process callers that resolved their price themselves — the service is built without a
+		 * price capability and `addLine` / `updateLine` are called with `statedPrice`. A table: the capability
+		 * prices each variant from it, as it does for a route. `'unbound'`: no capability and no stated price —
+		 * the installation that has no pricing package.
+		 */
+		prices?: Record<string, PriceGrant> | 'unbound';
+		/**
+		 * The delivery-rate capability (R3-07c). Absent: the suite's delivery cases state a name and an amount,
+		 * and each stated choice is registered as a configured option at that rate before it is set — the
+		 * stated rate becomes the option's rate, and the cart rates it through the capability as it does in
+		 * production. A table: the configured options. `'unbound'`: no capability.
+		 */
+		shippingOptions?: Record<string, ShippingOptionStub> | 'unbound';
+		/** The tax-category capability (R3-07c): each variant's category. Absent: no capability is bound. */
+		taxCategories?: Record<string, string | null>;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -680,6 +712,102 @@ function cartFixture(
 					})
 				};
 
+	/** The price capability double (R3-07b): a mutable table, so a case can move a price between two calls. */
+	const priceTable: Record<string, PriceGrant> =
+		options.prices && options.prices !== 'unbound' ? { ...options.prices } : {};
+	/**
+	 * In the suite's money cases (`prices` absent) the lines carry the prices their in-process callers stated,
+	 * and checkout prices every line again (R3-07b): the capability there answers with the price the cart's
+	 * line of that variant states, which is the price those callers resolved.
+	 */
+	const statedPort =
+		options.prices === undefined
+			? {
+					resolvePrices: jest.fn(async (query: any): Promise<any[]> =>
+						(query.variantIds ?? [])
+							.map((variantId: string) =>
+								tables.commerce_cart_line.find(
+									(row: any) => row.variantId === variantId && !row.deletedAt
+								)
+							)
+							.filter(Boolean)
+							.map((row: any) => ({
+								variantId: row.variantId,
+								currency: query.currency,
+								amount: String(row.unitPrice),
+								originalAmount: String(row.originalUnitPrice ?? row.unitPrice),
+								taxInclusive: Boolean(row.isTaxInclusive)
+							}))
+					)
+				}
+			: undefined;
+	const pricePort =
+		options.prices && options.prices !== 'unbound'
+			? {
+					resolvePrices: jest.fn(async (query: any): Promise<any[]> =>
+						(query.variantIds ?? [])
+							.filter((variantId: string) => priceTable[variantId] !== undefined)
+							.map((variantId: string) => {
+								const grant = priceTable[variantId];
+								const amount = typeof grant === 'function' ? grant(Number(query.quantity ?? 1)) : grant;
+
+								return {
+									variantId,
+									priceId: `price-${variantId}`,
+									currency: query.currency,
+									amount: String(amount),
+									taxInclusive: false
+								};
+							})
+					)
+				}
+			: undefined;
+
+	/** The delivery-rate capability double (R3-07c): the configured options, mutable between two calls. */
+	const shippingTable: Record<string, ShippingOptionStub> =
+		options.shippingOptions && options.shippingOptions !== 'unbound' ? { ...options.shippingOptions } : {};
+	const shippingPort =
+		options.shippingOptions === 'unbound'
+			? undefined
+			: {
+					findOneByIdString: jest.fn(async (id: string): Promise<any> => {
+						const option = shippingTable[id];
+
+						if (!option) {
+							throw new NotFoundException('The requested record was not found');
+						}
+
+						return {
+							id,
+							name: option.name,
+							isTaxInclusive: option.isTaxInclusive ?? false,
+							taxCategoryId: option.taxCategoryId
+						};
+					}),
+					calculate: jest.fn(async (id: string): Promise<any> => {
+						const option = shippingTable[id];
+
+						return {
+							amount: option.amount,
+							currency: option.currency,
+							providerKey: option.providerKey,
+							eligible: option.eligible !== false,
+							reason: option.reason
+						};
+					})
+				};
+	/** The tax-category capability double (R3-07c). */
+	const taxCategoryPort = options.taxCategories
+		? {
+				taxCategoriesOf: jest.fn(async (variantIds: string[]): Promise<any[]> =>
+					variantIds.map((variantId) => ({
+						variantId,
+						taxCategoryId: (options.taxCategories as Record<string, string | null>)[variantId] ?? null
+					}))
+				)
+			}
+		: undefined;
+
 	const service = new CommerceCartService(
 		repository(tables, 'commerce_cart') as never,
 		{} as never,
@@ -691,8 +819,43 @@ function cartFixture(
 		taxLineService as never,
 		stockPort as never,
 		taxPort as never,
-		promotionPort as never
+		promotionPort as never,
+		(pricePort ?? statedPort) as never,
+		shippingPort as never,
+		taxCategoryPort as never
 	);
+
+	if (options.shippingOptions === undefined) {
+		// The suite's delivery cases state the rate; it becomes the configured option's (see above).
+		const setShippingMethod = service.setShippingMethod.bind(service);
+
+		service.setShippingMethod = ((cartId: any, method: any, expectation?: any) => {
+			const shippingOptionId = method?.shippingOptionId ?? `option-${Object.keys(shippingTable).length + 1}`;
+
+			shippingTable[shippingOptionId] ??= {
+				name: method?.name,
+				amount: method?.amount,
+				isTaxInclusive: method?.isTaxInclusive,
+				taxCategoryId: method?.taxCategoryId
+			};
+
+			return setShippingMethod(cartId, { ...method, shippingOptionId }, expectation);
+		}) as typeof service.setShippingMethod;
+	}
+
+	if (options.prices === undefined) {
+		// The in-process callers of the money cases state the prices they resolved (see `prices` above).
+		const addLine = service.addLine.bind(service);
+		const updateLine = service.updateLine.bind(service);
+
+		service.addLine = ((cartId: any, line: any, expectation?: any, writeOptions: any = {}) =>
+			addLine(cartId, line, expectation, { statedPrice: true, ...writeOptions })) as typeof service.addLine;
+		service.updateLine = ((cartId: any, lineId: any, changes: any, expectation?: any, writeOptions: any = {}) =>
+			updateLine(cartId, lineId, changes, expectation, {
+				statedPrice: true,
+				...writeOptions
+			})) as typeof service.updateLine;
+	}
 
 	return {
 		service,
@@ -703,7 +866,12 @@ function cartFixture(
 		promotionService,
 		checkoutSessionService,
 		stockPort,
-		promotionPort
+		promotionPort,
+		pricePort,
+		priceTable,
+		shippingPort,
+		shippingTable,
+		taxCategoryPort
 	};
 }
 
@@ -2340,5 +2508,614 @@ describe('CommerceCartService — the discount is the promotion engine’s (R3-0
 		await expect(service.applyPromotion(cart.id, { amount: 4 } as any)).rejects.toMatchObject({
 			response: { code: 'CART_PROMOTION_REFERENCE_REQUIRED' }
 		});
+	});
+});
+
+/**
+ * R2-G19: the GraphQL cart writes (`createCart`, `addCartLine`, `setCartShippingMethod`, `applyCartPromotion`,
+ * `startCheckout`) wrote `organizationId = NULL`: the inputs declare no organization and the tenant-aware base
+ * stamps the tenant only. The cart takes the request's organization, a child row takes its cart's, and a stated
+ * organization is kept (REST states one, validated against the caller).
+ */
+describe('CommerceCartService — rows are written in the organization (R2-G19)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the request’s organization on a cart, and on every row its verbs write', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 5 });
+		await service.applyPromotion(cart.id, { code: 'TENOFF' } as any);
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_shipping_method[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_promotion[0].organizationId).toBe('org-1');
+	});
+
+	it('writes a child row in its cart’s organization rather than the request’s', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any);
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-2');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-2');
+	});
+
+	it('stamps the request’s organization on a child row created directly, and keeps a stated one', async () => {
+		// The REST child routes (`/cart-lines`, `/cart-shipping-methods`, `/cart-promotions`) reach the child
+		// services' own `create`, which the cart's verbs do not exercise on their own.
+		const { lineService, shippingMethodService, promotionService } = cartFixture();
+
+		const line = await lineService.create({ cartId: 'cart-1', variantId: 'v1', quantity: 1, unitPrice: 1 } as any);
+		const method = await shippingMethodService.create({ cartId: 'cart-1', name: 'Standard', amount: 5 } as any);
+		const applied = await promotionService.create({ cartId: 'cart-1', code: 'TENOFF', amount: 4 } as any);
+
+		expect([line, method, applied].map((row: any) => row.organizationId)).toEqual(['org-1', 'org-1', 'org-1']);
+
+		const stated = await lineService.create({
+			cartId: 'cart-1',
+			variantId: 'v1',
+			quantity: 1,
+			unitPrice: 1,
+			organizationId: 'org-2'
+		} as any);
+		const statedMethod = await shippingMethodService.create({
+			cartId: 'cart-1',
+			name: 'Express',
+			amount: 9,
+			organizationId: 'org-2'
+		} as any);
+		const statedPromotion = await promotionService.create({
+			cartId: 'cart-1',
+			code: 'FIVE',
+			amount: 5,
+			organizationId: 'org-2'
+		} as any);
+
+		expect([stated, statedMethod, statedPromotion].map((row: any) => row.organizationId)).toEqual([
+			'org-2',
+			'org-2',
+			'org-2'
+		]);
+	});
+
+	it('opens a checkout session in the request’s organization when none is stated', async () => {
+		const { checkoutSessionService, tables } = cartFixture();
+
+		await checkoutSessionService.create({ cartId: 'cart-1', status: CommerceCheckoutSessionStatus.STARTED });
+
+		expect(tables.commerce_checkout_session[0].organizationId).toBe('org-1');
+	});
+});
+
+/**
+ * R3-07b: a cart line's price was whatever its caller stated.
+ *
+ * `addLine` and `updateLine` recorded the request's `unitPrice` ("the caller states the resolved unit price"),
+ * and `POST /carts/:id/lines`, `addCartLine` and `updateCartLine` handed it the request's — so a buyer could name
+ * their own price. The line is now priced by the price capability (`CART_PRICE_RESOLUTION`, the pricing
+ * package's `ProductPriceService`) for the cart and the quantity, and priced again at checkout.
+ */
+describe('CommerceCartService — a line is priced by the pricing package (R3-07b)', () => {
+	/** A cart the strict ladder accepts once it holds a line: a contact and a currency. */
+	const openCart = (fixture: ReturnType<typeof cartFixture>) =>
+		fixture.service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+	it('prices a line from the pricing package and ignores the price the request states', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+
+		const priced = await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 2,
+			unitPrice: 0.01,
+			originalUnitPrice: 0.01,
+			isTaxInclusive: true,
+			metadata: { priceSource: 'STATED' }
+		} as any);
+
+		const [line] = fixture.tables.commerce_cart_line;
+		expect(Number(line.unitPrice)).toBe(20);
+		expect(line.isTaxInclusive).toBe(false);
+		expect(line.metadata).toMatchObject({ priceSource: 'ENGINE', priceId: 'price-v1' });
+		expect(priced.itemSubtotal).toBe(40);
+		expect(fixture.pricePort!.resolvePrices).toHaveBeenCalledWith(
+			expect.objectContaining({ variantIds: ['v1'], currency: 'USD', quantity: 2, channelId: 'channel-1' })
+		);
+	});
+
+	it('prices a merged line for the sum, so a quantity band applies to what the cart holds', async () => {
+		const fixture = cartFixture({ prices: { v1: (quantity: number) => (quantity >= 3 ? 8 : 10) } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 } as any);
+		const merged = await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10
+		} as any);
+
+		const live = fixture.tables.commerce_cart_line.filter((row: any) => !row.deletedAt);
+		expect(live).toHaveLength(1);
+		expect(Number(live[0].quantity)).toBe(3);
+		expect(Number(live[0].unitPrice)).toBe(8);
+		expect(merged.itemSubtotal).toBe(24);
+	});
+
+	it('refuses a price the pricing package answers in another currency', async () => {
+		// The capability's legacy fallback answers in the currency the retail price was entered in; 100 USD is
+		// not 100 JPY, and the cart does not convert.
+		const fixture = cartFixture({ prices: { v1: 100 } });
+		fixture.pricePort!.resolvePrices.mockImplementation(async () => [
+			{ variantId: 'v1', currency: 'USD', amount: '100', taxInclusive: false }
+		]);
+		const cart = await fixture.service.create({ channelId: 'channel-1', currency: 'JPY' });
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1 } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED', details: { priceCurrency: 'USD' } }
+		});
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('refuses a variant the pricing package cannot price, and writes nothing', async () => {
+		const fixture = cartFixture({ prices: {} });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v9', title: 'Z', quantity: 1, unitPrice: 1 } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_LINE_PRICE_UNRESOLVED' } });
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('fails closed when no price capability is bound', async () => {
+		const fixture = cartFixture({ prices: 'unbound' });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 1 } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_PRICE_ENGINE_MISSING' } });
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('ignores a stated price on a change, and prices the line again for its new quantity', async () => {
+		const fixture = cartFixture({ prices: { v1: (quantity: number) => (quantity >= 5 ? 7 : 10) } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1 } as any);
+		const [line] = fixture.tables.commerce_cart_line;
+
+		await fixture.service.updateLine(cart.id, line.id, {
+			quantity: 5,
+			unitPrice: 0.5,
+			originalUnitPrice: 0.5,
+			isTaxInclusive: true,
+			metadata: { priceSource: 'STATED', note: 'gift' }
+		} as any);
+
+		expect(Number(line.unitPrice)).toBe(7);
+		expect(line.isTaxInclusive).toBe(false);
+		expect(line.metadata).toMatchObject({ priceSource: 'ENGINE', note: 'gift' });
+
+		// A change that names only a price changes nothing about it.
+		await fixture.service.updateLine(cart.id, line.id, { unitPrice: 0.5 } as any);
+		expect(Number(line.unitPrice)).toBe(7);
+	});
+
+	it('prices every line again at checkout: a moved price, an old line and a stated one', async () => {
+		// The stated marker is line metadata, which a direct write to the line resource can set, so checkout
+		// trusts no line's price: the order is built from the capability's prices only.
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30, v3: 6 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		// An in-process caller's line, at the price it resolved itself.
+		await fixture.service.addLine(
+			cart.id,
+			{ variantId: 'v3', title: 'Plan', quantity: 1, unitPrice: 5, requiresShipping: false } as any,
+			undefined,
+			{ statedPrice: true }
+		);
+		// A line written before the rule, at a price its caller chose.
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-legacy',
+			cartId: cart.id,
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			unitPrice: 1,
+			originalUnitPrice: 1,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false
+		});
+		fixture.priceTable.v1 = 25;
+		registerCheckoutHandler();
+
+		const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		const byVariant = (variantId: string) =>
+			fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId && !row.deletedAt);
+		expect(Number(byVariant('v1').unitPrice)).toBe(25);
+		expect(Number(byVariant('v2').unitPrice)).toBe(30);
+		expect(byVariant('v2').metadata).toMatchObject({ priceSource: 'ENGINE' });
+		expect(Number(byVariant('v3').unitPrice)).toBe(6);
+		expect(completed.cart.itemSubtotal).toBe(61);
+		expect(checkoutCalls).toBe(1);
+	});
+
+	it('refuses the checkout, and releases the cart, when a line can no longer be priced', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		delete fixture.priceTable.v1;
+		registerCheckoutHandler();
+
+		await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+		expect(checkoutCalls).toBe(0);
+		expect(fixture.tables.commerce_cart[0].checkoutClaimId ?? null).toBeNull();
+	});
+
+	it('writes no new price at a refused checkout, so the lines still match the totals', async () => {
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		fixture.priceTable.v1 = 25;
+		delete fixture.priceTable.v2;
+		registerCheckoutHandler();
+
+		await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+
+		const first = fixture.tables.commerce_cart_line.find((row: any) => row.variantId === 'v1');
+		expect(Number(first.unitPrice)).toBe(20);
+	});
+
+	it('records a moved price list at checkout even when the amount is the same', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		fixture.pricePort!.resolvePrices.mockImplementation(async (query: any) => [
+			{
+				variantId: 'v1',
+				currency: query.currency,
+				amount: '20',
+				taxInclusive: false,
+				priceId: 'price-b',
+				priceListId: 'list-b'
+			}
+		]);
+		registerCheckoutHandler();
+
+		await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(fixture.tables.commerce_cart_line[0].metadata).toMatchObject({ priceId: 'price-b', priceListId: 'list-b' });
+	});
+
+	it('refuses a merge whose lines cannot all be priced for the surviving cart, before copying any', async () => {
+		// Production `merge` adds the copied lines without a stated price, so the capability prices them for the
+		// surviving cart; a line it cannot price there refuses the merge with nothing copied.
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const target = await openCart(fixture);
+		const source = await openCart(fixture);
+		await fixture.service.addLine(source.id, { variantId: 'v1', title: 'A', quantity: 1 } as any);
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-unpriced',
+			cartId: source.id,
+			variantId: 'v9',
+			title: 'Z',
+			quantity: 1,
+			unitPrice: 1,
+			originalUnitPrice: 1,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false
+		});
+
+		await expect(fixture.service.merge(target.id, source.id)).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+		expect(fixture.tables.commerce_cart_line.filter((row: any) => row.cartId === target.id)).toHaveLength(0);
+
+		// Priced, the merge copies the lines at the capability's price for the surviving cart.
+		fixture.priceTable.v9 = 3;
+		fixture.priceTable.v1 = 18;
+		await fixture.service.merge(target.id, source.id);
+
+		const copied = fixture.tables.commerce_cart_line.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+		expect(copied.map((row: any) => [row.variantId, Number(row.unitPrice)]).sort()).toEqual([
+			['v1', 18],
+			['v9', 3]
+		]);
+	});
+
+	it('records a price an in-process caller states, and keeps it', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(
+			cart.id,
+			{ variantId: 'v1', title: 'Plan', quantity: 1, unitPrice: 12 } as any,
+			undefined,
+			{ statedPrice: true }
+		);
+
+		const [line] = fixture.tables.commerce_cart_line;
+		expect(Number(line.unitPrice)).toBe(12);
+		expect(line.metadata).toMatchObject({ priceSource: 'STATED' });
+		expect(fixture.pricePort!.resolvePrices).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * R3-07c: a delivery choice's amount, and a line's tax category, were the caller's.
+ *
+ * `setShippingMethod` recorded the request's name, amount, tax inclusivity and tax category (and `isManual`), and
+ * `addLine` / `updateLine` the request's `taxCategoryId` — so a buyer could ship for free, or name a zero-rated
+ * category. The amount is now the configured shipping option's rate (`CART_SHIPPING_RATE`, the fulfilment
+ * package's `ShippingOptionService`), the category the catalogue's (`CART_TAX_CATEGORY`, the tax package's
+ * `TaxCategoryService`), and both are resolved again at checkout.
+ */
+describe('CommerceCartService — the delivery rate and the tax category are the platform’s (R3-07c)', () => {
+	const STANDARD: ShippingOptionStub = {
+		name: 'Standard',
+		amount: 7,
+		currency: 'USD',
+		isTaxInclusive: false,
+		taxCategoryId: 'tc-shipping'
+	};
+	const openCart = (fixture: ReturnType<typeof cartFixture>) =>
+		fixture.service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+	it('rates a delivery choice from the configured option and ignores what the request states', async () => {
+		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const cart = await openCart(fixture);
+
+		const rated = await fixture.service.setShippingMethod(cart.id, {
+			shippingOptionId: 'opt-standard',
+			name: 'Free!',
+			amount: 0,
+			isTaxInclusive: true,
+			taxCategoryId: 'tc-zero',
+			isManual: true
+		} as any);
+
+		const [method] = fixture.tables.commerce_cart_shipping_method;
+		expect(method).toMatchObject({
+			shippingOptionId: 'opt-standard',
+			name: 'Standard',
+			isTaxInclusive: false,
+			taxCategoryId: 'tc-shipping',
+			isManual: false
+		});
+		expect(Number(method.amount)).toBe(7);
+		expect(rated.shippingSubtotal).toBe(7);
+	});
+
+	it('refuses a delivery choice that names no configured option', async () => {
+		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { name: 'Mine', amount: 0 } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_REQUIRED' }
+		});
+		expect(fixture.tables.commerce_cart_shipping_method).toHaveLength(0);
+	});
+
+	it('fails closed when no delivery-rate capability is bound', async () => {
+		const fixture = cartFixture({ shippingOptions: 'unbound' });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.setShippingMethod(cart.id, {
+				shippingOptionId: 'opt-standard',
+				name: 'X',
+				amount: 0
+			} as any)
+		).rejects.toMatchObject({ response: { code: 'CART_SHIPPING_ENGINE_MISSING' } });
+	});
+
+	it('refuses an ineligible option, a calculated rate nothing prices, and a rate in another currency', async () => {
+		const fixture = cartFixture({
+			shippingOptions: {
+				'opt-closed': { ...STANDARD, eligible: false, reason: 'SHIPPING_OPTION_REGION_MISMATCH' },
+				'opt-carrier': { ...STANDARD, amount: 0, providerKey: 'carrier-x' },
+				'opt-euro': { ...STANDARD, currency: 'EUR' }
+			}
+		});
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-closed' } as any)
+		).rejects.toMatchObject({
+			response: {
+				code: 'CART_SHIPPING_OPTION_INELIGIBLE',
+				details: { reason: 'SHIPPING_OPTION_REGION_MISMATCH' }
+			}
+		});
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-carrier' } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'CALCULATED_BY_STRATEGY' } }
+		});
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-euro' } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'CURRENCY_MISMATCH' } }
+		});
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-gone' } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'SHIPPING_OPTION_NOT_FOUND' } }
+		});
+		expect(fixture.tables.commerce_cart_shipping_method).toHaveLength(0);
+	});
+
+	it('rates the delivery choice again at checkout, and refuses one from before the rule', async () => {
+		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10,
+			requiresShipping: false
+		});
+		await fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-standard' } as any);
+		fixture.shippingTable['opt-standard'] = { ...STANDARD, amount: 9 };
+		registerCheckoutHandler();
+
+		const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(Number(fixture.tables.commerce_cart_shipping_method[0].amount)).toBe(9);
+		expect(completed.cart.shippingSubtotal).toBe(9);
+
+		// A choice written before the rule names no option: nothing can rate it, so the checkout is refused.
+		const legacy = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const old = await openCart(legacy);
+		await legacy.service.addLine(old.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10,
+			requiresShipping: false
+		});
+		legacy.tables.commerce_cart_shipping_method.push({
+			id: 'method-legacy',
+			cartId: old.id,
+			name: 'Mine',
+			amount: 0
+		});
+
+		await expect(legacy.service.complete(old.id, { idempotencyKey: 'key-2' })).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_REQUIRED' }
+		});
+	});
+
+	it('gives a line the catalogue’s tax category, never the one the request names', async () => {
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30 }, taxCategories: { v1: 'tc-standard', v2: null } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			taxCategoryId: 'tc-zero'
+		} as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			taxCategoryId: 'tc-zero'
+		} as any);
+
+		const byVariant = (variantId: string) =>
+			fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId);
+		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
+		// A variant with no category carries none: the tax package applies the organization's default.
+		expect(byVariant('v2').taxCategoryId).toBeNull();
+
+		await fixture.service.updateLine(cart.id, byVariant('v1').id, {
+			taxCategoryId: 'tc-zero',
+			note: 'gift'
+		} as any);
+		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
+	});
+
+	it('rates a carried-over delivery choice for the merged contents before copying anything', async () => {
+		// The source's option serves at most three items: the surviving cart's two and the source's two exceed it,
+		// so the merge is refused with nothing copied rather than after the lines were.
+		const fixture = cartFixture({ shippingOptions: { 'opt-small': { ...STANDARD } } });
+		fixture.shippingPort!.calculate.mockImplementation(async (_id: string, context: any) => ({
+			amount: 7,
+			currency: 'USD',
+			eligible: Number(context.itemCount ?? 0) <= 3,
+			reason: 'SHIPPING_OPTION_ITEM_COUNT_EXCEEDED'
+		}));
+		const target = await openCart(fixture);
+		const source = await openCart(fixture);
+		await fixture.service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+		await fixture.service.addLine(source.id, { variantId: 'v2', title: 'B', quantity: 2, unitPrice: 10 });
+		await fixture.service.setShippingMethod(source.id, { shippingOptionId: 'opt-small' } as any);
+
+		await expect(fixture.service.merge(target.id, source.id)).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_INELIGIBLE' }
+		});
+		const copied = fixture.tables.commerce_cart_line.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+		expect(copied).toHaveLength(1);
+	});
+
+	it('refuses a delivery choice written straight to the child resource without the cart’s rating', async () => {
+		const { shippingMethodService } = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+
+		await expect(
+			shippingMethodService.create({ cartId: 'cart-1', shippingOptionId: 'opt-standard' } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_SHIPPING_OPTION_REQUIRED' } });
+	});
+
+	it('sets every line’s tax category from the catalogue at checkout', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 }, taxCategories: { v1: 'tc-standard' } });
+		const cart = await openCart(fixture);
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-legacy',
+			cartId: cart.id,
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 20,
+			originalUnitPrice: 20,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false,
+			taxCategoryId: 'tc-zero'
+		});
+		registerCheckoutHandler();
+
+		await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(fixture.tables.commerce_cart_line[0].taxCategoryId).toBe('tc-standard');
 	});
 });

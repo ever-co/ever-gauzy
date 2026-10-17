@@ -5,6 +5,7 @@ import { AddOrderPaymentTermForeignKey1791000000236 } from './migrations/1791000
 import { AddOrderLineKindShapeCheck1791000000430 } from './migrations/1791000000430-AddOrderLineKindShapeCheck';
 import { AddOrderVersionedColumns1791000000560 } from './migrations/1791000000560-AddOrderVersionedColumns';
 import { AddOrderCartUniqueIndex1791000000782 } from './migrations/1791000000782-AddOrderCartUniqueIndex';
+import { AddOrderTransactionPaymentFactUniqueIndex1791000000793 } from './migrations/1791000000793-AddOrderTransactionPaymentFactUniqueIndex';
 
 export { CreateOrderTables1791000000220 } from './migrations/1791000000220-CreateOrderTables';
 export { AddPaymentOrderForeignKey1791000000230 } from './migrations/1791000000230-AddPaymentOrderForeignKey';
@@ -13,6 +14,7 @@ export { AddOrderPaymentTermForeignKey1791000000236 } from './migrations/1791000
 export { AddOrderLineKindShapeCheck1791000000430 } from './migrations/1791000000430-AddOrderLineKindShapeCheck';
 export { AddOrderVersionedColumns1791000000560 } from './migrations/1791000000560-AddOrderVersionedColumns';
 export { AddOrderCartUniqueIndex1791000000782 } from './migrations/1791000000782-AddOrderCartUniqueIndex';
+export { AddOrderTransactionPaymentFactUniqueIndex1791000000793 } from './migrations/1791000000793-AddOrderTransactionPaymentFactUniqueIndex';
 
 /**
  * The plugin's migration set, in run order.
@@ -44,5 +46,7 @@ export const ALL_ORDER_MIGRATIONS = [
 	AddOrderPaymentTermForeignKey1791000000236,
 	AddOrderLineKindShapeCheck1791000000430,
 	AddOrderVersionedColumns1791000000560,
-	AddOrderCartUniqueIndex1791000000782
+	AddOrderCartUniqueIndex1791000000782,
+	// One payment-side money fact is one ledger row (Q7-W1b).
+	AddOrderTransactionPaymentFactUniqueIndex1791000000793
 ];

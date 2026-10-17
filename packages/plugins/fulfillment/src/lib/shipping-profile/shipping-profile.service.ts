@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { ShippingProfile } from './shipping-profile.entity';
 import { TypeOrmShippingProfileRepository } from './repository/type-orm-shipping-profile.repository';
 import { MikroOrmShippingProfileRepository } from './repository/mikro-orm-shipping-profile.repository';
@@ -43,7 +43,15 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 			await this.clearExistingDefault();
 		}
 
-		return super.create(entity);
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a profile created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads never found it again (review R2-G37, the R2-23 class). The caller's organization is
+		// stamped when the input states none; an organization the request stated is kept (REST validates it against the
+		// caller).
+		return super.create({
+			...entity,
+			organizationId: entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		});
 	}
 
 	/**

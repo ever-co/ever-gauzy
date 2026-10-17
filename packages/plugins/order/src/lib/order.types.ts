@@ -438,6 +438,61 @@ export interface IOrderApprovalPort {
 export const ORDER_APPROVAL = Symbol('ORDER_APPROVAL');
 
 /**
+ * One money fact about an order, as the payment domain states it (Q7-W1b).
+ *
+ * The same shape as the payment package's `IPaymentOrderMoneyFact`, declared here rather than imported,
+ * because neither package imports the other: the installation's composition module binds the payment
+ * package's `PAYMENT_ORDER_LEDGER` to `OrderPaymentLedgerService` and this package's
+ * `ORDER_CHECKOUT_PAYMENTS` to the payment package's link service, and structural typing does the rest.
+ *
+ * `amount` is the movement's **magnitude**; the ledger applies the sign its type carries (a `REFUND` row is
+ * negative). `referenceType` + `referenceId` name the payment-side row that caused the fact and are the
+ * key the ledger writes it under at most once.
+ */
+export interface IOrderMoneyFact {
+	orderId: ID;
+	type: 'AUTHORIZATION' | 'CAPTURE' | 'REFUND' | 'VOID';
+	amount: string;
+	currency: string;
+	referenceType: string;
+	referenceId: ID;
+	paymentId?: ID;
+	occurredAt?: Date;
+}
+
+/** What the ledger answered for one fact. */
+export interface IOrderMoneyFactResult {
+	/** True when a ledger row was written; false when the fact was already on the ledger. */
+	recorded: boolean;
+	/** The ledger row for the fact. */
+	transactionId?: ID;
+}
+
+/**
+ * The payments a cart carried into checkout, as the payment domain hands them to the order (Q7-W1b).
+ *
+ * A buyer pays before the order exists — the collection is opened for the cart — so the order learns of
+ * its money only when the checkout attaches the cart's collection and payments to it and records what
+ * they already did.
+ */
+export interface IOrderCheckoutPaymentsPort {
+	/**
+	 * Attaches a cart's collection and payments to its order.
+	 *
+	 * @param cartId The cart the order came from.
+	 * @param orderId The order.
+	 * @returns The money facts the order's ledger should carry.
+	 */
+	attachCart(cartId: ID, orderId: ID): Promise<IOrderMoneyFact[]>;
+}
+
+/**
+ * Token the payment hand-over is injected under (Q7-W1b). Optional: an installation without the payment
+ * package places orders that carry no money facts, exactly as before.
+ */
+export const ORDER_CHECKOUT_PAYMENTS = Symbol('ORDER_CHECKOUT_PAYMENTS');
+
+/**
  * What one line's counters say, and how the status follows from them.
  *
  * The basis is the quantity the line is invoiced against: the ordered quantity under a

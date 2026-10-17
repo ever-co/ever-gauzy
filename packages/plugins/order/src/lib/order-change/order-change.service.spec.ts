@@ -1871,3 +1871,63 @@ describe('OrderChangeStalenessScheduler — the schedule and the run', () => {
 		await expect(scheduler.cancelStaleOrderChanges()).resolves.toBeUndefined();
 	});
 });
+
+/**
+ * A change and its actions name kinds the columns carry (R2-G24).
+ *
+ * `requestOrderEdit` declares `changeType` and `actions[].action` as `String`, so a value outside the
+ * enumeration reached the varchar columns — past their length a database error (500), below it a stored row
+ * the apply step cannot interpret. `POST /orders/:id/changes` refuses the same values with `@IsEnum`; the
+ * service now refuses them for every caller, before anything is read or written.
+ */
+describe('OrderChangeService — the kinds a change names (R2-G24)', () => {
+	it('refuses a change type outside the enumeration with 400, and writes nothing', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await expect(
+			fixture.service.create({
+				orderId: 'order-1',
+				changeType: 'REFUND_EVERYTHING_PLEASE',
+				actions: [{ action: OrderChangeActionType.NOTE_ADD, details: { title: 'note' } }]
+			} as never)
+		).rejects.toMatchObject({
+			status: 400,
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { field: 'changeType', reason: 'ORDER_CHANGE_TYPE_INVALID' }
+		});
+		expect(fixture.tables.order_change ?? []).toHaveLength(0);
+	});
+
+	it('refuses an action outside the enumeration with 400, and writes nothing', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await expect(
+			fixture.service.create({
+				orderId: 'order-1',
+				changeType: OrderChangeType.EDIT,
+				actions: [
+					{ action: OrderChangeActionType.NOTE_ADD, details: { title: 'note' } },
+					{ action: 'ITEM_TELEPORT', details: {} }
+				]
+			} as never)
+		).rejects.toMatchObject({
+			status: 400,
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { field: 'action', value: 'ITEM_TELEPORT', reason: 'ORDER_CHANGE_ACTION_INVALID' }
+		});
+		expect(fixture.tables.order_change ?? []).toHaveLength(0);
+		expect(fixture.tables.order_change_action ?? []).toHaveLength(0);
+	});
+
+	it('still creates a change whose kinds are members', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+
+		await expect(
+			fixture.service.create({
+				orderId: 'order-1',
+				changeType: OrderChangeType.EDIT,
+				actions: [{ action: OrderChangeActionType.NOTE_ADD, details: { title: 'note' } }]
+			} as never)
+		).resolves.toMatchObject({ orderId: 'order-1' });
+	});
+});

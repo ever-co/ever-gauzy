@@ -281,7 +281,8 @@ const REFUND_EDIT = { reason: 'damaged', note: 'operator repair', metadata: { no
 const CAPTURE_INPUT = { paymentId: ID, amount: '42.500000', currency: 'USD' };
 
 /** The body `POST /payment-sessions` takes, which the field's input states identically. */
-const SESSION_OPEN = { collectionId: ID, amount: '42.500000' };
+// The provider is named, as the route's DTO requires (`@IsUUID() providerId`) and the field now checks (R2-G11).
+const SESSION_OPEN = { collectionId: ID, providerId: ID, amount: '42.500000' };
 
 /**
  * What a collapsed route's service answers, so the two surfaces can be compared by identity.

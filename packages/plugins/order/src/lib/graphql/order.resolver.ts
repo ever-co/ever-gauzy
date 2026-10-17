@@ -9,6 +9,7 @@ import {
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	RequestContext,
 	TenantPermissionGuard,
 	Versioned,
 	connectionFromOffsetPage,
@@ -236,7 +237,13 @@ export class OrderResolver {
 	@Versioned({ resource: OrderService, required: false })
 	@Mutation(() => Object, { name: 'createOrder' })
 	async createOrder(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Order> {
-		return this.orderService.create(input as any);
+		// R2-G19: `CreateOrderInput` declares no organization and the tenant-aware base stamps the tenant only,
+		// so an order created here had `organizationId = NULL` while `POST /orders` states a validated one. The
+		// request's organization is stamped, as the REST route's body carries it.
+		return this.orderService.create({
+			...input,
+			organizationId: input?.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as any);
 	}
 
 	/**
@@ -360,6 +367,30 @@ export class OrderResolver {
 		@Context() context?: any
 	): Promise<Order> {
 		return this.orderService.cancel(id, reason, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Completes an order whose goods are accounted for and whose money is settled (Q7-W1b).
+	 *
+	 * The mirror of `POST /orders/:id/complete`: the same service method, the same grant, the same retry
+	 * scope and the same versioned resource; refused with `ORDER_NOT_COMPLETABLE` and what still stands in
+	 * the way.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The completed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.complete', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'completeOrder' })
+	async completeOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.complete(id, versionExpectationOf(context?.req));
 	}
 
 	/**

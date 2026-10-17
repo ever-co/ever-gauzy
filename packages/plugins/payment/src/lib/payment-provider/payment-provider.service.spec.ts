@@ -566,4 +566,16 @@ describe('PaymentProviderService — registration and the null read (doc 10 §8.
 		await expect(fixture.service.findProviderOrNull('no-such-provider')).resolves.toBeNull();
 		await expect(fixture.service.findProviderOrFail('no-such-provider')).rejects.toBeInstanceOf(NotFoundException);
 	});
+
+	// R2-G11: TypeORM drops an `undefined` member from a where clause, so a read for "no identifier" answered
+	// the organization's first registration — GraphQL `openPaymentSession` without a `providerId` opened an
+	// attempt at whichever provider that was.
+	it('names no registration for an absent identifier, rather than the first one', async () => {
+		const fixture = providerFixture([providerRow('card-primary')]);
+
+		for (const absent of [undefined, null, '']) {
+			await expect(fixture.service.findProviderOrFail(absent as never)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(fixture.service.findProviderOrNull(absent as never)).resolves.toBeNull();
+		}
+	});
 });

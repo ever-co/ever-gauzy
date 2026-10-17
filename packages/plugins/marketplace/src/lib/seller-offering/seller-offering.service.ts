@@ -128,7 +128,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		return offering;
 	}
 
-	/** Creates an offering in `DRAFT`; publishing it is a separate act. */
+	/** Creates an offering in `DRAFT`; publishing it is a separate act, and a stated other status is refused. */
 	async createOffering(input: Partial<SellerOffering>, scope?: ISellerScope): Promise<SellerOffering> {
 		if (!input.sellerId || !input.variantId) {
 			throw new BadRequestException('An offering needs a seller and a variant.');
@@ -138,6 +138,14 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			assertSellerScope(scope, input.sellerId);
 		}
 
+		// An offering is created in DRAFT and moves through submit, publish, pause, unpause and withdraw — the edit
+		// already refuses `status` for that reason (review R4-19). The create did not: `POST /seller-offerings` and
+		// `createSellerOffering` stored the stated status, so `{status: "ACTIVE"}` listed an offering without the
+		// publication clauses `publish` checks (the seller's own status, the window, the channel and region sets,
+		// the catalogue's publication) and without its approval stamp. A body that restates DRAFT is accepted;
+		// any other status, or an approval stamp, is refused whichever surface carried it (review R2-G45).
+		this.assertCreatedDraft(input);
+
 		const seller = await this.requireSeller(input.sellerId);
 		const window = this.assertWindow(input.availableFrom, input.availableTo);
 		this.assertPrice(input.priceAmount, input.priceCurrency);
@@ -145,7 +153,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		const offering = this.typeOrmSellerOfferingRepository.create({
 			...input,
 			...window,
-			status: input.status ?? OfferingStatus.DRAFT,
+			status: OfferingStatus.DRAFT,
 			// The organization is copied from the seller the service read, never from the request body: a
 			// child row that could name another organization would be the leak the invariant exists for.
 			organizationId: seller.organizationId,
@@ -181,6 +189,34 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			// `(sellerId, variantId)` is unique among live offerings, so a second offer of one variant by
 			// one seller is a conflict rather than a duplicate listing.
 			throw new ConflictException('This seller already offers this variant, or the SKU is already used.');
+		}
+	}
+
+	/**
+	 * Refuses a create that states a lifecycle the offering has not been through.
+	 *
+	 * `status` may be absent, `null` or `DRAFT` — the status every offering starts in; `approvedAt` and
+	 * `approvedByUserId` are `publish`'s stamps and may not be stated at all.
+	 *
+	 * @throws BadRequestException (`SELLER_OFFERING_FIELD_NOT_WRITABLE`) naming every refused member.
+	 */
+	private assertCreatedDraft(input: Partial<SellerOffering>): void {
+		const stated = input as Record<string, unknown>;
+		const refused = OFFERING_LIFECYCLE_MEMBERS.filter((member) =>
+			member === 'status'
+				? stated[member] !== undefined && stated[member] !== null && stated[member] !== OfferingStatus.DRAFT
+				: stated[member] !== undefined
+		);
+
+		if (refused.length > 0) {
+			throw new BadRequestException({
+				message:
+					`SELLER_OFFERING_FIELD_NOT_WRITABLE: ${refused.join(', ')} of a new offering ` +
+					`${refused.length === 1 ? 'moves' : 'move'} through submit, publish, pause, unpause and withdraw; ` +
+					`an offering is created in ${OfferingStatus.DRAFT}.`,
+				code: 'SELLER_OFFERING_FIELD_NOT_WRITABLE',
+				details: { fields: refused }
+			});
 		}
 	}
 

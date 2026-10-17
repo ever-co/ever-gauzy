@@ -32,7 +32,7 @@ import {
 	compareDecimalStrings,
 	subtractDecimalStrings
 } from '@gauzy/core';
-import { OrderLine, OrderLineService, OrderTotalsService } from '@gauzy/plugin-order';
+import { OrderLine, OrderLineService, OrderService, OrderTotalsService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
@@ -282,7 +282,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		private readonly orderTotals: OrderTotalsService,
 		@Optional()
 		@Inject(FULFILLMENT_LABEL_PROVIDER)
-		private readonly labelProvider?: IFulfillmentLabelProviderPort
+		private readonly labelProvider?: IFulfillmentLabelProviderPort,
+		/**
+		 * The order's completion rule (Q7-W1b): an order whose money was settled before its goods shipped
+		 * completes when the last of them is accounted for here. Optional and last, so a suite that builds
+		 * this service by position is unchanged.
+		 */
+		@Optional()
+		private readonly orderService?: OrderService
 	) {
 		super(typeOrmFulfillmentRepository, mikroOrmFulfillmentRepository);
 	}
@@ -368,15 +375,28 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		await this.assertReferences(entity);
 		await this.lineService.assertReferences(lines);
 
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a shipment created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads and the organization-scoped fulfilment subscriptions never found it again (review
+		// R2-G37, the R2-23 class). The caller's organization is stamped when the input states none; an organization the
+		// request stated is kept (REST validates it against the caller).
+		// Its lines are the shipment's own rows, so they carry the shipment's organization.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const fulfillment = await super.create({
 			...entity,
+			organizationId,
 			direction,
 			status: FulfillmentStatusDetail.PENDING,
 			version: 1
 		} as DeepPartial<Fulfillment>);
 
 		for (const line of lines) {
-			await this.lineService.create({ ...line, fulfillmentId: fulfillment.id } as DeepPartial<FulfillmentLine>);
+			await this.lineService.create({
+				...line,
+				organizationId: line.organizationId ?? fulfillment.organizationId ?? undefined,
+				fulfillmentId: fulfillment.id
+			} as DeepPartial<FulfillmentLine>);
 
 			if (direction !== FulfillmentDirection.RETURN) {
 				await this.bumpOrderLineCounters(line.orderLineId as ID, line.quantity as Quantity, 'FULFILLED');
@@ -1391,6 +1411,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
 			try {
 				await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
+				await this.completeOrderIfSettled(orderId);
 
 				return;
 			} catch (error) {
@@ -1401,6 +1422,40 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				this.logger.warn(
 					`The fulfilment state of order ${orderId} could not be re-derived after ${attempt} attempt(s), ` +
 						`and is left to the nightly reconciliation: ${error instanceof Error ? error.message : String(error)}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Gives the order its chance to complete once its goods are accounted for (Q7-W1b).
+	 *
+	 * An order paid before it shipped stayed open: completion was asked only when money moved, and the
+	 * goods were still out then. The order's own rule decides — nothing left to ship, nothing outstanding,
+	 * no change open — and a completion that fails is logged, never the shipment's failure.
+	 *
+	 * @param orderId The order.
+	 */
+	private async completeOrderIfSettled(orderId: ID): Promise<void> {
+		// A completion is a versioned write that a concurrent re-derivation of the same order can overtake;
+		// it reads the order afresh on every attempt, so a lost race is retried like the recompute above
+		// (CodeRabbit on #10890).
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderService?.completeIfSettled(orderId);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`Order ${orderId} could not be completed after its goods were accounted for: ${
+						error instanceof Error ? error.message : String(error)
+					}`
 				);
 
 				return;

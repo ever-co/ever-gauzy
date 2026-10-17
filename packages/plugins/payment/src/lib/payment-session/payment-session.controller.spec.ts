@@ -308,7 +308,9 @@ async function mutate(
 
 	const result = await lastValueFrom(
 		surface.interceptor.intercept(context, {
-			handle: () => from(invoke(surface.resolver, handler, args))
+			// The handler is handed what `@Args('input')` extracts — the input, not the arguments object around
+			// it — so a field that reads its input's members is exercised with them (R2-G11).
+			handle: () => from(invoke(surface.resolver, handler, (args as { input?: unknown })?.input ?? args))
 		})
 	);
 
@@ -461,6 +463,56 @@ describe('PaymentSessionResolver — the mirrored mutations (17-graphql-api-spec
 			result: { paymentSession: { id: SESSION } }
 		});
 		expect(surface.store.claim).not.toHaveBeenCalled();
+	});
+
+	// R2-G11: the SDL declares `providerId` optional and the field handed the input on as it came, so an
+	// input without one opened an attempt at the organization's first provider (`findProviderOrFail(undefined)`).
+	it('refuses an attempt that names no provider, as the route does, before the service is reached', async () => {
+		const surface = resource();
+		const { providerId, ...input } = body();
+
+		expect(providerId).toBe(PROVIDER);
+		await expect(mutate(surface, 'openPaymentSession', { input })).resolves.toMatchObject({
+			result: {
+				paymentSession: null,
+				userErrors: [{ code: 'VALIDATION_FAILED', details: { details: { field: 'providerId' } } }]
+			}
+		});
+		expect(surface.kernel.openSession).not.toHaveBeenCalled();
+	});
+
+	it('refuses an identifier that is not a UUID, which the route refuses with @IsUUID()', async () => {
+		const surface = resource();
+
+		for (const [member, value] of [
+			['providerId', 'stripe'],
+			['collectionId', 'not-a-collection'],
+			['paymentMethodTokenId', '42']
+		] as const) {
+			await expect(
+				mutate(surface, 'openPaymentSession', { input: body({ [member]: value }) })
+			).resolves.toMatchObject({
+				result: { paymentSession: null, userErrors: [{ code: 'VALIDATION_FAILED' }] }
+			});
+		}
+		expect(surface.kernel.openSession).not.toHaveBeenCalled();
+	});
+
+	it('hands the service the route’s members only, and checks a stated provider code', async () => {
+		const surface = resource();
+		const providers = { findProviderOrFail: jest.fn(async (id: string) => ({ id, code: 'card-primary' })) };
+		const resolver = new PaymentSessionResolver(surface.kernel as never, undefined, undefined, providers as never);
+
+		await expect(
+			resolver.openPaymentSession(body({ providerCode: 'another-provider', paymentMethod: 'card' }) as never)
+		).resolves.toMatchObject({ paymentSession: null, userErrors: [{ code: 'PAYMENT_PROVIDER_MISMATCH' }] });
+		expect(surface.kernel.openSession).not.toHaveBeenCalled();
+
+		await expect(
+			resolver.openPaymentSession(body({ providerCode: ' card-primary ', paymentMethod: 'card' }) as never)
+		).resolves.toMatchObject({ paymentSession: { id: SESSION }, userErrors: [] });
+		expect(surface.kernel.openSession).toHaveBeenCalledWith(body());
+		expect(providers.findProviderOrFail).toHaveBeenCalledWith(PROVIDER);
 	});
 
 	it('replays a voided attempt when the key and the input are repeated', async () => {
