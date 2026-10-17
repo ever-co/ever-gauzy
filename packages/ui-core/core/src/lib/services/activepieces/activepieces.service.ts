@@ -110,6 +110,9 @@ export class ActivepiecesService {
 
 	/**
 	 * List MCP servers for a project
+	 *
+	 * The MCP routes resolve the ActivePieces credentials from the current tenant,
+	 * so `integrationId` is kept for callers but not sent.
 	 */
 	listMcpServers(
 		integrationId: ID,
@@ -122,10 +125,9 @@ export class ActivepiecesService {
 		if (params.name) httpParams = httpParams.set('name', params.name);
 		if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
 
-		return this.http.get<IActivepiecesMcpServersListResponsePublic>(
-			`${API_PREFIX}/integration/activepieces/mcp-servers/${integrationId}`,
-			{ params: httpParams }
-		);
+		return this.http.get<IActivepiecesMcpServersListResponsePublic>(`${API_PREFIX}/integration/activepieces/mcp`, {
+			params: httpParams
+		});
 	}
 
 	/**
@@ -133,7 +135,7 @@ export class ActivepiecesService {
 	 */
 	getMcpServer(integrationId: ID, serverId: string): Observable<IActivepiecesMcpServerPublic> {
 		return this.http.get<IActivepiecesMcpServerPublic>(
-			`${API_PREFIX}/integration/activepieces/mcp-server/${integrationId}/${serverId}`
+			`${API_PREFIX}/integration/activepieces/mcp/${encodeURIComponent(serverId)}`
 		);
 	}
 
@@ -158,8 +160,8 @@ export class ActivepiecesService {
 		serverId: string,
 		data: IActivepiecesMcpServerUpdateRequest
 	): Observable<IActivepiecesMcpServerPublic> {
-		return this.http.put<IActivepiecesMcpServerPublic>(
-			`${API_PREFIX}/integration/activepieces/mcp-server/${integrationId}/${serverId}`,
+		return this.http.patch<IActivepiecesMcpServerPublic>(
+			`${API_PREFIX}/integration/activepieces/mcp/${encodeURIComponent(serverId)}`,
 			data
 		);
 	}
