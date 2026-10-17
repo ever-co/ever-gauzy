@@ -118,6 +118,8 @@ describe('Mailgun email provider', () => {
 			expect([message?.spf, message?.dkim, message?.spamScore]).toEqual(['pass', 'pass', 0.3]);
 			// The message's own Authentication-Results is the sender's claim: no DMARC verdict from it.
 			expect(message?.dmarc).toBeUndefined();
+			// The message's own bytes, not the form's.
+			expect(message?.sizeBytes).toBeLessThan(request.rawBody.length);
 			expect(
 				message?.attachments.map((part) => [part.filename, part.size, part.isInline, part.contentId])
 			).toEqual([
@@ -127,9 +129,10 @@ describe('Mailgun email provider', () => {
 		});
 
 		it('parses the raw message of a URL ending in mime', async () => {
-			const [message] = await new MailgunProvider().parse(
-				urlencoded(signed({ recipient: 'support.ever@inbox.example.test', 'body-mime': RAW_MIME }))
-			);
+			const [message] = await new MailgunProvider().parse({
+				...urlencoded(signed({ recipient: 'support.ever@inbox.example.test', 'body-mime': RAW_MIME })),
+				url: `/api/inbox/inbound/mailgun/${account.id}/mime`
+			});
 			expect(message?.messageId).toBe('<raw-1@b.test>');
 			expect(message?.envelopeRecipients).toEqual(['support.ever@inbox.example.test']);
 		});

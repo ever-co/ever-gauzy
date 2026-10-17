@@ -52,6 +52,11 @@ describe('provider form webhooks', () => {
 			{ address: 'ada@acme.test', name: 'Lovelace, Ada' },
 			{ address: 'bob@acme.test' }
 		]);
+		// An escaped quote stays inside the name, with the comma after it.
+		expect(parseAddressList('"Ada \\"Ace, Lovelace" <ada@acme.test>, bob@acme.test')).toEqual([
+			{ address: 'ada@acme.test', name: 'Ada "Ace, Lovelace' },
+			{ address: 'bob@acme.test' }
+		]);
 		expect(parseAddressList(undefined)).toEqual([]);
 	});
 

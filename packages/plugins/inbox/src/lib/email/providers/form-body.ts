@@ -78,21 +78,36 @@ function oneAddress(value: string): IInboundEmailAddress | undefined {
 	const match = /^(.*?)<([^<>]+)>\s*$/.exec(raw);
 	const address = (match ? (match[2] as string) : raw).trim();
 	if (!address.includes('@')) return undefined;
-	const name = match ? (match[1] as string).trim().replace(/^"|"$/g, '').trim() : '';
+	let name = match ? (match[1] as string).trim() : '';
+	// A quoted name loses its quotes and its escapes (`"Ada \"Ace\""` is `Ada "Ace"`).
+	if (/^".*"$/.test(name)) name = name.slice(1, -1).replace(/\\(.)/g, '$1');
+	name = name.trim();
 	return name ? { address, name } : { address };
 }
 
 /**
- * The addresses of an address-list header (`To`, `Cc`, `Reply-To`): split on the commas outside quoted names and
- * angle brackets, so `"Lovelace, Ada" <ada@acme.test>, bob@acme.test` is two addresses.
+ * The addresses of an address-list header (`To`, `Cc`, `Reply-To`): split on the commas outside quoted names (whose
+ * `\"` escapes stay inside them) and angle brackets, so `"Lovelace, Ada" <ada@acme.test>, bob@acme.test` is two
+ * addresses.
  */
 export function parseAddressList(value: unknown): IInboundEmailAddress[] {
 	if (typeof value !== 'string' || !value.trim()) return [];
 	const parts: string[] = [];
 	let current = '';
 	let quoted = false;
+	let escaped = false;
 	let angle = 0;
 	for (const char of value) {
+		if (escaped) {
+			current += char;
+			escaped = false;
+			continue;
+		}
+		if (quoted && char === '\\') {
+			current += char;
+			escaped = true;
+			continue;
+		}
 		if (char === '"') quoted = !quoted;
 		else if (!quoted && char === '<') angle += 1;
 		else if (!quoted && char === '>') angle = Math.max(0, angle - 1);
