@@ -125,6 +125,8 @@ export class EverWorksOutboundQueue {
 						op: waiting.op === 'delete' || trigger.op === 'delete' ? 'delete' : 'upsert',
 						changedFieldsHint: JSON.stringify([...hints]),
 						actorUserId: trigger.actorUserId ?? waiting.actorUserId ?? null,
+						// A new change gets the full retry ladder, as a new row would.
+						attempts: 0,
 						availableAt
 					}
 				);

@@ -394,12 +394,13 @@ describe('Ever Works sync engine on SQLite', () => {
 			const gauzyId = randomUUID();
 			await queue.enqueue({ tenantId: A.tenantId, organizationId: A.organizationId, entityType: EverWorksLinkType.TASK, gauzyId, changedFields: ['title'] });
 			const [waiting] = await repo.find({ where: { gauzyId } });
-			await repo.update({ id: waiting.id }, { status: EverWorksOutboundStatus.DEFERRED, availableAt: new Date(Date.now() + 60_000), lastError: 'waiting' });
+			await repo.update({ id: waiting.id }, { status: EverWorksOutboundStatus.DEFERRED, availableAt: new Date(Date.now() + 60_000), lastError: 'waiting', attempts: 7 });
 			for (let i = 0; i < 3; i++)
 				await queue.enqueue({ tenantId: A.tenantId, organizationId: A.organizationId, entityType: EverWorksLinkType.TASK, gauzyId, changedFields: ['status'] });
 			const rows = await repo.find({ where: { gauzyId } });
 			expect(rows).toHaveLength(1);
-			expect(rows[0]).toMatchObject({ id: waiting.id, status: EverWorksOutboundStatus.PENDING, op: 'upsert' });
+			// A new change gets the full retry ladder (#11028 review), as a new row would.
+			expect(rows[0]).toMatchObject({ id: waiting.id, status: EverWorksOutboundStatus.PENDING, op: 'upsert', attempts: 0 });
 			expect(JSON.parse(rows[0].changedFieldsHint as string).sort()).toEqual(['status', 'title']);
 		});
 
