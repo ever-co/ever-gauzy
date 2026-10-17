@@ -408,3 +408,55 @@ export interface IInboundAddressNamespace {
 	/** Whether a domain (lower-case) is the Inbox's platform mailbox domain or under it: no custom address there. */
 	isReservedDomain?(domain: string): boolean;
 }
+
+// ---------------------------------------------------------------- hand-off to another plugin (plan 04 §5.3 step 7, §6)
+
+/**
+ * A message the inbound pipeline delivered to a mailbox, as another plugin hands it on (the Ever Works agent
+ * bridge, P4c: a mailbox routed to an agent). The stored message's own fields; attachments by their metadata only.
+ */
+export interface IInboxEmailHandoff {
+	tenantId: ID;
+	organizationId: ID | null;
+	mailboxId: ID;
+	mailboxAddress: string;
+	/** The mailbox's free settings (P4c: `everWorksAgentId`). */
+	mailboxSettings: Record<string, unknown> | null;
+	emailId: ID;
+	inboxItemId: ID | null;
+	from: string | null;
+	to: string[];
+	cc: string[];
+	subject: string | null;
+	text: string | null;
+	html: string | null;
+	messageId: string | null;
+	inReplyTo: string | null;
+	references: string[];
+	attachments: Array<{ filename: string; contentType: string; size: number | null }>;
+	receivedAt: Date | string | null;
+}
+
+/** What a hand-off listener is told when a message was delivered (it reads the message itself when it acts). */
+export type IInboxEmailDelivered = Pick<
+	IInboxEmailHandoff,
+	'tenantId' | 'organizationId' | 'mailboxId' | 'mailboxSettings' | 'emailId' | 'inboxItemId'
+>;
+
+/** A plugin told about every message the pipeline delivers (best effort: a listener never fails the delivery). */
+export interface IInboxEmailHandoffListener {
+	/** Unique per listener (a second registration under the same id replaces the first). */
+	readonly id: string;
+	delivered(email: IInboxEmailDelivered): Promise<void>;
+}
+
+/** The Inbox email features' hand-off seam: listeners, and the read of a stored message for its hand-off. */
+export interface IInboxEmailHandoffs {
+	register(listener: IInboxEmailHandoffListener): void;
+	unregister(id: string): void;
+	/** The stored message of a tenant (`null` when it is gone, or not delivered: received, quarantined, failed). */
+	read(tenantId: ID, emailId: ID): Promise<IInboxEmailHandoff | null>;
+}
+
+/** The DI token of {@link IInboxEmailHandoffs}, provided by the Inbox email features when they are loaded. */
+export const INBOX_EMAIL_HANDOFFS = 'INBOX_EMAIL_HANDOFFS';
