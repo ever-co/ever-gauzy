@@ -127,7 +127,14 @@ function processPackageDirectory(fullPath, packageJsonPath, targetNodeModulesDir
 		to: path.join(targetNodeModulesDir, packageName),
 		globOptions: {
 			ignore: ['**/node_modules/**']
-		}
+		},
+		// The packages are already compiled; leave them as they are. Without this, the production build's
+		// Terser pass also minified every copied package and turned `class InventoryPlugin` into an anonymous
+		// class named after its decorator alias (`InventoryPlugin_1`). Plugin dependencies (`dependsOn`) are
+		// matched by class name, so a production build of the API refused to boot ("Plugin InventoryPlugin_1
+		// requires "@gauzy/plugin-catalog", which is not present in the configured plugin list"), and any other
+		// name-based lookup (Nest's logger contexts, `constructor.name` checks) saw mangled names too.
+		info: { minimized: true }
 	});
 
 	return 0;
