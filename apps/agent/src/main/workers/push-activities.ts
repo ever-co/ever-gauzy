@@ -90,8 +90,8 @@ class PushActivities {
 		}
 		(async () => {
 			try {
-				await this.syncTimer(job);
-				if (!job.data?.isStopped) {
+				const synced = await this.syncTimer(job);
+				if (synced !== false && !job.data?.isStopped) {
 					await this.updateTaskStatus();
 				}
 				return cb(null);
@@ -440,6 +440,15 @@ class PushActivities {
 		return true;
 	}
 
+	/**
+	 * The local queue outlives a logout, so a row may belong to a user who has signed out.
+	 * Each pair is [stored owner field, signed-in user field]; a missing value on either side passes,
+	 * so older rows without an owner and the signed-out path keep their previous behaviour.
+	 */
+	private isRecordedByAnotherUser(owner: Array<[string | undefined, string | undefined]>): boolean {
+		return owner.some(([stored, current]) => !!stored && !!current && stored !== current);
+	}
+
 	handleUserAuth(auth: TAuthConfig): boolean {
 		if (!this.checkApplicationState()) {
 			this.mainEvent.emit(MAIN_EVENT, {
@@ -565,6 +574,10 @@ class PushActivities {
 		const authConfig = getAuthConfig();
 		const timerLocal = await this.timerService.findById({ id: job.timerId });
 		if (timerLocal?.id) {
+			if (this.isRecordedByAnotherUser([[timerLocal.employeeId, authConfig?.user?.employee?.id]])) {
+				this.agentLogger.warn(`Timer ${timerLocal.id} was recorded by another user, keeping it local`);
+				return false;
+			}
 			if (job.data?.isStopped && timerLocal.stoppedAt && this.currentSessionTimeLogId === timerLocal.timelogId) {
 				try {
 					await this.apiService.stopTimer({
@@ -725,6 +738,17 @@ class PushActivities {
 		this.agentLogger.info(`In coming job timeSlot sync ${JSON.stringify(job)}`);
 		const timeSlotLocal = await this.kbMouseActivityService.findById({ id: job.activityId });
 		if (timeSlotLocal?.id) {
+			const auth = getAuthConfig();
+			if (
+				this.isRecordedByAnotherUser([
+					[timeSlotLocal.remoteId, auth?.user?.id],
+					[timeSlotLocal.tenantId, auth?.user?.employee?.tenantId],
+					[timeSlotLocal.organizationId, auth?.user?.employee?.organizationId]
+				])
+			) {
+				this.agentLogger.warn(`Activity ${timeSlotLocal.id} was recorded by another user, keeping it local`);
+				return;
+			}
 			let resp: TResponseTimeSlot;
 			if (!timeSlotLocal?.syncedActivity) {
 				const params = this.timeSlotParams(timeSlotLocal);
