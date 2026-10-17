@@ -23,6 +23,7 @@ import { InboxMailboxAccessService } from '../mailboxes/inbox-mailbox-access.ser
 import { IInboundEmailAddress, ParsedInboundEmail } from '../providers/email-provider.types';
 import { getInboxEmailConfig, InboxEmailConfig } from './inbox-email.config';
 import { InboxEmailStorage } from './inbox-email-storage';
+import { InboxEmailHandoffs } from '../handoff/inbox-email-handoffs';
 import { IInboxEmailProcessor, INBOX_HOLD_HEADER } from './inbox-email-processor.types';
 import { deserializeParsedMessage, parseMimeMessage } from './mime';
 import { sanitizeEmailHtml, snippetOf, textFromHtml } from './sanitize';
@@ -144,7 +145,9 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		private readonly dataSource: DataSource,
 		private readonly mailboxes: InboxMailboxAccessService,
 		private readonly storage: InboxEmailStorage,
-		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter
+		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter,
+		/** The hand-off seam (P4c): told about every delivered message; absent in bare test wiring. */
+		@Optional() private readonly handoffs?: InboxEmailHandoffs
 	) {}
 
 	protected config(): InboxEmailConfig {
@@ -280,6 +283,7 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		} as EmailUpdate);
 		// Released, it is in the thread view again.
 		if (email.threadId) await this.recountThread(email.threadId as ID, email.tenantId as ID);
+		await this.handOff({ ...email, status: InboxEmailStatusEnum.PROCESSED } as InboxEmail, mailbox, itemId);
 		return itemId;
 	}
 
@@ -367,7 +371,15 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		}
 		await this.recountThread(threadId, row.tenantId as ID);
 		await this.count(mailbox);
+		await this.handOff(stored, mailbox, itemId);
 		return InboxEmailStatusEnum.PROCESSED;
+	}
+
+	/** Tells the hand-off listeners (P4c) about a delivered message; never fails the delivery. */
+	private async handOff(email: InboxEmail, mailbox: InboxMailbox, itemId: ID | null): Promise<void> {
+		await this.handoffs?.delivered(email, mailbox, itemId).catch((error) => {
+			this.logger.warn(`Inbox email ${email.id}: the hand-off failed (${(error as Error)?.message ?? error}).`);
+		});
 	}
 
 	/** The thread's count once the message has its final status (a quarantined one leaves the view). */

@@ -1,10 +1,11 @@
 import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { INBOUND_ADDRESS_NAMESPACE, INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
+import { INBOUND_ADDRESS_NAMESPACE, INBOX_EMAIL_HANDOFFS, INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
 import { EmailSendModule, RolePermissionModule } from '@gauzy/core';
 import { InboxEmailController } from './emails/inbox-email.controller';
 import { InboxEmailService } from './emails/inbox-email.service';
+import { InboxEmailHandoffs } from './handoff/inbox-email-handoffs';
 import { InboxEmail } from './entities/inbox-email.entity';
 import { InboxEmailAttachment } from './entities/inbox-email-attachment.entity';
 import { InboxEmailThread } from './entities/inbox-email-thread.entity';
@@ -82,7 +83,10 @@ export const INBOX_EMAIL_ENTITIES = [
 		InboxMailboxService,
 		InboxMailboxProvisioner,
 		// One address namespace: the Docs plugin asks it before it takes a capture address.
-		{ provide: INBOUND_ADDRESS_NAMESPACE, useExisting: InboxMailboxService }
+		{ provide: INBOUND_ADDRESS_NAMESPACE, useExisting: InboxMailboxService },
+		// The hand-off seam (P4c): plugins that route a mailbox elsewhere (the Ever Works agent bridge).
+		InboxEmailHandoffs,
+		{ provide: INBOX_EMAIL_HANDOFFS, useExisting: InboxEmailHandoffs }
 	],
 	exports: [
 		EmailProviderRegistry,
@@ -91,7 +95,9 @@ export const INBOX_EMAIL_ENTITIES = [
 		InboxMailboxAccessService,
 		InboundReplayGuard,
 		InboxMailboxService,
-		INBOUND_ADDRESS_NAMESPACE
+		INBOUND_ADDRESS_NAMESPACE,
+		InboxEmailHandoffs,
+		INBOX_EMAIL_HANDOFFS
 	]
 })
 export class InboxEmailModule implements NestModule {

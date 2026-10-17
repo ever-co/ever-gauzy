@@ -23,6 +23,7 @@ export * from './mailboxes/mailbox-address';
 export * from './entities/inbox-organization-setting.entity';
 export * from './inbound/inbox-email.config';
 export * from './inbound/replay-guard.service';
+export * from './handoff/inbox-email-handoffs';
 export * from './inbound/inbound-raw-body.middleware';
 export {
 	ALLOWLISTED_HEADERS,
