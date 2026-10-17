@@ -389,7 +389,9 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				relations: ['gallery', 'variants']
 			});
 
-			if (product.variants.find((variant) => variant.image.id == imageId)) {
+			// A variant may have no image (`image` is nullable): reading `variant.image.id` threw for it, and the
+			// gallery image could not be removed from any product with such a variant
+			if (product.variants?.some((variant) => (variant.imageId ?? variant.image?.id) === imageId)) {
 				throw new HttpException('Image is used in product variants', HttpStatus.BAD_REQUEST);
 			}
 
