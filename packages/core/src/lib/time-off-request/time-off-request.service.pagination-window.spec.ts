@@ -44,7 +44,10 @@ describe('TimeOffRequestService.pagination date window (TypeORM)', () => {
 			getManyAndCount: jest.fn().mockResolvedValue([[], 0])
 		};
 		const service = new TimeOffRequestService(
-			{ metadata: { tableName: 'time_off_request' }, createQueryBuilder: jest.fn().mockReturnValue(query) } as any,
+			{
+				metadata: { tableName: 'time_off_request' },
+				createQueryBuilder: jest.fn().mockReturnValue(query)
+			} as any,
 			{} as any,
 			{} as any
 		);
@@ -68,7 +71,8 @@ describe('TimeOffRequestService.pagination date window (TypeORM)', () => {
 
 	it('keeps a request spanning the whole window, and none outside it', async () => {
 		const { start, end } = await dateWindow();
-		const kept = (request: { start: string; end: string }) => request.start <= start.value && request.end >= end.value;
+		const kept = (request: { start: string; end: string }) =>
+			request.start <= start.value && request.end >= end.value;
 
 		expect(kept({ start: '2026-01-25 00:00:00', end: '2026-03-05 00:00:00' })).toBe(true);
 		expect(kept({ start: '2026-02-10 00:00:00', end: '2026-02-12 00:00:00' })).toBe(true);
