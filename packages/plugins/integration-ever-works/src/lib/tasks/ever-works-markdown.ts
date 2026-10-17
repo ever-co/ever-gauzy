@@ -79,9 +79,10 @@ function renderInline(source: string): string {
 	const slots: string[] = [];
 	const hold = (html: string) => `\u0000${slots.push(html) - 1}\u0000`;
 	let text = source;
-	// Code spans first: nothing inside them is markup. A backslash-escaped backtick never opens one (the
-	// escape is read below), so the escaped backticks of plain text read back as backticks.
-	text = text.replace(/(?<!\\)(`{1,16})(?!`)([\s\S]{0,4000}?[^`])\1(?!`)/g, (_match, _ticks: string, code: string) =>
+	// Code spans first: nothing inside them is markup. A backtick after an odd run of backslashes is escaped
+	// and never opens one (the escape is read below), so the escaped backticks of plain text read back as
+	// backticks; after an even run the backslashes escape each other and the span opens.
+	text = text.replace(/(?<!(?:^|[^\\])\\(?:\\\\)*)(`{1,16})(?!`)([\s\S]{0,4000}?[^`])\1(?!`)/g, (_match, _ticks: string, code: string) =>
 		hold(`<code>${escapeHtml(/^ [\s\S]* $/.test(code) && code.trim() ? code.slice(1, -1) : code)}</code>`)
 	);
 	// A backslash keeps the next punctuation character literal.

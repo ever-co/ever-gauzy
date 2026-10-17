@@ -230,6 +230,16 @@ describe('Gauzy Docs page → Ever Works Markdown', () => {
 		]);
 	});
 
+	it('opens a code span after an escaped backslash (an even run of backslashes), not after an escaped backtick', () => {
+		// Markdown: one \\`two` and \`three\`
+		const nodes = markdownToDocument('one \\\\`two` and \\`three\\`').contentJson.content?.[0]?.content ?? [];
+		expect(nodes.map((node) => [node.text, (node.marks ?? []).map((mark) => mark.type)])).toEqual([
+			['one \\', []],
+			['two', ['code']],
+			[' and `three`', []]
+		]);
+	});
+
 	it('keeps images of a table cell and of a heading (review #10829)', () => {
 		const { contentJson } = markdownToDocument(['# Logo ![a](https://example.com/a.png)', '', '| Diagram |', '| --- |', '| ![b](https://example.com/b.png) |'].join('\n'));
 		const blocks = contentJson.content ?? [];
