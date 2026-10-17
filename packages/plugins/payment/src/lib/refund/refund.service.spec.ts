@@ -522,6 +522,8 @@ function refundFixture(
 		claims?: Row[];
 		withPort?: boolean;
 		port?: { recordRefund: (report: any) => Promise<any> };
+		/** The order's money ledger, as the payment side reports to it (Q7-W1b). */
+		orderLedger?: any;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -569,7 +571,8 @@ function refundFixture(
 		collectionService,
 		refundLineService,
 		eventBus as never,
-		port as never
+		port as never,
+		options.orderLedger
 	);
 
 	return {
@@ -865,6 +868,29 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 			amount: '40',
 			currency: 'USD',
 			tenantId: TENANT
+		});
+	});
+
+	// Q7-W1b. A succeeded refund is a negative row on the order's money ledger; a refund that names only the
+	// payment is the payment's order's (Greptile on #10897).
+	it('tells the order its money went back, through the payment when the refund names no order', async () => {
+		const orderLedger = { mirror: jest.fn(async (_fact: any, _label?: string) => ({ recorded: true })) };
+		const fixture = refundFixture({
+			orderLedger,
+			refunds: [refundRow('by-payment', { amount: '40', orderId: undefined })]
+		});
+
+		await fixture.service.approveRefund('by-payment');
+
+		expect(orderLedger.mirror).toHaveBeenCalledTimes(1);
+		expect(orderLedger.mirror.mock.calls[0][0]).toMatchObject({
+			orderId: ORDER,
+			type: 'REFUND',
+			amount: '40',
+			currency: 'USD',
+			referenceType: 'REFUND',
+			referenceId: 'by-payment',
+			paymentId: PAYMENT
 		});
 	});
 

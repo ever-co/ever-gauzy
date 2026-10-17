@@ -5,8 +5,9 @@ import { DecimalString, ID } from '@gauzy/contracts';
 import { Money, Payment, RequestContext } from '@gauzy/core';
 import { PaymentCapture } from '../payment-capture/payment-capture.entity';
 import { TypeOrmPaymentCaptureRepository } from '../payment-capture/repository/type-orm-payment-capture.repository';
+import { Refund } from '../refund/refund.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
-import { IPaymentCollection, IPaymentOrderMoneyFact } from '../payment.types';
+import { IPaymentCollection, IPaymentOrderMoneyFact, RefundStatus } from '../payment.types';
 
 /**
  * Hands a cart's payments over to the order the cart became, and states what they already did (Q7-W1b).
@@ -30,7 +31,8 @@ export class PaymentOrderLinkService {
 	constructor(
 		private readonly paymentCollectionService: PaymentCollectionService,
 		private readonly typeOrmPaymentCaptureRepository: TypeOrmPaymentCaptureRepository,
-		@InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>
+		@InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>,
+		@InjectRepository(Refund) private readonly refundRepository: Repository<Refund>
 	) {}
 
 	/**
@@ -101,8 +103,8 @@ export class PaymentOrderLinkService {
 	 *
 	 * @param payments The payments.
 	 * @param orderId The order they belong to.
-	 * @returns One authorisation per authorised payment, one capture per capture row, one void per
-	 * cancelled amount.
+	 * @returns One authorisation per authorised payment, one capture per capture row, one refund per
+	 * succeeded refund, one void per cancelled amount.
 	 */
 	private async factsOf(payments: Payment[], orderId: ID): Promise<IPaymentOrderMoneyFact[]> {
 		if (!orderId || payments.length === 0) {
@@ -112,6 +114,15 @@ export class PaymentOrderLinkService {
 		const captures: PaymentCapture[] = await this.typeOrmPaymentCaptureRepository.find({
 			where: { paymentId: In(payments.map((payment) => payment.id)), ...this.scope } as never,
 			order: { capturedAt: 'ASC' } as never
+		});
+		// Money given back before the order existed is part of what the order's ledger has to carry, or a
+		// capture of 100 refunded 40 would read as paid in full (Greptile on #10897).
+		const refunds: Refund[] = await this.refundRepository.find({
+			where: {
+				paymentId: In(payments.map((payment) => payment.id)),
+				status: RefundStatus.SUCCEEDED,
+				...this.scope
+			} as never
 		});
 		const facts: IPaymentOrderMoneyFact[] = [];
 
@@ -141,6 +152,19 @@ export class PaymentOrderLinkService {
 					referenceId: capture.id,
 					paymentId: payment.id,
 					occurredAt: capture.capturedAt
+				});
+			}
+
+			for (const refund of refunds.filter((row) => row.paymentId === payment.id)) {
+				facts.push({
+					orderId,
+					type: 'REFUND',
+					amount: decimalOf(refund.amount, refund.currency ?? currency),
+					currency: refund.currency ?? currency,
+					referenceType: 'REFUND',
+					referenceId: refund.id,
+					paymentId: payment.id,
+					occurredAt: refund.refundedAt ?? refund.updatedAt
 				});
 			}
 
