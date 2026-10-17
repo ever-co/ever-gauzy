@@ -9,9 +9,11 @@ import { FeedbackUpdateHandler } from './candidate-feedbacks.update.handler';
  * `interviewId`, so a REST edit left the interview rating stale.
  */
 describe('FeedbackUpdateHandler', () => {
-	const run = async (entity: Record<string, unknown>, saved: Record<string, unknown> = {}) => {
+	const run = async (entity: Record<string, unknown>, stored: Record<string, unknown> = {}) => {
 		const candidateFeedbackService = {
-			create: jest.fn(async (input) => ({ ...saved, ...input })),
+			// As TypeORM's save: the entity built from the supplied fields only, not the full stored row
+			create: jest.fn(async (input) => ({ ...input })),
+			findOneByIdString: jest.fn().mockResolvedValue({ id: 'feedback-1', ...stored }),
 			getFeedbacksByInterviewId: jest.fn().mockResolvedValue([{ rating: 4 }, { rating: 2 }]),
 			calcRating: jest.fn().mockReturnValue(3)
 		};
@@ -36,8 +38,13 @@ describe('FeedbackUpdateHandler', () => {
 		expect(candidateInterviewService.create).toHaveBeenCalledWith({ id: 'interview-2', rating: 3 });
 	});
 
-	it("falls back to the saved feedback's interview", async () => {
-		const { candidateInterviewService } = await run({ rating: 2 }, { interviewId: 'interview-3' });
+	it("falls back to the stored feedback's interview when the edit names none", async () => {
+		const { candidateFeedbackService, candidateInterviewService } = await run(
+			{ description: 'Strong', rating: 2 },
+			{ interviewId: 'interview-3' }
+		);
+
+		expect(candidateFeedbackService.findOneByIdString).toHaveBeenCalledWith('feedback-1');
 
 		expect(candidateInterviewService.create).toHaveBeenCalledWith({ id: 'interview-3', rating: 3 });
 	});
