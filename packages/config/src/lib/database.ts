@@ -17,6 +17,7 @@ import {
 	getTlsOptions,
 	MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 	parseIntEnv,
+	resolveDatabaseType,
 	TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
 } from './database-helpers';
 import { TypeOrmCompatibleBetterSqliteDriver } from './mikro-orm-sqlite.driver';
@@ -51,9 +52,9 @@ console.log('NODE_ENV: %s', process.env.NODE_ENV);
 const dbORM: MultiORM = getORMType();
 console.log('DB ORM: %s', dbORM);
 
-// `||`, not `??`: an empty DB_TYPE falls back to better-sqlite3 exactly like an unset one, because
-// compose / k8s templates render an unset variable as ''.
-const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
+// An empty DB_TYPE falls back to better-sqlite3 exactly like an unset one, the same rule the
+// isSqlite()/isBetterSqlite3() helpers use (see resolveDatabaseType).
+const dbType = resolveDatabaseType();
 // Fail fast on a typo'd/unsupported DB_TYPE instead of letting the switch below fall through
 // silently and leave every connection config `undefined` (TASK 5 finding).
 assertValidDatabaseType(dbType);
