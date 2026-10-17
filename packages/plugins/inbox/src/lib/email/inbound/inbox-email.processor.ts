@@ -7,6 +7,7 @@ import {
 	ID,
 	IInboxItemWriter,
 	INBOX_ITEM_WRITER,
+	InboxEmailDirectionEnum,
 	InboxEmailSpamVerdictEnum,
 	InboxEmailStatusEnum,
 	InboxItemBodyFormatEnum,
@@ -67,6 +68,25 @@ function senderOf(email: InboxEmail): IInboundEmailAddress | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * How many of a thread's messages its thread view shows: not deleted, neither quarantined nor failed inbound work. The
+ * message being processed counts; the worker recounts once it has its final status.
+ */
+export function countThreadMessages(manager: EntityManager, threadId: ID, tenantId: ID): Promise<number> {
+	return manager
+		.getRepository(InboxEmail)
+		.createQueryBuilder('email')
+		.where('email.threadId = :threadId', { threadId })
+		.andWhere('email.tenantId = :tenantId', { tenantId })
+		.andWhere('email.deletedAt IS NULL')
+		.andWhere('email.status != :quarantined', { quarantined: InboxEmailStatusEnum.QUARANTINED })
+		.andWhere('NOT (email.status = :failed AND email.direction = :inbound)', {
+			failed: InboxEmailStatusEnum.FAILED,
+			inbound: InboxEmailDirectionEnum.IN
+		})
+		.getCount();
 }
 
 /** The reason the webhook held the message in the quarantine (its `x-gauzy-inbox-hold` header), if it did. */
@@ -251,6 +271,8 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 			spamVerdict: InboxEmailSpamVerdictEnum.SUSPECT,
 			...(itemId ? { inboxItemId: itemId } : {})
 		} as EmailUpdate);
+		// Released, it is in the thread view again.
+		if (email.threadId) await this.recountThread(email.threadId as ID, email.tenantId as ID);
 		return itemId;
 	}
 
@@ -317,6 +339,7 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		if (!owned) return null;
 
 		if (quarantined) {
+			await this.recountThread(threadId, row.tenantId as ID);
 			await this.count(mailbox);
 			return InboxEmailStatusEnum.QUARANTINED;
 		}
@@ -335,8 +358,15 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		) {
 			return null;
 		}
+		await this.recountThread(threadId, row.tenantId as ID);
 		await this.count(mailbox);
 		return InboxEmailStatusEnum.PROCESSED;
+	}
+
+	/** The thread's count once the message has its final status (a quarantined one leaves the view). */
+	private async recountThread(threadId: ID, tenantId: ID): Promise<void> {
+		const messageCount = await countThreadMessages(this.dataSource.manager, threadId, tenantId);
+		await this.dataSource.getRepository(InboxEmailThread).update({ id: threadId }, { messageCount });
 	}
 
 	/**
@@ -505,7 +535,7 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		}
 
 		// The counters from the thread's messages (never an increment: a repeat changes nothing).
-		const messageCount = await emails.count({ where: { threadId } });
+		const messageCount = await countThreadMessages(manager, threadId, row.tenantId as ID);
 		const known = new Set([...parseList<string>(thread.participants), ...participants]);
 		const last = thread.lastMessageAt ? new Date(thread.lastMessageAt) : null;
 		await threads.update({ id: threadId }, {

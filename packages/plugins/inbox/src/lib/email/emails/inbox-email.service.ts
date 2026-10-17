@@ -29,7 +29,7 @@ import { InboxEmailAttachment } from '../entities/inbox-email-attachment.entity'
 import { InboxEmailThread } from '../entities/inbox-email-thread.entity';
 import { InboxMailbox } from '../entities/inbox-mailbox.entity';
 import { InboxEmailStorage } from '../inbound/inbox-email-storage';
-import { InboxEmailProcessor } from '../inbound/inbox-email.processor';
+import { countThreadMessages, InboxEmailProcessor } from '../inbound/inbox-email.processor';
 import { messageIdOf, referencesOf } from '../inbound/mime';
 import { normalizeAddress } from '../mailboxes/address';
 import { InboxMailboxAccessService } from '../mailboxes/inbox-mailbox-access.service';
@@ -362,7 +362,7 @@ export class InboxEmailService {
 				emailId: row.id
 			});
 		}
-		await this.touchThread(row.threadId ?? null);
+		await this.touchThread(row.threadId ?? null, mailbox.tenantId as ID);
 		const sentRow = (await repository.findOne({ where: { id: row.id as ID } })) as InboxEmail;
 		return {
 			...this.toEmail(sentRow),
@@ -372,10 +372,13 @@ export class InboxEmailService {
 		};
 	}
 
-	/** A thread's count and last activity after a reply or forward joined it (recounted, never incremented). */
-	private async touchThread(threadId: ID | null): Promise<void> {
+	/**
+	 * A thread's count and last activity after a reply or forward joined it (recounted, never incremented; the messages
+	 * the thread view shows).
+	 */
+	private async touchThread(threadId: ID | null, tenantId: ID): Promise<void> {
 		if (!threadId) return;
-		const messageCount = await this.dataSource.getRepository(InboxEmail).count({ where: { threadId } });
+		const messageCount = await countThreadMessages(this.dataSource.manager, threadId, tenantId);
 		await this.dataSource
 			.getRepository(InboxEmailThread)
 			.update({ id: threadId }, { messageCount, lastMessageAt: new Date() });
