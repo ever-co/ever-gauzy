@@ -418,6 +418,98 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	}
 
 	/**
+	 * Appends a line to a shipment that has not left yet.
+	 *
+	 * The operation behind `POST /fulfillments/:id/lines` and `addFulfillmentLine` (review R2-G40): a shipment's
+	 * lines used to be stated only when it was created, and the standalone `POST /fulfillment-lines` writes a
+	 * row without the shipment's rules — it moves no order-line counter and reads neither the shipment's status
+	 * nor what the order line still has to ship. Appending applies exactly what `create` applies to each of its
+	 * lines, in the same order:
+	 *
+	 * - the shipment is still `PENDING` (a shipped, delivered or cancelled one is refused with
+	 *   `FULFILLMENT_NOT_PENDING`), and the order line is one of the shipment's own order (`FULFILLMENT_LINE_ORDER_MISMATCH`);
+	 * - the quantity is positive and, outbound, within what the order line still has to ship
+	 *   (`FULFILLMENT_QUANTITY_EXCEEDED`); the references are the caller's tenant's; the order line is not already
+	 *   in this shipment (`FULFILLMENT_LINE_DUPLICATE`, the line service's own rule);
+	 * - the shipment's version moves while it is still `PENDING`, in one conditional statement, so a ship or a
+	 *   cancel that won the race is answered with the version conflict rather than gaining a line after it left;
+	 *   a caller that read the shipment may state the version it read;
+	 * - outbound, the order line's `fulfilledQuantity` moves by the line and the order's derived fulfilment state
+	 *   is re-derived; a return-direction shipment moves no counter, as on `create`.
+	 *
+	 * The line carries the shipment's organization.
+	 *
+	 * @param fulfillmentId The shipment.
+	 * @param line The line to append.
+	 * @param expectation The version the caller read the shipment at, when it stated one.
+	 * @returns The shipment, with its lines.
+	 */
+	public async addLine(
+		fulfillmentId: ID,
+		line: DeepPartial<FulfillmentLine>,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		const fulfillment = await this.findOneByIdString(fulfillmentId);
+
+		if (fulfillment.status !== FulfillmentStatusDetail.PENDING) {
+			throw new ConflictException({
+				message: `FULFILLMENT_NOT_PENDING: fulfillment '${fulfillmentId}' is ${fulfillment.status}; a line is appended only to a shipment that has not left.`,
+				code: 'FULFILLMENT_NOT_PENDING',
+				details: { fulfillmentId, status: fulfillment.status }
+			});
+		}
+
+		const orderLineId = line?.orderLineId as ID;
+
+		if (!orderLineId) {
+			throw new BadRequestException('FULFILLMENT_LINE_ORDER_LINE_REQUIRED: a line names the order line it ships.');
+		}
+
+		const direction = fulfillment.direction ?? FulfillmentDirection.OUTBOUND;
+
+		await this.assertQuantityAvailable(orderLineId, line.quantity as Quantity, direction);
+
+		const orderLine: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
+
+		if (!orderLine || orderLine.orderId !== fulfillment.orderId) {
+			throw new BadRequestException({
+				message: `FULFILLMENT_LINE_ORDER_MISMATCH: order line '${orderLineId}' is not a line of order '${fulfillment.orderId}', which fulfillment '${fulfillmentId}' ships.`,
+				code: 'FULFILLMENT_LINE_ORDER_MISMATCH',
+				details: { fulfillmentId, orderLineId, orderId: fulfillment.orderId }
+			});
+		}
+
+		await this.lineService.assertReferences([line]);
+
+		// The shipment is claimed while it is still PENDING: the version moves in one statement conditioned on the
+		// status, so a ship or a cancel that committed between the read above and this write is answered with the
+		// version conflict instead of the line joining a shipment that already left.
+		await commitVersionedUpdate<Fulfillment>(this, {
+			id: fulfillment.id,
+			expectation,
+			patch: {},
+			where: {
+				status: FulfillmentStatusDetail.PENDING,
+				...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+				...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+			}
+		});
+
+		await this.lineService.create({
+			...line,
+			organizationId: fulfillment.organizationId ?? line.organizationId ?? undefined,
+			fulfillmentId: fulfillment.id
+		} as DeepPartial<FulfillmentLine>);
+
+		if (direction !== FulfillmentDirection.RETURN) {
+			await this.bumpOrderLineCounters(orderLineId, line.quantity as Quantity, 'FULFILLED');
+			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
+		}
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
 	 * Raises the leg the goods come back on.
 	 *
 	 * A return is a fulfilment whose direction is `RETURN`, and it is raised here rather than by the
