@@ -42,7 +42,9 @@ export class HelpCenterUpdateHandler implements ICommandHandler<HelpCenterUpdate
 			}
 		}
 
-		return await this.helpCenterService.updateBulk(updateInput);
+		// Read the nodes again: saving the snapshot taken before the updates wrote every old index back,
+		// so a reorder never stuck
+		return await this.helpCenterService.getAllNodes();
 	}
 
 	diff = function (oldChildren, newChildren) {
