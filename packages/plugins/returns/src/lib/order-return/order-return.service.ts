@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	HttpException,
 	HttpStatus,
 	Inject,
 	Injectable,
@@ -7,7 +8,7 @@ import {
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, SaveOptions } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, IsNull, SaveOptions } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
 	IOrderLineReceiptMove,
@@ -909,30 +910,92 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			throw new BadRequestException('A refund must be for a positive amount.');
 		}
 
-		const result = await this.refundGateway.createRefund({
-			orderId: orderReturn.orderId,
-			returnId: orderReturn.id,
-			amount: refundable.toStorageString(),
-			currency: orderReturn.currency,
-			reasonId,
-			note
-		});
+		// A caller who may not settle a refund is refused before the return is written at all.
+		await this.refundGateway.assertMayRefund?.();
 
-		const runningTotal = Money.of(orderReturn.refundAmount ?? '0', orderReturn.currency)
-			.add(Money.of(result.amount, result.currency))
+		/**
+		 * **Claim, then pay** (review R3-09r1). The return's header used to be written after the money had gone
+		 * back: a version that moved meanwhile (a second refund of the same return, a close) answered `409` for a
+		 * refund that had happened, and the running total `refundAmount` missed it — the caller retried and paid
+		 * again. The header is now written first, conditionally on the version the caller stated *and* on the
+		 * running total this call read, so of two overlapping refunds one wins the write and the other is refused
+		 * before any money moves; the winner then asks the payment capability for the refund.
+		 */
+		const previous = orderReturn.refundAmount ?? null;
+		const runningTotal = Money.of(previous ?? '0', orderReturn.currency)
+			.add(refundable)
 			.round()
 			.toStorageString();
-
-		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, {
-			name: RETURN_EVENTS.REFUNDED,
-			data: { refundedAmount: result.amount, refundId: result.refundId ?? null }
+		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, undefined, {
+			precondition: { refundAmount: previous === null ? IsNull() : previous }
 		});
+
+		let result: IRefundResult;
+
+		try {
+			result = await this.refundGateway.createRefund({
+				orderId: orderReturn.orderId,
+				returnId: orderReturn.id,
+				amount: refundable.toStorageString(),
+				currency: orderReturn.currency,
+				reasonId,
+				note
+			});
+		} catch (error) {
+			if (isRefusal(error)) {
+				// Refused before any money moved (4xx): the running total is given back, conditionally on the
+				// version this call wrote, so a write that landed in between is not overwritten.
+				await this.releaseRefundClaim(orderReturn, previous, version);
+			} else {
+				// Anything else may have come after the refund committed; the claimed total stays, so a retry is
+				// measured against it rather than paying the return back twice.
+				this.logger.warn(
+					`RETURN_REFUND_OUTCOME_UNKNOWN: return ${orderReturn.id} keeps refundAmount ${runningTotal} because its ` +
+						`refund failed with a non-refusal (${describe(error)}); check the return's refunds before correcting it.`
+				);
+			}
+
+			throw error;
+		}
+
+		await this.announce(
+			RETURN_EVENTS.REFUNDED,
+			{ ...orderReturn, refundAmount: runningTotal } as OrderReturn,
+			version,
+			{ refundedAmount: result.amount, refundId: result.refundId ?? null }
+		);
 
 		// The refund is on the order's ledger now, and the order's totals, its payment status and its
 		// summary row are all derived from that ledger — so they are refreshed before this returns.
 		await this.refreshOrderTotals(orderReturn.orderId);
 
 		return { refund: result, version };
+	}
+
+	/**
+	 * Gives back the running total a refund claimed, after the payment capability refused the refund.
+	 *
+	 * @param orderReturn The return as the refund read it.
+	 * @param previous The running total it held before the claim.
+	 * @param claimedVersion The version the claim wrote.
+	 */
+	private async releaseRefundClaim(
+		orderReturn: OrderReturn,
+		previous: unknown,
+		claimedVersion: number
+	): Promise<void> {
+		try {
+			await this.commitHeader(
+				{ ...orderReturn, version: claimedVersion } as OrderReturn,
+				{ refundAmount: previous },
+				exactly(claimedVersion)
+			);
+		} catch (error) {
+			this.logger.warn(
+				`RETURN_REFUND_RELEASE_FAILED: return ${orderReturn.id} could not give back the refund total it claimed ` +
+					`(${describe(error)}); its refundAmount overstates what was refunded and needs a correction.`
+			);
+		}
 	}
 
 	/**
@@ -1705,4 +1768,21 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
  */
 function describe(error: unknown): string {
 	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
+}
+
+/**
+ * Whether an error is a refusal answered before anything was written — an HTTP 4xx — rather than a fault whose
+ * effect is unknown (see `settleRefund`).
+ *
+ * @param error What the payment capability threw.
+ * @returns True for a 4xx `HttpException`.
+ */
+function isRefusal(error: unknown): boolean {
+	if (!(error instanceof HttpException)) {
+		return false;
+	}
+
+	const status = error.getStatus();
+
+	return status >= 400 && status < 500;
 }
