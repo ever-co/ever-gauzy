@@ -118,7 +118,8 @@ Management also needs an active membership of the organization; the tenant is al
 (`provider.inbound.verify`; there is no unsigned mode), with a per-client-address rate limit
 (`GAUZY_INBOX_INBOUND_REQUESTS_PER_MINUTE`, default 600). The platform route `/api/inbox/inbound/generic/platform` is
 proven with `GAUZY_INBOX_PLATFORM_SECRET` (at least 24 characters; unset, the route answers 404); the Cloudflare Email
-Worker of the platform domain (`GAUZY_INBOX_DOMAIN`) posts there. JSON and URL-encoded bodies arrive parsed with their
+Worker of the platform domain (`GAUZY_INBOX_DOMAIN`; script and setup in `.deploy/cloudflare/inbox-email-worker/`) posts
+there. JSON and URL-encoded bodies arrive parsed with their
 raw bytes; a `multipart/form-data` body (a form with files: Mailgun, SendGrid) or a `text/plain` one (SNS) is kept raw
 by the route itself (`InboundRawBodyMiddleware`, up to twice `GAUZY_INBOX_MAX_MESSAGE_BYTES` plus 1 MB; 413 beyond),
 and providers read forms with `readInboundForm`.
@@ -155,6 +156,13 @@ shared participant within 30 days), decides the spam verdict (authentication fai
 members of a shared mailbox (with none: a team's members, or the organization's users whose role grants
 `INBOX_MAILBOX_MANAGE`), counting only users who are still active members of the mailbox's organization. A quarantined
 message gets no item until a manager releases it. A failure is retried three times, then left `FAILED` with its error.
+
+**Hand-off (P4c).** Once a message is delivered (processed, or released from the quarantine), the listeners registered on
+`INBOX_EMAIL_HANDOFFS` (`InboxEmailHandoffs`) are told: the ids and the mailbox's free `settings`. A listener never fails
+or delays the delivery (its error is logged) and reads the stored message itself when it acts (`read(tenantId,
+emailId)`: a delivered inbound message only, with its addresses, threading headers and attachment metadata). The Ever
+Works integration uses it to hand a mailbox's mail to an Ever Works agent (`settings.everWorksAgentId`, see the
+integration's README); the Inbox depends on no listener.
 
 ## Messages (`/api/inbox/emails`, `INBOX_VIEW` plus access to the mailbox)
 

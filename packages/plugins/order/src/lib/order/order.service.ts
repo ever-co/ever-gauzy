@@ -8,7 +8,7 @@ import {
 	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import {
 	AddressType,
 	CommerceCartStatus,
@@ -847,6 +847,27 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		await this.place(orderId, placedWith);
 
 		return this.confirm(orderId, 'SYSTEM');
+	}
+
+	/**
+	 * The live placed order a cart became, if there is one (R3-10).
+	 *
+	 * "Placed" is every status but `DRAFT` and `CANCELED`: the orders the unique index `UQ_order_cart` allows
+	 * one of per cart. A draft left behind by a checkout that failed before placing it, and a cancelled
+	 * order, are not the cart's order. The statuses are filtered here rather than in the criteria, so the
+	 * read is the same plain equality on both ORMs.
+	 *
+	 * @param cartId The cart.
+	 * @returns The placed order, or null when the cart has none.
+	 */
+	public async findPlacedForCart(cartId: ID): Promise<Order | null> {
+		const page = (await this.findAll({ where: { cartId } as FindOptionsWhere<Order> })) as IPagination<Order>;
+
+		return (
+			(page.items ?? []).find(
+				(order) => order.status !== OrderStatus.DRAFT && order.status !== OrderStatus.CANCELED
+			) ?? null
+		);
 	}
 
 	/**

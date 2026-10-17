@@ -75,11 +75,24 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 		const prepared = this.prepare({
 			...entity,
 			id,
+			// The update is partial (its DTO is the `PartialType` of the list), so a name or a code the
+			// caller does not restate is the stored one. `prepare` requires both, and a `PUT` that only
+			// moved a priority used to be refused with PRICE_LIST_NAME_REQUIRED (R2-30).
+			name: entity.name !== undefined ? entity.name : existing.name,
+			code: entity.code !== undefined ? entity.code : existing.code,
 			// The window is validated as a whole, so a change to one bound is checked against the stored
-			// value of the other rather than against nothing.
-			startsAt: (entity.startsAt as Date) ?? existing.startsAt,
-			endsAt: (entity.endsAt as Date) ?? existing.endsAt
+			// value of the other rather than against nothing. A bound the caller states — `null`
+			// included, which opens it — is the one written: reading `null` as "keep" made a bound
+			// impossible to clear and validated a value the caller was replacing.
+			startsAt: entity.startsAt !== undefined ? (entity.startsAt as Date) : existing.startsAt,
+			endsAt: entity.endsAt !== undefined ? (entity.endsAt as Date) : existing.endsAt
 		});
+
+		// Publishing through an update is the same decision as `activate`, and is refused for the same
+		// reason when the window it would publish has already closed.
+		if (entity.status === PriceListStatus.ACTIVE && existing.status !== PriceListStatus.ACTIVE) {
+			this.assertWindowIsOpen(existing.code, prepared.endsAt as Date | null | undefined);
+		}
 
 		return await super.update(id, prepared as unknown as QueryDeepPartialEntity<PriceList>);
 	}
@@ -95,14 +108,24 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 	public async activate(id: ID): Promise<PriceList> {
 		const list = await this.findOneByIdString(id);
 
-		if (list.endsAt && new Date(list.endsAt).getTime() <= Date.now()) {
+		this.assertWindowIsOpen(list.code, list.endsAt);
+
+		return await this.setStatus(list, PriceListStatus.ACTIVE);
+	}
+
+	/**
+	 * @param code The list's code, named in the error.
+	 * @param endsAt The end of the window the list would be published with.
+	 * @throws BadRequestException when that window has already closed, because publishing the list would
+	 * publish prices that can never be charged.
+	 */
+	private assertWindowIsOpen(code: string, endsAt: Date | null | undefined): void {
+		if (endsAt && new Date(endsAt).getTime() <= Date.now()) {
 			throw new BadRequestException(
-				`PRICE_LIST_WINDOW_CLOSED: the list "${list.code}" ended at ${new Date(list.endsAt).toISOString()} ` +
+				`PRICE_LIST_WINDOW_CLOSED: the list "${code}" ended at ${new Date(endsAt).toISOString()} ` +
 					'and would resolve to nothing if it were activated.'
 			);
 		}
-
-		return await this.setStatus(list, PriceListStatus.ACTIVE);
 	}
 
 	/**

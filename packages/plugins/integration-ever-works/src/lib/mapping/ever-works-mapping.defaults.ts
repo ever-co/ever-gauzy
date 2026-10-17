@@ -16,7 +16,9 @@ export const EVER_WORKS_DOMAINS = {
 	ideas: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	tasks: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	inbox: ['ew_to_gauzy', 'off'],
-	docs: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off']
+	docs: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
+	/** The read-only mirror of Ever Works agent mail into the Gauzy Inbox (plan 04 §6, optional). */
+	agentEmail: ['off', 'ew_to_gauzy']
 } as const satisfies Record<string, ReadonlyArray<EverWorksDirection>>;
 
 export type EverWorksDomain = keyof typeof EVER_WORKS_DOMAINS;
@@ -32,7 +34,8 @@ export const DEFAULT_EVER_WORKS_DIRECTIONS: Record<EverWorksDomain, EverWorksDir
 	ideas: 'both',
 	tasks: 'both',
 	inbox: 'ew_to_gauzy',
-	docs: 'both'
+	docs: 'both',
+	agentEmail: 'off'
 };
 
 /**

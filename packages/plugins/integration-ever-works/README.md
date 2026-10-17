@@ -300,6 +300,29 @@ and answered `202`.
   there shows the answer Ever Works holds. Read / unread and archive follow
   to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
   events are skipped.
+- **Mailboxes routed to an agent (G-P4-6, where the Inbox email features
+  run).** A Gauzy mailbox whose settings name an Ever Works agent
+  (`PATCH /api/inbox/mailboxes/:id` with
+  `settings: { everWorksAgentId: <the agent's Ever Works id, or its agent
+  employee's Gauzy id> }`) hands every message it receives to that agent:
+  `POST /email/inbound`, where Ever Works stores it on the agent's inbound
+  address and dispatches it through the agent's inbound assignment; the task
+  that spawns syncs back like any task. The hand-off is durable (an outbound
+  change, retried with back-off, one `Idempotency-Key` per message, linked
+  `AGENT_EMAIL`). It needs the opt-in `email:write` scope on the key and an
+  inbound assignment on the agent (Ever Works answers `422` without one: a
+  terminal refusal in the sync log and the dead-letter notice); a mailbox
+  naming no agent paired here, or a message without a sender, is logged and
+  skipped.
+- **Agent mail in the Inbox (G-P4-6, optional).** With the `agentEmail`
+  direction on (`ew_to_gauzy`; **off** by default, on the Entities and
+  directions tab), Ever Works agent mail (`email.message.*`, served to a key
+  with `email:read`) appears as read-only Gauzy Inbox `EMAIL` items
+  (`source = EVER_WORKS`) of the Gauzy user paired with the agent's owner,
+  under "Ever Works — <agent>", linked to the agent employee and the task. A
+  reply stays in Ever Works. Mail Gauzy handed to the agent itself is not
+  copied back; an owner not paired yet waits like an inbox item; a body left
+  out of a large event is read from `GET /email/messages/:id`.
 - **Docs ↔ the Ever Works Knowledge Base (G-P3-4).** Per mapped
   organization, synced documents live under a root folder ("Ever Works", or
   the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first
