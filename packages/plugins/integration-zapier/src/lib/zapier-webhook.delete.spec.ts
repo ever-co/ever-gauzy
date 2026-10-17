@@ -10,7 +10,7 @@ jest.mock('@gauzy/core', () => {
 	});
 });
 
-import { ForbiddenException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ZapierWebhookController } from './zapier-webhook.controller';
 import { ZapierWebhookService } from './zapier-webhook.service';
 
@@ -22,13 +22,14 @@ describe('Zapier webhook deletion keeps its client errors', () => {
 	const subscriptionOf = (tenantId: string | null) =>
 		tenantId ? { id: 'subscription-1', tenantId } : null;
 
-	const build = (subscription: unknown, integration: unknown = { tenantId: 'tenant-1' }) => {
+	// `resolveIntegration` stands for the token check: it answers the integration, or rejects the token
+	const build = (subscription: unknown, resolveIntegration: () => Promise<unknown> = async () => ({ tenantId: 'tenant-1' })) => {
 		const repository = {
 			findOne: jest.fn().mockResolvedValue(subscription),
 			delete: jest.fn().mockResolvedValue({ affected: 1 })
 		};
 		const service = new ZapierWebhookService(repository as any, {} as any);
-		const zapierService = { resolveIntegrationFromBearerToken: jest.fn().mockResolvedValue(integration) };
+		const zapierService = { resolveIntegrationFromBearerToken: jest.fn(resolveIntegration) };
 		const controller = new ZapierWebhookController(service, zapierService as any);
 		jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
 		jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
@@ -38,9 +39,12 @@ describe('Zapier webhook deletion keeps its client errors', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('answers 404 for an unknown subscription', async () => {
-		const { service } = build(subscriptionOf(null));
+	it('answers 404 for an unknown subscription, through the controller too', async () => {
+		const { service, controller } = build(subscriptionOf(null));
 		await expect(service.deleteSubscription('subscription-1', 'tenant-1')).rejects.toBeInstanceOf(NotFoundException);
+		await expect(controller.deleteWebhook('subscription-1', 'Bearer token')).rejects.toBeInstanceOf(
+			NotFoundException
+		);
 	});
 
 	it("answers 403 for another tenant's subscription, through the controller too", async () => {
@@ -51,11 +55,14 @@ describe('Zapier webhook deletion keeps its client errors', () => {
 		expect(repository.delete).not.toHaveBeenCalled();
 	});
 
-	it('answers 403 for a token matching no integration', async () => {
-		const { controller } = build(subscriptionOf('tenant-1'), null);
+	it('answers 401 for an invalid or expired token, as the token check rejects it', async () => {
+		const { controller, repository } = build(subscriptionOf('tenant-1'), async () => {
+			throw new UnauthorizedException('Invalid token');
+		});
 		await expect(controller.deleteWebhook('subscription-1', 'Bearer token')).rejects.toBeInstanceOf(
-			ForbiddenException
+			UnauthorizedException
 		);
+		expect(repository.delete).not.toHaveBeenCalled();
 	});
 
 	it('still answers 500 for an unexpected failure', async () => {
