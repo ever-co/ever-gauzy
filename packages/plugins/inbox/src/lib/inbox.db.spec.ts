@@ -499,6 +499,47 @@ describe('Inbox on SQLite', () => {
 			expect(answered.response?.routed).toBe('resumed the agent run');
 		});
 
+		it('when another answer won at the source, that answer is recorded', async () => {
+			const onReply = jest.fn(async () => ({
+				routed: 'already-decided',
+				response: { text: 'Decided in the app', optionId: 'no', answeredAt: '2026-10-16T09:05:00.000Z' }
+			}));
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });
+			const { item } = await question({ source: InboxItemSourceEnum.EVER_WORKS });
+
+			const answered = await service.reply(item.id as string, { optionId: 'yes' });
+
+			expect(answered.status).toBe(InboxItemStatusEnum.ANSWERED);
+			expect(answered.response).toMatchObject({
+				optionId: 'no',
+				text: 'Decided in the app',
+				answeredAt: '2026-10-16T09:05:00.000Z',
+				routed: 'already-decided'
+			});
+		});
+
+		it("a malformed date in the source's answer keeps the claim, and the claim's time", async () => {
+			const onReply = jest.fn(async () => ({
+				routed: 'already-decided',
+				response: { text: 'Decided there', optionId: 'no', answeredAt: 'not-a-date' }
+			}));
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });
+			const { item } = await question({ source: InboxItemSourceEnum.EVER_WORKS });
+
+			const answered = await service.reply(item.id as string, { optionId: 'yes' });
+
+			expect(answered.status).toBe(InboxItemStatusEnum.ANSWERED);
+			expect(answered.response).toMatchObject({
+				optionId: 'no',
+				text: 'Decided there',
+				routed: 'already-decided'
+			});
+			expect(Number.isNaN(Date.parse(String(answered.response?.answeredAt)))).toBe(false);
+			await expect(service.reply(item.id as string, { optionId: 'yes' })).rejects.toBeInstanceOf(
+				ConflictException
+			);
+		});
+
 		it('a reply the source took stays answered even when recording where it went fails', async () => {
 			const onReply = jest.fn(async () => ({ routed: 'resumed the agent run' }));
 			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply });
@@ -647,6 +688,27 @@ describe('Inbox on SQLite', () => {
 			await expect(service.counts()).resolves.toMatchObject({ unread: 0 });
 			as(BOB);
 			await expect(service.counts()).resolves.toMatchObject({ unread: 1 });
+		});
+	});
+
+	describe('mark-all-read and the sources', () => {
+		it('tells the source of each item read in bulk (in the background), as for one item', async () => {
+			const onStateChange = jest.fn(async () => undefined);
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply: jest.fn(), onStateChange });
+			const sourced = await question({ source: InboxItemSourceEnum.EVER_WORKS, title: 'From Ever Works' });
+			await question({ title: 'Local' });
+
+			await expect(service.markAllRead()).resolves.toEqual({ updated: 2 });
+			for (let wait = 0; wait < 50 && onStateChange.mock.calls.length < 1; wait++) {
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+
+			expect(onStateChange).toHaveBeenCalledTimes(1);
+			expect(onStateChange).toHaveBeenCalledWith(
+				expect.objectContaining({ id: sourced.item.id }),
+				expect.objectContaining({ userId: ADA, isRead: true }),
+				{ isRead: true }
+			);
 		});
 	});
 
