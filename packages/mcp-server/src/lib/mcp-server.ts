@@ -180,13 +180,15 @@ export class ExtendedMcpServer extends McpServer {
 				throw new Error(`Tool '${name}' not found`);
 			}
 
+			// Recent SDK versions store the function as `handler`, older ones as `callback`
 			const tool = serverInternal._registeredTools[name];
-			if (!tool || typeof tool.callback !== 'function') {
+			const handler = typeof tool?.handler === 'function' ? tool.handler : tool?.callback;
+			if (typeof handler !== 'function') {
 				throw new Error(`Tool '${name}' has no valid callback`);
 			}
 
 			// Execute the tool with the provided arguments
-			const result = await tool.callback(args || {});
+			const result = await handler(args || {});
 			logger.debug(`Tool ${name} executed successfully. Result:`, mask(result as Record<string, unknown>));
 
 			return result;
