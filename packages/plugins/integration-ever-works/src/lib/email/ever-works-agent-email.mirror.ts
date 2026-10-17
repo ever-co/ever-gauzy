@@ -16,7 +16,11 @@ import type { EverWorksEmailMessage, EverWorksEventEnvelope } from '../client/ev
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
-import type { EverWorksApplyContext, EverWorksApplyOutcome, EverWorksInboundHandler } from '../sync/inbound/ever-works-inbound.applier';
+import type {
+	EverWorksApplyContext,
+	EverWorksApplyOutcome,
+	EverWorksInboundHandler
+} from '../sync/inbound/ever-works-inbound.applier';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 
 /** The aggregate of the `email.message.*` events (contract event catalog v1, CR-11). */
@@ -79,7 +83,7 @@ export function mirroredEmailUpsertOf(
  * `email.message.received|sent|status_changed` events (recipient-scoped, served to a key holding `email:read`) become
  * Gauzy Inbox `EMAIL` items (`source = EVER_WORKS`, identity `ever_works_email` / the EW message id) of the Gauzy user
  * paired with the agent's owner, listed under the virtual mailbox "Ever Works — <agent>", linked to the agent employee
- * and the task. They are copies to read: not replyable in Gauzy (replying stays in Ever Works).
+ * and the task. They are copies to read: a reply stays in Ever Works.
  *
  * - **Optional, per mapping:** the `agentEmail` direction (`ew_to_gauzy` | `off`, default **off**); off, the events are
  *   skipped (not left deferred).
@@ -116,8 +120,16 @@ export class EverWorksAgentEmailMirror implements EverWorksInboundHandler {
 		}
 		let message = { ...((envelope.data ?? {}) as unknown as EverWorksEmailMessage), id: envelope.aggregate.id };
 		const handedOff = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.AGENT_EMAIL, message.id);
-		if (handedOff) return { status: 'skipped', message: 'handed to the agent from Gauzy: the message is in the Gauzy Inbox already' };
-		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.AGENT_EMAIL_MIRROR, message.id);
+		if (handedOff)
+			return {
+				status: 'skipped',
+				message: 'handed to the agent from Gauzy: the message is in the Gauzy Inbox already'
+			};
+		const link = await this.links.byEw(
+			context.integrationTenantId,
+			EverWorksLinkType.AGENT_EMAIL_MIRROR,
+			message.id
+		);
 		const version = envelope.aggregate.version ?? message.version ?? null;
 		if (link?.ewVersion != null && version != null && version <= link.ewVersion) {
 			return { status: 'skipped', message: 'already applied (version)' };
@@ -140,7 +152,9 @@ export class EverWorksAgentEmailMirror implements EverWorksInboundHandler {
 			? await this.links.byEw(context.integrationTenantId, EverWorksLinkType.AGENT, message.agentId)
 			: null;
 		const live = agent && agent.state !== EverWorksLinkState.UNLINKED ? agent : null;
-		const task = message.taskId ? await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, message.taskId) : null;
+		const task = message.taskId
+			? await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, message.taskId)
+			: null;
 		const result = await this.inbox.upsertExternal(
 			mirroredEmailUpsertOf(
 				message,

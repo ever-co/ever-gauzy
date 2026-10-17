@@ -314,6 +314,15 @@ and answered `202`.
   terminal refusal in the sync log and the dead-letter notice); a mailbox
   naming no agent paired here, or a message without a sender, is logged and
   skipped.
+- **Agent mail in the Inbox (G-P4-6, optional).** With the `agentEmail`
+  direction on (`ew_to_gauzy`; **off** by default, on the Entities and
+  directions tab), Ever Works agent mail (`email.message.*`, served to a key
+  with `email:read`) appears as read-only Gauzy Inbox `EMAIL` items
+  (`source = EVER_WORKS`) of the Gauzy user paired with the agent's owner,
+  under "Ever Works — <agent>", linked to the agent employee and the task. A
+  reply stays in Ever Works. Mail Gauzy handed to the agent itself is not
+  copied back; an owner not paired yet waits like an inbox item; a body left
+  out of a large event is read from `GET /email/messages/:id`.
 - **Docs ↔ the Ever Works Knowledge Base (G-P3-4).** Per mapped
   organization, synced documents live under a root folder ("Ever Works", or
   the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first

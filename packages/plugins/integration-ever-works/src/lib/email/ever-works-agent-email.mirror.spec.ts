@@ -16,9 +16,16 @@ jest.mock('@gauzy/core', () => {
 		createSsrfSafeHttpsAgent: () => undefined,
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, currentOrganizationId: () => null },
 		...Object.fromEntries(
-			['Tenant', 'Organization', 'Employee', 'EmployeeNotification', 'User', 'UserOrganization', 'IntegrationTenant', 'IntegrationSetting'].map(
-				(name) => [name, entity(name)]
-			)
+			[
+				'Tenant',
+				'Organization',
+				'Employee',
+				'EmployeeNotification',
+				'User',
+				'UserOrganization',
+				'IntegrationTenant',
+				'IntegrationSetting'
+			].map((name) => [name, entity(name)])
 		)
 	};
 });
@@ -75,11 +82,31 @@ const envelope = (data: Row, version = 3) => ({
 
 function setup(options: { direction?: string; inbox?: boolean } = {}) {
 	const links: Row[] = [
-		{ integrationTenantId: 'm1', entityType: EverWorksLinkType.MEMBER, ewId: 'ew-ann', gauzyId: 'emp-ann', state: 'ok' },
-		{ integrationTenantId: 'm1', entityType: EverWorksLinkType.AGENT, ewId: 'ew-agent-1', gauzyId: 'emp-agent', state: 'ok', snapshot: JSON.stringify({ name: 'Builder' }) },
-		{ integrationTenantId: 'm1', entityType: EverWorksLinkType.TASK, ewId: 'ew-task-1', gauzyId: 'task-1', state: 'ok' }
+		{
+			integrationTenantId: 'm1',
+			entityType: EverWorksLinkType.MEMBER,
+			ewId: 'ew-ann',
+			gauzyId: 'emp-ann',
+			state: 'ok'
+		},
+		{
+			integrationTenantId: 'm1',
+			entityType: EverWorksLinkType.AGENT,
+			ewId: 'ew-agent-1',
+			gauzyId: 'emp-agent',
+			state: 'ok',
+			snapshot: JSON.stringify({ name: 'Builder' })
+		},
+		{
+			integrationTenantId: 'm1',
+			entityType: EverWorksLinkType.TASK,
+			ewId: 'ew-task-1',
+			gauzyId: 'task-1',
+			state: 'ok'
+		}
 	];
-	const find = (type: string, ewId: string) => links.find((l) => l['entityType'] === type && l['ewId'] === ewId) ?? null;
+	const find = (type: string, ewId: string) =>
+		links.find((l) => l['entityType'] === type && l['ewId'] === ewId) ?? null;
 	const linkService = {
 		byEw: async (_m: string, type: string, ewId: string) => find(type, ewId),
 		snapshot: (link: Row | null) => (link?.['snapshot'] ? JSON.parse(link['snapshot']) : {}),
@@ -103,14 +130,20 @@ function setup(options: { direction?: string; inbox?: boolean } = {}) {
 	const dataSource = {
 		getRepository: (target: unknown) => ({
 			findOne: async ({ where }: { where: Row }) =>
-				target === Employee ? (employees.find((e) => e['id'] === where['id'] && e['tenantId'] === where['tenantId']) ?? null) : null
+				target === Employee
+					? (employees.find((e) => e['id'] === where['id'] && e['tenantId'] === where['tenantId']) ?? null)
+					: null
 		})
 	};
 	const upserts: Row[] = [];
 	const inbox = {
 		upsertExternal: jest.fn(async (input: Row) => {
 			upserts.push(input);
-			return { item: { id: 'item-1' }, created: upserts.length === 1, recipientUserIds: input['recipients'].map((r: Row) => r['userId']) };
+			return {
+				item: { id: 'item-1' },
+				created: upserts.length === 1,
+				recipientUserIds: input['recipients'].map((r: Row) => r['userId'])
+			};
 		}),
 		create: jest.fn()
 	};
@@ -142,13 +175,24 @@ describe('EverWorksAgentEmailMirror — EW agent mail as read-only Gauzy Inbox c
 			body: 'Done: refunded.',
 			taskId: 'task-1',
 			agentEmployeeId: 'emp-agent',
-			metadata: { mailbox: 'Ever Works — Builder', readOnly: true, from: 'builder@agents.example.test', direction: 'outbound' },
+			metadata: {
+				mailbox: 'Ever Works — Builder',
+				readOnly: true,
+				from: 'builder@agents.example.test',
+				direction: 'outbound'
+			},
 			recipients: [{ userId: 'user-ann' }]
 		});
-		expect(links.find((l) => l['entityType'] === EverWorksLinkType.AGENT_EMAIL_MIRROR)).toMatchObject({ gauzyId: 'item-1', ewId: 'ew-mail-1', ewVersion: 3 });
+		expect(links.find((l) => l['entityType'] === EverWorksLinkType.AGENT_EMAIL_MIRROR)).toMatchObject({
+			gauzyId: 'item-1',
+			ewId: 'ew-mail-1',
+			ewVersion: 3
+		});
 		// The same version again (a feed replay) is skipped; a newer one updates the copy.
 		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'skipped' });
-		expect(await mirror.apply(envelope(message({ status: 'bounced' }), 4) as never, applyContext)).toMatchObject({ status: 'applied' });
+		expect(await mirror.apply(envelope(message({ status: 'bounced' }), 4) as never, applyContext)).toMatchObject({
+			status: 'applied'
+		});
 		expect(upserts).toHaveLength(2);
 	});
 
@@ -160,14 +204,24 @@ describe('EverWorksAgentEmailMirror — EW agent mail as read-only Gauzy Inbox c
 
 	it('skips a message Gauzy handed to the agent itself (it is in the Gauzy Inbox already)', async () => {
 		const { mirror, links, upserts } = setup();
-		links.push({ integrationTenantId: 'm1', entityType: EverWorksLinkType.AGENT_EMAIL, ewId: 'ew-mail-1', gauzyId: 'inbox-email-1', state: 'ok' });
-		expect(await mirror.apply(envelope(message({ direction: 'inbound' })) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		links.push({
+			integrationTenantId: 'm1',
+			entityType: EverWorksLinkType.AGENT_EMAIL,
+			ewId: 'ew-mail-1',
+			gauzyId: 'inbox-email-1',
+			state: 'ok'
+		});
+		expect(await mirror.apply(envelope(message({ direction: 'inbound' })) as never, applyContext)).toMatchObject({
+			status: 'skipped'
+		});
 		expect(upserts).toHaveLength(0);
 	});
 
 	it('an owner not paired yet waits (deferred); an undone agent pairing leaves the agent link out', async () => {
 		const { mirror, links, upserts } = setup();
-		expect(await mirror.apply(envelope(message({ ownerUserId: 'ew-bob' })) as never, applyContext)).toMatchObject({ status: 'deferred' });
+		expect(await mirror.apply(envelope(message({ ownerUserId: 'ew-bob' })) as never, applyContext)).toMatchObject({
+			status: 'deferred'
+		});
 		(links.find((l) => l['entityType'] === EverWorksLinkType.AGENT) as Row)['state'] = EverWorksLinkState.UNLINKED;
 		expect(await mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'applied' });
 		expect(upserts[0]).toMatchObject({ agentEmployeeId: null, metadata: { mailbox: 'Ever Works — agent' } });
@@ -184,9 +238,13 @@ describe('EverWorksAgentEmailMirror — EW agent mail as read-only Gauzy Inbox c
 		const saved = process.env['GAUZY_INBOX_ENABLED'];
 		try {
 			delete process.env['GAUZY_INBOX_ENABLED'];
-			expect(await setup({ inbox: false }).mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'skipped' });
+			expect(
+				await setup({ inbox: false }).mirror.apply(envelope(message()) as never, applyContext)
+			).toMatchObject({ status: 'skipped' });
 			process.env['GAUZY_INBOX_ENABLED'] = 'true';
-			expect(await setup({ inbox: false }).mirror.apply(envelope(message()) as never, applyContext)).toMatchObject({ status: 'deferred' });
+			expect(
+				await setup({ inbox: false }).mirror.apply(envelope(message()) as never, applyContext)
+			).toMatchObject({ status: 'deferred' });
 		} finally {
 			if (saved === undefined) delete process.env['GAUZY_INBOX_ENABLED'];
 			else process.env['GAUZY_INBOX_ENABLED'] = saved;
