@@ -12,6 +12,7 @@ import {
 } from '../tax.types';
 import { TaxRegimeRate } from '../tax-regime-rate/tax-regime-rate.entity';
 import { TaxRegimeRateService } from '../tax-regime-rate/tax-regime-rate.service';
+import { assertCountryCode, assertOrganizationUnchanged, assertPriority, retirementResult } from '../write-rules';
 import { TaxRegime } from './tax-regime.entity';
 import { MikroOrmTaxRegimeRepository } from './repository/mikro-orm-tax-regime.repository';
 import { TypeOrmTaxRegimeRepository } from './repository/type-orm-tax-regime.repository';
@@ -76,6 +77,8 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	public async create(entity: TaxWriteInput<TaxRegime>): Promise<TaxRegime> {
 		this.assertWindow(entity.startsAt, entity.endsAt);
 		this.assertPostalCodePattern(entity.postalCodePattern);
+		assertPriority(entity.priority, 'a tax regime');
+		assertCountryCode(entity.countryCode, 'a tax regime');
 
 		return await super.create({
 			...entity,
@@ -97,6 +100,15 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 		if (!regime) {
 			throw new NotFoundException(`The tax regime ${id} was not found.`);
 		}
+
+		assertOrganizationUnchanged(
+			entity.organizationId,
+			regime.organizationId,
+			RequestContext.currentOrganizationId(),
+			'A tax regime'
+		);
+		assertPriority(entity.priority, 'a tax regime');
+		assertCountryCode(entity.countryCode, 'a tax regime');
 
 		if (entity.startsAt !== undefined || entity.endsAt !== undefined) {
 			this.assertWindow(entity.startsAt ?? regime.startsAt, entity.endsAt ?? regime.endsAt);
@@ -121,9 +133,7 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	 * @returns The delete result, so the route keeps the platform's response shape.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<TaxRegime>): Promise<DeleteResult> {
-		await super.softDelete(criteria);
-
-		return { affected: 1, raw: [] } as DeleteResult;
+		return retirementResult(await super.softDelete(criteria));
 	}
 
 	/*

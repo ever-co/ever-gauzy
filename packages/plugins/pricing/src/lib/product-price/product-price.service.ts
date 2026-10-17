@@ -18,6 +18,7 @@ import {
 } from '../pricing.types';
 import { ExchangeRateService } from '../exchange-rate/exchange-rate.service';
 import { PricePreferenceService } from '../price-preference/price-preference.service';
+import { assertOrganizationUnchanged } from '../organization-scope';
 import { PriceList } from '../price-list/price-list.entity';
 import { ProductPrice } from './product-price.entity';
 import { TypeOrmProductPriceRepository } from './repository/type-orm-product-price.repository';
@@ -166,6 +167,14 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		options: { ignoreTierOf?: Set<string> } = {}
 	): Promise<UpdateResult | ProductPrice> {
 		const existing = await this.findOneByIdString(id);
+
+		assertOrganizationUnchanged(
+			entity.organizationId,
+			existing.organizationId,
+			this.scope.organizationId,
+			'A price'
+		);
+
 		const prepared = this.prepare(this.mergeWithStored(existing, entity));
 
 		// Only a list the caller names is checked: a row of a list deleted since stays editable — it no

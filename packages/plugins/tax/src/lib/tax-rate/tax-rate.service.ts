@@ -38,6 +38,7 @@ import {
 	TaxRuleMatcher,
 	TaxWriteInput
 } from '../tax.types';
+import { assertCountryCode, assertOrganizationUnchanged, assertPriority, retirementResult } from '../write-rules';
 import { TaxRate } from './tax-rate.entity';
 import { MikroOrmTaxRateRepository } from './repository/mikro-orm-tax-rate.repository';
 import { TypeOrmTaxRateRepository } from './repository/type-orm-tax-rate.repository';
@@ -152,6 +153,8 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 		this.assertPostalCodePattern(entity.postalCodePattern);
 		this.assertCompoundPriority(entity.isCompound, entity.priority);
 		this.assertDirection(entity.direction);
+		assertPriority(entity.priority, 'a tax rate');
+		assertCountryCode(entity.countryCode, 'a tax rate');
 		await this.assertCodeIsUnambiguous({
 			organizationId,
 			code: entity.code,
@@ -180,6 +183,15 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 		if (!rate) {
 			throw new NotFoundException(`The tax rate ${id} was not found.`);
 		}
+
+		assertOrganizationUnchanged(
+			entity.organizationId,
+			rate.organizationId,
+			RequestContext.currentOrganizationId(),
+			'A tax rate'
+		);
+		assertPriority(entity.priority, 'a tax rate');
+		assertCountryCode(entity.countryCode, 'a tax rate');
 
 		if (entity.taxCategoryId) {
 			await this.assertCategoryExists(entity.taxCategoryId);
@@ -296,8 +308,7 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 * @returns The delete result, so the route keeps the platform's response shape.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<TaxRate>): Promise<DeleteResult> {
-		await super.softDelete(criteria);
-		return { affected: 1, raw: [] } as DeleteResult;
+		return retirementResult(await super.softDelete(criteria));
 	}
 
 	/**
