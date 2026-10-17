@@ -54,6 +54,19 @@ export function wouldLowerLinkVersion(
 	return input.ewVersion === null || input.ewVersion < current.ewVersion;
 }
 
+/** Whether a stored link row already holds the values of a write (its sync time aside). */
+function linkHolds(row: EverWorksEntityLink, values: Record<string, unknown>): boolean {
+	const stored = row as unknown as Record<string, unknown>;
+	return Object.entries(values).every(([key, value]) => {
+		if (key === 'lastSyncedAt') return true;
+		const current = stored[key] ?? null;
+		if (value instanceof Date || current instanceof Date) {
+			return value !== null && current !== null && new Date(value as Date).getTime() === new Date(current as Date).getTime();
+		}
+		return current === (value ?? null);
+	});
+}
+
 /**
  * The identity map (`ever_works_entity_link`): one Gauzy record ↔ one Ever Works record per mapping and
  * type, unique on both sides. Handlers read a link before they write and record it after.
@@ -120,11 +133,12 @@ export class EverWorksLinkService {
 			if (existing) {
 				if (wouldLowerLinkVersion(existing, input)) throw new EverWorksStaleLinkError(existing.id as ID, existing.ewId, existing.ewVersion ?? null, input.ewVersion ?? null);
 				if (await this.updateUnlessLower(existing.id as ID, input, values, manager)) return { ...existing, ...values } as EverWorksEntityLink;
-				// Nothing written: a newer version landed since the read (refused), or the row is gone (inserted below).
+				// Nothing written: a newer version landed since the read (refused), the row is gone (inserted on the
+				// next attempt), or it changed otherwise (re-paired: the next attempt reads it again).
 				const current = await repository.findOne({ where: { id: existing.id } });
 				if (current && wouldLowerLinkVersion(current, input)) throw new EverWorksStaleLinkError(current.id as ID, current.ewId, current.ewVersion ?? null, input.ewVersion ?? null);
-				// A driver that counts changed rows only (nothing differed): the row already holds these values.
-				if (current) return { ...current, ...values } as EverWorksEntityLink;
+				// A driver that counts changed rows only: the row already holds exactly these values.
+				if (current && linkHolds(current, values)) return current;
 				continue;
 			}
 			try {

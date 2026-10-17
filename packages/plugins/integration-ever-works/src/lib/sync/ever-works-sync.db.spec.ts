@@ -640,6 +640,7 @@ describe('Ever Works sync engine on SQLite', () => {
 			...over
 		});
 		const stored = () => dataSource.getRepository(EverWorksEntityLink).findOneByOrFail({ ewId: 'task-1' });
+		afterEach(() => jest.restoreAllMocks());
 
 		it('never lowers the version of the same Ever Works record; an equal version, no version or another record is written', async () => {
 			const links = new EverWorksLinkService(dataSource);
@@ -671,6 +672,24 @@ describe('Ever Works sync engine on SQLite', () => {
 			expect(refused).toMatchObject({ ewId: 'task-1', storedVersion: 6, refusedVersion: 4 });
 			expect(refused.getStatus()).toBe(409);
 			expect(await stored()).toMatchObject({ ewVersion: 6, snapshot: JSON.stringify({ title: 'v6' }) });
+		});
+
+		it('a refused write whose row was re-paired before the re-read is not reported as saved: it is written on a fresh read', async () => {
+			const links = new EverWorksLinkService(dataSource);
+			await links.record(linkInput({ ewVersion: 6, snapshot: { title: 'v6' } }));
+			const read = { ...(await stored()), ewVersion: 3 } as EverWorksEntityLink;
+			const repository = dataSource.getRepository(EverWorksEntityLink);
+			const findOne = repository.findOne.bind(repository);
+			jest.spyOn(links, 'byEw').mockResolvedValueOnce(read);
+			// Between the refused update and the re-read, another process re-pairs the Gauzy record.
+			jest.spyOn(repository, 'findOne').mockImplementationOnce(async (options) => {
+				await repository.update({ ewId: 'task-1' }, { ewId: 'task-9', ewVersion: 8 } as never);
+				return findOne(options);
+			});
+			const saved = await links.record(linkInput({ ewVersion: 4, snapshot: { title: 'v4' } }));
+			const row = await repository.findOneByOrFail({ gauzyId: 'g-task-1' });
+			expect(row).toMatchObject({ ewId: 'task-1', ewVersion: 4, snapshot: JSON.stringify({ title: 'v4' }) });
+			expect(saved).toMatchObject({ ewId: 'task-1', ewVersion: 4 });
 		});
 
 		it('the applier settles a refused write of the event’s own record as skipped, and retries a refused dependency', async () => {
