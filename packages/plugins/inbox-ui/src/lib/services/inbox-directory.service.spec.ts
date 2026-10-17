@@ -55,4 +55,21 @@ describe('InboxDirectoryService', () => {
 		http.expectOne((req) => req.url === '/api/employee').flush({ items: [], total: 0 });
 		expect(agents).toEqual([]);
 	});
+
+	it('reads the profile of every agent, a few at a time (none is left out)', () => {
+		let count = -1;
+		directory.everWorksAgents('org-1', 'tenant-1').subscribe((entries) => (count = entries.length));
+		const many = Array.from({ length: 60 }, (_, index) => ({ id: `a${index}` }));
+		http.expectOne((req) => req.url === '/api/employee').flush({ items: many, total: many.length });
+		for (let index = 0; index < many.length; index++) {
+			const pending = http.match((req) => req.url.endsWith('/agent-profile'));
+			// At most a few in flight at once.
+			expect(pending.length).toBeLessThanOrEqual(6);
+			if (pending.length === 0) break;
+			pending[0].flush({ source: 'ever_works', title: `Agent ${pending[0].request.url}` });
+			for (const rest of pending.slice(1))
+				rest.flush({ source: 'ever_works', title: `Agent ${rest.request.url}` });
+		}
+		expect(count).toBe(60);
+	});
 });

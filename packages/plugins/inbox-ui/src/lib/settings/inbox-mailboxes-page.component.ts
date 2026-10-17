@@ -752,7 +752,9 @@ export class InboxMailboxesPageComponent implements OnInit {
 			)
 		)
 			.pipe(takeUntilDestroyed(this.destroyRef))
-			.subscribe((entries) => this.verifications.set(Object.fromEntries(entries)));
+			.subscribe((entries) => {
+				if (this.stillSelected(organizationId)) this.verifications.set(Object.fromEntries(entries));
+			});
 	}
 
 	/** The names of the Ever Works agents the mailboxes are routed to (only read when one is). */
@@ -766,7 +768,9 @@ export class InboxMailboxesPageComponent implements OnInit {
 				catchError(() => of([] as IInboxDirectoryEntry[])),
 				takeUntilDestroyed(this.destroyRef)
 			)
-			.subscribe((agents) => this.agents.set(agents));
+			.subscribe((agents) => {
+				if (this.stillSelected(organizationId)) this.agents.set(agents);
+			});
 	}
 
 	isBusy(row: IInboxMailboxRow): boolean {
@@ -784,19 +788,31 @@ export class InboxMailboxesPageComponent implements OnInit {
 		this.busy.set(next);
 	}
 
-	/** Runs one action: busy while in flight, the API's refusal shown on the page. */
-	private run<T>(key: string, request$: Observable<T>, done: (result: T) => void): void {
+	/** Whether the organization a request was made for is still the selected one (else its answer is dropped). */
+	private stillSelected(organizationId: ID | null): boolean {
+		return (this.organization()?.id ?? null) === organizationId;
+	}
+
+	/**
+	 * Runs one action: busy while in flight, the API's refusal shown on the page. An answer that arrives after another
+	 * organization was selected is dropped (it would show the previous organization's data), unless `always` (a
+	 * one-time secret must be shown whatever happened meanwhile).
+	 */
+	private run<T>(key: string, request$: Observable<T>, done: (result: T) => void, always = false): void {
 		if (this.busy().has(key)) return;
+		const organizationId = this.organization()?.id ?? null;
 		this.setBusy(key, true);
 		this.actionError.set(null);
 		request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
 			next: (result) => {
 				this.setBusy(key, false);
-				done(result);
+				if (always || this.stillSelected(organizationId)) done(result);
 			},
 			error: (error: unknown) => {
 				this.setBusy(key, false);
-				this.actionError.set(apiErrorMessage(error) ?? 'INBOX.SETTINGS.ERRORS.ACTION');
+				if (this.stillSelected(organizationId)) {
+					this.actionError.set(apiErrorMessage(error) ?? 'INBOX.SETTINGS.ERRORS.ACTION');
+				}
 			}
 		});
 	}
@@ -939,19 +955,28 @@ export class InboxMailboxesPageComponent implements OnInit {
 		const id = row.mailbox.id;
 		this.confirmRotate.set(null);
 		if (!id) return;
-		this.run(id, this.api.rotateMailboxSecret(id, this.organization()?.id), (secret) => {
-			this.dialogs.open(InboxOneTimeSecretDialogComponent, {
-				context: {
-					values: [
-						{ label: 'INBOX.SETTINGS.MAILBOXES.ADDRESS', translate: true, value: secret.address },
-						{ label: 'INBOX.SETTINGS.MAILBOXES.RELAY_SECRET', translate: true, value: secret.inboundSecret }
-					],
-					hint: 'INBOX.SETTINGS.ONE_TIME.MAILBOX_HINT'
-				},
-				closeOnEsc: false,
-				closeOnBackdropClick: false
-			});
-		});
+		this.run(
+			id,
+			this.api.rotateMailboxSecret(id, this.organization()?.id),
+			(secret) => {
+				this.dialogs.open(InboxOneTimeSecretDialogComponent, {
+					context: {
+						values: [
+							{ label: 'INBOX.SETTINGS.MAILBOXES.ADDRESS', translate: true, value: secret.address },
+							{
+								label: 'INBOX.SETTINGS.MAILBOXES.RELAY_SECRET',
+								translate: true,
+								value: secret.inboundSecret
+							}
+						],
+						hint: 'INBOX.SETTINGS.ONE_TIME.MAILBOX_HINT'
+					},
+					closeOnEsc: false,
+					closeOnBackdropClick: false
+				});
+			},
+			true
+		);
 	}
 
 	async copy(value: string | null | undefined): Promise<void> {

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NbDialogService } from '@nebular/theme';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import {
 	IInboxMailbox,
 	InboxMailboxDomainStatusEnum,
@@ -51,6 +51,7 @@ describe('InboxMailboxesPageComponent', () => {
 	const directory = { everWorksAgents: jest.fn() };
 	const dialogs = { open: jest.fn() };
 	const toastr = { success: jest.fn(), warning: jest.fn(), danger: jest.fn() };
+	let organization$: BehaviorSubject<{ id: string; tenantId: string }>;
 
 	function render() {
 		TestBed.configureTestingModule({
@@ -63,7 +64,7 @@ describe('InboxMailboxesPageComponent', () => {
 				{
 					provide: Store,
 					useValue: {
-						selectedOrganization$: of({ id: 'org-1', tenantId: 'tenant-1' }),
+						selectedOrganization$: organization$,
 						user: { tenantId: 'tenant-1' },
 						hasPermission: () => false
 					}
@@ -97,7 +98,10 @@ describe('InboxMailboxesPageComponent', () => {
 		);
 	}
 
-	beforeEach(() => jest.resetAllMocks());
+	beforeEach(() => {
+		jest.resetAllMocks();
+		organization$ = new BehaviorSubject({ id: 'org-1', tenantId: 'tenant-1' });
+	});
 
 	it('the email features are off (404): the notice only', () => {
 		api.mailboxes.mockReturnValue(throwError(() => ({ status: 404 })));
@@ -240,5 +244,27 @@ describe('InboxMailboxesPageComponent', () => {
 		expect(dialogs.open.mock.calls[0][1]).toMatchObject({ closeOnEsc: false, closeOnBackdropClick: false });
 		expect(dialogs.open.mock.calls[0][1].context.values[1].value).toBe('secret-1');
 		expect(component.confirmRotate()).toBeNull();
+	});
+
+	it('drops an answer that arrives after another organization was selected', () => {
+		served([]);
+		const pending = new Subject<{
+			organizationId: string;
+			autoProvisionEmployees: boolean;
+			platformDomain: string;
+		}>();
+		api.updateEmailSettings.mockReturnValue(pending);
+		const { component } = render();
+		component.setAutoProvision(true);
+
+		api.emailSettings.mockReturnValue(
+			of({ organizationId: 'org-2', autoProvisionEmployees: false, platformDomain: DOMAIN })
+		);
+		organization$.next({ id: 'org-2', tenantId: 'tenant-1' });
+		expect(api.mailboxes).toHaveBeenLastCalledWith('org-2');
+
+		pending.next({ organizationId: 'org-1', autoProvisionEmployees: true, platformDomain: DOMAIN });
+		expect(component.settings()).toMatchObject({ organizationId: 'org-2', autoProvisionEmployees: false });
+		expect(component.busy().has('settings')).toBe(false);
 	});
 });

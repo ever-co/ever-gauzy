@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
+import { catchError, map, mergeMap, switchMap, toArray } from 'rxjs/operators';
 import {
 	EmployeeAgentSourceEnum,
 	EmployeeKindEnum,
@@ -23,8 +23,8 @@ export interface IInboxDirectoryEntry {
 	detail?: string | null;
 }
 
-/** The most agent profiles read for one list (one request each). */
-export const INBOX_DIRECTORY_AGENT_LIMIT = 50;
+/** Agent profiles read at the same time (one request each; every agent is read, a few at a time). */
+export const INBOX_DIRECTORY_PROFILE_CONCURRENCY = 6;
 
 /** A user's name as the Settings pages show it: first and last name, else the email. */
 export function userName(user: Pick<IUser, 'firstName' | 'lastName' | 'email' | 'name'> | null | undefined): string {
@@ -106,21 +106,23 @@ export class InboxDirectoryService {
 	everWorksAgents(organizationId: ID, tenantId: ID): Observable<IInboxDirectoryEntry[]> {
 		return this.employeesOfKind(EmployeeKindEnum.AGENT, organizationId, tenantId).pipe(
 			switchMap((agents) => {
-				const listed = agents.filter((agent) => !!agent.id).slice(0, INBOX_DIRECTORY_AGENT_LIMIT);
+				const listed = agents.filter((agent) => !!agent.id);
 				if (listed.length === 0) return of([] as IInboxDirectoryEntry[]);
-				return forkJoin(
-					listed.map((agent) =>
-						this.http
-							.get<IEmployeeAgentProfile>(
-								`${API_PREFIX}/employee/${encodeURIComponent(agent.id as string)}/agent-profile`
-							)
-							.pipe(
-								map((profile) => ({ agent, profile })),
-								// No profile (404) or not readable: not an Ever Works agent for this list.
-								catchError(() => of({ agent, profile: null as IEmployeeAgentProfile | null }))
-							)
-					)
-				).pipe(
+				return from(listed).pipe(
+					mergeMap(
+						(agent) =>
+							this.http
+								.get<IEmployeeAgentProfile>(
+									`${API_PREFIX}/employee/${encodeURIComponent(agent.id as string)}/agent-profile`
+								)
+								.pipe(
+									map((profile) => ({ agent, profile })),
+									// No profile (404) or not readable: not an Ever Works agent for this list.
+									catchError(() => of({ agent, profile: null as IEmployeeAgentProfile | null }))
+								),
+						INBOX_DIRECTORY_PROFILE_CONCURRENCY
+					),
+					toArray(),
 					map((rows) =>
 						rows
 							.filter(({ profile }) => profile?.source === EmployeeAgentSourceEnum.EVER_WORKS)
