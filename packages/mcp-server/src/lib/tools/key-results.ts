@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { pageOf, validateOrganizationContext } from './utils';
 import { KeyResultInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -399,7 +399,7 @@ export const registerKeyResultTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/keyresult-updates', createData);
+				const response = await apiClient.post('/api/key-result-updates', createData);
 
 				return {
 					content: [
@@ -428,13 +428,11 @@ export const registerKeyResultTools = (server: McpServer) => {
 		},
 		async ({ keyResultId, page = 1, limit = 10 }) => {
 			try {
-				const params = {
-					keyResultId,
-					page,
-					limit
-				};
-
-				const response = await apiClient.get('/api/keyresult-updates', { params });
+				// The route answers every update of the key result: page them here
+				const { items = [] } = await apiClient.get<{ items?: unknown[] }>(
+					`/api/key-result-updates/${keyResultId}`
+				);
+				const response = pageOf(items, page, limit);
 
 				return {
 					content: [

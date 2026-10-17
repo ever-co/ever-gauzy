@@ -3,12 +3,26 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
+import { authManager } from '../common/auth-manager';
 import { CommentableTypeEnum } from '../input-schemas';
-import { validateOrganizationContext } from './utils';
+import { buildListQuery, containsText, pageOf, readAllPages, validateOrganizationContext } from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('CommentTools');
+
+/** Comments matching `where` whose text contains `query`, read page by page: the API has no comment search. */
+const findCommentsContaining = async (
+	defaultParams: { tenantId?: string; organizationId?: string },
+	where: Record<string, unknown>,
+	query: string,
+	relations?: string[]
+) => {
+	const comments = await readAllPages<{ comment?: string }>('/api/comment', (page, take) =>
+		buildListQuery(defaultParams, where, { page, limit: take, relations })
+	);
+	return comments.filter(({ comment }) => containsText(comment, query));
+};
 
 export const registerCommentTools = (server: McpServer) => {
 	// Get comments tool
@@ -33,20 +47,12 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(entity && { entity }),
-					...(entityId && { entityId }),
-					...(employeeId && { employeeId }),
-					...(parentId && { parentId })
-				};
-
-				const response = await apiClient.get('/api/comments', { params });
+				const where = { entity, entityId, employeeId, parentId };
+				const response = search
+					? pageOf(await findCommentsContaining(defaultParams, where, search, relations), page, limit)
+					: await apiClient.get('/api/comment', {
+							params: buildListQuery(defaultParams, where, { page, limit, relations })
+						});
 
 				return {
 					content: [
@@ -78,22 +84,16 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(entity && { entity }),
-					...(entityId && { entityId }),
-					...(employeeId && { employeeId }),
-					...(parentId && { parentId })
-				};
+				// `/api/comment/count` is read as a comment id: the list route counts them instead
+				const params = buildListQuery(defaultParams, { entity, entityId, employeeId, parentId }, { limit: 1 });
 
-				const response = await apiClient.get('/api/comments/count', { params });
+				const { total } = await apiClient.get<{ total: number }>('/api/comment', { params });
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ count: response }, null, 2)
+							text: JSON.stringify({ count: total }, null, 2)
 						}
 					]
 				};
@@ -122,7 +122,7 @@ export const registerCommentTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/comments/${id}`, { params });
+				const response = await apiClient.get(`/api/comment/${id}`, { params });
 
 				return {
 					content: [
@@ -164,7 +164,7 @@ export const registerCommentTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/comments', createData);
+				const response = await apiClient.post('/api/comment', createData);
 
 				return {
 					content: [
@@ -196,7 +196,7 @@ export const registerCommentTools = (server: McpServer) => {
 		},
 		async ({ id, comment_data }) => {
 			try {
-				const response = await apiClient.put(`/api/comments/${id}`, comment_data);
+				const response = await apiClient.put(`/api/comment/${id}`, comment_data);
 
 				return {
 					content: [
@@ -223,7 +223,7 @@ export const registerCommentTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				await apiClient.delete(`/api/comments/${id}`);
+				await apiClient.delete(`/api/comment/${id}`);
 
 				return {
 					content: [
@@ -257,22 +257,13 @@ export const registerCommentTools = (server: McpServer) => {
 			relations: z.array(z.string()).optional().describe('Relations to include'),
 			includeReplies: z.boolean().optional().default(true).describe('Include reply comments')
 		},
-		async ({ entity, entityId, page = 1, limit = 10, relations, includeReplies = true }) => {
+		async ({ entity, entityId, page = 1, limit = 10, relations }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					entity,
-					entityId,
-					page,
-					limit,
-					...(relations && { relations }),
-					includeReplies
-				};
+				const params = buildListQuery(defaultParams, { entity, entityId }, { page, limit, relations });
 
-				const response = await apiClient.get('/api/comments', { params });
+				const response = await apiClient.get('/api/comment', { params });
 
 				return {
 					content: [
@@ -313,7 +304,7 @@ export const registerCommentTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/comments', createData);
+				const response = await apiClient.post('/api/comment', createData);
 
 				return {
 					content: [
@@ -345,16 +336,9 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					parentId,
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const params = buildListQuery(defaultParams, { parentId }, { page, limit, relations });
 
-				const response = await apiClient.get('/api/comments', { params });
+				const response = await apiClient.get('/api/comment', { params });
 
 				return {
 					content: [
@@ -387,17 +371,17 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(entity && { entity }),
-					...(entityId && { entityId }),
-					...(relations && { relations })
-				};
+				const createdByUserId = authManager.getUserId();
+				if (!createdByUserId) {
+					throw new Error('User ID not available. Please ensure you are logged in.');
+				}
+				const params = buildListQuery(
+					defaultParams,
+					{ entity, entityId, createdByUserId },
+					{ page, limit, relations }
+				);
 
-				const response = await apiClient.get('/api/comments/me', { params });
+				const response = await apiClient.get('/api/comment', { params });
 
 				return {
 					content: [
@@ -435,7 +419,7 @@ export const registerCommentTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/comments', createData);
+				const response = await apiClient.post('/api/comment', createData);
 
 				return {
 					content: [
@@ -473,7 +457,7 @@ export const registerCommentTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/comments', createData);
+				const response = await apiClient.post('/api/comment', createData);
 
 				return {
 					content: [
@@ -511,7 +495,7 @@ export const registerCommentTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/comments', createData);
+				const response = await apiClient.post('/api/comment', createData);
 
 				return {
 					content: [
@@ -543,16 +527,8 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					...(entity && { entity }),
-					...(employeeId && { employeeId })
-				};
-
-				const response = await apiClient.get('/api/comments/search', { params });
+				const comments = await findCommentsContaining(defaultParams, { entity, employeeId }, query);
+				const response = pageOf(comments, 1, limit);
 
 				return {
 					content: [
@@ -584,18 +560,13 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit,
-					sortBy: 'createdAt',
-					sortOrder: 'DESC',
-					...(entity && { entity }),
-					...(employeeId && { employeeId }),
-					...(relations && { relations })
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ entity, employeeId },
+					{ limit, relations, order: { createdAt: 'DESC' } }
+				);
 
-				const response = await apiClient.get('/api/comments/recent', { params });
+				const response = await apiClient.get('/api/comment', { params });
 
 				return {
 					content: [

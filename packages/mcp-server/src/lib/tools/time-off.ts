@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { containsText, countByGroup, getCurrentEmployeeId, pageOf, validateOrganizationContext } from './utils';
 import { TimeOffStatusEnum, TimeOffTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -44,6 +44,82 @@ const convertTimeOffDateFields = (timeOffData: TimeOffData): ConvertedTimeOffDat
 	};
 };
 
+type DefaultParams = { tenantId?: string; organizationId?: string };
+
+interface TimeOffRequestFilters {
+	employeeId?: string;
+	startDate?: string;
+	endDate?: string;
+	status?: string;
+	policyId?: string;
+	search?: string;
+	relations?: string[];
+}
+
+/**
+ * The organization's time-off requests. `GET /api/time-off-request` answers the whole list for its
+ * employee and date filters and has no other filter or paging, so the rest is applied here.
+ */
+const findTimeOffRequests = async (
+	defaultParams: DefaultParams,
+	{ employeeId, startDate, endDate, status, policyId, search, relations }: TimeOffRequestFilters
+) => {
+	const { organizationId, tenantId } = defaultParams;
+	const { items = [] } = await apiClient.get<{ items?: Record<string, unknown>[] }>('/api/time-off-request', {
+		params: {
+			data: JSON.stringify({ relations, findInput: { organizationId, tenantId, employeeId, startDate, endDate } })
+		}
+	});
+
+	return items.filter(
+		(request) =>
+			(!status || request.status === status) &&
+			(!policyId || request.policyId === policyId) &&
+			containsText(request.description, search)
+	);
+};
+
+/**
+ * The organization's time-off policies, from `GET /api/time-off-policy`, which matches `findInput`
+ * exactly and answers the whole list.
+ */
+const findTimeOffPolicies = async (
+	defaultParams: DefaultParams,
+	findInput: Record<string, unknown>,
+	relations?: string[]
+) => {
+	const { organizationId, tenantId } = defaultParams;
+	const { items = [] } = await apiClient.get<{ items?: Record<string, unknown>[] }>('/api/time-off-policy', {
+		params: { data: JSON.stringify({ relations, findInput: { organizationId, tenantId, ...findInput } }) }
+	});
+	return items;
+};
+
+/**
+ * Updates a policy through `PUT /api/time-off-policy/:id`, which rewrites the whole policy and its
+ * employees: the fields the update leaves out are sent as the policy has them.
+ */
+const updateTimeOffPolicy = async (
+	id: string,
+	defaultParams: DefaultParams,
+	update: (employeeIds: string[]) => Record<string, unknown>
+) => {
+	const [policy] = await findTimeOffPolicies(defaultParams, { id }, ['employees']);
+	if (!policy) {
+		throw new Error('Time-off policy not found');
+	}
+
+	const { employees = [], ...fields } = policy;
+	const employeeIds = employees.map((employee) => employee.id);
+	return apiClient.put(`/api/time-off-policy/${id}`, {
+		...fields,
+		employees: employeeIds,
+		...update(employeeIds),
+		organizationId: defaultParams.organizationId,
+		...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+	});
+};
+
 export const registerTimeOffTools = (server: McpServer) => {
 	// Get time-off requests tool
 	registerTool(
@@ -68,21 +144,16 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(status && { status }),
-					...(employeeId && { employeeId }),
-					...(policyId && { policyId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/time-off-requests', { params });
+				const requests = await findTimeOffRequests(defaultParams, {
+					employeeId,
+					startDate,
+					endDate,
+					status,
+					policyId,
+					search,
+					relations
+				});
+				const response = pageOf(requests, page, limit);
 
 				return {
 					content: [
@@ -115,23 +186,19 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(status && { status }),
-					...(employeeId && { employeeId }),
-					...(policyId && { policyId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				};
-
-				const response = await apiClient.get('/api/time-off-requests/count', { params });
+				const requests = await findTimeOffRequests(defaultParams, {
+					status,
+					employeeId,
+					policyId,
+					startDate,
+					endDate
+				});
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify({ count: response }, null, 2)
+							text: JSON.stringify({ count: requests.length }, null, 2)
 						}
 					]
 				};
@@ -160,7 +227,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/time-off-requests/${id}`, { params });
+				const response = await apiClient.get(`/api/time-off-request/${id}`, { params });
 
 				return {
 					content: [
@@ -197,14 +264,19 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// The request entity names these fields `start`, `end` and `employees`, and requires a status
 				const createData = convertTimeOffDateFields({
+					start: new Date(request_data.startDate),
+					end: new Date(request_data.endDate),
+					employees: [{ id: request_data.employeeId }],
+					status: TimeOffStatusEnum.enum.REQUESTED,
 					...request_data,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
 					requestDate: new Date()
 				});
 
-				const response = await apiClient.post('/api/time-off-requests', createData);
+				const response = await apiClient.post('/api/time-off-request', createData);
 
 				return {
 					content: [
@@ -234,7 +306,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const updateData = convertTimeOffDateFields(request_data);
 
-				const response = await apiClient.put(`/api/time-off-requests/${id}`, updateData);
+				const response = await apiClient.put(`/api/time-off-request/${id}`, updateData);
 
 				return {
 					content: [
@@ -261,7 +333,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				await apiClient.delete(`/api/time-off-requests/${id}`);
+				await apiClient.delete(`/api/time-off-request/${id}`);
 
 				return {
 					content: [
@@ -292,10 +364,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				const response = await apiClient.put(`/api/time-off-requests/${id}/approve`, {
-					status: TimeOffStatusEnum.enum.APPROVED,
-					approvedDate: new Date()
-				});
+				const response = await apiClient.put(`/api/time-off-request/approval/${id}`);
 
 				return {
 					content: [
@@ -321,12 +390,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 			id: z.string().uuid().describe('The time-off request ID'),
 			reason: z.string().optional().describe('Reason for denial')
 		},
-		async ({ id, reason }) => {
+		async ({ id }) => {
 			try {
-				const response = await apiClient.put(`/api/time-off-requests/${id}/deny`, {
-					status: TimeOffStatusEnum.enum.DENIED,
-					...(reason && { denialReason: reason })
-				});
+				// The API records no denial reason
+				const response = await apiClient.put(`/api/time-off-request/denied/${id}`);
 
 				return {
 					content: [
@@ -351,20 +418,11 @@ export const registerTimeOffTools = (server: McpServer) => {
 		{
 			id: z.string().uuid().describe('The time-off request ID')
 		},
-		async ({ id }) => {
+		async () => {
 			try {
-				const response = await apiClient.put(`/api/time-off-requests/${id}/cancel`, {
-					status: TimeOffStatusEnum.enum.CANCELLED
-				});
-
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(response, null, 2)
-						}
-					]
-				};
+				throw new Error(
+					'The Gauzy API has no cancelled status for time-off requests. Use deny_time_off_request or delete_time_off_request.'
+				);
 			} catch (error) {
 				logger.error('Error cancelling time-off request:', sanitizeForLogging(error));
 				throw new Error(`Failed to cancel time-off request: ${sanitizeErrorMessage(error)}`);
@@ -390,19 +448,16 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					...(status && { status }),
-					...(policyId && { policyId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/time-off-requests/me', { params });
+				const employeeId = await getCurrentEmployeeId();
+				const requests = await findTimeOffRequests(defaultParams, {
+					employeeId,
+					status,
+					policyId,
+					startDate,
+					endDate,
+					relations
+				});
+				const response = pageOf(requests, page, limit);
 
 				return {
 					content: [
@@ -435,18 +490,13 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					page,
-					limit,
-					status: 'REQUESTED',
-					...(employeeId && { employeeId }),
-					...(policyId && { policyId }),
-					...(relations && { relations })
-				};
-
-				const response = await apiClient.get('/api/time-off-requests', { params });
+				const requests = await findTimeOffRequests(defaultParams, {
+					status: TimeOffStatusEnum.enum.REQUESTED,
+					employeeId,
+					policyId,
+					relations
+				});
+				const response = pageOf(requests, page, limit);
 
 				return {
 					content: [
@@ -483,19 +533,20 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+				const policies = await findTimeOffPolicies(
+					defaultParams,
+					{
+						...(type && { leaveType: type }),
+						...(requiresApproval !== undefined && { requiresApproval }),
+						...(paid !== undefined && { paid })
+					},
+					relations
+				);
+				const response = pageOf(
+					policies.filter(({ name }) => containsText(name, search)),
 					page,
-					limit,
-					...(search && { search }),
-					...(relations && { relations }),
-					...(type && { type }),
-					...(requiresApproval !== undefined && { requiresApproval }),
-					...(paid !== undefined && { paid })
-				};
-
-				const response = await apiClient.get('/api/time-off-policies', { params });
+					limit
+				);
 
 				return {
 					content: [
@@ -527,7 +578,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/time-off-policies/${id}`, { params });
+				const response = await apiClient.get(`/api/time-off-policy/${id}`, { params });
 
 				return {
 					content: [
@@ -563,12 +614,13 @@ export const registerTimeOffTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				const createData = convertTimeOffDateFields({
+					employees: [],
 					...policy_data,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
-				const response = await apiClient.post('/api/time-off-policies', createData);
+				const response = await apiClient.post('/api/time-off-policy', createData);
 
 				return {
 					content: [
@@ -596,9 +648,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 		},
 		async ({ id, policy_data }) => {
 			try {
-				const updateData = convertTimeOffDateFields(policy_data);
-
-				const response = await apiClient.put(`/api/time-off-policies/${id}`, updateData);
+				const defaultParams = validateOrganizationContext();
+				const response = await updateTimeOffPolicy(id, defaultParams, () =>
+					convertTimeOffDateFields(policy_data)
+				);
 
 				return {
 					content: [
@@ -625,7 +678,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 		},
 		async ({ id }) => {
 			try {
-				await apiClient.delete(`/api/time-off-policies/${id}`);
+				await apiClient.delete(`/api/time-off-policy/${id}`);
 
 				return {
 					content: [
@@ -657,9 +710,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 		},
 		async ({ policyId, employeeIds }) => {
 			try {
-				const response = await apiClient.put(`/api/time-off-policies/${policyId}/employees`, {
-					employeeIds
-				});
+				const defaultParams = validateOrganizationContext();
+				const response = await updateTimeOffPolicy(policyId, defaultParams, (assignedIds) => ({
+					employees: [...new Set([...assignedIds, ...employeeIds])]
+				}));
 
 				return {
 					content: [
@@ -769,18 +823,24 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					...(employeeId && { employeeId }),
-					...(policyId && { policyId }),
-					...(type && { type }),
-					...(groupBy && { groupBy })
+				// No statistics route: count the requests the list route answers
+				const requests = (
+					await findTimeOffRequests(defaultParams, { startDate, endDate, employeeId, policyId })
+				).filter(({ policy }) => !type || policy?.leaveType === type);
+				const groupings = {
+					employee: (request) => (request.employees ?? []).map(({ id }) => id),
+					policy: (request) => request.policy?.name,
+					type: (request) => request.policy?.leaveType,
+					month: (request) => (request.start ? new Date(request.start).toISOString().slice(0, 7) : undefined)
 				};
-
-				const response = await apiClient.get('/api/time-off-requests/statistics', { params });
+				const response = {
+					total: requests.length,
+					groupBy,
+					...countByGroup(requests, {
+						byStatus: ({ status }) => status,
+						...(groupBy && { groups: groupings[groupBy] })
+					})
+				};
 
 				return {
 					content: [
