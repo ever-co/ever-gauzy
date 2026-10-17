@@ -16,7 +16,7 @@ import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 import { escapeHtml, htmlToMarkdown, markdownToHtml, normaliseMarkdown } from './ever-works-markdown';
-import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskStore } from './ever-works-task.store';
+import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskStore, TASK_IN_ANOTHER_ORGANIZATION } from './ever-works-task.store';
 
 /** An Ever Works task chat message (contract v1 comment DTO; also the `data` of `task.comment.*`). */
 export interface EverWorksComment {
@@ -112,6 +112,9 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		if (!comment?.id) return { status: 'skipped', message: 'the comment event carries no comment' };
 		const taskLink = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, envelope.aggregate.id);
 		if (!taskLink || taskLink.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the task is not synced' };
+		// A task moved to another organization takes no comment of this mapping (review F23).
+		const taskOrganizationId = await this.store.organizationOfTask(context.tenantId, taskLink.gauzyId as ID);
+		if (taskOrganizationId && taskOrganizationId !== context.organizationId) return { status: 'skipped', message: TASK_IN_ANOTHER_ORGANIZATION };
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.COMMENT, comment.id);
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the comment is no longer synced' };
 		if (envelope.type === 'task.comment.deleted' || comment.deleted) {
@@ -206,6 +209,8 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		try {
 			if (change.op === 'delete' || !row || row.deletedAt) return await this.pushDelete(context, link);
 			if (row.entity !== BaseEntityEnum.Task || row.organizationId !== context.organizationId) return { status: 'skipped', message: 'not a comment of a task of this organization' };
+			const taskOrganizationId = await this.store.organizationOfTask(context.tenantId, row.entityId as ID);
+			if (taskOrganizationId && taskOrganizationId !== context.organizationId) return { status: 'skipped', message: TASK_IN_ANOTHER_ORGANIZATION };
 			const taskLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, row.entityId as ID);
 			if (!taskLink || taskLink.state === EverWorksLinkState.UNLINKED) {
 				if (taskLink) return { status: 'skipped', message: 'the task is no longer synced' };
