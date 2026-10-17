@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsOptional, IsUUID } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsPositive, IsUUID } from 'class-validator';
 
 /**
  * A line appended to a shipment that has not left yet (`POST /fulfillments/:id/lines`, review R2-G40).
@@ -12,8 +12,10 @@ export class AddFulfillmentLineDTO {
 	@IsUUID()
 	readonly orderLineId: string;
 
+	/** Positive, and no finer than the `numeric(20,6)` column it is stored in. */
 	@ApiProperty({ type: () => Number })
-	@IsNumber()
+	@IsNumber({ maxDecimalPlaces: 6 })
+	@IsPositive()
 	readonly quantity: number;
 
 	@ApiPropertyOptional({ type: () => String })

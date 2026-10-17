@@ -406,7 +406,8 @@ export const fulfillmentSchemaExtensions = gql`
 		updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
 		"""
 		Append a line to a shipment that has not left yet: the shipment must still be PENDING, the order line must be
-		one of its order's and still have the quantity to ship, and the order line's counter moves with the line.
+		one of its order's and still have the quantity to ship, and on an outbound shipment the order line's counter
+		moves with the line (a return-direction shipment moves none).
 		"""
 		addFulfillmentLine(id: ID!, input: AddFulfillmentLineInput!): Fulfillment!
 		"Correct one shipment line: the quantity, the location, the order line it covers, or its payload."

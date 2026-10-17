@@ -2645,6 +2645,60 @@ describe('FulfillmentService — appending a line to a pending shipment (review 
 		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(4);
 		expect(fixture.recomputed).toEqual([]);
 	});
+
+	it('refuses an order line already in the shipment, and rolls the claim back', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_B, { quantity: 4, fulfilledQuantity: 1 })],
+				fulfillment: [shipment('open')],
+				fulfillment_line: [shipmentLine('first', 'open', LINE_B, 1)]
+			}
+		});
+
+		await expect(fixture.service.addLine('open', request(LINE_B, 1) as never)).rejects.toThrow(
+			/already in this fulfilment/
+		);
+		expect(fixture.linesOf('open')).toHaveLength(1);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(1);
+		// The claim, the line and the counter are one transaction: the refusal leaves the shipment's version too.
+		expect(Number(fixture.row('open').version)).toBe(1);
+		expect(fixture.transactions).toEqual(['rolled back']);
+	});
+
+	it('answers a stale version with the conflict, and writes nothing', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_B, { quantity: 4 })],
+				fulfillment: [shipment('open', { version: 3 })]
+			}
+		});
+
+		await expect(
+			fixture.service.addLine('open', request(LINE_B, 1) as never, { wildcard: false, versions: [2] })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		expect(fixture.linesOf('open')).toHaveLength(0);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(0);
+		expect(Number(fixture.row('open').version)).toBe(3);
+	});
+
+	it('takes only what a line states, so an id the caller sends does not overwrite another line', async () => {
+		// CodeRabbit: handed on to the write, an `id` made the append an upsert of a line that already exists.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { fulfilledQuantity: 2 }), orderLine(LINE_B)],
+				fulfillment: [shipment('open')],
+				fulfillment_line: [shipmentLine('first', 'open', LINE_A, 2)]
+			}
+		});
+
+		await fixture.service.addLine('open', request(LINE_B, 1, { id: 'first', fulfillmentId: 'elsewhere' }) as never);
+
+		expect(fixture.linesOf('open')).toHaveLength(2);
+		expect(fixture.tables.fulfillment_line.find((row) => row.id === 'first')).toMatchObject({
+			orderLineId: LINE_A,
+			quantity: 2
+		});
+	});
 });
 
 describe('FulfillmentService — a paid order completes when its goods are accounted for (Q7-W1b)', () => {
