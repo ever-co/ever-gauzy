@@ -6,6 +6,7 @@ import { ID } from '@gauzy/contracts';
 import { EverWorksConnection, EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
 import { isEverWorksEnabled } from '../ever-works-enabled';
 import { EVER_WORKS_ENV } from '../ever-works.tokens';
+import { ensureRequestContextStore, EverWorksProcessCapability } from './ever-works-process';
 import { EverWorksSyncLogService } from './ever-works-sync-log.service';
 import { EverWorksFeedPoller } from './inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './inbound/ever-works-inbound.applier';
@@ -50,6 +51,12 @@ export const SYNC_RENEW_MS = 30_000;
  *
  * Off with the plugin (`EVER_WORKS_ENABLED` not `true`), and also with `EVER_WORKS_SYNC_LOOP=off` (for a
  * process that should only serve the API). Nothing is sent while no connection exists.
+ *
+ * The loop runs only in a process that can make the sync's Gauzy writes (`ever-works-process.ts`): every
+ * write opens a tenant-scoped request context of its own, in any process, and dispatches to the platform's
+ * task, project and employee services. A process that does not host those (the worker today: its module
+ * graph is the documents pipeline and the commerce sweeps) stays out on its own and says so once, so the
+ * lease is never held by a process that could only defer the writes; a process that serves the API runs it.
  */
 @Injectable()
 export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -68,7 +75,8 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		private readonly applier: EverWorksInboundApplier,
 		private readonly pusher: EverWorksOutboundPusher,
 		private readonly log: EverWorksSyncLogService,
-		@Optional() @Inject(EVER_WORKS_ENV) env?: Record<string, string | undefined>
+		@Optional() @Inject(EVER_WORKS_ENV) env?: Record<string, string | undefined>,
+		@Optional() private readonly capability?: EverWorksProcessCapability
 	) {
 		this.env = env ?? process.env;
 	}
@@ -79,9 +87,30 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 	}
 
 	onApplicationBootstrap(): void {
-		if (!isEverWorksEnabled(this.env) || this.env['EVER_WORKS_SYNC_LOOP'] === 'off') return;
+		if (!this.start()) return;
 		this.timer = setInterval(() => void this.tick(), SYNC_TICK_MS);
 		this.timer.unref?.();
+	}
+
+	/**
+	 * Whether this process runs the loop: the plugin is on, `EVER_WORKS_SYNC_LOOP` is not `off`, and the
+	 * process hosts the platform services the sync's Gauzy writes dispatch to. Where it runs, the process
+	 * is also given a request context store if it has none yet, so each write's tenant-scoped context opens.
+	 */
+	start(): boolean {
+		if (!isEverWorksEnabled(this.env) || this.env['EVER_WORKS_SYNC_LOOP'] === 'off') return false;
+		const missing = this.capability?.missingWriteServices() ?? [];
+		if (missing.length) {
+			this.logger.warn(
+				`This process does not host ${missing.join(', ')}, which the sync's Gauzy writes go through, so it stays out of the sync loop; a process that serves the API runs it (EVER_WORKS_SYNC_LOOP=off here silences this).`
+			);
+			return false;
+		}
+		if (!ensureRequestContextStore()) {
+			this.logger.warn('This process cannot open a request context for the sync writes, so it stays out of the sync loop.');
+			return false;
+		}
+		return true;
 	}
 
 	async onApplicationShutdown(): Promise<void> {

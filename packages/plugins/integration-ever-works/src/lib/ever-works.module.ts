@@ -19,6 +19,9 @@ import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
 import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
 import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
+import { EverWorksInitiativeCapture, EverWorksInitiativeGoalSubscriber, EverWorksInitiativeSubscriber } from './initiatives/ever-works-initiative.signals';
+import { EverWorksInitiativesController } from './initiatives/ever-works-initiatives.controller';
+import { EverWorksInitiativesService } from './initiatives/ever-works-initiatives.service';
 import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
@@ -56,6 +59,7 @@ import {
 	MikroOrmEverWorksSyncLogRepository
 } from './sync/entities/ever-works-sync.repositories';
 import { EverWorksSyncLogService } from './sync/ever-works-sync-log.service';
+import { EverWorksProcessCapability } from './sync/ever-works-process';
 import { EverWorksSyncLoop } from './sync/ever-works-sync.loop';
 import { EverWorksFeedPoller } from './sync/inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './sync/inbound/ever-works-inbound.applier';
@@ -110,7 +114,9 @@ export const EVER_WORKS_SUBSCRIBERS = [
 	EverWorksTaskCommentSubscriber,
 	EverWorksGoalSubscriber,
 	EverWorksKeyResultSubscriber,
-	EverWorksKeyResultUpdateSubscriber
+	EverWorksKeyResultUpdateSubscriber,
+	EverWorksInitiativeSubscriber,
+	EverWorksInitiativeGoalSubscriber
 ];
 
 /** Every table the plugin owns (its migrations create them). */
@@ -140,6 +146,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksPeopleController,
 		EverWorksTeamsController,
 		EverWorksProjectsController,
+		EverWorksInitiativesController,
 		EverWorksWebhookController,
 		EverWorksSyncController
 	],
@@ -160,6 +167,8 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksOutboundPusher,
 		EverWorksTaskEventListener,
 		EverWorksSyncLoop,
+		// Whether this process hosts the platform write paths the sync loop needs (the worker does not).
+		EverWorksProcessCapability,
 		EverWorksRateLimitGuard,
 		EverWorksLinkService,
 		EverWorksMappingContextService,
@@ -182,6 +191,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		// Goals ↔ Goal + KeyResults (G-P2-1): registers itself with the applier and the pusher.
 		EverWorksGoalsService,
 		EverWorksGoalCapture,
+		// Missions ↔ Strategic Initiatives (G-P2-2): registers itself with the applier and the pusher.
+		EverWorksInitiativesService,
+		EverWorksInitiativeCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,
