@@ -66,6 +66,7 @@
 			"@gauzy/plugin-email-provider-resend": ["./packages/plugins/email-provider-resend/src/index.ts"],
 			"@gauzy/plugin-email-provider-postmark": ["./packages/plugins/email-provider-postmark/src/index.ts"],
 			"@gauzy/plugin-email-provider-mailgun": ["./packages/plugins/email-provider-mailgun/src/index.ts"],
+			"@gauzy/plugin-email-provider-sendgrid": ["./packages/plugins/email-provider-sendgrid/src/index.ts"],
 			"@gauzy/plugin-auth-keycloak": ["./packages/plugins/auth-keycloak/src/index.ts"],
 			"@gauzy/plugin-auth-zitadel": ["./packages/plugins/auth-zitadel/src/index.ts"],
 			"@gauzy/plugin-auth-zitadel-ui": ["./packages/plugins/auth-zitadel-ui/src/index.ts"],
