@@ -277,7 +277,10 @@ describe('TaxCategoryService.taxCategoriesOf — the category a variant is taxed
 	afterEach(() => jest.restoreAllMocks());
 
 	/** The service, over a store of variants its TypeORM manager reads. */
-	const withVariants = (categories: ICategoryRow[], variants: Array<{ id: string; taxCategoryId?: string | null }>) => {
+	const withVariants = (
+		categories: ICategoryRow[],
+		variants: Array<{ id: string; taxCategoryId?: string | null }>
+	) => {
 		const { service } = serviceUnderTest(categories);
 
 		(service as any).typeOrmTaxCategoryRepository.manager = {
@@ -297,7 +300,9 @@ describe('TaxCategoryService.taxCategoriesOf — the category a variant is taxed
 			]
 		);
 
-		await expect(service.taxCategoriesOf(['variant-a', 'variant-b', 'variant-a', 'variant-unknown'])).resolves.toEqual([
+		await expect(
+			service.taxCategoriesOf(['variant-a', 'variant-b', 'variant-a', 'variant-unknown'])
+		).resolves.toEqual([
 			{ variantId: 'variant-a', taxCategoryId: 'category-reduced' },
 			{ variantId: 'variant-b', taxCategoryId: 'category-default' },
 			{ variantId: 'variant-unknown', taxCategoryId: 'category-default' }

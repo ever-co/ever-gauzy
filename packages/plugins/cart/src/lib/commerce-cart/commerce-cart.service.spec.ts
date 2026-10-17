@@ -2935,7 +2935,9 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
 		const cart = await openCart(fixture);
 
-		await expect(fixture.service.setShippingMethod(cart.id, { name: 'Mine', amount: 0 } as any)).rejects.toMatchObject({
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { name: 'Mine', amount: 0 } as any)
+		).rejects.toMatchObject({
 			response: { code: 'CART_SHIPPING_OPTION_REQUIRED' }
 		});
 		expect(fixture.tables.commerce_cart_shipping_method).toHaveLength(0);
@@ -2946,7 +2948,11 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		const cart = await openCart(fixture);
 
 		await expect(
-			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-standard', name: 'X', amount: 0 } as any)
+			fixture.service.setShippingMethod(cart.id, {
+				shippingOptionId: 'opt-standard',
+				name: 'X',
+				amount: 0
+			} as any)
 		).rejects.toMatchObject({ response: { code: 'CART_SHIPPING_ENGINE_MISSING' } });
 	});
 
@@ -2960,16 +2966,27 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		});
 		const cart = await openCart(fixture);
 
-		await expect(fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-closed' } as any)).rejects.toMatchObject({
-			response: { code: 'CART_SHIPPING_OPTION_INELIGIBLE', details: { reason: 'SHIPPING_OPTION_REGION_MISMATCH' } }
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-closed' } as any)
+		).rejects.toMatchObject({
+			response: {
+				code: 'CART_SHIPPING_OPTION_INELIGIBLE',
+				details: { reason: 'SHIPPING_OPTION_REGION_MISMATCH' }
+			}
 		});
-		await expect(fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-carrier' } as any)).rejects.toMatchObject({
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-carrier' } as any)
+		).rejects.toMatchObject({
 			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'CALCULATED_BY_STRATEGY' } }
 		});
-		await expect(fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-euro' } as any)).rejects.toMatchObject({
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-euro' } as any)
+		).rejects.toMatchObject({
 			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'CURRENCY_MISMATCH' } }
 		});
-		await expect(fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-gone' } as any)).rejects.toMatchObject({
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-gone' } as any)
+		).rejects.toMatchObject({
 			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'SHIPPING_OPTION_NOT_FOUND' } }
 		});
 		expect(fixture.tables.commerce_cart_shipping_method).toHaveLength(0);
@@ -2978,7 +2995,13 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 	it('rates the delivery choice again at checkout, and refuses one from before the rule', async () => {
 		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
 		const cart = await openCart(fixture);
-		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10, requiresShipping: false });
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10,
+			requiresShipping: false
+		});
 		await fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-standard' } as any);
 		fixture.shippingTable['opt-standard'] = { ...STANDARD, amount: 9 };
 		registerCheckoutHandler();
@@ -2991,8 +3014,19 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		// A choice written before the rule names no option: nothing can rate it, so the checkout is refused.
 		const legacy = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
 		const old = await openCart(legacy);
-		await legacy.service.addLine(old.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10, requiresShipping: false });
-		legacy.tables.commerce_cart_shipping_method.push({ id: 'method-legacy', cartId: old.id, name: 'Mine', amount: 0 });
+		await legacy.service.addLine(old.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10,
+			requiresShipping: false
+		});
+		legacy.tables.commerce_cart_shipping_method.push({
+			id: 'method-legacy',
+			cartId: old.id,
+			name: 'Mine',
+			amount: 0
+		});
 
 		await expect(legacy.service.complete(old.id, { idempotencyKey: 'key-2' })).rejects.toMatchObject({
 			response: { code: 'CART_SHIPPING_OPTION_REQUIRED' }
@@ -3003,15 +3037,29 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		const fixture = cartFixture({ prices: { v1: 20, v2: 30 }, taxCategories: { v1: 'tc-standard', v2: null } });
 		const cart = await openCart(fixture);
 
-		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, taxCategoryId: 'tc-zero' } as any);
-		await fixture.service.addLine(cart.id, { variantId: 'v2', title: 'B', quantity: 1, taxCategoryId: 'tc-zero' } as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			taxCategoryId: 'tc-zero'
+		} as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			taxCategoryId: 'tc-zero'
+		} as any);
 
-		const byVariant = (variantId: string) => fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId);
+		const byVariant = (variantId: string) =>
+			fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId);
 		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
 		// A variant with no category carries none: the tax package applies the organization's default.
 		expect(byVariant('v2').taxCategoryId).toBeNull();
 
-		await fixture.service.updateLine(cart.id, byVariant('v1').id, { taxCategoryId: 'tc-zero', note: 'gift' } as any);
+		await fixture.service.updateLine(cart.id, byVariant('v1').id, {
+			taxCategoryId: 'tc-zero',
+			note: 'gift'
+		} as any);
 		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
 	});
 

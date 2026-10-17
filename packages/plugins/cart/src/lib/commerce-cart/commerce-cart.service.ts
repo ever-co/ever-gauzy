@@ -2392,10 +2392,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			});
 		}
 
-		const rerated: Array<{ method: CommerceCartShippingMethod; fields: Record<string, unknown> }> = [];
+		const ratedChoices: Array<{ method: CommerceCartShippingMethod; fields: Record<string, unknown> }> = [];
 
 		for (const method of methods) {
-			rerated.push({
+			ratedChoices.push({
 				method,
 				fields: this.ratedFields(await this.resolveShippingRate(cart, method.shippingOptionId), cart)
 			});
@@ -2419,7 +2419,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			}
 		}
 
-		for (const { method, fields } of rerated) {
+		for (const { method, fields } of ratedChoices) {
 			if (
 				Number(method.amount) !== fields['amount'] ||
 				method.name !== fields['name'] ||
