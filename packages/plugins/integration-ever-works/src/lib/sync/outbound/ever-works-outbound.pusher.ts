@@ -4,6 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { IntegrationTenant } from '@gauzy/core';
 import { EverWorksApiError, EverWorksNetworkError } from '../../client/ever-works-client';
 import { EverWorksConnection } from '../../connection/ever-works-connection.entity';
+import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
 import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
 import { EverWorksLinkType, EverWorksOutboundChange, EverWorksOutboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
@@ -38,6 +39,11 @@ export const OUTBOUND_MAX_ATTEMPTS = 8;
 export const OUTBOUND_DEFER_MS = 60 * 60_000;
 /** How long a claimed (in-flight) push is held before another pass may take it over. */
 export const OUTBOUND_CLAIM_MS = 10 * 60_000;
+/** When a change Ever Works answered 401 is due again (the loop only works the connection once it is active again). */
+export const OUTBOUND_AUTH_RETRY_MS = 5 * 60_000;
+
+/** What one push did to the drain: settled (or not), or stopped by a 401 (the key no longer works). */
+type PushResult = boolean | 'unauthorized';
 
 /**
  * The outbound pusher (plan 03 §C.3): drains a connection's due changes through the handler of their
@@ -60,7 +66,9 @@ export class EverWorksOutboundPusher {
 		private readonly dataSource: DataSource,
 		private readonly log: EverWorksSyncLogService,
 		/** Tells the admin about a change that stopped (an Inbox notice, G-P3-5); absent in bare test wiring. */
-		@Optional() private readonly notifier?: EverWorksNotifier
+		@Optional() private readonly notifier?: EverWorksNotifier,
+		/** Checks the connection once when Ever Works answers 401 (needs_reauth); absent in bare test wiring. */
+		@Optional() private readonly connections?: EverWorksConnectionService
 	) {}
 
 	register(handler: EverWorksOutboundHandler): void {
@@ -102,7 +110,16 @@ export class EverWorksOutboundPusher {
 			for (const change of due) {
 				if (stillOwner && !(await stillOwner())) return settled;
 				const mapping = mappings.find((m) => m.id === change.integrationTenantId) as IntegrationTenant;
-				if (await this.pushOne(connection, mapping, change, now, lease)) settled++;
+				const result = await this.pushOne(connection, mapping, change, now, lease);
+				if (result === 'unauthorized') {
+					// The key no longer works (rotated or revoked): every other change would get the same answer. The
+					// connection is checked once (→ needs_reauth, the admin is told) and the drain stops (review F17).
+					await this.connections
+						?.checkHealth(connection)
+						.catch((error) => this.logger.warn(`Connection ${connection.id}: the health check after a 401 failed (${error instanceof Error ? error.name : 'error'}).`));
+					break;
+				}
+				if (result) settled++;
 			}
 		} catch (error) {
 			if (!(error instanceof EverWorksLeaseLostError)) throw error;
@@ -117,7 +134,7 @@ export class EverWorksOutboundPusher {
 		change: EverWorksOutboundChange,
 		now: Date,
 		lease: EverWorksLease | null = null
-	): Promise<boolean> {
+	): Promise<PushResult> {
 		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
 		const handler = this.handlers.get(change.entityType);
 		if (!handler) {
@@ -174,6 +191,15 @@ export class EverWorksOutboundPusher {
 				// Handed back to the process that holds the lease now: due at once, this attempt not counted.
 				await settle({ status: EverWorksOutboundStatus.FAILED, lastError: error.message.slice(0, 2000), availableAt: now });
 				throw error;
+			}
+			if (error instanceof EverWorksApiError && error.status === 401) {
+				// Not the change's fault: it waits, its attempts untouched, until the key works again (review F17).
+				await settle({
+					status: EverWorksOutboundStatus.DEFERRED,
+					lastError: `401 ${error.code}: ${error.message}`.slice(0, 2000),
+					availableAt: new Date(now.getTime() + OUTBOUND_AUTH_RETRY_MS)
+				});
+				return 'unauthorized';
 			}
 			const attempts = (change.attempts ?? 0) + 1;
 			// A link write refused as older than the recorded version (a newer event or push recorded first) is

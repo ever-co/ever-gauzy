@@ -183,11 +183,15 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		}
 		renewedAt = 0; // the feed may have taken a while: renew before applying
 		if (!(await stillOwner())) return;
-		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner, this.owner);
+		// The feed poll may have found the key revoked (a 401 → needs_reauth): nothing more runs on a connection that
+		// is no longer active (review F17), instead of pushing every due change with the old key.
+		const current = await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id } });
+		if (!current || current.status !== EverWorksConnectionStatus.ACTIVE) return;
+		await this.applier.drain(current, 200, this.timeFor(tickNow), stillOwner, this.owner);
 		// A drain stops quietly when its lease moved: re-check it (no cached answer) before the next stage.
 		renewedAt = 0;
 		if (!(await stillOwner())) return;
-		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner, this.owner);
+		await this.pusher.drain(current, 100, this.timeFor(tickNow), stillOwner, this.owner);
 		renewedAt = 0;
 		for (const [index, sweeper] of this.sweepers.entries()) {
 			const key = `${id}:${index}`;
@@ -195,7 +199,7 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 			if (!(await stillOwner())) return;
 			this.lastSweep.set(key, Date.now());
 			const lease = everWorksLease(this.dataSource, id, this.owner, this.timeFor(tickNow));
-			const lost = await withLeaseFence(lease, () => sweeper.sweep(fresh, stillOwner)).then(
+			const lost = await withLeaseFence(lease, () => sweeper.sweep(current, stillOwner)).then(
 				() => false,
 				(error) => {
 					if (error instanceof EverWorksLeaseLostError) return true;
