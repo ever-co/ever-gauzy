@@ -738,11 +738,16 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		taskStatistics: Promise<ITasksStatistics[]>
 	): Promise<IProjectsPanel> {
 		const { organizationId, tenantId } = this.employee;
+		// Without the task statistics, projects found only through a task are missed.
+		let tasksFailed = false;
 		const [top, assigned, tasks] = await Promise.all([
 			// Only adds project ids to read: a failure leaves the list without them.
 			this._statisticsService.getProjects(request).catch(() => null),
 			this._projectsService.getAllByEmployee(employeeId, { organizationId, tenantId }).catch(() => null),
-			taskStatistics.catch(() => [] as ITasksStatistics[])
+			taskStatistics.catch(() => {
+				tasksFailed = true;
+				return [] as ITasksStatistics[];
+			})
 		]);
 
 		const ids = new Set<string>();
@@ -772,7 +777,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 			(project: IProjectsStatistics) => ({ id: project.id, name: project.name }),
 			Infinity
 		);
-		return { stats, assigned: assigned || null, partial: top === null || failedBatches > 0 };
+		return { stats, assigned: assigned || null, partial: top === null || tasksFailed || failedBatches > 0 };
 	}
 
 	/** The period's latest time slots for this employee, newest first, with their screenshots. */
