@@ -45,8 +45,13 @@ export interface ResendSendInfo {
 }
 
 const clean = (value: string | undefined) => String(value ?? '').replace(/[\r\n]/g, '');
-const format = (entry: MailAddress) =>
-	entry.name ? `${clean(entry.name).replace(/"/g, '')} <${clean(entry.address)}>` : clean(entry.address);
+/** A display name with an RFC 5322 special (a comma, a dot, `@`, …) goes in quotes, its `"` and `\` escaped. */
+export const displayName = (name: string) =>
+	/[()<>[\]:;@\\,."]/.test(name) ? `"${name.replace(/(["\\])/g, '\\$1')}"` : name;
+const format = (entry: MailAddress) => {
+	const name = clean(entry.name);
+	return name ? `${displayName(name)} <${clean(entry.address)}>` : clean(entry.address);
+};
 const list = (entries: MailAddress[] | undefined) =>
 	(entries ?? []).filter((entry) => typeof entry.address === 'string' && entry.address).map(format);
 
