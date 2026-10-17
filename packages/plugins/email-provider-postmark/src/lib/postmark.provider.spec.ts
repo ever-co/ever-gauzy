@@ -9,6 +9,7 @@ jest.mock('@gauzy/plugin-inbox', () => ({
 
 import { UnauthorizedException } from '@nestjs/common';
 import { isPostmarkEnabled } from './postmark-enabled';
+import { formatAddress } from '../../../inbox/src/lib/email/providers/outbound-mail';
 import { PostmarkFetch, PostmarkProvider } from './postmark.provider';
 
 const account = {
@@ -144,6 +145,14 @@ describe('Postmark email provider', () => {
 	});
 
 	describe('outbound transport and connection test', () => {
+		it('quotes a display name with a special character, so a comma never splits the address', () => {
+			expect(formatAddress({ address: 'a@b.test', name: 'Support' })).toBe('Support <a@b.test>');
+			expect(formatAddress({ address: 'a@b.test', name: 'Support, Europe' })).toBe(
+				'"Support, Europe" <a@b.test>'
+			);
+			expect(formatAddress({ address: 'a@b.test', name: 'A "Q"' })).toBe('"A \\"Q\\"" <a@b.test>');
+		});
+
 		function recorder(answers: Record<string, { status?: number; body: unknown }>) {
 			const calls: Array<{ url: string; init: RequestInit }> = [];
 			const fetcher: PostmarkFetch = async (url, init) => {
