@@ -143,8 +143,8 @@ async function readThroughBothOrms(): Promise<{ typeorm: IReads; mikroorm: IRead
 
 			try {
 				// The rows are the catalogue's: the organization they name is not what this suite is about, so
-				// the store is not asked to enforce it. The tenant is stored, because TypeORM's tenant scope is a
-				// join to it (`tenant: { id }`), and a read of a tenant that is not there answers nothing.
+				// the store is not asked to enforce it. The tenant is stored, because TypeORM's tenant scope requires
+				// the tenant row (an `EXISTS` on it), and a read of a tenant that is not there answers nothing.
 				await dataSource.query('PRAGMA foreign_keys = OFF');
 				const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 				const insert = (entity: unknown, rows: object[]) => dataSource.getRepository(entity).insert(rows);
