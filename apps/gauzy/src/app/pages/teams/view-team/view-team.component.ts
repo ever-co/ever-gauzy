@@ -111,6 +111,14 @@ interface IProjectProgress {
 	percent: number;
 }
 
+/** One person in a project's "who worked the most": their photo, time, share and activity. */
+interface IContributorRow extends IRankedRow {
+	initials: string;
+	avatarUrl?: string;
+	/** Average activity in the period, 0–100; absent when unknown. */
+	activity?: number;
+}
+
 /** A member's period figures, keyed by employee id. */
 interface IMemberFigures {
 	duration: number;
@@ -287,7 +295,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	public viewedProjectCard: IProjectOverviewRow | null = null;
 	/** Its task completion, and the team members who worked on it the most in the period. */
 	public projectProgress: Loadable<IProjectProgress | null> = Loadable.empty(null);
-	public projectContributors: Loadable<IRankedRow[]> = Loadable.empty([]);
+	public projectContributors: Loadable<IContributorRow[]> = Loadable.empty([]);
 	public projectSections: IRecordViewSection[] = [];
 	private _projectSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
@@ -840,19 +848,29 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				projectIds: [projectId]
 			});
 			if (sequence !== this._projectSequence) return;
-			const names = new Map(this.members.map((member) => [member.id, member.name]));
+			const people = new Map(this.members.map((member) => [member.id, member]));
+			const ranked = this.rank(
+				(rows || []).map((row: IMembersStatistics) => ({
+					id: row.id,
+					name: people.get(row.id)?.name || row.user?.name,
+					duration: Number(row.weekTime?.duration) || 0
+				})),
+				(row) => row
+			);
+			const stats = new Map((rows || []).map((row) => [row.id, row]));
 			this.projectContributors = {
 				loading: false,
 				failed: false,
-				value: this.rank(
-					(rows || []).map((row: IMembersStatistics) => ({
-						id: row.id,
-						name: names.get(row.id) || row.user?.name,
-						meta: row.weekTime ? this.formatPercent(Number(row.weekTime.overall) || 0) : undefined,
-						duration: Number(row.weekTime?.duration) || 0
-					})),
-					(row) => row
-				)
+				value: ranked.map((row) => {
+					const member = people.get(row.id);
+					const weekTime = stats.get(row.id)?.weekTime;
+					return {
+						...row,
+						initials: member?.initials || ViewTeamComponent.initialsOf(row.name),
+						avatarUrl: member?.avatarUrl || stats.get(row.id)?.user?.imageUrl || undefined,
+						activity: weekTime ? Number(weekTime.overall) || 0 : undefined
+					};
+				})
 			};
 		} catch {
 			if (sequence === this._projectSequence)
