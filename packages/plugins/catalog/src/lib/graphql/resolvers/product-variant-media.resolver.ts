@@ -1,11 +1,24 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { ProductVariantMedia } from '../../product-variant-media/product-variant-media.entity';
 import { ProductVariantMediaService } from '../../product-variant-media/product-variant-media.service';
+
+/**
+ * Orders gallery items by the position each states, else by its place in the list; ties keep the list order.
+ *
+ * @param items The items as the input lists them.
+ * @returns The items in gallery order.
+ */
+export function galleryOrder<T extends { position?: number | null }>(items: readonly T[]): T[] {
+	return items
+		.map((item, index) => ({ item, index, at: typeof item?.position === 'number' ? item.position : index }))
+		.sort((left, right) => left.at - right.at || left.index - right.index)
+		.map(({ item }) => item);
+}
 
 /**
  * Per-variant galleries over GraphQL.
@@ -81,6 +94,10 @@ export class ProductVariantMediaResolver {
 
 	/**
 	 * Replaces the gallery of a variant, including which image is its thumbnail.
+	 *
+	 * The gallery order is each item's `position` when it states one, else its place in the list — the input
+	 * declared `position` and the field ignored it, ordering by the list alone (review sweep R2-G4). Items that
+	 * tie keep their list order.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
 	@Mutation('attachProductVariantMedia')
@@ -88,17 +105,25 @@ export class ProductVariantMediaResolver {
 		@Args('variantId') variantId: ID,
 		@Args('input') input: Array<{ imageAssetId: ID; position?: number; isPrimary?: boolean }>
 	): Promise<ProductVariantMedia[]> {
-		const primary = input.find((item) => item.isPrimary);
+		const ordered = galleryOrder(input ?? []);
+		const primary = ordered.find((item) => item.isPrimary);
 
 		return this.productVariantMediaService.replaceMedia(
 			variantId,
-			input.map((item) => item.imageAssetId),
+			ordered.map((item) => item.imageAssetId),
 			primary?.imageAssetId
 		);
 	}
 
 	/**
 	 * Reorders a variant's gallery without changing its membership.
+	 *
+	 * The order is written through the gallery's set write, which also adds and removes: a list that named an
+	 * image the gallery does not hold attached it, and one that left an image out deleted it, so the field did
+	 * more than its name and its description say (review sweep R2-G4). A list that is not exactly the gallery's
+	 * images is refused; attaching and detaching are `attachProductVariantMedia` and `detachProductVariantMedia`.
+	 *
+	 * @throws BadRequestException When the list adds to or drops from the gallery.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
 	@Mutation('reorderProductVariantMedia')
@@ -107,9 +132,23 @@ export class ProductVariantMediaResolver {
 		@Args('imageAssetIds') imageAssetIds: ID[]
 	): Promise<ProductVariantMedia[]> {
 		const existing = await this.productVariantMediaService.findByVariant(variantId);
+		const current = new Set(existing.map((row) => row.imageAssetId));
+		const stated = imageAssetIds ?? [];
+
+		if (
+			new Set(stated).size !== stated.length ||
+			stated.length !== current.size ||
+			stated.some((id) => !current.has(id))
+		) {
+			throw new BadRequestException(
+				'reorderProductVariantMedia reorders the gallery the variant has: state each of its images once. ' +
+					'Attach or detach images with attachProductVariantMedia / detachProductVariantMedia.'
+			);
+		}
+
 		const primary = existing.find((row) => row.isPrimary);
 
-		return this.productVariantMediaService.replaceMedia(variantId, imageAssetIds, primary?.imageAssetId);
+		return this.productVariantMediaService.replaceMedia(variantId, stated, primary?.imageAssetId);
 	}
 
 	/**
