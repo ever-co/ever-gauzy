@@ -504,6 +504,17 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'pushed' });
 			expect(ewFolder['name']).toBe('Handbooks');
 			expect((await page(folder))['name']).toBe('Handbooks');
+			// Ever Works changes it again while the retry runs (#11033 review): deferred, the rename still pending.
+			await documents().update({ id: folder } as never, { name: 'Manuals' } as never);
+			mock.fail({ method: 'PATCH', path: /^\/kb\/folders\//, status: 412, body: { error: { code: 'version_mismatch', message: 'The record changed.' } }, times: 2 });
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({
+				status: 'deferred',
+				message: 'Ever Works changed the folder again; the Gauzy change is retried',
+				retryInMs: 60_000
+			});
+			expect(ewFolder['name']).toBe('Handbooks');
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'pushed' });
+			expect(ewFolder['name']).toBe('Manuals');
 		});
 
 		it('sends edits and folder writes as the person who made them (review #10834)', async () => {
