@@ -167,10 +167,20 @@ export class OrderPaymentLedgerService {
 		try {
 			const snapshot = await this.totalsService.computeTotals(order);
 			const status = await this.totalsService.derivePaymentStatus(order, snapshot);
-			const paid = normalizeDecimalString(String(snapshot.paidTotal ?? 0));
-			const stored = normalizeDecimalString(String(order.paidTotal ?? 0));
+			// Every money column the ledger drives is compared, not only the paid total: a refund moves the
+			// refunded and outstanding totals and can leave the status where it was (CodeRabbit on #10897).
+			const differs = (derived: unknown, stored: unknown) =>
+				compareDecimalStrings(
+					normalizeDecimalString(String(derived ?? 0)),
+					normalizeDecimalString(String(stored ?? 0))
+				) !== 0;
 
-			if (status !== order.paymentStatus || compareDecimalStrings(paid, stored) !== 0) {
+			if (
+				status !== order.paymentStatus ||
+				differs(snapshot.paidTotal, order.paidTotal) ||
+				differs(snapshot.refundedTotal, order.refundedTotal) ||
+				differs(snapshot.outstandingTotal, order.outstandingTotal)
+			) {
 				await this.totalsService.recompute(order.id, 'PAYMENT_RECORDED');
 			}
 		} catch (error) {

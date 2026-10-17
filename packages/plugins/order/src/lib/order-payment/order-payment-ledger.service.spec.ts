@@ -22,10 +22,14 @@ const ORDER = {
 	tenantId: 'tenant-1',
 	organizationId: 'org-1',
 	paymentStatus: 'CAPTURED',
-	paidTotal: 40
+	paidTotal: 40,
+	refundedTotal: 0,
+	outstandingTotal: 0
 };
 
-function fixture(options: { completeFails?: boolean; ledgerPaid?: number; ledgerStatus?: string } = {}) {
+function fixture(
+	options: { completeFails?: boolean; ledgerPaid?: number; ledgerStatus?: string; ledgerRefunded?: number } = {}
+) {
 	const rows: any[] = [];
 	const orderService = {
 		findOneByIdString: jest.fn(async (id: string) => (id === ORDER.id ? { ...ORDER } : undefined)),
@@ -51,7 +55,11 @@ function fixture(options: { completeFails?: boolean; ledgerPaid?: number; ledger
 	const totalsService = {
 		recompute: jest.fn(async () => ORDER),
 		// What the ledger says now, which a repeated report compares the stored order against.
-		computeTotals: jest.fn(async () => ({ paidTotal: options.ledgerPaid ?? 40 })),
+		computeTotals: jest.fn(async () => ({
+			paidTotal: options.ledgerPaid ?? 40,
+			refundedTotal: options.ledgerRefunded ?? 0,
+			outstandingTotal: 0
+		})),
 		derivePaymentStatus: jest.fn(async () => options.ledgerStatus ?? 'CAPTURED')
 	};
 	const ledger = new OrderPaymentLedgerService(
@@ -196,5 +204,18 @@ describe('OrderPaymentLedgerService — a repeated report finishes what a failed
 
 		expect(totalsService.recompute).not.toHaveBeenCalled();
 		expect(orderService.completeIfSettled).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('OrderPaymentLedgerService — a stale refunded total is re-derived too (CodeRabbit on #10897)', () => {
+	it('re-derives when only the refunded total disagrees with the ledger', async () => {
+		const { ledger, totalsService } = fixture({ ledgerRefunded: 15 });
+		await ledger.record(fact({ type: 'REFUND', referenceType: 'REFUND', referenceId: 'refund-1', amount: '15' }));
+		totalsService.recompute.mockClear();
+
+		// Status and paid total still match (a partial refund leaves both); the refunded total does not.
+		await ledger.record(fact({ type: 'REFUND', referenceType: 'REFUND', referenceId: 'refund-1', amount: '15' }));
+
+		expect(totalsService.recompute).toHaveBeenCalledWith(ORDER.id, 'PAYMENT_RECORDED');
 	});
 });
