@@ -84,23 +84,23 @@ export function apiMessage(error: unknown): string | null {
 			<nb-card-header class="inbox-header">
 				<h4>{{ 'INBOX.TITLE' | translate }}</h4>
 				<span class="header-actions">
-				@if (emailAvailable()) {
-					<a nbButton ghost size="small" data-test="my-mailbox" [routerLink]="myMailboxLink">{{
-						'INBOX.MY_MAILBOX.LINK' | translate
-					}}</a>
-				}
-				@if (view() === 'ready' && tab() !== 'notifications') {
-					<button
-						nbButton
-						size="small"
-						status="basic"
-						data-test="mark-all-read"
-						[disabled]="loading() || !hasUnread()"
-						(click)="markAllRead()"
-					>
-						{{ 'INBOX.ACTIONS.MARK_ALL_READ' | translate }}
-					</button>
-				}
+					@if (emailAvailable()) {
+						<a nbButton ghost size="small" data-test="my-mailbox" [routerLink]="myMailboxLink">{{
+							'INBOX.MY_MAILBOX.LINK' | translate
+						}}</a>
+					}
+					@if (view() === 'ready' && tab() !== 'notifications') {
+						<button
+							nbButton
+							size="small"
+							status="basic"
+							data-test="mark-all-read"
+							[disabled]="loading() || !hasUnread()"
+							(click)="markAllRead()"
+						>
+							{{ 'INBOX.ACTIONS.MARK_ALL_READ' | translate }}
+						</button>
+					}
 				</span>
 			</nb-card-header>
 			<nb-card-body>

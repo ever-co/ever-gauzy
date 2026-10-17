@@ -52,7 +52,9 @@ export interface IInboxMailboxMembersDialogResult {
 	],
 	template: `
 		<nb-card class="dialog" data-test="members-dialog" [nbSpinner]="view() === 'loading' || saving()">
-			<nb-card-header>{{ 'INBOX.SETTINGS.MEMBERS.TITLE' | translate: { address: mailbox?.address } }}</nb-card-header>
+			<nb-card-header>{{
+				'INBOX.SETTINGS.MEMBERS.TITLE' | translate: { address: mailbox?.address }
+			}}</nb-card-header>
 			<nb-card-body>
 				<p class="hint">{{ 'INBOX.SETTINGS.MEMBERS.HINT' | translate }}</p>
 				@if (apiError(); as message) {
@@ -98,12 +100,16 @@ export interface IInboxMailboxMembersDialogResult {
 										(selectedChange)="setRole(row, $event)"
 									>
 										@for (role of roles; track role) {
-											<nb-option [value]="role">{{ 'INBOX.SETTINGS.MEMBERS.ROLE.' + role | translate }}</nb-option>
+											<nb-option [value]="role">{{
+												'INBOX.SETTINGS.MEMBERS.ROLE.' + role | translate
+											}}</nb-option>
 										}
 									</nb-select>
 								</li>
 							} @empty {
-								<li class="hint" data-test="no-users">{{ 'INBOX.SETTINGS.MEMBERS.NO_USERS' | translate }}</li>
+								<li class="hint" data-test="no-users">
+									{{ 'INBOX.SETTINGS.MEMBERS.NO_USERS' | translate }}
+								</li>
 							}
 						</ul>
 						<p class="hint" data-test="member-count">
@@ -200,7 +206,8 @@ export class InboxMailboxMembersDialogComponent implements OnInit {
 		return text
 			? rows.filter(
 					(row) =>
-						row.user.name.toLowerCase().includes(text) || (row.user.detail ?? '').toLowerCase().includes(text)
+						row.user.name.toLowerCase().includes(text) ||
+						(row.user.detail ?? '').toLowerCase().includes(text)
 				)
 			: rows;
 	});

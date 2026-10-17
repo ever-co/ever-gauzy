@@ -20,7 +20,16 @@ import { isSharedMailbox } from './mailbox-settings.helpers';
 @Component({
 	selector: 'ngx-inbox-my-mailbox-page',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, RouterLink, NbAlertModule, NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, TranslatePipe],
+	imports: [
+		DatePipe,
+		RouterLink,
+		NbAlertModule,
+		NbButtonModule,
+		NbCardModule,
+		NbIconModule,
+		NbSpinnerModule,
+		TranslatePipe
+	],
 	template: `
 		<nb-card class="page" data-test="my-mailbox-page">
 			<nb-card-header class="header">
@@ -72,17 +81,23 @@ import { isSharedMailbox } from './mailbox-settings.helpers';
 										<span>{{ mailbox.displayName }}</span>
 									}
 									<span class="chip">{{
-										(shared(mailbox) ? 'INBOX.MY_MAILBOX.SHARED' : 'INBOX.MY_MAILBOX.PERSONAL') | translate
+										(shared(mailbox) ? 'INBOX.MY_MAILBOX.SHARED' : 'INBOX.MY_MAILBOX.PERSONAL')
+											| translate
 									}}</span>
 									<span class="chip">{{ 'INBOX.SETTINGS.KIND.' + mailbox.kind | translate }}</span>
 									@if (mailbox.isDefault) {
-										<span class="chip">{{ 'INBOX.SETTINGS.MAILBOXES.IS_DEFAULT' | translate }}</span>
+										<span class="chip">{{
+											'INBOX.SETTINGS.MAILBOXES.IS_DEFAULT' | translate
+										}}</span>
 									}
 									@if (mailbox.isActive === false) {
 										<span class="chip">{{ 'INBOX.SETTINGS.MAILBOXES.INACTIVE' | translate }}</span>
 									}
 									<span>
-										{{ 'INBOX.MY_MAILBOX.MESSAGES' | translate: { count: mailbox.messageCount ?? 0 } }}
+										{{
+											'INBOX.MY_MAILBOX.MESSAGES'
+												| translate: { count: mailbox.messageCount ?? 0 }
+										}}
 										@if (mailbox.lastMessageAt) {
 											· {{ 'INBOX.SETTINGS.MAILBOXES.LAST_MESSAGE' | translate }}
 											{{ mailbox.lastMessageAt | date: 'medium' }}

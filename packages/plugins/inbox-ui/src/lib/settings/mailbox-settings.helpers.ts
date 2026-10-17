@@ -25,9 +25,7 @@ export const MAILBOX_LOCAL_PART_MAX = 64;
 
 /** The kinds a mailbox can be created as (CONNECTED comes with P5). */
 export type InboxMailboxCreateKind =
-	| InboxMailboxKindEnum.PLATFORM
-	| InboxMailboxKindEnum.CUSTOM_DOMAIN
-	| InboxMailboxKindEnum.FORWARDING;
+	InboxMailboxKindEnum.PLATFORM | InboxMailboxKindEnum.CUSTOM_DOMAIN | InboxMailboxKindEnum.FORWARDING;
 
 export const MAILBOX_CREATE_KINDS: InboxMailboxCreateKind[] = [
 	InboxMailboxKindEnum.PLATFORM,
@@ -142,7 +140,8 @@ export function mailboxCreateErrors(
 		const domain = state.domain.trim().toLowerCase().replace(/\.$/, '');
 		if (!domain) errors['domain'] = { key: MAILBOX_ERROR_KEYS.REQUIRED };
 		else if (domain.length > 253 || !DOMAIN.test(domain)) errors['domain'] = { key: MAILBOX_ERROR_KEYS.DOMAIN };
-		else if (isPlatformDomain(domain, platformDomain)) errors['domain'] = { key: MAILBOX_ERROR_KEYS.RESERVED_DOMAIN };
+		else if (isPlatformDomain(domain, platformDomain))
+			errors['domain'] = { key: MAILBOX_ERROR_KEYS.RESERVED_DOMAIN };
 		if (!state.providerAccountId) errors['providerAccountId'] = { key: MAILBOX_ERROR_KEYS.REQUIRED };
 	} else if (!platformDomain) {
 		errors['kind'] = { key: MAILBOX_ERROR_KEYS.NO_PLATFORM_DOMAIN };
@@ -163,7 +162,10 @@ export function mailboxCreateErrors(
 }
 
 /** The `POST /api/inbox/mailboxes` body of the form (only what applies to the chosen owner and kind). */
-export function mailboxCreateInput(state: IMailboxCreateFormState, organizationId?: ID | null): IInboxMailboxCreateInput {
+export function mailboxCreateInput(
+	state: IMailboxCreateFormState,
+	organizationId?: ID | null
+): IInboxMailboxCreateInput {
 	const localPart = state.localPart.trim().toLowerCase();
 	const displayName = state.displayName.trim();
 	const allowlist = parseAllowlist(state.allowlist);
@@ -212,7 +214,10 @@ export function mailboxEditForm(mailbox: IInboxMailbox): IMailboxEditFormState {
 	};
 }
 
-export function mailboxEditErrors(state: IMailboxEditFormState, mailbox: IInboxMailbox): Record<string, IMailboxFormError> {
+export function mailboxEditErrors(
+	state: IMailboxEditFormState,
+	mailbox: IInboxMailbox
+): Record<string, IMailboxFormError> {
 	const errors: Record<string, IMailboxFormError> = {};
 	if (state.displayName.trim().length > MAILBOX_DISPLAY_NAME_MAX) {
 		errors['displayName'] = { key: MAILBOX_ERROR_KEYS.MAX_LENGTH, params: { max: MAILBOX_DISPLAY_NAME_MAX } };
@@ -238,7 +243,10 @@ export function mailboxUpdateInput(state: IMailboxEditFormState, mailbox: IInbox
 	if (allowlist.length !== before.length || allowlist.some((entry, index) => entry !== before[index])) {
 		input.senderAllowlist = allowlist;
 	}
-	if (mailbox.kind === InboxMailboxKindEnum.CUSTOM_DOMAIN && state.providerAccountId !== (mailbox.providerAccountId ?? null)) {
+	if (
+		mailbox.kind === InboxMailboxKindEnum.CUSTOM_DOMAIN &&
+		state.providerAccountId !== (mailbox.providerAccountId ?? null)
+	) {
 		input.providerAccountId = state.providerAccountId;
 	}
 	if (state.isDefault !== !!mailbox.isDefault) input.isDefault = state.isDefault;
@@ -278,12 +286,15 @@ export function isSharedMailbox(mailbox: Pick<IInboxMailbox, 'ownerType'>): bool
 /** The accounts a custom-domain mailbox can receive through: not disabled, of a provider that receives mail. */
 export function receivingAccounts(accounts: IInboxProviderAccount[]): IInboxProviderAccount[] {
 	return accounts.filter(
-		(account) => account.status !== InboxProviderAccountStatusEnum.DISABLED && account.capabilities?.inbound !== false
+		(account) =>
+			account.status !== InboxProviderAccountStatusEnum.DISABLED && account.capabilities?.inbound !== false
 	);
 }
 
 /** The badge status of a domain verification. */
-export function domainStatusTone(status: InboxMailboxDomainStatusEnum | null | undefined): 'success' | 'warning' | 'danger' {
+export function domainStatusTone(
+	status: InboxMailboxDomainStatusEnum | null | undefined
+): 'success' | 'warning' | 'danger' {
 	if (status === InboxMailboxDomainStatusEnum.VERIFIED) return 'success';
 	if (status === InboxMailboxDomainStatusEnum.FAILED) return 'danger';
 	return 'warning';

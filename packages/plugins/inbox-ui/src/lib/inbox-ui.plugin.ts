@@ -33,8 +33,7 @@ export const INBOX_CHILD_ROUTES: Routes = [
 	{
 		// `/pages/inbox/mailbox` (G-P4-1): my addresses and their forwarding instructions; INBOX_VIEW, as the page.
 		path: INBOX_MY_MAILBOX_PATH,
-		loadComponent: () =>
-			import('./settings/my-mailbox-page.component').then((m) => m.InboxMyMailboxPageComponent)
+		loadComponent: () => import('./settings/my-mailbox-page.component').then((m) => m.InboxMyMailboxPageComponent)
 	}
 ];
 
@@ -90,8 +89,7 @@ export const INBOX_PROVIDERS_SETTINGS_ROUTE: PluginRouteInput = {
 export const INBOX_MAILBOXES_SETTINGS_ROUTE: PluginRouteInput = {
 	location: 'settings-sections',
 	path: INBOX_MAILBOXES_SETTINGS_PATH,
-	loadComponent: () =>
-		import('./settings/inbox-mailboxes-page.component').then((m) => m.InboxMailboxesPageComponent),
+	loadComponent: () => import('./settings/inbox-mailboxes-page.component').then((m) => m.InboxMailboxesPageComponent),
 	canActivate: [PermissionsGuard],
 	data: INBOX_SETTINGS_ROUTE_DATA
 };

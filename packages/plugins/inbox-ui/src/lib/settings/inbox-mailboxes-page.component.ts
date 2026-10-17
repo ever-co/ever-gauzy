@@ -1,7 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NbAlertModule, NbButtonModule, NbCardModule, NbDialogService, NbIconModule, NbSpinnerModule, NbToggleModule } from '@nebular/theme';
+import {
+	NbAlertModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogService,
+	NbIconModule,
+	NbSpinnerModule,
+	NbToggleModule
+} from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
@@ -58,7 +66,16 @@ export interface IInboxMailboxRow {
 @Component({
 	selector: 'ngx-inbox-mailboxes-page',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [DatePipe, NbAlertModule, NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbToggleModule, TranslatePipe],
+	imports: [
+		DatePipe,
+		NbAlertModule,
+		NbButtonModule,
+		NbCardModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbToggleModule,
+		TranslatePipe
+	],
 	template: `
 		<nb-card class="page" data-test="mailboxes-page">
 			<nb-card-header class="header">
@@ -67,7 +84,14 @@ export interface IInboxMailboxRow {
 					<p class="subtitle">{{ 'INBOX.SETTINGS.MAILBOXES.SUBTITLE' | translate }}</p>
 				</div>
 				@if (view() === 'ready') {
-					<button nbButton size="small" status="primary" type="button" data-test="add-mailbox" (click)="add()">
+					<button
+						nbButton
+						size="small"
+						status="primary"
+						type="button"
+						data-test="add-mailbox"
+						(click)="add()"
+					>
 						{{ 'INBOX.SETTINGS.MAILBOXES.ADD' | translate }}
 					</button>
 				}
@@ -176,20 +200,32 @@ export interface IInboxMailboxRow {
 													@if (row.mailbox.displayName) {
 														<span>{{ row.mailbox.displayName }}</span>
 													}
-													<span class="chip">{{ 'INBOX.SETTINGS.OWNER.' + row.mailbox.ownerType | translate }}</span>
-													<span class="chip">{{ 'INBOX.SETTINGS.KIND.' + row.mailbox.kind | translate }}</span>
+													<span class="chip">{{
+														'INBOX.SETTINGS.OWNER.' + row.mailbox.ownerType | translate
+													}}</span>
+													<span class="chip">{{
+														'INBOX.SETTINGS.KIND.' + row.mailbox.kind | translate
+													}}</span>
 													@if (row.mailbox.isDefault) {
-														<span class="chip chip-primary" [attr.data-test]="'default-' + row.mailbox.id">{{
-															'INBOX.SETTINGS.MAILBOXES.IS_DEFAULT' | translate
-														}}</span>
+														<span
+															class="chip chip-primary"
+															[attr.data-test]="'default-' + row.mailbox.id"
+															>{{
+																'INBOX.SETTINGS.MAILBOXES.IS_DEFAULT' | translate
+															}}</span
+														>
 													}
 													@if (row.mailbox.isActive === false) {
-														<span class="chip" [attr.data-test]="'inactive-' + row.mailbox.id">{{
-															'INBOX.SETTINGS.MAILBOXES.INACTIVE' | translate
-														}}</span>
+														<span
+															class="chip"
+															[attr.data-test]="'inactive-' + row.mailbox.id"
+															>{{ 'INBOX.SETTINGS.MAILBOXES.INACTIVE' | translate }}</span
+														>
 													}
 													@if (row.mailbox.autoProvisioned) {
-														<span class="chip">{{ 'INBOX.SETTINGS.MAILBOXES.AUTO' | translate }}</span>
+														<span class="chip">{{
+															'INBOX.SETTINGS.MAILBOXES.AUTO' | translate
+														}}</span>
 													}
 												</div>
 											</div>
@@ -263,7 +299,11 @@ export interface IInboxMailboxRow {
 										</div>
 
 										@if (confirmRotate() === row.mailbox.id) {
-											<div class="confirm" role="alertdialog" [attr.data-test]="'confirm-rotate-' + row.mailbox.id">
+											<div
+												class="confirm"
+												role="alertdialog"
+												[attr.data-test]="'confirm-rotate-' + row.mailbox.id"
+											>
 												<span>{{ 'INBOX.SETTINGS.MAILBOXES.ROTATE_CONFIRM' | translate }}</span>
 												<button
 													nbButton
@@ -276,7 +316,13 @@ export interface IInboxMailboxRow {
 												>
 													{{ 'INBOX.SETTINGS.MAILBOXES.ROTATE_SECRET' | translate }}
 												</button>
-												<button nbButton size="tiny" ghost type="button" (click)="confirmRotate.set(null)">
+												<button
+													nbButton
+													size="tiny"
+													ghost
+													type="button"
+													(click)="confirmRotate.set(null)"
+												>
 													{{ 'INBOX.SETTINGS.CANCEL' | translate }}
 												</button>
 											</div>
@@ -293,7 +339,8 @@ export interface IInboxMailboxRow {
 														[class.chip-warning]="tone(row) === 'warning'"
 														[attr.data-test]="'domain-status-' + row.mailbox.id"
 														>{{
-															'INBOX.SETTINGS.DOMAIN_STATUS.' + (row.mailbox.domainStatus ?? statuses.PENDING)
+															'INBOX.SETTINGS.DOMAIN_STATUS.' +
+																(row.mailbox.domainStatus ?? statuses.PENDING)
 																| translate
 														}}</span
 													>
@@ -309,7 +356,11 @@ export interface IInboxMailboxRow {
 														{{ 'INBOX.SETTINGS.MAILBOXES.CHECK_DNS' | translate }}
 													</button>
 													<p class="hint">
-														{{ 'INBOX.SETTINGS.DOMAIN_STATUS_HINT.' + (row.mailbox.domainStatus ?? statuses.PENDING) | translate }}
+														{{
+															'INBOX.SETTINGS.DOMAIN_STATUS_HINT.' +
+																(row.mailbox.domainStatus ?? statuses.PENDING)
+																| translate
+														}}
 													</p>
 												</dd>
 												<dt>{{ 'INBOX.SETTINGS.MAILBOXES.DNS_RECORDS' | translate }}</dt>
@@ -318,9 +369,24 @@ export interface IInboxMailboxRow {
 														<table class="dns" [attr.data-test]="'dns-' + row.mailbox.id">
 															<thead>
 																<tr>
-																	<th>{{ 'INBOX.SETTINGS.MAILBOXES.DNS_TYPE' | translate }}</th>
-																	<th>{{ 'INBOX.SETTINGS.MAILBOXES.DNS_NAME' | translate }}</th>
-																	<th>{{ 'INBOX.SETTINGS.MAILBOXES.DNS_VALUE' | translate }}</th>
+																	<th>
+																		{{
+																			'INBOX.SETTINGS.MAILBOXES.DNS_TYPE'
+																				| translate
+																		}}
+																	</th>
+																	<th>
+																		{{
+																			'INBOX.SETTINGS.MAILBOXES.DNS_NAME'
+																				| translate
+																		}}
+																	</th>
+																	<th>
+																		{{
+																			'INBOX.SETTINGS.MAILBOXES.DNS_VALUE'
+																				| translate
+																		}}
+																	</th>
 																</tr>
 															</thead>
 															<tbody>
@@ -333,7 +399,9 @@ export interface IInboxMailboxRow {
 																			ghost
 																			size="tiny"
 																			type="button"
-																			[attr.aria-label]="'INBOX.SETTINGS.COPY' | translate"
+																			[attr.aria-label]="
+																				'INBOX.SETTINGS.COPY' | translate
+																			"
 																			(click)="copy(record.recordName)"
 																		>
 																			<nb-icon icon="copy-outline"></nb-icon>
@@ -346,7 +414,9 @@ export interface IInboxMailboxRow {
 																			ghost
 																			size="tiny"
 																			type="button"
-																			[attr.aria-label]="'INBOX.SETTINGS.COPY' | translate"
+																			[attr.aria-label]="
+																				'INBOX.SETTINGS.COPY' | translate
+																			"
 																			(click)="copy(record.recordValue)"
 																		>
 																			<nb-icon icon="copy-outline"></nb-icon>
@@ -361,31 +431,51 @@ export interface IInboxMailboxRow {
 																	<td class="hint">
 																		{{
 																			'INBOX.SETTINGS.MAILBOXES.MX_HINT'
-																				| translate: { account: row.account?.name ?? '' }
+																				| translate
+																					: {
+																							account:
+																								row.account?.name ?? ''
+																					  }
 																		}}
 																	</td>
 																</tr>
 															</tbody>
 														</table>
 													} @else {
-														<span class="hint" [attr.data-test]="'dns-unavailable-' + row.mailbox.id">{{
-															'INBOX.SETTINGS.MAILBOXES.DNS_UNAVAILABLE' | translate
-														}}</span>
+														<span
+															class="hint"
+															[attr.data-test]="'dns-unavailable-' + row.mailbox.id"
+															>{{
+																'INBOX.SETTINGS.MAILBOXES.DNS_UNAVAILABLE' | translate
+															}}</span
+														>
 													}
 												</dd>
 												<dt>{{ 'INBOX.SETTINGS.MAILBOXES.ACCOUNT' | translate }}</dt>
-												<dd>{{ row.account?.name ?? ('INBOX.SETTINGS.MAILBOXES.ACCOUNT_MISSING' | translate) }}</dd>
+												<dd>
+													{{
+														row.account?.name ??
+															('INBOX.SETTINGS.MAILBOXES.ACCOUNT_MISSING' | translate)
+													}}
+												</dd>
 											}
-											@if (row.mailbox.kind === kinds.FORWARDING || row.mailbox.kind === kinds.PLATFORM) {
+											@if (
+												row.mailbox.kind === kinds.FORWARDING ||
+												row.mailbox.kind === kinds.PLATFORM
+											) {
 												<dt>{{ 'INBOX.SETTINGS.MAILBOXES.FORWARDING' | translate }}</dt>
 												<dd [attr.data-test]="'forwarding-' + row.mailbox.id">
 													@if (row.forwardFrom) {
 														{{
 															'INBOX.SETTINGS.MAILBOXES.FORWARD_FROM_TO'
-																| translate: { from: row.forwardFrom, to: row.mailbox.address }
+																| translate
+																	: { from: row.forwardFrom, to: row.mailbox.address }
 														}}
 													} @else {
-														{{ 'INBOX.SETTINGS.MAILBOXES.FORWARD_TO' | translate: { to: row.mailbox.address } }}
+														{{
+															'INBOX.SETTINGS.MAILBOXES.FORWARD_TO'
+																| translate: { to: row.mailbox.address }
+														}}
 													}
 												</dd>
 											}
@@ -395,7 +485,9 @@ export interface IInboxMailboxRow {
 											}
 											@if (row.agentId) {
 												<dt>{{ 'INBOX.SETTINGS.MAILBOXES.AGENT' | translate }}</dt>
-												<dd [attr.data-test]="'agent-' + row.mailbox.id">{{ row.agentName ?? row.agentId }}</dd>
+												<dd [attr.data-test]="'agent-' + row.mailbox.id">
+													{{ row.agentName ?? row.agentId }}
+												</dd>
 											}
 											<dt>{{ 'INBOX.SETTINGS.MAILBOXES.MESSAGES' | translate }}</dt>
 											<dd>
@@ -594,7 +686,9 @@ export class InboxMailboxesPageComponent implements OnInit {
 						mailboxes: this.api.mailboxes(organizationId),
 						settings: this.api.emailSettings(organizationId),
 						// The accounts only name the receiving account of a custom domain: the page works without them.
-						accounts: this.api.accounts(organizationId).pipe(catchError(() => of([] as IInboxProviderAccount[])))
+						accounts: this.api
+							.accounts(organizationId)
+							.pipe(catchError(() => of([] as IInboxProviderAccount[])))
 					}).pipe(
 						catchError((error: unknown) => {
 							this.view.set(viewOfLoadError(error));
@@ -642,7 +736,9 @@ export class InboxMailboxesPageComponent implements OnInit {
 	/** The DNS record of each custom-domain mailbox (one request each; a failure leaves that one unknown). */
 	private readVerifications(mailboxes: IInboxMailbox[]): void {
 		const organizationId = this.organization()?.id ?? null;
-		const custom = mailboxes.filter((mailbox) => mailbox.kind === InboxMailboxKindEnum.CUSTOM_DOMAIN && !!mailbox.id);
+		const custom = mailboxes.filter(
+			(mailbox) => mailbox.kind === InboxMailboxKindEnum.CUSTOM_DOMAIN && !!mailbox.id
+		);
 		if (custom.length === 0) {
 			this.verifications.set({});
 			return;
@@ -748,6 +844,8 @@ export class InboxMailboxesPageComponent implements OnInit {
 					platformDomain: this.platformDomain(),
 					accounts: this.accounts()
 				},
+				// Neither Escape nor a click outside closes it while it may be saving.
+				closeOnEsc: false,
 				closeOnBackdropClick: false
 			})
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
@@ -772,6 +870,8 @@ export class InboxMailboxesPageComponent implements OnInit {
 					tenantId: this.tenantId(),
 					accounts: this.accounts()
 				},
+				// Neither Escape nor a click outside closes it while it may be saving.
+				closeOnEsc: false,
 				closeOnBackdropClick: false
 			})
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
@@ -791,6 +891,8 @@ export class InboxMailboxesPageComponent implements OnInit {
 					organizationId: this.organization()?.id ?? null,
 					tenantId: this.tenantId()
 				},
+				// Neither Escape nor a click outside closes it while it may be saving.
+				closeOnEsc: false,
 				closeOnBackdropClick: false
 			})
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
@@ -809,7 +911,9 @@ export class InboxMailboxesPageComponent implements OnInit {
 	setActive(row: IInboxMailboxRow, isActive: boolean): void {
 		const id = row.mailbox.id;
 		if (!id) return;
-		this.run(id, this.api.updateMailbox(id, { isActive }, this.organization()?.id), (mailbox) => this.replace(mailbox));
+		this.run(id, this.api.updateMailbox(id, { isActive }, this.organization()?.id), (mailbox) =>
+			this.replace(mailbox)
+		);
 	}
 
 	/**

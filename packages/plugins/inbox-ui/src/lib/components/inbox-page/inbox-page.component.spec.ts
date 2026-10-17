@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { IInboxItemWithState, InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
+import { InboxEmailAvailabilityService } from '../../services/inbox-email-availability.service';
 import { InboxNotificationsService, InboxUiService } from '../../services/inbox-ui.service';
 import { apiMessage, InboxPageComponent } from './inbox-page.component';
 
@@ -31,10 +32,13 @@ describe('InboxPageComponent', () => {
 		changed$: new Subject<void>()
 	};
 
+	const email$ = new BehaviorSubject<boolean>(false);
+
 	function render() {
 		TestBed.configureTestingModule({
 			imports: [InboxPageComponent],
 			providers: [
+				{ provide: InboxEmailAvailabilityService, useValue: { available$: email$ } },
 				{ provide: InboxUiService, useValue: api },
 				{ provide: InboxNotificationsService, useValue: { list: jest.fn(() => of({ items: [], total: 0 })) } },
 				{ provide: Store, useValue: { user$: of(null), selectedOrganization$: of(null) } }
@@ -117,5 +121,16 @@ describe('InboxPageComponent', () => {
 		);
 		expect(apiMessage({ error: { message: ['a', 'b'] } })).toBe('a b');
 		expect(apiMessage(null)).toBeNull();
+	});
+
+	it('links "My mailbox" only where the API serves the email features', () => {
+		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [], nextCursor: null }));
+		email$.next(false);
+		const { find, fixture } = render();
+		expect(find('my-mailbox')).toBeNull();
+		email$.next(true);
+		fixture.detectChanges();
+		expect(find('my-mailbox')?.getAttribute('href')).toBe('/pages/inbox/mailbox');
 	});
 });

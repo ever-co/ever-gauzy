@@ -88,6 +88,23 @@ The UI has no switch of its own. It follows the API:
   connection, enable / disable, outbound default and delete (refused while a
   mailbox receives through the account). A tenant-wide account is read-only
   without `ALL_ORG_EDIT`.
+- **Settings → Inbox → Mailboxes** (`/pages/settings/inbox-mailboxes`):
+  the organization's shared (organization, team) and personal (employee)
+  mailboxes. Platform addresses are allocated by the API on the server's
+  platform domain, which the page reads from the API (`platformDomain`);
+  without one, only custom-domain mailboxes can be added. A custom domain
+  shows its DNS TXT record and status ("Check DNS now") and the provider
+  account it receives through; a forwarding mailbox says what to forward
+  where. Members of shared mailboxes (READER / MANAGER), the default mailbox
+  per owner, active / inactive, a new relay secret (shown once), opt-in
+  auto-provisioning and "create the missing ones now". A mailbox can hand
+  its mail to an **Ever Works agent** (`settings.everWorksAgentId`, the
+  agents being the organization's agent employees whose profile comes from
+  Ever Works); the read-only copy of the agents' own mail is switched on per
+  Ever Works mapping, on the integration's Entities and directions tab.
+- **My mailbox** (`/pages/inbox/mailbox`, `INBOX_VIEW`, linked from the
+  Inbox page where the email features are served): the addresses whose mail
+  reaches me, with the API's forwarding instructions.
 
 The badge is a header action: `NavigationBuilderService.registerHeaderAction`
 in `@gauzy/ui-core/core` is the extension point. The header renders plugins'
@@ -110,6 +127,10 @@ actions after its own.
 - the provider form: the fields of a `configSchema`, the checks, the
   payload (a secret kept, replaced, cleared or generated anew, never shown);
 - the providers page and the account dialog (the "off" notice, the one-time
-  values, test, disable, delete and its refusal).
+  values, test, disable, delete and its refusal);
+- the mailbox forms (owner, kind, custom domain, allowlist, only what changed,
+  the agent merged into the other settings), the mailboxes page (platform
+  domain, DNS records and checks, members, provisioning, relay secret), the
+  dialogs, "My mailbox" and the directory lists (Ever Works agents only).
 
 `yarn nx test ui-core` covers the header-action registry.

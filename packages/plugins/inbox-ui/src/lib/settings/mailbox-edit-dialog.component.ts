@@ -57,7 +57,9 @@ export interface IInboxMailboxEditDialogResult {
 	],
 	template: `
 		<nb-card class="dialog" data-test="mailbox-edit-dialog" [nbSpinner]="saving()">
-			<nb-card-header>{{ 'INBOX.SETTINGS.MAILBOXES.EDIT_TITLE' | translate: { address: mailbox?.address } }}</nb-card-header>
+			<nb-card-header>{{
+				'INBOX.SETTINGS.MAILBOXES.EDIT_TITLE' | translate: { address: mailbox?.address }
+			}}</nb-card-header>
 			<nb-card-body>
 				@if (apiError(); as message) {
 					<nb-alert status="danger" role="alert" data-test="dialog-error">{{ message | translate }}</nb-alert>
@@ -132,7 +134,11 @@ export interface IInboxMailboxEditDialogResult {
 				</div>
 
 				<div class="field">
-					<nb-toggle data-test="is-default" [checked]="form().isDefault" (checkedChange)="patch({ isDefault: $event })">
+					<nb-toggle
+						data-test="is-default"
+						[checked]="form().isDefault"
+						(checkedChange)="patch({ isDefault: $event })"
+					>
 						{{ 'INBOX.SETTINGS.MAILBOXES.IS_DEFAULT_TOGGLE' | translate }}
 					</nb-toggle>
 				</div>
@@ -157,8 +163,8 @@ export interface IInboxMailboxEditDialogResult {
 								>{{ agent.name }}
 								@if (agent.detail) {
 									<span class="detail">({{ agent.detail }})</span>
-								}</nb-option
-							>
+								}
+							</nb-option>
 						}
 					</nb-select>
 					<p class="hint">{{ 'INBOX.SETTINGS.MAILBOXES.AGENT_HINT' | translate }}</p>

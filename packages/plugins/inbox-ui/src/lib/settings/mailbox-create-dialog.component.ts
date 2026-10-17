@@ -118,8 +118,8 @@ type DirectoryState = 'idle' | 'loading' | 'ready' | 'error';
 										>{{ entry.name }}
 										@if (entry.detail) {
 											<span class="detail">({{ entry.detail }})</span>
-										}</nb-option
-									>
+										}
+									</nb-option>
 								}
 							</nb-select>
 						}
@@ -205,7 +205,9 @@ type DirectoryState = 'idle' | 'loading' | 'ready' | 'error';
 								(ngModelChange)="patch({ localPart: $event })"
 							/>
 							@if (shownErrors()['localPart']; as error) {
-								<p class="error" role="alert" data-test="error-localPart">{{ error.key | translate }}</p>
+								<p class="error" role="alert" data-test="error-localPart">
+									{{ error.key | translate }}
+								</p>
 							}
 						</div>
 						<span class="at">&#64;</span>
@@ -356,7 +358,11 @@ type DirectoryState = 'idle' | 'loading' | 'ready' | 'error';
 					}
 				</div>
 
-				<nb-toggle data-test="is-default" [checked]="form().isDefault" (checkedChange)="patch({ isDefault: $event })">
+				<nb-toggle
+					data-test="is-default"
+					[checked]="form().isDefault"
+					(checkedChange)="patch({ isDefault: $event })"
+				>
 					{{ 'INBOX.SETTINGS.MAILBOXES.MAKE_DEFAULT_ON_CREATE' | translate }}
 				</nb-toggle>
 			</nb-card-body>
