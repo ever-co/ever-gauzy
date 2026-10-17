@@ -219,11 +219,11 @@ describe('ProductPriceService.bulkUpsert — what a REPLACE batch retires (R2-26
 		// A's high band keeps its price until its replacement is written.
 		expect(retired).not.toContain('a-high');
 		expect(retired).not.toContain('a-low');
-		// Control: B's pair was fully written, so its row it did not supply is retired as REPLACE promises.
+		// Control: B's pair was fully written, so the old row the batch did not supply is retired as REPLACE promises.
 		expect(retired).toEqual(['b-old']);
 	});
 
-	it('retires the row it did not supplys of a pair the batch wrote (control)', async () => {
+	it('retires the rows a written pair no longer carries (control)', async () => {
 		const rows = [
 			row({ id: 'a-old', variantId: VARIANT_A, priceListId: LIST, maxQuantity: '9.000000' }),
 			row({ id: 'default-a', variantId: VARIANT_A })
