@@ -462,9 +462,11 @@ describe('Mailbox management on SQLite', () => {
 			await expect(create('support')).rejects.toBeInstanceOf(ConflictException);
 			// A claim left unverified past the hold is released, proof or not; the row is kept, FAILED.
 			const stale = await squat('info@acme.test', { createdAt: new Date(Date.now() - 4 * 86_400_000) });
+			// The holder cannot block its own release by taking a predictable replacement address first.
+			await squat(`released-${stale.replace(/-/g, '')}@acme.test`);
 			expect((await create('info')).address).toBe('info@acme.test');
 			const released = (await repository.findOne({ where: { id: stale } })) as InboxMailbox;
-			expect(released.address).toBe(`released-${stale.replace(/-/g, '')}@acme.test`);
+			expect(released.address).toMatch(/^released-[0-9a-f]{24}@acme\.test$/);
 			expect(released.domainStatus).toBe(InboxMailboxDomainStatusEnum.FAILED);
 			expect(JSON.parse(released.settings as string)).toMatchObject({ releasedAddress: 'info@acme.test' });
 			// Once this tenant proves the domain, another tenant's unproven claim on it gives way at once.
@@ -524,6 +526,65 @@ describe('Mailbox management on SQLite', () => {
 			} as never);
 			// Verified once and failing now (a DNS outage): only a proof of the domain releases it, never its age.
 			await expect(create('help')).rejects.toBeInstanceOf(ConflictException);
+		});
+
+		it('a mailbox verified once stays FAILED through repeated failed checks, and a release never undoes a verification (review F28)', async () => {
+			const providerAccountId = await account();
+			const repository = dataSource.getRepository(InboxMailbox);
+			const created = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				localPart: 'desk',
+				domain: 'acme.test',
+				providerAccountId
+			});
+			const lookup = jest.spyOn(service as never, 'resolveTxt');
+			lookup.mockResolvedValueOnce([(created.verification as { recordValue: string }).recordValue] as never);
+			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
+			lookup.mockRejectedValueOnce(new Error('SERVFAIL') as never);
+			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.FAILED);
+			lookup.mockRejectedValueOnce(new Error('SERVFAIL') as never);
+			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.FAILED);
+			// Another tenant's stale claim read as PENDING, then verified before the release writes: the release gives up.
+			const OTHER_TENANT = randomUUID();
+			const SQUATTER_ORG = randomUUID();
+			await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [OTHER_TENANT]);
+			await dataSource.query(`INSERT INTO "organization" ("id", "tenantId", "name") VALUES (?, ?, 'Other')`, [
+				SQUATTER_ORG,
+				OTHER_TENANT
+			]);
+			const holderId = randomUUID();
+			await repository.insert({
+				id: holderId,
+				tenantId: OTHER_TENANT,
+				organizationId: SQUATTER_ORG,
+				address: 'team@acme.test',
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				purpose: 'INBOX',
+				domain: 'acme.test',
+				domainStatus: InboxMailboxDomainStatusEnum.PENDING,
+				createdAt: new Date(Date.now() - 4 * 86_400_000),
+				isDefault: false,
+				autoProvisioned: false,
+				messageCount: 0
+			} as never);
+			const stale = (await repository.findOne({ where: { id: holderId } })) as InboxMailbox;
+			await repository.update({ id: holderId }, { domainStatus: InboxMailboxDomainStatusEnum.VERIFIED });
+			jest.spyOn(service as never, 'unprovenClaimOf').mockResolvedValue(stale as never);
+			await expect(
+				service.create({
+					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+					kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+					localPart: 'team',
+					domain: 'acme.test',
+					providerAccountId
+				})
+			).rejects.toBeInstanceOf(ConflictException);
+			expect(await repository.findOne({ where: { id: holderId } })).toMatchObject({
+				address: 'team@acme.test',
+				domainStatus: InboxMailboxDomainStatusEnum.VERIFIED
+			});
 		});
 
 		it('never leaves a mailbox on a removed account: removing it and pointing a mailbox at it never both succeed', async () => {

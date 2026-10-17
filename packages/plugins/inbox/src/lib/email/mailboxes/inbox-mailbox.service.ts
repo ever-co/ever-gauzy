@@ -407,14 +407,21 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			message = (error as Error)?.message ?? 'The DNS lookup failed.';
 		}
 		const matched = !!row.domainVerificationToken && observed.includes(row.domainVerificationToken);
-		const status = matched
-			? InboxMailboxDomainStatusEnum.VERIFIED
-			: row.domainStatus === InboxMailboxDomainStatusEnum.VERIFIED
-				? InboxMailboxDomainStatusEnum.FAILED
-				: InboxMailboxDomainStatusEnum.PENDING;
-		// Only this mailbox follows the check: each mailbox has its own token, so another mailbox on the domain keeps
-		// the status its own record earned.
-		await this.dataSource.getRepository(InboxMailbox).update({ id: row.id as ID }, { domainStatus: status });
+		// The write runs under the address's claim, so a release of the address (another tenant's create) never
+		// interleaves with it; the status is worked out from the row as it is then. A mailbox verified once stays FAILED
+		// (never back to PENDING) while its proof is missing, so its age never lets another tenant take it (review F28).
+		await this.claim(row.address, async () => {
+			const current = await this.dataSource.getRepository(InboxMailbox).findOne({ where: { id: row.id as ID } });
+			const was = current?.domainStatus ?? row.domainStatus;
+			const status = matched
+				? InboxMailboxDomainStatusEnum.VERIFIED
+				: was === InboxMailboxDomainStatusEnum.VERIFIED || was === InboxMailboxDomainStatusEnum.FAILED
+					? InboxMailboxDomainStatusEnum.FAILED
+					: InboxMailboxDomainStatusEnum.PENDING;
+			// Only this mailbox follows the check: each mailbox has its own token, so another mailbox on the domain keeps
+			// the status its own record earned.
+			await this.dataSource.getRepository(InboxMailbox).update({ id: row.id as ID }, { domainStatus: status });
+		});
 		const stored = (await this.dataSource
 			.getRepository(InboxMailbox)
 			.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
@@ -683,11 +690,23 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 	private async releaseUnprovenClaim(tenantId: ID, address: string, domain: string): Promise<void> {
 		const holder = await this.unprovenClaimOf(tenantId, address, domain);
 		if (!holder) return;
+		// A replacement nobody can predict (a holder knows its own id and could take an id-based one first), checked free.
+		let replacement: string | null = null;
+		for (let attempt = 0; attempt < 5 && !replacement; attempt++) {
+			const candidate = `released-${randomBytes(12).toString('hex')}@${holder.domain ?? domain}`;
+			if (!(await this.isTaken(candidate))) replacement = candidate;
+		}
+		if (!replacement) return;
 		const settings = parse<Record<string, unknown>>(holder.settings, {});
-		await this.dataSource.getRepository(InboxMailbox).update(
-			{ id: holder.id as ID },
+		// Only the row as it was read: a verification (or another release) that changed it meanwhile wins.
+		const result = await this.dataSource.getRepository(InboxMailbox).update(
 			{
-				address: `released-${String(holder.id).replace(/-/g, '')}@${holder.domain ?? domain}`,
+				id: holder.id as ID,
+				address: holder.address,
+				domainStatus: holder.domainStatus ? holder.domainStatus : IsNull()
+			} as never,
+			{
+				address: replacement,
 				domainStatus: InboxMailboxDomainStatusEnum.FAILED,
 				isDefault: false,
 				settings: JSON.stringify({
@@ -697,6 +716,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				})
 			}
 		);
+		if (!result.affected) return;
 		this.logger.warn(
 			`Released ${holder.address} from an unverified custom-domain mailbox of another tenant (mailbox ${holder.id}).`
 		);
