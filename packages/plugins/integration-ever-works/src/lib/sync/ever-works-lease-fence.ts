@@ -40,8 +40,10 @@ import { EverWorksConnection } from '../connection/ever-works-connection.entity'
  *   update of that row, so it waits until the write commits or rolls back: the lease cannot move between
  *   the check and the write, and once it has moved the check fails. The owner alone decides here.
  * - **Outside a transaction** (a query builder or `update()` / `insert()` / `delete()` statement), the check
- *   and the write are two statements on one connection; the check then also needs
- *   {@link LEASE_FENCE_MARGIN_MS} of lease left, so the lease cannot run out and be claimed in between.
+ *   and the write are two back-to-back statements on one connection; the check then also needs
+ *   {@link LEASE_FENCE_MARGIN_MS} of lease left, so the lease cannot run out and be claimed in between
+ *   (only a stall of the process longer than that, between the two statements, could let a claim in; a
+ *   write that waits on a row lock instead keeps its place ahead of the new holder's write of that row).
  *
  * A failed check throws {@link EverWorksLeaseLostError} before the write (a transaction rolls back) and
  * marks the unit lost: every later write of it is refused without a query, and {@link withLeaseFence}
@@ -58,8 +60,12 @@ import { EverWorksConnection } from '../connection/ever-works-connection.entity'
 
 /** How long a lease lasts (the loop claims and renews it for this long). */
 export const EVER_WORKS_SYNC_LEASE_MS = 5 * 60_000;
-/** Lease a check outside a transaction needs left, so the lease cannot be claimed before the write that follows it. */
-export const LEASE_FENCE_MARGIN_MS = 30_000;
+/**
+ * Lease a check outside a transaction needs left, so the lease cannot be claimed before the write that
+ * follows it on the same connection (a claim needs the lease to have run out). While a unit keeps writing,
+ * the background renewal keeps about four minutes left, so the margin never refuses a unit that holds it.
+ */
+export const LEASE_FENCE_MARGIN_MS = 60_000;
 /** While a fenced unit keeps writing, its lease is renewed in the background this often. */
 export const LEASE_FENCE_RENEW_MS = 60_000;
 

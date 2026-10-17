@@ -190,7 +190,7 @@ and answered `202`.
   platform's services and commands included), the plugin's ORM subscriber
   checks that this process still holds the lease. Inside a transaction it
   reads the lease row in that transaction with a share lock, so a claim
-  cannot commit before the write; outside one it needs 30 seconds of lease
+  cannot commit before the write; outside one it needs a minute of lease
   left. A handler that outlived its lease therefore writes nothing once
   another process holds it: the write is refused (rolled back), the rest of
   that handler's writes too, and the event or change is left to the new
