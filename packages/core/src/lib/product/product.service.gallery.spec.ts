@@ -1,6 +1,5 @@
 import '../core/entities/internal';
 
-import { BadRequestException } from '@nestjs/common';
 import { ProductService } from './product.service';
 
 /**
@@ -27,15 +26,27 @@ describe('ProductService.deleteGalleryImage', () => {
 		expect(result.gallery).toEqual([{ id: 'image-2' }]);
 	});
 
-	it('refuses to remove an image a variant uses', async () => {
+	// The refusal itself, not any BadRequestException: the old check also ended in one, by throwing on
+	// the missing `image`
+	const refusedAsUsed = {
+		response: expect.objectContaining({ message: 'Image is used in product variants' })
+	};
+
+	it('refuses to remove an image a variant uses (relation and id loaded)', async () => {
 		await expect(
 			removeFrom([{ id: 'variant-1', image: { id: 'image-1' }, imageId: 'image-1' }], 'image-1')
-		).rejects.toBeInstanceOf(BadRequestException);
+		).rejects.toMatchObject(refusedAsUsed);
 	});
 
-	it('refuses it as well when only the image id of the variant is loaded', async () => {
-		await expect(removeFrom([{ id: 'variant-1', imageId: 'image-1' }], 'image-1')).rejects.toBeInstanceOf(
-			BadRequestException
+	it('refuses it when only the image id of the variant is loaded', async () => {
+		await expect(removeFrom([{ id: 'variant-1', imageId: 'image-1' }], 'image-1')).rejects.toMatchObject(
+			refusedAsUsed
+		);
+	});
+
+	it('refuses it when only the image relation of the variant is loaded', async () => {
+		await expect(removeFrom([{ id: 'variant-1', image: { id: 'image-1' } }], 'image-1')).rejects.toMatchObject(
+			refusedAsUsed
 		);
 	});
 });
