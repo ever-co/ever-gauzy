@@ -1,6 +1,13 @@
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
-import { PriceListStatus, PriceListType, PriceSource, PriceStatus } from '../pricing.types';
+import {
+	PriceBaseSource,
+	PriceComputeMode,
+	PriceListStatus,
+	PriceListType,
+	PriceSource,
+	PriceStatus
+} from '../pricing.types';
 import { ProductPriceService } from './product-price.service';
 
 /**
@@ -23,6 +30,7 @@ const ORG = '00000000-0000-4000-8000-000000000002';
 const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
 const VARIANT = '00000000-0000-4000-8000-000000000010';
 const SALE_LIST = '00000000-0000-4000-8000-000000000100';
+const DERIVED_LIST = '00000000-0000-4000-8000-000000000101';
 const AT = new Date('2026-01-15T12:00:00.000Z');
 
 interface IListRow {
@@ -44,8 +52,12 @@ interface IPriceRow {
 	variantId: string;
 	priceListId?: string;
 	currency: string;
-	amount: string;
+	amount: string | null;
 	status: PriceStatus;
+	computeMode?: PriceComputeMode;
+	percent?: string;
+	baseSource?: PriceBaseSource;
+	basePriceListId?: string;
 }
 
 const saleList = (overrides: Partial<IListRow> = {}): IListRow => ({
@@ -195,5 +207,32 @@ describe('ProductPriceService.resolvePrices — a deleted price list stops prici
 
 		expect(resolved.amount).toBe('19.990000');
 		expect(resolved.source).toBe(PriceSource.DEFAULT_PRICE);
+	});
+
+	it('eliminates a derived price whose base list was soft-deleted, with the notice that says why', async () => {
+		const derivedList = saleList({ id: DERIVED_LIST, code: 'DISTRIBUTOR', name: 'Distributor' });
+		const [resolved] = await serviceUnderTest(
+			[
+				priceRow({ id: 'p-default', amount: '19.990000' }),
+				// The base list's own row, and the derived list's row reading it.
+				priceRow({ id: 'p-base', amount: '18.000000', priceListId: SALE_LIST }),
+				priceRow({
+					id: 'p-derived',
+					amount: null,
+					priceListId: DERIVED_LIST,
+					computeMode: PriceComputeMode.PERCENT_OFF,
+					percent: '0.250000',
+					baseSource: PriceBaseSource.PRICE_LIST,
+					basePriceListId: SALE_LIST
+				})
+			],
+			[saleList({ deletedAt: new Date('2026-01-10T00:00:00.000Z') }), derivedList]
+		).resolvePrices({ variantIds: [VARIANT], currency: 'USD', date: AT });
+
+		// The derived list used to read the deleted list's 18.00 as its base and undercut the default.
+		expect(resolved.priceId).toBe('p-default');
+		expect(resolved.amount).toBe('19.990000');
+		expect(resolved.source).toBe(PriceSource.DEFAULT_PRICE);
+		expect(resolved.notices?.some((notice) => notice.startsWith('PRICE_BASE_UNRESOLVED'))).toBe(true);
 	});
 });
