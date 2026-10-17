@@ -138,6 +138,27 @@ The writer (`create`, `upsertExternal`), the recipient model and the
 source-handler registry are the stable surface other plugins build on (the Ever
 Works integration, the P4 inbound-email pipeline): change them additively.
 
+## Real time (`inbox_item.created`, G-P3-6)
+
+When an item is created for at least one user, the plugin appends
+`inbox_item.created` to the platform outbox and declares it with the
+subscription catalogue (`InboxRealtime`). The payload is the item's `id`,
+`kind`, `source`, `status`, `priority`, `organizationId`, `mailboxId` and
+`recipientUserIds` — never its title, body or answer, because the outbox row
+is also listed by `GET /events/outbox` and can reach a tenant's webhooks. A
+client that hears about an item reads it through `GET /api/inbox/items/:id`.
+
+The event is **addressed**: the kernel delivers an event whose payload names
+`recipientUserIds` only to subscriptions of those users (`Subscription.events`
+and every tenant-topic stream), never to another user of the tenant who holds
+the stream's permission. Subscribe with
+`subscription { events(names: ["inbox_item.created"]) { eventId data } }`
+(`EVENT_OUTBOX_VIEW`). A typed field for holders of `INBOX_VIEW` is a follow-up:
+the schema snapshot and its gates are composed with the flag off. The header
+badge keeps its 60-second count poll. Nothing here can fail an Inbox write: a
+failed append is logged, and a process without an outbox or a subscription
+surface (the worker) skips it.
+
 ## Tests
 
 ```sh

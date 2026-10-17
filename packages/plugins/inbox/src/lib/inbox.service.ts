@@ -7,6 +7,7 @@ import {
 	Injectable,
 	Logger,
 	NotFoundException,
+	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { Brackets, DataSource, In, SelectQueryBuilder } from 'typeorm';
@@ -38,6 +39,7 @@ import { RequestContext } from '@gauzy/core';
 import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
+import { InboxRealtime } from './realtime/inbox-realtime';
 
 /** A recipient row's own state change (the columns are nullable; the base entity types them optional). */
 type RecipientChange = {
@@ -135,7 +137,9 @@ export class InboxService implements IInboxItemWriter {
 
 	constructor(
 		private readonly dataSource: DataSource,
-		private readonly registry: InboxSourceHandlerRegistry
+		private readonly registry: InboxSourceHandlerRegistry,
+		/** Streams `inbox_item.created` to the recipients (G-P3-6); absent in bare test wiring. */
+		@Optional() private readonly realtime?: InboxRealtime
 	) {}
 
 	// ---------------------------------------------------------------- reads
@@ -429,6 +433,8 @@ export class InboxService implements IInboxItemWriter {
 
 		const { recipientUserIds, skippedUserIds } = await this.writeRecipients(item, input.recipients ?? []);
 		const stored = (await repository.findOne({ where: { id: item.id } })) as InboxItem;
+		// A new item is announced to its recipients' subscriptions (never fails the write).
+		if (created) await this.realtime?.itemCreated(stored, recipientUserIds);
 		return { item: toInboxItem(stored), created, recipientUserIds, skippedUserIds };
 	}
 
