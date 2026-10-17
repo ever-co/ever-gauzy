@@ -83,3 +83,32 @@ describe('Settings → Features labels for the commerce catalogue', () => {
 		expect(missing).toEqual([]);
 	});
 });
+
+/**
+ * Q8c: an empty string is a translation as far as ngx-translate is concerned — it shadows the English fallback — so a
+ * feature card, description or sub-feature row whose label is `""` renders with no text at all. pt.json carried one
+ * (`SETTINGS_FEATURES_TEXT.EMAIL_HISTORY.CUSTOM_EMAIL_TEMPLATE`). The `"": ""` members are the files' placeholders for
+ * a feature without sub-features and are not labels.
+ */
+describe('Settings → Features labels are never empty', () => {
+	const languages = loadLanguages();
+	const NAMESPACES = ['SETTINGS_FEATURES', 'SETTINGS_FEATURES_DESCRIPTION', 'SETTINGS_FEATURES_TEXT'];
+
+	function emptyLabels(node: unknown, path: string): string[] {
+		if (typeof node === 'string') {
+			return node.trim().length === 0 ? [path] : [];
+		}
+		if (!node || typeof node !== 'object') {
+			return [];
+		}
+		return Object.entries(node as Record<string, unknown>)
+			.filter(([key]) => key !== '')
+			.flatMap(([key, value]) => emptyLabels(value, `${path}.${key}`));
+	}
+
+	it.each([...languages.keys()])('%s.json holds no empty feature label', (language) => {
+		const dictionary = languages.get(language) ?? {};
+		const empty = NAMESPACES.flatMap((namespace) => emptyLabels(dictionary[namespace], namespace));
+		expect(empty).toEqual([]);
+	});
+});

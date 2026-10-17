@@ -192,6 +192,8 @@ function searchFixture(
 		version?: number;
 		mapPivot?: boolean;
 		declaration?: ISearchIndexRegistration;
+		/** The persisted definitions: the shipped row (no organization) and the organizations' own copies. */
+		definitions?: Row[];
 	} = {}
 ) {
 	let sequence = 0;
@@ -299,10 +301,14 @@ function searchFixture(
 		// The persisted half of a declaration carries the engine an installation chose *and* the version
 		// an operator's edits have reached, and the live path needs both: the engine selects the provider
 		// and the version is what the document is stamped with.
-		findOne: async () =>
-			seed.engineKey || seed.version
-				? { entity: 'product_variant', engineKey: seed.engineKey ?? null, version: seed.version ?? 1 }
-				: null
+		findOne: async ({ where }: any = {}) =>
+			seed.definitions
+				? (seed.definitions.find((row) => matches(row, where)) ?? null)
+				: seed.engineKey || seed.version
+					? { entity: 'product_variant', engineKey: seed.engineKey ?? null, version: seed.version ?? 1 }
+					: null,
+		// The organizations' own copies, read for the organizations a batch of rows belongs to (Q16).
+		find: async ({ where }: any = {}) => (seed.definitions ?? []).filter((row) => matches(row, where))
 	};
 
 	const indexRegistry = new SearchIndexRegistry(dataSource);
@@ -315,6 +321,7 @@ function searchFixture(
 
 	return {
 		indexer,
+		definitionRepository,
 		registry: indexRegistry,
 		providerRegistry,
 		dataSource,
@@ -762,5 +769,145 @@ describe('SearchIndexerService — a declaration with a row rule (review R7-05)'
 		const outcome = await fixture.indexer.index('product_variant', { tenantId: TENANT, organizationId: ORG });
 
 		expect(outcome).toMatchObject({ indexed: 2, removed: 0 });
+	});
+});
+
+/**
+ * Q16 (1): the live path read only the shipped definition row and never its switch, so an organization that had
+ * switched the entity off on its own copy (SEC-B-04) was re-indexed by its next ordinary update — the documents the
+ * switch had dropped came back. Each row is now written under its own organization's definition.
+ */
+describe('SearchIndexerService — the definition in force for the event’s organization (Q16)', () => {
+	const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
+	const shipped = (overrides: Row = {}): Row => ({
+		entity: 'product_variant',
+		version: 5,
+		isActive: true,
+		tenantId: null,
+		organizationId: null,
+		...overrides
+	});
+	const ownCopy = (overrides: Row = {}): Row => ({
+		entity: 'product_variant',
+		version: 7,
+		isActive: true,
+		tenantId: TENANT,
+		organizationId: ORG,
+		...overrides
+	});
+	const updated = (id: string, organizationId: string) =>
+		({
+			name: 'product_variant.updated',
+			aggregate: { type: 'ProductVariant', id },
+			tenantId: TENANT,
+			organizationId
+		}) as never;
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('does not re-index a row of an organization that switched the entity off, and removes its document', async () => {
+		const copy = ownCopy();
+		const fixture = searchFixture({ definitions: [shipped(), copy] });
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+		expect(fixture.documents()).toHaveLength(1);
+
+		copy.isActive = false;
+
+		const outcome = await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(outcome).toMatchObject({ indexed: 0, removed: 1 });
+		expect(fixture.documents()).toEqual([]);
+	});
+
+	it('CONTROL: a row of another organization, still on the shipped definition, is indexed', async () => {
+		const fixture = searchFixture({
+			rows: [sourceRow('v1'), sourceRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped(), ownCopy({ isActive: false })]
+		});
+
+		const outcome = await fixture.indexer.handleEvent(updated('v2', OTHER_ORG));
+
+		expect(outcome).toMatchObject({ indexed: 1, removed: 0 });
+		expect(fixture.documents().map((document) => [document.entityId, document.definitionVersion])).toEqual([
+			['v2', 5]
+		]);
+	});
+
+	it('stamps the organization’s own copy’s version rather than the shipped one', async () => {
+		const fixture = searchFixture({ definitions: [shipped(), ownCopy()] });
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(fixture.documents()[0].definitionVersion).toBe(7);
+	});
+
+	it('does not index an entity whose shipped definition is off, unless the organization’s own copy is on', async () => {
+		const fixture = searchFixture({
+			rows: [sourceRow('v1'), sourceRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped({ isActive: false }), ownCopy()]
+		});
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+		await fixture.indexer.handleEvent(updated('v2', OTHER_ORG));
+
+		expect(fixture.documents().map((document) => document.entityId)).toEqual(['v1']);
+	});
+
+	it('writes a tenant-wide batch row by row, each under its own organization’s definition', async () => {
+		const fixture = searchFixture({
+			rows: [sourceRow('v1'), sourceRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped(), ownCopy()]
+		});
+
+		const outcome = await fixture.indexer.index('product_variant', { definitionVersion: 5 });
+
+		expect(outcome).toMatchObject({ indexed: 2, read: 2 });
+		expect(
+			fixture
+				.documents()
+				.map((document) => [document.entityId, document.definitionVersion])
+				.sort()
+		).toEqual([
+			['v1', 7],
+			['v2', 5]
+		]);
+	});
+
+	it('does not take a tenant’s own row with no organization for the shipped definition (CodeRabbit)', async () => {
+		const fixture = searchFixture({
+			// Listed first, so a lookup that does not exclude it would take it.
+			definitions: [shipped({ tenantId: 'another-tenant', isActive: false, version: 9 }), shipped()]
+		});
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(fixture.documents().map((document) => document.definitionVersion)).toEqual([5]);
+	});
+
+	it('fails the run when the organizations’ copies cannot be read, rather than index under the shipped row', async () => {
+		const fixture = searchFixture({ definitions: [shipped(), ownCopy({ isActive: false })] });
+
+		fixture.definitionRepository.find = async () => {
+			throw new Error('the definition table is unreachable');
+		};
+
+		await expect(fixture.indexer.handleEvent(updated('v1', ORG))).rejects.toThrow(/unreachable/);
+		expect(fixture.documents()).toEqual([]);
+	});
+
+	it('ignores a copy that belongs to another tenant', async () => {
+		const fixture = searchFixture({
+			definitions: [shipped(), ownCopy({ tenantId: 'another-tenant', isActive: false })]
+		});
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(fixture.documents().map((document) => document.definitionVersion)).toEqual([5]);
 	});
 });

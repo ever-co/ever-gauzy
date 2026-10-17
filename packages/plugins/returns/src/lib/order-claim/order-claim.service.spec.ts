@@ -1001,8 +1001,10 @@ describe('OrderClaimService — a refund claim settles once (review R3-09, the c
 		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.APPROVED });
 		expect(warn).toHaveBeenCalledWith(expect.stringContaining('CLAIM_REFUND_OUTCOME_UNKNOWN'));
 
-		// A second approval is refused rather than paying the claim back again; cancel, reject or close finish it.
-		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/cannot approve/);
+		// A second approval does not pay the claim back again. Without a gateway that can look the refund up by its
+		// key it is refused, and cancel, reject or close finish the claim; with one it resumes (review R3-09r2).
+		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/CLAIM_REFUND_RESUME_UNAVAILABLE/);
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.APPROVED });
 	});
 
 	it('refuses a caller who may not settle a refund before the claim moves', async () => {
@@ -1015,5 +1017,130 @@ describe('OrderClaimService — a refund claim settles once (review R3-09, the c
 		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toBeInstanceOf(ForbiddenException);
 		expect(fixture.refundCalls).toEqual([]);
 		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.OPEN });
+	});
+});
+
+describe('OrderClaimService — a claim left in flight is resumed on the refund its key produced (review R3-09r2)', () => {
+	const line = { id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE };
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** A REFUND claim an earlier approval decided and left in flight, under a decision key. */
+	const inFlight = () =>
+		claimFixture({
+			lines: [line],
+			claims: [
+				claimRow('claim-1', {
+					status: OrderClaimStatus.APPROVED,
+					refundAmount: '25.000000',
+					metadata: { refundDecisionKey: 'decision-1', refundDecidedFrom: OrderClaimStatus.OPEN }
+				})
+			]
+		});
+
+	it('takes the decision under a key and asks for the refund under it', async () => {
+		const fixture = claimFixture({ lines: [line] });
+
+		await fixture.service.approve('claim-1', '25.00');
+
+		const key = (fixture.claim('claim-1') as Row).metadata?.refundDecisionKey;
+
+		expect(key).toEqual(expect.any(String));
+		expect((fixture.claim('claim-1') as Row).metadata?.refundDecidedFrom).toBe(OrderClaimStatus.OPEN);
+		expect(fixture.refundCalls[0]).toMatchObject({ claimId: 'claim-1', idempotencyKey: key });
+	});
+
+	it('closes on the refund the key already produced, and pays nothing again', async () => {
+		const fixture = inFlight();
+		const lookups: Row[] = [];
+
+		(fixture.service as any).refundGateway.findRefund = async (query: Row) => {
+			lookups.push(query);
+
+			return { refundId: 'refund-earlier', amount: '25.000000', currency: 'USD', status: 'SUCCEEDED' };
+		};
+
+		const outcome = await fixture.service.approve('claim-1');
+
+		// The failure scenario: the claim was stuck APPROVED, or a second approval paid it back again.
+		expect(fixture.refundCalls).toEqual([]);
+		expect(lookups).toEqual([{ orderId: ORDER, claimId: 'claim-1', idempotencyKey: 'decision-1' }]);
+		expect(outcome.refund).toMatchObject({ refundId: 'refund-earlier' });
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.CLOSED, refundAmount: '25.000000' });
+	});
+
+	it('asks for the refund again under the same key when the key produced none', async () => {
+		const fixture = inFlight();
+
+		(fixture.service as any).refundGateway.findRefund = async () => null;
+
+		await fixture.service.approve('claim-1');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.refundCalls[0]).toMatchObject({
+			claimId: 'claim-1',
+			idempotencyKey: 'decision-1',
+			amount: '25.000000'
+		});
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.CLOSED });
+	});
+
+	it('leaves the claim in flight when its resumed refund is refused, so no new decision can pay beside the first', async () => {
+		// Greptile, #10906: the approval that took the decision may still be paying; releasing on a resume's refusal
+		// reopened the claim, and a new approval could take a new key and pay a second refund.
+		const fixture = inFlight();
+		const gateway = (fixture.service as any).refundGateway;
+		const warn = jest.spyOn((fixture.service as any).logger, 'warn').mockImplementation(() => undefined);
+
+		gateway.findRefund = async () => null;
+		gateway.createRefund = async () => {
+			throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
+		};
+
+		await expect(fixture.service.approve('claim-1')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.APPROVED });
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('CLAIM_REFUND_RESUME_REFUSED'));
+	});
+
+	it('settles a refund the key left pending for its own amount, when the claim states none', async () => {
+		// Greptile, #10906: the claim may carry no amount of its own; the pending refund's amount is the one owed.
+		const fixture = claimFixture({
+			lines: [line],
+			claims: [
+				claimRow('claim-1', {
+					status: OrderClaimStatus.APPROVED,
+					metadata: { refundDecisionKey: 'decision-1', refundDecidedFrom: OrderClaimStatus.OPEN }
+				})
+			]
+		});
+
+		(fixture.service as any).refundGateway.findRefund = async () => ({
+			refundId: 'refund-pending',
+			amount: '25.000000',
+			currency: 'USD',
+			status: 'PENDING'
+		});
+
+		await fixture.service.approve('claim-1');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.refundCalls[0]).toMatchObject({ amount: '25.000000', idempotencyKey: 'decision-1' });
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.CLOSED, refundAmount: '25.000000' });
+	});
+
+	it('still refuses to approve an approved claim that carries no decision key', async () => {
+		// A replacement claim waiting for its shipment, or a refund claim approved before decisions carried a key.
+		const fixture = claimFixture({
+			lines: [line],
+			claims: [claimRow('claim-1', { status: OrderClaimStatus.APPROVED })]
+		});
+
+		await expect(fixture.service.approve('claim-1', '25.00')).rejects.toThrow(/cannot approve/);
+		expect(fixture.refundCalls).toEqual([]);
 	});
 });

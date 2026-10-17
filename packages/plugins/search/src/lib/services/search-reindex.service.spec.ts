@@ -133,6 +133,12 @@ function matches(row: Row, where: any = {}): boolean {
 					// The sweeps page by a cursor on the row's own id rather than by an offset, because the
 					// set an offset counts into is the set they are shrinking.
 					return row[field] !== undefined && String(row[field]) > String(operator._value);
+				case 'not':
+					// `NOT IN` never matches a NULL, as in SQL: the drop that keeps some organizations states
+					// the unowned documents in a statement of their own.
+					return (
+						row[field] !== null && row[field] !== undefined && !matches(row, { [field]: operator._value })
+					);
 				default:
 					throw new Error(`the in-memory double does not implement the "${operator._type}" operator`);
 			}
@@ -268,6 +274,47 @@ function reindexFixture(
 	const documentRepository: any = {
 		manager: { connection: { options: { type: 'better-sqlite3' } } },
 		create: () => ({}),
+		// The stale count's one grouped read: live documents of an entity behind a version, per organization and
+		// version (the builder states exactly these predicates).
+		createQueryBuilder: () => {
+			const params: Row = {};
+			const builder: any = {
+				select: () => builder,
+				addSelect: () => builder,
+				where: (_sql: string, values: Row = {}) => (Object.assign(params, values), builder),
+				andWhere: (_sql: string, values: Row = {}) => (Object.assign(params, values), builder),
+				groupBy: () => builder,
+				addGroupBy: () => builder,
+				getRawMany: async () => {
+					const groups = new Map<string, Row>();
+
+					for (const row of tables.search_document) {
+						if (
+							row.deletedAt ||
+							row.entity !== params.entity ||
+							!(Number(row.definitionVersion) < Number(params.ceiling)) ||
+							(params.tenantId && row.tenantId !== params.tenantId)
+						) {
+							continue;
+						}
+
+						const key = `${row.organizationId ?? ''}|${row.definitionVersion}`;
+						const group = groups.get(key) ?? {
+							organizationId: row.organizationId ?? null,
+							definitionVersion: row.definitionVersion,
+							count: 0
+						};
+
+						group.count += 1;
+						groups.set(key, group);
+					}
+
+					return [...groups.values()];
+				}
+			};
+
+			return builder;
+		},
 		find: async ({ where, withDeleted, order, skip, take }: any = {}) => {
 			let found = tables.search_document.filter((row) => (withDeleted || !row.deletedAt) && matches(row, where));
 
@@ -340,8 +387,26 @@ function reindexFixture(
 
 	const provider = new DatabaseSearchProvider(documentRepository, indexRegistry);
 	const providerRegistry = new SearchProviderRegistry(provider);
-	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
+	// The indexer reads the persisted definitions itself: the shipped row for the engine and the switch, and the
+	// organizations' own copies for the rows of a batch (Q16).
+	const definitionRepository = {
+		findOne: async ({ where }: any = {}) =>
+			(seed.definitions ?? []).find((row) => row.entity === where?.entity && !row.organizationId) ?? null,
+		find: async ({ where }: any = {}) => (seed.definitions ?? []).filter((row) => matches(row, where))
+	};
+	const indexer = new SearchIndexerService(
+		new SearchSourceConnection(dataSource),
+		indexRegistry,
+		providerRegistry,
+		definitionRepository as never
+	);
 	const definitionService = {
+		platformDefinitionOf: async (entity: string) =>
+			(seed.definitions ?? []).find((row) => row.entity === entity && !row.organizationId) ?? null,
+		organizationCopies: async (entity: string, tenantId?: string | null) =>
+			(seed.definitions ?? []).filter(
+				(row) => row.entity === entity && !!row.organizationId && (!tenantId || row.tenantId === tenantId)
+			),
 		// The caller's organization's own row wins and the platform row is the fallback, as `findFor` resolves them.
 		findFor: async (entity: string) => {
 			const rows = (seed.definitions ?? []).filter((row) => row.entity === entity);
@@ -819,7 +884,9 @@ describe('SearchReindexService — an organization’s own definition switched o
 			entity: 'product_variant'
 		} as never);
 
-		expect(runs[0]).toMatchObject({ indexed: 0, removed: 1 });
+		// The sweep is the tenant's (Q16): OTHER_ORG's row is rebuilt under the shipped definition it is on, and ORG's
+		// is removed rather than written.
+		expect(runs[0]).toMatchObject({ indexed: 1, removed: 1 });
 		expect(variants().map((document) => [document.entityId, document.organizationId])).toEqual([['v2', OTHER_ORG]]);
 	});
 
@@ -878,12 +945,221 @@ describe('SearchReindexService — an organization’s own definition switched o
 			entity: 'product_variant'
 		} as never);
 
-		expect(runs[0]).toMatchObject({ removed: 1 });
+		// ORG's row is never written (Q16), so there is nothing of it to drop afterwards.
+		expect(runs[0]).toMatchObject({ indexed: 1, removed: 0 });
 		expect(
 			fixture
 				.documents()
 				.filter((document) => document.entity === 'product_variant')
 				.map((document) => [document.entityId, document.organizationId])
 		).toEqual([['v2', OTHER_ORG]]);
+	});
+});
+
+/**
+ * Q16 (2) and (3): a sweep reads every organization's rows of the tenant, and used to resolve ONE definition for all of
+ * them — the copy of whichever organization the operator had selected, else the shipped row. Every organization's
+ * documents were stamped with that one version, and a shipped definition switched off dropped the whole tenant's
+ * documents, including those of an organization whose own copy is on.
+ */
+describe('SearchReindexService — a sweep partitioned by organization (Q16)', () => {
+	const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
+	const shipped = (overrides: Row = {}): Row => ({
+		entity: 'product_variant',
+		version: 2,
+		isActive: true,
+		tenantId: null,
+		organizationId: null,
+		...overrides
+	});
+	const ownCopy = (overrides: Row = {}): Row => ({
+		entity: 'product_variant',
+		version: 6,
+		isActive: true,
+		tenantId: TENANT,
+		organizationId: ORG,
+		...overrides
+	});
+	const versions = (fixture: ReturnType<typeof reindexFixture>) =>
+		fixture
+			.documents()
+			.filter((document) => document.entity === 'product_variant')
+			.map((document) => [document.entityId, document.organizationId, document.definitionVersion])
+			.sort();
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps each organization’s documents with its own definition’s version', async () => {
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped(), ownCopy()]
+		});
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ indexed: 2, stale: 0 });
+		expect(versions(fixture)).toEqual([
+			['v1', ORG, 6],
+			['v2', OTHER_ORG, 2]
+		]);
+	});
+
+	it('gives the same versions when the operator has another organization selected', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
+
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped(), ownCopy()]
+		});
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		expect(versions(fixture)).toEqual([
+			['v1', ORG, 6],
+			['v2', OTHER_ORG, 2]
+		]);
+	});
+
+	it('counts an organization’s documents as stale against its own copy’s version', async () => {
+		const fixture = reindexFixture({
+			variants: [],
+			definitions: [shipped(), ownCopy()],
+			documents: [
+				// ORG's copy is at 6, so a document of ORG built at 3 is stale; OTHER_ORG's at 2 is current.
+				{
+					id: 'd-1',
+					entity: 'product_variant',
+					entityId: 'gone-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					definitionVersion: 3
+				},
+				{
+					id: 'd-2',
+					entity: 'product_variant',
+					entityId: 'gone-2',
+					tenantId: TENANT,
+					organizationId: OTHER_ORG,
+					definitionVersion: 2
+				}
+			]
+		});
+		const stale = await (fixture.service as any).staleCount('product_variant', 2, [ownCopy()]);
+
+		expect(stale).toBe(1);
+	});
+
+	it('keeps an organization’s documents when the shipped definition is off but its own copy is on', async () => {
+		const definitions = [shipped(), ownCopy()];
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions
+		});
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+		expect(versions(fixture)).toHaveLength(2);
+
+		definitions[0].isActive = false;
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ removed: 1, stale: 0 });
+		expect(versions(fixture)).toEqual([['v1', ORG, 6]]);
+	});
+
+	it('drops the documents that carry no organization when the shipped definition is off', async () => {
+		const fixture = reindexFixture({
+			variants: [variantRow('v1')],
+			definitions: [shipped({ isActive: false }), ownCopy()],
+			documents: [
+				{
+					id: 'd-unowned',
+					entity: 'product_variant',
+					entityId: 'x',
+					tenantId: TENANT,
+					organizationId: null,
+					definitionVersion: 2
+				},
+				{
+					id: 'd-other',
+					entity: 'product_variant',
+					entityId: 'y',
+					tenantId: TENANT,
+					organizationId: OTHER_ORG,
+					definitionVersion: 2
+				}
+			]
+		});
+
+		await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+		expect(versions(fixture)).toEqual([['v1', ORG, 6]]);
+	});
+
+	it('CONTROL: a shipped definition that is off, with no organization’s copy on, still drops the whole tenant', async () => {
+		const fixture = reindexFixture({
+			variants: [variantRow('v1'), variantRow('v2', { organizationId: OTHER_ORG })],
+			definitions: [shipped({ isActive: false }), ownCopy({ isActive: false })]
+		});
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0]).toMatchObject({ indexed: 0, batches: 0 });
+		expect(versions(fixture)).toEqual([]);
+	});
+
+	it('removes only the caller’s tenant’s documents for ids an id-scoped run cannot read (CodeRabbit)', async () => {
+		const foreign = {
+			id: 'd-foreign',
+			entity: 'product_variant',
+			entityId: 'x-1',
+			tenantId: 'another-tenant',
+			organizationId: 'another-org',
+			definitionVersion: 1
+		};
+
+		for (const definitions of [[shipped({ isActive: false }), ownCopy()], [shipped(), ownCopy()]]) {
+			const fixture = reindexFixture({ variants: [variantRow('v1')], definitions, documents: [{ ...foreign }] });
+
+			await fixture.service.run({
+				scope: SearchReindexScope.ENTITY,
+				entity: 'product_variant',
+				ids: ['x-1']
+			} as never);
+
+			expect(fixture.documents().map((document) => document.id)).toEqual(['d-foreign']);
+		}
+	});
+
+	it('reads past a page full of rows of an organization that switched the entity off', async () => {
+		await withBatchSize(2, async () => {
+			const fixture = reindexFixture({
+				variants: [
+					variantRow('v1'),
+					variantRow('v2'),
+					variantRow('v3', { organizationId: OTHER_ORG }),
+					variantRow('v4', { organizationId: OTHER_ORG })
+				],
+				definitions: [shipped(), ownCopy({ isActive: false })]
+			});
+
+			await fixture.service.run({ scope: SearchReindexScope.ENTITY, entity: 'product_variant' } as never);
+
+			expect(versions(fixture).map(([id]) => id)).toEqual(['v3', 'v4']);
+		});
 	});
 });

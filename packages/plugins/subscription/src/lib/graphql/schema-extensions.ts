@@ -584,6 +584,8 @@ export const schemaExtensions = gql`
 		resumeSubscription(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 		"Ends a subscription."
 		cancelSubscription(id: ID!, input: CancelSubscriptionInput): CustomerSubscriptionPayload!
+		"Withdraws a cancellation at the end of the period, so the subscription keeps billing."
+		undoSubscriptionCancellation(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 		"Ends a subscription because it ran out."
 		expireSubscription(id: ID!, input: ExpireSubscriptionInput): CustomerSubscriptionPayload!
 		"Moves a subscription to another plan, settling the remainder of the current period."
@@ -656,7 +658,7 @@ export const schemaExtensions = gql`
 	extend type Subscription {
 		"""
 		Every lifecycle move of a customer's subscription of the caller's tenant — created, activated, paused, resumed,
-		canceled, expired, renewed, or a cycle's payment failed — with the subscription as \`subscription(id:)\` reads it
+		canceled, its cancellation undone, expired, renewed, or a cycle's payment failed — with the subscription as \`subscription(id:)\` reads it
 		when the move is delivered, not a snapshot of the move: a move made since may already show in it. Narrowed by \`subscriptionId\`, by the customer, and by \`action\` (the move:
 		\`activated\`, \`payment-failed\`, …); each only narrows what the credential may read. Follows the
 		\`subscription.*\` facts the subscription service appends to the outbox. The field is not \`subscriptionChanged\`

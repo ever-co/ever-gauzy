@@ -40,6 +40,12 @@ export class CampaignBudgetController extends CrudController<CampaignBudget> {
 	/**
 	 * Creates the budget of a campaign.
 	 *
+	 * The body goes through `setBudget`, the write `PUT /campaigns/:id/budget` and `updateCampaignBudget` make (review
+	 * R2-G28): the campaign must be the caller's, the shape is checked against the type, the tenant and organization
+	 * are the caller's (the inherited create stamped neither), the consumption starts at zero (`used` other than that
+	 * is refused), and a campaign that already carries its one ceiling (`UQ_campaign_budget`) has it moved instead of
+	 * failing on the constraint.
+	 *
 	 * @param entity The ceiling to store.
 	 * @returns The stored budget.
 	 */
@@ -50,11 +56,14 @@ export class CampaignBudgetController extends CrudController<CampaignBudget> {
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateCampaignBudgetDTO): Promise<CampaignBudget> {
-		return this.campaignBudgetService.create(entity as never);
+		return this.campaignBudgetService.setBudget(entity.campaignId, entity as never) as Promise<CampaignBudget>;
 	}
 
 	/**
 	 * Changes a budget's ceiling or currency. The consumption already recorded is left alone.
+	 *
+	 * `campaignId` and `used` are not written from the body (refused with `CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE` when they
+	 * would change), the budget must be the caller's, and the shape the change leaves is checked (review R2-G28).
 	 *
 	 * @param id The budget to change.
 	 * @param entity The fields to change.
@@ -67,7 +76,7 @@ export class CampaignBudgetController extends CrudController<CampaignBudget> {
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateCampaignBudgetDTO) {
-		return this.campaignBudgetService.update(id, entity as never);
+		return this.campaignBudgetService.updateBudget(id, entity as never);
 	}
 
 	/**
