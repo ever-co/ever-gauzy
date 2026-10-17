@@ -1,5 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommerceCartStatus, CommerceCheckoutSessionStatus } from '@gauzy/contracts';
+import { ApiErrorCode, ApiException } from '@gauzy/core';
 
 /**
  * The state filters the cart schema accepts, read into the enumerations the columns carry.
@@ -39,25 +39,36 @@ export const CHECKOUT_STEP_MAX_LENGTH = 64;
  * database error), and a step past 64 characters was a database error — a 500 for what the REST body
  * (`@IsEnum`, `@MaxLength(64)`) answers with a 400. An omitted member is not checked.
  *
+ * The refusals are `ApiException`s with catalogued codes — `VALIDATION_INVALID_ENUM` for the status,
+ * `VALIDATION_FAILED` for the step — so the GraphQL error filter carries the code and the details to the
+ * client (Greptile, #10905); the specific reason is `details.reason`.
+ *
  * @param input The members as the input carried them.
- * @throws BadRequestException `CHECKOUT_SESSION_STATUS_INVALID` or `CHECKOUT_STEP_INVALID`.
+ * @throws ApiException `400`, reason `CHECKOUT_SESSION_STATUS_INVALID` or `CHECKOUT_STEP_INVALID`.
  */
 export function assertCheckoutSessionMembers(input: { status?: unknown; step?: unknown } | null | undefined): void {
 	const { status, step } = input ?? {};
 
 	if (status !== undefined && status !== null && !isCheckoutSessionStatus(status)) {
-		throw new BadRequestException({
-			message: `CHECKOUT_SESSION_STATUS_INVALID: status "${String(status)}" is not one of: ${CHECKOUT_SESSION_STATUSES.join(', ')}.`,
-			code: 'CHECKOUT_SESSION_STATUS_INVALID',
-			details: { field: 'status', value: status, allowed: CHECKOUT_SESSION_STATUSES }
-		});
+		throw new ApiException(
+			400,
+			ApiErrorCode.VALIDATION_INVALID_ENUM,
+			`CHECKOUT_SESSION_STATUS_INVALID: status "${String(status)}" is not one of: ${CHECKOUT_SESSION_STATUSES.join(', ')}.`,
+			{
+				field: 'status',
+				value: status,
+				allowed: CHECKOUT_SESSION_STATUSES,
+				reason: 'CHECKOUT_SESSION_STATUS_INVALID'
+			}
+		);
 	}
 
 	if (step !== undefined && step !== null && (typeof step !== 'string' || step.length > CHECKOUT_STEP_MAX_LENGTH)) {
-		throw new BadRequestException({
-			message: `CHECKOUT_STEP_INVALID: a step is a string of at most ${CHECKOUT_STEP_MAX_LENGTH} characters.`,
-			code: 'CHECKOUT_STEP_INVALID',
-			details: { field: 'step', maxLength: CHECKOUT_STEP_MAX_LENGTH }
-		});
+		throw new ApiException(
+			400,
+			ApiErrorCode.VALIDATION_FAILED,
+			`CHECKOUT_STEP_INVALID: a step is a string of at most ${CHECKOUT_STEP_MAX_LENGTH} characters.`,
+			{ field: 'step', maxLength: CHECKOUT_STEP_MAX_LENGTH, reason: 'CHECKOUT_STEP_INVALID' }
+		);
 	}
 }

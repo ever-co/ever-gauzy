@@ -101,6 +101,8 @@ jest.mock('@gauzy/core', () => {
 		},
 		AdjustmentService: class {},
 		TaxLineService: class {},
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		SequenceService: class {}
 	};
 });
@@ -127,7 +129,11 @@ describe('R2-G24 — the change inputs are refused outside their enumeration', (
 
 		await expect(
 			resolverWith(changeService, {}).updateOrderChange('change-1', { changeType: 'NOPE' }, 2, REQUEST)
-		).rejects.toMatchObject({ status: 400, response: { code: 'ORDER_CHANGE_TYPE_INVALID' } });
+		).rejects.toMatchObject({
+			status: 400,
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { reason: 'ORDER_CHANGE_TYPE_INVALID' }
+		});
 		expect(changeService.commitChange).not.toHaveBeenCalled();
 	});
 
@@ -148,7 +154,8 @@ describe('R2-G24 — the change inputs are refused outside their enumeration', (
 			resolverWith({}, actionService).updateOrderChangeAction('action-1', { action: 'ITEM_TELEPORT' })
 		).rejects.toMatchObject({
 			status: 400,
-			response: { code: 'ORDER_CHANGE_ACTION_INVALID', details: { field: 'action', value: 'ITEM_TELEPORT' } }
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { field: 'action', value: 'ITEM_TELEPORT', reason: 'ORDER_CHANGE_ACTION_INVALID' }
 		});
 		expect(actionService.update).not.toHaveBeenCalled();
 	});

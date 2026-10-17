@@ -117,6 +117,8 @@ jest.mock('@gauzy/core', () => {
 		// The two decimal helpers the money DTOs reach: they are called inside a validator's `validate`,
 		// which nothing in this suite runs, so the double states the shape rather than the arithmetic.
 		normalizeDecimalString: (value: unknown) => String(value),
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		isValidDecimalString: () => true
 	};
 });
@@ -148,7 +150,8 @@ describe('R2-G24 — checkout-session members the columns cannot hold', () => {
 			resolver.updateCommerceCheckoutSession(ID, { status: 'PAID_IN_FULL_HONEST' })
 		).rejects.toMatchObject({
 			status: 400,
-			response: { code: 'CHECKOUT_SESSION_STATUS_INVALID', details: { field: 'status' } }
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { field: 'status', reason: 'CHECKOUT_SESSION_STATUS_INVALID' }
 		});
 		expect(session.update).not.toHaveBeenCalled();
 	});
@@ -162,7 +165,11 @@ describe('R2-G24 — checkout-session members the columns cannot hold', () => {
 			() => resolver.startCheckout({ cartId: ID, step: long }),
 			() => resolver.completeStepCommerceCheckoutSession(ID, long)
 		]) {
-			await expect(write()).rejects.toMatchObject({ status: 400, response: { code: 'CHECKOUT_STEP_INVALID' } });
+			await expect(write()).rejects.toMatchObject({
+				status: 400,
+				code: 'VALIDATION_FAILED',
+				details: { reason: 'CHECKOUT_STEP_INVALID' }
+			});
 		}
 
 		expect(session.update).not.toHaveBeenCalled();

@@ -1892,7 +1892,8 @@ describe('OrderChangeService — the kinds a change names (R2-G24)', () => {
 			} as never)
 		).rejects.toMatchObject({
 			status: 400,
-			response: { code: 'ORDER_CHANGE_TYPE_INVALID', details: { field: 'changeType' } }
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { field: 'changeType', reason: 'ORDER_CHANGE_TYPE_INVALID' }
 		});
 		expect(fixture.tables.order_change ?? []).toHaveLength(0);
 	});
@@ -1911,7 +1912,8 @@ describe('OrderChangeService — the kinds a change names (R2-G24)', () => {
 			} as never)
 		).rejects.toMatchObject({
 			status: 400,
-			response: { code: 'ORDER_CHANGE_ACTION_INVALID', details: { field: 'action', value: 'ITEM_TELEPORT' } }
+			code: 'VALIDATION_INVALID_ENUM',
+			details: { field: 'action', value: 'ITEM_TELEPORT', reason: 'ORDER_CHANGE_ACTION_INVALID' }
 		});
 		expect(fixture.tables.order_change ?? []).toHaveLength(0);
 		expect(fixture.tables.order_change_action ?? []).toHaveLength(0);
