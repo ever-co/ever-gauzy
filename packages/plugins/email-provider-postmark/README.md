@@ -1,4 +1,5 @@
 <!-- cspell:ignore DMARC -->
+
 # @gauzy/plugin-email-provider-postmark
 
 [Postmark](https://postmarkapp.com) as an email provider of the Gauzy Inbox: receive with a Postmark inbound stream and
@@ -26,7 +27,8 @@ where `GAUZY_INBOX_ENABLED=true` and `GAUZY_INBOX_EMAIL_ENABLED=true` too. No ta
   use in the Inbox pipeline. Serve the API over HTTPS: the credential travels in the request.
 - **Inbound.** The JSON fields (or `RawEmail`, parsed as MIME, when the stream includes it) become the Inbox message;
   `OriginalRecipient` is the envelope. Only verdicts Postmark adds are trusted (`Received-SPF`, `X-Spam-Score`); no
-  DKIM / DMARC verdict is taken from the message's own headers, so an allowlisted mailbox admits no Postmark mail.
+  DKIM / DMARC verdict is taken from the message's own headers, so in a mailbox with a sender allowlist the mail of an
+  allowlisted sender is held in the quarantine until a manager releases it.
 - **Outbound.** A nodemailer transport over `POST /email` (`X-Postmark-Server-Token`): addresses, subject, text,
   HTML, attachments, `Message-ID` / `In-Reply-To` / `References` headers, the message stream.
 
