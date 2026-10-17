@@ -1137,6 +1137,11 @@ describe('OrderService — the promotions a checkout redeems (Q7-W1c)', () => {
 
 				return 'usage-1';
 			}),
+			releaseForCart: jest.fn(async (cartId: string) => {
+				calls.push(`release:${cartId}`);
+
+				return 1;
+			}),
 			registerForOrder: jest.fn(async (orderId: string, cartId: string) => {
 				calls.push(`register:${orderId}:${cartId}`);
 
@@ -1181,6 +1186,8 @@ describe('OrderService — the promotions a checkout redeems (Q7-W1c)', () => {
 		expect(fixture.tables.order).toHaveLength(before);
 		expect(fixture.tables.order_line).toHaveLength(0);
 		expect(promotionUsage.registerForOrder).not.toHaveBeenCalled();
+		// What this attempt reserved before the refusal goes back with it.
+		expect(promotionUsage.calls).toEqual(['reserve:promotion-1', 'release:cart-1']);
 	});
 
 	it('records no redemption when the caller does not ask, as the subscription path does not', async () => {
@@ -1218,5 +1225,45 @@ describe('OrderService — the promotions a checkout redeems (Q7-W1c)', () => {
 		const cancelled = await fixture.service.cancel('order-1');
 
 		expect(cancelled.status).toBe(OrderStatus.CANCELED);
+	});
+});
+
+describe('OrderService — a failed checkout gives its promotion uses back (Greptile on #10897)', () => {
+	it('releases the reservations when the order cannot be placed after they were taken', async () => {
+		const calls: string[] = [];
+		const promotionUsage = {
+			reserveForCart: jest.fn(async () => {
+				calls.push('reserve');
+
+				return 'usage-1';
+			}),
+			releaseForCart: jest.fn(async (cartId: string) => {
+				calls.push(`release:${cartId}`);
+
+				return 1;
+			}),
+			registerForOrder: jest.fn(),
+			revertForOrder: jest.fn()
+		};
+		const fixture = orderFixture({ promotionUsage });
+
+		// A cart with no line cannot be placed (ORDER_EMPTY): the failure comes after the reservation.
+		await expect(
+			fixture.service.createFromCart(
+				{
+					id: 'cart-1',
+					channelId: 'channel-1',
+					currency: 'USD',
+					currencyDecimals: 2,
+					status: CommerceCartStatus.ACTIVE,
+					lines: [],
+					promotions: [{ promotionId: 'promotion-1', code: 'SPRING', amount: '5' }]
+				} as never,
+				{ recordPromotionUsage: true }
+			)
+		).rejects.toThrow(/ORDER_EMPTY/);
+
+		expect(calls).toEqual(['reserve', 'release:cart-1']);
+		expect(promotionUsage.registerForOrder).not.toHaveBeenCalled();
 	});
 });

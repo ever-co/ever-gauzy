@@ -11,13 +11,17 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 import { PromotionUsageStatus } from '../promotion.types';
 import { PromotionOrderUsageAdapter } from './promotion-order-usage.adapter';
 
-function fixture() {
+function fixture(options: { perCustomer?: number; held?: boolean; used?: number } = {}) {
 	const promotionService = {
 		reserveUsage: jest.fn(async (input: any) => ({ id: 'usage-1', ...input })),
+		findPromotionOrFail: jest.fn(async (id: string) => ({ id, perCustomerUsageLimit: options.perCustomer })),
+		releaseCartUsage: jest.fn(async () => [{ id: 'usage-1' }]),
 		revertUsage: jest.fn(async () => ({ reverted: '5', usage: null }))
 	};
 	const promotionUsageService = {
 		register: jest.fn(async () => [{ id: 'usage-1' }, { id: 'usage-2' }]),
+		hasLiveReservation: jest.fn(async () => options.held ?? false),
+		countByCustomer: jest.fn(async () => options.used ?? 0),
 		findByOrder: jest.fn(async () => [
 			{ id: 'usage-1', promotionId: 'promotion-1', status: PromotionUsageStatus.REGISTERED },
 			{ id: 'usage-2', promotionId: 'promotion-2', status: PromotionUsageStatus.REVERTED }
@@ -79,5 +83,29 @@ describe('PromotionOrderUsageAdapter (Q7-W1c)', () => {
 		await expect(adapter.revertForOrder('order-1')).resolves.toBe(1);
 		expect(promotionService.revertUsage).toHaveBeenCalledTimes(1);
 		expect(promotionService.revertUsage).toHaveBeenCalledWith('promotion-1', 'order-1');
+	});
+});
+
+describe('PromotionOrderUsageAdapter — the per-customer limit and a failed checkout (Greptile on #10897)', () => {
+	it('refuses a customer who has used a once-per-customer promotion on another order', async () => {
+		const { adapter, promotionService } = fixture({ perCustomer: 1, used: 1 });
+
+		await expect(adapter.reserveForCart(reservation)).rejects.toMatchObject({
+			response: { code: 'PROMOTION_CUSTOMER_LIMIT_REACHED' }
+		});
+		expect(promotionService.reserveUsage).not.toHaveBeenCalled();
+	});
+
+	it("does not count the cart's own live reservation against the customer", async () => {
+		const { adapter } = fixture({ perCustomer: 1, used: 1, held: true });
+
+		await expect(adapter.reserveForCart(reservation)).resolves.toBe('usage-1');
+	});
+
+	it('releases what a failed checkout reserved', async () => {
+		const { adapter, promotionService } = fixture();
+
+		await expect(adapter.releaseForCart('cart-1')).resolves.toBe(1);
+		expect(promotionService.releaseCartUsage).toHaveBeenCalledWith('cart-1');
 	});
 });

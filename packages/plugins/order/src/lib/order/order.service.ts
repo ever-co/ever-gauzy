@@ -215,121 +215,130 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			await this.reservePromotionUsage(cart);
 		}
 
-		const order = await this.create({
-			channelId: cart.channelId,
-			regionId: cart.regionId,
-			customerId: cart.customerId,
-			userId: cart.userId,
-			email: cart.email,
-			currency: cart.currency,
-			currencyDecimals: cart.currencyDecimals,
-			locale: cart.locale,
-			cartId: cart.id,
-			// The order a recurrence came from. A cart does not carry one — the lineage is a fact about
-			// the order, not about the basket it was built from — so the caller that knows it states it.
-			parentOrderId: options.parentOrderId,
-			source: options.source ?? 'CHANNEL',
-			isDraft: false,
-			metadata: { ...(cart.metadata ?? {}), idempotencyKey: options.idempotencyKey }
-		} as DeepPartial<Order>);
+		// A checkout that took promotion uses and then failed before its order was placed gives them back, so a
+		// failed attempt does not spend a use the buyer never got (Greptile on #10897).
+		let placed: Order;
 
-		const cartLines = cart.lines ?? [];
-		const cartShipping = cart.shippingMethods ?? [];
-		// Which order row each cart row became — the only place that knows it is the loop that creates them,
-		// and the ledger carry-over below needs it to move each cart row's discount and tax to the right owner.
-		const carried = options.carryCartLedgers === true;
-		const lineMap = new Map<ID, ID>();
-		const lineWeights = new Map<ID, string>();
-		const shippingMap = new Map<ID, ID>();
+		try {
+			const order = await this.create({
+				channelId: cart.channelId,
+				regionId: cart.regionId,
+				customerId: cart.customerId,
+				userId: cart.userId,
+				email: cart.email,
+				currency: cart.currency,
+				currencyDecimals: cart.currencyDecimals,
+				locale: cart.locale,
+				cartId: cart.id,
+				// The order a recurrence came from. A cart does not carry one — the lineage is a fact about
+				// the order, not about the basket it was built from — so the caller that knows it states it.
+				parentOrderId: options.parentOrderId,
+				source: options.source ?? 'CHANNEL',
+				isDraft: false,
+				metadata: { ...(cart.metadata ?? {}), idempotencyKey: options.idempotencyKey }
+			} as DeepPartial<Order>);
 
-		let position = 0;
+			const cartLines = cart.lines ?? [];
+			const cartShipping = cart.shippingMethods ?? [];
+			// Which order row each cart row became — the only place that knows it is the loop that creates them,
+			// and the ledger carry-over below needs it to move each cart row's discount and tax to the right owner.
+			const carried = options.carryCartLedgers === true;
+			const lineMap = new Map<ID, ID>();
+			const lineWeights = new Map<ID, string>();
+			const shippingMap = new Map<ID, ID>();
 
-		for (const line of cartLines) {
-			const created = await this.lineService.create({
-				orderId: order.id,
-				productId: line.productId,
-				variantId: line.variantId,
-				sellerId: line.sellerId,
-				title: line.title,
-				sku: line.sku,
-				thumbnail: line.thumbnail,
-				quantity: line.quantity,
-				unitPrice: line.unitPrice,
-				originalUnitPrice: line.originalUnitPrice,
-				isTaxInclusive: line.isTaxInclusive,
-				taxCategoryId: line.taxCategoryId,
-				isDiscountable: line.isDiscountable,
-				requiresShipping: line.requiresShipping,
-				weight: line.weight,
-				position: line.position ?? position++,
-				note: line.note,
-				warehouseId: line.warehouseId,
-				metadata: carried && line.id ? { ...(line.metadata ?? {}), cartLineId: line.id } : line.metadata
-			} as DeepPartial<OrderLine>);
+			let position = 0;
 
-			if (line.id && created?.id) {
-				lineMap.set(line.id, created.id);
-				// What the line is worth, which a document-level discount or fee is spread over in proportion to.
-				lineWeights.set(
-					created.id,
-					lineValueOf(line.unitPrice, line.quantity, cart.currency, cart.currencyDecimals)
-				);
-			}
-		}
+			for (const line of cartLines) {
+				const created = await this.lineService.create({
+					orderId: order.id,
+					productId: line.productId,
+					variantId: line.variantId,
+					sellerId: line.sellerId,
+					title: line.title,
+					sku: line.sku,
+					thumbnail: line.thumbnail,
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					originalUnitPrice: line.originalUnitPrice,
+					isTaxInclusive: line.isTaxInclusive,
+					taxCategoryId: line.taxCategoryId,
+					isDiscountable: line.isDiscountable,
+					requiresShipping: line.requiresShipping,
+					weight: line.weight,
+					position: line.position ?? position++,
+					note: line.note,
+					warehouseId: line.warehouseId,
+					metadata: carried && line.id ? { ...(line.metadata ?? {}), cartLineId: line.id } : line.metadata
+				} as DeepPartial<OrderLine>);
 
-		position = 0;
-
-		for (const method of cartShipping) {
-			const created = await this.shippingMethodService.create({
-				orderId: order.id,
-				shippingOptionId: method.shippingOptionId,
-				name: method.name,
-				amount: method.amount,
-				isTaxInclusive: method.isTaxInclusive,
-				taxCategoryId: method.taxCategoryId,
-				data: method.data,
-				position: method.position ?? position++,
-				metadata: method.metadata
-			} as DeepPartial<OrderShippingMethod>);
-
-			if (method.id && created?.id) {
-				shippingMap.set(method.id, created.id);
-			}
-		}
-
-		for (const [index, snapshot] of [
-			cart.shippingAddressSnapshot,
-			cart.billingAddressSnapshot
-		].entries()) {
-			if (!snapshot) {
-				continue;
+				if (line.id && created?.id) {
+					lineMap.set(line.id, created.id);
+					// What the line is worth, which a document-level discount or fee is spread over in proportion to.
+					lineWeights.set(
+						created.id,
+						lineValueOf(line.unitPrice, line.quantity, cart.currency, cart.currencyDecimals)
+					);
+				}
 			}
 
-			await this.addressService.create({
-				orderId: order.id,
-				type: index === 0 ? AddressType.SHIPPING : AddressType.BILLING,
-				...snapshot
-			} as DeepPartial<OrderAddress>);
-		}
+			position = 0;
 
-		if (carried) {
-			await this.carryCartLedgers(cart.id, order, {
-				lines: lineMap,
-				shippingMethods: shippingMap,
-				lineWeights,
-				currencyDecimals: cart.currencyDecimals
+			for (const method of cartShipping) {
+				const created = await this.shippingMethodService.create({
+					orderId: order.id,
+					shippingOptionId: method.shippingOptionId,
+					name: method.name,
+					amount: method.amount,
+					isTaxInclusive: method.isTaxInclusive,
+					taxCategoryId: method.taxCategoryId,
+					data: method.data,
+					position: method.position ?? position++,
+					metadata: method.metadata
+				} as DeepPartial<OrderShippingMethod>);
+
+				if (method.id && created?.id) {
+					shippingMap.set(method.id, created.id);
+				}
+			}
+
+			for (const [index, snapshot] of [cart.shippingAddressSnapshot, cart.billingAddressSnapshot].entries()) {
+				if (!snapshot) {
+					continue;
+				}
+
+				await this.addressService.create({
+					orderId: order.id,
+					type: index === 0 ? AddressType.SHIPPING : AddressType.BILLING,
+					...snapshot
+				} as DeepPartial<OrderAddress>);
+			}
+
+			if (carried) {
+				await this.carryCartLedgers(cart.id, order, {
+					lines: lineMap,
+					shippingMethods: shippingMap,
+					lineWeights,
+					currencyDecimals: cart.currencyDecimals
+				});
+			}
+
+			// The timeline entry is written once, by the step that actually places the order, and it
+			// carries what the placement came from.
+			placed = await this.placeAndConfirm(order.id, {
+				cartId: cart.id,
+				idempotencyKey: options.idempotencyKey
 			});
-		}
+		} catch (error) {
+			if (options.recordPromotionUsage === true) {
+				await this.releasePromotionUsage(cart.id);
+			}
 
-		// The timeline entry is written once, by the step that actually places the order, and it
-		// carries what the placement came from.
-		const placed = await this.placeAndConfirm(order.id, {
-			cartId: cart.id,
-			idempotencyKey: options.idempotencyKey
-		});
+			throw error;
+		}
 
 		if (options.recordPromotionUsage === true) {
-			await this.registerPromotionUsage(order.id, cart.id);
+			await this.registerPromotionUsage(placed.id, cart.id);
 		}
 
 		return placed;
@@ -849,6 +858,27 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			return;
 		}
 
+		try {
+			await this.reserveEachPromotion(cart);
+		} catch (error) {
+			// The promotions before the refused one were reserved by this attempt: they go back with it.
+			await this.releasePromotionUsage(cart.id);
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Reserves each promotion snapshot that names a promotion, in order.
+	 *
+	 * @param cart The cart.
+	 */
+	private async reserveEachPromotion(cart: {
+		id: ID;
+		currency?: string;
+		customerId?: ID;
+		promotions?: Array<{ promotionId?: ID; couponId?: ID; code?: string; amount?: unknown }>;
+	}): Promise<void> {
 		for (const promotion of cart.promotions ?? []) {
 			if (!promotion?.promotionId) {
 				continue;
@@ -875,13 +905,26 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * @param orderId The order.
 	 * @param cartId The cart it came from.
 	 */
-	private async registerPromotionUsage(orderId: ID, cartId: ID): Promise<void> {
+	public async registerPromotionUsage(orderId: ID, cartId: ID): Promise<void> {
 		try {
 			await this.promotionUsage?.registerForOrder(orderId, cartId);
 		} catch (error) {
 			this.logger.warn(
 				`ORDER_PROMOTION_USAGE_NOT_REGISTERED: order ${orderId} (cart ${cartId}): ${describeError(error)}`
 			);
+		}
+	}
+
+	/**
+	 * Gives back the promotion uses a failed checkout took (Q7-W1c). Logged, never masking the failure.
+	 *
+	 * @param cartId The cart whose checkout failed.
+	 */
+	private async releasePromotionUsage(cartId: ID): Promise<void> {
+		try {
+			await this.promotionUsage?.releaseForCart(cartId);
+		} catch (error) {
+			this.logger.warn(`ORDER_PROMOTION_USAGE_NOT_RELEASED: cart ${cartId}: ${describeError(error)}`);
 		}
 	}
 

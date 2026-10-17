@@ -53,6 +53,8 @@ export class PromotionOrderUsageAdapter {
 	 * @throws ConflictException with `PROMOTION_USAGE_LIMIT_REACHED` when the promotion's limit is reached.
 	 */
 	async reserveForCart(input: IPromotionOrderUsageReservation): Promise<ID> {
+		await this.assertCustomerHasUseLeft(input);
+
 		try {
 			const usage = await this.promotionService.reserveUsage({
 				promotionId: input.promotionId,
@@ -76,6 +78,19 @@ export class PromotionOrderUsageAdapter {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * Releases every reservation a cart holds and gives back the uses they took.
+	 *
+	 * Called when a checkout that reserved fails before its order was placed, so a failed checkout does
+	 * not keep a use of a promotion the buyer never got (Greptile on #10897).
+	 *
+	 * @param cartId The cart.
+	 * @returns How many reservations were released.
+	 */
+	async releaseForCart(cartId: ID): Promise<number> {
+		return (await this.promotionService.releaseCartUsage(cartId)).length;
 	}
 
 	/**
@@ -108,5 +123,42 @@ export class PromotionOrderUsageAdapter {
 		}
 
 		return reverted;
+	}
+
+	/**
+	 * Refuses a reservation the customer has no use left for (Greptile on #10897).
+	 *
+	 * The engine checks `perCustomerUsageLimit` when a code is applied, and a customer could apply a
+	 * once-per-customer code to two carts and complete both. The customer's live redemptions are counted
+	 * again here, where the use is taken; a reservation this cart already holds is one of them and is not
+	 * counted against itself. Two checkouts of one customer racing in the same instant is the window this
+	 * leaves open, as the engine's own check does.
+	 *
+	 * @param input The reservation.
+	 * @throws ConflictException with `PROMOTION_CUSTOMER_LIMIT_REACHED`.
+	 */
+	private async assertCustomerHasUseLeft(input: IPromotionOrderUsageReservation): Promise<void> {
+		if (!input.customerId) {
+			return;
+		}
+
+		const promotion = await this.promotionService.findPromotionOrFail(input.promotionId);
+		const limit = Number(promotion?.perCustomerUsageLimit ?? 0);
+
+		if (!limit) {
+			return;
+		}
+
+		const held = await this.promotionUsageService.hasLiveReservation(input.promotionId, input.cartId);
+		const used =
+			(await this.promotionUsageService.countByCustomer(input.promotionId, input.customerId)) - (held ? 1 : 0);
+
+		if (used >= limit) {
+			throw new ConflictException({
+				message: `PROMOTION_CUSTOMER_LIMIT_REACHED: the customer has used promotion ${input.promotionId} as often as it allows.`,
+				code: 'PROMOTION_CUSTOMER_LIMIT_REACHED',
+				details: { promotionId: input.promotionId, customerId: input.customerId, limit }
+			});
+		}
 	}
 }

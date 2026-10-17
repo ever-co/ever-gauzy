@@ -516,6 +516,8 @@ export interface IOrderPromotionUsagePort {
 	 * when none is left. A reservation the cart already holds is reused.
 	 */
 	reserveForCart(input: IOrderPromotionUsageReservation): Promise<ID>;
+	/** Releases every reservation a cart holds, when its checkout failed before the order was placed. */
+	releaseForCart(cartId: ID): Promise<number>;
 	/** Registers a placed order's reservations against it. */
 	registerForOrder(orderId: ID, cartId: ID): Promise<number>;
 	/** Reverts every redemption of a cancelled order and gives back the uses. */

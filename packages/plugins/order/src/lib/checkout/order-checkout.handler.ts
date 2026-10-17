@@ -77,6 +77,9 @@ export class OrderCheckoutHandler implements ICartCheckoutHandler {
 			// is idempotent (an attached collection is not moved, a recorded fact is not written twice), so the
 			// recovery finishes that step as well (Q7-W1b).
 			await this.attachPayments(cart.id, recovered.id);
+			// The same for the promotion uses the dead checkout reserved: registering is idempotent (Q7-W1c,
+			// Greptile on #10897).
+			await this.orderService.registerPromotionUsage(recovered.id, cart.id);
 
 			return { orderId: recovered.id, orderNumber: recovered.number };
 		}
