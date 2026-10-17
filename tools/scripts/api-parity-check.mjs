@@ -129,6 +129,24 @@ const REST_ONLY = {
 	'product-variant-tags': 'The link between a variant and a tag, reached over GraphQL through the variant.'
 };
 
+/**
+ * Ledger resources: rows written only by the operations that own them, served read-only over both protocols.
+ *
+ * Each is reached over GraphQL (as a root, or through its parent) and over REST, and on both its direct create, update and
+ * hard delete are refused — REST answers the routes it inherits from `CrudController` with a refusal, GraphQL
+ * declares no such field — while the recoverable withdraw/restore pair is served on both. That is a decision,
+ * not a gap, and it used to be recorded only in the package's own write-route suite
+ * (`promotion/src/lib/graphql/resolvers/write-routes.spec.ts`, `REFUSED`); listing it here makes the gate say
+ * so too (R2-G34), and an entry that names a resource no controller declares fails as stale.
+ */
+const LEDGERS = {
+	'gift-card-transactions':
+		'The append-only ledger of a gift card, written by the card operations (issue, redeem, refund, adjust, void).',
+	'promotion-usages': 'The redemption ledger, written by the checkout and cancellation operations.',
+	'campaign-budget-usages':
+		'The per-value consumption of a campaign budget, maintained by the budget increment inside its transaction.'
+};
+
 /** Reads a file, or the empty string when it cannot be read. */
 function read(file) {
 	try {
@@ -500,9 +518,12 @@ const staleResources = Object.keys(REST_ONLY).filter(
 	(resource) => !declaredResources.has(resource) || !oneSidedResources.has(resource)
 );
 
+const staleLedgers = Object.keys(LEDGERS).filter((resource) => !declaredResources.has(resource));
+
 const stale = [
 	...staleFields.map((field) => `GraphQL field \`${field}\``),
-	...staleResources.map((resource) => `REST resource /${resource}`)
+	...staleResources.map((resource) => `REST resource /${resource}`),
+	...staleLedgers.map((resource) => `ledger /${resource}`)
 ];
 
 console.log('');
@@ -533,6 +554,14 @@ console.log('');
 console.log(`  ${oneSided.length} REST resource(s) acknowledged as deliberately one-sided:`);
 for (const entry of oneSided) {
 	console.log(`    ${`/${entry.resource}`.padEnd(28)} ${entry.package} — ${entry.reason}`);
+}
+
+console.log('');
+console.log(
+	`  ${Object.keys(LEDGERS).length} ledger resource(s) served read-only on both protocols, their direct writes refused on both:`
+);
+for (const [resource, reason] of Object.entries(LEDGERS)) {
+	console.log(`    ${`/${resource}`.padEnd(28)} ${reason}`);
 }
 
 if (stale.length) {
