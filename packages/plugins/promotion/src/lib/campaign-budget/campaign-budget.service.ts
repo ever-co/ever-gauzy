@@ -206,7 +206,7 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 				input,
 				CAMPAIGN_BUDGET_LEDGER_MEMBERS,
 				{ campaignId, used: '0' },
-				this.ledgerRefusal(null)
+				{ ...this.ledgerRefusal(null), nullIsAbsent: true }
 			)
 		);
 

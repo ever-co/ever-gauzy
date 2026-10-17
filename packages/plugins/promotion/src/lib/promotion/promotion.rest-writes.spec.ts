@@ -119,7 +119,11 @@ describe('PromotionService — the counters are not written from a body (R2-G27)
 		).rejects.toBeInstanceOf(BadRequestException);
 		expect(rows).toHaveLength(0);
 
-		// The REST create DTO defaults `usageCount` to 0, so every REST create restates it.
+		// The REST create DTO defaults `usageCount` to 0, so every REST create restates it; a `null` states nothing.
+		await service.createPromotion({ title: 'Nothing spent', budgetSpent: null } as never);
+		expect(rows).toHaveLength(1);
+		rows.length = 0;
+
 		await service.createPromotion({ title: 'Fresh', usageCount: 0, budgetSpent: '0.000000' } as never);
 
 		expect(rows).toHaveLength(1);

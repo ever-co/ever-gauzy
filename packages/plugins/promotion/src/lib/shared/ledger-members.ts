@@ -11,6 +11,11 @@ export interface ILedgerMemberRefusal {
 	readonly movedBy: string;
 	/** Carried into `details` beside the refused fields, e.g. the row's identifier. */
 	readonly details?: Record<string, unknown>;
+	/**
+	 * Read a member stated as `null` as not stated. For a create, whose baseline is the starting value: the DTOs admit
+	 * `null` for these optional members, and on a new row it states nothing (an update keeps `null` as a change).
+	 */
+	readonly nullIsAbsent?: boolean;
 }
 
 /**
@@ -41,6 +46,15 @@ export function withoutRestatedMembers<T extends object>(
 	refusal: ILedgerMemberRefusal
 ): T {
 	const body = { ...((patch ?? {}) as Record<string, unknown>) };
+
+	if (refusal.nullIsAbsent) {
+		for (const member of members) {
+			if (body[member] === null) {
+				delete body[member];
+			}
+		}
+	}
+
 	const named = members.filter((member) => body[member] !== undefined);
 
 	if (named.length === 0) {

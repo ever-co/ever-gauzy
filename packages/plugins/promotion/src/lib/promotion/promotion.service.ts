@@ -177,7 +177,9 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 		input = withoutRestatedMembers(input, PROMOTION_LEDGER_MEMBERS, PROMOTION_LEDGER_START, {
 			code: 'PROMOTION_FIELD_NOT_WRITABLE',
 			subject: 'a promotion',
-			movedBy: 'a new promotion starts with no redemption and no spend, and both move with its usage ledger only.'
+			movedBy:
+				'a new promotion starts with no redemption and no spend, and both move with its usage ledger only.',
+			nullIsAbsent: true
 		});
 
 		const code = input.code ? input.code.trim().toUpperCase() : undefined;
