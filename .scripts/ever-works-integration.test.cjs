@@ -109,6 +109,7 @@ const core = {
 	RolePermissionModule: class {},
 	EmployeeService: class {},
 	EmployeeAgentProfileService: class {},
+	OrganizationProjectService: class {},
 	EventBus: class {},
 	TaskEvent: class {},
 	TaskService: class {},
@@ -130,14 +131,22 @@ const core = {
 		currentUserId: () => caller.userId,
 		currentOrganizationId: () => caller.organizationId,
 		currentRequestContext: () => null,
-		/** The platform opens a request context for the sync's task writes (`EverWorksTaskStore.asActor`). */
-		runWithRequest: async (request, work) => {
+		/**
+		 * The platform opens a request context for the sync's writes (`runInSyncRequestContext`): synchronous like
+		 * the platform's, so the sync's store probe sees a real context; restored when the work settles.
+		 */
+		runWithRequest: (request, work) => {
 			const saved = { ...caller };
-			Object.assign(caller, { tenantId: request.user.tenantId, userId: request.user.id ?? null, organizationId: request.user.lastOrganizationId });
+			const restore = () => Object.assign(caller, saved);
+			Object.assign(caller, { tenantId: request.user?.tenantId ?? null, userId: request.user?.id ?? null, organizationId: request.user?.lastOrganizationId ?? null });
 			try {
-				return await work();
-			} finally {
-				Object.assign(caller, saved);
+				const result = work();
+				if (result && typeof result.then === 'function') return result.finally(restore);
+				restore();
+				return result;
+			} catch (error) {
+				restore();
+				throw error;
 			}
 		}
 	}
