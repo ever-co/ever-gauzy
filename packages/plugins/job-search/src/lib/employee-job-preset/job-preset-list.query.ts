@@ -8,6 +8,8 @@ import type { Knex } from 'knex';
  *   was still listed (the TypeORM branch leaves them out).
  * - The name search is a case-insensitive `LIKE` on the lowered name: `ILIKE` exists on PostgreSQL only,
  *   so searching failed on MySQL and SQLite.
+ * - The employees are joined through the relation's pivot table, `employee_job_preset` (the query named a
+ *   `job_preset_employee` table that does not exist, so the list failed).
  */
 export function jobPresetListQuery(
 	knex: Knex,
@@ -19,7 +21,7 @@ export function jobPresetListQuery(
 	}: { tenantId: string; organizationId?: string; search?: string; employeeId?: string }
 ): Knex.QueryBuilder {
 	let qb = knex('job_preset')
-		.leftJoin('job_preset_employee', 'job_preset.id', 'job_preset_employee.jobPresetId')
+		.leftJoin('employee_job_preset', 'job_preset.id', 'employee_job_preset.jobPresetId')
 		.where('job_preset.tenantId', tenantId)
 		.whereNull('job_preset.deletedAt');
 
@@ -30,7 +32,7 @@ export function jobPresetListQuery(
 		qb = qb.andWhereRaw('LOWER(??) LIKE ?', ['job_preset.name', `%${search.toLowerCase()}%`]);
 	}
 	if (employeeId) {
-		qb = qb.andWhere('job_preset_employee.employeeId', employeeId);
+		qb = qb.andWhere('employee_job_preset.employeeId', employeeId);
 	}
 
 	return qb.select('job_preset.*').orderBy('job_preset.name', 'asc').distinct();

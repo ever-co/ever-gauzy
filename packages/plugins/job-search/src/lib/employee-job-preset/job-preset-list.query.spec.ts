@@ -17,7 +17,7 @@ describe('jobPresetListQuery', () => {
 			table.string('name');
 			table.datetime('deletedAt').nullable();
 		});
-		await db.schema.createTable('job_preset_employee', (table) => {
+		await db.schema.createTable('employee_job_preset', (table) => {
 			table.string('jobPresetId');
 			table.string('employeeId');
 		});
@@ -27,7 +27,7 @@ describe('jobPresetListQuery', () => {
 			{ id: 'p3', tenantId: 'tenant-1', organizationId: 'org-1', name: 'Old jobs', deletedAt: '2026-10-01 00:00:00' },
 			{ id: 'p4', tenantId: 'tenant-2', organizationId: 'org-2', name: 'Other tenant', deletedAt: null }
 		]);
-		await db('job_preset_employee').insert([{ jobPresetId: 'p2', employeeId: 'employee-1' }]);
+		await db('employee_job_preset').insert([{ jobPresetId: 'p2', employeeId: 'employee-1' }]);
 	});
 
 	afterAll(async () => {
