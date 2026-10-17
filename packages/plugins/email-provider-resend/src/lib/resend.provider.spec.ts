@@ -285,6 +285,7 @@ describe('Resend email provider', () => {
 				)
 			);
 			expect(info['response']).toBe('resend:resend-id-1');
+			expect(info['providerMessageId']).toBe('resend-id-1');
 			expect(info['messageId']).toBe('<out-1@inbox.example.test>');
 			const call = calls[0] as { headers: Record<string, string>; body: Record<string, unknown> };
 			expect(call.headers['Idempotency-Key']).toBe('<out-1@inbox.example.test>');
