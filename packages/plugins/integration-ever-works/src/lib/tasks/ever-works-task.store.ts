@@ -228,10 +228,19 @@ export class EverWorksTaskStore {
 	}
 
 	/** A comment, deleted ones included. */
-	async loadComment(
-		tenantId: ID,
-		commentId: ID
-	): Promise<{ id: ID; comment: string; entity: string; entityId: ID; organizationId: ID; employeeId: ID | null; deletedAt: Date | null } | null> {
+	async loadComment(tenantId: ID, commentId: ID): Promise<{
+		id: ID;
+		comment: string;
+		entity: string;
+		entityId: ID;
+		organizationId: ID;
+		employeeId: ID | null;
+		deletedAt: Date | null;
+		/** The users who wrote, last edited and deleted it (the platform's audit columns, from the request context). */
+		createdByUserId: ID | null;
+		updatedByUserId: ID | null;
+		deletedByUserId: ID | null;
+	} | null> {
 		const row = await this.dataSource.getRepository(Comment).findOne({ where: { id: commentId, tenantId } as never, withDeleted: true });
 		if (!row) return null;
 		return {
@@ -241,7 +250,10 @@ export class EverWorksTaskStore {
 			entityId: row.entityId as ID,
 			organizationId: row.organizationId as ID,
 			employeeId: (row.employeeId as ID) ?? null,
-			deletedAt: (row as { deletedAt?: Date | null }).deletedAt ?? null
+			deletedAt: (row as { deletedAt?: Date | null }).deletedAt ?? null,
+			createdByUserId: (row.createdByUserId as ID) ?? null,
+			updatedByUserId: (row.updatedByUserId as ID) ?? null,
+			deletedByUserId: ((row as { deletedByUserId?: ID | null }).deletedByUserId as ID) ?? null
 		};
 	}
 
