@@ -411,6 +411,14 @@ export const schemaExtensions = gql`
 		publishedAt: DateTime
 	}
 
+	# One collection publication row's writable surface: every member optional, because an update states what
+	# changed — what UpdateCollectionChannelDTO declares on PUT /collection-channels/:id, less the row's
+	# business key (the collection and the channel), which a row update does not move.
+	input UpdateCollectionChannelInput {
+		status: PublicationStatus
+		publishedAt: DateTime
+	}
+
 	input ProductVariantPublicationInput {
 		channelId: ID!
 		status: PublicationStatus!
@@ -487,6 +495,8 @@ export const schemaExtensions = gql`
 		recoverCollection(id: ID!): Collection!
 		addCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+		"Writes the whole product set of a collection in one call, in order — the set route's own operation."
+		replaceCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		"Retires one collection membership recoverably, so the product stays curated into the collection."
 		softDeleteCollectionProduct(id: ID!): CollectionProduct!
 		"Restores a soft-deleted collection membership."
@@ -506,6 +516,8 @@ export const schemaExtensions = gql`
 		"Restores a soft-deleted facet."
 		recoverTagProductVariant(id: ID!): TagProductVariant!
 		assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
+		"Updates one collection publication row - its status or its date - as PUT /collection-channels/:id does."
+		updateCollectionChannel(id: ID!, input: UpdateCollectionChannelInput!): CollectionChannel!
 		unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
 		"Retires one collection publication recoverably, so the placement keeps its status and its date."
 		softDeleteCollectionChannel(id: ID!): CollectionChannel!

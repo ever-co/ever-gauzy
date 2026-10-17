@@ -673,3 +673,63 @@ describe('DELETE /:id retires and never erases', () => {
 		]);
 	});
 });
+
+/**
+ * Q16 (4): `cancelAtPeriodEnd` is the service's own key (SEC-B-03), so a deferred cancellation had no way back. The
+ * undo is one act stated twice: `POST /subscriptions/:id/undo-cancellation` and `undoSubscriptionCancellation`.
+ */
+describe('undo a cancellation at the end of the period — the two protocols reach the same act', () => {
+	const surfacesOfUndo = () => {
+		const service = { undoCancellation: jest.fn().mockResolvedValue(SUBSCRIPTION_ROW) };
+
+		return {
+			service,
+			controller: new SubscriptionController(service as never) as Row,
+			resolver: new SubscriptionResolver(service as never, {} as never, {} as never) as Row
+		};
+	};
+
+	it('reaches the service with the version the caller read, over REST and over GraphQL', async () => {
+		const { service, controller, resolver } = surfacesOfUndo();
+
+		await expect(controller.undoCancellation(SUBSCRIPTION, requestWithVersion())).resolves.toEqual(
+			SUBSCRIPTION_ROW
+		);
+		await expect(resolver.undoSubscriptionCancellation(SUBSCRIPTION, contextWithVersion())).resolves.toEqual({
+			subscription: SUBSCRIPTION_ROW,
+			userErrors: []
+		});
+
+		expect(service.undoCancellation.mock.calls).toEqual([
+			[SUBSCRIPTION, VERSION],
+			[SUBSCRIPTION, VERSION]
+		]);
+	});
+
+	it('is gated by the grant the cancellation itself states, on both surfaces', () => {
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(SubscriptionController).undoCancellation)).toEqual(
+			Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(SubscriptionController).cancel)
+		);
+		expect(
+			Reflect.getMetadata(
+				PERMISSIONS_METADATA,
+				(SubscriptionResolver.prototype as Row).undoSubscriptionCancellation
+			)
+		).toEqual([SubscriptionPermissions.SUBSCRIPTIONS_EDIT]);
+	});
+
+	it('answers a refusal as a user error over GraphQL rather than an exception', async () => {
+		const { service, resolver } = surfacesOfUndo();
+
+		service.undoCancellation.mockRejectedValueOnce(new Error('already cancelled'));
+
+		const payload = await resolver.undoSubscriptionCancellation(SUBSCRIPTION, contextWithVersion());
+
+		expect(payload.subscription).toBeNull();
+		expect(payload.userErrors).toHaveLength(1);
+	});
+
+	it('is declared in the document the plugin contributes', () => {
+		expect(declares('undoSubscriptionCancellation')).toBe(true);
+	});
+});

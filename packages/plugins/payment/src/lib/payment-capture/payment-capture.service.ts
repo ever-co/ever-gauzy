@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { EntityManager, IsNull, Repository } from 'typeorm';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { EventBus, Money, Payment, readAffectedRows } from '@gauzy/core';
@@ -328,8 +328,13 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 	 * @param paymentId The payment to sum for.
 	 * @returns The captured total as an exact decimal.
 	 */
-	async sumCapturedForPayment(paymentId: ID): Promise<DecimalString> {
-		const captures: IPaymentCapture[] = await this.find({ where: { paymentId, ...this.scope } as never });
+	async sumCapturedForPayment(paymentId: ID, manager?: EntityManager): Promise<DecimalString> {
+		// On the caller's transaction when it holds one: a refund re-reads the ceiling under the order's lock, and a
+		// second pool connection taken there can wait for the first (see `RefundService.readRefunds`).
+		const criteria = { paymentId, ...this.scope } as never;
+		const captures: IPaymentCapture[] = manager
+			? await manager.find(PaymentCapture, { where: criteria })
+			: await this.find({ where: criteria });
 		const currency = captures.length ? captures[0].currency : undefined;
 
 		if (!currency) {

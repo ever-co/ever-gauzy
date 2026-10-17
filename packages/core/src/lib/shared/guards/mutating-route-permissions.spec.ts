@@ -359,6 +359,11 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE (employee-setting.service.ts:30)
 	'EmployeeSettingController.create',
 	'EmployeeSettingController.delete',
+	// PATCH /employee-settings/:id/data is the same own-settings write, key by key (every employee saves their own
+	// sidebar pins and widget toggles through it, so a permission would lock them out). It reads the row in the
+	// tenant of the caller and refuses another employee's setting unless they hold ALL_ORG_EDIT or
+	// CHANGE_SELECTED_EMPLOYEE (employee-setting.service.ts:192 assertMayPatch)
+	'EmployeeSettingController.patchData',
 	'EmployeeSettingController.softRecover',
 	'EmployeeSettingController.softRemove',
 	'EmployeeSettingController.update',

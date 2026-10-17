@@ -130,6 +130,15 @@ export class InboxMailboxController {
 		return this.mailboxes.verify(id, query?.organizationId);
 	}
 
+	@Get('/:id/verification')
+	@Permissions(PermissionsEnum.INBOX_MAILBOX_MANAGE)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({ summary: 'The DNS TXT record a custom domain is proven with, and its last status (no lookup).' })
+	verification(@Param('id', UUIDValidationPipe) id: ID, @Query() query: InboxOrganizationQueryDTO) {
+		return this.mailboxes.verification(id, query?.organizationId);
+	}
+
 	@Post('/:id/rotate-secret')
 	@Permissions(PermissionsEnum.INBOX_MAILBOX_MANAGE)
 	@HttpCode(HttpStatus.OK)

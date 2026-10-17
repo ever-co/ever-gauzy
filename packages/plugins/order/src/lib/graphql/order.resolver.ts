@@ -9,6 +9,7 @@ import {
 	Idempotent,
 	PermissionGuard,
 	Permissions,
+	RequestContext,
 	TenantPermissionGuard,
 	Versioned,
 	connectionFromOffsetPage,
@@ -236,7 +237,13 @@ export class OrderResolver {
 	@Versioned({ resource: OrderService, required: false })
 	@Mutation(() => Object, { name: 'createOrder' })
 	async createOrder(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Order> {
-		return this.orderService.create(input as any);
+		// R2-G19: `CreateOrderInput` declares no organization and the tenant-aware base stamps the tenant only,
+		// so an order created here had `organizationId = NULL` while `POST /orders` states a validated one. The
+		// request's organization is stamped, as the REST route's body carries it.
+		return this.orderService.create({
+			...input,
+			organizationId: input?.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as any);
 	}
 
 	/**
