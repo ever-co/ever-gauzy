@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundExc
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
-import { DeepPartial, Like } from 'typeorm';
+import { DataSource, DeepPartial, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService, environment } from '@gauzy/config';
 import {
@@ -23,7 +23,8 @@ import {
 	IntegrationTenantService,
 	parseFindOptionsRelations,
 	isAccessTokenPayload,
-	JWT_ALGORITHMS
+	JWT_ALGORITHMS,
+	assertCurrentUserBelongsToOrganization
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
 import {
@@ -45,7 +46,8 @@ export class ZapierService {
 		private readonly _integrationSettingService: IntegrationSettingService,
 		private readonly _integrationService: IntegrationService,
 		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly config: ConfigService
+		private readonly config: ConfigService,
+		private readonly _dataSource: DataSource
 	) {}
 
 	/**
@@ -140,6 +142,30 @@ export class ZapierService {
 		} catch (error) {
 			throw new NotFoundException(`Access token for integration ID ${integrationId} not found`);
 		}
+	}
+
+	/**
+	 * The stored Zapier access token of an integration, for a caller who is a member of the organization
+	 * the integration belongs to. The settings lookup alone is scoped to the tenant, so without this check
+	 * a member of one organization could call Zapier with the account of another organization.
+	 *
+	 * @param {ID} integrationId - The ID of the integration.
+	 * @returns {Promise<IIntegrationSetting>} - The integration setting containing the access token.
+	 * @throws {NotFoundException} - If the integration or its access token is not found.
+	 * @throws {ForbiddenException} - If the caller is not a member of the integration's organization.
+	 */
+	async getZapierTokenForCurrentUser(integrationId: ID): Promise<IIntegrationSetting> {
+		let integration: IIntegrationTenant | null;
+		try {
+			integration = await this._integrationTenantService.findOneByOptions({ where: { id: integrationId } });
+		} catch {
+			integration = null;
+		}
+		if (!integration) {
+			throw new NotFoundException(`Access token for integration ID ${integrationId} not found`);
+		}
+		await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
+		return this.getZapierToken(integrationId);
 	}
 
 	/**

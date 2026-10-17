@@ -8,6 +8,7 @@ import {
 	Logger,
 	UnauthorizedException,
 	BadRequestException,
+	ForbiddenException,
 	Body,
 	Post,
 	Param
@@ -209,14 +210,15 @@ export class ZapierController {
 
 	/**
 	 * The Zapier token to call Zapier with: the `token` query param when the caller sends one,
-	 * otherwise the access token stored for `integrationId`. The token endpoint only hands the
-	 * browser a masked value, so the web app sends the integration ID and the token is read here.
+	 * otherwise the access token stored for `integrationId`, once the caller is checked as a member
+	 * of the integration's organization. The token endpoint only hands the browser a masked value,
+	 * so the web app sends the integration ID and the token is read here.
 	 */
 	private async resolveToken(token: string, integrationId?: string): Promise<string> {
 		if (token?.trim() || !integrationId?.trim()) {
 			return token;
 		}
-		const setting = await this.zapierService.getZapierToken(integrationId);
+		const setting = await this.zapierService.getZapierTokenForCurrentUser(integrationId);
 		return setting?.settingsValue;
 	}
 
@@ -247,6 +249,9 @@ export class ZapierController {
 			throw error;
 		}
 		if (error instanceof NotFoundException) {
+			throw error;
+		}
+		if (error instanceof ForbiddenException) {
 			throw error;
 		}
 		// For unexpected errors, include original error message
