@@ -32,7 +32,7 @@ import {
 	compareDecimalStrings,
 	subtractDecimalStrings
 } from '@gauzy/core';
-import { OrderLine, OrderLineService, OrderTotalsService } from '@gauzy/plugin-order';
+import { OrderLine, OrderLineService, OrderService, OrderTotalsService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
@@ -282,7 +282,14 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		private readonly orderTotals: OrderTotalsService,
 		@Optional()
 		@Inject(FULFILLMENT_LABEL_PROVIDER)
-		private readonly labelProvider?: IFulfillmentLabelProviderPort
+		private readonly labelProvider?: IFulfillmentLabelProviderPort,
+		/**
+		 * The order's completion rule (Q7-W1b): an order whose money was settled before its goods shipped
+		 * completes when the last of them is accounted for here. Optional and last, so a suite that builds
+		 * this service by position is unchanged.
+		 */
+		@Optional()
+		private readonly orderService?: OrderService
 	) {
 		super(typeOrmFulfillmentRepository, mikroOrmFulfillmentRepository);
 	}
@@ -1498,6 +1505,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
 			try {
 				await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
+				await this.completeOrderIfSettled(orderId);
 
 				return;
 			} catch (error) {
@@ -1508,6 +1516,40 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				this.logger.warn(
 					`The fulfilment state of order ${orderId} could not be re-derived after ${attempt} attempt(s), ` +
 						`and is left to the nightly reconciliation: ${error instanceof Error ? error.message : String(error)}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Gives the order its chance to complete once its goods are accounted for (Q7-W1b).
+	 *
+	 * An order paid before it shipped stayed open: completion was asked only when money moved, and the
+	 * goods were still out then. The order's own rule decides — nothing left to ship, nothing outstanding,
+	 * no change open — and a completion that fails is logged, never the shipment's failure.
+	 *
+	 * @param orderId The order.
+	 */
+	private async completeOrderIfSettled(orderId: ID): Promise<void> {
+		// A completion is a versioned write that a concurrent re-derivation of the same order can overtake;
+		// it reads the order afresh on every attempt, so a lost race is retried like the recompute above
+		// (CodeRabbit on #10890).
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderService?.completeIfSettled(orderId);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`Order ${orderId} could not be completed after its goods were accounted for: ${
+						error instanceof Error ? error.message : String(error)
+					}`
 				);
 
 				return;

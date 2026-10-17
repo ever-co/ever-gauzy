@@ -28,7 +28,9 @@ import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository
 import {
 	ANY_ORDER_VERSION,
 	IOrderApprovalPort,
+	IOrderPromotionUsagePort,
 	ORDER_APPROVAL,
+	ORDER_PROMOTION_USAGE,
 	ORDER_EVENTS,
 	OrderVersionExpectation
 } from '../order.types';
@@ -115,7 +117,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		 * placed with the lines alone, which is what every order was before the carry-over existed.
 		 */
 		@Optional()
-		private readonly cartLedgerCarryover?: OrderCartLedgerCarryover
+		private readonly cartLedgerCarryover?: OrderCartLedgerCarryover,
+		/**
+		 * The promotion redemptions a checkout takes and a cancellation gives back (Q7-W1c). Optional and last:
+		 * bound by the installation that hosts the promotion package; the worker binds nothing.
+		 */
+		@Optional()
+		@Inject(ORDER_PROMOTION_USAGE)
+		private readonly promotionUsage?: IOrderPromotionUsagePort
 	) {
 		super(typeOrmOrderRepository, mikroOrmOrderRepository);
 	}
@@ -171,7 +180,11 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// accept the exact decimal string the GraphQL schema promises, and an order line's are numbers.
 		// Naming the shape it is actually handed is what lets the conversion below be the one place the
 		// two vocabularies meet.
-		cart: ICommerceCart & { lines?: ICommerceCartLine[]; shippingMethods?: ICommerceCartShippingMethod[] },
+		cart: ICommerceCart & {
+			lines?: ICommerceCartLine[];
+			shippingMethods?: ICommerceCartShippingMethod[];
+			promotions?: Array<{ promotionId?: ID; couponId?: ID; code?: string; amount?: unknown }>;
+		},
 		options: {
 			idempotencyKey?: string;
 			source?: string;
@@ -183,6 +196,11 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			 * cycle's own discount and tax onto the order itself, so the cart's would be charged twice.
 			 */
 			carryCartLedgers?: boolean;
+			/**
+			 * Take the use of every promotion the cart carries before the order is written, and register it
+			 * against the order once placed (Q7-W1c). Stated by the checkout handler only.
+			 */
+			recordPromotionUsage?: boolean;
 		} = {}
 	): Promise<Order> {
 		if (cart.orderId) {
@@ -191,118 +209,139 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			);
 		}
 
-		const order = await this.create({
-			channelId: cart.channelId,
-			regionId: cart.regionId,
-			customerId: cart.customerId,
-			userId: cart.userId,
-			email: cart.email,
-			currency: cart.currency,
-			currencyDecimals: cart.currencyDecimals,
-			locale: cart.locale,
-			cartId: cart.id,
-			// The order a recurrence came from. A cart does not carry one — the lineage is a fact about
-			// the order, not about the basket it was built from — so the caller that knows it states it.
-			parentOrderId: options.parentOrderId,
-			source: options.source ?? 'CHANNEL',
-			isDraft: false,
-			metadata: { ...(cart.metadata ?? {}), idempotencyKey: options.idempotencyKey }
-		} as DeepPartial<Order>);
-
-		const cartLines = cart.lines ?? [];
-		const cartShipping = cart.shippingMethods ?? [];
-		// Which order row each cart row became — the only place that knows it is the loop that creates them,
-		// and the ledger carry-over below needs it to move each cart row's discount and tax to the right owner.
-		const carried = options.carryCartLedgers === true;
-		const lineMap = new Map<ID, ID>();
-		const lineWeights = new Map<ID, string>();
-		const shippingMap = new Map<ID, ID>();
-
-		let position = 0;
-
-		for (const line of cartLines) {
-			const created = await this.lineService.create({
-				orderId: order.id,
-				productId: line.productId,
-				variantId: line.variantId,
-				sellerId: line.sellerId,
-				title: line.title,
-				sku: line.sku,
-				thumbnail: line.thumbnail,
-				quantity: line.quantity,
-				unitPrice: line.unitPrice,
-				originalUnitPrice: line.originalUnitPrice,
-				isTaxInclusive: line.isTaxInclusive,
-				taxCategoryId: line.taxCategoryId,
-				isDiscountable: line.isDiscountable,
-				requiresShipping: line.requiresShipping,
-				weight: line.weight,
-				position: line.position ?? position++,
-				note: line.note,
-				warehouseId: line.warehouseId,
-				metadata: carried && line.id ? { ...(line.metadata ?? {}), cartLineId: line.id } : line.metadata
-			} as DeepPartial<OrderLine>);
-
-			if (line.id && created?.id) {
-				lineMap.set(line.id, created.id);
-				// What the line is worth, which a document-level discount or fee is spread over in proportion to.
-				lineWeights.set(
-					created.id,
-					lineValueOf(line.unitPrice, line.quantity, cart.currency, cart.currencyDecimals)
-				);
-			}
+		// The use of every promotion is taken before anything is written, so a promotion whose limit is
+		// reached refuses the checkout instead of granting a discount it no longer has (Q7-W1c).
+		if (options.recordPromotionUsage === true) {
+			await this.reservePromotionUsage(cart);
 		}
 
-		position = 0;
+		// A checkout that took promotion uses and then failed before its order was placed gives them back, so a
+		// failed attempt does not spend a use the buyer never got (Greptile on #10897).
+		let placed: Order;
 
-		for (const method of cartShipping) {
-			const created = await this.shippingMethodService.create({
-				orderId: order.id,
-				shippingOptionId: method.shippingOptionId,
-				name: method.name,
-				amount: method.amount,
-				isTaxInclusive: method.isTaxInclusive,
-				taxCategoryId: method.taxCategoryId,
-				data: method.data,
-				position: method.position ?? position++,
-				metadata: method.metadata
-			} as DeepPartial<OrderShippingMethod>);
+		try {
+			const order = await this.create({
+				channelId: cart.channelId,
+				regionId: cart.regionId,
+				customerId: cart.customerId,
+				userId: cart.userId,
+				email: cart.email,
+				currency: cart.currency,
+				currencyDecimals: cart.currencyDecimals,
+				locale: cart.locale,
+				cartId: cart.id,
+				// The order a recurrence came from. A cart does not carry one — the lineage is a fact about
+				// the order, not about the basket it was built from — so the caller that knows it states it.
+				parentOrderId: options.parentOrderId,
+				source: options.source ?? 'CHANNEL',
+				isDraft: false,
+				metadata: { ...(cart.metadata ?? {}), idempotencyKey: options.idempotencyKey }
+			} as DeepPartial<Order>);
 
-			if (method.id && created?.id) {
-				shippingMap.set(method.id, created.id);
+			const cartLines = cart.lines ?? [];
+			const cartShipping = cart.shippingMethods ?? [];
+			// Which order row each cart row became — the only place that knows it is the loop that creates them,
+			// and the ledger carry-over below needs it to move each cart row's discount and tax to the right owner.
+			const carried = options.carryCartLedgers === true;
+			const lineMap = new Map<ID, ID>();
+			const lineWeights = new Map<ID, string>();
+			const shippingMap = new Map<ID, ID>();
+
+			let position = 0;
+
+			for (const line of cartLines) {
+				const created = await this.lineService.create({
+					orderId: order.id,
+					productId: line.productId,
+					variantId: line.variantId,
+					sellerId: line.sellerId,
+					title: line.title,
+					sku: line.sku,
+					thumbnail: line.thumbnail,
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					originalUnitPrice: line.originalUnitPrice,
+					isTaxInclusive: line.isTaxInclusive,
+					taxCategoryId: line.taxCategoryId,
+					isDiscountable: line.isDiscountable,
+					requiresShipping: line.requiresShipping,
+					weight: line.weight,
+					position: line.position ?? position++,
+					note: line.note,
+					warehouseId: line.warehouseId,
+					metadata: carried && line.id ? { ...(line.metadata ?? {}), cartLineId: line.id } : line.metadata
+				} as DeepPartial<OrderLine>);
+
+				if (line.id && created?.id) {
+					lineMap.set(line.id, created.id);
+					// What the line is worth, which a document-level discount or fee is spread over in proportion to.
+					lineWeights.set(
+						created.id,
+						lineValueOf(line.unitPrice, line.quantity, cart.currency, cart.currencyDecimals)
+					);
+				}
 			}
-		}
 
-		for (const [index, snapshot] of [
-			cart.shippingAddressSnapshot,
-			cart.billingAddressSnapshot
-		].entries()) {
-			if (!snapshot) {
-				continue;
+			position = 0;
+
+			for (const method of cartShipping) {
+				const created = await this.shippingMethodService.create({
+					orderId: order.id,
+					shippingOptionId: method.shippingOptionId,
+					name: method.name,
+					amount: method.amount,
+					isTaxInclusive: method.isTaxInclusive,
+					taxCategoryId: method.taxCategoryId,
+					data: method.data,
+					position: method.position ?? position++,
+					metadata: method.metadata
+				} as DeepPartial<OrderShippingMethod>);
+
+				if (method.id && created?.id) {
+					shippingMap.set(method.id, created.id);
+				}
 			}
 
-			await this.addressService.create({
-				orderId: order.id,
-				type: index === 0 ? AddressType.SHIPPING : AddressType.BILLING,
-				...snapshot
-			} as DeepPartial<OrderAddress>);
-		}
+			for (const [index, snapshot] of [cart.shippingAddressSnapshot, cart.billingAddressSnapshot].entries()) {
+				if (!snapshot) {
+					continue;
+				}
 
-		if (carried) {
-			await this.carryCartLedgers(cart.id, order, {
-				lines: lineMap,
-				shippingMethods: shippingMap,
-				lineWeights,
-				currencyDecimals: cart.currencyDecimals
+				await this.addressService.create({
+					orderId: order.id,
+					type: index === 0 ? AddressType.SHIPPING : AddressType.BILLING,
+					...snapshot
+				} as DeepPartial<OrderAddress>);
+			}
+
+			if (carried) {
+				await this.carryCartLedgers(cart.id, order, {
+					lines: lineMap,
+					shippingMethods: shippingMap,
+					lineWeights,
+					currencyDecimals: cart.currencyDecimals
+				});
+			}
+
+			// The timeline entry is written once, by the step that actually places the order, and it
+			// carries what the placement came from.
+			placed = await this.placeAndConfirm(order.id, {
+				cartId: cart.id,
+				idempotencyKey: options.idempotencyKey
 			});
+		} catch (error) {
+			if (options.recordPromotionUsage === true) {
+				await this.releasePromotionUsage(cart.id);
+			}
+
+			throw error;
 		}
 
-		// The timeline entry is written once, by the step that actually places the order, and it
-		// carries what the placement came from.
-		return this.placeAndConfirm(order.id, {
-			cartId: cart.id,
-			idempotencyKey: options.idempotencyKey
-		});
+		if (options.recordPromotionUsage === true) {
+			await this.registerPromotionUsage(placed.id, cart.id);
+		}
+
+		return placed;
 	}
 
 	/**
@@ -472,6 +511,9 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		// A cancelled order will not be approved, so a request still awaiting a decision is refused with it.
 		await this.settleApprovals(order, false);
+
+		// The promotions the order redeemed give their uses back (Q7-W1c).
+		await this.revertPromotionUsage(order.id);
 
 		return cancelled;
 	}
@@ -703,6 +745,54 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
+	 * Completes an order on an operator's request, or says why it cannot be completed yet (Q7-W1b).
+	 *
+	 * The same rule as `completeIfSettled` — confirmed or processing, nothing left to ship, nothing
+	 * outstanding, no change open — stated as a refusal rather than a silent no-op, because an operator who
+	 * asked for a completion is owed the reason it did not happen. An order that is already completed is
+	 * answered as it is, so a retried request is not refused.
+	 *
+	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The completed order.
+	 * @throws NotFoundException when the order is not in the caller's tenant.
+	 * @throws ConflictException with `ORDER_NOT_COMPLETABLE` and what still stands in the way.
+	 */
+	public async complete(orderId: ID, expectation: OrderVersionExpectation = ANY_ORDER_VERSION): Promise<Order> {
+		const order = await this.findOneByIdString(orderId);
+
+		if (!order) {
+			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
+		}
+
+		if (order.status === OrderStatus.COMPLETED) {
+			return order;
+		}
+
+		const completed = await this.completeIfSettled(orderId, expectation);
+
+		if (completed?.status === OrderStatus.COMPLETED) {
+			return completed;
+		}
+
+		const statusAllows = this.totalsService.canComplete(order);
+
+		throw new ConflictException({
+			message: `ORDER_NOT_COMPLETABLE: order ${orderId} cannot be completed yet.`,
+			code: 'ORDER_NOT_COMPLETABLE',
+			details: {
+				status: order.status,
+				statusAllows,
+				hasOpenShippableLines: statusAllows ? await this.totalsService.hasOpenShippableLines(order) : undefined,
+				paymentSettled: statusAllows ? await this.totalsService.isPaymentSettled(order) : undefined,
+				hasOpenChange: statusAllows
+					? (await this.changeService.findOpenForOrder(orderId)).length > 0
+					: undefined
+			}
+		});
+	}
+
+	/**
 	 * Completes an order whose lines are all fulfilled and whose money side is settled.
 	 *
 	 * @param orderId The order.
@@ -747,6 +837,110 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		await this.historyService.record(order.id, 'ORDER_COMPLETED', 'Order completed', {}, scopeOfOrderRow(order));
 
 		return completed;
+	}
+
+	/**
+	 * Takes the use of every promotion a cart carries into checkout (Q7-W1c).
+	 *
+	 * Runs before the order row is written: a promotion whose limit is reached refuses the checkout with
+	 * `PROMOTION_USAGE_LIMIT_REACHED`, and nothing is left behind but the reservations of the promotions
+	 * before it — which the cart still holds, and a retry reuses rather than takes again.
+	 *
+	 * @param cart The cart, with its promotion snapshots.
+	 */
+	private async reservePromotionUsage(cart: {
+		id: ID;
+		currency?: string;
+		customerId?: ID;
+		promotions?: Array<{ promotionId?: ID; couponId?: ID; code?: string; amount?: unknown }>;
+	}): Promise<void> {
+		if (!this.promotionUsage) {
+			return;
+		}
+
+		try {
+			await this.reserveEachPromotion(cart);
+		} catch (error) {
+			// The promotions before the refused one were reserved by this attempt: they go back with it.
+			await this.releasePromotionUsage(cart.id);
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Reserves each promotion snapshot that names a promotion, in order.
+	 *
+	 * @param cart The cart.
+	 */
+	private async reserveEachPromotion(cart: {
+		id: ID;
+		currency?: string;
+		customerId?: ID;
+		promotions?: Array<{ promotionId?: ID; couponId?: ID; code?: string; amount?: unknown }>;
+	}): Promise<void> {
+		for (const promotion of cart.promotions ?? []) {
+			if (!promotion?.promotionId) {
+				continue;
+			}
+
+			await this.promotionUsage.reserveForCart({
+				cartId: cart.id,
+				promotionId: promotion.promotionId,
+				...(promotion.couponId ? { couponId: promotion.couponId } : {}),
+				...(promotion.code ? { code: promotion.code } : {}),
+				...(cart.customerId ? { customerId: cart.customerId } : {}),
+				amount: String(promotion.amount ?? '0'),
+				currency: cart.currency
+			});
+		}
+	}
+
+	/**
+	 * Registers a placed order's promotion reservations against it (Q7-W1c).
+	 *
+	 * The order is already placed, so a refusal here is logged rather than failing the checkout: the
+	 * reservations stand against the cart, and the use was already taken when they were made.
+	 *
+	 * @param orderId The order.
+	 * @param cartId The cart it came from.
+	 */
+	public async registerPromotionUsage(orderId: ID, cartId: ID): Promise<void> {
+		try {
+			await this.promotionUsage?.registerForOrder(orderId, cartId);
+		} catch (error) {
+			this.logger.warn(
+				`ORDER_PROMOTION_USAGE_NOT_REGISTERED: order ${orderId} (cart ${cartId}): ${describeError(error)}`
+			);
+		}
+	}
+
+	/**
+	 * Gives back the promotion uses a failed checkout took (Q7-W1c). Logged, never masking the failure.
+	 *
+	 * @param cartId The cart whose checkout failed.
+	 */
+	private async releasePromotionUsage(cartId: ID): Promise<void> {
+		try {
+			await this.promotionUsage?.releaseForCart(cartId);
+		} catch (error) {
+			this.logger.warn(`ORDER_PROMOTION_USAGE_NOT_RELEASED: cart ${cartId}: ${describeError(error)}`);
+		}
+	}
+
+	/**
+	 * Gives back the promotion uses a cancelled order took (Q7-W1c).
+	 *
+	 * The cancellation has committed, so a refusal is logged rather than reported as a failed cancellation.
+	 *
+	 * @param orderId The order.
+	 */
+	private async revertPromotionUsage(orderId: ID): Promise<void> {
+		try {
+			await this.promotionUsage?.revertForOrder(orderId);
+		} catch (error) {
+			this.logger.warn(`ORDER_PROMOTION_USAGE_NOT_REVERTED: order ${orderId}: ${describeError(error)}`);
+		}
 	}
 
 	/**

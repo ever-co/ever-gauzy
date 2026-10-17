@@ -37,6 +37,22 @@ describe('MIME parsing', () => {
 		expect(message.raw?.length).toBe(Buffer.byteLength(SAMPLE_MIME));
 	});
 
+	it("keeps the provider's verdicts, score and hold", async () => {
+		const message = await parseMimeMessage(Buffer.from(SAMPLE_MIME), {
+			spf: 'pass',
+			spamScore: 3,
+			hold: 'virus',
+			providerMessageId: 'p-1'
+		});
+		expect([message.spf, message.spamScore, message.hold, message.providerMessageId]).toEqual([
+			'pass',
+			3,
+			'virus',
+			'p-1'
+		]);
+		expect((await parseMimeMessage(Buffer.from(SAMPLE_MIME))).hold).toBeUndefined();
+	});
+
 	it('derives a stable message id when the message has none', async () => {
 		const raw = Buffer.from('From: a@b.test\r\nTo: c@d.test\r\nSubject: hi\r\n\r\nbody\r\n');
 		const one = await parseMimeMessage(raw);

@@ -31,6 +31,7 @@ import { PaymentCaptureService } from '../payment-capture/payment-capture.servic
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLineService } from '../refund-line/refund-line.service';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
+import { PaymentOrderLedgerMirror } from '../payment-order-ledger/payment-order-ledger.mirror';
 
 /**
  * The statuses a refund may be retired from: the two that moved no money and never will. See
@@ -117,7 +118,13 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		 */
 		@Optional()
 		@Inject(PAYMENT_ORDER_LINE_REFUND)
-		private readonly orderLineRefunds?: IPaymentOrderLineRefundPort
+		private readonly orderLineRefunds?: IPaymentOrderLineRefundPort,
+		/**
+		 * Tells the order the money went back (Q7-W1b): the order's ledger carries a `REFUND` row for every
+		 * succeeded refund, which is what moves its refunded total and its payment status. Optional and last.
+		 */
+		@Optional()
+		private readonly orderLedger?: PaymentOrderLedgerMirror
 	) {
 		super(typeOrmRefundRepository, mikroOrmRefundRepository);
 	}
@@ -544,6 +551,26 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		 * that has not gone back.
 		 */
 		await this.mirrorToOrderLines(await this.findRefundOrFail(id));
+
+		// A refund that names only the payment it gives back belongs to that payment's order, and the order's
+		// ledger has to hear of it all the same (Greptile on #10897).
+		const refundOrderId = refund.orderId ?? payment?.orderId;
+
+		if (refundOrderId) {
+			await this.orderLedger?.mirror(
+				{
+					orderId: refundOrderId,
+					type: 'REFUND',
+					amount: refund.amount,
+					currency: refund.currency,
+					referenceType: 'REFUND',
+					referenceId: refund.id,
+					...(refund.paymentId ? { paymentId: refund.paymentId } : {}),
+					occurredAt: new Date()
+				},
+				`refund ${refund.id}`
+			);
+		}
 
 		await this.publish(
 			new PaymentRefundedEvent(

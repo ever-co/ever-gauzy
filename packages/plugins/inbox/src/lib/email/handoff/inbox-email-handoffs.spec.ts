@@ -7,6 +7,7 @@ jest.mock('@gauzy/core', () => {
 	const decorator = () => () => undefined;
 	return {
 		ColumnIndex: decorator,
+		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
 		MultiORMManyToOne: decorator,

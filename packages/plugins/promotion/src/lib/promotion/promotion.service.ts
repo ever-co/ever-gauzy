@@ -139,6 +139,9 @@ interface IPromotionAdjustmentPlan {
  * kernel's evaluator, so this service asks one question — "does this promotion's rule set match this
  * context" — and never re-implements what "matches" means.
  */
+/** The code `reserveUsage` refuses a use with when the promotion's usage limit is reached. */
+export const PROMOTION_USAGE_LIMIT_EXCEEDED = 'PROMOTION_USAGE_LIMIT_EXCEEDED';
+
 @Injectable()
 export class PromotionService extends TenantScopedCrudService<Promotion> {
 	constructor(
@@ -301,7 +304,7 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 		if (!fundingType || fundingType === PromotionFunding.PLATFORM) {
 			if (sellerId) {
 				throw new BadRequestException(
-					'PROMOTION_FUNDING_SELLER_UNEXPECTED: a promotion the platform funds names no seller, because the cost it bears is not a seller\'s to record.'
+					"PROMOTION_FUNDING_SELLER_UNEXPECTED: a promotion the platform funds names no seller, because the cost it bears is not a seller's to record."
 				);
 			}
 
@@ -513,9 +516,13 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 			// may redeem would hold budget and count against the per-customer limit for ever.
 			await this.promotionUsageService.releaseUsage(usage.id);
 
-			throw new BadRequestException(
-				`PROMOTION_USAGE_LIMIT_EXCEEDED: promotion ${input.promotionId} has reached its usage limit.`
-			);
+			// The code is stated as well as the text, so a caller that translates the refusal reads a stable
+			// member rather than matching a message (Q7-W1c, CodeRabbit on #10897).
+			throw new BadRequestException({
+				message: `PROMOTION_USAGE_LIMIT_EXCEEDED: promotion ${input.promotionId} has reached its usage limit.`,
+				code: PROMOTION_USAGE_LIMIT_EXCEEDED,
+				details: { promotionId: input.promotionId }
+			});
 		}
 
 		return usage;

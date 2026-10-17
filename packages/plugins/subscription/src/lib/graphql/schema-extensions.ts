@@ -283,6 +283,8 @@ export const schemaExtensions = gql`
 		setupFee: Decimal
 		discountPercentage: Decimal
 		metadata: JSON
+		"Create the plan inactive (not offered to new subscriptions), as POST /subscription-plans allows. Defaults to active."
+		isActive: Boolean
 	}
 
 	"The plan as it is updated."
@@ -300,6 +302,8 @@ export const schemaExtensions = gql`
 		discountPercentage: Decimal
 		isActive: Boolean
 		metadata: JSON
+		"The currency the plan's amounts are expressed in, as PUT /subscription-plans/:id takes it; refused while the plan has live subscriptions (SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE)."
+		currency: String
 	}
 
 	"One recurring line as it is stated."
@@ -325,6 +329,7 @@ export const schemaExtensions = gql`
 		activate: Boolean
 		"Leave the subscription inside the plan's trial."
 		startTrial: Boolean
+		"A discount for this subscription only, as a fraction between 0 and 1, applied to every cycle in place of the plan's own discount. Served over GraphQL only: POST /subscriptions does not take it."
 		discountPercentage: Decimal
 		metadata: JSON
 		idempotencyKey: String

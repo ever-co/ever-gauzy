@@ -10259,7 +10259,14 @@ type Mutation {
   cancelStockAdjustment(id: ID!): StockAdjustment!
   createStockReservation(input: StockReservationInput!): StockReservation!
   releaseStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
-  consumeStockReservation(id: ID!): StockReservation!
+
+  """
+  Consumes a hold: the held units leave, and the hold closes with them.
+  
+  `reason` is the machine-readable reason recorded on the ledger row, as `POST /stock-reservations/:id/consume?reason=`
+  records it; `idempotencyKey` makes a retry safe, as on the release beside it.
+  """
+  consumeStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
 
   """
   Pushes the expiry of every active hold of a document.
@@ -10278,7 +10285,14 @@ type Mutation {
   cancelStockTransfer(id: ID!, reason: String): StockTransfer!
   addStockTransferLine(input: StockTransferLineInput!): StockTransferLine!
   createStockAlert(input: StockAlertInput!): StockAlert!
-  updateStockAlert(id: ID!, input: StockAlertInput!): StockAlert!
+
+  """
+  Updates an alert rule and answers it as it now stands.
+  
+  State the changes once: as `patch`, whose every member is optional, or as the older `input`, the create's
+  shape, which restates the rule's required members and keeps working. Both, or neither, is refused.
+  """
+  updateStockAlert(id: ID!, input: StockAlertInput, patch: UpdateStockAlertInput): StockAlert!
   deleteStockAlert(id: ID!): Boolean!
   createStockCount(input: StockCountInput!): StockCount!
   openStockCount(id: ID!): StockCount!
@@ -10593,6 +10607,10 @@ type Mutation {
   updateOrder(id: ID!, input: UpdateOrderInput!): Order!
   cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!
   archiveOrder(id: ID!, version: Int): Order!
+  """
+  Completes an order whose goods are accounted for and whose money is settled; refused with ORDER_NOT_COMPLETABLE otherwise.
+  """
+  completeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
   placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
   confirmOrder(id: ID!, version: Int): Order!
 
@@ -11743,7 +11761,18 @@ type Mutation {
   Extends the term of a right, which is what a successful renewal does. The caller states the
   'version' it read, and a right that has moved on since is refused.
   """
-  extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int, version: Int, idempotencyKey: String): EntitlementPayload!
+  extendEntitlement(
+    id: ID!
+    endsAt: DateTime!
+    quantity: Int
+    version: Int
+    idempotencyKey: String
+
+    """
+    What extended the right (e.g. the subscription billing cycle), carried on the renewal event, as POST /entitlements/:id/extend takes it.
+    """
+    note: String
+  ): EntitlementPayload!
 
   """
   Edits a right: its ceiling, its term, its grace, its activation limit, its extras and its
@@ -48127,6 +48156,20 @@ input StockAlertInput {
   idempotencyKey: String
 }
 
+"""
+What a caller changes on an alert rule. Every member is optional, because an edit states what changed rather
+than restating the rule; `idempotencyKey` is absent, because an edit is not a create a retry could duplicate.
+"""
+input UpdateStockAlertInput {
+  variantId: ID
+  warehouseId: ID
+  threshold: Float
+  notifyEmails: [String!]
+  notifyRoles: [String!]
+  cooldownMinutes: Int
+  isActive: Boolean
+}
+
 input StockCountInput {
   warehouseId: ID!
   mode: String
@@ -49878,8 +49921,16 @@ input UpdateOrderInput {
   email: String
   phone: String
   locale: String
+
+  """
+  Not a field of an order: a stated note is refused (ORDER_NOTE_NOT_A_FIELD); a change carries one.
+  """
   note: String
   externalId: String
+
+  """
+  Recorded by cancelOrder only: a stated reason is refused (ORDER_CANCEL_REASON_NOT_WRITABLE).
+  """
   cancelReason: String
   paymentTermId: ID
 
@@ -49937,6 +49988,11 @@ input RequestOrderEditInput {
   Retry key: a repeat of this input under the same key is answered from the first attempt.
   """
   idempotencyKey: String
+
+  """
+  The version of the order this change was reasoned about; omitted, the change is refused.
+  """
+  version: Int
 }
 
 """
@@ -50782,6 +50838,16 @@ input UpdatePaymentCollectionInput {
   fxRateId: ID
   fxCapturedAt: DateTime
   metadata: JSON
+
+  """
+  The amount to collect, as `PUT /payment-collections/:id` takes it; refused once money has moved against the collection.
+  """
+  amount: Decimal
+
+  """
+  The currency of the amount, as the route takes it; refused once money has moved against the collection.
+  """
+  currency: String
 }
 
 input OpenPaymentSessionInput {
@@ -54538,6 +54604,11 @@ input CreateSubscriptionPlanInput {
   setupFee: Decimal
   discountPercentage: Decimal
   metadata: JSON
+
+  """
+  Create the plan inactive (not offered to new subscriptions), as POST /subscription-plans allows. Defaults to active.
+  """
+  isActive: Boolean
 }
 
 """The plan as it is updated."""
@@ -54555,6 +54626,11 @@ input UpdateSubscriptionPlanInput {
   discountPercentage: Decimal
   isActive: Boolean
   metadata: JSON
+
+  """
+  The currency the plan's amounts are expressed in, as PUT /subscription-plans/:id takes it; refused while the plan has live subscriptions (SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE).
+  """
+  currency: String
 }
 
 """One recurring line as it is stated."""
@@ -54587,6 +54663,10 @@ input CreateSubscriptionInput {
 
   """Leave the subscription inside the plan's trial."""
   startTrial: Boolean
+
+  """
+  A discount for this subscription only, as a fraction between 0 and 1, applied to every cycle in place of the plan's own discount. Served over GraphQL only: POST /subscriptions does not take it.
+  """
   discountPercentage: Decimal
   metadata: JSON
   idempotencyKey: String
@@ -55904,6 +55984,11 @@ input GrantEntitlementInput {
   a grant that names no key behaves exactly as it always did.
   """
   idempotencyKey: String
+
+  """
+  An explicit number for the right (at most 32 characters), as POST /entitlements takes it; allocated from the ENTITLEMENT series when absent.
+  """
+  number: String
 }
 
 """The request that occupies a slot."""
@@ -55927,6 +56012,11 @@ input ActivateEntitlementInput {
   activation that states no key behaves exactly as it always did.
   """
   idempotencyKey: String
+
+  """
+  Refresh lastSeenAt of an existing activation only after this many seconds (0 or more), as POST /entitlement-activations takes it.
+  """
+  seenIntervalSeconds: Int
 }
 
 """The request that asks whether a right may be exercised."""

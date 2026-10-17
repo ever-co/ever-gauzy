@@ -18,19 +18,28 @@ import {
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
 import {
 	ORDER_APPROVAL,
+	ORDER_CHECKOUT_PAYMENTS,
 	ORDER_INVOICING,
+	ORDER_PROMOTION_USAGE,
 	OrderApprovalAdapter,
 	OrderInvoicingAdapter,
 	OrderLineFulfillmentService,
 	OrderLineService,
 	OrderModule,
+	OrderPaymentLedgerService,
 	OrderPlatformAdaptersModule,
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
 import { PricingModule, ProductPriceService, RecurringPriceService } from '@gauzy/plugin-pricing';
-import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
-import { PromotionModule, PromotionService } from '@gauzy/plugin-promotion';
+import {
+	PAYMENT_ORDER_LEDGER,
+	PAYMENT_ORDER_LINE_REFUND,
+	PaymentModule,
+	PaymentOrderLinkService,
+	ReturnRefundService
+} from '@gauzy/plugin-payment';
+import { PromotionModule, PromotionOrderUsageAdapter, PromotionService } from '@gauzy/plugin-promotion';
 import {
 	PURCHASING_APPROVAL,
 	PURCHASING_INVENTORY,
@@ -129,6 +138,13 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// The payment package reports what a succeeded refund paid back per line; the order package is
 		// the only writer of `order_line.refundedQuantity` / `refundedAmount`.
 		{ provide: PAYMENT_ORDER_LINE_REFUND, useExisting: OrderLineService },
+		// Every authorisation, capture, void and refund is a row of the order's own money ledger, which only the
+		// order package writes; the payment package reports each one after its money moved (Q7-W1b). Unbound, an
+		// order paid in full answered NOT_PAID for ever and could never complete.
+		{ provide: PAYMENT_ORDER_LEDGER, useExisting: OrderPaymentLedgerService },
+		// A buyer pays before the order exists, on a collection opened for the cart; the checkout hands that
+		// collection and its payments to the order the cart became (Q7-W1b).
+		{ provide: ORDER_CHECKOUT_PAYMENTS, useExisting: PaymentOrderLinkService },
 		// A return cannot exceed what was sent, and only the order package knows how much that is.
 		{ provide: RETURNS_ORDER_FULFILLMENT, useExisting: OrderLineFulfillmentService },
 		// A billing period is priced by the pricing package, so a subscription asks it rather than
@@ -166,6 +182,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// rather than recording an amount the caller stated — which is what it did before (R3-07): a buyer
 		// could name any code and any discount, and the cart re-priced from it.
 		{ provide: CART_PROMOTION_EVALUATION, useExisting: PromotionService },
+		// What the engine granted is also a redemption: a checkout takes the promotion's use before the order
+		// is written and registers it once placed, and a cancellation gives it back (Q7-W1c). Unbound, a
+		// promotion's usage limit counted nothing and could be redeemed without end.
+		{ provide: ORDER_PROMOTION_USAGE, useExisting: PromotionOrderUsageAdapter },
 		// What a cart line costs is the pricing package's resolution — its price lists, sale and override
 		// lists, quantity bands and currency — for the cart and the line's quantity. Unbound, the cart refuses a
 		// line rather than recording the price its caller stated, which is what it did before (R3-07b).
@@ -230,7 +250,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		RETURNS_SHIPMENT_GATEWAY,
 		RETURNS_REFUND_GATEWAY,
 		ORDER_INVOICING,
-		ORDER_APPROVAL
+		ORDER_APPROVAL,
+		PAYMENT_ORDER_LEDGER,
+		ORDER_CHECKOUT_PAYMENTS,
+		ORDER_PROMOTION_USAGE
 	]
 })
 export class PluginCompositionModule {}

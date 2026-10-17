@@ -443,6 +443,40 @@ describe('StockAlertService — the rules it watches (doc 09 §10.1)', () => {
 		expect(stated.organizationId).toBe('org-stated');
 	});
 
+	it('answers the rule after an edit, never the ORM’s update result (R2-G35)', async () => {
+		const fixture = alertFixture([alertRow()]);
+
+		const updated = await fixture.service.updateAlert(RULE, { threshold: 2, isActive: false });
+
+		expect(updated).toMatchObject({ id: RULE, threshold: 2, isActive: false, variantId: VARIANT });
+		expect(updated).not.toHaveProperty('affected');
+	});
+
+	it('writes neither the retry key nor the rule’s identity or tenancy (R2-G35)', async () => {
+		const fixture = alertFixture([alertRow()]);
+
+		await fixture.service.updateAlert(RULE, {
+			threshold: 2,
+			idempotencyKey: 'key-1',
+			id: 'another-id',
+			tenantId: 'another-tenant',
+			organizationId: 'another-org'
+		} as never);
+
+		expect(fixture.rule()).toMatchObject({ id: RULE, tenantId: TENANT, organizationId: ORG, threshold: 2 });
+		expect(fixture.rule()).not.toHaveProperty('idempotencyKey');
+	});
+
+	it('reads the rule back without a write when an edit states nothing it may change', async () => {
+		const fixture = alertFixture([alertRow()]);
+		const update = jest.spyOn(fixture.repository, 'update');
+
+		const answered = await fixture.service.updateAlert(RULE, { idempotencyKey: 'key-1' } as never);
+
+		expect(answered).toMatchObject({ id: RULE, threshold: 5 });
+		expect(update).not.toHaveBeenCalled();
+	});
+
 	it('lists the rules it watches', async () => {
 		const fixture = alertFixture([alertRow(), alertRow({ id: 'stock_alert-2', variantId: OTHER_VARIANT })]);
 

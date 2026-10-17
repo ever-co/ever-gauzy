@@ -18,6 +18,7 @@ import {
 	AbstractValidationPipe,
 	BaseQueryDTO,
 	CrudController,
+	Idempotent,
 	Permissions,
 	PermissionGuard,
 	TenantOrganizationBaseDTO,
@@ -100,6 +101,9 @@ export class RefundLineController extends CrudController<RefundLine> {
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Refund line recorded' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Settled refund, unknown order line, or over the refund' })
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	// Optional retry key, the scope `createRefundLine` honours through `CreateRefundLineInput.idempotencyKey`
+	// (R2-G16): a retried line is answered the first one rather than recorded twice against the refund.
+	@Idempotent({ scope: 'refund.line.create', required: false, resourceType: 'refund_line' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async create(@Body() entity: CreateRefundLineDTO): Promise<IRefundLine> {

@@ -305,6 +305,8 @@ export const schemaExtensions = gql`
 		a grant that names no key behaves exactly as it always did.
 		"""
 		idempotencyKey: String
+		"An explicit number for the right (at most 32 characters), as POST /entitlements takes it; allocated from the ENTITLEMENT series when absent."
+		number: String
 	}
 
 	"The request that occupies a slot."
@@ -325,6 +327,8 @@ export const schemaExtensions = gql`
 		activation that states no key behaves exactly as it always did.
 		"""
 		idempotencyKey: String
+		"Refresh lastSeenAt of an existing activation only after this many seconds (0 or more), as POST /entitlement-activations takes it."
+		seenIntervalSeconds: Int
 	}
 
 	"The request that asks whether a right may be exercised."
@@ -546,6 +550,8 @@ export const schemaExtensions = gql`
 			quantity: Int
 			version: Int
 			idempotencyKey: String
+			"What extended the right (e.g. the subscription billing cycle), carried on the renewal event, as POST /entitlements/:id/extend takes it."
+			note: String
 		): EntitlementPayload!
 		"""
 		Edits a right: its ceiling, its term, its grace, its activation limit, its extras and its

@@ -13,6 +13,8 @@ export * from './lib/graphql/schema-extensions';
 export * from './lib/order-state-machine/order-state-machine';
 export * from './lib/order-totals/order-totals.service';
 export * from './lib/checkout/order-checkout.handler';
+export * from './lib/checkout/order-cart-ledger-carryover.service';
+export * from './lib/order-payment/order-payment-ledger.service';
 export * from './lib/subscription-order/subscription-order.service';
 // The bridge from an order to the accounting documents that bill it, and the adapters an installation binds
 // the `ORDER_INVOICING` and `ORDER_APPROVAL` ports to — with the module that provides them, which the order

@@ -318,11 +318,19 @@ describe('Inbound email pipeline on SQLite', () => {
 		mockCaller.permissions = permissions;
 	};
 
-	// Every delivery signed at its own second (a relay's retry is signed anew); `at` pins one.
-	let clock = 0;
+	// Every delivery signed at its own second (a relay's retry is signed anew); `at` pins one. The seconds go back
+	// from now and are never handed out twice: `now - counter` repeated itself whenever a delivery took a second, and
+	// a retry of the same body then carried the same signature and was refused as a replay.
+	const usedSeconds = new Set<number>();
+	const nextSecond = () => {
+		let second = Math.floor(Date.now() / 1000);
+		while (usedSeconds.has(second)) second--;
+		usedSeconds.add(second);
+		return second;
+	};
 	const signedRequest = (body: unknown, secret = PLATFORM_SECRET, at?: number) => {
 		const raw = JSON.stringify(body);
-		const timestamp = at ?? Math.floor(Date.now() / 1000) - (clock++ % 200);
+		const timestamp = at ?? nextSecond();
 		return {
 			headers: { [GENERIC_SIGNATURE_HEADER]: signWebhookPayload(secret, raw, { timestamp }).header },
 			body,

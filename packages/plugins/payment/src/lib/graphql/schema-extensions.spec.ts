@@ -42,7 +42,10 @@ const MIRRORS: ReadonlyArray<readonly [string, string]> = [
 	['reprocessPaymentWebhookEvent', 'ReprocessPaymentWebhookEventInput'],
 	['createPaymentAccountHolder', 'CreatePaymentAccountHolderInput'],
 	['verifyPaymentAccountHolder', 'VerifyPaymentAccountHolderInput'],
-	['createPaymentMethodToken', 'CreatePaymentMethodTokenInput']
+	['createPaymentMethodToken', 'CreatePaymentMethodTokenInput'],
+	// The two whose inputs always declared the key while nothing read it, honoured on both surfaces now (R2-G16).
+	['approveRefund', 'ApproveRefundInput'],
+	['createRefundLine', 'CreateRefundLineInput']
 ];
 
 /**
@@ -62,7 +65,7 @@ function inputBody(name: string): string {
 }
 
 describe('the schema — the retry key on the mutations that mirror a decorated route (17 §6.1)', () => {
-	it('declares the twelve mirrors of the decorated operations', () => {
+	it('declares the fourteen mirrors of the decorated operations', () => {
 		for (const [mutation, input] of MIRRORS) {
 			expect(schemaText).toMatch(new RegExp(`${mutation}\\(input: ${input}!\\)`));
 		}
@@ -84,5 +87,16 @@ describe('the schema — the retry key on the mutations that mirror a decorated 
 			// one character that would turn the declaration into a requirement.
 			expect(inputBody(input)).toMatch(/\bidempotencyKey:\s*String(?!\S)/);
 		}
+	});
+});
+
+// R2-G16: `PUT /payment-collections/:id` takes the amount and the currency (refused once money has moved);
+// `UpdatePaymentCollectionInput` did not declare them, so the correction could only be made over REST.
+describe('the schema — the collection correction takes what the route takes', () => {
+	it('declares the amount and the currency on UpdatePaymentCollectionInput, both nullable', () => {
+		const body = inputBody('UpdatePaymentCollectionInput');
+
+		expect(body).toMatch(/\bamount:\s*Decimal(?!\S)/);
+		expect(body).toMatch(/\bcurrency:\s*String(?!\S)/);
 	});
 });
