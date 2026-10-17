@@ -1,5 +1,7 @@
 // cspell:ignore verif
 import { UnauthorizedException } from '@nestjs/common';
+import { environment } from '@gauzy/config';
+import { sign } from 'jsonwebtoken';
 
 // The strategy only needs these for DI metadata; loading the real modules drags in the whole core
 // entity graph, which cannot be required in isolation (pre-existing circular import).
@@ -57,12 +59,18 @@ describe('JwtStrategy.validate', () => {
 		return { strategy, authService, employeeService, userOrganizationService, roleAuthorizationService };
 	}
 
+	/**
+	 * Runs the strategy the way passport-jwt does: through the verify callback the `PassportStrategy` mixin
+	 * registered, which calls `validate` and reports its outcome to passport's `done` — `done(null, user)` for
+	 * a returned user, `done(err, null)` for a thrown error. Every call is recorded, and there must be
+	 * exactly one: a second one is what turned every authenticated request into a success followed by a
+	 * thrown-and-swallowed `UnauthorizedException`.
+	 */
 	async function run(strategy: JwtStrategy, payload: any) {
-		let result: { err: unknown; user: unknown } | undefined;
-		await strategy.validate(payload, (err, user) => {
-			result = { err, user };
-		});
-		return result!;
+		const calls: Array<{ err: unknown; user: unknown }> = [];
+		await (strategy as any)._verify(payload, (err: unknown, user: unknown) => calls.push({ err, user }));
+		expect(calls).toHaveLength(1);
+		return calls[0];
 	}
 
 	it.each([
@@ -76,7 +84,7 @@ describe('JwtStrategy.validate', () => {
 		const { strategy, authService } = build();
 		const { err, user } = await run(strategy, payload);
 		expect(err).toBeInstanceOf(UnauthorizedException);
-		expect(user).toBe(false);
+		expect(user).toBeNull();
 		expect(authService.getAuthenticatedUser).not.toHaveBeenCalled();
 	});
 
@@ -99,7 +107,7 @@ describe('JwtStrategy.validate', () => {
 			const { strategy, authService } = build();
 			const { err, user } = await run(strategy, payload);
 			expect(err).toBeInstanceOf(UnauthorizedException);
-			expect(user).toBe(false);
+			expect(user).toBeNull();
 			expect(authService.getAuthenticatedUser).not.toHaveBeenCalled();
 		});
 
@@ -151,7 +159,7 @@ describe('JwtStrategy.validate', () => {
 			const { strategy, roleAuthorizationService } = build(user);
 			const { err, user: authenticated } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
 			expect(err).toBeInstanceOf(UnauthorizedException);
-			expect(authenticated).toBe(false);
+			expect(authenticated).toBeNull();
 			// Nothing about the request may be set up for a user we just refused.
 			expect(roleAuthorizationService.attachAuthorizationState).not.toHaveBeenCalled();
 		});
@@ -168,7 +176,7 @@ describe('JwtStrategy.validate', () => {
 			const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant', employeeId: 'emp-1' });
 
 			expect(err).toBeInstanceOf(UnauthorizedException);
-			expect(user).toBe(false);
+			expect(user).toBeNull();
 		});
 
 		it('still authenticates a token carrying an active employee', async () => {
@@ -203,7 +211,7 @@ describe('JwtStrategy.validate', () => {
 			});
 
 			expect(err).toBeInstanceOf(UnauthorizedException);
-			expect(user).toBe(false);
+			expect(user).toBeNull();
 		});
 
 		it('rejects an employee that belongs to another organization', async () => {
@@ -225,7 +233,7 @@ describe('JwtStrategy.validate', () => {
 			});
 
 			expect(err).toBeInstanceOf(UnauthorizedException);
-			expect(user).toBe(false);
+			expect(user).toBeNull();
 			// Refused before the membership lookup: the claims contradict each other.
 			expect(userOrganizationService.findOneByOptions).not.toHaveBeenCalled();
 		});
@@ -283,7 +291,7 @@ describe('JwtStrategy.validate', () => {
 			const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
 
 			expect(err).toBeInstanceOf(UnauthorizedException);
-			expect(user).toBe(false);
+			expect(user).toBeNull();
 		});
 
 		it('authenticates with no role and no permissions when the role does not resolve (returns null)', async () => {
@@ -301,6 +309,114 @@ describe('JwtStrategy.validate', () => {
 			expect(err).toBeNull();
 			expect((user as any).role).toBeUndefined();
 			expect((user as any).permissions).toEqual([]);
+		});
+	});
+
+	/**
+	 * The `PassportStrategy` mixin calls passport's `done` with whatever `validate` returns or throws. A
+	 * `validate` that also called `done` itself reported every request twice: passport-jwt turned the second
+	 * report — `done(null, undefined)` — into `fail()`, and Nest's AuthGuard answered that by constructing
+	 * and throwing an `UnauthorizedException` on every authenticated request, swallowed only because the
+	 * guard's promise had already settled.
+	 */
+	describe('passport contract', () => {
+		it('returns the authenticated user', async () => {
+			const { strategy } = build();
+			await expect(strategy.validate({ id: 'first-user', tenantId: 'tenant' })).resolves.toMatchObject({
+				id: 'first-user'
+			});
+		});
+
+		it.each([
+			['a payload that names no user', { email: 'x@y.z' }, 'unauthorized'],
+			['a purpose-typed token', { purpose: 'password-reset', id: 'first-user' }, 'unauthorized']
+		])('throws the refusal for %s', async (_label, payload, message) => {
+			const { strategy } = build();
+			await expect(strategy.validate(payload)).rejects.toThrow(new UnauthorizedException(message));
+		});
+
+		it('throws the claim refusals exactly as they are built, not re-wrapped', async () => {
+			const { strategy, employeeService, userOrganizationService } = build();
+			employeeService.findOneByIdString.mockResolvedValue({
+				id: 'emp-1',
+				userId: 'first-user',
+				organizationId: 'org-2',
+				isActive: true,
+				isArchived: false
+			});
+			userOrganizationService.findOneByOptions.mockResolvedValue(null);
+
+			const crossOrganization = strategy.validate({
+				id: 'first-user',
+				tenantId: 'tenant',
+				employeeId: 'emp-1',
+				organizationId: 'org-1'
+			});
+			await expect(crossOrganization).rejects.toBeInstanceOf(UnauthorizedException);
+			await expect(crossOrganization).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'Employee does not belong to the claimed organization' }
+			});
+
+			const notAMember = strategy.validate({ id: 'first-user', tenantId: 'tenant', organizationId: 'org-1' });
+			await expect(notAMember).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'User does not have access to organization' }
+			});
+		});
+
+		it('turns a lookup that threw into a 401 carrying its message', async () => {
+			const { strategy, authService } = build();
+			authService.getAuthenticatedUser.mockRejectedValue(new Error('lookup failed'));
+
+			const result = strategy.validate({ id: 'first-user', tenantId: 'tenant' });
+			await expect(result).rejects.toBeInstanceOf(UnauthorizedException);
+			await expect(result).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'unauthorized', error: 'lookup failed' }
+			});
+		});
+
+		it('reports a valid bearer token to passport as one success and nothing else', async () => {
+			const { strategy } = build();
+			const token = sign({ id: 'first-user', tenantId: 'tenant' }, environment.JWT_SECRET, {
+				algorithm: 'HS256'
+			});
+			const reports: string[] = [];
+			const settled = new Promise<void>((resolve) => {
+				Object.assign(strategy, {
+					success: () => (reports.push('success'), resolve()),
+					fail: () => (reports.push('fail'), resolve()),
+					error: () => (reports.push('error'), resolve())
+				});
+			});
+
+			strategy.authenticate({ headers: { authorization: `Bearer ${token}` } } as any, {});
+			await settled;
+			// Give a second report — the one the old implicit `return undefined` produced — time to arrive.
+			await new Promise((resolve) => setImmediate(resolve));
+
+			expect(reports).toEqual(['success']);
+		});
+
+		it('reports a refused bearer token to passport as one error and nothing else', async () => {
+			const { strategy } = build({ ...activeUser, isActive: false });
+			const token = sign({ id: 'first-user', tenantId: 'tenant' }, environment.JWT_SECRET, {
+				algorithm: 'HS256'
+			});
+			const reports: Array<[string, unknown?]> = [];
+			const settled = new Promise<void>((resolve) => {
+				Object.assign(strategy, {
+					success: () => (reports.push(['success']), resolve()),
+					fail: () => (reports.push(['fail']), resolve()),
+					error: (err: unknown) => (reports.push(['error', err]), resolve())
+				});
+			});
+
+			strategy.authenticate({ headers: { authorization: `Bearer ${token}` } } as any, {});
+			await settled;
+			await new Promise((resolve) => setImmediate(resolve));
+
+			expect(reports).toHaveLength(1);
+			expect(reports[0][0]).toBe('error');
+			expect(reports[0][1]).toBeInstanceOf(UnauthorizedException);
 		});
 	});
 });

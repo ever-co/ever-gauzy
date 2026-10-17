@@ -28,12 +28,20 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 		return { strategy, userService, refreshTokenService };
 	}
 
+	/**
+	 * Runs the strategy the way passport-jwt does (`passReqToCallback`): through the verify callback the
+	 * `PassportStrategy` mixin registered, which reports what `validate` returned or threw to passport's
+	 * `done`. Every call is recorded, and there must be exactly one.
+	 */
 	async function run(strategy: JwtRefreshTokenStrategy, payload: any) {
-		let result: { err: unknown; user: unknown } | undefined;
-		await strategy.validate({ body: { refresh_token: 'refresh-token' } } as any, payload, (err, user) => {
-			result = { err, user };
-		});
-		return result!;
+		const calls: Array<{ err: unknown; user: unknown }> = [];
+		await (strategy as any)._verify(
+			{ body: { refresh_token: 'refresh-token' } },
+			payload,
+			(err: unknown, user: unknown) => calls.push({ err, user })
+		);
+		expect(calls).toHaveLength(1);
+		return calls[0];
 	}
 
 	it('authenticates an active user', async () => {
@@ -54,13 +62,46 @@ describe('JwtRefreshTokenStrategy.validate', () => {
 		const { strategy } = build(user);
 		const { err, user: authenticated } = await run(strategy, { id: 'user-1' });
 		expect(err).toBeInstanceOf(UnauthorizedException);
-		expect(authenticated).toBe(false);
+		expect(authenticated).toBeNull();
 	});
 
 	it('still rejects an identity mismatch between the payload and the stored token', async () => {
 		const { strategy } = build();
 		const { err, user } = await run(strategy, { id: 'someone-else' });
 		expect(err).toBeInstanceOf(UnauthorizedException);
-		expect(user).toBe(false);
+		expect(user).toBeNull();
+	});
+
+	describe('passport contract', () => {
+		const request = { body: { refresh_token: 'refresh-token' } } as any;
+
+		it('returns the user', async () => {
+			const { strategy } = build();
+			await expect(strategy.validate(request, { id: 'user-1' })).resolves.toMatchObject({ id: 'user-1' });
+		});
+
+		it('throws the refusal it decided exactly as it was built', async () => {
+			const { strategy, refreshTokenService } = build();
+			refreshTokenService.verify.mockResolvedValue({
+				isValid: false,
+				token: null,
+				reason: 'Token revoked'
+			} as any);
+
+			await expect(strategy.validate(request, { id: 'user-1' })).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'Token revoked' }
+			});
+		});
+
+		it('turns a lookup that threw into a 401 carrying its message', async () => {
+			const { strategy, userService } = build();
+			userService.findOneByIdString.mockRejectedValue(new Error('lookup failed'));
+
+			const result = strategy.validate(request, { id: 'user-1' });
+			await expect(result).rejects.toBeInstanceOf(UnauthorizedException);
+			await expect(result).rejects.toMatchObject({
+				response: { statusCode: 401, message: 'Unauthorized', error: 'lookup failed' }
+			});
+		});
 	});
 });

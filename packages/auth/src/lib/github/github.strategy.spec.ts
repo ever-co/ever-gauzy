@@ -13,14 +13,23 @@ describe('GithubStrategy', () => {
 	const rawEmails = (emails: Array<{ value: string; primary?: boolean; verified?: unknown }>): Profile['emails'] =>
 		emails as unknown as Profile['emails'];
 
-	/** Runs `validate` and returns what it passed to the Passport callback. */
+	/**
+	 * Runs `validate` the way passport-github2 does (`passReqToCallback`) — through the verify callback the
+	 * `PassportStrategy` mixin registered — and returns what reached Passport's `done`, which must be called
+	 * exactly once.
+	 */
 	const runValidate = async (profile: Partial<Profile>): Promise<{ error: any; user: any }> => {
 		const strategy = new GithubStrategy(configService);
-		let result: { error: any; user: any };
-		await strategy.validate({} as any, 'access-token', 'refresh-token', profile as Profile, (error, user) => {
-			result = { error, user };
-		});
-		return result;
+		const calls: Array<{ error: any; user: any }> = [];
+		await (strategy as any)._verify(
+			{},
+			'access-token',
+			'refresh-token',
+			profile as Profile,
+			(error: any, user: any) => calls.push({ error, user })
+		);
+		expect(calls).toHaveLength(1);
+		return calls[0];
 	};
 
 	const baseProfile: Partial<Profile> = {
@@ -131,10 +140,7 @@ describe('GithubStrategy', () => {
 					err ? reject(err) : resolve(value)
 				)
 			);
-			let user: any;
-			await strategy.validate({} as any, 'access-token', 'refresh-token', profile, (_error, value) => {
-				user = value;
-			});
+			const user: any = await strategy.validate({} as any, 'access-token', 'refresh-token', profile);
 
 			expect(user.emails).toEqual([{ value: 'ada@example.com', verified: true }]);
 		});

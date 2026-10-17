@@ -30,70 +30,98 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 	/**
 	 * Validates the JWT payload.
+	 *
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the value returned here is handed
+	 * to passport as the authenticated user, and a thrown exception is handed to it as the error. The mixin
+	 * owns passport's `done` callback and calls it exactly once with the outcome; this method must not
+	 * call it too. It used to — `done(null, user)` and then an implicit `return undefined` — so every
+	 * authenticated request reported to passport twice: a success, then a `fail()` that Nest's AuthGuard
+	 * answered by constructing and throwing an `UnauthorizedException` nobody would ever see, and that
+	 * overwrote `request.authInfo`.
+	 *
 	 * @param {JwtPayload} payload - The JWT payload to validate.
-	 * @param {Function} done - The callback function to call when validation is complete.
-	 * @returns {void}
+	 * @returns {Promise<IAuthenticatedUser>} The authenticated user.
+	 * @throws {UnauthorizedException} When the token does not authenticate a user.
 	 */
-	async validate(payload: JwtPayload, done: (err: unknown, user?: unknown) => void): Promise<void> {
+	async validate(payload: JwtPayload): Promise<IAuthenticatedUser> {
+		let outcome: IAuthenticatedUser | UnauthorizedException;
 		try {
-			const { id, thirdPartyId, employeeId, organizationId, tenantId } = payload;
-
-			if (this.loggingEnabled) {
-				this.logger.debug(`Validate JWT payload for user: ${payload?.id}`);
-			}
-
-			// An access token identifies its user by `id` (or `thirdPartyId`). Other JWTs are signed
-			// with the same JWT_SECRET but carry no such claim (invite, estimate, team-join,
-			// appointment, magic-code tokens); a lookup by an undefined id used to fall through to
-			// the FIRST user in the table, so such a token authenticated as that user. Reject them here.
-			if (!id && !thirdPartyId) {
-				return done(new UnauthorizedException('unauthorized'), false);
-			}
-
-			// A purpose-typed token (password reset, workspace sign-in, ...) is not an access token even
-			// when it carries an `id`: the password-reset token does (GHSA-28wv-vrxj-rp4q).
-			if (!isAccessTokenPayload(payload)) {
-				return done(new UnauthorizedException('unauthorized'), false);
-			}
-
-			// We use this to also attach the user object to the request context.
-			const user: IAuthenticatedUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
-
-			// A token outlives the account it was issued for. Deactivating or archiving a user is an
-			// off-boarding or incident-response control, and it has to end the session on the NEXT request
-			// rather than whenever the token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by
-			// default). These are the exact predicates (`isActive: true, isArchived: false`) that `login()`
-			// and `getJwtAccessToken()` already apply at issuance, so no one who holds a token today is
-			// locked out by them — and an account whose status is unknown (NULL) is refused, as it is there.
-			if (!user || user.isActive !== true || user.isArchived !== false) {
-				return done(new UnauthorizedException('unauthorized'), false);
-			}
-
-			// Pin the role and permissions the user holds RIGHT NOW onto the request. Every
-			// RequestContext.hasRoles/hasPermissions check during this request reads them instead of the
-			// `role` / `permissions` claims frozen into the token, so a demotion also takes effect on the
-			// next request. If the role cannot be resolved the user gets none — authorization fails closed.
-			await this._roleAuthorizationService.attachAuthorizationState(user);
-
-			// Validate the employee/organization claims and attach them to the user.
-			const contextError = await this.attachEmployeeAndOrganizationContext(user, {
-				employeeId,
-				organizationId,
-				tenantId
-			});
-
-			if (contextError) {
-				return done(contextError, false);
-			}
-
-			if (this.loggingEnabled) {
-				this.logger.debug(`Getting user tenantId from JWT strategy: ${user.tenantId ?? 'undefined'}`);
-			}
-			done(null, user);
+			outcome = await this.resolveAuthenticatedUser(payload);
 		} catch (error) {
 			this.logger.error(`Error occurred during JWT validation: ${error?.message}`, error?.stack, 'JwtStrategy');
-			return done(new UnauthorizedException('unauthorized', error.message), false);
+			throw new UnauthorizedException('unauthorized', error.message);
 		}
+
+		// A refusal decided by `resolveAuthenticatedUser` is passed on exactly as it was built, never
+		// re-wrapped by the catch above, which is only for a lookup that FAILED.
+		if (outcome instanceof UnauthorizedException) {
+			throw outcome;
+		}
+		return outcome;
+	}
+
+	/**
+	 * Resolves the user a JWT payload authenticates.
+	 *
+	 * @param payload - The JWT payload to validate.
+	 * @returns The authenticated user, or the `UnauthorizedException` that refuses the token. A refusal is
+	 * RETURNED rather than thrown, so that `validate` can tell it apart from a lookup that threw.
+	 */
+	private async resolveAuthenticatedUser(payload: JwtPayload): Promise<IAuthenticatedUser | UnauthorizedException> {
+		const { id, thirdPartyId, employeeId, organizationId, tenantId } = payload;
+
+		if (this.loggingEnabled) {
+			this.logger.debug(`Validate JWT payload for user: ${payload?.id}`);
+		}
+
+		// An access token identifies its user by `id` (or `thirdPartyId`). Other JWTs are signed
+		// with the same JWT_SECRET but carry no such claim (invite, estimate, team-join,
+		// appointment, magic-code tokens); a lookup by an undefined id used to fall through to
+		// the FIRST user in the table, so such a token authenticated as that user. Reject them here.
+		if (!id && !thirdPartyId) {
+			return new UnauthorizedException('unauthorized');
+		}
+
+		// A purpose-typed token (password reset, workspace sign-in, ...) is not an access token even
+		// when it carries an `id`: the password-reset token does (GHSA-28wv-vrxj-rp4q).
+		if (!isAccessTokenPayload(payload)) {
+			return new UnauthorizedException('unauthorized');
+		}
+
+		// We use this to also attach the user object to the request context.
+		const user: IAuthenticatedUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
+
+		// A token outlives the account it was issued for. Deactivating or archiving a user is an
+		// off-boarding or incident-response control, and it has to end the session on the NEXT request
+		// rather than whenever the token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by
+		// default). These are the exact predicates (`isActive: true, isArchived: false`) that `login()`
+		// and `getJwtAccessToken()` already apply at issuance, so no one who holds a token today is
+		// locked out by them — and an account whose status is unknown (NULL) is refused, as it is there.
+		if (!user || user.isActive !== true || user.isArchived !== false) {
+			return new UnauthorizedException('unauthorized');
+		}
+
+		// Pin the role and permissions the user holds RIGHT NOW onto the request. Every
+		// RequestContext.hasRoles/hasPermissions check during this request reads them instead of the
+		// `role` / `permissions` claims frozen into the token, so a demotion also takes effect on the
+		// next request. If the role cannot be resolved the user gets none — authorization fails closed.
+		await this._roleAuthorizationService.attachAuthorizationState(user);
+
+		// Validate the employee/organization claims and attach them to the user.
+		const contextError = await this.attachEmployeeAndOrganizationContext(user, {
+			employeeId,
+			organizationId,
+			tenantId
+		});
+
+		if (contextError) {
+			return contextError;
+		}
+
+		if (this.loggingEnabled) {
+			this.logger.debug(`Getting user tenantId from JWT strategy: ${user.tenantId ?? 'undefined'}`);
+		}
+		return user;
 	}
 
 	/**
