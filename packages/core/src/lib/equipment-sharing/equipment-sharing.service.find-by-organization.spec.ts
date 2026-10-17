@@ -37,7 +37,10 @@ describe('EquipmentSharingService.findEquipmentSharingsByOrganizationId on MySQL
 		}
 		query.getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
 		const service = new EquipmentSharingService(
-			{ metadata: { tableName: 'equipment_sharing' }, createQueryBuilder: jest.fn().mockReturnValue(query) } as any,
+			{
+				metadata: { tableName: 'equipment_sharing' },
+				createQueryBuilder: jest.fn().mockReturnValue(query)
+			} as any,
 			{} as any,
 			{} as any,
 			{ dbConnectionOptions: { type: 'mysql' } } as any
