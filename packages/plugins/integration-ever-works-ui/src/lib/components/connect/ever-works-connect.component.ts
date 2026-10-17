@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, type SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
