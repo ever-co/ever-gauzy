@@ -71,9 +71,20 @@ describe('SendGrid email provider', () => {
 		const provider = new SendGridProvider();
 
 		it('accepts a signed POST and names the delivery by its signature', async () => {
-			const identity = await provider.verify(await post(PARSED_FIELDS), account);
+			const signed = await post(PARSED_FIELDS);
+			const identity = await provider.verify(signed, account);
 			expect(identity.fingerprint).toMatch(/^sig:[0-9a-f]{64}$/);
 			expect(identity.ttlMs).toBeGreaterThan(15 * 60 * 1000);
+			// The same signature re-encoded (whitespace in the base64) is the same delivery.
+			const signature = signed.headers[SENDGRID_SIGNATURE_HEADER] as string;
+			const reencoded = {
+				...signed,
+				headers: {
+					...signed.headers,
+					[SENDGRID_SIGNATURE_HEADER]: `${signature.slice(0, 8)} ${signature.slice(8)}`
+				}
+			};
+			expect((await provider.verify(reencoded, account)).fingerprint).toBe(identity.fingerprint);
 			// The key as PEM works too.
 			const pem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
 			expect(verificationKeyOf(pem)?.asymmetricKeyType).toBe('ec');
