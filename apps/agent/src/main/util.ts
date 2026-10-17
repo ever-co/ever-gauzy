@@ -173,6 +173,6 @@ export function updateTimerStatus(timerStarted: boolean): void {
 	});
 }
 
-export function updateAuthConfig(token: string): void {
-	LocalStore.updateAuthSetting({ token })
+export function updateAuthConfig(token: string, refreshToken?: string): void {
+	LocalStore.updateAuthSetting({ token, ...(refreshToken ? { refreshToken } : {}) });
 }
