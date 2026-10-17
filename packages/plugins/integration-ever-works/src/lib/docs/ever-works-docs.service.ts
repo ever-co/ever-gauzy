@@ -579,6 +579,20 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 				// Works, with Gauzy's edit kept as a version (plan 05 §3).
 				const remote = await this.fetchDocument(context, pair.ewId);
 				if (!remote) return { status: 'skipped', message: 'the document is no longer visible in Ever Works' };
+				if (!fromEverWorks(context.directions.docs)) {
+					// Gauzy is the source (docs `gauzy_to_ew`, review F27): nothing of Ever Works is written into Gauzy.
+					// Only its newer version (and body) is recorded on the link, keeping Gauzy's snapshot fields, so the
+					// retry sends Gauzy's changes on top of it.
+					pair = await this.record(
+						context,
+						page.id as ID,
+						remote,
+						remote.version ?? null,
+						{ ...before, eHash: remote.body != null ? markdownHash(remote.body) : before.eHash },
+						'outbound'
+					);
+					continue;
+				}
 				// A field Gauzy changed is kept only while Ever Works still has the last-synced value: when both
 				// changed it, Ever Works' version wins (and the conflict is logged), as for a live event.
 				const keep = new Set<KeptField>();
@@ -707,8 +721,22 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			return { status: 'pushed' };
 		} catch (error) {
 			if (error instanceof EverWorksApiError && error.status === 412) {
-				// Ever Works changed the folder meanwhile: its rename or move wins (as for document fields).
 				const remote = await this.fetchFolder(context, link.ewId);
+				if (remote && !fromEverWorks(context.directions.docs)) {
+					// Gauzy is the source (docs `gauzy_to_ew`, review F27): its rename or move goes again on top of Ever
+					// Works' newer version; Ever Works' folder state is not written into Gauzy.
+					try {
+						const retried = await this.asPersonElseKey(actAs, (asUser) =>
+							client.request<EverWorksKbFolder>('PATCH', `/kb/folders/${encodeURIComponent(link.ewId)}`, { body: patch, ifMatchVersion: remote.version ?? undefined, actAsUserId: asUser })
+						);
+						await this.recordFolder(context, folder.id as ID, retried, folder.name, 'outbound');
+						return { status: 'pushed' };
+					} catch (retryError) {
+						if (retryError instanceof EverWorksApiError && retryError.status === 412) return { status: 'deferred', message: 'Ever Works changed the folder again; the Gauzy change is retried', retryInMs: 60_000 };
+						throw retryError;
+					}
+				}
+				// Ever Works changed the folder meanwhile: its rename or move wins (as for document fields).
 				if (remote) await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `folder-412:${link.ewId}` }, () => this.ensureFolder(context, remote, link, remote.version ?? null, 0));
 				return { status: 'skipped', message: 'Ever Works changed the folder meanwhile; its version is kept' };
 			}
