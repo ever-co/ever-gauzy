@@ -95,6 +95,11 @@ export class OrderPaymentLedgerService {
 		const existing = await this.findRecorded(order.id, type, fact.referenceType, fact.referenceId);
 
 		if (existing) {
+			// The row is there, but the re-derivation or the completion that should have followed it may not
+			// be: a recompute that failed after the insert left the order's totals stale, and a repeated report
+			// is the chance to finish it (Greptile on #10890).
+			await this.settleIfStale(order);
+
 			return { recorded: false, transactionId: existing.id };
 		}
 
@@ -149,6 +154,30 @@ export class OrderPaymentLedgerService {
 		}
 
 		return recorded;
+	}
+
+	/**
+	 * Re-derives an order whose stored money state disagrees with its ledger, then lets it complete.
+	 *
+	 * Read-only when nothing is stale, so a fact reported twice does not bump the order's version twice.
+	 *
+	 * @param order The order, as read.
+	 */
+	private async settleIfStale(order: Order): Promise<void> {
+		try {
+			const snapshot = await this.totalsService.computeTotals(order);
+			const status = await this.totalsService.derivePaymentStatus(order, snapshot);
+			const paid = normalizeDecimalString(String(snapshot.paidTotal ?? 0));
+			const stored = normalizeDecimalString(String(order.paidTotal ?? 0));
+
+			if (status !== order.paymentStatus || compareDecimalStrings(paid, stored) !== 0) {
+				await this.totalsService.recompute(order.id, 'PAYMENT_RECORDED');
+			}
+		} catch (error) {
+			this.logger.warn(`Order ${order.id} could not be re-derived from its money ledger: ${describe(error)}`);
+		}
+
+		await this.tryComplete(order.id);
 	}
 
 	/**

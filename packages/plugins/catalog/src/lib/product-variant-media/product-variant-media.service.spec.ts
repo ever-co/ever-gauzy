@@ -491,6 +491,63 @@ describe('ProductVariantMediaService â€” the gallery and its thumbnail (doc 05 Â
 		expect(fixture.primaries()).toEqual([SIDE]);
 	});
 
+	// Greptile on #10887 / R2-G4: a reorder must not add or remove images, not even when it overlaps an attach.
+	it('reorders a gallery in place, keeping its rows, its primary and every image it holds', async () => {
+		const fixture = galleryFixture();
+
+		await fixture.service.replaceMedia(VARIANT, [FRONT, SIDE, DETAIL], SIDE);
+		const ids = fixture
+			.gallery()
+			.map((row) => row.id)
+			.sort();
+
+		const reordered = await fixture.service.reorderMedia(VARIANT, [DETAIL, FRONT, SIDE]);
+
+		expect(reordered.map((row) => row.imageAssetId)).toEqual([DETAIL, FRONT, SIDE]);
+		expect(
+			fixture
+				.gallery()
+				.map((row) => row.id)
+				.sort()
+		).toEqual(ids);
+		expect(fixture.primaries()).toEqual([SIDE]);
+	});
+
+	it('refuses a reorder that adds, drops or repeats an image, and writes nothing', async () => {
+		const fixture = galleryFixture();
+
+		await fixture.service.replaceMedia(VARIANT, [FRONT, SIDE, DETAIL], FRONT);
+		const before = fixture.gallery().map((row) => ({ ...row }));
+
+		await expect(fixture.service.reorderMedia(VARIANT, [FRONT, SIDE])).rejects.toBeInstanceOf(BadRequestException);
+		await expect(fixture.service.reorderMedia(VARIANT, [FRONT, SIDE, DETAIL, 'extra'])).rejects.toThrow(
+			/attachProductVariantMedia/
+		);
+		await expect(fixture.service.reorderMedia(VARIANT, [FRONT, FRONT, SIDE])).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(fixture.gallery()).toEqual(before);
+	});
+
+	it('leaves an image attached by an overlapping request where it is, refusing the stale list', async () => {
+		// The caller read FRONT, SIDE, DETAIL; another request attached a fourth image before the reorder ran.
+		const fixture = galleryFixture();
+
+		await fixture.service.replaceMedia(VARIANT, [FRONT, SIDE, DETAIL], FRONT);
+		fixture.tables.product_variant_media.push({
+			...fixture.gallery()[0],
+			id: 'attached-meanwhile',
+			imageAssetId: 'meanwhile',
+			position: 3,
+			isPrimary: false
+		});
+
+		await expect(fixture.service.reorderMedia(VARIANT, [DETAIL, SIDE, FRONT])).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(fixture.gallery().map((row) => row.imageAssetId)).toContain('meanwhile');
+	});
+
 	it('reorders an existing gallery without re-attaching its images', async () => {
 		const fixture = galleryFixture();
 

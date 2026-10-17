@@ -279,51 +279,61 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 
 		const repository = this.dataSource.getRepository(InboxMailbox);
 		// The last check and the save under the address's claim (shared with the Docs capture addresses).
-		const row = await this.claim(address, async () => {
-			if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
-			try {
-				return await repository.save(
-					repository.create({
-						tenantId,
-						organizationId,
-						address,
-						displayName: (input?.displayName?.trim() || owner.displayName || null)?.slice(0, 200) ?? null,
-						kind,
-						ownerType: input.ownerType,
-						...(input.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE
-							? { ownerEmployeeId: input.ownerEmployeeId }
-							: {}),
-						...(input.ownerType === InboxMailboxOwnerTypeEnum.TEAM
-							? { ownerTeamId: input.ownerTeamId }
-							: {}),
-						purpose: InboxMailboxPurposeEnum.INBOX,
-						...(providerAccountId ? { providerAccountId } : {}),
-						senderAllowlist: senderAllowlist.length ? JSON.stringify(senderAllowlist) : null,
-						domain,
-						domainStatus: domain ? InboxMailboxDomainStatusEnum.PENDING : null,
-						domainVerificationToken: domain
-							? `gauzy-inbox-verify=${randomBytes(16).toString('hex')}`
-							: null,
-						isDefault: false,
-						autoProvisioned: false,
-						messageCount: 0,
-						settings:
-							kind === InboxMailboxKindEnum.FORWARDING && normalizeAddress(input?.forwardFrom)
-								? JSON.stringify({ forwardFrom: normalizeAddress(input?.forwardFrom)?.address })
-								: null
-					} as InboxMailbox)
-				);
-			} catch (error) {
-				// The unique address index: another request took it between the check and the insert.
+		const save = () =>
+			this.claim(address, async () => {
 				if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
-				throw error;
-			}
-		});
+				try {
+					return await repository.save(
+						repository.create({
+							tenantId,
+							organizationId,
+							address,
+							displayName:
+								(input?.displayName?.trim() || owner.displayName || null)?.slice(0, 200) ?? null,
+							kind,
+							ownerType: input.ownerType,
+							...(input.ownerType === InboxMailboxOwnerTypeEnum.EMPLOYEE
+								? { ownerEmployeeId: input.ownerEmployeeId }
+								: {}),
+							...(input.ownerType === InboxMailboxOwnerTypeEnum.TEAM
+								? { ownerTeamId: input.ownerTeamId }
+								: {}),
+							purpose: InboxMailboxPurposeEnum.INBOX,
+							...(providerAccountId ? { providerAccountId } : {}),
+							senderAllowlist: senderAllowlist.length ? JSON.stringify(senderAllowlist) : null,
+							domain,
+							domainStatus: domain ? InboxMailboxDomainStatusEnum.PENDING : null,
+							domainVerificationToken: domain
+								? `gauzy-inbox-verify=${randomBytes(16).toString('hex')}`
+								: null,
+							isDefault: false,
+							autoProvisioned: false,
+							messageCount: 0,
+							settings:
+								kind === InboxMailboxKindEnum.FORWARDING && normalizeAddress(input?.forwardFrom)
+									? JSON.stringify({ forwardFrom: normalizeAddress(input?.forwardFrom)?.address })
+									: null
+						} as InboxMailbox)
+					);
+				} catch (error) {
+					// The unique address index: another request took it between the check and the insert.
+					if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
+					throw error;
+				}
+			});
+		// A mailbox that receives through an account is saved under the account's lock, the account checked again there:
+		// a removal of the account in between never leaves the mailbox pointing at a deleted account.
+		const row = providerAccountId
+			? await this.accounts.whileAccountHeld(providerAccountId, async () => {
+					await this.receivingAccount(tenantId, organizationId, kind, providerAccountId);
+					return save();
+				})
+			: await save();
 		if (input?.isDefault) await this.makeDefault(row);
 		const stored = (await repository.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
 		return {
 			...this.toMailbox(stored),
-			...(domain ? { verification: this.verification(stored) } : {})
+			...(domain ? { verification: this.verificationOf(stored) } : {})
 		};
 	}
 
@@ -336,6 +346,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			const list = this.allowlist(input.senderAllowlist);
 			change.senderAllowlist = list.length ? JSON.stringify(list) : null;
 		}
+		let attaching: ID | null = null;
 		if (input?.providerAccountId !== undefined) {
 			const accountId = await this.receivingAccount(
 				row.tenantId as ID,
@@ -344,6 +355,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				input.providerAccountId
 			);
 			change.providerAccountId = (accountId ?? null) as never;
+			attaching = accountId ?? null;
 		}
 		if (input?.settings !== undefined) {
 			if (input.settings !== null && (typeof input.settings !== 'object' || Array.isArray(input.settings))) {
@@ -354,7 +366,17 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			change.settings = text;
 		}
 		if (Object.keys(change).length > 0) {
-			await this.dataSource.getRepository(InboxMailbox).update({ id: row.id as ID }, change);
+			const write = () => this.dataSource.getRepository(InboxMailbox).update({ id: row.id as ID }, change);
+			if (attaching) {
+				// Pointed at an account under its lock, the account checked again there (see `create`).
+				const accountId = attaching;
+				await this.accounts.whileAccountHeld(accountId, async () => {
+					await this.receivingAccount(row.tenantId as ID, row.organizationId as ID, row.kind, accountId);
+					await write();
+				});
+			} else {
+				await write();
+			}
 		}
 		if (input?.isDefault === true) await this.makeDefault(row);
 		if (input?.isDefault === false) {
@@ -389,9 +411,21 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			.getRepository(InboxMailbox)
 			.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
 		return {
-			...this.verification(stored),
+			...this.verificationOf(stored),
 			...(matched ? {} : { message: message ?? 'The expected TXT record was not found.' })
 		};
+	}
+
+	/**
+	 * The DNS record that proves a custom-domain mailbox, and its last known status, without a new DNS lookup (the
+	 * Settings page shows it for a domain still to be set up; `verify` checks it).
+	 */
+	async verification(id: ID, organizationId?: ID): Promise<IInboxMailboxDomainVerification> {
+		const row = await this.managed(id, organizationId);
+		if (row.kind !== InboxMailboxKindEnum.CUSTOM_DOMAIN || !row.domain) {
+			throw new BadRequestException('Only a custom-domain mailbox has a DNS record to create.');
+		}
+		return this.verificationOf(row);
 	}
 
 	/** A new relay secret (stored as a scrypt digest), answered this once. */
@@ -510,7 +544,11 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		const row = await this.dataSource
 			.getRepository(InboxOrganizationSetting)
 			.findOne({ where: { tenantId, organizationId: orgId } });
-		return { organizationId: orgId, autoProvisionEmployees: !!row?.autoProvisionEmployees };
+		return {
+			organizationId: orgId,
+			autoProvisionEmployees: !!row?.autoProvisionEmployees,
+			platformDomain: getInboxEmailConfig().domain
+		};
 	}
 
 	async updateSettings(
@@ -863,7 +901,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		}
 	}
 
-	private verification(row: InboxMailbox): IInboxMailboxDomainVerification {
+	private verificationOf(row: InboxMailbox): IInboxMailboxDomainVerification {
 		return {
 			recordType: 'TXT',
 			recordName: `${INBOX_DOMAIN_TXT_PREFIX}.${row.domain}`,

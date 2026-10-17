@@ -9995,6 +9995,11 @@ type Mutation {
   removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 
   """
+  Writes the whole product set of a collection in one call, in order — the set route's own operation.
+  """
+  replaceCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+
+  """
   Retires one collection membership recoverably, so the product stays curated into the collection.
   """
   softDeleteCollectionProduct(id: ID!): CollectionProduct!
@@ -10027,6 +10032,11 @@ type Mutation {
   """Restores a soft-deleted facet."""
   recoverTagProductVariant(id: ID!): TagProductVariant!
   assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
+
+  """
+  Updates one collection publication row - its status or its date - as PUT /collection-channels/:id does.
+  """
+  updateCollectionChannel(id: ID!, input: UpdateCollectionChannelInput!): CollectionChannel!
   unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
 
   """
@@ -46184,6 +46194,11 @@ input UpdateProductRelationInput {
 input CollectionChannelInput {
   channelId: ID!
   status: PublicationStatus!
+  publishedAt: DateTime
+}
+
+input UpdateCollectionChannelInput {
+  status: PublicationStatus
   publishedAt: DateTime
 }
 
