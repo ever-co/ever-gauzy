@@ -26,9 +26,13 @@ describe('OrganizationRecurringExpenseFindSplitExpenseHandler', () => {
 		const endOfMarch = new Date(2026, 2, 31, 23, 59, 59, 999);
 
 		// Started by the end of the month (an expense from March 15 counts for March)
+		expect(openEnded.startDate.type).toBe('lessThanOrEqual');
 		expect(valueOf(openEnded.startDate)).toEqual(endOfMarch);
+		expect(ending.startDate.type).toBe('lessThanOrEqual');
 		expect(valueOf(ending.startDate)).toEqual(endOfMarch);
-		// Ending on or after the start of the month
+		// Open-ended, or ending on or after the start of the month
+		expect(openEnded.endDate.type).toBe('isNull');
+		expect(ending.endDate.type).toBe('moreThanOrEqual');
 		expect(valueOf(ending.endDate)).toEqual(new Date(2026, 2, 1));
 		expect(result.items[0]).toMatchObject({ value: 100, originalValue: 300, employeeCount: 3 });
 	});
