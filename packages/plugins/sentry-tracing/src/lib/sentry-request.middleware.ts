@@ -1,6 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { NextFunction, Request, Response } from 'express';
+import { redactHeaders } from './sentry-request-redaction';
 
 @Injectable()
 export class SentryRequestMiddleware implements NestMiddleware {
@@ -21,7 +22,7 @@ export class SentryRequestMiddleware implements NestMiddleware {
 		Sentry.getCurrentScope().setContext('request', {
 			method: req.method,
 			url: req.url,
-			headers: req.headers,
+			headers: redactHeaders(req.headers),
 			query: req.query
 		});
 

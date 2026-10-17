@@ -68,6 +68,9 @@ import { resolveTrustProxy } from './trust-proxy';
 import { validateApplicationSecrets } from './validate-secrets';
 import { createPerfMetricsMiddleware, instrumentPg, isPerfMetricsEnabled, startEventLoopMonitor } from './perf-metrics';
 import { resolveLogLevels } from './log-levels';
+import { memoizeRequestQuery } from './request-query-memo';
+import { applyClassValidatorMetadataPatches } from '../shared/validators/class-validator-metadata.patches';
+import { applyClassTransformerMetadataPatches } from '../core/interceptors/class-transformer-metadata.patches';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -80,6 +83,10 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	// Fail fast (in real production) or warn (dev/demo) if auth/session secrets are unset or default.
 	validateApplicationSecrets();
+
+	// Per-request library work that only depends on boot-time decorators: see the two modules.
+	applyClassValidatorMetadataPatches();
+	applyClassTransformerMetadataPatches();
 
 	// Pre-bootstrap the application configuration
 	const config = await preBootstrapApplicationConfig(pluginConfig);
@@ -110,6 +117,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
 	app.set('query parser', 'extended');
+	// Express 5 parses `req.query` on every read; once per request is enough (see ./request-query-memo.ts).
+	memoizeRequestQuery(app.getHttpAdapter().getInstance());
 
 	// Opt-in request performance instrumentation (off unless API_PERF_METRICS / API_SERVER_TIMING /
 	// API_SLOW_REQUEST_LOG_MS / API_EVENT_LOOP_MONITOR_MS is set — see ./perf-metrics.ts). Registered before every

@@ -9,8 +9,8 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
 import { MigrationLockingDataSource } from './migration-run-lock';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
-import { getORMType, MultiORMEnum } from '../core/utils';
 import { applyTypeOrmReadPathPatches } from './typeorm-read-path.patches';
+import { mikroOrmOptionsForActiveOrm } from './mikro-orm-options';
 
 // Before any query is built: see typeorm-read-path.patches.ts.
 applyTypeOrmReadPathPatches();
@@ -28,22 +28,6 @@ const mikroOrmDriverMap: Record<string, any> = {
 };
 
 const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatibleBetterSqliteDriver;
-
-/**
- * MikroORM is initialised under every DB_ORM, because its repositories are injected everywhere. Under TypeORM
- * (production) it serves no request, yet `MikroORM.init` connected at boot (`connect`, then `ensureDatabase`'s
- * `select 1 from pg_database ...`) through its own pool. That cost a connection, and — worse — a connection that
- * could not be acquired within DB_CONNECTION_TIMEOUT while the boot was busy discovering entities failed the
- * whole API ("KnexTimeoutError: Knex: Timeout acquiring a connection" from MikroORM.connect), even though TypeORM
- * itself retries for minutes. Under TypeORM it now connects lazily, on the first query anything actually sends
- * through it; under DB_ORM=mikro-orm nothing changes.
- */
-export function mikroOrmOptionsForActiveOrm<T extends object>(options: T): T {
-	if (getORMType() === MultiORMEnum.MikroORM || !options) {
-		return options;
-	}
-	return { ...options, connect: false, ensureDatabase: false };
-}
 
 /**
  * Import and provide base typeorm related classes.
