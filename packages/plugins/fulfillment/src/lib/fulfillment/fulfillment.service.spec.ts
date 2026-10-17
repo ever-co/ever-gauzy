@@ -511,7 +511,7 @@ function orderLineService(tables: ITables) {
  * unbound — which is the state a deployment with no carrier integration is in, and the state the
  * label cases below have to answer for.
  */
-function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: any } = {}) {
+function fulfillmentFixture(options: { seed?: Partial<ITables>; orderService?: any; labelProvider?: any } = {}) {
 	const tables: ITables = {
 		order_line: [...(options.seed?.order_line ?? [])],
 		fulfillment: [...(options.seed?.fulfillment ?? [])],
@@ -625,7 +625,8 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		orderLineService(tables) as never,
 		outbox as never,
 		orderTotals as never,
-		options.labelProvider as never
+		options.labelProvider as never,
+		options.orderService as never
 	);
 
 	return {
@@ -2554,5 +2555,70 @@ describe('FulfillmentService — a correction never moves what the counters were
 		).resolves.toMatchObject({ affected: 1 });
 		expect(find).not.toHaveBeenCalled();
 		expect(fixture.row('five')!.note).toBe('fragile');
+	});
+});
+
+describe('FulfillmentService — a paid order completes when its goods are accounted for (Q7-W1b)', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => jest.useRealTimers());
+
+	it('asks the order to complete once the shipment is written and the order re-derived', async () => {
+		const calls: string[] = [];
+		const orderService = {
+			completeIfSettled: jest.fn(async (orderId: string) => {
+				calls.push(`complete:${orderId}`);
+
+				return {};
+			})
+		};
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 2 })] },
+			orderService
+		});
+		fixture.orderTotals.recompute.mockImplementation(async (orderId: string) => {
+			calls.push(`recompute:${orderId}`);
+
+			return {} as never;
+		});
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		// The money may have been settled before the goods left: completion is asked after the re-derivation
+		// that counted the shipment, so the order's own rule sees the line accounted for.
+		expect(calls).toEqual([`recompute:${ORDER}`, `complete:${ORDER}`]);
+	});
+
+	it('asks again for the completion when a concurrent write of the order won the version (CodeRabbit on #10890)', async () => {
+		const conflict = () =>
+			new ApiException(409, ApiErrorCode.ENTITY_VERSION_CONFLICT, 'The record changed since you read it.', {
+				expectedVersion: 4,
+				actualVersion: 5
+			});
+		const orderService = {
+			completeIfSettled: jest.fn().mockRejectedValueOnce(conflict()).mockResolvedValueOnce({})
+		};
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 1 })] },
+			orderService
+		});
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 1)] } as never);
+
+		expect(orderService.completeIfSettled).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps the shipment when the completion that follows it fails', async () => {
+		const orderService = {
+			completeIfSettled: jest.fn(async () => Promise.reject(new Error('ENTITY_VERSION_CONFLICT')))
+		};
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 1 })] },
+			orderService
+		});
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 1)] } as never)
+		).resolves.toBeDefined();
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(1);
 	});
 });

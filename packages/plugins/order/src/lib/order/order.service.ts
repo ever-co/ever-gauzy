@@ -703,6 +703,54 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
+	 * Completes an order on an operator's request, or says why it cannot be completed yet (Q7-W1b).
+	 *
+	 * The same rule as `completeIfSettled` — confirmed or processing, nothing left to ship, nothing
+	 * outstanding, no change open — stated as a refusal rather than a silent no-op, because an operator who
+	 * asked for a completion is owed the reason it did not happen. An order that is already completed is
+	 * answered as it is, so a retried request is not refused.
+	 *
+	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The completed order.
+	 * @throws NotFoundException when the order is not in the caller's tenant.
+	 * @throws ConflictException with `ORDER_NOT_COMPLETABLE` and what still stands in the way.
+	 */
+	public async complete(orderId: ID, expectation: OrderVersionExpectation = ANY_ORDER_VERSION): Promise<Order> {
+		const order = await this.findOneByIdString(orderId);
+
+		if (!order) {
+			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
+		}
+
+		if (order.status === OrderStatus.COMPLETED) {
+			return order;
+		}
+
+		const completed = await this.completeIfSettled(orderId, expectation);
+
+		if (completed?.status === OrderStatus.COMPLETED) {
+			return completed;
+		}
+
+		const statusAllows = this.totalsService.canComplete(order);
+
+		throw new ConflictException({
+			message: `ORDER_NOT_COMPLETABLE: order ${orderId} cannot be completed yet.`,
+			code: 'ORDER_NOT_COMPLETABLE',
+			details: {
+				status: order.status,
+				statusAllows,
+				hasOpenShippableLines: statusAllows ? await this.totalsService.hasOpenShippableLines(order) : undefined,
+				paymentSettled: statusAllows ? await this.totalsService.isPaymentSettled(order) : undefined,
+				hasOpenChange: statusAllows
+					? (await this.changeService.findOpenForOrder(orderId)).length > 0
+					: undefined
+			}
+		});
+	}
+
+	/**
 	 * Completes an order whose lines are all fulfilled and whose money side is settled.
 	 *
 	 * @param orderId The order.
