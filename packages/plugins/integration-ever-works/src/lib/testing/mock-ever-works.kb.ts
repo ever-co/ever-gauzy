@@ -1,3 +1,4 @@
+// cspell:ignore wikilink wikilinks unfiled
 import { createHash, randomUUID } from 'node:crypto';
 import type { EverWorksHttpResponse } from '../client/ever-works-transport';
 import { KB_DOCUMENT_CLASSES } from '../docs/ever-works-kb.types';

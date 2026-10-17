@@ -1,3 +1,4 @@
+// cspell:ignore wikilink wikilinks unfiled
 import { createHash } from 'node:crypto';
 import {
 	escapeHtml,

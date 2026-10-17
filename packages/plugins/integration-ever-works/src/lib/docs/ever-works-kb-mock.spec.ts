@@ -1,3 +1,4 @@
+// cspell:ignore wikilink wikilinks unfiled
 /**
  * The mock Ever Works Knowledge Base (test code the docs sync is tested against) keeps to the contract
  * (v1-draft.6, CR-7): the KB routes, their refusals and the `kb.*` events they record.

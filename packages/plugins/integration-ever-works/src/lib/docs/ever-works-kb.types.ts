@@ -1,3 +1,4 @@
+// cspell:ignore wikilink wikilinks unfiled
 /**
  * The Ever Works Knowledge Base as the integration contract serves it (contract v1-draft.6, CR-7,
  * ever-works `docs/specs/features/integrations-api-v1/contract/schemas/resources/kb-document.schema.json`

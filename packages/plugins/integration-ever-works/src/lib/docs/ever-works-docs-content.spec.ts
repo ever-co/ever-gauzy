@@ -1,3 +1,4 @@
+// cspell:ignore wikilink wikilinks unfiled
 /**
  * Document bodies between Ever Works (Markdown with `[[path]]` wikilinks) and Gauzy Docs (TipTap JSON +
  * HTML render cache), plan 05 §2 (G-P3-4). Pure functions: no mocks.
