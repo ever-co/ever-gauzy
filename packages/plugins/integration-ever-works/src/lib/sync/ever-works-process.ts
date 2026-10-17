@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { ClsServiceManager } from 'nestjs-cls';
 import { ID } from '@gauzy/contracts';
 import { EmployeeService, OrganizationProjectService, RequestContext, TaskService } from '@gauzy/core';
+import { assertLeaseFence } from './ever-works-lease-fence';
 
 /**
  * What a process needs for the sync's Gauzy writes (plan 03 §C.4 step 4), and the one place those writes
@@ -109,7 +110,9 @@ export function isMissingWritePath(error: unknown): boolean {
  * Runs `fn` inside a request context of its own, signed in as `user` (see {@link syncRequestUser}), on a
  * fresh store that holds nothing of an enclosing request. `unavailable` is thrown — before anything is
  * written — where no context can be opened, and in place of a missing platform write path, so the
- * caller defers the change instead of failing it.
+ * caller defers the change instead of failing it. Inside a sync pass's lease fence, the lease is checked
+ * before `fn` starts (`EverWorksLeaseLostError` when it moved): the per-write fence sees every ORM write,
+ * this check also covers the platform writes that bypass the ORM events.
  */
 export async function runInSyncRequestContext<T>(
 	user: EverWorksSyncRequestUser,
@@ -124,6 +127,7 @@ export async function runInSyncRequestContext<T>(
 		async () => {
 			// Without the platform's request context the services would write tenant-less rows: refuse first.
 			if (RequestContext.currentTenantId() !== user.tenantId) throw unavailable();
+			await assertLeaseFence();
 			try {
 				return await fn();
 			} catch (error) {

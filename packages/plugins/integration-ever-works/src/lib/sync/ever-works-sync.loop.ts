@@ -6,6 +6,7 @@ import { ID } from '@gauzy/contracts';
 import { EverWorksConnection, EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
 import { isEverWorksEnabled } from '../ever-works-enabled';
 import { EVER_WORKS_ENV } from '../ever-works.tokens';
+import { EVER_WORKS_SYNC_LEASE_MS, EverWorksLeaseLostError, everWorksLease, withLeaseFence } from './ever-works-lease-fence';
 import { ensureRequestContextStore, EverWorksProcessCapability } from './ever-works-process';
 import { EverWorksSyncLogService } from './ever-works-sync-log.service';
 import { EverWorksFeedPoller } from './inbound/ever-works-feed.poller';
@@ -38,7 +39,7 @@ export interface EverWorksSyncSweeper {
 /** How often a process looks for work. */
 export const SYNC_TICK_MS = 5_000;
 /** How long a lease on a connection lasts; renewed during the work, and the work stops once it is lost. */
-export const SYNC_LEASE_MS = 5 * 60_000;
+export const SYNC_LEASE_MS = EVER_WORKS_SYNC_LEASE_MS;
 /** How often a pass renews its lease while it works. */
 export const SYNC_RENEW_MS = 30_000;
 
@@ -57,6 +58,10 @@ export const SYNC_RENEW_MS = 30_000;
  * task, project and employee services. A process that does not host those (the worker today: its module
  * graph is the documents pipeline and the commerce sweeps) stays out on its own and says so once, so the
  * lease is never held by a process that could only defer the writes; a process that serves the API runs it.
+ *
+ * **Lease fence** (`ever-works-lease-fence.ts`): every handler, push and sweep runs fenced on the lease, so
+ * each of its Gauzy writes checks in its own transaction that this process still holds it — a unit that
+ * outlived the lease writes nothing once another process has claimed it.
  */
 @Injectable()
 export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -163,7 +168,8 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		// Renews the lease every SYNC_RENEW_MS while working; false once another process holds it. A cached
 		// `true` is safe: the lease was just extended by SYNC_LEASE_MS (5 min, ten renewals), and another
 		// process can claim it only once it has run out. Every write is fenced as well: the feed cursor and
-		// the inbound outcomes on `leaseOwner`, the outbound results on their claim.
+		// the inbound outcomes on `leaseOwner`, the outbound results on their claim, and every Gauzy write of
+		// a handler, a push or a sweep by the lease fence (checked in the write's own transaction).
 		const stillOwner = async (): Promise<boolean> => {
 			if (Date.now() - renewedAt < SYNC_RENEW_MS) return true;
 			renewedAt = Date.now();
@@ -179,13 +185,25 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		if (!(await stillOwner())) return;
 		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner, this.owner);
 		if (!(await stillOwner())) return;
-		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner);
+		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner, this.owner);
 		for (const [index, sweeper] of this.sweepers.entries()) {
 			const key = `${id}:${index}`;
 			if (Date.now() - (this.lastSweep.get(key) ?? 0) < sweeper.sweepIntervalMs) continue;
 			if (!(await stillOwner())) return;
 			this.lastSweep.set(key, Date.now());
-			await sweeper.sweep(fresh, stillOwner).catch((error) => this.logger.warn(`Connection ${connection.id}: a sweep failed (${describeSyncError(error)}).`));
+			const lease = everWorksLease(this.dataSource, id, this.owner, this.timeFor(tickNow));
+			const lost = await withLeaseFence(lease, () => sweeper.sweep(fresh, stillOwner)).then(
+				() => false,
+				(error) => {
+					if (error instanceof EverWorksLeaseLostError) return true;
+					this.logger.warn(`Connection ${connection.id}: a sweep failed (${describeSyncError(error)}).`);
+					return false;
+				}
+			);
+			if (lost) {
+				this.logger.warn(`Connection ${connection.id}: the lease moved to another process during a sweep; the pass stopped.`);
+				return;
+			}
 		}
 	}
 
