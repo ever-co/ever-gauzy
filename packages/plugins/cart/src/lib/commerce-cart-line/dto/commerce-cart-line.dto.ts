@@ -6,9 +6,10 @@ import { DecimalAmount, IsDecimalAmount } from '../../shared/is-decimal-amount.v
 /**
  * The writable surface of a cart line.
  *
- * `unitPrice` is the price the price resolver returned; this DTO accepts it because a cart is priced
- * by the pricing package and the cart simply records the result. The snapshot fields (`title`, `sku`,
- * `thumbnail`) are written by the add-to-cart path from the variant, not authored by a caller.
+ * `unitPrice`, `originalUnitPrice` and `isTaxInclusive` are **accepted and ignored (R3-07b)**: a line is
+ * priced by the pricing package (`CART_PRICE_RESOLUTION`) for the cart and the line's quantity, and priced
+ * again at checkout. The members stay so an existing client's body keeps validating. The snapshot fields
+ * (`title`, `sku`, `thumbnail`) are written by the add-to-cart path from the variant, not authored by a caller.
  *
  * **The money members take a decimal string as well as a number.** The GraphQL schema types the same
  * two fields `Decimal!` and states that a money value read over GraphQL and the same value read over

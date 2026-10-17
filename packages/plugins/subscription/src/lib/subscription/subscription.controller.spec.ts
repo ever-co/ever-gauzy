@@ -457,6 +457,7 @@ describe('SubscriptionResolver — the same conventions, under the same names', 
 		['pauseSubscription', 'subscription.pause', false],
 		['resumeSubscription', 'subscription.resume', false],
 		['cancelSubscription', 'subscription.cancel', false],
+		['undoSubscriptionCancellation', 'subscription.undo-cancellation', false],
 		['expireSubscription', 'subscription.expire', false],
 		['changeSubscriptionPlan', 'subscription.plan.change', false],
 		['addSubscriptionItem', 'subscription.item.add', false],
@@ -488,6 +489,7 @@ describe('SubscriptionResolver — the same conventions, under the same names', 
 			SubscriptionResolver.prototype.pauseSubscription,
 			SubscriptionResolver.prototype.resumeSubscription,
 			SubscriptionResolver.prototype.cancelSubscription,
+			SubscriptionResolver.prototype.undoSubscriptionCancellation,
 			SubscriptionResolver.prototype.expireSubscription,
 			SubscriptionResolver.prototype.changeSubscriptionPlan,
 			SubscriptionResolver.prototype.addSubscriptionItem,
@@ -546,6 +548,7 @@ describe('SubscriptionSchema — the members the two conventions need', () => {
 		for (const mutation of [
 			'activateSubscription',
 			'resumeSubscription',
+			'undoSubscriptionCancellation',
 			'addSubscriptionItem',
 			'changeSubscriptionItemQuantity'
 		]) {
@@ -623,6 +626,7 @@ describe('SubscriptionSchema — the members the two conventions need', () => {
 			'expireSubscription',
 			'pauseSubscription',
 			'resumeSubscription',
+			'undoSubscriptionCancellation',
 			'updateSubscription'
 		]);
 	});

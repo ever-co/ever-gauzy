@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, timingSafeEqual } from 'crypto';
+import { timingSafeEqual } from 'crypto';
 import { EntityManager, FindOptionsWhere, IsNull, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { restatesStoredValue } from '@gauzy/common';
@@ -8,6 +8,7 @@ import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { EventBus, Money, normalizeDecimalString, readAffectedRows, RequestContext } from '@gauzy/core';
 import { GiftCardRedeemedEvent } from '../events';
 import { GiftCard } from './gift-card.entity';
+import { hashGiftCardPin, isGiftCardPinDigest, storedGiftCardPin } from './gift-card-pin';
 import { TypeOrmGiftCardRepository } from './repository/type-orm-gift-card.repository';
 import { MikroOrmGiftCardRepository } from './repository/mikro-orm-gift-card.repository';
 import { GiftCardTransactionService } from '../gift-card-transaction/gift-card-transaction.service';
@@ -103,6 +104,10 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	 * *after* it and not to this one: counting the row and the column would show every reconciliation
 	 * twice the card (doc 08 §13.3 `ISSUE`, GC1; doc 05 §10.9).
 	 *
+	 * The second factor is stored as its digest only (review R2-G30): `pin` is the PIN as the caller stated it and is
+	 * hashed here, the one place both surfaces issue through; `pinHash` is a digest an internal caller already holds
+	 * and is stored as it is when it is one (anything else is hashed, so no plaintext ever reaches the column).
+	 *
 	 * @param input The card to issue.
 	 * @returns The stored card.
 	 * @throws BadRequestException when the face value is not positive.
@@ -114,6 +119,7 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 		customerId?: ID;
 		orderId?: ID;
 		expiresAt?: Date;
+		pin?: string | null;
 		pinHash?: string;
 		metadata?: Record<string, unknown>;
 	}): Promise<IGiftCard> {
@@ -123,8 +129,18 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 			throw new BadRequestException('GIFT_CARD_INVALID: a card is issued with a positive face value.');
 		}
 
+		if (!input.code?.trim()) {
+			// Both surfaces mint a code for a caller who states none; a card without one could never be spent, and the
+			// column is not nullable, so the refusal is a 400 here rather than the constraint's 500.
+			throw new BadRequestException('GIFT_CARD_INVALID: a card is issued with a code.');
+		}
+
+		const { pin, pinHash, ...descriptive } = input;
+		const storedPin = isGiftCardPinDigest(pinHash) ? pinHash : storedGiftCardPin(pinHash ?? pin);
+
 		const card = await this.create({
-			...input,
+			...descriptive,
+			...(storedPin !== undefined ? { pin: storedPin } : {}),
 			balance: faceValue.toStorageString(),
 			status: GiftCardStatus.ACTIVE,
 			...this.scope
@@ -383,6 +399,10 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 	 * stored value is accepted and the member left out of the write. The card's own lifecycle writes go through the
 	 * base class and are not affected.
 	 *
+	 * A `pin` in the patch is stored as its digest (review R2-G30), as {@link issue} stores it, because the balance
+	 * lookup compares digests: `PUT /gift-cards/:id {"pin":"1234"}` stored `1234` in plaintext and the card never
+	 * verified again. `null` or an empty string removes the second factor.
+	 *
 	 * @param id The card, or the conditions that select the cards to change.
 	 * @param partialEntity The members to change.
 	 * @returns The update result, as the base class answers it.
@@ -393,6 +413,11 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 		partialEntity: QueryDeepPartialEntity<GiftCard>
 	): Promise<UpdateResult | GiftCard> {
 		let patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+
+		if (patch.pin !== undefined) {
+			patch.pin = storedGiftCardPin(patch.pin);
+		}
+
 		const named = GIFT_CARD_LEDGER_MEMBERS.filter((member) => patch[member] !== undefined);
 
 		if (named.length > 0) {
@@ -654,7 +679,7 @@ export class GiftCardService extends TenantScopedCrudService<GiftCard> {
 			return false;
 		}
 
-		const presentedDigest = createHash('sha256').update(String(presented)).digest('hex');
+		const presentedDigest = hashGiftCardPin(presented);
 		const left = this.hexToBytes(presentedDigest);
 		const right = this.hexToBytes(stored);
 

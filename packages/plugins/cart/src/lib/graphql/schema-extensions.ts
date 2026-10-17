@@ -206,7 +206,9 @@ export const cartSchemaExtensions = gql`
 		sku: String
 		thumbnail: String
 		quantity: Decimal!
-		unitPrice: Decimal!
+		# Ignored (R3-07b): the line is priced by the pricing package. Optional so an existing client that
+		# still sends it keeps validating.
+		unitPrice: Decimal
 		originalUnitPrice: Decimal
 		isTaxInclusive: Boolean
 		taxCategoryId: ID
@@ -233,8 +235,9 @@ export const cartSchemaExtensions = gql`
 	input SetCartShippingMethodInput {
 		cartId: ID!
 		shippingOptionId: ID
-		name: String!
-		amount: Decimal!
+		# Ignored (R3-07c): the name, the amount and the tax treatment are the shipping option's.
+		name: String
+		amount: Decimal
 		isTaxInclusive: Boolean
 		isManual: Boolean
 		taxCategoryId: ID

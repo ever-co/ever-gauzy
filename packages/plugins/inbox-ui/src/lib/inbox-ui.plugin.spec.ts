@@ -5,11 +5,15 @@ import { NavigationBuilderService, NavMenuBuilderService } from '@gauzy/ui-core/
 import {
 	INBOX_HEADER_ACTION_ID,
 	INBOX_LINK,
+	INBOX_MAILBOXES_NAV_ID,
+	INBOX_MAILBOXES_SETTINGS_LINK,
 	INBOX_NAV_ID,
 	INBOX_PROVIDERS_NAV_ID,
 	INBOX_PROVIDERS_SETTINGS_LINK
 } from './inbox-ui.constants';
 import {
+	INBOX_CHILD_ROUTES,
+	INBOX_MAILBOXES_SETTINGS_ROUTE,
 	INBOX_PAGE_ROUTE,
 	INBOX_PROVIDERS_SETTINGS_ROUTE,
 	InboxUiPlugin,
@@ -40,7 +44,13 @@ describe('InboxUiPlugin', () => {
 
 	it('declares /pages/inbox behind INBOX_VIEW, with the INBOX translations', () => {
 		expect(InboxUiPlugin.id).toBe('inbox');
-		expect(InboxUiPlugin.routes).toEqual([INBOX_PAGE_ROUTE, INBOX_PROVIDERS_SETTINGS_ROUTE]);
+		expect(InboxUiPlugin.routes).toEqual([
+			INBOX_PAGE_ROUTE,
+			INBOX_PROVIDERS_SETTINGS_ROUTE,
+			INBOX_MAILBOXES_SETTINGS_ROUTE
+		]);
+		// "My mailbox" is a child of the Inbox page (INBOX_VIEW, as the page).
+		expect(INBOX_CHILD_ROUTES.map((route) => route.path)).toEqual(['', 'mailbox']);
 		expect(INBOX_PAGE_ROUTE).toMatchObject({
 			location: 'page-sections',
 			path: 'inbox',
@@ -89,10 +99,15 @@ describe('InboxUiPlugin', () => {
 		expect(header.registerHeaderAction).not.toHaveBeenCalled();
 	});
 
-	it('declares Settings → Inbox → Providers in the settings shell, behind INBOX_MAILBOX_MANAGE', () => {
+	it('declares Settings → Inbox → Providers and Mailboxes in the settings shell, behind INBOX_MAILBOX_MANAGE', () => {
 		expect(INBOX_PROVIDERS_SETTINGS_ROUTE).toMatchObject({
 			location: 'settings-sections',
 			path: 'inbox-providers',
+			data: { permissions: { only: [PermissionsEnum.INBOX_MAILBOX_MANAGE], redirectTo: '/pages/settings' } }
+		});
+		expect(INBOX_MAILBOXES_SETTINGS_ROUTE).toMatchObject({
+			location: 'settings-sections',
+			path: 'inbox-mailboxes',
 			data: { permissions: { only: [PermissionsEnum.INBOX_MAILBOX_MANAGE], redirectTo: '/pages/settings' } }
 		});
 		expect(typeof INBOX_PROVIDERS_SETTINGS_ROUTE.loadComponent).toBe('function');
@@ -114,8 +129,10 @@ describe('InboxUiPlugin', () => {
 			link: INBOX_PROVIDERS_SETTINGS_LINK,
 			data: { permissionKeys: [PermissionsEnum.INBOX_MAILBOX_MANAGE] }
 		});
+		expect(items[1]).toMatchObject({ id: INBOX_MAILBOXES_NAV_ID, link: INBOX_MAILBOXES_SETTINGS_LINK });
 		expect(items[0].data.hide()).toBe(false);
 		available.next(false);
 		expect(items[0].data.hide()).toBe(true);
+		expect(items[1].data.hide()).toBe(true);
 	});
 });

@@ -3953,6 +3953,168 @@ describe('SubscriptionService — an edit never writes back the credit a billing
 });
 
 /**
+ * Q16 (4): `cancel({ immediate: false })` records `cancelAtPeriodEnd`, a key the service owns (SEC-B-03, #10655) —
+ * a caller's metadata can neither set nor erase it — and no action withdrew it, so a customer who changed their mind
+ * could only let the subscription end and start another. `undoCancellation` is that action.
+ */
+describe('SubscriptionService — undoing a cancellation at the end of the period (Q16)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('withdraws the deferred cancellation and keeps the period the customer paid for', async () => {
+		const fixture = subscriptionFixture();
+
+		await fixture.service.cancel(SUBSCRIPTION, { reason: 'too expensive' });
+
+		const kept = await fixture.service.undoCancellation(SUBSCRIPTION);
+
+		expect(kept).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			nextBillingAt: APRIL,
+			currentPeriodEnd: APRIL
+		});
+		expect(kept.canceledAt).toBeNull();
+		expect(kept.cancelReason).toBeNull();
+		expect(kept.metadata?.['cancelAtPeriodEnd']).toBeUndefined();
+		expect(fixture.events.map((event) => event.name)).toEqual([
+			'subscription.canceled',
+			'subscription.cancellation-undone'
+		]);
+	});
+
+	it('keeps the caller’s own metadata and the service’s other keys', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { note: 'kept', chargedSetupFeePlanIds: [PLAN] } })
+			]
+		});
+
+		await fixture.service.cancel(SUBSCRIPTION);
+		await fixture.service.undoCancellation(SUBSCRIPTION);
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ note: 'kept', chargedSetupFeePlanIds: [PLAN] });
+	});
+
+	it('bills the next period instead of cancelling once the cancellation is undone', async () => {
+		const fixture = subscriptionFixture();
+
+		await fixture.service.cancel(SUBSCRIPTION, { reason: 'customer asked' });
+		expect(await fixture.service.previewNextBilling(SUBSCRIPTION, MARCH)).toBeNull();
+
+		await fixture.service.undoCancellation(SUBSCRIPTION);
+
+		expect(await fixture.service.previewNextBilling(SUBSCRIPTION, MARCH)).not.toBeNull();
+	});
+
+	it('answers a live subscription with no deferred cancellation with itself, and appends nothing', async () => {
+		const fixture = subscriptionFixture();
+
+		await expect(fixture.service.undoCancellation(SUBSCRIPTION)).resolves.toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			version: 1
+		});
+		expect(fixture.events).toEqual([]);
+	});
+
+	it('refuses a cancellation that already took effect, which is reactivated as a new subscription', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow('canceled', {
+					status: SubscriptionStatus.CANCELED,
+					metadata: { cancelAtPeriodEnd: true }
+				}),
+				subscriptionRow('expired', { status: SubscriptionStatus.EXPIRED })
+			]
+		});
+
+		await expect(fixture.service.undoCancellation('canceled')).rejects.toThrow(/cannot be changed/);
+		await expect(fixture.service.undoCancellation('expired')).rejects.toThrow(/cannot be changed/);
+		expect(fixture.subscription('canceled')).toMatchObject({
+			status: SubscriptionStatus.CANCELED,
+			metadata: { cancelAtPeriodEnd: true }
+		});
+	});
+
+	it('does not overwrite the billing run that ended the period between the read and the write', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, canceledAt: MARCH })]
+		});
+		const original = fixture.service.findOneScoped.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockImplementationOnce(async (id: string) => {
+			const read = { ...(await original(id)) };
+			const row = fixture.subscription(SUBSCRIPTION)!;
+
+			// The run's own write: the period ran out and the subscription is cancelled, one version further on.
+			row.status = SubscriptionStatus.CANCELED;
+			row.nextBillingAt = null;
+			row.version = 2;
+
+			return read as never;
+		});
+
+		await expect(fixture.service.undoCancellation(SUBSCRIPTION)).rejects.toThrow(/cannot be changed/);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.CANCELED,
+			version: 2,
+			metadata: { cancelAtPeriodEnd: true }
+		});
+		expect(fixture.events).toEqual([]);
+	});
+
+	it('does not cancel at the period end after an undo that landed while the billing run was deciding (Greptile)', async () => {
+		// The run reads the marker, the undo commits, then the run cancels: predicated on whatever version the row held,
+		// the cancellation landed over the undo the customer had just been told succeeded.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, canceledAt: MARCH })]
+		});
+		const original = fixture.service.findOneScoped.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'findOneScoped').mockImplementationOnce(async (id: string) => {
+			const read = { ...(await original(id)) };
+
+			await fixture.service.undoCancellation(id);
+
+			return read as never;
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)?.status).not.toBe(SubscriptionStatus.CANCELED);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['cancelAtPeriodEnd']).toBeUndefined();
+		expect(fixture.events.map((event) => event.name)).not.toContain('subscription.canceled');
+	});
+
+	it('CONTROL: still cancels at the period end when nothing undid the cancellation', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, canceledAt: MARCH })]
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)?.status).toBe(SubscriptionStatus.CANCELED);
+	});
+
+	it('refuses a stated version the subscription has moved past', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { cancelAtPeriodEnd: true }, version: 3 })]
+		});
+
+		const refusal = await fixture.service
+			.undoCancellation(SUBSCRIPTION, { wildcard: false, versions: [2] })
+			.catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ApiException);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata).toEqual({ cancelAtPeriodEnd: true });
+	});
+});
+
+/**
  * R4-05 (interim): an unpaid `INVOICED` cycle was counted as settled.
  *
  * The run raised the cycle's order, the order was not paid, the cycle was recorded `INVOICED` — and

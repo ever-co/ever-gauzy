@@ -198,8 +198,9 @@ const AGGREGATES_WITHOUT_A_FIELD = new Map([
 	[
 		'inbox_item',
 		'`inbox_item.created` (@gauzy/plugin-inbox, G-P3-6) is addressed to the item’s recipients and streamed through ' +
-			'`events(names:)`; a typed field waits until the schema snapshot and the field-binding gate read the SDL of a ' +
-			'flag-gated plugin (the Inbox is off unless GAUZY_INBOX_ENABLED=true, so a field of its own is in no snapshot).'
+			'`events(names:)`; a typed field waits until this gate reads the SDL of a flag-gated plugin, as the field-binding ' +
+			'gate does through its GATED_PLUGIN_SCHEMAS (the Inbox is off unless GAUZY_INBOX_ENABLED=true, so a field of its ' +
+			'own is in no snapshot).'
 	]
 ]);
 

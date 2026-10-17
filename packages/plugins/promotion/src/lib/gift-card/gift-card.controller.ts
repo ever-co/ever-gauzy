@@ -29,6 +29,7 @@ import { GiftCardService } from './gift-card.service';
 import { CreateGiftCardDTO, UpdateGiftCardDTO } from './dto';
 import { GiftCardStatus, IGiftCard } from '../promotion.types';
 import { PromotionPermission } from '../promotion.permissions';
+import { CouponService, DEFAULT_COUPON_FORMAT } from '../coupon/coupon.service';
 
 /**
  * The gift-card resource: a stored-value instrument and the four movements it accepts.
@@ -50,7 +51,16 @@ import { PromotionPermission } from '../promotion.permissions';
 @Permissions(PromotionPermission.GIFT_CARDS_VIEW as PermissionsEnum)
 @Controller('/gift-cards')
 export class GiftCardController extends CrudController<GiftCard> {
-	constructor(private readonly giftCardService: GiftCardService) {
+	/**
+	 * @param giftCardService The card service.
+	 * @param couponService The platform's code generator, which mints the code of a card issued without one (the
+	 * GraphQL `issueGiftCard` uses the same generator and format). Always injected by the module; optional in the
+	 * signature only so suites that build the controller by hand keep compiling.
+	 */
+	constructor(
+		private readonly giftCardService: GiftCardService,
+		private readonly couponService?: CouponService
+	) {
 		super(giftCardService);
 	}
 
@@ -60,6 +70,10 @@ export class GiftCardController extends CrudController<GiftCard> {
 	 * The face value is credited as the card's first ledger row, so a balance always has a
 	 * provenance. Issuing is granted separately from editing, because every card issued is money the
 	 * business owes.
+	 *
+	 * A body without a `code` (or with a blank one) is given one from the platform's code generator, in the
+	 * format `issueGiftCard` mints it in: the column is not nullable, and such a body used to fail on the
+	 * database constraint (review R2-G30). The `pin` is stored as its digest by the service.
 	 *
 	 * @param entity The card to issue.
 	 * @returns The issued card.
@@ -71,7 +85,9 @@ export class GiftCardController extends CrudController<GiftCard> {
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateGiftCardDTO): Promise<IGiftCard> {
-		return this.giftCardService.issue(entity as never);
+		const code = entity?.code?.trim() ? entity.code : this.couponService?.generateCode(DEFAULT_COUPON_FORMAT);
+
+		return this.giftCardService.issue({ ...entity, code } as never);
 	}
 
 	/**

@@ -871,3 +871,72 @@ describe('GiftCardService — concurrent movements of one card', () => {
 		]);
 	});
 });
+
+/**
+ * R2-G30: the second factor is stored as the digest the balance lookup compares with. `POST /gift-cards` and
+ * `PUT /gift-cards/:id` used to store the body's `pin` verbatim, so the PIN sat in the table in plaintext and a card
+ * issued with one never verified; a REST issue without a `code` failed on the column's NOT NULL.
+ */
+describe('GiftCardService — the PIN is stored as its digest (R2-G30)', () => {
+	const digestOf = (pin: string) => createHash('sha256').update(pin).digest('hex');
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stores the digest of the PIN a card is issued with, and the card verifies with that PIN', async () => {
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-PIN', initialAmount: '100.000000', currency: 'USD', pin: '4821' });
+
+		expect(cards[0].pin).toBe(digestOf('4821'));
+		expect(cards[0].pin).not.toBe('4821');
+		await expect(service.balanceByCode('GC-PIN', '4821')).resolves.toMatchObject({ balance: '100.000000' });
+		await expect(service.balanceByCode('GC-PIN', '0000')).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('keeps a digest an internal caller already holds, and never stores a stated pinHash in plaintext', async () => {
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-A', initialAmount: '10', currency: 'USD', pinHash: digestOf('1111') });
+		await service.issue({ code: 'GC-B', initialAmount: '10', currency: 'USD', pinHash: '2222' });
+
+		expect(cards[0].pin).toBe(digestOf('1111'));
+		expect(cards[1].pin).toBe(digestOf('2222'));
+	});
+
+	it('issues a card without a second factor when no PIN is stated', async () => {
+		const { service, cards } = serviceUnderTest([]);
+
+		await service.issue({ code: 'GC-PLAIN', initialAmount: '10', currency: 'USD' });
+
+		expect(cards[0].pin).toBeUndefined();
+		await expect(service.balanceByCode('GC-PLAIN')).resolves.toMatchObject({ currency: 'USD' });
+	});
+
+	it('refuses to issue a card without a code with a 400 rather than the constraint', async () => {
+		const { service, cards } = serviceUnderTest([]);
+
+		await expect(
+			service.issue({ code: '  ', initialAmount: '10', currency: 'USD' } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(cards).toHaveLength(0);
+	});
+
+	it('stores the digest of a PIN changed through the edit, and clears the second factor on null', async () => {
+		const { service, cards } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })]);
+
+		await service.update('gc-1', { pin: '9876' } as never);
+
+		expect(cards[0].pin).toBe(digestOf('9876'));
+		await expect(service.balanceByCode('GC-1000', '9876')).resolves.toMatchObject({ balance: '100.000000' });
+
+		await service.update('gc-1', { pin: null } as never);
+
+		expect(cards[0].pin).toBeNull();
+		await expect(service.balanceByCode('GC-1000')).resolves.toMatchObject({ balance: '100.000000' });
+	});
+});

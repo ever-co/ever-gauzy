@@ -29,6 +29,7 @@ import { IPromotionEvaluationContext, PromotionService } from './promotion.servi
 import { CreatePromotionDTO, DeactivatePromotionDTO, ReplacePromotionActionsDTO, UpdatePromotionDTO } from './dto';
 import { IPromotionAction, IPromotion } from '../promotion.types';
 import { PromotionPermission } from '../promotion.permissions';
+import { assertMayPublishOnCreate } from './promotion-publish';
 
 /**
  * The promotion resource: the offer, its lifecycle and its dry run.
@@ -62,6 +63,9 @@ export class PromotionController extends CrudController<Promotion> {
 	/**
 	 * Creates a promotion in draft.
 	 *
+	 * A body stating `status: ACTIVE` starts the offer at once, which `POST :id/activate` grants under
+	 * `PROMOTIONS_EDIT`, so it needs that grant too (review R2-G29, `PROMOTION_PUBLISH_FORBIDDEN`).
+	 *
 	 * @param entity The offer to create.
 	 * @returns The stored promotion.
 	 */
@@ -72,6 +76,8 @@ export class PromotionController extends CrudController<Promotion> {
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreatePromotionDTO): Promise<IPromotion> {
+		assertMayPublishOnCreate(entity);
+
 		return this.promotionService.createPromotion(entity as never);
 	}
 
