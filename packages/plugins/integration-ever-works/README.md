@@ -265,6 +265,16 @@ and answered `202`.
   edits, criteria and the Definition of Done follow, and key result values are
   pushed as samples (`POST /goals/:id/samples`). Gauzy never activates,
   resumes or completes an Ever Works goal: no status is sent.
+- **Inbox (where the Gauzy Inbox is loaded).** Ever Works inbox items
+  (questions, approvals, escalations, notices; `inbox.item.*`, served to a key
+  with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
+  Gauzy user paired with the recipient, with the linked task, project and
+  agent. An item whose recipient is not paired yet waits (deferred, retried
+  hourly) until the People tab pairs them. A reply in Gauzy goes to Ever Works
+  at once, acting as the recipient (`inbox:write`); an item already decided
+  there shows the answer Ever Works holds. Read / unread and archive follow
+  to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
+  events are skipped.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
