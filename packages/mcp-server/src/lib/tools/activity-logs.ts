@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { containsText, countByGroup, isWithinDates, readAllPages, validateOrganizationContext } from './utils';
+import { containsText, countByGroup, isWithinDates, pageOf, readAllPages, validateOrganizationContext } from './utils';
 import {
 	ActivityLogActionEnum,
 	ActivityLogEntityEnum,
@@ -106,6 +106,74 @@ const findUserLogsPage = async (
 	return { items: logs.slice((page - 1) * limit, page * limit) };
 };
 
+/** Filters `GET /api/activity-log` ignores: the tools apply them to the logs they read. */
+interface ClientLogFilters {
+	createdByUserId?: string;
+	employeeId?: string;
+	startDate?: string;
+	endDate?: string;
+}
+
+const hasClientFilters = ({ createdByUserId, employeeId, startDate, endDate }: ClientLogFilters) =>
+	!!(createdByUserId || employeeId || startDate || endDate);
+
+/** Every log that matches both the API `filters` and the `clientFilters`, newest first. */
+const findFilteredLogs = (
+	defaultParams: DefaultParams,
+	filters: Record<string, unknown>,
+	{ createdByUserId, employeeId, startDate, endDate }: ClientLogFilters
+) =>
+	findNewestLogs(
+		defaultParams,
+		filters,
+		(log) =>
+			(!createdByUserId || log.createdByUserId === createdByUserId) &&
+			(!employeeId || log.employeeId === employeeId) &&
+			isWithinDates(log.createdAt, startDate, endDate),
+		Infinity,
+		startDate
+	);
+
+/** Sorts logs on `sortBy` in `sortOrder`, as the API sorts its pages. */
+const sortLogs = (logs: ActivityLog[], sortBy: string, sortOrder: string) => {
+	const direction = sortOrder.toUpperCase() === 'ASC' ? 1 : -1;
+	return [...logs].sort((a, b) => {
+		const left = String(a[sortBy] ?? '');
+		const right = String(b[sortBy] ?? '');
+		return direction * (Number(left > right) - Number(left < right));
+	});
+};
+
+interface LogsPage {
+	page: number;
+	limit: number;
+	sortBy: string;
+	sortOrder: string;
+}
+
+/** One page of logs: from the API, or read and filtered here when a filter the API ignores is set. */
+const findLogsPage = async (
+	defaultParams: DefaultParams,
+	filters: Record<string, unknown>,
+	clientFilters: ClientLogFilters,
+	{ page, limit, sortBy, sortOrder }: LogsPage
+) =>
+	hasClientFilters(clientFilters)
+		? pageOf(
+				sortLogs(await findFilteredLogs(defaultParams, filters, clientFilters), sortBy, sortOrder),
+				page,
+				limit
+			)
+		: apiClient.get('/api/activity-log', {
+				params: activityLogQuery(defaultParams, {
+					...filters,
+					skip: page,
+					take: limit,
+					orderBy: sortBy,
+					order: sortOrder
+				})
+			});
+
 export const registerActivityLogTools = (server: McpServer) => {
 	// Get activity logs tool
 	registerTool(
@@ -153,23 +221,21 @@ export const registerActivityLogTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = activityLogQuery(defaultParams, {
-					skip: page,
-					take: limit,
+				const filters = {
 					...(relations !== undefined ? { relations } : {}),
 					...(entity && { entity }),
 					...(entityId && { entityId }),
 					...(action && { action }),
-					...(actorType && { actorType }),
-					...(createdByUserId && { createdByUserId }),
-					...(employeeId && { employeeId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					orderBy: sortBy,
-					order: sortOrder
-				});
+					...(actorType && { actorType })
+				};
 
-				const response = await apiClient.get('/api/activity-log', { params });
+				// The API cannot filter by user, employee or date: those are applied to the logs read here
+				const response = await findLogsPage(
+					defaultParams,
+					filters,
+					{ createdByUserId, employeeId, startDate, endDate },
+					{ page, limit, sortBy, sortOrder }
+				);
 
 				return {
 					content: [
@@ -205,20 +271,22 @@ export const registerActivityLogTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				// No count route: the list route answers the total
-				const params = activityLogQuery(defaultParams, {
-					take: 1,
+				const filters = {
 					...(entity && { entity }),
 					...(entityId && { entityId }),
 					...(action && { action }),
-					...(actorType && { actorType }),
-					...(createdByUserId && { createdByUserId }),
-					...(employeeId && { employeeId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
-				});
+					...(actorType && { actorType })
+				};
+				const clientFilters = { createdByUserId, employeeId, startDate, endDate };
 
-				const { total } = await apiClient.get<{ total: number }>('/api/activity-log', { params });
+				// No count route: the list route answers the total, unless the logs are filtered here
+				const total = hasClientFilters(clientFilters)
+					? (await findFilteredLogs(defaultParams, filters, clientFilters)).length
+					: (
+							await apiClient.get<{ total: number }>('/api/activity-log', {
+								params: activityLogQuery(defaultParams, { ...filters, take: 1 })
+							})
+						).total;
 
 				return {
 					content: [
@@ -328,23 +396,21 @@ export const registerActivityLogTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = activityLogQuery(defaultParams, {
+				const filters = {
 					entity,
 					entityId,
-					skip: page,
-					take: limit,
 					...(relations !== undefined ? { relations } : {}),
 					...(action && { action }),
-					...(actorType && { actorType }),
-					...(createdByUserId && { createdByUserId }),
-					...(employeeId && { employeeId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate }),
-					orderBy: sortBy,
-					order: sortOrder
-				});
+					...(actorType && { actorType })
+				};
 
-				const response = await apiClient.get('/api/activity-log', { params });
+				// The API cannot filter by user, employee or date: those are applied to the logs read here
+				const response = await findLogsPage(
+					defaultParams,
+					filters,
+					{ createdByUserId, employeeId, startDate, endDate },
+					{ page, limit, sortBy, sortOrder }
+				);
 
 				return {
 					content: [

@@ -392,8 +392,19 @@ export const registerKeyResultTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// The route requires the owner and status of the update: take them from the key result
+				const { items = [] } = await apiClient.get<{
+					items?: { ownerId?: string; owner?: { id: string }; status?: string }[];
+				}>(`/api/key-results/${keyResultId}`);
+				const [keyResult] = items;
+				if (!keyResult) {
+					throw new Error(`Key result ${keyResultId} not found`);
+				}
+
 				const createData = {
 					...update_data,
+					owner: keyResult.ownerId ?? keyResult.owner?.id,
+					status: update_data.status ?? keyResult.status,
 					keyResultId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
