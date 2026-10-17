@@ -185,6 +185,16 @@ and answered `202`.
   overwriting the newer snapshot: the applier skips that event (the newer
   version covers it), the pusher retries the change against the newer
   snapshot, and an admin action answers `409`.
+- **Lease fence.** Every handler, push and sweep of the sync loop runs fenced
+  on the connection's lease: before each insert, update or delete (the
+  platform's services and commands included), the plugin's ORM subscriber
+  checks that this process still holds the lease. Inside a transaction it
+  reads the lease row in that transaction with a share lock, so a claim
+  cannot commit before the write; outside one it needs a minute of lease
+  left. A handler that outlived its lease therefore writes nothing once
+  another process holds it: the write is refused (rolled back), the rest of
+  that handler's writes too, and the event or change is left to the new
+  holder. A handler that keeps writing renews its lease as it goes.
 - **People.** Ever Works members are paired with Gauzy people on the People
   tab: a verified, case-insensitive email match is only a suggestion the admin
   confirms (one by one or all at once); nothing is linked silently and

@@ -7,6 +7,7 @@ import { EverWorksConnection } from '../../connection/ever-works-connection.enti
 import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
 import { EverWorksLinkType, EverWorksOutboundChange, EverWorksOutboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
+import { assertLeaseFence, EverWorksLease, EverWorksLeaseLostError, everWorksLease, withLeaseFence } from '../ever-works-lease-fence';
 import { EverWorksStaleLinkError } from '../links/ever-works-link.service';
 
 /** What a push did. */
@@ -43,6 +44,12 @@ export const OUTBOUND_CLAIM_MS = 10 * 60_000;
  * type. No handler yet → `deferred` (hourly), so nothing is lost before a type ships. 429 / 5xx /
  * network → retried with back-off (honouring `Retry-After`); after {@link OUTBOUND_MAX_ATTEMPTS} the
  * change is `dead` and logged. Another 4xx is a `failed` change with the contract's code.
+ *
+ * With the loop's lease `owner`, each push runs behind the lease fence (`withLeaseFence`): the Gauzy
+ * writes a handler makes (a 412 merge or a 409 status written back, its link) check, in their own
+ * transaction, that this process still holds the connection's lease. A push that outlived the lease
+ * writes nothing more once another process holds it; its change is handed back (due at once, the
+ * attempt not counted) and the drain stops.
  */
 @Injectable()
 export class EverWorksOutboundPusher {
@@ -65,8 +72,17 @@ export class EverWorksOutboundPusher {
 		return this.handlers.has(entityType);
 	}
 
-	/** Pushes up to `limit` due changes of the connection's mappings; returns how many were settled. */
-	async drain(connection: EverWorksConnection, limit = 100, now: Date = new Date(), stillOwner?: () => Promise<boolean>): Promise<number> {
+	/**
+	 * Pushes up to `limit` due changes of the connection's mappings; returns how many were settled. With
+	 * `owner` (the sync loop's lease holder) every push is fenced on the connection's lease.
+	 */
+	async drain(
+		connection: EverWorksConnection,
+		limit = 100,
+		now: Date = new Date(),
+		stillOwner?: () => Promise<boolean>,
+		owner?: string
+	): Promise<number> {
 		const mappings = await this.mappingsOf(connection);
 		if (!mappings.length) return 0;
 		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
@@ -80,16 +96,28 @@ export class EverWorksOutboundPusher {
 			order: { availableAt: 'ASC' },
 			take: limit
 		});
+		const lease = owner ? everWorksLease(this.dataSource, connection.id as ID, owner, now) : null;
 		let settled = 0;
-		for (const change of due) {
-			if (stillOwner && !(await stillOwner())) return settled;
-			const mapping = mappings.find((m) => m.id === change.integrationTenantId) as IntegrationTenant;
-			if (await this.pushOne(connection, mapping, change, now)) settled++;
+		try {
+			for (const change of due) {
+				if (stillOwner && !(await stillOwner())) return settled;
+				const mapping = mappings.find((m) => m.id === change.integrationTenantId) as IntegrationTenant;
+				if (await this.pushOne(connection, mapping, change, now, lease)) settled++;
+			}
+		} catch (error) {
+			if (!(error instanceof EverWorksLeaseLostError)) throw error;
+			this.logger.warn(`Connection ${connection.id}: the lease moved to another process; the outbound drain stopped.`);
 		}
 		return settled;
 	}
 
-	private async pushOne(connection: EverWorksConnection, mapping: IntegrationTenant, change: EverWorksOutboundChange, now: Date): Promise<boolean> {
+	private async pushOne(
+		connection: EverWorksConnection,
+		mapping: IntegrationTenant,
+		change: EverWorksOutboundChange,
+		now: Date,
+		lease: EverWorksLease | null = null
+	): Promise<boolean> {
 		const repository = this.dataSource.getRepository(EverWorksOutboundChange);
 		const handler = this.handlers.get(change.entityType);
 		if (!handler) {
@@ -105,8 +133,11 @@ export class EverWorksOutboundPusher {
 		// MySQL DATETIME included). Every result below is written only while that claim still stands, so a
 		// push whose claim lapsed and was taken over never overwrites the newer push.
 		const claimUntil = new Date(Math.ceil((now.getTime() + OUTBOUND_CLAIM_MS) / 1000) * 1000);
+		// A lapsed claim is taken over on its own token (the hold it was read with): of two passes that both
+		// read it as lapsed, only the first takes it.
+		const lapsed = change.status === EverWorksOutboundStatus.PUSHING && change.availableAt ? { availableAt: change.availableAt } : {};
 		const claimed = await repository.update(
-			{ id: change.id, status: change.status },
+			{ id: change.id, status: change.status, ...lapsed } as never,
 			{ status: EverWorksOutboundStatus.PUSHING, availableAt: claimUntil }
 		);
 		if (!claimed.affected) return false; // another process took it
@@ -120,7 +151,12 @@ export class EverWorksOutboundPusher {
 			return true;
 		};
 		try {
-			const outcome = await handler.push(change, { connection, mapping });
+			// Fenced: a Gauzy write of this push made after the lease moved is refused. The lease is also checked
+			// before the handler starts, since its Ever Works request goes out before its first Gauzy write.
+			const outcome = await withLeaseFence(lease, async () => {
+				await assertLeaseFence();
+				return handler.push(change, { connection, mapping });
+			});
 			if (outcome.status === 'deferred') {
 				await settle({
 					status: EverWorksOutboundStatus.DEFERRED,
@@ -134,6 +170,11 @@ export class EverWorksOutboundPusher {
 				lastError: outcome.status === 'skipped' ? outcome.message.slice(0, 2000) : null
 			});
 		} catch (error) {
+			if (error instanceof EverWorksLeaseLostError) {
+				// Handed back to the process that holds the lease now: due at once, this attempt not counted.
+				await settle({ status: EverWorksOutboundStatus.FAILED, lastError: error.message.slice(0, 2000), availableAt: now });
+				throw error;
+			}
 			const attempts = (change.attempts ?? 0) + 1;
 			// A link write refused as older than the recorded version (a newer event or push recorded first) is
 			// retried: the next push recomputes the change against the newer snapshot.
