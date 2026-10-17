@@ -382,6 +382,30 @@ describe('EverWorksInitiativesService — G → EW', () => {
 			expect(JSON.stringify(request.body ?? {})).not.toContain('"status":"active"');
 	});
 
+	it('a team-scoped initiative never goes to Ever Works as an organization-visible mission (review F24)', async () => {
+		const { service, mock, missionsMock, initiatives, addLink } = setup();
+		// Team-scoped through its aligned projects' teams only (no direct teams): no team to scope the mission to.
+		initiatives.push(initiative({ visibilityScope: 'team', teams: [], projects: [{ id: 'p-1' }] }));
+		expect(await service.push(change('init-1'), pushContext)).toEqual({
+			status: 'skipped',
+			message: 'a team-scoped initiative goes to Ever Works once it is linked to a paired team'
+		});
+		expect(missionsMock.missions.size).toBe(0);
+		// With a paired direct team it goes, team-visible.
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');
+		initiatives[0]['teams'] = [{ id: 'g-team-1' }];
+		expect(await service.push(change('init-1'), pushContext)).toMatchObject({ status: 'pushed' });
+		const [created] = [...missionsMock.missions.values()];
+		expect(created).toMatchObject({ visibility: 'team', teamIds: ['ew-team-1'] });
+		// Its direct teams cleared in Gauzy later (still team-scoped): the mission keeps its teams, other edits go.
+		initiatives[0]['teams'] = [];
+		initiatives[0]['title'] = 'Enter Europe now';
+		expect(await service.push(change('init-1'), pushContext)).toMatchObject({ status: 'pushed' });
+		expect(created).toMatchObject({ title: 'Enter Europe now', visibility: 'team', teamIds: ['ew-team-1'] });
+		for (const request of mock.requests.filter((r) => r.method !== 'GET'))
+			expect(JSON.stringify(request.body ?? {})).not.toContain('"visibility":"organization"');
+	});
+
 	it('leadership initiatives and drafts are never pushed; one made before the mapping waits for the tab', async () => {
 		const { service, missionsMock, initiatives } = setup();
 		initiatives.push(
@@ -490,6 +514,25 @@ describe('EverWorksInitiativesService — Initiatives tab', () => {
 		expect(view.missions.find((m) => m.ewMissionId === 'ew-m-9')?.suggestion).toBeNull();
 		await service.decide('m1' as never, { acceptSuggestions: true });
 		expect(links.find((l) => l['ewId'] === 'ew-m-9')).toBeUndefined();
+	});
+
+	it('refuses to create a team-scoped initiative with no paired team as a mission (review F24)', async () => {
+		const { service, missionsMock, initiatives } = setup();
+		initiatives.push({
+			id: 'init-9',
+			tenantId: 't1',
+			organizationId: 'o1',
+			title: 'Team only',
+			state: 'active',
+			visibilityScope: 'team',
+			createdAt: new Date('2026-09-01T00:00:00Z'),
+			teams: [],
+			projects: []
+		});
+		await expect(service.decide('m1' as never, { createInEverWorks: ['init-9' as never] })).rejects.toThrow(
+			/team-scoped initiative goes to Ever Works once it is linked to a paired team/
+		);
+		expect(missionsMock.missions.size).toBe(0);
 	});
 
 	it('pairing keeps on the link what the mission has that Gauzy cannot map, so a push never removes it', async () => {
