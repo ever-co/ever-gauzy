@@ -58,6 +58,7 @@ import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
 import { ValidatorModule } from '../shared/validators/validator.module';
+import { CachedValidatorContainer } from '../shared/validators/cached-validator-container';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
@@ -375,9 +376,14 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	await seedDatabaseIfEmpty(app, appService);
 
 	/**
-	 * Dependency injection with class-validator
+	 * Dependency injection with class-validator.
+	 *
+	 * class-validator asks this container for every constraint of every validated property. Handing it Nest's
+	 * context directly made Nest throw (and class-validator catch) an `UnknownElementException` for every
+	 * built-in constraint on every request; the cached container asks Nest once per class and otherwise
+	 * behaves as class-validator's own default container does (see CachedValidatorContainer).
 	 */
-	useContainer(app.select(ValidatorModule), { fallbackOnErrors: true });
+	useContainer(new CachedValidatorContainer(app.select(ValidatorModule)), { fallbackOnErrors: true });
 
 	// Start the server
 	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
