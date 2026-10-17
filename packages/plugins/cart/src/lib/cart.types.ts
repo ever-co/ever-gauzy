@@ -234,6 +234,20 @@ export interface ICartPromotionNotice {
 	readonly message: string;
 }
 
+/**
+ * One amount the capability takes off one owner: a cart line (`LINE`) or a delivery choice (`SHIPPING`).
+ *
+ * The cart records only the `LINE` part of a promotion for now - it spreads a promotion's amount across its
+ * lines - so a `SHIPPING` part is never moved onto the items.
+ */
+export interface ICartPromotionAllocation {
+	readonly ownerType: 'LINE' | 'SHIPPING';
+	readonly ownerId: ID;
+	readonly promotionId: ID;
+	readonly code?: string;
+	readonly amount: DecimalString;
+}
+
 /** What the capability decided. */
 export interface ICartPromotionEvaluation {
 	readonly result: {
@@ -242,6 +256,8 @@ export interface ICartPromotionEvaluation {
 		readonly discountTotal: DecimalString;
 		readonly currency: string;
 	};
+	/** Where each granted amount was taken from. */
+	readonly allocations?: ICartPromotionAllocation[];
 }
 
 /**

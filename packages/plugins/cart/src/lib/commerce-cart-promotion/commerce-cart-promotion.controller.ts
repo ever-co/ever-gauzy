@@ -127,7 +127,7 @@ export class CommerceCartPromotionController extends CrudController<CommerceCart
 		if (stated.length) {
 			throw new BadRequestException({
 				message:
-					'CART_PROMOTION_NOT_WRITABLE: an applied promotion's amount and attribution are the promotion engine's; re-apply the promotion through POST /carts/:id/promotions instead.',
+					"CART_PROMOTION_NOT_WRITABLE: an applied promotion's amount and attribution are the promotion engine's; re-apply the promotion through POST /carts/:id/promotions instead.",
 				code: 'CART_PROMOTION_NOT_WRITABLE',
 				details: { fields: stated }
 			});

@@ -1,4 +1,4 @@
-// cspell:ignore TENOFF
+// cspell:ignore TENOFF SHIPFREE
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a cart service needs and none of which is available
@@ -638,7 +638,7 @@ function cartFixture(
 		options.promotions === false
 			? undefined
 			: {
-					evaluate: jest.fn(async (query: any) => {
+					evaluate: jest.fn(async (query: any): Promise<any> => {
 						const codes: string[] = query.codes ?? [];
 						const applications = codes
 							.filter((code) => promotionTable[code] !== undefined)
@@ -2056,6 +2056,86 @@ describe('CommerceCartService — the discount is the promotion engine’s (R3-0
 
 		const untouched = await service.findOneByIdString(cart.id);
 		expect(untouched.discountTotal ?? 0).toBe(0);
+	});
+
+	it('retires what the engine no longer grants beside the new code, so exclusive discounts never stack', async () => {
+		// LOW and HIGH are exclusive members of one stacking group, HIGH first by priority: applied alone LOW is
+		// granted, evaluated together only HIGH is. The cart keeps the engine's answer for the whole set.
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const codes: string[] = query.codes ?? [];
+			const grant = codes.includes('HIGH') ? { code: 'HIGH', amount: '20' } : { code: 'LOW', amount: '5' };
+
+			return {
+				result: {
+					applications: [
+						{
+							promotionId: `promotion-${grant.code}`,
+							code: grant.code,
+							isAutomatic: false,
+							amount: grant.amount,
+							currency: 'USD'
+						}
+					],
+					notices: [],
+					discountTotal: '0',
+					currency: 'USD'
+				}
+			};
+		});
+
+		await service.applyPromotion(cart.id, { code: 'LOW' } as any);
+		const priced = await service.applyPromotion(cart.id, { code: 'HIGH' } as any);
+
+		const live = tables.commerce_cart_promotion.filter((row: any) => !row.deletedAt);
+		expect(live.map((row: any) => row.code)).toEqual(['HIGH']);
+		expect(priced.discountTotal).toBe(20);
+		expect(priced.grandTotal).toBe(80);
+	});
+
+	it('records only what the engine takes off the lines, and refuses a delivery-only discount', async () => {
+		// The cart spreads a promotion over its lines, so a part the engine took off a delivery choice is not
+		// moved onto the items (it would reduce their tax base instead of shipping's).
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 10 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const line = query.lines[0];
+			const method = query.shipping[0];
+			const applications: any[] = [];
+			const allocations: any[] = [];
+
+			if ((query.codes ?? []).includes('BUNDLE')) {
+				applications.push({ promotionId: 'p-bundle', code: 'BUNDLE', isAutomatic: false, amount: '15' });
+				allocations.push(
+					{ ownerType: 'LINE', ownerId: line.id, promotionId: 'p-bundle', amount: '5' },
+					{ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-bundle', amount: '10' }
+				);
+			}
+
+			if ((query.codes ?? []).includes('SHIPFREE')) {
+				applications.push({ promotionId: 'p-ship', code: 'SHIPFREE', isAutomatic: false, amount: '10' });
+				allocations.push({ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-ship', amount: '10' });
+			}
+
+			return { result: { applications, notices: [], discountTotal: '0', currency: 'USD' }, allocations };
+		});
+
+		await expect(service.applyPromotion(cart.id, { code: 'SHIPFREE' } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: { notices: [expect.objectContaining({ notice: 'SHIPPING_DISCOUNT_NOT_SUPPORTED' })] }
+			}
+		});
+
+		await service.applyPromotion(cart.id, { code: 'BUNDLE' } as any);
+
+		expect(tables.commerce_cart_promotion.map((row: any) => Number(row.amount))).toEqual([5]);
 	});
 
 	it('refuses a request that names no promotion at all', async () => {

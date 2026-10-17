@@ -550,7 +550,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		// moves (P0 #6c).
 		await this.promotionService.assertReferences(promotion);
 
-		const granted = await this.grantedPromotion(cart, promotion);
+		const { granted, amount, answerFor } = await this.grantedPromotion(cart, promotion);
 
 		const existing = (await this.promotionService.findAll({
 			where: { cartId }
@@ -564,9 +564,32 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		await this.spendVersion(cartId, expectation);
 
+		// Every promotion already on the cart takes the engine's answer for the whole set (R3-07): the set was
+		// evaluated together, so a promotion the new one excludes - an exclusive member of its stacking group,
+		// or one left nothing to discount - is retired rather than kept beside it, and one whose share moved
+		// is recorded at its new amount. Keeping only the new grant would let two exclusive discounts stack.
+		for (const row of existing.items) {
+			if (duplicate && row.id === duplicate.id) {
+				continue;
+			}
+
+			const answer = answerFor(row.promotionId, row.code);
+
+			if (!answer) {
+				await this.promotionService.softDelete(row.id);
+				continue;
+			}
+
+			const recorded = this.toColumnAmount(answer, cart);
+
+			if (Number(row.amount) !== recorded) {
+				await this.promotionService.update(row.id, { amount: recorded } as any);
+			}
+		}
+
 		if (duplicate) {
 			await this.promotionService.update(duplicate.id, {
-				amount: this.toColumnAmount(granted.amount, cart)
+				amount: this.toColumnAmount(amount, cart)
 			} as any);
 		} else {
 			await this.promotionService.create({
@@ -576,7 +599,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				// the promotion that granted it, whatever the request said about either.
 				promotionId: granted.promotionId,
 				code: granted.code ?? promotion.code,
-				amount: this.toColumnAmount(granted.amount, cart),
+				amount: this.toColumnAmount(amount, cart),
 				isAutomatic: granted.isAutomatic ?? false,
 				appliedAt: new Date()
 			} as DeepPartial<CommerceCartPromotion>);
@@ -1805,7 +1828,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	private async grantedPromotion(
 		cart: CommerceCart,
 		requested: DeepPartial<CommerceCartPromotion>
-	): Promise<ICartPromotionApplication> {
+	): Promise<{
+		granted: ICartPromotionApplication;
+		amount: string;
+		answerFor: (promotionId?: ID, code?: string) => string | null;
+	}> {
 		const normalized = (value?: string | null): string => `${value ?? ''}`.trim().toUpperCase();
 		const code = normalized(requested?.code as string) || undefined;
 		const promotionId = requested?.promotionId ? String(requested.promotionId) : undefined;
@@ -1861,29 +1888,88 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			}))
 		});
 
-		const granted = (evaluation?.result?.applications ?? []).find(
-			(application) =>
-				(!promotionId || String(application.promotionId) === promotionId) &&
-				(!code || normalized(application.code) === code)
-		);
+		const applications = evaluation?.result?.applications ?? [];
+		const allocations = evaluation?.allocations;
+		const find = (id?: ID, stated?: string): ICartPromotionApplication | undefined =>
+			id || stated
+				? applications.find(
+						(application) =>
+							(!id || String(application.promotionId) === String(id)) &&
+							(!stated || normalized(application.code) === normalized(stated))
+				  )
+				: undefined;
+		/**
+		 * What the cart records for one application: the part the engine allocated to the cart's lines.
+		 * The cart attributes a promotion's amount across its lines (`syncPromotionAdjustments`), so a part the
+		 * engine allocated to a delivery choice would be moved onto the items - reducing their tax base instead
+		 * of shipping's. That part is not recorded until the cart applies delivery discounts (Q7). An engine
+		 * that reports no allocations is taken at its application's amount.
+		 */
+		const lineAmountOf = (application: ICartPromotionApplication): string => {
+			if (!Array.isArray(allocations)) {
+				return application.amount;
+			}
 
-		if (!granted || !(Number(granted.amount) > 0)) {
+			return Money.sum(
+				allocations
+					.filter(
+						(allocation) =>
+							allocation.ownerType === 'LINE' &&
+							String(allocation.promotionId) === String(application.promotionId)
+					)
+					.map((allocation) => Money.of(allocation.amount as never, currency, decimals).abs()),
+				currency
+			).toStorageString();
+		};
+
+		const granted = find(promotionId, code);
+		const amount = granted ? lineAmountOf(granted) : '0';
+
+		if (!granted || !(Number(amount) > 0)) {
+			const notices = (evaluation?.result?.notices ?? []).filter(
+				(notice) =>
+					(promotionId && String(notice.promotionId) === promotionId) ||
+					(code && normalized(notice.code) === code)
+			);
+
 			throw new BadRequestException({
 				message: 'CART_PROMOTION_NOT_APPLICABLE: the promotion engine grants this cart nothing for that promotion.',
 				code: 'CART_PROMOTION_NOT_APPLICABLE',
 				details: {
 					code: code ?? null,
 					promotionId: promotionId ?? null,
-					notices: (evaluation?.result?.notices ?? []).filter(
-						(notice) =>
-							(promotionId && String(notice.promotionId) === promotionId) ||
-							(code && normalized(notice.code) === code)
-					)
+					notices: granted
+						? [
+								...notices,
+								{
+									promotionId: granted.promotionId,
+									code: granted.code ?? code ?? '',
+									notice: 'SHIPPING_DISCOUNT_NOT_SUPPORTED',
+									message:
+										'The promotion discounts delivery only, and the cart does not yet apply delivery discounts.'
+								}
+						  ]
+						: notices
 				}
 			});
 		}
 
-		return granted;
+		return {
+			granted,
+			amount,
+			answerFor: (id?: ID, stated?: string) => {
+				// A row recorded under a promotion id is matched by it; a row recorded by code alone, by its code.
+				const answer = find(id || undefined, id ? undefined : stated);
+
+				if (!answer) {
+					return null;
+				}
+
+				const share = lineAmountOf(answer);
+
+				return Number(share) > 0 ? share : null;
+			}
+		};
 	}
 
 	/**
