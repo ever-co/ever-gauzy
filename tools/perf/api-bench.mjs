@@ -256,8 +256,9 @@ async function resolveContext() {
 async function runEndpoint(ep, ctx) {
 	const headers = {
 		...(ep.public ? {} : { authorization: `Bearer ${ctx.token}` }),
-		'tenant-id': ctx.vars.tenantId,
-		'organization-id': ctx.vars.organizationId
+		// Without PG_URL (and ORGANIZATION_ID) there is no organization id: an undefined header value is refused by Node.
+		...(ctx.vars.tenantId ? { 'tenant-id': ctx.vars.tenantId } : {}),
+		...(ctx.vars.organizationId ? { 'organization-id': ctx.vars.organizationId } : {})
 	};
 	const url = fill(ep.path, ctx.vars);
 	const method = ep.method || 'GET';
