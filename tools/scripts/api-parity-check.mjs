@@ -33,6 +33,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './subscription-parity-check.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '..');
@@ -408,15 +409,19 @@ function schemaSourceOf(dir) {
 }
 
 /**
- * The source of the controller that serves a resource, or the empty string.
+ * The source of the controller that serves a resource, without its comments, or the empty string.
+ *
+ * Comments are stripped before anything is matched, so a route that was commented out reads as absent
+ * rather than as mapped (Greptile, #10901) — the reading `subscription-parity-check.mjs` gives a
+ * commented-out producer.
  *
  * @param dir The package directory.
  * @param resource The resource, without a leading slash.
- * @returns {string} The controller's text.
+ * @returns {string} The controller's text, without comments.
  */
 function controllerSourceOf(dir, resource) {
 	for (const file of walk(dir, (name) => name.endsWith('.controller.ts'))) {
-		const source = read(file);
+		const source = stripComments(read(file));
 		const prefix = /@Controller\(\s*['"`]([^'"`]*)['"`]\s*\)/.exec(source);
 
 		if (prefix && prefix[1].split('/').filter(Boolean)[0] === resource) return source;
@@ -440,6 +445,20 @@ function mapsRoute(source, method, path) {
 		: new RegExp(`@${method}\\(\\s*(?:['"\`]['"\`])?\\s*\\)`);
 
 	return pattern.test(source);
+}
+
+/**
+ * Whether a schema document defines a field: its name followed by its arguments or by its type.
+ *
+ * A field with no arguments — `closeOrderClaim: Boolean!` — is a field too, so both `(` and `:` count
+ * (CodeRabbit, #10901). The ledger rule and the single-route rule both read fields this way.
+ *
+ * @param schema The package's schema source.
+ * @param field The field name.
+ * @returns {boolean} Whether the document defines it.
+ */
+function definesField(schema, field) {
+	return new RegExp(`\\b${field}\\s*[(:]`).test(schema);
 }
 
 const problems = [];
@@ -587,7 +606,7 @@ for (const name of PACKAGES) {
 			const type = camelCase(singular(resource)).replace(/^./, (first) => first.toUpperCase());
 			const writes = ['create', 'update', 'delete']
 				.map((verb) => `${verb}${type}`)
-				.filter((field) => new RegExp(`\\b${field}\\s*\\(`).test(schema));
+				.filter((field) => definesField(schema, field));
 
 			if (writes.length) {
 				problems.push({
@@ -612,7 +631,7 @@ for (const name of PACKAGES) {
 			continue;
 		}
 
-		if (new RegExp(`\\b${entry.field}\\s*\\(`).test(schemaSourceOf(dir))) {
+		if (definesField(stripComments(schemaSourceOf(dir)), entry.field)) {
 			problems.push({
 				package: name,
 				kind: 'route-mirrored',
