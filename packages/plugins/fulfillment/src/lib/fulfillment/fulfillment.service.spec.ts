@@ -2588,6 +2588,25 @@ describe('FulfillmentService — a paid order completes when its goods are accou
 		expect(calls).toEqual([`recompute:${ORDER}`, `complete:${ORDER}`]);
 	});
 
+	it('asks again for the completion when a concurrent write of the order won the version (CodeRabbit on #10890)', async () => {
+		const conflict = () =>
+			new ApiException(409, ApiErrorCode.ENTITY_VERSION_CONFLICT, 'The record changed since you read it.', {
+				expectedVersion: 4,
+				actualVersion: 5
+			});
+		const orderService = {
+			completeIfSettled: jest.fn().mockRejectedValueOnce(conflict()).mockResolvedValueOnce({})
+		};
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 1 })] },
+			orderService
+		});
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 1)] } as never);
+
+		expect(orderService.completeIfSettled).toHaveBeenCalledTimes(2);
+	});
+
 	it('keeps the shipment when the completion that follows it fails', async () => {
 		const orderService = {
 			completeIfSettled: jest.fn(async () => Promise.reject(new Error('ENTITY_VERSION_CONFLICT')))

@@ -40,10 +40,9 @@ const TYPE_OF_FACT: Record<IOrderMoneyFact['type'], OrderTransactionType> = {
  * **At most once.** A fact is keyed by `(order, type, referenceType, referenceId)` — the payment-side row
  * that caused it — and a key already on the ledger answers `recorded: false` and moves nothing. That is
  * what lets the synchronous report, a retried request and the outbox consumer that backs them up
- * (Q7-W3) all deliver the same fact. The check is a read before the write rather than a unique index for
- * now (the index belongs to the order package's migration set, which another change is editing); two
- * deliveries of one fact racing within the same instant is the window that leaves open, and the outbox
- * consumer runs a minute behind the synchronous report.
+ * (Q7-W3) all deliver the same fact. The check is a read before the write,
+ * backed by the unique index `UQ_order_transaction_payment_fact` (`1791000000793`): of two reports that race
+ * past the read, the database refuses the second insert and the writer answers it as a repeat.
  *
  * **Both ORMs.** The order is read and the row written through the tenant-aware CRUD services, which
  * dispatch to the configured ORM; the re-derivation is `OrderTotalsService.recompute` with no manager,
@@ -103,23 +102,39 @@ export class OrderPaymentLedgerService {
 			return { recorded: false, transactionId: existing.id };
 		}
 
-		const row = (await this.transactionService.create({
-			orderId: order.id,
-			// A refund gives money back, which the ledger counts as a negative row; every other fact is the
-			// money moving towards the merchant.
-			amount: (type === OrderTransactionType.REFUND
-				? subtractDecimalStrings('0', magnitude)
-				: magnitude) as never,
-			currency: order.currency,
-			type,
-			referenceType: fact.referenceType,
-			referenceId: fact.referenceId,
-			description: `${fact.type} reported by the payment domain`,
-			occurredAt: fact.occurredAt ? new Date(fact.occurredAt) : new Date(),
-			metadata: { source: 'payment', ...(fact.paymentId ? { paymentId: fact.paymentId } : {}) },
-			tenantId: order.tenantId,
-			organizationId: order.organizationId
-		} as DeepPartial<OrderTransaction>)) as OrderTransaction;
+		let row: OrderTransaction;
+
+		try {
+			row = (await this.transactionService.create({
+				orderId: order.id,
+				// A refund gives money back, which the ledger counts as a negative row; every other fact is the
+				// money moving towards the merchant.
+				amount: (type === OrderTransactionType.REFUND
+					? subtractDecimalStrings('0', magnitude)
+					: magnitude) as never,
+				currency: order.currency,
+				type,
+				referenceType: fact.referenceType,
+				referenceId: fact.referenceId,
+				description: `${fact.type} reported by the payment domain`,
+				occurredAt: fact.occurredAt ? new Date(fact.occurredAt) : new Date(),
+				metadata: { source: 'payment', ...(fact.paymentId ? { paymentId: fact.paymentId } : {}) },
+				tenantId: order.tenantId,
+				organizationId: order.organizationId
+			} as DeepPartial<OrderTransaction>)) as OrderTransaction;
+		} catch (error) {
+			// Two reports of one fact raced, and `UQ_order_transaction_payment_fact` refused the second insert:
+			// the fact is on the ledger, so the report is answered as a repeat (CodeRabbit on #10890).
+			const raced = await this.findRecorded(order.id, type, fact.referenceType, fact.referenceId);
+
+			if (!raced) {
+				throw error;
+			}
+
+			await this.settleIfStale(order);
+
+			return { recorded: false, transactionId: raced.id };
+		}
 
 		await this.totalsService.recompute(order.id, 'PAYMENT_RECORDED');
 		await this.tryComplete(order.id);

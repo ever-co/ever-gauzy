@@ -219,3 +219,24 @@ describe('OrderPaymentLedgerService — a stale refunded total is re-derived too
 		expect(totalsService.recompute).toHaveBeenCalledWith(ORDER.id, 'PAYMENT_RECORDED');
 	});
 });
+
+describe('OrderPaymentLedgerService — a race the unique index refuses (CodeRabbit on #10890)', () => {
+	it('answers the losing insert as a repeat once the winner is on the ledger', async () => {
+		const { ledger, rows, transactionService } = fixture();
+		transactionService.create.mockImplementationOnce(async (input: any) => {
+			// The other report of the same capture committed first; this insert is refused by the index.
+			rows.push({ id: 'tx-winner', ...input });
+			throw new Error('UNIQUE constraint failed: order_transaction.UQ_order_transaction_payment_fact');
+		});
+
+		await expect(ledger.record(fact())).resolves.toEqual({ recorded: false, transactionId: 'tx-winner' });
+		expect(rows).toHaveLength(1);
+	});
+
+	it('lets any other failure of the insert through', async () => {
+		const { ledger, transactionService } = fixture();
+		transactionService.create.mockRejectedValueOnce(new Error('connection lost'));
+
+		await expect(ledger.record(fact())).rejects.toThrow(/connection lost/);
+	});
+});
