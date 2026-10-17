@@ -109,6 +109,27 @@ export class EverWorksOutboundQueue {
 				);
 				return true;
 			}
+			// A change waiting for a precondition (deferred) takes the trigger too, instead of a new row per trigger: it is
+			// due again after the debounce (review F22: a comment waiting for its task, or a child for its parent, queued a
+			// new row of the task every minute). The update is conditional, so a pusher that claimed it meanwhile wins.
+			const waiting = await repository.findOne({
+				where: { integrationTenantId, entityType: trigger.entityType, gauzyId: trigger.gauzyId, status: EverWorksOutboundStatus.DEFERRED },
+				order: { availableAt: 'ASC' }
+			});
+			if (waiting) {
+				const hints = new Set<string>([...this.parse(waiting.changedFieldsHint), ...(trigger.changedFields ?? [])]);
+				const merged = await repository.update(
+					{ id: waiting.id, status: EverWorksOutboundStatus.DEFERRED },
+					{
+						status: EverWorksOutboundStatus.PENDING,
+						op: waiting.op === 'delete' || trigger.op === 'delete' ? 'delete' : 'upsert',
+						changedFieldsHint: JSON.stringify([...hints]),
+						actorUserId: trigger.actorUserId ?? waiting.actorUserId ?? null,
+						availableAt
+					}
+				);
+				if (merged.affected) return true;
+			}
 			await repository.insert({
 				id: randomUUID(),
 				tenantId: trigger.tenantId,

@@ -388,6 +388,21 @@ describe('Ever Works sync engine on SQLite', () => {
 			expect(await queue.enqueue({ tenantId: A.tenantId, organizationId: randomUUID(), entityType: EverWorksLinkType.TASK, gauzyId })).toBe(false);
 		});
 
+		it('a trigger for a record whose change waits (deferred) joins that change instead of adding a row (review F22)', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const repo = dataSource.getRepository(EverWorksOutboundChange);
+			const gauzyId = randomUUID();
+			await queue.enqueue({ tenantId: A.tenantId, organizationId: A.organizationId, entityType: EverWorksLinkType.TASK, gauzyId, changedFields: ['title'] });
+			const [waiting] = await repo.find({ where: { gauzyId } });
+			await repo.update({ id: waiting.id }, { status: EverWorksOutboundStatus.DEFERRED, availableAt: new Date(Date.now() + 60_000), lastError: 'waiting' });
+			for (let i = 0; i < 3; i++)
+				await queue.enqueue({ tenantId: A.tenantId, organizationId: A.organizationId, entityType: EverWorksLinkType.TASK, gauzyId, changedFields: ['status'] });
+			const rows = await repo.find({ where: { gauzyId } });
+			expect(rows).toHaveLength(1);
+			expect(rows[0]).toMatchObject({ id: waiting.id, status: EverWorksOutboundStatus.PENDING, op: 'upsert' });
+			expect(JSON.parse(rows[0].changedFieldsHint as string).sort()).toEqual(['status', 'title']);
+		});
+
 		it('pushes through the handler of the type, defers types without one, and dead-letters after retryable failures', async () => {
 			const queue = new EverWorksOutboundQueue(dataSource);
 			const pusher = new EverWorksOutboundPusher(dataSource, log);

@@ -16,6 +16,7 @@ import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 import { escapeHtml, htmlToMarkdown, markdownToHtml, normaliseMarkdown } from './ever-works-markdown';
+import { taskSyncExclusion } from './ever-works-task-exclusion';
 import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskStore, TASK_IN_ANOTHER_ORGANIZATION } from './ever-works-task.store';
 
 /** An Ever Works task chat message (contract v1 comment DTO; also the `data` of `task.comment.*`). */
@@ -58,6 +59,10 @@ export const EVER_WORKS_COMMENT_LIMIT = 16384;
 const CUT_NOTE = '\n\n… (cut to fit Ever Works; the full comment is in Gauzy)';
 /** A comment waiting for its task to be linked is retried after this long. */
 export const COMMENT_WAIT_MS = 60_000;
+/** How long a comment waits for its task to reach Ever Works before it stops (review F22). */
+export const COMMENT_MAX_WAIT_MS = 24 * 60 * 60_000;
+/** The wait of a comment whose task is not in Ever Works yet (its retries do not queue the task again). */
+const WAITING_FOR_TASK = 'the task is not in Ever Works yet';
 /** How often the comment sweep (edits and deletes the ORM hooks cannot see) runs per connection. */
 export const COMMENT_SWEEP_MS = 10 * 60_000;
 const COMMENT_SWEEP_PAGE = 200;
@@ -217,9 +222,22 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 			const taskLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, row.entityId as ID);
 			if (!taskLink || taskLink.state === EverWorksLinkState.UNLINKED) {
 				if (taskLink) return { status: 'skipped', message: 'the task is no longer synced' };
-				// The comment waits for its task, which is queued (it goes first).
-				await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: row.entityId as ID, op: 'upsert' });
-				return { status: 'deferred', message: 'the task is not in Ever Works yet', retryInMs: COMMENT_WAIT_MS };
+				// A task that never syncs (an idea, a task of an unlinked project with that setting off) never gets a link:
+				// its comments are skipped instead of waiting forever (review F22).
+				const task = await this.store.load(context.tenantId, row.entityId as ID);
+				if (!task || (task as { deletedAt?: Date | null }).deletedAt) return { status: 'skipped', message: 'the task is gone' };
+				const excluded = await taskSyncExclusion(this.links, context, task);
+				if (excluded) return { status: 'skipped', message: `the task does not sync to Ever Works: ${excluded}` };
+				const since = (change as { createdAt?: Date | string | null }).createdAt;
+				if (since && Date.now() - new Date(since).getTime() > COMMENT_MAX_WAIT_MS) {
+					return { status: 'skipped', message: 'its task has not reached Ever Works in 24 hours; the comment is not sent' };
+				}
+				// The comment waits for its task, which is queued (it goes first) — once: the comment's retries do not
+				// queue it again (the task's own change retries; the queue keeps one waiting change per record).
+				if (change.lastError !== WAITING_FOR_TASK) {
+					await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: row.entityId as ID, op: 'upsert' });
+				}
+				return { status: 'deferred', message: WAITING_FOR_TASK, retryInMs: COMMENT_WAIT_MS };
 			}
 			const full = htmlToMarkdown(row.comment);
 			if (!full.trim()) return { status: 'skipped', message: 'the comment has no text' };
