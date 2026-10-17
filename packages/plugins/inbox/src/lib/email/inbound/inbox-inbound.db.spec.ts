@@ -474,6 +474,18 @@ describe('Inbound email pipeline on SQLite', () => {
 			);
 		});
 
+		it('keeps one stored file when deliveries of one message overlap', async () => {
+			const body = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
+			const results = await Promise.all([deliver(body), deliver(body)]);
+			expect(results.map((result) => result.accepted).sort()).toEqual([0, 1]);
+			expect(storage.files.size).toBe(1);
+			const row = await dataSource
+				.getRepository(InboxEmail)
+				.findOneByOrFail({ mailboxId: supportBox.id as string });
+			expect(row.rawStorageKey).toBe(`inbox/${TENANT}/messages/${(row.rawStorageKey ?? '').slice(-52, -4)}.eml`);
+			expect(row.rawStorageKey).toMatch(/\/messages\/[0-9a-f]{48}\.eml$/);
+		});
+
 		it('refuses an exact replay, and lets a retry through after a failed store', async () => {
 			const body = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
 			const at = Math.floor(Date.now() / 1000);
@@ -854,6 +866,21 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect(followUp.status).toBe(InboxEmailStatusEnum.SENT);
 			expect(sent[1]?.message['to']).toEqual(['ada@acme.test']);
 			expect(sent[1]?.message['inReplyTo']).toBe(first.messageId);
+		});
+
+		it('keeps the provider’s own id of a sent reply', async () => {
+			const email = await stored();
+			as(BOB);
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async (message: Record<string, unknown>) => ({
+					messageId: message['messageId'],
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:account',
+					providerMessageId: 'pm-9'
+				})
+			);
+			expect((await emails.reply(email.id as string, { text: 'Thanks!' })).providerMessageId).toBe('pm-9');
 		});
 
 		it('keeps the refused recipients of a partly accepted reply', async () => {

@@ -42,6 +42,8 @@ export interface ResendSendInfo {
 	rejected: string[];
 	response: string;
 	resendId: string;
+	/** The provider's id, under the name the core send result reads (`IOutboundEmailResult.providerMessageId`). */
+	providerMessageId: string;
 }
 
 const clean = (value: string | undefined) => String(value ?? '').replace(/[\r\n]/g, '');
@@ -85,7 +87,8 @@ export function createResendTransport(client: ResendApiClient, fromAddress?: str
 						accepted: [...request.to, ...(request.cc ?? []), ...(request.bcc ?? [])],
 						rejected: [],
 						response: `resend:${id}`,
-						resendId: id
+						resendId: id,
+						providerMessageId: id
 					});
 				})
 				.catch((error: Error) => callback(error));
