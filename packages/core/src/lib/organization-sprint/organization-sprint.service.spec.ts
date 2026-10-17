@@ -172,6 +172,16 @@ describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
 			expect(updated).toHaveBeenCalledWith('row-a', { role: { id: 'role-manager' }, isManager: true });
 		});
 
+		it('sets the flag of a manager who already has the role but not the flag', async () => {
+			const updated = await update(
+				[{ id: 'row-a', employeeId: 'employee-a', roleId: 'role-manager', isManager: false }],
+				['employee-a'],
+				[]
+			);
+
+			expect(updated).toHaveBeenCalledWith('row-a', { role: { id: 'role-manager' }, isManager: true });
+		});
+
 		it('leaves an unchanged member alone', async () => {
 			const updated = await update(
 				[
