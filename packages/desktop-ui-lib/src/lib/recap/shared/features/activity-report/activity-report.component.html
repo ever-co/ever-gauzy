@@ -52,7 +52,7 @@
 											@if (activityIndex == 0) {
 												<ng-container
 													[ngTemplateOutlet]="projectEl"
-													[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+													[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(projectRow?.project) }"
 												>
 												</ng-container>
 											}

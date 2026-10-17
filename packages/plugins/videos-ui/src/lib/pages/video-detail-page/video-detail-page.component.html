@@ -1,4 +1,4 @@
-@let timeSlotId = (video$ | async)?.timeSlotId;
+@let timeSlotId = $safeNavigationMigration((video$ | async)?.timeSlotId);
 
 <!-- Structure -->
 

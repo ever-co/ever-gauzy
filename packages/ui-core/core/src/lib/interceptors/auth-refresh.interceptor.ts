@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import {
 	HttpRequest,
 	HttpHandler,
-	HttpEvent,
+	type HttpEvent,
 	HttpInterceptor,
 	HttpErrorResponse,
 	HttpStatusCode
@@ -12,6 +12,7 @@ import { Observable, Subject, throwError, from } from 'rxjs';
 import { catchError, take, switchMap, finalize } from 'rxjs/operators';
 import { AuthService } from '../services/auth/auth.service';
 import { Store } from '../services/store/store.service';
+import { isAuthUrl, LOGIN_URL, loginReturnUrl } from '../auth/login-return-url';
 
 /**
  * Interceptor that automatically refreshes the access token when a 401 Unauthorized error occurs.
@@ -81,9 +82,7 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 							// Recreate Subject since .error() completes it and makes it unusable
 							this.refreshTokenSubject = new Subject<string>();
 							// Redirect to login page
-							this.router.navigate(['/auth/login'], {
-								queryParams: { returnUrl: this.router.url }
-							});
+							this.redirectToLogin();
 							return throwError(() => refreshError);
 						}),
 						// When the call to refreshToken completes we reset the refreshTokenInProgress to false
@@ -95,6 +94,29 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 				}
 			})
 		);
+	}
+
+	/**
+	 * Sends the user to the sign-in page once, with the page to come back to (Q8d).
+	 *
+	 * A stale session fails every request it makes, and each failure used to redirect with
+	 * `returnUrl: router.url`. The second one ran while the first redirect was on screen, so it wrapped the
+	 * sign-in URL in itself (`/auth/login?returnUrl=/auth/login?returnUrl=…`), and every redirect started a new
+	 * navigation that superseded the one before it — the app's skeleton waits for a navigation to end, so it
+	 * stayed up. A redirect is now skipped when the router is already on, or already on its way to, an
+	 * authentication page, and the return URL is never an authentication page itself.
+	 */
+	private redirectToLogin(): void {
+		const pending = this.router.getCurrentNavigation();
+		const target = pending ? this.router.serializeUrl(pending.finalUrl ?? pending.extractedUrl) : null;
+
+		if (isAuthUrl(this.router.url) || (target !== null && isAuthUrl(target))) {
+			return;
+		}
+
+		const returnUrl = loginReturnUrl(target ?? this.router.url);
+
+		this.router.navigate([LOGIN_URL], returnUrl ? { queryParams: { returnUrl } } : {});
 	}
 
 	/**

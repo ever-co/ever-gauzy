@@ -20,7 +20,7 @@
             <img [src]="employee.user.imageUrl" alt="" loading="lazy" (error)="brokenImages.add(employee.user.imageUrl)" />
           }
         </span>
-        <span class="employee-name" [title]="employee.user?.name">{{ employee.user?.name }}</span>
+        <span class="employee-name" [title]="$safeNavigationMigration(employee.user?.name)">{{ employee.user?.name }}</span>
       </nb-option>
     }
   </nb-select>

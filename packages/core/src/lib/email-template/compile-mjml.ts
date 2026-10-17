@@ -15,7 +15,7 @@ import * as mjml2html from 'mjml';
  * Options passed to every MJML compile.
  *
  * - `ignoreIncludes: true` makes mjml-parser-xml drop `<mj-include>` before it resolves or reads
- *   the path (mjml-parser-xml 4.x, `if (ignoreIncludes || !isNode) return;`).
+ *   the path (mjml-parser-xml 4.x and 5.x, `if (ignoreIncludes || !isNode) return;`).
  * - `validationLevel: 'soft'` is the mjml default and what every call site used before; pinned so
  *   a future default cannot start rejecting templates that render today.
  * - `useMjmlConfigOptions: false`, and no `filePath` / `mjmlConfigPath`: never read a
@@ -66,6 +66,7 @@ export function toTemplateSource(source: unknown): string {
  * @param source - The MJML source.
  * @returns The mjml2html result (`html` and `errors`).
  */
-export function compileMjml(source: unknown): ICompiledMjml {
-	return mjml2html(toTemplateSource(source), { ...SAFE_MJML_OPTIONS });
+export async function compileMjml(source: unknown): Promise<ICompiledMjml> {
+	// mjml 5 compiles asynchronously.
+	return await mjml2html(toTemplateSource(source), { ...SAFE_MJML_OPTIONS });
 }

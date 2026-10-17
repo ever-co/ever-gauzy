@@ -24,7 +24,7 @@
 
 	<nb-card-body>
 		@if (!loading) {
-		@let unit = keyResult.type == keyResultTypeEnum.KPI ? kpi?.unit : keyResult.unit;
+		@let unit = keyResult.type == keyResultTypeEnum.KPI ? $safeNavigationMigration(kpi?.unit) : keyResult.unit;
 		<!-- The figures first: where it started, where it is headed, and how far along it is — the last on
 		     one line, label then bar then percentage, as in the objective dialog this opens from. -->
 		<section class="summary">

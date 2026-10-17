@@ -187,7 +187,8 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		['get', '/api/ever-connect/policy', undefined],
 		['put', '/api/ever-connect/policy/stats_link', { allowed: false }],
 		['put', '/api/ever-connect/public-url', { url: 'https://gauzy.acme.example' }],
-		['post', '/api/ever-connect/integrations/stats_link/accept', { accepted: true }]
+		['post', '/api/ever-connect/integrations/stats_link/accept', { accepted: true }],
+		['post', '/api/ever-connect/entitlement/import', { jws: 'a.b.c' }]
 	];
 
 	it('loaded but not connected: nothing is sent, nothing is scheduled, no client exists', async () => {
@@ -268,6 +269,10 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 			(await call('put', '/api/ever-connect/public-url', 'operator', { url: 'https://gauzy.acme.example' })).body
 				.code
 		).toBe('consent_required');
+		// An entitlement document cannot be imported before the installation is connected (no call).
+		const notConnected = await call('post', '/api/ever-connect/entitlement/import', 'operator', { jws: 'a.b.c' });
+		expect(notConnected.status).toBe(409);
+		expect(notConnected.body.code).toBe('not_connected');
 		expect(calls).toEqual([]);
 	});
 

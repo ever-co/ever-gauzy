@@ -9,10 +9,11 @@ import {
 	NbSpinnerModule,
 	NbSelectModule,
 	NbBadgeModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -23,11 +24,15 @@ import {
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
+import { ViewTeamComponent } from './view-team/view-team.component';
+import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view-header.component';
+import { EmployeeHoursChartComponent } from '../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 
 @NgModule({
 	imports: [
@@ -45,16 +50,20 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		CardGridModule,
 		FavoriteToggleModule,
 		NbTooltipModule,
+		NbPopoverModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,
 		SmartDataViewLayoutModule,
-		ImageUploaderModule
+		ImageUploaderModule,
+		RecordViewModule,
+		EmployeeHoursChartComponent,
+		TaskViewHeaderComponent
 	],
-	declarations: [TeamsComponent, TeamsMutationComponent],
+	declarations: [TeamsComponent, TeamsMutationComponent, ViewTeamComponent],
 	providers: [OrganizationTeamsService]
 })
 export class TeamsModule {}

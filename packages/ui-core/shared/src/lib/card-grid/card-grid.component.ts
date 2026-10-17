@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 
 import { Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,6 +11,7 @@ import { CustomViewComponent } from './card-grid-custom.component';
 	selector: 'ga-card-grid',
 	templateUrl: './card-grid.component.html',
 	styleUrls: ['./card-grid.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CardGridComponent implements OnInit, OnDestroy {

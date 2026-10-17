@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
@@ -22,6 +22,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
     selector: 'ngx-tags',
     templateUrl: './tags.component.html',
     styleUrls: ['./tags.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TagsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

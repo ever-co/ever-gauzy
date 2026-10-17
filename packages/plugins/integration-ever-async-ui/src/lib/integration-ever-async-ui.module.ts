@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ROUTES } from '@angular/router';
 import { NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
@@ -22,7 +22,7 @@ import { getEverAsyncRoutes } from './integration-ever-async.routes';
 		CommonModule,
 		ReactiveFormsModule,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,

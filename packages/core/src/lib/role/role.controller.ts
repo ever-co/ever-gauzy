@@ -13,7 +13,7 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { IPagination, IRole, IRoleMigrateInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { RoleService } from './role.service';
@@ -22,8 +22,8 @@ import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO, FindRoleQueryDTO } from 
 import { CrudController } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
+import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
+import { Permissions, Roles } from './../shared/decorators';
 
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -67,6 +67,32 @@ export class RoleController extends CrudController<Role> {
 		} catch (error) {
 			throw new ForbiddenException();
 		}
+	}
+
+	/**
+	 * GET the roles a team manager can give to team members (EMPLOYEE and MANAGER).
+	 * A narrow read-only route, so team managers get these roles while `GET /roles` and
+	 * role administration stay reserved to CHANGE_ROLES_PERMISSIONS.
+	 *
+	 * @returns The EMPLOYEE and MANAGER roles of the current tenant.
+	 */
+	@ApiOperation({ summary: 'Find roles assignable to team members.' })
+	@ApiExtraModels(Role)
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found team assignable roles.',
+		schema: {
+			type: 'object',
+			properties: {
+				items: { type: 'array', items: { $ref: getSchemaPath(Role) } },
+				total: { type: 'number' }
+			}
+		}
+	})
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD)
+	@Get('team-assignable')
+	async findTeamAssignable(): Promise<IPagination<IRole>> {
+		return await this.roleService.findTeamAssignableRoles();
 	}
 
 	/**
@@ -164,5 +190,27 @@ export class RoleController extends CrudController<Role> {
 	@Post('import/migrate')
 	async importRole(@Body() input: IRoleMigrateInput[]) {
 		return await this.roleService.migrateImportRecord(input);
+	}
+
+	/**
+	 * Creates, in the caller's own tenant, every default role the tenant does not hold.
+	 *
+	 * The bulk write tenant onboarding performs, restricted to the credential's tenant: the body names no
+	 * tenant, so no caller can write roles into another one. Idempotent — a complete tenant gets an empty
+	 * answer — and a withdrawn default role is left for recovery rather than duplicated. `SUPER_ADMIN` only,
+	 * by role, on top of the class's own guards and `CHANGE_ROLES_PERMISSIONS`.
+	 *
+	 * @returns The roles created.
+	 */
+	@ApiOperation({ summary: "Create the default roles the caller's tenant is missing (SUPER_ADMIN)." })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The roles created; empty when none were missing.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller is not a SUPER_ADMIN.' })
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+	@Post('bulk')
+	async createMissingDefaultRoles(): Promise<IRole[]> {
+		return await this.roleService.createMissingDefaultRoles();
 	}
 }

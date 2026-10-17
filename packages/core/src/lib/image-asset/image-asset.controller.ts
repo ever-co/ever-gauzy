@@ -20,7 +20,7 @@ import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as Jimp from 'jimp';
+import { Jimp, JimpMime } from 'jimp';
 import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { assertNotMarkupContent, FileStorage, imageUploadFileFilter, UploadedFileStorage } from './../core/file-storage';
@@ -105,22 +105,20 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 
 		try {
 			const inputFile = await tempFile('media-asset-thumb');
-			const outputFile = await tempFile('media-asset-thumb');
 
 			await fs.promises.writeFile(inputFile, fileContent);
 
 			const image = await Jimp.read(inputFile);
 
-			// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
-			image.resize(250, Jimp.AUTO);
+			// Only the width is given, so the height follows the aspect ratio (jimp 0.x's Jimp.AUTO)
+			image.resize({ w: 250 });
 
-			await image.writeAsync(outputFile);
-
-			const data = await fs.promises.readFile(outputFile);
+			// jimp 1 picks the output format from a file name's extension, and nothing here has one: encode in the
+			// image's own format, as jimp 0.x's writeAsync did, straight to a buffer.
+			const data = await image.getBuffer((image.mime ?? JimpMime.png) as typeof JimpMime.png);
 
 			try {
 				await fs.promises.unlink(inputFile);
-				await fs.promises.unlink(outputFile);
 			} catch (error) {
 				this.logger.error('Error while unlinking temp files');
 			}

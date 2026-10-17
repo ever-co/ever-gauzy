@@ -143,7 +143,7 @@
 									<span class="row-label">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.CREATED_AT' | translate }}</span>
 								</div>
 								<div class="row-control auto">
-									<span class="row-value">{{ tenant()?.createdAt | date: 'mediumDate' }}</span>
+									<span class="row-value">{{ $safeNavigationMigration(tenant()?.createdAt) | date: 'mediumDate' }}</span>
 								</div>
 							</div>
 						}

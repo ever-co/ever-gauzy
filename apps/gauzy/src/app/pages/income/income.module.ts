@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -20,13 +20,15 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	TableFiltersModule,
-	UserFormsModule
+	UserFormsModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		NbBadgeModule,
 		IncomeRoutingModule,
 		NbCardModule,
@@ -41,7 +43,7 @@ import { IncomeRoutingModule } from './income-routing.module';
 		RecordViewModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,

@@ -130,22 +130,27 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 * @param mentionEmployeeIds - Array of user IDs to be mentioned in this entity.
 	 * @param parentEntityId - (Optional) The ID of the parent entity, if applicable.
 	 * @param parentEntityType - (Optional) The type of the parent entity, if applicable.
+	 * @param organizationId - The organization of the entity: the new mentions, their notification and
+	 *   their subscription belong to it (they used to be created without one).
 	 */
 	async updateEntityMentions(
 		entity: BaseEntityEnum,
 		entityId: ID,
 		mentionEmployeeIds: ID[],
 		parentEntityId?: ID,
-		parentEntityType?: BaseEntityEnum
+		parentEntityType?: BaseEntityEnum,
+		organizationId?: ID
 	): Promise<void> {
 		try {
 			const user = RequestContext.currentUser();
 
-			// Retrieve existing mentions for the entity
-			const existingMentions = await super.find({
-				where: { entity, entityId },
-				select: { mentionedEmployeeId: true }
-			});
+			// Retrieve existing mentions for the entity, whoever wrote them. Scoped to the caller's employee,
+			// the mentions written by someone else were published again on each edit and never removed.
+			// No `select`: on MikroORM `mentionedEmployeeId` is a `persist: false` relation mirror that a
+			// partial load leaves unset, so every id read back as undefined. A full load fills it on both ORMs
+			const existingMentions = await this.withoutEmployeeFilter(() =>
+				super.find({ where: { entity, entityId } })
+			);
 
 			// Extract the IDs of currently mentioned users
 			const existingMentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedEmployeeId));
@@ -158,6 +163,14 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 				(id) => !mentionEmployeeIds.includes(id)
 			);
 
+			// Remove outdated mentions, whoever wrote them. This runs before the new mentions are published, so
+			// their handler, which creates the rows through this service in this same request, runs outside the bypass
+			if (mentionsToRemoveIds.length > 0) {
+				await this.withoutEmployeeFilter(() =>
+					super.delete({ mentionedEmployeeId: In(mentionsToRemoveIds), entity, entityId })
+				);
+			}
+
 			// Add new mentions
 			if (mentionsToAddEmployeeIds.length > 0) {
 				await Promise.all(
@@ -169,15 +182,11 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 							parentEntityType,
 							mentionedEmployeeId,
 							actorType: ActorTypeEnum.User,
-							employeeId: user.employeeId
+							employeeId: user.employeeId,
+							organizationId
 						})
 					)
 				);
-			}
-
-			// Remove outdated mentions
-			if (mentionsToRemoveIds.length > 0) {
-				await super.delete({ mentionedEmployeeId: In(mentionsToRemoveIds), entity, entityId });
 			}
 		} catch (error) {
 			console.log(`Error while updating mention: ${error.message}`, error);

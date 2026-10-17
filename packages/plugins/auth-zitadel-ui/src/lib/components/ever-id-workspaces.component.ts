@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { NbButtonModule, NbListModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
 import { EverIdWorkspaceResponse } from '../services/auth-zitadel-ui.service';
 
@@ -10,7 +10,7 @@ import { EverIdWorkspaceResponse } from '../services/auth-zitadel-ui.service';
 @Component({
 	selector: 'ngx-ever-id-workspaces',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbButtonModule, NbListModule, TranslateModule],
+	imports: [NbButtonModule, NbListModule, TranslatePipe],
 	template: `
 		@if (response?.workspaces?.length) {
 			<p class="hint">{{ 'AUTH_ZITADEL.WORKSPACES.CHOOSE' | translate }}</p>

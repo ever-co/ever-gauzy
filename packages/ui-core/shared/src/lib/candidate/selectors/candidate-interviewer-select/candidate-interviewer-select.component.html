@@ -17,8 +17,8 @@
       >
       <ngx-avatar
         size="sm"
-        [src]="interviewer.user?.imageUrl"
-        [name]="interviewer.user?.name"
+        [src]="$safeNavigationMigration(interviewer.user?.imageUrl)"
+        [name]="$safeNavigationMigration(interviewer.user?.name)"
         [isOption]="true"
       ></ngx-avatar>
     </nb-option>

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.component';
 
@@ -6,6 +6,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
     selector: 'ga-only-tags',
     templateUrl: './tags-only.component.html',
     styleUrls: ['./tags-only.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TagsOnlyComponent extends NotesWithTagsComponent {

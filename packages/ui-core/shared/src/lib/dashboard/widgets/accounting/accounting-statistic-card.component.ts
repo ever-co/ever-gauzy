@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SingleStatisticModule } from '../../../single-statistic/single-statistic.module';
 
 /**
@@ -27,7 +27,7 @@ import { SingleStatisticModule } from '../../../single-statistic/single-statisti
 	templateUrl: './accounting-statistic-card.component.html',
 	styleUrls: ['./accounting-statistic-card.component.scss'],
 	standalone: true,
-	imports: [NbButtonModule, NbIconModule, TranslateModule, SingleStatisticModule],
+	imports: [NbButtonModule, NbIconModule, TranslatePipe, SingleStatisticModule],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountingStatisticCardComponent {

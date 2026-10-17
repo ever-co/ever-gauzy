@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,6 +14,7 @@ import { ErrorHandlingService, ProposalTemplateService, Store, ToastrService } f
 	selector: 'ga-proposal-template-form',
 	templateUrl: './proposal-template-form.component.html',
 	styleUrls: ['./proposal-template-form.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProposalTemplateFormComponent extends TranslationBaseComponent implements OnInit {

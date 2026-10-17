@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { catchError, filter, tap } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { AuthService, readRegisterError, isCheckoutSessionId, rememberCheckoutSe
 	selector: 'ngx-register',
 	templateUrl: './register.component.html',
 	styleUrls: ['./register.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxRegisterComponent extends NbRegisterComponent implements OnInit {
@@ -62,7 +63,7 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 		 * Get the current language from the translation service and
 		 * set it as the preferred language for the user.
 		 */
-		const currentLang = this.translate.currentLang;
+		const currentLang = this.translate.getCurrentLang();
 		this.user.preferredLanguage = currentLang;
 
 		/**

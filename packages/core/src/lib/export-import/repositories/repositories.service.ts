@@ -861,7 +861,9 @@ export class RepositoriesService implements OnModuleInit {
 		@InjectRepository(ProductCategory)
 		public typeOrmProductCategoryRepository: TypeOrmProductCategoryRepository,
 
-		mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository,
+		// Public for `ImportService.rebuildProductCategoryClosure`, which writes through the manager of the
+		// ORM `DB_ORM` selects rather than through TypeORM's on a MikroORM deployment.
+		public mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository,
 
 		@InjectRepository(ProductCategoryTranslation)
 		public typeOrmProductCategoryTranslationRepository: TypeOrmProductCategoryTranslationRepository,

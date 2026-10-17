@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { Brackets, IsNull, SaveOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
+import { EmailTemplateEnum, ID, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { isEmpty, isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, BaseQueryDTO } from './../core/crud';
-import { IFindManyOptions } from './../core/crud/icrud.service';
+import { IFindManyOptions, IFindOneOptions } from './../core/crud/icrud.service';
 import { scopeEmailTemplateWhere } from './email-template.scope';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
@@ -23,7 +24,70 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	}
 
 	/**
+	 * Withdraws a template of the caller's own tenant, recoverably.
+	 *
+	 * This service is a plain `CrudService`, whose `softRemove` resolves the row by id alone. The REST route passes
+	 * the caller's tenant (GHSA-44pv-34gx-q9p4); the GraphQL field did not, and any tenant admin withdrew another
+	 * tenant's templates — or the platform's GLOBAL defaults, after which every tenant without its own copy sent its
+	 * password-reset, invite and verification e-mails empty (SEC-A-01, SEC-E-02). The scope is applied here, so every
+	 * caller is held to it: a global or foreign row is the platform's 404.
+	 *
+	 * @param id The template id.
+	 * @param options Find options the caller stated, if any.
+	 * @param saveOptions The save options, on the TypeORM branch.
+	 * @returns The withdrawn template.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<EmailTemplate>,
+		saveOptions?: SaveOptions
+	): Promise<EmailTemplate> {
+		return super.softRemove(id, this.withCallerTenant(options), saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn template of the caller's own tenant. See {@link softRemove}.
+	 *
+	 * @param id The template id.
+	 * @param options Find options the caller stated, if any.
+	 * @param saveOptions The save options, on the TypeORM branch.
+	 * @returns The restored template.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<EmailTemplate>,
+		saveOptions?: SaveOptions
+	): Promise<EmailTemplate> {
+		return super.softRecover(id, this.withCallerTenant(options), saveOptions);
+	}
+
+	/**
+	 * The caller's find options with the caller's tenant merged in last, so a stated `where` cannot widen it.
+	 * Without a tenant in context (a seeder, a job) the options are the caller's own.
+	 */
+	private withCallerTenant(options?: IFindOneOptions<EmailTemplate>): IFindOneOptions<EmailTemplate> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return options;
+		}
+		const stated = (options && typeof options === 'object' && !Array.isArray(options) ? options : {}) as Record<
+			string,
+			any
+		>;
+
+		return { ...stated, where: { ...(stated['where'] ?? {}), tenantId } } as IFindOneOptions<EmailTemplate>;
+	}
+
+	/**
 	 * Get Email Templates
+	 *
+	 * **`withDeleted` is honoured on both ORMs.** This method builds its own reads rather than going
+	 * through the CRUD base, so a member of `params` it does not name is dropped — and the flag used to
+	 * be one of them, answering the live rows to a caller who asked for the retired ones. On MikroORM
+	 * soft delete is a filter, disabled by name for this one read; on TypeORM it is the query builder's
+	 * own `deletedAt IS NULL`, lifted with `withDeleted`. Neither touches the tenant and global arms
+	 * below, so a retired row of another tenant stays as unreachable as a live one.
+	 *
 	 * @param params
 	 * @returns
 	 */
@@ -31,6 +95,10 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(params);
+
+		// The GraphQL field hands a boolean; the REST list route's pipe does not transform, so its query
+		// string arrives as 'true' / 'false', and a truthiness test would read 'false' as true.
+		const withDeleted = parseToBoolean(params?.withDeleted);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
@@ -52,7 +120,9 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere as any, {
 					...(params?.relations ? { populate: Object.keys(params.relations) as any[] } : {}),
-					...(params?.order ? { orderBy: params.order as any } : {})
+					...(params?.order ? { orderBy: params.order as any } : {}),
+					// Only the soft-delete filter is disabled, by name: the tenant scope is the `$or` above.
+					...(withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 			}
@@ -76,7 +146,9 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 						? {
 								order: params.order
 						  }
-						: {})
+						: {}),
+					// Lifts only the builder's own `deletedAt IS NULL`; the tenant arms are the `where` below.
+					...(withDeleted ? { withDeleted: true } : {})
 				});
 				query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
 					qb.where(
@@ -179,7 +251,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					entity = {
 						...emailTemplate,
 						mjml: content.mjml,
-						hbs: compileMjml(content.mjml).html
+						hbs: (await compileMjml(content.mjml)).html
 					};
 					break;
 			}
@@ -197,7 +269,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					break;
 				case 'html':
 					entity.mjml = content.mjml;
-					entity.hbs = compileMjml(content.mjml).html;
+					entity.hbs = (await compileMjml(content.mjml)).html;
 					break;
 			}
 			await super.create(entity);

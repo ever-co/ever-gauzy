@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { takeUntil } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -35,6 +35,7 @@ import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/key
 	selector: 'ga-keyresult-details',
 	templateUrl: './keyresult-details.component.html',
 	styleUrls: ['./keyresult-details.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class KeyResultDetailsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

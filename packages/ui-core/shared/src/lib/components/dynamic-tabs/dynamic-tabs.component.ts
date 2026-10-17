@@ -10,7 +10,8 @@ import {
 	Type,
 	TemplateRef,
 	ViewChildren,
-	QueryList
+	QueryList,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,6 +27,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	templateUrl: './dynamic-tabs.component.html',
 	styleUrls: ['./dynamic-tabs.component.scss'],
 	providers: [],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {

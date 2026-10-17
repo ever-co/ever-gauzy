@@ -98,9 +98,9 @@
           }
         </nb-select>
         @if(form.get('status')?.valid && form.get('status')?.value) {
-          <nb-hint [class]="'hint-' + getStatusHintColor(form.get('status')?.value)">
+          <nb-hint [class]="'hint-' + getStatusHintColor($safeNavigationMigration(form.get('status')?.value))">
             <nb-icon icon="checkmark-circle-outline"></nb-icon>
-            Status: {{ 'PLUGIN.FORM.STATUSES.' + form.get('status')?.value | translate }}
+            Status: {{ 'PLUGIN.FORM.STATUSES.' + $safeNavigationMigration(form.get('status')?.value) | translate }}
           </nb-hint>
         }
       </div>
@@ -110,7 +110,7 @@
           <nb-icon icon="folder-outline" class="label-icon"></nb-icon>
           {{ 'PLUGIN.FORM.CATEGORY' | translate }}
         </label>
-        <gauzy-category-selector [categoryId]="category?.value"></gauzy-category-selector>
+        <gauzy-category-selector [categoryId]="$safeNavigationMigration(category?.value)"></gauzy-category-selector>
         @if(category?.value) {
           <nb-hint class="hint-success">
             <nb-icon icon="checkmark-circle-outline"></nb-icon>

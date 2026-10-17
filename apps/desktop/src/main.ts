@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import {
 	enableProdMode,
 	importProvidersFrom,
@@ -37,6 +37,7 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
+import { provideNgSelectPanelSizing } from '@gauzy/ui-core/shared';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
 	NbDatepickerModule,
@@ -187,7 +188,10 @@ bootstrapApplication(AppComponent, {
 
 			iconLibraries.setDefaultPack('eva');
 		}),
-		provideHttpClient(withInterceptorsFromDi()),
+		// This app loads ui-core's global styles, whose panel rules take the select's width as the floor
+		// of every ng-select panel from the pane (ng-select 24 no longer states it) — see the service.
+		provideNgSelectPanelSizing(),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 		provideAnimations()
 	]
 }).catch((error) => console.error(error));

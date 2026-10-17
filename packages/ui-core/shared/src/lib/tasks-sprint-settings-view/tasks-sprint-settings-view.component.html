@@ -17,8 +17,8 @@
                 [action]="action"
                 [dialogRef]="dialogRef"
                 [options]="{
-                  sprintIndex: sprints?.length,
-                  sprintStartDate: sprints.slice(-1)[0]?.endDate
+                  sprintIndex: $safeNavigationMigration(sprints?.length),
+                  sprintStartDate: $safeNavigationMigration(sprints.slice(-1)[0]?.endDate)
                 }"
               ></ngx-sprint-dialog>
             </ng-template>

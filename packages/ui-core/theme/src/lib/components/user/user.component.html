@@ -14,7 +14,7 @@
 	>
 		<div class="img-container">
 			@if (user?.imageUrl) {
-				<img [src]="user.imageUrl" [alt]="user?.name" />
+				<img [src]="user.imageUrl" [alt]="$safeNavigationMigration(user?.name)" />
 			} @else {
 				<span class="initials">{{ initials(user) }}</span>
 			}

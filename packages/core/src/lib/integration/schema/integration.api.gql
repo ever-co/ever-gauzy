@@ -1,0 +1,87 @@
+# The integration domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The controller serves two reads and the surface states two fields.** `IntegrationController` serves
+# `GET /api/integration` — the catalogue, narrowed by the filter object it takes as a query parameter —
+# and `GET /api/integration/types` — the facets, whole. Neither is a write, so this domain contributes
+# no mutation; neither has a count route beside it, so it contributes no count field; and neither is
+# paginated by the route, which is why the fields below are connections rather than bare arrays: the
+# connection protocol is how every list on this platform is stated, and a cursor obtained here is the
+# same cursor the REST query protocol produces.
+#
+# **The guard chain and the permission are the controller's.** The class carries
+# `TenantPermissionGuard`, `PermissionGuard` and `INTEGRATION_VIEW`, and no handler states a permission
+# of its own — so both fields state `INTEGRATION_VIEW` and the class carries the two guards beside the
+# gate. Reading the catalogue is a tenant-scoped act on an installation-wide reference table: the rows
+# belong to no tenant, and what the permission protects is who may see which providers this
+# installation offers.
+#
+# **The delivered read's own filter object is stated as arguments, because that is what it is.**
+# `GET /api/integration` takes one query parameter, `filters`, holding `integrationTypeId`,
+# `searchQuery` and `filter` (the paid flag, as the string `'true'` or `'false'`). Those three are the
+# read itself rather than a narrowing applied afterwards: the command hands them to the store, which
+# matches the facet membership through a join, the name through a prefix match, and the paid flag
+# through a column. The connection protocol's `filter` narrows the rows the read returned and cannot
+# express a relation membership, so the three are stated where the delivered command reads them, and
+# `filter`/`sort`/the page are applied to what came back. A `filter` member for `isPaid` is therefore
+# deliberately absent from `IntegrationFilter`: the paid flag is already an argument of this field, and
+# one narrowing with two spellings is two answers that can disagree.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so both fields below are
+# behind the one capability. `FeatureFlagGuard` reads it from `FEATURE_METADATA`, over the handler and
+# then the class. The REST routes are not gated by that code — they are the door that stays open — so a
+# tenant that switched the capability off is answered `Cannot query field <name>` here and served as it
+# always was there.
+
+extend type Query {
+	"""
+	The integration catalogue: what this installation can be connected to, in the order the catalogue
+	places its entries.
+
+	`integrationTypeId`, `searchQuery` and `isPaid` are the delivered read's own narrowing, in the
+	vocabulary its own filter object uses; `filter`, `sort` and the page narrow and order the rows that
+	read returned.
+	"""
+	integrations(
+		"The facet to read the catalogue through. The delivered read requires one."
+		integrationTypeId: ID
+		"""
+		The name prefix the delivered read matches against, case-insensitively. This is the term the
+		read hands the store rather than a filter applied afterwards, which is why it is an argument.
+		"""
+		searchQuery: String
+		"""
+		Read only the entries that require a paid provider plan (`true`) or only those that do not
+		(`false`). The delivered read narrows only when this is stated, which is what its own
+		`filter` member means.
+		"""
+		isPaid: Boolean
+		filter: IntegrationFilter
+		sort: [IntegrationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): IntegrationConnection!
+
+	"""
+	The facets of the catalogue, in the order the catalogue places them.
+	"""
+	integrationTypes(
+		filter: IntegrationTypeFilter
+		sort: [IntegrationTypeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): IntegrationTypeConnection!
+}

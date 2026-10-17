@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IInvite, ITermsAcceptanceDocument, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { FormHelpers } from '@gauzy/ui-core/shared';
     selector: 'ga-accept-invite-form',
     templateUrl: './accept-invite-form.component.html',
     styleUrls: ['./accept-invite-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AcceptInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

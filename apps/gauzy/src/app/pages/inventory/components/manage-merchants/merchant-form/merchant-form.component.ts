@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +18,7 @@ import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetCom
     selector: 'ga-merchant-form',
     templateUrl: './merchant-form.component.html',
     styleUrls: ['./merchant-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MerchantFormComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

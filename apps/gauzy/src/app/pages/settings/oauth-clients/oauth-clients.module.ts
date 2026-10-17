@@ -14,7 +14,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { OAuthClientsRoutingModule } from './oauth-clients-routing.module';
 import { OAuthClientsComponent } from './oauth-clients.component';
@@ -36,7 +36,7 @@ import { OAuthClientSecretDialogComponent } from './oauth-client-secret-dialog/o
 		NbSpinnerModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		OAuthClientsRoutingModule,
 		SharedModule
 	],

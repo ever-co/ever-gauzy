@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import {
 	ICurrency,
 	IGetPaymentInput,
@@ -28,6 +28,7 @@ import { DateRangePickerBuilderService, PaymentService, Store, TimesheetFilterSe
 	selector: 'ga-payment-report',
 	templateUrl: './payment-report.component.html',
 	styleUrls: ['./payment-report.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PaymentReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

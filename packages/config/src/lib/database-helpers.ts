@@ -26,6 +26,28 @@ export type MikroLoggerNamespace = 'query' | 'query-params' | 'schema' | 'discov
 export const TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR: NonNullable<DataSourceOptions['invalidWhereValuesBehavior']> =
 	Object.freeze({ null: 'sql-null', undefined: 'ignore' } as const);
 
+/**
+ * Whether MikroORM joins every to-one relation of a row it reads — loaded or not — to find out whether a
+ * filter hides the row that relation points at. Every MikroORM connection profile in `database.ts` must use it.
+ *
+ * MikroORM 6 defaults this to `true`, and on this platform every relation qualifies: every entity carries a
+ * default-on filter, the soft-delete filter `@SoftDeletable` declares on `SoftDeletableBaseEntity`. So a read
+ * joined each row's `createdByUser`, `updatedByUser`, `deletedByUser`, `tenant`, `organization` and every other
+ * to-one — and the same again for every relation it populates and every eager relation of those, recursively,
+ * all in the one statement. The time-log list (`timeLogs` over GraphQL, `GET /timesheet/time-log`) populates
+ * six paths and became a statement with 80 joins: SQLite refuses it (`at most 64 tables in a join`), and
+ * PostgreSQL and MySQL run it as an 81-table join. Loading the populated relations `select-in` does not help,
+ * because the reference joins stay in the root statement (72 joins).
+ *
+ * `false` joins what a read populates and nothing else (10 joins for that list), which is what TypeORM does: it
+ * never joins a relation it was not asked to load, and answers an unloaded relation's key as stored. A populated
+ * relation still leaves a soft-deleted row out — the filter sits on its own join (`filtersOnRelations`), as
+ * TypeORM puts `deletedAt IS NULL` on its join. The one difference is that an unloaded reference to a
+ * soft-deleted row is answered as its key, as the `xId` column beside it always was, rather than as `null`.
+ * Measured against MikroORM 6.6 on SQLite in `time-log.service.mikro-orm-joins.spec.ts`.
+ */
+export const MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS = false;
+
 export enum DatabaseTypeEnum {
 	mongodb = 'mongodb',
 	sqlite = 'sqlite',

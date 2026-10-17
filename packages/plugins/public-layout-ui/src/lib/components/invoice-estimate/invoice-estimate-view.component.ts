@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { catchError, filter, switchMap } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'gz-public-invoice-estimate-view',
     templateUrl: './invoice-estimate-view.component.html',
     styleUrls: ['./invoice-estimate-view.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceEstimateViewComponent extends TranslationBaseComponent implements OnInit {

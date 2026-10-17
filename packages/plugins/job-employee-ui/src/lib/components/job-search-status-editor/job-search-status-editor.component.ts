@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, inject, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, inject, Input, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +18,7 @@ import { JobSearchStoreService } from '../../providers/job-search-store.service'
 		></ngx-toggle-switcher>
 	`,
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [TableComponentsModule]
 })
 export class JobSearchStatusEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {

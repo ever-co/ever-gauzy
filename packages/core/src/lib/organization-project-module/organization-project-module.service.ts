@@ -27,6 +27,7 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { RequestContext } from '../core/context';
@@ -265,7 +266,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						limit: options?.take || 10,
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						...(options?.relations ? { populate: options.relations as any[] } : {}),
-						...(options?.order ? { orderBy: options.order as any } : {})
+						...(options?.order ? { orderBy: options.order as any } : {}),
+						// The soft-delete filter is a named filter in this dialect, and a reader that builds its
+						// own options has to lift it by name — the base read is where that usually happens.
+						...(options?.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
 				}
@@ -279,17 +283,24 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					// Apply pagination and query options
 					this.applyPaginationAndOptions(query, options);
 
+					// The query builder states its own soft-delete condition, so the flag is what lifts it —
+					// the same call the base read makes on a client's behalf, made here because this reader
+					// builds its own query.
+					if (options?.withDeleted) {
+						query.withDeleted();
+					}
+
 					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 						const subQuery = qb.subQuery();
 						subQuery
-							.select(p('"project_module_employee"."organizationProjectModuleId"'))
-							.from(p('project_module_employee'), p('project_module_employee'));
+							.select(p('"module_employee"."organizationProjectModuleId"'))
+							.from(p('organization_project_module_employee'), p('module_employee'));
 
 						// If user have permission to change employee
 						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 								const employeeId = members['id'];
-								subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), {
+								subQuery.andWhere(p('"module_employee"."employeeId" = :employeeId'), {
 									employeeId
 								});
 							}
@@ -297,15 +308,12 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 							// If employee has login and don't have permission to change employee
 							const employeeId = RequestContext.currentEmployeeId();
 							if (isNotEmpty(employeeId)) {
-								subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), {
+								subQuery.andWhere(p('"module_employee"."employeeId" = :employeeId'), {
 									employeeId
 								});
 							}
 						}
-						return (
-							p('"organization_project_module_members"."organizationProjectModuleId" IN ') +
-							subQuery.distinct(true).getQuery()
-						);
+						return p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery();
 					});
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
@@ -387,7 +395,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						limit: options?.take || 10,
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						...(options?.relations ? { populate: options.relations as any[] } : {}),
-						...(options?.order ? { orderBy: options.order as any } : {})
+						...(options?.order ? { orderBy: options.order as any } : {}),
+						// The soft-delete filter is a named filter in this dialect, and a reader that builds its
+						// own options has to lift it by name — the base read is where that usually happens.
+						...(options?.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					return { items: items.map((e) => this.serialize(e)) as OrganizationProjectModule[], total };
 				}
@@ -402,7 +413,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					// Apply pagination and query options
 					this.applyPaginationAndOptions(query, options);
 
-					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
+					// The query builder states its own soft-delete condition, so the flag is what lifts it —
+					// the same call the base read makes on a client's behalf, made here because this reader
+					// builds its own query.
+					if (options?.withDeleted) {
+						query.withDeleted();
+					}
+
+					const teamModulesCondition = (qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 						const subQuery = qb.subQuery();
 						subQuery
 							.select(p('"project_module_team"."organizationProjectModuleId"'))
@@ -434,20 +452,24 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						if (isNotEmpty(teams)) {
 							subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), { teams });
 						}
-						return (
-							p(`"organization_project_module_members"."organizationProjectModuleId" IN `) +
-							subQuery.distinct(true).getQuery()
-						);
-					});
+						return p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery();
+					};
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						})
 					);
-					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-						query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
+					// With teams and a project, the project's modules are listed with the teams' modules. One
+					// bracket holds both, so the tenant and organization scope applies to each.
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(teamModulesCondition);
+							if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+								qb.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+							}
+						})
+					);
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							if (isNotEmpty(projectId) && isEmpty(teams)) {
@@ -521,11 +543,11 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					// Joins and where clauses
 					query.innerJoin(`${query.alias}.members`, 'member');
 					query.leftJoin(`${query.alias}.teams`, 'project_team');
-					query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
+					query.leftJoin(`${query.alias}.organizationSprints`, 'sprint');
 
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p('member.id = :employeeId'), { employeeId })
+							qb.andWhere(p('member.employeeId = :employeeId'), { employeeId })
 								.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
 								.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 

@@ -19,7 +19,7 @@
           @for (report of reportCategory.reports; track report) {
             <nb-card class="report-card">
               <nb-card-header class="report-card-header">
-                <h6 class="report-name" [title]="report?.name">{{ report?.name }}</h6>
+                <h6 class="report-name" [title]="$safeNavigationMigration(report?.name)">{{ report?.name }}</h6>
                 <nb-toggle
                   (click)="$event.stopPropagation()"
                   [(ngModel)]="report.showInMenu"
@@ -27,7 +27,7 @@
                 ></nb-toggle>
               </nb-card-header>
               <nb-card-body class="report-card-body">
-                <p class="report-description" [title]="report?.description">{{ report?.description }}</p>
+                <p class="report-description" [title]="$safeNavigationMigration(report?.description)">{{ report?.description }}</p>
                 <div class="report-preview">
                   @if (report.imageUrl) {
                     <!--

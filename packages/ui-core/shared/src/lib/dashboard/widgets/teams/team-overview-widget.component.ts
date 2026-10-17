@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BaseTeamsWidgetComponent } from './base-teams-widget.component';
 import { TeamMemberRowComponent } from './team-member-row.component';
 import { TeamSummaryCardComponent } from './team-summary-card.component';
@@ -25,7 +25,7 @@ import { ITeamDashboardTeam } from './teams-dashboard.types';
 	templateUrl: './team-overview-widget.component.html',
 	styleUrls: ['./team-overview-widget.component.scss'],
 	standalone: true,
-	imports: [TranslateModule, TeamMemberRowComponent, TeamSummaryCardComponent, TeamsWidgetStateComponent],
+	imports: [TranslatePipe, TeamMemberRowComponent, TeamSummaryCardComponent, TeamsWidgetStateComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamOverviewWidgetComponent extends BaseTeamsWidgetComponent {

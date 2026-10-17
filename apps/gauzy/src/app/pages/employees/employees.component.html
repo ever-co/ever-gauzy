@@ -45,6 +45,18 @@
         ></ng-container>
         <ng-container buttonTemplateVisible [ngTemplateOutlet]="visibleButtons"></ng-container>
       </ngx-gauzy-button-action>
+      <div class="kind-filter">
+        <nb-select
+          size="small"
+          [selected]="kindFilter"
+          (selectedChange)="changeKindFilter($event)"
+          [attr.aria-label]="'EMPLOYEES_PAGE.KIND' | translate"
+          >
+          <nb-option value="">{{ 'EMPLOYEES_PAGE.KIND_ALL' | translate }}</nb-option>
+          <nb-option [value]="employeeKindEnum.HUMAN">{{ 'EMPLOYEES_PAGE.KIND_HUMAN' | translate }}</nb-option>
+          <nb-option [value]="employeeKindEnum.AGENT">{{ 'EMPLOYEES_PAGE.KIND_AGENT' | translate }}</nb-option>
+        </nb-select>
+      </div>
       <div class="custom-toggle">
         <nb-toggle (checkedChange)="changeIncludeDeleted($event)" status="danger">
           {{ 'FORM.CHECKBOXES.INCLUDE_DELETED' | translate }}
@@ -82,7 +94,7 @@
           <div class="grid">
             <ga-card-grid
               [loading]="loading"
-              [totalItems]="pagination?.totalItems"
+              [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
               [settings]="settingsSmartTable"
               [source]="employees"
               (onSelectedItem)="selectEmployee($event)"

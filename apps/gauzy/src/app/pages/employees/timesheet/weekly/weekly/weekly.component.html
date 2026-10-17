@@ -82,13 +82,13 @@
                       status="basic"
                       [nbPopover]="viewTimeLogComponent"
 								[nbPopoverContext]="{
-									timeLogs: day.dates[date]?.logs,
+									timeLogs: $safeNavigationMigration(day.dates[date]?.logs),
 									callback: addTimeCallback,
 									close: onClose
 								}"
                       #popover
                       >
-                      {{ day.dates[date]?.sum | durationFormat }}
+                      {{ $safeNavigationMigration(day.dates[date]?.sum) | durationFormat }}
                     </button>
                   } @else {
                     <ng-template
@@ -116,7 +116,7 @@
 											(click)="
 												openAddByDateProject(
 													date,
-													day?.project
+													$safeNavigationMigration(day?.project)
 												)
 											"
                             >

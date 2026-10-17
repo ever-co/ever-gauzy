@@ -2,7 +2,7 @@ import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { ICache, StorageService } from './storage.service';
 import { Store } from '../services';
-import hash from 'hash-it';
+import { hash } from 'hash-it';
 
 export abstract class AbstractCacheService<T> {
 	private readonly _DEFAULT_KEY = 'DEFAULT';

@@ -1,0 +1,18 @@
+<ngx-record-view-page heading="TASKS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (task) {
+		<ngx-favorite-toggle
+			recordPageActions
+			[entityType]="favoriteEntity"
+			[entityId]="task.id"
+			[entityName]="task.title"
+			size="small"
+			status="basic"
+			spacing="list"
+		></ngx-favorite-toggle>
+	}
+	@if (task) {
+		<ngx-record-view [record]="task" [sections]="sections" [placeholder]="'SM_TABLE.NONE' | translate">
+			<ga-task-view-header recordViewHeader [task]="task" [status]="status" [large]="true"></ga-task-view-header>
+		</ngx-record-view>
+	}
+</ngx-record-view-page>

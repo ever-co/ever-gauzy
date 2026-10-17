@@ -51,9 +51,11 @@ export abstract class BaseEntityEventSubscriber<Entity = any>
 	 *
 	 * @param entity The entity being updated.
 	 * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
+	 * @param changedProperties The names of the properties this write changes, or undefined when the ORM
+	 * does not report them.
 	 * @returns {Promise<void>}
 	 */
-	async beforeEntityUpdate(entity: Entity, em?: MultiOrmEntityManager): Promise<void> {
+	async beforeEntityUpdate(entity: Entity, em?: MultiOrmEntityManager, changedProperties?: string[]): Promise<void> {
 		// Default empty implementation
 	}
 

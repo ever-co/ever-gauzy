@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IProductOptionTranslatable, LanguagesEnum, VariantCreateInput } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InventoryStore, TranslatableService } from '@gauzy/ui-core/core';
@@ -10,6 +10,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ngx-variant-form',
     templateUrl: './variant-form.component.html',
     styleUrls: ['./variant-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class VariantFormComponent implements OnInit {

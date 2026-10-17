@@ -6,13 +6,13 @@
 	<nb-tabset>
 		@for (tab of tabs; track tab.tabId ?? $index; let i = $index) {
 			<nb-tab
-				[tabTitle]="tab?.title"
-				[tabIcon]="tab?.icon"
-				[tabId]="tab?.tabId"
-				[active]="tab?.active"
-				[disabled]="tab?.disabled"
-				[responsive]="tab?.responsive"
-				[route]="tab?.route"
+				[tabTitle]="$safeNavigationMigration(tab?.title)"
+				[tabIcon]="$safeNavigationMigration(tab?.icon)"
+				[tabId]="$safeNavigationMigration(tab?.tabId)"
+				[active]="$safeNavigationMigration(tab?.active)"
+				[disabled]="$safeNavigationMigration(tab?.disabled)"
+				[responsive]="$safeNavigationMigration(tab?.responsive)"
+				[route]="$safeNavigationMigration(tab?.route)"
 			>
 				<!-- Placeholder for dynamic content -->
 				<ng-container #tabContent></ng-container>

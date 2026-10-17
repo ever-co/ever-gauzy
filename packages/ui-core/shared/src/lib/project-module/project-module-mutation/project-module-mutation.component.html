@@ -152,7 +152,7 @@
                 [projectId]="form.get('projectId').value"
                 formControlName="tasks"
                 [multiple]="true"
-                [required]="organization?.requireTask"
+                [required]="$safeNavigationMigration(organization?.requireTask)"
               ></ga-task-selector>
             </div>
           </div>

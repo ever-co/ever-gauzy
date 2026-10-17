@@ -1,13 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.component';
 
 @Component({
     selector: 'ga-picture-name-tags',
     template: `
 		<ngx-avatar
-		  [src]="avatar?.imageUrl"
-		  [name]="avatar?.name"
-		  [id]="avatar?.id"
+		  [src]="$safeNavigationMigration(avatar?.imageUrl)"
+		  [name]="$safeNavigationMigration(avatar?.name)"
+		  [id]="$safeNavigationMigration(avatar?.id)"
 		  [employee]="avatar.employee"
 		  [linkTo]="linkTo"
 		  class="report-table"
@@ -16,8 +16,8 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		  <nb-badge
 		    class="color default-badge"
 		    position="centered"
-		    [style.background]="background(rowData?.color)"
-		    [style.color]="backgroundContrast(rowData?.brandColor)"
+		    [style.background]="background($safeNavigationMigration(rowData?.color))"
+		    [style.color]="backgroundContrast($safeNavigationMigration(rowData?.brandColor))"
 		    text="Default"
 		  ></nb-badge>
 		}
@@ -27,9 +27,9 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		      <nb-badge
 		        class="color"
 		        position="centered"
-		        [style.background]="background(tag?.color)"
-		        [style.color]="backgroundContrast(tag?.color)"
-		        [text]="tag?.name"
+		        [style.background]="background($safeNavigationMigration(tag?.color))"
+		        [style.color]="backgroundContrast($safeNavigationMigration(tag?.color))"
+		        [text]="$safeNavigationMigration(tag?.name)"
 		      ></nb-badge>
 		    }
 		  </div>
@@ -84,6 +84,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		`
     ],
     styleUrls: ['./picture-name-tags.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PictureNameTagsComponent extends NotesWithTagsComponent {

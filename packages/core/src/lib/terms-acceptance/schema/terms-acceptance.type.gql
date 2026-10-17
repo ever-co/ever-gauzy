@@ -1,0 +1,132 @@
+# The terms-acceptance document's object type.
+#
+# This is not a row of any table. The delivered route answers the published legal corpus directly — the
+# documents a new account must accept, as currently published — so the type is the corpus entry rather
+# than an entity: which document, which version of it, the digest of the exact source that version names,
+# the locale it is shown in, where it can be read, what to call it, and when it takes effect.
+#
+# **`sha256` is the member that matters, and it is why the shape exists at all.** It is the digest of the
+# document source as published, so the value a form displays and the value the form posts back are the
+# same object: the server re-checks every claim against the corpus before it records an acceptance, which
+# is what turns a checkbox from a claim into evidence. A client that hashed the text itself would be
+# answering a digest over its own rendering rather than over the published source, and the two are not
+# the same bytes.
+#
+# The three trailing members are optional in the corpus entry: a document may be published without a
+# human title, without an effective date and without a URL for this deployment to link to. They are
+# nullable here for exactly that reason rather than because the route sometimes omits them.
+
+"""
+One legal document a new account must accept, as the corpus publishes it.
+"""
+type TermsAcceptanceDocument {
+	"The stable document identifier, `<document>:<product>`."
+	documentId: String!
+	"The published version of the document."
+	version: String!
+	"""
+	The lowercase hex digest of the exact document source this version publishes.
+	
+	This is the value a form displays and posts back, and the value the server checks a claim against.
+	"""
+	sha256: String!
+	"The locale of the rendering that is being shown."
+	locale: String!
+	"Where the person can read the document, when the deployment publishes a link for it."
+	url: String
+	"A human title for the checkbox or the modal, when the corpus carries one."
+	title: String
+	"The date this version takes effect, when the corpus declares one."
+	effectiveDate: String
+}
+
+"""
+One acceptance on file: which document, which version of it, the digest of the exact text that was
+shown, and when and how consent was given.
+
+The record is evidence rather than a preference: the digest pins the wording, and the fingerprint is the
+recorder's integrity digest over every other member, so a row altered in storage is detectable. The
+salted address hash and the user-agent the recorder also keeps are not members here — they identify a
+device, and nothing a client does with this read needs them.
+"""
+type TermsAcceptance {
+	"The record's identifier."
+	id: ID!
+	"The stable document identifier, `<document>:<product>`."
+	documentId: String!
+	"The version of the document that was accepted."
+	version: String!
+	"The lowercase hex digest of the exact document source that was shown."
+	sha256: String!
+	"The locale of the text that was shown."
+	locale: String!
+	"When the acceptance happened."
+	acceptedAt: DateTime!
+	"How consent was obtained: `signup-checkbox`, `invite-accept`, `api`, and the recorder's other methods."
+	method: String!
+	"The recorder's integrity digest over every other member of the record."
+	fingerprint: String!
+}
+
+"""
+The boundary of one page of acceptances.
+"""
+type TermsAcceptanceEdge {
+	node: TermsAcceptance!
+	cursor: String!
+}
+
+"""
+One page of the caller's acceptances, with the total the filters select and the boundary cursors.
+"""
+type TermsAcceptanceConnection {
+	nodes: [TermsAcceptance!]!
+	edges: [TermsAcceptanceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an acceptance history may be sorted by.
+"""
+enum TermsAcceptanceSortField {
+	acceptedAt
+	documentId
+	version
+}
+
+"""
+The order the acceptances are returned in. At most three keys are accepted.
+"""
+input TermsAcceptanceSort {
+	field: TermsAcceptanceSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an acceptance history may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it. The person and the tenant are not members: both are
+the credential's.
+"""
+input TermsAcceptanceFilter {
+	id: IDFilter
+	documentId: StringFilter
+	version: StringFilter
+	locale: StringFilter
+	method: StringFilter
+	acceptedAt: DateTimeFilter
+	and: [TermsAcceptanceFilter!]
+	or: [TermsAcceptanceFilter!]
+	not: TermsAcceptanceFilter
+}
+
+"""
+What a caller states when it accepts documents: the documents, and nothing that names a person.
+
+Each claim is the `TermsAcceptanceClaimInput` the invite-acceptance input already declares — one shape for
+"a document I was shown", whichever flow records it.
+"""
+input AcceptTermsInput {
+	"The documents that were shown and accepted, exactly as `termsAcceptanceDocuments` published them. 1 to 20."
+	terms: [TermsAcceptanceClaimInput!]!
+}

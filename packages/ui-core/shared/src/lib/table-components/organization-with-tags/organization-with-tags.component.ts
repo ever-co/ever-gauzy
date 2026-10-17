@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags.component';
@@ -7,6 +7,7 @@ import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags
 	selector: 'gauzy-organization-with-tags',
 	templateUrl: './organization-with-tags.component.html',
 	styleUrls: ['./organization-with-tags.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OrganizationWithTagsComponent extends PictureNameTagsComponent implements OnChanges {

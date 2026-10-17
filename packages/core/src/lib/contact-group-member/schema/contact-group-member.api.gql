@@ -1,0 +1,25 @@
+# The membership domain's root fields.
+#
+# `Mutation` is declared by the kernel and extended here: a root operation type exists once for the
+# whole platform, so a domain adds fields to it and never declares its own.
+#
+# **There is no query root field for the pivot, and that is the graph rather than a gap.** A membership
+# has no meaning without its group, so it is read as the `members` field of the group the caller already
+# selected; §3.2's completeness rule is about the concepts a client addresses by name, and the membership
+# is addressed through its parent. The two mutations below are the write path, and each is the same
+# operation the REST membership route performs.
+
+extend type Mutation {
+	"""
+	Makes several parties members of a group by hand. The whole list is validated before any of it is
+	written, and a hand-written membership of a rule-based group is refused: that group's membership is
+	computed from its rules and is never materialised.
+	"""
+	addContactGroupMembers(input: AddContactGroupMembersInput!): [ContactGroupMember!]!
+
+	"""
+	Removes the membership of several parties, each of the provenance the caller states. An operator
+	removes the hand-written membership and never the derived row an evaluation or an import owns.
+	"""
+	removeContactGroupMembers(input: RemoveContactGroupMembersInput!): [ContactGroupMember!]!
+}

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbDialogService } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 // 🛑 Type-only. `docs.routes.ts` is eager, so a value import here would drag the whole
 // TipTap editor chunk out from behind `loadComponent` and into the shell bundle
@@ -17,7 +17,7 @@ import type { DocumentPageComponent } from '../pages/page-editor/document-page.c
 @Component({
 	selector: 'gz-docs-unsaved-changes-dialog',
 	standalone: true,
-	imports: [TranslateModule, NbButtonModule, NbCardModule],
+	imports: [TranslatePipe, NbButtonModule, NbCardModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<nb-card class="docs-dialog docs-unsaved-dialog">

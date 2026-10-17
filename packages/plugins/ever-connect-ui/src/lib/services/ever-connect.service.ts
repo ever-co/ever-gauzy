@@ -85,6 +85,10 @@ export interface EverConnectIntegration {
 export interface EverConnectEntitlement {
 	subject: 'instance' | 'link';
 	status: 'valid' | 'stale' | 'paused';
+	/** valid; grace (could not be refreshed, features still apply); paused (Ever Platform features off). */
+	ladder: 'valid' | 'grace' | 'paused';
+	/** Licence certificate ids the document names, shown as "Licence EVER-… active". */
+	licence_ids: string[];
 	seq: number | null;
 	issued_at: string | null;
 	expires_at: string | null;
@@ -218,6 +222,16 @@ export class EverConnectUiService {
 			`${BASE}/entitlement/refresh`,
 			{},
 			this.org(organizationId)
+		);
+	}
+
+	/** Operator only: imports a downloaded entitlement document (`.jws`). */
+	importEntitlement(
+		jws: string
+	): Observable<{ subject: 'instance' | 'link'; seq: number; status: 'stored' | 'unchanged' }> {
+		return this.http.post<{ subject: 'instance' | 'link'; seq: number; status: 'stored' | 'unchanged' }>(
+			`${BASE}/entitlement/import`,
+			{ jws }
 		);
 	}
 

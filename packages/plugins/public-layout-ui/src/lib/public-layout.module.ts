@@ -21,7 +21,7 @@ import {
 	NbTooltipModule,
 	NbUserModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
@@ -75,7 +75,7 @@ const NB_MODULES = [
 const THIRD_PARTY_MODULES = [
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
-	TranslateModule.forChild()
+	TranslatePipe
 ];
 
 /**

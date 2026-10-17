@@ -1,0 +1,261 @@
+name: Upgrade Test
+# cspell:words println gsub sendgrid
+
+# develop -> this branch, on a database that already holds develop's schema and data.
+#
+# develop's API image (by default the one the demo runs) boots on a FRESH database and seeds the demo data; it is
+# stopped, and this branch's API image boots on that SAME database. Every migration the branch adds has to apply on
+# top of develop's schema and data, and the upgraded API has to serve: super admin login, GET /api/user/me, GraphQL,
+# a commerce list, and the commerce e2e suites (tools/scripts/*-e2e.mjs). Once on SQLite (what the demo runs) and
+# once on PostgreSQL (what stage and prod run). The checks live in .github/scripts/upgrade-test.sh; the job summary
+# carries one table with every check per database.
+#
+# The plugins behind a switch (GATED_PLUGIN_FLAGS below) run their migrations only when switched on, so after each
+# upgrade this branch's image boots once more on the same database with them on: their migrations have to apply on
+# top, and their routes have to answer. Its checks are the "<db>-gated" columns; the switches-off checks above are
+# unchanged. Dispatch with gated_plugins=false to leave it out.
+#
+# Nothing leaves the runner. The after image is built with `push: false` and tagged
+# `gauzy-api-upgrade-after:<sha>`, a name no deployment or image updater follows (the build step is the one
+# docker-build-check.yml, #10551, uses — and the build needs that PR's Yarn-in-the-build-stage fix: Node 26 images ship
+# no Yarn). The before image is only pulled — a public package, no registry login. The databases are a throwaway
+# volume / container, and every secret is random per run.
+
+on:
+  pull_request:
+    # A pull request INTO develop starts no workflow (owner decision 2026-09-21, tools/scripts/pr-trigger-check.mjs).
+    branches-ignore:
+      - develop
+    paths:
+      - '.github/workflows/upgrade-test.yml'
+      - '.github/scripts/upgrade-test.sh'
+      - '.github/scripts/upgrade-test-smoke.mjs'
+  # The real use: dispatched on a branch before it is merged into develop, e.g.
+  #   gh workflow run upgrade-test.yml --ref feat/platform-extensions
+  workflow_dispatch:
+    inputs:
+      before_image:
+        description: "develop's API image to upgrade from (default: the image the demo runs)"
+        type: string
+        default: ghcr.io/ever-co/gauzy-api-demo:latest
+      databases:
+        description: Databases to run the upgrade on
+        type: choice
+        options:
+          - both
+          - sqlite
+          - postgres
+        default: both
+      postgres_image:
+        description: PostgreSQL image for the PostgreSQL run
+        type: string
+        default: postgres:16
+      control:
+        description: Also boot this branch on a FRESH database (tells an upgrade defect from a defect of the branch itself)
+        type: boolean
+        default: false
+      gated_plugins:
+        description: After each upgrade, boot this branch once more on the same database with the gated plugins switched on (their migrations run only then)
+        type: boolean
+        default: true
+
+concurrency:
+  group: upgrade-test-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # docker/build-push-action's build record holds every build-arg value and is downloadable on a public repo.
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+  BEFORE_IMAGE: ${{ inputs.before_image || 'ghcr.io/ever-co/gauzy-api-demo:latest' }}
+  AFTER_IMAGE: gauzy-api-upgrade-after:${{ github.sha }}
+  POSTGRES_IMAGE: ${{ inputs.postgres_image || 'postgres:16' }}
+  DATABASES: ${{ inputs.databases || 'both' }}
+  RESULTS_DIR: ${{ github.workspace }}/upgrade-test-results
+  NEW_MIGRATIONS: ${{ github.workspace }}/upgrade-test-results/new-migrations.tsv
+  # The gated plugins (the Ever Works integration, the Inbox, Inbox email, the email providers) load, and register their
+  # migrations, only when their switch is exactly `true`, so the upgrade boots above them never run those migrations.
+  # With these set, upgrade-test.sh boots this branch once more on the same database with the switches on and adds
+  # its checks as a "<db>-gated" column; the switches-off checks are unchanged. Empty (dispatched with
+  # gated_plugins=false) = no such boot. A switch no plugin of this branch reads is harmless.
+  GATED_PLUGIN_FLAGS: ${{ (github.event_name != 'workflow_dispatch' || inputs.gated_plugins) && 'EVER_WORKS_ENABLED=true GAUZY_INBOX_ENABLED=true GAUZY_INBOX_EMAIL_ENABLED=true EMAIL_PROVIDER_RESEND_ENABLED=true EMAIL_PROVIDER_POSTMARK_ENABLED=true EMAIL_PROVIDER_MAILGUN_ENABLED=true EMAIL_PROVIDER_SENDGRID_ENABLED=true EMAIL_PROVIDER_SES_ENABLED=true' || '' }}
+  # Routes of those plugins the super admin reads after that boot (each must answer 200).
+  GATED_SMOKE_PATHS: /api/integration/ever-works/status,/api/inbox/items/counts,/api/inbox/providers
+
+jobs:
+  upgrade:
+    name: develop -> this branch, on SQLite and PostgreSQL
+    # GitHub-hosted on purpose: a manual, occasional run that needs only Docker, kept off the self-hosted ARC pool the
+    # PR builds and the demo image build queue on. Consequence: the image installs from the public npm registry (the
+    # internal Verdaccio VIP is unreachable from here, and its public token route truncates large
+    # tarballs), so no Verdaccio argument or secret is passed — every package in yarn.lock is public.
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      # The hosted runner starts with ~20 GB free; the API image build alone needs more than that.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          docker image prune --all --force >/dev/null
+          df -h /
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Build the after image (this branch, no push)
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: ./.deploy/api/Dockerfile
+          push: false
+          load: true
+          platforms: linux/amd64
+          tags: ${{ env.AFTER_IMAGE }}
+          # The demo image's build arguments (docker-build-publish-demo.yml), less the registry ones (see runs-on).
+          build-args: |
+            NODE_ENV=development
+            DEMO=true
+            NX_BRANCH=${{ github.head_ref || github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+
+      - name: Free the build cache
+        run: docker buildx prune --all --force >/dev/null 2>&1 || true
+
+      - name: Pull the before image and list the migrations this branch adds
+        id: before
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          mkdir -p "$RESULTS_DIR"
+          docker pull --quiet "$BEFORE_IMAGE"
+          image_env() { docker image inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$BEFORE_IMAGE" | sed -n "s/^$1=//p"; }
+          before_commit="$(image_env GAUZY_APP_COMMIT)"
+          before_version="$(image_env GAUZY_APP_VERSION)"
+          digest="$(docker image inspect -f '{{join .RepoDigests ", "}}' "$BEFORE_IMAGE")"
+          develop_tip="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/develop | cut -f1)"
+          if [ -z "$before_commit" ]; then
+            echo "::error::$BEFORE_IMAGE carries no GAUZY_APP_COMMIT, so the migrations it already has cannot be known"
+            exit 1
+          fi
+          if [ "$before_commit" = "$develop_tip" ]; then
+            relation="= develop's tip"
+          else
+            relation="develop's tip is ${develop_tip:0:11}"
+            echo "::warning::$BEFORE_IMAGE was built from ${before_commit:0:11}, develop's tip is ${develop_tip:0:11}: the upgrade starts from that older develop"
+          fi
+
+          # The migration files of each side; TypeORM records a migration by its `name` (the class name).
+          git fetch --no-tags --depth=1 origin "$before_commit"
+          files() { git ls-tree -r --name-only "$1" -- packages apps | grep -E '/migrations/[0-9]{13}-[^/]+\.ts$' | sort; }
+          files "$before_commit" >"$RUNNER_TEMP/before-files"
+          files HEAD >"$RUNNER_TEMP/after-files"
+          : >"$NEW_MIGRATIONS"
+          comm -13 "$RUNNER_TEMP/before-files" "$RUNNER_TEMP/after-files" | while read -r path; do
+            name="$(grep -oE "^[[:space:]]*(public[[:space:]]+)?(readonly[[:space:]]+)?name[[:space:]]*=[[:space:]]*['\"][^'\"]+['\"]" "$path" | head -1 | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/" || true)"
+            [ -n "$name" ] || name="$(grep -oE 'class [A-Za-z0-9_]+ implements MigrationInterface' "$path" | head -1 | cut -d' ' -f2 || true)"
+            if [ -z "$name" ]; then echo "::error file=$path::no migration name found"; exit 1; fi
+            printf '%s\t%s\n' "$name" "$path" >>"$NEW_MIGRATIONS"
+          done
+          echo "Migration files this branch adds over ${before_commit:0:11}: $(wc -l <"$NEW_MIGRATIONS")"
+
+          {
+            echo "| | |"
+            echo "|---|---|"
+            echo "| before image | \`$BEFORE_IMAGE\` ${before_version:+($before_version)} — \`$digest\` |"
+            echo "| before commit | \`${before_commit:0:11}\` ($relation) |"
+            echo "| after image | this branch, \`${GITHUB_SHA:0:11}\` (built here, not pushed) |"
+            echo "| migration files this branch adds | $(wc -l <"$NEW_MIGRATIONS") |"
+          } >"$RESULTS_DIR/before.md"
+
+      - name: SQLite — develop seeds, this branch upgrades
+        id: sqlite
+        if: ${{ !cancelled() && steps.before.outcome == 'success' && env.DATABASES != 'postgres' }}
+        run: bash .github/scripts/upgrade-test.sh sqlite upgrade
+
+      - name: PostgreSQL — develop seeds, this branch upgrades
+        id: postgres
+        if: ${{ !cancelled() && steps.before.outcome == 'success' && env.DATABASES != 'sqlite' }}
+        run: bash .github/scripts/upgrade-test.sh postgres upgrade
+
+      - name: Control — this branch alone on a fresh SQLite database
+        if: ${{ !cancelled() && inputs.control && steps.before.outcome == 'success' && env.DATABASES != 'postgres' }}
+        run: bash .github/scripts/upgrade-test.sh sqlite fresh
+
+      - name: Control — this branch alone on a fresh PostgreSQL database
+        if: ${{ !cancelled() && inputs.control && steps.before.outcome == 'success' && env.DATABASES != 'sqlite' }}
+        run: bash .github/scripts/upgrade-test.sh postgres fresh
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          labels=()
+          for label in sqlite postgres sqlite-gated postgres-gated sqlite-fresh postgres-fresh; do
+            [ -f "$RESULTS_DIR/$label/checks.tsv" ] && labels+=("$label")
+          done
+          {
+            echo "## Upgrade test: develop -> \`${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}\`"
+            echo
+            [ -f "$RESULTS_DIR/before.md" ] && cat "$RESULTS_DIR/before.md" && echo
+            if [ "${#labels[@]}" -eq 0 ]; then
+              echo "No database run took place: see the build and before steps."
+            else
+              files=()
+              for label in "${labels[@]}"; do files+=("$RESULTS_DIR/$label/checks.tsv"); done
+              awk -F'\t' -v labels="${labels[*]}" '
+                BEGIN { n = split(labels, L, " ") }
+                FNR == 1 { for (i = 1; i <= n; i++) if (FILENAME ~ ("/" L[i] "/checks.tsv$")) current = L[i] }
+                {
+                  if (!($1 in seen)) { seen[$1] = 1; order[++rows] = $1 }
+                  icon = ($2 == "pass") ? "✅" : (($2 == "fail") ? "❌" : "ℹ️")
+                  detail = $3; gsub(/\|/, "\\|", detail)
+                  cell[$1, current] = icon " " detail
+                }
+                END {
+                  printf "| check |"; for (i = 1; i <= n; i++) printf " %s |", L[i]; print ""
+                  printf "|---|"; for (i = 1; i <= n; i++) printf "---|"; print ""
+                  for (r = 1; r <= rows; r++) {
+                    printf "| %s |", order[r]
+                    for (i = 1; i <= n; i++) printf " %s |", ((order[r], L[i]) in cell) ? cell[order[r], L[i]] : "—"
+                    print ""
+                  }
+                }' "${files[@]}"
+              for label in "${labels[@]}"; do
+                applied="$RESULTS_DIR/$label/applied.names"
+                [ -s "$applied" ] || continue
+                echo
+                echo "<details><summary>$label: $(wc -l <"$applied") migrations applied by this branch's image</summary>"
+                echo
+                sed 's/^/- /' "$applied"
+                echo
+                echo "</details>"
+              done
+            fi
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the results and the API logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: upgrade-test-results
+          path: ${{ env.RESULTS_DIR }}
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker rm -f gauzy-upgrade-api gauzy-upgrade-pg 2>/dev/null || true
+          docker network rm gauzy-upgrade 2>/dev/null || true
+          docker image rm "$AFTER_IMAGE" "$BEFORE_IMAGE" 2>/dev/null || true

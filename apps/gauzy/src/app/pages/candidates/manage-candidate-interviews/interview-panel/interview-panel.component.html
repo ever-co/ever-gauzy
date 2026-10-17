@@ -61,7 +61,7 @@
       <div class="custom-grid">
         <ga-card-grid
           [loading]="loading"
-          [totalItems]="pagination?.totalItems"
+          [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
           [settings]="settingsSmartTable"
           [source]="tableInterviewList"
           (onSelectedItem)="selectInterview($event)"
@@ -89,7 +89,7 @@
       status="basic"
       size="small"
       class="action primary"
-      (click)="editInterview(selectedInterview?.id)"
+      (click)="editInterview($safeNavigationMigration(selectedInterview?.id))"
       >
       <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
       {{ 'BUTTONS.EDIT' | translate }}
@@ -103,7 +103,7 @@
       status="basic"
       size="small"
       class="action"
-      (click)="removeInterview(selectedInterview?.id)"
+      (click)="removeInterview($safeNavigationMigration(selectedInterview?.id))"
       [nbTooltip]="'BUTTONS.DELETE' | translate"
       >
       <nb-icon status="danger" icon="trash-2-outline"></nb-icon>

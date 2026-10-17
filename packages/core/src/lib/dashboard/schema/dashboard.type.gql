@@ -1,0 +1,173 @@
+# The dashboard's GraphQL types.
+#
+# A dashboard is a *personal* arrangement rather than an organization record: it belongs to the tenant
+# and the organization it was filed under, and it names the employee it was built for. That is why the
+# type carries `employeeId` and `createdByUserId` — the delivered service refuses an edit or a removal
+# to anyone but the person who created the row, and a client that cannot see who that is cannot explain
+# the refusal it receives.
+#
+# `contentHtml` is the arrangement itself: a serialised layout document. It is carried as `JSON`
+# rather than as a typed object because the document's shape is the dashboard builder's own and it has
+# two versions in the wild — a legacy positional snapshot and the tabbed placement document that
+# superseded it — so a type here would freeze one of them and answer `null` for the other. The column
+# is a document the platform stores and hands back unchanged, which is what `JSON` is for.
+#
+# `widgets` is deliberately absent. The relation is loaded only when a REST caller names it in
+# `relations`, and no delivered read this surface mirrors names any, so a member for it would be null
+# on every row answered here. The widgets of a dashboard are their own resource with their own routes —
+# `dashboardWidgets` on the sibling resolver, narrowed by `dashboardId` — which is also where a client
+# that wants the placement rows rather than the layout document reads them.
+#
+# `isArchived`, `archivedAt` and the two remaining audit-user columns are not carried: no route of this
+# resource reads or writes them, and the two lifecycle routes move `deletedAt` alone.
+
+"""
+One dashboard: a named arrangement of widgets, owned by the person who created it.
+"""
+type Dashboard {
+	id: ID!
+	"The dashboard's display name."
+	name: String!
+	"""
+	The dashboard's identifier, unique within the organization. It is what the layout and the personal
+	preferences are keyed by.
+	"""
+	identifier: String!
+	"One line describing what the dashboard is for."
+	description: String
+	"""
+	The serialised layout: which widgets the dashboard shows, where they sit and what each is
+	configured with. Either document version the builder has shipped, carried through unchanged.
+	"""
+	contentHtml: JSON
+	"""
+	Whether this is the employee's default dashboard.
+
+	At most one dashboard of one person is the default: the delivered update demotes the others in the
+	same step it promotes this one.
+	"""
+	isDefault: Boolean!
+	"The employee the dashboard was built for."
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	"""
+	The user who created the dashboard. Only that user may change or remove it, which is what the
+	delivered service refuses everyone else with.
+	"""
+	createdByUserId: ID
+	"Whether the row is active. A removal sets `deletedAt`; it does not clear this flag."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+	"When the dashboard was withdrawn, or null while it is live. The two lifecycle routes write this alone."
+	deletedAt: DateTime
+}
+
+"""
+The boundary of one page of dashboards.
+"""
+type DashboardEdge {
+	node: Dashboard!
+	cursor: String!
+}
+
+"""
+One page of dashboards, with the total the filters select and the boundary cursors.
+"""
+type DashboardConnection {
+	nodes: [Dashboard!]!
+	edges: [DashboardEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a dashboard list may be sorted by.
+"""
+enum DashboardSortField {
+	createdAt
+	updatedAt
+	name
+	identifier
+	isDefault
+}
+
+"""
+The order the dashboards are returned in. At most three keys are accepted.
+"""
+input DashboardSort {
+	field: DashboardSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a dashboard list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`contentHtml` is filterable as a document, which is what the `JSON` kind's `contains` operator is for:
+a client asking which dashboards place a given widget asks it of the layout rather than of a column
+the dashboard does not have.
+"""
+input DashboardFilter {
+	id: IDFilter
+	name: StringFilter
+	identifier: StringFilter
+	description: StringFilter
+	contentHtml: JSONFilter
+	isDefault: BooleanFilter
+	employeeId: IDFilter
+	createdByUserId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [DashboardFilter!]
+	or: [DashboardFilter!]
+	not: DashboardFilter
+}
+
+"""
+What a caller states when it creates a dashboard.
+
+The members are the ones the delivered create DTO declares, and two absences are deliberate.
+`isDefault` is excluded because the DTO excludes it — creation never promotes a dashboard — and it is
+the update that re-allows it. The tenant is excluded because the delivered service stamps the caller's
+own tenant onto the row; stating one here would promise a scope the write does not honour.
+"""
+input CreateDashboardInput {
+	"The dashboard's display name."
+	name: String!
+	"The identifier the layout and the preferences are keyed by."
+	identifier: String!
+	description: String
+	"The serialised layout document, for a dashboard created with its arrangement already known."
+	contentHtml: JSON
+	"The employee the dashboard is built for."
+	employeeId: ID
+	"The organization to file the dashboard under."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a dashboard that exists.
+
+The identifier is the path's, so it is stated once and only here. Every other member is optional, and
+**a member the caller leaves out is left as it is**: the delivered edit is the create's own service
+call carrying the identifier, which updates the columns the body names rather than replacing the row.
+"""
+input UpdateDashboardInput {
+	id: ID!
+	name: String
+	identifier: String
+	description: String
+	contentHtml: JSON
+	"""
+	Whether this becomes the employee's default dashboard. Promoting one demotes the person's other
+	defaults in the same step, so at most one is ever default.
+	"""
+	isDefault: Boolean
+	employeeId: ID
+	organizationId: ID
+}

@@ -1,6 +1,5 @@
 import {
 	Controller,
-	ForbiddenException,
 	HttpCode,
 	HttpStatus,
 	Get,
@@ -24,7 +23,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { RelationsQueryDTO } from './../shared/dto';
-import { isUserEditableIntegrationSetting } from './../integration-setting/integration-setting.utils';
+import { assertClientMayWriteIntegrationSettings } from './../integration-setting/integration-setting.utils';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 import { IntegrationTenantQueryDTO, UpdateIntegrationTenantDTO } from './dto';
@@ -136,21 +135,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	@Post('/')
 	async create(@Body() input: IIntegrationTenantCreateInput): Promise<IIntegrationTenant> {
 		// Fail closed: anything under `settings` that is not a plain array of allowlisted settings is refused.
-		const submitted = input?.settings;
-
-		if (submitted != null && !Array.isArray(submitted)) {
-			throw new ForbiddenException(
-				'This integration setting is managed by the server and cannot be set by a client.'
-			);
-		}
-
-		for (const setting of submitted ?? []) {
-			if (!isUserEditableIntegrationSetting(input?.name, setting?.settingsName)) {
-				throw new ForbiddenException(
-					'This integration setting is managed by the server and cannot be set by a client.'
-				);
-			}
-		}
+		// The GraphQL `createIntegrationTenant` makes the same call (SEC-E-03).
+		assertClientMayWriteIntegrationSettings(input?.name, input?.settings);
 
 		return await this._integrationTenantService.create(input);
 	}

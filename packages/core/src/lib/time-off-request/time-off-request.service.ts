@@ -23,6 +23,7 @@ import {
 	splitKeywords
 } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { assertCurrentUserBelongsToSentOrganization } from '../user-organization/assert-organization-membership';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
@@ -78,6 +79,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		return timeOffRequest;
 	}
 
+	/**
+	 * Refuses a `GET /time-off-request` list scoped to an organization the current user is not a member of.
+	 *
+	 * The route reads its filter from a `?data=` JSON parameter that no DTO validates, and
+	 * `getAllTimeOffRequests` filters on the organization it is given. Without one, the list matches nothing.
+	 *
+	 * @param organizationId the organization the request names
+	 */
+	async assertOrganizationMember(organizationId: unknown): Promise<void> {
+		await assertCurrentUserBelongsToSentOrganization(this.typeOrmRepository.manager, organizationId);
+	}
+
 	async getAllTimeOffRequests(
 		relations: string[],
 		findInput: ITimeOffFindInput
@@ -86,15 +99,22 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
 
-			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
-			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
+			// Both dates are optional, and the appointment calendar and the availability slots send none:
+			// `moment(undefined)` is "now", so the window collapsed to a single instant and no time off was
+			// ever listed. The format also used `hh`, the 12-hour clock without AM / PM, which moved an
+			// afternoon bound 12 hours back. Same bounds as `pagination()` now, and only when both are given.
+			// A plain presence check: `isNotEmpty` treats a Date (no enumerable property) as empty
+			const isGiven = (value: unknown) => value !== undefined && value !== null && value !== '';
+			const hasRange = isGiven(startDate) && isGiven(endDate);
+			const start = hasRange ? moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
+			const end = hasRange ? moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss') : undefined;
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const where: any = {
 						tenantId,
 						organizationId,
-						start: { $gte: start, $lte: end }
+						...(hasRange ? { start: { $gte: start, $lte: end } } : {})
 					};
 					if (employeeId) {
 						where.employees = { id: employeeId };
@@ -126,10 +146,12 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						});
 					}
 
-					query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
-						begin: start,
-						end: end
-					});
+					if (hasRange) {
+						query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
+							begin: start,
+							end: end
+						});
+					}
 					const items = await query.getMany();
 					return { items, total: items.length };
 				}

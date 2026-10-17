@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule, NbToggleModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { normalizeInboundDomain, normalizeInboundLocalPart } from '../models/docs-inbound.model';
 
 /** What the dialog resolves with on confirm (`null` on cancel). */
@@ -32,7 +32,7 @@ export interface IDocsInboundDomainDialogResult {
  */
 @Component({
 	selector: 'gz-docs-inbound-domain-dialog',
-	imports: [CommonModule, FormsModule, TranslateModule, NbButtonModule, NbCardModule, NbInputModule, NbToggleModule],
+	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule, NbToggleModule],
 	template: `
 		<nb-card class="docs-dialog docs-inbound-domain-dialog">
 			<nb-card-header>{{ 'DOCS.INBOUND.DIALOG_TITLE' | translate }}</nb-card-header>
@@ -99,6 +99,7 @@ export interface IDocsInboundDomainDialogResult {
 			</nb-card-footer>
 		</nb-card>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styles: [
 		`
 			.docs-inbound-domain-dialog {

@@ -106,9 +106,9 @@
 									nbTooltipPlacement="top"
 								>
 									<ngx-avatar
-										[src]="employee?.user?.imageUrl"
+										[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
 										size="sm"
-										[id]="employee?.id"
+										[id]="$safeNavigationMigration(employee?.id)"
 										[employee]="employee"
 									></ngx-avatar>
 								</span>
@@ -157,14 +157,14 @@
 		<button
 			size="small"
 			class="action secondary"
-			(click)="openArticle(selectedItem?.article)"
+			(click)="openArticle($safeNavigationMigration(selectedItem?.article))"
 			status="basic"
 			nbButton
 		>
 			<nb-icon icon="eye-outline"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
 		</button>
-		<button size="small" class="action primary" (click)="editNode(selectedItem?.article)" status="basic" nbButton>
+		<button size="small" class="action primary" (click)="editNode($safeNavigationMigration(selectedItem?.article))" status="basic" nbButton>
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
@@ -173,7 +173,7 @@
 			status="basic"
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
-			(click)="deleteNode(selectedItem?.article)"
+			(click)="deleteNode($safeNavigationMigration(selectedItem?.article))"
 			nbButton
 		>
 			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>

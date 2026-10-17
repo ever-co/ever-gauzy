@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,6 +35,7 @@ import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-ta
     selector: 'ngx-table-inventory',
     templateUrl: './table-inventory.component.html',
     styleUrls: ['./table-inventory.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TableInventoryComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

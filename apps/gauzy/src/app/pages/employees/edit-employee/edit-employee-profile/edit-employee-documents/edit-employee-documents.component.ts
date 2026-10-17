@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseEntityEnum, IEmployee } from '@gauzy/contracts';
@@ -22,6 +22,7 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 	selector: 'ga-edit-employee-documents',
 	templateUrl: './edit-employee-documents.component.html',
 	styleUrls: ['./edit-employee-documents.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditEmployeeDocumentsComponent implements OnInit, OnDestroy {

@@ -1,0 +1,166 @@
+# The timesheet project change request object type.
+#
+# A request is not a timesheet and not a time log: it is the record of a move that somebody asked for
+# and somebody decided on. It names the period the move concerns, the project the time is booked to
+# now and the project it should move to, why the employee is asking, and — once it is reviewed — who
+# decided, when, and with what note. The status is what makes the row meaningful after the fact: a
+# request that was never approved explains why the time is still where it is, which is the question an
+# audit asks and a log alone cannot answer.
+#
+# **Every member below is a column of this row.** The delivered read and both writes use the row
+# directly — no relation is loaded — so a member for `timesheet`, `requestedProject`, `previousProject`
+# or `reviewedBy` would be empty on every row this surface answers, which is worse than no member at
+# all. Each relation is carried as the identifier that always travels (`timesheetId`,
+# `requestedProjectId`, `previousProjectId`, `reviewedById`), and the row behind it is read from its
+# own domain's surface: the period from `timesheet(id)`, the projects from the project surface, the
+# account that decided from `user(id)`.
+#
+# **Both identifiers of the move are carried, and neither is derivable from the other.** A request
+# that named only the destination could not be applied safely, because a period holds the time of
+# several projects; the pair is what lets an approval touch exactly the logs the employee meant.
+#
+# **`status` is carried as its value.** The vocabulary — `PENDING`, `APPROVED`, `REJECTED` — belongs
+# to the contracts package, which is where the delivered routes read it from; declaring a second copy
+# of it here would be a second vocabulary that could drift from the one the writes validate against.
+
+"""
+One employee's request to move the time booked to one project over to another, with the approver's
+decision once it has one.
+"""
+type TimesheetProjectChangeRequest {
+	id: ID!
+	"Why the employee is asking for the move. Required, and bounded by the delivered body's own length."
+	reason: String!
+	"Where the request stands, as the contracts package's own `TimesheetProjectChangeStatus` value: `PENDING`, `APPROVED` or `REJECTED`."
+	status: String!
+	"When the request was approved or rejected, or null while it is pending."
+	reviewedAt: DateTime
+	"The note the approver left, where one was left."
+	reviewNote: String
+	"The period whose time the request concerns. The period is read from the timesheet surface by this identifier."
+	timesheetId: ID!
+	"The project the time should move to. The project is read from the project surface by this identifier."
+	requestedProjectId: ID!
+	"The project the time is booked to while the request is pending. Only the logs on this project are ever moved by an approval."
+	previousProjectId: ID!
+	"The account that approved or rejected the request, where one has. The account is read from the user surface by this identifier."
+	reviewedById: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of project change requests.
+"""
+type TimesheetProjectChangeRequestEdge {
+	node: TimesheetProjectChangeRequest!
+	cursor: String!
+}
+
+"""
+One page of project change requests, with the total the filters select and the boundary cursors.
+"""
+type TimesheetProjectChangeRequestConnection {
+	nodes: [TimesheetProjectChangeRequest!]!
+	edges: [TimesheetProjectChangeRequestEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields the project change request list may be sorted by.
+
+Every member is a column of the row: the two instants a request is dated by and the status a queue is
+worked in. The project identifiers are deliberately absent — a queue is read in the order requests
+arrived in, not in the order of the projects they name.
+"""
+enum TimesheetProjectChangeRequestSortField {
+	createdAt
+	updatedAt
+	reviewedAt
+	status
+}
+
+"""
+The order the project change requests are returned in. At most three keys are accepted.
+"""
+input TimesheetProjectChangeRequestSort {
+	field: TimesheetProjectChangeRequestSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields the project change request list may be narrowed by.
+
+Every member is a column of the row, which is what makes it answerable: no relation is loaded by the
+delivered read, so a member for one would narrow by a value those rows do not carry. The three
+identifiers the move is stated in are here for the reason they exist — the requests of one period, the
+moves one project received, the moves one project is waiting for — and the period and the organization
+are here as well as among the field's own arguments, because the read narrows by them in the store
+while the connection narrows the rows the read answered.
+"""
+input TimesheetProjectChangeRequestFilter {
+	id: IDFilter
+	timesheetId: IDFilter
+	requestedProjectId: IDFilter
+	previousProjectId: IDFilter
+	reviewedById: IDFilter
+	status: StringFilter
+	reason: StringFilter
+	reviewNote: StringFilter
+	reviewedAt: DateTimeFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimesheetProjectChangeRequestFilter!]
+	or: [TimesheetProjectChangeRequestFilter!]
+	not: TimesheetProjectChangeRequestFilter
+}
+
+"""
+What a caller states when it raises a request.
+
+Every member is required, because every one of them is what the delivered write needs: the period
+whose time is in question, both endpoints of the move, the reason a reviewer reads, and the
+organization both projects are resolved inside. The tenant is not a member — the service stamps it
+from the credential, which is the one value a caller cannot misstate.
+"""
+input RequestTimesheetProjectChangeInput {
+	"The period whose time the request concerns. The service refuses a period that is not the caller's own."
+	timesheetId: ID!
+	"The project the time should move to. It must differ from the project the time is booked to."
+	requestedProjectId: ID!
+	"The project the time is booked to now. Only the logs on this project are ever moved."
+	previousProjectId: ID!
+	"Why the move is being asked for, which is what a reviewer decides on."
+	reason: String!
+	"The organization both projects must belong to. The delivered body requires it."
+	organizationId: ID!
+}
+
+"""
+What a caller states when it decides on a pending request.
+
+`PENDING` is deliberately not admitted: a review always moves the request out of the pending state,
+which is what the delivered body validates. Only an approval moves the time — a rejection leaves every
+log exactly where it is.
+"""
+input ReviewTimesheetProjectChangeInput {
+	"The decision, as the contracts package's own `TimesheetProjectChangeStatus` value. Only `APPROVED` and `REJECTED` are admitted."
+	status: String!
+	"An optional note for the employee who raised the request."
+	reviewNote: String
+	"The organization the request belongs to. The service refuses a request outside it."
+	organizationId: ID!
+}

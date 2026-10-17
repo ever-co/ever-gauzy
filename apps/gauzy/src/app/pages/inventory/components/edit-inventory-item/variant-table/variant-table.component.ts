@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -23,6 +23,7 @@ export interface SelectedProductVariant {
 	selector: 'ngx-variant-table',
 	templateUrl: './variant-table.component.html',
 	styleUrls: ['./variant-table.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class VariantTableComponent extends TranslationBaseComponent implements OnInit {

@@ -3,7 +3,7 @@
 		<div class="header-row">
 			<div class="identity">
 				@if (!isCalendar && selectedCandidate?.user?.imageUrl) {
-					<img class="candidate-avatar" [src]="selectedCandidate?.user?.imageUrl" alt="" />
+					<img class="candidate-avatar" [src]="$safeNavigationMigration(selectedCandidate?.user?.imageUrl)" alt="" />
 				} @else {
 					<span class="title-badge"><nb-icon icon="calendar-outline"></nb-icon></span>
 				}
@@ -82,8 +82,8 @@
 			<nb-step>
 				<ga-candidate-criterions-form
 					#candidateCriterionsForm
-					[editSelectedTechnologies]="editData?.technologies"
-					[editSelectedQualities]="editData?.personalQualities"
+					[editSelectedTechnologies]="$safeNavigationMigration(editData?.technologies)"
+					[editSelectedQualities]="$safeNavigationMigration(editData?.personalQualities)"
 				></ga-candidate-criterions-form>
 
 				@if (isCriterionsVisible) {

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { GAUZY_ENV } from '../constants';
@@ -13,6 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'ngx-splash-screen',
     templateUrl: './splash-screen.component.html',
     styleUrls: ['./splash-screen.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbLayoutModule, NbCardModule, NbButtonModule, SpinnerButtonDirective, NbIconModule, TranslatePipe]
 })
 export class SplashScreenComponent implements OnInit {

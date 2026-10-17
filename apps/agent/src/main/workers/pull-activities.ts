@@ -35,7 +35,7 @@ import MainEvent from '../events/events';
 import { MAIN_EVENT_TYPE, MAIN_EVENT } from '../../constant';
 import { ApiService } from '../api';
 import { WorkerQueue } from '../queue/worker-queue';
-import * as isOnline from 'is-online';
+import isOnline from 'is-online';
 
 type UserLogin = {
 	tenantId: string;

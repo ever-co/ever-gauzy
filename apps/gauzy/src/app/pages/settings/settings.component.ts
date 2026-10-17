@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseNavMenuComponent, NavMenuSectionItem } from '@gauzy/ui-core/core';
@@ -8,6 +8,7 @@ import { BaseNavMenuComponent, NavMenuSectionItem } from '@gauzy/ui-core/core';
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
 	styleUrls: ['./settings.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SettingsComponent extends BaseNavMenuComponent implements OnInit, OnDestroy {

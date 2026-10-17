@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Observable, from } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
     selector: 'ga-edit-appointment',
     templateUrl: './edit-appointment.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

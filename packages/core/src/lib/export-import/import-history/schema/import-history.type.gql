@@ -1,0 +1,123 @@
+# The import history's object type.
+#
+# A row is one ledger entry for one import: which archive was handed to the platform, how large it was,
+# when it was taken in and what became of it. The delivered read answers every entry of the caller's
+# tenant, newest first, and this type is the row it answers.
+#
+# **`path` is not a member, and the entity is what refuses it.** The column holds the storage key of the
+# uploaded archive, and the entity excludes it from every plain serialisation — `@Exclude({ toPlainOnly:
+# true })` — so a REST client never reads it and a member for it here would be this surface reaching past
+# the delivered projection for a value the projection withholds. A storage key is also the thing a
+# caller should not hold: it names a location inside the installation's own storage, and a URL built from
+# it is a capability rather than a fact.
+#
+# **`fullUrl` is a member, and it is the projection's own replacement for that key.** The column is
+# virtual — nothing persists it — and a subscriber fills it as the row is loaded, asking the configured
+# storage provider for the URL of the archive the key names. So it is present on the rows the delivered
+# read answers and absent only when the storage provider cannot be reached, and carrying it is what makes
+# this surface answer the same entry the REST route answers. It points at the tenant's own uploaded
+# archive and at nothing else.
+#
+# **The archive is not re-read here, and no member carries its contents.** What the import wrote into the
+# tenant's tables is reachable through the resources that own those tables; the ledger row records that
+# the import happened rather than what it contained.
+#
+# `status` is carried as its delivered value rather than declared as a schema enum. The vocabulary is
+# `ImportStatusEnum` in the platform's contract package — `Success`, `Failed`, `Cancelled` and
+# `In Progress` — which types the column and which the delivered import path writes; the values are
+# stated here so a client does not have to guess them, and they are carried as they are spelled rather
+# than normalised, because a caller comparing an answer against a stored row compares the same text. The
+# outcome is recorded rather than raised: a delivered import that fails is answered with the row that says
+# so, which is why a caller reads this member instead of catching an error.
+
+"""
+One ledger entry for one import: the archive that was taken in, and what became of it.
+"""
+type ImportHistory {
+	id: ID!
+	"The name of the archive that was uploaded, as the caller's own upload named it."
+	file: String!
+	"How large the archive was, in bytes."
+	size: Int
+	"""
+	What became of the import: `Success` when the archive was parsed into the tenant's tables, `Failed`
+	when it was not, and the two reserved values the vocabulary also declares. The delivered import
+	records either outcome as a row rather than refusing the request, so this member is the answer rather
+	than a detail beside it.
+	"""
+	status: String!
+	"When the platform took the archive in."
+	importDate: DateTime
+	"""
+	The URL of the stored archive, resolved by the configured storage provider as the row is loaded. It
+	points at the tenant's own uploaded file; the storage key behind it is not a member.
+	"""
+	fullUrl: String
+	"The tenant the entry belongs to. Stamped from the credential when the import ran."
+	tenantId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of ledger entries.
+"""
+type ImportHistoryEdge {
+	node: ImportHistory!
+	cursor: String!
+}
+
+"""
+One page of ledger entries, with the total the filters select and the boundary cursors.
+"""
+type ImportHistoryConnection {
+	nodes: [ImportHistory!]!
+	edges: [ImportHistoryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a ledger list may be sorted by.
+"""
+enum ImportHistorySortField {
+	importDate
+	createdAt
+	updatedAt
+	file
+	size
+	status
+}
+
+"""
+The order the ledger list is returned in. At most three keys are accepted.
+"""
+input ImportHistorySort {
+	field: ImportHistorySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a ledger list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+`status: { eq: "Failed" }` is how an operator asks what did not come in. `path` is not filterable for the
+same reason it is not a member — a condition on a storage key is a comparison against a value the
+delivered projection withholds — and `fullUrl` is not filterable because it is not stored: it is resolved
+from the key as the row is loaded, so the delivered read has no criterion for it.
+"""
+input ImportHistoryFilter {
+	id: IDFilter
+	file: StringFilter
+	size: NumberFilter
+	status: StringFilter
+	importDate: DateTimeFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ImportHistoryFilter!]
+	or: [ImportHistoryFilter!]
+	not: ImportHistoryFilter
+}

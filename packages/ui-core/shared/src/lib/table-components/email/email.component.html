@@ -1,1 +1,1 @@
-<a [href]="'mailto:' + rowData?.email">{{ rowData?.email }}</a>
+<a [href]="'mailto:' + $safeNavigationMigration(rowData?.email)">{{ rowData?.email }}</a>

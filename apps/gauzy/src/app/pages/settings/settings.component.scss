@@ -116,6 +116,15 @@
 	height: 100%;
 }
 
+// A page that fills the content area and scrolls inside itself (the template editors)
+// marks its host `settings-page-fill`. `min-height` alone leaves the shell's height
+// indefinite, so the page's `height: 100%` resolved to its content and it overflowed
+// the column; for such a page the shell takes the column's exact height instead. Long
+// pages keep `min-height` and grow, which is what keeps the sticky menu in view.
+.settings-shell:has(> .settings-content > .settings-page-fill) {
+	height: 100%;
+}
+
 @include respond(md) {
 	.settings-shell {
 		flex-direction: column;
@@ -129,5 +138,11 @@
 
 	.settings-content {
 		width: 100%;
+	}
+
+	// Stacked under the menu, a fill page takes what the menu leaves.
+	.settings-shell:has(> .settings-content > .settings-page-fill) > .settings-content {
+		flex: 1 1 0;
+		min-height: 0;
 	}
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, filter, debounceTime, tap, firstValueFrom } from 'rxjs';
@@ -22,6 +22,7 @@ import { FormHelpers } from '../../forms/helpers';
 	selector: 'ngx-profile',
 	templateUrl: './edit-profile-form.component.html',
 	styleUrls: ['./edit-profile-form.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditProfileFormComponent implements OnInit, OnDestroy {

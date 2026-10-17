@@ -1,6 +1,6 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
 import { FileUploadModule } from 'ng2-file-upload';
 import { Subject, of } from 'rxjs';
@@ -41,7 +41,7 @@ import { COMPONENTS } from './components';
 		NebularModule,
 		FileUploadModule,
 		MomentModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule,
 		DialogsModule,
 		ProposalTemplateSelectModule,

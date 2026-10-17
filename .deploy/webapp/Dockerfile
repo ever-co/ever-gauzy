@@ -17,7 +17,7 @@
 # envsubst + replacements.sed. The ENV literals in the production stage below are the
 # load-bearing defaults for that substitution — keep them in sync with replacements.sed.
 
-FROM node:24.16.0-alpine3.23 AS dependencies
+FROM node:26.11.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -76,8 +76,10 @@ COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/integration-ever-works/package.json ./packages/plugins/integration-ever-works/
 COPY --chown=node:node packages/plugins/integration-plane-ui/package.json ./packages/plugins/integration-plane-ui/
 COPY --chown=node:node packages/plugins/integration-ever-async-ui/package.json ./packages/plugins/integration-ever-async-ui/
+COPY --chown=node:node packages/plugins/integration-ever-works-ui/package.json ./packages/plugins/integration-ever-works-ui/
 COPY --chown=node:node packages/plugins/auth-zitadel-ui/package.json ./packages/plugins/auth-zitadel-ui/
 COPY --chown=node:node packages/plugins/ever-stats-ui/package.json ./packages/plugins/ever-stats-ui/
 COPY --chown=node:node packages/plugins/ever-connect-ui/package.json ./packages/plugins/ever-connect-ui/
@@ -111,6 +113,11 @@ COPY --chown=node:node packages/plugins/dashboard-time-track-angular-ui/package.
 COPY --chown=node:node packages/plugins/dashboard-time-track-react-ui/package.json ./packages/plugins/dashboard-time-track-react-ui/
 COPY --chown=node:node packages/plugins/ai-chat-react-ui/package.json ./packages/plugins/ai-chat-react-ui/
 COPY --chown=node:node packages/plugins/docs-ui/package.json ./packages/plugins/docs-ui/
+# @gauzy/plugin-integration-ever-works depends on @gauzy/plugin-docs, which depends on @gauzy/plugin-ai-chat; without their
+# manifests yarn looks them up on npm and the install fails
+COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
+COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
+COPY --chown=node:node packages/plugins/inbox-ui/package.json ./packages/plugins/inbox-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
 COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
@@ -119,6 +126,8 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
@@ -166,7 +175,11 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	yarn cache clean && \
 	rm -f .npmrc .yarnrc
 
-FROM node:24.16.0-alpine3.23 AS development
+FROM node:26.11.1-alpine3.24 AS development
+
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
 
 USER node:node
 
@@ -176,7 +189,11 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.16.0-alpine3.23 AS build
+FROM node:26.11.1-alpine3.24 AS build
+
+# The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
+# that runs a yarn script installs the version package.json pins (`packageManager`).
+RUN npm install -g yarn@1.22.22
 
 WORKDIR /srv/gauzy
 

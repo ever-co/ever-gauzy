@@ -59,7 +59,7 @@ savingSettings = savingSettings$ | async;
 					</nb-form-field>
 				</div>
 				<div class="category-field">
-					<gauzy-category-selector [categoryId]="categoryId?.value"></gauzy-category-selector>
+					<gauzy-category-selector [categoryId]="$safeNavigationMigration(categoryId?.value)"></gauzy-category-selector>
 				</div>
 			</div>
 		</form>
@@ -200,7 +200,7 @@ savingSettings = savingSettings$ | async;
 									></nb-badge>
 									} @else if(isSelectType(setting.type) || isMultiSelectType(setting.type)) {
 									<div class="selected-options">
-										@let currentValue = settingsForm.get(setting.key)?.value;
+										@let currentValue = $safeNavigationMigration(settingsForm.get(setting.key)?.value);
 										@if(Array.isArray(currentValue)) { @for(val of currentValue; track val) {
 										<nb-badge status="info" [text]="getOptionLabel(setting, val)"></nb-badge>
 										} } @else {
@@ -283,8 +283,8 @@ savingSettings = savingSettings$ | async;
 										formControlName="value"
 										[id]="setting.key"
 										[placeholder]="setting.description || 'Enter ' + setting.label"
-										[min]="setting.validation?.min"
-										[max]="setting.validation?.max"
+										[min]="$safeNavigationMigration(setting.validation?.min)"
+										[max]="$safeNavigationMigration(setting.validation?.max)"
 									/>
 									}
 
@@ -308,8 +308,8 @@ savingSettings = savingSettings$ | async;
 										formControlName="value"
 										[id]="setting.key"
 										[placeholder]="setting.description || 'Enter ' + setting.label"
-										[minlength]="setting.validation?.minLength"
-										[maxlength]="setting.validation?.maxLength"
+										[minlength]="$safeNavigationMigration(setting.validation?.minLength)"
+										[maxlength]="$safeNavigationMigration(setting.validation?.maxLength)"
 									/>
 									}
 

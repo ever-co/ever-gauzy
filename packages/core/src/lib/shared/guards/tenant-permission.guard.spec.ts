@@ -70,6 +70,7 @@ function contextFor(
 	};
 
 	return {
+		getType: () => 'http',
 		getHandler: () => handler,
 		getClass: () => Controller,
 		switchToHttp: () => ({ getRequest: () => httpRequest })
@@ -124,21 +125,40 @@ describe('TenantBaseGuard', () => {
 			await expect(guard.canActivate(contextFor({ headerTenantId: OTHER_TENANT_ID }))).resolves.toBe(false);
 		});
 
-		it('does not look at a body or query tenantId once the header matches', async () => {
-			// Current behaviour, pinned on purpose: the header is the whole check. A write that names
-			// another tenant in its body passes this guard, so services must take the tenant from the
-			// request context (as TenantAwareCrudService does), never from the payload.
+		it('denies a body or query that names another tenant, even when the header matches (SEC-A-03, SEC-D-12)', async () => {
+			// The header used to be the whole check, on the assumption that services take the tenant from the
+			// request context — and `TenantAwareCrudService.update` wrote the payload's tenantId as given, so
+			// `PUT` + header A + body {"tenantId": B} re-tenanted the caller's own row. A request that states
+			// another tenant anywhere is refused.
 			actAs();
-			await expect(
-				guard.canActivate(
-					contextFor({
-						method: 'POST',
-						headerTenantId: TENANT_ID,
-						body: { tenantId: OTHER_TENANT_ID },
-						query: { tenantId: OTHER_TENANT_ID }
-					})
-				)
-			).resolves.toBe(true);
+			for (const request of [
+				{ method: 'POST', body: { tenantId: OTHER_TENANT_ID } },
+				{ method: 'PUT', body: { tenant: { id: OTHER_TENANT_ID } } },
+				{ method: 'POST', body: [{ tenantId: TENANT_ID }, { tenantId: OTHER_TENANT_ID }] },
+				{ method: 'GET', query: { tenantId: OTHER_TENANT_ID } },
+				// The read shape the no-header path checks too (CodeRabbit on #10647).
+				{ method: 'GET', query: { data: JSON.stringify({ findInput: { tenantId: OTHER_TENANT_ID } }) } }
+			]) {
+				await expect(guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID } as any))).resolves.toBe(
+					false
+				);
+			}
+		});
+
+		it('allows a body or query that names the caller’s own tenant, or none, when the header matches', async () => {
+			actAs();
+			for (const request of [
+				{ method: 'POST', body: { tenantId: TENANT_ID, name: 'x' } },
+				{ method: 'PUT', body: { name: 'x' } },
+				{ method: 'POST', body: [{ tenantId: TENANT_ID }, { name: 'y' }] },
+				{ method: 'GET', query: { tenantId: TENANT_ID } },
+				{ method: 'GET', query: { data: JSON.stringify({ findInput: { tenantId: TENANT_ID } }) } },
+				{ method: 'GET', query: { data: JSON.stringify({ findInput: { name: 'x' } }) } }
+			]) {
+				await expect(guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID } as any))).resolves.toBe(
+					true
+				);
+			}
 		});
 	});
 

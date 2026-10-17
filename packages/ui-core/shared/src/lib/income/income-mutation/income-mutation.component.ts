@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { IIncome, ITag, IOrganization, ICurrency, ISelectedEmployee } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { OrganizationSettingService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers } from '../../forms/helpers';
@@ -15,6 +15,7 @@ import { FormHelpers } from '../../forms/helpers';
     selector: 'ngx-income-mutation',
     templateUrl: './income-mutation.component.html',
     styleUrls: ['./income-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IncomeMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
@@ -102,10 +103,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent implements
 	}
 
 	selectedTagsHandler(tags: ITag[]) {
-		if (isNotEmpty(tags)) {
-			this.form.patchValue({ tags: tags });
-			this.form.updateValueAndValidity();
-		}
+		this.form.patchValue({ tags: tags });
+		this.form.updateValueAndValidity();
 	}
 
 	/**

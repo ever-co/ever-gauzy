@@ -1,4 +1,4 @@
-import { NgModule, ModuleWithProviders, inject, provideAppInitializer } from '@angular/core';
+import { NgModule, type ModuleWithProviders, inject, provideAppInitializer } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { PostHogTrackDirective } from './directives/posthog-track.directive';

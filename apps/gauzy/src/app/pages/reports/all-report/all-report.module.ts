@@ -7,7 +7,7 @@ import {
 	NbToggleModule,
 	NbButtonModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { AllReportRoutingModule } from './all-report-routing.module';
 import { AllReportComponent } from './all-report/all-report.component';
@@ -17,7 +17,7 @@ import { AllReportComponent } from './all-report/all-report.component';
 	imports: [
 		AllReportRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService, NbIconModule, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbToggleModule, NbSelectModule, NbOptionModule } from '@nebular/theme';
@@ -54,6 +54,7 @@ interface IPluginSetting {
     selector: 'lib-plugin-settings-manager',
     templateUrl: './plugin-settings-manager.component.html',
     styleUrls: ['./plugin-settings-manager.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbIconModule, SpinnerButtonDirective, NbButtonModule, NbTooltipModule, NbFormFieldModule, NbInputModule, NbToggleModule, FormsModule, ReactiveFormsModule, NbSelectModule, NbOptionModule, AsyncPipe, TitleCasePipe]
 })
 export class PluginSettingsManagerComponent implements OnInit, OnDestroy {

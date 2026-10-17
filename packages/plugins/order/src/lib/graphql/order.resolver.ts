@@ -1,0 +1,885 @@
+import { Args, Context, ID, Int, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { BadRequestException, UseGuards } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
+import { IPagination, OrderChangeType } from '@gauzy/contracts';
+import {
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	IConnectionPageSelection,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	RequestContext,
+	TenantPermissionGuard,
+	Versioned,
+	connectionFromOffsetPage,
+	resolveConnectionWindow,
+	versionExpectationOf
+} from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { IOrderApprovalRequested, OrderService } from '../order/order.service';
+import { OrderAddressService } from '../order-address/order-address.service';
+import { OrderEditGuard } from '../order/order-edit.guard';
+import { OrderChangeService } from '../order-change/order-change.service';
+import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
+import { OrderHistoryService } from '../order-history/order-history.service';
+import { IOrderQuoteSent, OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
+import { OrderLineService } from '../order-line/order-line.service';
+import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
+import { OrderTotalsService } from '../order-totals/order-totals.service';
+import { ORDER_PERMISSIONS } from '../order.permissions';
+import {
+	FULFILLMENT_STATUSES,
+	ORDER_PAYMENT_STATUSES,
+	ORDER_STATUSES,
+	isFulfillmentStatus,
+	isOrderPaymentStatus,
+	isOrderStatus
+} from './filters';
+import { retireForDeleteField } from './order-delete-result';
+import {
+	IOrderConnection,
+	IOrderDeleteResult,
+	Order,
+	OrderAddress,
+	OrderChange,
+	OrderCreditLine,
+	OrderHistory,
+	OrderLine,
+	OrderShippingMethod,
+	OrderTotals
+} from './types';
+
+/**
+ * The order root fields and the order's own relation fields.
+ *
+ * The resolver is a thin adapter over the same services the REST controller uses, with the same guards
+ * and the same permissions, so a GraphQL caller and a REST caller cannot diverge in what they are
+ * allowed to do or in what a rule means. Every relation is resolved by its own aggregate's service,
+ * which is what makes the order graph one query without N+1 reads.
+ *
+ * The mutations carry the same `@Idempotent(...)` and `@Versioned(...)` declarations as the routes
+ * they mirror, under the same scope names, so the two protocols answer a retry and a stale version
+ * identically. A GraphQL operation travels over `POST` whichever root type it selects, so a mutation
+ * states its version as the nullable `version` argument — and its retry key as `idempotencyKey` —
+ * because one request may carry several mutations and a header could not say which of them either
+ * belongs to.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
+ */
+@Resolver('Order')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@Permissions(ORDER_PERMISSIONS.ORDERS_VIEW)
+export class OrderResolver {
+	constructor(
+		private readonly orderService: OrderService,
+		private readonly totalsService: OrderTotalsService,
+		private readonly lineService: OrderLineService,
+		private readonly addressService: OrderAddressService,
+		private readonly shippingMethodService: OrderShippingMethodService,
+		private readonly creditLineService: OrderCreditLineService,
+		private readonly historyService: OrderHistoryService,
+		private readonly changeService: OrderChangeService,
+		private readonly invoicingService: OrderInvoicingService,
+		private readonly editGuard: OrderEditGuard
+	) {}
+
+	/**
+	 * Refuses to retire or restore a child of a placed order (review R3-11); the order change is the way to change
+	 * one. `OrderEditGuard` states the rule, and the REST routes these fields mirror apply it too.
+	 *
+	 * @param service The child's service.
+	 * @param id The child row.
+	 * @param subject What it is, for the message.
+	 * @param withDeleted Whether a retired row is read too (a restore reads one).
+	 */
+	private async assertChildEditable(
+		service: { findOneByIdString(id: string, options?: never): Promise<{ orderId: string }> },
+		id: string,
+		subject: string,
+		withDeleted = false
+	): Promise<void> {
+		const stored = await service.findOneByIdString(id, (withDeleted ? { withDeleted: true } : undefined) as never);
+
+		await this.editGuard.assertDraft(stored.orderId, subject);
+	}
+
+	/**
+	 * Lists orders.
+	 *
+	 * @param filter The filter arguments.
+	 * @returns A page of orders.
+	 * @throws BadRequestException when a status is given that the order does not have.
+	 */
+	@Query(() => Object, { name: 'orders' })
+	async orders(
+		@Args('status', { type: () => String, nullable: true }) status?: string,
+		@Args('paymentStatus', { type: () => String, nullable: true }) paymentStatus?: string,
+		@Args('fulfillmentStatus', { type: () => String, nullable: true }) fulfillmentStatus?: string,
+		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
+		@Args('channelId', { type: () => ID, nullable: true }) channelId?: string,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
+	): Promise<IOrderConnection> {
+		const where: FindOptionsWhere<Order> = {};
+		const { skip, take } = resolveConnectionWindow(page);
+
+		if (status) {
+			if (!isOrderStatus(status)) {
+				throw new BadRequestException(`The order status "${status}" is not one of: ${ORDER_STATUSES.join(', ')}.`);
+			}
+
+			where.status = status;
+		}
+
+		if (paymentStatus) {
+			if (!isOrderPaymentStatus(paymentStatus)) {
+				throw new BadRequestException(
+					`The payment status "${paymentStatus}" is not one of: ${ORDER_PAYMENT_STATUSES.join(', ')}.`
+				);
+			}
+
+			where.paymentStatus = paymentStatus;
+		}
+
+		if (fulfillmentStatus) {
+			if (!isFulfillmentStatus(fulfillmentStatus)) {
+				throw new BadRequestException(
+					`The fulfilment status "${fulfillmentStatus}" is not one of: ${FULFILLMENT_STATUSES.join(', ')}.`
+				);
+			}
+
+			where.fulfillmentStatus = fulfillmentStatus;
+		}
+
+		if (customerId) {
+			where.customerId = customerId;
+		}
+
+		if (channelId) {
+			where.channelId = channelId;
+		}
+
+		// The visibility the REST list route offers, offered here: its `findAll` is handed the whole
+		// `BaseQueryDTO`, which declares `withDeleted`, while this field builds its criterion from named
+		// arguments — so the flag has to be stated rather than passed through.
+		const listing = (await this.orderService.findAll({
+			where,
+			// Newest first, closed by the row's identity. The page is cut with LIMIT/OFFSET and its cursors are
+			// offsets, so an order the store may rearrange between two pages — or none at all, which on Postgres
+			// is heap order, and an `UPDATE` to an order on page one moves it to the end of the heap — repeats
+			// one order and never shows another. The primary key is the one column that leaves no tie.
+			order: { createdAt: 'DESC', id: 'DESC' },
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<Order>;
+
+		return connectionFromOffsetPage(listing, skip);
+	}
+
+	/**
+	 * Reads one order.
+	 *
+	 * A read carries the version in the response body, which is what the caller states back as the
+	 * `version` argument of the mutation it is about to make.
+	 *
+	 * @param id The order.
+	 * @returns The order.
+	 */
+	@Versioned({ resource: OrderService, write: false })
+	@Query(() => Object, { name: 'order', nullable: true })
+	async order(@Args('id', { type: () => ID }) id: string): Promise<Order> {
+		return this.orderService.findOneByIdString(id);
+	}
+
+	/**
+	 * Reads one order by its human number.
+	 *
+	 * @param number The order number.
+	 * @returns The order.
+	 */
+	@Query(() => Object, { name: 'orderByNumber', nullable: true })
+	async orderByNumber(@Args('number', { type: () => String }) number: string): Promise<Order> {
+		return this.orderService.findOneByWhereOptions({ number } as any);
+	}
+
+	/**
+	 * The computed totals of one order.
+	 *
+	 * @param id The order.
+	 * @returns The totals, computed from the lines and the money ledgers.
+	 */
+	@Query(() => Object, { name: 'orderTotals', nullable: true })
+	async orderTotals(@Args('id', { type: () => ID }) id: string): Promise<OrderTotals> {
+		const order = await this.orderService.findOneByIdString(id);
+
+		return this.totalsService.computeTotals(order);
+	}
+
+	/**
+	 * Creates a draft order.
+	 *
+	 * @param input The order to create.
+	 * @returns The created order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	@Idempotent({ scope: 'order.create', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService, required: false })
+	@Mutation(() => Object, { name: 'createOrder' })
+	async createOrder(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<Order> {
+		// R2-G19: `CreateOrderInput` declares no organization and the tenant-aware base stamps the tenant only,
+		// so an order created here had `organizationId = NULL` while `POST /orders` states a validated one. The
+		// request's organization is stamped, as the REST route's body carries it.
+		return this.orderService.create({
+			...input,
+			organizationId: input?.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as any);
+	}
+
+	/**
+	 * Updates the fields of an order that may change outside a change.
+	 *
+	 * @param id The order.
+	 * @param input The fields to change, with the version the caller read the order at.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'updateOrder' })
+	async updateOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>,
+		@Context() context: any
+	): Promise<Order> {
+		return this.orderService.updateMutable(id, input as any, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Places a draft order.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The placed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.place', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'placeOrder' })
+	async placeOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.place(id, {}, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Places a buyer's draft order for a staff member's approval.
+	 *
+	 * The mirror of `POST /orders/:id/request-approval`: the same service method, the same grant, the same
+	 * retry scope and the same versioned resource, and the note the route's body carries as an argument.
+	 *
+	 * @param id The order.
+	 * @param note The buyer's note to the approver.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The placed order, and the approval request filed for it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.approval.request', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'requestOrderApproval' })
+	async requestOrderApproval(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('note', { type: () => String, nullable: true }) note?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<IOrderApprovalRequested> {
+		return this.orderService.requestApproval(id, note, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Confirms a placed order.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The confirmed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'confirmOrder' })
+	async confirmOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.confirm(id, 'STAFF', versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Cancels an order that nothing has shipped from.
+	 *
+	 * @param id The order.
+	 * @param reason Why it was cancelled.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The cancelled order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_CANCEL)
+	@Idempotent({ scope: 'order.cancel', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'cancelOrder' })
+	async cancelOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.cancel(id, reason, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Completes an order whose goods are accounted for and whose money is settled (Q7-W1b).
+	 *
+	 * The mirror of `POST /orders/:id/complete`: the same service method, the same grant, the same retry
+	 * scope and the same versioned resource; refused with `ORDER_NOT_COMPLETABLE` and what still stands in
+	 * the way.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The completed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.complete', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'completeOrder' })
+	async completeOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.complete(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Archives a terminal order.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The archived order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'archiveOrder' })
+	async archiveOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.orderService.archive(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Issues the invoice that bills an order.
+	 *
+	 * The mirror of `POST /orders/:id/invoice`: the same service method, the same grant, the same retry scope
+	 * and the same versioned resource. The order answered carries the invoice in `invoiceId`.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, stamped with its invoice.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.invoice', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'generateOrderInvoice' })
+	async generateOrderInvoice(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.generateInvoice(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Sends the buyer a quote for an order.
+	 *
+	 * The mirror of `POST /orders/:id/quote/send`: the same service method, the same grant, the same retry
+	 * scope and the same versioned resource. The payload says whether the estimate e-mail went, because the
+	 * quote is recorded whether or not it did.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, the estimate the quote is, and whether the e-mail went.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.quote.send', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'sendOrderQuote' })
+	async sendOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<IOrderQuoteSent> {
+		return this.invoicingService.sendQuote(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Records the buyer's acceptance of an order's quote and confirms the order.
+	 *
+	 * The mirror of `POST /orders/:id/quote/accept`: the same service method, the same grant — the approve
+	 * route's, because it confirms the order — and the same versioned resource; like `confirmOrder`, no retry
+	 * scope.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The confirmed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'acceptOrderQuote' })
+	async acceptOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.acceptQuote(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Records the buyer's refusal of an order's quote, leaving the order where it is.
+	 *
+	 * The mirror of `POST /orders/:id/quote/decline`: the same service method, the same grant and the same
+	 * versioned resource, and the reason the route's body carries as an argument — the shape
+	 * `declineOrderChange` already has.
+	 *
+	 * @param id The order.
+	 * @param reason Why the buyer declined.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, in the status it was in.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'declineOrderQuote' })
+	async declineOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.declineQuote(id, reason, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Recomputes an order.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order with its recomputed totals.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'recalculateOrder' })
+	async recalculateOrder(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.totalsService.recompute(id, 'MANUAL', { expectation: versionExpectationOf(context?.req) });
+	}
+
+	/**
+	 * Retires an order recoverably, keeping the row and every satellite of it.
+	 *
+	 * The route it mirrors is `DELETE /orders/:id/soft`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. Without this field an order
+	 * retired over GraphQL could not be brought back over GraphQL, while a REST caller could do both. Since
+	 * `13` §11.4's "Soft delete only" row, `DELETE /orders/:id` and `deleteOrder` perform this same retirement
+	 * too: no surface drops an order that tax lines, invoices and a money ledger point at.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT` — and not the class-level view
+	 * grant, because retiring an order takes it out of every listing, total and change a reader sees.
+	 *
+	 * @param id The order to retire.
+	 * @returns The order, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrder' })
+	async softDeleteOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
+		return this.orderService.softRemove(id);
+	}
+
+	/**
+	 * Restores an order that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /orders/:id/recover`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. A restored order is a candidate
+	 * for every read and every change again, which is why the route states the editing grant rather than
+	 * the reading one.
+	 *
+	 * @param id The order to restore.
+	 * @returns The restored order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrder' })
+	async recoverOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
+		return this.orderService.softRecover(id);
+	}
+
+	/**
+	 * Retires an order. This field no longer erases one.
+	 *
+	 * The route it mirrors is `DELETE /orders/:id`, which reached `CrudController`'s hard delete — and an
+	 * order's hard delete cascades into its lines, addresses, delivery choices, totals history, changes,
+	 * credit lines, timeline and payment collection. `13` §11.4 keeps every order table in one retention row
+	 * — "`order*`, … | Indefinite | Soft delete only (`deletedAt`); no hard delete through the API" — and the
+	 * owner decided it again on 2026-10-13 ("Soft delete only"), so the route and this field now retire the
+	 * order through `OrderService.softRemove`, the act `softDeleteOrder` performs, and `recoverOrder` brings
+	 * it back.
+	 *
+	 * The answer keeps its shape: the identifier, and whether an order of the caller's was there to retire —
+	 * `deleted: false` when the identifier names none. The permission is the route's own — `ORDERS_EDIT`.
+	 *
+	 * @param id The order to retire.
+	 * @returns The identifier the field named, and whether an order was there to retire.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrder' })
+	async deleteOrder(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		return await retireForDeleteField(id, () => this.orderService.softRemove(id));
+	}
+
+	/**
+	 * Retires a frozen address recoverably, keeping the row an order was placed with.
+	 *
+	 * The route it mirrors is `DELETE /order-addresses/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Its fields are the
+	 * address the order was shipped to at the moment it was placed, so the row is evidence rather than a
+	 * preference: retiring it recoverably is how a caller corrects a duplicate, and the recovery below is
+	 * how it undoes that.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT` — which this resolver states on
+	 * the field rather than leaving to its class-level view grant.
+	 *
+	 * @param id The frozen address to retire.
+	 * @returns The address, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderAddress' })
+	async softDeleteOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<OrderAddress> {
+		await this.assertChildEditable(this.addressService as never, id, 'order address');
+
+		return this.addressService.softRemove(id);
+	}
+
+	/**
+	 * Restores a frozen address that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-addresses/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without it an
+	 * address retired over GraphQL could only be put back by writing the order again.
+	 *
+	 * @param id The frozen address to restore.
+	 * @returns The restored address.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderAddress' })
+	async recoverOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<OrderAddress> {
+		await this.assertChildEditable(this.addressService as never, id, 'order address', true);
+
+		return this.addressService.softRecover(id);
+	}
+
+	/**
+	 * Retires a frozen address. This field no longer erases one.
+	 *
+	 * The route it mirrors is `DELETE /order-addresses/:id`. An address is only ever created or rewritten by
+	 * `ADDRESS_UPDATE`, so a caller that has to take a duplicate snapshot the placement wrote out of the
+	 * order has this route and this field — and the row is the address the order was shipped to as it stood
+	 * when it was placed. `13` §11.4 keeps every order table in one retention row — "`order*`, … |
+	 * Indefinite | Soft delete only (`deletedAt`); no hard delete through the API" — so the route and this
+	 * field now retire the address through `OrderAddressService.softRemove`, the act `softDeleteOrderAddress`
+	 * performs, and `recoverOrderAddress` brings it back.
+	 *
+	 * The answer keeps its shape: the identifier, and whether an address of the caller's was there to retire
+	 * — `deleted: false` when the identifier names none. The permission is the route's own — `ORDERS_EDIT`.
+	 *
+	 * @param id The frozen address to retire.
+	 * @returns The identifier the field named, and whether an address was there to retire.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrderAddress' })
+	async deleteOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		return await retireForDeleteField(id, async () => {
+			await this.assertChildEditable(this.addressService as never, id, 'order address');
+
+			return this.addressService.softRemove(id);
+		});
+	}
+
+	/**
+	 * Retires a credit line recoverably, keeping what the order was reduced by.
+	 *
+	 * The route it mirrors is `DELETE /order-credit-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A credit line is
+	 * part of how an order's outstanding total was arrived at, so the row is retired rather than dropped
+	 * and the recovery below puts it back into that arithmetic.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The credit line to retire.
+	 * @returns The credit line, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderCreditLine' })
+	async softDeleteOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
+		await this.assertChildEditable(this.creditLineService as never, id, 'order credit line');
+
+		return this.creditLineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a credit line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-credit-lines/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored credit
+	 * line is counted against the order again, which is why the route states the editing grant.
+	 *
+	 * @param id The credit line to restore.
+	 * @returns The restored credit line.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderCreditLine' })
+	async recoverOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
+		await this.assertChildEditable(this.creditLineService as never, id, 'order credit line', true);
+
+		return this.creditLineService.softRecover(id);
+	}
+
+	/**
+	 * Amends a credit line that was applied to an order.
+	 *
+	 * The route it mirrors is `PUT /order-credit-lines/:id`, declared by the controller with the
+	 * resource's writable surface as its body — amount, currency, reference and description — and
+	 * overridden from `CrudController` only to state the permission the base class leaves unstated. The
+	 * credit is what reduces what the customer owes, and its route is the one place a figure the totals
+	 * were computed from is corrected in place rather than by a new credit.
+	 *
+	 * The route states no version: a credit line has no version of its own — the `version` column on it is
+	 * the order version the credit was applied against — so nothing is predicated on one, on either
+	 * surface.
+	 *
+	 * @param id The credit line.
+	 * @param input The members to change.
+	 * @returns The credit line, as it now stands.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'updateOrderCreditLine' })
+	async updateOrderCreditLine(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<OrderCreditLine> {
+		// The route's two rules, in the route's order: a credit line stays on the order it was written for (SEC-B-02 —
+		// re-parented onto a placed order, it cut what the customer owes with no order change), and a placed order's
+		// credit line is changed through an order change.
+		const stored = await this.creditLineService.findOneByIdString(id);
+		this.editGuard.assertSameOrder(stored.orderId, input?.orderId, 'order credit line');
+		await this.editGuard.assertDraft(stored.orderId, 'order credit line');
+		await this.creditLineService.update(id, input as any);
+
+		return this.creditLineService.findOneByIdString(id);
+	}
+
+	/**
+	 * Retires a credit line. This field no longer erases one.
+	 *
+	 * The route it mirrors is `DELETE /order-credit-lines/:id`. A credit line is money owed back to the
+	 * buyer, part of the arithmetic the order's outstanding total was arrived at by, and `13` §11.4 keeps
+	 * every order table in one retention row — "`order*`, … | Indefinite | Soft delete only (`deletedAt`); no
+	 * hard delete through the API" — so the route and this field now retire the credit line through
+	 * `OrderCreditLineService.softRemove`, the act `softDeleteOrderCreditLine` performs, and
+	 * `recoverOrderCreditLine` brings it back.
+	 *
+	 * The answer keeps its shape: the identifier, and whether a credit line of the caller's was there to
+	 * retire — `deleted: false` when the identifier names none. The permission is the route's own —
+	 * `ORDERS_EDIT`.
+	 *
+	 * @param id The credit line to retire.
+	 * @returns The identifier the field named, and whether a credit line was there to retire.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrderCreditLine' })
+	async deleteOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		return await retireForDeleteField(id, async () => {
+			await this.assertChildEditable(this.creditLineService as never, id, 'order credit line');
+
+			return this.creditLineService.softRemove(id);
+		});
+	}
+
+	/**
+	 * Retires a delivery choice recoverably, keeping the amount the order was placed with.
+	 *
+	 * The route it mirrors is `DELETE /order-shipping-methods/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. A delivery
+	 * choice carries the shipping amount the order's totals were computed from, so the row is kept and the
+	 * recovery below is what undoes the retirement.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The delivery choice to retire.
+	 * @returns The delivery choice, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderShippingMethod' })
+	async softDeleteOrderShippingMethod(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<OrderShippingMethod> {
+		await this.assertChildEditable(this.shippingMethodService as never, id, 'order shipping method');
+
+		return this.shippingMethodService.softRemove(id);
+	}
+
+	/**
+	 * Restores a delivery choice that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-shipping-methods/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. A restored
+	 * choice is counted into the order's shipping totals again.
+	 *
+	 * @param id The delivery choice to restore.
+	 * @returns The restored delivery choice.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderShippingMethod' })
+	async recoverOrderShippingMethod(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<OrderShippingMethod> {
+		await this.assertChildEditable(this.shippingMethodService as never, id, 'order shipping method', true);
+
+		return this.shippingMethodService.softRecover(id);
+	}
+
+	/**
+	 * Creates a change.
+	 *
+	 * @param input The change and its actions.
+	 * @returns The created change.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.change.create', required: false, resourceType: 'order_change' })
+	// The order is the record the change is reasoned about, and the input names it rather than the
+	// resolver's own argument list, so the version is read from the order the input points at.
+	@Versioned({
+		resource: OrderService,
+		identify: (_request: any, context: any) => context?.getArgByIndex?.(1)?.input?.orderId
+	})
+	@Mutation(() => Object, { name: 'requestOrderEdit' })
+	async requestOrderEdit(@Args('input', { type: () => Object }) input: Record<string, any>): Promise<OrderChange> {
+		return this.changeService.create({
+			orderId: input.orderId,
+			changeType: (input.changeType as OrderChangeType) ?? OrderChangeType.EDIT,
+			note: input.note,
+			actions: input.actions
+		} as any);
+	}
+
+	/**
+	 * Resolves an order's lines.
+	 *
+	 * @param order The parent order.
+	 * @returns The lines.
+	 */
+	@ResolveField('lines', () => [Object], { nullable: true })
+	async lines(@Parent() order: Order): Promise<OrderLine[]> {
+		const page = (await this.lineService.findAll({ where: { orderId: order.id } })) as IPagination<OrderLine>;
+
+		return page.items;
+	}
+
+	/**
+	 * Resolves an order's frozen addresses.
+	 *
+	 * @param order The parent order.
+	 * @returns The addresses.
+	 */
+	@ResolveField('addresses', () => [Object], { nullable: true })
+	async addresses(@Parent() order: Order): Promise<OrderAddress[]> {
+		const page = (await this.addressService.findAll({
+			where: { orderId: order.id }
+		})) as IPagination<OrderAddress>;
+
+		return page.items;
+	}
+
+	/**
+	 * Resolves an order's delivery choices.
+	 *
+	 * @param order The parent order.
+	 * @returns The delivery choices.
+	 */
+	@ResolveField('shippingMethods', () => [Object], { nullable: true })
+	async shippingMethods(@Parent() order: Order): Promise<OrderShippingMethod[]> {
+		const page = (await this.shippingMethodService.findAll({
+			where: { orderId: order.id }
+		})) as IPagination<OrderShippingMethod>;
+
+		return page.items;
+	}
+
+	/**
+	 * Resolves an order's credit lines.
+	 *
+	 * @param order The parent order.
+	 * @returns The credit lines.
+	 */
+	@ResolveField('creditLines', () => [Object], { nullable: true })
+	async creditLines(@Parent() order: Order): Promise<OrderCreditLine[]> {
+		const page = (await this.creditLineService.findAll({
+			where: { orderId: order.id }
+		})) as IPagination<OrderCreditLine>;
+
+		return page.items;
+	}
+
+	/**
+	 * Resolves an order's changes.
+	 *
+	 * @param order The parent order.
+	 * @returns The changes.
+	 */
+	@ResolveField('changes', () => [Object], { nullable: true })
+	async changes(@Parent() order: Order): Promise<OrderChange[]> {
+		const page = (await this.changeService.findAll({
+			where: { orderId: order.id }
+		})) as IPagination<OrderChange>;
+
+		return page.items;
+	}
+
+	/**
+	 * Resolves an order's timeline.
+	 *
+	 * @param order The parent order.
+	 * @returns The timeline, oldest first.
+	 */
+	@ResolveField('history', () => [Object], { nullable: true })
+	async history(@Parent() order: Order): Promise<OrderHistory[]> {
+		return this.historyService.timeline(order.id);
+	}
+}

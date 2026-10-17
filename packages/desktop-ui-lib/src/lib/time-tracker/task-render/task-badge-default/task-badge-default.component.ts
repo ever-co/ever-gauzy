@@ -1,5 +1,5 @@
 import { TitleCasePipe } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TaskStatusEnum } from '@gauzy/contracts';
 import { NbBadgeModule, NbComponentStatus } from '@nebular/theme';
 import { ReplacePipe } from '../../pipes/replace.pipe';
@@ -8,6 +8,7 @@ import { ReplacePipe } from '../../pipes/replace.pipe';
 	selector: 'gauzy-task-badge-default',
 	templateUrl: './task-badge-default.component.html',
 	styleUrls: ['./task-badge-default.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [NbBadgeModule, TitleCasePipe, ReplacePipe]
 })
 export class TaskBadgeDefaultComponent implements OnInit {

@@ -1,0 +1,245 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from 'chalk';
+import { DatabaseTypeEnum } from '@gauzy/config';
+
+/**
+ * Creates `promotion.fundingType`, `promotion.sellerFundingShare`, `promotion.sellerId` in the package that owns them (review R5-14).
+ *
+ * ## Why
+ *
+ * The columns are declared by the promotion plugin, which declares them on `Promotion` (`fundingType`, `sellerFundingShare`, `sellerId`), but until now only the
+ * marketplace plugin's `AddMarketplaceAmendmentColumns1791000000435` created them. An
+ * installation that hosts this package without the marketplace — the worker hosts the kernel, pricing, cart, order,
+ * inventory and the catalogue, not the marketplace — maps columns its own migrations never create, so every read
+ * or write of the row fails with "no such column" (a fresh worker database today; on a shared database, the window
+ * before the API has run 0435). This tick makes the owner create what the owner declares, for every installation that hosts promotions, with or without the marketplace.
+ *
+ * ## What
+ *
+ * Each column is added where the table exists and the column does not, with the definition
+ * `1791000000435` uses, so an installation that ran the marketplace's tick first sees a no-op and one without the
+ * marketplace gets exactly the column the marketplace would have added. The foreign key to `seller`, the indexes
+ * the marketplace reads through and its `CHECK` rules stay the marketplace's: they constrain a seller relation,
+ * and `seller` is the marketplace's table.
+ *
+ * ## Down
+ *
+ * The columns are dropped only where the marketplace's tick has **not** run: there they are this tick's
+ * alone. Where it has run they are the marketplace's too — its foreign key, its indexes and its rules sit on them,
+ * and its own down leaves the columns in place — so this down leaves them as well. SQLite keeps them either way,
+ * as every additive column of this platform is kept on the embedded dialect: dropping one there means a table
+ * rebuild, the destructive `ALTER` the conventions refuse.
+ */
+export class AddPromotionFundingColumns1791000000653 implements MigrationInterface {
+	name = 'AddPromotionFundingColumns1791000000653';
+
+	/** The table the columns belong to. */
+	private static readonly TABLE = 'promotion';
+
+	/** The columns, as `AddMarketplaceAmendmentColumns1791000000435` defines them on each dialect. */
+	private static readonly COLUMNS: ReadonlyArray<{ name: string; sqlite: string; postgres: string; mysql: string }> =
+		[
+			{
+				name: 'fundingType',
+				sqlite: `varchar(16) NOT NULL DEFAULT 'PLATFORM'`,
+				postgres: `varchar(16) NOT NULL DEFAULT 'PLATFORM'`,
+				mysql: `varchar(16) NOT NULL DEFAULT 'PLATFORM'`
+			},
+			{
+				name: 'sellerFundingShare',
+				sqlite: `numeric(9,6) NOT NULL DEFAULT 0`,
+				postgres: `numeric(9,6) NOT NULL DEFAULT 0`,
+				mysql: `numeric(9,6) NOT NULL DEFAULT 0`
+			},
+			{ name: 'sellerId', sqlite: `varchar`, postgres: `uuid`, mysql: `varchar(36) NULL` }
+		];
+
+	/** The marketplace tick that also adds these columns, and whose constraints sit on them once it has run. */
+	private static readonly MARKETPLACE_TICK = 'AddMarketplaceAmendmentColumns1791000000435';
+
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteUpQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresUpQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlUpQueryRunner(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' reverting changes!'));
+
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteDownQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresDownQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlDownQueryRunner(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+
+	/**
+	 * SqliteDB Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await this.addColumns(queryRunner, 'sqlite');
+	}
+
+	/**
+	 * SqliteDB Down Migration
+	 *
+	 * The columns are kept: see the class documentation.
+	 *
+	 * @param queryRunner
+	 */
+	public async sqliteDownQueryRunner(_queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.gray(`${this.name}: the embedded dialect keeps its additive columns.`));
+	}
+
+	/**
+	 * PostgresDB Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await this.addColumns(queryRunner, 'postgres');
+	}
+
+	/**
+	 * PostgresDB Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await this.dropColumns(queryRunner, 'postgres');
+	}
+
+	/**
+	 * MySQL Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await this.addColumns(queryRunner, 'mysql');
+	}
+
+	/**
+	 * MySQL Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await this.dropColumns(queryRunner, 'mysql');
+	}
+
+	/**
+	 * Adds every column that is missing, when the table is there.
+	 *
+	 * @param queryRunner The runner the migration is executing on.
+	 * @param dialect The dialect, for its quoting and its column definition.
+	 */
+	private async addColumns(queryRunner: QueryRunner, dialect: 'sqlite' | 'postgres' | 'mysql'): Promise<void> {
+		const table = AddPromotionFundingColumns1791000000653.TABLE;
+
+		if (!(await queryRunner.hasTable(table))) {
+			return;
+		}
+
+		const quote = dialect === 'mysql' ? '`' : '"';
+
+		for (const column of AddPromotionFundingColumns1791000000653.COLUMNS) {
+			if (await queryRunner.hasColumn(table, column.name)) {
+				continue;
+			}
+
+			await queryRunner.query(
+				`ALTER TABLE ${quote}${table}${quote} ADD COLUMN ${quote}${column.name}${quote} ${column[dialect]}`
+			);
+			console.log(chalk.yellow(`${this.name}: added ${table}.${column.name}.`));
+		}
+	}
+
+	/**
+	 * Drops the columns, unless the marketplace's tick has run here and they are its columns too.
+	 *
+	 * @param queryRunner The runner the migration is executing on.
+	 * @param dialect The dialect, for its quoting.
+	 */
+	private async dropColumns(queryRunner: QueryRunner, dialect: 'postgres' | 'mysql'): Promise<void> {
+		const table = AddPromotionFundingColumns1791000000653.TABLE;
+
+		if (!(await queryRunner.hasTable(table))) {
+			return;
+		}
+		if (await this.marketplaceTickHasRun(queryRunner)) {
+			console.log(
+				chalk.gray(
+					`${this.name}: ${AddPromotionFundingColumns1791000000653.MARKETPLACE_TICK} has run here, so the columns are the marketplace's too and stay.`
+				)
+			);
+			return;
+		}
+
+		const quote = dialect === 'mysql' ? '`' : '"';
+
+		for (const column of [...AddPromotionFundingColumns1791000000653.COLUMNS].reverse()) {
+			if (await queryRunner.hasColumn(table, column.name)) {
+				await queryRunner.query(
+					`ALTER TABLE ${quote}${table}${quote} DROP COLUMN ${quote}${column.name}${quote}`
+				);
+			}
+		}
+	}
+
+	/**
+	 * Whether the marketplace's amendment tick is recorded as executed on this database.
+	 *
+	 * @param queryRunner The runner the migration is executing on.
+	 */
+	private async marketplaceTickHasRun(queryRunner: QueryRunner): Promise<boolean> {
+		const migrations = queryRunner.connection.options.migrationsTableName ?? 'migrations';
+
+		if (!(await queryRunner.hasTable(migrations))) {
+			return false;
+		}
+
+		const quote = (queryRunner.connection.options.type as DatabaseTypeEnum) === DatabaseTypeEnum.mysql ? '`' : '"';
+		const placeholder =
+			(queryRunner.connection.options.type as DatabaseTypeEnum) === DatabaseTypeEnum.postgres ? '$1' : '?';
+		const rows = await queryRunner.query(
+			`SELECT 1 FROM ${quote}${migrations}${quote} WHERE ${quote}name${quote} = ${placeholder}`,
+			[AddPromotionFundingColumns1791000000653.MARKETPLACE_TICK]
+		);
+
+		return Array.isArray(rows) && rows.length > 0;
+	}
+}

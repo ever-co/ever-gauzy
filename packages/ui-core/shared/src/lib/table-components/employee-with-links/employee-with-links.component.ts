@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -15,6 +15,7 @@ import { IPersonListItem } from '../people-list/people-list.component';
 @Component({
 	selector: 'ngx-employee-with-links',
 	templateUrl: './employee-with-links.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmployeeWithLinksComponent {

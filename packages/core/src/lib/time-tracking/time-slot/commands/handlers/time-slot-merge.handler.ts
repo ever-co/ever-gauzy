@@ -172,11 +172,58 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		// Save the new time slot to the database
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmTimeSlotRepository.persistAndFlush(newTimeSlot);
+				await this.saveMergedTimeSlotWithMikroOrm(newTimeSlot, slots);
 				return newTimeSlot;
 			case MultiORMEnum.TypeORM:
 			default:
 				return await this.typeOrmTimeSlotRepository.save(newTimeSlot);
+		}
+	}
+
+	/**
+	 * Saves a merged time slot under MikroORM as TypeORM's `save()` does: the kept slot (the first of the group)
+	 * takes the aggregated values and every time log of the group, and the screenshots and activities of the other
+	 * slots move onto it before those slots are cleaned up.
+	 *
+	 * The merged slot itself is not persisted: it carries the kept slot's id without being managed, so MikroORM
+	 * inserted it as a new row and refused its time logs, which are plain serialized objects.
+	 *
+	 * @param newTimeSlot - The merged time slot, carrying the kept slot's id
+	 * @param slots - The time slots of the group, the kept one first
+	 */
+	private async saveMergedTimeSlotWithMikroOrm(newTimeSlot: TimeSlot, slots: ITimeSlot[]): Promise<void> {
+		const { id, tenantId, organizationId, employeeId } = newTimeSlot;
+		const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+
+		const timeSlot = await em.findOneOrFail(
+			TimeSlot,
+			{ id, tenantId, organizationId, employeeId },
+			{ populate: ['timeLogs'] }
+		);
+		em.assign(timeSlot, {
+			duration: newTimeSlot.duration,
+			keyboard: newTimeSlot.keyboard,
+			mouse: newTimeSlot.mouse,
+			overall: newTimeSlot.overall,
+			startedAt: newTimeSlot.startedAt,
+			// By id, so the stored time logs are linked rather than rebuilt from their serialized copies
+			timeLogs: pluck(newTimeSlot.timeLogs, 'id')
+		});
+
+		const mergedSlotIds = pluck(slots.slice(1), 'id');
+		if (isNotEmpty(mergedSlotIds)) {
+			// Through the relation: MikroORM does not write the `timeSlotId` mirror
+			await em.nativeUpdate(Screenshot, { timeSlot: { $in: mergedSlotIds } }, { timeSlot: id });
+			await em.nativeUpdate(Activity, { timeSlot: { $in: mergedSlotIds } }, { timeSlot: id });
+		}
+
+		await em.flush();
+
+		if (isNotEmpty(mergedSlotIds)) {
+			// nativeUpdate bypasses the identity map, where getTimeSlots already loaded these collections, and an
+			// initialized collection is not reloaded by a later populate: refresh them so a read in the same request
+			// (CreateTimeSlotHandler's findOne) returns the moved screenshots and activities too
+			await em.populate(timeSlot, ['screenshots', 'activities'], { refresh: true });
 		}
 	}
 

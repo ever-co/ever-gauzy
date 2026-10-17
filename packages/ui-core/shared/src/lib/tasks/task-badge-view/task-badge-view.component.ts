@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ColorAdapter } from '@gauzy/ui-core/core';
 import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 
@@ -8,6 +8,7 @@ export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
     selector: 'gauzy-task-badge-view',
     templateUrl: './task-badge-view.component.html',
     styleUrls: ['./task-badge-view.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TaskBadgeViewComponent {

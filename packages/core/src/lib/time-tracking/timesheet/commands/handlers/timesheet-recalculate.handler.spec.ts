@@ -42,6 +42,7 @@ describe('TimesheetRecalculateHandler (MikroORM)', () => {
 			userParams: { schema: 'public' }
 		});
 		const timesheetService = {
+			forTimeLogEmployee: (callback: () => Promise<unknown>) => callback(),
 			findOneByIdString: jest.fn().mockResolvedValue(timesheet),
 			update: jest.fn()
 		};

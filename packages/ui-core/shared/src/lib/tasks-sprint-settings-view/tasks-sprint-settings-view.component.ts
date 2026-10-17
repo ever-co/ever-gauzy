@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { IOrganization, IOrganizationProject, IOrganizationSprint } from '@gauzy/contracts';
 import { SprintStoreService, Store } from '@gauzy/ui-core/core';
@@ -12,6 +12,7 @@ import { ItemActionType } from '../editable-grid/gauzy-editable-grid.component';
     selector: 'ngx-tasks-sprint-settings-view',
     templateUrl: './tasks-sprint-settings-view.component.html',
     styleUrls: ['./tasks-sprint-settings-view.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {

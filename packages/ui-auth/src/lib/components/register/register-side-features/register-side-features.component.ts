@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IChangelog } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, Subject } from 'rxjs';
@@ -9,6 +9,7 @@ import { ChangelogService } from '@gauzy/ui-core/core';
 	selector: 'ngx-register-side-features',
 	templateUrl: './register-side-features.component.html',
 	styleUrls: ['./register-side-features.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxRegisterSideFeaturesComponent implements OnInit {

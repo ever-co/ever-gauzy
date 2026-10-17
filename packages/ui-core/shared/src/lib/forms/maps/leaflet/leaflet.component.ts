@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import * as L from 'leaflet';
 import { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
 import { environment } from '@gauzy/ui-config';
@@ -8,6 +8,7 @@ import { convertPrecisionFloatDigit } from '@gauzy/ui-core/common';
     selector: 'ga-leaflet-map',
     templateUrl: './leaflet.component.html',
     styleUrls: ['./leaflet.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class LeafletMapComponent implements AfterViewInit {

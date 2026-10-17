@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, AfterViewInit, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, AfterViewInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, catchError, debounceTime, filter, of, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,6 +15,7 @@ import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/
 	selector: 'ngx-upwork-reports',
 	templateUrl: './reports.component.html',
 	styleUrls: ['./reports.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ReportsComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {

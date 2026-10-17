@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import {
@@ -21,6 +21,7 @@ import { FormHelpers } from '../../forms/helpers';
     selector: 'ngx-time-off-request-mutation',
     templateUrl: './time-off-request-mutation.component.html',
     styleUrls: ['../time-off-mutation.components.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TimeOffRequestMutationComponent implements OnInit {

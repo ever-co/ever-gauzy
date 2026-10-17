@@ -100,7 +100,7 @@
 								<p class="caption status-danger">
 									{{
 										'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH'
-											| translate: { requiredLength: code.errors?.minlength?.requiredLength }
+											| translate: { requiredLength: $safeNavigationMigration(code.errors?.minlength?.requiredLength) }
 									}}
 								</p>
 							}

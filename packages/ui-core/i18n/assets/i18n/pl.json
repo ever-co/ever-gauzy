@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ENABLED": "Włączony",
+		"DISABLED": "Wyłączony",
 		"PAY": "Wynagrodzenie",
 		"ADD_EXISTING_USER": "Dodaj istniejącego użytkownika",
 		"ADD_NEW": "Dodaj nowe",
@@ -180,6 +182,7 @@
 		"ADD_MORE_SOURCES": "Dodaj więcej źródeł",
 		"REMOVE_FROM_FAVORITES": "Usuń z ulubionych",
 		"ADD_TO_FAVORITES": "Dodaj do ulubionych",
+		"EXPAND_FULL_WIDTH": "Rozwiń na pełną szerokość",
 		"UNSELECT_ALL": "Odznacz wszystko",
 		"START_TIMER_ANYWAY": "Uruchom mimo to",
 		"OPEN_SETTING": "Otwórz ustawienia"
@@ -833,6 +836,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Musisz być pracownikiem, aby móc śledzić czas, tworzyć podziały kosztów i korzystać z innych funkcji związanych z pracownikami"
 	},
 	"MENU": {
+		"INITIATIVES": "Inicjatywy",
 		"BREADCRUMB": "Ścieżka nawigacji",
 		"PIPELINES": "Rurociągi",
 		"DASHBOARD": "Dashboard",
@@ -1945,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Rodzaj",
+		"KIND_ALL": "Wszyscy",
+		"KIND_HUMAN": "Osoby",
+		"KIND_AGENT": "Agenci",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Zarządzany przez Ever Works: nazwa i profil tego agenta są zmieniane w Ever Works i synchronizowane z Gauzy.",
+		"MANAGED_EXTERNALLY": "Zarządzany zewnętrznie: nazwa i profil tego agenta są zmieniane w systemie źródłowym i synchronizowane z Gauzy.",
+		"OPEN_MANAGED_AGENT": "Otwórz stronę agenta",
 		"HEADER": "Zarządzaj pracownikami",
 		"ADD_EMPLOYEE": "Dodaj pracownika",
 		"ACTIVE": "Aktywny",
@@ -2084,7 +2096,68 @@
 				"IN_DAYS": "Za {{ count }} dni"
 			},
 			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
-			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku",
+			"PROJECTS_CAPTION": "Projekty tej osoby i czas poświęcony każdemu z nich w tym okresie",
+			"NO_PROJECTS": "Nie jest członkiem żadnego projektu i nie ma czasu w projektach w tym okresie",
+			"NOT_A_MEMBER": "Nie jest członkiem",
+			"NOT_A_MEMBER_HINT": "Zarejestrowano czas w tym projekcie, ale ta osoba nie jest jego członkiem",
+			"VIEW_PROFILE": "Zobacz profil",
+			"MEMBERSHIP_UNKNOWN": "Nie udało się wczytać członkostwa w projektach, więc członkowie i nie-członkowie nie są rozróżniani.",
+			"PROJECT_TIMES_PARTIAL": "Nie udało się wczytać części czasów projektów, więc projekt bez czasu może go jednak mieć."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Inicjatywy strategiczne",
+		"SUBTITLE": "Kierunki, w których Twoja organizacja postanowiła się rozwijać, oraz powiązane z nimi cele, projekty i zespoły.",
+		"ADD": "Dodaj inicjatywę",
+		"EDIT": "Edytuj inicjatywę",
+		"EMPTY": "Brak inicjatyw strategicznych.",
+		"TITLE": "Tytuł",
+		"STATE": "Stan",
+		"VISIBILITY": "Widoczność",
+		"TEAMS": "Zespoły",
+		"TEAMS_HINT": "Przy widoczności „Zespół” inicjatywę widzą członkowie tych zespołów (oraz zespołów powiązanych projektów).",
+		"PROJECTS": "Projekty",
+		"GOALS": "Cele",
+		"CONFIDENCE": "Pewność",
+		"MOMENTUM": "Dynamika",
+		"INTENT": "Intencja",
+		"INTENT_HINT": "Co świadomie chcemy posunąć naprzód i dlaczego?",
+		"STEWARD": "Opiekun",
+		"SIGNALS": "Sygnały",
+		"KNOWN_RISKS": "Znane ryzyka",
+		"KNOWN_RISKS_HINT": "Jedno ryzyko w wierszu",
+		"NOTES": "Notatki",
+		"LAST_ASSESSED": "Ostatnia ocena",
+		"NO_TEAMS": "Brak powiązanych zespołów.",
+		"NO_GOALS": "Brak powiązanych celów.",
+		"NO_PROJECTS": "Brak powiązanych projektów.",
+		"NOT_FOUND": "Nie znaleziono inicjatywy lub nie masz do niej dostępu.",
+		"DELETE_TITLE": "Usuń inicjatywę",
+		"DELETE_CONFIRMATION": "Usunąć inicjatywę „{{ name }}”?",
+		"DELETED": "Usunięto inicjatywę „{{ name }}”.",
+		"CREATED": "Utworzono inicjatywę „{{ name }}”.",
+		"UPDATED": "Zaktualizowano inicjatywę „{{ name }}”.",
+		"STATES": {
+			"DRAFT": "Szkic",
+			"ACTIVE": "Aktywna",
+			"RESOLVED": "Zrealizowana",
+			"RETIRED": "Wycofana"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Kierownictwo",
+			"ORGANIZATION": "Organizacja",
+			"TEAM": "Zespół"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Niska",
+			"MEDIUM": "Średnia",
+			"HIGH": "Wysoka"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Zastój",
+			"PROGRESSING": "Postępuje",
+			"ACCELERATING": "Przyspiesza"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2464,6 +2537,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń organizację",
+			"WARNING": "{{ name }} zostanie trwale usunięta. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
+			"CONFIRM": "Usuń organizację"
+		},
 		"ORGANIZATIONS": "Organizacje",
 		"EMPLOYEES": "Pracownicy",
 		"POSITIONS": "Stanowiska",
@@ -2660,7 +2739,61 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",
-				"MEMBERS": "Członkowie"
+				"MEMBERS": "Członkowie",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Szczegóły"
+					},
+					"PUBLIC": "Publiczny",
+					"PRIVATE": "Prywatny",
+					"PREFIX": "Prefiks zadań",
+					"MEMBERS_COUNT": "Członkowie: {{ count }}",
+					"LIVE": "Śledzą teraz: {{ tracking }} · Online: {{ online }}",
+					"OF_MEMBERS": "{{ count }} z {{ total }} członków",
+					"CREATED": "Utworzono",
+					"UPDATED": "Ostatnia aktualizacja",
+					"ACTIVE_MEMBERS": "Aktywni członkowie",
+					"ACTIVE_MEMBERS_META": "z {{ total }} członków rejestrowało czas",
+					"TIME_BY_MEMBER": "Czas według członków",
+					"TEAM_TASKS": "Zadania zespołu",
+					"NO_TEAM_TASKS": "Brak zadań przypisanych do tego zespołu",
+					"NO_MEMBERS": "Ten zespół nie ma jeszcze członków",
+					"NO_PROJECTS": "Brak projektów powiązanych z tym zespołem",
+					"COLUMNS": {
+						"MEMBER": "Członek",
+						"ROLE": "Rola",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Bieżące zadanie",
+						"TODAY": "Dziś",
+						"ACTIVITY": "Aktywność"
+					},
+					"ROLE": {
+						"MANAGER": "Menedżer",
+						"MEMBER": "Członek"
+					},
+					"GENERAL": "Ogólne",
+					"SETTINGS": "Ustawienia",
+					"RECORD": "Rekord",
+					"TEAM_SIZE": "Wielkość zespołu",
+					"COLOR": "Kolor",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Link do profilu",
+					"VISIBILITY": "Widoczność",
+					"SHARE_PROFILE_VIEW": "Członkowie widzą nawzajem swoje profile",
+					"REQUIRE_PLAN": "Wymagaj planu do śledzenia czasu",
+					"NOT_FOUND": "Nie znaleziono tego zespołu",
+					"LOAD_FAILED": "Nie udało się wczytać zespołu",
+					"RETRY": "Spróbuj ponownie",
+					"OPEN_TASK_DETAILS": "Pokaż szczegóły: {{ title }}",
+					"OPEN_TASK_PAGE": "Otwórz stronę: {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Otwórz stronę zadania",
+					"UNASSIGNED": "Nieprzypisane",
+					"SHOW_ALL": "Pokaż wszystkie",
+					"SHOW_LESS": "Pokaż mniej",
+					"PROJECTS_CAPTION": "Projekty zespołu i czas poświęcony każdemu z nich w tym okresie",
+					"NOT_LINKED": "Niepowiązany",
+					"NOT_LINKED_HINT": "Członkowie rejestrowali czas w tym projekcie, ale nie jest on powiązany z zespołem"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2766,6 +2899,48 @@
 				"ADMINISTRATION": "Administracja"
 			},
 			"ONLY_ADMIN": "Te uprawnienia są tylko do odczytu i są aktywowane tylko dla administratora",
+			"ENABLED_COUNT": "{{ enabled }} z {{ total }} włączonych",
+			"SECTIONS": {
+				"DASHBOARDS": "Pulpity",
+				"SELECTION": "Wybór obszaru roboczego",
+				"INTEGRATIONS_AI": "Integracje i AI",
+				"JOBS": "Oferty pracy",
+				"FINANCE": "Finanse",
+				"SALES": "Sprzedaż i kontakty",
+				"EMPLOYEES_TEAMS": "Pracownicy i zespoły",
+				"CANDIDATES": "Kandydaci",
+				"TIME_OFF_APPROVALS": "Urlopy i zatwierdzenia",
+				"TIME_TRACKING": "Śledzenie czasu",
+				"PROJECTS_TASKS": "Projekty i zadania",
+				"INVENTORY_EQUIPMENT": "Magazyn i sprzęt",
+				"CONTENT_COMMUNICATION": "Treści i komunikacja",
+				"TAGS": "Tagi",
+				"ACCOUNT": "Konto",
+				"USERS_ORGANIZATIONS": "Użytkownicy i organizacje",
+				"SETTINGS_INTEGRATIONS": "Ustawienia i integracje",
+				"DATA_LOGS": "Dane i logi",
+				"DOCUMENTS": "Dokumenty",
+				"COMMERCE_PLATFORM": "Handel: platforma",
+				"COMMERCE_CATALOG": "Handel: katalog i ceny",
+				"COMMERCE_ORDERS": "Handel: zamówienia i klienci",
+				"COMMERCE_FULFILLMENT": "Handel: magazyn i realizacja",
+				"COMMERCE_PAYMENTS": "Handel: płatności",
+				"COMMERCE_MARKETPLACE": "Handel: marketplace",
+				"OTHER": "Inne"
+			},
+			"ORG_PAYROLL_VIEW": "Wyświetlanie list płac",
+			"ORG_PAYROLL_EDIT": "Tworzenie/edycja przebiegów płacowych",
+			"ORG_PAYROLL_APPROVE": "Zatwierdzanie i wypłata przebiegów płacowych",
+			"DOCS_READ": "Wyświetlanie dokumentów",
+			"DOCS_CREATE": "Tworzenie dokumentów",
+			"DOCS_UPDATE": "Edycja dokumentów",
+			"DOCS_DELETE": "Usuwanie dokumentów",
+			"DOCS_MANAGE": "Zarządzanie kategoriami dokumentów i adresami przechwytywania",
+			"DOCS_REVIEW": "Zatwierdzanie/odrzucanie przeglądów dokumentów",
+			"DOCS_AI_IMPORT": "Zarządzanie wiedzą AI dokumentów",
+			"INBOX_VIEW": "Wyświetlanie skrzynki odbiorczej",
+			"INBOX_MAILBOX_MANAGE": "Zarządzanie skrzynkami pocztowymi i kontami dostawców",
+			"INBOX_MAILBOX_READ_ALL": "Odczyt wszystkich wspólnych skrzynek pocztowych",
 			"INSUFFICIENT": "Nie masz wystarczających uprawnień. Brakuje następujących uprawnień:",
 			"ORG_SPRINT_EDIT": "Edytuj sprint",
 			"ORG_SPRINT_VIEW": "Wyświetl sprint",
@@ -2832,7 +3007,201 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "Utwórz organizacyjną strategiczną inicjatywę",
 			"ORG_STRATEGIC_INITIATIVE_READ": "Zobacz organizacyjną strategiczną inicjatywę",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Aktualizuj organizacyjną strategiczną inicjatywę",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Usuń organizacyjną strategiczną inicjatywę"
+			"CHANNELS_VIEW": "Wyświetlanie kanałów",
+			"CHANNELS_CREATE": "Tworzenie kanałów",
+			"CHANNELS_EDIT": "Edycja kanałów",
+			"CHANNELS_DELETE": "Usuwanie kanałów",
+			"REGIONS_VIEW": "Wyświetlanie regionów",
+			"REGIONS_CREATE": "Tworzenie regionów",
+			"REGIONS_EDIT": "Edycja regionów",
+			"REGIONS_DELETE": "Usuwanie regionów",
+			"RULES_VIEW": "Wyświetlanie reguł",
+			"RULES_EDIT": "Edycja reguł",
+			"SEQUENCES_VIEW": "Wyświetlanie sekwencji numeracji",
+			"SEQUENCES_EDIT": "Edycja sekwencji numeracji",
+			"UNITS_VIEW": "Wyświetlanie jednostek miary",
+			"UNITS_EDIT": "Edycja jednostek miary",
+			"PAYMENT_TERMS_VIEW": "Wyświetlanie warunków płatności",
+			"PAYMENT_TERMS_EDIT": "Edycja warunków płatności",
+			"PROVIDERS_VIEW": "Wyświetlanie dostawców",
+			"OPERATIONS_VIEW": "Wyświetlanie operacji w tle",
+			"OPERATIONS_CANCEL": "Anulowanie operacji w tle",
+			"EVENT_OUTBOX_VIEW": "Wyświetlanie skrzynki nadawczej zdarzeń",
+			"EVENT_OUTBOX_RETRY": "Ponawianie wiadomości ze skrzynki nadawczej zdarzeń",
+			"IDEMPOTENCY_KEYS_VIEW": "Wyświetlanie kluczy idempotencji",
+			"IDEMPOTENCY_KEYS_DELETE": "Usuwanie kluczy idempotencji",
+			"WEBHOOKS_VIEW": "Wyświetlanie webhooków",
+			"WEBHOOKS_CREATE": "Tworzenie webhooków",
+			"WEBHOOKS_EDIT": "Edycja webhooków",
+			"WEBHOOKS_DELETE": "Usuwanie webhooków",
+			"WEBHOOK_DELIVERIES_RETRY": "Ponawianie dostarczania webhooków",
+			"SEARCH_VIEW": "Korzystanie z wyszukiwania globalnego",
+			"SEARCH_REINDEX": "Przebudowa indeksu wyszukiwania",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "Wyświetlanie definicji indeksów wyszukiwania",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "Edycja definicji indeksów wyszukiwania",
+			"PRODUCTS_VIEW": "Wyświetlanie produktów",
+			"PRODUCTS_EDIT": "Edycja produktów",
+			"PRODUCTS_DELETE": "Usuwanie produktów",
+			"PRODUCTS_BULK_IMPORT": "Masowy import produktów",
+			"COLLECTIONS_VIEW": "Wyświetlanie kolekcji",
+			"COLLECTIONS_CREATE": "Tworzenie kolekcji",
+			"COLLECTIONS_EDIT": "Edycja kolekcji",
+			"COLLECTIONS_DELETE": "Usuwanie kolekcji",
+			"PRICE_LISTS_VIEW": "Wyświetlanie cenników",
+			"PRICE_LISTS_CREATE": "Tworzenie cenników",
+			"PRICE_LISTS_EDIT": "Edycja cenników",
+			"PRICE_LISTS_DELETE": "Usuwanie cenników",
+			"PRICE_LISTS_SIMULATE": "Symulacja cenników",
+			"PRODUCT_PRICES_VIEW": "Wyświetlanie cen produktów",
+			"PRODUCT_PRICES_EDIT": "Edycja cen produktów",
+			"PRODUCT_PRICES_BULK_EDIT": "Masowa edycja cen produktów",
+			"EXCHANGE_RATES_VIEW": "Wyświetlanie kursów walut",
+			"EXCHANGE_RATES_EDIT": "Edycja kursów walut",
+			"TAX_CATEGORIES_VIEW": "Wyświetlanie kategorii podatkowych",
+			"TAX_CATEGORIES_EDIT": "Edycja kategorii podatkowych",
+			"TAX_RATES_VIEW": "Wyświetlanie stawek podatkowych",
+			"TAX_RATES_EDIT": "Edycja stawek podatkowych",
+			"TAX_REGIMES_VIEW": "Wyświetlanie systemów podatkowych",
+			"TAX_REGIMES_EDIT": "Edycja systemów podatkowych",
+			"PROMOTIONS_VIEW": "Wyświetlanie promocji",
+			"PROMOTIONS_CREATE": "Tworzenie promocji",
+			"PROMOTIONS_EDIT": "Edycja promocji",
+			"PROMOTIONS_DELETE": "Usuwanie promocji",
+			"PROMOTIONS_SIMULATE": "Symulacja promocji",
+			"COUPONS_VIEW": "Wyświetlanie kuponów",
+			"COUPONS_CREATE": "Tworzenie kuponów",
+			"COUPONS_EDIT": "Edycja kuponów",
+			"COUPONS_DELETE": "Usuwanie kuponów",
+			"GIFT_CARDS_VIEW": "Wyświetlanie kart podarunkowych",
+			"GIFT_CARDS_ISSUE": "Wydawanie kart podarunkowych",
+			"GIFT_CARDS_EDIT": "Edycja kart podarunkowych",
+			"CARTS_VIEW": "Wyświetlanie koszyków",
+			"CARTS_EDIT": "Edycja koszyków",
+			"CARTS_DELETE": "Usuwanie koszyków",
+			"CARTS_CHECKOUT": "Finalizacja zakupu",
+			"ORDERS_VIEW": "Wyświetlanie zamówień",
+			"ORDERS_CREATE": "Tworzenie zamówień",
+			"ORDERS_EDIT": "Edycja zamówień",
+			"ORDERS_CANCEL": "Anulowanie zamówień",
+			"ORDERS_APPROVE": "Zatwierdzanie zamówień",
+			"RETURNS_VIEW": "Wyświetlanie zwrotów",
+			"RETURNS_CREATE": "Tworzenie zwrotów",
+			"RETURNS_APPROVE": "Zatwierdzanie zwrotów",
+			"RETURNS_REJECT": "Odrzucanie zwrotów",
+			"RETURNS_RECEIVE": "Przyjmowanie zwrotów",
+			"CLAIMS_VIEW": "Wyświetlanie reklamacji",
+			"CLAIMS_CREATE": "Tworzenie reklamacji",
+			"CLAIMS_RESOLVE": "Rozpatrywanie reklamacji",
+			"EXCHANGES_VIEW": "Wyświetlanie wymian",
+			"EXCHANGES_CREATE": "Tworzenie wymian",
+			"EXCHANGES_RESOLVE": "Rozpatrywanie wymian",
+			"SUBSCRIPTIONS_VIEW": "Wyświetlanie subskrypcji",
+			"SUBSCRIPTIONS_CREATE": "Tworzenie subskrypcji",
+			"SUBSCRIPTIONS_EDIT": "Edycja subskrypcji",
+			"SUBSCRIPTIONS_BILL": "Fakturowanie subskrypcji",
+			"ENTITLEMENTS_VIEW": "Wyświetlanie uprawnień licencyjnych",
+			"ENTITLEMENTS_GRANT": "Przyznawanie uprawnień licencyjnych",
+			"ENTITLEMENTS_EDIT": "Edycja uprawnień licencyjnych",
+			"CONTACT_GROUPS_VIEW": "Wyświetlanie grup kontaktów",
+			"CONTACT_GROUPS_CREATE": "Tworzenie grup kontaktów",
+			"CONTACT_GROUPS_EDIT": "Edycja grup kontaktów",
+			"CONTACT_GROUPS_DELETE": "Usuwanie grup kontaktów",
+			"CONTACT_CREDENTIALS_VIEW": "Wyświetlanie poświadczeń kontaktów",
+			"CONTACT_CREDENTIALS_MANAGE": "Zarządzanie poświadczeniami kontaktów",
+			"CONTACT_CREDITS_EDIT": "Edycja limitów kredytowych kontaktów",
+			"CONTACT_TAX_IDENTITY_EDIT": "Edycja danych podatkowych kontaktów",
+			"STOCK_VIEW": "Wyświetlanie stanów magazynowych",
+			"STOCK_EDIT": "Edycja stanów magazynowych",
+			"STOCK_RECONCILE": "Uzgadnianie stanów magazynowych",
+			"STOCK_TRANSFER_VIEW": "Wyświetlanie przesunięć magazynowych",
+			"STOCK_TRANSFER_CREATE": "Tworzenie przesunięć magazynowych",
+			"STOCK_TRANSFER_APPROVE": "Zatwierdzanie przesunięć magazynowych",
+			"STOCK_TRANSFER_SHIP": "Wysyłka przesunięć magazynowych",
+			"STOCK_TRANSFER_RECEIVE": "Przyjmowanie przesunięć magazynowych",
+			"STOCK_TRANSFER_CANCEL": "Anulowanie przesunięć magazynowych",
+			"WAREHOUSE_ZONES_VIEW": "Wyświetlanie stref magazynowych",
+			"WAREHOUSE_ZONES_CREATE": "Tworzenie stref magazynowych",
+			"WAREHOUSE_ZONES_EDIT": "Edycja stref magazynowych",
+			"WAREHOUSE_ZONES_DELETE": "Usuwanie stref magazynowych",
+			"WAREHOUSE_BINS_VIEW": "Wyświetlanie lokalizacji magazynowych",
+			"WAREHOUSE_BINS_CREATE": "Tworzenie lokalizacji magazynowych",
+			"WAREHOUSE_BINS_EDIT": "Edycja lokalizacji magazynowych",
+			"WAREHOUSE_BINS_DELETE": "Usuwanie lokalizacji magazynowych",
+			"PICK_LISTS_VIEW": "Wyświetlanie list kompletacyjnych",
+			"PICK_LISTS_EDIT": "Edycja list kompletacyjnych",
+			"PICK_LISTS_PICK": "Kompletacja pozycji z list kompletacyjnych",
+			"PICK_LISTS_CANCEL": "Anulowanie list kompletacyjnych",
+			"FULFILLMENTS_VIEW": "Wyświetlanie realizacji zamówień",
+			"FULFILLMENTS_CREATE": "Tworzenie realizacji zamówień",
+			"FULFILLMENTS_EDIT": "Edycja realizacji zamówień",
+			"SHIPPING_OPTIONS_VIEW": "Wyświetlanie opcji wysyłki",
+			"SHIPPING_OPTIONS_CREATE": "Tworzenie opcji wysyłki",
+			"SHIPPING_OPTIONS_EDIT": "Edycja opcji wysyłki",
+			"SHIPPING_OPTIONS_DELETE": "Usuwanie opcji wysyłki",
+			"PURCHASE_ORDERS_VIEW": "Wyświetlanie zamówień zakupu",
+			"PURCHASE_ORDERS_CREATE": "Tworzenie zamówień zakupu",
+			"PURCHASE_ORDERS_EDIT": "Edycja zamówień zakupu",
+			"PURCHASE_ORDERS_APPROVE": "Zatwierdzanie zamówień zakupu",
+			"PURCHASE_ORDERS_SEND": "Wysyłanie zamówień zakupu",
+			"GOODS_RECEIPTS_VIEW": "Wyświetlanie przyjęć towarów",
+			"GOODS_RECEIPTS_CREATE": "Tworzenie przyjęć towarów",
+			"VENDOR_TERMS_VIEW": "Wyświetlanie warunków dostawców",
+			"VENDOR_TERMS_EDIT": "Edycja warunków dostawców",
+			"PAYMENT_PROVIDERS_VIEW": "Wyświetlanie dostawców płatności",
+			"PAYMENT_PROVIDERS_CREATE": "Tworzenie dostawców płatności",
+			"PAYMENT_PROVIDERS_EDIT": "Edycja dostawców płatności",
+			"PAYMENT_PROVIDERS_DELETE": "Usuwanie dostawców płatności",
+			"PAYMENT_SESSIONS_VIEW": "Wyświetlanie sesji płatności",
+			"PAYMENT_SESSIONS_AUTHORIZE": "Autoryzacja płatności",
+			"PAYMENT_SESSIONS_CAPTURE": "Pobieranie płatności",
+			"PAYMENT_SESSIONS_CANCEL": "Anulowanie sesji płatności",
+			"REFUNDS_VIEW": "Wyświetlanie zwrotów płatności",
+			"REFUNDS_CREATE": "Tworzenie zwrotów płatności",
+			"REFUNDS_APPROVE": "Zatwierdzanie zwrotów płatności",
+			"PAYMENT_CALLBACKS_VIEW": "Wyświetlanie wywołań zwrotnych dostawców",
+			"PAYMENT_CALLBACKS_REPROCESS": "Ponowne przetwarzanie wywołań zwrotnych dostawców",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "Wyświetlanie posiadaczy kont płatniczych",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "Edycja posiadaczy kont płatniczych",
+			"PAYMENT_METHOD_TOKENS_VIEW": "Wyświetlanie zapisanych metod płatności",
+			"PAYMENT_METHOD_TOKENS_EDIT": "Edycja zapisanych metod płatności",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "Obciążanie zapisanych metod płatności",
+			"SELLERS_VIEW": "Wyświetlanie sprzedawców",
+			"SELLERS_CREATE": "Tworzenie sprzedawców",
+			"SELLERS_EDIT": "Edycja sprzedawców",
+			"SELLERS_DELETE": "Usuwanie sprzedawców",
+			"SELLER_OFFERINGS_VIEW": "Wyświetlanie ofert sprzedawców",
+			"SELLER_OFFERINGS_EDIT": "Edycja ofert sprzedawców",
+			"SELLER_COMMISSIONS_VIEW": "Wyświetlanie prowizji sprzedawców",
+			"SELLER_COMMISSIONS_EDIT": "Edycja prowizji sprzedawców",
+			"SELLER_TRANSACTIONS_VIEW": "Wyświetlanie transakcji sprzedawców",
+			"SELLER_TRANSACTIONS_SETTLE": "Rozliczanie transakcji sprzedawców",
+			"SELLER_SETTLEMENTS_VIEW": "Wyświetlanie rozliczeń sprzedawców",
+			"SELLER_SETTLEMENTS_EDIT": "Edycja rozliczeń sprzedawców",
+			"SELLER_PAYOUTS_VIEW": "Wyświetlanie wypłat dla sprzedawców",
+			"SELLER_PAYOUTS_CREATE": "Tworzenie wypłat dla sprzedawców",
+			"SELLER_PAYOUTS_APPROVE": "Zatwierdzanie wypłat dla sprzedawców",
+			"SELLER_PAYOUTS_CANCEL": "Anulowanie wypłat dla sprzedawców",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Usuń organizacyjną strategiczną inicjatywę",
+			"INTEGRATION_ADD": "Dodaj integracje",
+			"INTEGRATION_EDIT": "Edytuj integracje",
+			"INTEGRATION_DELETE": "Usuń integracje",
+			"AI_CHAT_ACCESS": "Dostęp do czatu AI",
+			"AI_CHAT_SETTINGS": "Zarządzaj ustawieniami czatu AI",
+			"ORG_JOB_APPLY": "Aplikuj na oferty pracy",
+			"ORG_JOB_SEARCH": "Wyświetl oferty pracy",
+			"ORG_JOB_EDIT": "Edytuj oferty pracy",
+			"ORG_EMPLOYEES_ADD": "Twórz pracowników organizacji",
+			"ORG_EMPLOYEES_DELETE": "Usuń pracowników organizacji",
+			"DAILY_PLAN_CREATE": "Twórz plany dnia",
+			"DAILY_PLAN_READ": "Wyświetl plany dnia",
+			"DAILY_PLAN_UPDATE": "Aktualizuj plany dnia",
+			"DAILY_PLAN_DELETE": "Usuń plany dnia",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Usuń konto jako członka zespołu",
+			"CUSTOM_SMTP_EDIT": "Edytuj niestandardowy serwer SMTP",
+			"IMPORT_ADD": "Importuj swoje dane",
+			"EXPORT_ADD": "Eksportuj swoje dane",
+			"OAUTH_CLIENT_VIEW": "Wyświetl klientów OAuth",
+			"OAUTH_CLIENT_EDIT": "Zarządzaj klientami OAuth"
 		},
 		"BILLING": "Rozliczenie / Faktury",
 		"BUDGET": "Budżet",
@@ -2840,7 +3209,33 @@
 		"ORGANIZATION_ADD": "Dodaj organizację",
 		"IMAGE": "Obraz",
 		"SPRINTS": "Sprinty",
-		"NO_IMAGE": "Obraz niedostępny"
+		"NO_IMAGE": "Obraz niedostępny",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Skonfiguruj nową organizację wraz z adresem, premią i ustawieniami regionalnymi.",
+			"PROGRESS": "Postęp",
+			"STEP_DETAILS": "Szczegóły",
+			"STEP_LOCATION": "Lokalizacja",
+			"STEP_BONUS": "Premia",
+			"STEP_SETTINGS": "Ustawienia",
+			"STEP_EMPLOYEE": "Pracownik",
+			"PROFILE": "Profil",
+			"LOGO": "Logo organizacji",
+			"LOGO_HINT": "Opcjonalnie. Kliknij logo, aby przesłać kwadratowy obraz o wymiarach co najmniej 256 × 256 px.",
+			"BUSINESS": "Dane firmy",
+			"ADDRESS_TITLE": "Adres",
+			"ADDRESS_HINT": "Opcjonalnie. Wyszukaj adres, wpisz go lub kliknij mapę, aby umieścić organizację.",
+			"BONUS_TITLE": "Premia",
+			"BONUS_HINT": "Wybierz sposób obliczania premii pracowników. Możesz to później zmienić w ustawieniach organizacji.",
+			"REGIONAL": "Regionalne",
+			"FISCAL_YEAR": "Rok obrachunkowy",
+			"INVITES": "Zaproszenia",
+			"EMPLOYEE_TITLE": "Zarejestruj się jako pracownik",
+			"EMPLOYEE_HINT": "Dodaj siebie do nowej organizacji jako pracownika.",
+			"BACK": "Wstecz",
+			"CONTINUE": "Dalej",
+			"SKIP": "Pomiń",
+			"CREATE": "Utwórz organizację"
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Odwiedzający",
@@ -3534,17 +3929,20 @@
 		"USER": {
 			"MANAGE": "Zarządzanie zaproszeniami użytkowników",
 			"HEADER": "Zaproś użytkowników",
-			"ACTION": "Zaproś użytkowników"
+			"ACTION": "Zaproś użytkowników",
+			"DESCRIPTION": "Zaproś osoby do dołączenia do Twojej organizacji jako użytkownicy. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Zarządzaj zaproszeniami dla pracowników",
 			"HEADER": "Zaprosić pracowników",
-			"ACTION": "Zaproszenie pracowników"
+			"ACTION": "Zaproszenie pracowników",
+			"DESCRIPTION": "Zaproś osoby do dołączenia do Twojej organizacji jako pracownicy. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Zarządzaj zaproszeniami kandydatów",
 			"HEADER": "Zaproszenie kandydatów",
-			"ACTION": "Zaproszenie kandydatów"
+			"ACTION": "Zaproszenie kandydatów",
+			"DESCRIPTION": "Zaproś kandydatów do procesu rekrutacji. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"SENT": "{{total}} Wysłane zaproszenia",
 		"IGNORED": "Wysłano {{total}} zaproszeń. {{ignored}} zostało już zaproszonych i zostało zignorowanych",
@@ -3554,6 +3952,23 @@
 			"TWO_WEEK": "14 dni",
 			"MONTH": "30 dni",
 			"NEVER": "Nigdy"
+		},
+		"FORM": {
+			"RECIPIENTS": "Odbiorcy",
+			"EMAILS_PLACEHOLDER": "imie@firma.pl",
+			"EMAILS_HINT": "Naciśnij Enter po każdym adresie, aby dodać wielu odbiorców.",
+			"CLEAR_EMAILS": "Wyczyść wszystko",
+			"ACCESS": "Dostęp",
+			"ACCESS_HINT": "Opcjonalnie. Wybierz, do czego nowi członkowie będą mieli dostęp od razu po dołączeniu.",
+			"DETAILS": "Szczegóły zaproszenia",
+			"RECIPIENT_COUNT": "Odbiorcy: {{count}}",
+			"NO_RECIPIENTS": "Nie dodano jeszcze odbiorców"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń zaproszenie",
+			"WARNING": "Zaproszenie dla {{ email }} zostanie trwale usunięte, a jego link przestanie działać. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
+			"CONFIRM": "Usuń zaproszenie"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -3888,6 +4303,12 @@
 		"FOR": "dla",
 		"FROM": "z"
 	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Wróć do listy",
+		"NOT_FOUND": "Ten rekord nie istnieje lub został usunięty.",
+		"FORBIDDEN": "Nie masz uprawnień do wyświetlenia tego rekordu.",
+		"ERROR": "Nie udało się wczytać rekordu."
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Strona nie znaleziona",
 		"TAKE_ME_HOME": "Zabierz mnie do domu",
@@ -4009,6 +4430,39 @@
 		"TIME_TRACKING": "Śledzenie czasu",
 		"ESTIMATE": "Oszacowanie",
 		"DASHBOARD": "Panel nawigacyjny",
+		"ORDERS": "Zamówienia",
+		"CART": "Koszyk",
+		"CATALOG": "Katalog",
+		"PRICING": "Ceny",
+		"TAX": "Podatki",
+		"PROMOTIONS": "Promocje",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "Rejestr magazynowy i rezerwacje",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "Zarządzanie magazynem",
+		"FULFILLMENT": "Realizacja zamówień",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "Zwroty, reklamacje i wymiany",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "Subskrypcje i rozliczenia cykliczne",
+		"PURCHASING": "Zakupy",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "Uprawnienia, aktywacje i klucze licencyjne",
+		"MARKETPLACE": "Marketplace",
+		"GLOBAL_SEARCH": "Wyszukiwanie globalne",
+		"MULTI-CURRENCY_PRICING": "Ceny w wielu walutach",
+		"MULTI-REGION_PRICING": "Ceny w wielu regionach",
+		"MULTI-LOCATION_ALLOCATION": "Alokacja w wielu lokalizacjach",
+		"B2B_CREDIT": "Kredyt B2B",
+		"ORDER_APPROVALS": "Zatwierdzanie zamówień",
+		"GIFT_CARDS": "Karty podarunkowe",
+		"WEBHOOKS": "Webhooki",
+		"EXTERNAL_SEARCH_ENGINE": "Zewnętrzna wyszukiwarka",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "Odczyty z indeksu wyszukiwania",
+		"BACKORDERS": "Zamówienia oczekujące",
+		"PRICE_TIERS": "Progi cenowe",
+		"BULK_API": "API masowe",
+		"DATA_EXPORT": "Eksport danych",
+		"TAX_PROVIDER": "Dostawca podatków",
+		"SUBSCRIPTION_BILLING_RUN": "Cykl rozliczeń subskrypcji",
+		"MARKETPLACE_PAYOUTS": "Wypłaty marketplace",
+		"SCHEDULED_SELLER_PAYOUTS": "Zaplanowane wypłaty dla sprzedawców",
 		"DOCUMENTS": "Dokumenty"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4107,6 +4561,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Przejdź do kokpitu, Zarządzanie statystykami pracowników, Kokpit śledzenia czasu"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Zamówienia, pozycje zamówień, zmiany zamówień, oś czasu zamówienia i powiązanie z fakturami."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "Koszyki i sesja finalizacji zakupu, która zamienia koszyk w zamówienie."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Publikacja produktów i kolekcji, fasety wariantów, powiązania i masowy endpoint katalogu."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Cenniki, ceny produktów, preferencje cenowe, kursy walut i endpointy symulacji."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Kategorie podatkowe, stawki podatkowe i sposób ustalania opodatkowania dokumentu."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Promocje, kampanie, kupony i silnik rabatów, który je ocenia."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Ruchy, rezerwacje, przesunięcia, alerty, korekty, inwentaryzacje i uzgadnianie."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "Endpoint GraphQL i jego resolvery, z tymi samymi zabezpieczeniami i uprawnieniami co REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Strefy, lokalizacje, fale kompletacji, listy kompletacyjne, pakowanie i manifesty przewoźników."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Profile i opcje wysyłki, realizacje, etykiety oraz proces pakowania i manifestów."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "Procesy posprzedażowe: zwroty, reklamacje i wymiany wraz z ich przyczynami i wpływem na stany magazynowe."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Plany, subskrypcje i historia rozliczeń; obciążenia cykliczne to osobna flaga."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Zamówienia zakupu, warunki dostawców i przyjęcia towarów."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Uprawnienia licencyjne, ich aktywacje i wydane dla nich klucze."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Sprzedawcy, oferty, prowizje, wypłaty i rozliczenia."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "Endpointy wyszukiwania, podpowiedzi i faset oraz definicje indeksów, z których korzystają."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "Więcej niż jedna waluta w kanale: kursy walut, nadpisania walut i przewalutowanie."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "Więcej niż jeden region w kanale, z podatkami i wysyłką właściwymi dla regionu."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Alokacja rozdzielona między lokalizacje magazynowe, dostępność w każdej lokalizacji i przesunięcia między nimi."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Limity kredytowe, terminy rozliczeń, okresowe limity wydatków i weryfikacja kredytu przy składaniu zamówienia."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Kierowanie zamówienia przez moduł zatwierdzeń przed jego złożeniem."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Wydawanie i realizacja kart podarunkowych oraz endpoint sprawdzania salda."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Subskrypcje wychodzących webhooków i ich dostarczenia."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Korzystanie z zewnętrznego silnika zamiast wbudowanego dostawcy bazy danych w wyszukiwaniu globalnym."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Kierowanie odczytów do projekcji wyszukiwania zamiast do tabel źródłowych."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Zezwalanie na zamówienie większej ilości niż dostępna i odpowiedź o dostępności na zamówienie."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Ceny zależne od ilości i ceny dla grup kontaktów."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "Endpointy do tworzenia wsadowego."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Strumieniowy eksport katalogu i dokumentów zamówień."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Przekazanie obliczania podatków zewnętrznemu silnikowi za pomocą skonfigurowanych poświadczeń integracji."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "Cykliczne rozliczenie i automatyczne obciążanie."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Przygotowanie, zatwierdzenie i realizacja wypłaty przez dostawcę płatności."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Automatyczne wypłaty zgodnie z harmonogramem wypłat sprzedawcy."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centralne miejsce na dokumenty firmy: przesyłanie, strony wiki, przegląd i wiedza AI"
@@ -4234,7 +4787,40 @@
 		"UNTAGGED": "build bez tagu",
 		"API_UNAVAILABLE": "Wersja API niedostępna",
 		"LEARN_MORE": "Dowiedz się więcej",
-		"ABOUT": "O nas"
+		"ABOUT": "O nas",
+		"GITHUB": {
+			"TITLE": "Na GitHubie",
+			"DESCRIPTION": "Ever Gauzy jest rozwijany otwarcie: śledź wydania, zgłoś problem lub współtwórz.",
+			"RELEASES": "Wydania",
+			"ISSUES": "Zgłoszenia",
+			"PULL_REQUESTS": "Pull requesty",
+			"CONTRIBUTORS": "Współtwórcy",
+			"CONTRIBUTING": "Przewodnik dla współtwórców",
+			"CODE_OF_CONDUCT": "Kodeks postępowania",
+			"LICENSE_FILE": "Licencja"
+		},
+		"CARD": {
+			"IN_SYNC": "Zsynchronizowane",
+			"DIFFERENT": "Różne kompilacje",
+			"RELEASE_NOTES": "Informacje o wydaniu",
+			"COMMIT": "Commit",
+			"REPOSITORY": "Repozytorium"
+		},
+		"ENV": {
+			"TITLE": "Środowisko",
+			"BUILD": "Kompilacja",
+			"PRODUCTION": "Produkcyjna",
+			"DEVELOPMENT": "Deweloperska",
+			"MODE": "Tryb",
+			"DEMO": "Demo",
+			"STANDARD": "Standardowy",
+			"RUNNING_IN": "Działa w",
+			"DESKTOP": "Aplikacja desktopowa",
+			"BROWSER": "Przeglądarka",
+			"API_ADDRESS": "Adres API",
+			"WEB_ADDRESS": "Adres sieciowy",
+			"COPY": "Kopiuj {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "przez",
@@ -5165,7 +5751,40 @@
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres dat, pracownika lub projekt",
 		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}",
 		"NO_TIME_TRACKED": "Brak zarejestrowanego czasu",
-		"MINUTES_TRACKED": "Zarejestrowano {{ minutes }} min"
+		"MINUTES_TRACKED": "Zarejestrowano {{ minutes }} min",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Łączny czas",
+			"APPS_USED": "Używane aplikacje",
+			"SITES_VISITED": "Odwiedzone witryny",
+			"TOP_APP": "Najczęściej używana aplikacja",
+			"TOP_SITE": "Najczęściej odwiedzana witryna",
+			"VIEW": "Widok",
+			"BY_APP": "Wg aplikacji",
+			"BY_SITE": "Wg witryny",
+			"BY_MEMBERS": "Wg członka",
+			"BY_HOURS": "Wg godziny",
+			"SEARCH_APPS": "Szukaj aplikacji…",
+			"SEARCH_SITES": "Szukaj witryn…",
+			"SORT": "Zmień sortowanie",
+			"SORT_TIME": "Najwięcej czasu",
+			"SORT_NAME": "Nazwa A–Z",
+			"LOAD_FAILED": "Nie udało się wczytać aktywności. Spróbuj ponownie.",
+			"NO_MATCH": "Brak wyników dla „{{ search }}”.",
+			"APP": "Aplikacja",
+			"SITE": "Witryna",
+			"TIME": "Czas",
+			"SHOW_PAGES": "Pokaż strony odwiedzone w {{ site }}",
+			"LOADING_PAGES": "Wczytywanie stron…",
+			"PAGES_FAILED": "Nie udało się wczytać stron.",
+			"NO_PAGES": "Dla tej witryny nie zapisano szczegółów stron.",
+			"SHOW_ALL": "Pokaż wszystkie ({{ count }})",
+			"SHOW_LESS": "Pokaż mniej",
+			"UNKNOWN_MEMBER": "Nieznany członek",
+			"APPS_COUNT": "Aplikacje: {{ count }}",
+			"SITES_COUNT": "Witryny: {{ count }}",
+			"OF_TOTAL": "{{ value }} całości",
+			"PAGES_TRUNCATED": "Ta witryna ma więcej rekordów, niż można wyświetlić; zestawienie obejmuje tylko część jej czasu."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -5294,7 +5913,10 @@
 			"payment-receipt": "Wysłać potwierdzenie płatności",
 			"reject-candidate": "Odrzuć Kandydata"
 		},
-		"HTML_EDITOR": "Edytor HTML"
+		"HTML_EDITOR": "Edytor HTML",
+		"FULL_PREVIEW": "Pełny podgląd",
+		"VIEW_GRID": "Siatka",
+		"VIEW_EDITOR": "Edytor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Rurociekle",
@@ -5345,53 +5967,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Dostawca plików",
+		"SHOW_SECRET": "Pokaż sekret",
+		"HIDE_SECRET": "Ukryj sekret",
+		"SUMMARY": {
+			"TITLE": "Bieżąca konfiguracja",
+			"DESCRIPTION": "Ostatnio zapisane ustawienia — używane przez nowe przesyłane pliki.",
+			"PROVIDER": "Dostawca",
+			"BUCKET": "Bucket / nazwa chmury",
+			"REGION": "Region",
+			"ENDPOINT": "Punkt końcowy",
+			"CREDENTIALS": "Dane uwierzytelniające",
+			"CREDENTIALS_SAVED": "Zapisane",
+			"CREDENTIALS_INCOMPLETE": "Niekompletne",
+			"CREDENTIALS_NONE": "Nie ustawiono",
+			"CREDENTIALS_NOT_NEEDED": "Niewymagane",
+			"SERVER_DEFAULT": "Domyślne ustawienie serwera"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Skąd wziąć klucze",
+			"LOCAL": {
+				"NAME": "Dysk lokalny",
+				"DESCRIPTION": "pliki są zapisywane w systemie plików serwera API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "pliki są zapisywane w buckecie AWS S3. Użyj klucza dostępu IAM z prawem odczytu i zapisu do bucketu."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "magazyn w chmurze zgodny z S3. Dane uwierzytelniające są weryfikowane w Wasabi podczas zapisu."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "hosting obrazów i wideo. Nazwa chmury i klucze API znajdują się w konsoli Cloudinary w sekcji API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "magazyn obiektów zgodny z S3 z opcjonalnym CDN. Utwórz klucz dostępu Spaces w panelu sterowania DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Magazyn lokalny",
+			"WHERE": "Przesłane pliki są zapisywane w systemie plików serwera API.",
+			"NO_CONFIG": "Nic do konfigurowania — magazyn lokalny działa od razu.",
+			"WARNING": "Pliki zostaną utracone, jeśli serwer zostanie ponownie wdrożony bez trwałego wolumenu, i nie są współdzielone między wieloma instancjami API. W produkcji użyj dostawcy chmurowego."
+		},
+		"CHECK": {
+			"BUTTON": "Sprawdź konfigurację",
+			"OK": "Wszystkie wymagane pola są wypełnione, a adresy URL są poprawne. Same klucze weryfikuje wyłącznie dostawca.",
+			"OK_LOCAL": "Magazyn lokalny nie wymaga konfiguracji.",
+			"OK_SERVER_DEFAULTS": "Niczego nie brakuje. Te puste pola używają konfiguracji serwera:",
+			"MISSING": "Brakuje:",
+			"INVALID_URL": "Nieprawidłowy adres URL http(s):",
+			"HTTPS_REQUIRED": "Wymagany https:// — klucze są wysyłane na ten adres:"
+		},
 		"S3": {
 			"HEADER": "Konfiguracja S3",
+			"SUBTITLE": "Przechowuj przesłane pliki w buckecie Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Klucz dostępu IAM z prawem odczytu i zapisu do bucketu.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"REGION": "Region AWS bucketu, np. us-east-1 lub eu-west-1.",
+				"BUCKET": "Nazwa bucketu dokładnie taka jak w konsoli S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro"
+				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
-				"SECRET_ACCESS_KEY": "Sekretny klucz dostępu",
+				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro"
+				"BUCKET": "Bucket"
 			}
 		},
 		"WASABI": {
 			"HEADER": "Konfiguracja Wasabi",
+			"SUBTITLE": "Przechowuj przesłane pliki w buckecie Wasabi przez jego API zgodne z S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Para kluczy dostępu z konsoli Wasabi.",
+				"BUCKET": "Bucket i punkt końcowy",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki.",
+				"OPTIONS": "Opcje"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"REGION": "Region bucketu, np. us-east-1 lub eu-central-1.",
+				"SERVICE_URL": "Punkt końcowy S3 dla tego regionu.",
+				"BUCKET": "Małe litery, cyfry, kropki i myślniki. Nazwy są unikalne w całym Wasabi.",
+				"FORCE_PATH_STYLE": "Adresuj pliki jako endpoint/bucket/plik zamiast bucket.endpoint/plik. Pozostaw włączone, chyba że potrzebujesz adresów virtual-hosted."
+			},
+			"SUGGESTED_ENDPOINT": "Punkt końcowy dla tego regionu:",
+			"USE_SUGGESTION": "Użyj",
+			"SAVE_NOTE": "Podczas zapisu Gauzy używa tych danych, aby utworzyć bucket w Wasabi. Jeśli Wasabi odrzuci żądanie, ustawienia nie zostaną zapisane.",
 			"LABELS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro",
-				"SERVICE_URL": "Adres URL usługi"
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Adres URL usługi",
+				"FORCE_PATH_STYLE": "Wymuś adresy URL w stylu ścieżki"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
 				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
 				"REGION": "Region",
-				"BUCKET": "Wiadro",
+				"BUCKET": "Bucket",
 				"SERVICE_URL": "Adres URL usługi"
 			}
 		},
 		"CLOUDINARY": {
 			"HEADER": "Konfiguracja Cloudinary",
+			"SUBTITLE": "Przechowuj przesłane pliki w Cloudinary i udostępniaj je przez jego sieć dostarczania.",
+			"SECTIONS": {
+				"ACCOUNT": "Konto",
+				"ACCOUNT_HINT": "Wszystkie trzy wartości znajdziesz w konsoli Cloudinary w sekcji API Keys.",
+				"DELIVERY": "Dostarczanie",
+				"DELIVERY_HINT": "Jak budowane są linki do przesłanych plików."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Nazwa widoczna u góry konsoli Cloudinary.",
+				"ACCESS_API_KEY": "Identyfikuje konto; używany razem z sekretem API.",
+				"ACCESS_API_SECRET": "Zapisane wartości wracają zamaskowane.",
+				"DELIVERY_URL": "Bazowy adres linków. Zostaw https://res.cloudinary.com, chyba że używasz własnej domeny.",
+				"SECURE": "Twórz linki z https://. Pozostaw True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Nazwa Cloudinary",
-				"ACCESS_API_KEY": "Numer identyfikacyjny klucza dostępu",
-				"ACCESS_API_SECRET": "Sekretny klucz dostępu",
-				"DELIVERY_URL": "Adres dostawy",
-				"SECURE": "Bezpieczny"
+				"CLOUD_NAME": "Nazwa chmury",
+				"ACCESS_API_KEY": "Klucz API",
+				"ACCESS_API_SECRET": "Sekret API",
+				"DELIVERY_URL": "Adres URL dostarczania",
+				"SECURE": "Bezpieczne (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "nazwa Cloudinary",
-				"ACCESS_API_KEY": "Identyfikator klucza dostępu",
-				"ACCESS_API_SECRET": "Sekretny klucz dostępu",
-				"DELIVERY_URL": "Adres URL dostawy",
-				"SECURE": "Bezpieczny"
+				"CLOUD_NAME": "Nazwa chmury",
+				"ACCESS_API_KEY": "Klucz API",
+				"ACCESS_API_SECRET": "Sekret API",
+				"DELIVERY_URL": "Adres URL dostarczania",
+				"SECURE": "Bezpieczne (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Konfiguracja DigitalOcean",
+			"SUBTITLE": "Przechowuj przesłane pliki w DigitalOcean Space przez jego API zgodne z S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Dane uwierzytelniające",
+				"CREDENTIALS_HINT": "Klucz dostępu Spaces z panelu sterowania DigitalOcean.",
+				"BUCKET": "Space i punkt końcowy",
+				"BUCKET_HINT": "Gdzie zapisywane są przesłane pliki.",
+				"OPTIONS": "Opcje"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Publiczna część pary kluczy.",
+				"SECRET_ACCESS_KEY": "Wyświetlany tylko raz, przy tworzeniu klucza. Zapisane wartości wracają zamaskowane.",
+				"SERVICE_URL": "Punkt końcowy centrum danych Twojego Space, np. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Ustawiony na us-east-1, zgodnie z wymaganiami Spaces; centrum danych wynika z punktu końcowego.",
+				"BUCKET": "Nazwa Space.",
+				"CDN_URL": "Opcjonalnie. Punkt końcowy CDN Space, jeśli CDN jest włączony.",
+				"FORCE_PATH_STYLE": "Adresuj pliki jako endpoint/space/plik zamiast space.endpoint/plik."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
+				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Adres URL usługi",
+				"CDN_URL": "Adres URL CDN",
+				"FORCE_PATH_STYLE": "Wymuś adresy URL w stylu ścieżki"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Identyfikator klucza dostępu",
+				"SECRET_ACCESS_KEY": "Tajny klucz dostępu",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Adres URL usługi",
+				"CDN_URL": "Adres URL CDN"
 			}
 		}
 	},
@@ -5429,6 +6189,16 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Zarządzaj SMTP dla '{{ name }}'",
+		"DESCRIPTION_TENANT": "Używany do wiadomości każdej organizacji bez własnego SMTP, takich jak zaproszenia, faktury i powiadomienia o kartach czasu pracy. Bez niego obowiązują domyślne ustawienia poczty serwera. Wiadomości weryfikacji konta i resetowania hasła zawsze używają ustawień serwera.",
+		"DESCRIPTION_ORGANIZATION": "Używany do wiadomości tej organizacji zamiast SMTP najemcy. Zweryfikuj połączenie, a następnie zapisz.",
+		"HINTS": {
+			"FROM_ADDRESS": "Adres nadawcy widoczny dla odbiorców w skrzynce odbiorczej.",
+			"HOST": "Adres Twojego serwera SMTP, np. smtp.gmail.com.",
+			"PORT": "Zwykle 587 (STARTTLS) lub 465 (SSL).",
+			"SECURE": "Dotyczy tylko innych portów: 465 zawsze używa SSL, a 587 zawsze STARTTLS.",
+			"USERNAME": "Konto używane do logowania na serwerze SMTP. Zapisane wartości są zwracane zamaskowane; wpisz ponownie nazwę użytkownika i hasło, aby zmienić te ustawienia.",
+			"PASSWORD": "Hasło lub hasło aplikacji dla tego konta."
+		},
 		"FROM_ADDRESS": "Adres email nadawcy",
 		"HOST": "Gospodarz",
 		"PORT": "Port",
@@ -5440,7 +6210,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Dostawca SMS",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Wysyłaj powiadomienia i zaproszenia SMS przez Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Dokumentacja"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Zarządzaj funkcjami dla '{{ name }}'"
@@ -5490,7 +6262,11 @@
 			"invoice": "Faktura",
 			"estimate": "Szacunek",
 			"receipt": "Paragon"
-		}
+		},
+		"VIEW_GRID": "Siatka",
+		"VIEW_EDITOR": "Edytor",
+		"FULL_PREVIEW": "Pełny podgląd",
+		"SAVED": "Szablon '{{ templateName }}' został zapisany"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Zarejestruj się",

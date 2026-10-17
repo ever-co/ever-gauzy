@@ -1,4 +1,4 @@
-import { OnInit, Component } from '@angular/core';
+import { OnInit, Component, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
@@ -10,6 +10,7 @@ import { EquipmentSharingPolicyService } from '@gauzy/ui-core/core';
     selector: 'ngx-equipment-sharing-policy-mutation',
     templateUrl: './equipment-sharing-policy-mutation.component.html',
     styleUrls: ['./equipment-sharing-policy-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentSharingPolicyMutationComponent extends TranslationBaseComponent implements OnInit {

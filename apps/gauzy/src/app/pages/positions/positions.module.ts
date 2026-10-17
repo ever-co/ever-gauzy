@@ -8,7 +8,7 @@ import {
 	NbInputModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -29,7 +29,7 @@ import { PositionsComponent } from './positions.component';
 		NbIconModule,
 		NbInputModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		TableComponentsModule,
 		CardGridModule,

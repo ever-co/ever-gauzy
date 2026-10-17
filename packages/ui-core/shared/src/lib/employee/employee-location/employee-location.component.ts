@@ -1,4 +1,4 @@
-import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
+import { OnInit, OnDestroy, Component, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { LeafletMapComponent, LocationFormComponent } from '../../forms';
     selector: 'ga-employee-location',
     templateUrl: './employee-location.component.html',
     styleUrls: ['./employee-location.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeLocationComponent implements OnInit, OnDestroy {

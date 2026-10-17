@@ -118,7 +118,7 @@
 						</div>
 						@if (uploader.options.isHTML5) {
 						<div class="col-1" style="white-space: nowrap">
-							{{ item?.file?.size | fileSize }}
+							{{ $safeNavigationMigration(item?.file?.size) | fileSize }}
 						</div>
 						<div class="col-5">
 							<div class="d-flex align-items-center">
@@ -160,7 +160,7 @@
 	</nb-card-body>
 </nb-card>
 
-<nb-card class="mt-3">
+<nb-card class="mt-3 history-card">
 	<nb-card-header>
 		<h4 class="title">
 			{{ 'MENU.IMPORT_EXPORT.IMPORT_HISTORY' | translate }}

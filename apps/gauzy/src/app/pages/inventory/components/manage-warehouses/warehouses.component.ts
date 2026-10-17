@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-warehouse-layout-selector',
@@ -7,6 +7,7 @@ import { Component } from '@angular/core';
 			<router-outlet></router-outlet>
 		</div>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class WarehousesComponent { }

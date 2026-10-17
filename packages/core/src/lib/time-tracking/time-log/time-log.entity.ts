@@ -37,6 +37,12 @@ import {
 } from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
+/**
+ * The organization-wide statistics filter on no employee, hence the second index.
+ * Both are built by `AddTimeLogAndTimeSlotCompositeIndexes1790000024000`.
+ */
+@ColumnIndex('IDX_time_log_tenant_org_employee_started', ['tenantId', 'organizationId', 'employeeId', 'startedAt'])
+@ColumnIndex('IDX_time_log_tenant_org_started', ['tenantId', 'organizationId', 'startedAt'])
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiProperty({ type: () => 'timestamptz' })

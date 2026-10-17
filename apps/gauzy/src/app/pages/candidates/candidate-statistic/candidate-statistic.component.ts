@@ -1,5 +1,5 @@
 import { ICandidate, ICandidateInterview, IEmployee, IOrganization, IPagination } from '@gauzy/contracts';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -17,6 +17,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
     selector: 'ga-candidate-statistic',
     templateUrl: './candidate-statistic.component.html',
     styleUrls: ['./candidate-statistic.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateStatisticComponent implements OnInit, OnDestroy {

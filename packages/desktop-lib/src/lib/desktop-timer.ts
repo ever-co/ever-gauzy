@@ -14,23 +14,34 @@ import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
 import { LocalStore } from './desktop-store';
 import { metaData } from './desktop-wakatime';
-import {
-	ActivityWatchAfkService,
-	ActivityWatchChromeService,
-	ActivityWatchEdgeService,
-	ActivityWatchEventManager,
-	ActivityWatchEventTableList,
-	ActivityWatchFirefoxService,
-	ActivityWatchService,
-	ActivityWatchWindowService
-} from './integrations';
+import { ActivityWatchEventManager, ActivityWatchEventTableList, ActivityWatchService } from './integrations';
 import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
 import { AuditLogHandler } from './audit';
+import {
+	AsyncTimerSyncQueue,
+	DEFAULT_TIMER_QUEUE,
+	IAsyncTimerSyncQueueOptions,
+	isAsyncTimerDataSyncEnabled
+} from './queues/async-timer-sync-queue';
+import { ITimerQueueJob, TimerQueueJobType, TimerQueueProcessor } from './queues/timer-queue-processor';
+import { restoreUtilTypeChecks } from './queues/embedded-queue-node';
 
 // embedded-queue is required lazily inside processWithQueue() to avoid
 // loading it at module import time (before app.ready).
+
+/** How long building a time slot waits for the activity saves queued before it (asynchronous sync only). */
+const ACTIVITY_SETTLE_MS = 5_000;
+/** How long a job that could not be stored waits for the stored jobs ahead of it before running in memory. */
+const FALLBACK_SETTLE_MS = 5_000;
+/** The longest that work bypassing the persistent queue keeps waiting, in rounds of `FALLBACK_SETTLE_MS`, for the jobs stored ahead. */
+const FALLBACK_MAX_WAIT_MS = 60_000;
+/** How many offline sync attempts in a row are skipped while stored timer jobs are still pending, before one goes ahead. */
+const MAX_DEFERRED_SYNCS = 3;
+/** How long quitting waits for the stored jobs to be applied, then for the running one; the rest runs on the next start. */
+const QUIT_SETTLE_MS = 3_000;
+const QUIT_CLOSE_MS = 1_000;
 
 export default class TimerHandler {
 	// How frequently to collect activities (ms)
@@ -61,6 +72,23 @@ export default class TimerHandler {
 	private _activities = [];
 	private _offlineMode: IOfflineMode = DesktopOfflineModeHandler.instance;
 	private _timerService = new TimerService();
+	// Applies queue jobs to the local database, for the in-memory queue and the persistent one alike.
+	private readonly _queueProcessor = new TimerQueueProcessor(this._timerService, this._offlineMode);
+	// Persistent queue of the asynchronous timer data sync (`appSetting.asyncTimerDataSync`, off by default), or null
+	// for the in-memory queue. Decided once, on the first job, so a session never mixes the two queues: a change of
+	// the setting applies from the next start.
+	private _asyncTimerSync: Promise<AsyncTimerSyncQueue | null> | null = null;
+	// The setting is off but an earlier asynchronous session left jobs behind: new jobs queue behind them until none is
+	// left, then the session moves to the in-memory queue.
+	private _drainingLeftovers = false;
+	// Every job for the persistent queue, in submission order (see `submitInOrder`): a job refused by the store must
+	// still run before the newer ones, which would otherwise be stored ahead of it and then overwritten by it.
+	private _submissions: Promise<void> = Promise.resolve();
+	private _submissionsPending = 0;
+	// While refused work waits for the stored jobs ahead: the one deadline all of it shares (see `submitInOrder`).
+	private _fallbackDeadline: number | null = null;
+	private _fallbackDeadlineAudited = false;
+	private _deferredSyncs = 0;
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
 	private readonly _userService: UserService;
@@ -86,7 +114,7 @@ export default class TimerHandler {
 	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		this._activities = [];
 
-		await this._activityWatchService.clearAllEvents();
+		await this.clearActivityEvents(knex);
 
 		this._eventCounter.start();
 		this._activeWindow.start();
@@ -344,10 +372,17 @@ export default class TimerHandler {
 	*/
 	async getAllActivities(knex, lastTimeSlot) {
 		try {
+			// Activity saved before this slot is still queued (asynchronous sync): read the tables once it is written,
+			// or it would miss this slot and, saved after the reset below, land in the next one.
+			if (!(await this.settleTimerJobs(knex, ACTIVITY_SETTLE_MS))) {
+				await this._auditLogHandler.timerAuditError(
+					`[getAllActivities] Activity queued before this time slot was not written within ${ACTIVITY_SETTLE_MS} ms`
+				);
+			}
 			console.log('Get All Activities Start for:', lastTimeSlot);
 			const dataCollection = await this.activitiesCollection(knex, lastTimeSlot);
 			console.log('Get All Activities End for:', lastTimeSlot);
-			const result = await this.takeScreenshotActivities(lastTimeSlot, dataCollection);
+			const result = await this.takeScreenshotActivities(lastTimeSlot, dataCollection, knex);
 			console.log('Get All Activities Result');
 			return result;
 		} catch (error) {
@@ -450,7 +485,7 @@ export default class TimerHandler {
 		}
 	}
 
-	async takeScreenshotActivities(lastTimeSlot, dataCollection) {
+	async takeScreenshotActivities(lastTimeSlot, dataCollection, knex?) {
 		console.log('Take Screenshot Activities Start:', lastTimeSlot);
 
 		const now = moment();
@@ -557,9 +592,9 @@ export default class TimerHandler {
 					timerId: lastTimerId,
 					timeLogId: timeLogId,
 					startedAt: startedAt,
-					activities: dataCollection.allActivities,
-					idsAw: dataCollection.idsAw,
-					idsWakatime: dataCollection.idsWakatime,
+					activities: dataCollection?.allActivities,
+					idsAw: dataCollection?.idsAw,
+					idsWakatime: dataCollection?.idsWakatime,
 					duration: durationNow,
 					activeWindow: null,
 					isAw: projectInfo.aw.isAw,
@@ -578,7 +613,7 @@ export default class TimerHandler {
 			this._eventCounter.reset();
 			console.log('Event Counter Reset');
 
-			await this._activityWatchService.clearAllEvents();
+			await this.clearActivityEvents(knex);
 			console.log('Cleared All Events');
 
 			this._activities = [];
@@ -602,6 +637,10 @@ export default class TimerHandler {
 		 * Stop time interval after stop timer
 		 */
 		await this.stopTimerIntervalPeriod();
+
+		if (quitApp) {
+			await this.closeAsyncTimerSync().catch((error) => console.error('Error releasing the timer queue', error));
+		}
 
 		const lastTimer = await this._timerService.findLastOne();
 
@@ -711,103 +750,336 @@ export default class TimerHandler {
 	}
 
 	private async ProcessQueueMessage(job, knex) {
-		await new Promise(async (resolve) => {
-			const windowService = new ActivityWatchWindowService();
+		try {
+			await this._queueProcessor.process(job.data, knex);
+		} catch (error) {
+			await this.auditQueueJobFailure(job?.data, error);
+		}
+	}
 
-			const typeJob = job.data.type;
+	private async auditQueueJobFailure(job: ITimerQueueJob, error) {
+		await this._auditLogHandler.timerAuditError(
+			`[ProcessQueueMessage] Failed to process queue job (type: ${job?.type}): ${error?.message ?? error}`
+		);
+	}
 
-			try {
-				switch (typeJob) {
-					case ActivityWatchEventTableList.WINDOW:
-						{
-							console.log('Processing Window Event');
-							await windowService.save(job.data.data);
-						}
-						break;
+	/*
+	 * The persistent queue when `appSetting.asyncTimerDataSync` is on, otherwise null (the in-memory queue).
+	 * With the setting off, jobs an earlier asynchronous session left behind keep running, ahead of new jobs, until
+	 * none is left, so turning it off loses nothing and reorders nothing; without that session's file this is a no-op.
+	 * If the persistent queue cannot be opened, or once it is closed, the in-memory queue is used.
+	 */
+	private async asyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
+		this._asyncTimerSync ??= this.openAsyncTimerSync(knex);
+		const queue = await this._asyncTimerSync;
+		if (!queue || queue.isClosed) {
+			return null;
+		}
+		if (this._drainingLeftovers && this.isIdle(queue)) {
+			this._drainingLeftovers = false;
+			this._asyncTimerSync = Promise.resolve(null);
+			await queue.close();
+			return null;
+		}
+		return queue;
+	}
 
-					case ActivityWatchEventTableList.AFK:
-						{
-							console.log('Processing AFK Event');
-							const afkService = new ActivityWatchAfkService();
-							await afkService.save(job.data.data);
-						}
-						break;
+	/* A store that cannot be read counts as busy: jobs keep going to the persistent queue, or fall back from there. */
+	private isIdle(queue: AsyncTimerSyncQueue): boolean {
+		try {
+			return queue.isIdle();
+		} catch {
+			return false;
+		}
+	}
 
-					case ActivityWatchEventTableList.CHROME:
-						{
-							console.log('Processing Chrome Event');
-							const chromeService = new ActivityWatchChromeService();
-							await chromeService.save(job.data.data);
-						}
-						break;
-
-					case ActivityWatchEventTableList.FIREFOX:
-						{
-							console.log('Processing Firefox Event');
-							const firefoxService = new ActivityWatchFirefoxService();
-							await firefoxService.save(job.data.data);
-						}
-						break;
-
-					case ActivityWatchEventTableList.EDGE:
-						{
-							console.log('Processing Edge Event');
-							const edgeService = new ActivityWatchEdgeService();
-							await edgeService.save(job.data.data);
-						}
-						break;
-
-					case 'remove-window-events':
-						console.log('Removing Window Events');
-						await windowService.clear();
-						break;
-
-					case 'remove-wakatime-events':
-						console.log('Removing Wakatime Events');
-						await metaData.removeActivity(knex, {
-							idsWakatime: job.data.data
-						});
-						break;
-
-					case 'update-duration-timer':
-						const pUpdate = {
-							id: job.data.data.id,
-							duration: job.data.data.duration,
-							...(this._offlineMode.enabled && { synced: false })
-						};
-
-						await this._timerService.update(new Timer(pUpdate));
-
-						break;
-
-					case 'update-timer-time-slot':
-						const pUpdateSlot = {
-							id: job.data.data.id,
-							timeslotId: job.data.data.timeSlotId,
-							timesheetId: job.data.data.timeSheetId
-						};
-
-						await this._timerService.update(new Timer(pUpdateSlot));
-
-
-						break;
-
-					default:
-						console.log('Unknown Job Type');
-						break;
-				}
-
-				resolve(true);
-			} catch (error) {
-				await this._auditLogHandler.timerAuditError(
-					`[ProcessQueueMessage] Failed to process queue job (type: ${job?.data?.type}): ${error?.message ?? error}`
+	/*
+	 * Empties the ActivityWatch event tables (`tables`, all five when absent). With the asynchronous sync the reset is a job
+	 * of the timer queue, behind the event saves queued before it: a save still waiting there (a retry, a busy database)
+	 * past the wait a time slot allows is then written before the reset rather than after it, so it can never surface in
+	 * the next time slot. With the in-memory queue, or when the job cannot be stored, the tables are emptied right away,
+	 * as before.
+	 */
+	public async clearActivityEvents(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
+		const queue = await this.asyncTimerSync(knex);
+		if (queue) {
+			const store = () =>
+				queue.processWithQueue(
+					DEFAULT_TIMER_QUEUE,
+					{ type: TimerQueueJobType.CLEAR_ACTIVITY_EVENTS, data: tables?.length ? { tables } : {} },
+					knex
 				);
-				resolve(false);
+			// Not before the event saves queued ahead of it: one written after the reset would land in the next time slot.
+			return this.submitInOrder(queue, 'clearActivityEvents', {
+				store,
+				runInMemory: () => this.resetActivityTables(knex, tables),
+				refused: (error) =>
+					this._auditLogHandler.timerAuditError(
+						`[clearActivityEvents] Could not queue the activity reset, emptying the tables once the saves ahead are written: ${(error as Error)?.message ?? error}`
+					)
+			});
+		}
+		await this.resetActivityTables(knex, tables);
+	}
+
+	/* Empties the ActivityWatch event tables (`tables`, all five when absent) right away. */
+	private async resetActivityTables(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
+		if (!tables?.length) {
+			await this._activityWatchService.clearAllEvents();
+			return;
+		}
+		await this._queueProcessor.process({ type: TimerQueueJobType.CLEAR_ACTIVITY_EVENTS, data: { tables } }, knex);
+	}
+
+	/*
+	 * For offline sync, before it reads what to upload: resolves once the timer jobs stored so far — those an earlier run
+	 * left behind included — have been applied to the local database, so it uploads the timers as they end up rather
+	 * than as they were before a stored duration update ran (false after `timeoutMs`). Always true with the in-memory
+	 * queue, which is not waited for, as before.
+	 */
+	public settleQueuedTimerJobs(knex, timeoutMs: number): Promise<boolean> {
+		return this.settleTimerJobs(knex, timeoutMs);
+	}
+
+	/*
+	 * Whether offline sync may read what to upload now. It waits (up to `timeoutMs`) for the timer jobs stored so far; while
+	 * they are still pending it answers false, so that this sync attempt is skipped and made again on its next trigger,
+	 * rather than upload a timer a pending job is about to change. After `MAX_DEFERRED_SYNCS` skipped attempts in a row it
+	 * answers true anyway, so that a store that never settles cannot hold offline sync back for good. Always true with the
+	 * in-memory queue.
+	 */
+	public async readyForOfflineSync(knex, timeoutMs: number): Promise<boolean> {
+		if (await this.settleTimerJobs(knex, timeoutMs)) {
+			this._deferredSyncs = 0;
+			return true;
+		}
+		if (this._deferredSyncs < MAX_DEFERRED_SYNCS) {
+			this._deferredSyncs++;
+			await this._auditLogHandler.timerAuditInfo(
+				`[readyForOfflineSync] Stored timer jobs still pending after ${timeoutMs} ms; offline sync skipped (${this._deferredSyncs}/${MAX_DEFERRED_SYNCS})`
+			);
+			return false;
+		}
+		this._deferredSyncs = 0;
+		await this._auditLogHandler.timerAuditError(
+			`[readyForOfflineSync] Stored timer jobs still pending after ${MAX_DEFERRED_SYNCS} skipped attempts; offline sync goes ahead`
+		);
+		return true;
+	}
+
+	/*
+	 * Waits for the jobs stored ahead before work that bypasses the persistent queue (a job, or a reset, it could not
+	 * store), so that this work cannot overtake them: in rounds of `FALLBACK_SETTLE_MS`, until they have run or the queue
+	 * is closed — or until `deadline`, so that a store that never settles cannot stall the timer for good (audited once
+	 * per fallback episode). A round that cannot read the store (audited once per wait) pauses and keeps waiting: giving
+	 * up early would let this work overtake the jobs stored ahead. Answers whether the stored jobs ahead were all applied.
+	 */
+	private async waitForStoredJobs(queue: AsyncTimerSyncQueue, caller: string, deadline: number): Promise<boolean> {
+		const failedRounds = { audited: false };
+		while (!queue.isClosed) {
+			const remaining = deadline - Date.now();
+			if (remaining <= 0) {
+				await this.auditFallbackDeadline(caller);
+				return false;
 			}
+			if (await this.settleRound(queue, caller, remaining, deadline, failedRounds)) {
+				return true;
+			}
+		}
+		return true;
+	}
+
+	/*
+	 * One round of `waitForStoredJobs`: whether the stored jobs ahead were all applied within `remaining` (at most
+	 * `FALLBACK_SETTLE_MS`). A round that cannot read the store fails at once rather than waiting: it is audited (once
+	 * per wait), pauses for what it would have waited, and answers false so that the wait goes on.
+	 */
+	private async settleRound(
+		queue: AsyncTimerSyncQueue,
+		caller: string,
+		remaining: number,
+		deadline: number,
+		failedRounds: { audited: boolean }
+	): Promise<boolean> {
+		try {
+			return await queue.settle(Math.min(FALLBACK_SETTLE_MS, remaining));
+		} catch (error) {
+			if (!failedRounds.audited) {
+				failedRounds.audited = true;
+				await this._auditLogHandler.timerAuditError(
+					`[${caller}] Could not wait for the stored timer jobs: ${error?.message ?? error}`
+				);
+			}
+			const pause = Math.min(FALLBACK_SETTLE_MS, Math.max(0, deadline - Date.now()));
+			if (pause > 0) {
+				await new Promise((resolve) => setTimeout(resolve, pause));
+			}
+			return false;
+		}
+	}
+
+	/** Audits, once per fallback episode, that the cut-off passed with stored jobs still pending. */
+	private async auditFallbackDeadline(caller: string): Promise<void> {
+		if (this._fallbackDeadlineAudited) {
+			return;
+		}
+		this._fallbackDeadlineAudited = true;
+		await this._auditLogHandler.timerAuditError(
+			`[${caller}] Stored timer jobs still pending after ${FALLBACK_MAX_WAIT_MS} ms; going ahead without them`
+		);
+	}
+
+	/*
+	 * Hands every job for the persistent queue on in submission order. Each job takes its place synchronously, when it
+	 * is submitted — before anything is awaited — so a newer job can never reach the store while an older one is still
+	 * being stored, refused or run. At its turn a job:
+	 *  1. is stored (the normal case): it then runs after everything stored before it;
+	 *  2. if the store refuses it (audited), is offered once more — a busy database usually accepts the retry;
+	 *  3. if still refused, waits for the jobs stored ahead of it to be applied and runs right here, in memory, so it has
+	 *     finished before the next job's turn;
+	 *  4. if those stored jobs are still pending at the deadline, is offered to the store once more rather than run ahead
+	 *     of them (they would overwrite it when they run), and runs in memory only if that fails too.
+	 * The deadline (`FALLBACK_MAX_WAIT_MS`) is shared by all the refused work of one episode — from the first refusal
+	 * until no submission is pending any more — so a stuck backlog delays the timer once, not once per job.
+	 * A closed queue (quitting) runs the work in memory straight away.
+	 */
+	private submitInOrder(
+		queue: AsyncTimerSyncQueue,
+		caller: string,
+		work: {
+			store: () => Promise<void>;
+			runInMemory: () => Promise<void>;
+			refused: (error: unknown) => Promise<void>;
+		}
+	): Promise<void> {
+		const tryStore = async (): Promise<boolean> => {
+			try {
+				await work.store();
+				return true;
+			} catch {
+				return false;
+			}
+		};
+		this._submissionsPending++;
+		const run = this._submissions.then(async () => {
+			if (queue.isClosed) {
+				return work.runInMemory();
+			}
+			try {
+				return await work.store();
+			} catch (error) {
+				await work.refused(error);
+			}
+			if (await tryStore()) {
+				return;
+			}
+			this._fallbackDeadline ??= Date.now() + FALLBACK_MAX_WAIT_MS;
+			const applied = await this.waitForStoredJobs(queue, caller, this._fallbackDeadline);
+			if (!applied && !queue.isClosed && (await tryStore())) {
+				return;
+			}
+			await work.runInMemory();
 		});
+		this._submissions = run
+			.catch(() => undefined)
+			.finally(() => {
+				if (--this._submissionsPending === 0) {
+					// The episode is over: the next refusal waits for the jobs stored by then, from scratch.
+					this._fallbackDeadline = null;
+					this._fallbackDeadlineAudited = false;
+				}
+			});
+		return run;
+	}
+
+	/*
+	 * Resolves once the timer jobs queued so far have been applied to the local database (false after `timeoutMs`).
+	 * Always true with the in-memory queue, which is not waited for, as before.
+	 */
+	private async settleTimerJobs(knex, timeoutMs: number): Promise<boolean> {
+		const queue = await this.asyncTimerSync(knex);
+		return queue ? queue.settle(timeoutMs).catch(() => false) : true;
+	}
+
+	/*
+	 * When the app quits: applies what the persistent queue holds (bounded) and releases it; the rest runs on the next
+	 * start, and the jobs that still come (e.g. the last time-slot link) use the in-memory queue. Work the store refused
+	 * and that was still waiting its turn runs in memory once the queue is closed: that is waited for too (bounded), so
+	 * that quitting does not drop it with the process.
+	 */
+	private async closeAsyncTimerSync(): Promise<void> {
+		const queue = await this._asyncTimerSync;
+		if (!queue || queue.isClosed) {
+			return;
+		}
+		try {
+			await queue.settle(QUIT_SETTLE_MS);
+		} finally {
+			this._drainingLeftovers = false;
+			this._asyncTimerSync = Promise.resolve(null);
+			await queue.close(QUIT_CLOSE_MS).catch((error) => console.error('Error closing the timer queue', error));
+			await this.settlePendingSubmissions(QUIT_CLOSE_MS);
+		}
+	}
+
+	/* Resolves once the submissions made so far have been stored or run (false after `timeoutMs`). */
+	private async settlePendingSubmissions(timeoutMs: number): Promise<boolean> {
+		if (this._submissionsPending === 0) {
+			return true;
+		}
+		let timer: ReturnType<typeof setTimeout>;
+		const timeout = new Promise<boolean>((resolve) => {
+			timer = setTimeout(() => resolve(false), timeoutMs);
+		});
+		try {
+			return await Promise.race([this._submissions.then(() => true), timeout]);
+		} finally {
+			clearTimeout(timer);
+		}
+	}
+
+	private async openAsyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
+		const options: IAsyncTimerSyncQueueOptions = {
+			processor: this._queueProcessor,
+			offlineMode: this._offlineMode,
+			onJobFailed: (job, error) => this.auditQueueJobFailure(job, error)
+		};
+		try {
+			if (isAsyncTimerDataSyncEnabled(LocalStore.getStore('appSetting'))) {
+				return new AsyncTimerSyncQueue(options).open(knex);
+			}
+			const leftovers = AsyncTimerSyncQueue.openLeftovers(knex, options);
+			this._drainingLeftovers = leftovers !== null;
+			return leftovers;
+		} catch (error) {
+			await this._auditLogHandler.timerAuditError(
+				`[processWithQueue] Persistent timer queue unavailable, using the in-memory queue: ${error?.message ?? error}`
+			);
+		}
+		return null;
 	}
 
 	async processWithQueue(type, data, knex) {
+		const asyncTimerSync = await this.asyncTimerSync(knex);
+
+		if (asyncTimerSync) {
+			// A job the store refuses still runs, in memory, rather than being lost: behind the stored jobs ahead of it,
+			// so it does not overtake them, and ahead of the jobs submitted after it (see `submitInOrder`).
+			return this.submitInOrder(asyncTimerSync, 'processWithQueue', {
+				store: () => asyncTimerSync.processWithQueue(type, data, knex),
+				runInMemory: () => this.ProcessQueueMessage({ data }, knex),
+				refused: (error) =>
+					this._auditLogHandler.timerAuditError(
+						`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${(error as Error)?.message ?? error}`
+					)
+			});
+		}
+
+		return this.processInMemory(type, data, knex);
+	}
+
+	/* The in-memory queue: used when the persistent queue is off or closed. */
+	private async processInMemory(type, data, knex): Promise<void> {
 		const queName = `${type}-${this.appName}`;
 		console.log(`processWithQueue Called for ${queName}`);
 
@@ -815,7 +1087,8 @@ export default class TimerHandler {
 			console.log(`Initializing Queue ${queName}`);
 
 			// Lazy require — deferred from module scope to avoid loading embedded-queue
-			// (and its native dependencies) before app.ready.
+			// (and its native dependencies) before app.ready. Its nedb store needs util checks Node 23 removed.
+			restoreUtilTypeChecks();
 			const EmbeddedQueue = require('embedded-queue');
 
 			this.queue = await EmbeddedQueue.Queue.createQueue({

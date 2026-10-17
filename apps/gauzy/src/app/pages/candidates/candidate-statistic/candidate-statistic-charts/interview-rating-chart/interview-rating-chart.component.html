@@ -5,7 +5,7 @@
     (selectedChange)="onInterviewSelected($event)"
     >
     @for (candidate of candidates; track candidate) {
-      <nb-option-group [title]="candidate.user?.name">
+      <nb-option-group [title]="$safeNavigationMigration(candidate.user?.name)">
         @for (interview of candidate.interview; track interview) {
           <nb-option [value]="interview">
             {{ interview.title }}

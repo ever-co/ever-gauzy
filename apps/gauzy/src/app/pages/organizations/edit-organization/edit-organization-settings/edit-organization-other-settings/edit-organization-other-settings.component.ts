@@ -8,7 +8,8 @@ import {
 	OnInit,
 	QueryList,
 	ViewChild,
-	ViewChildren
+	ViewChildren,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -68,6 +69,7 @@ import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 	selector: 'ga-edit-org-other-settings',
 	templateUrl: './edit-organization-other-settings.component.html',
 	styleUrls: ['./edit-organization-other-settings.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditOrganizationOtherSettingsComponent

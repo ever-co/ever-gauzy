@@ -1,4 +1,4 @@
-import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from "@angular/core";
 import { NG_VALUE_ACCESSOR } from "@angular/forms";
 import { UntilDestroy } from "@ngneat/until-destroy";
 
@@ -13,6 +13,7 @@ import { UntilDestroy } from "@ngneat/until-destroy";
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PhoneFormInputComponent implements OnInit, OnDestroy {

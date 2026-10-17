@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IUser } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -9,6 +9,7 @@ import { PluginSubscriptionAccessFacade } from '../../+state/plugin-subscription
 	selector: 'gauzy-plugin-user-assignment-dialog',
 	templateUrl: './plugin-user-assignment-dialog.component.html',
 	styleUrls: ['./plugin-user-assignment-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PluginUserAssignmentDialogComponent implements OnInit, OnDestroy {

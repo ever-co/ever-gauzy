@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -34,6 +34,7 @@ import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 	selector: 'gz-docs-review-page',
 	templateUrl: './review-page.component.html',
 	styleUrls: ['./review-page.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ReviewPageComponent extends TranslationBaseComponent implements OnInit {

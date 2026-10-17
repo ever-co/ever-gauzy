@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -61,6 +61,7 @@ type JobEmployeeRow = IEmployee & Partial<IEmployeeJobsStatistics>;
 	// JobSearchStoreService provided here so dynamically created cell editors (e.g. JobSearchStatusEditorComponent)
 	// in the smart table can inject it; their injector may not see the module-level provider (NG0201 otherwise).
 	providers: [CurrencyPipe, JobSearchStoreService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
@@ -127,6 +128,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/** Initialize permissions, locale, page tabs/columns, smart table settings, and translation listener. */
+	/**
+	 * The drawer's "expand to full width" icon leads to the employee's page, which requires
+	 * ORG_EMPLOYEES_VIEW; viewers without it get no icon rather than a redirect.
+	 */
+	get canOpenEmployeePage(): boolean {
+		return this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
+	}
+
 	ngOnInit(): void {
 		this._initializeUiPermissions();
 		this._initializeUiLanguagesAndLocale();

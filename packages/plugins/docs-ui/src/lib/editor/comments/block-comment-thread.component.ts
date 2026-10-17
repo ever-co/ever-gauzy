@@ -8,12 +8,12 @@ import {
 	Input,
 	OnChanges,
 	Output,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild,
 	inject
 } from '@angular/core';
 import { NbBadgeModule, NbButtonModule, NbIconModule, NbInputModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { BaseEntityEnum, IComment, ID, PermissionsEnum } from '@gauzy/contracts';
 import { EmployeesService, Store, ToastrService } from '@gauzy/ui-core/core';
@@ -62,7 +62,7 @@ export interface IBlockThread {
 	standalone: true,
 	imports: [
 		CommonModule,
-		TranslateModule,
+		TranslatePipe,
 		NbBadgeModule,
 		NbButtonModule,
 		NbIconModule,

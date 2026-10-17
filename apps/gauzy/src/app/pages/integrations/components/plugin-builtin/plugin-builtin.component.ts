@@ -14,7 +14,7 @@ import {
 	NbTagModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IntegrationFiltersBase } from '../../integration-filters.base';
 
 @Component({
@@ -34,7 +34,7 @@ import { IntegrationFiltersBase } from '../../integration-filters.base';
 		NbSpinnerModule,
 		NbTagModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslatePipe,
 		ReplacePipe
 	]
 })

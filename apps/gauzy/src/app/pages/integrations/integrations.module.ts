@@ -14,7 +14,7 @@ import {
 	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { IntegrationListComponent } from './components/integration-list/list.component';
 import { IntegrationsComponent } from './integrations.component';
@@ -35,7 +35,7 @@ import { IntegrationLayoutComponent } from './layout/layout.component';
 		NbButtonGroupModule,
 		RouterModule.forChild([]),
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		SmartDataViewLayoutModule,
 		TableComponentsModule,

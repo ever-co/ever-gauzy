@@ -1,234 +1,275 @@
 <form [formGroup]="form" autocomplete-off>
-	<div class="row">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="emails" class="label">
-					{{ 'FORM.LABELS.EMAILS' | translate }}
-				</label>
-				<nb-form-field>
-					<nb-tag-list class="custom-tag-list" (tagRemove)="onEmailRemove($event)">
-						@for (email of emails; track email) {
-						<nb-tag [text]="email" [size]="'tiny'" removable></nb-tag>
+	<!-- Recipients -->
+	<section class="form-section">
+		<div class="form-group">
+			<label for="emails" class="label">
+				{{ 'FORM.LABELS.EMAILS' | translate }}
+			</label>
+			<nb-form-field>
+				<nb-tag-list class="custom-tag-list" (tagRemove)="onEmailRemove($event)">
+					@for (email of emails; track email) {
+					<nb-tag [text]="email" [size]="'tiny'" removable></nb-tag>
+					}
+					<input
+						id="emails"
+						type="text"
+						name="emails"
+						nbTagInput
+						fullWidth
+						aria-describedby="emails-hint"
+						[placeholder]="emails.size > 0 ? '' : ('INVITE_PAGE.FORM.EMAILS_PLACEHOLDER' | translate)"
+						(tagAdd)="onEmailAdd($event)"
+						(focusout)="onFocusOut($event)"
+						[status]="FormHelpers.isInvalidControl(form, 'emails') ? 'danger' : 'basic'"
+					/>
+				</nb-tag-list>
+				@if (emails.size > 0) {
+				<button
+					nbSuffix
+					type="button"
+					class="clear-emails"
+					[attr.aria-label]="'INVITE_PAGE.FORM.CLEAR_EMAILS' | translate"
+					[nbTooltip]="'INVITE_PAGE.FORM.CLEAR_EMAILS' | translate"
+					(click)="onResetEmails()"
+				>
+					<nb-icon icon="close-outline" pack="eva"></nb-icon>
+				</button>
+				}
+			</nb-form-field>
+			<p id="emails-hint" class="hint">
+				<nb-icon icon="info-outline" pack="eva" aria-hidden="true"></nb-icon>
+				{{ 'INVITE_PAGE.FORM.EMAILS_HINT' | translate }}
+			</p>
+		</div>
+	</section>
+
+	<!-- Access (optional pre-assignments) -->
+	@if (invitationType === invitationTypeEnum.EMPLOYEE || invitationType === invitationTypeEnum.CANDIDATE) {
+	<section class="form-section">
+		<header class="section-header">
+			<h6 class="section-title">
+				<nb-icon icon="lock-outline" pack="eva"></nb-icon>
+				{{ 'INVITE_PAGE.FORM.ACCESS' | translate }}
+			</h6>
+			<p class="section-hint">{{ 'INVITE_PAGE.FORM.ACCESS_HINT' | translate }}</p>
+		</header>
+		<div class="row">
+			@if (invitationType === invitationTypeEnum.EMPLOYEE) {
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="label-with-select">
+						<label for="projectSelection" class="label">
+							{{ 'FORM.LABELS.PROJECTS_OPTIONAL' | translate }}
+						</label>
+						<button nbButton ghost size="tiny" status="primary" type="button" class="select-all" (click)="selectAllProjects()">
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</div>
+					<ng-select
+						id="projectSelection"
+						class="adjust-height"
+						[hideSelected]="false"
+						[multiple]="true"
+						bindLabel="name"
+						bindValue="id"
+						appendTo="body"
+						formControlName="projects"
+						[placeholder]="'FORM.PLACEHOLDERS.PROJECTS' | translate"
+						(change)="detectChanges()"
+					>
+						@for (project of organizationProjects; track project) {
+						<ng-option [value]="project.id">
+							{{ project.name }}
+						</ng-option>
 						}
-						<input
-							id="emails"
-							type="text"
-							name="emails"
-							nbTagInput
-							fullWidth
-							(tagAdd)="onEmailAdd($event)"
-							(focusout)="onFocusOut($event)"
-							[status]="FormHelpers.isInvalidControl(form, 'emails') ? 'danger' : 'basic'"
-						/>
-					</nb-tag-list>
-					@if (emails.size > 0) {
-					<nb-icon nbSuffix icon="close-outline" pack="eva" (click)="onResetEmails()"></nb-icon>
-					}
-				</nb-form-field>
+					</ng-select>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="label-with-select">
+						<label for="contactSelection" class="label">
+							{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
+						</label>
+						<button nbButton ghost size="tiny" status="primary" type="button" class="select-all" (click)="selectAllOrganizationContacts()">
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</div>
+					<ng-select
+						id="contactSelection"
+						class="adjust-height"
+						[hideSelected]="false"
+						[multiple]="true"
+						bindLabel="name"
+						bindValue="id"
+						appendTo="body"
+						formControlName="organizationContacts"
+						[placeholder]="'FORM.PLACEHOLDERS.CONTACTS' | translate"
+						(change)="detectChanges()"
+					>
+						@for (contact of organizationContacts; track contact) {
+						<ng-option [value]="contact.id">
+							{{ contact.name }}
+						</ng-option>
+						}
+					</ng-select>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="label-with-select">
+						<label for="teamSelection" class="label">
+							{{ 'FORM.LABELS.TEAMS_OPTIONAL' | translate }}
+						</label>
+						<button nbButton ghost size="tiny" status="primary" type="button" class="select-all" (click)="selectAllTeams()">
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</div>
+					<ng-select
+						id="teamSelection"
+						class="adjust-height"
+						[hideSelected]="false"
+						[multiple]="true"
+						bindLabel="name"
+						bindValue="id"
+						appendTo="body"
+						formControlName="teams"
+						[placeholder]="'FORM.PLACEHOLDERS.TEAMS' | translate"
+						(change)="detectChanges()"
+					>
+						@for (team of organizationTeams; track team) {
+						<ng-option [value]="team.id">
+							{{ team.name }}
+						</ng-option>
+						}
+					</ng-select>
+				</div>
+			</div>
+			}
+			<div
+				[class.col-sm-6]="invitationType === invitationTypeEnum.EMPLOYEE"
+				[class.col-12]="!(invitationType === invitationTypeEnum.EMPLOYEE)"
+			>
+				<div class="form-group">
+					<div class="label-with-select">
+						<label for="departmentSelection" class="label">
+							{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
+						</label>
+						<button nbButton ghost size="tiny" status="primary" type="button" class="select-all" (click)="selectAllDepartments()">
+							{{ 'BUTTONS.SELECT_ALL' | translate }}
+						</button>
+					</div>
+					<ng-select
+						id="departmentSelection"
+						class="adjust-height"
+						[hideSelected]="false"
+						[multiple]="true"
+						bindLabel="name"
+						bindValue="id"
+						appendTo="body"
+						formControlName="departments"
+						[placeholder]="'FORM.PLACEHOLDERS.DEPARTMENTS' | translate"
+						(change)="detectChanges()"
+					>
+						@for (department of organizationDepartments; track department) {
+						<ng-option [value]="department.id">
+							{{ department.name }}
+						</ng-option>
+						}
+					</ng-select>
+				</div>
 			</div>
 		</div>
-	</div>
-	@if (invitationType === invitationTypeEnum.CANDIDATE) {
-	<div class="row">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="appliedDate" class="label">
-					{{ 'FORM.LABELS.APPLIED_DATE_LABEL' | translate }}
-				</label>
-				<input
-					id="appliedDate"
-					[nbDatepicker]="appliedDatePicker"
-					nbInput
-					fullWidth
-					[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
-					formControlName="appliedDate"
-				/>
-				<nb-datepicker #appliedDatePicker></nb-datepicker>
-			</div>
-		</div>
-	</div>
-	} @if (invitationType === invitationTypeEnum.EMPLOYEE) {
-	<div class="row">
-		<div class="col-sm-6">
-			<div class="form-group">
-				<label for="projectSelection" class="label label-with-select">
-					{{ 'FORM.LABELS.PROJECTS_OPTIONAL' | translate }}
-					<button nbButton ghost size="tiny" type="button" (click)="selectAllProjects()">
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="projectSelection"
-					class="adjust-height"
-					[hideSelected]="false"
-					[multiple]="true"
-					bindLabel="name"
-					bindValue="id"
-					appendTo="body"
-					formControlName="projects"
-					[placeholder]="'FORM.PLACEHOLDERS.PROJECTS' | translate"
-					(change)="detectChanges()"
-				>
-					@for (project of organizationProjects; track project) {
-					<ng-option [value]="project.id">
-						{{ project.name }}
-					</ng-option>
-					}
-				</ng-select>
-			</div>
-		</div>
-		<div class="col-sm-6">
-			<div class="form-group">
-				<label for="contactSelection" class="label label-with-select">
-					{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
-					<button nbButton ghost size="tiny" type="button" (click)="selectAllOrganizationContacts()">
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="contactSelection"
-					class="adjust-height"
-					[hideSelected]="false"
-					[multiple]="true"
-					bindLabel="name"
-					bindValue="id"
-					appendTo="body"
-					formControlName="organizationContacts"
-					[placeholder]="'FORM.PLACEHOLDERS.CONTACTS' | translate"
-					(change)="detectChanges()"
-				>
-					@for (contact of organizationContacts; track contact) {
-					<ng-option [value]="contact.id">
-						{{ contact.name }}
-					</ng-option>
-					}
-				</ng-select>
-			</div>
-		</div>
-	</div>
-	} @if (invitationType === invitationTypeEnum.EMPLOYEE || invitationType === invitationTypeEnum.CANDIDATE) {
-	<div class="row">
-		@if (invitationType === invitationTypeEnum.EMPLOYEE) {
-		<div class="col-6">
-			<div class="form-group">
-				<label for="teamSelection" class="label label-with-select">
-					{{ 'FORM.LABELS.TEAMS_OPTIONAL' | translate }}
-					<button nbButton ghost size="tiny" type="button" (click)="selectAllTeams()">
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="teamSelection"
-					class="adjust-height"
-					[hideSelected]="false"
-					[multiple]="true"
-					bindLabel="name"
-					bindValue="id"
-					appendTo="body"
-					formControlName="teams"
-					[placeholder]="'FORM.PLACEHOLDERS.TEAMS' | translate"
-					(change)="detectChanges()"
-				>
-					@for (team of organizationTeams; track team) {
-					<ng-option [value]="team.id">
-						{{ team.name }}
-					</ng-option>
-					}
-				</ng-select>
+	</section>
+	}
+
+	<!-- Invitation details -->
+	<section class="form-section">
+		<header class="section-header">
+			<h6 class="section-title">
+				<nb-icon icon="settings-2-outline" pack="eva"></nb-icon>
+				{{ 'INVITE_PAGE.FORM.DETAILS' | translate }}
+			</h6>
+		</header>
+		@if (invitationType === invitationTypeEnum.USER) {
+		<div class="row">
+			<div class="col-12">
+				<ngx-role-form-field
+					id="role"
+					formControlName="role"
+					[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
+					[label]="'FORM.LABELS.ROLE' | translate"
+					[excludes]="excludes"
+					(selectedChange)="onSelectionChange($event)"
+				></ngx-role-form-field>
 			</div>
 		</div>
 		}
-		<div
-			[class.col-6]="invitationType === invitationTypeEnum.EMPLOYEE"
-			[class.col-12]="!(invitationType === invitationTypeEnum.EMPLOYEE)"
-		>
-			<div class="form-group">
-				<label for="departmentSelection" class="label label-with-select">
-					{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
-					<button nbButton ghost size="tiny" type="button" (click)="selectAllDepartments()">
-						{{ 'BUTTONS.SELECT_ALL' | translate }}
-					</button>
-				</label>
-				<ng-select
-					id="departmentSelection"
-					class="adjust-height"
-					[hideSelected]="false"
-					[multiple]="true"
-					bindLabel="name"
-					bindValue="id"
-					appendTo="body"
-					formControlName="departments"
-					[placeholder]="'FORM.PLACEHOLDERS.DEPARTMENTS' | translate"
-					(change)="detectChanges()"
-				>
-					@for (department of organizationDepartments; track department) {
-					<ng-option [value]="department.id">
-						{{ department.name }}
-					</ng-option>
-					}
-				</ng-select>
-			</div>
-		</div>
-	</div>
-	} @if (invitationType === invitationTypeEnum.USER) {
-	<div class="row">
-		<div class="col-12">
-			<ngx-role-form-field
-				id="role"
-				formControlName="role"
-				[placeholder]="'FORM.PLACEHOLDERS.ROLE' | translate"
-				[label]="'FORM.LABELS.ROLE' | translate"
-				[excludes]="excludes"
-				(selectedChange)="onSelectionChange($event)"
-			></ngx-role-form-field>
-		</div>
-	</div>
-	} @if (invitationType !== invitationTypeEnum.CANDIDATE) {
-	<div class="row">
-		<div class="col-sm-6">
-			<div class="form-group">
-				<label for="startedWorkOn" class="label">
-					{{ 'FORM.LABELS.START_DATE' | translate }}
-					<nb-icon
-						[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate"
-						icon="question-mark-circle-outline"
-					></nb-icon>
-				</label>
-				<nb-form-field>
+		<div class="row">
+			@if (invitationType === invitationTypeEnum.CANDIDATE) {
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label for="appliedDate" class="label">
+						{{ 'FORM.LABELS.APPLIED_DATE_LABEL' | translate }}
+					</label>
 					<input
-						id="startedWorkOn"
-						[nbDatepicker]="startedWorkDatepicker"
+						id="appliedDate"
+						[nbDatepicker]="appliedDatePicker"
 						nbInput
 						fullWidth
 						[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
-						formControlName="startedWorkOn"
+						formControlName="appliedDate"
 					/>
-					<nb-datepicker #startedWorkDatepicker></nb-datepicker>
-				</nb-form-field>
+					<nb-datepicker #appliedDatePicker></nb-datepicker>
+				</div>
 			</div>
-		</div>
-	</div>
-	} @if (invitationExpiryOptions.length > 0) {
-	<div class="row">
-		<div class="col-sm-6">
-			<div class="form-group">
-				<label for="invitationExpirationPeriod" class="label">
-					{{ 'FORM.LABELS.INVITATION_EXPIRATION' | translate }}
-				</label>
-				<nb-select
-					id="invitationExpirationPeriod"
-					fullWidth
-					[placeholder]="'FORM.PLACEHOLDERS.INVITATION_EXPIRATION' | translate"
-					formControlName="invitationExpirationPeriod"
-				>
-					@for (option of invitationExpiryOptions; track option) {
-					<nb-option [value]="option?.value">
-						{{ option?.label }}
-					</nb-option>
-					}
-				</nb-select>
+			} @if (invitationType !== invitationTypeEnum.CANDIDATE) {
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label for="startedWorkOn" class="label label-with-icon">
+						{{ 'FORM.LABELS.START_DATE' | translate }}
+						<nb-icon
+							class="help-icon"
+							[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate"
+							icon="question-mark-circle-outline"
+							pack="eva"
+						></nb-icon>
+					</label>
+					<nb-form-field>
+						<nb-icon nbPrefix icon="calendar-outline" pack="eva"></nb-icon>
+						<input
+							id="startedWorkOn"
+							[nbDatepicker]="startedWorkDatepicker"
+							nbInput
+							fullWidth
+							[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
+							formControlName="startedWorkOn"
+						/>
+						<nb-datepicker #startedWorkDatepicker></nb-datepicker>
+					</nb-form-field>
+				</div>
 			</div>
+			} @if (invitationExpiryOptions.length > 0) {
+			<div class="col-sm-6">
+				<div class="form-group">
+					<label for="invitationExpirationPeriod" class="label">
+						{{ 'FORM.LABELS.INVITATION_EXPIRATION' | translate }}
+					</label>
+					<nb-select
+						id="invitationExpirationPeriod"
+						fullWidth
+						[placeholder]="'FORM.PLACEHOLDERS.INVITATION_EXPIRATION' | translate"
+						formControlName="invitationExpirationPeriod"
+					>
+						@for (option of invitationExpiryOptions; track option) {
+						<nb-option [value]="$safeNavigationMigration(option?.value)">
+							{{ option?.label }}
+						</nb-option>
+						}
+					</nb-select>
+				</div>
+			</div>
+			}
 		</div>
-	</div>
-	}
+	</section>
 </form>

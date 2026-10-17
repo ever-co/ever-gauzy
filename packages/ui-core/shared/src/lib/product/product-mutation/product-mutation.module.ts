@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	OrganizationsService,
 	ProductCategoryService,
@@ -31,7 +31,7 @@ import { ProductOptionGroupTranslationsComponent } from './product-option-group-
 		NbCardModule,
 		CommonModule,
 		NbIconModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		LanguageSelectorModule,
 		ImageUploaderModule,
 		FormsModule,

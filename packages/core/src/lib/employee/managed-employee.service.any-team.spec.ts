@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { In } from 'typeorm';
+import { Equal, In, IsNull, Or } from 'typeorm';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ManagedEmployeeService } from './managed-employee.service';
@@ -46,8 +46,8 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 		expect(teamEmployeeRepository.find.mock.calls[0][0].where).toEqual({
 			employeeId: ACTOR_ID,
 			isManager: true,
-			isActive: true,
-			isArchived: false,
+			isActive: Or(IsNull(), Equal(true)),
+			isArchived: Or(IsNull(), Equal(false)),
 			tenantId: TENANT_ID,
 			organizationTeam: { organizationId: ORGANIZATION_ID }
 		});
@@ -55,8 +55,8 @@ describe('ManagedEmployeeService.canManageEmployee without a team context', () =
 		expect(teamEmployeeRepository.existsBy).toHaveBeenCalledWith({
 			employeeId: TARGET_ID,
 			organizationTeamId: In([TEAM_ID]),
-			isActive: true,
-			isArchived: false,
+			isActive: Or(IsNull(), Equal(true)),
+			isArchived: Or(IsNull(), Equal(false)),
 			tenantId: TENANT_ID
 		});
 	});

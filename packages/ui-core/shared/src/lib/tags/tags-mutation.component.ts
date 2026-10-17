@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +12,7 @@ import { NotesWithTagsComponent } from '../table-components';
     selector: 'ngx-tags-mutation',
     templateUrl: './tags-mutation.component.html',
     styleUrls: ['./tags-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {

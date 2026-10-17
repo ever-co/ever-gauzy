@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { IDailyActivity } from '@gauzy/contracts';
 
@@ -6,6 +6,7 @@ import { IDailyActivity } from '@gauzy/contracts';
     selector: 'ngx-activity-item',
     templateUrl: './activity-item.component.html',
     styleUrls: ['./activity-item.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ActivityItemComponent implements OnInit, OnDestroy {

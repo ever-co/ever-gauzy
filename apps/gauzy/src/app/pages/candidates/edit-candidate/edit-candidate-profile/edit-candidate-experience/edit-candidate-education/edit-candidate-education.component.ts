@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,6 +14,7 @@ import { DateViewComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core
     selector: 'ga-edit-candidate-education',
     templateUrl: './edit-candidate-education.component.html',
     styleUrls: ['./edit-candidate-education.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateEducationComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

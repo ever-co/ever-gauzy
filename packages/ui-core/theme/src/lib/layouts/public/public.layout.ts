@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Inject, PLATFORM_ID, ViewChild, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Inject, PLATFORM_ID, ViewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { tap } from 'rxjs/operators';
 import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
@@ -12,6 +12,7 @@ import { WindowModeBlockScrollService } from '../../services';
     selector: 'ngx-public-layout',
     styleUrls: ['./public.layout.scss'],
     templateUrl: './public.layout.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PublicLayoutComponent implements OnInit, AfterViewInit {

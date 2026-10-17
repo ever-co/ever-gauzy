@@ -14,15 +14,11 @@ const requestContext = {
 	tenantId: 'tenant-1' as string | null
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		RequestContext: {
-			currentTenantId: () => requestContext.tenantId
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/core', () => ({
+	RequestContext: {
+		currentTenantId: () => requestContext.tenantId
+	}
+}));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));
 jest.mock('./document.service', () => ({ DocumentService: class {} }));

@@ -49,14 +49,12 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		case 'win32':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
 					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
@@ -65,8 +63,7 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean) {
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		default:

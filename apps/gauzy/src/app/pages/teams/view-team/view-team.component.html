@@ -1,0 +1,871 @@
+<nb-card>
+	<nb-card-header class="ev-header">
+		@if (team) {
+		<!-- ── Team header: identity, live presence, and the actions on it ── -->
+		<div class="profile-row">
+			<span class="avatar team-avatar" [style.--team-color]="team.color || null" [class.has-color]="!!team.color && !logoUrl">
+				@if (logoUrl) {
+				<img [src]="logoUrl" [alt]="team.name" />
+				} @else if (team.emoji) {
+				<span class="team-emoji" aria-hidden="true">{{ team.emoji }}</span>
+				} @else {
+				<span class="avatar-initials" aria-hidden="true">{{ initials }}</span>
+				}
+			</span>
+
+			<div class="profile-text">
+				<div class="profile-name-row">
+					<h4 class="profile-name">{{ team.name }}</h4>
+					<span class="chip status-chip" [class.tone-success]="team.public">
+						<nb-icon [icon]="team.public ? 'globe-2-outline' : 'lock-outline'" aria-hidden="true"></nb-icon>
+						{{ (team.public ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PUBLIC' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PRIVATE') | translate }}
+					</span>
+					@if (team.prefix) {
+					<span class="chip" [title]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PREFIX' | translate">{{ team.prefix }}</span>
+					}
+				</div>
+				<div class="profile-sub">
+					<span>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.MEMBERS_COUNT' | translate : { count: members.length } }}</span>
+					<span class="live" [class.is-live]="trackingNow > 0">
+						<span class="live-dot" aria-hidden="true"></span>
+						{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.LIVE' | translate : { tracking: trackingNow, online: onlineNow } }}
+					</span>
+				</div>
+				@if (tags.length) {
+				<div class="profile-traits">
+					@for (tag of tags; track $index) {
+					<span class="chip chip--swatch"><span class="swatch" [style.background-color]="tag.color"></span>{{ tag.name }}</span>
+					}
+				</div>
+				}
+			</div>
+
+			<div class="profile-actions">
+				<ngx-back-navigation class="back"></ngx-back-navigation>
+				<ngx-favorite-toggle
+					[entityType]="BaseEntityEnum.OrganizationTeam"
+					[entityId]="team.id"
+					[entityName]="team.name"
+					size="small"
+					status="basic"
+					spacing="list"
+					[showLabel]="false"
+				></ngx-favorite-toggle>
+			</div>
+		</div>
+
+		<!-- ── Facts strip ──────────────────────────────────────────────────── -->
+		<dl class="facts">
+			<div class="fact">
+				<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS' | translate }}</dt>
+				<dd>{{ members.length }}</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS' | translate }}</dt>
+				<dd>
+					{{ managers.length }}
+					@if (managers.length) {
+					<span class="fact-meta">{{ managers[0].name }}{{ managers.length > 1 ? ' +' + (managers.length - 1) : '' }}</span>
+					}
+				</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}</dt>
+				<dd>{{ projects.length }}</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'SM_TABLE.TIME_TRACKING' | translate }}</dt>
+				<dd>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OF_MEMBERS' | translate : { count: trackingEnabledCount, total: members.length } }}</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.CREATED' | translate }}</dt>
+				<dd>
+					{{ createdOn || '—' }}
+					@if (age) {
+					<span class="fact-meta">{{ age }}</span>
+					}
+				</dd>
+			</div>
+		</dl>
+
+		<!-- ── Tabs, with the period controls on the Overview's own line ── -->
+		<div class="tab-row">
+			<div class="tabs" role="tablist">
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					id="team-view-tab-overview"
+					aria-controls="team-view-pane-overview"
+					[class.is-active]="tab === 'overview'"
+					[attr.aria-selected]="tab === 'overview'"
+					(click)="tab = 'overview'"
+				>
+					{{ 'EMPLOYEES_PAGE.VIEW.TABS.OVERVIEW' | translate }}
+				</button>
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					id="team-view-tab-members"
+					aria-controls="team-view-pane-members"
+					[class.is-active]="tab === 'members'"
+					[attr.aria-selected]="tab === 'members'"
+					(click)="tab = 'members'"
+				>
+					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS' | translate }}
+					<span class="tab-count">{{ members.length }}</span>
+				</button>
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					id="team-view-tab-details"
+					aria-controls="team-view-pane-details"
+					[class.is-active]="tab === 'details'"
+					[attr.aria-selected]="tab === 'details'"
+					(click)="tab = 'details'"
+				>
+					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TABS.DETAILS' | translate }}
+				</button>
+			</div>
+			@if (tab !== 'details') {
+			<div class="period">
+				<span class="period-range">
+					<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+					{{ rangeLabel }}
+				</span>
+				<nb-select
+					class="period-switcher"
+					size="small"
+					status="basic"
+					[(selected)]="period"
+					[attr.aria-label]="'EMPLOYEES_PAGE.VIEW.PERIOD' | translate"
+				>
+					@for (option of periods; track option) {
+					<nb-option [value]="option">{{ 'EMPLOYEES_PAGE.VIEW.PERIODS.' + option | translate }}</nb-option>
+					}
+				</nb-select>
+			</div>
+			}
+		</div>
+		}
+	</nb-card-header>
+
+	<nb-card-body class="ev-body" [nbSpinner]="state === 'loading'" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		@if (state === 'not-found') {
+		<div class="state">
+			<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
+			<p>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_FOUND' | translate }}</p>
+			<a nbButton size="small" status="basic" routerLink="/pages/organization/teams">
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+				{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}
+			</a>
+		</div>
+		} @else if (state === 'error') {
+		<div class="state">
+			<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+			<p>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.LOAD_FAILED' | translate }}</p>
+			<button nbButton size="small" status="basic" (click)="loadTeam()">
+				<nb-icon icon="refresh-outline"></nb-icon>
+				{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.RETRY' | translate }}
+			</button>
+		</div>
+		} @else if (team) {
+		@if (tab === 'overview') {
+		<div class="tab-pane" role="tabpanel" id="team-view-pane-overview" aria-labelledby="team-view-tab-overview">
+			<!-- ── Summary: the team's period against the previous one ── -->
+			<section class="summary" [nbSpinner]="counts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<div class="summary-cell">
+					<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.WORKED_TODAY' | translate }}</span>
+					<span class="summary-value">{{ counts.failed ? '—' : formatDuration($safeNavigationMigration(counts.value?.todayDuration)) }}</span>
+					<span class="summary-meta">
+						{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent($safeNavigationMigration(counts.value?.todayActivities)) } }}
+					</span>
+				</div>
+
+				<div class="summary-cell">
+					<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.WORKED_PERIOD' | translate }}</span>
+					<span class="summary-value">{{ counts.failed ? '—' : formatDuration($safeNavigationMigration(counts.value?.weekDuration)) }}</span>
+					<ng-container *ngTemplateOutlet="deltaTpl; context: { $implicit: durationDelta }"></ng-container>
+				</div>
+
+				<div class="summary-cell">
+					<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.AVG_ACTIVITY' | translate }}</span>
+					<span class="summary-value">{{ counts.failed ? '—' : formatPercent($safeNavigationMigration(counts.value?.weekActivities)) }}</span>
+					<ng-container *ngTemplateOutlet="deltaTpl; context: { $implicit: activityDelta }"></ng-container>
+				</div>
+
+				<div class="summary-cell">
+					<span class="summary-label">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS' | translate }}</span>
+					<span class="summary-value">{{ memberStats.failed ? '—' : activeMembers }}</span>
+					<span class="summary-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS_META' | translate : { total: members.length } }}
+					</span>
+				</div>
+
+				<div class="summary-cell">
+					<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.OPEN_TASKS' | translate }}</span>
+					<span class="summary-value">{{ tasks.failed ? '—' : taskSummary.open }}</span>
+					<span class="summary-meta" [class.is-negative]="taskSummary.overdue > 0">
+						@if (taskSummary.overdue > 0) {
+						<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+						}
+						{{ 'EMPLOYEES_PAGE.VIEW.OPEN_TASKS_META' | translate : { progress: taskSummary.progress, overdue: taskSummary.overdue } }}
+					</span>
+				</div>
+			</section>
+
+			<!-- ── Time: hours per day, and who worked them ───────────────────── -->
+			<div class="grid">
+				<section class="panel panel--chart" [nbSpinner]="hours.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<header class="panel-header">
+						<div class="panel-heading">
+							<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.HOURS_WORKED' | translate }}</h5>
+							@if (!hours.failed && hoursSummary.total) {
+							<span class="panel-caption">
+								{{ 'EMPLOYEES_PAGE.VIEW.HOURS_META' | translate : { total: formatDuration(hoursSummary.total), average: formatDuration(hoursSummary.average) } }}
+							</span>
+							}
+						</div>
+					</header>
+					<div class="panel-body">
+						@if (hours.failed) {
+						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+						} @else if (!hours.loading && !hoursSummary.total) {
+						<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"></ng-container>
+						} @else {
+						<ngx-employee-hours-chart
+							[days]="hours.value"
+							[formatHours]="formatHours"
+							[trackedLabel]="'EMPLOYEES_PAGE.VIEW.TRACKED' | translate"
+							[manualLabel]="'EMPLOYEES_PAGE.VIEW.MANUAL' | translate"
+						></ngx-employee-hours-chart>
+						}
+					</div>
+				</section>
+
+				<section class="panel" [nbSpinner]="memberStats.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<header class="panel-header">
+						<h5 class="panel-title">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TIME_BY_MEMBER' | translate }}</h5>
+						<button type="button" class="panel-link" (click)="tab = 'members'">
+							{{ 'EMPLOYEES_PAGE.VIEW.VIEW_ALL' | translate }}
+							<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+						</button>
+					</header>
+					<div class="panel-body panel-body--flush">
+						<ng-container
+							*ngTemplateOutlet="ranked; context: { $implicit: { loading: memberStats.loading, failed: memberStats.failed, value: memberRanking }, column: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.MEMBER', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'people-outline' }"
+						></ng-container>
+					</div>
+				</section>
+			</div>
+
+			<!-- ── Projects: every project of the team, and the time it got in the period ── -->
+			<section class="panel" [nbSpinner]="projectStats.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title">
+							{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}
+							@if (projectOverview.length) {
+							<span class="title-count">{{ projectOverview.length }}</span>
+							}
+						</h5>
+						<span class="panel-caption">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECTS_CAPTION' | translate }}</span>
+					</div>
+				</header>
+				<div class="panel-body">
+					@if (!projectOverview.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_PROJECTS', icon: 'briefcase-outline' }"></ng-container>
+					} @else {
+					<ul class="project-grid">
+						@for (project of projectOverview; track project.id) {
+						<li class="project-card" [class.is-idle]="!project.duration">
+							<span class="project-logo">
+								@if (project.imageUrl) {
+								<img [src]="project.imageUrl" [alt]="project.name" />
+								} @else {
+								<span aria-hidden="true">{{ project.initials }}</span>
+								}
+							</span>
+							<span class="project-body">
+								<span class="project-name-row">
+									<span class="project-name" [nbTooltip]="project.name" nbTooltipPlacement="top">{{ project.name }}</span>
+									@if (!project.linked) {
+									<span
+										class="chip project-chip"
+										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_LINKED_HINT' | translate"
+										nbTooltipPlacement="top"
+										>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_LINKED' | translate }}</span
+									>
+									}
+								</span>
+								<span class="project-figures">
+									<span class="project-time">{{ projectStats.failed ? '—' : project.duration ? formatDuration(project.duration) : '—' }}</span>
+									@if (!projectStats.failed && project.duration) {
+									<span class="project-share">{{ formatPercent(project.share) }}</span>
+									} @else if (!projectStats.failed) {
+									<span class="project-share">{{ 'EMPLOYEES_PAGE.VIEW.NO_TIME' | translate }}</span>
+									}
+								</span>
+								<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="project.width"></span></span>
+							</span>
+						</li>
+						}
+					</ul>
+					}
+				</div>
+			</section>
+
+			<!-- ── Work: the team's tasks, and where the time went ─────────────── -->
+			<div class="grid">
+				<section class="panel" [nbSpinner]="tasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<header class="panel-header panel-header--wrap">
+						<h5 class="panel-title">
+							{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TEAM_TASKS' | translate }}
+							@if (!tasks.failed && taskSummary.open + taskSummary.done) {
+							<span class="title-count">{{ taskSummary.open + taskSummary.done }}</span>
+							}
+						</h5>
+						@if (!tasks.failed && taskSummary.open + taskSummary.done) {
+						<div class="segmented" role="group" [attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TEAM_TASKS' | translate">
+							@for (filter of taskFilters; track filter) {
+							<button
+								type="button"
+								class="segment"
+								[class]="'segment--' + filter"
+								[class.is-active]="taskFilter === filter"
+								[attr.aria-pressed]="taskFilter === filter"
+								(click)="taskFilter = filter"
+							>
+								{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.' + filter.toUpperCase() | translate }}
+								<span class="segment-count" [class.is-alert]="filter === 'overdue' && taskCount(filter) > 0">{{ taskCount(filter) }}</span>
+							</button>
+							}
+						</div>
+						}
+					</header>
+					<div class="panel-body panel-body--flush">
+						@if (tasks.failed) {
+						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+						} @else if (!tasks.loading && !(taskSummary.open + taskSummary.done)) {
+						<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_TEAM_TASKS', icon: 'checkmark-square-outline' }"></ng-container>
+						} @else if (visibleTasks.length) {
+						<!--
+							Each row is one button that opens the task's quick look in the side
+							drawer, plus a real link to the task's own page (so it can also be
+							opened in a new tab or copied).
+						-->
+						<ul class="task-list">
+							@for (task of visibleTasks; track task.id) {
+							<li class="task-row task-row--interactive" [class.is-viewed]="viewedTask?.id === task.id">
+								<button
+									type="button"
+									class="task-open"
+									(click)="openTask(task)"
+									[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
+								>
+									<span
+										class="task-dot"
+										[class]="'group-' + task.statusGroup"
+										[nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.STATUS' | translate) + ': ' + task.status"
+										nbTooltipPlacement="top"
+										aria-hidden="true"
+									></span>
+									<span class="task-main">
+										<span class="task-title" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
+										<span class="task-meta">
+											@if (task.key) {
+											<span class="task-key">{{ task.key }}</span>
+											}
+											@if (task.project) {
+											<span
+												class="task-meta-item"
+												[nbTooltip]="('EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT' | translate) + ': ' + task.project"
+												nbTooltipPlacement="top"
+												>{{ task.project }}</span
+											>
+											}
+											<span class="task-meta-item">{{ task.status }}</span>
+											@if (task.priority) {
+											<span
+												class="task-meta-item task-priority"
+												[class]="'priority-' + (task.priorityLevel || 'none')"
+												[nbTooltip]="('EMPLOYEES_PAGE.VIEW.COLUMNS.PRIORITY' | translate) + ': ' + task.priority"
+												nbTooltipPlacement="top"
+											>
+												<nb-icon
+													[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
+													aria-hidden="true"
+												></nb-icon>
+												{{ task.priority }}
+											</span>
+											}
+										</span>
+									</span>
+									<span
+										class="task-due"
+										[class.is-overdue]="task.overdue"
+										[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
+									>
+										<span
+											class="task-due-date"
+											[nbTooltip]="task.dueDate ? ('EMPLOYEES_PAGE.VIEW.COLUMNS.DUE' | translate) + ': ' + task.dueDateLong : ''"
+											[nbTooltipDisabled]="!task.dueDate"
+											nbTooltipPlacement="top"
+											>{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span
+										>
+										@if (task.dueDate) {
+										<span class="task-due-relative">
+											@if (task.overdue) {
+											<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+											}
+											{{ task.due.key | translate : { count: task.due.count } }}
+										</span>
+										}
+									</span>
+								</button>
+								<!-- Assignees: each avatar links to the person's profile and shows their card on hover or focus;
+								     the "+N" chip lists the rest, from the mouse or the keyboard. Kept outside the task button,
+								     so Enter on the row opens the task and Tab reaches every person. -->
+								<span class="task-people">
+									@for (person of task.people.slice(0, 3); track $index) {
+									<a
+										class="task-person"
+										[routerLink]="['/pages/employees/view', person.id]"
+										#personPopover="nbPopover"
+										[nbPopover]="personCard"
+										[nbPopoverContext]="person"
+										nbPopoverTrigger="hover"
+										nbPopoverPlacement="top"
+										nbPopoverClass="person-popover"
+										(focus)="personPopover.show()"
+										(blur)="personPopover.hide()"
+										[attr.aria-label]="('EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate) + ': ' + person.name"
+									>
+										@if (person.avatarUrl) {
+										<img [src]="person.avatarUrl" alt="" />
+										} @else {
+										<span aria-hidden="true">{{ person.initials }}</span>
+										}
+									</a>
+									}
+									@if (task.people.length > 3) {
+									<button
+										type="button"
+										class="task-person task-person--more"
+										#morePopover="nbPopover"
+										[nbPopover]="morePeople"
+										[nbPopoverContext]="task.morePeople"
+										nbPopoverTrigger="hover"
+										nbPopoverPlacement="top"
+										nbPopoverClass="person-popover"
+										(click)="morePopover.show()"
+										(keydown.enter)="assigneeKeyboard.openList($event, morePopover)"
+										(keydown.space)="assigneeKeyboard.openList($event, morePopover)"
+										(blur)="assigneeKeyboard.onTriggerBlur($event, morePopover)"
+										[attr.aria-label]="'+' + (task.people.length - 3)"
+										aria-haspopup="true"
+									>
+										+{{ task.people.length - 3 }}
+									</button>
+									}
+									@if (!task.people.length) {
+									<span
+										class="task-person task-person--none"
+										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.UNASSIGNED' | translate"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="person-outline"></nb-icon>
+									</span>
+									}
+								</span>
+								<a
+									class="task-link"
+									[routerLink]="taskLink(task.id)"
+									[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE' | translate : { title: task.title }"
+									[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE_SHORT' | translate"
+									nbTooltipPlacement="left"
+								>
+									<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+								</a>
+							</li>
+							}
+						</ul>
+						@if (filteredTasks.length > taskLimit) {
+						<p class="table-footer table-footer--action">
+							<span>{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}</span>
+							<button type="button" class="panel-link" (click)="showAllTasks = !showAllTasks">
+								{{ (showAllTasks ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_LESS' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_ALL') | translate }}
+								<nb-icon [icon]="showAllTasks ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></nb-icon>
+							</button>
+						</p>
+						}
+						} @else if (!tasks.loading) {
+						<div class="state state--compact">
+							<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+							<p>{{ 'EMPLOYEES_PAGE.VIEW.NO_TASKS_IN_VIEW' | translate }}</p>
+						</div>
+						}
+					</div>
+				</section>
+
+				<div class="stack">
+					<section class="panel" [nbSpinner]="topTasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.TOP_TASKS' | translate }}</h5>
+						</header>
+						<div class="panel-body panel-body--flush">
+							<ng-container
+								*ngTemplateOutlet="ranked; context: { $implicit: topTasks, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.TASK', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'list-outline' }"
+							></ng-container>
+						</div>
+					</section>
+
+					<section class="panel" [nbSpinner]="apps.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.APPS_URLS' | translate }}</h5>
+						</header>
+						<div class="panel-body panel-body--flush">
+							<ng-container
+								*ngTemplateOutlet="ranked; context: { $implicit: apps, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.NAME', empty: 'EMPLOYEES_PAGE.VIEW.NO_APPS', icon: 'monitor-outline' }"
+							></ng-container>
+						</div>
+					</section>
+				</div>
+			</div>
+		</div>
+		} @else if (tab === 'members') {
+		<!-- ── Members: everyone on the team, with their own period figures ── -->
+		<div class="tab-pane" role="tabpanel" id="team-view-pane-members" aria-labelledby="team-view-tab-members">
+			<section class="panel" [nbSpinner]="memberStats.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title">
+							{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS' | translate }}
+							<span class="title-count">{{ members.length }}</span>
+						</h5>
+						<span class="panel-caption">{{ rangeLabel }}</span>
+					</div>
+				</header>
+				<div class="panel-body panel-body--flush">
+					@if (!members.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_MEMBERS', icon: 'people-outline' }"></ng-container>
+					} @else {
+					<div class="table-scroll">
+						<table class="data-table member-table">
+							<thead>
+								<tr>
+									<th>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.MEMBER' | translate }}</th>
+									<th>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.ROLE' | translate }}</th>
+									<th>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.STATUS' | translate }}</th>
+									<th class="col-task">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.CURRENT_TASK' | translate }}</th>
+									<th>{{ 'SM_TABLE.TIME_TRACKING' | translate }}</th>
+									<th class="num">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.TODAY' | translate }}</th>
+									<th class="num">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.TIME' | translate }}</th>
+									<th class="num">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.ACTIVITY' | translate }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								@for (member of members; track member.id) {
+								<tr>
+									<td>
+										<a class="member" [routerLink]="['/pages/employees/view', member.id]">
+											<span class="member-avatar" [class]="'presence-' + member.presence">
+												@if (member.avatarUrl) {
+												<img [src]="member.avatarUrl" [alt]="member.name" />
+												} @else {
+												<span aria-hidden="true">{{ member.initials }}</span>
+												}
+												<span class="avatar-dot"></span>
+											</span>
+											<span class="member-text">
+												<span class="cell-title" [title]="member.name">{{ member.name }}</span>
+												@if (member.position || member.email) {
+												<span class="cell-meta">{{ member.position || member.email }}</span>
+												}
+											</span>
+										</a>
+									</td>
+									<td>
+										<span class="chip role-chip" [class.is-manager]="member.isManager">
+											{{ (member.isManager ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MANAGER' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MEMBER') | translate }}
+										</span>
+									</td>
+									<td>
+										<span class="presence-label" [class]="'presence-' + member.presence">
+											<span class="presence-dot" aria-hidden="true"></span>
+											{{ 'EMPLOYEES_PAGE.VIEW.PRESENCE.' + member.presence.toUpperCase() | translate }}
+										</span>
+									</td>
+									<td class="col-task">
+										<span class="cell-muted" [title]="member.activeTask || ''">{{ member.activeTask || '—' }}</span>
+									</td>
+									<td>
+										<span class="cell-muted">
+											{{ (member.isTrackingEnabled ? 'EMPLOYEES_PAGE.ENABLED' : 'EMPLOYEES_PAGE.DISABLED') | translate }}
+										</span>
+									</td>
+									<td class="num cell-muted">{{ memberStats.failed ? '—' : formatDuration($safeNavigationMigration(figuresOf(member)?.today)) }}</td>
+									<td class="num cell-strong">{{ memberStats.failed ? '—' : formatDuration($safeNavigationMigration(figuresOf(member)?.duration)) }}</td>
+									<td class="num">
+										@if (memberStats.failed) {
+										—
+										} @else {
+										<span class="activity" [class]="'activity--' + (($safeNavigationMigration(figuresOf(member)?.activity) || 0) >= 50 ? 'high' : ($safeNavigationMigration(figuresOf(member)?.activity) || 0) >= 20 ? 'mid' : 'low')">
+											{{ formatPercent($safeNavigationMigration(figuresOf(member)?.activity)) }}
+										</span>
+										}
+									</td>
+								</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					}
+				</div>
+			</section>
+		</div>
+		} @else {
+		<!-- ── Details: the full read-only team record ─────────────────────── -->
+		<div class="profile" role="tabpanel" id="team-view-pane-details" aria-labelledby="team-view-tab-details">
+			<div class="profile-main">
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.GENERAL', icon: 'info-outline' }"></ng-container>
+					<div class="panel-body">
+						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: details.general }"></ng-container>
+					</div>
+				</section>
+
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SETTINGS', icon: 'settings-2-outline' }"></ng-container>
+					<div class="panel-body">
+						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: details.settings }"></ng-container>
+					</div>
+				</section>
+			</div>
+
+			<aside class="profile-side">
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS', icon: 'shield-outline' }"></ng-container>
+					<div class="panel-body">
+						@if (managers.length) {
+						<ul class="side-list">
+							@for (manager of managers; track manager.id) {
+							<li class="side-item">
+								<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+								<span class="side-text">
+									<a class="field-link" [routerLink]="['/pages/employees/view', manager.id]">{{ manager.name }}</a>
+									@if (manager.email) {
+									<span class="field-label">{{ manager.email }}</span>
+									}
+								</span>
+							</li>
+							}
+						</ul>
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+						}
+					</div>
+				</section>
+
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'SM_TABLE.TAGS', icon: 'pricetags-outline' }"></ng-container>
+					<div class="panel-body">
+						@if (tags.length) {
+						<div class="chip-list">
+							@for (tag of tags; track $index) {
+							<span class="chip chip--swatch"><span class="swatch" [style.background-color]="tag.color"></span>{{ tag.name }}</span>
+							}
+						</div>
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+						}
+					</div>
+				</section>
+
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.RECORD', icon: 'clock-outline' }"></ng-container>
+					<div class="panel-body">
+						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: details.record }"></ng-container>
+					</div>
+				</section>
+			</aside>
+		</div>
+		}
+		}
+	</nb-card-body>
+</nb-card>
+
+<!-- Quick look: the same task drawer the task lists use, with an expand icon to the task's own page. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask"
+	[heading]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TEAM_TASKS'"
+	[wide]="true"
+	[fullViewLink]="viewedTask ? '/pages/tasks/view/' + viewedTask.id : null"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
+
+<!-- Hover list on the "+N" avatar: the assignees it stands for, photo and name. -->
+<ng-template #morePeople let-people>
+	<ul class="people-list" (focusout)="assigneeKeyboard.onListFocusOut($event)" (keydown.escape)="assigneeKeyboard.onListEscape()">
+		@for (person of people; track $index) {
+		<li>
+			<!-- Each person opens their employee profile. -->
+			<a class="people-list-row" [routerLink]="['/pages/employees/view', person.id]">
+				<span class="people-list-avatar">
+					@if (person.avatarUrl) {
+					<img [src]="person.avatarUrl" [alt]="person.name" />
+					} @else {
+					<span aria-hidden="true">{{ person.initials }}</span>
+					}
+				</span>
+				<span class="people-list-name">{{ person.name }}</span>
+			</a>
+		</li>
+		}
+	</ul>
+</ng-template>
+
+<!-- Hover card on an assignee's avatar: a profile card — banner, photo with presence, name, about. -->
+<ng-template #personCard let-person>
+	<div class="person-card">
+		<div class="person-card-banner" aria-hidden="true"></div>
+		<div class="person-card-photo" [class]="'presence-' + person.presence">
+			@if (person.avatarUrl) {
+			<img [src]="person.avatarUrl" [alt]="person.name" />
+			} @else {
+			<span class="person-card-initials" aria-hidden="true">{{ person.initials }}</span>
+			}
+			<span class="person-card-dot" [title]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate"></span>
+		</div>
+		<div class="person-card-body">
+			<span class="person-card-name">{{ person.name }}</span>
+			@if (person.email) {
+			<a class="person-card-handle" [href]="'mailto:' + person.email">{{ person.email }}</a>
+			}
+			<span class="person-card-meta">
+				<span class="person-card-status" [class]="'presence-' + person.presence">
+					<span class="person-card-status-dot" aria-hidden="true"></span>
+					{{ 'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate }}
+				</span>
+				@if (person.since) {
+				<span>{{ 'EMPLOYEES_PAGE.VIEW.MEMBER_SINCE' | translate }} {{ person.since }}</span>
+				}
+			</span>
+			@if (person.bio) {
+			<p class="person-card-bio">{{ person.bio }}</p>
+			}
+			@if (person.id) {
+			<a class="person-card-action" [routerLink]="['/pages/employees/view', person.id]">
+				{{ 'EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate }}
+				<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+			</a>
+			}
+		</div>
+	</div>
+</ng-template>
+
+<!-- Change against the previous period: arrow + percentage, then what it is measured against. -->
+<ng-template #deltaTpl let-delta>
+	<span class="delta" [class]="'delta--' + delta.direction">
+		@if (delta.percent !== null) {
+		<nb-icon
+			[icon]="delta.direction === 'up' ? 'arrow-upward-outline' : delta.direction === 'down' ? 'arrow-downward-outline' : 'minus-outline'"
+			aria-hidden="true"
+		></nb-icon>
+		<b>{{ delta.percent }}%</b>
+		} @else {
+		<b>—</b>
+		}
+		<span class="delta-label">{{ 'EMPLOYEES_PAGE.VIEW.VS_PREVIOUS.' + period | translate }}</span>
+	</span>
+</ng-template>
+
+<!-- A ranked table: name over its bar, time, and share of the period's total. -->
+<ng-template #ranked let-panel let-column="column" let-emptyKey="empty" let-icon="icon">
+	@if (panel.failed) {
+	<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+	} @else if (!panel.loading && !panel.value.length) {
+	<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: icon }"></ng-container>
+	} @else {
+	<table class="data-table">
+		<thead>
+			<tr>
+				<th>{{ column | translate }}</th>
+				<th class="num">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.TIME' | translate }}</th>
+				<th class="num col-share">%</th>
+			</tr>
+		</thead>
+		<tbody>
+			@for (row of panel.value; track row.id) {
+			<tr>
+				<td class="cell-main">
+					<span class="cell-title" [title]="row.name">{{ row.name }}</span>
+					@if (row.meta) {
+					<span class="cell-meta">{{ row.meta }}</span>
+					}
+					<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="row.width"></span></span>
+				</td>
+				<td class="num cell-strong">{{ formatDuration(row.duration) }}</td>
+				<td class="num col-share cell-muted">{{ formatPercent(row.share) }}</td>
+			</tr>
+			}
+		</tbody>
+	</table>
+	}
+</ng-template>
+
+<ng-template #cardHeader let-title="title" let-icon="icon">
+	<header class="panel-header">
+		<h5 class="panel-title panel-title--icon">
+			<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+			{{ title | translate }}
+		</h5>
+	</header>
+</ng-template>
+
+<!-- Label over value, two to a row; only fields that are set reach here. -->
+<ng-template #fieldGrid let-fields>
+	@if (fields.length) {
+	<dl class="field-grid">
+		@for (field of fields; track field.label) {
+		<div class="field">
+			<dt class="field-label">{{ field.label | translate }}</dt>
+			<dd class="field-value">
+				@if (field.swatch) {
+				<span class="swatch swatch--lg" [style.background-color]="field.swatch"></span>
+				}
+				@if (field.href) {
+				<a class="field-link" [href]="field.href" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
+				} @else {
+				{{ field.value }}
+				}
+			</dd>
+		</div>
+		}
+	</dl>
+	} @else {
+	<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+	}
+</ng-template>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #unavailable>
+	<div class="state">
+		<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EMPLOYEES_PAGE.VIEW.UNAVAILABLE' | translate }}</p>
+	</div>
+</ng-template>

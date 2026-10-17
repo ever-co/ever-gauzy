@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
@@ -20,6 +20,7 @@ import {
 	selector: 'gauzy-user-menu',
 	templateUrl: './user-menu.component.html',
 	styleUrls: ['./user-menu.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class UserMenuComponent implements OnInit, OnDestroy {

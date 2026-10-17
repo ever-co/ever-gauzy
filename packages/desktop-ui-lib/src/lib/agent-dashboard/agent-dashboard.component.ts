@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbMenuItem, NbSidebarState, NbLayoutModule, NbSidebarModule, NbMenuModule } from '@nebular/theme';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../constants';
@@ -10,6 +10,7 @@ import { RouterOutlet } from '@angular/router';
 	selector: 'ngx-agent-dashboard',
 	templateUrl: './agent-dashboard.component.html',
 	styleUrls: ['./agent-dashboard.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [NbLayoutModule, NbSidebarModule, NbMenuModule, RouterOutlet]
 })
 export class AgentDashboardComponent implements OnInit, OnDestroy {

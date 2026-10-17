@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter, finalize } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { Store, IntegrationsService, ZapierStoreService } from '@gauzy/ui-core/c
 	selector: 'ngx-zapier',
 	templateUrl: './zapier.component.html',
 	styleUrls: ['./zapier.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

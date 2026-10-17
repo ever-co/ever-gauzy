@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -46,6 +46,7 @@ import { ApprovalPolicyComponent } from '../approvals/table-components';
     selector: 'ga-time-off-list',
     templateUrl: './time-off.component.html',
     styleUrls: ['./time-off.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TimeOffComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { NbDialogModule, NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
@@ -18,7 +18,7 @@ import { CalendarComponent } from './calendar/calendar.component';
 	declarations: [CalendarComponent],
 	imports: [
 		CommonModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		FullCalendarModule,
 		NbButtonModule,

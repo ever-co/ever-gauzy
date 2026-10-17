@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, tap } from 'rxjs';
@@ -16,6 +16,7 @@ import { EmployeeSelectorComponent } from '@gauzy/ui-core/shared';
     templateUrl: './pick-employee.component.html',
     styleUrls: ['./pick-employee.component.scss'],
     providers: [EventTypeService],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PickEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

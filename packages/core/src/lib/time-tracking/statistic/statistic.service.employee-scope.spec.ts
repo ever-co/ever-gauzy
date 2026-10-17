@@ -1,8 +1,8 @@
 import '../../core/entities/internal';
 
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IGetCountsStatistics, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
-import { NO_ACCESSIBLE_EMPLOYEE_ID } from '../../employee/managed-employee.service';
+import { ManagedEmployeeService, NO_ACCESSIBLE_EMPLOYEE_ID } from '../../employee/managed-employee.service';
 import { StatisticService } from './statistic.service';
 
 const TENANT_ID = '9d347c5c-5b96-4ef3-9799-b5fa0ca09111';
@@ -11,14 +11,27 @@ const OWN_EMPLOYEE_ID = '619ec3c7-498d-4c28-8b74-48da57cc5564';
 const OTHER_EMPLOYEE_ID = '12128029-8b07-45a0-9690-181a66a660fc';
 
 /**
- * The counts queries scope their employee predicate by hand rather than through ManagedEmployeeService,
- * and applied it only `if (user.employeeId && ...)`. A token with no employee identity therefore left the
- * predicate off entirely and answered with the whole organization — see
- * `managed-employee.service.no-employee-identity.spec.ts` for the same defect on the shared path.
+ * The employee and project counts apply their employee predicate only when the id list is non-empty, and take
+ * that list from getCounts. A token with no employee identity must reach them as an id that matches nothing:
+ * no predicate at all would answer with the whole organization. See
+ * `managed-employee.service.no-employee-identity.spec.ts` for the shared helper getCounts scopes through.
  */
 class TestStatisticService extends StatisticService {
-	restrict(employeeIds: ID[] = [], onlyMe = false): ID[] {
-		return this.restrictToAccessibleEmployees(employeeIds, onlyMe);
+	/** Runs getCounts with its queries stubbed and returns the employee ids the two counts were given. */
+	async restrict(employeeIds: ID[] = []): Promise<ID[]> {
+		const noActivity = { overall: 0, duration: 0 };
+		const employeeCounts = jest.spyOn(this as any, 'getEmployeeWorkedCounts').mockResolvedValue(0);
+		const projectCounts = jest.spyOn(this as any, 'getProjectWorkedCounts').mockResolvedValue(0);
+		jest.spyOn(this as StatisticService, 'getWeeklyStatisticsActivities').mockResolvedValue(noActivity);
+		jest.spyOn(this as StatisticService, 'getTodayStatisticsActivities').mockResolvedValue(noActivity);
+
+		await this.getCounts({ employeeIds } as IGetCountsStatistics);
+
+		const [employeeScope, projectScope] = [employeeCounts, projectCounts].map(
+			(count) => (count.mock.lastCall[0] as IGetCountsStatistics).employeeIds
+		);
+		expect(projectScope).toEqual(employeeScope);
+		return employeeScope;
 	}
 }
 
@@ -41,7 +54,7 @@ describe('StatisticService employee scoping', () => {
 			{ getKnex: jest.fn() } as any,
 			{} as any,
 			{} as any,
-			{} as any
+			new ManagedEmployeeService({} as any, {} as any)
 		);
 	});
 
@@ -49,38 +62,37 @@ describe('StatisticService employee scoping', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('pins an authenticated caller with no employee identity to an id that matches nothing', () => {
+	it('pins an authenticated caller with no employee identity to an id that matches nothing', async () => {
 		actAs({ user: { id: USER_ID, tenantId: TENANT_ID } });
 
-		expect(service.restrict([OTHER_EMPLOYEE_ID])).toEqual([NO_ACCESSIBLE_EMPLOYEE_ID]);
-		expect(service.restrict()).toEqual([NO_ACCESSIBLE_EMPLOYEE_ID]);
+		await expect(service.restrict([OTHER_EMPLOYEE_ID])).resolves.toEqual([NO_ACCESSIBLE_EMPLOYEE_ID]);
+		await expect(service.restrict()).resolves.toEqual([NO_ACCESSIBLE_EMPLOYEE_ID]);
 	});
 
-	it('keeps the requested ids for an organization-wide viewer', () => {
+	it('keeps the requested ids for an organization-wide viewer', async () => {
 		actAs({ user: { id: USER_ID, tenantId: TENANT_ID }, permissions: [PermissionsEnum.ALL_ORG_VIEW] });
 
-		expect(service.restrict([OTHER_EMPLOYEE_ID])).toEqual([OTHER_EMPLOYEE_ID]);
+		await expect(service.restrict([OTHER_EMPLOYEE_ID])).resolves.toEqual([OTHER_EMPLOYEE_ID]);
 	});
 
-	it('leaves a request with no user at all alone (public share links, internal calls)', () => {
+	it('leaves a request with no user at all alone (public share links, internal calls)', async () => {
 		actAs({ user: null });
 
-		expect(service.restrict([OTHER_EMPLOYEE_ID])).toEqual([OTHER_EMPLOYEE_ID]);
+		await expect(service.restrict([OTHER_EMPLOYEE_ID])).resolves.toEqual([OTHER_EMPLOYEE_ID]);
 	});
 
-	it('pins a normal employee to their own id', () => {
+	it('pins a normal employee to their own id', async () => {
 		actAs({ user: { id: USER_ID, tenantId: TENANT_ID, employeeId: OWN_EMPLOYEE_ID } });
 
-		expect(service.restrict([OTHER_EMPLOYEE_ID])).toEqual([OWN_EMPLOYEE_ID]);
+		await expect(service.restrict([OTHER_EMPLOYEE_ID])).resolves.toEqual([OWN_EMPLOYEE_ID]);
 	});
 
-	it('lets a CHANGE_SELECTED_EMPLOYEE holder ask for anyone, and honours onlyMe', () => {
+	it('lets a CHANGE_SELECTED_EMPLOYEE holder ask for anyone', async () => {
 		actAs({
 			user: { id: USER_ID, tenantId: TENANT_ID, employeeId: OWN_EMPLOYEE_ID },
 			permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]
 		});
 
-		expect(service.restrict([OTHER_EMPLOYEE_ID])).toEqual([OTHER_EMPLOYEE_ID]);
-		expect(service.restrict([OTHER_EMPLOYEE_ID], true)).toEqual([OWN_EMPLOYEE_ID]);
+		await expect(service.restrict([OTHER_EMPLOYEE_ID])).resolves.toEqual([OTHER_EMPLOYEE_ID]);
 	});
 });

@@ -3,7 +3,7 @@
 		<gz-docs-preset-chips
 			class="docs-filter-presets"
 			[counts]="presetCounts"
-			[active]="value?.preset"
+			[active]="$safeNavigationMigration(value?.preset)"
 			(presetToggled)="onPresetToggled($event)"
 		></gz-docs-preset-chips>
 
@@ -20,7 +20,7 @@
 					id="docs-filter-search"
 					[placeholder]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
 					[attr.aria-label]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
-					[ngModel]="value?.q"
+					[ngModel]="$safeNavigationMigration(value?.q)"
 					(ngModelChange)="onSearchInput($event)"
 				/>
 			</span>

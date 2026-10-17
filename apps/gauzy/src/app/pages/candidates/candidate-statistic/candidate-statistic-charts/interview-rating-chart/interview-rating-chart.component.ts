@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
@@ -10,6 +10,7 @@ import { tap } from 'rxjs/operators';
     selector: 'ga-interview-rating-chart',
     templateUrl: './interview-rating-chart.component.html',
     styleUrls: ['./interview-rating-chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InterviewRatingChartComponent implements OnInit, OnDestroy {

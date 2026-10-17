@@ -146,8 +146,9 @@
      so the record renderer is built fresh for each entry that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedRecurringExpense"
+  [fullViewLink]="viewedRecurringExpense ? '/pages/employees/recurring-expenses/view/' + viewedRecurringExpense.id : null"
   heading="EMPLOYEES_PAGE.RECURRING_EXPENSE"
-  [subtitle]="viewedRecurringExpense?.employee?.user?.name"
+  [subtitle]="$safeNavigationMigration(viewedRecurringExpense?.employee?.user?.name)"
   (closed)="closeView()"
   >
   @if (viewedRecurringExpense) {

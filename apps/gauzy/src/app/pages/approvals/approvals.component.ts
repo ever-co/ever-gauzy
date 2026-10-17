@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
@@ -30,12 +30,14 @@ import {
 	StatusBadgeComponent
 } from '@gauzy/ui-core/shared';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
+import { buildApprovalViewSections } from './approval-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approvals',
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -406,48 +408,12 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			return;
 		}
 
-		this.viewSections = this.buildViewSections();
+		this.viewSections = buildApprovalViewSections();
 		this.viewedRequestApproval = requestApproval;
 	}
 
 	closeView(): void {
 		this.viewedRequestApproval = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer. It mirrors the grid columns — same fields,
-	 * same renderers — so a request reads identically in the row and in its View.
-	 */
-	private buildViewSections(): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME', key: 'name' },
-					// `status` was replaced by `statusMapper` when the rows were loaded,
-					// so it is already the `{ text, value, class }` a badge expects.
-					{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS', key: 'status', type: 'badge' },
-					{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT', key: 'min_count' },
-					{
-						label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY',
-						key: 'approvalPolicy.name'
-					}
-				]
-			},
-			{
-				title: 'APPROVAL_REQUEST_PAGE.EMPLOYEES',
-				fields: [
-					{ label: 'APPROVAL_REQUEST_PAGE.EMPLOYEES', key: 'employees', type: 'people', wide: true },
-					{ label: 'APPROVAL_REQUEST_PAGE.TEAMS', key: 'teams', type: 'teams', wide: true }
-				]
-			},
-			{
-				fields: [
-					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true },
-					{ label: 'APPROVAL_REQUEST_PAGE.CREATED_BY', key: 'createdByUser', type: 'person' },
-					{ label: 'APPROVAL_REQUEST_PAGE.CREATED_AT', key: 'createdAt', type: 'datetime' }
-				]
-			}
-		];
 	}
 
 	async save(isCreate: boolean, selectedItem?: IRequestApproval) {

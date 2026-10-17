@@ -1,6 +1,6 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
@@ -27,7 +27,7 @@ import { JobSearchStoreService } from './providers/job-search-store.service';
 	imports: [
 		RouterModule.forChild([]),
 		NebularModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		SmartDataViewLayoutModule,
 		DynamicTabsModule,

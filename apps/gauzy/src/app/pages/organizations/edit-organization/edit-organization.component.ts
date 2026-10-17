@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
@@ -14,6 +14,7 @@ import { Store } from '@gauzy/ui-core/core';
 @Component({
     templateUrl: './edit-organization.component.html',
     styleUrls: ['./edit-organization.component.scss', '../../dashboard/dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditOrganizationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

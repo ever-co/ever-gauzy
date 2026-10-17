@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import * as moment from 'moment';
@@ -50,6 +50,7 @@ interface IHumanResourcesFigures {
 	templateUrl: './human-resources.component.html',
 	styleUrls: ['./human-resources.component.scss'],
 	standalone: false,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	providers: [CurrencyPipe, CurrencyPositionPipe]
 })
 export class HumanResourcesComponent implements OnInit, OnDestroy {

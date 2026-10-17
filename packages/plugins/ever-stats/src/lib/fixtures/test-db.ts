@@ -101,7 +101,7 @@ export async function createCoreTables(dataSource: DataSource, d: TestDialect): 
 		organization: `${common}, ${t('name')} ${text}, ${t('taxId')} ${text}, ${t('website')} ${text}`,
 		role: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('tenantId')} ${id} NULL`,
 		user: `${common}, ${t('email')} ${text}, ${t('firstName')} ${text}, ${t('lastName')} ${text}, ${t('roleId')} ${id} NULL, ${t('lastLoginAt')} ${ts} NULL, ${t('emailVerifiedAt')} ${ts} NULL`,
-		employee: `${common}, ${t('userId')} ${id} NULL`,
+		employee: `${common}, ${t('userId')} ${id} NULL, ${t('kind')} varchar(16) NOT NULL DEFAULT 'human'`,
 		organization_team: `${common}, ${t('name')} ${text}`,
 		task: `${common}, ${t('title')} ${text}`,
 		organization_project: `${common}, ${t('name')} ${text}`,

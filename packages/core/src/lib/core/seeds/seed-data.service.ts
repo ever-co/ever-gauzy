@@ -2,16 +2,18 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import * as rimraf from 'rimraf';
 import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { serializeEmbeddedTransactions } from './../../database/embedded-transaction-queue';
+import { pruneTypeOrmSkeletonMetadata } from './../../database/typeorm-skeleton-metadata';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { IEmployee, IOrganization, IOrganizationProject, IRole, ITenant, IUser } from '@gauzy/contracts';
 import { validateSeedCredentials } from '../../bootstrap/validate-secrets';
+import { removeGeneratedFiles } from './utils';
 import { MigrationLockingDataSource } from '../../database/migration-run-lock';
 import { getPluginModules, hasLifecycleMethod, PluginLifecycleMethods } from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
@@ -47,6 +49,7 @@ import {
 import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import { createDefaultTenant, createRandomTenants, DEFAULT_EVER_TENANT, DEFAULT_TENANT } from '../../tenant';
 import { createDefaultTenantSetting } from './../../tenant/tenant-setting/tenant-setting.seed';
+import { createDefaultCommerceDefaults } from './commerce-defaults.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
@@ -509,6 +512,22 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute('Default Email Templates', createDefaultEmailTemplates(this.dataSource));
+
+		/**
+		 * The defaults an organization needs before it can issue a document — its default channel and
+		 * region, the seven numbering series, and the rest of `1791000000520`'s per-organization set (tax
+		 * category, price preference, measurement families, search definitions) — are seeded here rather than only by the
+		 * data-only kernel migration, because that migration runs **before** this seeding creates the
+		 * organization, and it seeds only the organizations it can see. Without this step a fresh
+		 * installation has no `ORDER` series and no `PO` series, so it can create parties, suppliers,
+		 * warehouses and products and then fail to raise a single order — which is exactly what happened
+		 * before it was added. Every insert is guarded by the row it would create, so a second boot
+		 * creates nothing.
+		 */
+		await this.tryExecute(
+			'Commerce Defaults',
+			createDefaultCommerceDefaults(this.dataSource, this.organizations)
+		);
 
 		await this.tryExecute('Default Accounting Templates', createDefaultAccountingTemplates(this.dataSource));
 
@@ -1052,6 +1071,13 @@ export class SeedDataService {
 			this.dataSource,
 			this.randomTenants,
 			randomSeedConfig.organizationsPerTenant || 1
+		);
+
+		// The same commerce defaults the default organizations get above (R5-05): a random organization is
+		// created after the migrations too, so nothing else would give it a channel, a region or a series.
+		await this.tryExecute(
+			'Random Commerce Defaults',
+			createDefaultCommerceDefaults(this.dataSource, [...this.randomTenantOrganizationsMap.values()].flat())
 		);
 
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(this.dataSource, this.randomTenants, 1);
@@ -1660,10 +1686,14 @@ export class SeedDataService {
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
-			rimraf(`${dir}/!(rimraf|.gitkeep)`, () => {
-				this.log(chalk.green(`✅ CLEANED UP`));
-				resolve(true);
-			});
+			// A failed cleanup never stops the seed, as with rimraf 3's callback. The rejection is handled
+			// here: `finally()` would hand it on to a promise nobody awaits, and Node ends the process on that.
+			removeGeneratedFiles(dir)
+				.then(
+					() => this.log(chalk.green(`✅ CLEANED UP`)),
+					(error) => this.log(chalk.yellow(`⚠ COULD NOT CLEAN UP ${dir}: ${error?.message ?? error}`))
+				)
+				.then(() => resolve(true));
 		});
 	}
 
@@ -1683,9 +1713,16 @@ export class SeedDataService {
 					...this.overrideDbConfig
 				};
 				// Locking: with `migrationsRun` it runs the pending migrations, possibly while a server boots.
-				const dataSource = new MigrationLockingDataSource({
-					...options
-				} as DataSourceOptions);
+				// And the same transaction queue the application's data source gets on SQLite, where every
+				// transaction would otherwise share the data source's one query runner.
+				// Under DB_ORM=mikro-orm TypeORM sees skeleton entities; drop the metadata entries that name a
+				// property it was never given, or the data source cannot build (a strict no-op under TypeORM).
+				pruneTypeOrmSkeletonMetadata();
+				const dataSource = serializeEmbeddedTransactions(
+					new MigrationLockingDataSource({
+						...options
+					} as DataSourceOptions)
+				);
 
 				if (!dataSource.isInitialized) {
 					this.dataSource = await dataSource.initialize();

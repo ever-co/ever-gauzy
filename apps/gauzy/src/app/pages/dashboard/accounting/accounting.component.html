@@ -17,7 +17,7 @@
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate }}</span>
 					<span class="kpi-value">
-						{{ totals.income | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.income | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</span>
 					<span class="kpi-meta">
 						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.EMPLOYEES_COUNT' | translate : { count: employeeCount } }}
@@ -30,7 +30,7 @@
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate }}</span>
 					<span class="kpi-value">
-						{{ totals.expense | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.expense | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</span>
 					@if (percentOfIncome(totals.expense); as percent) {
 					<span class="kpi-meta">
@@ -45,7 +45,7 @@
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.PROFIT' | translate }}</span>
 					<span class="kpi-value">
-						{{ totals.profit | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.profit | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</span>
 					@if (percentOfIncome(totals.profit); as percent) {
 					<span class="kpi-meta">
@@ -61,7 +61,7 @@
 				<span class="kpi-text">
 					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}</span>
 					<span class="kpi-value">
-						{{ totals.bonus | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.bonus | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</span>
 					@if (percentOfIncome(totals.bonus); as percent) {
 					<span class="kpi-meta">
@@ -212,15 +212,15 @@
 					<div class="breakdown-cell" role="cell">
 						<ngx-avatar
 							class="report-table"
-							[name]="row.employee?.user?.name"
-							[src]="row.employee?.user?.imageUrl"
-							[id]="row.employee?.id"
+							[name]="$safeNavigationMigration(row.employee?.user?.name)"
+							[src]="$safeNavigationMigration(row.employee?.user?.imageUrl)"
+							[id]="$safeNavigationMigration(row.employee?.id)"
 							[employee]="row.employee"
 						></ngx-avatar>
 					</div>
 					<div class="breakdown-cell is-amount is-income" role="cell">
 						<span class="amount">
-							{{ row.income || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+							{{ row.income || 0 | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 						</span>
 						<!--
 							Share of the organization's income, so the ranking reads as proportion and not only as order.
@@ -244,14 +244,14 @@
 						}
 					</div>
 					<div class="breakdown-cell is-amount is-muted" role="cell">
-						{{ row.expense || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ row.expense || 0 | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					<div class="breakdown-cell is-amount is-strong" [class.is-negative]="row.profit < 0" role="cell">
-						{{ row.profit || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ row.profit || 0 | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					@if (organization?.bonusType) {
 					<div class="breakdown-cell is-amount" [class.is-negative]="row.bonus < 0" role="cell">
-						{{ row.bonus || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ row.bonus || 0 | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					}
 					<div class="breakdown-cell breakdown-affordance" role="cell" aria-hidden="true">
@@ -271,17 +271,17 @@
 					<div class="breakdown-cell breakdown-rank" role="cell"></div>
 					<div class="breakdown-cell" role="cell">{{ 'INVOICES_PAGE.TOTAL' | translate }}</div>
 					<div class="breakdown-cell is-amount" role="cell">
-						{{ totals.income | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.income | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					<div class="breakdown-cell is-amount" role="cell">
-						{{ totals.expense | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.expense | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					<div class="breakdown-cell is-amount" [class.is-negative]="totals.profit < 0" role="cell">
-						{{ totals.profit | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.profit | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					@if (organization?.bonusType) {
 					<div class="breakdown-cell is-amount" [class.is-negative]="totals.bonus < 0" role="cell">
-						{{ totals.bonus | currency : organization?.currency | position : organization?.currencyPosition }}
+						{{ totals.bonus | currency : $safeNavigationMigration(organization?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 					</div>
 					}
 					<div class="breakdown-cell" role="cell"></div>

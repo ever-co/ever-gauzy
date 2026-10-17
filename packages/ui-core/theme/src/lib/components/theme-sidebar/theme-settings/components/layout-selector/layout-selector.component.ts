@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentLayoutStyleEnum, IUser, IUserUpdateInput } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -10,6 +10,7 @@ import { Store } from '@gauzy/ui-core/core';
 	selector: 'gauzy-layout-selector',
 	templateUrl: './layout-selector.component.html',
 	styleUrls: ['./layout-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {

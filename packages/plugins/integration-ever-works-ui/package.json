@@ -1,0 +1,58 @@
+{
+	"name": "@gauzy/plugin-integration-ever-works-ui",
+	"version": "0.1.0",
+	"description": "Ever Gauzy UI plugin: Integrations > Ever Works (connect with an Ever Works integration key, organization mapping, sync settings and activity)",
+	"author": {
+		"name": "Ever Co. LTD",
+		"url": "https://github.com/ever-co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-ever-works-ui"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://github.com/ever-co/ever-gauzy/tree/develop/packages/plugins/integration-ever-works-ui",
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integration-ever-works-ui --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integration-ever-works-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-integration-ever-works-ui --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "22.2.2",
+		"@angular/core": "22.2.2",
+		"@angular/router": "22.2.2"
+	},
+	"dependencies": {
+		"@angular/forms": "22.2.2",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/plugin-ui": "^0.1.0",
+		"@gauzy/ui-core": "^0.1.0",
+		"@nebular/theme": "^18.0.0",
+		"@ngx-translate/core": "^18.0.0",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.8.1"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^26.6.5",
+		"jest-preset-angular": "17.0.2"
+	},
+	"keywords": [
+		"gauzy",
+		"ever-works",
+		"integrations",
+		"ui",
+		"angular",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=26",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

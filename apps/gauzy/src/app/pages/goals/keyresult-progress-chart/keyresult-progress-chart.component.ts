@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, Input, ElementRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { IKeyResult, KeyResultDeadlineEnum, IKPI, IOrganization } from '@gauzy/contracts';
 import { GoalSettingsService } from '@gauzy/ui-core/core';
 import {
@@ -23,6 +23,7 @@ import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
     selector: 'ga-keyresult-progress-chart',
     templateUrl: './keyresult-progress-chart.component.html',
     styleUrls: ['./keyresult-progress-chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class KeyResultProgressChartComponent extends TranslationBaseComponent implements OnInit {

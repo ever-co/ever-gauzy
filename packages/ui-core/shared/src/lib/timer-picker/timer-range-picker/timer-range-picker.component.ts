@@ -1,6 +1,6 @@
 import moment from 'moment';
 import timezone from 'moment-timezone';
-import { Component, OnInit, forwardRef, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, forwardRef, Input, ViewChild, ChangeDetectorRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/contracts';
 import { merge } from 'rxjs';
@@ -21,6 +21,7 @@ import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter/t
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimerRangePickerComponent implements OnInit, AfterViewInit {

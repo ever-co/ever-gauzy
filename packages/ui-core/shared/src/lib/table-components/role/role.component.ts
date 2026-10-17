@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbComponentStatus } from '@nebular/theme';
 import { IRole, RolesEnum } from '@gauzy/contracts';
 
@@ -6,6 +6,7 @@ import { IRole, RolesEnum } from '@gauzy/contracts';
     selector: 'gauzy-role',
     templateUrl: './role.component.html',
     styleUrls: ['./role.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RoleComponent implements OnInit {

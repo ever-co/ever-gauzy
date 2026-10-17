@@ -80,9 +80,9 @@
 				</div>
 				<div class="section-content uploader-profile">
 					<ngx-avatar
-						[src]="video.uploadedBy?.user.imageUrl"
-						[name]="video.uploadedBy?.fullName"
-						[id]="video.uploadedBy?.id"
+						[src]="$safeNavigationMigration(video.uploadedBy?.user.imageUrl)"
+						[name]="$safeNavigationMigration(video.uploadedBy?.fullName)"
+						[id]="$safeNavigationMigration(video.uploadedBy?.id)"
 						[employee]="video.uploadedBy"
 						class="uploader-avatar"
 					></ngx-avatar>

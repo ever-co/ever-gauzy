@@ -13,7 +13,28 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
-import { EmployeeStatisticsService } from './../../employee-statistics.service';
+import { EmployeeStatisticsService, monthOf, shareOf } from './../../employee-statistics.service';
+import { recurringExpenseMonths, recurringExpenseStart } from '../../recurring-expense-start';
+
+/** The employees working in each month, by `month-year` key, read once per query. */
+type WorkingEmployeesByMonth = Map<string, Promise<Set<string>>>;
+/** The recurring expenses counted on one day of the chart: each employee's own, and the split ones by month. */
+type RecurringExpensesOfDay = {
+	employees: { employeeId: string; value: number }[];
+	split: Map<string, IMonthAggregatedSplitExpense>;
+};
+
+/** The dates a recurring expense is counted on in the range, as the totals count it: once a month, until it ends. */
+function* recurringExpenseDates(
+	expense: { startDate: Date; endDate?: Date },
+	{ startDate, endDate }: IDateRangePicker
+): Generator<Date> {
+	for (const date of recurringExpenseMonths(recurringExpenseStart(expense.startDate, startDate), endDate)) {
+		if (expense.endDate && date > expense.endDate) return;
+		yield date;
+	}
+}
+
 /**
  * Finds income, expense, profit and bonus for all employees for the given month.
  * If month is not specified, finds from the start of time till now.
@@ -32,6 +53,7 @@ export class AggregateOrganizationQueryHandler
 	): Promise<IAggregatedEmployeeStatistic> {
 		const { input } = command;
 		const { organizationId, startDate, endDate } = input;
+		// Agent employees (`kind = 'agent'`) earn no income and take no share of an expense: people only.
 		const { items: employees } =
 			await this.employeeService.findWorkingEmployees(
 				organizationId,
@@ -39,6 +61,7 @@ export class AggregateOrganizationQueryHandler
 					startDate,
 					endDate
 				},
+				true,
 				true
 			);
 		const employeeMap: Map<string, IEmployeeStatisticSum> = new Map();
@@ -67,8 +90,11 @@ export class AggregateOrganizationQueryHandler
 			}
 		};
 
+		// Who worked in which month, shared by the totals and the chart below
+		let workingByMonth: WorkingEmployeesByMonth = new Map();
+
 		if (employees.length > 0) {
-			await this._loadAllData(searchInput, employeeMap, organizationId);
+			await this._loadAllData(searchInput, employeeMap, organizationId, workingByMonth);
 		}
 
 		const employeeStats = [...employeeMap.values()];
@@ -80,22 +106,28 @@ export class AggregateOrganizationQueryHandler
 		return {
 			total,
 			employees: employeeStats,
-			chart: await this._loadChartData(
-				employees,
-				searchInput,
-				organizationId
-			)
+			chart: await this._loadChartData(employees, searchInput, organizationId, workingByMonth)
 		};
 	}
 
 	private async _loadChartData(
 		employees: IEmployee[],
 		searchInput: { rangeDate: IDateRangePicker; months: number },
-		organizationId: string
+		organizationId: string,
+		workingByMonth: WorkingEmployeesByMonth
 	): Promise<IChartEmployeeStatistic[]> {
 		const { endDate, startDate } = searchInput.rangeDate;
 		const PERIOD = moment(endDate).diff(moment(startDate), 'day') + 1;
 		const chartStats: IChartEmployeeStatistic[] = [];
+		const recurringByDay =
+			employees.length > 0
+				? await this._loadRecurringExpensesByDay(
+						employees.map(({ id }) => id),
+						searchInput.rangeDate,
+						organizationId,
+						PERIOD
+					)
+				: [];
 		for (let i = 0; i < PERIOD; i++) {
 			const employeeMap: Map<string, IEmployeeStatisticSum> = new Map();
 			employees.forEach((employee) => {
@@ -122,7 +154,9 @@ export class AggregateOrganizationQueryHandler
 						}
 					},
 					employeeMap,
-					organizationId
+					organizationId,
+					workingByMonth,
+					recurringByDay[i]
 				);
 			}
 			const employeeStats = [...employeeMap.values()];
@@ -139,10 +173,61 @@ export class AggregateOrganizationQueryHandler
 		return chartStats;
 	}
 
+	/**
+	 * The recurring expenses counted on each day of the chart, read once for the whole range as for the totals.
+	 *
+	 * A recurring expense is counted once a month. Read again for each one-day window, it was counted in full on
+	 * every day, so the chart's expense, profit and bonus did not add up to the totals.
+	 */
+	private async _loadRecurringExpensesByDay(
+		employeeIds: string[],
+		rangeDate: IDateRangePicker,
+		organizationId: string,
+		days: number
+	): Promise<RecurringExpensesOfDay[]> {
+		const byDay = Array.from({ length: days }, (): RecurringExpensesOfDay => ({ employees: [], split: new Map() }));
+		const start = moment(rangeDate.startDate);
+		const dayOf = (date: Date) => byDay[Math.min(Math.max(moment(date).diff(start, 'day'), 0), days - 1)];
+
+		const { items: employeeRecurringExpenses } = await this.employeeStatisticsService.employeeRecurringExpenses(
+			employeeIds,
+			rangeDate,
+			organizationId
+		);
+		for (const expense of employeeRecurringExpenses) {
+			for (const date of recurringExpenseDates(expense, rangeDate)) {
+				dayOf(date).employees.push({ employeeId: expense.employeeId, value: Number(expense.value) });
+			}
+		}
+
+		// Each month's recurring split expenses, with the number of employees they are split among
+		const months = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
+			employeeIds[0],
+			rangeDate,
+			organizationId
+		);
+		// An expense is listed under every month it is counted in: take each one once, then each of its dates
+		for (const expense of new Set([...months.values()].flatMap(({ recurringExpense }) => recurringExpense))) {
+			for (const date of recurringExpenseDates(expense, rangeDate)) {
+				const key = `${date.getMonth()}-${date.getFullYear()}`;
+				const { month, year, splitAmong } = months.get(key);
+				const { split } = dayOf(date);
+				const share = split.get(key) ?? { month, year, splitAmong, splitExpense: 0 };
+				share.splitExpense = Number(
+					(shareOf(Number(expense.value), splitAmong) + share.splitExpense).toFixed(2)
+				);
+				split.set(key, share);
+			}
+		}
+		return byDay;
+	}
+
 	private async _loadAllData(
 		searchInput: { rangeDate: IDateRangePicker; months: number },
 		employeeMap: Map<string, IEmployeeStatisticSum>,
-		organizationId: string
+		organizationId: string,
+		workingByMonth: WorkingEmployeesByMonth,
+		recurringExpensesOfDay?: RecurringExpensesOfDay
 	) {
 		// 1.Load Income and Direct Bonus in employeeMap
 		await this._loadIncomeAndDirectBonus(
@@ -161,21 +246,24 @@ export class AggregateOrganizationQueryHandler
 		/**
 		 * Load Recurring/Split Expenses for organization/employees
 		 */
-		await this._loadEmployeeRecurringExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
-		await this._loadOrganizationSplitExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
-		await this._loadOrganizationRecurringSplitExpenses(
-			searchInput,
-			employeeMap,
-			organizationId
-		);
+		if (recurringExpensesOfDay) {
+			// A day of the chart: the recurring expenses counted on that day, read once for the whole range
+			for (const { employeeId, value } of recurringExpensesOfDay.employees) {
+				const stat = employeeMap.get(employeeId);
+				stat.expense = Number((value + stat.expense).toFixed(2));
+			}
+			await this._loadOrganizationSplitExpenses(searchInput, employeeMap, organizationId, workingByMonth);
+			await this._addSplitShares(recurringExpensesOfDay.split, employeeMap, organizationId, workingByMonth);
+		} else {
+			await this._loadEmployeeRecurringExpenses(searchInput, employeeMap, organizationId);
+			await this._loadOrganizationSplitExpenses(searchInput, employeeMap, organizationId, workingByMonth);
+			await this._loadOrganizationRecurringSplitExpenses(
+				searchInput,
+				employeeMap,
+				organizationId,
+				workingByMonth
+			);
+		}
 
 		// 3. Populate Profit in employeeMap
 		this._calculateProfit(employeeMap);
@@ -257,16 +345,9 @@ export class AggregateOrganizationQueryHandler
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate =
-				expense.startDate > inputStartDate
-					? expense.startDate
-					: inputStartDate;
+			const requiredStartDate = recurringExpenseStart(expense.startDate, inputStartDate);
 
-			for (
-				const date = new Date(requiredStartDate);
-				date <= new Date(endDate);
-				date.setMonth(date.getMonth() + 1)
-			) {
+			for (const date of recurringExpenseMonths(requiredStartDate, endDate)) {
 				// Stop loading expense if the recurring expense has ended before input date
 				if (expense.endDate && date > expense.endDate) break;
 
@@ -280,42 +361,30 @@ export class AggregateOrganizationQueryHandler
 	private async _loadOrganizationSplitExpenses(
 		searchInput: { rangeDate: IDateRangePicker; months: number },
 		employeeMap: Map<string, IEmployeeStatisticSum>,
-		organizationId: string
+		organizationId: string,
+		workingByMonth: WorkingEmployeesByMonth
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
-		// Fetch split expenses and the number of employees the expense need to be split among for each month
-		// TODO: Handle case when searchInput.months > 1
-		const expenses =
-			await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
-				employeeIds[0], // split expenses are fetched at organization level, 1st Employee
-				searchInput.rangeDate,
-				organizationId
-			);
+		// Split expenses of the range, per month, with the number of employees each month's are split among
+		const expenses = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
+			employeeIds[0], // split expenses are fetched at organization level, 1st Employee
+			searchInput.rangeDate,
+			organizationId
+		);
 
-		//Since we are only calculating for one month, we only expect one value here.
-		const monthSplitExpense: IMonthAggregatedSplitExpense = expenses
-			.values()
-			.next().value;
-
-		if (monthSplitExpense) {
-			// Add split expense share to each employee's expenses
-			employeeMap.forEach((emp) => {
-				emp.expense = Number(
-					(emp.expense + monthSplitExpense.splitExpense).toFixed(2)
-				);
-			});
-		}
+		await this._addSplitShares(expenses, employeeMap, organizationId, workingByMonth);
 	}
 
 	private async _loadOrganizationRecurringSplitExpenses(
 		searchInput: { rangeDate: IDateRangePicker; months: number },
 		employeeMap: Map<string, IEmployeeStatisticSum>,
-		organizationId: string
+		organizationId: string,
+		workingByMonth: WorkingEmployeesByMonth
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
-		// Fetch split expenses and the number of employees the expense need to be split among
+		// Recurring split expenses of the range, per month, with the number of employees they are split among
 		const organizationRecurringSplitExpenses =
 			await this.employeeStatisticsService.organizationRecurringSplitExpenses(
 				employeeIds[0],
@@ -323,19 +392,46 @@ export class AggregateOrganizationQueryHandler
 				organizationId
 			);
 
-		//Since we are only calculating for one month, we only expect one value here.
-		const monthSplitExpense: IMonthAggregatedSplitExpense =
-			organizationRecurringSplitExpenses.values().next().value;
+		await this._addSplitShares(organizationRecurringSplitExpenses, employeeMap, organizationId, workingByMonth);
+	}
 
-		if (monthSplitExpense) {
-			employeeMap.forEach(
-				(emp) =>
-					(emp.expense = Number(
-						(emp.expense + monthSplitExpense.splitExpense).toFixed(
-							2
-						)
-					))
-			);
+	/**
+	 * Adds each month's split-expense share to the employees who worked in that month.
+	 *
+	 * A month's expenses are divided among the employees working in it (`employeeSplitExpenseInNMonths` /
+	 * `organizationRecurringSplitExpenses` count them with `findWorkingEmployees(monthOf(month))`), so exactly those
+	 * employees receive the share and the shares add back up to the expense. This used to take only the first month
+	 * of the range and add its share to every employee listed for the range: the later months' split expenses were
+	 * never counted, and over a range in which someone joined or left, the first month's were over- or under-counted.
+	 */
+	private async _addSplitShares(
+		months: Map<string, IMonthAggregatedSplitExpense>,
+		employeeMap: Map<string, IEmployeeStatisticSum>,
+		organizationId: string,
+		workingByMonth: WorkingEmployeesByMonth
+	): Promise<void> {
+		for (const [key, month] of months) {
+			if (!workingByMonth.has(key)) {
+				workingByMonth.set(
+					key,
+					this.employeeService
+						.findWorkingEmployees(organizationId, monthOf(new Date(month.year, month.month, 1)), false, true)
+						.then((result) => {
+							// `findWorkingEmployees` answers undefined when its query fails: that is not "nobody
+							// worked", and reading it so would drop the month's split expenses from a successful answer
+							if (!result) {
+								throw new Error(`Could not read the employees working in ${key}`);
+							}
+							return new Set(result.items.map(({ id }) => id));
+						})
+				);
+			}
+			const working = await workingByMonth.get(key);
+			employeeMap.forEach((emp, employeeId) => {
+				if (working.has(employeeId)) {
+					emp.expense = Number((emp.expense + month.splitExpense).toFixed(2));
+				}
+			});
 		}
 	}
 

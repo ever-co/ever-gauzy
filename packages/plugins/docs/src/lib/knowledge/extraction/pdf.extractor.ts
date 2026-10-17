@@ -1,5 +1,5 @@
 import { Injectable, Optional } from '@nestjs/common';
-import * as pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import { DocsPermanentError, DocsTransientError, isTransientError } from '../errors';
 import { DocumentOcrService } from './document-ocr.service';
 import {
@@ -63,39 +63,31 @@ export class PdfExtractor implements IDocumentExtractor {
 
 		let pageCount = 0;
 		try {
-			// `pdf-parse` drives pdf.js through an in-process loopback "worker" whose
-			// structured-clone shim re-wraps the input as `new input.constructor(input)`.
-			// For a Node `Buffer` that is the legacy `new Buffer(…)` path, which for inputs
-			// under Node's 4 KiB pool threshold returns a POOLED buffer — one whose
-			// `.buffer` is the shared 8 KiB allocation pool. pdf.js resolves every xref
-			// offset against `bytes.buffer`, so it reads from the pool base instead of the
-			// file and the parse dies with "bad XRef entry". Whether it happens depends on
-			// the pool's fill level, so small PDFs fail non-deterministically. A standalone
-			// `Uint8Array` clones to `byteOffset: 0` and parses reliably at any size.
+			// A standalone `Uint8Array` (`byteOffset: 0`), not the Buffer itself: pdf.js resolves every xref
+			// offset against `bytes.buffer`, and a small Node `Buffer` is a view into the shared 8 KiB allocation
+			// pool, so a parse of the pooled view read from the pool base and died with "bad XRef entry" —
+			// non-deterministically, depending on the pool's fill level (seen with pdf-parse 1's loopback worker).
 			const bytes = new Uint8Array(buffer);
 
-			// `pagerender` collects per-page text so `## Page N` locators can be emitted.
-			const result = await (pdfParse as any)(bytes, {
-				pagerender: async (pageData: any) => {
-					const textContent = await pageData.getTextContent({
-						normalizeWhitespace: true,
-						disableCombineTextItems: false
-					});
-					let lastY: number | undefined;
-					let text = '';
-					for (const item of textContent.items ?? []) {
-						const y = item.transform?.[5];
-						if (lastY !== undefined && y !== lastY) {
-							text += '\n';
-						}
-						text += item.str ?? '';
-						lastY = y;
-					}
-					pages.push(text);
-					return text;
+			// pdf-parse 2 answers the text page by page, so `## Page N` locators can be emitted. Its options
+			// reproduce what this extractor's own page renderer did on pdf-parse 1: a new line whenever an item
+			// sits on another baseline (`lineThreshold: 0`), items on one baseline joined with nothing (no cell
+			// separator), and no page marker of the library's own.
+			const parser = new PDFParse({ data: bytes });
+			try {
+				const result = await parser.getText({
+					lineEnforce: true,
+					lineThreshold: 0,
+					cellSeparator: '',
+					pageJoiner: ''
+				});
+				for (const page of result.pages) {
+					pages.push(page.text ?? '');
 				}
-			});
-			pageCount = Number(result?.numpages) || pages.length;
+				pageCount = Number(result.total) || pages.length;
+			} finally {
+				await parser.destroy();
+			}
 		} catch (error) {
 			if (isTransientError(error)) {
 				throw new DocsTransientError('Temporary failure while reading the PDF.', error);

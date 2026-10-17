@@ -1,21 +1,149 @@
 @use 'themes' as *;
 
+// Same vocabulary as Settings > File Storage: a hairline panel sized to its
+// fields, label + hint | control rows, 1rem/600 title, 12px/500 labels.
 :host {
-  header {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 30px;
-    letter-spacing: 0em;
-  }
+	nb-card {
+		background-color: nb-theme(gauzy-card-2);
+	}
 
-  nb-card {
-    background-color: nb-theme(gauzy-card-2);
-  }
+	// Sized to its content: a fixed viewport height clipped the action bar
+	// whenever the demo / verification banners were shown above the page.
+	nb-card.card-smtp {
+		display: flex;
+		flex-direction: column;
+		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+		padding: 0;
+		margin: 0;
+	}
 
-  nb-card.card-smtp {
-    height: calc(100vh - 16.5rem);
-    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-    padding: 0;
-    margin: 0;
-  }
+	nb-card-body.smtp-body {
+		padding: 1rem 1.25rem;
+		background: transparent;
+	}
+
+	// ── Panel ─────────────────────────────────────────────────────────────
+	.smtp-panel {
+		overflow: hidden;
+		border-radius: var(--gauzy-radius-sm, 0.5rem);
+		background: transparent;
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+		font-size: 0.75rem;
+	}
+
+	.smtp-panel-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.875rem 1rem;
+		border-bottom: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+	}
+
+	.smtp-mark {
+		display: inline-flex;
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: var(--gauzy-radius-sm, 0.5rem);
+		background: var(--color-primary-transparent-default, rgba(51, 102, 255, 0.08));
+		color: var(--color-primary-default);
+
+		nb-icon {
+			font-size: 1.125rem;
+		}
+	}
+
+	.smtp-heading {
+		min-width: 0;
+	}
+
+	.smtp-title {
+		margin: 0;
+		font-size: nb-theme(text-heading-6-font-size);
+		font-weight: 600;
+		line-height: 1.25;
+		letter-spacing: 0em;
+	}
+
+	.smtp-subtitle {
+		margin: 0.125rem 0 0;
+		font-size: 0.75rem;
+		line-height: 1.125rem;
+		color: var(--text-hint-color);
+	}
+
+	// ── Rows ──────────────────────────────────────────────────────────────
+	.field-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+		align-items: center;
+		gap: 0.5rem 1.5rem;
+		padding: 0.625rem 1rem;
+
+		& + .field-row {
+			border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+		}
+
+		@media (max-width: 767.98px) {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	.field-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		min-width: 0;
+	}
+
+	.field-label {
+		margin: 0;
+		font-size: 0.75rem;
+		font-weight: 500;
+		line-height: 1.125rem;
+		color: var(--text-basic-color);
+	}
+
+	.field-hint {
+		line-height: 1.125rem;
+		color: var(--text-hint-color);
+	}
+
+	.field-control {
+		min-width: 0;
+
+		input[nbInput],
+		nb-select {
+			width: 100%;
+			max-width: none;
+		}
+
+		input.mono {
+			font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+			font-size: 0.75rem;
+			font-weight: 400;
+		}
+	}
+
+	// ── Action bar ────────────────────────────────────────────────────────
+	nb-card-footer.form-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		padding: 0.75rem 1.25rem;
+		border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+
+		button[nbButton] {
+			margin: 0;
+			text-transform: none;
+
+			nb-icon {
+				font-size: 1rem;
+			}
+		}
+	}
 }

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbFormFieldModule, NbInputModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 
@@ -24,7 +24,7 @@ import { WorkspaceSelectionComponent } from './workspace-selection/workspace-sel
 		NbFormFieldModule,
 		NbInputModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslatePipe,
 		SharedModule,
 		ThemeModule
 	],

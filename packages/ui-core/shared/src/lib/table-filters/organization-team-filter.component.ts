@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnInit, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -25,6 +25,7 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 		  }
 		</ng-select>
 		`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OrganizationTeamFilterComponent extends DefaultFilter implements OnInit, OnChanges {

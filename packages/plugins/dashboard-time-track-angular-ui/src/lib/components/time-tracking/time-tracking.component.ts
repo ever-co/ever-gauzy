@@ -9,7 +9,8 @@ import {
 	OnInit,
 	QueryList,
 	TemplateRef,
-	ViewChildren
+	ViewChildren,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -91,6 +92,7 @@ enum Windows {
 	selector: 'gz-time-tracking-dashboard',
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeTrackingComponent

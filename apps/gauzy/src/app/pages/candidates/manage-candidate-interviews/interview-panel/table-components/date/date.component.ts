@@ -1,12 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-interview-date',
     template: `
 		<div class="start-column">
-			<strong style="text-align:center;">{{ rowData?.startTime | date : 'shortDate' }} </strong>
-			<span> {{ rowData?.startTime | date : 'shortTime' }}</span>
-			<span>{{ rowData?.endTime | date : 'shortTime' }} </span>
+			<strong style="text-align:center;">{{ $safeNavigationMigration(rowData?.startTime) | date : 'shortDate' }} </strong>
+			<span> {{ $safeNavigationMigration(rowData?.startTime) | date : 'shortTime' }}</span>
+			<span>{{ $safeNavigationMigration(rowData?.endTime) | date : 'shortTime' }} </span>
 		</div>
 	`,
     styles: [
@@ -19,6 +19,7 @@ import { Component, Input } from '@angular/core';
 			}
 		`
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InterviewDateTableComponent {

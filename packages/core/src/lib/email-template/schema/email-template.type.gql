@@ -1,0 +1,223 @@
+# The email template's object type.
+#
+# A template is one part of one message rather than a message: `name` addresses the part —
+# `<template>/<type>`, where the surname is `html` or `subject` — and `languageCode` says which
+# language's copy it is. That pair is the row's identity to every reader of this table, on both
+# protocols: the delivered lookup goes straight to `name` + `languageCode`, and the delivered list
+# merges nothing onto the row, so what a client reads here is the row as the store holds it.
+#
+# **`hbs` and `mjml` are text columns and are carried as `String`, never as `JSON`.** `hbs` is the
+# compiled part the sender renders — the text of a subject, or the HTML of a body — and `mjml` is the
+# source it was compiled from. A document column elsewhere on this platform is a `JSON`, and a client
+# that had to parse a string of markup would be working around a shape this table does not have.
+#
+# **`organizationId` is where the tenant-wide copy is stated.** A row with no organization is the copy
+# the platform answers to every organization of its tenant: the delivered reader falls back to it when
+# the organization has no copy of its own. It is a nullable member here for the same reason it is a
+# nullable column, and the filter below is where a caller selects on it.
+
+"""
+One part of one message, in one language.
+"""
+type EmailTemplate {
+	id: ID!
+	"""
+	The address of the part: `<template>/<type>`, for example `password/html` or `password/subject`.
+	The surname is not decoration — the two parts of one message are two rows, and this member is how a
+	reader tells them apart.
+	"""
+	name: String!
+	"The language this copy is written in."
+	languageCode: String!
+	"""
+	The label the delivered surface derives from `name` for display. It is nullable because it is not a
+	column: the entity produces it from `name` on load, and a row read through a path that does not run
+	that hook carries none.
+	"""
+	title: String
+	"The compiled part: the text of a subject, or the HTML of a body."
+	hbs: String!
+	"The MJML source `hbs` was compiled from, or null on a part filed without one."
+	mjml: String
+	"The tenant this copy belongs to, or null on a copy that belongs to no tenant at all."
+	tenantId: ID
+	"""
+	The organization this copy belongs to, or null when it is the tenant-wide copy: the platform
+	answers an organization-less row to every organization of the tenant, and the copies seeded from the
+	platform's own template folder carry no organization and no tenant either. A caller states one with
+	`organizationId: { isNull: true }` in the filter below.
+	"""
+	organizationId: ID
+	"""
+	When the copy was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live copy from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of templates.
+"""
+type EmailTemplateEdge {
+	node: EmailTemplate!
+	cursor: String!
+}
+
+"""
+One page of templates, with the total the filters select and the boundary cursors.
+"""
+type EmailTemplateConnection {
+	nodes: [EmailTemplate!]!
+	edges: [EmailTemplateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a template list may be sorted by.
+"""
+enum EmailTemplateSortField {
+	createdAt
+	updatedAt
+	name
+	languageCode
+}
+
+"""
+The order the templates are returned in. At most three keys are accepted.
+"""
+input EmailTemplateSort {
+	field: EmailTemplateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a template list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+**`organizationId: { isNull: true }` is how a caller states the tenant-wide copy.** Such a row is the
+copy the platform answers to every organization of its tenant, and a filter that could not say so
+would leave the row that decides what most messages actually say unstateable — which is why the member
+is an `IDFilter` rather than an `ID`.
+
+`tenantId` is filterable for the same reason in the other direction. The copies seeded from the
+platform's own template folder carry no tenant either, so `tenantId: { isNull: true }` separates the
+copy that belongs to no tenant at all from an organization-less copy a tenant filed for itself, and a
+caller that means one of the two no longer has to read both and guess. Neither key reaches outside the
+set the reader answered: the tenant a read runs under comes from the credential, never from a filter,
+so these two members narrow that set rather than widening it.
+
+`deletedAt` is deliberately absent: the delivered list read answers live rows only, so the column is
+absent on every row this connection holds and a condition on it could only ever be a condition no row
+matches. The member is carried on the object type because the two lifecycle writes answer the row they
+changed.
+"""
+input EmailTemplateFilter {
+	id: IDFilter
+	name: StringFilter
+	languageCode: StringFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmailTemplateFilter!]
+	or: [EmailTemplateFilter!]
+	not: EmailTemplateFilter
+}
+
+"""
+One message part as the delivered lookup answers it: the subject text and the body source that will be
+used for a name, in a language, for an organization.
+
+The two members are the two parts of one message, resolved separately and each through its own
+fallback: the organization's own copy of that part when it has one, then the tenant-wide copy, then the
+English copy of either. They are nullable because a part the fallback chain could not reach any row for
+is answered as no text at all rather than as a fabricated empty one — the difference between "this
+message has no body" and "this message has an empty body" is one a sender has to be able to see.
+"""
+type EmailTemplateContent {
+	"The text of the `<name>/subject` part of the message."
+	subject: String
+	"""
+	The MJML source of the `<name>/html` part — the source the platform compiles the HTML body from,
+	not the compiled HTML itself. It is null on a copy that was filed from a source carrying only the
+	compiled body.
+	"""
+	template: String
+}
+
+"""
+A document converted for preview, as the delivered preview route answers it.
+"""
+type EmailTemplatePreview {
+	"The document with its markup compiled and its placeholders rendered with sample values."
+	html: String!
+}
+
+"""
+What a caller states when it files a template part.
+
+The tenant is not a member: the tenant a row is written into comes from the credential on every write
+on this platform, and a member naming one would promise a scope the write does not honour.
+`organizationId` is a member and is nullable, because its absence is a statement rather than an
+omission — an absent organization files the tenant-wide copy the whole tenant falls back to.
+"""
+input CreateEmailTemplateInput {
+	"The address of the part: `<template>/<type>`."
+	name: String!
+	"The language this copy is written in."
+	languageCode: String!
+	"""
+	The compiled part. The delivered create stores what it is given and compiles nothing, so a caller
+	holding only MJML source wants `saveEmailTemplate` rather than this field.
+	"""
+	hbs: String!
+	"The MJML source, when the caller holds one."
+	mjml: String
+	"The organization the copy is filed for. Omit it to file the tenant-wide copy."
+	organizationId: ID
+}
+
+"""
+What a caller states when it edits a template part that exists.
+
+**A member that is absent is left as it is, and a member stated as null is written as null.** The
+delivered edit is a partial column update — the service writes the members it is given and touches no
+other column — so a body that omits `mjml` keeps the source that is there. GraphQL keeps the two apart
+for exactly this reason: omitting `organizationId` leaves the copy where it is, while stating
+`organizationId: null` moves it to the tenant-wide copy every organization of the tenant is answered
+with, which is a different request from saying nothing about it.
+"""
+input UpdateEmailTemplateInput {
+	id: ID!
+	name: String
+	languageCode: String
+	hbs: String
+	mjml: String
+	organizationId: ID
+}
+
+"""
+What a caller states when it saves a part of a message through the delivered save route.
+
+`subject` and `mjml` are the two halves that route compiles: `subject` is stored as the part's compiled
+text and `mjml` as its source, with the compiled body derived from the source. That is the difference
+between this write and `createEmailTemplate` above, which stores what it is given.
+"""
+input SaveEmailTemplateInput {
+	"The template the part belongs to, without the `/subject` or `/html` surname."
+	name: String!
+	languageCode: String!
+	"The MJML source of the body. The compiled HTML is derived from it."
+	mjml: String!
+	"The text of the subject part."
+	subject: String!
+	"The organization the parts are saved for. Omit it to write the tenant-wide copies."
+	organizationId: ID
+}

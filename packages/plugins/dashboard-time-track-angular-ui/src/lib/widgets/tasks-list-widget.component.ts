@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbButtonModule, NbComponentStatus, NbProgressBarModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { ITasksStatistics } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
@@ -21,7 +21,7 @@ import { TimeTrackWidgetStateComponent } from './time-track-widget-state.compone
 	templateUrl: './tasks-list-widget.component.html',
 	styleUrls: ['./time-track-list-widget.scss'],
 	standalone: true,
-	imports: [NbButtonModule, NbProgressBarModule, TranslateModule, DurationFormatPipe, TimeTrackWidgetStateComponent],
+	imports: [NbButtonModule, NbProgressBarModule, TranslatePipe, DurationFormatPipe, TimeTrackWidgetStateComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TasksListWidgetComponent extends BaseTimeTrackListWidgetComponent<ITasksStatistics> {

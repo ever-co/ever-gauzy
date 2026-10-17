@@ -20,7 +20,7 @@ import {
 } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -59,7 +59,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule
 	]
 })

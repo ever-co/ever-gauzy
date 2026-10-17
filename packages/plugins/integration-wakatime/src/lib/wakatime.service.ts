@@ -8,6 +8,27 @@ import { MikroOrmWakatimeRepository } from './repository/mikro-orm-wakatime.repo
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
+/**
+ * Splits a number of seconds into whole hours and the minutes left over.
+ *
+ * The summary used `seconds / 60` for the minutes, i.e. the TOTAL minutes, so 3,700 s read "1:61"
+ * instead of "1:01". A day without heartbeats sums to `null`; it, and any non-numeric or negative value,
+ * counts as 0.
+ */
+export function splitDuration(seconds: number | string | null | undefined): {
+	totalSeconds: number;
+	hours: number;
+	minutes: number;
+} {
+	const value = Number(seconds);
+	const totalSeconds = Number.isFinite(value) && value > 0 ? value : 0;
+	return {
+		totalSeconds,
+		hours: Math.floor(totalSeconds / 3600),
+		minutes: Math.floor((totalSeconds % 3600) / 60)
+	};
+}
+
 @Injectable()
 export class WakatimeService {
 	constructor(
@@ -55,16 +76,18 @@ export class WakatimeService {
 				break;
 		}
 
+		const { totalSeconds, hours, minutes } = splitDuration(result[0]?.seconds);
+
 		return {
 			data: [
 				{
 					categories: [],
 					grand_total: {
-						digital: `${Math.floor(result[0].seconds / 3600)}:${Math.floor(result[0].seconds / 60)}`,
-						hours: Math.floor(result[0].seconds / 3600),
-						minute: Math.floor(result[0].seconds / 60),
-						total_seconds: result[0].seconds,
-						text: `${result[0].seconds} secs`
+						digital: `${hours}:${String(minutes).padStart(2, '0')}`,
+						hours,
+						minute: minutes,
+						total_seconds: totalSeconds,
+						text: `${totalSeconds} secs`
 					},
 					range: {
 						date: moment().format('YYYY-MM-DD'),

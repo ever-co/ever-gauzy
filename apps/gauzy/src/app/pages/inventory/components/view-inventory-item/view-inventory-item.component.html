@@ -4,6 +4,17 @@
 		<h5>
 			{{ 'INVENTORY_PAGE.VIEW_INVENTORY_ITEM' | translate }}
 		</h5>
+		@if (inventoryItem?.id) {
+			<ngx-favorite-toggle
+				class="ml-auto"
+				[entityType]="'Product'"
+				[entityId]="inventoryItem.id"
+				[entityName]="$any(inventoryItem).name || ''"
+				size="small"
+				status="basic"
+				spacing="list"
+			></ngx-favorite-toggle>
+		}
 	</nb-card-header>
 
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">

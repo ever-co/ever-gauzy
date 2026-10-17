@@ -6,7 +6,8 @@ import {
 } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
-import { CrudService, getLastDayOfMonth } from '../../core';
+import { CrudService } from '../../core/crud';
+import { getLastDayOfMonth } from '../../core/utils';
 
 /**
  * Deletes a OrganizationRecurringExpense based on command.deleteInput.deletionType:

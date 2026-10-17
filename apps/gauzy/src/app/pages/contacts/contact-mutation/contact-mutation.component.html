@@ -404,7 +404,7 @@
 											/>
 											} @else {
 											<span class="member-option-avatar member-option-initial" aria-hidden="true">
-												{{ item.user?.name | slice: 0 : 1 }}
+												{{ $safeNavigationMigration(item.user?.name) | slice: 0 : 1 }}
 											</span>
 											}
 											<span class="member-option-text">

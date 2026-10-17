@@ -14,7 +14,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TaskSelectModule, TaskStatusSelectModule } from '../../tasks';
 import { ProjectSelectModule, SelectorsModule } from '../../selectors';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
@@ -40,7 +40,7 @@ import { ProjectModuleMutationComponent } from './project-module-mutation.compon
 		NbToastrModule,
 		NgSelectModule,
 		SelectorsModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
 		ProjectSelectModule,

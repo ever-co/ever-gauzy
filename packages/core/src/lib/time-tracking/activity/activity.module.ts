@@ -7,6 +7,7 @@ import { EmployeeModule } from './../../employee/employee.module';
 import { OrganizationProjectModule } from './../../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { ActivityController } from './activity.controller';
+import { ActivityResolver } from './activity.resolver';
 import { ActivityService } from './activity.service';
 import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
@@ -25,7 +26,16 @@ import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repo
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],
-	providers: [ActivityService, ActivityMapService, TypeOrmActivityRepository, MikroOrmActivityRepository, ...CommandHandlers],
+	providers: [
+		ActivityService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject services
+		// its own module can reach, and this module is what reaches them.
+		ActivityResolver,
+		ActivityMapService,
+		TypeOrmActivityRepository,
+		MikroOrmActivityRepository,
+		...CommandHandlers
+	],
 	exports: [ActivityService, ActivityMapService, TypeOrmActivityRepository, MikroOrmActivityRepository]
 })
 export class ActivityModule {}

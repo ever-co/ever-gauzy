@@ -15,7 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CandidateTechnologiesService } from '@gauzy/ui-core/core';
 import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.module';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
@@ -54,7 +54,7 @@ import { CandidatePersonalQualitiesComponent } from './interview-criterions/cand
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
 		CandidateCriterionCardModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	exports: [
 		CandidateInterviewMutationComponent,

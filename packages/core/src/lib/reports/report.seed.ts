@@ -1,6 +1,5 @@
 import * as chalk from 'chalk';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 import { DataSource } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
@@ -10,8 +9,8 @@ import { getDefaultOrganizations } from './../organization/organization.seed';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
-import { getApiPublicPath } from '../core';
-import { copyAssets } from '../core/seeds/utils';
+import { getApiPublicPath } from '../core/util';
+import { copyAssets, removeGeneratedFiles } from '../core/seeds/utils';
 
 /**
  * Creates default reports and their categories for a tenant.
@@ -188,7 +187,7 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
 
-	await new Promise((resolve, reject) => {
+	await new Promise((resolve) => {
 		// Determine directories based on environment
 		const isElectron = env.isElectron;
 
@@ -203,16 +202,13 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
 		console.log('Report Cleaner -> assetPublicPath: ' + dir);
 
 		// delete old generated report image
-		rimraf(
-			`${dir}/!(rimraf|.gitkeep)`,
-			() => {
-				console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
-				resolve(null);
-			},
-			() => {
-				reject(null);
-			}
-		);
+		// A failed cleanup never stopped the seed (rimraf 3 called the success handler either way); it still does not.
+		removeGeneratedFiles(dir)
+			.then(
+				() => console.log(chalk.green(`CLEANED UP REPORT IMAGES`)),
+				(error) => console.error(chalk.red(`FAILED TO CLEAN REPORT IMAGES: ${dir}: ${error?.message ?? error}`))
+			)
+			.then(() => resolve(null));
 	});
 }
 

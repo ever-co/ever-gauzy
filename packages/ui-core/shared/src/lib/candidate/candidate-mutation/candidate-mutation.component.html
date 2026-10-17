@@ -21,7 +21,7 @@
                 @for (candidate of candidates; track candidate) {
                   <nb-tag
                     removable
-                    [text]="candidate?.user?.email"
+                    [text]="$safeNavigationMigration(candidate?.user?.email)"
                   ></nb-tag>
                 }
               </nb-tag-list>

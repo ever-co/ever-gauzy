@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { tap, catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -13,6 +13,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	selector: 'ngx-zapier-settings',
 	templateUrl: './zapier-settings.component.html',
 	styleUrls: ['./zapier-settings.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierSettingsComponent extends TranslationBaseComponent implements OnInit {

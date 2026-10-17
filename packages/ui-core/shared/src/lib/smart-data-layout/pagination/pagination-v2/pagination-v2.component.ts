@@ -1,5 +1,5 @@
 /* It's a pagination component that works with the angular2-smart-table component */
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Subscription, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -9,6 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ngx-pagination',
     templateUrl: './pagination-v2.component.html',
     styleUrls: ['./pagination-v2.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PaginationV2Component implements OnChanges, OnDestroy {

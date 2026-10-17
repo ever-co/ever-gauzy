@@ -1,8 +1,4 @@
-@use 'gauzy/_gauzy-overrides' as *;
-
-:host ga-organizations-step-form ::ng-deep {
-  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
-  nb-stepper {
-    @include input-appearance(42px, var(--gauzy-sidebar-background-4));
-  }
+// The step form styles itself as a dialog when it is closable
+:host {
+	display: block;
 }

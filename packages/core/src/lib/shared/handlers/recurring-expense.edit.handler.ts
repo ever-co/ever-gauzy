@@ -13,7 +13,8 @@ import {
 	IRecurringExpenseModel,
 	StartDateUpdateTypeEnum
 } from '@gauzy/contracts';
-import { CrudService, getLastDayOfMonth } from '../../core';
+import { CrudService } from '../../core/crud';
+import { getLastDayOfMonth } from '../../core/utils';
 
 /**
  * Edits a recurring expense.

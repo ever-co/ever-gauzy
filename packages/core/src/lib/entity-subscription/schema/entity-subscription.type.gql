@@ -1,0 +1,194 @@
+# The entity subscription's object type.
+#
+# A subscription is the standing answer to "tell me when this record changes": the row names the record
+# by its type and its identifier (`entity`, `entityId`), the employee who asked to be told
+# (`employeeId`) and the kind of subscription that put the row there (`type`).
+#
+# **The employee is not an object member.** The list and the one-row reads behind this surface join no
+# relation at all — the delivered routes load only what their own query string names, and the read this
+# connection performs names none — so an `employee` member would be absent on every row answered here,
+# whichever row was asked about, and a member that always reads null is worse than no member. It is
+# carried as the identifier the row stores, and the employee behind it is read from the employee
+# resource, which is where that relation belongs.
+#
+# `type` and `actorType` are carried as their string values rather than declared as schema enums. `type`
+# holds a member of the contract's own subscription-kind vocabulary — the five values a subscription can
+# be filed under — and `actorType` holds the contract's name for who did the subscribing (`System` or
+# `User`). Both value sets belong to the contract that every other per-entity table shares with this
+# one; declaring either here would claim a vocabulary this domain does not own, and the next domain
+# that needs the same values would collide with this file instead of reusing it. `entity` is carried as
+# its value for the same reason: it is the platform's own entity-type list, written into this row as
+# text rather than as a reference to a table.
+
+"""
+One employee's standing request to be told when one record changes.
+"""
+type EntitySubscription {
+	id: ID!
+	"""
+	The type of the entity being watched, as the platform's own entity-type value. It is stored on this
+	row as text, so it is carried as text rather than as a declared enum.
+	"""
+	entity: String!
+	"The record being watched, by identifier."
+	entityId: ID!
+	"""
+	The kind of subscription this is, as the contract's own value: `manual`, `mention`, `assignment`,
+	`comment` or `created-entity`. Carried as its value rather than declared as an enum, because the
+	vocabulary belongs to the contract and is written by rows this surface does not file.
+	"""
+	type: String!
+	"""
+	Who performed the subscribing, as the contract's own name for it: `System` or `User`. Nullable
+	because the column is — a row written before the actor was recorded carries neither.
+	"""
+	actorType: String
+	"""
+	The employee who is to be told, by identifier. The delivered filing stamps it from the credential
+	rather than from the body, and it is nullable for rows written outside a request. The account behind
+	it is not joined by this read.
+	"""
+	employeeId: ID
+	"The tenant the subscription belongs to, by identifier."
+	tenantId: ID
+	"The organization the subscription belongs to, by identifier."
+	organizationId: ID
+	"Whether the subscription is active. A flag an operator sets, not a statement about its lifecycle."
+	isActive: Boolean
+	"Whether the subscription is archived. A flag an operator sets, not a statement about its lifecycle."
+	isArchived: Boolean
+	"When the subscription was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the subscription was withdrawn, or null while it is live. Withdrawing and restoring are
+	delivered routes — two of the nine this resource serves — and this column is the whole of what they
+	write, so without it a caller could not tell a live row from a withdrawn one on the answer to the
+	write that withdrew it.
+	"""
+	deletedAt: DateTime
+	"When the subscription was filed."
+	createdAt: DateTime
+	"When the subscription was last changed."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of subscriptions.
+"""
+type EntitySubscriptionEdge {
+	node: EntitySubscription!
+	cursor: String!
+}
+
+"""
+One page of subscriptions, with the total the filters select and the boundary cursors.
+"""
+type EntitySubscriptionConnection {
+	nodes: [EntitySubscription!]!
+	edges: [EntitySubscriptionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a subscription list may be sorted by.
+"""
+enum EntitySubscriptionSortField {
+	id
+	entity
+	entityId
+	type
+	employeeId
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the subscriptions are returned in. At most three keys are accepted.
+"""
+input EntitySubscriptionSort {
+	field: EntitySubscriptionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a subscription list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the subscription row, because the delivered list read answers the row
+itself and joins only the relations its REST caller names — and this connection's read names none. The
+employee is therefore an identifier rather than a relation path: narrowing by who is to be told is a
+condition on the identifier this row stores.
+
+No member narrows by the tenant on the caller's behalf. The tenant comes from the credential on every
+read, so the identifier member above narrows the row's own column rather than restating a scope
+decision the caller does not have.
+"""
+input EntitySubscriptionFilter {
+	id: IDFilter
+	entity: StringFilter
+	entityId: IDFilter
+	type: StringFilter
+	actorType: StringFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [EntitySubscriptionFilter!]
+	or: [EntitySubscriptionFilter!]
+	not: EntitySubscriptionFilter
+}
+
+"""
+What a caller states when it subscribes to an entity.
+
+The members are the ones the delivered create DTO states: the two that name the record being watched,
+the kind of subscription, and the actor who performed the subscribing. The record's type and its
+identifier are required because the subscription is *for* that record — a row without them watches
+nothing — and the kind is required because the column is not nullable.
+
+There is no member for the tenant, and none for the employee: the delivered service stamps both from
+the credential and overwrites whatever a body states. The organization is stated because it is a
+member of the delivered DTO and because the criterion the service looks an existing subscription up by
+carries it: a caller that states the organization it is acting in is answered the subscription it
+already has rather than a second one beside it.
+"""
+input CreateEntitySubscriptionInput {
+	"The organization the subscription belongs to."
+	organizationId: ID
+	"The kind of subscription, as the contract's own value."
+	type: String!
+	"The type of the entity being watched, as the platform's own entity-type value."
+	entity: String!
+	"The record being watched, by identifier."
+	entityId: ID!
+	"Who performed the subscribing, as the contract's own name for it: `System` or `User`."
+	actorType: String
+}
+
+"""
+What a caller states when it changes a subscription that exists.
+
+**A member the caller leaves out is left as it is.** The delivered route reads the row the identifier
+names — proving it is the caller's own — and then writes the members the body states to it, so this is
+a column update and not a replacement of the row. The identifier is the one required member, and it is
+stated because the delivered route carries it in the path rather than in the body.
+"""
+input UpdateEntitySubscriptionInput {
+	id: ID!
+	"The organization the subscription belongs to."
+	organizationId: ID
+	"The kind of subscription, as the contract's own value."
+	type: String
+	"The type of the entity being watched."
+	entity: String
+	"The record being watched, by identifier."
+	entityId: ID
+	"Who performed the subscribing, as the contract's own name for it: `System` or `User`."
+	actorType: String
+}

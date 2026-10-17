@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IUser } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -10,6 +10,7 @@ import { PluginSubscriptionAccessFacade } from '../../+state/plugin-subscription
 	selector: 'gauzy-plugin-user-revocation-dialog',
 	templateUrl: './plugin-user-revocation-dialog.component.html',
 	styleUrls: ['./plugin-user-revocation-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PluginUserRevocationDialogComponent implements OnInit, OnDestroy {

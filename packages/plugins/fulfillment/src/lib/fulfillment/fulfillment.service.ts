@@ -1,0 +1,1525 @@
+import {
+	BadGatewayException,
+	BadRequestException,
+	ConflictException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
+import { DeepPartial, DeleteResult, EntityManager, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import {
+	DecimalString,
+	FulfillmentDirection,
+	FulfillmentStatusDetail,
+	ID,
+	IOrderLine,
+	IPagination
+} from '@gauzy/contracts';
+import {
+	ApiErrorCode,
+	ApiException,
+	EventOutboxService,
+	IVersionExpectation,
+	IVersionedWriter,
+	MultiORMEnum,
+	RequestContext,
+	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
+	commitVersionedUpdate,
+	compareDecimalStrings,
+	subtractDecimalStrings
+} from '@gauzy/core';
+import { OrderLine, OrderLineService, OrderService, OrderTotalsService } from '@gauzy/plugin-order';
+import { Fulfillment } from './fulfillment.entity';
+import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
+import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
+import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
+import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { FULFILLMENT_REFERENCES } from '../fulfillment.references';
+import { isCountedShipment, removalCriteria } from '../fulfillment.removal';
+import {
+	Quantity,
+	addQuantities,
+	isNegativeQuantity,
+	isPositiveQuantity,
+	remainingQuantity,
+	toQuantityText
+} from '../fulfillment.quantity';
+import {
+	ANY_FULFILLMENT_VERSION,
+	FULFILLMENT_AGGREGATE_TYPE,
+	FULFILLMENT_EVENTS,
+	FULFILLMENT_LABEL_PROVIDER,
+	IFulfillmentLabelProviderPort
+} from '../fulfillment.types';
+
+/**
+ * The transitions the fulfilment lifecycle allows, and nothing else.
+ *
+ * `CANCELED` is reachable from `PENDING` only: goods that have left are handled by a return, never by
+ * a cancelation, so a `SHIPPED` parcel is not un-shipped (doc 09 §12.9).
+ */
+const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDetail[]> = {
+	[FulfillmentStatusDetail.PENDING]: [
+		FulfillmentStatusDetail.SHIPPED,
+		FulfillmentStatusDetail.CANCELED
+	],
+	[FulfillmentStatusDetail.SHIPPED]: [
+		FulfillmentStatusDetail.IN_TRANSIT,
+		FulfillmentStatusDetail.DELIVERED
+	],
+	[FulfillmentStatusDetail.IN_TRANSIT]: [FulfillmentStatusDetail.DELIVERED],
+	[FulfillmentStatusDetail.DELIVERED]: [],
+	[FulfillmentStatusDetail.CANCELED]: []
+};
+
+/**
+ * The reason `OrderTotalsService.recompute` records for a write that moved a fulfilment.
+ *
+ * The string is the order package's own: `recompute`'s docstring
+ * (`packages/plugins/order/src/lib/order-totals/order-totals.service.ts`) names `FULFILLMENT_COMMITTED`
+ * as the reason for exactly this write, beside `PLACED`, `CHANGE_CONFIRMED`, `PAYMENT_RECONCILED` and
+ * `CASH_ROUNDED`. It is restated here rather than imported because the order package publishes it as
+ * prose and not as a value, and it is stated once in this package so the two call sites below cannot
+ * disagree about it. Until this wave it had no caller anywhere in the repository: the reason a summary
+ * row exists to record was one no production write ever recorded.
+ */
+const FULFILLMENT_COMMITTED = 'FULFILLMENT_COMMITTED';
+
+/**
+ * How many times one write asks for the order's re-derivation before leaving the order to the nightly
+ * reconciliation.
+ *
+ * The re-derivation is a conditional write on the order, and a caller inside the platform states the
+ * wildcard: `recompute` reads the version the row holds and updates `WHERE version = <what it read>`. Two
+ * writes that re-derive the same order at the same instant — two shipments of one order, or a shipment
+ * beside a return, a refund or a payment — therefore race on that one row, and the loser is answered
+ * `ENTITY_VERSION_CONFLICT` although it held no stale state to protect: the wildcard stated none. Each
+ * attempt reads the order afresh and derives it again from the ledgers as they now stand, so a retry is a
+ * new derivation rather than a replay of the one that lost, and the winner's write is already part of what
+ * it reads. Three attempts outlast any race short of a sustained stampede on one order, and that one is
+ * what the reconciliation repairs.
+ */
+const RECOMPUTE_ATTEMPTS = 3;
+
+/**
+ * The row lock a transaction's read of the row it is about to write takes, where the dialect has one.
+ *
+ * Inside a transaction a plain read is a snapshot: on MySQL's default `REPEATABLE READ` it is the snapshot of
+ * the transaction's first read, so a row another transaction changed and committed since is still read as it
+ * was — the version a conditional write is then predicated on is stale, the write matches nothing, and the
+ * conflict's own read-back sees the same stale row. A locking read (`SELECT … FOR UPDATE`) reads the latest
+ * committed row and holds it until the transaction ends, so two cancelations of one shipment queue on it and the second sees the first. PostgreSQL and MySQL have it; SQLite has
+ * no row locks (TypeORM refuses the option there) and serialises writers on its one connection instead, which
+ * is the lock.
+ *
+ * @param manager The transaction's manager.
+ * @returns The find option that takes the lock, or nothing where the dialect has none.
+ */
+function rowLockOf(manager: EntityManager): { lock?: { mode: 'pessimistic_write' } } {
+	const type = String((manager?.connection?.options as { type?: string } | undefined)?.type ?? '');
+
+	return ['postgres', 'cockroachdb', 'mysql', 'mariadb', 'aurora-mysql'].includes(type)
+		? { lock: { mode: 'pessimistic_write' } }
+		: {};
+}
+
+/**
+ * A shipment's lines ordered by the order line they count against, so the order lines are always locked in
+ * the same order (see `FulfillmentService.cancelInTransaction`).
+ *
+ * @param lines The shipment's lines.
+ * @returns A sorted copy.
+ */
+function inOrderLineOrder<T extends { orderLineId?: string | null }>(lines: T[]): T[] {
+	return [...lines].sort((a, b) => String(a.orderLineId ?? '').localeCompare(String(b.orderLineId ?? '')));
+}
+
+/**
+ * The isolation level the cancelation's transaction asks for: `READ COMMITTED` on MySQL, the server's default
+ * elsewhere.
+ *
+ * MySQL's default `REPEATABLE READ` reads every plain `SELECT` of a transaction from one snapshot, taken at its
+ * first plain read. Two cancelations of different shipments of one order queue on the order's row (the
+ * re-derivation reads it `FOR UPDATE`), but the one that waited would still read the order's other ledgers —
+ * the lines the first one gave units back to, its transactions, adjustments — as they were before the first
+ * committed, derive `fulfillmentStatus` from them and, holding the latest version, write it: an order whose
+ * shipments are all cancelled could be left `PARTIALLY_FULFILLED` (Greptile on #10555). Under `READ COMMITTED`
+ * each statement reads what was committed when it started, so once the order's lock is granted every ledger
+ * read sees the first cancelation. Locking those reads instead (`FOR SHARE`) would take the order lines in the
+ * opposite order to `bumpOrderLineCounters`' `FOR UPDATE` and deadlock two such cancelations. PostgreSQL
+ * already defaults to `READ COMMITTED`; SQLite accepts no other level and serialises writers anyway.
+ *
+ * @param manager The manager the transaction is opened on.
+ * @returns `READ COMMITTED` on the MySQL family, otherwise nothing (the server's default).
+ */
+function cancelationIsolationOf(manager: EntityManager): 'READ COMMITTED' | undefined {
+	const type = String((manager?.connection?.options as { type?: string } | undefined)?.type ?? '');
+
+	return ['mysql', 'mariadb', 'aurora-mysql'].includes(type) ? 'READ COMMITTED' : undefined;
+}
+
+/**
+ * Whether an error is the concurrency kernel's refusal of a write predicated on a version that moved on.
+ *
+ * @param error What a conditional write threw.
+ * @returns True for `ENTITY_VERSION_CONFLICT`, false for anything else.
+ */
+function isVersionConflict(error: unknown): boolean {
+	return error instanceof ApiException && error.code === ApiErrorCode.ENTITY_VERSION_CONFLICT;
+}
+
+/**
+ * The columns of a shipment that decide what its lines did to the order line's counters.
+ *
+ * Which order the shipment is of, and which way its goods travel: an outbound shipment moved
+ * `fulfilledQuantity` when it was created and a return leg moved nothing, `cancel` gives the units back
+ * by the same rule, `delete` refuses by it (`isCountedShipment`), and the re-derivation is asked for the
+ * order this column names. A correction that changed either would leave every one of those decisions made
+ * about a shipment that no longer exists — a pending outbound shipment re-labelled a return is one whose
+ * cancelation gives nothing back and whose removal is no longer refused.
+ */
+const COUNTED_SHIPMENT_COLUMNS = ['orderId', 'direction'] as const;
+
+/** One of the columns above. */
+type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
+
+/**
+ * Shipments against orders.
+ *
+ * The lifecycle is owned here, in one place, because it is the reason the table exists: **a delivered
+ * fulfilment is never cancelled** — a return is created instead, as a fulfilment whose direction is
+ * `RETURN` — and a status only ever moves forward. A service that could write a status directly would
+ * make that rule a convention rather than an invariant.
+ *
+ * Quantity is checked against what the order line has **left**, not against what was ordered: a second
+ * partial shipment of the same line is a second fulfilment, and the order line's own counters are the
+ * authority on how much is outstanding. Those counters are maintained here, one statement at a time:
+ * **`create`, `ship`, `deliver` and a MikroORM `cancel` hold no transaction** — `CrudService.create` and
+ * `CrudService.update` each run one statement — so a failure between two of them leaves the earlier one
+ * committed. The consequence is stated where it matters rather than implied, and it is the reason the
+ * recompute below is a second write rather than part of the first on those paths. `cancel` on TypeORM is
+ * the exception, stated below.
+ *
+ * Every quantity on that path is an exact decimal and is computed as one — the remainder, the
+ * comparison against it and the counters themselves all go through `fulfillment.quantity.ts` — because
+ * a partial shipment of a measured good lands exactly on a boundary that binary floating point cannot
+ * represent.
+ *
+ * **The order's materialised fulfilment state is re-derived by the two writes that can move it.** ADR-26
+ * makes `order.fulfillmentStatus` a cache of the fulfilments and their lines, "recomputed by a single
+ * function from the ledgers every time a transaction, fulfillment, return, claim or exchange changes",
+ * and that single function is `OrderTotalsService.recompute` — which the order package owns, exports and
+ * already had its dependency wired for. The derivation is what decides which writes call it:
+ * `OrderStateMachine.deriveFulfillmentStatus` reads the order's `orderedQuantity`, `writtenOffQuantity`,
+ * `dismissedQuantity`, `fulfilledQuantity` and `receivedReturnQuantity`, and of those this service writes
+ * exactly one — `fulfilledQuantity`, moved by `create` for an outbound shipment and given back by
+ * `cancel`. `ship`, `markInTransit` and `deliver` move `shippedQuantity` and `deliveredQuantity`, which
+ * the derivation never reads, so re-deriving on them would rewrite identical columns and bump the order's
+ * version — a write that buys nothing and invalidates every client holding the order's `ETag`. They are
+ * therefore left alone deliberately, not by omission.
+ *
+ * **The recompute is awaited, retried when it lost a race, and never answered as the shipment's failure.**
+ * By the time it runs the shipment has committed — its row, its lines and the order line's counters — so
+ * an exception out of it would tell the caller a shipment that exists had failed. On `create` that is
+ * worse than a wrong answer: the idempotency kernel stores the refusal under the key and replays it to
+ * every retry (`IdempotencyService.fail`), so the client is never told the shipment exists, and the
+ * `fulfillment.pending` event that a picking list is built from was never appended. The commonest cause
+ * is not a fault at all: the re-derivation states the wildcard version, so a concurrent re-derivation of
+ * the same order — a second shipment, a return, a refund, a payment — wins the row's version and this one
+ * is answered `ENTITY_VERSION_CONFLICT` for state it never held. That case is re-derived again from a
+ * fresh read (`RECOMPUTE_ATTEMPTS`); anything that still fails is logged and left to the nightly
+ * `OrderTotalsReconciliationScheduler`, which selects every order whose lines moved in its window and
+ * re-derives the ones whose columns disagree with their ledgers — precisely the order a failed
+ * re-derivation leaves behind.
+ *
+ * **ADR-26's "inside the same transaction as the change" is delivered for `cancel` on TypeORM, and not yet
+ * for `create`** (handover §7.65 item 22). `commitVersionedUpdate` accepts a writer bound to a transaction and
+ * `OrderTotalsService.recompute` accepts the caller's manager, so `cancel` runs the shipment's write, its event,
+ * the counters it gives back and the order's re-derivation on one transaction (`cancelInTransaction`), and a
+ * failed re-derivation rolls the cancelation back. `create` cannot do the same yet: its rows are written
+ * through `TenantAwareCrudService.create` — the shipment by this class and its lines by the line service — whose
+ * tenancy checks (the foreign-row and nested-graph ownership assertions) have no transaction-bound form, and
+ * writing them on a manager directly would drop those checks. Until the CRUD kernel's create takes a manager,
+ * `create` keeps the second-write shape above and the reconciliation as its safety net. MikroORM installations
+ * keep it for `cancel` too: there a transaction is joined through MikroORM's context (which `recompute` already
+ * supports), but this class's outbox append is handed the TypeORM manager on every ORM, so the move is not yet
+ * expressible as one MikroORM transaction.
+ *
+ * **A shipment the order line still counts is never removed outright.** The counters are given back by
+ * `cancel` and by nothing else, so `delete` refuses an outbound shipment until it is cancelled — the rule
+ * `fulfillment.removal.ts` states for this service and for the line service alike, so that neither
+ * protocol can reach a removal the other refuses. For the same reason `update` refuses to change the order
+ * a shipment is of or the way it travels: those two columns are what that rule, and `cancel`'s, are
+ * decided on.
+ *
+ * One capability is reached through a port rather than implemented here, because it belongs to the
+ * carrier: the label a shipment travels with is issued by a provider this domain does not own. The
+ * port is injected optionally — an installation with no carrier integration records tracking by hand —
+ * and a request for a label that cannot be answered is refused loudly rather than invented. Every
+ * write of a fulfilment that a caller conditions on a version goes through `commitVersionedUpdate`, so
+ * the columns and the version move in one statement.
+ */
+@Injectable()
+export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
+	/** Where a re-derivation that could not run is reported, since the caller is not told of it. */
+	private readonly logger = new Logger(FulfillmentService.name);
+
+	constructor(
+		readonly typeOrmFulfillmentRepository: TypeOrmFulfillmentRepository,
+		readonly mikroOrmFulfillmentRepository: MikroOrmFulfillmentRepository,
+		private readonly lineService: FulfillmentLineService,
+		private readonly orderLineService: OrderLineService,
+		private readonly outbox: EventOutboxService,
+		// The order aggregate's single re-derivation, injected rather than reached through the module
+		// reference the order package uses for its own writer: this is a required collaborator, and a
+		// late lookup would turn a missing registration into a write that silently stopped re-deriving.
+		// `FulfillmentModule` already imports `OrderModule`, which exports this, so the dependency was
+		// wired and unused before this wave rather than added by it.
+		private readonly orderTotals: OrderTotalsService,
+		@Optional()
+		@Inject(FULFILLMENT_LABEL_PROVIDER)
+		private readonly labelProvider?: IFulfillmentLabelProviderPort,
+		/**
+		 * The order's completion rule (Q7-W1b): an order whose money was settled before its goods shipped
+		 * completes when the last of them is accounted for here. Optional and last, so a suite that builds
+		 * this service by position is unchanged.
+		 */
+		@Optional()
+		private readonly orderService?: OrderService
+	) {
+		super(typeOrmFulfillmentRepository, mikroOrmFulfillmentRepository);
+	}
+
+	/**
+	 * Refuses a shipment, or a change to one, naming an order or a location of another tenant
+	 * (`fulfillment.references.ts`).
+	 *
+	 * @param payload The shipment, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: unknown): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmFulfillmentRepository.manager,
+			payload,
+			FULFILLMENT_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
+	 * Lists fulfilments without the carrier's label payload.
+	 *
+	 * A page of shipments is a list of journeys, and the label payload is a document: it is the
+	 * provider's own body, it is as large as the provider chose to make it, and no list view renders
+	 * it. Projecting it out here rather than at each caller is what keeps the rule in one place — the
+	 * collection read of both protocols narrows through this method, so neither can start answering
+	 * with a payload the other withholds.
+	 *
+	 * `labelUrl` stays. It is one address, it is what a list actually shows, and the read of one
+	 * fulfilment answers both members in full — which is where a caller that needs the document goes.
+	 *
+	 * @param options The query options.
+	 * @returns A page of fulfilments, each without its label payload.
+	 */
+	public async findAll(options: FindManyOptions<Fulfillment> = {}): Promise<IPagination<Fulfillment>> {
+		const page = await super.findAll(options);
+
+		return { ...page, items: page.items.map((fulfillment) => this.withoutLabelPayload(fulfillment)) };
+	}
+
+	/**
+	 * Creates a fulfilment and its lines.
+	 *
+	 * Stock is not touched here: consuming the reservations and writing the movements through the sale
+	 * ledger is the inventory package's write path, and it runs in the same transaction as this call.
+	 * What this method guarantees is that the quantities are legal against the order — the precondition
+	 * the stock movement depends on.
+	 *
+	 * **A return-direction shipment writes lines but moves no counter**, which is the rule
+	 * `createReturnLeg` states below and the rule this method used to break. `fulfilledQuantity` counts
+	 * the units that left the building; a shipment whose goods are coming *back* has not fulfilled
+	 * anything, so adding its quantity to that counter counts the same units twice — once when they went
+	 * out and once when they returned. A line ordered for 10 that shipped 10 and was then returned 4
+	 * through `POST /fulfillments/returns` reached `fulfilledQuantity = 14` against a `quantity` of 10:
+	 * the outstanding remainder went negative, every later outbound shipment on that line was refused
+	 * with `FULFILLMENT_QUANTITY_EXCEEDED`, and the order stayed `FULFILLED` after the goods came back.
+	 * The lines themselves are still written — they are what the returns package reconciles the receipt
+	 * against — and only the counter move is withheld.
+	 *
+	 * @param entity The fulfilment, with its lines.
+	 * @returns The created fulfilment, with its lines.
+	 */
+	public async create(entity: DeepPartial<Fulfillment>): Promise<Fulfillment> {
+		const lines = (entity as { lines?: DeepPartial<FulfillmentLine>[] }).lines ?? [];
+
+		if (lines.length === 0) {
+			throw new BadRequestException('FULFILLMENT_EMPTY: a fulfilment needs at least one line.');
+		}
+
+		// Resolved once, because the guard above and the counter move below have to agree about which
+		// way the goods are travelling: a direction read twice from a defaulted member is a direction
+		// two halves of one method can disagree about.
+		const direction = entity.direction ?? FulfillmentDirection.OUTBOUND;
+
+		for (const line of lines) {
+			await this.assertQuantityAvailable(line.orderLineId as ID, line.quantity as Quantity, direction);
+		}
+
+		// What the shipment and its lines name has to be the caller's tenant's (P0 #6c). Checked before the shipment is
+		// written: the writes below are separate statements, so a line refused after the header would leave a shipment
+		// without it.
+		await this.assertReferences(entity);
+		await this.lineService.assertReferences(lines);
+
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a shipment created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads and the organization-scoped fulfilment subscriptions never found it again (review
+		// R2-G37, the R2-23 class). The caller's organization is stamped when the input states none; an organization the
+		// request stated is kept (REST validates it against the caller).
+		// Its lines are the shipment's own rows, so they carry the shipment's organization.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
+		const fulfillment = await super.create({
+			...entity,
+			organizationId,
+			direction,
+			status: FulfillmentStatusDetail.PENDING,
+			version: 1
+		} as DeepPartial<Fulfillment>);
+
+		for (const line of lines) {
+			await this.lineService.create({
+				...line,
+				organizationId: line.organizationId ?? fulfillment.organizationId ?? undefined,
+				fulfillmentId: fulfillment.id
+			} as DeepPartial<FulfillmentLine>);
+
+			if (direction !== FulfillmentDirection.RETURN) {
+				await this.bumpOrderLineCounters(line.orderLineId as ID, line.quantity as Quantity, 'FULFILLED');
+			}
+		}
+
+		// Announced after the lines exist, because a picking list is what a consumer of this event
+		// builds and a shipment with no lines yet is not one it could build anything from — and before
+		// the order is re-derived, because the event describes this shipment, which has committed by now,
+		// and not the order's derived state: a re-derivation that could not run must not cost a shipment
+		// that exists the picking list it is built from.
+		await this.announce(
+			FULFILLMENT_EVENTS[FulfillmentStatusDetail.PENDING],
+			fulfillment,
+			Number(fulfillment.version ?? 1)
+		);
+
+		// The counters above are the only input of the order's derived fulfilment state that this write
+		// moved, so this is where the state is re-derived. A return direction moved none of them — the
+		// rule stated on `createReturnLeg` below — so it has nothing to re-derive and no call is made.
+		if (direction !== FulfillmentDirection.RETURN) {
+			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
+		}
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * Raises the leg the goods come back on.
+	 *
+	 * A return is a fulfilment whose direction is `RETURN`, and it is raised here rather than by the
+	 * domain that decided on it, because a shipment is this domain's row and its lifecycle is this
+	 * domain's rule. What it deliberately does **not** carry is lines, and that is the one place the
+	 * two creation paths differ:
+	 *
+	 * - **Nothing is picked for a return.** The lines of an outbound fulfilment are what a picking
+	 *   list is derived from and what the order line's counters are moved by, which is why `create`
+	 *   refuses a fulfilment with none. Goods coming back are not fetched from a bin: they arrive, and
+	 *   the quantity that arrived is recorded by the domain that received it, against its own lines.
+	 * - **The order line's counters must not move.** A return does not fulfil anything, so writing
+	 *   `fulfilledQuantity` for it would count the same units twice — once when they went out and once
+	 *   when they came back — and every later check measured against that counter would be wrong.
+	 *
+	 * The leg therefore starts `PENDING` at version one, like any other shipment, and moves through
+	 * the same lifecycle as any other: what has not moved cannot be delivered, and a leg that is
+	 * abandoned before anything was handed over is cancelled rather than deleted.
+	 *
+	 * The tenant and the organization are stamped from the request context rather than taken from the
+	 * caller: the leg belongs to whoever raised it, and a caller that could state another scope could
+	 * write a shipment its own reads would never find again.
+	 *
+	 * @param entity The leg to raise: the order the goods came from, and whatever else is already
+	 * known about the journey.
+	 * @returns The raised leg, pending.
+	 * @throws BadRequestException when no order was named.
+	 */
+	public async createReturnLeg(entity: {
+		orderId: ID;
+		warehouseId?: ID;
+		trackingNumber?: string;
+		carrier?: string;
+		service?: string;
+		providerId?: string;
+		metadata?: Record<string, unknown>;
+	}): Promise<Fulfillment> {
+		if (!entity?.orderId) {
+			throw new BadRequestException(
+				'FULFILLMENT_ORDER_REQUIRED: a return leg is raised against the order its goods came from.'
+			);
+		}
+
+		await this.assertReferences(entity);
+
+		const leg = await super.create({
+			...entity,
+			direction: FulfillmentDirection.RETURN,
+			status: FulfillmentStatusDetail.PENDING,
+			requiresShipping: true,
+			version: 1,
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		} as DeepPartial<Fulfillment>);
+
+		await this.announce(FULFILLMENT_EVENTS[FulfillmentStatusDetail.PENDING], leg, Number(leg.version ?? 1));
+
+		return leg;
+	}
+
+	/**
+	 * Marks a fulfilment as handed to the carrier.
+	 *
+	 * Handing the same parcel over twice is not a second hand-over, and it is refused rather than
+	 * absorbed: the counters below are a cache of the shipment lines that caused them, so a repeat
+	 * would count the same units again (doc 06 §6.9, `409 FULFILLMENT_ALREADY_SHIPPED`).
+	 *
+	 * **The tracking details are part of the move, not a write after it.** They are what the hand-over
+	 * *is*, so they ride in the same conditional statement as the status: one version per move rather
+	 * than a bump followed by an unconditional second write, and the `fulfillment.shipped` event the
+	 * move appends describes a row that already carries the number the carrier issued.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param details The tracking details the carrier returned.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
+	 * @returns The shipped fulfilment.
+	 */
+	public async ship(
+		fulfillmentId: ID,
+		details: { trackingNumber?: string; carrier?: string; service?: string; noNotification?: boolean } = {},
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		const current = await this.findOneByIdString(fulfillmentId);
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.SHIPPED, expectation, {
+			trackingNumber: details.trackingNumber ?? current?.trackingNumber,
+			carrier: details.carrier ?? current?.carrier,
+			service: details.service ?? current?.service,
+			noNotification: details.noNotification ?? current?.noNotification,
+			shippedAt: new Date()
+		});
+
+		if (!moved) {
+			throw new ConflictException({
+				message: `FULFILLMENT_ALREADY_SHIPPED: fulfillment '${fulfillmentId}' is already shipped.`,
+				code: 'FULFILLMENT_ALREADY_SHIPPED',
+				details: { fulfillmentId, status: fulfillment.status }
+			});
+		}
+
+		const lines = ((await this.lineService.findAll({
+			where: { fulfillmentId }
+		})) as IPagination<FulfillmentLine>).items;
+
+		// A return leg's lines describe goods coming back, so they move no shipped counter for the same
+		// reason they move no fulfilled one: the units they name already left, and counting them again
+		// as they return would double the quantity the order line believes it handed over.
+		if (fulfillment.direction !== FulfillmentDirection.RETURN) {
+			for (const line of lines) {
+				await this.bumpOrderLineCounters(line.orderLineId, line.quantity as Quantity, 'SHIPPED');
+			}
+		}
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * Marks a fulfilment as moving, without changing what has shipped.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
+	 * @returns The updated fulfilment.
+	 */
+	public async markInTransit(
+		fulfillmentId: ID,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		return this.transition(fulfillmentId, FulfillmentStatusDetail.IN_TRANSIT, expectation);
+	}
+
+	/**
+	 * Marks a fulfilment as delivered.
+	 *
+	 * Delivery is reported rather than requested, so a carrier that reports it twice has not delivered
+	 * the goods twice: the repeat answers the resource it already has, and the counters below are not
+	 * moved a second time. Only a hand-over that actually happened is counted.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param deliveredAt When the carrier reported delivery.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
+	 * @returns The delivered fulfilment.
+	 */
+	public async deliver(
+		fulfillmentId: ID,
+		deliveredAt?: Date,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.DELIVERED, expectation, {
+			deliveredAt: deliveredAt ?? new Date()
+		});
+
+		if (!moved) {
+			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		}
+
+		const lines = ((await this.lineService.findAll({
+			where: { fulfillmentId }
+		})) as IPagination<FulfillmentLine>).items;
+
+		// A return leg that arrives is goods coming back, not goods delivered to a buyer: the order
+		// line's delivered counter measures what reached the customer, and a return reaching the
+		// warehouse is the returns package's receipt rather than a delivery of this order's units.
+		if (fulfillment.direction !== FulfillmentDirection.RETURN) {
+			for (const line of lines) {
+				await this.bumpOrderLineCounters(line.orderLineId, line.quantity as Quantity, 'DELIVERED');
+			}
+		}
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * Cancels a fulfilment that has not been handed over, or answers the one already cancelled.
+	 *
+	 * The cancelation matrix of doc 09 §12.9 permits a cancelation from `PENDING` only: `SHIPPED`,
+	 * `IN_TRANSIT` and `DELIVERED` are refused with `FULFILLMENT_NOT_CANCELABLE`, because goods that
+	 * have left are handled by a return (`direction = RETURN`) rather than by an un-shipment. A
+	 * repeat submission of a cancelation is the documented no-op — `200` with the unchanged resource —
+	 * so it moves no counter: the quantities below go back to the order line once, whatever the
+	 * caller submits.
+	 *
+	 * The quantities go back to the order line, because a cancelled shipment no longer accounts for
+	 * them; re-creating the stock reservations is the inventory package's compensation for the same
+	 * event.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param reason Why it was cancelled.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
+	 * @returns The cancelled fulfilment.
+	 */
+	public async cancel(
+		fulfillmentId: ID,
+		reason?: string,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		const current = await this.findOneByIdString(fulfillmentId);
+
+		if (current.status === FulfillmentStatusDetail.CANCELED) {
+			return this.findOneByIdString(current.id, { relations: ['lines'] });
+		}
+
+		if (current.status !== FulfillmentStatusDetail.PENDING) {
+			throw new ConflictException({
+				message: `FULFILLMENT_NOT_CANCELABLE: fulfillment '${fulfillmentId}' can no longer be canceled: it is ${current.status}.`,
+				code: 'FULFILLMENT_NOT_CANCELABLE',
+				details: { fulfillmentId, status: current.status, cancelableFrom: [FulfillmentStatusDetail.PENDING] }
+			});
+		}
+
+		if (current.direction !== FulfillmentDirection.RETURN) {
+			await this.assertNotRequestedForReturn(current);
+		}
+
+		const patch = {
+			canceledAt: new Date(),
+			metadata: { ...(current.metadata ?? {}), ...(reason ? { cancelReason: reason } : {}) }
+		};
+
+		// **On TypeORM the cancelation and the order's re-derivation are one transaction** (ADR-26: "recomputed
+		// … inside the same transaction"; handover §7.65 item 22). Every statement of the move — the shipment's
+		// conditional write and its event, the counters given back, and the whole re-derivation — runs on the
+		// transaction's manager, so a re-derivation that fails takes the cancelation down with it instead of
+		// leaving an order whose status no longer matches its lines until the nightly reconciliation. On
+		// MikroORM, and for a return leg (which moves no counter and is re-derived by nothing), the path below
+		// is the one this method always had.
+		if (this.ormType === MultiORMEnum.TypeORM && current.direction !== FulfillmentDirection.RETURN) {
+			const entityManager = this.typeOrmFulfillmentRepository.manager;
+			const work = (manager: EntityManager) =>
+				this.cancelInTransaction(fulfillmentId, expectation, patch, manager);
+			const isolation = cancelationIsolationOf(entityManager);
+			const fulfillment = isolation
+				? await entityManager.transaction(isolation, work)
+				: await entityManager.transaction(work);
+
+			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		}
+
+		const { fulfillment, moved } = await this.move(fulfillmentId, FulfillmentStatusDetail.CANCELED, expectation, patch);
+
+		// Another cancelation of the same shipment won the conditional write after both read it `PENDING`, and
+		// the move answers this one as a racer that lost to a mover heading for the same status. The winner gave
+		// the units back and re-derived the order; giving them back again — what this path used to do — left the
+		// line with less fulfilled than the shipments that exist. It is the repeat submission's no-op instead.
+		if (!moved) {
+			return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		}
+
+		const lines = ((await this.lineService.findAll({
+			where: { fulfillmentId }
+		})) as IPagination<FulfillmentLine>).items;
+
+		// Only an outbound shipment ever moved the counter, so only an outbound shipment gives it back.
+		// Crediting a cancelled return leg would subtract units the line never accounted for and take
+		// `fulfilledQuantity` below what actually shipped. The negation is exact rather than a `-Number(…)`:
+		// the quantity is a `numeric(20,6)` and the counter it moves is compared against a remainder.
+		if (fulfillment.direction !== FulfillmentDirection.RETURN) {
+			for (const line of lines) {
+				await this.bumpOrderLineCounters(
+					line.orderLineId,
+					subtractDecimalStrings('0', `${line.quantity ?? 0}`),
+					'FULFILLED'
+				);
+			}
+
+			// The counters were given back above, so the order's derived fulfilment state has moved with
+			// them and is re-derived here. The repeat path returns before this — a shipment that is
+			// already `CANCELED` gives nothing back a second time — so a retried cancel re-derives
+			// nothing, which is what keeps the status from moving on a no-op. The cancelation has
+			// committed by now, so a re-derivation that could not run is not answered as its failure.
+			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
+		}
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * The cancelation of an outbound shipment, every statement on one TypeORM transaction.
+	 *
+	 * It is the path above, statement for statement, with the transaction's manager carried into each: the
+	 * shipment's conditional write and its event (`move`), the read of its lines, the counters given back
+	 * (`bumpOrderLineCounters`) and the order's re-derivation (`OrderTotalsService.recompute` with the manager).
+	 * Nothing here reaches an injected repository — on PostgreSQL and MySQL that would be another pooled
+	 * connection, outside the transaction, waiting on the rows it holds.
+	 *
+	 * **The re-derivation's failure is the cancelation's failure here**, which is the opposite of the
+	 * transaction-less path and the point of the change: there the shipment had committed before the
+	 * re-derivation ran, so a failure could only be logged and left to the nightly reconciliation; here
+	 * nothing has committed, the transaction rolls back, and the caller is told the truth — the shipment is
+	 * still pending. A re-derivation that loses the order's version race is retried inside the call
+	 * (`ORDER_RECOMPUTE_ATTEMPTS`, each attempt a fresh read on the same transaction).
+	 *
+	 * @param fulfillmentId The shipment.
+	 * @param expectation The version the caller read the shipment at.
+	 * @param patch The columns the cancelation writes with the status.
+	 * @param manager The transaction.
+	 * @returns The shipment as the move left it.
+	 */
+	private async cancelInTransaction(
+		fulfillmentId: ID,
+		expectation: IVersionExpectation,
+		patch: Record<string, unknown>,
+		manager: EntityManager
+	): Promise<Fulfillment> {
+		const { fulfillment, moved } = await this.move(
+			fulfillmentId,
+			FulfillmentStatusDetail.CANCELED,
+			expectation,
+			patch,
+			manager
+		);
+
+		// Another cancelation won the row between this one's read and its write: the winner gave the units back
+		// and re-derived the order, so this one is the documented no-op (see `cancel`).
+		if (!moved) {
+			return fulfillment;
+		}
+
+		// Each order line is locked (FOR UPDATE) as its counter moves and stays locked until the transaction ends,
+		// so the lines are taken in one order - by id - whatever order the shipment lists them in: two
+		// cancelations of shipments that share lines would otherwise lock A then B and B then A, and the database
+		// would abort one of them as a deadlock (Greptile on #10555).
+		const lines = inOrderLineOrder(await manager.getRepository(FulfillmentLine).find({ where: { fulfillmentId } }));
+
+		for (const line of lines) {
+			await this.bumpOrderLineCounters(
+				line.orderLineId,
+				subtractDecimalStrings('0', `${line.quantity ?? 0}`),
+				'FULFILLED',
+				manager
+			);
+		}
+
+		await this.orderTotals.recompute(fulfillment.orderId as ID, FULFILLMENT_COMMITTED, { manager });
+
+		return fulfillment;
+	}
+
+	/**
+	 * Moves a fulfilment to a status, or refuses with the allowed set.
+	 *
+	 * A move to the status the row already holds writes nothing and answers the row unchanged, so the
+	 * machine itself is idempotent; what that means for the counters a caller moves beside it is
+	 * decided by the caller, through the `moved` flag of `move`.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param to The requested status.
+	 * @param expectation The version the caller read the shipment at, when its route stated one.
+	 * @returns The fulfilment, with its optimistic lock bumped when it moved.
+	 */
+	public async transition(
+		fulfillmentId: ID,
+		to: FulfillmentStatusDetail,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		return (await this.move(fulfillmentId, to, expectation)).fulfillment;
+	}
+
+	/**
+	 * Corrects a shipment, refusing a change to what its counters and its removal were decided on.
+	 *
+	 * The correction is the repair surface for what a shipment *says* — its tracking, its carrier, its note,
+	 * its payload — and the lifecycle's own conditional writes reach it too, with a status and a version.
+	 * What it may not do is re-point the shipment at another order or turn it round (`COUNTED_SHIPMENT_COLUMNS`):
+	 * `PUT /fulfillments/:id` validates a body that declares both, and a pending outbound shipment turned
+	 * into a return used to be written as asked — after which its cancelation gave nothing back, because a
+	 * return leg moved nothing, and `delete` let it go, because a return leg counts nothing, while
+	 * `fulfilledQuantity` kept its units for good. The `updateFulfillment` field declares neither member, so
+	 * the refusal is the route's today; it is made here, below both surfaces, so the two cannot come to
+	 * differ about it.
+	 *
+	 * A member that restates the value the row already holds is not a change and is accepted, so a client
+	 * that sends the whole row back with its tracking edited is not refused for the members it did not
+	 * touch. A row that states no direction is outbound, which is the column's default.
+	 *
+	 * @param id The shipment, or the conditions that select the shipments to correct.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException with `FULFILLMENT_IMMUTABLE` when the correction would move the order or
+	 * the direction of a shipment.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<Fulfillment>,
+		partialEntity: QueryDeepPartialEntity<Fulfillment>
+	): Promise<Fulfillment | UpdateResult> {
+		const patch = (partialEntity ?? {}) as Record<string, unknown>;
+		const stated = COUNTED_SHIPMENT_COLUMNS.filter((column) => patch[column] !== undefined);
+
+		if (stated.length > 0) {
+			const current =
+				typeof id === 'string' ? [await this.findOneByIdString(id)] : await this.find({ where: id });
+
+			for (const shipment of current) {
+				const moved = stated.filter((column) => !this.restates(column, shipment[column], patch[column]));
+
+				if (moved.length > 0) {
+					throw new BadRequestException({
+						message: `FULFILLMENT_IMMUTABLE: a correction cannot change ${moved.join(', ')} of fulfillment '${shipment.id}', because what the order line's counters were moved by, and what gives them back, was decided on them; cancel the shipment and raise the right one instead.`,
+						code: 'FULFILLMENT_IMMUTABLE',
+						details: { fulfillmentId: shipment.id, columns: moved }
+					});
+				}
+			}
+		}
+
+		await this.assertReferences(partialEntity);
+
+		return super.update(id, partialEntity);
+	}
+
+	/**
+	 * Removes a shipment outright, once nothing the order line counts still rests on it.
+	 *
+	 * **A shipment the counters still count is refused, whichever protocol asked.** An outbound shipment
+	 * moved `order_line.fulfilledQuantity` when it was created — and `shippedQuantity` and
+	 * `deliveredQuantity` as it travelled — and `cancel` is the one write that gives those units back. The
+	 * inherited removal gave nothing back: `DELETE /fulfillments/:id` and `deleteFulfillment` both reached
+	 * `TenantAwareCrudService.delete`, the lines went with the row (`FK_fulfillment_line_fulfillment` is
+	 * `ON DELETE CASCADE`), and the counters kept counting units nothing would ship. The order stayed
+	 * `FULFILLED`, the outstanding remainder stayed at zero so every later shipment of the line was refused
+	 * with `FULFILLMENT_QUANTITY_EXCEEDED`, and the nightly reconciliation, which derives from those same
+	 * counters, agreed with them. The refusal is made here rather than in either surface, so the route and
+	 * the field cannot diverge on it.
+	 *
+	 * What may go is what counts nothing (`isCountedShipment`): an outbound shipment that was cancelled —
+	 * the cancelation already gave its units back and re-derived the order — and a return leg, which never
+	 * moved a counter. A `PENDING` shipment is cancelled first; one that has left the building records goods
+	 * that moved and is refused for good, because no cancelation can reach it either.
+	 *
+	 * The read that decides includes a retired row, because a soft-deleted shipment is still counted, and it
+	 * selects exactly what the removal selects (`removalCriteria`): the caller's tenant through the base
+	 * class and the organization the request states. A shipment the caller cannot see is therefore neither
+	 * refused nor removed — the statement matches nothing and answers `affected: 0`, which is what the route
+	 * has always answered for an identifier that names nothing.
+	 *
+	 * @param criteria The shipment's identifier, or the conditions that select the shipments to remove.
+	 * @returns The result of the removal.
+	 * @throws ConflictException with `FULFILLMENT_NOT_DELETABLE` when a selected shipment is still counted.
+	 */
+	public async delete(criteria: ID | FindOptionsWhere<Fulfillment>): Promise<DeleteResult> {
+		const where = removalCriteria(criteria) as FindOptionsWhere<Fulfillment>;
+		const selected = await this.find({ where, withDeleted: true });
+
+		for (const fulfillment of selected) {
+			if (isCountedShipment(fulfillment)) {
+				throw shipmentNotDeletable(fulfillment);
+			}
+		}
+
+		return super.delete(where);
+	}
+
+	/**
+	 * Retires a shipment, by the same rule as `delete` (review R3-16).
+	 *
+	 * `DELETE /fulfillments/:id/soft` and `softDeleteFulfillment` used to retire a `PENDING` shipment the order line
+	 * still counted: `fulfilledQuantity` kept its units, every new shipment of the line was refused with
+	 * `FULFILLMENT_QUANTITY_EXCEEDED`, and `cancel` - which reads live rows only - could no longer find the shipment
+	 * to give the units back. A retired shipment is still counted, so retiring one is refused exactly where removing
+	 * it is: cancel it first.
+	 *
+	 * @param id The shipment to retire.
+	 * @param rest The find and save options the base method takes.
+	 * @returns The retired shipment.
+	 * @throws ConflictException with `FULFILLMENT_NOT_DELETABLE` when the order line still counts the shipment.
+	 */
+	public async softRemove(id: ID, ...rest: any[]): Promise<Fulfillment> {
+		const [shipment] = await this.find({ where: removalCriteria(id) as FindOptionsWhere<Fulfillment> });
+
+		// The retirement selects what the check read and nothing wider: a shipment outside the organization the
+		// request states is not retired on the strength of a check that could not see it.
+		if (!shipment) {
+			throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${id}.`);
+		}
+
+		if (isCountedShipment(shipment)) {
+			throw shipmentNotDeletable(shipment);
+		}
+
+		return super.softRemove(id, rest[0], rest[1]);
+	}
+
+	/**
+	 * Requests a carrier label for a shipment, or asks the carrier for the label it already issued.
+	 *
+	 * **The two cases are one call.** A carrier answers a request for a label it has already issued
+	 * with the document it holds for that tracking number rather than by issuing a second one, so the
+	 * domain cannot tell a first request from a re-fetch and does not try to: what it writes is what
+	 * the provider answered, and the version-predicated update is what makes the write safe to repeat.
+	 * A retry that carries the same `Idempotency-Key` never reaches here at all — the kernel replays
+	 * the first answer — and a re-fetch that carries a fresh key is an ordinary call that lands on the
+	 * same two columns.
+	 *
+	 * **A label needs a parcel the carrier has taken.** The tracking number is the number the carrier
+	 * issued when it took the goods, so a shipment that carries none has not been handed over, and a
+	 * label for it is a request no carrier can answer. It is refused with the code this package already
+	 * raises for a shipment that has not departed, rather than by asking a provider about a parcel it
+	 * has never seen and reporting whatever it says.
+	 *
+	 * **An installation with no carrier integration is refused, not guessed at.** The provider is
+	 * reached through a port, and a deployment that registered none cannot produce a label for any
+	 * shipment; the answer is the code the API specification already assigns to that, so an operator
+	 * learns that the integration is missing rather than that this parcel is special.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param request The carrier strategy, and the service level when the caller restates it.
+	 * @param expectation The version the caller read the fulfilment at, which the write is predicated
+	 * on.
+	 * @returns The fulfilment with its label recorded and its version moved on.
+	 * @throws NotFoundException when the fulfilment is not the caller's, which is also the answer for
+	 * one that does not exist.
+	 * @throws BadRequestException with `SHIPMENT_NOT_DEPARTED` when the fulfilment carries no tracking
+	 * number.
+	 * @throws BadGatewayException with `FULFILLMENT_LABEL_UNAVAILABLE` when no carrier label provider
+	 * is registered in this installation.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the fulfilment moved on since it was
+	 * read.
+	 */
+	public async requestLabel(
+		fulfillmentId: ID,
+		request: { providerId: string; service?: string },
+		expectation: IVersionExpectation
+	): Promise<Fulfillment> {
+		const fulfillment = await this.findOneByIdString(fulfillmentId);
+
+		if (!fulfillment) {
+			throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${fulfillmentId}.`);
+		}
+
+		if (!fulfillment.trackingNumber) {
+			throw new BadRequestException({
+				message: `SHIPMENT_NOT_DEPARTED: fulfillment '${fulfillmentId}' carries no tracking number, so no carrier has taken the parcel and no label can be requested for it.`,
+				code: 'SHIPMENT_NOT_DEPARTED',
+				details: { fulfillmentId, status: fulfillment.status }
+			});
+		}
+
+		if (!this.labelProvider) {
+			throw new BadGatewayException({
+				message: `FULFILLMENT_LABEL_UNAVAILABLE: no carrier label provider is registered in this installation, so no shipping label is available for fulfillment '${fulfillmentId}'.`,
+				code: 'FULFILLMENT_LABEL_UNAVAILABLE',
+				details: { fulfillmentId, providerId: request?.providerId }
+			});
+		}
+
+		const label = await this.labelProvider.requestLabel({
+			fulfillmentId: fulfillment.id,
+			orderId: fulfillment.orderId,
+			providerId: request.providerId,
+			trackingNumber: fulfillment.trackingNumber,
+			service: request.service ?? fulfillment.service,
+			carrier: fulfillment.carrier,
+			direction: fulfillment.direction,
+			warehouseId: fulfillment.warehouseId
+		});
+
+		// The label and the version increment are one statement, so a caller that read the shipment and
+		// a carrier that labelled it cannot both be right about the row: whichever loses is answered
+		// with the conflict and re-reads.
+		await commitVersionedUpdate<Fulfillment>(this, {
+			id: fulfillment.id,
+			expectation,
+			patch: { labelUrl: label.labelUrl, labelData: label.labelData },
+			where: {
+				...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+				...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+			}
+		});
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * The quantity of an order line that may still go into a fulfilment.
+	 *
+	 * @param orderLineId The order line.
+	 * @returns The outstanding quantity.
+	 */
+	public async outstandingOf(orderLineId: ID): Promise<number> {
+		return Number(await this.outstandingQuantityTextOf(orderLineId));
+	}
+
+	/**
+	 * Moves a fulfilment to a status and reports whether it actually moved.
+	 *
+	 * The lifecycle is owned here, in one place, and the flag is what lets the callers that move a
+	 * counter beside the status tell "the row is now the target" from "the row was already the
+	 * target" — a distinction that is invisible to a caller reading only the moved row.
+	 *
+	 * **The status and the version move in one statement.** This method used to read the row, compute
+	 * `version + 1` in JavaScript and write both columns with an unconditional `UPDATE … WHERE id = ?`,
+	 * which is exactly the read-then-write window the concurrency kernel exists to close — and it is a
+	 * money and quantity defect rather than merely a lost update, because the callers move an order
+	 * line's counters on the strength of the `moved` flag. Two operators both posting `:id/ship` on a
+	 * PENDING shipment both read version 3, both passed the transition check, both wrote
+	 * `SHIPPED, version = 4`, and both were told they had moved it: `shippedQuantity` ended at twice the
+	 * units handed over, and the `409 FULFILLMENT_ALREADY_SHIPPED` the caller documents never fired. The
+	 * write is now the kernel's conditional update, which decides the outcome from the affected-row
+	 * count, and the version is set by that statement rather than by this one.
+	 *
+	 * **A racer that lost to a mover heading for the same status is told what actually happened.** The
+	 * kernel answers a lost race with `ENTITY_VERSION_CONFLICT`, which is the right answer when the row
+	 * moved somewhere else. When it moved to the status this call asked for, the honest answer is the
+	 * one this method already has a vocabulary for: the row is at the target and this caller did not put
+	 * it there, which is `moved: false` — so `ship` raises its documented conflict and `deliver` answers
+	 * the resource unchanged, exactly as each does for a repeat submission. Any other conflict is
+	 * re-raised untouched.
+	 *
+	 * **The move announces itself, from inside the write that made it.** The package's shipments are
+	 * what the search index, the outbound webhooks and the buyer's notifications are driven by, and
+	 * none of them could observe one: a parcel could be handed over, tracked and delivered and nothing
+	 * outside this package would learn of it. The fact is appended to the platform outbox immediately
+	 * after the conditional statement returned, through the shipment repository's own entity manager —
+	 * a statement that was refused throws before that line is reached, so no event is ever produced for
+	 * a move that did not happen, and an event written as a row cannot be lost by a crash the way one
+	 * published over a bus after the commit can.
+	 *
+	 * @param fulfillmentId The fulfilment.
+	 * @param to The requested status.
+	 * @param expectation The version the caller read the shipment at. A caller inside the platform
+	 * states the wildcard, and the write is then predicated on the version the row holds when the
+	 * statement runs.
+	 * @param patch The columns that belong to this move — the tracking a hand-over carries, the instant
+	 * a delivery happened, the reason a cancelation records. They ride the same statement as the status
+	 * so that one move is one version, and so that the event describes a complete row.
+	 * @param manager The TypeORM transaction the move runs in, when its caller opened one: the read, the
+	 * conditional write and the event then all run on it (see {@link cancelInTransaction}).
+	 * @returns The fulfilment, and whether the move happened.
+	 */
+	private async move(
+		fulfillmentId: ID,
+		to: FulfillmentStatusDetail,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION,
+		patch: Record<string, unknown> = {},
+		manager?: EntityManager
+	): Promise<{ fulfillment: Fulfillment; moved: boolean }> {
+		const writer = manager ? this.transactionWriter(manager) : this;
+		const read = (id: ID) => writer.findOneByIdString(id);
+		const fulfillment = await read(fulfillmentId);
+
+		if (!fulfillment) {
+			throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${fulfillmentId}.`);
+		}
+
+		if (fulfillment.status === to) {
+			return { fulfillment, moved: false };
+		}
+
+		if (!ALLOWED_TRANSITIONS[fulfillment.status].includes(to)) {
+			throw new BadRequestException({
+				message: `A ${fulfillment.status} fulfilment cannot move to ${to}.`,
+				code: 'FULFILLMENT_STATUS_TRANSITION_INVALID',
+				details: { from: fulfillment.status, to, allowed: ALLOWED_TRANSITIONS[fulfillment.status] }
+			});
+		}
+
+		try {
+			// The same call `requestLabel` makes. `version` is deliberately absent from the patch: the
+			// conditional update writes the next version in the statement that checks the current one,
+			// and the tenancy columns are criteria so that the row this statement may touch is the
+			// caller's row and not merely a row with this id.
+			const { version } = await commitVersionedUpdate<Fulfillment>(writer, {
+				id: fulfillment.id,
+				expectation,
+				patch: { ...patch, status: to },
+				where: {
+					...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+					...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+				}
+			});
+
+			await this.announce(FULFILLMENT_EVENTS[to], { ...fulfillment, ...patch, status: to }, version, manager);
+		} catch (error) {
+			if (!isVersionConflict(error)) {
+				throw error;
+			}
+
+			const current = await read(fulfillment.id);
+
+			if (current?.status !== to) {
+				throw error;
+			}
+
+			return { fulfillment: current, moved: false };
+		}
+
+		return { fulfillment: await read(fulfillment.id), moved: true };
+	}
+
+	/**
+	 * The shipment's versioned writer inside a caller's TypeORM transaction.
+	 *
+	 * The two members `commitVersionedUpdate` uses, run on the transaction's manager, with the scoping the
+	 * tenant-aware service applies: a read by id inside the caller's tenant that answers `NotFoundException`
+	 * for a shipment that is not there, and an update by the criteria the kernel builds.
+	 *
+	 * @param manager The transaction.
+	 * @returns The writer.
+	 */
+	private transactionWriter(manager: EntityManager): IVersionedWriter<Fulfillment> {
+		const shipments = manager.getRepository(Fulfillment);
+		const tenantId = RequestContext.currentTenantId();
+		// Read under a row lock where the dialect has one (see `rowLockOf`): two cancelations of one shipment
+		// then queue on the row, and the second reads it `CANCELED` and is the documented no-op, instead of
+		// reading a snapshot that still says `PENDING` and answering a conflict.
+		const locked = rowLockOf(manager);
+
+		return {
+			update: (criteria, partial) => shipments.update(criteria as never, partial as never),
+			findOneByIdString: async (id) => {
+				const shipment = await shipments.findOne({
+					where: { id, ...(tenantId ? { tenantId } : {}) },
+					...locked
+				} as never);
+
+				if (!shipment) {
+					throw new NotFoundException(`FULFILLMENT_NOT_FOUND: no fulfilment exists with id ${id}.`);
+				}
+
+				return shipment;
+			}
+		} as IVersionedWriter<Fulfillment>;
+	}
+
+	/**
+	 * Appends one `fulfillment.*` event to the platform outbox.
+	 *
+	 * The append goes through the shipment repository's own entity manager — the manager the
+	 * conditional update was written through — and only after that update returned, which is what binds
+	 * the fact to the write that earned it. A move the version predicate refused throws before this is
+	 * reached, so no event is ever produced for a shipment that did not move.
+	 *
+	 * The projection carries what a consumer routes on: the parcel, the order it satisfies, which way
+	 * the goods are travelling, where it is in its lifecycle and how to track it. It does not carry the
+	 * row, and in particular it never carries `labelData` — the carrier's own document is as large as
+	 * the carrier chose to make it, and an event is not where a document belongs.
+	 *
+	 * @param name The event name, taken from the status the shipment reached.
+	 * @param fulfillment The shipment as the move left it.
+	 * @param version The version the conditional update produced.
+	 * @param manager The caller's TypeORM transaction, when the move runs in one; the row joins it.
+	 */
+	private async announce(name: string, fulfillment: Fulfillment, version: number, manager?: EntityManager): Promise<void> {
+		await this.outbox.append(manager ?? this.typeOrmFulfillmentRepository.manager, {
+			name,
+			aggregateType: FULFILLMENT_AGGREGATE_TYPE,
+			aggregateId: fulfillment.id,
+			data: {
+				fulfillmentId: fulfillment.id,
+				orderId: fulfillment.orderId ?? null,
+				direction: fulfillment.direction ?? null,
+				status: fulfillment.status,
+				warehouseId: fulfillment.warehouseId ?? null,
+				carrier: fulfillment.carrier ?? null,
+				service: fulfillment.service ?? null,
+				trackingNumber: fulfillment.trackingNumber ?? null,
+				version
+			},
+			tenantId: fulfillment.tenantId,
+			organizationId: fulfillment.organizationId
+		});
+	}
+
+	/**
+	 * The quantity of an order line that may still go into a fulfilment, as exact decimal text.
+	 *
+	 * The subtraction is the one doc 09 §12.6 states, made on the digits of the decimals rather than
+	 * on their floating point approximations, and it is answered as text because a `numeric(20,6)`
+	 * carries more significant digits than a double: the guard that compares a requested quantity
+	 * against this remainder is exact only while the remainder is still its own digits.
+	 *
+	 * @param orderLineId The order line.
+	 * @returns The outstanding quantity, as decimal text.
+	 */
+	private async outstandingQuantityTextOf(orderLineId: ID): Promise<string> {
+		const line = await this.orderLineService.findOneByIdString(orderLineId);
+
+		if (!line) {
+			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);
+		}
+
+		return remainingQuantity(
+			line.quantity,
+			line.writtenOffQuantity,
+			line.returnDismissedQuantity,
+			line.fulfilledQuantity
+		);
+	}
+
+	/**
+	 * Refuses a shipment of more than the order line has left.
+	 *
+	 * A return shipment is exempt: returning more than is outstanding is a credit decision the returns
+	 * package makes, not a shipping constraint this one imposes.
+	 *
+	 * @param orderLineId The order line.
+	 * @param quantity The quantity being shipped.
+	 * @param direction The direction of the shipment.
+	 */
+	private async assertQuantityAvailable(
+		orderLineId: ID,
+		quantity: Quantity,
+		direction: FulfillmentDirection
+	): Promise<void> {
+		// The requirement is a quantity, and a quantity greater than zero: `NaN` and the infinities are
+		// not quantities, and the comparison this guard used to be written as is false for all of them.
+		if (!isPositiveQuantity(quantity)) {
+			throw new BadRequestException('FULFILLMENT_LINE_QUANTITY_INVALID: a shipment quantity is positive.');
+		}
+
+		if (direction === FulfillmentDirection.RETURN) {
+			return;
+		}
+
+		const requested = toQuantityText(quantity);
+		const outstanding = await this.outstandingQuantityTextOf(orderLineId);
+
+		// Compared as decimals rather than as numbers, so that a request for exactly the remainder is
+		// accepted even when the remainder has no exact binary representation.
+		if (compareDecimalStrings(requested, outstanding) > 0) {
+			throw new BadRequestException({
+				message: 'The shipment would exceed what the order line still has to ship.',
+				code: 'FULFILLMENT_QUANTITY_EXCEEDED',
+				// Both figures are reported as the digits the comparison was made on. Rendering the
+				// remainder through `Number` would print a value that differs from the one the guard
+				// refused it against, which is the least helpful thing a refusal about a boundary can do.
+				details: { orderLineId, requested, outstanding }
+			});
+		}
+	}
+
+	/**
+	 * Refuses a cancelation that would leave an order line with more asked back than it fulfilled.
+	 *
+	 * Doc 10 invariant I-12 bounds `returnRequestedQuantity` by `fulfilledQuantity`. The order package refuses a
+	 * request raised past what was fulfilled (`OrderLineFulfillmentService`); this is the same half from the
+	 * other side. A return is measured against what was fulfilled, and a pending shipment counts as fulfilled
+	 * from the moment it is created — so the units a return asks back can rest on a shipment that is still
+	 * cancelable, and giving them back would leave the line asking back goods it never sent.
+	 *
+	 * It is checked before the shipment moves, so a refusal leaves the shipment, its counters and the order
+	 * exactly as they were. The check reads the line and compares; it is not one statement with the counter
+	 * move, which on this path is a read and a write of its own (`bumpOrderLineCounters`), so a return raised
+	 * between the two is not seen — the order package's own guard refuses the reverse race, a request raised
+	 * after the cancelation, and the nightly reconciliation reads both counters.
+	 *
+	 * @param fulfillment The outbound shipment about to be cancelled.
+	 * @throws ConflictException with `FULFILLMENT_UNITS_REQUESTED_FOR_RETURN` when a line's requested-return
+	 * quantity would exceed what it still fulfils once this shipment's units are given back.
+	 */
+	private async assertNotRequestedForReturn(fulfillment: Fulfillment): Promise<void> {
+		const lines = ((await this.lineService.findAll({
+			where: { fulfillmentId: fulfillment.id }
+		})) as IPagination<FulfillmentLine>).items;
+		const givenBack = new Map<ID, DecimalString>();
+
+		for (const line of lines) {
+			givenBack.set(line.orderLineId, addQuantities(givenBack.get(line.orderLineId), line.quantity as Quantity));
+		}
+
+		for (const [orderLineId, quantity] of givenBack) {
+			const orderLine: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
+			const stillFulfilled = remainingQuantity(orderLine?.fulfilledQuantity as Quantity, quantity);
+			const requested = toQuantityText(orderLine?.returnRequestedQuantity as Quantity);
+
+			if (compareDecimalStrings(requested, stillFulfilled) > 0) {
+				throw new ConflictException({
+					message:
+						`FULFILLMENT_UNITS_REQUESTED_FOR_RETURN: fulfillment '${fulfillment.id}' cannot be canceled: order line ` +
+						`'${orderLineId}' has ${requested} units requested for return, and giving back this shipment's ` +
+						`${quantity} would leave it ${stillFulfilled} fulfilled (doc 10 I-12). Withdraw or reduce the return first.`,
+					code: 'FULFILLMENT_UNITS_REQUESTED_FOR_RETURN',
+					details: { fulfillmentId: fulfillment.id, orderLineId, requested, stillFulfilled }
+				});
+			}
+		}
+	}
+
+	/**
+	 * Adds a delta to one of an order line's quantity counters.
+	 *
+	 * The counters are caches of the fulfilment lines, which is why they are written here and only here:
+	 * a second writer would be a second opinion about how much of a line has shipped. The addition is
+	 * exact for the same reason the remainder above is: a counter that drifted by a rounding error
+	 * would make every later remainder wrong in the same direction.
+	 *
+	 * The delta is a `Quantity` rather than a `number`, which is the whole point: a shipment line's
+	 * quantity comes off a `numeric(20,6)` column, and routing it through a double on its way to a
+	 * counter that is compared against a remainder is the same rounding error the remainder was made
+	 * exact to avoid — arriving one call frame earlier.
+	 *
+	 * @param orderLineId The order line.
+	 * @param delta The signed quantity.
+	 * @param counter Which counter to move.
+	 * @param manager The caller's TypeORM transaction, when the move runs in one: the line is then read and
+	 * written on it, inside the caller's tenant, as the order-line service would scope them.
+	 */
+	private async bumpOrderLineCounters(
+		orderLineId: ID,
+		delta: Quantity,
+		counter: 'FULFILLED' | 'SHIPPED' | 'DELIVERED',
+		manager?: EntityManager
+	): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const scoped = { id: orderLineId, ...(tenantId ? { tenantId } : {}) };
+		const line: IOrderLine = manager
+			? // Under a row lock where the dialect has one: the counter is read, moved in JavaScript and written back,
+			  // and on MySQL a plain read inside the transaction is a snapshot another cancelation may have outdated.
+			  await manager.getRepository(OrderLine).findOne({ where: scoped, ...rowLockOf(manager) } as never)
+			: await this.orderLineService.findOneByIdString(orderLineId);
+
+		if (!line) {
+			throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);
+		}
+
+		/** The counter after the move, which a cancelation may take to zero but never below. */
+		const moved = (current: Quantity): number => {
+			const total = addQuantities(current, delta);
+
+			// The column's transformer takes a `number`, so the value is rendered once, at the boundary,
+			// from digits that were exact up to that point — rather than being carried as a double
+			// through the addition and the sign test that decide what the counter becomes.
+			return isNegativeQuantity(total) ? 0 : Number(total);
+		};
+
+		const changes: Record<string, number> = {};
+
+		switch (counter) {
+			case 'FULFILLED':
+				changes['fulfilledQuantity'] = moved(line.fulfilledQuantity);
+				break;
+			case 'SHIPPED':
+				changes['shippedQuantity'] = moved(line.shippedQuantity);
+				break;
+			case 'DELIVERED':
+				changes['deliveredQuantity'] = moved(line.deliveredQuantity);
+				break;
+		}
+
+		if (manager) {
+			await manager.getRepository(OrderLine).update(scoped as never, changes as never);
+
+			return;
+		}
+
+		await this.orderLineService.update(orderLineId, changes as any);
+	}
+
+	/**
+	 * Re-derives the order's materialised state from its own rows, after this service moved one of them.
+	 *
+	 * One call, because the platform has one function for this: `OrderTotalsService.recompute` re-derives
+	 * `fulfillmentStatus` through `OrderStateMachine.deriveFulfillmentStatus`, and beside it the totals,
+	 * `paymentStatus`, `promisedAt` and `sellerCount`. Writing the status here instead would be a second
+	 * opinion about a derivation the order package owns, which is the defect ADR-26 exists to prevent —
+	 * so this states the reason and delegates rather than narrowing the write to the one column that
+	 * moved. That it also recomputes the money is not waste: those columns read the order's lines,
+	 * shipping methods, credit lines, transactions, adjustments and tax lines, none of which a fulfilment
+	 * transition writes, so the values it re-derives are the values already there.
+	 *
+	 * **Why the reason string is `FULFILLMENT_COMMITTED`.** It is the reason `recompute`'s own docstring
+	 * names for this write, and it is recorded on the `order_summary` row the call writes and on the
+	 * `order.*` event when the caller states one — so a reader of the summary can tell a fulfilment
+	 * commit from a placement, a confirmed change, a reconciled payment or a rounding. It is passed
+	 * rather than left blank because a summary row whose reason says nothing is a row an operator cannot
+	 * explain, and because the string had no production caller at all before this wave.
+	 *
+	 * **Awaited, retried when it lost a race, and never the caller's failure.** Both call sites run it after
+	 * the shipment's own writes have committed, so an exception out of here would answer a shipment that
+	 * exists as one that failed — and on `create`, whose key is required, the idempotency kernel would store
+	 * that refusal and replay it to every retry, so the client would never learn the shipment exists. The
+	 * write this makes states the wildcard version, and the one conflict a wildcard can meet is a concurrent
+	 * re-derivation of the same order that took the version between `recompute`'s read and its update:
+	 * spurious, because this caller held no stale state to protect. It is answered by asking again — each
+	 * call reads the order afresh and derives it from the ledgers as they now stand, the winner's write
+	 * included — up to `RECOMPUTE_ATTEMPTS` times. Anything else, and a race still lost on the last attempt,
+	 * is logged and left to `OrderTotalsReconciliationScheduler`: its nightly pass selects every order whose
+	 * lines were written in its window — which the counter moves above are — and re-derives each one whose
+	 * columns disagree with its ledgers. That job did not exist when this call was first wired, which is why
+	 * the failure used to be surfaced instead; a signal that told the caller a committed shipment had failed
+	 * was the wrong one to rely on once a correcting one existed.
+	 *
+	 * @param orderId The order the moved shipment belongs to.
+	 */
+	private async recomputeOrderFulfillmentStatus(orderId: ID): Promise<void> {
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
+				await this.completeOrderIfSettled(orderId);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`The fulfilment state of order ${orderId} could not be re-derived after ${attempt} attempt(s), ` +
+						`and is left to the nightly reconciliation: ${error instanceof Error ? error.message : String(error)}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Gives the order its chance to complete once its goods are accounted for (Q7-W1b).
+	 *
+	 * An order paid before it shipped stayed open: completion was asked only when money moved, and the
+	 * goods were still out then. The order's own rule decides — nothing left to ship, nothing outstanding,
+	 * no change open — and a completion that fails is logged, never the shipment's failure.
+	 *
+	 * @param orderId The order.
+	 */
+	private async completeOrderIfSettled(orderId: ID): Promise<void> {
+		// A completion is a versioned write that a concurrent re-derivation of the same order can overtake;
+		// it reads the order afresh on every attempt, so a lost race is retried like the recompute above
+		// (CodeRabbit on #10890).
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderService?.completeIfSettled(orderId);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`Order ${orderId} could not be completed after its goods were accounted for: ${
+						error instanceof Error ? error.message : String(error)
+					}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * One fulfilment without the carrier's label payload.
+	 *
+	 * The copy is deliberate: the row the caller holds is the one the list read answered with, and
+	 * deleting a member from it would edit a record another caller may still be reading. A fulfilment
+	 * that holds no payload is answered as it stands, because there is nothing to withhold.
+	 *
+	 * @param fulfillment The fulfilment, as it was read.
+	 * @returns The fulfilment without its label payload.
+	 */
+	private withoutLabelPayload(fulfillment: Fulfillment): Fulfillment {
+		if (fulfillment?.labelData === null || fulfillment?.labelData === undefined) {
+			return fulfillment;
+		}
+
+		const { labelData, ...rest } = fulfillment;
+		void labelData;
+
+		return rest as Fulfillment;
+	}
+
+	/**
+	 * Whether a stated value is the value a counted column of a shipment already holds.
+	 *
+	 * @param column The column.
+	 * @param stored What the row holds.
+	 * @param stated What the correction states.
+	 * @returns True when the correction restates the stored value rather than changing it. A direction the
+	 * row does not state is outbound, which is the column's default, so restating `OUTBOUND` over it is not
+	 * a change.
+	 */
+	private restates(column: CountedShipmentColumn, stored: unknown, stated: unknown): boolean {
+		if (stated === null) {
+			return false;
+		}
+
+		const held = column === 'direction' ? (stored ?? FulfillmentDirection.OUTBOUND) : (stored ?? '');
+
+		return String(stated) === String(held);
+	}
+}
+
+/**
+ * The refusal of a removal or a retirement of a shipment the order line still counts.
+ *
+ * @param fulfillment The shipment.
+ * @returns The exception, naming the way out (cancel first).
+ */
+function shipmentNotDeletable(fulfillment: Fulfillment): ConflictException {
+	return new ConflictException({
+		message: `FULFILLMENT_NOT_DELETABLE: fulfillment '${fulfillment.id}' is ${fulfillment.status}, so the order line still counts its units; cancel it before removing it, or keep it as the record of goods that left.`,
+		code: 'FULFILLMENT_NOT_DELETABLE',
+		details: {
+			fulfillmentId: fulfillment.id,
+			status: fulfillment.status,
+			direction: fulfillment.direction ?? FulfillmentDirection.OUTBOUND,
+			deletableFrom: [FulfillmentStatusDetail.CANCELED]
+		}
+	});
+}

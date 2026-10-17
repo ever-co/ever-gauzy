@@ -179,6 +179,45 @@ describe('DocsRowActionsService — favorites', () => {
 		expect(service.isFavorite(OTHER_ID)).toBe(false);
 	});
 
+	/*
+	 * A favorited PAGE now opens the document page itself (handover §4.P) and a folder opens as that folder,
+	 * so the sidebar entries no longer all carry `?id=`. The star must still light up for every kind.
+	 */
+	it('recognises the favorites whose sidebar links open the page editor or a folder', () => {
+		const { service } = createService({
+			favoriteStore: {
+				favoriteItems$: of([
+					{ id: `favorite-Document-${DOCUMENT_ID}`, link: `/pages/documents/page/${DOCUMENT_ID}?view=full` },
+					{ id: `favorite-Document-${OTHER_ID}`, link: `/pages/documents?folder=${OTHER_ID}` }
+				])
+			}
+		});
+
+		expect(service.isFavorite(DOCUMENT_ID)).toBe(true);
+		expect(service.isFavorite(OTHER_ID)).toBe(true);
+	});
+
+	it('recognises a favorite whose sidebar link opens an uploaded file on its own page', () => {
+		const { service } = createService({
+			favoriteStore: { favoriteItems$: of([{ link: `/pages/documents/file/${DOCUMENT_ID}` }]) }
+		});
+
+		expect(service.isFavorite(DOCUMENT_ID)).toBe(true);
+	});
+
+	it('does not mistake another type for a document, nor a page link without its id', () => {
+		const { service } = createService({
+			favoriteStore: {
+				favoriteItems$: of([
+					{ id: `favorite-Task-${DOCUMENT_ID}`, link: `/pages/tasks/view/${DOCUMENT_ID}` },
+					{ link: '/pages/documents/page/' }
+				])
+			}
+		});
+
+		expect(service.isFavorite(DOCUMENT_ID)).toBe(false);
+	});
+
 	it('links a PAGE to its editor route and everything else to the detail panel', () => {
 		const { service } = createService();
 

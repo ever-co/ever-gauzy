@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,6 +22,7 @@ import {
     selector: 'ngx-product-categories',
     templateUrl: './product-categories.component.html',
     styleUrls: ['./product-categories.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductCategoriesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {

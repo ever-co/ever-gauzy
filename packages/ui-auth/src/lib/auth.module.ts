@@ -17,7 +17,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	AuthService,
 	ElectronService,
@@ -97,7 +97,7 @@ const COMPONENTS = [
 	imports: [
 		...NB_MODULES,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ThemeModule,

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { WarehouseService } from '@gauzy/ui-core/core';
@@ -7,6 +7,7 @@ import { WarehouseService } from '@gauzy/ui-core/core';
     selector: 'ga-manage-warehouse-quantity-selector',
     templateUrl: './manage-quantity.component.html',
     styles: ['input { width: 80px }'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ManageQuantityComponent implements AfterViewInit {

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IPayment } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -37,6 +37,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
         '.progress-bar-inner {background-color: var(--color-success-default, rgba(0, 214, 143, 1)); display: block; height: 100%; border-radius: inherit;}',
         '.paid-percent {color: var(--gauzy-text-color-1); font-weight: 600; white-space: nowrap;}'
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoicePaidComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -21,6 +21,7 @@ export const NO_DATA_SETTLE_DELAY_MS = 700;
     selector: 'ngx-no-data-message',
     templateUrl: './no-data-message.component.html',
     styleUrls: ['./no-data-message.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NoDataMessageComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

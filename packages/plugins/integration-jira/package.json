@@ -27,8 +27,8 @@
 		"lib:watch": "yarn nx build plugin-integration-jira --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.26",
-		"@nestjs/core": "^11.1.26"
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
@@ -39,8 +39,8 @@
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
 	},
 	"keywords": [
 		"jira",
@@ -54,7 +54,7 @@
 		"microservices"
 	],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags
     selector: 'ga-contact-link-with-tags',
     templateUrl: './contact-with-tags.component.html',
     styleUrls: ['./contact-with-tags.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ContactWithTagsComponent extends PictureNameTagsComponent {

@@ -8,7 +8,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	RecordViewModule,
@@ -31,7 +31,7 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		RecurringExpenseBlockModule,
 		RecordViewModule,
 		SmartDataViewLayoutModule

@@ -2,11 +2,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FileProviderSelectorComponent } from './file-provider-selector.component';
 
 @NgModule({
-	imports: [CommonModule, FormsModule, NbSelectModule, TranslateModule.forChild()],
+	imports: [CommonModule, FormsModule, NbSelectModule, TranslatePipe],
 	declarations: [FileProviderSelectorComponent],
 	exports: [FileProviderSelectorComponent]
 })

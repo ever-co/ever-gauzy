@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import {
 	DailyStatisticsModule,
@@ -18,7 +18,7 @@ import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-re
 		WeeklyTimeReportsRoutingModule,
 		LineChartModule,
 		DailyStatisticsModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

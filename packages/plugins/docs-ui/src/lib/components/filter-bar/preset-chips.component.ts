@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { DocsPresetCounts } from '../../+state/documents.store';
 import { DocsPresetId } from '../../models/docs-filter.model';
 
@@ -69,6 +69,7 @@ interface IPresetChip {
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PresetChipsComponent {
