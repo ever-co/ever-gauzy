@@ -1,0 +1,28 @@
+{
+	"description": "Endpoints the web app calls on almost every page, from the cheapest (public, no DB) to typical paginated lists. Placeholders: {tenantId} {organizationId} {employeeId} {userId} {projectId}.",
+	"endpoints": [
+		{ "name": "health", "path": "/health", "public": true },
+		{ "name": "feature-toggle-definition", "path": "/feature/toggle/definition", "public": true },
+		{ "name": "user-me", "path": "/user/me" },
+		{ "name": "role-permissions-me", "path": "/role-permissions/me" },
+		{ "name": "tags", "path": "/tags?organizationId={organizationId}&tenantId={tenantId}" },
+		{ "name": "organization-team-me", "path": "/organization-team/me?organizationId={organizationId}&tenantId={tenantId}" },
+		{
+			"name": "projects-pagination",
+			"path": "/organization-projects/pagination?where[organizationId]={organizationId}&where[tenantId]={tenantId}&take=10&skip=0"
+		},
+		{
+			"name": "employees-pagination",
+			"path": "/employee/pagination?where[organizationId]={organizationId}&where[tenantId]={tenantId}&where[isActive]=true&take=10&skip=0&relations[]=user"
+		},
+		{
+			"name": "tasks-pagination",
+			"path": "/tasks/pagination?where[organizationId]={organizationId}&where[tenantId]={tenantId}&take=10&skip=0"
+		},
+		{
+			"name": "teams-pagination",
+			"path": "/organization-team/pagination?where[organizationId]={organizationId}&where[tenantId]={tenantId}&take=10&skip=0"
+		},
+		{ "name": "employee-by-id", "path": "/employee/{employeeId}?relations[]=user" }
+	]
+}

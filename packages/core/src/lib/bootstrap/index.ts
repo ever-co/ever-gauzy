@@ -28,7 +28,7 @@ export function startTracing(): void {
 startTracing(); // Start tracing if OTEL is enabled.
 
 // import * as csurf from 'csurf';
-import { ConflictException, INestApplication, Type } from '@nestjs/common';
+import { ConflictException, INestApplication, Logger, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { EventSubscriber, MikroORM, RequestContext } from '@mikro-orm/core';
@@ -64,6 +64,7 @@ import { configureRedisSession } from './redis-store';
 import { setupSwagger } from './swagger';
 import { resolveTrustProxy } from './trust-proxy';
 import { validateApplicationSecrets } from './validate-secrets';
+import { createPerfMetricsMiddleware, instrumentPg, isPerfMetricsEnabled, startEventLoopMonitor } from './perf-metrics';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -106,6 +107,18 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
 	app.set('query parser', 'extended');
+
+	// Opt-in request performance instrumentation (off unless API_PERF_METRICS / API_SERVER_TIMING /
+	// API_SLOW_REQUEST_LOG_MS / API_EVENT_LOOP_MONITOR_MS is set — see ./perf-metrics.ts). Registered before every
+	// other middleware, so the session store, body parsing and authentication are all inside the measured time.
+	if (isPerfMetricsEnabled()) {
+		instrumentPg();
+		app.use(createPerfMetricsMiddleware({ logger: new Logger('PerfMetrics') }));
+	}
+	if (process.env.API_EVENT_LOOP_MONITOR_MS) {
+		instrumentPg();
+		startEventLoopMonitor({ logger: new Logger('EventLoopMonitor') });
+	}
 
 	// Register custom entity fields for Mikro ORM (under DB_ORM=mikro-orm they were registered above,
 	// before MikroORM discovered the entities)
