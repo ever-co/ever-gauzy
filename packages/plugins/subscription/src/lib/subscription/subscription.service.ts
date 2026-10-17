@@ -136,6 +136,18 @@ const PRORATION_SCOPE = 'subscription.proration';
 const RIGHTS_RELEASE_SCOPE = 'subscription.rights.release';
 
 /**
+ * The subscription statuses a late payment releases no rights for (R4-05, review note from px-refunds): the
+ * subscription ended — cancelled, expired, or failed out of dunning — while the invoice was open. The cycle is
+ * recorded paid and the reason the rights were withheld is kept on it; nothing extends a right of a
+ * subscription that is over.
+ */
+const RIGHTS_WITHHELD_STATUSES: SubscriptionStatus[] = [
+	SubscriptionStatus.CANCELED,
+	SubscriptionStatus.EXPIRED,
+	SubscriptionStatus.FAILED
+];
+
+/**
  * Cycle statuses that mean the period's charge has been raised — an order is open for it, or it was paid,
  * waived or refunded — and must never be charged again.
  *
@@ -2140,6 +2152,19 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 
 		if (billing.status === SubscriptionBillingStatus.PAID && this.billingService.holdsDeferredRights(billing)) {
 			const subscription = await this.findOneScoped(billing.subscriptionId);
+
+			if (RIGHTS_WITHHELD_STATUSES.includes(subscription.status)) {
+				await this.billingService.releaseDeferredRights(billing.id, { withheldFor: subscription.status });
+				await this.idempotencyService.complete(claim.record, {
+					responseStatus: 200,
+					responseBody: { billingId, withheldFor: subscription.status },
+					resourceType: 'subscription_billing',
+					resourceId: billingId
+				});
+
+				return;
+			}
+
 			const items = await this.itemService.findForSubscription(subscription.id);
 
 			if (this.billingService.holdsDeferredActivation(billing)) {

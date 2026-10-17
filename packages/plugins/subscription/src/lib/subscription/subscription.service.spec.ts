@@ -4074,6 +4074,22 @@ describe('SubscriptionService — an invoiced cycle is not a settled one (R4-05)
 		});
 	});
 
+	it('releases no rights when the subscription ended while its invoice was open', async () => {
+		// Review note (px-refunds): a late payment of a cancelled, expired or failed subscription's invoice is
+		// recorded, and extends nothing for a subscription that is over.
+		const fixture = subscriptionFixture({ orders: { paid: false } });
+
+		await fixture.service.billCycle(SUBSCRIPTION);
+		Object.assign(fixture.subscription(SUBSCRIPTION) as Row, { status: SubscriptionStatus.CANCELED });
+
+		const paid = await fixture.service.payCycle((fixture.cycle(APRIL) as Row).id);
+
+		expect(paid.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(0);
+		expect(fixture.cycle(APRIL)?.metadata).toMatchObject({ rightsWithheldFor: SubscriptionStatus.CANCELED });
+		expect(fixture.cycle(APRIL)?.metadata?.rightsDeferred).toBeUndefined();
+	});
+
 	it('still renews on the spot a cycle whose order was paid', async () => {
 		const fixture = subscriptionFixture({ orders: { paid: true } });
 

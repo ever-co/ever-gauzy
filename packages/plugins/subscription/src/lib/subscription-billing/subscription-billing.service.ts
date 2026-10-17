@@ -43,6 +43,8 @@ const WAIVABLE_FROM: readonly SubscriptionBillingStatus[] = [
 export const RIGHTS_DEFERRED = 'rightsDeferred';
 export const ACTIVATION_DEFERRED = 'activationDeferred';
 export const RIGHTS_RELEASED_AT = 'rightsReleasedAt';
+/** Why a paid cycle's rights were not put in force: the subscription's status when it was paid (R4-05). */
+export const RIGHTS_WITHHELD_FOR = 'rightsWithheldFor';
 
 /** The refusal of a settling action from a status it may not start from. */
 function invalidTransition(
@@ -282,15 +284,20 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 * Records that a cycle's payment released the rights it held back, so they are never released twice.
 	 *
 	 * @param id The cycle.
+	 * @param options Why the rights were withheld instead, when the subscription had ended by the payment.
 	 * @returns The updated cycle.
 	 */
-	public async releaseDeferredRights(id: ID): Promise<SubscriptionBilling> {
+	public async releaseDeferredRights(id: ID, options: { withheldFor?: string } = {}): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 		const metadata: Record<string, unknown> = { ...(billing.metadata ?? {}) };
 
 		delete metadata[RIGHTS_DEFERRED];
 		delete metadata[ACTIVATION_DEFERRED];
 		metadata[RIGHTS_RELEASED_AT] = new Date().toISOString();
+
+		if (options.withheldFor) {
+			metadata[RIGHTS_WITHHELD_FOR] = options.withheldFor;
+		}
 
 		await super.update(id, { metadata } as any);
 
