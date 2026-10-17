@@ -171,7 +171,7 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 
 	it('GET /employee/count counts people only', async () => {
 		const employeeService = { countBy: jest.fn().mockResolvedValue(2) };
-		const controller = new EmployeeController(employeeService as never, {} as never, {} as never);
+		const controller = new EmployeeController(employeeService as never, {} as never, {} as never, {} as never);
 
 		await expect(controller.getCount({ organizationId: 'org-1' } as never)).resolves.toBe(2);
 		expect(employeeService.countBy).toHaveBeenCalledWith({ organizationId: 'org-1', kind: EmployeeKindEnum.HUMAN });

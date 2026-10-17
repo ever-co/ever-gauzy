@@ -112,6 +112,8 @@ describe('StatisticService on MikroORM — soft-deleted rows', () => {
 		await knex.schema.createTable('employee', (table) => {
 			table.string('id').primary();
 			table.string('userId');
+			// The members-worked count keeps people only (`kind = 'human'`, the column's default, as on the entity)
+			table.string('kind', 16).notNullable().defaultTo('human');
 			table.string('deletedAt').nullable();
 		});
 		await knex.schema.createTable('organization_project', (table) => {
