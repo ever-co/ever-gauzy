@@ -112,6 +112,24 @@ export const countByGroup = <T>(items: T[], groups: Record<string, (item: T) => 
 		])
 	);
 
+/** `BaseEntityEnum` names of the entity types the tool schemas spell in capitals. */
+const API_ENTITY_NAMES: Record<string, string> = {
+	USER: 'User',
+	EMPLOYEE: 'Employee',
+	TASK: 'Task',
+	PROJECT: 'OrganizationProject',
+	GOAL: 'Goal',
+	INVOICE: 'Invoice',
+	EXPENSE: 'Expense',
+	CANDIDATE: 'Candidate'
+};
+
+/**
+ * The API name of an entity type: the tool schemas spell them `TASK` or `PROJECT`, the API `Task` or
+ * `OrganizationProject`. Any other value, an API name included, is sent unchanged.
+ */
+export const toApiEntity = (entity?: string): string | undefined => (entity && API_ENTITY_NAMES[entity]) || entity;
+
 /** Whether `text` contains `query`, ignoring case; no query matches everything. */
 export const containsText = (text: unknown, query?: string): boolean => {
 	const needle = query?.toLowerCase();

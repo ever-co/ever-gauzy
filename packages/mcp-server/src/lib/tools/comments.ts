@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import { CommentableTypeEnum } from '../input-schemas';
-import { buildListQuery, containsText, pageOf, readAllPages, validateOrganizationContext } from './utils';
+import { buildListQuery, containsText, pageOf, readAllPages, toApiEntity, validateOrganizationContext } from './utils';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
@@ -47,7 +47,7 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const where = { entity, entityId, employeeId, parentId };
+				const where = { entity: toApiEntity(entity), entityId, employeeId, parentId };
 				const response = search
 					? pageOf(await findCommentsContaining(defaultParams, where, search, relations), page, limit)
 					: await apiClient.get('/api/comment', {
@@ -85,7 +85,11 @@ export const registerCommentTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				// `/api/comment/count` is read as a comment id: the list route counts them instead
-				const params = buildListQuery(defaultParams, { entity, entityId, employeeId, parentId }, { limit: 1 });
+				const params = buildListQuery(
+					defaultParams,
+					{ entity: toApiEntity(entity), entityId, employeeId, parentId },
+					{ limit: 1 }
+				);
 
 				const { total } = await apiClient.get<{ total: number }>('/api/comment', { params });
 
@@ -160,6 +164,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					...comment_data,
+					entity: toApiEntity(comment_data.entity),
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
@@ -257,13 +262,25 @@ export const registerCommentTools = (server: McpServer) => {
 			relations: z.array(z.string()).optional().describe('Relations to include'),
 			includeReplies: z.boolean().optional().default(true).describe('Include reply comments')
 		},
-		async ({ entity, entityId, page = 1, limit = 10, relations }) => {
+		async ({ entity, entityId, page = 1, limit = 10, relations, includeReplies = true }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = buildListQuery(defaultParams, { entity, entityId }, { page, limit, relations });
-
-				const response = await apiClient.get('/api/comment', { params });
+				const where = { entity: toApiEntity(entity), entityId };
+				// The API cannot filter on a missing parent: without replies, the root comments are kept here
+				const response = includeReplies
+					? await apiClient.get('/api/comment', {
+							params: buildListQuery(defaultParams, where, { page, limit, relations })
+						})
+					: pageOf(
+							(
+								await readAllPages<{ parentId?: string }>('/api/comment', (pageNumber, take) =>
+									buildListQuery(defaultParams, where, { page: pageNumber, limit: take, relations })
+								)
+							).filter(({ parentId }) => !parentId),
+							page,
+							limit
+						);
 
 				return {
 					content: [
@@ -297,7 +314,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity,
+					entity: toApiEntity(entity),
 					entityId,
 					parentId,
 					organizationId: defaultParams.organizationId,
@@ -377,7 +394,7 @@ export const registerCommentTools = (server: McpServer) => {
 				}
 				const params = buildListQuery(
 					defaultParams,
-					{ entity, entityId, createdByUserId },
+					{ entity: toApiEntity(entity), entityId, createdByUserId },
 					{ page, limit, relations }
 				);
 
@@ -413,7 +430,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity: CommentableTypeEnum.enum.TASK,
+					entity: toApiEntity(CommentableTypeEnum.enum.TASK),
 					entityId: taskId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
@@ -451,7 +468,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity: CommentableTypeEnum.enum.PROJECT,
+					entity: toApiEntity(CommentableTypeEnum.enum.PROJECT),
 					entityId: projectId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
@@ -489,7 +506,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const createData = {
 					comment,
-					entity: CommentableTypeEnum.enum.GOAL,
+					entity: toApiEntity(CommentableTypeEnum.enum.GOAL),
 					entityId: goalId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
@@ -527,7 +544,11 @@ export const registerCommentTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const comments = await findCommentsContaining(defaultParams, { entity, employeeId }, query);
+				const comments = await findCommentsContaining(
+					defaultParams,
+					{ entity: toApiEntity(entity), employeeId },
+					query
+				);
 				const response = pageOf(comments, 1, limit);
 
 				return {
@@ -562,7 +583,7 @@ export const registerCommentTools = (server: McpServer) => {
 
 				const params = buildListQuery(
 					defaultParams,
-					{ entity, employeeId },
+					{ entity: toApiEntity(entity), employeeId },
 					{ limit, relations, order: { createdAt: 'DESC' } }
 				);
 

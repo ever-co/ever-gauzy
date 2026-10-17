@@ -4,7 +4,15 @@ import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
-import { containsText, countByGroup, isWithinDates, pageOf, readAllPages, validateOrganizationContext } from './utils';
+import {
+	containsText,
+	countByGroup,
+	isWithinDates,
+	pageOf,
+	readAllPages,
+	toApiEntity,
+	validateOrganizationContext
+} from './utils';
 import {
 	ActivityLogActionEnum,
 	ActivityLogEntityEnum,
@@ -23,14 +31,27 @@ const logger = new Logger('ActivityLogTools');
 type DefaultParams = { tenantId?: string; organizationId?: string };
 type ActivityLog = Record<string, unknown> & { createdAt?: string; createdByUserId?: string };
 
+/** `ActionTypeEnum` names of the tool actions: the API logs no other action. */
+const API_ACTIONS: Record<string, string> = { CREATED: 'Created', UPDATED: 'Updated', DELETED: 'Deleted' };
+
+const toApiAction = (action: string) => {
+	const apiAction = API_ACTIONS[action];
+	if (!apiAction) {
+		throw new Error(`The Gauzy API logs only the CREATED, UPDATED and DELETED actions, not ${action}.`);
+	}
+	return apiAction;
+};
+
 /**
  * Query of `GET /api/activity-log`, the only activity log route: its filters sit at the top level,
- * `skip` is a page number and `take` is at most 100.
+ * `skip` is a page number and `take` is at most 100. Entity and action are sent in the API's spelling.
  */
-const activityLogQuery = (defaultParams: DefaultParams, filters: Record<string, unknown>) => ({
+const activityLogQuery = (defaultParams: DefaultParams, { entity, action, ...filters }: Record<string, unknown>) => ({
 	organizationId: defaultParams.organizationId,
 	...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-	...filters
+	...filters,
+	...(entity && { entity: toApiEntity(entity as string) }),
+	...(action && { action: toApiAction(action as string) })
 });
 
 /** Reads the logs newest first, page by page, until `stop`: the API cannot search or group them. */
@@ -703,20 +724,17 @@ export const registerActivityLogTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = activityLogQuery(defaultParams, {
-					entity,
-					entityId,
-					take: limit,
-					orderBy: 'createdAt',
-					order: 'DESC',
+				// The API has no date filter: read the newest logs until `limit` of them fall in the range
+				const timeline = await findNewestLogs(
+					defaultParams,
 					// ActivityLog has no `createdBy` relation: its author is `createdByUserId`
-					relations: ['employee']
-				});
-
-				// The API has no date filter: keep the logs of the page that fall in the range
-				const { items = [] } = await apiClient.get<{ items?: ActivityLog[] }>('/api/activity-log', { params });
-				const timeline = items.filter(({ createdAt }) => isWithinDates(createdAt, startDate, endDate));
-				const response = { items: timeline, total: timeline.length };
+					{ entity, entityId, relations: ['employee'] },
+					(log) => isWithinDates(log.createdAt, startDate, endDate),
+					limit,
+					startDate
+				);
+				const items = timeline.slice(0, limit);
+				const response = { items, total: items.length };
 
 				return {
 					content: [
