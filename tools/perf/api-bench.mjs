@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { performance } from 'node:perf_hooks';
+import { execFileSync } from 'node:child_process';
 
 const require = createRequire(path.join(process.cwd(), 'package.json'));
 
@@ -37,6 +38,31 @@ const LABEL = env.LABEL || 'run';
 const OUT = env.OUT || '';
 const ONLY = env.ONLY ? env.ONLY.split(',') : null;
 const PG_URL = env.PG_URL || '';
+// Optional: path to redis-cli, to count Redis commands per request (INFO commandstats).
+const REDIS_CLI = env.REDIS_CLI || '';
+const REDIS_PORT = env.REDIS_PORT || '6379';
+
+function redis(...args) {
+	return execFileSync(REDIS_CLI, ['-p', REDIS_PORT, ...args], { encoding: 'utf8' });
+}
+
+function redisReset() {
+	if (REDIS_CLI) redis('CONFIG', 'RESETSTAT');
+}
+
+function redisCalls() {
+	if (!REDIS_CLI) return null;
+	const out = redis('INFO', 'commandstats');
+	const byCommand = {};
+	let total = 0;
+	for (const line of out.split(/\r?\n/)) {
+		const m = /^cmdstat_([^:]+):calls=(\d+)/.exec(line);
+		if (!m || ['info', 'config', 'ping'].includes(m[1])) continue;
+		byCommand[m[1]] = Number(m[2]);
+		total += Number(m[2]);
+	}
+	return { total, byCommand };
+}
 const scenarioFile = process.argv[2] || path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), 'scenarios.json');
 
 const baseUrl = new URL(BASE);
@@ -124,14 +150,19 @@ async function pgCalls() {
 
 async function resolveContext() {
 	const login = await request('POST', '/auth/login', { body: { email: EMAIL, password: PASSWORD } });
-	if (login.status >= 300) throw new Error(`login failed: ${login.status} ${login.body}`);
+	if (login.status >= 300 || login.status === 0) throw new Error(`login failed: ${login.status} ${login.error?.message ?? login.body}`);
 	const data = JSON.parse(login.body.toString());
 	const token = data.token;
 	const user = data.user;
 	const vars = { tenantId: user.tenantId, userId: user.id, employeeId: user.employee?.id || user.employeeId || '' };
 	const c = await pgClient();
 	if (c) {
-		const org = await c.query(`select id from organization where "tenantId" = $1 order by "createdAt" limit 1`, [user.tenantId]);
+		// The organization with the most employees, so list endpoints return real pages.
+		const org = await c.query(
+			`select o.id from organization o left join employee e on e."organizationId" = o.id
+			  where o."tenantId" = $1 group by o.id order by count(e.id) desc, min(o."createdAt") limit 1`,
+			[user.tenantId]
+		);
 		vars.organizationId = org.rows[0]?.id;
 		if (!vars.employeeId) {
 			const emp = await c.query(`select id from employee where "tenantId" = $1 and "organizationId" = $2 order by "createdAt" limit 1`, [user.tenantId, vars.organizationId]);
@@ -163,6 +194,7 @@ async function runEndpoint(ep, ctx) {
 
 	// Sequential latency + SQL statements per request
 	await pgReset();
+	redisReset();
 	const seq = [];
 	const seqStatus = {};
 	for (let i = 0; i < SEQ; i++) {
@@ -171,6 +203,7 @@ async function runEndpoint(ep, ctx) {
 		seqStatus[r.status] = (seqStatus[r.status] || 0) + 1;
 	}
 	const sql = await pgCalls();
+	const rds = redisCalls();
 
 	// Concurrent throughput
 	const conc = [];
@@ -195,6 +228,8 @@ async function runEndpoint(ep, ctx) {
 		sequential: { ...stats(seq), status: seqStatus },
 		sqlPerRequest: sql ? Math.round((sql.calls / SEQ) * 100) / 100 : null,
 		sqlMsPerRequest: sql ? Math.round((sql.ms / SEQ) * 100) / 100 : null,
+		redisPerRequest: rds ? Math.round((rds.total / SEQ) * 100) / 100 : null,
+		redisCommands: rds ? rds.byCommand : null,
 		concurrent: { concurrency: CONCURRENCY, seconds: Math.round(elapsed * 100) / 100, rps: Math.round((conc.length / elapsed) * 10) / 10, ...stats(conc), status: concStatus }
 	};
 }
@@ -212,7 +247,7 @@ async function main() {
 			console.log(`  ${ep.name.padEnd(28)} ERROR ${r.error}`);
 		} else {
 			console.log(
-				`  ${ep.name.padEnd(28)} seq p50 ${String(r.sequential.p50).padStart(8)}ms p90 ${String(r.sequential.p90).padStart(8)}ms | sql/req ${String(r.sqlPerRequest ?? '-').padStart(6)} | c${CONCURRENCY} ${String(r.concurrent.rps).padStart(7)} rps p50 ${String(r.concurrent.p50).padStart(8)}ms p99 ${String(r.concurrent.p99).padStart(8)}ms | ${r.bytes}B`
+				`  ${ep.name.padEnd(28)} seq p50 ${String(r.sequential.p50).padStart(8)}ms p90 ${String(r.sequential.p90).padStart(8)}ms | sql/req ${String(r.sqlPerRequest ?? '-').padStart(6)} redis/req ${String(r.redisPerRequest ?? '-').padStart(5)} | c${CONCURRENCY} ${String(r.concurrent.rps).padStart(7)} rps p50 ${String(r.concurrent.p50).padStart(8)}ms p99 ${String(r.concurrent.p99).padStart(8)}ms | ${r.bytes}B`
 			);
 		}
 	}

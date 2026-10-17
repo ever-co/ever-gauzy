@@ -5,8 +5,8 @@
 		{ "name": "feature-toggle-definition", "path": "/feature/toggle/definition", "public": true },
 		{ "name": "user-me", "path": "/user/me" },
 		{ "name": "role-permissions-me", "path": "/role-permissions/me" },
-		{ "name": "tags", "path": "/tags?organizationId={organizationId}&tenantId={tenantId}" },
-		{ "name": "organization-team-me", "path": "/organization-team/me?organizationId={organizationId}&tenantId={tenantId}" },
+		{ "name": "tags", "path": "/tags?where[organizationId]={organizationId}&where[tenantId]={tenantId}" },
+		{ "name": "organization-team-me", "path": "/organization-team/me?where[organizationId]={organizationId}&where[tenantId]={tenantId}" },
 		{
 			"name": "projects-pagination",
 			"path": "/organization-projects/pagination?where[organizationId]={organizationId}&where[tenantId]={tenantId}&take=10&skip=0"
