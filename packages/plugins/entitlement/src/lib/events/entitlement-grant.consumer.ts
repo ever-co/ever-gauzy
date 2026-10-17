@@ -253,7 +253,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 		}
 
 		for (const entitlement of await this.findByOrder(orderId, scope)) {
-			await this.entitlementService.revoke(entitlement.id, EntitlementRevocationReason.REFUNDED, scope);
+			await this.entitlementService.revoke(entitlement.id, EntitlementRevocationReason.ORDER_CANCELED, scope);
 		}
 	}
 

@@ -32,6 +32,7 @@ export * from './lib/order/repository/mikro-orm-order.repository';
 
 export * from './lib/order-line/order-line.entity';
 export * from './lib/order-line/order-line.service';
+export * from './lib/order-line/order-line-entitlement';
 export * from './lib/order-line/order-line.controller';
 export * from './lib/order-line/repository/type-orm-order-line.repository';
 export * from './lib/order-line/repository/mikro-orm-order-line.repository';
