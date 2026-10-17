@@ -412,6 +412,26 @@ describe('Mailbox management on SQLite', () => {
 			expect([lost.status, lost.message]).toEqual([InboxMailboxDomainStatusEnum.FAILED, 'NXDOMAIN']);
 		});
 
+		it('never leaves a mailbox on a removed account: removing it and pointing a mailbox at it never both succeed', async () => {
+			const providerAccountId = await account();
+			const [removed, created] = await Promise.allSettled([
+				accounts.remove(providerAccountId),
+				service.create({
+					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+					kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+					localPart: 'billing',
+					domain: 'acme.test',
+					providerAccountId
+				})
+			]);
+			expect([removed.status, created.status].filter((status) => status === 'fulfilled')).toHaveLength(1);
+			const [row] = await dataSource.query(`SELECT "deletedAt" FROM "inbox_provider_account" WHERE "id" = ?`, [
+				providerAccountId
+			]);
+			const mailboxes = await dataSource.getRepository(InboxMailbox).count();
+			expect(mailboxes > 0 && row.deletedAt !== null).toBe(false);
+		});
+
 		it('has a DNS record to read for a custom-domain mailbox only', async () => {
 			const support = await service.create({
 				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
