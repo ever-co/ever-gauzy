@@ -54,8 +54,10 @@ import { EverWorksConnection } from '../connection/ever-works-connection.entity'
  *
  * Writes to the connection row itself (the claim, renewals, the feed cursor) are not fenced: each is
  * already one conditional statement on the lease. Writes that bypass the ORM events (raw SQL, MikroORM's
- * `nativeUpdate` / `nativeDelete`) are covered by {@link assertLeaseFence}, which every sync write calls
- * as it enters its request context (`runInSyncRequestContext`).
+ * `nativeUpdate` / `nativeDelete`) are not seen by the subscriber: {@link assertLeaseFence} checks the
+ * lease when a sync write opens its request context (`runInSyncRequestContext`) and before each push, so
+ * such a write is fenced only up to that point, not right before it (a call site that makes one later
+ * should call {@link assertLeaseFence} just before it). The plugin itself makes none.
  */
 
 /** How long a lease lasts (the loop claims and renews it for this long). */
@@ -139,7 +141,8 @@ export function pendingLeaseRenewal(): Promise<void> | null {
 
 /**
  * Checks, as for a write outside a transaction (with the margin), that the armed fence's lease still
- * holds; no-op outside a fence. For writes the ORM events do not see, made right after it.
+ * holds; no-op outside a fence. It covers what follows it only up to the next long wait: call it right
+ * before a write the ORM events do not see, or before a side effect outside Gauzy (a push to Ever Works).
  */
 export async function assertLeaseFence(): Promise<void> {
 	const state = storage.getStore();

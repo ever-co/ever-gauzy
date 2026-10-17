@@ -111,8 +111,9 @@ export function isMissingWritePath(error: unknown): boolean {
  * fresh store that holds nothing of an enclosing request. `unavailable` is thrown — before anything is
  * written — where no context can be opened, and in place of a missing platform write path, so the
  * caller defers the change instead of failing it. Inside a sync pass's lease fence, the lease is checked
- * before `fn` starts (`EverWorksLeaseLostError` when it moved): the per-write fence sees every ORM write,
- * this check also covers the platform writes that bypass the ORM events.
+ * before `fn` starts (`EverWorksLeaseLostError` when it moved). Every ORM write inside `fn` is fenced again
+ * at the write; a write that bypasses the ORM events (raw SQL, MikroORM's native update or delete) is
+ * fenced only by this check, i.e. up to the start of `fn`.
  */
 export async function runInSyncRequestContext<T>(
 	user: EverWorksSyncRequestUser,

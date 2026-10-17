@@ -7,7 +7,7 @@ import { EverWorksConnection } from '../../connection/ever-works-connection.enti
 import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
 import { EverWorksLinkType, EverWorksOutboundChange, EverWorksOutboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
-import { EverWorksLease, EverWorksLeaseLostError, everWorksLease, withLeaseFence } from '../ever-works-lease-fence';
+import { assertLeaseFence, EverWorksLease, EverWorksLeaseLostError, everWorksLease, withLeaseFence } from '../ever-works-lease-fence';
 import { EverWorksStaleLinkError } from '../links/ever-works-link.service';
 
 /** What a push did. */
@@ -151,8 +151,12 @@ export class EverWorksOutboundPusher {
 			return true;
 		};
 		try {
-			// Fenced: a Gauzy write of this push made after the lease moved is refused.
-			const outcome = await withLeaseFence(lease, () => handler.push(change, { connection, mapping }));
+			// Fenced: a Gauzy write of this push made after the lease moved is refused. The lease is also checked
+			// before the handler starts, since its Ever Works request goes out before its first Gauzy write.
+			const outcome = await withLeaseFence(lease, async () => {
+				await assertLeaseFence();
+				return handler.push(change, { connection, mapping });
+			});
 			if (outcome.status === 'deferred') {
 				await settle({
 					status: EverWorksOutboundStatus.DEFERRED,

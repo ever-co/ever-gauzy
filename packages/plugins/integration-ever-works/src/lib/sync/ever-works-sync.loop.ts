@@ -184,8 +184,11 @@ export class EverWorksSyncLoop implements OnApplicationBootstrap, OnApplicationS
 		renewedAt = 0; // the feed may have taken a while: renew before applying
 		if (!(await stillOwner())) return;
 		await this.applier.drain(fresh, 200, this.timeFor(tickNow), stillOwner, this.owner);
+		// A drain stops quietly when its lease moved: re-check it (no cached answer) before the next stage.
+		renewedAt = 0;
 		if (!(await stillOwner())) return;
 		await this.pusher.drain(fresh, 100, this.timeFor(tickNow), stillOwner, this.owner);
+		renewedAt = 0;
 		for (const [index, sweeper] of this.sweepers.entries()) {
 			const key = `${id}:${index}`;
 			if (Date.now() - (this.lastSweep.get(key) ?? 0) < sweeper.sweepIntervalMs) continue;
