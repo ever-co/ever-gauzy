@@ -280,7 +280,16 @@
 					} @else {
 					<ul class="project-grid">
 						@for (project of projectOverview; track project.id) {
-						<li class="project-card" [class.is-idle]="!project.duration">
+						<!-- Each card opens the project's quick look in the side drawer. -->
+						<li>
+							<button
+								type="button"
+								class="project-card project-open"
+								[class.is-idle]="!project.duration"
+								[class.is-viewed]="viewedProject?.id === project.id"
+								(click)="openProject(project)"
+								[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_PROJECT_DETAILS' | translate : { name: project.name }"
+							>
 							<span class="project-logo">
 								@if (project.imageUrl) {
 								<img [src]="project.imageUrl" [alt]="project.name" />
@@ -310,6 +319,7 @@
 								</span>
 								<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="project.width"></span></span>
 							</span>
+							</button>
 						</li>
 						}
 					</ul>
@@ -708,6 +718,98 @@
 	@if (viewedTask) {
 	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
 		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
+
+<!-- Quick look of a project from the Projects panel, with a way to its edit page for those who may edit it. -->
+<ngx-record-view-drawer
+	[open]="!!viewedProject"
+	[heading]="'SM_TABLE.PROJECT'"
+	[wide]="true"
+	(closed)="closeProject()"
+>
+	@if (viewedProject) {
+	<ngx-record-view [record]="viewedProject" [sections]="projectSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<div recordViewHeader class="project-view-header">
+			<span class="project-logo">
+				@if (viewedProjectCard?.imageUrl) {
+				<img [src]="viewedProjectCard.imageUrl" [alt]="viewedProject.name" />
+				} @else {
+				<span aria-hidden="true">{{ viewedProjectCard?.initials }}</span>
+				}
+			</span>
+			<h5 class="project-view-name">{{ viewedProject.name }}</h5>
+			<a
+				*ngxPermissionsOnly="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT]"
+				nbButton
+				size="small"
+				status="basic"
+				class="project-view-edit"
+				[routerLink]="projectEditLink(viewedProject.id)"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}
+			</a>
+		</div>
+
+		<!-- Progress: the project's tasks done, in progress and still to do. -->
+		<section recordViewHeader class="panel project-view-panel" [nbSpinner]="projectProgress.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<header class="panel-header">
+				<h5 class="panel-title panel-title--icon">
+					<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS' | translate }}
+				</h5>
+				@if (projectProgress.value?.total) {
+				<span class="project-progress-percent">{{ formatPercent(projectProgress.value.percent) }}</span>
+				}
+			</header>
+			<div class="panel-body">
+				@if (projectProgress.failed) {
+				<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+				} @else if (projectProgress.value && !projectProgress.value.total) {
+				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_PROJECT_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+				} @else if (projectProgress.value) {
+				<div
+					class="project-progress-track"
+					role="progressbar"
+					aria-valuemin="0"
+					aria-valuemax="100"
+					[attr.aria-valuenow]="projectProgress.value.percent | number : '1.0-0'"
+					[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS' | translate"
+				>
+					<span class="project-progress-done" [style.width.%]="(projectProgress.value.done / projectProgress.value.total) * 100"></span>
+					<span class="project-progress-active" [style.width.%]="(projectProgress.value.progress / projectProgress.value.total) * 100"></span>
+				</div>
+				<p class="project-progress-meta">
+					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PROJECT_PROGRESS_META' | translate : { done: projectProgress.value.done, total: projectProgress.value.total } }}
+				</p>
+				<ul class="project-progress-legend">
+					<li><span class="legend-dot legend-dot--done" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate }} <strong>{{ projectProgress.value.done }}</strong></li>
+					<li><span class="legend-dot legend-dot--active" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate }} <strong>{{ projectProgress.value.progress }}</strong></li>
+					<li><span class="legend-dot" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate }} <strong>{{ projectProgress.value.todo }}</strong></li>
+				</ul>
+				}
+			</div>
+		</section>
+
+		<!-- Who worked the most: the team members' time on the project in the period. -->
+		<section recordViewHeader class="panel project-view-panel" [nbSpinner]="projectContributors.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<header class="panel-header">
+				<div class="panel-heading">
+					<h5 class="panel-title panel-title--icon">
+						<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
+						{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TOP_CONTRIBUTORS' | translate }}
+					</h5>
+					<span class="panel-caption">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.TOP_CONTRIBUTORS_CAPTION' | translate : { range: rangeLabel } }}</span>
+				</div>
+			</header>
+			<div class="panel-body panel-body--flush">
+				<ng-container
+					*ngTemplateOutlet="ranked; context: { $implicit: projectContributors, column: 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.MEMBER', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"
+				></ng-container>
+			</div>
+		</section>
 	</ngx-record-view>
 	}
 </ngx-record-view-drawer>
