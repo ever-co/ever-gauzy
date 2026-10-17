@@ -216,8 +216,8 @@ export class PostmarkProvider implements IEmailProviderPlugin, IInboundEmailProv
 		const envelopeRecipients =
 			typeof body.OriginalRecipient === 'string' && body.OriginalRecipient ? [body.OriginalRecipient] : [];
 		// Only what Postmark's own servers add is trusted: `Received-SPF` and the SpamAssassin score. A sender can put
-		// any `Authentication-Results` into its message, so no DKIM / DMARC verdict is taken from it (an allowlisted
-		// mailbox therefore admits no Postmark mail: allowlists need a DMARC verdict the relay vouches for).
+		// any `Authentication-Results` into its message, so no DKIM / DMARC verdict is taken from it (in a mailbox with
+		// an allowlist, an allowlisted sender's Postmark mail is therefore held in the quarantine for a manager).
 		const verdicts: { dkim?: ReturnType<typeof toVerdict>; dmarc?: ReturnType<typeof toVerdict> } = {};
 		const spf = toVerdict(/^(pass|fail|softfail|neutral|none)/i.exec(headers['received-spf'] ?? '')?.[1]);
 		const score = Number.parseFloat(headers['x-spam-score'] ?? '');
