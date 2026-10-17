@@ -650,7 +650,9 @@ export class SearchIndexerService {
 	private async persistedDefinitionOf(entity: string): Promise<IPersistedSearchDefinition | null> {
 		try {
 			const row = await this.typeOrmSearchIndexDefinitionRepository.findOne({
-				where: { entity, organizationId: IsNull() } as any
+				// The shipped row is the platform's: no organization AND no tenant. A tenant's row with no organization
+				// is not the shipped definition of every other tenant (CodeRabbit on #10850).
+				where: { entity, organizationId: IsNull(), tenantId: IsNull() } as any
 			});
 
 			return row ?? null;
@@ -666,8 +668,12 @@ export class SearchIndexerService {
 	 *
 	 * A copy is what `SearchIndexDefinitionService.findFor` answers for its organization, so it is the definition in
 	 * force for that organization's rows. The read is bounded by the batch: it names only the organizations the rows
-	 * carry (or the one the caller stated), which is a handful per page of a sweep and one for an event. Copies that
-	 * cannot be read are a warning, and the rows are written under the shipped definition as they were before.
+	 * carry (or the one the caller stated), which is a handful per page of a sweep and one for an event.
+	 *
+	 * **A read that fails fails the run** (CodeRabbit on #10850). Written under the shipped definition instead, a row of
+	 * an organization that switched the entity off would be indexed again — the very thing the copies are read to
+	 * prevent. The event is redelivered and the sweep reports the entity as not rebuilt, as for a provider nothing
+	 * claims (`writableProvider`).
 	 *
 	 * @param entity The entity key.
 	 * @param rows The batch.
@@ -693,24 +699,18 @@ export class SearchIndexerService {
 			return copies;
 		}
 
-		try {
-			const found: IPersistedSearchDefinition[] = await this.typeOrmSearchIndexDefinitionRepository.find({
-				where: {
-					entity,
-					organizationId: In(organizationIds),
-					...(options.tenantId ? { tenantId: options.tenantId } : {})
-				} as any
-			});
+		const found: IPersistedSearchDefinition[] = await this.typeOrmSearchIndexDefinitionRepository.find({
+			where: {
+				entity,
+				organizationId: In(organizationIds),
+				...(options.tenantId ? { tenantId: options.tenantId } : {})
+			} as any
+		});
 
-			for (const copy of found ?? []) {
-				if (copy?.organizationId) {
-					copies.set(String(copy.organizationId), copy);
-				}
+		for (const copy of found ?? []) {
+			if (copy?.organizationId) {
+				copies.set(String(copy.organizationId), copy);
 			}
-		} catch (error) {
-			this.logger.warn(
-				`The organizations' own "${entity}" index definitions could not be read: ${describe(error)}`
-			);
 		}
 
 		return copies;

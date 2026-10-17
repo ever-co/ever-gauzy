@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
+import { In, IsNull, MoreThan, Not } from 'typeorm';
 import {
 	ID,
 	ISearchIndexRegistration,
@@ -514,7 +514,9 @@ export class SearchReindexService {
 	 * completed leaves this at zero; anything else names documents the sweep did not reach.
 	 *
 	 * Each organization's documents are compared with the version of the definition in force for it (Q16): its own
-	 * copy's, else the shipped row's.
+	 * copy's, else the shipped row's. It is ONE grouped read — the live documents behind the highest of those versions,
+	 * counted per organization and version — whatever the number of copies (Greptile on #10850: two counts per copy
+	 * made a tenant with many tuned organizations wait for thousands of sequential queries).
 	 *
 	 * @param entity The entity key.
 	 * @param version The version the shipped definition stamped, or `null` when it is switched off.
@@ -526,37 +528,50 @@ export class SearchReindexService {
 		version: number | null,
 		copies: Array<{ organizationId?: ID | null; version?: number | null }> = []
 	): Promise<number> {
+		const own = new Map<string, number>();
+
+		for (const copy of copies) {
+			if (copy.organizationId) {
+				own.set(String(copy.organizationId), normaliseVersion(copy.version));
+			}
+		}
+
+		// Nothing is behind version 1, so a read whose every threshold is 1 has nothing to count.
+		const ceiling = Math.max(version ?? 0, ...own.values());
+
+		if (ceiling <= 1) {
+			return 0;
+		}
+
 		try {
-			const where = (extra: Record<string, unknown>) =>
-				({ entity, deletedAt: IsNull(), ...this.tenantScope(), ...extra }) as any;
+			const { tenantId } = this.tenantScope() as { tenantId?: ID };
+			const query = this.typeOrmSearchDocumentRepository
+				.createQueryBuilder('document')
+				.select('document.organizationId', 'organizationId')
+				.addSelect('document.definitionVersion', 'definitionVersion')
+				.addSelect('COUNT(*)', 'count')
+				.where('document.entity = :entity', { entity })
+				.andWhere('document.deletedAt IS NULL')
+				.andWhere('document.definitionVersion < :ceiling', { ceiling });
+
+			if (tenantId) {
+				query.andWhere('document.tenantId = :tenantId', { tenantId });
+			}
+
+			const groups: Array<{ organizationId?: ID | null; definitionVersion?: unknown; count?: unknown }> =
+				await query.groupBy('document.organizationId').addGroupBy('document.definitionVersion').getRawMany();
 			let stale = 0;
 
-			if (version !== null) {
-				stale += await this.typeOrmSearchDocumentRepository.count({
-					where: where({ definitionVersion: LessThan(version) })
-				});
+			for (const group of groups) {
+				const organizationId = group.organizationId ? String(group.organizationId) : null;
+				const threshold = organizationId && own.has(organizationId) ? own.get(organizationId) : version;
+
+				if (threshold !== null && threshold !== undefined && Number(group.definitionVersion) < threshold) {
+					stale += Number(group.count) || 0;
+				}
 			}
 
-			for (const copy of copies) {
-				if (!copy.organizationId) {
-					continue;
-				}
-
-				const own = normaliseVersion(copy.version);
-
-				if (version !== null) {
-					// The copy's organization was counted against the shipped version above; its own version decides.
-					stale -= await this.typeOrmSearchDocumentRepository.count({
-						where: where({ organizationId: copy.organizationId, definitionVersion: LessThan(version) })
-					});
-				}
-
-				stale += await this.typeOrmSearchDocumentRepository.count({
-					where: where({ organizationId: copy.organizationId, definitionVersion: LessThan(own) })
-				});
-			}
-
-			return Math.max(0, stale);
+			return stale;
 		} catch (error) {
 			this.logger.warn(`The stale document count for "${entity}" could not be read: ${describe(error)}`);
 

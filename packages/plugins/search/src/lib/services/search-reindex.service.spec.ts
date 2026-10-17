@@ -274,6 +274,47 @@ function reindexFixture(
 	const documentRepository: any = {
 		manager: { connection: { options: { type: 'better-sqlite3' } } },
 		create: () => ({}),
+		// The stale count's one grouped read: live documents of an entity behind a version, per organization and
+		// version (the builder states exactly these predicates).
+		createQueryBuilder: () => {
+			const params: Row = {};
+			const builder: any = {
+				select: () => builder,
+				addSelect: () => builder,
+				where: (_sql: string, values: Row = {}) => (Object.assign(params, values), builder),
+				andWhere: (_sql: string, values: Row = {}) => (Object.assign(params, values), builder),
+				groupBy: () => builder,
+				addGroupBy: () => builder,
+				getRawMany: async () => {
+					const groups = new Map<string, Row>();
+
+					for (const row of tables.search_document) {
+						if (
+							row.deletedAt ||
+							row.entity !== params.entity ||
+							!(Number(row.definitionVersion) < Number(params.ceiling)) ||
+							(params.tenantId && row.tenantId !== params.tenantId)
+						) {
+							continue;
+						}
+
+						const key = `${row.organizationId ?? ''}|${row.definitionVersion}`;
+						const group = groups.get(key) ?? {
+							organizationId: row.organizationId ?? null,
+							definitionVersion: row.definitionVersion,
+							count: 0
+						};
+
+						group.count += 1;
+						groups.set(key, group);
+					}
+
+					return [...groups.values()];
+				}
+			};
+
+			return builder;
+		},
 		find: async ({ where, withDeleted, order, skip, take }: any = {}) => {
 			let found = tables.search_document.filter((row) => (withDeleted || !row.deletedAt) && matches(row, where));
 

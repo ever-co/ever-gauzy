@@ -301,9 +301,9 @@ function searchFixture(
 		// The persisted half of a declaration carries the engine an installation chose *and* the version
 		// an operator's edits have reached, and the live path needs both: the engine selects the provider
 		// and the version is what the document is stamped with.
-		findOne: async () =>
+		findOne: async ({ where }: any = {}) =>
 			seed.definitions
-				? (seed.definitions.find((row) => !row.organizationId) ?? null)
+				? (seed.definitions.find((row) => matches(row, where)) ?? null)
 				: seed.engineKey || seed.version
 					? { entity: 'product_variant', engineKey: seed.engineKey ?? null, version: seed.version ?? 1 }
 					: null,
@@ -321,6 +321,7 @@ function searchFixture(
 
 	return {
 		indexer,
+		definitionRepository,
 		registry: indexRegistry,
 		providerRegistry,
 		dataSource,
@@ -876,6 +877,28 @@ describe('SearchIndexerService — the definition in force for the event’s org
 			['v1', 7],
 			['v2', 5]
 		]);
+	});
+
+	it('does not take a tenant’s own row with no organization for the shipped definition (CodeRabbit)', async () => {
+		const fixture = searchFixture({
+			// Listed first, so a lookup that does not exclude it would take it.
+			definitions: [shipped({ tenantId: 'another-tenant', isActive: false, version: 9 }), shipped()]
+		});
+
+		await fixture.indexer.handleEvent(updated('v1', ORG));
+
+		expect(fixture.documents().map((document) => document.definitionVersion)).toEqual([5]);
+	});
+
+	it('fails the run when the organizations’ copies cannot be read, rather than index under the shipped row', async () => {
+		const fixture = searchFixture({ definitions: [shipped(), ownCopy({ isActive: false })] });
+
+		fixture.definitionRepository.find = async () => {
+			throw new Error('the definition table is unreachable');
+		};
+
+		await expect(fixture.indexer.handleEvent(updated('v1', ORG))).rejects.toThrow(/unreachable/);
+		expect(fixture.documents()).toEqual([]);
 	});
 
 	it('ignores a copy that belongs to another tenant', async () => {

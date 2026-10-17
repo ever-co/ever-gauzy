@@ -279,8 +279,10 @@ export class SearchIndexDefinitionService extends CrudService<SearchIndexDefinit
 	 * @returns The platform row, or `null` when the entity has no persisted definition.
 	 */
 	async platformDefinitionOf(entity: string): Promise<SearchIndexDefinition | null> {
+		// No organization AND no tenant: a tenant's own row with no organization is not every tenant's shipped
+		// definition (CodeRabbit on #10850).
 		return await this.typeOrmSearchIndexDefinitionRepository.findOne({
-			where: { entity, organizationId: IsNull() } as any
+			where: { entity, organizationId: IsNull(), tenantId: IsNull() } as any
 		});
 	}
 
