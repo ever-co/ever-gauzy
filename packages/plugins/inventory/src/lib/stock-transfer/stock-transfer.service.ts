@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
+import { restatesStoredValue } from '@gauzy/common';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockTransferStatus } from './../inventory.enums';
@@ -28,6 +29,16 @@ const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
 		StockTransferStatus.PARTIALLY_RECEIVED
 	]
 };
+
+/** States in which the outbound movements are written at the source. */
+const DISPATCHED = [
+	StockTransferStatus.IN_TRANSIT,
+	StockTransferStatus.PARTIALLY_RECEIVED,
+	StockTransferStatus.RECEIVED
+];
+
+/** States in which inbound movements may have landed at the destination. */
+const ARRIVED = [StockTransferStatus.PARTIALLY_RECEIVED, StockTransferStatus.RECEIVED];
 
 /**
  * Refusal code of a transition a caller attempted from a version the document has moved past.
@@ -160,6 +171,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
 			const transfer = await this.requireTransfer(manager, id);
 			this.assertVersion(transfer, expectedVersion);
+			await this.assertEditable(manager, transfer, partialEntity);
 
 			// The version the caller stated is not a column it writes: the stored counter is the one the
 			// compare-and-set below moves, so a body that carries a version cannot overwrite it.
@@ -515,6 +527,70 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 				`A transfer cannot move from ${transfer.status} to ${status}.`,
 				{ details: { transferId: transfer.id, status: transfer.status, requestedStatus: status } }
 			);
+		}
+	}
+
+	/**
+	 * Refuses an edit that would move what only the transitions move.
+	 *
+	 * The state and its dates change through request, approve, ship, receive and cancel, each with its
+	 * own permission and stock movements, so the edit refuses to move them; a body that restates the
+	 * stored values still passes. A location can still be corrected inside the caller's scope until a
+	 * movement was written there: the source once units left it, the destination once units arrived.
+	 *
+	 * @param manager The transaction the edit runs in.
+	 * @param transfer The transfer as it was read, inside that transaction.
+	 * @param patch The columns the caller asked to write.
+	 */
+	private async assertEditable(manager: any, transfer: StockTransfer, patch: Partial<StockTransfer>): Promise<void> {
+		const moves = (member: keyof StockTransfer) =>
+			patch[member] !== undefined && !restatesStoredValue(transfer[member], patch[member]);
+
+		const lifecycle = (['status', 'shippedAt', 'receivedAt'] as const).filter(moves);
+		if (lifecycle.length) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`An edit cannot change ${lifecycle.join(', ')}: use the request, approve, ship, receive or cancel route.`,
+				{ details: { transferId: transfer.id, status: transfer.status, members: lifecycle } }
+			);
+		}
+
+		const fromMoves = moves('fromWarehouseId');
+		const toMoves = moves('toWarehouseId');
+		if (!fromMoves && !toMoves) {
+			return;
+		}
+
+		// A cancel may follow a partial receipt, so a canceled transfer that was shipped keeps both ends.
+		const shipped = Boolean(transfer.shippedAt) || DISPATCHED.includes(transfer.status);
+		const arrived =
+			ARRIVED.includes(transfer.status) || (transfer.status === StockTransferStatus.CANCELED && shipped);
+		const fixed = [
+			...(fromMoves && shipped ? ['fromWarehouseId'] : []),
+			...(toMoves && arrived ? ['toWarehouseId'] : [])
+		];
+		if (fixed.length) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer in ${transfer.status} cannot change ${fixed.join(', ')} once its stock has moved.`,
+				{ details: { transferId: transfer.id, status: transfer.status, members: fixed } }
+			);
+		}
+
+		const fromWarehouseId = fromMoves ? patch.fromWarehouseId : transfer.fromWarehouseId;
+		const toWarehouseId = toMoves ? patch.toWarehouseId : transfer.toWarehouseId;
+		if (fromWarehouseId === toWarehouseId) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_SAME_LOCATION,
+				'A transfer must move stock between two different locations.',
+				{ badRequest: true, details: { warehouseId: fromWarehouseId } }
+			);
+		}
+		if (fromMoves) {
+			await assertLocationInScope(manager, fromWarehouseId);
+		}
+		if (toMoves) {
+			await assertLocationInScope(manager, toWarehouseId);
 		}
 	}
 
