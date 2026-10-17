@@ -561,10 +561,18 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 			return;
 		}
 
-		// A cancel may follow a partial receipt, so a canceled transfer that was shipped keeps both ends.
+		// A cancel may follow a partial receipt, so a canceled transfer keeps its destination only when a
+		// line recorded units there; one canceled while still in transit never reached it.
 		const shipped = Boolean(transfer.shippedAt) || DISPATCHED.includes(transfer.status);
 		const arrived =
-			ARRIVED.includes(transfer.status) || (transfer.status === StockTransferStatus.CANCELED && shipped);
+			ARRIVED.includes(transfer.status) ||
+			(toMoves &&
+				shipped &&
+				transfer.status === StockTransferStatus.CANCELED &&
+				(await manager.find(StockTransferLine, { where: { transferId: transfer.id } })).some(
+					(line: StockTransferLine) =>
+						Number(line.receivedQuantity ?? 0) > 0 || Number(line.damagedQuantity ?? 0) > 0
+				));
 		const fixed = [
 			...(fromMoves && shipped ? ['fromWarehouseId'] : []),
 			...(toMoves && arrived ? ['toWarehouseId'] : [])
@@ -593,7 +601,6 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 			await assertLocationInScope(manager, toWarehouseId);
 		}
 	}
-
 
 	/**
 	 * Writes the state a transition reached, under the version the document was read at.
