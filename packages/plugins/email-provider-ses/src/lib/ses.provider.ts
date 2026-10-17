@@ -12,6 +12,7 @@ import { KeyObject } from 'node:crypto';
 import { INBOX_EMAIL_PROVIDER_REGISTRY } from '@gauzy/contracts';
 import {
 	getInboxEmailConfig,
+	HOLD_VIRUS,
 	IEmailProviderPlugin,
 	IEmailProviderRegistry,
 	IInboundDeliveryIdentity,
@@ -26,9 +27,12 @@ import { isSnsUrl, signingKeyOf, SNS_TYPES, SnsMessage, verifySnsSignature } fro
 
 /** The token a spec replaces `fetch` with. */
 export const SES_FETCH = 'SES_FETCH';
-/** How old an SNS message may be (SNS retries keep the original timestamp); its id is single use for longer. */
-export const SES_SNS_TOLERANCE_SECONDS = 60 * 60;
-/** A spam or virus verdict of FAIL counts as this spam score (at or above the quarantine threshold). */
+/**
+ * How old an SNS message may be: SNS retries keep the original timestamp, and a delivery policy can retry for many
+ * hours, so a day (a stored delivery's id is single use for longer than that).
+ */
+export const SES_SNS_TOLERANCE_SECONDS = 24 * 60 * 60;
+/** A FAIL spam verdict counts as this spam score (at or above the default quarantine threshold). */
 export const SES_FAILED_VERDICT_SCORE = 100;
 const TIMEOUT_MS = 15_000;
 const MAX_CACHED_CERTIFICATES = 20;
@@ -124,13 +128,13 @@ async function readCapped(response: Response, cap: number): Promise<Buffer> {
  *     - the topic must be the account's;
  *     - the signature (SignatureVersion 1 or 2) must verify under the signing certificate, fetched only from
  *       `https://sns.<region>.amazonaws.com/….pem` and cached;
- *     - the timestamp must be within an hour.
+ *     - the timestamp must be within a day (SNS retries keep it).
  *
  *   There is no unsigned mode. The SNS message id makes a delivery single use. A subscription confirmation is
  *   confirmed (its `SubscribeURL`, on SNS only) once it verifies. The message is fetched from the account's bucket
  *   (SigV4) when it was stored in S3.
  * - **Verdicts.** SES's own SPF, DKIM and **DMARC** checks are trusted, so a sender allowlist works with SES. A FAIL
- *   spam or virus verdict quarantines the message.
+ *   spam verdict scores the message as spam; a FAIL virus verdict holds it in the quarantine whatever the threshold.
  * - **Outbound.** A nodemailer transport sending the raw message through SESv2 `SendEmail`
  *   (`POST /v2/email/outbound-emails`, SigV4).
  * - **Test connection.** SESv2 `GetAccount`.
@@ -219,7 +223,7 @@ export class SesProvider implements IEmailProviderPlugin, IInboundEmailProvider,
 		}
 		const at = Date.parse(asText(message.Timestamp));
 		if (!Number.isFinite(at) || Math.abs(Date.now() - at) > SES_SNS_TOLERANCE_SECONDS * 1000) {
-			throw new UnauthorizedException('The SNS message is too old (or from the future).');
+			throw new UnauthorizedException('The SNS message is more than a day old (or from the future).');
 		}
 		const key = isSnsUrl(message.SigningCertURL, true) ? await this.certificate(message.SigningCertURL) : null;
 		if (!key || !verifySnsSignature(message, key)) {
@@ -264,9 +268,9 @@ export class SesProvider implements IEmailProviderPlugin, IInboundEmailProvider,
 				...(spf ? { spf } : {}),
 				...(dkim ? { dkim } : {}),
 				...(dmarc ? { dmarc } : {}),
-				...(failed(receipt.spamVerdict?.status) || failed(receipt.virusVerdict?.status)
-					? { spamScore: SES_FAILED_VERDICT_SCORE }
-					: {}),
+				...(failed(receipt.spamVerdict?.status) ? { spamScore: SES_FAILED_VERDICT_SCORE } : {}),
+				// A failed virus scan is held whatever the spam threshold.
+				...(failed(receipt.virusVerdict?.status) ? { hold: HOLD_VIRUS } : {}),
 				...(providerMessageId ? { providerMessageId } : {})
 			})
 		];

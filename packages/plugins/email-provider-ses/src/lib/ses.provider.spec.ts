@@ -4,7 +4,8 @@
 jest.mock('@gauzy/core', () => ({}));
 jest.mock('@gauzy/plugin-inbox', () => ({
 	...jest.requireActual('../../../inbox/src/lib/email/inbound/mime'),
-	...jest.requireActual('../../../inbox/src/lib/email/inbound/inbox-email.config')
+	...jest.requireActual('../../../inbox/src/lib/email/inbound/inbox-email.config'),
+	...jest.requireActual('../../../inbox/src/lib/email/inbound/inbox-email-processor.types')
 }));
 
 import { createSign, generateKeyPairSync, KeyObject } from 'node:crypto';
@@ -122,7 +123,7 @@ describe('Amazon SES email provider', () => {
 			const message = sns({ Message: JSON.stringify(receivedNotification()) });
 			expect(await provider.verify(request(message), account)).toEqual({
 				fingerprint: `sns:${message.MessageId}`,
-				ttlMs: (2 * 3600 + 60) * 1000
+				ttlMs: (2 * 24 * 3600 + 60) * 1000
 			});
 			const older = sns({ Message: 'x', MessageId: 'b7a3c1f0-0000-4000-8000-000000000002' }, { version: '1' });
 			await expect(provider.verify(request(older), account)).resolves.toBeDefined();
@@ -147,7 +148,7 @@ describe('Amazon SES email provider', () => {
 			await expect(
 				provider.verify(request(sns({ Message: 'x', TopicArn: `${TOPIC_ARN}-other` })), account)
 			).rejects.toBeInstanceOf(UnauthorizedException);
-			const stale = sns({ Message: 'x', Timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString() });
+			const stale = sns({ Message: 'x', Timestamp: new Date(Date.now() - 25 * 3600 * 1000).toISOString() });
 			await expect(provider.verify(request(stale), account)).rejects.toBeInstanceOf(UnauthorizedException);
 			const offSns = sns({ Message: 'x', SigningCertURL: 'https://evil.example/cert.pem' });
 			await expect(provider.verify(request(offSns), account)).rejects.toBeInstanceOf(UnauthorizedException);
@@ -171,14 +172,15 @@ describe('Amazon SES email provider', () => {
 			expect(message?.providerMessageId).toBe('o3vrnil0e2ic28trm7dfhrc2v0clambda4nbp0g1');
 		});
 
-		it('quarantines a FAIL spam or virus verdict', async () => {
-			const notification = receivedNotification();
-			notification.receipt.virusVerdict = { status: 'FAIL' };
-			const [message] = await new SesProvider().parse(
-				request(sns({ Message: JSON.stringify(notification) })),
-				account
-			);
-			expect(message?.spamScore).toBe(SES_FAILED_VERDICT_SCORE);
+		it('holds a FAIL virus verdict whatever the spam threshold, and scores a FAIL spam verdict', async () => {
+			const virus = receivedNotification();
+			virus.receipt.virusVerdict = { status: 'FAIL' };
+			const [held] = await new SesProvider().parse(request(sns({ Message: JSON.stringify(virus) })), account);
+			expect([held?.hold, held?.spamScore]).toEqual(['virus', undefined]);
+			const spam = receivedNotification();
+			spam.receipt.spamVerdict = { status: 'FAIL' };
+			const [scored] = await new SesProvider().parse(request(sns({ Message: JSON.stringify(spam) })), account);
+			expect([scored?.hold, scored?.spamScore]).toEqual([undefined, SES_FAILED_VERDICT_SCORE]);
 		});
 
 		it('fetches a message an S3 action stored, from the account’s bucket only (SigV4)', async () => {

@@ -34,7 +34,7 @@ migration.
     - the topic must be the account's;
     - the signature (SignatureVersion 1 / SHA1 or 2 / SHA256) must verify under the signing certificate, which is
       fetched only from `https://sns.<region>.amazonaws.com/….pem` and cached;
-    - the timestamp must be within an hour.
+    - the timestamp must be within a day (SNS retries keep the original one).
 
     Anything else is refused with 401. There is no unsigned mode. The SNS message id makes a delivery single use in
     the Inbox pipeline.
@@ -45,7 +45,8 @@ migration.
   message is then parsed as MIME:
     - `receipt.recipients` give the envelope;
     - SES's own SPF, DKIM and **DMARC** verdicts are trusted, so a sender allowlist works with SES;
-    - a FAIL spam or virus verdict quarantines the message.
+    - a FAIL spam verdict scores the message as spam; a FAIL virus verdict holds it in the quarantine whatever
+      `GAUZY_INBOX_SPAM_QUARANTINE_SCORE` is.
 - **Outbound.** A nodemailer transport sends the raw message (Bcc only in the envelope) through
   `POST /v2/email/outbound-emails`. The message id comes from SES.
 
@@ -61,7 +62,7 @@ The tests cover:
     - accepted with version 2 and version 1;
     - unsigned, forged, changed, another topic, stale, a certificate off SNS and an empty body all refused;
 - the recorded "Received" notification: verdicts including DMARC, the envelope;
-- the virus or spam quarantine;
+- the virus hold and the spam score;
 - the S3 fetch: SigV4, and another bucket refused;
 - the subscription confirmation: on SNS only;
 - the raw outbound request;
