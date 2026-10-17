@@ -1,3 +1,4 @@
+// cspell:ignore changeme
 import { createHash } from 'crypto';
 import { HashGiftCardPins1791000000785 } from '../migrations/1791000000785-HashGiftCardPins';
 import { KeyGiftCardPinDigests1791000000786 } from '../migrations/1791000000786-KeyGiftCardPinDigests';
