@@ -359,6 +359,48 @@ describe('the four flagged routes — every one served under another name', () =
 		]);
 		expect(entity.fields).toEqual(['reindexEntity', 'reindexAll']);
 	});
+
+	// Review sweep R2-G6: `reindexAll` replaced the stated scope with ALL/CHANNEL, so `{ scope: ENTITY }` ran a full
+	// rebuild where the route rebuilds one entity.
+	it('honours the scope reindexAll is given, as the route does, and refuses ENTITY instead of widening it', async () => {
+		const stubs = stubsFor();
+		const { controller, definitionResolver } = surfaces(stubs);
+
+		await controller.reindex({ scope: 'ALL', channelId: CHANNEL });
+		await definitionResolver.reindexAll({ scope: 'ALL', channelId: CHANNEL });
+		await definitionResolver.reindexAll({ scope: 'CHANNEL', channelId: CHANNEL });
+		await definitionResolver.reindexAll({});
+
+		expect(stubs.reindex.run.mock.calls.map((call: any[]) => call[0].scope)).toEqual([
+			'ALL',
+			'ALL',
+			'CHANNEL',
+			'ALL'
+		]);
+
+		const refused: any = await definitionResolver.reindexAll({ scope: 'ENTITY', entity: 'product' });
+
+		expect(refused.queued).toBe(false);
+		expect(refused.userErrors[0].message).toMatch(/reindexEntity/);
+		expect(stubs.reindex.run).toHaveBeenCalledTimes(4);
+	});
+
+	it('keeps reindexEntity on its entity whatever scope the input states', async () => {
+		const stubs = stubsFor();
+
+		await surfaces(stubs).definitionResolver.reindexEntity('product', { scope: 'ALL' });
+
+		expect(stubs.reindex.run.mock.calls[0][0]).toMatchObject({ scope: 'ENTITY', entity: 'product' });
+	});
+
+	it('declares the input scope optional, so reindexEntity needs no scope it ignores', () => {
+		const input = (schemaExtensions as any).definitions.find(
+			(node: any) => node.kind === 'InputObjectTypeDefinition' && node.name.value === 'SearchReindexInput'
+		);
+		const scope = input.fields.find((field: any) => field.name.value === 'scope');
+
+		expect(scope.type.kind).toBe('NamedType');
+	});
 });
 
 /**

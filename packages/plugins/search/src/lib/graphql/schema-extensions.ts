@@ -250,7 +250,12 @@ export const schemaExtensions = gql`
 
 	"What a rebuild covers."
 	input SearchReindexInput {
-		scope: SearchReindexScope!
+		"""
+		The scope \`reindexAll\` rebuilds — honoured as \`POST /search/reindex\` honours it; \`ENTITY\` is refused there
+		(use \`reindexEntity\`). When omitted, \`reindexAll\` rebuilds one channel when \`channelId\` is stated and every
+		index otherwise. \`reindexEntity\` always rebuilds its entity.
+		"""
+		scope: SearchReindexScope
 		"Required for the entity scope."
 		entity: String
 		"Required for the channel scope."

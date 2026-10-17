@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ID, ISearchIndexField, SearchFieldKind, SearchReindexScope } from '@gauzy/contracts';
 import {
 	FEATURE_GRAPHQL,
@@ -175,6 +175,9 @@ export class SearchIndexDefinitionResolver {
 	/**
 	 * Rebuilds one entity's index.
 	 *
+	 * The field names its entity, so its scope is the entity's whatever the input states: the input's `scope`
+	 * (optional since the review sweep R2-G6) is the member `reindexAll` reads.
+	 *
 	 * @param entity The entity to rebuild.
 	 * @param input The remainder of the request.
 	 * @returns The payload, carrying what the sweep did.
@@ -188,13 +191,37 @@ export class SearchIndexDefinitionResolver {
 	/**
 	 * Rebuilds every index, or every index of one channel.
 	 *
+	 * A stated scope is honoured, as `POST /search/reindex` honours it (review sweep R2-G6). The field used to
+	 * replace it with `ALL`, or `CHANNEL` when a channel was named, so `reindexAll(input: { scope: ENTITY,
+	 * entity: "product" })` ran a full rebuild of every index where the route rebuilt one. `ENTITY` is
+	 * refused here rather than run: one entity is `reindexEntity`'s, and this field's name promises more. With
+	 * no scope stated the field keeps inferring it from the channel.
+	 *
 	 * @param input The request.
-	 * @returns The payload, carrying what each sweep did.
+	 * @returns The payload, carrying what each sweep did, or the reason the scope was refused.
 	 */
 	@Permissions(SearchPermissions.SEARCH_REINDEX)
 	@Mutation('reindexAll')
 	async reindexAll(@Args('input') input?: ISearchReindexInput) {
-		const scope = input?.channelId ? SearchReindexScope.CHANNEL : SearchReindexScope.ALL;
+		const stated = input?.scope as SearchReindexScope | undefined;
+
+		if (stated === SearchReindexScope.ENTITY) {
+			return {
+				entity: input?.entity ?? null,
+				queued: false,
+				estimatedCount: 0,
+				runs: [],
+				userErrors: [
+					toUserError(
+						new BadRequestException(
+							'reindexAll rebuilds every index, or every index of one channel: rebuild one entity with reindexEntity.'
+						)
+					)
+				]
+			};
+		}
+
+		const scope = stated ?? (input?.channelId ? SearchReindexScope.CHANNEL : SearchReindexScope.ALL);
 
 		return await this.reindex({ ...(input ?? {}), scope });
 	}

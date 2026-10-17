@@ -1,4 +1,4 @@
-// cspell:ignore TENOFF
+// cspell:ignore TENOFF SHIPFREE
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a cart service needs and none of which is available
@@ -297,6 +297,10 @@ function repository(tables: ITables, tableName: keyof ITables) {
 					return value !== undefined && value !== null && new Date(value) <= new Date(expected.value);
 				case 'moreThanOrEqual':
 					return value !== undefined && value !== null && new Date(value) >= new Date(expected.value);
+				// The checkout claim is predicated on `orderId IS NULL` (R3-10), and a double that could not
+				// evaluate it would let the second of two completions claim a cart the first one completed.
+				case 'isNull':
+					return value === undefined || value === null;
 				default:
 					return false;
 			}
@@ -381,10 +385,19 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			// A criteria that names a version is a conditional update: the row has to still be at that
 			// version for the statement to change it, and the affected count is what reports which of
 			// the two happened. Without this the double could not tell a lost race from a won one.
+			// The other members of an object criteria narrow the statement too — a status, `orderId IS NULL`,
+			// the claim a release names (R3-10) — and are evaluated the way a read evaluates them. The scope
+			// members are left out: the fixtures seed no tenant, and the scope is the kernel's concern.
+			const narrowing = Object.fromEntries(
+				Object.entries(criteria && typeof criteria === 'object' ? criteria : {}).filter(
+					([field]) => !['id', 'version', 'tenantId', 'organizationId'].includes(field)
+				)
+			);
 			const stored = rows().find(
 				(row: any) =>
 					String(row.id ?? '') === String(id ?? '') &&
-					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version))
+					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version)) &&
+					matches(row, narrowing)
 			);
 
 			if (stored) {
@@ -448,7 +461,28 @@ type StockLevel = number | { sellableQuantity: number; allowBackorder?: boolean;
  * @param options.stock Per-variant levels, overriding `DEFAULT_STOCK_LEVEL`; `false` for an
  * installation with no stock capability registered.
  */
-function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxRate?: number } = {}) {
+/** What the promotion engine double grants for one code: an amount, or an amount under a stated promotion id. */
+type PromotionGrant = number | string | { amount: number | string; promotionId?: string };
+
+/**
+ * What the promotion engine double grants when a fixture states nothing (R3-07).
+ *
+ * The cart no longer records the amount a caller states beside a code — it asks the engine — so the suite's
+ * money cases, which apply `TENOFF` for 4 and `PENNIES` for 0.10, are answered by an engine that grants
+ * exactly those amounts for exactly those codes. A case that needs a different grant states its own table.
+ */
+const DEFAULT_PROMOTION_GRANTS: Record<string, PromotionGrant> = {
+	TENOFF: { amount: 4, promotionId: 'promo-1' },
+	PENNIES: '0.1'
+};
+
+function cartFixture(
+	options: {
+		stock?: Record<string, StockLevel> | false;
+		taxRate?: number;
+		promotions?: Record<string, PromotionGrant> | false;
+	} = {}
+) {
 	const tables: ITables = {
 		commerce_cart: [],
 		commerce_cart_line: [],
@@ -607,6 +641,45 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 					})
 				};
 
+	/**
+	 * The promotion capability (R3-07), in the engine's own shape: it is handed the cart's codes and lines —
+	 * never an amount — and answers from a table of what each code grants, with a notice for a code that
+	 * names nothing. `promotions: false` leaves the port absent, which is the installation with no engine.
+	 */
+	const promotionTable = options.promotions === false ? {} : options.promotions ?? DEFAULT_PROMOTION_GRANTS;
+	const promotionPort =
+		options.promotions === false
+			? undefined
+			: {
+					evaluate: jest.fn(async (query: any): Promise<any> => {
+						const codes: string[] = query.codes ?? [];
+						const applications = codes
+							.filter((code) => promotionTable[code] !== undefined)
+							.map((code) => {
+								const grant = promotionTable[code];
+								const stated = typeof grant === 'object' ? grant : { amount: grant };
+
+								return {
+									promotionId: stated.promotionId ?? `promotion-${code}`,
+									code,
+									isAutomatic: false,
+									amount: String(stated.amount),
+									currency: query.currency
+								};
+							});
+						const notices = codes
+							.filter((code) => promotionTable[code] === undefined)
+							.map((code) => ({
+								promotionId: '',
+								code,
+								notice: 'COUPON_INACTIVE',
+								message: `No promotion carries the code "${code}".`
+							}));
+
+						return { result: { applications, notices, discountTotal: '0', currency: query.currency } };
+					})
+				};
+
 	const service = new CommerceCartService(
 		repository(tables, 'commerce_cart') as never,
 		{} as never,
@@ -617,7 +690,8 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 		adjustmentService as never,
 		taxLineService as never,
 		stockPort as never,
-		taxPort as never
+		taxPort as never,
+		promotionPort as never
 	);
 
 	return {
@@ -628,7 +702,8 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 		shippingMethodService,
 		promotionService,
 		checkoutSessionService,
-		stockPort
+		stockPort,
+		promotionPort
 	};
 }
 
@@ -1172,7 +1247,7 @@ describe('CommerceCartService — money', () => {
 	it('rates the amount the buyer actually pays, after the discount the promotion allocated', async () => {
 		// The money specification's rule: `baseAmount` is the owner's net after discount. Rating the
 		// catalogue price instead would charge tax on money nobody pays.
-		const { service, ledger } = cartFixture({ taxRate: 0.2 });
+		const { service, ledger } = cartFixture({ taxRate: 0.2, promotions: { TENOFF: 10 } });
 		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
 
 		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
@@ -1389,6 +1464,188 @@ describe('CommerceCartService — checkout', () => {
 		const untouched = await fixture.service.findOneByIdString(cart.id);
 		expect(untouched.status).toBe(CommerceCartStatus.ACTIVE);
 		expect(untouched.orderId).toBeUndefined();
+	});
+
+	/**
+	 * R3-10: two completions of one cart placed two orders.
+	 *
+	 * The cart was marked completed only after the handler had created the order, and nothing before
+	 * that excluded a second completion: each one read the cart, validated it, re-priced it under
+	 * whatever version the row held and reached the handler. The claim is the first write a completion
+	 * makes now, predicated on the version it validated, a completable status and `orderId IS NULL`.
+	 */
+	describe('the checkout claim (R3-10)', () => {
+		it('refuses a completion arriving while another one places the order; one order', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			let racing: { value?: unknown; error?: any } | undefined;
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					const call = ++checkoutCalls;
+
+					// The second completion arrives while the first is inside the handler, creating its order.
+					if (call === 1) {
+						racing = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' }).then(
+							(value) => ({ value }),
+							(error) => ({ error })
+						);
+					}
+
+					return { orderId: `order-${call}`, orderNumber: `ORD-${call}` };
+				}
+			});
+
+			const first = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+			expect(checkoutCalls).toBe(1);
+			expect(racing?.error?.response).toMatchObject({
+				code: 'CART_CHECKOUT_IN_PROGRESS',
+				details: { cartId: cart.id }
+			});
+			expect(first.orderId).toBe('order-1');
+
+			const stored = await fixture.service.findOneByIdString(cart.id);
+			expect(stored.status).toBe(CommerceCartStatus.COMPLETED);
+			expect(stored.orderId).toBe('order-1');
+			// The claim is cleared once the order is recorded.
+			expect(stored.checkoutClaimId ?? null).toBeNull();
+		});
+
+		it('refuses a completion that validated the cart before another one claimed and completed it', async () => {
+			// The true race: both completions read the same version. The one that loses is refused by the
+			// claim statement itself — predicated on the version it validated — not by a read it made first.
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			registerCheckoutHandler();
+
+			const validate = fixture.service.validate.bind(fixture.service);
+			let raced = false;
+
+			jest.spyOn(fixture.service, 'validate').mockImplementation(async (...args: Parameters<typeof validate>) => {
+				const verdict = await validate(...args);
+
+				if (!raced) {
+					raced = true;
+					// Another completion runs to the end between this one's validation and its claim.
+					await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+				}
+
+				return verdict;
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				response: { code: 'CART_ALREADY_COMPLETED', details: { cartId: cart.id, orderId: 'order-1' } }
+			});
+			expect(checkoutCalls).toBe(1);
+		});
+
+		it('releases the claim when the handler fails, so the buyer can complete again at once', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			let fail = true;
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					checkoutCalls++;
+
+					if (fail) {
+						fail = false;
+						throw new Error('ORDER_CREATE_FAILED');
+					}
+
+					return { orderId: 'order-2', orderNumber: 'ORD-2' };
+				}
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toThrow(
+				/ORDER_CREATE_FAILED/
+			);
+
+			const released = await fixture.service.findOneByIdString(cart.id);
+			expect(released.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(released.orderId ?? null).toBeNull();
+			expect(released.checkoutClaimId ?? null).toBeNull();
+
+			const retried = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+			expect(retried.orderId).toBe('order-2');
+			expect(checkoutCalls).toBe(2);
+		});
+
+		it('keeps every other writer off a claimed cart, and lets a lapsed claim go', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			registerCheckoutHandler();
+
+			const row = fixture.tables.commerce_cart.find((candidate: any) => candidate.id === cart.id);
+			// Another checkout holds the cart and is placing its order.
+			Object.assign(row, { checkoutClaimId: 'another-checkout', checkoutClaimedAt: new Date() });
+
+			await expect(
+				fixture.service.addLine(cart.id, {
+					variantId: 'variant-2',
+					title: 'More',
+					quantity: 1,
+					unitPrice: 5,
+					requiresShipping: false
+				})
+			).rejects.toMatchObject({ response: { code: 'CART_CHECKOUT_IN_PROGRESS' } });
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			expect(checkoutCalls).toBe(0);
+
+			// The cart's own fields, a merge of it into another cart and the expiry sweep wait too.
+			await expect(fixture.service.applyChanges(cart.id, { note: 'Ring twice.' } as any)).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			const other = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+			await expect(fixture.service.merge(other.id, cart.id)).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			row.expiresAt = new Date(Date.now() - 1000);
+			expect(await fixture.service.expireDueCarts()).not.toContain(cart.id);
+			expect(row.status).toBe(CommerceCartStatus.ACTIVE);
+			row.expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+			// A claim older than the bound belongs to a checkout that died: the cart can be bought again.
+			row.checkoutClaimedAt = new Date(Date.now() - 11 * 60 * 1000);
+
+			const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+			expect(completed.orderId).toBe('order-1');
+			expect(checkoutCalls).toBe(1);
+		});
+
+		it('refuses the last write of a checkout whose claim another one took over, and records nothing', async () => {
+			// A checkout that outlived its claim must not record its order over the one that took the cart over;
+			// the next completion is answered with the placed order by the order package's handler instead.
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					checkoutCalls++;
+					Object.assign(
+						fixture.tables.commerce_cart.find((candidate: any) => candidate.id === cart.id),
+						{ checkoutClaimId: 'the-checkout-that-took-over', checkoutClaimedAt: new Date() }
+					);
+
+					return { orderId: 'order-late', orderNumber: 'ORD-LATE' };
+				}
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				code: 'ENTITY_VERSION_CONFLICT'
+			});
+
+			const stored = await fixture.service.findOneByIdString(cart.id);
+			expect(stored.orderId ?? null).toBeNull();
+			expect(stored.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(stored.checkoutClaimId).toBe('the-checkout-that-took-over');
+		});
 	});
 
 	it('marks an uncompleted cart abandoned and refuses to abandon a completed one', async () => {
@@ -1911,5 +2168,261 @@ describe('CommerceCartService — the guest-access token', () => {
 		jest.spyOn(service, 'findOneByOptions').mockRejectedValue(new Error('the store is unreachable'));
 
 		await expect(service.findByToken('any-token')).rejects.toThrow('the store is unreachable');
+	});
+});
+
+/**
+ * R3-07: the cart accepted a caller-stated discount.
+ *
+ * `applyPromotion` recorded whatever `amount` it was handed beside a code, and `POST /carts/:id/promotions`
+ * and `applyCartPromotion` handed it the request's — so a buyer could name any code and any discount and the
+ * cart re-priced from it. The discount is now the promotion engine's answer for this cart, reached through
+ * `CART_PROMOTION_EVALUATION`; the request names the promotion and nothing it says about an amount is read.
+ */
+describe('CommerceCartService — the discount is the promotion engine’s (R3-07)', () => {
+	it('records the amount the engine grants, never the amount the caller states', async () => {
+		const { service, tables } = cartFixture({ promotions: { TENOFF: 4 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20 });
+
+		// The buyer asks for the whole cart off.
+		const priced = await service.applyPromotion(cart.id, { code: 'tenoff', amount: 40 } as any);
+
+		expect(tables.commerce_cart_promotion).toHaveLength(1);
+		expect(Number(tables.commerce_cart_promotion[0].amount)).toBe(4);
+		expect(tables.commerce_cart_promotion[0].code).toBe('TENOFF');
+		expect(priced.discountTotal).toBe(4);
+		expect(priced.grandTotal).toBe(36);
+	});
+
+	it('hands the engine the cart and every code it carries, and no amount', async () => {
+		const { service, promotionPort } = cartFixture({ promotions: { TENOFF: 4, FIVE: 5 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', customerId: 'customer-1' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20, sku: 'SKU-A' });
+		// A line the catalogue excluded from promotions is not the engine's to discount.
+		await service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			unitPrice: 7,
+			isDiscountable: false
+		});
+
+		await service.applyPromotion(cart.id, { code: 'TENOFF', amount: 999 } as any);
+		await service.applyPromotion(cart.id, { code: 'FIVE', amount: 999 } as any);
+
+		const query = promotionPort!.evaluate.mock.calls[1][0];
+
+		expect(query).toMatchObject({ currency: 'USD', channelId: 'channel-1', customerId: 'customer-1' });
+		expect(query.codes).toEqual(['TENOFF', 'FIVE']);
+		expect(query.lines).toHaveLength(1);
+		expect(query.lines[0]).toMatchObject({ quantity: 2, variantId: 'v1', sku: 'SKU-A' });
+		expect(Number(query.lines[0].amount)).toBe(40);
+		expect(JSON.stringify(promotionPort!.evaluate.mock.calls)).not.toContain('999');
+	});
+
+	it('refuses a promotion the engine grants nothing, with the engine’s notice, and writes nothing', async () => {
+		const { service, tables } = cartFixture({ promotions: {} });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const added = await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await expect(service.applyPromotion(cart.id, { code: 'BOGUS', amount: 20 } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: {
+					code: 'BOGUS',
+					notices: [expect.objectContaining({ code: 'BOGUS', notice: 'COUPON_INACTIVE' })]
+				}
+			}
+		});
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+		expect(Number(tables.commerce_cart[0].version)).toBe(Number(added.version));
+	});
+
+	it('fails closed when no promotion engine is bound', async () => {
+		const { service, tables } = cartFixture({ promotions: false });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await expect(service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4 } as any)).rejects.toMatchObject({
+			response: { code: 'CART_PROMOTION_ENGINE_MISSING' }
+		});
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+
+		const untouched = await service.findOneByIdString(cart.id);
+		expect(untouched.discountTotal ?? 0).toBe(0);
+	});
+
+	it('retires what the engine no longer grants beside the new code, so exclusive discounts never stack', async () => {
+		// LOW and HIGH are exclusive members of one stacking group, HIGH first by priority: applied alone LOW is
+		// granted, evaluated together only HIGH is. The cart keeps the engine's answer for the whole set.
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const codes: string[] = query.codes ?? [];
+			const grant = codes.includes('HIGH') ? { code: 'HIGH', amount: '20' } : { code: 'LOW', amount: '5' };
+
+			return {
+				result: {
+					applications: [
+						{
+							promotionId: `promotion-${grant.code}`,
+							code: grant.code,
+							isAutomatic: false,
+							amount: grant.amount,
+							currency: 'USD'
+						}
+					],
+					notices: [],
+					discountTotal: '0',
+					currency: 'USD'
+				}
+			};
+		});
+
+		await service.applyPromotion(cart.id, { code: 'LOW' } as any);
+		const priced = await service.applyPromotion(cart.id, { code: 'HIGH' } as any);
+
+		const live = tables.commerce_cart_promotion.filter((row: any) => !row.deletedAt);
+		expect(live.map((row: any) => row.code)).toEqual(['HIGH']);
+		expect(priced.discountTotal).toBe(20);
+		expect(priced.grandTotal).toBe(80);
+	});
+
+	it('records only what the engine takes off the lines, and refuses a delivery-only discount', async () => {
+		// The cart spreads a promotion over its lines, so a part the engine took off a delivery choice is not
+		// moved onto the items (it would reduce their tax base instead of shipping's).
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 10 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const line = query.lines[0];
+			const method = query.shipping[0];
+			const applications: any[] = [];
+			const allocations: any[] = [];
+
+			if ((query.codes ?? []).includes('BUNDLE')) {
+				applications.push({ promotionId: 'p-bundle', code: 'BUNDLE', isAutomatic: false, amount: '15' });
+				allocations.push(
+					{ ownerType: 'LINE', ownerId: line.id, promotionId: 'p-bundle', amount: '5' },
+					{ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-bundle', amount: '10' }
+				);
+			}
+
+			if ((query.codes ?? []).includes('SHIPFREE')) {
+				applications.push({ promotionId: 'p-ship', code: 'SHIPFREE', isAutomatic: false, amount: '10' });
+				allocations.push({ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-ship', amount: '10' });
+			}
+
+			return { result: { applications, notices: [], discountTotal: '0', currency: 'USD' }, allocations };
+		});
+
+		await expect(service.applyPromotion(cart.id, { code: 'SHIPFREE' } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: { notices: [expect.objectContaining({ notice: 'SHIPPING_DISCOUNT_NOT_SUPPORTED' })] }
+			}
+		});
+
+		await service.applyPromotion(cart.id, { code: 'BUNDLE' } as any);
+
+		expect(tables.commerce_cart_promotion.map((row: any) => Number(row.amount))).toEqual([5]);
+	});
+
+	it('refuses a request that names no promotion at all', async () => {
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await expect(service.applyPromotion(cart.id, { amount: 4 } as any)).rejects.toMatchObject({
+			response: { code: 'CART_PROMOTION_REFERENCE_REQUIRED' }
+		});
+	});
+});
+
+/**
+ * R2-G19: the GraphQL cart writes (`createCart`, `addCartLine`, `setCartShippingMethod`, `applyCartPromotion`,
+ * `startCheckout`) wrote `organizationId = NULL`: the inputs declare no organization and the tenant-aware base
+ * stamps the tenant only. The cart takes the request's organization, a child row takes its cart's, and a stated
+ * organization is kept (REST states one, validated against the caller).
+ */
+describe('CommerceCartService — rows are written in the organization (R2-G19)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the request’s organization on a cart, and on every row its verbs write', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 5 });
+		await service.applyPromotion(cart.id, { code: 'TENOFF' } as any);
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_shipping_method[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_promotion[0].organizationId).toBe('org-1');
+	});
+
+	it('writes a child row in its cart’s organization rather than the request’s', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any);
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-2');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-2');
+	});
+
+	it('stamps the request’s organization on a child row created directly, and keeps a stated one', async () => {
+		// The REST child routes (`/cart-lines`, `/cart-shipping-methods`, `/cart-promotions`) reach the child
+		// services' own `create`, which the cart's verbs do not exercise on their own.
+		const { lineService, shippingMethodService, promotionService } = cartFixture();
+
+		const line = await lineService.create({ cartId: 'cart-1', variantId: 'v1', quantity: 1, unitPrice: 1 } as any);
+		const method = await shippingMethodService.create({ cartId: 'cart-1', name: 'Standard', amount: 5 } as any);
+		const applied = await promotionService.create({ cartId: 'cart-1', code: 'TENOFF', amount: 4 } as any);
+
+		expect([line, method, applied].map((row: any) => row.organizationId)).toEqual(['org-1', 'org-1', 'org-1']);
+
+		const stated = await lineService.create({
+			cartId: 'cart-1',
+			variantId: 'v1',
+			quantity: 1,
+			unitPrice: 1,
+			organizationId: 'org-2'
+		} as any);
+		const statedMethod = await shippingMethodService.create({
+			cartId: 'cart-1',
+			name: 'Express',
+			amount: 9,
+			organizationId: 'org-2'
+		} as any);
+		const statedPromotion = await promotionService.create({
+			cartId: 'cart-1',
+			code: 'FIVE',
+			amount: 5,
+			organizationId: 'org-2'
+		} as any);
+
+		expect([stated, statedMethod, statedPromotion].map((row: any) => row.organizationId)).toEqual([
+			'org-2',
+			'org-2',
+			'org-2'
+		]);
+	});
+
+	it('opens a checkout session in the request’s organization when none is stated', async () => {
+		const { checkoutSessionService, tables } = cartFixture();
+
+		await checkoutSessionService.create({ cartId: 'cart-1', status: CommerceCheckoutSessionStatus.STARTED });
+
+		expect(tables.commerce_checkout_session[0].organizationId).toBe('org-1');
 	});
 });

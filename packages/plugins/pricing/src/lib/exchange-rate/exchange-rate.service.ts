@@ -3,6 +3,7 @@ import { DeepPartial, FindOptionsWhere, IsNull, LessThanOrEqual, MoreThanOrEqual
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { assertOrganizationUnchanged, organizationForCreate } from '../organization-scope';
 import { ExchangeRate } from './exchange-rate.entity';
 import { TypeOrmExchangeRateRepository } from './repository/type-orm-exchange-rate.repository';
 import { MikroOrmExchangeRateRepository } from './repository/mikro-orm-exchange-rate.repository';
@@ -164,6 +165,8 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 		// organization, and it supplies the currency the incoming rate is expressed in.
 		const existing = await this.findOneByIdString(id);
 
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'An exchange rate');
+
 		if (entity.rate !== undefined && entity.rate !== null) {
 			const rate = this.toMoney(entity.rate as DecimalString, 'rate', existing.fromCurrency);
 
@@ -207,7 +210,11 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 
 		this.assertWindow(entity.validFrom, entity.validUntil);
 
-		return { ...entity, fromCurrency, toCurrency };
+		// The caller's organization, stamped rather than read from the payload: the GraphQL input states
+		// none, and a rate stored without one is never read by `findRateAt` (R2-G31).
+		const organizationId = organizationForCreate(entity, this.scope.organizationId, 'An exchange rate');
+
+		return { ...entity, fromCurrency, toCurrency, organizationId };
 	}
 
 	/**

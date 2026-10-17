@@ -5,6 +5,7 @@ import { CurrencyCode, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { IPriceContext, IResolvedPrice, PriceListStatus } from '../pricing.types';
 import { ProductPriceService } from '../product-price/product-price.service';
+import { assertOrganizationUnchanged, statedOrganizations } from '../organization-scope';
 import { PriceList } from './price-list.entity';
 import { TypeOrmPriceListRepository } from './repository/type-orm-price-list.repository';
 import { MikroOrmPriceListRepository } from './repository/mikro-orm-price-list.repository';
@@ -75,13 +76,33 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 		const prepared = this.prepare({
 			...entity,
 			id,
+			// The update is partial (its DTO is the `PartialType` of the list), so a name or a code the
+			// caller does not restate is the stored one. `prepare` requires both, and a `PUT` that only
+			// moved a priority used to be refused with PRICE_LIST_NAME_REQUIRED (R2-30).
+			name: entity.name !== undefined ? entity.name : existing.name,
+			code: entity.code !== undefined ? entity.code : existing.code,
 			// The window is validated as a whole, so a change to one bound is checked against the stored
-			// value of the other rather than against nothing.
-			startsAt: (entity.startsAt as Date) ?? existing.startsAt,
-			endsAt: (entity.endsAt as Date) ?? existing.endsAt
+			// value of the other rather than against nothing. A bound the caller states — `null`
+			// included, which opens it — is the one written: reading `null` as "keep" made a bound
+			// impossible to clear and validated a value the caller was replacing.
+			startsAt: entity.startsAt !== undefined ? (entity.startsAt as Date) : existing.startsAt,
+			endsAt: entity.endsAt !== undefined ? (entity.endsAt as Date) : existing.endsAt
 		});
 
-		return await super.update(id, prepared as unknown as QueryDeepPartialEntity<PriceList>);
+		// A list stays in the organization it was created in. `prepare` stamps the caller's organization,
+		// which on an update would move a list of another organization of the tenant into the caller's.
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price list');
+
+		// Publishing through an update is the same decision as `activate`, and is refused for the same
+		// reason when the window it would publish has already closed.
+		if (entity.status === PriceListStatus.ACTIVE && existing.status !== PriceListStatus.ACTIVE) {
+			this.assertWindowIsOpen(existing.code, prepared.endsAt as Date | null | undefined);
+		}
+
+		return await super.update(id, {
+			...prepared,
+			organizationId: existing.organizationId ?? prepared.organizationId
+		} as unknown as QueryDeepPartialEntity<PriceList>);
 	}
 
 	/**
@@ -95,14 +116,24 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 	public async activate(id: ID): Promise<PriceList> {
 		const list = await this.findOneByIdString(id);
 
-		if (list.endsAt && new Date(list.endsAt).getTime() <= Date.now()) {
+		this.assertWindowIsOpen(list.code, list.endsAt);
+
+		return await this.setStatus(list, PriceListStatus.ACTIVE);
+	}
+
+	/**
+	 * @param code The list's code, named in the error.
+	 * @param endsAt The end of the window the list would be published with.
+	 * @throws BadRequestException when that window has already closed, because publishing the list would
+	 * publish prices that can never be charged.
+	 */
+	private assertWindowIsOpen(code: string, endsAt: Date | null | undefined): void {
+		if (endsAt && new Date(endsAt).getTime() <= Date.now()) {
 			throw new BadRequestException(
-				`PRICE_LIST_WINDOW_CLOSED: the list "${list.code}" ended at ${new Date(list.endsAt).toISOString()} ` +
+				`PRICE_LIST_WINDOW_CLOSED: the list "${code}" ended at ${new Date(endsAt).toISOString()} ` +
 					'and would resolve to nothing if it were activated.'
 			);
 		}
-
-		return await this.setStatus(list, PriceListStatus.ACTIVE);
 	}
 
 	/**
@@ -165,7 +196,8 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			throw new BadRequestException('PRICE_ORGANIZATION_REQUIRED: a price list belongs to an organization.');
 		}
 
-		if (entity.organizationId && String(entity.organizationId) !== String(organizationId)) {
+		// The column and the relation alike: the ORM writes either (R2-G34).
+		if (statedOrganizations(entity).some((stated) => stated && String(stated) !== String(organizationId))) {
 			throw new BadRequestException('PRICE_ORGANIZATION_MISMATCH: a price list belongs to the caller\'s organization.');
 		}
 
@@ -175,6 +207,18 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 
 		if (typeof entity.code !== 'string' || entity.code.trim() === '') {
 			throw new BadRequestException('PRICE_LIST_CODE_REQUIRED: a price list needs a code.');
+		}
+
+		// The REST DTO states `@IsInt() @Min(0)`; the GraphQL input is an `Int` with no floor, so the rule
+		// is stated here, where both protocols reach it (R2-G34).
+		if (
+			entity.priority !== undefined &&
+			entity.priority !== null &&
+			(!Number.isInteger(Number(entity.priority)) || Number(entity.priority) < 0)
+		) {
+			throw new BadRequestException(
+				`PRICE_LIST_PRIORITY_INVALID: a priority is a whole number of zero or more; ${entity.priority} is not.`
+			);
 		}
 
 		if (entity.currency && String(entity.currency).trim().length !== 3) {

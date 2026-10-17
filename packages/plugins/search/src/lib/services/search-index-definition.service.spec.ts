@@ -454,6 +454,61 @@ describe('SearchIndexDefinitionService â€” what an operator may change (doc 05 Â
 		expect(fixture.store('d1')?.fields).toHaveLength(2);
 	});
 
+	// Review sweep R2-G5: REST checked the weight and the lengths but not the kind; GraphQL the kind but not the
+	// weight (a negative one was stored and silently ignored by the builder) nor the lengths.
+	it('refuses an unknown kind, a negative or non-numeric weight, an empty source and over-long members', async () => {
+		const fixture = definitionFixture({ definitions: [definitionRow('d1')] });
+		const field = {
+			name: 'sku',
+			kind: SearchFieldKind.KEYWORD,
+			weight: 1,
+			searchable: true,
+			filterable: true,
+			facetable: false
+		};
+
+		await expect(
+			fixture.service.updateDefinition('d1', { fields: [{ ...field, kind: 'COLOUR' as never }] })
+		).rejects.toThrow(/declares the kind "COLOUR"/);
+		await expect(fixture.service.updateDefinition('d1', { fields: [{ ...field, weight: -1 }] })).rejects.toThrow(
+			/non-negative number/
+		);
+		await expect(
+			fixture.service.updateDefinition('d1', { fields: [{ ...field, weight: 'heavy' as never }] })
+		).rejects.toThrow(/non-negative number/);
+		await expect(fixture.service.updateDefinition('d1', { fields: [{ ...field, source: '  ' }] })).rejects.toThrow(
+			/empty source path/
+		);
+		await expect(
+			fixture.service.updateDefinition('d1', { fields: [{ ...field, name: 'n'.repeat(129) }] })
+		).rejects.toThrow(/longer than 128/);
+		await expect(fixture.service.updateDefinition('d1', { label: 'l'.repeat(256) })).rejects.toThrow(/at most 255/);
+		await expect(fixture.service.updateDefinition('d1', { bodyTemplate: 'b'.repeat(1025) })).rejects.toThrow(
+			/at most 1024/
+		);
+		expect(fixture.store('d1')?.fields).toHaveLength(2);
+	});
+
+	it('accepts a field with a zero weight and a source path, as both doors do', async () => {
+		const fixture = definitionFixture({ definitions: [definitionRow('d1')] });
+
+		const updated = await fixture.service.updateDefinition('d1', {
+			fields: [
+				{
+					name: 'sku',
+					kind: SearchFieldKind.KEYWORD,
+					weight: 0,
+					searchable: true,
+					filterable: true,
+					facetable: false,
+					source: 'variant.sku'
+				}
+			]
+		});
+
+		expect(updated.fields).toHaveLength(1);
+	});
+
 	it('clamps a default weight rather than storing a negative one, and clears a template that was emptied', async () => {
 		const fixture = definitionFixture({ definitions: [definitionRow('d1')] });
 

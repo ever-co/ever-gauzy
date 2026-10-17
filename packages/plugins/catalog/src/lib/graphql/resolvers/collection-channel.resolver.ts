@@ -83,6 +83,31 @@ export class CollectionChannelResolver {
 	}
 
 	/**
+	 * Updates one publication row — its status or its publication date.
+	 *
+	 * The route it mirrors is `PUT /collection-channels/:id`. `assignCollectionChannel` writes the set and keeps
+	 * an existing row's `publishedAt` (the instant a placement first went live), so a date the caller states for a
+	 * row that exists already was dropped over GraphQL while REST wrote it (review sweep R2-G2). This is the row's
+	 * own update, as `updateProductChannel` is for a product's publication: the same grant as the route
+	 * (`COLLECTIONS_EDIT`), the same service call with the same two arguments, and the row read back, because the
+	 * CRUD base's `update` answers an `UpdateResult` where the type promises the row.
+	 *
+	 * @param id The publication row.
+	 * @param input The members the update states.
+	 * @returns The publication row as the update left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('updateCollectionChannel')
+	async updateCollectionChannel(
+		@Args('id') id: ID,
+		@Args('input') input: { status?: PublicationStatus; publishedAt?: Date }
+	): Promise<CollectionChannel> {
+		await this.collectionChannelService.update(id, input);
+
+		return this.collectionChannelService.findOneByIdString(id);
+	}
+
+	/**
 	 * Withdraws a collection from one channel.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
