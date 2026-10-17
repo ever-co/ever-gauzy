@@ -297,6 +297,10 @@ function repository(tables: ITables, tableName: keyof ITables) {
 					return value !== undefined && value !== null && new Date(value) <= new Date(expected.value);
 				case 'moreThanOrEqual':
 					return value !== undefined && value !== null && new Date(value) >= new Date(expected.value);
+				// The checkout claim is predicated on `orderId IS NULL` (R3-10), and a double that could not
+				// evaluate it would let the second of two completions claim a cart the first one completed.
+				case 'isNull':
+					return value === undefined || value === null;
 				default:
 					return false;
 			}
@@ -381,10 +385,19 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			// A criteria that names a version is a conditional update: the row has to still be at that
 			// version for the statement to change it, and the affected count is what reports which of
 			// the two happened. Without this the double could not tell a lost race from a won one.
+			// The other members of an object criteria narrow the statement too — a status, `orderId IS NULL`,
+			// the claim a release names (R3-10) — and are evaluated the way a read evaluates them. The scope
+			// members are left out: the fixtures seed no tenant, and the scope is the kernel's concern.
+			const narrowing = Object.fromEntries(
+				Object.entries(criteria && typeof criteria === 'object' ? criteria : {}).filter(
+					([field]) => !['id', 'version', 'tenantId', 'organizationId'].includes(field)
+				)
+			);
 			const stored = rows().find(
 				(row: any) =>
 					String(row.id ?? '') === String(id ?? '') &&
-					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version))
+					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version)) &&
+					matches(row, narrowing)
 			);
 
 			if (stored) {
@@ -1389,6 +1402,135 @@ describe('CommerceCartService — checkout', () => {
 		const untouched = await fixture.service.findOneByIdString(cart.id);
 		expect(untouched.status).toBe(CommerceCartStatus.ACTIVE);
 		expect(untouched.orderId).toBeUndefined();
+	});
+
+	/**
+	 * R3-10: two completions of one cart placed two orders.
+	 *
+	 * The cart was marked completed only after the handler had created the order, and nothing before
+	 * that excluded a second completion: each one read the cart, validated it, re-priced it under
+	 * whatever version the row held and reached the handler. The claim is the first write a completion
+	 * makes now, predicated on the version it validated, a completable status and `orderId IS NULL`.
+	 */
+	describe('the checkout claim (R3-10)', () => {
+		it('refuses a completion that arrives while another one is placing the order, and places one order', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			let racing: { value?: unknown; error?: any } | undefined;
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					const call = ++checkoutCalls;
+
+					// The second completion arrives while the first is inside the handler, creating its order.
+					if (call === 1) {
+						racing = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' }).then(
+							(value) => ({ value }),
+							(error) => ({ error })
+						);
+					}
+
+					return { orderId: `order-${call}`, orderNumber: `ORD-${call}` };
+				}
+			});
+
+			const first = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+			expect(checkoutCalls).toBe(1);
+			expect(racing?.error?.response).toMatchObject({ code: 'CART_CHECKOUT_IN_PROGRESS', details: { cartId: cart.id } });
+			expect(first.orderId).toBe('order-1');
+
+			const stored = await fixture.service.findOneByIdString(cart.id);
+			expect(stored.status).toBe(CommerceCartStatus.COMPLETED);
+			expect(stored.orderId).toBe('order-1');
+			// The claim is cleared once the order is recorded.
+			expect(stored.checkoutClaimId ?? null).toBeNull();
+		});
+
+		it('refuses a completion that validated the cart before another one claimed and completed it', async () => {
+			// The true race: both completions read the same version. The one that loses is refused by the
+			// claim statement itself — predicated on the version it validated — not by a read it made first.
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			registerCheckoutHandler();
+
+			const validate = fixture.service.validate.bind(fixture.service);
+			let raced = false;
+
+			jest.spyOn(fixture.service, 'validate').mockImplementation(async (...args: Parameters<typeof validate>) => {
+				const verdict = await validate(...args);
+
+				if (!raced) {
+					raced = true;
+					// Another completion runs to the end between this one's validation and its claim.
+					await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+				}
+
+				return verdict;
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				response: { code: 'CART_ALREADY_COMPLETED', details: { cartId: cart.id, orderId: 'order-1' } }
+			});
+			expect(checkoutCalls).toBe(1);
+		});
+
+		it('releases the claim when the handler fails, so the buyer can complete again at once', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			let fail = true;
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					checkoutCalls++;
+
+					if (fail) {
+						fail = false;
+						throw new Error('ORDER_CREATE_FAILED');
+					}
+
+					return { orderId: 'order-2', orderNumber: 'ORD-2' };
+				}
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toThrow(/ORDER_CREATE_FAILED/);
+
+			const released = await fixture.service.findOneByIdString(cart.id);
+			expect(released.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(released.orderId ?? null).toBeNull();
+			expect(released.checkoutClaimId ?? null).toBeNull();
+
+			const retried = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+			expect(retried.orderId).toBe('order-2');
+			expect(checkoutCalls).toBe(2);
+		});
+
+		it('keeps every other writer off a claimed cart, and lets a lapsed claim go', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			registerCheckoutHandler();
+
+			const row = fixture.tables.commerce_cart.find((candidate: any) => candidate.id === cart.id);
+			// Another checkout holds the cart and is placing its order.
+			Object.assign(row, { checkoutClaimId: 'another-checkout', checkoutClaimedAt: new Date() });
+
+			await expect(
+				fixture.service.addLine(cart.id, { variantId: 'variant-2', title: 'More', quantity: 1, unitPrice: 5, requiresShipping: false })
+			).rejects.toMatchObject({ response: { code: 'CART_CHECKOUT_IN_PROGRESS' } });
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			expect(checkoutCalls).toBe(0);
+
+			// A claim older than the bound belongs to a checkout that died: the cart can be bought again.
+			row.checkoutClaimedAt = new Date(Date.now() - 11 * 60 * 1000);
+
+			const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+			expect(completed.orderId).toBe('order-1');
+			expect(checkoutCalls).toBe(1);
+		});
 	});
 
 	it('marks an uncompleted cart abandoned and refuses to abandon a completed one', async () => {
