@@ -454,14 +454,15 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 			patch = withoutRestatedMembers(patch, ['usageCount'], stored, {
 				code: 'COUPON_FIELD_NOT_WRITABLE',
 				subject: 'a coupon',
-				movedBy: 'the redemption counter moves with the coupon's redemptions only.',
+				movedBy: 'the redemption counter moves with the redemptions of the coupon only.',
 				details: { couponId: typeof id === 'string' ? id : null }
 			});
 
 			if (patch.code !== undefined) {
 				if (!stored) {
 					throw new BadRequestException({
-						message: 'COUPON_FIELD_NOT_WRITABLE: a code is changed on one coupon at a time, named by its id.',
+						message:
+							'COUPON_FIELD_NOT_WRITABLE: a code is changed on one coupon at a time, named by its id.',
 						code: 'COUPON_FIELD_NOT_WRITABLE',
 						details: { couponId: null, fields: ['code'] }
 					});
