@@ -12,6 +12,7 @@ import {
 	HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { cachedPresign, getCachedS3Client, PRESIGNED_URL_EXPIRES_IN_SECONDS } from './s3-client-cache';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
@@ -243,15 +244,12 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			const s3Client = this.getWasabiInstance();
 
 			if (s3Client) {
-				const signedUrl = await getSignedUrl(
-					s3Client,
-					new GetObjectCommand({
-						Bucket: this.getWasabiBucket(),
-						Key: fileURL
-					}),
-					{
-						expiresIn: 3600
-					}
+				// One signature per object for a few minutes, from a client shared per configuration (s3-client-cache.ts).
+				const bucket = this.getWasabiBucket();
+				const signedUrl = await cachedPresign(s3Client, bucket, fileURL, () =>
+					getSignedUrl(s3Client, new GetObjectCommand({ Bucket: bucket, Key: fileURL }), {
+						expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS
+					})
 				);
 
 				return signedUrl;
@@ -471,7 +469,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			) {
 				const endpoint = ensureHttpPrefix(this.config.wasabi_aws_service_url);
 
-				const s3Client = new S3Client({
+				const s3Client = getCachedS3Client({
 					credentials: {
 						accessKeyId: this.config.wasabi_aws_access_key_id,
 						secretAccessKey: this.config.wasabi_aws_secret_access_key
