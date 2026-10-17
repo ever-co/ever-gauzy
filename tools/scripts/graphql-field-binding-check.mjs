@@ -91,7 +91,7 @@ function dedent(text) {
 const gatedFailures = [];
 
 const snapshotSchema = withoutDescriptions(readFileSync(SDL, 'utf8'));
-const pluginList = readFileSync(PLUGIN_LIST, 'utf8');
+const pluginList = stripComments(readFileSync(PLUGIN_LIST, 'utf8'));
 const gatedSchemas = [];
 
 for (const entry of GATED_PLUGIN_SCHEMAS) {
@@ -124,12 +124,13 @@ for (const entry of GATED_PLUGIN_SCHEMAS) {
 
 	const pluginDir = join(ROOT, ...entry.file.split('/').slice(0, 3));
 	const registers = pluginFiles(pluginDir, '.plugin.ts').some((file) =>
-		new RegExp(`\\bschema:\\s*${entry.exportName}\\b`).test(readFileSync(file, 'utf8'))
+		registersSchema(readFileSync(file, 'utf8'), entry.plugin, entry.exportName)
 	);
 
 	if (!registers) {
 		gatedFailures.push(
-			`${where} -> no *.plugin.ts under ${relative(ROOT, pluginDir)} registers \`schema: ${entry.exportName}\``
+			`${where} -> the @Plugin({...}) of class ${entry.plugin} under ${relative(ROOT, pluginDir).split('\\').join('/')} ` +
+				`does not register \`schema: ${entry.exportName}\``
 		);
 		continue;
 	}
@@ -161,6 +162,61 @@ if (gatedFailures.length > 0) {
 
 /** The snapshot, then each flag-gated plugin's SDL: everything a resolver in the source may bind to. */
 const schema = [snapshotSchema, ...gatedSchemas.map((gated) => gated.text)].join('\n');
+
+/**
+ * Source text with its `//` and `/* … *\/` comments removed, strings kept intact — so a commented-out
+ * registration is not read as one.
+ */
+function stripComments(source) {
+	let out = '';
+	let quote = null;
+
+	for (let index = 0; index < source.length; index++) {
+		const character = source[index];
+		const next = source[index + 1];
+
+		if (quote) {
+			out += character;
+			if (character === '\\') {
+				out += next ?? '';
+				index++;
+			} else if (character === quote) {
+				quote = null;
+			}
+		} else if (character === '/' && next === '/') {
+			while (index < source.length && source[index] !== '\n') index++;
+			out += '\n';
+		} else if (character === '/' && next === '*') {
+			const end = source.indexOf('*/', index + 2);
+			index = end === -1 ? source.length : end + 1;
+		} else {
+			if (character === "'" || character === '"' || character === '`') quote = character;
+			out += character;
+		}
+	}
+
+	return out;
+}
+
+/**
+ * Whether the `@…Plugin({ … })` decorator of `class <plugin>` itself registers `schema: <exportName>` — not a comment,
+ * and not another class in the same file.
+ */
+function registersSchema(source, plugin, exportName) {
+	const code = stripComments(source);
+	const declaration = new RegExp(`\\bclass\\s+${plugin}\\b`).exec(code);
+	if (!declaration) return false;
+
+	const decorators = [...code.slice(0, declaration.index).matchAll(/@\w*Plugin\(/g)];
+	const decorator = decorators.at(-1);
+	if (!decorator) return false;
+
+	const open = decorator.index + decorator[0].length - 1;
+	const close = closingParen(code, open);
+	if (close === -1 || close > declaration.index) return false;
+
+	return new RegExp(`\\bschema:\\s*${exportName}\\b`).test(code.slice(open, close));
+}
 
 /** Every file under a directory with the given suffix, skipping build output. */
 function pluginFiles(dir, suffix, found = []) {
