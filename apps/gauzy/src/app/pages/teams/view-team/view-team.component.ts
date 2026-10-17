@@ -23,6 +23,7 @@ import {
 	ITimeLogFilters,
 	ITimeLogTodayFilters,
 	PermissionsEnum,
+	ProjectStatusEnum,
 	RolesEnum,
 	TaskStatusEnum,
 	TimeLogType
@@ -46,7 +47,7 @@ import {
 	taskStatusOf,
 	TASK_VIEW_RELATIONS
 } from '../../tasks/components/task-view/task-view-sections';
-import { buildProjectViewSections, PROJECT_VIEW_RELATIONS } from './project-view-sections';
+import { buildProjectViewSections, PROJECT_VIEW_RELATIONS, projectStatusOf } from './project-view-sections';
 
 /** The date windows the overview can be read over — the same as an employee's page. */
 export enum TeamViewPeriod {
@@ -109,6 +110,18 @@ interface IProjectProgress {
 	todo: number;
 	/** Done share of all tasks, 0–100. */
 	percent: number;
+}
+
+/** The project quick look's headline: its status line and key figures. */
+interface IProjectFacts {
+	status: IRecordViewStatus | null;
+	isPublic?: boolean;
+	client?: string;
+	/** Null until the project's full read lands. */
+	members: number | null;
+	endDate?: string;
+	due: { key: string; count?: number } | null;
+	overdue: boolean;
 }
 
 /** One person in a project's "who worked the most": their photo, time, share and activity. */
@@ -297,6 +310,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	public projectProgress: Loadable<IProjectProgress | null> = Loadable.empty(null);
 	public projectContributors: Loadable<IContributorRow[]> = Loadable.empty([]);
 	public projectSections: IRecordViewSection[] = [];
+	public projectFacts: IProjectFacts | null = null;
 	private _projectSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
 
@@ -787,6 +801,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this._projectSequence++;
 		this.viewedProject = null;
 		this.viewedProjectCard = null;
+		this.projectFacts = null;
 	}
 
 	/** The project's edit page, where its details are managed. */
@@ -882,7 +897,25 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this.projectSections = buildProjectViewSections(project, {
 			translate: (key) => this.getTranslation(key)
 		});
+		this.projectFacts = this.toProjectFacts(project);
 		this.viewedProject = project;
+	}
+
+	/** Status line and key figures; a finished project's end date is no longer a deadline. */
+	private toProjectFacts(project: IOrganizationProject): IProjectFacts {
+		const isFinished = [ProjectStatusEnum.COMPLETED, ProjectStatusEnum.CANCELLED].includes(project.status);
+		const daysLeft = project.endDate
+			? moment(project.endDate).startOf('day').diff(moment().startOf('day'), 'days')
+			: null;
+		return {
+			status: projectStatusOf(project),
+			isPublic: project.public,
+			client: project.organizationContact?.name,
+			members: project.members ? project.members.filter((member) => !!member?.employee).length : null,
+			endDate: project.endDate ? moment(project.endDate).format('ll') : undefined,
+			due: daysLeft === null || isFinished ? null : ViewTeamComponent.dueInWords(daysLeft, false),
+			overdue: !isFinished && daysLeft !== null && daysLeft < 0
+		};
 	}
 
 	get taskSummary(): TaskSummary {
