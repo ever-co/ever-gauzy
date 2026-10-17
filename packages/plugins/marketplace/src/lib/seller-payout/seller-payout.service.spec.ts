@@ -617,7 +617,15 @@ describe('SellerPayoutService — the SELLER_PAYOUT numbering series (Q7-W3)', (
 		expect(payout.number).toBe('SP-000001');
 		expect(sequence.ensure).toHaveBeenCalledTimes(1);
 		expect(sequence.ensure).toHaveBeenCalledWith(
-			expect.objectContaining({ key: 'SELLER_PAYOUT', prefix: 'SP-', padding: 6, nextValue: 1, step: 1 })
+			expect.objectContaining({
+				tenantId: TENANT,
+				organizationId: ORG,
+				key: 'SELLER_PAYOUT',
+				prefix: 'SP-',
+				padding: 6,
+				nextValue: 1,
+				step: 1
+			})
 		);
 		expect(sequence.allocate).toHaveBeenCalledTimes(2);
 	});

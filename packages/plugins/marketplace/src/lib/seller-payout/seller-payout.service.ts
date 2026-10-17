@@ -1091,11 +1091,21 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 *
 	 * A concurrent first payout of the same organization may create it a moment earlier; the unique series
 	 * index then refuses this insert, which is fine — the retried allocation numbers from that row. Any other
-	 * cause surfaces through the retried allocation, which fails exactly as it did before.
+	 * cause surfaces through the retried allocation, which fails exactly as it did before. Nothing is created
+	 * without an organization in context: a series attached to no organization is one no scoped allocation reads.
 	 */
 	private async ensureSeries(): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (!tenantId || !organizationId) {
+			return;
+		}
+
 		try {
 			await this.sequenceService.ensure({
+				tenantId,
+				organizationId,
 				key: SELLER_PAYOUT_SEQUENCE,
 				prefix: SELLER_PAYOUT_SEQUENCE_PREFIX,
 				padding: 6,
