@@ -212,7 +212,8 @@ export class ReturnRefundService {
 	 * share the expensive part — two ledger sums per payment — and because an answer computed twice is
 	 * an answer that can disagree with itself. The total is `undefined`, rather than zero, for an order
 	 * that has no payment in this currency at all: that is the case the documented escape is for, and
-	 * a zero there would turn it into a refusal.
+	 * a zero there would turn it into a refusal. The total is net of the order's refunds that name no payment
+	 * (`RefundService.sumUnattributedForOrder`), which no payment's own figure counts.
 	 *
 	 * @param request The refund being recorded.
 	 * @param amount The requested amount, already read as a monetary value.
@@ -242,12 +243,7 @@ export class ReturnRefundService {
 			const headroom = Money.of(
 				await this.paymentCaptureService.sumCapturedForPayment(payment.id),
 				currency as CurrencyCode
-			).subtract(
-				Money.of(
-					await this.refundService.sumSucceededForPayment(payment.id),
-					currency as CurrencyCode
-				)
-			);
+			).subtract(Money.of(await this.refundService.sumSucceededForPayment(payment.id), currency as CurrencyCode));
 
 			// A payment that has already given back more than it took carries no headroom, and a negative
 			// one must not reduce what the other payments of the order can still give.
@@ -265,6 +261,24 @@ export class ReturnRefundService {
 
 			return byHeadroom !== 0 ? byHeadroom : String(left.id).localeCompare(String(right.id));
 		});
+
+		/**
+		 * **A refund this path already recorded with no payment spends from the same order.** When no single
+		 * payment can carry an amount the order's payments can carry between them, the refund is recorded
+		 * against the return or the claim with no payment — and then no payment's figure above counts it. The
+		 * order-wide total read here was therefore the same after every such refund: an order paid 10 + 10 took
+		 * a 15 return refund, then another, without limit (review R3-08). Those refunds are taken off the total.
+		 */
+		if (total) {
+			const currency = request.currency as CurrencyCode;
+			const unattributed = Money.of(
+				await this.refundService.sumUnattributedForOrder(request.orderId, request.currency),
+				currency
+			);
+			const net = total.subtract(unattributed);
+
+			total = net.isNegative() ? Money.zero(currency) : net;
+		}
 
 		return {
 			...(candidates.length ? { paymentId: candidates[0].id } : {}),

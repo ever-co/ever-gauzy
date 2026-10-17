@@ -118,20 +118,17 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-jest.mock(
-	'@gauzy/config',
-	() => ({
-		isMySQL: () => false,
-		isPostgres: () => false,
-		DatabaseTypeEnum: {
-			mongodb: 'mongodb',
-			sqlite: 'sqlite',
-			betterSqlite3: 'better-sqlite3',
-			postgres: 'postgres',
-			mysql: 'mysql'
-		}
-	})
-);
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => false,
+	isPostgres: () => false,
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
@@ -143,6 +140,7 @@ import { PaymentCollection } from '../payment-collection/payment-collection.enti
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLine } from '../refund-line/refund-line.entity';
 import { RefundLineService } from '../refund-line/refund-line.service';
+import { RefundReason } from '../refund-reason/refund-reason.entity';
 import { Refund } from './refund.entity';
 import { RefundService } from './refund.service';
 
@@ -197,6 +195,14 @@ interface ITables {
 	payment_capture: Row[];
 	payment_collection: Row[];
 	order_line: Row[];
+	refund_reason: Row[];
+	/**
+	 * The other packages' documents a refund names, read by table name. A fixture that leaves one out models an
+	 * installation that does not register that table (the order or the returns package is not installed).
+	 */
+	order?: Row[];
+	order_return?: Row[];
+	order_claim?: Row[];
 }
 
 /** The entity classes the services hand to their transaction manager, resolved to tables. */
@@ -204,7 +210,8 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[Refund, 'refund'],
 	[RefundLine, 'refund_line'],
 	[Payment, 'payment'],
-	[PaymentCollection, 'payment_collection']
+	[PaymentCollection, 'payment_collection'],
+	[RefundReason, 'refund_reason']
 ]);
 
 /**
@@ -306,15 +313,28 @@ function datastore(tables: ITables) {
 			return { affected: index >= 0 ? 1 : 0 };
 		},
 		/**
-		 * The one raw read this domain makes: the order lines a breakdown cites, read by name inside the
-		 * writing transaction. The conditions the service states are applied — the ids, the soft-delete
-		 * filter and the caller's own tenant and organization.
+		 * Whether the installation registers a table. A document table the fixture left out is one whose
+		 * package is not installed, and the refund service then has nothing to check an identifier against.
+		 */
+		dataSource: {
+			hasMetadata: (name: string) => Array.isArray((tables as unknown as Record<string, unknown>)[name])
+		},
+		/**
+		 * The raw reads this domain makes by table name: the order lines a breakdown cites, and the order,
+		 * return or claim a refund names. The conditions the service states are applied — the ids, the
+		 * soft-delete filter of the line read and the caller's own tenant and organization.
 		 */
 		createQueryBuilder: () => {
 			const conditions: Array<{ sql: string; params: Row }> = [];
+			let fromTable = 'order_line';
 			const builder: any = {
 				select: () => builder,
-				from: () => builder,
+				addSelect: () => builder,
+				from: (table: string) => {
+					fromTable = table;
+
+					return builder;
+				},
 				where: (sql: string, params: Row = {}) => {
 					conditions.push({ sql, params });
 
@@ -327,6 +347,14 @@ function datastore(tables: ITables) {
 				},
 				getRawMany: async () => {
 					const parameters = conditions.reduce<Row>((all, one) => ({ ...all, ...one.params }), {});
+
+					if (fromTable !== 'order_line') {
+						return ((tables as unknown as Record<string, Row[]>)[fromTable] ?? [])
+							.filter((row) => row.id === parameters.refundSubjectId)
+							.filter((row) => row.tenantId === parameters.tenantId)
+							.filter((row) => row.organizationId === parameters.organizationId)
+							.map((row) => ({ id: row.id, orderId: row.orderId ?? null }));
+					}
 
 					return tables.order_line
 						.filter((line) => (parameters.orderLineIds ?? []).includes(line.id))
@@ -488,6 +516,10 @@ function refundFixture(
 		refunds?: Row[];
 		lines?: Row[];
 		orderLines?: Row[];
+		reasons?: Row[];
+		orders?: Row[];
+		returns?: Row[];
+		claims?: Row[];
 		withPort?: boolean;
 		port?: { recordRefund: (report: any) => Promise<any> };
 	} = {}
@@ -501,7 +533,11 @@ function refundFixture(
 		order_line: options.orderLines ?? [
 			{ id: LINE_ONE, tenantId: TENANT, organizationId: ORG, quantity: '2', unitPrice: '50' },
 			{ id: LINE_TWO, tenantId: TENANT, organizationId: ORG, quantity: '1', unitPrice: '10' }
-		]
+		],
+		refund_reason: options.reasons ?? [],
+		...(options.orders ? { order: options.orders } : {}),
+		...(options.returns ? { order_return: options.returns } : {}),
+		...(options.claims ? { order_claim: options.claims } : {})
 	};
 	const store = datastore(tables);
 	const published: any[] = [];
@@ -783,7 +819,10 @@ describe('RefundService — the breakdown is written with the refund, in one tra
 
 		await expect(
 			fixture.service.createRefund(
-				refundInput({ amount: '60', lines: [{ orderLineId: 'no-such-line', quantity: '1', amount: '50' }] }) as never
+				refundInput({
+					amount: '60',
+					lines: [{ orderLineId: 'no-such-line', quantity: '1', amount: '50' }]
+				}) as never
 			)
 		).rejects.toThrow(/REFUND_LINE_ORDER_LINE_NOT_FOUND/);
 		expect(fixture.tables.refund).toEqual([]);
@@ -998,7 +1037,9 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 		// 100 was authorised but only 40 was ever taken, so 40 is what may go back — whatever the amount
 		// recorded on the refund while it was pending.
 		const fixture = refundFixture({
-			payments: [paymentRow(PAYMENT, { capturedAmount: '40', refundedAmount: '0', status: 'PARTIALLY_CAPTURED' })],
+			payments: [
+				paymentRow(PAYMENT, { capturedAmount: '40', refundedAmount: '0', status: 'PARTIALLY_CAPTURED' })
+			],
 			captures: [captureRow('capture-1', { amount: '40' })],
 			refunds: [refundRow('too-big', { amount: '60' })]
 		});
@@ -1260,5 +1301,248 @@ describe('RefundService — an approval moves the payment, the collection and th
 		expect(fixture.payment().refundedAmount).toBe('0');
 		expect(fixture.collection().refundedAmount).toBe('0');
 		expect(fixture.tables.refund[0].status).toBe(RefundStatus.CANCELED);
+	});
+});
+
+describe('RefundService — what a refund cites is the caller’s, and the order is one ceiling (review R3-08)', () => {
+	const OTHER_ORDER = '00000000-0000-4000-8000-000000000011';
+	const FOREIGN_ORDER = '00000000-0000-4000-8000-000000000012';
+	const SECOND_PAYMENT = 'payment-2';
+	const RETURN = 'return-1';
+	const CLAIM = 'claim-1';
+
+	/** One document row of another package (order, return or claim), in the caller's organization by default. */
+	const documentRow = (id: string, overrides: Row = {}) => ({
+		id,
+		tenantId: TENANT,
+		organizationId: ORG,
+		...overrides
+	});
+
+	/** The installation registers the order and returns tables: two orders of ours and one of another organization. */
+	const registered = (overrides: Row = {}) => ({
+		orders: [
+			documentRow(ORDER),
+			documentRow(OTHER_ORDER),
+			documentRow(FOREIGN_ORDER, { organizationId: OTHER_ORG })
+		],
+		returns: [
+			documentRow(RETURN, { orderId: ORDER }),
+			documentRow('return-other-order', { orderId: OTHER_ORDER }),
+			documentRow('return-foreign', { organizationId: OTHER_ORG, orderId: FOREIGN_ORDER })
+		],
+		claims: [
+			documentRow(CLAIM, { orderId: ORDER }),
+			documentRow('claim-other-order', { orderId: OTHER_ORDER }),
+			documentRow('claim-foreign', { tenantId: 'another-tenant', orderId: ORDER })
+		],
+		reasons: [documentRow('reason-ours'), documentRow('reason-foreign', { organizationId: OTHER_ORG })],
+		...overrides
+	});
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** An order paid 10 + 10, which already gave 15 back through a return refund no single payment could carry. */
+	const splitOrder = (refunds: Row[] = []) =>
+		refundFixture({
+			payments: [paymentRow(PAYMENT, { amount: '10' }), paymentRow(SECOND_PAYMENT, { amount: '10' })],
+			captures: [
+				captureRow('capture-1', { amount: '10' }),
+				captureRow('capture-2', { paymentId: SECOND_PAYMENT, amount: '10' })
+			],
+			refunds: [
+				refundRow('return-refund', {
+					paymentId: undefined,
+					returnId: RETURN,
+					amount: '15',
+					status: RefundStatus.SUCCEEDED
+				}),
+				...refunds
+			]
+		});
+
+	it('counts a refund that names no payment against the order before a payment refunds its own money', async () => {
+		const fixture = splitOrder();
+
+		// The failure scenario: each payment's own figure still read 10, so 10 + 15 went back on 20 taken.
+		await expect(fixture.service.createRefund(refundInput({ amount: '10' }) as never)).rejects.toThrow(
+			/REFUND_AMOUNT_EXCEEDS_CAPTURED/
+		);
+		expect(fixture.tables.refund).toHaveLength(1);
+
+		// What is left on the order (20 − 15) is still refundable, from either payment.
+		const fits = await fixture.service.createRefund(refundInput({ amount: '5' }) as never);
+
+		expect(fits).toMatchObject({ amount: '5', status: RefundStatus.PENDING });
+	});
+
+	it('measures an approval against the order too, and a cancelled payment-less refund no longer counts', async () => {
+		const fixture = splitOrder([refundRow('pending-on-payment', { amount: '10' })]);
+
+		await expect(fixture.service.approveRefund('pending-on-payment')).rejects.toThrow(
+			/REFUND_AMOUNT_EXCEEDS_CAPTURED/
+		);
+		expect(fixture.payment().refundedAmount).toBe('0');
+
+		// Withdrawn, the return refund moved nothing, and the payment's own money is refundable again.
+		fixture.tables.refund[0].status = RefundStatus.CANCELED;
+
+		await expect(fixture.service.approveRefund('pending-on-payment')).resolves.toMatchObject({
+			status: RefundStatus.SUCCEEDED
+		});
+	});
+
+	it('sums only the standing refunds of the order that name no payment, in the currency asked', async () => {
+		const unattributed = (id: string, overrides: Row) =>
+			refundRow(id, { paymentId: undefined, returnId: RETURN, status: RefundStatus.SUCCEEDED, ...overrides });
+		const fixture = refundFixture({
+			refunds: [
+				unattributed('a', { amount: '3' }),
+				unattributed('b', { amount: '2', returnId: undefined, claimId: CLAIM, status: RefundStatus.PENDING }),
+				unattributed('c', { amount: '7', status: RefundStatus.CANCELED }),
+				unattributed('d', { amount: '9', currency: 'EUR' }),
+				refundRow('e', { amount: '11', status: RefundStatus.SUCCEEDED }),
+				unattributed('f', { amount: '13', organizationId: OTHER_ORG })
+			]
+		});
+
+		expect(await fixture.service.sumUnattributedForOrder(ORDER, 'USD')).toBe('5');
+	});
+
+	it('refuses an order, a return or a claim of another organization or tenant, on both entry points', async () => {
+		const fixture = refundFixture({ ...registered(), payments: [paymentRow(PAYMENT, { orderId: null })] });
+
+		// The payment names no order, so before this any order id at all was written beside it.
+		await expect(
+			fixture.service.createRefund(refundInput({ orderId: FOREIGN_ORDER }) as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_ORDER_NOT_FOUND' }) });
+		await expect(
+			fixture.service.createRefund(refundInput({ returnId: 'return-foreign' }) as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_RETURN_NOT_FOUND' }) });
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				claimId: 'claim-foreign',
+				amount: '5',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_CLAIM_NOT_FOUND' }) });
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				returnId: 'no-such-return',
+				amount: '5',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_RETURN_NOT_FOUND' }) });
+
+		expect(fixture.tables.refund).toEqual([]);
+	});
+
+	it('refuses a return or a claim raised against another order than the refund’s', async () => {
+		const fixture = refundFixture(registered());
+
+		await expect(
+			fixture.service.createRefund(refundInput({ returnId: 'return-other-order' }) as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_RETURN_ORDER_MISMATCH' }) });
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				claimId: 'claim-other-order',
+				amount: '5',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_CLAIM_ORDER_MISMATCH' }) });
+		expect(fixture.tables.refund).toEqual([]);
+
+		// The control: the caller's own order, return and claim, all of one order, are recorded.
+		await expect(
+			fixture.service.createRefund(
+				refundInput({ returnId: RETURN, claimId: CLAIM, reasonId: 'reason-ours' }) as never
+			)
+		).resolves.toMatchObject({ returnId: RETURN, claimId: CLAIM, reasonId: 'reason-ours' });
+	});
+
+	it('refuses a governed reason of another organization', async () => {
+		const fixture = refundFixture(registered());
+
+		await expect(
+			fixture.service.createRefund(refundInput({ reasonId: 'reason-foreign' }) as never)
+		).rejects.toThrow(/REFUND_REASON_NOT_FOUND/);
+		expect(fixture.tables.refund).toEqual([]);
+	});
+
+	it('keeps the identifiers as plain attribution where the installation has no order or returns tables', async () => {
+		// No order and no returns package: nothing to check against, and no other tenant's row to leak into.
+		const fixture = refundFixture();
+
+		await expect(
+			fixture.service.createRefund(
+				refundInput({ returnId: 'external-return', claimId: 'external-claim' }) as never
+			)
+		).resolves.toMatchObject({ returnId: 'external-return', claimId: 'external-claim' });
+	});
+
+	it('measures a correction against what will be written: a cleared return no longer binds the order', async () => {
+		// The payment names no order, so the refund may be corrected to another order of ours — and the return
+		// it cited, which belongs to the first order, is cleared in the same request (Greptile, #10854).
+		const fixture = refundFixture({ ...registered(), payments: [paymentRow(PAYMENT, { orderId: null })] });
+		const refund = await fixture.service.createRefund(refundInput({ returnId: RETURN }) as never);
+
+		await expect(
+			fixture.service.updateRefund(refund.id, { orderId: OTHER_ORDER, returnId: null } as never)
+		).resolves.toMatchObject({ orderId: OTHER_ORDER, returnId: null });
+
+		// A refund with no payment is explained by its return or claim alone, so both cannot be cleared.
+		const attributed = await fixture.service.createAttributedRefund({
+			orderId: ORDER,
+			returnId: RETURN,
+			amount: '5',
+			currency: 'USD'
+		} as never);
+
+		await expect(fixture.service.updateRefund(attributed.id, { returnId: null } as never)).rejects.toThrow(
+			/REFUND_NOT_ALLOWED/
+		);
+	});
+
+	it('holds a changed attribution to the creation rules, and never moves a refund out of the organization', async () => {
+		const fixture = refundFixture(registered());
+		const refund = await fixture.service.createRefund(refundInput() as never);
+		const refusal = (input: Row) =>
+			fixture.service
+				.updateRefund(refund.id, input as never)
+				.then(() => undefined)
+				.catch((thrown) => thrown?.response?.code ?? thrown?.message);
+
+		// The failure scenario: `PUT /refunds/:id` re-pointed a pending refund at any order, return or claim.
+		expect(await refusal({ orderId: FOREIGN_ORDER })).toBe('REFUND_ORDER_NOT_FOUND');
+		expect(await refusal({ orderId: OTHER_ORDER })).toBe('REFUND_ORDER_MISMATCH');
+		expect(await refusal({ returnId: 'return-foreign' })).toBe('REFUND_RETURN_NOT_FOUND');
+		expect(await refusal({ claimId: 'claim-other-order' })).toBe('REFUND_CLAIM_ORDER_MISMATCH');
+		expect(await refusal({ reasonId: 'reason-foreign' })).toMatch(/REFUND_REASON_NOT_FOUND/);
+
+		const updated = await fixture.service.updateRefund(refund.id, {
+			tenantId: 'another-tenant',
+			organizationId: OTHER_ORG,
+			returnId: RETURN,
+			claimId: CLAIM,
+			note: 'corrected'
+		} as never);
+
+		expect(updated).toMatchObject({
+			tenantId: TENANT,
+			organizationId: ORG,
+			orderId: ORDER,
+			returnId: RETURN,
+			claimId: CLAIM,
+			note: 'corrected'
+		});
 	});
 });

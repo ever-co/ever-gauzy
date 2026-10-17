@@ -65,8 +65,8 @@ export interface ISearchRequestInput {
  * A reindex as it arrives over either surface.
  */
 export interface ISearchReindexInput {
-	/** `ALL`, `ENTITY` or `CHANNEL`. */
-	scope: string;
+	/** `ALL`, `ENTITY` or `CHANNEL`; optional on the GraphQL input, where the field decides when it is omitted. */
+	scope?: string;
 	entity?: string;
 	channelId?: ID;
 	ids?: ID[];

@@ -41,15 +41,26 @@ export const schemaExtensions = gql`
 		isFeatured: Boolean!
 		startsAt: DateTime
 		endsAt: DateTime
+		"""
+		The earliest \`publishedAt\` among the collection's current channel publications (each keeps the instant
+		it first became ACTIVE). Null when no current channel publication carries one. The collection has no such
+		column of its own; the date is per channel.
+		"""
 		publishedAt: DateTime
-		imageAssetId: ID
+		"Id of the hero image, under the name the entity and the REST routes give it."
+		imageId: ID
+		"The earlier name of \`imageId\`, answered from the same column."
+		imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
 		parentId: ID
 		customerId: ID
 		parent: Collection
 		children: [Collection!]
 		products: [CollectionProduct!]
 		variants: [CollectionVariant!]
-		channelPublications: [CollectionChannel!]
+		"Where the collection is published: its channel publication rows, under the entity's name."
+		channels: [CollectionChannel!]
+		"The earlier name of \`channels\`, answered from the same rows."
+		channelPublications: [CollectionChannel!] @deprecated(reason: "Use channels; removal planned for 0.3.0")
 		metadata: JSON
 		createdAt: DateTime!
 		updatedAt: DateTime!
@@ -355,7 +366,10 @@ export const schemaExtensions = gql`
 		isFeatured: Boolean
 		startsAt: DateTime
 		endsAt: DateTime
-		imageAssetId: ID
+		"Id of the hero image."
+		imageId: ID
+		"The earlier name of \`imageId\`; \`imageId\` wins when both are stated."
+		imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
 		parentId: ID
 		customerId: ID
 		metadata: JSON
@@ -371,7 +385,10 @@ export const schemaExtensions = gql`
 		isFeatured: Boolean
 		startsAt: DateTime
 		endsAt: DateTime
-		imageAssetId: ID
+		"Id of the hero image."
+		imageId: ID
+		"The earlier name of \`imageId\`; \`imageId\` wins when both are stated."
+		imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
 		parentId: ID
 		metadata: JSON
 	}
@@ -391,6 +408,14 @@ export const schemaExtensions = gql`
 	input CollectionChannelInput {
 		channelId: ID!
 		status: PublicationStatus!
+		publishedAt: DateTime
+	}
+
+	# One collection publication row's writable surface: every member optional, because an update states what
+	# changed — what UpdateCollectionChannelDTO declares on PUT /collection-channels/:id, less the row's
+	# business key (the collection and the channel), which a row update does not move.
+	input UpdateCollectionChannelInput {
+		status: PublicationStatus
 		publishedAt: DateTime
 	}
 
@@ -470,6 +495,8 @@ export const schemaExtensions = gql`
 		recoverCollection(id: ID!): Collection!
 		addCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+		"Writes the whole product set of a collection in one call, in order — the set route's own operation."
+		replaceCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		"Retires one collection membership recoverably, so the product stays curated into the collection."
 		softDeleteCollectionProduct(id: ID!): CollectionProduct!
 		"Restores a soft-deleted collection membership."
@@ -489,6 +516,8 @@ export const schemaExtensions = gql`
 		"Restores a soft-deleted facet."
 		recoverTagProductVariant(id: ID!): TagProductVariant!
 		assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
+		"Updates one collection publication row - its status or its date - as PUT /collection-channels/:id does."
+		updateCollectionChannel(id: ID!, input: UpdateCollectionChannelInput!): CollectionChannel!
 		unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
 		"Retires one collection publication recoverably, so the placement keeps its status and its date."
 		softDeleteCollectionChannel(id: ID!): CollectionChannel!
