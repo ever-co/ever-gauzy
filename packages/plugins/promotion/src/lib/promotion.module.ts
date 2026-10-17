@@ -50,6 +50,7 @@ import { TypeOrmGiftCardRepository } from './gift-card/repository/type-orm-gift-
 import { MikroOrmGiftCardRepository } from './gift-card/repository/mikro-orm-gift-card.repository';
 import { TypeOrmGiftCardTransactionRepository } from './gift-card-transaction/repository/type-orm-gift-card-transaction.repository';
 import { MikroOrmGiftCardTransactionRepository } from './gift-card-transaction/repository/mikro-orm-gift-card-transaction.repository';
+import { PromotionOrderUsageAdapter } from './promotion-order-usage/promotion-order-usage.adapter';
 
 /**
  * The NestJS module of the promotion domain.
@@ -90,6 +91,8 @@ import { MikroOrmGiftCardTransactionRepository } from './gift-card-transaction/r
 		PromotionActionService,
 		CouponService,
 		PromotionUsageService,
+		// The redemption half an order's checkout and cancellation reach (Q7-W1c).
+		PromotionOrderUsageAdapter,
 		GiftCardService,
 		GiftCardTransactionService,
 		TypeOrmCampaignRepository,
@@ -123,6 +126,7 @@ import { MikroOrmGiftCardTransactionRepository } from './gift-card-transaction/r
 		PromotionActionService,
 		CouponService,
 		PromotionUsageService,
+		PromotionOrderUsageAdapter,
 		GiftCardService,
 		GiftCardTransactionService
 	]

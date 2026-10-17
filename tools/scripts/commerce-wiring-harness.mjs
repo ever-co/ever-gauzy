@@ -275,7 +275,8 @@ export async function ensureCatalogue(api, organizationId, prefix, options = {})
  *
  * @param {(method: string, path: string, body?: unknown) => Promise<any>} api The scoped caller.
  * @param {string} organizationId The organization.
- * @param {{code: string, value: string, currency?: string}} promotion The code and the amount off.
+ * @param {{code: string, value: string, currency?: string, usageLimit?: number}} promotion The code, the amount
+ * off and, when stated, how many orders may redeem it.
  * @returns {Promise<any | undefined>} The promotion.
  */
 export async function ensurePromotion(api, organizationId, promotion) {
@@ -292,6 +293,7 @@ export async function ensurePromotion(api, organizationId, promotion) {
 			currency,
 			isAutomatic: false,
 			isCombinable: true,
+			...(promotion.usageLimit ? { usageLimit: promotion.usageLimit } : {}),
 			organizationId
 		}
 	});
