@@ -15,6 +15,7 @@ import { EverWorksCatalogService } from './ever-works-catalog.service';
 import { readEverWorksConfig } from './ever-works-config';
 import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
+import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
 import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
 import { EverWorksGoalsService } from './goals/ever-works-goals.service';
 import { EverWorksIdeaTaskCapture } from './ideas/ever-works-idea-task.capture';
@@ -80,7 +81,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly projects: EverWorksProjectsService,
 		private readonly initialSync: EverWorksInitialSyncService,
 		private readonly tasks: EverWorksTasksService,
-		private readonly taskComments: EverWorksTaskCommentsService
+		private readonly taskComments: EverWorksTaskCommentsService,
+		private readonly inbox: EverWorksInboxService
 	) {}
 
 	onModuleInit(): void {
@@ -97,6 +99,8 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.loop.registerSweeper(this.tasks);
 		this.pusher.register(this.taskComments);
 		this.loop.registerSweeper(this.taskComments);
+		// EW inbox items → the Gauzy Inbox (skipped while the Gauzy Inbox is off).
+		this.applier.register(this.inbox);
 	}
 }
 
@@ -173,6 +177,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksTasksService,
 		EverWorksTaskCommentsService,
 		EverWorksTaskEdgeCapture,
+		EverWorksInboxService,
 		EverWorksTeamCapture,
 		EverWorksConflictsService,
 		EverWorksInitialSyncService,
