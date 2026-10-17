@@ -163,19 +163,39 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	/**
 	 * Records that a cycle produced an order.
 	 *
+	 * **The rights it holds back are recorded in the same statement (R4-05).** An invoiced cycle has an order
+	 * and no money, so the rights of its period wait for its payment; writing the flags with the status means
+	 * no payment can ever see the cycle `INVOICED` without them, which a second write after this one allowed.
+	 *
 	 * @param id The cycle.
 	 * @param orderId The order it produced.
 	 * @param amount The amount actually billed, when it differs from the opened one.
+	 * @param deferred The rights the cycle holds back until it is paid, and whether they include the activation
+	 * of the trial it converts.
 	 * @returns The updated cycle.
 	 */
-	public async markInvoiced(id: ID, orderId: ID, amount?: DecimalString): Promise<SubscriptionBilling> {
+	public async markInvoiced(
+		id: ID,
+		orderId: ID,
+		amount?: DecimalString,
+		deferred?: { activation: boolean }
+	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 
 		await super.update(id, {
 			orderId,
 			status: SubscriptionBillingStatus.INVOICED,
 			amount: amount ? this.normalizeAmount(amount, billing.currency) : billing.amount,
-			lastError: null
+			lastError: null,
+			...(deferred
+				? {
+						metadata: {
+							...(billing.metadata ?? {}),
+							[RIGHTS_DEFERRED]: true,
+							...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {})
+						}
+				  }
+				: {})
 		} as any);
 
 		return await this.findOneScoped(id);
@@ -227,28 +247,9 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	}
 
 	/**
-	 * Records that an invoiced cycle holds the rights of its period back until it is paid (R4-05).
-	 *
-	 * @param id The cycle.
-	 * @param deferred Whether the cycle also converted a trial, whose activation waits as well.
-	 * @returns The updated cycle.
-	 */
-	public async deferRights(id: ID, deferred: { activation: boolean }): Promise<SubscriptionBilling> {
-		const billing = await this.findOneScoped(id);
-
-		await super.update(id, {
-			metadata: {
-				...(billing.metadata ?? {}),
-				[RIGHTS_DEFERRED]: true,
-				...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {})
-			}
-		} as any);
-
-		return await this.findOneScoped(id);
-	}
-
-	/**
 	 * Whether a cycle still holds the rights of its period back (R4-05).
+	 *
+	 * The flags are written by `markInvoiced` and cleared by `releaseDeferredRights` alone.
 	 *
 	 * @param billing The cycle.
 	 * @returns True when its `subscription.renewed` waits for its payment.
@@ -265,6 +266,16 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	 */
 	public holdsDeferredActivation(billing: SubscriptionBilling): boolean {
 		return this.holdsDeferredRights(billing) && billing?.metadata?.[ACTIVATION_DEFERRED] === true;
+	}
+
+	/**
+	 * Whether a cycle ever held rights back, released or not: a cycle invoiced unpaid whose payment came later.
+	 *
+	 * @param billing The cycle.
+	 * @returns True when the cycle's rights were, or still are, waiting for its payment.
+	 */
+	public heldRights(billing: SubscriptionBilling): boolean {
+		return this.holdsDeferredRights(billing) || typeof billing?.metadata?.[RIGHTS_RELEASED_AT] === 'string';
 	}
 
 	/**

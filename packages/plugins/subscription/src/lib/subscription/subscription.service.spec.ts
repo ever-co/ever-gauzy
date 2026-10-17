@@ -4028,6 +4028,52 @@ describe('SubscriptionService — an invoiced cycle is not a settled one (R4-05)
 		expect(named(fixture.events, 'subscription.activated')).toHaveLength(1);
 	});
 
+	it('releases once when two payments of the invoiced cycle race', async () => {
+		const fixture = subscriptionFixture({ orders: { paid: false } });
+
+		await fixture.service.billCycle(SUBSCRIPTION);
+
+		const cycle = fixture.cycle(APRIL) as Row;
+
+		await Promise.all([fixture.service.payCycle(cycle.id), fixture.service.payCycle(cycle.id)]);
+
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(1);
+		expect(fixture.cycle(APRIL)?.status).toBe(SubscriptionBillingStatus.PAID);
+	});
+
+	it('finishes the release when a payment is retried on a paid cycle whose rights are still held', async () => {
+		// The payment was recorded and the release did not get as far as clearing the flags: a retry of the
+		// payment finds the cycle paid and must not return before the rights are in force.
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'billing-half-released',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(MARCH),
+					periodEnd: new Date(APRIL),
+					dueAt: new Date(MARCH),
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					orderId: 'order-0',
+					attemptCount: 1,
+					metadata: { rightsDeferred: true }
+				}
+			]
+		});
+
+		await fixture.service.payCycle('billing-half-released');
+
+		expect(named(fixture.events, 'subscription.renewed')).toHaveLength(1);
+		expect(named(fixture.events, 'subscription.renewed')[0].data).toMatchObject({
+			billingId: 'billing-half-released',
+			periodEnd: new Date(APRIL)
+		});
+	});
+
 	it('still renews on the spot a cycle whose order was paid', async () => {
 		const fixture = subscriptionFixture({ orders: { paid: true } });
 
