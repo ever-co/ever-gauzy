@@ -29,7 +29,9 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		ActivityLogModule,
 		MentionModule,
 		TokenModule.forRoot({
-			enableScheduler: WORKER_SCHEDULER_ENABLED
+			// Both token cleanup jobs target the `token-maintenance` queue, so their processor is only
+			// registered when a BullMQ root exists.
+			enableScheduler: WORKER_SCHEDULER_ENABLED && WORKER_QUEUE_ENABLED
 		}),
 		SchedulerModule.forRoot({
 			enabled: WORKER_SCHEDULER_ENABLED,
