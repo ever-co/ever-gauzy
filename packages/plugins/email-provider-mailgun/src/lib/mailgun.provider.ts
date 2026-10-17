@@ -105,8 +105,8 @@ function headersOf(value: string | undefined): Record<string, string> {
  * Mailgun (plan 04 §5.2, G-P4-7).
  *
  * - **Inbound.** A Mailgun route `forward()`s each message to the account URL (`/api/inbox/inbound/mailgun/<account
- *   id>`) as a form: the parsed message (fields + `attachment-N` files), or, when the URL ends in `mime`, the raw
- *   message (`body-mime`). Every POST is signed: `signature` = HMAC-SHA256 of `timestamp` + `token` under the account's
+ *   id>`) as a form: the parsed message (fields + `attachment-N` files), or, to the same URL ending in `/mime`, the
+ *   raw message (`body-mime`). Every POST is signed: `signature` = HMAC-SHA256 of `timestamp` + `token` under the account's
  *   **webhook signing key**; a missing or wrong signature, or a timestamp more than 15 minutes away, is refused
  *   (constant-time compare). There is no unsigned mode. The token makes a delivery single use.
  * - **Outbound.** A nodemailer transport over `POST /v3/<domain>/messages` with the API key (US or EU region).
@@ -297,7 +297,12 @@ export class MailgunProvider implements IEmailProviderPlugin, IInboundEmailProvi
 				...(inReplyTo ? { inReplyTo } : {}),
 				references: referencesOf(field('references')),
 				headers,
-				sizeBytes: request.rawBody?.length ?? (text?.length ?? 0) + (html?.length ?? 0),
+				// The message's own bytes (never the encoded form, which percent-encoding can triple).
+				sizeBytes:
+					Buffer.byteLength(text ?? '') +
+					Buffer.byteLength(html ?? '') +
+					Buffer.byteLength(fields['message-headers'] ?? '') +
+					attachments.reduce((sum, part) => sum + part.size, 0),
 				attachments
 			}
 		];

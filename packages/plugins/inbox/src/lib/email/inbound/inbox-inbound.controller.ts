@@ -81,7 +81,8 @@ export class InboxInboundRateLimitGuard implements CanActivate {
 export class InboxInboundController {
 	constructor(private readonly inbound: InboxInboundService) {}
 
-	@Post('/:providerId/:accountId')
+	// The same URL ending in `/mime` too: Mailgun posts the raw message to a route URL that ends in `mime`.
+	@Post(['/:providerId/:accountId', '/:providerId/:accountId/mime'])
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Header('Cache-Control', 'no-store')
 	@ApiOperation({ summary: 'An email provider delivers mail for a provider account (signed by that account).' })

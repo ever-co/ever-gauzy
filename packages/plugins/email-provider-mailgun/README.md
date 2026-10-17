@@ -19,8 +19,9 @@ keeps it off and is logged once. It registers with the Inbox email provider regi
     - the sending domain;
     - the region (`us` or `eu`);
     - the default sender.
-2. In Mailgun, add a route whose action is `forward("https://<api>/api/inbox/inbound/mailgun/<account id>")`. When
-   the URL ends in `mime`, Mailgun posts the raw message instead of the parsed fields; the plugin reads both.
+2. In Mailgun, add a route whose action is `forward("https://<api>/api/inbox/inbound/mailgun/<account id>")`. To the
+   same URL ending in `/mime` (`…/<account id>/mime`), Mailgun posts the raw message instead of the parsed fields; the
+   plugin reads both.
 3. Point custom-domain mailboxes at the account. "Test connection" reads `GET /v3/domains/<domain>`, which must be
    `active`.
 
