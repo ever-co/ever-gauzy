@@ -35,6 +35,7 @@ import { FulfillmentService } from './fulfillment.service';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
 import { fulfillmentVersionOf } from '../fulfillment.types';
 import {
+	AddFulfillmentLineDTO,
 	CreateFulfillmentDTO,
 	FulfillmentTransitionDTO,
 	RequestFulfillmentLabelDTO,
@@ -121,6 +122,35 @@ export class FulfillmentController extends CrudController<Fulfillment> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateFulfillmentDTO): Promise<Fulfillment> {
 		return this.fulfillmentService.create(entity as any);
+	}
+
+	/**
+	 * Appends a line to a shipment that has not left yet.
+	 *
+	 * `FulfillmentService.addLine` applies what the shipment's creation applies to each of its lines: the
+	 * shipment must still be `PENDING`, the order line must be one of its order's and still have the quantity
+	 * to ship, and the order line's counter moves with the line (review R2-G40). The standalone
+	 * `POST /fulfillment-lines` is unchanged. A caller that read the shipment may state the version it read.
+	 *
+	 * @param id The shipment.
+	 * @param body The line.
+	 * @param request The request, which carries the version the caller read the shipment at when it stated one.
+	 * @returns The shipment, with its lines.
+	 */
+	@ApiOperation({ summary: 'Append a line to a pending fulfillment' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Line appended; the shipment is answered with its lines' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The shipment is no longer pending, or it moved on' })
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Idempotent({ scope: 'fulfillment.line.add', required: false, resourceType: 'fulfillment' })
+	@Versioned({ resource: FulfillmentService, required: false })
+	@Post(':id/lines')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async addLine(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: AddFulfillmentLineDTO,
+		@Req() request?: Request
+	): Promise<Fulfillment> {
+		return this.fulfillmentService.addLine(id, body as any, fulfillmentVersionOf(request));
 	}
 
 	/**

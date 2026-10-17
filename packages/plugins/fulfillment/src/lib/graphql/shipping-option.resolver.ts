@@ -20,6 +20,7 @@ import { ShippingProfileService } from '../shipping-profile/shipping-profile.ser
 import { ShippingProfileVariant } from '../shipping-profile-variant/shipping-profile-variant.entity';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
 import { IShippingOptionConnection, IShippingOptionEligibility, IShippingProfileConnection, IShippingRate } from './types';
+import { updateChanges, withoutRequestMembers } from './update-input';
 
 /**
  * The shipping configuration: profiles, their variant attachments, and the sellable options.
@@ -190,17 +191,22 @@ export class ShippingOptionResolver {
 	/**
 	 * Updates a shipping profile.
 	 *
+	 * The changes come as `patch` (every member optional) or as the older `input` (the create's shape, which
+	 * restates `name` and `code`) — never both; the create's `idempotencyKey` is not written (review R2-G41).
+	 *
 	 * @param id The profile.
-	 * @param input The fields to change.
+	 * @param input The older, create-shaped changes.
+	 * @param patch The partial changes.
 	 * @returns The profile.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
 	@Mutation(() => Object, { name: 'updateShippingProfile' })
 	async updateShippingProfile(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('input', { type: () => Object }) input: Record<string, any>
+		@Args('input', { type: () => Object, nullable: true }) input?: Record<string, any>,
+		@Args('patch', { type: () => Object, nullable: true }) patch?: Record<string, any>
 	): Promise<ShippingProfile> {
-		await this.profileService.update(id, input as any);
+		await this.profileService.update(id, withoutRequestMembers(updateChanges(input, patch)) as any);
 
 		return this.profileService.findOneByIdString(id);
 	}
@@ -300,17 +306,23 @@ export class ShippingOptionResolver {
 	/**
 	 * Updates a shipping option.
 	 *
+	 * The changes come as `patch` (every member optional) or as the older `input` (the create's shape, which
+	 * restates `name`, `code` and `priceType`) — never both; the create's `idempotencyKey` is not written
+	 * (review R2-G41).
+	 *
 	 * @param id The option.
-	 * @param input The fields to change.
+	 * @param input The older, create-shaped changes.
+	 * @param patch The partial changes.
 	 * @returns The option.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_EDIT)
 	@Mutation(() => Object, { name: 'updateShippingOption' })
 	async updateShippingOption(
 		@Args('id', { type: () => ID }) id: string,
-		@Args('input', { type: () => Object }) input: Record<string, any>
+		@Args('input', { type: () => Object, nullable: true }) input?: Record<string, any>,
+		@Args('patch', { type: () => Object, nullable: true }) patch?: Record<string, any>
 	): Promise<ShippingOption> {
-		await this.optionService.update(id, input as any);
+		await this.optionService.update(id, withoutRequestMembers(updateChanges(input, patch)) as any);
 
 		return this.optionService.findOneByIdString(id);
 	}

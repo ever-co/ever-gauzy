@@ -2558,6 +2558,149 @@ describe('FulfillmentService — a correction never moves what the counters were
 	});
 });
 
+describe('FulfillmentService — appending a line to a pending shipment (review R2-G40)', () => {
+	const OTHER_ORDER = '00000000-0000-4000-8000-000000000011';
+
+	it('appends the line, moves the order line’s counter and re-derives the order', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [
+					orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 2 }),
+					orderLine(LINE_B, { quantity: 4 })
+				],
+				fulfillment: [shipment('open')],
+				fulfillment_line: [shipmentLine('first', 'open', LINE_A, 2)]
+			}
+		});
+
+		const answered = await fixture.service.addLine('open', request(LINE_B, 3) as never);
+
+		expect(fixture.linesOf('open')).toHaveLength(2);
+		expect(fixture.linesOf('open')).toEqual(
+			expect.arrayContaining([expect.objectContaining({ orderLineId: LINE_B, organizationId: ORG })])
+		);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(3);
+		expect(fixture.recomputed.map((call) => call.orderId)).toEqual([ORDER]);
+		// The shipment's version moved with the line, so a caller that read it before the append is answered
+		// with the conflict rather than overwriting it.
+		expect(Number(fixture.row('open').version)).toBe(2);
+		expect(answered).toMatchObject({ id: 'open' });
+	});
+
+	it('refuses a shipment that already left, and writes nothing', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A), orderLine(LINE_B)],
+				fulfillment: [shipment('gone', { status: FulfillmentStatusDetail.SHIPPED })],
+				fulfillment_line: [shipmentLine('first', 'gone', LINE_A, 2)]
+			}
+		});
+
+		await expect(fixture.service.addLine('gone', request(LINE_B, 1) as never)).rejects.toThrow(
+			/FULFILLMENT_NOT_PENDING/
+		);
+		expect(fixture.linesOf('gone')).toHaveLength(1);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(0);
+	});
+
+	it('refuses an order line of another order', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A), orderLine(LINE_B, { orderId: OTHER_ORDER })],
+				fulfillment: [shipment('open')]
+			}
+		});
+
+		await expect(fixture.service.addLine('open', request(LINE_B, 1) as never)).rejects.toThrow(
+			/FULFILLMENT_LINE_ORDER_MISMATCH/
+		);
+		expect(fixture.linesOf('open')).toHaveLength(0);
+	});
+
+	it('refuses more than the order line still has to ship', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_B, { quantity: 4, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('open')]
+			}
+		});
+
+		await expect(fixture.service.addLine('open', request(LINE_B, 2) as never)).rejects.toThrow(
+			/exceed what the order line still has to ship/
+		);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(3);
+	});
+
+	it('moves no counter for a return-direction shipment', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_B, { quantity: 4, fulfilledQuantity: 4 })],
+				fulfillment: [shipment('back', { direction: FulfillmentDirection.RETURN })]
+			}
+		});
+
+		await fixture.service.addLine('back', request(LINE_B, 2) as never);
+
+		expect(fixture.linesOf('back')).toHaveLength(1);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(4);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('refuses an order line already in the shipment, and rolls the claim back', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_B, { quantity: 4, fulfilledQuantity: 1 })],
+				fulfillment: [shipment('open')],
+				fulfillment_line: [shipmentLine('first', 'open', LINE_B, 1)]
+			}
+		});
+
+		await expect(fixture.service.addLine('open', request(LINE_B, 1) as never)).rejects.toThrow(
+			/already in this fulfilment/
+		);
+		expect(fixture.linesOf('open')).toHaveLength(1);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(1);
+		// The claim, the line and the counter are one transaction: the refusal leaves the shipment's version too.
+		expect(Number(fixture.row('open').version)).toBe(1);
+		expect(fixture.transactions).toEqual(['rolled back']);
+	});
+
+	it('answers a stale version with the conflict, and writes nothing', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_B, { quantity: 4 })],
+				fulfillment: [shipment('open', { version: 3 })]
+			}
+		});
+
+		await expect(
+			fixture.service.addLine('open', request(LINE_B, 1) as never, { wildcard: false, versions: [2] })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		expect(fixture.linesOf('open')).toHaveLength(0);
+		expect(Number(fixture.line(LINE_B).fulfilledQuantity)).toBe(0);
+		expect(Number(fixture.row('open').version)).toBe(3);
+	});
+
+	it('takes only what a line states, so an id the caller sends does not overwrite another line', async () => {
+		// CodeRabbit: handed on to the write, an `id` made the append an upsert of a line that already exists.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { fulfilledQuantity: 2 }), orderLine(LINE_B)],
+				fulfillment: [shipment('open')],
+				fulfillment_line: [shipmentLine('first', 'open', LINE_A, 2)]
+			}
+		});
+
+		await fixture.service.addLine('open', request(LINE_B, 1, { id: 'first', fulfillmentId: 'elsewhere' }) as never);
+
+		expect(fixture.linesOf('open')).toHaveLength(2);
+		expect(fixture.tables.fulfillment_line.find((row) => row.id === 'first')).toMatchObject({
+			orderLineId: LINE_A,
+			quantity: 2
+		});
+	});
+});
+
 describe('FulfillmentService — a paid order completes when its goods are accounted for (Q7-W1b)', () => {
 	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
 	afterEach(() => jest.useRealTimers());

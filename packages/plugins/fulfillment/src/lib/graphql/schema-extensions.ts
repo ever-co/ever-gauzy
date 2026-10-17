@@ -226,6 +226,55 @@ export const fulfillmentSchemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	"""
+	What a caller changes on a shipping profile. Every member is optional; \`idempotencyKey\` is absent, because an
+	edit is not a create a retry could duplicate.
+	"""
+	input UpdateShippingProfileInput {
+		name: String
+		code: String
+		isDefault: Boolean
+		description: String
+	}
+
+	"""
+	What a caller changes on a shipping option. Every member is optional; \`idempotencyKey\` is absent, because an
+	edit is not a create a retry could duplicate.
+	"""
+	input UpdateShippingOptionInput {
+		name: String
+		code: String
+		priceType: String
+		amount: Decimal
+		currency: String
+		isTaxInclusive: Boolean
+		taxCategoryId: ID
+		providerKey: String
+		profileId: ID
+		channelId: ID
+		regionId: ID
+		priority: Int
+		estimatedMinDays: Int
+		estimatedMaxDays: Int
+		requiresShippingAddress: Boolean
+		allowPickup: Boolean
+		maxWeight: Decimal
+		maxItemCount: Int
+	}
+
+	"""
+	A line appended to a shipment that has not left yet. \`idempotencyKey\` makes a retry safe; \`version\` is the
+	version the caller read the shipment at, honoured when stated.
+	"""
+	input AddFulfillmentLineInput {
+		orderLineId: ID!
+		quantity: Decimal!
+		warehouseId: ID
+		metadata: JSON
+		idempotencyKey: String
+		version: Int
+	}
+
 	input UpdateFulfillmentInput {
 		trackingNumber: String
 		trackingUrl: String
@@ -317,7 +366,16 @@ export const fulfillmentSchemaExtensions = gql`
 
 	extend type Mutation {
 		createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
-		updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
+		"""
+		Updates a shipping profile. State the changes once: as \`patch\`, whose every member is optional, or as the
+		older \`input\`, the create's shape, which restates \`name\` and \`code\` and keeps working. Both, or neither,
+		is refused.
+		"""
+		updateShippingProfile(
+			id: ID!
+			input: CreateShippingProfileInput
+			patch: UpdateShippingProfileInput
+		): ShippingProfile!
 		deleteShippingProfile(id: ID!): Boolean!
 		"Retire a shipping profile recoverably, so the variants that ship under it keep their group."
 		softDeleteShippingProfile(id: ID!): ShippingProfile!
@@ -329,7 +387,16 @@ export const fulfillmentSchemaExtensions = gql`
 		"Restore a soft-deleted variant attachment."
 		recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
 		createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
-		updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
+		"""
+		Updates a shipping option. State the changes once: as \`patch\`, whose every member is optional, or as the
+		older \`input\`, the create's shape, which restates \`name\`, \`code\` and \`priceType\` and keeps working. Both, or
+		neither, is refused.
+		"""
+		updateShippingOption(
+			id: ID!
+			input: CreateShippingOptionInput
+			patch: UpdateShippingOptionInput
+		): ShippingOption!
 		deleteShippingOption(id: ID!): Boolean!
 		"Retire a shipping option recoverably, so the carts that selected it keep their record."
 		softDeleteShippingOption(id: ID!): ShippingOption!
@@ -337,6 +404,12 @@ export const fulfillmentSchemaExtensions = gql`
 		recoverShippingOption(id: ID!): ShippingOption!
 		createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
 		updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+		"""
+		Append a line to a shipment that has not left yet: the shipment must still be PENDING, the order line must be
+		one of its order's and still have the quantity to ship, and on an outbound shipment the order line's counter
+		moves with the line (a return-direction shipment moves none).
+		"""
+		addFulfillmentLine(id: ID!, input: AddFulfillmentLineInput!): Fulfillment!
 		"Correct one shipment line: the quantity, the location, the order line it covers, or its payload."
 		updateFulfillmentLine(id: ID!, input: UpdateFulfillmentLineInput!): FulfillmentLine!
 		shipFulfillment(id: ID!, input: ShipFulfillmentInput): Fulfillment!
