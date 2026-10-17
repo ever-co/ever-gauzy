@@ -178,9 +178,9 @@ describe('Ever Works docs sync on SQLite', () => {
 		} as never);
 		return id;
 	};
-	const gauzyFolder = async (parentId: string, name: string) => {
+	const gauzyFolder = async (parentId: string, name: string, over: Row = {}) => {
 		const id = randomUUID();
-		await documents().insert({ id, tenantId: T, organizationId: O, kind: DocumentKindEnum.FOLDER, name, parentId, version: 1, visibility: DocumentVisibilityEnum.ORGANIZATION } as never);
+		await documents().insert({ id, tenantId: T, organizationId: O, kind: DocumentKindEnum.FOLDER, name, parentId, version: 1, visibility: DocumentVisibilityEnum.ORGANIZATION, ...over } as never);
 		return id;
 	};
 
@@ -392,6 +392,25 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(((await pageOf(document['id'])) as Row)['parentId']).toBe(organization);
 		});
 
+		it("stops applying Ever Works' edits to a page or folder made PRIVATE in Gauzy (review F26, #11018 review)", async () => {
+			const folder = kb.addFolder(ewOrg.id, { name: 'Guides' });
+			await apply('kb.folder.created', folder, 'kb_folder');
+			const folderLink = await links.byEw(M as never, EverWorksLinkType.DOC_FOLDER, folder['id'] as string);
+			const document = kb.addDocument(ewOrg.id, { folderId: folder['id'], body: 'First' });
+			await apply('kb.document.created', document);
+			const row = (await pageOf(document['id'])) as Row;
+			expect(row['parentId']).toBe(folderLink?.gauzyId);
+			await documents().update({ id: folderLink?.gauzyId } as never, { visibility: DocumentVisibilityEnum.PRIVATE, name: 'Guides (private)' } as never);
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', document)).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('First');
+			Object.assign(folder, { name: 'Handbooks', version: 2 });
+			expect(await apply('kb.folder.updated', folder, 'kb_folder')).toEqual({ status: 'skipped', message: 'private folders never sync' });
+			expect((await page(folderLink?.gauzyId as string))['name']).toBe('Guides (private)');
+			expect((await links.byEw(M as never, EverWorksLinkType.DOC, document['id'] as string))?.state).toBe(EverWorksLinkState.UNLINKED);
+			expect((await links.byEw(M as never, EverWorksLinkType.DOC_FOLDER, folder['id'] as string))?.state).toBe(EverWorksLinkState.UNLINKED);
+		});
+
 		it('follows a folder rename and archives a deleted folder', async () => {
 			const folder = kb.addFolder(ewOrg.id, { name: 'Guides' });
 			await apply('kb.folder.created', folder, 'kb_folder');
@@ -490,6 +509,51 @@ describe('Ever Works docs sync on SQLite', () => {
 			const outside = await gauzyPage(null as never, 'Elsewhere');
 			expect(await push(outside)).toEqual({ status: 'skipped', message: 'not in the synced folders' });
 			expect(kb.documents.size).toBe(0);
+		});
+
+		it('never pushes a private folder, nor a page under one: the folder name stays out of Ever Works (review F26)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const secret = await gauzyFolder(organization, 'Layoffs 2027', { visibility: DocumentVisibilityEnum.PRIVATE });
+			const inner = await gauzyFolder(secret, 'Lists');
+			const pageId = await gauzyPage(secret, 'Plan');
+			const deeper = await gauzyPage(inner, 'Names');
+			expect(await push(secret, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'skipped', message: 'private folders never sync' });
+			expect(await push(inner, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'skipped', message: 'folders in a private folder never sync' });
+			expect(await push(pageId)).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			expect(await push(deeper)).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			// A Work's private subfolder: its name would become a path segment.
+			const workFolder = await store.workFolder(context as never, kb.addWork(ewOrg.id), 'Site', null);
+			const hidden = await gauzyFolder(workFolder, 'Acquisition', { visibility: DocumentVisibilityEnum.PRIVATE });
+			expect(await push(await gauzyPage(hidden, 'Terms'))).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			expect(kb.folders.size).toBe(0);
+			expect(kb.documents.size).toBe(0);
+			expect(mock.requests.filter((request) => request.method !== 'GET').map((request) => `${request.method} ${request.path}`)).toEqual([]);
+		});
+
+		it('stops syncing a synced folder and its pages once the folder turns private in Gauzy (review F26)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const folder = await gauzyFolder(organization, 'Playbooks');
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toMatchObject({ status: 'pushed' });
+			const pageId = await gauzyPage(folder, 'Text');
+			expect(await push(pageId)).toMatchObject({ status: 'pushed' });
+			await documents().update({ id: folder } as never, { visibility: DocumentVisibilityEnum.PRIVATE, name: 'Playbooks (HR only)' } as never);
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'skipped', message: 'private folders never sync' });
+			expect((await links.byGauzy(M as never, EverWorksLinkType.DOC_FOLDER, folder as never))?.state).toBe(EverWorksLinkState.UNLINKED);
+			await documents().update({ id: pageId } as never, { contentJson: markdownToDocument('Edited').contentJson } as never);
+			expect(await push(pageId)).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			expect((await links.byGauzy(M as never, EverWorksLinkType.DOC, pageId as never))?.state).toBe(EverWorksLinkState.UNLINKED);
+			expect([...kb.folders.values()].map((row) => row['name'])).toEqual(['Playbooks']);
+			expect([...kb.documents.values()].map((row) => row['body'])).toEqual(['Text']);
+		});
+
+		it('never pushes under a synced root that was made PRIVATE (review F26, #11018 review)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const root = await store.existingRoot(context as never);
+			await documents().update({ id: root } as never, { visibility: DocumentVisibilityEnum.PRIVATE } as never);
+			const folder = await gauzyFolder(organization, 'Guides');
+			expect(await push(folder, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'skipped', message: 'folders in a private folder never sync' });
+			expect(await push(await gauzyPage(organization, 'Text'))).toEqual({ status: 'skipped', message: 'pages in a private folder never sync' });
+			expect(kb.folders.size + kb.documents.size).toBe(0);
 		});
 	});
 

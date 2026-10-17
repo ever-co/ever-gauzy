@@ -57,7 +57,7 @@ import {
 	titleForEverWorks,
 	transitionBlockedMessage
 } from './ever-works-task.mapper';
-import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskScope, EverWorksTaskStore } from './ever-works-task.store';
+import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskScope, EverWorksTaskStore, TASK_IN_ANOTHER_ORGANIZATION } from './ever-works-task.store';
 
 const fromEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'ew_to_gauzy';
 const toEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'gauzy_to_ew';
@@ -377,6 +377,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		const row = await this.store.load(context.tenantId, link.gauzyId as ID);
 		if (!row) return { status: 'skipped', message: 'the Gauzy task is gone' };
 		if ((row as { deletedAt?: Date | null }).deletedAt) return { status: 'skipped', message: 'the Gauzy task was deleted (its delete is pushed)' };
+		if (row.organizationId !== context.organizationId) return { status: 'skipped', message: TASK_IN_ANOTHER_ORGANIZATION };
 		const snapshot = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(link));
 		const prevE = snapshot.e;
 		const prevG = snapshot.g;
@@ -706,6 +707,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	 */
 	private async applyRuntime(context: EverWorksMappingContext, link: EverWorksEntityLink | null, task: EverWorksTask, occurredAt: string | null | undefined): Promise<EverWorksApplyOutcome> {
 		if (!link) return { status: 'skipped', message: 'the task is not linked' };
+		if (await this.inAnotherOrganization(context, link.gauzyId as ID)) return { status: 'skipped', message: TASK_IN_ANOTHER_ORGANIZATION };
 		const ewOnly = this.everWorksOnly(link);
 		// No version on run state: an older event (a late delivery) never overwrites a newer one.
 		if (occurredAt && ewOnly.runtimeAt && new Date(occurredAt).getTime() < new Date(ewOnly.runtimeAt).getTime()) {
@@ -780,6 +782,11 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	private async applyDelete(context: EverWorksMappingContext, link: EverWorksEntityLink | null, envelope: EverWorksEventEnvelope): Promise<EverWorksApplyOutcome> {
 		if (!link) return { status: 'skipped', message: 'the task is not linked' };
 		const row = await this.store.load(context.tenantId, link.gauzyId as ID);
+		if (row && row.organizationId !== context.organizationId) {
+			const reason = `deleted in Ever Works; ${TASK_IN_ANOTHER_ORGANIZATION} and is kept`;
+			await this.links.unlink(link, reason);
+			return { status: 'skipped', message: reason };
+		}
 		if (row && !(row as { deletedAt?: Date | null }).deletedAt) {
 			const actor = await this.actorOf(context, envelope.actor);
 			await this.store.asActor(context, actor, () => this.store.softDelete(row.id as ID));
@@ -816,7 +823,11 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	 */
 	private async ensureTaskLinked(context: EverWorksMappingContext, everWorksTaskId: string, depth: number): Promise<ID | null | undefined> {
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, everWorksTaskId);
-		if (link) return link.state === EverWorksLinkState.UNLINKED ? undefined : (link.gauzyId as ID);
+		if (link) {
+			if (link.state === EverWorksLinkState.UNLINKED) return undefined;
+			// A parent, blocker or related task moved to another organization is not tied to this one.
+			return (await this.inAnotherOrganization(context, link.gauzyId as ID)) ? undefined : (link.gauzyId as ID);
+		}
 		if (depth > TASK_PARENT_DEPTH) return undefined;
 		const task = await this.fetchTask(context, everWorksTaskId);
 		if (!task) return null;
@@ -824,6 +835,12 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (outcome.status !== 'applied') return undefined;
 		const linked = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, everWorksTaskId);
 		return linked && linked.state !== EverWorksLinkState.UNLINKED ? (linked.gauzyId as ID) : undefined;
+	}
+
+	/** Whether the Gauzy task now sits in another organization than the mapping's (review F23). */
+	private async inAnotherOrganization(context: EverWorksMappingContext, taskId: ID): Promise<boolean> {
+		const organizationId = await this.store.organizationOfTask(context.tenantId, taskId);
+		return !!organizationId && organizationId !== context.organizationId;
 	}
 
 	/** The project an Ever Works task lands in (plan 01 §7.2). */
