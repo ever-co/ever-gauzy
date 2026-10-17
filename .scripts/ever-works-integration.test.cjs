@@ -502,7 +502,9 @@ function taskSync(t) {
 async function taskStatuses(t) {
 	const row = (value, order, flags) => ({ id: randomUUID(), tenantId: t.tenantId, organizationId: t.organizationId, name: value, value, order, isSystem: false, ...flags });
 	const statuses = { open: row('open', 0, { isTodo: true }), inProgress: row('in-progress', 1, { isInProgress: true }), done: row('done', 2, { isDone: true }) };
-	await db.getRepository(entities.TaskStatus).insert(Object.values(statuses));
+	// Copies: after a multi-row insert TypeORM reads the generated defaults back with an unordered SELECT and merges
+	// them into the inserted objects by position, so on SQLite the objects could come back with each other's ids.
+	await db.getRepository(entities.TaskStatus).insert(Object.values(statuses).map((status) => ({ ...status })));
 	return statuses;
 }
 
