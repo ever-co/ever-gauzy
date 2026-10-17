@@ -28,9 +28,9 @@ interface IPreparedRefundLine {
  * never disagree about what was given back.
  *
  * Three things this service is deliberately strict about. A line must name an **order line of the
- * caller's own organization**: the amount is attributed to a line of an order, and an amount
- * attributed to a line that is not there is an attribution nobody can reconcile, so the write is
- * refused rather than stored. A line's **identity does not move**: a different order line is a
+ * caller's own organization**, and of the refund's own order when the refund names one: the amount is
+ * attributed to a line of an order, and an amount attributed to a line that is not there is an
+ * attribution nobody can reconcile, so the write is refused rather than stored. A line's **identity does not move**: a different order line is a
  * different line, and it is added rather than rewritten. And the breakdown of a **settled** refund is
  * a record — once the refund has left `PENDING` the money has moved or the intention has been
  * withdrawn, and neither is something a line may be edited to describe.
@@ -321,7 +321,7 @@ export class RefundLineService extends PaymentScopedCrudService<RefundLine> {
 		const currency = refund.currency;
 		const prepared = lines.map((line) => this.prepareLine(refund, line, currency));
 
-		await this.assertOrderLines(manager, prepared);
+		await this.assertOrderLines(manager, refund, prepared);
 		await this.assertWithinRefund(manager, refund, prepared, excludedLineId);
 
 		return prepared;
@@ -370,18 +370,27 @@ export class RefundLineService extends PaymentScopedCrudService<RefundLine> {
 	}
 
 	/**
-	 * Checks that every order line a breakdown cites is an order line of the caller's organization.
+	 * Checks that every order line a breakdown cites is an order line of the caller's organization and,
+	 * when the refund names an order, a line of that order.
 	 *
 	 * The order aggregate is a peer package, so its table is read by name through the caller's own
 	 * manager — inside the writing transaction, which is what keeps the check and the write from
 	 * disagreeing. The read is scoped by the caller's tenant and organization, and it fails closed
-	 * when the caller has no scope to read with.
+	 * when the caller has no scope to read with. A line of another order of the same organization is
+	 * refused as well, as a payment of another order is: once the refund is approved each line is
+	 * reported to its order line's register, which would count money that order's payments never gave back.
 	 *
 	 * @param manager The manager to read through.
+	 * @param refund The refund the lines belong to.
 	 * @param lines The lines about to be written.
-	 * @throws BadRequestException when the caller has no scope, or when an order line does not resolve.
+	 * @throws BadRequestException when the caller has no scope, when an order line does not resolve, or
+	 * when it is not a line of the refund's order.
 	 */
-	private async assertOrderLines(manager: EntityManager, lines: IPreparedRefundLine[]): Promise<void> {
+	private async assertOrderLines(
+		manager: EntityManager,
+		refund: IRefund,
+		lines: IPreparedRefundLine[]
+	): Promise<void> {
 		const { tenantId, organizationId } = this.scope;
 
 		if (!tenantId || !organizationId) {
@@ -391,19 +400,8 @@ export class RefundLineService extends PaymentScopedCrudService<RefundLine> {
 		}
 
 		const ids = [...new Set(lines.map((line) => line.orderLineId))];
-		const orderLine = this.q('orderLine');
-
-		const rows: Array<{ id: ID }> = await manager
-			.createQueryBuilder()
-			.select(`${orderLine}.${this.q('id')}`, 'id')
-			.from('order_line', 'orderLine')
-			.where(`${orderLine}.${this.q('id')} IN (:...orderLineIds)`, { orderLineIds: ids })
-			.andWhere(`${orderLine}.${this.q('deletedAt')} IS NULL`)
-			.andWhere(`${orderLine}.${this.q('tenantId')} = :tenantId`, { tenantId })
-			.andWhere(`${orderLine}.${this.q('organizationId')} = :organizationId`, { organizationId })
-			.getRawMany();
-
-		const known = new Set((rows ?? []).map((row) => row.id));
+		const known = await this.findOrderLineIds(manager, ids);
+		const ofOrder = refund.orderId ? await this.findOrderLineIds(manager, ids, refund.orderId) : known;
 
 		for (const id of ids) {
 			if (!known.has(id)) {
@@ -411,7 +409,45 @@ export class RefundLineService extends PaymentScopedCrudService<RefundLine> {
 					`REFUND_LINE_ORDER_LINE_NOT_FOUND: order line ${id} is not an order line of this organization.`
 				);
 			}
+
+			if (!ofOrder.has(id)) {
+				throw new BadRequestException({
+					message: `REFUND_LINE_ORDER_MISMATCH: order line ${id} is not a line of order ${refund.orderId}.`,
+					code: 'REFUND_LINE_ORDER_MISMATCH'
+				});
+			}
 		}
+	}
+
+	/**
+	 * Reads which of the given order lines are live order lines of the caller's organization, and of one
+	 * order when it is given.
+	 *
+	 * @param manager The manager to read through.
+	 * @param ids The order lines to look up.
+	 * @param orderId The order the lines must belong to, when there is one.
+	 * @returns The ids that resolved.
+	 */
+	private async findOrderLineIds(manager: EntityManager, ids: ID[], orderId?: ID): Promise<Set<ID>> {
+		const { tenantId, organizationId } = this.scope;
+		const orderLine = this.q('orderLine');
+
+		const query = manager
+			.createQueryBuilder()
+			.select(`${orderLine}.${this.q('id')}`, 'id')
+			.from('order_line', 'orderLine')
+			.where(`${orderLine}.${this.q('id')} IN (:...orderLineIds)`, { orderLineIds: ids })
+			.andWhere(`${orderLine}.${this.q('deletedAt')} IS NULL`)
+			.andWhere(`${orderLine}.${this.q('tenantId')} = :tenantId`, { tenantId })
+			.andWhere(`${orderLine}.${this.q('organizationId')} = :organizationId`, { organizationId });
+
+		if (orderId) {
+			query.andWhere(`${orderLine}.${this.q('orderId')} = :refundOrderId`, { refundOrderId: orderId });
+		}
+
+		const rows: Array<{ id: ID }> = await query.getRawMany();
+
+		return new Set((rows ?? []).map((row) => row.id));
 	}
 
 	/**
