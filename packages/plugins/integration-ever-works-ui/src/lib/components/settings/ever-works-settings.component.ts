@@ -229,7 +229,7 @@ type Loaded =
 								}
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_WORKS.SETTINGS.TABS.MAPPING' | translate" data-test="tab-mapping">
-								<ngx-ever-works-match-review [organizationId]="organizationId" [integrationTenantId]="integrationTenantId" />
+								<ngx-ever-works-match-review [organizationId]="organizationId" [integrationTenantId]="integrationTenantId" [mapping]="mapping" />
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_WORKS.SETTINGS.TABS.DIRECTIONS' | translate" data-test="tab-directions">
 								<ngx-ever-works-directions [organizationId]="organizationId" [mapping]="mapping" (savedMapping)="mapping = $event" />

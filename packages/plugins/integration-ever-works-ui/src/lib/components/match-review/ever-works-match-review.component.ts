@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbAlertModule, NbButtonModule, NbCheckboxModule, NbTabsetModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import {
 	EverWorksTeamsView,
 	EverWorksUiService
 } from '../../services/ever-works.service';
+import type { EverWorksMapping } from '../../services/ever-works.service';
 import { errorText, isNotFound } from '../shared/ever-works-ui.utils';
 
 /** The choice of a row that creates the record on the other side instead of pairing it. */
@@ -266,7 +267,9 @@ export const DRAFT_INITIATIVE = 'draft';
 												} @else {
 													<select class="form-control" [name]="'mission-' + row.ewMissionId" [(ngModel)]="missionChoice[row.ewMissionId]" [disabled]="busy.initiatives">
 														<option value="">{{ 'EVER_WORKS.REVIEW.NOT_PAIRED_OPTION' | translate }}</option>
-														<option [value]="create">{{ 'EVER_WORKS.REVIEW.CREATE_IN_GAUZY' | translate }}</option>
+														@if (canCreateInitiatives) {
+															<option [value]="create">{{ 'EVER_WORKS.REVIEW.CREATE_IN_GAUZY' | translate }}</option>
+														}
 														@for (initiative of initiatives.unmatchedInitiatives; track initiative.initiativeId) {
 															<option [value]="initiative.initiativeId">{{ initiative.title }}</option>
 														}
@@ -281,13 +284,16 @@ export const DRAFT_INITIATIVE = 'draft';
 						}
 						@if (unpairedGauzyInitiatives().length) {
 							<h6>{{ 'EVER_WORKS.REVIEW.UNMATCHED_GAUZY' | translate }}</h6>
+							@if (!canCreateMissions) {
+								<p data-test="missions-not-created">{{ (mapping?.isEnabled === false ? 'EVER_WORKS.REVIEW.MAPPING_OFF_NO_CREATE' : 'EVER_WORKS.REVIEW.MISSIONS_ONE_WAY') | translate }}</p>
+							}
 							@for (initiative of unpairedGauzyInitiatives(); track initiative.initiativeId) {
 								<div>
 									<nb-checkbox
 										[name]="'create-mission-' + initiative.initiativeId"
 										[attr.data-test]="'create-mission-' + initiative.initiativeId"
 										[(ngModel)]="createMissionInEverWorks[initiative.initiativeId]"
-										[disabled]="busy.initiatives || initiative.state === draft"
+										[disabled]="busy.initiatives || initiative.state === draft || !canCreateMissions"
 									>
 										{{ initiative.title }} — {{ 'EVER_WORKS.REVIEW.CREATE_MISSION_IN_EVER_WORKS' | translate }}
 										@if (initiative.state === draft) {
@@ -329,6 +335,12 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 
 	@Input() organizationId: string | null = null;
 	@Input() integrationTenantId: string | null = null;
+	/**
+	 * The mapping, for what it lets this review create on the other side (its switch and the missions direction,
+	 * as the API checks them). Without it every option is offered and the API decides. A new mapping object (its
+	 * switch or directions changed) changes only those options: nothing is read again and no choice is lost.
+	 */
+	@Input() mapping: EverWorksMapping | null = null;
 
 	readonly create = CREATE;
 	readonly draft = DRAFT_INITIATIVE;
@@ -357,8 +369,15 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	};
 	errors: Record<Section, string | null> = { people: null, agents: null, teams: null, projects: null, initiatives: null };
 
-	ngOnChanges(): void {
+	ngOnChanges(changes?: SimpleChanges): void {
+		if (changes && !changes['organizationId'] && !changes['integrationTenantId']) return;
 		this.scope$.next();
+		// Another mapping: nothing of the previous one's initiatives may be shown or sent with the new id.
+		this.initiatives = null;
+		this.initiativesUnavailable = false;
+		this.missionChoice = {};
+		this.createMissionInEverWorks = {};
+		this.removed.initiatives.clear();
 		if (!this.integrationTenantId) return;
 		const id = this.integrationTenantId;
 		this.run('people', this.api.people(this.organizationId, id), (view) => this.setPeople(view));
@@ -376,6 +395,20 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	unpairedGauzyTeams(): Array<{ teamId: string; name: string }> {
 		const chosen = new Set(Object.values(this.teamChoice));
 		return (this.teams?.unmatchedTeams ?? []).filter((team) => !chosen.has(team.teamId));
+	}
+
+	/** Missions can be created as Gauzy initiatives: the mapping is on and missions sync from Ever Works. */
+	get canCreateInitiatives(): boolean {
+		if (!this.mapping) return true;
+		const direction = this.mapping.directions?.['missions'] ?? 'ew_to_gauzy';
+		return this.mapping.isEnabled && (direction === 'both' || direction === 'ew_to_gauzy');
+	}
+
+	/** Initiatives can be created as Ever Works missions: the mapping is on and missions sync both ways. */
+	get canCreateMissions(): boolean {
+		if (!this.mapping) return true;
+		const direction = this.mapping.directions?.['missions'];
+		return this.mapping.isEnabled && (direction === 'both' || direction === 'gauzy_to_ew');
 	}
 
 	/** Gauzy initiatives paired with nothing and not chosen for an Ever Works mission in this form. */
@@ -465,11 +498,16 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		const links = rows
 			.filter((row) => this.missionChoice[row.ewMissionId] !== CREATE)
 			.map((row) => ({ ewMissionId: row.ewMissionId, initiativeId: this.missionChoice[row.ewMissionId] }));
-		const createInGauzy = rows.filter((row) => this.missionChoice[row.ewMissionId] === CREATE).map((row) => row.ewMissionId);
+		// What the mapping does not allow is never sent: the API would refuse the whole save, pairs included.
+		const createInGauzy = this.canCreateInitiatives
+			? rows.filter((row) => this.missionChoice[row.ewMissionId] === CREATE).map((row) => row.ewMissionId)
+			: [];
 		// A draft stays in Gauzy until it is active (the API refuses it); its box is disabled, and never sent.
-		const createInEverWorks = this.unpairedGauzyInitiatives()
-			.filter((initiative) => this.createMissionInEverWorks[initiative.initiativeId] && initiative.state !== DRAFT_INITIATIVE)
-			.map((initiative) => initiative.initiativeId);
+		const createInEverWorks = this.canCreateMissions
+			? this.unpairedGauzyInitiatives()
+					.filter((initiative) => this.createMissionInEverWorks[initiative.initiativeId] && initiative.state !== DRAFT_INITIATIVE)
+					.map((initiative) => initiative.initiativeId)
+			: [];
 		if (!links.length && !createInGauzy.length && !createInEverWorks.length) return;
 		if (this.refuseDuplicates('initiatives', links.map((link) => link.initiativeId))) return;
 		this.run(
@@ -525,14 +563,27 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		);
 	}
 
+	/**
+	 * A new view of the tab. Choices the admin made for missions that are still unpaired are kept (removing one
+	 * pairing must not reset the others, nor bring back a suggestion the admin turned down); only a mission seen
+	 * for the first time gets its suggestion preselected. Ticks stay for initiatives still paired with nothing.
+	 */
 	private setInitiatives(view: EverWorksInitiativesView): void {
-		this.initiatives = view;
-		this.initiativesUnavailable = false;
-		this.missionChoice = preselect(
+		const previous = this.missionChoice;
+		const valid = new Set(['', CREATE, ...view.unmatchedInitiatives.map((initiative) => initiative.initiativeId)]);
+		const fresh = preselect(
 			view.missions.filter((row) => !row.linkedInitiativeId).map((row) => ({ id: row.ewMissionId, suggested: row.suggestion?.initiativeId ?? null })),
 			this.removed.initiatives
 		);
-		this.createMissionInEverWorks = {};
+		this.missionChoice = Object.fromEntries(
+			Object.entries(fresh).map(([id, suggested]) => [id, id in previous && valid.has(previous[id]) ? previous[id] : suggested])
+		);
+		const unmatched = new Set(view.unmatchedInitiatives.map((initiative) => initiative.initiativeId));
+		this.createMissionInEverWorks = Object.fromEntries(
+			Object.entries(this.createMissionInEverWorks).filter(([id, ticked]) => ticked && unmatched.has(id))
+		);
+		this.initiatives = view;
+		this.initiativesUnavailable = false;
 	}
 
 	/** A Gauzy record chosen for two Ever Works records is refused here, before the API refuses the whole save. */

@@ -1,3 +1,4 @@
+import { SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { EverWorksUiService } from '../../services/ever-works.service';
@@ -216,6 +217,51 @@ describe('EverWorksMatchReviewComponent', () => {
 			component.saveInitiatives();
 			expect(api.decideInitiatives).not.toHaveBeenCalled();
 			expect(component.errors.initiatives).toBe('EVER_WORKS.REVIEW.DUPLICATE_CHOICE');
+		});
+
+		it('offers only the creates the mapping allows, and never sends one it does not', () => {
+			api.decideInitiatives.mockReturnValue(of(INITIATIVES));
+			const { component, fixture } = render();
+			// New mappings sync missions one way (Ever Works → Gauzy): no mission is created from Gauzy.
+			component.mapping = { isEnabled: true, directions: { missions: 'ew_to_gauzy' } } as never;
+			component.ngOnChanges({ mapping: new SimpleChange(null, component.mapping, false) });
+			fixture.detectChanges();
+			expect(api.initiatives).toHaveBeenCalledTimes(1);
+			expect(component.canCreateInitiatives).toBe(true);
+			expect(component.canCreateMissions).toBe(false);
+			component.missionChoice['m-2'] = CREATE;
+			component.createMissionInEverWorks['i2'] = true;
+			component.saveInitiatives();
+			expect(api.decideInitiatives).toHaveBeenCalledWith('org-1', 'm1', { links: [{ ewMissionId: 'm-1', initiativeId: 'i1' }], createInGauzy: ['m-2'] });
+			// A mapping that is off creates nothing on either side.
+			component.mapping = { isEnabled: false, directions: { missions: 'both' } } as never;
+			expect(component.canCreateInitiatives).toBe(false);
+			expect(component.canCreateMissions).toBe(false);
+			component.mapping = { isEnabled: true, directions: { missions: 'both' } } as never;
+			expect(component.canCreateMissions).toBe(true);
+		});
+
+		it('keeps the choices of the other missions when one pairing is removed', () => {
+			api.decideInitiatives.mockReturnValue(of(INITIATIVES));
+			const { component } = render();
+			// The admin turned the suggestion of m-1 down and chose to create m-2 in Gauzy, then removes m-3's pairing.
+			component.missionChoice['m-1'] = '';
+			component.missionChoice['m-2'] = CREATE;
+			component.createMissionInEverWorks['i2'] = true;
+			component.unlinkMission('m-3');
+			expect(component.missionChoice).toEqual({ 'm-1': '', 'm-2': CREATE });
+			expect(component.createMissionInEverWorks).toEqual({ i2: true });
+		});
+
+		it('drops the previous mapping\u2019s initiatives when the mapping changes', () => {
+			const { component } = render();
+			expect(component.initiatives).not.toBeNull();
+			api.initiatives.mockReturnValue(throwError(() => ({ status: 404 })));
+			component.integrationTenantId = 'm2';
+			component.ngOnChanges({ integrationTenantId: new SimpleChange('m1', 'm2', false) });
+			expect(component.initiatives).toBeNull();
+			expect(component.missionChoice).toEqual({});
+			expect(component.initiativesUnavailable).toBe(true);
 		});
 
 		it('says the tab is not available when the API has no initiatives route yet', () => {
