@@ -150,8 +150,16 @@ export class StockReservationResolver {
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
 	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.consume', required: false, resourceType: 'stock-reservation' })
-	async consumeStockReservation(@Args('id') id: string): Promise<any> {
-		return await this.service.consume(id);
+	async consumeStockReservation(
+		@Args('id') id: string,
+		@Args('reason') reason?: string,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	): Promise<any> {
+		void idempotencyKey;
+
+		// The reason is the one `POST /stock-reservations/:id/consume?reason=` records on the ledger row; the field
+		// took none, so a consumption over GraphQL was recorded with the service's default (review R2-G38).
+		return await this.service.consume(id, reason);
 	}
 
 	/**

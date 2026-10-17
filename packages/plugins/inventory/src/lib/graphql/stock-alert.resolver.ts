@@ -26,6 +26,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockAlert } from './../stock-alert/stock-alert.entity';
 import { StockAlertService } from './../stock-alert/stock-alert.service';
+import { updateChanges } from './update-input';
 
 /**
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
@@ -114,11 +115,22 @@ export class StockAlertResolver {
 		return await this.service.createAlert(input);
 	}
 
-	/** Updates a rule. */
+	/**
+	 * Updates a rule and answers it as it now stands.
+	 *
+	 * The changes come as `patch` (every member optional) or as the older `input` (the create's shape, which
+	 * restates the rule's required members) — never both. The service drops the members an edit does not
+	 * write, the key among them, and reads the rule back: the field used to answer the ORM's `UpdateResult`,
+	 * which failed `StockAlert!` after the write (review R2-G35, R2-G41).
+	 */
 	@Mutation('updateStockAlert')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	async updateStockAlert(@Args('id') id: string, @Args('input') input: any): Promise<any> {
-		return await this.service.update(id, input);
+	async updateStockAlert(
+		@Args('id') id: string,
+		@Args('input') input?: any,
+		@Args('patch') patch?: any
+	): Promise<any> {
+		return await this.service.updateAlert(id, updateChanges(input, patch));
 	}
 
 	/**

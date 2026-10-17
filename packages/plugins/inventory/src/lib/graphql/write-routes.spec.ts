@@ -639,3 +639,41 @@ describe('the seven flagged routes — two collapsed, three delivered, two refus
 		expect(declares('addStockTransferLine')).toBe(true);
 	});
 });
+
+/**
+ * Review R2-G38 and R2-G41: the consumption takes the route's reason, and the alert edit takes a partial
+ * `patch` beside the older create-shaped `input`, which stays.
+ */
+describe('the inventory document — consumption reason and the partial alert edit', () => {
+	it('hands the stated consumption reason to the service, as the route does', async () => {
+		const stub = { consume: jest.fn().mockResolvedValue(undefined) };
+		const controller = new StockReservationController(stub as never) as unknown as Row;
+		const resolver = new StockReservationResolver(stub as never, {
+			ofType: () => null
+		} as unknown as EventBus) as unknown as Row;
+
+		await controller.consume(DOCUMENT, 'DAMAGED_IN_PICK');
+		await resolver.consumeStockReservation(DOCUMENT, 'DAMAGED_IN_PICK');
+
+		expect(stub.consume).toHaveBeenNthCalledWith(1, DOCUMENT, 'DAMAGED_IN_PICK');
+		expect(stub.consume).toHaveBeenNthCalledWith(2, DOCUMENT, 'DAMAGED_IN_PICK');
+	});
+
+	it('declares the reason and the retry key on consumeStockReservation, both optional', () => {
+		const arguments_ = mutationField('consumeStockReservation').arguments ?? [];
+
+		expect(arguments_.map((argument) => argument.name.value)).toEqual(['id', 'reason', 'idempotencyKey']);
+		expect(arguments_[1].type.kind).toBe('NamedType');
+		expect(arguments_[2].type.kind).toBe('NamedType');
+	});
+
+	it('takes updateStockAlert changes as the older input or the partial patch, both optional', () => {
+		const arguments_ = mutationField('updateStockAlert').arguments ?? [];
+
+		expect(arguments_.map((argument) => argument.name.value)).toEqual(['id', 'input', 'patch']);
+		expect(namedTypeName(arguments_[1].type)).toBe('StockAlertInput');
+		expect(arguments_[1].type.kind).toBe('NamedType');
+		expect(namedTypeName(arguments_[2].type)).toBe('UpdateStockAlertInput');
+		expect(arguments_[2].type.kind).toBe('NamedType');
+	});
+});

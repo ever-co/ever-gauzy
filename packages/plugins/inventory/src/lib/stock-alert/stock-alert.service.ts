@@ -14,6 +14,9 @@ export interface IStockAlertEvaluation {
 	readonly suppressed: number;
 }
 
+/** The members an edit of a rule never writes: a request member, the row's identity and its tenancy. */
+export const STOCK_ALERT_UNWRITABLE_MEMBERS: readonly string[] = ['idempotencyKey', 'id', 'tenantId', 'organizationId'];
+
 /**
  * Maintains the low-stock rules and evaluates them.
  *
@@ -65,6 +68,33 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 			);
 		}
 		return await this.create({ ...input, organizationId });
+	}
+
+	/**
+	 * Writes the changes of an edit and answers the rule as it now stands.
+	 *
+	 * This is the write behind `updateStockAlert`. The field handed its input to the inherited `update`,
+	 * which answers the ORM's `UpdateResult` — so the mutation, typed `StockAlert!`, failed with a null `id`
+	 * after the row had been written — and wrote the input's `idempotencyKey`, which is a request member and
+	 * no column (review R2-G35). The members an edit does not write are dropped here: the key, the row's id
+	 * and its tenancy (a rule never moves to another tenant or organization).
+	 *
+	 * @param id The rule.
+	 * @param changes The members the caller changes.
+	 * @returns The rule after the write.
+	 */
+	public async updateAlert(id: ID, changes: Partial<StockAlert> & { idempotencyKey?: string }): Promise<StockAlert> {
+		const values: Record<string, unknown> = { ...(changes ?? {}) };
+
+		for (const member of STOCK_ALERT_UNWRITABLE_MEMBERS) {
+			delete values[member];
+		}
+
+		if (Object.keys(values).length > 0) {
+			await this.update(id, values as Partial<StockAlert>);
+		}
+
+		return await this.findOneByIdString(id);
 	}
 
 	/**
