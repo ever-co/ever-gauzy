@@ -5,7 +5,7 @@ import { EmailStatusEnum, IEmailHistory, IPagination } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, resolveRequestedPage } from '../core/utils';
 import { EmailHistory } from './email-history.entity';
 import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-history.repository';
 import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
@@ -35,6 +35,12 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 		// The GraphQL field hands a boolean; the REST list route's pipe does not transform, so its query
 		// string arrives as 'true' / 'false', and a truthiness test would read 'false' as true.
 		const withDeleted = parseToBoolean(filter?.withDeleted);
+		// The requested page (`skip` is the page number, as for the other lists); it used to be dropped, so
+		// every page answered the newest 20 rows
+		const { limit, offset } = resolveRequestedPage({ take: filter?.take ?? 20, skip: filter?.skip }) ?? {
+			limit: 20,
+			offset: 0
+		};
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -50,7 +56,8 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 					} as any,
 					{
 						populate: ['user', 'emailTemplate'] as any[],
-						limit: filter.take ? (filter.take as number) : 20,
+						limit,
+						offset,
 						orderBy: { createdAt: 'DESC' } as any,
 						// Only the soft-delete filter is disabled, by name: the tenant scope is the where above.
 						...(withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
@@ -77,7 +84,8 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 					...this.buildListFilters(filter.where)
 				});
 
-				query.take(filter.take ? (filter.take as number) : 20);
+				query.take(limit);
+				query.skip(offset);
 				query.orderBy(`${query.alias}.createdAt`, 'DESC');
 
 				// Lifts only the builder's own `deletedAt IS NULL`; the tenant scope is the `where` above.
