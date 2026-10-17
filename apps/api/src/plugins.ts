@@ -34,6 +34,7 @@ import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
 import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -115,6 +116,11 @@ export const plugins = [
 	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
 		? [InboxEmailPlugin]
 		: []),
+
+	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isResendEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderResendPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

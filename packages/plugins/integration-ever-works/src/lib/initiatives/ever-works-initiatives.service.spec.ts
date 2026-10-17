@@ -480,6 +480,18 @@ describe('EverWorksInitiativesService — Initiatives tab', () => {
 		).rejects.toThrow('leadership');
 	});
 
+	it('suggests nothing when two free initiatives have the mission\'s title, so accepting pairs neither', async () => {
+		const { service, missionsMock, ewOrg, initiatives, links } = setup();
+		missionsMock.addMission(ewOrg.id, { id: 'ew-m-9', title: 'Launch' });
+		for (const id of ['init-a', 'init-b']) {
+			initiatives.push({ id, tenantId: 't1', organizationId: 'o1', title: 'launch', state: 'active', visibilityScope: 'organization' });
+		}
+		const view = await service.initiatives('m1' as never);
+		expect(view.missions.find((m) => m.ewMissionId === 'ew-m-9')?.suggestion).toBeNull();
+		await service.decide('m1' as never, { acceptSuggestions: true });
+		expect(links.find((l) => l['ewId'] === 'ew-m-9')).toBeUndefined();
+	});
+
 	it('pairing keeps on the link what the mission has that Gauzy cannot map, so a push never removes it', async () => {
 		const { service, missionsMock, ewOrg, initiatives, links } = setup();
 		missionsMock.addMission(ewOrg.id, {

@@ -1,4 +1,4 @@
-// cspell:ignore sendgrid
+// cspell:ignore sendgrid dmarc
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 
 /**
@@ -137,3 +137,274 @@ export interface IInboxProviderAccountCheck {
  * Inbox email features are off the token is absent and the plugin stays idle.
  */
 export const INBOX_EMAIL_PROVIDER_REGISTRY = 'INBOX_EMAIL_PROVIDER_REGISTRY';
+
+// ---------------------------------------------------------------- mailboxes (plan 04 §2, §5.1)
+
+/** How a mailbox receives. */
+export enum InboxMailboxKindEnum {
+	/** An address on the platform domain (`GAUZY_INBOX_DOMAIN`), received by the platform route. */
+	PLATFORM = 'PLATFORM',
+	/** An address on an organization's own, verified domain, received through a provider account. */
+	CUSTOM_DOMAIN = 'CUSTOM_DOMAIN',
+	/** A platform address the user forwards an existing mailbox to (no DNS change). */
+	FORWARDING = 'FORWARDING',
+	/** An existing mailbox Gauzy reads (IMAP, Gmail, Microsoft 365; P5). */
+	CONNECTED = 'CONNECTED'
+}
+
+/** Whose mailbox it is. */
+export enum InboxMailboxOwnerTypeEnum {
+	EMPLOYEE = 'EMPLOYEE',
+	ORGANIZATION = 'ORGANIZATION',
+	TEAM = 'TEAM'
+}
+
+export enum InboxMailboxPurposeEnum {
+	INBOX = 'INBOX',
+	/** Reserved: docs capture moving onto mailboxes later (plan 04 §5.1). */
+	DOCS_CAPTURE = 'DOCS_CAPTURE'
+}
+
+export enum InboxMailboxDomainStatusEnum {
+	PENDING = 'PENDING',
+	VERIFIED = 'VERIFIED',
+	FAILED = 'FAILED'
+}
+
+/** A user's role in a shared (organization or team) mailbox. */
+export enum InboxMailboxMemberRoleEnum {
+	READER = 'READER',
+	MANAGER = 'MANAGER'
+}
+
+/** A mailbox (`inbox_mailbox`), as the API answers it: never its inbound secret or verification token. */
+export interface IInboxMailbox extends IBasePerTenantAndOrganizationEntityModel {
+	address: string;
+	displayName?: string | null;
+	kind: InboxMailboxKindEnum;
+	ownerType: InboxMailboxOwnerTypeEnum;
+	ownerEmployeeId?: ID | null;
+	ownerTeamId?: ID | null;
+	purpose: InboxMailboxPurposeEnum;
+	/** `null`: the platform default (the platform route on `GAUZY_INBOX_DOMAIN`). */
+	providerAccountId?: ID | null;
+	senderAllowlist?: string[];
+	domain?: string | null;
+	domainStatus?: InboxMailboxDomainStatusEnum | null;
+	isDefault?: boolean;
+	autoProvisioned?: boolean;
+	lastMessageAt?: Date | null;
+	messageCount?: number;
+	settings?: Record<string, unknown> | null;
+}
+
+// ---------------------------------------------------------------- email (plan 04 §2, §5.3, §5.5)
+
+export enum InboxEmailDirectionEnum {
+	IN = 'IN',
+	OUT = 'OUT'
+}
+
+export enum InboxEmailStatusEnum {
+	/** Stored by the webhook; the worker has not processed it yet. */
+	RECEIVED = 'RECEIVED',
+	/** Claimed by a worker. */
+	PROCESSING = 'PROCESSING',
+	/** Processed: sanitized, threaded, an inbox item created. */
+	PROCESSED = 'PROCESSED',
+	/** Held as spam: no inbox item until a mailbox manager releases it. */
+	QUARANTINED = 'QUARANTINED',
+	FAILED = 'FAILED',
+	/** Outbound, being sent. */
+	QUEUED = 'QUEUED',
+	SENT = 'SENT'
+}
+
+export enum InboxEmailSpamVerdictEnum {
+	HAM = 'ham',
+	SUSPECT = 'suspect',
+	SPAM = 'spam'
+}
+
+/** An address of a stored message. */
+export interface IInboxEmailAddress {
+	address: string;
+	name?: string;
+}
+
+/** An attachment of a stored message (metadata; the bytes are downloaded through the API). */
+export interface IInboxEmailAttachment {
+	id: ID;
+	emailId: ID;
+	filename: string;
+	contentType?: string | null;
+	size: number;
+	sha256?: string | null;
+	contentId?: string | null;
+	isInline: boolean;
+	savedDocumentId?: ID | null;
+}
+
+/** A stored message (`inbox_email`), as the API answers it. `htmlSanitized` is sanitized on the server. */
+export interface IInboxEmail extends IBasePerTenantAndOrganizationEntityModel {
+	mailboxId: ID;
+	threadId?: ID | null;
+	direction: InboxEmailDirectionEnum;
+	messageId: string;
+	inReplyTo?: string | null;
+	references: string[];
+	from?: IInboxEmailAddress | null;
+	to: IInboxEmailAddress[];
+	cc: IInboxEmailAddress[];
+	bcc: IInboxEmailAddress[];
+	replyTo: IInboxEmailAddress[];
+	subject?: string | null;
+	textBody?: string | null;
+	htmlSanitized?: string | null;
+	snippet?: string | null;
+	headers?: Record<string, string> | null;
+	spf?: string | null;
+	dkim?: string | null;
+	dmarc?: string | null;
+	spamScore?: number | null;
+	spamVerdict?: InboxEmailSpamVerdictEnum | null;
+	receivedAt?: Date | null;
+	sentAt?: Date | null;
+	sizeBytes?: number | null;
+	status: InboxEmailStatusEnum;
+	providerMessageId?: string | null;
+	error?: string | null;
+	inboxItemId?: ID | null;
+	attachments?: IInboxEmailAttachment[];
+}
+
+/** `POST /api/inbox/emails/:id/reply`. Sent from the mailbox's address, in the message's thread. */
+export interface IInboxEmailReplyInput {
+	text: string;
+	/** Also to the original `To` / `Cc` (minus the mailbox itself). */
+	replyAll?: boolean;
+	cc?: string[];
+}
+
+/** `POST /api/inbox/emails/:id/forward`. */
+export interface IInboxEmailForwardInput {
+	to: string[];
+	text?: string;
+	/** Defaults to `true`. */
+	includeAttachments?: boolean;
+}
+
+/** What the provider webhook answers (202). */
+export interface IInboxInboundResult {
+	/** Messages stored for a mailbox (one per mailbox a message is for). */
+	accepted: number;
+	/** Messages that were already stored for that mailbox (a provider's retry). */
+	duplicates: number;
+	/** Recipients that are no active mailbox of this account, and messages over the size cap. */
+	dropped: number;
+}
+
+// ---------------------------------------------------------------- mailbox management (plan 04 §3, §5.1, G-P4-1)
+
+/** `POST /api/inbox/mailboxes`. */
+export interface IInboxMailboxCreateInput {
+	ownerType: InboxMailboxOwnerTypeEnum;
+	/** EMPLOYEE mailboxes. */
+	ownerEmployeeId?: ID;
+	/** TEAM mailboxes. */
+	ownerTeamId?: ID;
+	/** Defaults to PLATFORM (an address on `GAUZY_INBOX_DOMAIN`). */
+	kind?: InboxMailboxKindEnum.PLATFORM | InboxMailboxKindEnum.CUSTOM_DOMAIN | InboxMailboxKindEnum.FORWARDING;
+	/**
+	 * The address's local part: chosen for a custom domain; for a platform address the name part (`support` of
+	 * `support.<orgSlug>@…`), allocated from the owner when left out.
+	 */
+	localPart?: string;
+	/** CUSTOM_DOMAIN: the organization's domain (verified by a DNS TXT record before it receives). */
+	domain?: string;
+	displayName?: string;
+	/** Required for a custom domain; `null` / left out = the platform route. */
+	providerAccountId?: ID | null;
+	senderAllowlist?: string[];
+	organizationId?: ID;
+	isDefault?: boolean;
+	/** FORWARDING: the existing address that forwards to this one (shown in the instructions). */
+	forwardFrom?: string;
+}
+
+/** `PATCH /api/inbox/mailboxes/:id`. */
+export interface IInboxMailboxUpdateInput {
+	displayName?: string | null;
+	isActive?: boolean;
+	senderAllowlist?: string[];
+	providerAccountId?: ID | null;
+	isDefault?: boolean;
+	/** Free settings (P4c: `everWorksAgentId`). */
+	settings?: Record<string, unknown> | null;
+}
+
+/** The DNS record that proves a custom domain (`POST /api/inbox/mailboxes/:id/verify`). */
+export interface IInboxMailboxDomainVerification {
+	recordType: 'TXT';
+	recordName: string;
+	recordValue: string;
+	status: InboxMailboxDomainStatusEnum;
+	message?: string;
+}
+
+/** A mailbox's relay secret, answered once (`POST /api/inbox/mailboxes/:id/rotate-secret`). */
+export interface IInboxMailboxSecret {
+	address: string;
+	inboundSecret: string;
+}
+
+/** `PUT /api/inbox/mailboxes/:id/members`. */
+export interface IInboxMailboxMemberInput {
+	userId: ID;
+	role?: InboxMailboxMemberRoleEnum;
+}
+
+export interface IInboxMailboxMember {
+	userId: ID;
+	role: InboxMailboxMemberRoleEnum;
+}
+
+/** `POST /api/inbox/mailboxes/provision`: create what is missing now. */
+export interface IInboxMailboxProvisionInput {
+	organizationId?: ID;
+	/** A mailbox for every active (human) employee of the organization that has none. */
+	employees?: boolean;
+	/** The organization's default mailbox (`inbox.<orgSlug>@…`) when it has none. */
+	defaultOrganizationMailbox?: boolean;
+}
+
+export interface IInboxMailboxProvisionResult {
+	created: IInboxMailbox[];
+	/** Owners that already had a mailbox. */
+	existing: number;
+}
+
+/** An organization's email settings (`GET / PUT /api/inbox/mailboxes/settings`). */
+export interface IInboxOrganizationEmailSettings {
+	organizationId: ID;
+	/** Create a mailbox for every new employee (agents never get one). */
+	autoProvisionEmployees: boolean;
+}
+
+/**
+ * One address namespace for every inbound address of the platform (plan 04 §5.1): the Inbox provides this token,
+ * and the Docs plugin asks it before it takes a custom capture address (the Inbox asks the Docs table in turn).
+ */
+export const INBOUND_ADDRESS_NAMESPACE = 'INBOUND_ADDRESS_NAMESPACE';
+
+export interface IInboundAddressNamespace {
+	/** Whether an inbound address (lower-case, no `+tag`) is already taken. */
+	isTaken(address: string): Promise<boolean>;
+	/**
+	 * Runs `work` (the check of an address and the save that takes it) while no other claim of that address runs, in
+	 * either feature and across the replicas, so two requests for one address never both pass their checks.
+	 */
+	claim?<T>(address: string, work: () => Promise<T>): Promise<T>;
+	/** Whether a domain (lower-case) is the Inbox's platform mailbox domain or under it: no custom address there. */
+	isReservedDomain?(domain: string): boolean;
+}

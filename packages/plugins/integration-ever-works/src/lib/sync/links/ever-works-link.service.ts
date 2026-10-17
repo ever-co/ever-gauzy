@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource, EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
@@ -19,6 +19,52 @@ export interface EverWorksLinkInput {
 	ewOnly?: Record<string, unknown> | null;
 	direction: 'inbound' | 'outbound';
 	state?: EverWorksLinkState;
+}
+
+/**
+ * A link write refused because it would lower the link's Ever Works version (plan 03 §C.4, monotonic
+ * links): the handler worked from an older state than the one already recorded — it outlived its lease,
+ * or a newer event or push recorded first. The newer snapshot stays. The applier settles the event as
+ * skipped when the refused link is the event's own record (the newer version covers it) and retries it
+ * otherwise; the pusher retries the change against the newer snapshot; an admin action answers `409`.
+ */
+export class EverWorksStaleLinkError extends ConflictException {
+	constructor(
+		readonly linkId: ID,
+		readonly ewId: string,
+		readonly storedVersion: number | null,
+		readonly refusedVersion: number | null
+	) {
+		super(`The link of Ever Works record ${ewId} already records version ${storedVersion}; the write of version ${refusedVersion ?? '(none)'} was refused.`);
+		this.name = 'EverWorksStaleLinkError';
+	}
+}
+
+/**
+ * Whether writing `input` over `current` would lower the link's Ever Works version: same Ever Works
+ * record, a version stated, and the stored one higher (a stated `null` is lower than any version). A
+ * write that states no version (`undefined`), or that pairs the Gauzy record with another Ever Works
+ * record, is never refused.
+ */
+export function wouldLowerLinkVersion(
+	current: Pick<EverWorksEntityLink, 'ewId' | 'ewVersion'>,
+	input: Pick<EverWorksLinkInput, 'ewId' | 'ewVersion'>
+): boolean {
+	if (input.ewVersion === undefined || current.ewId !== input.ewId || current.ewVersion == null) return false;
+	return input.ewVersion === null || input.ewVersion < current.ewVersion;
+}
+
+/** Whether a stored link row already holds the values of a write (its sync time aside). */
+function linkHolds(row: EverWorksEntityLink, values: Record<string, unknown>): boolean {
+	const stored = row as unknown as Record<string, unknown>;
+	return Object.entries(values).every(([key, value]) => {
+		if (key === 'lastSyncedAt') return true;
+		const current = stored[key] ?? null;
+		if (value instanceof Date || current instanceof Date) {
+			return value !== null && current !== null && new Date(value as Date).getTime() === new Date(current as Date).getTime();
+		}
+		return current === (value ?? null);
+	});
 }
 
 /**
@@ -58,6 +104,12 @@ export class EverWorksLinkService {
 	/**
 	 * Records a link: updates the row of the Ever Works id (or, failing that, of the Gauzy id), or inserts
 	 * one. A unique-index race with another process is retried once as an update.
+	 *
+	 * **Monotonic version:** the update is one conditional statement that never lowers the stored
+	 * `ewVersion` of the same Ever Works record (`ewVersion IS NULL OR ewVersion <= :new`), so a handler
+	 * that worked from an older state — one that outlived its lease, or lost a race with a newer event or
+	 * push — cannot overwrite the newer snapshot; it gets {@link EverWorksStaleLinkError} instead. An equal
+	 * version is written (a later write of the same Ever Works state, e.g. the Gauzy side after a push).
 	 */
 	async record(input: EverWorksLinkInput, manager?: EntityManager): Promise<EverWorksEntityLink> {
 		for (let attempt = 0; attempt < 2; attempt++) {
@@ -79,8 +131,15 @@ export class EverWorksLinkService {
 				lastError: null
 			};
 			if (existing) {
-				await repository.update({ id: existing.id }, values as never);
-				return { ...existing, ...values } as EverWorksEntityLink;
+				if (wouldLowerLinkVersion(existing, input)) throw new EverWorksStaleLinkError(existing.id as ID, existing.ewId, existing.ewVersion ?? null, input.ewVersion ?? null);
+				if (await this.updateUnlessLower(existing.id as ID, input, values, manager)) return { ...existing, ...values } as EverWorksEntityLink;
+				// Nothing written: a newer version landed since the read (refused), the row is gone (inserted on the
+				// next attempt), or it changed otherwise (re-paired: the next attempt reads it again).
+				const current = await repository.findOne({ where: { id: existing.id } });
+				if (current && wouldLowerLinkVersion(current, input)) throw new EverWorksStaleLinkError(current.id as ID, current.ewId, current.ewVersion ?? null, input.ewVersion ?? null);
+				// A driver that counts changed rows only: the row already holds exactly these values.
+				if (current && linkHolds(current, values)) return current;
+				continue;
 			}
 			try {
 				const row = {
@@ -97,7 +156,27 @@ export class EverWorksLinkService {
 				if (attempt === 1) throw error;
 			}
 		}
-		throw new Error('unreachable');
+		throw new Error(`The ${input.entityType} link of Ever Works record ${input.ewId} changed twice while it was being recorded.`);
+	}
+
+	/**
+	 * One conditional update of a link row: with a stated version, only while the row's version is not
+	 * higher (or the row pairs another Ever Works record). Returns whether a row was written.
+	 */
+	private async updateUnlessLower(id: ID, input: EverWorksLinkInput, values: Record<string, unknown>, manager?: EntityManager): Promise<boolean> {
+		const builder = (manager ?? this.dataSource.manager).createQueryBuilder().update(EverWorksEntityLink).set(values as never);
+		const q = (name: string) => builder.escape(name);
+		builder.where(`${q('id')} = :id`, { id });
+		if (input.ewVersion !== undefined) {
+			builder.andWhere(
+				input.ewVersion === null
+					? `(${q('ewId')} <> :ewId OR ${q('ewVersion')} IS NULL)`
+					: `(${q('ewId')} <> :ewId OR ${q('ewVersion')} IS NULL OR ${q('ewVersion')} <= :ewVersion)`,
+				{ ewId: input.ewId, ...(input.ewVersion === null ? {} : { ewVersion: input.ewVersion }) }
+			);
+		}
+		const result = await builder.execute();
+		return (result.affected ?? 0) > 0;
 	}
 
 	/** Deletes a link (a pairing an admin undid; neither record is touched). */

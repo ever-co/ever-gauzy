@@ -178,6 +178,13 @@ and answered `202`.
 - **Merge.** Per field, against the snapshot: one side changed wins; both
   changed → last writer wins for scalars and rich text (the loser is kept), a
   3-way set merge for sets; Ever Works' gates decide status.
+- **Versions only go up.** A link records the Ever Works version it last
+  synced, and the link update is one conditional statement that never lowers
+  it. A handler that worked from an older state (one that outlived its lease,
+  or lost a race with a newer event or push) gets a refusal instead of
+  overwriting the newer snapshot: the applier skips that event (the newer
+  version covers it), the pusher retries the change against the newer
+  snapshot, and an admin action answers `409`.
 - **People.** Ever Works members are paired with Gauzy people on the People
   tab: a verified, case-insensitive email match is only a suggestion the admin
   confirms (one by one or all at once); nothing is linked silently and
@@ -286,11 +293,44 @@ and answered `202`.
   with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
   Gauzy user paired with the recipient, with the linked task, project and
   agent. An item whose recipient is not paired yet waits (deferred, retried
-  hourly) until the People tab pairs them. A reply in Gauzy goes to Ever Works
+  hourly) until the People tab pairs them; the tab lists those waiting items
+  per member (`deferredInbox` of `GET …/people`), and pairing a member makes
+  their items due at once. A reply in Gauzy goes to Ever Works
   at once, acting as the recipient (`inbox:write`); an item already decided
   there shows the answer Ever Works holds. Read / unread and archive follow
   to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
   events are skipped.
+- **Docs ↔ the Ever Works Knowledge Base (G-P3-4).** Per mapped
+  organization, synced documents live under a root folder ("Ever Works", or
+  the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first
+  document: `Organization/` holds the organization documents and the library
+  folder tree, `Works/<Work name>/` each Work's documents (the folder is linked
+  to the Work's paired project). An Ever Works document becomes a Docs page:
+  title, description, the Markdown body as the editor's content (headings,
+  lists and task lists, quotes, code, tables, links, images; a `[[path]]`
+  link of a synced document becomes a document mention, any other stays
+  literal text), lock, archive state and review state (an agent's proposal is
+  pending in Gauzy's review queue; approving it there accepts it in Ever
+  Works). Class, tags, language and a decision record are kept in the page's
+  metadata. Before Gauzy's content is replaced it is kept as a page version.
+  When both sides changed the body since the last sync, Ever Works' version
+  wins, Gauzy's edit is kept as a version named "Gauzy edit (conflict)", the
+  conflict is logged and the last Gauzy editor gets an Inbox notice. A page
+  under the synced tree (not private) becomes an Ever Works document of its
+  area, with its path from its folder chain (a Work document under its class
+  folder, `freeform` unless it has a class); its title, description and body
+  (as Markdown) are patched, a move between library folders is filed there,
+  and a removed page is archived in Ever Works. A folder under `Organization/`
+  becomes a library folder and follows renames and moves; a Gauzy folder
+  delete is not pushed. A deleted Ever Works document or folder archives its
+  Gauzy node; nothing is hard-deleted on either side. Files, private pages and
+  folders outside the tree do not sync. A 10-minute sweep queues the tree's
+  changed pages and folders (and, on a process's first sweep, all of them, so
+  pages written before the sync are exported). Each side's body is compared
+  with its own last-synced fingerprint, so a construct one side cannot hold
+  exactly never flaps. Writes go as the attributed person, else as the key.
+  Marking another Gauzy folder "Sync with Ever Works" (plan 05 §1) is not part
+  of this version.
 - **Scope.** A record on a team is team-scoped on both sides, on no team
   organization-scoped: team resources set the team of the linked project or
   task, a record whose Gauzy team is not linked yet waits, and private Ever
