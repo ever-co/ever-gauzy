@@ -178,6 +178,13 @@ and answered `202`.
 - **Merge.** Per field, against the snapshot: one side changed wins; both
   changed → last writer wins for scalars and rich text (the loser is kept), a
   3-way set merge for sets; Ever Works' gates decide status.
+- **Versions only go up.** A link records the Ever Works version it last
+  synced, and the link update is one conditional statement that never lowers
+  it. A handler that worked from an older state (one that outlived its lease,
+  or lost a race with a newer event or push) gets a refusal instead of
+  overwriting the newer snapshot: the applier skips that event (the newer
+  version covers it), the pusher retries the change against the newer
+  snapshot, and an admin action answers `409`.
 - **People.** Ever Works members are paired with Gauzy people on the People
   tab: a verified, case-insensitive email match is only a suggestion the admin
   confirms (one by one or all at once); nothing is linked silently and

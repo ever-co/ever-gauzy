@@ -68,6 +68,7 @@ import {
 import { EverWorksSyncContext } from './ever-works-sync.context';
 import { EverWorksSyncLogService } from './ever-works-sync-log.service';
 import { EverWorksSyncLoop } from './ever-works-sync.loop';
+import { EverWorksLinkInput, EverWorksLinkService, EverWorksStaleLinkError } from './links/ever-works-link.service';
 import { EverWorksFeedPoller } from './inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './inbound/ever-works-inbound.applier';
 import { EverWorksInboundStore } from './inbound/ever-works-inbound.store';
@@ -625,6 +626,105 @@ describe('Ever Works sync engine on SQLite', () => {
 			expect(await pusher.drain(connection, 100, new Date(Date.now() + 10_000))).toBe(0);
 			const [row] = await changes.find({ where: { gauzyId: 't5' } });
 			expect(row.status).toBe(EverWorksOutboundStatus.PUSHING);
+		});
+	});
+
+	describe('monotonic link versions (a handler that outlived its lease)', () => {
+		const linkInput = (over: Partial<EverWorksLinkInput> = {}): EverWorksLinkInput => ({
+			tenantId: A.tenantId as never,
+			organizationId: A.organizationId as never,
+			integrationTenantId: integrationTenantId as never,
+			entityType: EverWorksLinkType.TASK,
+			gauzyId: 'g-task-1' as never,
+			ewId: 'task-1',
+			direction: 'inbound',
+			...over
+		});
+		const stored = () => dataSource.getRepository(EverWorksEntityLink).findOneByOrFail({ ewId: 'task-1' });
+		afterEach(() => jest.restoreAllMocks());
+
+		it('never lowers the version of the same Ever Works record; an equal version, no version or another record is written', async () => {
+			const links = new EverWorksLinkService(dataSource);
+			await links.record(linkInput({ ewVersion: 3, snapshot: { title: 'v3' } }));
+			await links.record(linkInput({ ewVersion: 5, snapshot: { title: 'v5' } }));
+			await expect(links.record(linkInput({ ewVersion: 4, snapshot: { title: 'v4' } }))).rejects.toBeInstanceOf(EverWorksStaleLinkError);
+			await expect(links.record(linkInput({ ewVersion: null, snapshot: { title: 'none' } }))).rejects.toBeInstanceOf(EverWorksStaleLinkError);
+			expect(await stored()).toMatchObject({ ewVersion: 5, snapshot: JSON.stringify({ title: 'v5' }) });
+			// The same Ever Works state again (the Gauzy side after a push): written.
+			await links.record(linkInput({ ewVersion: 5, snapshot: { title: 'v5 + gauzy' }, direction: 'outbound' }));
+			expect(await stored()).toMatchObject({ ewVersion: 5, snapshot: JSON.stringify({ title: 'v5 + gauzy' }), lastDirection: 'outbound' });
+			// No version stated: nothing to compare, written as before.
+			await links.record(linkInput({ snapshot: { title: 'unversioned' } }));
+			expect(await stored()).toMatchObject({ ewVersion: 5, snapshot: JSON.stringify({ title: 'unversioned' }) });
+			// The Gauzy record paired with another Ever Works record: a new pairing, its own version.
+			await links.record(linkInput({ ewId: 'task-2', ewVersion: 1 }));
+			expect(await dataSource.getRepository(EverWorksEntityLink).findOneByOrFail({ gauzyId: 'g-task-1' })).toMatchObject({ ewId: 'task-2', ewVersion: 1 });
+		});
+
+		it('a newer version written after the handler read the link wins: the stale write is one refused conditional update', async () => {
+			const links = new EverWorksLinkService(dataSource);
+			await links.record(linkInput({ ewVersion: 3, snapshot: { title: 'v3' } }));
+			const read = await stored();
+			// Another process applies version 6 while this handler still works from its read of version 3.
+			await links.record(linkInput({ ewVersion: 6, snapshot: { title: 'v6' } }));
+			jest.spyOn(links, 'byEw').mockResolvedValueOnce(read);
+			const refused = await links.record(linkInput({ ewVersion: 4, snapshot: { title: 'v4' } })).catch((error) => error);
+			expect(refused).toBeInstanceOf(EverWorksStaleLinkError);
+			expect(refused).toMatchObject({ ewId: 'task-1', storedVersion: 6, refusedVersion: 4 });
+			expect(refused.getStatus()).toBe(409);
+			expect(await stored()).toMatchObject({ ewVersion: 6, snapshot: JSON.stringify({ title: 'v6' }) });
+		});
+
+		it('a refused write whose row was re-paired before the re-read is not reported as saved: it is written on a fresh read', async () => {
+			const links = new EverWorksLinkService(dataSource);
+			await links.record(linkInput({ ewVersion: 6, snapshot: { title: 'v6' } }));
+			const read = { ...(await stored()), ewVersion: 3 } as EverWorksEntityLink;
+			const repository = dataSource.getRepository(EverWorksEntityLink);
+			const findOne = repository.findOne.bind(repository);
+			jest.spyOn(links, 'byEw').mockResolvedValueOnce(read);
+			// Between the refused update and the re-read, another process re-pairs the Gauzy record.
+			jest.spyOn(repository, 'findOne').mockImplementationOnce(async (options) => {
+				await repository.update({ ewId: 'task-1' }, { ewId: 'task-9', ewVersion: 8 } as never);
+				return findOne(options);
+			});
+			const saved = await links.record(linkInput({ ewVersion: 4, snapshot: { title: 'v4' } }));
+			const row = await repository.findOneByOrFail({ gauzyId: 'g-task-1' });
+			expect(row).toMatchObject({ ewId: 'task-1', ewVersion: 4, snapshot: JSON.stringify({ title: 'v4' }) });
+			expect(saved).toMatchObject({ ewId: 'task-1', ewVersion: 4 });
+		});
+
+		it('the applier settles a refused write of the event’s own record as skipped, and retries a refused dependency', async () => {
+			const applier = new EverWorksInboundApplier(dataSource, log);
+			applier.register({
+				aggregateTypes: ['task'],
+				apply: async (env) => {
+					throw new EverWorksStaleLinkError('link-1' as never, env.aggregate.id === 'task-1' ? 'task-1' : 'parent-task', 7, 2);
+				}
+			});
+			await store.record(connection, envelope({ seq: '1' }) as never, 'webhook');
+			await store.record(connection, envelope({ seq: '2', aggregate: { type: 'task', id: 'task-2', version: 2 } }) as never, 'webhook');
+			await applier.drain(connection);
+			const own = await events().findOneByOrFail({ seq: '1' } as never);
+			expect(own).toMatchObject({ status: EverWorksInboundStatus.SKIPPED, attempts: 0 });
+			expect(own.error).toMatch(/^superseded: /);
+			expect(await events().findOneByOrFail({ seq: '2' } as never)).toMatchObject({ status: EverWorksInboundStatus.FAILED, attempts: 1 });
+		});
+
+		it('the pusher retries a change whose link write was refused (it is not a terminal refusal)', async () => {
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log);
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async () => {
+					throw new EverWorksStaleLinkError('link-1' as never, 'task-1', 7, 6);
+				}
+			});
+			await queue.enqueue({ tenantId: A.tenantId, organizationId: A.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: 'stale' });
+			await pusher.drain(connection, 100, new Date(Date.now() + 10_000));
+			expect(await dataSource.getRepository(EverWorksOutboundChange).findOneByOrFail({ gauzyId: 'stale' })).toMatchObject({
+				status: EverWorksOutboundStatus.FAILED,
+				attempts: 1
+			});
 		});
 	});
 });
