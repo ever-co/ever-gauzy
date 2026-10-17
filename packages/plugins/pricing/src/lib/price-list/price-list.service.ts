@@ -5,6 +5,7 @@ import { CurrencyCode, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { IPriceContext, IResolvedPrice, PriceListStatus } from '../pricing.types';
 import { ProductPriceService } from '../product-price/product-price.service';
+import { assertOrganizationUnchanged, statedOrganizations } from '../organization-scope';
 import { PriceList } from './price-list.entity';
 import { TypeOrmPriceListRepository } from './repository/type-orm-price-list.repository';
 import { MikroOrmPriceListRepository } from './repository/mikro-orm-price-list.repository';
@@ -88,13 +89,20 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			endsAt: entity.endsAt !== undefined ? (entity.endsAt as Date) : existing.endsAt
 		});
 
+		// A list stays in the organization it was created in. `prepare` stamps the caller's organization,
+		// which on an update would move a list of another organization of the tenant into the caller's.
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price list');
+
 		// Publishing through an update is the same decision as `activate`, and is refused for the same
 		// reason when the window it would publish has already closed.
 		if (entity.status === PriceListStatus.ACTIVE && existing.status !== PriceListStatus.ACTIVE) {
 			this.assertWindowIsOpen(existing.code, prepared.endsAt as Date | null | undefined);
 		}
 
-		return await super.update(id, prepared as unknown as QueryDeepPartialEntity<PriceList>);
+		return await super.update(id, {
+			...prepared,
+			organizationId: existing.organizationId ?? prepared.organizationId
+		} as unknown as QueryDeepPartialEntity<PriceList>);
 	}
 
 	/**
@@ -188,7 +196,8 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			throw new BadRequestException('PRICE_ORGANIZATION_REQUIRED: a price list belongs to an organization.');
 		}
 
-		if (entity.organizationId && String(entity.organizationId) !== String(organizationId)) {
+		// The column and the relation alike: the ORM writes either (R2-G34).
+		if (statedOrganizations(entity).some((stated) => stated && String(stated) !== String(organizationId))) {
 			throw new BadRequestException('PRICE_ORGANIZATION_MISMATCH: a price list belongs to the caller\'s organization.');
 		}
 
@@ -198,6 +207,18 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 
 		if (typeof entity.code !== 'string' || entity.code.trim() === '') {
 			throw new BadRequestException('PRICE_LIST_CODE_REQUIRED: a price list needs a code.');
+		}
+
+		// The REST DTO states `@IsInt() @Min(0)`; the GraphQL input is an `Int` with no floor, so the rule
+		// is stated here, where both protocols reach it (R2-G34).
+		if (
+			entity.priority !== undefined &&
+			entity.priority !== null &&
+			(!Number.isInteger(Number(entity.priority)) || Number(entity.priority) < 0)
+		) {
+			throw new BadRequestException(
+				`PRICE_LIST_PRIORITY_INVALID: a priority is a whole number of zero or more; ${entity.priority} is not.`
+			);
 		}
 
 		if (entity.currency && String(entity.currency).trim().length !== 3) {
