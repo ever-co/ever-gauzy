@@ -178,6 +178,8 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 	let pageSize: number;
 	/** A list route answers 404 after this many requests (a route Ever Works stops serving part-way). */
 	let failListAfter: Record<string, number>;
+	/** Runs before a list request is answered (its path and how many times it was requested). */
+	let onList: ((path: string, call: number) => Promise<void>) | null;
 	let listCalls: Record<string, number>;
 	let connections: EverWorksConnectionService;
 	let store: EverWorksInboundStore;
@@ -260,6 +262,7 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		lists = new Map();
 		pageSize = 500;
 		failListAfter = {};
+		onList = null;
 		listCalls = {};
 		// The mock answers whoami, the feed and webhooks; list routes the engine items have not added to it yet are served here.
 		const transport = {
@@ -270,6 +273,7 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 				const rows = request.method === 'GET' ? lists.get(path) : undefined;
 				if (rows) {
 					listCalls[path] = (listCalls[path] ?? 0) + 1;
+					if (onList) await onList(path, listCalls[path]);
 					if (failListAfter[path] !== undefined && listCalls[path] > failListAfter[path]) {
 						return { status: 404, headers: {}, data: { error: { code: 'not_found', message: 'No such route.' } } };
 					}
@@ -477,6 +481,44 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		const held = () => dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', availableAt: MoreThan(new Date('9000-01-01')) } as never });
 		expect(await held()).toBe(1);
 		await initial.cancel(integrationTenantId);
+		expect(await held()).toBe(0);
+	});
+
+	it('a cancel during a list import leaves nothing held: the rest of the page is released too (review F18)', async () => {
+		pageSize = 1;
+		const held = () => dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', availableAt: MoreThan(new Date('9000-01-01')) } as never });
+		// The depth pass reads the 3 agent pages, the import reads page 1; the admin cancels while page 2 is read.
+		onList = async (path, call) => {
+			if (path === '/agents' && call === 5) await initial.cancel(integrationTenantId);
+		};
+		await initial.start(integrationTenantId, 'initial');
+		await reload();
+		await initial.sweep(connection);
+		expect((await runs().findOneOrFail({ where: { integrationTenantId } as never })).status).toBe('cancelled');
+		// Page 2 was stored after the cancel released page 1: it is due too, not held until 9999.
+		expect(await dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', aggregateType: 'agent' } as never })).toBe(2);
+		expect(await held()).toBe(0);
+	});
+
+	it('records a run that ended left held are released by the next sweep (review F18)', async () => {
+		const envelope = {
+			id: 'initial:agent:orphan:v1',
+			seq: '0',
+			type: 'agent.updated',
+			version: 1,
+			occurredAt: new Date().toISOString(),
+			tenantId: mock.tenant.id,
+			organizationId: ewOrgId,
+			aggregate: { type: 'agent', id: 'orphan', version: 1 },
+			actor: { type: 'system', id: 'initial-sync' },
+			data: { id: 'orphan' }
+		};
+		await reload();
+		await store.record(connection, envelope as never, 'initial', { availableAt: new Date('9999-01-01T00:00:00.000Z') });
+		const held = () => dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', availableAt: MoreThan(new Date('9000-01-01')) } as never });
+		expect(await held()).toBe(1);
+		// No run is running for the mapping: nothing will release it otherwise, and it would hold back its agent's live events.
+		await initial.sweep(connection);
 		expect(await held()).toBe(0);
 	});
 
