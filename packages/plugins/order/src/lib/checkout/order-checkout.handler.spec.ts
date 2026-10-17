@@ -13,16 +13,17 @@
 jest.mock('@gauzy/plugin-cart', () => ({ CommerceCart: class {}, CommerceCartService: class {} }));
 jest.mock('../order/order.service', () => ({ OrderService: class {} }));
 
-import { CommerceCartStatus } from '@gauzy/contracts';
+import { CommerceCartStatus, OrderStatus } from '@gauzy/contracts';
 import { OrderCheckoutHandler } from './order-checkout.handler';
 
 /** The handler over doubled collaborators, with the cart it reads and the placed order the cart already has. */
-function fixture(placed: { id: string; number: string } | null) {
+function fixture(placed: { id: string; number: string; status?: OrderStatus } | null) {
 	const cart = { id: 'cart-1', status: CommerceCartStatus.ACTIVE, lines: [] };
 	const orderService = {
 		canCreateFromCart: jest.fn(() => true),
 		findPlacedForCart: jest.fn(async () => placed),
-		createFromCart: jest.fn(async () => ({ id: 'order-new', number: 'ORD-NEW' }))
+		createFromCart: jest.fn(async () => ({ id: 'order-new', number: 'ORD-NEW' })),
+		confirm: jest.fn(async (id: string) => ({ ...placed, id, status: OrderStatus.CONFIRMED }))
 	};
 	const cartService = { findOneWithContent: jest.fn(async () => cart) };
 	const handler = new OrderCheckoutHandler(orderService as never, cartService as never);
@@ -32,12 +33,31 @@ function fixture(placed: { id: string; number: string } | null) {
 
 describe('OrderCheckoutHandler — one placed order per cart (R3-10)', () => {
 	it('answers with the order a previous checkout placed, and places no second one', async () => {
-		const { handler, orderService, cart } = fixture({ id: 'order-1', number: 'ORD-1' });
+		const { handler, orderService, cart } = fixture({
+			id: 'order-1',
+			number: 'ORD-1',
+			status: OrderStatus.CONFIRMED
+		});
 
 		const result = await handler.complete({ cart: cart as never, idempotencyKey: 'key-2' });
 
 		expect(result).toEqual({ orderId: 'order-1', orderNumber: 'ORD-1' });
 		expect(orderService.findPlacedForCart).toHaveBeenCalledWith('cart-1');
+		expect(orderService.createFromCart).not.toHaveBeenCalled();
+		expect(orderService.confirm).not.toHaveBeenCalled();
+	});
+
+	it('confirms a recovered order the dead checkout placed but did not confirm', async () => {
+		const { handler, orderService, cart } = fixture({
+			id: 'order-1',
+			number: 'ORD-1',
+			status: OrderStatus.PENDING
+		});
+
+		const result = await handler.complete({ cart: cart as never, idempotencyKey: 'key-2' });
+
+		expect(orderService.confirm).toHaveBeenCalledWith('order-1', 'SYSTEM');
+		expect(result).toEqual({ orderId: 'order-1', orderNumber: 'ORD-1' });
 		expect(orderService.createFromCart).not.toHaveBeenCalled();
 	});
 

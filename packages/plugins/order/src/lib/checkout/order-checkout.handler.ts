@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { OrderStatus } from '@gauzy/contracts';
 import {
 	CommerceCart,
 	CommerceCartService,
@@ -56,7 +57,12 @@ export class OrderCheckoutHandler implements ICartCheckoutHandler {
 		const placed = await this.orderService.findPlacedForCart(cart.id);
 
 		if (placed) {
-			return { orderId: placed.id, orderNumber: placed.number };
+			// `createFromCart` places and then confirms; a checkout that died between the two left the order
+			// `PENDING`, and the recovery finishes what it started rather than completing the cart over it.
+			const recovered =
+				placed.status === OrderStatus.PENDING ? await this.orderService.confirm(placed.id, 'SYSTEM') : placed;
+
+			return { orderId: recovered.id, orderNumber: recovered.number };
 		}
 
 		const order = await this.orderService.createFromCart(cart as any, {
