@@ -279,13 +279,19 @@ function decodeEntities(text: string): string {
 export function parseHtml(html: string): HtmlNode {
 	const root: HtmlNode = { tag: '#root', attributes: {}, children: [] };
 	const stack: HtmlNode[] = [root];
-	const token = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*(\/?)>|([^<]+|<)/g;
+	// Linear on any input (comments are stored unsanitized): an attribute name never contains '<', so '<a <a <a …'
+	// with no '>' fails at the next '<' instead of re-scanning the rest of the input from every '<' (quadratic); an
+	// unclosed comment runs to the end of the input, as in a browser, instead of being re-scanned from every '<!--'.
+	const token = /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^\s"'<>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*(\/?)>|([^<]+|<)/g;
 	let match: RegExpExecArray | null;
 	while ((match = token.exec(html))) {
 		const [whole, closing, rawTag, rawAttributes, selfClosing, text] = match;
 		const top = stack[stack.length - 1];
 		if (text !== undefined) {
-			top.children.push(decodeEntities(text));
+			// A stray '<' is its own token: join it to the text around it, so the Markdown escaping sees '<a' whole.
+			const last = top.children[top.children.length - 1];
+			if (typeof last === 'string') top.children[top.children.length - 1] = last + decodeEntities(text);
+			else top.children.push(decodeEntities(text));
 			continue;
 		}
 		if (!rawTag || whole.startsWith('<!--')) continue;
@@ -296,7 +302,7 @@ export function parseHtml(html: string): HtmlNode {
 			continue;
 		}
 		const attributes: Record<string, string> = {};
-		const attribute = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+		const attribute = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 		let pair: RegExpExecArray | null;
 		while ((pair = attribute.exec(rawAttributes ?? ''))) {
 			attributes[(pair[1] ?? '').toLowerCase()] = decodeEntities(pair[2] ?? pair[3] ?? pair[4] ?? '');

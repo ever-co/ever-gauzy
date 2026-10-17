@@ -102,6 +102,20 @@ describe('Markdown ↔ HTML', () => {
 		expect(htmlToMarkdown('')).toBe('');
 	});
 
+	it('parses raw Gauzy HTML in linear time: unclosed tags and comments (ReDoS, review F20)', () => {
+		// Comments are stored unsanitized; '<a <a <a …' with no '>' made the tokenizer quadratic (60 KB ≈ 6 s).
+		for (const unit of ['<a ', '<a x="1" <a ', '<!--', '<a href=x ']) {
+			const started = Date.now();
+			const markdown = htmlToMarkdown(unit.repeat(20_000));
+			expect(Date.now() - started).toBeLessThan(2000);
+			expect(typeof markdown).toBe('string');
+		}
+		// Unclosed tags are text; a '<' inside a quoted value is still a value; an unclosed comment runs to the end.
+		expect(htmlToMarkdown('<p>1 <a 2 <b>bold</b></p>')).toBe('1 \\<a 2 **bold**');
+		expect(htmlToMarkdown('<p><a href="https://a.example" title="a <b> c">site</a></p>')).toBe('[site](https://a.example)');
+		expect(htmlToMarkdown('<p>kept</p><!-- hidden <p>gone</p>')).toBe('kept');
+	});
+
 	it('converts to itself again after one round trip (nothing flaps)', () => {
 		for (const markdown of [
 			'Plain text\nwith lines',
