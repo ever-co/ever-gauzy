@@ -4343,7 +4343,9 @@ describe('SubscriptionService — the calendar waits for an invoiced cycle’s p
 		const fixture = subscriptionFixture({ orders: { paid: false } });
 
 		await fixture.service.billCycle(SUBSCRIPTION);
-		await fixture.service.payCycle((fixture.cycle(APRIL) as Row).id, { paidAt: new Date('2026-04-03T00:00:00.000Z') });
+		await fixture.service.payCycle((fixture.cycle(APRIL) as Row).id, {
+			paidAt: new Date('2026-04-03T00:00:00.000Z')
+		});
 
 		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
 			status: SubscriptionStatus.ACTIVE,
@@ -4353,7 +4355,9 @@ describe('SubscriptionService — the calendar waits for an invoiced cycle’s p
 			nextBillingAt: monthAfter(APRIL)
 		});
 		expect(fixture.cycle(APRIL)?.metadata?.calendarDeferred).toBeUndefined();
-		expect(named(fixture.events, 'subscription.renewed')[0].data).toMatchObject({ nextBillingAt: monthAfter(APRIL) });
+		expect(named(fixture.events, 'subscription.renewed')[0].data).toMatchObject({
+			nextBillingAt: monthAfter(APRIL)
+		});
 
 		await fixture.service.billCycle(SUBSCRIPTION, { asOf: monthAfter(APRIL) });
 
@@ -4373,7 +4377,10 @@ describe('SubscriptionService — the calendar waits for an invoiced cycle’s p
 
 		await fixture.service.payCycle((fixture.cycle(APRIL) as Row).id);
 
-		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ status: SubscriptionStatus.ACTIVE, billingCycleCount: 1 });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			billingCycleCount: 1
+		});
 		expect(named(fixture.events, 'subscription.activated')).toHaveLength(1);
 	});
 
@@ -4418,7 +4425,10 @@ describe('SubscriptionService — the calendar waits for an invoiced cycle’s p
 		const fixture = subscriptionFixture({ orders: { paid: false } });
 
 		await fixture.service.billCycle(SUBSCRIPTION);
-		Object.assign(fixture.subscription(SUBSCRIPTION) as Row, { status: SubscriptionStatus.CANCELED, nextBillingAt: null });
+		Object.assign(fixture.subscription(SUBSCRIPTION) as Row, {
+			status: SubscriptionStatus.CANCELED,
+			nextBillingAt: null
+		});
 
 		await fixture.service.payCycle((fixture.cycle(APRIL) as Row).id);
 

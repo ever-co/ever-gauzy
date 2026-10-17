@@ -884,7 +884,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			return { restart: period, nextBillingAt: period.start };
 		}
 
-		if (opening?.status === SubscriptionBillingStatus.INVOICED && this.billingService.holdsDeferredCalendar(opening)) {
+		if (
+			opening?.status === SubscriptionBillingStatus.INVOICED &&
+			this.billingService.holdsDeferredCalendar(opening)
+		) {
 			// Invoiced and waiting for its payment (Q7-W4): the period stays open, and its payment moves the calendar.
 			return { restart: null, nextBillingAt: new Date(subscription.nextBillingAt as Date) };
 		}
@@ -2118,7 +2121,10 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	): Promise<ISubscriptionBillingOutcome> {
 		const settled = await this.billingService.findOneScoped(billing.id);
 
-		if (settled.status === SubscriptionBillingStatus.INVOICED && this.billingService.holdsDeferredCalendar(settled)) {
+		if (
+			settled.status === SubscriptionBillingStatus.INVOICED &&
+			this.billingService.holdsDeferredCalendar(settled)
+		) {
 			// Q7-W4: an invoice nobody has paid yet is the subscription's open cycle. The calendar stays on it — the
 			// period is not counted, a trial does not convert, the plan's ceiling is not reached — so every later
 			// pass replays this cycle instead of invoicing the period after it, and the payment moves the calendar
@@ -2292,12 +2298,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			const plan = await this.planService.findOneScoped(subscription.planId);
 			const cycleCount = (subscription.billingCycleCount ?? 0) + 1;
 			const ceilingReached =
-				plan.maxBillingCycles !== undefined && plan.maxBillingCycles !== null && cycleCount >= plan.maxBillingCycles;
+				plan.maxBillingCycles !== undefined &&
+				plan.maxBillingCycles !== null &&
+				cycleCount >= plan.maxBillingCycles;
 			const status = ceilingReached
 				? SubscriptionStatus.EXPIRED
 				: subscription.status === SubscriptionStatus.PENDING
-				? SubscriptionStatus.ACTIVE
-				: subscription.status;
+					? SubscriptionStatus.ACTIVE
+					: subscription.status;
 
 			try {
 				await commitVersionedUpdate<Subscription>(this, {
