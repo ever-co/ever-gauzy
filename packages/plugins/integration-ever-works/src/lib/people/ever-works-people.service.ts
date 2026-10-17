@@ -143,14 +143,25 @@ export class EverWorksPeopleService {
 				);
 			}
 		});
-		// Their inbox items waited for this pairing: deliver them now rather than at the next hourly retry.
+		// Their inbox items waited for this pairing: deliver them now rather than at the next hourly retry. Every
+		// deferred event is woken (page by page, not only the newest the tab lists), so none keeps an older one waiting.
 		const paired = new Set(pairs.map((pair) => pair.ewUserId));
-		if (paired.size) await requeueDeferredInbox(this.dataSource.getRepository(EverWorksInboundEvent), await this.deferredInboxEvents(context), paired);
+		if (paired.size) {
+			const repository = this.dataSource.getRepository(EverWorksInboundEvent);
+			for (let skip = 0; ; skip += DEFERRED_INBOX_SCAN) {
+				const page = await this.deferredInboxEvents(context, skip);
+				await requeueDeferredInbox(repository, page, paired);
+				if (page.length < DEFERRED_INBOX_SCAN) break;
+			}
+		}
 		return this.view(context, members);
 	}
 
-	/** The connection's deferred Ever Works inbox events of the mapped organization, newest first (bounded). */
-	private deferredInboxEvents(context: EverWorksMappingContext): Promise<EverWorksInboundEvent[]> {
+	/**
+	 * A page of the connection's deferred Ever Works inbox events of the mapped organization, newest first (the tab
+	 * reads the first; waking a pairing reads them all — waking changes `availableAt` only, so the pages stay put).
+	 */
+	private deferredInboxEvents(context: EverWorksMappingContext, skip = 0): Promise<EverWorksInboundEvent[]> {
 		return this.dataSource.getRepository(EverWorksInboundEvent).find({
 			where: {
 				tenantId: context.tenantId,
@@ -160,7 +171,8 @@ export class EverWorksPeopleService {
 				status: EverWorksInboundStatus.DEFERRED
 			} as never,
 			select: { id: true, aggregateId: true, payload: true, seq: true } as never,
-			order: { seq: 'DESC' } as never,
+			order: { seq: 'DESC', id: 'DESC' } as never,
+			skip,
 			take: DEFERRED_INBOX_SCAN
 		});
 	}
