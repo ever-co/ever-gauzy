@@ -232,8 +232,21 @@ function setup(options: { ideas?: string } = {}) {
 				insert: async (row: Row) => void tags.push(row)
 			}
 		],
-		[Comment, { insert: async (row: Row) => void comments.push(row) }],
-		[ResourceLink, { insert: async (row: Row) => void resourceLinks.push(row) }],
+		[
+			Comment,
+			{
+				findOne: async ({ where }: { where: Row }) => comments.find((c) => c['id'] === where['id']) ?? null,
+				insert: async (row: Row) => void comments.push(row)
+			}
+		],
+		[
+			ResourceLink,
+			{
+				findOne: async ({ where }: { where: Row }) =>
+					resourceLinks.find((r) => r['id'] === where['id']) ?? null,
+				insert: async (row: Row) => void resourceLinks.push(row)
+			}
+		],
 		[
 			IntegrationSetting,
 			{
@@ -293,6 +306,7 @@ function setup(options: { ideas?: string } = {}) {
 		ideas,
 		ewOrg,
 		links,
+		linkService,
 		addLink,
 		tasks,
 		projects,
@@ -397,6 +411,34 @@ describe('EverWorksIdeasService — EW → G', () => {
 		await other.service.apply(envelope('idea.deleted', { ...idea, deleted: true }, 2) as never, applyContext);
 		expect(other.tasks[0]['isArchived']).toBe(true);
 		expect(other.links[0]['state']).toBe(EverWorksLinkState.UNLINKED);
+	});
+
+	it('a retry after a failure half-way (the task written, its link not) finds that task instead of a second one', async () => {
+		const { service, tasks, links, resourceLinks, comments, linkService, commandBus } = setup();
+		const failed = { ...idea, status: 'failed', failureMessage: 'Build ran out of budget' };
+		jest.spyOn(linkService, 'record').mockRejectedValueOnce(new Error('connection lost'));
+		await expect(service.apply(envelope('idea.created', failed) as never, applyContext)).rejects.toThrow(
+			'connection lost'
+		);
+		expect(tasks).toHaveLength(1);
+		expect(links).toHaveLength(0);
+		expect(await service.apply(envelope('idea.created', failed) as never, applyContext)).toMatchObject({
+			status: 'applied'
+		});
+		expect(tasks).toHaveLength(1);
+		expect(resourceLinks).toHaveLength(1);
+		expect(comments).toHaveLength(1);
+		expect(commandBus.execute.mock.calls.filter(([command]) => command instanceof TaskCreateCommand)).toHaveLength(
+			1
+		);
+		expect(links.find((l) => l['entityType'] === EverWorksLinkType.IDEA_TASK)).toMatchObject({
+			gauzyId: tasks[0]['id'],
+			ewId: 'ew-idea-1'
+		});
+		// The id is derived from the mapping and the idea: the same on every retry, in any process.
+		const again = setup();
+		await again.service.apply(envelope('idea.created', failed) as never, applyContext);
+		expect(again.tasks[0]['id']).toBe(tasks[0]['id']);
 	});
 
 	it('an idea made from a Gauzy task links back to that task instead of creating a twin', async () => {

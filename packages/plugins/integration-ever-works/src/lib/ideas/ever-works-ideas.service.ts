@@ -39,6 +39,7 @@ import {
 	EverWorksOutboundChange
 } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
+import { stableUuid } from '../sync/ever-works-stable-id';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
 import {
 	EverWorksApplyContext,
@@ -274,28 +275,48 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		const teams = gauzyTeamsFor(next.teamIds, teamMap);
 		const tagId = await this.sourceTagId(context, idea.source);
 		const statusFields = status ? await this.statusChanges(context, projectId, status) : {};
-		const created = (await runAsGauzyUser(context, actorUserId, () =>
-			this.commandBus.execute(
-				new TaskCreateCommand(
-					{
-						title: next.title || 'Idea',
-						description: ideaTextToHtml(next.description),
-						issueType: GAUZY_IDEA_ISSUE_TYPE,
-						...(ideaTypeId ? { taskTypeId: ideaTypeId } : {}),
-						projectId,
-						...statusFields,
-						teams: teams.teamIds.map((id) => ({ id })),
-						tags: tagId ? [{ id: tagId }] : [],
-						tenantId: context.tenantId,
-						organizationId: context.organizationId
-					} as never,
-					true
-				)
-			)
-		)) as Task;
-		const taskId = created.id as ID;
-		if (idea.webUrl) await this.resourceLink(context, taskId, 'Ever Works idea', idea.webUrl);
-		if (status === 'failed' && idea.failureMessage) await this.comment(context, taskId, idea.failureMessage);
+		// A stable id (the goals' pattern): a retry after a failure half-way — the task written, its link not —
+		// finds the task it wrote instead of creating a second one. `TaskCreateCommand` keeps a caller-supplied
+		// id (the CRUD create inserts it; a row of another tenant with it is refused). A task deleted in Gauzy
+		// under that id is not revived: a new one is created with an id of its own, as before.
+		const seed = `${context.integrationTenantId}:idea-task:${idea.id}`;
+		const stableId = stableUuid(seed) as ID;
+		const written = await this.task(context, stableId, true);
+		const reuse = !!written && !(written as { deletedAt?: Date | null }).deletedAt;
+		const created = reuse
+			? null
+			: ((await runAsGauzyUser(context, actorUserId, () =>
+					this.commandBus.execute(
+						new TaskCreateCommand(
+							{
+								...(written ? {} : { id: stableId }),
+								title: next.title || 'Idea',
+								description: ideaTextToHtml(next.description),
+								issueType: GAUZY_IDEA_ISSUE_TYPE,
+								...(ideaTypeId ? { taskTypeId: ideaTypeId } : {}),
+								projectId,
+								...statusFields,
+								teams: teams.teamIds.map((id) => ({ id })),
+								tags: tagId ? [{ id: tagId }] : [],
+								tenantId: context.tenantId,
+								organizationId: context.organizationId
+							} as never,
+							true
+						)
+					)
+				)) as Task);
+		const taskId = ((created?.id as ID | undefined) ?? stableId) as ID;
+		// The resource link and the failure comment take stable ids too, so the retry does not add them twice.
+		if (idea.webUrl)
+			await this.resourceLink(
+				context,
+				taskId,
+				'Ever Works idea',
+				idea.webUrl,
+				stableUuid(`${seed}:${taskId}:web-url`) as ID
+			);
+		if (status === 'failed' && idea.failureMessage)
+			await this.comment(context, taskId, idea.failureMessage, stableUuid(`${seed}:${taskId}:failure`) as ID);
 		await this.record(context, taskId, idea, version, { ...next, status }, null, teams.unmapped, 'inbound');
 		this.logger.log(
 			`Ever Works idea ${idea.id} created as Gauzy task ${taskId} (organization ${context.organizationId}).`
@@ -757,10 +778,20 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		if (!current.some((tag) => tag.id === tagId)) await relation.add(tagId);
 	}
 
-	/** Posts the Ever Works failure as a comment on the task (a system comment, plan 01 §8). */
-	private async comment(context: EverWorksMappingContext, taskId: ID, failureMessage: string): Promise<void> {
-		await this.dataSource.getRepository(Comment).insert({
-			id: randomUUID(),
+	/**
+	 * Posts the Ever Works failure as a comment on the task (a system comment, plan 01 §8). With `id` (a
+	 * stable one), a comment already written under it is not posted again.
+	 */
+	private async comment(
+		context: EverWorksMappingContext,
+		taskId: ID,
+		failureMessage: string,
+		id?: ID
+	): Promise<void> {
+		const repository = this.dataSource.getRepository(Comment);
+		if (id && (await repository.findOne({ where: { id } as never, withDeleted: true }))) return;
+		await repository.insert({
+			id: id ?? randomUUID(),
 			entity: BaseEntityEnum.Task,
 			entityId: taskId,
 			comment: `Ever Works could not build this idea: ${failureMessage}`.slice(0, 5000),
@@ -770,15 +801,19 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		} as never);
 	}
 
+	/** Adds a resource link to the task; with `id` (a stable one), a link already written under it is kept. */
 	private async resourceLink(
 		context: EverWorksMappingContext,
 		taskId: ID,
 		title: string,
-		url: string
+		url: string,
+		id?: ID
 	): Promise<void> {
 		if (!/^https?:\/\//i.test(url)) return;
-		await this.dataSource.getRepository(ResourceLink).insert({
-			id: randomUUID(),
+		const repository = this.dataSource.getRepository(ResourceLink);
+		if (id && (await repository.findOne({ where: { id } as never, withDeleted: true }))) return;
+		await repository.insert({
+			id: id ?? randomUUID(),
 			entity: BaseEntityEnum.Task,
 			entityId: taskId,
 			title,
