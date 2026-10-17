@@ -20,7 +20,7 @@ import {
 import { getMetadataArgsStorage } from 'typeorm';
 import { Collection } from '../../collection/collection.entity';
 import { schemaExtensions } from '../schema-extensions';
-import { CollectionResolver, toCollectionWrite } from './collection.resolver';
+import { COLLECTION_CHANNELS_LOADER, CollectionResolver, toCollectionWrite } from './collection.resolver';
 
 const COLLECTION = '00000000-0000-4000-8000-000000000101';
 const IMAGE = '00000000-0000-4000-8000-000000000102';
@@ -87,7 +87,12 @@ function resolvedFields(): Set<string> {
 
 /** A resolver over stubs: the collection service is not reached by the field resolvers. */
 function resolverWith(channels: Array<Record<string, unknown>>) {
-	const channelService = { findByCollection: jest.fn().mockResolvedValue(channels) };
+	const channelService = {
+		findByCollection: jest.fn().mockResolvedValue(channels),
+		findByCollections: jest.fn(async (ids: readonly string[]) =>
+			channels.filter((row) => ids.includes(String(row.collectionId)))
+		)
+	};
 	const collectionService = { create: jest.fn(async (row) => row), update: jest.fn(async (_id, row) => row) };
 	const resolver = new CollectionResolver(
 		collectionService as never,
@@ -148,6 +153,76 @@ describe('Collection type vs the entity (R2-22)', () => {
 		expect(channelService.findByCollection).toHaveBeenCalledWith(COLLECTION);
 	});
 
+	it('batches the channel reads of a page through the operation loaders, one read for every field', async () => {
+		// A stand-in for core's per-operation RelationLoaderRegistry: one loader per key, keys collected until the
+		// microtask queue drains, then one batch call — the property a page of collections relies on.
+		const opened: string[] = [];
+		const loaders = {
+			for: <K, V>(key: string, batchFn: (keys: readonly K[]) => Promise<readonly (V | Error)[]>) => {
+				opened.push(key);
+				const cache = new Map<K, Promise<V>>();
+				let pending: Array<{ key: K; resolve: (value: V) => void }> = [];
+
+				return {
+					load: (id: K): Promise<V> => {
+						if (!cache.has(id)) {
+							cache.set(
+								id,
+								new Promise<V>((resolve) => {
+									if (!pending.length) {
+										queueMicrotask(async () => {
+											const batch = pending;
+											pending = [];
+											const values = await batchFn(batch.map((it) => it.key));
+											batch.forEach((it, index) => it.resolve(values[index] as V));
+										});
+									}
+									pending.push({ key: id, resolve });
+								})
+							);
+						}
+
+						return cache.get(id) as Promise<V>;
+					}
+				};
+			}
+		};
+		const shared = new Map<string, unknown>();
+		const context = {
+			loaders: {
+				for: (key: string, batchFn: never) => {
+					if (!shared.has(key)) shared.set(key, loaders.for(key, batchFn));
+					return shared.get(key) as never;
+				}
+			}
+		};
+		const rows = [
+			{ id: 'a1', collectionId: 'a', publishedAt: new Date('2026-03-01T00:00:00.000Z') },
+			{ id: 'b1', collectionId: 'b', publishedAt: null }
+		];
+		const { resolver, channelService } = resolverWith(rows);
+		const a = { id: 'a' } as Collection;
+		const b = { id: 'b' } as Collection;
+
+		const [aChannels, bChannels, aAlias, aPublished, bPublished] = await Promise.all([
+			resolver.channels(a, context),
+			resolver.channels(b, context),
+			resolver.channelPublications(a, context),
+			resolver.publishedAt(a, context),
+			resolver.publishedAt(b, context)
+		]);
+
+		expect(aChannels.map((row) => row.id)).toEqual(['a1']);
+		expect(bChannels.map((row) => row.id)).toEqual(['b1']);
+		expect(aAlias).toBe(aChannels);
+		expect(aPublished).toEqual(new Date('2026-03-01T00:00:00.000Z'));
+		expect(bPublished).toBeNull();
+		expect(channelService.findByCollections).toHaveBeenCalledTimes(1);
+		expect(channelService.findByCollections).toHaveBeenCalledWith(['a', 'b']);
+		expect(channelService.findByCollection).not.toHaveBeenCalled();
+		expect(opened[0]).toBe(COLLECTION_CHANNELS_LOADER);
+	});
+
 	it('answers a loaded channels relation without reading again', async () => {
 		const rows = [{ id: 'cc1' }] as unknown as Collection['channels'];
 		const { resolver, channelService } = resolverWith([]);
@@ -158,7 +233,7 @@ describe('Collection type vs the entity (R2-22)', () => {
 		expect(channelService.findByCollection).not.toHaveBeenCalled();
 	});
 
-	it('answers publishedAt with the earliest channel publication instant, null when never published', async () => {
+	it('answers publishedAt with the earliest current channel publication instant, null when none carries one', async () => {
 		const early = new Date('2026-01-02T03:04:05.000Z');
 		const late = new Date('2026-05-06T07:08:09.000Z');
 

@@ -1,4 +1,4 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
+import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { connectionFromOffsetPage, deliverPayloadAsIs, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard, tenantScopedEventStream } from '@gauzy/core';
@@ -16,6 +16,23 @@ import { CollectionChangedEvent } from '../../events';
  * `imageAssetId` is the inputs' earlier spelling of the entity's `imageId`.
  */
 export type CollectionWriteInput = Partial<Collection> & { imageAssetId?: ID | null };
+
+/**
+ * The part of the operation's GraphQL context the channel fields batch through: the request-scoped relation
+ * loader registry core's context factory puts on every operation (`graphql-context.ts`). Stated structurally,
+ * because the registry is not part of `@gauzy/core`'s public surface.
+ */
+export interface CollectionChannelLoaders {
+	loaders?: {
+		for<K, V>(
+			key: string,
+			batchFn: (keys: readonly K[]) => Promise<readonly (V | Error)[]>
+		): { load(key: K): Promise<V> };
+	};
+}
+
+/** The relation key the channel rows of a page of collections are batched under, per operation. */
+export const COLLECTION_CHANNELS_LOADER = 'collection_channel:collectionId';
 
 /**
  * Translates a GraphQL collection input into the entity's own names.
@@ -62,9 +79,9 @@ export function toCollectionWrite(input: CollectionWriteInput | null | undefined
 @FeatureFlag(FEATURE_GRAPHQL)
 export class CollectionResolver {
 	/**
-	 * The channel rows each collection object of an answer was resolved with, so `channels`, its deprecated
-	 * alias and `publishedAt` selected together read them once. Keyed by the parent object, which lives for
-	 * one response.
+	 * The channel rows each collection object was resolved with when no operation context is at hand, so
+	 * `channels`, its deprecated alias and `publishedAt` selected together read them once. Keyed by the parent
+	 * object, which lives for one response.
 	 */
 	private readonly channelReads = new WeakMap<Collection, Promise<CollectionChannel[]>>();
 
@@ -245,16 +262,22 @@ export class CollectionResolver {
 	/**
 	 * The collection's channel publications — the entity's `channels` relation.
 	 *
-	 * The rows the read already loaded are answered as they are; otherwise they are read the way
+	 * The rows the read already loaded are answered as they are. Otherwise they are read the way
 	 * `GET /collection-channels/by-collection/:collectionId` reads them, inside the caller's tenant and
-	 * organization.
+	 * organization — batched through the operation's relation loaders, so a page of collections is one read
+	 * rather than one per collection, and `channels`, `channelPublications` and `publishedAt` selected together
+	 * on one collection share it.
 	 *
 	 * @param collection The collection being read.
+	 * @param context The operation's GraphQL context.
 	 * @returns Its publication rows.
 	 */
 	@ResolveField('channels')
-	async channels(@Parent() collection: Collection): Promise<CollectionChannel[]> {
-		return this.channelsOf(collection);
+	async channels(
+		@Parent() collection: Collection,
+		@Context() context?: CollectionChannelLoaders
+	): Promise<CollectionChannel[]> {
+		return this.channelsOf(collection, context);
 	}
 
 	/**
@@ -262,26 +285,35 @@ export class CollectionResolver {
 	 * entity does not have, and answered null for every collection (review R2-22).
 	 *
 	 * @param collection The collection being read.
+	 * @param context The operation's GraphQL context.
 	 * @returns Its publication rows.
 	 */
 	@ResolveField('channelPublications')
-	async channelPublications(@Parent() collection: Collection): Promise<CollectionChannel[]> {
-		return this.channelsOf(collection);
+	async channelPublications(
+		@Parent() collection: Collection,
+		@Context() context?: CollectionChannelLoaders
+	): Promise<CollectionChannel[]> {
+		return this.channelsOf(collection, context);
 	}
 
 	/**
-	 * When the collection first went live on any channel.
+	 * The earliest publication instant among the collection's current channel publications.
 	 *
 	 * The collection has no `publishedAt` column — publication is per channel, and each channel row keeps the
-	 * instant it first became ACTIVE, never cleared by a later withdrawal — so the type's field used to answer
-	 * null for every collection (review R2-22). It is the earliest of those instants.
+	 * instant it first became ACTIVE — so the type's field used to answer null for every collection (review
+	 * R2-22). It is read from the rows the collection has now: a channel unassigned since (its row is removed)
+	 * no longer contributes its date.
 	 *
 	 * @param collection The collection being read.
-	 * @returns The earliest channel publication instant, or null when it was never published.
+	 * @param context The operation's GraphQL context.
+	 * @returns The earliest instant, or null when no current channel publication carries one.
 	 */
 	@ResolveField('publishedAt')
-	async publishedAt(@Parent() collection: Collection): Promise<Date | null> {
-		const instants = (await this.channelsOf(collection))
+	async publishedAt(
+		@Parent() collection: Collection,
+		@Context() context?: CollectionChannelLoaders
+	): Promise<Date | null> {
+		const instants = (await this.channelsOf(collection, context))
 			.map((row) => (row.publishedAt ? new Date(row.publishedAt).getTime() : NaN))
 			.filter((instant) => !Number.isNaN(instant));
 
@@ -290,22 +322,35 @@ export class CollectionResolver {
 
 	/**
 	 * @param collection The collection being read.
-	 * @returns Its channel rows: the loaded relation when the read carried it, else one scoped read per
-	 * collection object, shared by every field that needs them.
+	 * @param context The operation's GraphQL context, whose loaders batch the read.
+	 * @returns Its channel rows: the loaded relation when the read carried it; else one scoped, batched read per
+	 * operation; else (no operation context) one scoped read per collection object, shared by its fields.
 	 */
-	private channelsOf(collection: Collection): Promise<CollectionChannel[]> {
+	private channelsOf(collection: Collection, context?: CollectionChannelLoaders): Promise<CollectionChannel[]> {
 		if (Array.isArray(collection?.channels)) {
 			return Promise.resolve(collection.channels);
 		}
 
-		if (!collection?.id || !this.collectionChannelService) {
+		const channelService = this.collectionChannelService;
+
+		if (!collection?.id || !channelService) {
 			return Promise.resolve([]);
+		}
+
+		if (typeof context?.loaders?.for === 'function') {
+			return context.loaders
+				.for<ID, CollectionChannel[]>(COLLECTION_CHANNELS_LOADER, async (collectionIds) => {
+					const rows = await channelService.findByCollections(collectionIds);
+
+					return collectionIds.map((id) => rows.filter((row) => row.collectionId === id));
+				})
+				.load(collection.id);
 		}
 
 		let read = this.channelReads.get(collection);
 
 		if (!read) {
-			read = this.collectionChannelService.findByCollection(collection.id);
+			read = channelService.findByCollection(collection.id);
 			this.channelReads.set(collection, read);
 		}
 

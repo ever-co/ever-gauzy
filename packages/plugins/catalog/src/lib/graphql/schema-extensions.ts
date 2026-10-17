@@ -42,9 +42,9 @@ export const schemaExtensions = gql`
 		startsAt: DateTime
 		endsAt: DateTime
 		"""
-		When the collection first went live on any channel: the earliest \`publishedAt\` of its channel
-		publications, each of which keeps the instant it first became ACTIVE. Null while the collection has
-		never been published. The collection has no such column of its own; the date is per channel.
+		The earliest \`publishedAt\` among the collection's current channel publications (each keeps the instant
+		it first became ACTIVE). Null when no current channel publication carries one. The collection has no such
+		column of its own; the date is per channel.
 		"""
 		publishedAt: DateTime
 		"Id of the hero image, under the name the entity and the REST routes give it."
