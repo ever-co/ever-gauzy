@@ -511,6 +511,27 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	}
 
 	/**
+	 * Reads the open invoices of a set of subscriptions: the cycles a billing pass checks its candidates against, so a
+	 * subscription whose calendar waits on one is not selected (Q7-W4, `SubscriptionService.findDue`).
+	 *
+	 * @param subscriptionIds The subscriptions.
+	 * @returns Their `INVOICED` cycles.
+	 */
+	public async findInvoicedFor(subscriptionIds: ID[]): Promise<SubscriptionBilling[]> {
+		if (!subscriptionIds.length) {
+			return [];
+		}
+
+		return await this.typeOrmSubscriptionBillingRepository.find({
+			where: {
+				subscriptionId: In(subscriptionIds),
+				status: SubscriptionBillingStatus.INVOICED,
+				...currentScope()
+			}
+		});
+	}
+
+	/**
 	 * Removes a cycle outright, but only one that records no money billed.
 	 *
 	 * `DELETE /subscription-billings/:id` reached the generic hard delete, while doc 13 §11.4 names
