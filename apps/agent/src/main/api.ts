@@ -159,6 +159,7 @@ export class ApiService {
 	private isLogout: boolean;
 	private statusProgress: ITaskStatus;
 	private agentLogger: AgentLogger;
+	private refreshPromise: Promise<string | boolean> | null = null;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
@@ -349,7 +350,17 @@ export class ApiService {
 		return employee;
 	}
 
-	async refreshToken(): Promise<string | boolean> {
+	refreshToken(): Promise<string | boolean> {
+		// The server rotates refresh tokens, so concurrent 401s must share one refresh call
+		if (!this.refreshPromise) {
+			this.refreshPromise = this.requestTokenRefresh().finally(() => {
+				this.refreshPromise = null;
+			});
+		}
+		return this.refreshPromise;
+	}
+
+	private async requestTokenRefresh(): Promise<string | boolean> {
 		const authConfig = getAuthConfig();
 		if (!authConfig.refreshToken) {
 			return false;
@@ -364,9 +375,9 @@ export class ApiService {
 		});
 		if (res.ok) {
 			// node-fetch 3 types a JSON body as unknown
-			const resJson = (await res.json()) as { token: string };
+			const resJson = (await res.json()) as { token: string; refresh_token?: string };
 			if (resJson?.token) {
-				updateAuthConfig(resJson.token);
+				updateAuthConfig(resJson.token, resJson.refresh_token);
 				return resJson.token;
 			}
 		}
