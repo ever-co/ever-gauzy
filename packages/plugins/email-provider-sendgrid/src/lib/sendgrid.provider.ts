@@ -76,9 +76,9 @@ export function verificationKeyOf(value: unknown): KeyObject | null {
 
 /** A raw header block (`Name: value` lines, folded lines continued), lower-cased; the first occurrence wins. */
 function headersOf(block: string | undefined): Record<string, string> {
-	const headers: Record<string, string> = {};
+	let headers: Record<string, string> = {};
 	if (!block) return headers;
-	const lines: string[] = [];
+	let lines: string[] = [];
 	for (const line of block.split(/\r?\n/)) {
 		if (/^[ \t]/.test(line) && lines.length > 0) lines[lines.length - 1] += ` ${line.trim()}`;
 		else if (line.trim()) lines.push(line);
@@ -212,7 +212,9 @@ export class SendGridProvider implements IEmailProviderPlugin, IInboundEmailProv
 		}
 		if (!valid) throw new UnauthorizedException('The SendGrid signature does not verify.');
 		return {
-			fingerprint: `sig:${createHash('sha256').update(signature).digest('hex')}`,
+			// The verified bytes (the timestamp and the body), never the header's text: re-encoding the same signature
+			// (whitespace in the base64) is the same delivery.
+			fingerprint: `sig:${createHash('sha256').update(timestamp).update('.').update(request.rawBody).digest('hex')}`,
 			ttlMs: (2 * SENDGRID_SIGNATURE_TOLERANCE_SECONDS + 60) * 1000
 		};
 	}
@@ -250,7 +252,7 @@ export class SendGridProvider implements IEmailProviderPlugin, IInboundEmailProv
 		const info = json<
 			Record<string, { filename?: unknown; name?: unknown; type?: unknown; 'content-id'?: unknown }>
 		>(fields['attachment-info'], {});
-		const inline = new Map<string, string>();
+		let inline = new Map<string, string>();
 		for (const [cid, part] of Object.entries(json<Record<string, unknown>>(fields['content-ids'], {}))) {
 			if (typeof part === 'string') inline.set(part, cid.replace(/^<|>$/g, ''));
 		}
