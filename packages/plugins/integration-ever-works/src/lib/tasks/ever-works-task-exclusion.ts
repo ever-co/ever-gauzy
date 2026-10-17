@@ -5,7 +5,7 @@ import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-wor
 import type { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 
 /** The fields of a Gauzy task the exclusion rule reads. */
-export interface EverWorksExcludableTask {
+export interface EverWorksTaskExclusionInput {
 	issueType?: string | null;
 	taskTypeId?: ID | string | null;
 	projectId?: ID | string | null;
@@ -19,7 +19,7 @@ export interface EverWorksExcludableTask {
 export async function taskSyncExclusion(
 	links: Pick<EverWorksLinkService, 'byGauzy'>,
 	context: EverWorksMappingContext,
-	task: EverWorksExcludableTask
+	task: EverWorksTaskExclusionInput
 ): Promise<string | null> {
 	const setting = (name: EverWorksSettingName) =>
 		context.mapping.settings?.find((row) => row.settingsName === name)?.settingsValue ?? '';
