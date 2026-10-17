@@ -31,6 +31,7 @@ describe('InboxHeaderBadgeComponent', () => {
 	it('reads the counts at once, every 60 s, and after a change', fakeAsync(() => {
 		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 1, byMailbox: [] }));
 		const fixture = render();
+		tick(0); // the first read is the poll timer's tick at 0 ms
 		expect(api.counts).toHaveBeenCalledTimes(1);
 		expect(fixture.componentInstance.text()).toBe('3');
 
@@ -46,6 +47,7 @@ describe('InboxHeaderBadgeComponent', () => {
 	it('stops when the API does not serve the Inbox (404)', fakeAsync(() => {
 		api.counts.mockReturnValue(throwError(() => ({ status: 404 })));
 		const fixture = render();
+		tick(0);
 		expect(api.counts).toHaveBeenCalledTimes(1);
 		tick(INBOX_BADGE_POLL_MS * 3);
 		expect(api.counts).toHaveBeenCalledTimes(1);
