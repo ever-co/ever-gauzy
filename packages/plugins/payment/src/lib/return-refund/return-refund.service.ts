@@ -1,10 +1,18 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { CurrencyCode, DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
 import { Money, Payment, RequestContext, compareDecimalStrings } from '@gauzy/core';
 import { PaymentPermission } from '../payment.permissions';
-import { IReturnRefundRequest, IReturnRefundResult } from '../payment.types';
+import {
+	IRefund,
+	IReturnRefundFound,
+	IReturnRefundLookup,
+	IReturnRefundRequest,
+	IReturnRefundResult,
+	REFUND_IDEMPOTENCY_KEY,
+	RefundStatus
+} from '../payment.types';
 import { RefundService } from '../refund/refund.service';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { RefundReasonService } from '../refund-reason/refund-reason.service';
@@ -112,6 +120,17 @@ export class ReturnRefundService {
 			await this.refundReasonService.findReasonOrFail(request.reasonId);
 		}
 
+		// **A retry under the same key gets the refund it already produced** (review R3-09r2). A refund whose
+		// answer was lost, or whose outcome nobody saw, is found by its return or claim and its key before anything
+		// is measured or written: a succeeded one is answered as it is, a pending one is settled.
+		if (request.idempotencyKey) {
+			const existing = await this.answerExisting(request);
+
+			if (existing) {
+				return existing;
+			}
+		}
+
 		const attribution = await this.attributedPayment(request, requested);
 		const paymentId = attribution.paymentId;
 
@@ -154,17 +173,36 @@ export class ReturnRefundService {
 			throw new BadRequestException(NOT_ATTRIBUTED);
 		}
 
-		const created = await this.refundService.createAttributedRefund({
-			orderId: request.orderId,
-			amount: request.amount,
-			currency: request.currency,
-			...(request.returnId ? { returnId: request.returnId } : {}),
-			...(request.claimId ? { claimId: request.claimId } : {}),
-			...(paymentId ? { paymentId } : {}),
-			...(request.reasonId ? { reasonId: request.reasonId } : {}),
-			...(request.note ? { note: request.note } : {}),
-			...(request.exchangeId ? { metadata: { [EXCHANGE_KEY]: request.exchangeId } } : {})
-		});
+		const metadata = {
+			...(request.exchangeId ? { [EXCHANGE_KEY]: request.exchangeId } : {}),
+			...(request.idempotencyKey ? { [REFUND_IDEMPOTENCY_KEY]: request.idempotencyKey } : {})
+		};
+		let created: IRefund;
+
+		try {
+			created = await this.refundService.createAttributedRefund({
+				orderId: request.orderId,
+				amount: request.amount,
+				currency: request.currency,
+				...(request.returnId ? { returnId: request.returnId } : {}),
+				...(request.claimId ? { claimId: request.claimId } : {}),
+				...(paymentId ? { paymentId } : {}),
+				...(request.reasonId ? { reasonId: request.reasonId } : {}),
+				...(request.note ? { note: request.note } : {}),
+				...(Object.keys(metadata).length ? { metadata } : {})
+			});
+		} catch (error) {
+			// Another call under the same key wrote its refund between the lookup above and this write; the refund
+			// service refused the second one under the order's lock, and the first is the answer.
+			const existing =
+				request.idempotencyKey && this.isKeyInUse(error) ? await this.answerExisting(request) : null;
+
+			if (existing) {
+				return existing;
+			}
+
+			throw error;
+		}
 
 		const settled = await this.refundService.approveAttributedRefund(created.id);
 
@@ -173,6 +211,112 @@ export class ReturnRefundService {
 			amount: Money.of(settled.amount, settled.currency as CurrencyCode).toStorageString(),
 			currency: settled.currency as CurrencyCode
 		};
+	}
+
+	/**
+	 * Finds the refund a return or a claim already produced under a key (review R3-09r2).
+	 *
+	 * The refunds of the return (or the claim, or failing both the order) are read in the caller's tenant and
+	 * organization, in one read, and the standing ones carrying the key are kept: a succeeded refund before a
+	 * pending one, the newest first. A cancelled or failed refund moved no money and is not an answer.
+	 *
+	 * @param query The return or the claim, and the key.
+	 * @returns The refund, or `null` when none stands under the key.
+	 */
+	public async findRefund(query: IReturnRefundLookup): Promise<IReturnRefundFound | null> {
+		if (!query?.idempotencyKey || (!query.returnId && !query.claimId && !query.orderId)) {
+			return null;
+		}
+
+		const where = query.claimId
+			? { claimId: query.claimId }
+			: query.returnId
+				? { returnId: query.returnId }
+				: { orderId: query.orderId };
+		const rows: IRefund[] =
+			(await this.refundService.find({ where: { ...where, ...this.scope() } as never })) ?? [];
+		const standing = rows
+			.filter((refund) => [RefundStatus.SUCCEEDED, RefundStatus.PENDING].includes(refund.status as RefundStatus))
+			.filter((refund) => refund.metadata?.[REFUND_IDEMPOTENCY_KEY] === query.idempotencyKey)
+			.sort((left, right) => {
+				const settled =
+					Number(right.status === RefundStatus.SUCCEEDED) - Number(left.status === RefundStatus.SUCCEEDED);
+
+				return settled !== 0
+					? settled
+					: new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime();
+			});
+		const found = standing[0];
+
+		if (!found) {
+			return null;
+		}
+
+		return {
+			refundId: found.id,
+			amount: Money.of(found.amount, found.currency as CurrencyCode).toStorageString(),
+			currency: found.currency as CurrencyCode,
+			status: found.status as RefundStatus
+		};
+	}
+
+	/**
+	 * Answers a request with the refund its key already produced, settling it when it is still pending.
+	 *
+	 * @param request The request, carrying its key.
+	 * @returns The refund as settled, or `null` when the key has produced none yet.
+	 */
+	private async answerExisting(request: IReturnRefundRequest): Promise<IReturnRefundResult | null> {
+		const found = await this.findRefund({
+			orderId: request.orderId,
+			returnId: request.returnId,
+			claimId: request.claimId,
+			idempotencyKey: request.idempotencyKey as string
+		});
+
+		if (!found) {
+			return null;
+		}
+
+		if (found.status === RefundStatus.PENDING) {
+			try {
+				// Recorded, never settled — the outcome nobody saw. The settlement measures it as any other does.
+				const settled = await this.refundService.approveAttributedRefund(found.refundId);
+
+				return {
+					refundId: settled.id,
+					amount: Money.of(settled.amount, settled.currency as CurrencyCode).toStorageString(),
+					currency: settled.currency as CurrencyCode
+				};
+			} catch (error) {
+				// A concurrent retry settled it first: the refund it settled is the answer.
+				const again = await this.findRefund({
+					orderId: request.orderId,
+					returnId: request.returnId,
+					claimId: request.claimId,
+					idempotencyKey: request.idempotencyKey as string
+				});
+
+				if (again?.status === RefundStatus.SUCCEEDED) {
+					return { refundId: again.refundId, amount: again.amount, currency: again.currency };
+				}
+
+				throw error;
+			}
+		}
+
+		return { refundId: found.refundId, amount: found.amount, currency: found.currency };
+	}
+
+	/**
+	 * @param error What the refund service threw.
+	 * @returns Whether it refused a second refund under a key that already has one.
+	 */
+	private isKeyInUse(error: unknown): boolean {
+		return (
+			error instanceof ConflictException &&
+			(error.getResponse() as { code?: string })?.code === 'REFUND_IDEMPOTENCY_KEY_IN_USE'
+		);
 	}
 
 	/**

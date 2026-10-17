@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
 	BadRequestException,
 	ConflictException,
@@ -33,6 +34,15 @@ const CLAIM_NUMBER_KEY = 'CLAIM';
 
 /** Statuses a claim may still be decided from. */
 const DECIDABLE_STATUSES: OrderClaimStatus[] = [OrderClaimStatus.OPEN, OrderClaimStatus.REQUESTED];
+
+/**
+ * The claim metadata members a refund decision is recorded under (review R3-09r2): the key the claim's refund is
+ * asked under, and the status the claim was decided from. A `REFUND` claim left `APPROVED` by an outcome nobody saw
+ * carries both, which is what lets an approval resume it — find the refund the key produced, or ask for it again
+ * under the same key — rather than refuse it or pay twice.
+ */
+const REFUND_DECISION_KEY = 'refundDecisionKey';
+const REFUND_DECIDED_FROM = 'refundDecidedFrom';
 
 /**
  * A complaint about a delivered order and the resolution chosen for it.
@@ -145,6 +155,16 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		// The status this approval decides from, taken before anything else runs: the conditional write below is
 		// predicated on it, not on whatever the row object holds by then.
 		const decidedFrom = claim.status;
+		// A `REFUND` claim left in flight (`APPROVED`, with the decision key its refund was asked under) is resumed
+		// rather than refused: see `resumeRefund`.
+		const resuming =
+			claim.type === OrderClaimType.REFUND &&
+			claim.status === OrderClaimStatus.APPROVED &&
+			typeof claim.metadata?.[REFUND_DECISION_KEY] === 'string';
+
+		if (resuming) {
+			return await this.resumeRefund(claim, refundAmount, note);
+		}
 
 		this.assertStatus(claim, DECIDABLE_STATUSES, 'approve');
 
@@ -165,12 +185,14 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			// The decision is taken before the money moves, and only once. Two approvals of the same claim that
 			// overlapped — a double click, a retry after a lost answer while the first was still settling — both
 			// read it as decidable and each settled a refund; the claim then closed once with two refunds behind it.
-			await this.takeRefundDecision(claim, decidedFrom);
+			const decisionKey = randomUUID();
+
+			await this.takeRefundDecision(claim, decidedFrom, decisionKey);
 
 			let refund: IRefundResult;
 
 			try {
-				refund = await this.settleRefund(claim, refundAmount, note);
+				refund = await this.settleRefund(claim, refundAmount, note, decisionKey);
 			} catch (error) {
 				// A refusal (4xx: no amount, no gateway, past the ceiling, no grant, a lost compare-and-swap) is
 				// answered before the refund commits, so nothing was paid back and the claim is decidable again.
@@ -352,7 +374,8 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 	private async settleRefund(
 		claim: OrderClaim,
 		refundAmount: string | number | undefined,
-		note?: string
+		note?: string,
+		idempotencyKey?: string
 	): Promise<IRefundResult> {
 		const requested = refundAmount ?? claim.refundAmount;
 
@@ -379,7 +402,10 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			claimId: claim.id,
 			amount: refundable.toStorageString(),
 			currency: claim.currency,
-			note
+			note,
+			// The decision's key: a resume asks again under it, and the payment capability answers with the refund
+			// the first request produced rather than paying twice (review R3-09r2).
+			...(idempotencyKey ? { idempotencyKey } : {})
 		});
 
 		// A claim that settles in money answered by appending an `order_transaction`, so the order's
@@ -464,14 +490,21 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 	 * @param from The status this approval read it in.
 	 * @throws ConflictException with `CLAIM_DECISION_CONFLICT` when another call decided the claim first.
 	 */
-	private async takeRefundDecision(claim: OrderClaim, from: OrderClaimStatus): Promise<void> {
+	private async takeRefundDecision(claim: OrderClaim, from: OrderClaimStatus, decisionKey: string): Promise<void> {
 		let affected = 0;
 
 		try {
 			const result = await super.update(
 				{ id: claim.id, status: from } as any,
 				{
-					status: OrderClaimStatus.APPROVED
+					status: OrderClaimStatus.APPROVED,
+					// Recorded with the decision, so a resume knows the key the refund was asked under and the status
+					// to give back on a refusal (review R3-09r2).
+					metadata: {
+						...(claim.metadata ?? {}),
+						[REFUND_DECISION_KEY]: decisionKey,
+						[REFUND_DECIDED_FROM]: from
+					}
 				} as any
 			);
 
@@ -491,6 +524,67 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 				code: 'CLAIM_DECISION_CONFLICT'
 			});
 		}
+	}
+
+	/**
+	 * Resumes a `REFUND` claim left `APPROVED` by an outcome nobody saw (review R3-09r2).
+	 *
+	 * The claim's decision recorded the key its refund was asked under. The payment capability is asked first
+	 * whether that key produced a refund: a succeeded one closes the claim with it, and nothing is paid. Otherwise
+	 * the refund is asked for again **under the same key** — the payment capability settles a refund the key left
+	 * pending, answers one a concurrent resume just produced, or records the refund that never happened — so the
+	 * claim is paid back once however often it is resumed. A refusal gives the claim back the status it was decided
+	 * from; any other failure leaves it in flight, as the first attempt did.
+	 *
+	 * @param claim The claim, `APPROVED` with a decision key.
+	 * @param refundAmount The amount to refund when no refund stands under the key yet.
+	 * @param note An operator note.
+	 * @returns The claim, closed, and the refund it was closed on.
+	 */
+	private async resumeRefund(
+		claim: OrderClaim,
+		refundAmount: string | number | undefined,
+		note?: string
+	): Promise<{ claim: OrderClaim; refund?: IRefundResult }> {
+		const decisionKey = String(claim.metadata?.[REFUND_DECISION_KEY]);
+		const decidedFrom = (claim.metadata?.[REFUND_DECIDED_FROM] as OrderClaimStatus) ?? OrderClaimStatus.OPEN;
+
+		if (!this.refundGateway?.findRefund) {
+			throw new BadRequestException(
+				'CLAIM_REFUND_RESUME_UNAVAILABLE: the payment capability cannot look a refund up by its key, so a claim left in flight cannot be resumed; check its refunds and close, reject or cancel it.'
+			);
+		}
+
+		const found = await this.refundGateway.findRefund({
+			orderId: claim.orderId,
+			claimId: claim.id,
+			idempotencyKey: decisionKey
+		});
+		let refund: IRefundResult;
+
+		if (found && found.status === 'SUCCEEDED') {
+			refund = { refundId: found.refundId, amount: found.amount, currency: found.currency };
+		} else {
+			await this.refundGateway.assertMayRefund?.();
+
+			try {
+				refund = await this.settleRefund(claim, refundAmount, note, decisionKey);
+			} catch (error) {
+				if (this.isRefusal(error)) {
+					await this.releaseRefundDecision(claim, decidedFrom);
+				}
+
+				throw error;
+			}
+		}
+
+		await super.update(claim.id, {
+			status: OrderClaimStatus.CLOSED,
+			refundAmount: refund.amount,
+			note: note ?? claim.note
+		} as any);
+
+		return { claim: await this.findOneScoped(claim.id), refund };
 	}
 
 	/**

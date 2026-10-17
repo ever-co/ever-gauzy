@@ -24,6 +24,7 @@ import {
 	IRefundLine,
 	IRefundUpdateInput,
 	PAYMENT_ORDER_LINE_REFUND,
+	REFUND_IDEMPOTENCY_KEY,
 	RefundStatus
 } from '../payment.types';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
@@ -222,7 +223,16 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 
 		const { lines, ...fields } = input;
 
+		const key = (fields.metadata as Record<string, unknown> | undefined)?.[REFUND_IDEMPOTENCY_KEY];
 		const refund = await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (typeof key === 'string' && key && input.orderId) {
+				// **One refund per key** (review R3-09r2). A return or a claim retried under the same key looks its
+				// refund up first; two retries that both looked before either wrote are told apart here, under the
+				// order's lock, so the second is refused by name and answered with the first's refund.
+				await this.lockOrderPayments(manager, input.orderId);
+				await this.assertKeyUnused(input, key, manager);
+			}
+
 			if (!input.paymentId && input.orderId) {
 				// **A refund that names no payment is measured against its order under the order's lock** (review
 				// R3-08r1). The return or claim flow measured it already, but two of them for one order could both read
@@ -866,6 +876,33 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 					throw new BadRequestException('REFUND_AMOUNT_EXCEEDS_CAPTURED');
 				}
 			}
+		}
+	}
+
+	/**
+	 * Refuses a second standing refund under a key the same return, claim or order already has one under.
+	 *
+	 * @param input The refund being recorded.
+	 * @param key Its key.
+	 * @param manager The transaction holding the order's lock.
+	 * @throws ConflictException with `REFUND_IDEMPOTENCY_KEY_IN_USE`, naming the refund that holds the key.
+	 */
+	private async assertKeyUnused(input: IRefundCreateInput, key: string, manager: EntityManager): Promise<void> {
+		const standing = new Set<string>([RefundStatus.SUCCEEDED, RefundStatus.PENDING]);
+		const holder = (await this.readRefunds({ orderId: input.orderId }, manager)).find(
+			(refund) =>
+				standing.has(refund.status as string) &&
+				(refund.metadata as Record<string, unknown> | undefined)?.[REFUND_IDEMPOTENCY_KEY] === key &&
+				String(refund.returnId ?? '') === String(input.returnId ?? '') &&
+				String(refund.claimId ?? '') === String(input.claimId ?? '')
+		);
+
+		if (holder) {
+			throw new ConflictException({
+				message: `REFUND_IDEMPOTENCY_KEY_IN_USE: refund '${holder.id}' already stands under this key.`,
+				code: 'REFUND_IDEMPOTENCY_KEY_IN_USE',
+				details: { refundId: holder.id }
+			});
 		}
 	}
 

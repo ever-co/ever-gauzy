@@ -1780,3 +1780,62 @@ describe('RefundService — two refunds of one order are measured one after the 
 		expect(fixture.locks).toEqual([]);
 	});
 });
+
+describe('RefundService — one standing refund per key, decided under the order lock (review R3-09r2)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses the second of two concurrent refunds under one key, naming the first', async () => {
+		const fixture = refundFixture();
+		const refund = () =>
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				paymentId: PAYMENT,
+				claimId: 'claim-1',
+				amount: '10',
+				currency: 'USD',
+				metadata: { idempotencyKey: 'decision-1' }
+			} as never);
+
+		const outcomes = await Promise.allSettled([refund(), refund()]);
+
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+
+		const refused = outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult;
+
+		expect(refused.reason).toBeInstanceOf(ConflictException);
+		expect(refused.reason.getResponse()).toMatchObject({
+			code: 'REFUND_IDEMPOTENCY_KEY_IN_USE',
+			details: { refundId: fixture.tables.refund[0].id }
+		});
+		expect(fixture.tables.refund).toHaveLength(1);
+	});
+
+	it('records a refund under a key that only a withdrawn refund held', async () => {
+		const fixture = refundFixture({
+			refunds: [
+				refundRow('withdrawn', {
+					claimId: 'claim-1',
+					status: RefundStatus.CANCELED,
+					metadata: { idempotencyKey: 'decision-1' }
+				})
+			]
+		});
+
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				paymentId: PAYMENT,
+				claimId: 'claim-1',
+				amount: '10',
+				currency: 'USD',
+				metadata: { idempotencyKey: 'decision-1' }
+			} as never)
+		).resolves.toMatchObject({ status: RefundStatus.PENDING });
+	});
+});

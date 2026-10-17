@@ -916,3 +916,83 @@ describe('A refund recorded with no payment still spends from the order (review 
 		expect(tables.refund.filter((row) => row.status === RefundStatus.SUCCEEDED)).toHaveLength(2);
 	});
 });
+
+describe('ReturnRefundService — one refund per key, found again by the flow that asked for it (review R3-09r2)', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	const keyed = (overrides: Row = {}) => ({
+		orderId: ORDER,
+		claimId: CLAIM,
+		amount: '25',
+		currency: 'USD' as never,
+		idempotencyKey: 'decision-1',
+		...overrides
+	});
+
+	it('answers a second request under the same key with the refund the first produced', async () => {
+		const { service, tables } = fixture({});
+
+		const first = await service.createRefund(keyed());
+		const again = await service.createRefund(keyed());
+
+		// The failure scenario: a resumed claim, or a retried return refund, paid the money back a second time.
+		expect(again).toEqual(first);
+		expect(tables.refund).toHaveLength(1);
+		expect(tables.refund[0].metadata).toMatchObject({ idempotencyKey: 'decision-1' });
+		expect(tables.payment[0]).toMatchObject({ refundedAmount: '25' });
+	});
+
+	it('settles a refund the key left pending instead of recording another', async () => {
+		const pending = {
+			id: 'refund-left-pending',
+			tenantId: TENANT,
+			organizationId: ORG,
+			orderId: ORDER,
+			claimId: CLAIM,
+			paymentId: PAYMENT,
+			amount: '25',
+			currency: 'USD',
+			status: RefundStatus.PENDING,
+			metadata: { idempotencyKey: 'decision-1' }
+		};
+		const { service, tables } = fixture({ refunds: [pending] });
+
+		const answer = await service.createRefund(keyed());
+
+		expect(answer).toMatchObject({ refundId: 'refund-left-pending', amount: '25.000000' });
+		expect(tables.refund).toHaveLength(1);
+		expect(tables.refund[0].status).toBe(RefundStatus.SUCCEEDED);
+		expect(tables.payment[0]).toMatchObject({ refundedAmount: '25' });
+	});
+
+	it('finds the standing refund of a claim or a return under its key, and nothing else', async () => {
+		const row = (id: string, overrides: Row) => ({
+			id,
+			tenantId: TENANT,
+			organizationId: ORG,
+			orderId: ORDER,
+			claimId: CLAIM,
+			amount: '25',
+			currency: 'USD',
+			status: RefundStatus.SUCCEEDED,
+			metadata: { idempotencyKey: 'decision-1' },
+			...overrides
+		});
+		const { service } = fixture({
+			refunds: [
+				row('canceled', { status: RefundStatus.CANCELED }),
+				row('other-key', { metadata: { idempotencyKey: 'decision-2' } }),
+				row('other-org', { organizationId: OTHER_ORG }),
+				row('pending', { status: RefundStatus.PENDING }),
+				row('settled', {})
+			]
+		});
+
+		await expect(service.findRefund({ claimId: CLAIM, idempotencyKey: 'decision-1' })).resolves.toMatchObject({
+			refundId: 'settled',
+			status: RefundStatus.SUCCEEDED
+		});
+		await expect(service.findRefund({ claimId: CLAIM, idempotencyKey: 'unknown' })).resolves.toBeNull();
+		await expect(service.findRefund({ returnId: RETURN, idempotencyKey: 'decision-1' })).resolves.toBeNull();
+	});
+});
