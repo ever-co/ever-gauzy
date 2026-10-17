@@ -114,10 +114,18 @@ function serviceUnderTest(rows: IRow[]) {
 
 		return stored as never;
 	});
-	jest.spyOn(service, 'updateOne').mockImplementation(async (_id, payload) => {
+	jest.spyOn(service, 'updateOne').mockImplementation(async (id, payload) => {
 		if ((payload as unknown as IRow).amount === 'refuse') {
 			throw new Error('PRICE_INVALID_DECIMAL: amount must be an exact decimal.');
 		}
+
+		// The write lands as a new version of the row, so a caller holding the row from before the
+		// write would visibly hold stale values.
+		const index = rows.findIndex((one) => same(one.id, id));
+		const changes = Object.fromEntries(
+			Object.entries(payload as object).filter(([, value]) => value !== undefined)
+		);
+		rows[index] = { ...rows[index], ...changes, id: rows[index].id };
 
 		return { generatedMaps: [], raw: [], affected: 1 } as never;
 	});
@@ -175,7 +183,12 @@ describe('ProductPriceService.bulkUpsert — what a REPLACE batch retires (R2-26
 		});
 
 		expect(retired).toEqual([]);
-		expect(result.succeeded.map((written) => written.id)).toEqual(['a-1', 'b-1']);
+		// The stored rows as they stand after the write, not the driver's result and not the rows as
+		// they were read before it.
+		expect(result.succeeded.map((written) => [written.id, written.amount])).toEqual([
+			['a-1', '11.000000'],
+			['b-1', '12.000000']
+		]);
 	});
 
 	it('retires nothing in a pair whose replacement row was refused', async () => {
