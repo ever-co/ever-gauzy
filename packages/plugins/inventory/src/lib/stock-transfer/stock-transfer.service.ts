@@ -38,6 +38,9 @@ const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
  */
 const TRANSFER_VERSION_CONFLICT = 'STOCK_TRANSFER_VERSION_CONFLICT';
 
+/** Units in one whole quantity at the six decimals of a transfer line's `numeric(20,6)` columns. */
+const QUANTITY_UNITS = 1e6;
+
 /**
  * Moves stock between locations.
  *
@@ -218,7 +221,10 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 				const shipped = Number(input.shippedQuantity);
 				// A dispatch may name the same line once per carton or scan: the entries add up, so the line
 				// records every unit the source loses and the sum, not each entry, is held to the request.
-				const total = Number(line.shippedQuantity ?? 0) + shipped;
+				// The sum is taken at the columns' six decimals: in a double, 0.1 + 0.2 is 0.30000000000000004,
+				// which would refuse two entries that add up exactly to a request of 0.3.
+				const total =
+					Math.round((Number(line.shippedQuantity ?? 0) + shipped) * QUANTITY_UNITS) / QUANTITY_UNITS;
 				if (!Number.isFinite(shipped) || shipped < 0 || total > Number(line.requestedQuantity)) {
 					throw inventoryError(
 						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
