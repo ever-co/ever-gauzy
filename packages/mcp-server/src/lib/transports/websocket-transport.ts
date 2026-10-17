@@ -9,6 +9,7 @@ import https from 'node:https';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
+import { runWithAuthKey } from '../common/auth-context';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -510,7 +511,8 @@ export class WebSocketTransport {
 					break;
 				}
 				case 'tools/call': {
-					const result = await this.callTool(params as Record<string, unknown>);
+					// Tools run with the Gauzy login of the session bound to this connection
+					const result = await this.callTool(params as Record<string, unknown>, userContext?.sessionId);
 					transport.send({
 						jsonrpc: '2.0',
 						id,
@@ -563,7 +565,7 @@ export class WebSocketTransport {
 		}
 	}
 
-	private async callTool(params: Record<string, unknown>): Promise<unknown> {
+	private async callTool(params: Record<string, unknown>, authKey?: string): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
 
@@ -586,7 +588,9 @@ export class WebSocketTransport {
 			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
 			// Use the public method for tool invocation
-			const result = await this.mcpServer.invokeTool(name, sanitized as Record<string, unknown>);
+			const result = await runWithAuthKey(authKey, () =>
+				this.mcpServer.invokeTool(name, sanitized as Record<string, unknown>)
+			);
 			logger.debug(`Tool ${name} executed successfully`);
 
 			return result;

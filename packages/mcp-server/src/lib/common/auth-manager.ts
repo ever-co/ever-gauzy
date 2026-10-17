@@ -1,5 +1,6 @@
 import { environment } from '../environments/environment';
 import { sanitizeForLogging } from './error-utils';
+import { getAuthKey } from './auth-context';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('AuthManager');
@@ -17,14 +18,24 @@ interface ITokenData {
 	userId: string;
 	organizationId?: string; // Add organization ID
 	tenantId?: string; // Add tenant ID
+	source?: 'auto-login' | 'manual';
 }
+
+interface IAuthState {
+	tokenData: ITokenData | null;
+	isLoginInProgress: boolean;
+	isRefreshInProgress: boolean;
+}
+
+const createAuthState = (): IAuthState => ({ tokenData: null, isLoginInProgress: false, isRefreshInProgress: false });
 
 export class AuthManager {
 	private static instance: AuthManager;
-	private tokenData: ITokenData | null = null;
+	// Process-wide login, used by stdio and by HTTP/WebSocket calls that carry no session or OAuth identity
+	private readonly processState: IAuthState = createAuthState();
+	// Logins of HTTP/WebSocket sessions and OAuth subjects, by auth key
+	private readonly keyedStates = new Map<string, IAuthState>();
 	private apiClient: any;
-	private isLoginInProgress = false;
-	private isRefreshInProgress = false;
 	private hasInitialized = false;
 
 	private constructor() {}
@@ -47,13 +58,14 @@ export class AuthManager {
 	 * Check if we have valid authentication
 	 */
 	public isAuthenticated(): boolean {
-		if (!this.tokenData) {
+		const tokenData = this.currentTokenData();
+		if (!tokenData) {
 			return false;
 		}
 
 		// Check if token is still valid (with some buffer time)
 		const now = new Date();
-		const expiryWithBuffer = new Date(this.tokenData.expiresAt.getTime() - 10000);
+		const expiryWithBuffer = new Date(tokenData.expiresAt.getTime() - 10000);
 
 		return now < expiryWithBuffer;
 	}
@@ -65,35 +77,35 @@ export class AuthManager {
 		if (!this.isAuthenticated()) {
 			return null;
 		}
-		return this.tokenData?.accessToken || null;
+		return this.currentTokenData()?.accessToken || null;
 	}
 
 	/**
 	 * Get the current refresh token
 	 */
 	public getRefreshToken(): string | null {
-		return this.tokenData?.refreshToken || null;
+		return this.currentTokenData()?.refreshToken || null;
 	}
 
 	/**
 	 * Get the current user ID
 	 */
 	public getUserId(): string | null {
-		return this.tokenData?.userId || null;
+		return this.currentTokenData()?.userId || null;
 	}
 
 	/**
 	 * Get the current organization ID
 	 */
 	public getOrganizationId(): string | null {
-		return this.tokenData?.organizationId || null;
+		return this.currentTokenData()?.organizationId || null;
 	}
 
 	/**
 	 * Get the current tenant ID
 	 */
 	public getTenantId(): string | null {
-		return this.tokenData?.tenantId || null;
+		return this.currentTokenData()?.tenantId || null;
 	}
 
 	/**
@@ -120,15 +132,18 @@ export class AuthManager {
 	 * Login with email and password
 	 */
 	public async login(email?: string, password?: string): Promise<boolean> {
+		const authKey = getAuthKey();
+		const state = authKey === undefined ? this.processState : (this.keyedStates.get(authKey) ?? createAuthState());
+
 		// Prevent concurrent login attempts
-		if (this.isLoginInProgress) {
+		if (state.isLoginInProgress) {
 			if (environment.debug) {
 				logger.warn('🔑 Login already in progress, skipping duplicate attempt');
 			}
 			return false;
 		}
 
-		this.isLoginInProgress = true;
+		state.isLoginInProgress = true;
 
 		try {
 			const credentials = {
@@ -189,14 +204,19 @@ export class AuthManager {
 					// Don't use environment defaults anymore since we want to rely on actual user data
 				}
 
-				this.setTokenData({
-					accessToken: response.token,
-					refreshToken: response.refresh_token,
-					userId: response.user?.id,
-					organizationId,
-					tenantId,
-					expiresAt: this.calculateTokenExpiry(response.token)
-				});
+				this.setTokenData(
+					state,
+					{
+						accessToken: response.token,
+						refreshToken: response.refresh_token,
+						userId: response.user?.id,
+						organizationId,
+						tenantId,
+						expiresAt: this.calculateTokenExpiry(response.token),
+						source: email || password ? 'manual' : 'auto-login'
+					},
+					authKey
+				);
 
 				if (environment.debug) {
 					logger.log(`✅ Login successful for user: ${response.user?.email || 'Unknown'}`);
@@ -218,7 +238,7 @@ export class AuthManager {
 			}
 			return false;
 		} finally {
-			this.isLoginInProgress = false;
+			state.isLoginInProgress = false;
 		}
 	}
 
@@ -226,18 +246,20 @@ export class AuthManager {
 	 * Refresh the access token using the refresh token
 	 */
 	public async refreshToken(): Promise<boolean> {
+		const state = this.resolveState() ?? createAuthState();
+
 		// Prevent concurrent refresh attempts
-		if (this.isRefreshInProgress) {
+		if (state.isRefreshInProgress) {
 			if (environment.debug) {
 				logger.warn('🔄 Token refresh already in progress, skipping duplicate attempt');
 			}
 			return false;
 		}
 
-		this.isRefreshInProgress = true;
+		state.isRefreshInProgress = true;
 
 		try {
-			if (!this.tokenData?.refreshToken) {
+			if (!state.tokenData?.refreshToken) {
 				if (environment.debug) {
 					logger.warn('🔄 No refresh token available');
 				}
@@ -250,13 +272,13 @@ export class AuthManager {
 
 			// Use the correct Gauzy API endpoint
 			const response = await this.apiClient.post('/api/auth/refresh-token', {
-				refresh_token: this.tokenData.refreshToken
+				refresh_token: state.tokenData.refreshToken
 			});
 
 			if (response?.token) {
 				// Update only the access token and expiry
-				this.tokenData.accessToken = response.token;
-				this.tokenData.expiresAt = this.calculateTokenExpiry(response.token);
+				state.tokenData.accessToken = response.token;
+				state.tokenData.expiresAt = this.calculateTokenExpiry(response.token);
 
 				if (environment.debug) {
 					logger.log('✅ Token refreshed successfully');
@@ -275,7 +297,7 @@ export class AuthManager {
 			}
 			return false;
 		} finally {
-			this.isRefreshInProgress = false;
+			state.isRefreshInProgress = false;
 		}
 	}
 
@@ -324,7 +346,8 @@ export class AuthManager {
 		}
 
 		// If we have a refresh token, try to refresh
-		if (this.tokenData?.refreshToken && !this.isRefreshInProgress) {
+		const state = this.resolveState();
+		if (state?.tokenData?.refreshToken && !state.isRefreshInProgress) {
 			const refreshed = await this.refreshToken();
 			if (refreshed) {
 				return true;
@@ -340,8 +363,13 @@ export class AuthManager {
 	 * Logout and clear stored tokens
 	 */
 	public async logout(): Promise<void> {
+		const authKey = getAuthKey();
+		// A keyed caller only logs out its own login, never the shared auto-login account it may fall back to
+		const ownTokenData =
+			authKey === undefined ? this.processState.tokenData : this.keyedStates.get(authKey)?.tokenData;
+
 		try {
-			if (this.tokenData?.accessToken && this.apiClient) {
+			if (ownTokenData?.accessToken && this.apiClient) {
 				// Call logout endpoint to invalidate refresh token on server
 				await this.apiClient.get('/api/auth/logout');
 			}
@@ -351,8 +379,10 @@ export class AuthManager {
 				logger.warn('⚠️  Logout endpoint failed, clearing local data anyway');
 			}
 		} finally {
-			this.clearTokenData();
-			this.hasInitialized = false; // Allow re-initialization after logout
+			this.clearTokenData(authKey);
+			if (authKey === undefined) {
+				this.hasInitialized = false; // Allow re-initialization after logout
+			}
 			if (environment.debug) {
 				logger.log('🔑 Logged out successfully');
 			}
@@ -360,17 +390,66 @@ export class AuthManager {
 	}
 
 	/**
+	 * Forget the login kept for an auth key (called when its session is destroyed)
+	 */
+	public clearKey(authKey: string): void {
+		this.keyedStates.delete(authKey);
+	}
+
+	/**
+	 * Whether the process-wide login is the account configured through GAUZY_AUTO_LOGIN,
+	 * the only one that may be shared with callers that have not logged in themselves
+	 */
+	public isSharedAutoLoginIdentity(): boolean {
+		return this.processState.tokenData?.source === 'auto-login';
+	}
+
+	/**
+	 * Give an auth key a copy of the current caller's login (used when a session is created from it)
+	 */
+	public copyLoginToKey(authKey: string): void {
+		const tokenData = this.currentTokenData();
+		if (tokenData) {
+			this.keyedStates.set(authKey, { ...createAuthState(), tokenData: { ...tokenData } });
+		}
+	}
+
+	/**
+	 * Login state of the current caller. Without an auth key this is the process-wide login, as before.
+	 * A keyed caller with no login of its own falls back to the process-wide login only when it is the auto-login account.
+	 */
+	private resolveState(): IAuthState | null {
+		const authKey = getAuthKey();
+		if (authKey === undefined) {
+			return this.processState;
+		}
+		return this.keyedStates.get(authKey) ?? (this.isSharedAutoLoginIdentity() ? this.processState : null);
+	}
+
+	private currentTokenData(): ITokenData | null {
+		return this.resolveState()?.tokenData ?? null;
+	}
+
+	/**
 	 * Set token data
 	 */
-	private setTokenData(tokenData: ITokenData): void {
-		this.tokenData = tokenData;
+	private setTokenData(state: IAuthState, tokenData: ITokenData, authKey?: string): void {
+		state.tokenData = tokenData;
+		if (authKey !== undefined) {
+			this.keyedStates.set(authKey, state);
+		}
 	}
 
 	/**
 	 * Clear token data
 	 */
-	private clearTokenData(): void {
-		this.tokenData = null;
+	private clearTokenData(authKey?: string): void {
+		if (authKey === undefined) {
+			this.processState.tokenData = null;
+		} else {
+			// Keep an empty entry so the caller stays logged out instead of falling back to the auto-login account
+			this.keyedStates.set(authKey, createAuthState());
+		}
 	}
 
 	/**
@@ -406,18 +485,19 @@ export class AuthManager {
 	 * Get authentication status details
 	 */
 	public getAuthStatus() {
+		const state = this.resolveState();
 		return {
 			isAuthenticated: this.isAuthenticated(),
-			hasToken: !!this.tokenData?.accessToken,
-			hasRefreshToken: !!this.tokenData?.refreshToken,
+			hasToken: !!state?.tokenData?.accessToken,
+			hasRefreshToken: !!state?.tokenData?.refreshToken,
 			userId: this.getUserId(),
 			organizationId: this.getOrganizationId(),
 			tenantId: this.getTenantId(),
-			tokenExpiresAt: this.tokenData?.expiresAt,
+			tokenExpiresAt: state?.tokenData?.expiresAt,
 			autoLoginEnabled: environment.auth.autoLogin,
 			hasInitialized: this.hasInitialized,
-			isLoginInProgress: this.isLoginInProgress,
-			isRefreshInProgress: this.isRefreshInProgress
+			isLoginInProgress: !!state?.isLoginInProgress,
+			isRefreshInProgress: !!state?.isRefreshInProgress
 		};
 	}
 }

@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import crypto from 'node:crypto';
+import { authManager } from '../common/auth-manager';
 
 const logger = new Logger('SessionStore');
 
@@ -423,6 +424,7 @@ export class SessionStore {
 		}
 
 		this.sessions.delete(sessionId);
+		authManager.clearKey(sessionId);
 		this.metrics.sessionsDestroyed++;
 
 		if (this.config.enableLogging) {

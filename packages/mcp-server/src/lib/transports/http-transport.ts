@@ -14,6 +14,7 @@ import { AuthorizationConfig, loadAuthorizationConfig, ResponseBuilder } from '.
 import { sanitizeErrorMessage } from '../common/error-utils';
 import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
+import { runWithAuthKey } from '../common/auth-context';
 
 const logger = new Logger('HttpTransport');
 
@@ -748,7 +749,7 @@ export class HttpTransport {
 			};
 
 			// Route the request to appropriate MCP server handler
-			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext);
+			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext, tokenInfo);
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method}:`, error);
 			res.status(500).json({
@@ -804,7 +805,8 @@ export class HttpTransport {
 		params: Record<string, unknown> | unknown[] | undefined,
 		id: string | number | null | undefined,
 		transport: MockTransport,
-		userContext?: UserContext
+		userContext?: UserContext,
+		tokenInfo?: AuthorizedRequest['tokenInfo']
 	) {
 		try {
 			// Handle MCP protocol methods by delegating to the actual MCP server
@@ -836,7 +838,11 @@ export class HttpTransport {
 				}
 
 				case 'tools/call': {
-					const result = await this.callTool(params as Record<string, unknown>);
+					// Tools run with the Gauzy login of this session, or of this OAuth subject
+					const authKey =
+						userContext?.sessionId ??
+						(tokenInfo?.subject ? `oauth:${tokenInfo.subject}:${tokenInfo.clientId ?? ''}` : undefined);
+					const result = await this.callTool(params as Record<string, unknown>, authKey);
 					transport.send({
 						jsonrpc: '2.0',
 						id,
@@ -880,7 +886,7 @@ export class HttpTransport {
 		}
 	}
 
-	private async callTool(params: Record<string, unknown>): Promise<unknown> {
+	private async callTool(params: Record<string, unknown>, authKey?: string): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
 
@@ -908,7 +914,7 @@ export class HttpTransport {
 			}
 
 			// Use the public method for tool invocation with sanitized args
-			const result = await this.mcpServer.invokeTool(name, validation.sanitized);
+			const result = await runWithAuthKey(authKey, () => this.mcpServer.invokeTool(name, validation.sanitized));
 			logger.debug(`Tool ${name} executed successfully`);
 
 			return result;
