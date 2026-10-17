@@ -477,7 +477,8 @@ export class ActivepiecesService {
 
 	/**
 	 * Get API key for Activepieces API calls.
-	 * Looks for a tenant-specific API key in the database first, then falls back to global config.
+	 * Looks for a tenant-specific API key in the database first, on the given row then on any of the tenant's rows
+	 * holding one, then falls back to global config.
 	 * @param integrationTenantId - The integration tenant ID (not the base integration ID)
 	 */
 	async getApiKey(integrationTenantId?: string): Promise<string> {
@@ -507,6 +508,15 @@ export class ActivepiecesService {
 
 				if (apiKeySetting?.settingsValue) {
 					return apiKeySetting.settingsValue;
+				}
+
+				// A connection saved on a row without a key was created with the key of another tenant row
+				// (see upsertConnection), so reading and deleting it go through that same key
+				if (integrationTenant) {
+					const tenantApiKey = this.findApiKey(await this.findExistingIntegrationTenant(tenantId));
+					if (tenantApiKey) {
+						return tenantApiKey;
+					}
 				}
 			}
 
@@ -774,9 +784,16 @@ export class ActivepiecesService {
 	 * Whether the integration tenant holds an Activepieces API key.
 	 */
 	private hasApiKey(integrationTenant: any): boolean {
-		return !!integrationTenant?.settings?.some(
+		return !!this.findApiKey(integrationTenant);
+	}
+
+	/**
+	 * The Activepieces API key held by the integration tenant, if any.
+	 */
+	private findApiKey(integrationTenant: any): string | undefined {
+		return integrationTenant?.settings?.find(
 			(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY && setting.settingsValue
-		);
+		)?.settingsValue;
 	}
 
 	/**
