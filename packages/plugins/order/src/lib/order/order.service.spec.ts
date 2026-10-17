@@ -145,9 +145,9 @@ jest.mock('@gauzy/core', () => {
 		},
 		AdjustmentService: class {},
 		TaxLineService: class {},
-		SequenceService: class {},
-	// Added when core grew this export: the double has to carry it, or the code under
-	// test calls nothing and the suite fails for a reason that is not its own.
+		SequenceService: class {}
+		// Added when core grew this export: the double has to carry it, or the code under
+		// test calls nothing and the suite fails for a reason that is not its own.
 	};
 });
 
@@ -169,6 +169,7 @@ import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderService } from './order.service';
+import { OrderCartLedgerCarryover } from '../checkout/order-cart-ledger-carryover.service';
 
 /**
  * The order aggregate's lifecycle.
@@ -347,7 +348,14 @@ const line = (id: string, overrides: Record<string, unknown> = {}) => ({
  *
  * @param seeds The rows the order starts with.
  */
-function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } = {}) {
+function orderFixture(
+	seeds: {
+		lines?: any[];
+		order?: Record<string, unknown>;
+		/** The kernel's two money ledgers, shared by the carry-over (Q7-W1a) and the totals writer. */
+		ledger?: { adjustments?: any[]; taxLines?: any[] };
+	} = {}
+) {
 	const tables: Record<string, any[]> = {};
 	for (const table of TABLES) {
 		tables[table] = [];
@@ -370,6 +378,21 @@ function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } 
 
 	const repo = (table: TableName) => repository(tables, table);
 	const typeOrmOrderRepository = repo('order');
+	// The adjustment and tax ledgers: empty unless a test seeds them, and the same rows for the writer that
+	// copies a cart's ledger onto an order and for the totals writer that sums the order's.
+	const ledgerOf = (rows: any[]) => ({
+		rows,
+		findByOwner: async (ownerType: string, ownerId: string) =>
+			rows.filter((row) => row.ownerType === ownerType && row.ownerId === ownerId),
+		append: async (input: any) => {
+			const row = { id: `${input.ownerType}-${rows.length + 1}`, ...input };
+			rows.push(row);
+
+			return row;
+		}
+	});
+	const adjustmentLedger = ledgerOf([...(seeds.ledger?.adjustments ?? [])]);
+	const taxLineLedger = ledgerOf([...(seeds.ledger?.taxLines ?? [])]);
 	// The order aggregate's version-predicated write resolves the service that owns the row by token,
 	// so the fixture offers the totals writer the same two calls the real order service offers it.
 	const orderWriter = {
@@ -383,8 +406,8 @@ function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } 
 		new OrderCreditLineService(repo('order_credit_line') as never, {} as never) as never,
 		new OrderTransactionService(repo('order_transaction') as never, {} as never) as never,
 		new OrderSummaryService(repo('order_summary') as never, {} as never) as never,
-		{ findByOwner: async () => [] } as never,
-		{ findByOwner: async () => [] } as never,
+		adjustmentLedger as never,
+		taxLineLedger as never,
 		// The outbox every recomputation announces itself into. Stubbed rather than omitted: the
 		// constructor gained it when the order lifecycle started announcing its moves, and a double
 		// that stops matching the constructor is a suite that fails to compile.
@@ -404,10 +427,22 @@ function orderFixture(seeds: { lines?: any[]; order?: Record<string, unknown> } 
 		new OrderShippingMethodService(repo('order_shipping_method') as never, {} as never),
 		new OrderHistoryService(repo('order_history') as never, {} as never),
 		changeService as never,
-		sequenceService as never
+		sequenceService as never,
+		undefined,
+		new OrderCartLedgerCarryover(adjustmentLedger as never, taxLineLedger as never)
 	);
 
-	return { service, totalsService, tables, order: tables.order[0], allocate, openChanges, changeService };
+	return {
+		service,
+		totalsService,
+		tables,
+		order: tables.order[0],
+		allocate,
+		openChanges,
+		changeService,
+		adjustmentLedger,
+		taxLineLedger
+	};
 }
 
 /** The timeline of the fixture order. */
@@ -496,6 +531,177 @@ describe('OrderService — creating and numbering (doc 10 §4.4, §7.1)', () => 
 		expect(timelineOf(fixture)).toContain('ORDER_PLACED');
 		// The placement is recorded once: the move through `PENDING` is what writes it.
 		expect(timelineOf(fixture).filter((action: string) => action === 'ORDER_PLACED')).toHaveLength(1);
+	});
+
+	// Q7-W1a. The order used to be re-totalled from empty ledgers: the cart's discount and tax rows stayed on
+	// the cart's owners, so the order's discount and tax were zero and its grand total was not the amount the
+	// buyer was shown. The checkout handler asks for the carry-over; the order is placed with the rows.
+	it('places a checkout order with the discount and the tax the cart was priced at', async () => {
+		const tax = (id: string, ownerType: string, ownerId: string, amount: string, baseAmount: string) => ({
+			id,
+			ownerType,
+			ownerId,
+			name: 'VAT',
+			rate: '0.1',
+			amount,
+			baseAmount,
+			currency: 'USD'
+		});
+		const fixture = orderFixture({
+			ledger: {
+				adjustments: [
+					{
+						id: 'cart-adj-1',
+						ownerType: 'CART_LINE',
+						ownerId: 'cart-line-1',
+						amount: '-4',
+						currency: 'USD',
+						isTaxInclusive: false,
+						type: 'PROMOTION'
+					},
+					{
+						id: 'cart-adj-2',
+						ownerType: 'CART',
+						ownerId: 'cart-1',
+						amount: '-2',
+						currency: 'USD',
+						isTaxInclusive: false,
+						type: 'PROMOTION'
+					}
+				],
+				taxLines: [
+					tax('cart-tax-1', 'CART_LINE', 'cart-line-1', '3.6', '36'),
+					tax('cart-tax-2', 'CART_LINE', 'cart-line-2', '1', '10'),
+					tax('cart-tax-3', 'CART_SHIPPING', 'cart-shipping-1', '0.5', '5')
+				]
+			}
+		});
+
+		const order = await fixture.service.createFromCart(
+			{
+				id: 'cart-1',
+				channelId: 'channel-1',
+				currency: 'USD',
+				currencyDecimals: 2,
+				status: CommerceCartStatus.ACTIVE,
+				lines: [
+					{ id: 'cart-line-1', productId: 'p1', variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20 },
+					{ id: 'cart-line-2', productId: 'p2', variantId: 'v2', title: 'B', quantity: 1, unitPrice: 10 }
+				],
+				shippingMethods: [{ id: 'cart-shipping-1', name: 'Standard', amount: 5 }]
+			} as never,
+			{ carryCartLedgers: true }
+		);
+
+		const [first, second] = fixture.tables.order_line;
+		const [shipping] = fixture.tables.order_shipping_method;
+
+		// Each copy is owned by the order row its cart row became, and the line says which cart line that was.
+		expect(first.metadata).toEqual({ cartLineId: 'cart-line-1' });
+		expect(second.metadata).toEqual({ cartLineId: 'cart-line-2' });
+		expect(
+			fixture.adjustmentLedger.rows
+				.filter((row: any) => String(row.ownerType).startsWith('ORDER'))
+				.map((row: any) => [row.ownerType, row.ownerId, Number(row.amount)])
+		).toEqual([
+			['ORDER_LINE', first.id, -4],
+			// The cart-level 2 off, spread over the lines by value (40 : 10), so the per-line breakdown the
+			// invoice is built from still adds up to the totals.
+			['ORDER_LINE', first.id, -1.6],
+			['ORDER_LINE', second.id, -0.4]
+		]);
+		expect(
+			fixture.taxLineLedger.rows
+				.filter((row: any) => String(row.ownerType).startsWith('ORDER'))
+				.map((row: any) => [row.ownerType, row.ownerId, row.amount])
+		).toEqual([
+			['ORDER_LINE', first.id, '3.6'],
+			['ORDER_LINE', second.id, '1'],
+			['ORDER_SHIPPING', shipping.id, '0.5']
+		]);
+		// 50 of goods, 4 + 2 off, 4.6 of item tax, 5 of shipping taxed 0.5: the cart's own total.
+		expect(order.status).toBe(OrderStatus.CONFIRMED);
+		expect(Number(order.discountTotal)).toBe(6);
+		expect(Number(order.taxTotal)).toBe(4.6);
+		expect(Number(order.grandTotal)).toBe(54.1);
+	});
+
+	it('leaves the cart ledger where it is when the caller does not ask for the carry-over', async () => {
+		const fixture = orderFixture({
+			ledger: {
+				adjustments: [
+					{
+						id: 'cart-adj-1',
+						ownerType: 'CART_LINE',
+						ownerId: 'cart-line-1',
+						amount: '-4',
+						currency: 'USD',
+						isTaxInclusive: false,
+						type: 'PROMOTION'
+					}
+				]
+			}
+		});
+
+		// The subscription path builds a cart and writes the cycle's own discount and tax onto the order, so
+		// a carry-over there would charge them twice; it does not ask, and nothing moves.
+		const order = await fixture.service.createFromCart({
+			id: 'cart-1',
+			channelId: 'channel-1',
+			currency: 'USD',
+			currencyDecimals: 2,
+			status: CommerceCartStatus.ACTIVE,
+			lines: [{ id: 'cart-line-1', productId: 'p1', variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20 }]
+		} as never);
+
+		expect(fixture.adjustmentLedger.rows).toHaveLength(1);
+		expect(fixture.tables.order_line[0].metadata).toBeUndefined();
+		expect(Number(order.grandTotal)).toBe(40);
+	});
+
+	it('cancels the draft and fails the checkout when the carry-over is refused', async () => {
+		const fixture = orderFixture({
+			ledger: {
+				taxLines: [
+					{
+						id: 'cart-tax-1',
+						ownerType: 'CART_LINE',
+						ownerId: 'cart-line-1',
+						name: 'VAT',
+						rate: '0.1',
+						amount: '4',
+						baseAmount: '40',
+						currency: 'USD'
+					}
+				]
+			}
+		});
+		fixture.taxLineLedger.append = async () => {
+			throw new Error('TAX_INCLUSIVE_MISMATCH');
+		};
+
+		await expect(
+			fixture.service.createFromCart(
+				{
+					id: 'cart-1',
+					channelId: 'channel-1',
+					currency: 'USD',
+					currencyDecimals: 2,
+					status: CommerceCartStatus.ACTIVE,
+					lines: [
+						{ id: 'cart-line-1', productId: 'p1', variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20 }
+					]
+				} as never,
+				{ carryCartLedgers: true }
+			)
+		).rejects.toThrow(/TAX_INCLUSIVE_MISMATCH/);
+
+		const draft = fixture.tables.order.find((row: any) => row.cartId === 'cart-1');
+
+		// Never placed without the tax it was quoted, and not left behind as a draft nothing would close.
+		expect(draft.status).toBe(OrderStatus.CANCELED);
+		expect(draft.cancelReason).toBe('CART_LEDGER_CARRYOVER_FAILED');
+		expect(timelineOf(fixture)).not.toContain('ORDER_PLACED');
 	});
 
 	it('copies the cart address snapshots onto the order, one row per type', async () => {
@@ -804,5 +1010,39 @@ describe('OrderService — what an update may change (doc 10 §6.1)', () => {
 		const updated = await fixture.service.updateMutable('order-1', { currency: 'EUR' } as never);
 
 		expect(updated.currency).toBe('EUR');
+	});
+});
+
+describe('OrderTotalsService — a net amount stated as decimal text (Q7-W1a, Greptile on #10863)', () => {
+	const totalsWith = async (netAmount: unknown) => {
+		const fixture = orderFixture({
+			lines: [line('L1', { quantity: 1, unitPrice: 20, isTaxInclusive: true })],
+			ledger: {
+				adjustments: [
+					{
+						id: 'adj-1',
+						ownerType: 'ORDER_LINE',
+						ownerId: 'L1',
+						amount: '-6.000000',
+						currency: 'USD',
+						isTaxInclusive: true,
+						type: 'PROMOTION',
+						metadata: { netAmount }
+					}
+				]
+			}
+		});
+
+		return fixture.totalsService.computeTotals(fixture.order as never);
+	};
+
+	it('reads a carried row whose net amount is decimal text exactly as the cart did', async () => {
+		const asNumber = await totalsWith(-5);
+		const asText = await totalsWith('-5.000000');
+
+		// The cart reads both forms; a checkout carries the row as it stands, so the order must too, or its
+		// discount — and its grand total — moves off the amount the buyer was quoted.
+		expect(asText.itemDiscountTotal).toEqual(asNumber.itemDiscountTotal);
+		expect(asText.grandTotal).toEqual(asNumber.grandTotal);
 	});
 });

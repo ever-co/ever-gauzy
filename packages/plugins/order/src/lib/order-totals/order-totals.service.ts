@@ -1440,7 +1440,21 @@ export class OrderTotalsService {
 	private netAmountOf(metadata: Record<string, unknown> | undefined): number | undefined {
 		const netAmount = metadata?.['netAmount'];
 
-		return typeof netAmount === 'number' ? netAmount : undefined;
+		if (typeof netAmount === 'number') {
+			return Number.isFinite(netAmount) ? netAmount : undefined;
+		}
+
+		// **A decimal string counts too**, exactly as the cart's reader counts it. Money crosses every boundary
+		// as exact decimal text, and a checkout carries the cart's rows onto the order as they stand (Q7-W1a):
+		// a row whose `netAmount` the cart read as `"-5.000000"` was read here as "no net", so the order
+		// reduced its taxable base by the gross and its total moved off the amount the buyer was quoted.
+		if (typeof netAmount === 'string' && netAmount.trim() !== '') {
+			const parsed = Number(netAmount);
+
+			return Number.isFinite(parsed) ? parsed : undefined;
+		}
+
+		return undefined;
 	}
 
 	/**
