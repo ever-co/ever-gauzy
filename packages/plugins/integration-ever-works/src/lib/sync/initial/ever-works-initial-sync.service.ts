@@ -232,7 +232,13 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		for (const context of contexts) {
 			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return;
 			const run = await this.running(context.tenantId, context.integrationTenantId);
-			if (!run || run.connectionId !== connection.id) continue;
+			if (!run) {
+				// No run: a record still held was left by one that ended without releasing it (a process that stopped
+				// mid-page): it is made due, so it never holds back its aggregate's live events (review F18).
+				await this.release(context).catch(() => 0);
+				continue;
+			}
+			if (run.connectionId !== connection.id) continue;
 			if (!context.isEnabled) {
 				await this.finish(run, context, EverWorksSyncRunStatus.CANCELLED, 'the mapping was disabled');
 				continue;
@@ -477,7 +483,12 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				state.pass = (state.pass ?? 0) + 1;
 				state.cursor = null;
 			}
-			if (!(await checkpoint())) return { done: false };
+			if (!(await checkpoint())) {
+				// The run ended meanwhile (an admin's cancel): its end released what was held then, not what this page
+				// stored after it, which would stay held until 9999 and hold back its aggregates' live events (review F18).
+				if (!(await this.running(context.tenantId, context.integrationTenantId))) await this.release(context, spec.aggregateType);
+				return { done: false };
+			}
 		}
 		const released = await this.release(context, spec.aggregateType);
 		this.depthCache.delete(depthKey);
