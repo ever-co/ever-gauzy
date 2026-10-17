@@ -3,6 +3,24 @@ import { createClient } from 'redis';
 import { RedisStore } from 'connect-redis';
 import { environment } from '@gauzy/config';
 import { redactUrlCredentials, redactUrlErrorInput } from '../core/util/redact-credentials';
+import { resolveSessionStoreTimeout, withSessionStoreDeadline } from './session-store-deadline';
+
+/**
+ * Whether a session nobody wrote to is still stored (and a cookie set for it).
+ *
+ * It used to be `true`, which made EVERY request that arrived without a session cookie — every call
+ * from the web app (CORS without credentials sends no cookie), the desktop timers, the SDKs and any
+ * other API client, i.e. nearly all traffic — create a brand-new session and, before its response
+ * could be written, store it: a Redis `SET` with a day-long TTL on the request path (express-session
+ * defers `res.end` until the store answers), and with the in-memory fallback store an object that
+ * stays in the API's heap for good. Nothing reads such a session: the sign-in flows that do use one
+ * (OAuth 1 request tokens, OAuth 2 `state`, the MCP authorization server) write to it, and a session
+ * that has been written to is saved exactly as before. `EXPRESS_SESSION_SAVE_UNINITIALIZED=true`
+ * restores the previous behaviour.
+ */
+export function resolveSaveUninitialized(value: string | undefined): boolean {
+	return String(value ?? '').trim().toLowerCase() === 'true';
+}
 
 /**
  * Sets up the Redis client with connection options and logs key events.
@@ -33,7 +51,8 @@ function createRedisClient(options: any) {
 /**
  * Wraps the session middleware so it is skipped for health probe routes.
  *
- * Probe requests carry no cookies, so with `saveUninitialized: true` every probe
+ * Probe requests carry no cookies, so with `saveUninitialized: true` (still available through
+ * EXPRESS_SESSION_SAVE_UNINITIALIZED) every probe
  * would create a brand-new session, and — with the Redis store — express-session
  * defers the response until the session write settles. That would silently couple
  * the dependency-free liveness endpoint (`GET /api/health/live`) to Redis
@@ -119,10 +138,15 @@ export async function configureRedisSession(app: any): Promise<void> {
 				console.error('Failed to connect to Redis:', redactUrlErrorInput(error));
 			}
 
-			const redisStore = new RedisStore({
-				client: redisClient,
-				prefix: environment.production ? 'gauzyprodsess:' : 'gauzydevsess:'
-			});
+			// Bounded, so that a Redis that stops answering (failover, maintenance, a half-open connection)
+			// cannot hold every request of the API at once: see session-store-deadline.ts.
+			const redisStore = withSessionStoreDeadline(
+				new RedisStore({
+					client: redisClient,
+					prefix: environment.production ? 'gauzyprodsess:' : 'gauzydevsess:'
+				}),
+				resolveSessionStoreTimeout(process.env.REDIS_SESSION_TIMEOUT_MS)
+			);
 
 			app.use(
 				skipSessionForHealthRoutes(
@@ -130,7 +154,7 @@ export async function configureRedisSession(app: any): Promise<void> {
 						store: redisStore,
 						secret: environment.EXPRESS_SESSION_SECRET,
 						resave: false, // Required for lightweight session keep alive (touch)
-						saveUninitialized: true,
+						saveUninitialized: resolveSaveUninitialized(process.env.EXPRESS_SESSION_SAVE_UNINITIALIZED),
 						// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
 						// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
 						cookie: { secure: 'auto' }
@@ -150,7 +174,7 @@ export async function configureRedisSession(app: any): Promise<void> {
 				expressSession({
 					secret: environment.EXPRESS_SESSION_SECRET,
 					resave: true, // Required as MemoryStore doesn't support `touch` method
-					saveUninitialized: true,
+					saveUninitialized: resolveSaveUninitialized(process.env.EXPRESS_SESSION_SAVE_UNINITIALIZED),
 					// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
 					// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
 					cookie: { secure: 'auto' }

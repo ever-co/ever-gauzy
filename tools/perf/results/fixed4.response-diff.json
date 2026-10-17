@@ -1,0 +1,45 @@
+{
+  "against": "baseline.responses.json",
+  "at": "2026-10-17T21:46:57.469Z",
+  "endpoints": {
+    "health": {
+      "same": true
+    },
+    "feature-toggle-definition": {
+      "same": true
+    },
+    "user-me": {
+      "same": true
+    },
+    "role-permissions-me": {
+      "same": true
+    },
+    "tags": {
+      "same": true
+    },
+    "organization-team-me": {
+      "same": true
+    },
+    "projects-pagination": {
+      "same": true,
+      "reordered": [
+        "$.items"
+      ]
+    },
+    "employees-pagination": {
+      "same": true
+    },
+    "tasks-pagination": {
+      "same": true,
+      "reordered": [
+        "$.items"
+      ]
+    },
+    "teams-pagination": {
+      "same": true
+    },
+    "employee-by-id": {
+      "same": true
+    }
+  }
+}

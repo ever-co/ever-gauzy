@@ -18,16 +18,14 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	 * @param {string} accessToken - The OAuth access token received from Twitter.
 	 * @param {string} refreshToken - The refresh token (not used in Twitter OAuth).
 	 * @param {Profile} profile - The Twitter user's profile data.
-	 * @param {(err: any, user?: any, info?: any) => void} done - Callback function to indicate authentication success or failure.
 	 *
-	 * @returns {Promise<void>} - Resolves after processing the user profile.
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
+	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
+	 * method never calls `done` itself (doing both reported every sign-in twice: a success, then a failure).
+	 *
+	 * @returns The user object built from the profile.
 	 */
-	async validate(
-		accessToken: string,
-		refreshToken: string,
-		profile: any,
-		done: (err: any, user: any, info?: any) => void
-	): Promise<void> {
+	async validate(accessToken: string, refreshToken: string, profile: any) {
 		try {
 			console.log('Twitter OAuth validate:', profile);
 			// Extract relevant information from the user's profile
@@ -40,10 +38,10 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 				refreshToken
 			};
 
-			done(null, user);
+			return user;
 		} catch (error) {
 			console.error('Error during Twitter OAuth validation:', error);
-			done(error, false);
+			throw error;
 		}
 	}
 }

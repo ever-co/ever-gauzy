@@ -128,7 +128,7 @@ const OrganizationTeamEmployeeSchema = new EntitySchema<any>({
 
 /**
  * The time log, with the two scope relations `TenantAwareCrudService` names beside their columns
- * (`tenant: { id }` with `tenantId`, `employee: { id }` with `employeeId`) when it reads a log back, and
+ * (`tenant` with `tenantId`, `employee` with `employeeId`) when it reads a log back, and
  * the slots the service loads before it moves a log to another employee.
  */
 const TimeLogSchema = new EntitySchema<any>({

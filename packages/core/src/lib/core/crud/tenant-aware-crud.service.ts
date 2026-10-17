@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOperator, FindOptionsWhere, In, Raw, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/utils';
+import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { LegacyFindManyOptions, LegacyFindOneOptions, MultiORMEnum } from '../utils';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
@@ -24,6 +24,15 @@ type ScopeColumn = 'tenantId' | 'employeeId';
 /** The relation each scope column is the foreign key of, which the scoping names beside the column. */
 const SCOPE_RELATION: Record<ScopeColumn, string> = { tenantId: 'tenant', employeeId: 'employee' };
 
+/** The read a scope condition is built for, as far as the condition depends on it. */
+interface IScopedRead {
+	/** Whether the read returns soft-deleted rows too: the `withDeleted` it runs with. */
+	withDeleted: boolean;
+}
+
+/** A read of live rows only — every read that cannot state `withDeleted`. */
+const LIVE_READ: Readonly<IScopedRead> = Object.freeze({ withDeleted: false });
+
 /**
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
@@ -39,6 +48,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 	/** How MikroORM maps each scope column of this entity, read once: metadata does not change after discovery. */
 	private readonly mikroOrmScopeColumns = new Map<ScopeColumn, IMikroOrmScopeColumn | null>();
+
+	/** The predicate {@link readScopedBy} puts on each scope relation, per `withDeleted`, built once from TypeORM's metadata. */
+	private readonly readScopePredicates = new Map<string, FindOperator<unknown> | null>();
 
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
@@ -93,6 +105,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * mirror of the relation — and the relation only when the mapping has one, since a `where` naming a
 	 * relation the entity does not have is refused.
 	 *
+	 * These are the members every write is stamped and scoped with. A TypeORM read is scoped with
+	 * {@link readScopedBy}'s instead, which name the relation without making TypeORM join it.
+	 *
 	 * @param column The scope column.
 	 * @param value The caller's tenant or employee.
 	 * @returns The members to merge into a `where`, or into a payload.
@@ -103,6 +118,116 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			return { ...(relation ? { [relation]: { id: value } } : {}), [column]: value };
 		}
 		return { [SCOPE_RELATION[column]]: { id: value }, [column]: value };
+	}
+
+	/**
+	 * The members that scope a READ with one value of a scope column: the rows {@link scopedBy}'s members select,
+	 * without the join they cost.
+	 *
+	 * **Why not the relation by its id.** TypeORM resolves `{ tenant: { id } }` in a `where` by LEFT JOINing the
+	 * relation — `"tenant"."deletedAt" IS NULL` in the ON clause, the tenant and the employee being soft-deletable —
+	 * only to compare the id that is already compared on the foreign-key column beside it. One join is all it takes
+	 * for TypeORM to page in two statements: with a `take` or a `skip` (and every `findOne` / `findOneBy` is a
+	 * `take: 1`), it first selects `DISTINCT` ids over the joined query under the limit, and then the rows `IN`
+	 * those ids. Every scoped lookup by id cost two round trips instead of one, and every scoped page three
+	 * statements instead of two, its count a `COUNT(DISTINCT …)` over the join (measured statement by statement in
+	 * `tenant-aware-crud.service.read-scope.spec.ts`).
+	 *
+	 * **What it keeps.** The join did more than repeat the column: it hid the rows whose tenant (or employee) is
+	 * soft-deleted, and that must hold. TypeORM renders a find operator on a many-to-one relation as a predicate on
+	 * its foreign key, so the relation is handed a {@link Raw} `EXISTS` on the referenced row instead — a live one,
+	 * unless the read states `withDeleted`, exactly as the join's ON clause was — and the statement keeps a single
+	 * table in its FROM clause. The table, its key and its delete-date column come from TypeORM's metadata and are
+	 * quoted by the driver, so the predicate is the same standard SQL on PostgreSQL, MySQL and SQLite.
+	 *
+	 * **Where the joined shape stays.** The predicate is TypeORM's alone: MikroORM, and the doubles that stand in
+	 * for it, are handed {@link scopedBy}'s members unchanged. TypeORM is handed them too for a value that is not
+	 * an id — a caller without a tenant, whose `undefined` the connection ignores and whose `null` it reads as
+	 * `IS NULL`, both of which the predicate would answer differently — and for a relation the metadata does not
+	 * describe as a to-one on a single foreign key, a stand-in repository without metadata included. Writes never
+	 * use it: rows created and saved are stamped, and updates and deletes scoped, with {@link scopedBy}'s members.
+	 *
+	 * @param column The scope column.
+	 * @param value The caller's tenant or employee.
+	 * @param read The read the members scope.
+	 * @returns The members to merge into the read's `where`.
+	 */
+	private readScopedBy(column: ScopeColumn, value: ID, read: IScopedRead): Record<string, unknown> {
+		const predicate =
+			this.ormType === MultiORMEnum.TypeORM && isNotEmpty(value)
+				? this.relationExistsPredicate(column, read.withDeleted)
+				: null;
+
+		if (!predicate) {
+			return this.scopedBy(column, value);
+		}
+		return { [SCOPE_RELATION[column]]: predicate, [column]: value };
+	}
+
+	/**
+	 * The predicate {@link readScopedBy} puts on a scope relation: the row its foreign key names exists and, unless
+	 * the read returns soft-deleted rows too, is not soft-deleted. TypeORM substitutes the foreign-key column for
+	 * the alias the operator is handed, so the statement reads, on PostgreSQL:
+	 *
+	 * `EXISTS (SELECT 1 FROM "tenant" "tenant_scope" WHERE "tenant_scope"."id" = "Row"."tenantId" AND "tenant_scope"."deletedAt" IS NULL)`
+	 *
+	 * Built once per column and `withDeleted`: the metadata does not change once the data source is initialised.
+	 *
+	 * @param column The scope column.
+	 * @param withDeleted Whether the read returns soft-deleted rows too.
+	 * @returns The predicate, or `null` where the metadata cannot state one.
+	 */
+	private relationExistsPredicate(column: ScopeColumn, withDeleted: boolean): FindOperator<unknown> | null {
+		const key = `${column}:${withDeleted ? 'all' : 'live'}`;
+		if (!this.readScopePredicates.has(key)) {
+			this.readScopePredicates.set(key, this.buildRelationExistsPredicate(column, withDeleted));
+		}
+		return this.readScopePredicates.get(key);
+	}
+
+	/**
+	 * Builds the predicate {@link relationExistsPredicate} answers with, from the TypeORM metadata of the relation.
+	 *
+	 * @param column The scope column.
+	 * @param withDeleted Whether the read returns soft-deleted rows too.
+	 * @returns The predicate, or `null` where the metadata cannot state one.
+	 */
+	private buildRelationExistsPredicate(column: ScopeColumn, withDeleted: boolean): FindOperator<unknown> | null {
+		const metadata = this.typeOrmRepository?.metadata;
+		const driver = metadata?.dataSource?.driver;
+		if (typeof metadata?.findRelationWithPropertyPath !== 'function' || typeof driver?.escape !== 'function') {
+			return null;
+		}
+
+		// Only a to-one relation that owns its one foreign-key column is rendered by TypeORM as a predicate on it.
+		const relation = metadata.findRelationWithPropertyPath(SCOPE_RELATION[column]);
+		const isOwnedToOne = !!relation && (relation.isManyToOne || relation.isOneToOneOwner);
+		if (!isOwnedToOne || relation.joinColumns.length !== 1) {
+			return null;
+		}
+
+		const target = relation.inverseEntityMetadata;
+		const referenced = relation.joinColumns[0].referencedColumn;
+		if (!target?.tablePath || !referenced) {
+			return null;
+		}
+
+		const quote = (identifier: string) => driver.escape(identifier);
+		// As TypeORM quotes a table path: each part, and the empty part SQL Server's `database..table` leaves alone.
+		const table = target.tablePath
+			.split('.')
+			.map((part) => (part === '' ? part : quote(part)))
+			.join('.');
+		const alias = quote(`${SCOPE_RELATION[column]}_scope`);
+		const live =
+			!withDeleted && target.deleteDateColumn
+				? ` AND ${alias}.${quote(target.deleteDateColumn.databaseName)} IS NULL`
+				: '';
+
+		return Raw(
+			(foreignKey: string) =>
+				`EXISTS (SELECT 1 FROM ${table} ${alias} WHERE ${alias}.${quote(referenced.databaseName)} = ${foreignKey}${live})`
+		);
 	}
 
 	/**
@@ -197,8 +322,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 *
 	 * If the user has permission to change the selected employee
 	 * or filtering is skipped, no automatic restriction is applied.
+	 *
+	 * @param read The read the conditions scope ({@link readScopedBy}); omitted for a write's criteria.
 	 */
-	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
+	private findConditionsWithEmployeeByUser(read?: IScopedRead): FindOptionsWhere<T> {
 		// Skip automatic filtering if explicitly disabled
 		if (this.getSkipEmployeeFilter()) {
 			return {} as FindOptionsWhere<T>;
@@ -211,7 +338,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 		// Restrict to current employee only
 		if (isNotEmpty(employeeId) && hasEmployeeColumn && !canChangeEmployee) {
-			return this.scopedBy('employeeId', employeeId) as unknown as FindOptionsWhere<T>;
+			const employeeScope = read
+				? this.readScopedBy('employeeId', employeeId, read)
+				: this.scopedBy('employeeId', employeeId);
+			return employeeScope as unknown as FindOptionsWhere<T>;
 		}
 
 		// A caller who may not act for other employees, but has no employee record of their own.
@@ -270,12 +400,17 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * Define find conditions when retrieving data with tenant by user.
 	 *
 	 * @param user - The user for whom the conditions are defined.
+	 * @param read - The read the conditions scope ({@link readScopedBy}); omitted for a write's criteria, which
+	 * keep {@link scopedBy}'s members.
 	 * @returns The find conditions based on the user's relationship with the tenant and employees.
 	 */
-	private findConditionsWithTenantByUser(user: IUser): FindOptionsWhere<T> {
+	private findConditionsWithTenantByUser(user: IUser, read?: IScopedRead): FindOptionsWhere<T> {
+		const tenantScope = () =>
+			read ? this.readScopedBy('tenantId', user.tenantId, read) : this.scopedBy('tenantId', user.tenantId);
+
 		return {
-			...(this.hasScopeColumn('tenantId') ? this.scopedBy('tenantId', user.tenantId) : {}),
-			...this.findConditionsWithEmployeeByUser()
+			...(this.hasScopeColumn('tenantId') ? tenantScope() : {}),
+			...this.findConditionsWithEmployeeByUser(read)
 		} as FindOptionsWhere<T>;
 	}
 
@@ -284,18 +419,20 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 *
 	 * @param user - The user for whom the conditions are defined.
 	 * @param where - Additional find options.
+	 * @param read - The read the conditions scope.
 	 * @returns The find conditions based on the user's relationship with the tenant and additional options.
 	 */
 	private findConditionsWithTenant(
 		user: IUser,
-		where?: FindOptionsWhere<T>[] | FindOptionsWhere<T>
+		where: FindOptionsWhere<T>[] | FindOptionsWhere<T> | undefined,
+		read: IScopedRead
 	): FindOptionsWhere<T>[] | FindOptionsWhere<T> {
 		if (where && Array.isArray(where)) {
 			const wheres: FindOptionsWhere<T>[] = [];
 			where.forEach((options: FindOptionsWhere<T>) => {
 				wheres.push({
 					...options,
-					...this.findConditionsWithTenantByUser(user)
+					...this.findConditionsWithTenantByUser(user, read)
 				});
 			});
 			return wheres;
@@ -304,12 +441,23 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			where
 				? {
 						...where,
-						...this.findConditionsWithTenantByUser(user)
+						...this.findConditionsWithTenantByUser(user, read)
 					}
 				: {
-						...this.findConditionsWithTenantByUser(user)
+						...this.findConditionsWithTenantByUser(user, read)
 					}
 		) as FindOptionsWhere<T>;
+	}
+
+	/**
+	 * The read a find-options object describes, as far as its scope conditions depend on it: whether it states
+	 * `withDeleted`, read as the boolean every read entry point of the base class reads it as.
+	 *
+	 * @param filter - The caller's find options.
+	 * @returns The read.
+	 */
+	private scopedReadOf(filter?: { withDeleted?: unknown }): IScopedRead {
+		return parseToBoolean(filter?.withDeleted) ? { withDeleted: true } : LIVE_READ;
 	}
 
 	/**
@@ -323,21 +471,22 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		if (!user || !user.tenantId) {
 			return filter;
 		}
+		const read = this.scopedReadOf(filter);
 		if (!filter) {
 			return {
-				where: this.findConditionsWithTenantByUser(user)
+				where: this.findConditionsWithTenantByUser(user, read)
 			};
 		}
 		if (!filter.where) {
 			return {
 				...filter,
-				where: this.findConditionsWithTenantByUser(user)
+				where: this.findConditionsWithTenantByUser(user, read)
 			};
 		}
 		if (filter.where instanceof Object) {
 			return {
 				...filter,
-				where: this.findConditionsWithTenant(user, filter.where)
+				where: this.findConditionsWithTenant(user, filter.where, read)
 			};
 		}
 		return filter;
@@ -354,21 +503,22 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		if (!user || !user.tenantId) {
 			return filter;
 		}
+		const read = this.scopedReadOf(filter);
 		if (!filter) {
 			return {
-				where: this.findConditionsWithTenantByUser(user)
+				where: this.findConditionsWithTenantByUser(user, read)
 			};
 		}
 		if (!filter.where) {
 			return {
 				...filter,
-				where: this.findConditionsWithTenantByUser(user)
+				where: this.findConditionsWithTenantByUser(user, read)
 			};
 		}
 		if (filter.where instanceof Object) {
 			return {
 				...filter,
-				where: this.findConditionsWithTenant(user, filter.where)
+				where: this.findConditionsWithTenant(user, filter.where, read)
 			};
 		}
 		return filter;
@@ -391,7 +541,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}
 		return {
 			...options,
-			...this.findConditionsWithTenantByUser(user)
+			...this.findConditionsWithTenantByUser(user, LIVE_READ)
 		};
 	}
 
@@ -426,7 +576,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async findAll(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
-		return await super.findAll(this.findManyWithTenant(filter));
+		return await super.findAll(this.findManyWithTenant(this.withStableOrder(filter, !!(filter?.take || filter?.skip))));
 	}
 
 	/**
@@ -436,7 +586,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async find(filter?: LegacyFindManyOptions<T>): Promise<T[]> {
-		return await super.find(this.findManyWithTenant(filter));
+		return await super.find(this.findManyWithTenant(this.withStableOrder(filter, !!(filter?.take || filter?.skip))));
 	}
 
 	/**
@@ -448,7 +598,39 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @returns
 	 */
 	public async paginate(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
-		return await super.paginate(this.findManyWithTenant(filter));
+		// paginate() always limits (10 rows when no `take` is given).
+		return await super.paginate(this.findManyWithTenant(this.withStableOrder(filter, true)));
+	}
+
+	/**
+	 * The order a limited TypeORM read without one of its own has always had: by primary key.
+	 *
+	 * Until scoped reads stopped joining the tenant (see {@link readScopedBy}), every limited scoped read had a join,
+	 * so TypeORM paged it with its two-query algorithm, whose id query is `ORDER BY <primary key> ASC` when the
+	 * caller states no order. Pages were therefore ordered by id, and successive pages never overlapped. Without the
+	 * join TypeORM sends one plain `LIMIT` query, which PostgreSQL may answer in any order — so the primary-key order
+	 * is now stated explicitly, keeping every page exactly what it was. A caller's own order is left alone, as is
+	 * MikroORM (it never joined) and any read without `take`/`skip` (it was never ordered).
+	 *
+	 * @param filter The caller's options.
+	 * @param limited Whether the read is limited (`take`/`skip`, or paginate's default page).
+	 */
+	private withStableOrder(filter: LegacyFindManyOptions<T> | undefined, limited: boolean): LegacyFindManyOptions<T> {
+		if (!limited || this.ormType !== MultiORMEnum.TypeORM || this.readsMikroOrmMapping()) {
+			return filter;
+		}
+		const order = (filter as { order?: unknown })?.order;
+		if (order && (typeof order !== 'object' || Object.keys(order).length > 0)) {
+			return filter;
+		}
+		const primaryColumns = this.typeOrmRepository?.metadata?.primaryColumns ?? [];
+		if (primaryColumns.length === 0) {
+			return filter;
+		}
+		return {
+			...(filter ?? {}),
+			order: Object.fromEntries(primaryColumns.map((column) => [column.propertyName, 'ASC']))
+		} as LegacyFindManyOptions<T>;
 	}
 
 	/*
@@ -888,10 +1070,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/**
 	 * The scoping conditions a statement can carry.
 	 *
-	 * A `where` for a read may name a relation — the tenant, the employee — and the read joins to
-	 * resolve it. An `UPDATE` addresses columns, so a relation condition is not something it can express;
-	 * handing one to it produces invalid SQL rather than a narrower write. Only the scalar members are
-	 * kept, and nothing is lost by that here: the two relations this platform scopes by are reached
+	 * A `where` for a read may name a relation — the tenant, the employee — and the read resolves it, by
+	 * a join or by the `EXISTS` {@link readScopedBy} puts on it. An `UPDATE` addresses columns, so a
+	 * relation condition is not something it can express; handing one to it produces invalid SQL rather
+	 * than a narrower write. Only the scalar members are kept — an object, a find operator included, is
+	 * dropped — and nothing is lost by that here: the two relations this platform scopes by are reached
 	 * through foreign-key columns (`tenantId`, `employeeId`) that travel beside them in the same object,
 	 * and those columns are exactly what the statement can be scoped by.
 	 *
@@ -936,7 +1119,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 			const user = RequestContext.currentUser();
 
-			// Proceed with the delete operation using the merged criteria
+			// Proceed with the delete operation using the merged criteria — a write's, without a read passed:
+			// the DELETE is scoped by scopedBy()'s members, never by readScopedBy()'s EXISTS.
 			return await super.delete({
 				...where,
 				...this.findConditionsWithTenantByUser(user)

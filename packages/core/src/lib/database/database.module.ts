@@ -9,6 +9,11 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
 import { MigrationLockingDataSource } from './migration-run-lock';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
+import { applyTypeOrmReadPathPatches } from './typeorm-read-path.patches';
+import { mikroOrmOptionsForActiveOrm } from './mikro-orm-options';
+
+// Before any query is built: see typeorm-read-path.patches.ts.
+applyTypeOrmReadPathPatches();
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
@@ -44,7 +49,7 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatib
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
 				const dbMikroOrmConnectionOptions = configService.getConfigValue('dbMikroOrmConnectionOptions');
-				return dbMikroOrmConnectionOptions;
+				return mikroOrmOptionsForActiveOrm(dbMikroOrmConnectionOptions);
 			},
 			imports: [ConfigModule],
 			inject: [ConfigService]

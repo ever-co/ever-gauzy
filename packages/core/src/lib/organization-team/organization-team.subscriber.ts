@@ -3,6 +3,7 @@ import { sluggable } from '@gauzy/utils';
 import { getDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { OrganizationTeam } from './organization-team.entity';
+import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 @EventSubscriber()
 export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<OrganizationTeam> {
@@ -82,22 +83,22 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 	}
 
 	/**
-	 * 	Simulate an asynchronous operation to set the logo.
-	 * @param entity - The OrganizationTeam entity for which the logo is to be updated.
-	 * @returns {Promise<void>} A promise that resolves when the logo update is complete.
+	 * Sets `logo` from the image's `fullUrl`, falling back to the existing `logo`. Waits only for the
+	 * image's own URL resolution, and not at all when there is no image (see `imageAssetUrlsReady`).
+	 *
+	 * @param entity
+	 * @returns
 	 */
-	private setImageUrl(entity: OrganizationTeam): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.logo = entity.image?.fullUrl ?? entity.logo;
-					resolve();
-				});
-			} catch (error) {
-				console.error('OrganizationTeamSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
+	private async setImageUrl(entity: OrganizationTeam): Promise<void> {
+		try {
+			const ready = imageAssetUrlsReady(entity.image);
+			if (ready) {
+				await ready;
 			}
-		});
+			entity.logo = entity.image?.fullUrl ?? entity.logo;
+		} catch (error) {
+			console.error('OrganizationTeamSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }
