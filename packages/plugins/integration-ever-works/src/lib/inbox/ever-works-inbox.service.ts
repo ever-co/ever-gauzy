@@ -38,7 +38,7 @@ import {
 import { EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
-import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
+import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import {
 	EverWorksApplyContext,
 	EverWorksApplyOutcome,
@@ -386,7 +386,8 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 	/** The Gauzy user matched to an Ever Works user (MEMBER link: EW user ↔ G employee of the organization). */
 	private async gauzyUserOf(context: EverWorksMappingContext, ewUserId: string): Promise<ID | null> {
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.MEMBER, ewUserId);
-		if (!link?.gauzyId) return null;
+		// A pairing that was undone delivers nothing to that person any more (their Ever Works items stay there).
+		if (!link?.gauzyId || link.state === EverWorksLinkState.UNLINKED) return null;
 		const employee = await this.dataSource.getRepository(Employee).findOne({
 			where: { id: link.gauzyId, tenantId: context.tenantId, organizationId: context.organizationId },
 			select: { id: true, userId: true }
@@ -402,7 +403,8 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		});
 		if (!employee?.id) return null;
 		const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, employee.id as ID);
-		return link?.ewId ?? null;
+		// Act-as only for a live pairing: an undone one never speaks for that Ever Works member (as everywhere else).
+		return link && link.state !== EverWorksLinkState.UNLINKED ? link.ewId : null;
 	}
 
 	/** The Gauzy task, project and agent of an item, through the integration's links (unlinked → `null`). */

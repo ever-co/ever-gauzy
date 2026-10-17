@@ -140,6 +140,33 @@ function everWorksStatusOf(task: Task): string | null {
  *   cancelled in Ever Works, with a comment. Both links stop syncing.
  * - Recurring templates are never synced, and tasks hidden from the board (triage) only with the setting.
  */
+/** A push that has to wait, and why (a team or the parent not in Ever Works yet). */
+type TaskOutgoingWait = { wait: string; teamIds?: undefined };
+
+/** What a push sends, computed from the Gauzy task. */
+type TaskOutgoing = {
+	wait?: undefined;
+	g: TaskGauzySide;
+	teamIds: string[];
+	workId: string | null;
+	parentTaskId: string | null;
+	assignees: EverWorksPrincipalRef[];
+	labels: string[];
+	watchers: string[];
+	blockedBy: string[];
+	relations: string[];
+	pendingWatchers: string[];
+	pendingEdges: string[];
+};
+
+/**
+ * Whether a push has to wait. A type guard rather than `out.wait !== undefined`: the API build compiles this
+ * plugin without `strictNullChecks`, where an optional `undefined` member does not narrow the union.
+ */
+function waitsFor(out: TaskOutgoingWait | TaskOutgoing): out is TaskOutgoingWait {
+	return out.wait !== undefined;
+}
+
 @Injectable()
 export class EverWorksTasksService implements EverWorksInboundHandler, EverWorksOutboundHandler, EverWorksSyncSweeper {
 	readonly aggregateTypes = ['task'] as const;
@@ -884,26 +911,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	}
 
 	/** What a push sends, computed from the Gauzy task; or why it has to wait. */
-	private async outgoing(
-		context: EverWorksMappingContext,
-		task: Task
-	): Promise<
-		| { wait: string; teamIds?: undefined }
-		| {
-				wait?: undefined;
-				g: TaskGauzySide;
-				teamIds: string[];
-				workId: string | null;
-				parentTaskId: string | null;
-				assignees: EverWorksPrincipalRef[];
-				labels: string[];
-				watchers: string[];
-				blockedBy: string[];
-				relations: string[];
-				pendingWatchers: string[];
-				pendingEdges: string[];
-		  }
-	> {
+	private async outgoing(context: EverWorksMappingContext, task: Task): Promise<TaskOutgoingWait | TaskOutgoing> {
 		const g = await this.gauzySide(context, task);
 		const teamOf = new Map<ID, string>();
 		for (const teamId of g.teamIds ?? []) {
@@ -1059,7 +1067,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		change: EverWorksOutboundChange
 	): Promise<EverWorksPushOutcome> {
 		const out = await this.outgoing(context, task);
-		if (out.wait !== undefined) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
+		if (waitsFor(out)) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
 		const connectionId = context.connection.id as ID;
 		const wanted = everWorksStatusOf(task);
 		const priority = gauzyPriorityToEverWorks(out.g.priority);
@@ -1127,7 +1135,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		let pair = link;
 		for (let attempt = 0; attempt < 2; attempt++) {
 			const out = await this.outgoing(context, row);
-			if (out.wait !== undefined) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
+			if (waitsFor(out)) return { status: 'deferred', message: out.wait, retryInMs: TASK_WAIT_MS };
 			const snapshot = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(pair));
 			const prevG = snapshot.g;
 			const prevE = snapshot.e;
