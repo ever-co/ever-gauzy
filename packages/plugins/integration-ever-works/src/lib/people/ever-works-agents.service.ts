@@ -168,17 +168,18 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 			}
 			return { status: 'skipped', message: 'agent turned private: no longer synced' };
 		}
-		// A private agent stays out until Ever Works shares it again (a newer visibility change to team or organization).
-		const sharedAgain = envelope.type === 'agent.visibility_changed' && typeof data.visibility === 'string' && isSyncedVisibility(data.visibility);
-		if (link?.state === EverWorksLinkState.UNLINKED && !sharedAgain) return { status: 'skipped', message: 'the agent is no longer synced (private)' };
 		const archived = envelope.type === 'agent.deleted' || envelope.type === 'agent.archived' || data.deleted === true;
 		let agent: EverWorksAgent = { ...data, id: envelope.aggregate.id, version: envelope.aggregate.version, ...(archived ? { status: 'archived' } : {}) };
 		if (!link || link.state === EverWorksLinkState.UNLINKED) {
-			// An agent not linked yet (or shared again) is read from Ever Works first, which never answers a private one:
-			// an event or list entry older than a private notice Gauzy had nothing to end for never brings it in.
+			// An agent not linked yet, or ended as private (any event newer than its tombstone: shared again, a resync),
+			// is read from Ever Works first and applied as it is now. Ever Works never answers a private agent, so an
+			// event or list entry older than a private notice Gauzy had nothing to end for never brings it in.
 			const current = await this.fetchAgent(context, envelope.aggregate.id);
 			if (!current) return { status: 'skipped', message: 'the agent is not visible in Ever Works (private or gone)' };
-			agent = { ...current, id: envelope.aggregate.id, version: current.version ?? envelope.aggregate.version, ...(archived ? { status: 'archived' } : {}) };
+			if (current.visibility !== undefined && !isSyncedVisibility(current.visibility)) {
+				return { status: 'skipped', message: 'the agent is not visible in Ever Works (private or gone)' };
+			}
+			agent = { ...current, id: envelope.aggregate.id, version: current.version ?? envelope.aggregate.version };
 		}
 		await this.provision(context, agent);
 		return { status: 'applied' };

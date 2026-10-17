@@ -96,12 +96,13 @@ function setup(options: { link?: { gauzyId: string; ewVersion: number | null; st
 	};
 	const contexts = { forEverWorksOrganization: jest.fn(async () => context), forRequest: jest.fn(async () => context) };
 	const inbound = { record: jest.fn(async () => ({ duplicate: false })) };
-	// GET /agents/:id answers the agent while it is visible to the integration (never a private one: 404).
+	// GET /agents/:id answers the agent as it is now while it is visible to the integration (never a private one: 404).
+	const remote = { visible: options.visible ?? true, agent: { ...agent, version: 2 } as Record<string, unknown> };
 	const client = {
 		request: jest.fn(async (_method: string, path: string): Promise<any> => {
 			if (path === '/agents/AG-1') {
-				if (options.visible === false) throw new EverWorksApiError(404, 'not_found', 'No such agent.');
-				return { ...agent, version: 2 };
+				if (!remote.visible) throw new EverWorksApiError(404, 'not_found', 'No such agent.');
+				return { ...remote.agent };
 			}
 			return { data: [], nextCursor: null, hasMore: false };
 		})
@@ -114,7 +115,7 @@ function setup(options: { link?: { gauzyId: string; ewVersion: number | null; st
 			options.provisioning === false ? undefined : token === EmployeeService ? employees : token === EmployeeAgentProfileService ? profiles : undefined
 	};
 	const service = new EverWorksAgentsService(dataSource as never, contexts as never, connections as never, links as never, moduleRef as never, inbound as never);
-	return { service, employeesRepo, usersRepo, links, contexts, employees, profiles, inbound, client, link: () => current };
+	return { service, employeesRepo, usersRepo, links, contexts, employees, profiles, inbound, client, remote, link: () => current };
 }
 
 describe('EverWorksAgentsService', () => {
@@ -167,7 +168,8 @@ describe('EverWorksAgentsService', () => {
 	});
 
 	it('a stale public event after the private notice never brings the agent back; shared again, it resumes (review F19)', async () => {
-		const { service, links, employees, profiles, employeesRepo, link } = setup({ link: { gauzyId: 'e1', ewVersion: 5 } });
+		const { service, links, employees, profiles, employeesRepo, link, remote } = setup({ link: { gauzyId: 'e1', ewVersion: 5 } });
+		remote.visible = false;
 		expect(await service.apply(envelope('agent.visibility_changed', { id: 'AG-1', visibility: 'private' }, 7) as never, applyContext)).toMatchObject({
 			status: 'skipped'
 		});
@@ -175,18 +177,19 @@ describe('EverWorksAgentsService', () => {
 		expect(link()).toMatchObject({ gauzyId: 'e1', ewVersion: 7, state: EverWorksLinkState.UNLINKED });
 		// A late webhook or an import listed before the agent turned private: older, skipped.
 		expect(await service.apply(envelope('agent.updated', agent, 6) as never, applyContext)).toMatchObject({ status: 'skipped' });
-		// Anything else while it is private (other than being shared again) is skipped too.
+		// A newer event while it is still private (Ever Works answers 404) is skipped too.
 		expect(await service.apply(envelope('agent.updated', agent, 8) as never, applyContext)).toMatchObject({ status: 'skipped' });
 		expect(employees.createAgentEmployee).not.toHaveBeenCalled();
 		expect(profiles.upsertForEmployee).not.toHaveBeenCalled();
 		expect(employeesRepo.update).not.toHaveBeenCalled();
 		expect(link()).toMatchObject({ state: EverWorksLinkState.UNLINKED });
 		// Shared again (a newer visibility change): read from Ever Works and linked again on the same employee.
+		Object.assign(remote, { visible: true, agent: { ...agent, version: 9, visibility: 'organization' } });
 		expect(await service.apply(envelope('agent.visibility_changed', { id: 'AG-1', visibility: 'organization' }, 9) as never, applyContext)).toEqual({
 			status: 'applied'
 		});
 		expect(profiles.upsertForEmployee).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1' }), expect.objectContaining({ externalId: 'AG-1' }));
-		expect(link()).toMatchObject({ gauzyId: 'e1', state: EverWorksLinkState.OK });
+		expect(link()).toMatchObject({ gauzyId: 'e1', ewVersion: 9, state: EverWorksLinkState.OK });
 		expect(links.unlink).toHaveBeenCalledTimes(1);
 	});
 
@@ -203,6 +206,24 @@ describe('EverWorksAgentsService', () => {
 		expect(client.request).toHaveBeenCalledWith('GET', '/agents/AG-1');
 		expect(employees.createAgentEmployee).not.toHaveBeenCalled();
 		expect(links.record).not.toHaveBeenCalled();
+	});
+
+	it('a resync after the agent was shared again while offline restores it; a late archive event never overrides its current state (#11025 review)', async () => {
+		const { service, profiles, employeesRepo, link, remote } = setup({ link: { gauzyId: 'e1', ewVersion: 5 } });
+		remote.visible = false;
+		await service.apply(envelope('agent.visibility_changed', { id: 'AG-1', visibility: 'private' }, 7) as never, applyContext);
+		// Shared again while the feed was out of reach: the resync's initial event is an `agent.updated` at the current version.
+		Object.assign(remote, { visible: true, agent: { ...agent, version: 12, visibility: 'team' } });
+		expect(await service.apply(envelope('agent.updated', { ...agent, visibility: 'team' }, 12) as never, applyContext)).toEqual({ status: 'applied' });
+		expect(link()).toMatchObject({ gauzyId: 'e1', ewVersion: 12, state: EverWorksLinkState.OK });
+		expect(profiles.upsertForEmployee).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1' }), expect.objectContaining({ status: 'active' }));
+		// A never-linked agent archived and restored before its delayed archive event arrives: applied as it is now (active).
+		const fresh = setup();
+		Object.assign(fresh.remote, { agent: { ...agent, version: 4, status: 'active' } });
+		expect(await fresh.service.apply(envelope('agent.archived', agent, 3) as never, applyContext)).toEqual({ status: 'applied' });
+		expect(fresh.employeesRepo.update).toHaveBeenCalledWith({ id: 'e-new' }, expect.objectContaining({ isActive: true, isArchived: false }));
+		expect(fresh.link()).toMatchObject({ ewVersion: 4 });
+		expect(employeesRepo.update).not.toHaveBeenCalledWith({ id: 'e1' }, { isActive: false, isArchived: true });
 	});
 
 	it('nothing is written when agents are not synced for the mapping', async () => {
