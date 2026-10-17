@@ -3,7 +3,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { containsText, countByGroup, getCurrentEmployeeId, pageOf, validateOrganizationContext } from './utils';
+import {
+	containsText,
+	countByGroup,
+	getCurrentEmployeeId,
+	isWithinDates,
+	pageOf,
+	validateOrganizationContext
+} from './utils';
 import { TimeOffStatusEnum, TimeOffTypeEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -56,9 +63,33 @@ interface TimeOffRequestFilters {
 	relations?: string[];
 }
 
+/** `LeaveTypeEnum` of the API, which names two of the tool's time-off types differently. */
+const API_LEAVE_TYPES = new Set([
+	'ANNUAL',
+	'SICK',
+	'MATERNITY',
+	'PATERNITY',
+	'UNPAID',
+	'COMPENSATORY',
+	'BEREAVEMENT',
+	'STUDY',
+	'OTHER'
+]);
+const LEAVE_TYPE_ALIASES: Record<string, string> = { VACATION: 'ANNUAL', SICK_LEAVE: 'SICK' };
+
+/** The API leave type of a tool time-off type: `VACATION` is `ANNUAL` there and `SICK_LEAVE` is `SICK`. */
+const toLeaveType = (type?: string) => (type && LEAVE_TYPE_ALIASES[type]) || type;
+
+/** The `leaveType` a policy write sends for `type`, left out when the API has no such leave type. */
+const leaveTypeField = (type?: string) => {
+	const leaveType = toLeaveType(type);
+	return API_LEAVE_TYPES.has(leaveType) ? { leaveType } : {};
+};
+
 /**
  * The organization's time-off requests. `GET /api/time-off-request` answers the whole list for its
- * employee and date filters and has no other filter or paging, so the rest is applied here.
+ * employee filter, and for its date filter only when both dates are given; it has no other filter or
+ * paging, so the rest is applied here.
  */
 const findTimeOffRequests = async (
 	defaultParams: DefaultParams,
@@ -75,6 +106,7 @@ const findTimeOffRequests = async (
 		(request) =>
 			(!status || request.status === status) &&
 			(!policyId || request.policyId === policyId) &&
+			isWithinDates(request.start as string, startDate, endDate) &&
 			containsText(request.description, search)
 	);
 };
@@ -304,7 +336,13 @@ export const registerTimeOffTools = (server: McpServer) => {
 		},
 		async ({ id, request_data }) => {
 			try {
-				const updateData = convertTimeOffDateFields(request_data);
+				// The request entity names the dates `start` and `end`, as create_time_off_request sends them
+				const { startDate, endDate, ...fields } = request_data;
+				const updateData = convertTimeOffDateFields({
+					...(startDate && { start: new Date(startDate) }),
+					...(endDate && { end: new Date(endDate) }),
+					...fields
+				});
 
 				const response = await apiClient.put(`/api/time-off-request/${id}`, updateData);
 
@@ -536,7 +574,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 				const policies = await findTimeOffPolicies(
 					defaultParams,
 					{
-						...(type && { leaveType: type }),
+						...(type && { leaveType: toLeaveType(type) }),
 						...(requiresApproval !== undefined && { requiresApproval }),
 						...(paid !== undefined && { paid })
 					},
@@ -613,8 +651,10 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// The policy entity names its type `leaveType`
 				const createData = convertTimeOffDateFields({
 					employees: [],
+					...leaveTypeField(policy_data.type),
 					...policy_data,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
@@ -650,7 +690,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 				const response = await updateTimeOffPolicy(id, defaultParams, () =>
-					convertTimeOffDateFields(policy_data)
+					convertTimeOffDateFields({ ...leaveTypeField(policy_data.type), ...policy_data })
 				);
 
 				return {
@@ -826,7 +866,7 @@ export const registerTimeOffTools = (server: McpServer) => {
 				// No statistics route: count the requests the list route answers
 				const requests = (
 					await findTimeOffRequests(defaultParams, { startDate, endDate, employeeId, policyId })
-				).filter(({ policy }) => !type || policy?.leaveType === type);
+				).filter(({ policy }) => !type || policy?.leaveType === toLeaveType(type));
 				const groupings = {
 					employee: (request) => (request.employees ?? []).map(({ id }) => id),
 					policy: (request) => request.policy?.name,
