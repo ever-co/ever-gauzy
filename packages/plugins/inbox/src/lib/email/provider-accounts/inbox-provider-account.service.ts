@@ -26,6 +26,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { describeEmailSendError, RequestContext } from '@gauzy/core';
+import { InboxNamedLocks } from '../database/named-locks';
 import { InboxProviderAccount } from '../entities/inbox-provider-account.entity';
 import { INBOX_SECRET_BOX, inboundWebhookUrl, PROVIDER_ACCOUNT_ERROR_MAX } from '../inbox-email.constants';
 import { InboxEmailScopeService } from '../inbox-email-scope.service';
@@ -67,7 +68,21 @@ export class InboxProviderAccountService {
 		private readonly registry: EmailProviderRegistry,
 		private readonly scope: InboxEmailScopeService,
 		@Inject(INBOX_SECRET_BOX) private readonly secretBox: InboxSecretBox
-	) {}
+	) {
+		this.locks = new InboxNamedLocks(dataSource);
+	}
+
+	/** One named lock per account: its removal, and a mailbox being pointed at it, never overlap. */
+	private readonly locks: InboxNamedLocks;
+
+	/**
+	 * Runs `work` while the account can be neither removed nor attached by another request (in this process and
+	 * across the replicas). A mailbox is pointed at an account under this lock, after checking the account again, so a
+	 * removal never leaves a mailbox receiving through a deleted account.
+	 */
+	whileAccountHeld<T>(accountId: ID, work: () => Promise<T>): Promise<T> {
+		return this.locks.run(`provider-account:${accountId}`, work);
+	}
 
 	// ---------------------------------------------------------------- management API
 
@@ -270,9 +285,18 @@ export class InboxProviderAccountService {
 	 */
 	async remove(id: ID, organizationId?: ID): Promise<IInboxProviderAccountRemoved> {
 		const row = await this.managed(id, organizationId, true);
+		await this.whileAccountHeld(row.id as ID, () => this.removeHeld(row));
+		return { id: row.id as ID, deleted: true };
+	}
+
+	/** The removal itself, under the account's named lock (no mailbox can be pointed at it meanwhile). */
+	private async removeHeld(row: InboxProviderAccount): Promise<void> {
 		await this.inTransaction(async (manager) => {
-			// Under the row lock (where the database has one), so a parallel edit of the account waits for the removal.
-			await this.lockedRow(manager, row.id as ID);
+			// Under the row lock too (where the database has one), so a parallel edit of the account waits for it.
+			const latest = await this.lockedRow(manager, row.id as ID);
+			if (!latest || latest.deletedAt) {
+				throw new NotFoundException('The provider account does not exist.');
+			}
 			const mailboxes = await manager
 				.createQueryBuilder()
 				.select('m.id', 'id')
@@ -296,7 +320,6 @@ export class InboxProviderAccountService {
 				}
 			);
 		});
-		return { id: row.id as ID, deleted: true };
 	}
 
 	// ---------------------------------------------------------------- for the pipeline and the transport

@@ -616,6 +616,8 @@ export class InboxProvidersPageComponent implements OnInit {
 					organizationId: this.organizationId(),
 					canManageTenant: this.canManageTenant()
 				},
+				// Neither Escape nor a click outside closes it: a save in flight must reach its one-time values.
+				closeOnEsc: false,
 				closeOnBackdropClick: false
 			})
 			.onClose.pipe(takeUntilDestroyed(this.destroyRef))
@@ -708,11 +710,15 @@ export class InboxProvidersPageComponent implements OnInit {
 
 	/** The accounts again, without the page's loading state (a failure keeps the list as it was). */
 	private refreshAccounts(): void {
+		const organizationId = this.organizationId();
 		this.api
-			.accounts(this.organizationId())
+			.accounts(organizationId)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
-				next: (accounts) => this.accounts.set(accounts ?? []),
+				// An answer for an organization that is no longer the selected one is dropped.
+				next: (accounts) => {
+					if (this.organizationId() === organizationId) this.accounts.set(accounts ?? []);
+				},
 				error: () => undefined
 			});
 	}
