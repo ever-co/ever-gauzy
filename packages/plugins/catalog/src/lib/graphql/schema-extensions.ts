@@ -41,15 +41,26 @@ export const schemaExtensions = gql`
 		isFeatured: Boolean!
 		startsAt: DateTime
 		endsAt: DateTime
+		"""
+		When the collection first went live on any channel: the earliest \`publishedAt\` of its channel
+		publications, each of which keeps the instant it first became ACTIVE. Null while the collection has
+		never been published. The collection has no such column of its own; the date is per channel.
+		"""
 		publishedAt: DateTime
-		imageAssetId: ID
+		"Id of the hero image, under the name the entity and the REST routes give it."
+		imageId: ID
+		"The earlier name of \`imageId\`, answered from the same column."
+		imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
 		parentId: ID
 		customerId: ID
 		parent: Collection
 		children: [Collection!]
 		products: [CollectionProduct!]
 		variants: [CollectionVariant!]
-		channelPublications: [CollectionChannel!]
+		"Where the collection is published: its channel publication rows, under the entity's name."
+		channels: [CollectionChannel!]
+		"The earlier name of \`channels\`, answered from the same rows."
+		channelPublications: [CollectionChannel!] @deprecated(reason: "Use channels; removal planned for 0.3.0")
 		metadata: JSON
 		createdAt: DateTime!
 		updatedAt: DateTime!
@@ -355,7 +366,10 @@ export const schemaExtensions = gql`
 		isFeatured: Boolean
 		startsAt: DateTime
 		endsAt: DateTime
-		imageAssetId: ID
+		"Id of the hero image."
+		imageId: ID
+		"The earlier name of \`imageId\`; \`imageId\` wins when both are stated."
+		imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
 		parentId: ID
 		customerId: ID
 		metadata: JSON
@@ -371,7 +385,10 @@ export const schemaExtensions = gql`
 		isFeatured: Boolean
 		startsAt: DateTime
 		endsAt: DateTime
-		imageAssetId: ID
+		"Id of the hero image."
+		imageId: ID
+		"The earlier name of \`imageId\`; \`imageId\` wins when both are stated."
+		imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
 		parentId: ID
 		metadata: JSON
 	}

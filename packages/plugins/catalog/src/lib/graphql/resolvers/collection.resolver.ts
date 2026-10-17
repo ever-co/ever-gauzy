@@ -1,12 +1,43 @@
-import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { connectionFromOffsetPage, deliverPayloadAsIs, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard, tenantScopedEventStream } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
+import { CollectionChannel } from '../../collection-channel/collection-channel.entity';
+import { CollectionChannelService } from '../../collection-channel/collection-channel.service';
 import { Collection } from '../../collection/collection.entity';
 import { CollectionService } from '../../collection/collection.service';
 import { CollectionChangedEvent } from '../../events';
+
+/**
+ * A collection write as the GraphQL inputs state it.
+ *
+ * `imageAssetId` is the inputs' earlier spelling of the entity's `imageId`.
+ */
+export type CollectionWriteInput = Partial<Collection> & { imageAssetId?: ID | null };
+
+/**
+ * Translates a GraphQL collection input into the entity's own names.
+ *
+ * The inputs declared the hero image as `imageAssetId`, a property the entity does not have, and the field
+ * handed the input to the service unchanged — so the ORM dropped it and an image set over GraphQL never
+ * reached the row, while REST wrote the same column as `imageId` (review R2-22). `imageId` is now declared
+ * too and wins when both are stated; a stated `imageAssetId` (null included, which clears the image) is
+ * written to `imageId` otherwise.
+ *
+ * @param input The input the field received.
+ * @returns The same write under the entity's names.
+ */
+export function toCollectionWrite(input: CollectionWriteInput | null | undefined): Partial<Collection> {
+	const { imageAssetId, ...write } = input ?? {};
+
+	if (imageAssetId !== undefined && write.imageId === undefined) {
+		return { ...write, imageId: imageAssetId };
+	}
+
+	return write;
+}
 
 /**
  * Collections over GraphQL.
@@ -30,9 +61,17 @@ import { CollectionChangedEvent } from '../../events';
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class CollectionResolver {
+	/**
+	 * The channel rows each collection object of an answer was resolved with, so `channels`, its deprecated
+	 * alias and `publishedAt` selected together read them once. Keyed by the parent object, which lives for
+	 * one response.
+	 */
+	private readonly channelReads = new WeakMap<Collection, Promise<CollectionChannel[]>>();
+
 	constructor(
 		private readonly collectionService: CollectionService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		private readonly collectionChannelService?: CollectionChannelService
 	) {}
 
 	/**
@@ -90,8 +129,8 @@ export class CollectionResolver {
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_CREATE))
 	@Mutation('createCollection')
-	async createCollection(@Args('input') input: Partial<Collection>): Promise<Collection> {
-		return this.collectionService.create(input);
+	async createCollection(@Args('input') input: CollectionWriteInput): Promise<Collection> {
+		return this.collectionService.create(toCollectionWrite(input));
 	}
 
 	/**
@@ -99,8 +138,8 @@ export class CollectionResolver {
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
 	@Mutation('updateCollection')
-	async updateCollection(@Args('id') id: ID, @Args('input') input: Partial<Collection>): Promise<Collection> {
-		return this.collectionService.update(id, input);
+	async updateCollection(@Args('id') id: ID, @Args('input') input: CollectionWriteInput): Promise<Collection> {
+		return this.collectionService.update(id, toCollectionWrite(input));
 	}
 
 	/**
@@ -187,5 +226,89 @@ export class CollectionResolver {
 			read: (event, scope) =>
 				this.collectionService.findOneByWhereOptions({ id: event.collectionId, tenantId: scope.tenantId })
 		});
+	}
+
+	/**
+	 * The deprecated name of `imageId`.
+	 *
+	 * The type declared `imageAssetId` while the entity's column is `imageId`, so the default resolver read a
+	 * property no row has and the field answered null for every collection, an image or not (review R2-22).
+	 *
+	 * @param collection The collection being read.
+	 * @returns The id of its hero image, or null.
+	 */
+	@ResolveField('imageAssetId')
+	imageAssetId(@Parent() collection: Collection): ID | null {
+		return collection.imageId ?? null;
+	}
+
+	/**
+	 * The collection's channel publications — the entity's `channels` relation.
+	 *
+	 * The rows the read already loaded are answered as they are; otherwise they are read the way
+	 * `GET /collection-channels/by-collection/:collectionId` reads them, inside the caller's tenant and
+	 * organization.
+	 *
+	 * @param collection The collection being read.
+	 * @returns Its publication rows.
+	 */
+	@ResolveField('channels')
+	async channels(@Parent() collection: Collection): Promise<CollectionChannel[]> {
+		return this.channelsOf(collection);
+	}
+
+	/**
+	 * The deprecated name of `channels`. The default resolver read `channelPublications`, a property the
+	 * entity does not have, and answered null for every collection (review R2-22).
+	 *
+	 * @param collection The collection being read.
+	 * @returns Its publication rows.
+	 */
+	@ResolveField('channelPublications')
+	async channelPublications(@Parent() collection: Collection): Promise<CollectionChannel[]> {
+		return this.channelsOf(collection);
+	}
+
+	/**
+	 * When the collection first went live on any channel.
+	 *
+	 * The collection has no `publishedAt` column — publication is per channel, and each channel row keeps the
+	 * instant it first became ACTIVE, never cleared by a later withdrawal — so the type's field used to answer
+	 * null for every collection (review R2-22). It is the earliest of those instants.
+	 *
+	 * @param collection The collection being read.
+	 * @returns The earliest channel publication instant, or null when it was never published.
+	 */
+	@ResolveField('publishedAt')
+	async publishedAt(@Parent() collection: Collection): Promise<Date | null> {
+		const instants = (await this.channelsOf(collection))
+			.map((row) => (row.publishedAt ? new Date(row.publishedAt).getTime() : NaN))
+			.filter((instant) => !Number.isNaN(instant));
+
+		return instants.length ? new Date(Math.min(...instants)) : null;
+	}
+
+	/**
+	 * @param collection The collection being read.
+	 * @returns Its channel rows: the loaded relation when the read carried it, else one scoped read per
+	 * collection object, shared by every field that needs them.
+	 */
+	private channelsOf(collection: Collection): Promise<CollectionChannel[]> {
+		if (Array.isArray(collection?.channels)) {
+			return Promise.resolve(collection.channels);
+		}
+
+		if (!collection?.id || !this.collectionChannelService) {
+			return Promise.resolve([]);
+		}
+
+		let read = this.channelReads.get(collection);
+
+		if (!read) {
+			read = this.collectionChannelService.findByCollection(collection.id);
+			this.channelReads.set(collection, read);
+		}
+
+		return read;
 	}
 }
