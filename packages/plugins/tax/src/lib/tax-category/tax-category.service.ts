@@ -82,7 +82,7 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 		}
 
 		assertOrganizationUnchanged(
-			entity.organizationId,
+			entity,
 			category.organizationId,
 			RequestContext.currentOrganizationId(),
 			'A tax category'

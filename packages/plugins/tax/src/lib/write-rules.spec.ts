@@ -61,12 +61,16 @@ describe('tax — write rules both protocols share (R2-G34)', () => {
 			expect(() => assertCountryCode(undefined, 'a rate')).not.toThrow();
 			expect(() => assertCountryCode('CA', 'a rate')).not.toThrow();
 			expect(() => assertCountryCode('CAN', 'a rate')).toThrow(BadRequestException);
+			// `@Length(2, 2)` refuses these over REST; stored, the zone match would read them as "any country".
+			expect(() => assertCountryCode('', 'a rate')).toThrow(BadRequestException);
+			expect(() => assertCountryCode(' CA', 'a rate')).toThrow(BadRequestException);
+			expect(() => assertCountryCode('C ', 'a rate')).toThrow(BadRequestException);
 		});
 
 		it('refuses an update that moves a row, and accepts one that restates its organization', () => {
-			expect(() => assertOrganizationUnchanged(ORG, ORG, ORG, 'A rate')).not.toThrow();
-			expect(() => assertOrganizationUnchanged(undefined, ORG, ORG, 'A rate')).not.toThrow();
-			expect(() => assertOrganizationUnchanged(OTHER_ORG, ORG, ORG, 'A rate')).toThrow(
+			expect(() => assertOrganizationUnchanged({ organizationId: ORG }, ORG, ORG, 'A rate')).not.toThrow();
+			expect(() => assertOrganizationUnchanged({}, ORG, ORG, 'A rate')).not.toThrow();
+			expect(() => assertOrganizationUnchanged({ organizationId: OTHER_ORG }, ORG, ORG, 'A rate')).toThrow(
 				/TAX_ORGANIZATION_IMMUTABLE/
 			);
 		});
@@ -129,6 +133,19 @@ describe('tax — write rules both protocols share (R2-G34)', () => {
 				BadRequestException
 			);
 			expect(created).not.toHaveBeenCalled();
+		});
+
+		it('refuses an update that moves a regime through the organization relation alone', async () => {
+			const updated = jest
+				.spyOn(TenantAwareCrudService.prototype, 'update')
+				.mockImplementation(async () => ({ affected: 1 }) as never);
+			const service = new TaxRegimeService({} as never, {} as never, {} as never, {} as never);
+			jest.spyOn(service, 'findOneByIdString').mockResolvedValue({ id: 'oss', organizationId: ORG } as never);
+
+			await expect(service.update('oss', { organization: { id: OTHER_ORG } } as never)).rejects.toThrow(
+				/TAX_ORGANIZATION_IMMUTABLE/
+			);
+			expect(updated).not.toHaveBeenCalled();
 		});
 
 		it('refuses an update that moves a regime into another organization', async () => {

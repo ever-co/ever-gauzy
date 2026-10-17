@@ -165,12 +165,7 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 		// organization, and it supplies the currency the incoming rate is expressed in.
 		const existing = await this.findOneByIdString(id);
 
-		assertOrganizationUnchanged(
-			entity.organizationId,
-			existing.organizationId,
-			this.scope.organizationId,
-			'An exchange rate'
-		);
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'An exchange rate');
 
 		if (entity.rate !== undefined && entity.rate !== null) {
 			const rate = this.toMoney(entity.rate as DecimalString, 'rate', existing.fromCurrency);
@@ -217,11 +212,7 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 
 		// The caller's organization, stamped rather than read from the payload: the GraphQL input states
 		// none, and a rate stored without one is never read by `findRateAt` (R2-G31).
-		const organizationId = organizationForCreate(
-			entity.organizationId,
-			this.scope.organizationId,
-			'An exchange rate'
-		);
+		const organizationId = organizationForCreate(entity, this.scope.organizationId, 'An exchange rate');
 
 		return { ...entity, fromCurrency, toCurrency, organizationId };
 	}

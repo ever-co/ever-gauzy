@@ -168,12 +168,7 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	): Promise<UpdateResult | ProductPrice> {
 		const existing = await this.findOneByIdString(id);
 
-		assertOrganizationUnchanged(
-			entity.organizationId,
-			existing.organizationId,
-			this.scope.organizationId,
-			'A price'
-		);
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price');
 
 		const prepared = this.prepare(this.mergeWithStored(existing, entity));
 

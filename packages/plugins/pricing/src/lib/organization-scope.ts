@@ -13,23 +13,56 @@ import { ID } from '@gauzy/contracts';
  * - **An update could move a row into another organization.** The REST update DTOs inherit
  *   `organizationId` from the tenant/organization base DTO, and the payload reached the write as it came.
  *
- * Both are answered here, so the REST route and the GraphQL field cannot disagree about either.
+ * Both are answered here, so the REST route and the GraphQL field cannot disagree about either. A payload
+ * states its organization in two ways — the `organizationId` column and the `organization` relation, which
+ * the ORM writes just as well — and both are read.
  */
 
 /**
- * @param stated The organization the payload states, when it states one.
+ * @param payload A write's payload.
+ * @returns Every organization the payload states, through the column or through the relation; `null`
+ * for a member that clears it. Empty when it states none.
+ */
+export function statedOrganizations(payload: object | null | undefined): Array<ID | null> {
+	const fields = (payload ?? {}) as Record<string, unknown>;
+	const stated: Array<ID | null> = [];
+
+	if (fields['organizationId'] !== undefined) {
+		stated.push((fields['organizationId'] as ID) ?? null);
+	}
+
+	if (fields['organization'] !== undefined) {
+		const relation = fields['organization'] as { id?: ID } | null;
+		stated.push(relation?.id ?? null);
+	}
+
+	return stated;
+}
+
+/**
+ * @param payload The create's payload.
  * @param caller The caller's organization.
  * @param what The row being written, named in the error.
  * @returns The organization the row is written into: the caller's.
  * @throws BadRequestException `PRICE_ORGANIZATION_MISMATCH` when the payload states another organization,
  * and `PRICE_ORGANIZATION_REQUIRED` when there is none at all.
  */
-export function organizationForCreate(stated: unknown, caller: ID | null | undefined, what: string): ID {
-	if (stated && caller && String(stated) !== String(caller)) {
+export function organizationForCreate(
+	payload: object | null | undefined,
+	caller: ID | null | undefined,
+	what: string
+): ID {
+	const stated = statedOrganizations(payload).filter((organizationId): organizationId is ID => !!organizationId);
+
+	if (caller && stated.some((organizationId) => String(organizationId) !== String(caller))) {
 		throw new BadRequestException(`PRICE_ORGANIZATION_MISMATCH: ${what} belongs to the caller's organization.`);
 	}
 
-	const organizationId = (caller ?? stated) as ID | undefined;
+	if (!caller && new Set(stated.map(String)).size > 1) {
+		throw new BadRequestException(`PRICE_ORGANIZATION_MISMATCH: ${what} states two organizations.`);
+	}
+
+	const organizationId = caller ?? stated[0];
 
 	if (!organizationId) {
 		throw new BadRequestException(`PRICE_ORGANIZATION_REQUIRED: ${what} is written inside an organization.`);
@@ -44,28 +77,26 @@ export function organizationForCreate(stated: unknown, caller: ID | null | undef
  * Restating the row's own organization is accepted, so a client that echoes the row back keeps working.
  * A row stored without one — the defect above — may be given the caller's, which is how it is repaired.
  *
- * @param stated The organization the payload states; `undefined` when it states none.
+ * @param payload The update's payload.
  * @param stored The organization the row belongs to.
  * @param caller The caller's organization.
  * @param what The row being written, named in the error.
  * @throws BadRequestException `PRICE_ORGANIZATION_IMMUTABLE`.
  */
 export function assertOrganizationUnchanged(
-	stated: unknown,
+	payload: object | null | undefined,
 	stored: ID | null | undefined,
 	caller: ID | null | undefined,
 	what: string
 ): void {
-	if (stated === undefined) {
-		return;
-	}
-
 	const target = stored ?? caller;
 
-	if (!target || String(stated ?? '') !== String(target)) {
-		throw new BadRequestException(
-			`PRICE_ORGANIZATION_IMMUTABLE: ${what} stays in the organization it was created in; ` +
-				'create it again inside the other organization instead.'
-		);
+	for (const stated of statedOrganizations(payload)) {
+		if (!target || String(stated ?? '') !== String(target)) {
+			throw new BadRequestException(
+				`PRICE_ORGANIZATION_IMMUTABLE: ${what} stays in the organization it was created in; ` +
+					'create it again inside the other organization instead.'
+			);
+		}
 	}
 }

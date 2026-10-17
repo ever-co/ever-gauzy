@@ -122,11 +122,7 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 	public async createOne(entity: DeepPartial<PricePreference>): Promise<PricePreference> {
 		// The caller's organization, stamped rather than read from the payload: the GraphQL input states
 		// none, and a preference stored without one is never read by `findFor` (R2-G31).
-		const organizationId = organizationForCreate(
-			entity.organizationId,
-			this.scope.organizationId,
-			'A price preference'
-		);
+		const organizationId = organizationForCreate(entity, this.scope.organizationId, 'A price preference');
 		const attribute = entity.attribute;
 
 		if (!attribute) {
@@ -160,12 +156,7 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 		// an update to a preference the caller cannot see.
 		const existing = await this.findOneByIdString(id);
 
-		assertOrganizationUnchanged(
-			entity.organizationId,
-			existing.organizationId,
-			this.scope.organizationId,
-			'A price preference'
-		);
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price preference');
 
 		return await super.update(id, entity);
 	}

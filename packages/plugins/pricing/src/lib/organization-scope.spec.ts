@@ -48,29 +48,45 @@ describe('pricing — the organization a row is written into (R2-G31, R2-G34)', 
 
 	describe('the helpers', () => {
 		it('stamps the caller’s organization when the payload states none', () => {
-			expect(organizationForCreate(undefined, ORG, 'A row')).toBe(ORG);
+			expect(organizationForCreate({}, ORG, 'A row')).toBe(ORG);
 		});
 
 		it('refuses a payload that states another organization, or a create with none at all', () => {
-			expect(() => organizationForCreate(OTHER_ORG, ORG, 'A row')).toThrow(/PRICE_ORGANIZATION_MISMATCH/);
-			expect(() => organizationForCreate(undefined, null, 'A row')).toThrow(/PRICE_ORGANIZATION_REQUIRED/);
+			expect(() => organizationForCreate({ organizationId: OTHER_ORG }, ORG, 'A row')).toThrow(
+				/PRICE_ORGANIZATION_MISMATCH/
+			);
+			expect(() => organizationForCreate({}, null, 'A row')).toThrow(/PRICE_ORGANIZATION_REQUIRED/);
 		});
 
 		it('accepts an update that restates the row’s own organization or states none', () => {
-			expect(() => assertOrganizationUnchanged(undefined, ORG, ORG, 'A row')).not.toThrow();
-			expect(() => assertOrganizationUnchanged(ORG, ORG, ORG, 'A row')).not.toThrow();
+			expect(() => assertOrganizationUnchanged({}, ORG, ORG, 'A row')).not.toThrow();
+			expect(() => assertOrganizationUnchanged({ organizationId: ORG }, ORG, ORG, 'A row')).not.toThrow();
 		});
 
 		it('refuses an update that moves the row, or clears its organization', () => {
-			expect(() => assertOrganizationUnchanged(OTHER_ORG, ORG, ORG, 'A row')).toThrow(
+			expect(() => assertOrganizationUnchanged({ organizationId: OTHER_ORG }, ORG, ORG, 'A row')).toThrow(
 				/PRICE_ORGANIZATION_IMMUTABLE/
 			);
-			expect(() => assertOrganizationUnchanged(null, ORG, ORG, 'A row')).toThrow(/PRICE_ORGANIZATION_IMMUTABLE/);
+			expect(() => assertOrganizationUnchanged({ organizationId: null }, ORG, ORG, 'A row')).toThrow(
+				/PRICE_ORGANIZATION_IMMUTABLE/
+			);
+		});
+
+		it('reads the organization relation as well as the column, on create and on update', () => {
+			// The ORM writes `organization: { id }` as readily as `organizationId`, so a payload that moves the row
+			// through the relation alone is refused too.
+			expect(() => assertOrganizationUnchanged({ organization: { id: OTHER_ORG } }, ORG, ORG, 'A row')).toThrow(
+				/PRICE_ORGANIZATION_IMMUTABLE/
+			);
+			expect(() => assertOrganizationUnchanged({ organization: { id: ORG } }, ORG, ORG, 'A row')).not.toThrow();
+			expect(() => organizationForCreate({ organization: { id: OTHER_ORG } }, ORG, 'A row')).toThrow(
+				/PRICE_ORGANIZATION_MISMATCH/
+			);
 		});
 
 		it('lets a row stored without an organization be given the caller’s, and only the caller’s', () => {
-			expect(() => assertOrganizationUnchanged(ORG, null, ORG, 'A row')).not.toThrow();
-			expect(() => assertOrganizationUnchanged(OTHER_ORG, null, ORG, 'A row')).toThrow(
+			expect(() => assertOrganizationUnchanged({ organizationId: ORG }, null, ORG, 'A row')).not.toThrow();
+			expect(() => assertOrganizationUnchanged({ organizationId: OTHER_ORG }, null, ORG, 'A row')).toThrow(
 				/PRICE_ORGANIZATION_IMMUTABLE/
 			);
 		});

@@ -32,15 +32,38 @@ export function assertPriority(priority: unknown, what: string): void {
  * @throws BadRequestException when it is not a two-letter code.
  */
 export function assertCountryCode(countryCode: unknown, what: string): void {
-	if (countryCode === undefined || countryCode === null || countryCode === '') {
+	if (countryCode === undefined || countryCode === null) {
 		return;
 	}
 
-	if (typeof countryCode !== 'string' || countryCode.trim().length !== 2) {
+	// The string as written, exactly as `@Length(2, 2)` reads it: an empty or space-padded value is
+	// refused rather than stored and then read as "no country restriction" by the zone match.
+	if (typeof countryCode !== 'string' || countryCode.length !== 2 || countryCode.trim().length !== 2) {
 		throw new BadRequestException(
 			`The country of ${what} is a two-letter ISO 3166-1 code; "${String(countryCode)}" is not.`
 		);
 	}
+}
+
+/**
+ * @param payload A write's payload.
+ * @returns Every organization the payload states, through the `organizationId` column or through the
+ * `organization` relation (which the ORM writes just as well); `null` for a member that clears it.
+ */
+export function statedOrganizations(payload: object | null | undefined): Array<ID | null> {
+	const fields = (payload ?? {}) as Record<string, unknown>;
+	const stated: Array<ID | null> = [];
+
+	if (fields['organizationId'] !== undefined) {
+		stated.push((fields['organizationId'] as ID) ?? null);
+	}
+
+	if (fields['organization'] !== undefined) {
+		const relation = fields['organization'] as { id?: ID } | null;
+		stated.push(relation?.id ?? null);
+	}
+
+	return stated;
 }
 
 /**
@@ -50,28 +73,26 @@ export function assertCountryCode(countryCode: unknown, what: string): void {
  * reached the write as it came, so a `PUT` could re-home a row in another organization of the tenant.
  * Restating the row's own organization is accepted; a row stored without one may be given the caller's.
  *
- * @param stated The organization the payload states; `undefined` when it states none.
+ * @param payload The update's payload.
  * @param stored The organization the row belongs to.
  * @param caller The caller's organization.
  * @param what The row being written, named in the error.
  * @throws BadRequestException `TAX_ORGANIZATION_IMMUTABLE`.
  */
 export function assertOrganizationUnchanged(
-	stated: unknown,
+	payload: object | null | undefined,
 	stored: ID | null | undefined,
 	caller: ID | null | undefined,
 	what: string
 ): void {
-	if (stated === undefined) {
-		return;
-	}
-
 	const target = stored ?? caller;
 
-	if (!target || String(stated ?? '') !== String(target)) {
-		throw new BadRequestException(
-			`TAX_ORGANIZATION_IMMUTABLE: ${what} stays in the organization it was created in.`
-		);
+	for (const stated of statedOrganizations(payload)) {
+		if (!target || String(stated ?? '') !== String(target)) {
+			throw new BadRequestException(
+				`TAX_ORGANIZATION_IMMUTABLE: ${what} stays in the organization it was created in.`
+			);
+		}
 	}
 }
 

@@ -184,12 +184,7 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			throw new NotFoundException(`The tax rate ${id} was not found.`);
 		}
 
-		assertOrganizationUnchanged(
-			entity.organizationId,
-			rate.organizationId,
-			RequestContext.currentOrganizationId(),
-			'A tax rate'
-		);
+		assertOrganizationUnchanged(entity, rate.organizationId, RequestContext.currentOrganizationId(), 'A tax rate');
 		assertPriority(entity.priority, 'a tax rate');
 		assertCountryCode(entity.countryCode, 'a tax rate');
 

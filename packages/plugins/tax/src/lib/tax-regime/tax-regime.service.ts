@@ -102,7 +102,7 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 		}
 
 		assertOrganizationUnchanged(
-			entity.organizationId,
+			entity,
 			regime.organizationId,
 			RequestContext.currentOrganizationId(),
 			'A tax regime'

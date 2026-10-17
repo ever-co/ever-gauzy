@@ -91,13 +91,7 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 
 		// A list stays in the organization it was created in. `prepare` stamps the caller's organization,
 		// which on an update would move a list of another organization of the tenant into the caller's.
-		assertOrganizationUnchanged(
-			entity.organizationId,
-			existing.organizationId,
-			this.scope.organizationId,
-			'A price list'
-		);
-		prepared.organizationId = existing.organizationId ?? prepared.organizationId;
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price list');
 
 		// Publishing through an update is the same decision as `activate`, and is refused for the same
 		// reason when the window it would publish has already closed.
@@ -105,7 +99,10 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			this.assertWindowIsOpen(existing.code, prepared.endsAt as Date | null | undefined);
 		}
 
-		return await super.update(id, prepared as unknown as QueryDeepPartialEntity<PriceList>);
+		return await super.update(id, {
+			...prepared,
+			organizationId: existing.organizationId ?? prepared.organizationId
+		} as unknown as QueryDeepPartialEntity<PriceList>);
 	}
 
 	/**
