@@ -76,6 +76,7 @@
 		"@gauzy/plugin-email-provider-postmark": "^0.1.0",
 		"@gauzy/plugin-email-provider-mailgun": "^0.1.0",
 		"@gauzy/plugin-email-provider-sendgrid": "^0.1.0",
+		"@gauzy/plugin-email-provider-ses": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
 		"@gauzy/plugin-integration-make-com": "^0.1.0",

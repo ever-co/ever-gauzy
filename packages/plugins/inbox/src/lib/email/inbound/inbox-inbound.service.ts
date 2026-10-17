@@ -31,7 +31,7 @@ import {
 	IProviderAccountContext,
 	ParsedInboundEmail
 } from '../providers/email-provider.types';
-import { InboundReplayGuard } from './replay-guard.service';
+import { INBOUND_PROCESSING_CLAIM_MS, InboundReplayGuard } from './replay-guard.service';
 import { getInboxEmailConfig, InboxEmailConfig } from './inbox-email.config';
 import { InboxEmailStorage } from './inbox-email-storage';
 import {
@@ -117,10 +117,18 @@ export class InboxInboundService {
 				: new UnauthorizedException('The delivery is not verified.');
 		}
 
-		// Single use: marked before anything is stored, released when storing fails (the provider's retry of the same
-		// signed request must get through); storage is idempotent on the Message-ID anyway.
+		// Single use: claimed briefly before anything is stored, remembered for its window once stored, released when
+		// storing fails (the provider's retry of the same signed request must get through; a crash in between leaves
+		// only the short claim); storage is idempotent on the Message-ID anyway.
 		const replayScope = `${providerId}:${account.id ?? PLATFORM_ACCOUNT_ID}`;
-		if (identity && !(await this.replay.consume(replayScope, identity.fingerprint, identity.ttlMs))) {
+		if (
+			identity &&
+			!(await this.replay.consume(
+				replayScope,
+				identity.fingerprint,
+				Math.min(INBOUND_PROCESSING_CLAIM_MS, identity.ttlMs)
+			))
+		) {
 			throw new UnauthorizedException('The delivery was already received.');
 		}
 		const result: IInboxInboundResult = { accepted: 0, duplicates: 0, dropped: 0 };
@@ -136,6 +144,7 @@ export class InboxInboundService {
 			for (const id of created) this.processor.enqueue(id);
 			throw error;
 		}
+		if (identity) await this.replay.complete(replayScope, identity.fingerprint, identity.ttlMs);
 		for (const id of created) {
 			this.processor.enqueue(id);
 		}
@@ -248,7 +257,7 @@ export class InboxInboundService {
 							ccAddresses: json(message.cc),
 							replyToAddresses: json(message.replyTo),
 							subject: message.subject?.slice(0, 500) ?? null,
-							headers: json(this.headersOf(message, tag, hold)),
+							headers: json(this.headersOf(message, tag, hold ?? message.hold)),
 							spf: message.spf ?? null,
 							dkim: message.dkim ?? null,
 							dmarc: message.dmarc ?? null,
@@ -334,7 +343,7 @@ export class InboxInboundService {
 			if (ALLOWLISTED_HEADERS.has(key) && typeof value === 'string') headers[key] = value.slice(0, 1000);
 		}
 		if (tag) headers['x-gauzy-inbox-tag'] = tag.slice(0, 64);
-		if (hold) headers[INBOX_HOLD_HEADER] = hold;
+		if (hold) headers[INBOX_HOLD_HEADER] = hold.slice(0, 64);
 		return headers;
 	}
 
