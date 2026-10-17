@@ -160,6 +160,12 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the document is no longer synced' };
 		const version = envelope.aggregate.version ?? null;
 		if (link && link.ewVersion != null && version != null && version <= link.ewVersion) return { status: 'skipped', message: 'already applied (version)' };
+		// A page made PRIVATE in Gauzy (or put in a private folder) no longer syncs either way.
+		const hidden = link ? await this.privateReason(context, link.gauzyId as ID, 'page') : null;
+		if (link && hidden) {
+			await this.links.unlink(link, 'private in Gauzy; no longer shared with Ever Works');
+			return { status: 'skipped', message: hidden };
+		}
 		const data = { ...((envelope.data ?? {}) as unknown as EverWorksKbDocument), id: ewId };
 		if (envelope.type === 'kb.document.deleted' || data.deleted) return this.archivePage(context, link, 'deleted in Ever Works; the Gauzy page is archived');
 		if (!DOCUMENT_EVENTS.has(envelope.type)) return { status: 'skipped', message: `${envelope.type} is not synced` };
@@ -274,6 +280,12 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the folder is no longer synced' };
 		const version = envelope.aggregate.version ?? null;
 		if (link && link.ewVersion != null && version != null && version <= link.ewVersion) return { status: 'skipped', message: 'already applied (version)' };
+		// A folder made PRIVATE in Gauzy (or inside a private folder) no longer syncs either way.
+		const hidden = link ? await this.privateReason(context, link.gauzyId as ID, 'folder') : null;
+		if (link && hidden) {
+			await this.links.unlink(link, 'private in Gauzy; no longer shared with Ever Works');
+			return { status: 'skipped', message: hidden };
+		}
 		const data = { ...((envelope.data ?? {}) as unknown as EverWorksKbFolder), id: ewId };
 		if (envelope.type === 'kb.folder.deleted' || data.deleted) {
 			if (!link) return { status: 'skipped', message: 'the folder is not linked' };
@@ -793,6 +805,18 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			return { area: 'work', workId: marker.slice('tree:work:'.length), segments: chain.slice(2).map((folder) => folder.name) };
 		}
 		return null;
+	}
+
+	/** Why a synced Gauzy page or folder stopped syncing because it, or a folder above it, is PRIVATE; `null` when not. */
+	private async privateReason(context: EverWorksMappingContext, nodeId: ID, kind: 'page' | 'folder'): Promise<string | null> {
+		const node = await this.store.load(context, nodeId, true);
+		if (!node) return null;
+		if (node.visibility === DocumentVisibilityEnum.PRIVATE) return kind === 'page' ? 'private pages never sync' : 'private folders never sync';
+		const root = await this.store.existingRoot(context);
+		if (!root || node.id === root) return null;
+		const { folders } = await this.store.ancestry(context, node, root);
+		if (!folders.some((folder) => folder.visibility === DocumentVisibilityEnum.PRIVATE) && !(await this.isPrivateFolder(context, root))) return null;
+		return kind === 'page' ? 'pages in a private folder never sync' : 'folders in a private folder never sync';
 	}
 
 	/** Whether a Gauzy folder is PRIVATE (the synced root, which `ancestry` does not return). */
