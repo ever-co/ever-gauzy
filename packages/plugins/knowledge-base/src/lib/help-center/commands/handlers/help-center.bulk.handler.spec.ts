@@ -31,7 +31,10 @@ describe('HelpCenterUpdateHandler', () => {
 	};
 
 	it('keeps the new order', async () => {
-		const { rows, result } = await reorder([{ id: 'a' }, { id: 'b' }, { id: 'c' }], [{ id: 'b' }, { id: 'c' }, { id: 'a' }]);
+		const { rows, result } = await reorder(
+			[{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+			[{ id: 'b' }, { id: 'c' }, { id: 'a' }]
+		);
 
 		expect(rows).toEqual([
 			{ id: 'a', index: 2 },
