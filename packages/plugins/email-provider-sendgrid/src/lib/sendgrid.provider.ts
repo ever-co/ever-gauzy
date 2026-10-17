@@ -302,7 +302,12 @@ export class SendGridProvider implements IEmailProviderPlugin, IInboundEmailProv
 				...(inReplyTo ? { inReplyTo } : {}),
 				references: referencesOf(headers['references']),
 				headers,
-				sizeBytes: request.rawBody?.length ?? 0,
+				// The message's own bytes (never the form around them).
+				sizeBytes:
+					Buffer.byteLength(text ?? '') +
+					Buffer.byteLength(html ?? '') +
+					Buffer.byteLength(fields['headers'] ?? '') +
+					attachments.reduce((sum, part) => sum + part.size, 0),
 				attachments
 			}
 		];
