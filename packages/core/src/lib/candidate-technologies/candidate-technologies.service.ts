@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
-import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { findTenantInterviewCriteria } from './../candidate-interview/interview-criteria.helper';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
 import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
@@ -30,11 +30,12 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async getTechnologiesByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
-		return await this.find({
-			where: {
-				interviewId,
-				tenantId: RequestContext.currentTenantId()
-			}
-		});
+		const items = await findTenantInterviewCriteria(
+			this.ormType,
+			this.typeOrmRepository,
+			this.mikroOrmRepository,
+			interviewId
+		);
+		return items.map((item) => this.serialize(item));
 	}
 }
