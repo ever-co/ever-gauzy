@@ -168,3 +168,25 @@ export function sourceLabelOf(source: string | null | undefined): string {
 	const known = ['EVER_WORKS', 'EMAIL', 'GAUZY', 'SYSTEM'];
 	return source && known.includes(source) ? `INBOX.SOURCE.${source}` : (source ?? '');
 }
+
+/**
+ * What a source answers a reply with when the item was already decided there (another answer won, in the
+ * source or from another client): the item then carries the source's own answer, not the reply sent here.
+ */
+export const INBOX_ROUTED_ALREADY_DECIDED = 'already-decided';
+
+/** The line under an answer saying where the reply went (`null`: nothing to say, e.g. a local item). */
+export type InboxRoutedNotice = { alreadyDecided: true; source: string } | { alreadyDecided: false; routed: string };
+
+/**
+ * The routing line of an answered item: "Already decided in <source>" when the source had decided it before
+ * the reply (its own answer is shown), else "Delivered: <routed>"; nothing for a local answer.
+ */
+export function routedNoticeOf(item: Pick<IInboxItem, 'response' | 'source'>): InboxRoutedNotice | null {
+	const routed = item.response?.routed;
+	if (!routed || routed === 'local') return null;
+	if (routed === INBOX_ROUTED_ALREADY_DECIDED) {
+		return { alreadyDecided: true, source: sourceLabelOf(item.source) || 'INBOX.THE_SOURCE' };
+	}
+	return { alreadyDecided: false, routed };
+}
