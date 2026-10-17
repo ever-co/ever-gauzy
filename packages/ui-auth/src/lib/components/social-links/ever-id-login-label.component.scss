@@ -8,7 +8,7 @@
 
 // The ever.works logo star: one turn every 9 s, linear, endless; none with a reduced-motion setting.
 .ever-star {
-  width: 20px;
+  width: auto;
   height: 20px;
   flex-shrink: 0;
   animation: ever-star-spin 9s linear infinite;
@@ -26,15 +26,16 @@
 .label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   white-space: nowrap;
 }
 
 .ever-id-wordmark {
+  display: block;
   height: 14px;
   width: auto;
   flex-shrink: 0;
-  transform: translateY(1px);
+  overflow: visible;
 }
 
 .visually-hidden {
