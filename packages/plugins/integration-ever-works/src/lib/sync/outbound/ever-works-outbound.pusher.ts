@@ -7,6 +7,7 @@ import { EverWorksConnection } from '../../connection/ever-works-connection.enti
 import { EverWorksNotifier } from '../../connection/ever-works-notifier.service';
 import { EverWorksLinkType, EverWorksOutboundChange, EverWorksOutboundStatus } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
+import { EverWorksStaleLinkError } from '../links/ever-works-link.service';
 
 /** What a push did. */
 export type EverWorksPushOutcome =
@@ -134,7 +135,10 @@ export class EverWorksOutboundPusher {
 			});
 		} catch (error) {
 			const attempts = (change.attempts ?? 0) + 1;
-			const retryable = error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable);
+			// A link write refused as older than the recorded version (a newer event or push recorded first) is
+			// retried: the next push recomputes the change against the newer snapshot.
+			const retryable =
+				error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable) || error instanceof EverWorksStaleLinkError;
 			// A refusal (4xx other than 429) does not change by retrying: it is terminal at once.
 			const dead = !retryable || attempts >= OUTBOUND_MAX_ATTEMPTS;
 			const reason =

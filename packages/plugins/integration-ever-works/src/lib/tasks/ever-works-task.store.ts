@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommandBus } from '@nestjs/cqrs';
-import { randomUUID } from 'node:crypto';
 import { DataSource, In, IsNull } from 'typeorm';
 import { ActorTypeEnum, BaseEntityEnum, EntitySubscriptionTypeEnum, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
@@ -10,7 +9,7 @@ import {
 	EntitySubscription,
 	OrganizationProject,
 	OrganizationStrategicInitiative,
-	RequestContext,
+	ResourceLink,
 	Tag,
 	Task,
 	TaskCreateCommand,
@@ -20,6 +19,7 @@ import {
 	TaskStatus,
 	TaskUpdateCommand
 } from '@gauzy/core';
+import { runInSyncRequestContext, syncRequestUser } from '../sync/ever-works-process';
 import { gauzyStatusSlug, resolveGauzyStatusRow } from '../sync/mappers/status-priority.mapper';
 import { edgesFromRows, LinkedIssueRow } from './ever-works-task.mapper';
 
@@ -49,13 +49,14 @@ export interface EverWorksTaskOption {
 }
 
 /**
- * This process cannot open a request context (the worker builds its own module graph without core's
- * `AppModule`, so there is no CLS service and no task command handlers). Task writes are applied by a
- * process that serves the API; the change is retried there.
+ * This process cannot make the task write: it cannot open a request context, or it does not host the
+ * task commands and service (core's task module; the worker's module graph has no task module). Nothing
+ * was written; the change is retried by the process that holds the connection — the sync loop runs only
+ * where the task writes can be made (`ever-works-process.ts`).
  */
 export class EverWorksRequestContextUnavailableError extends Error {
 	constructor() {
-		super('This process has no request context for Gauzy task writes; a process that serves the API applies them.');
+		super('This process cannot make Gauzy task writes (no request context or no task commands); the sync retries it.');
 		this.name = 'EverWorksRequestContextUnavailableError';
 	}
 }
@@ -92,26 +93,13 @@ export class EverWorksTaskStore {
 	 * the creator added as a member (plan 01 §7), and no permission is held.
 	 */
 	async asActor<T>(scope: { tenantId: ID; organizationId: ID }, actor: EverWorksTaskActor | null, work: () => Promise<T>): Promise<T> {
-		const user = {
-			id: actor?.userId ?? undefined,
-			tenantId: scope.tenantId,
-			lastOrganizationId: scope.organizationId,
-			name: actor?.name ?? 'Ever Works',
-			firstName: actor?.name ?? 'Ever Works',
-			lastName: '',
-			employeeId: undefined,
-			permissions: []
-		};
-		const request = { user, headers: {}, query: {}, params: {}, body: {} };
-		return RequestContext.runWithRequest(
-			request as never,
-			async () => {
-				// A process without the platform's request context (the worker: no core AppModule, no CLS) would
-				// write tenant-less rows: refuse before anything is written.
-				if (RequestContext.currentTenantId() !== scope.tenantId) throw new EverWorksRequestContextUnavailableError();
-				return work();
-			},
-			{ id: randomUUID() as ID }
+		// A process without a context store (the worker) gets the process-wide one attached first; where no
+		// context can be opened, or the task commands are not hosted here, nothing is written and the
+		// change is retried.
+		return runInSyncRequestContext(
+			syncRequestUser(scope, actor?.userId ?? null, actor?.name ?? 'Ever Works'),
+			work,
+			() => new EverWorksRequestContextUnavailableError()
 		);
 	}
 
@@ -122,6 +110,13 @@ export class EverWorksTaskStore {
 			relations: TASK_RELATIONS as never,
 			withDeleted: true
 		});
+	}
+
+	/** The ids among `taskIds` whose task still exists (not deleted, soft or hard). */
+	async presentTaskIds(tenantId: ID, taskIds: ReadonlyArray<ID>): Promise<Set<ID>> {
+		if (!taskIds.length) return new Set();
+		const rows = await this.dataSource.getRepository(Task).find({ where: { tenantId, id: In([...taskIds]) } as never, select: { id: true } as never });
+		return new Set(rows.map((row) => row.id as ID));
 	}
 
 	/** Creates a task through `TaskCreateCommand` (call inside {@link asActor}); returns its id. */
@@ -215,10 +210,10 @@ export class EverWorksTaskStore {
 		return result;
 	}
 
-	/** Adds a comment to a task (the sync's own notes: a kept status, a conflicting edit). */
-	async addComment(scope: { tenantId: ID; organizationId: ID }, taskId: ID, html: string, actorType: ActorTypeEnum, employeeId: ID | null = null): Promise<void> {
+	/** Adds a comment to a task (a synced chat message, or the sync's own notes); returns its id. */
+	async addComment(scope: { tenantId: ID; organizationId: ID }, taskId: ID, html: string, actorType: ActorTypeEnum, employeeId: ID | null = null): Promise<ID> {
 		const repository = this.dataSource.getRepository(Comment);
-		await repository.save(
+		const saved = await repository.save(
 			repository.create({
 				entity: BaseEntityEnum.Task,
 				entityId: taskId,
@@ -229,6 +224,69 @@ export class EverWorksTaskStore {
 				organizationId: scope.organizationId
 			} as unknown as Comment)
 		);
+		return saved.id as ID;
+	}
+
+	/** A comment, deleted ones included. */
+	async loadComment(
+		tenantId: ID,
+		commentId: ID
+	): Promise<{ id: ID; comment: string; entity: string; entityId: ID; organizationId: ID; employeeId: ID | null; deletedAt: Date | null } | null> {
+		const row = await this.dataSource.getRepository(Comment).findOne({ where: { id: commentId, tenantId } as never, withDeleted: true });
+		if (!row) return null;
+		return {
+			id: row.id as ID,
+			comment: row.comment,
+			entity: row.entity,
+			entityId: row.entityId as ID,
+			organizationId: row.organizationId as ID,
+			employeeId: (row.employeeId as ID) ?? null,
+			deletedAt: (row as { deletedAt?: Date | null }).deletedAt ?? null
+		};
+	}
+
+	/** Rewrites a comment's text (an edit synced from Ever Works). */
+	async updateComment(commentId: ID, html: string): Promise<void> {
+		await this.dataSource.getRepository(Comment).update({ id: commentId } as never, { comment: html, editedAt: new Date() } as never);
+	}
+
+	/** Soft-deletes a comment (a delete synced from Ever Works; nothing is hard-deleted). */
+	async softDeleteComment(commentId: ID): Promise<void> {
+		await this.dataSource.getRepository(Comment).softDelete({ id: commentId } as never);
+	}
+
+	/** Soft-deletes a resource link the sync made (its Ever Works target is gone). */
+	async removeResourceLink(tenantId: ID, linkId: ID): Promise<void> {
+		await this.dataSource.getRepository(ResourceLink).softDelete({ id: linkId, tenantId } as never);
+	}
+
+	/**
+	 * The task's resource link with this title and URL: the one recorded before (updated when the URL
+	 * changed), else one with the same URL, else a new one. Returns its id.
+	 */
+	async upsertResourceLink(
+		scope: { tenantId: ID; organizationId: ID },
+		taskId: ID,
+		title: string,
+		url: string,
+		known: { id: ID; owned: boolean } | null
+	): Promise<{ id: ID; owned: boolean }> {
+		const repository = this.dataSource.getRepository(ResourceLink);
+		if (known) {
+			const row = await repository.findOne({ where: { id: known.id, tenantId: scope.tenantId } as never });
+			if (row) {
+				// Only a link the sync made is rewritten; a person's link with the old URL is left as it is.
+				if (known.owned && (row.url !== url || row.title !== title)) await repository.update({ id: known.id } as never, { url, title } as never);
+				if (known.owned || row.url === url) return known;
+			}
+		}
+		// A link a person already added with this URL is reused as it is (and never removed by the sync).
+		const same = await repository.findOne({ where: { tenantId: scope.tenantId, entity: BaseEntityEnum.Task, entityId: taskId, url } as never });
+		if (same) return { id: same.id as ID, owned: false };
+		const saved = await repository.save(
+			repository.create({ tenantId: scope.tenantId, organizationId: scope.organizationId, entity: BaseEntityEnum.Task, entityId: taskId, title, url } as unknown as ResourceLink)
+		);
+		return { id: saved.id as ID, owned: true };
 	}
 
 	/** The user (and display name) of an employee. */

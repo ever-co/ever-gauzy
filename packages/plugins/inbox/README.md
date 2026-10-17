@@ -7,6 +7,7 @@
       "## Tables (migrations for PostgreSQL, MySQL and SQLite)",
       "## API (`/api/inbox/items`, `INBOX_VIEW`)",
       "## Feeding the Inbox from another plugin",
+      "## Real time (G-P3-6)",
       "## Tests"
     ]
   }
@@ -85,10 +86,12 @@ a parameter. Answers are `Cache-Control: no-store`.
   **synchronously**, so the source's own refusal (for example "already decided
   in Ever Works") reaches the user. The reply is claimed once: two overlapping
   replies dispatch once. When the source refuses, the item is `OPEN` again;
-  once the source took it, it stays answered.
+  once the source took it, it stays answered. A source may return the answer
+  it holds (another answer won there), which is recorded instead.
 - **`PATCH /items/:id/state`:** `{ isRead?, isArchived?, snoozedUntil? }`: my
   state only. The source handler is told about it on a best-effort basis.
-- **`POST /items/mark-all-read`:** `{ tab? }`.
+- **`POST /items/mark-all-read`:** `{ tab? }`. Each item's source handler is
+  told, as for one item (in the background, best effort).
 
 The Notifications tab of the UI reads `/employee-notification` directly. A
 GraphQL mirror of the read routes, and the mailbox, email and provider routes
@@ -137,6 +140,27 @@ await this.inbox?.upsertExternal({
 The writer (`create`, `upsertExternal`), the recipient model and the
 source-handler registry are the stable surface other plugins build on (the Ever
 Works integration, the P4 inbound-email pipeline): change them additively.
+
+## Real time (G-P3-6)
+
+When an item is created for at least one user, the plugin appends
+`inbox_item.created` to the platform outbox and declares it with the
+subscription catalogue (`InboxRealtime`). The payload is the item's `id`,
+`kind`, `source`, `status`, `priority`, `organizationId`, `mailboxId` and
+`recipientUserIds` — never its title, body or answer, because the outbox row
+is also listed by `GET /events/outbox` and can reach a tenant's webhooks. A
+client that hears about an item reads it through `GET /api/inbox/items/:id`.
+
+The event is **addressed**: the kernel delivers an event whose payload names
+`recipientUserIds` only to subscriptions of those users (`Subscription.events`
+and every tenant-topic stream), never to another user of the tenant who holds
+the stream's permission. Subscribe with
+`subscription { events(names: ["inbox_item.created"]) { eventId data } }`
+(`EVENT_OUTBOX_VIEW`). A typed field for holders of `INBOX_VIEW` is a follow-up:
+the schema snapshot and its gates are composed with the flag off. The header
+badge keeps its 60-second count poll. Nothing here can fail an Inbox write: a
+failed append is logged, and a process without an outbox or a subscription
+surface (the worker) skips it.
 
 ## Tests
 

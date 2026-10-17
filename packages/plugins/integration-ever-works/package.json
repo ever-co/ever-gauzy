@@ -34,6 +34,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-docs": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.2",
 		"@nestjs/cqrs": "^12.1.0",
@@ -43,6 +44,7 @@
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.15.1",
 		"express": "^5.3.0",
+		"nestjs-cls": "^7.0.1",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.8.1",
 		"typeorm": "^1.1.2"

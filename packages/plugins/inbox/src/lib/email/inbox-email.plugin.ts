@@ -2,6 +2,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { INBOX_EMAIL_MIGRATIONS } from './database/inbox-email-migrations';
 import { INBOX_EMAIL_ENTITIES, InboxEmailModule } from './inbox-email.module';
+import { InboxEmployeeCreatedSubscriber } from './mailboxes/inbox-employee.subscriber';
 
 export { INBOX_EMAIL_MIGRATIONS };
 
@@ -19,6 +20,8 @@ export { INBOX_EMAIL_MIGRATIONS };
 	// Arrays, not factories: the platform resolves a factory for migrations but not for entities.
 	entities: [...INBOX_EMAIL_ENTITIES],
 	migrations: [...INBOX_EMAIL_MIGRATIONS],
+	// Auto-provisioning: every employee the platform creates (the mailbox is created where the organization opted in).
+	subscribers: [InboxEmployeeCreatedSubscriber],
 	configuration: (config: ApplicationPluginConfig) => config
 })
 export class InboxEmailPlugin implements IOnPluginBootstrap, IOnPluginDestroy {

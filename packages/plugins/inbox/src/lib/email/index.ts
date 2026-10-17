@@ -17,6 +17,9 @@ export * from './provider-accounts/inbox-provider-account.service';
 export * from './secrets/inbox-secret-box';
 export * from './mailboxes/address';
 export * from './mailboxes/inbox-mailbox-access.service';
+export * from './mailboxes/inbox-mailbox.service';
+export * from './mailboxes/mailbox-address';
+export * from './entities/inbox-organization-setting.entity';
 export * from './inbound/inbox-email.config';
 export * from './inbound/replay-guard.service';
 export {

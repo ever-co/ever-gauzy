@@ -105,7 +105,9 @@ export class PlatformEventsResolver {
 			requiredPermission: PermissionsEnum.EVENT_OUTBOX_VIEW,
 			permissionEvaluator: rolePermissionEvaluator(this.rolePermissionService, scope.tenantId, roleId),
 			eventNames: names ?? [],
-			aggregateId: aggregateId ? String(aggregateId) : undefined
+			aggregateId: aggregateId ? String(aggregateId) : undefined,
+			// An addressed event (an inbox item) reaches this stream only when its subscriber is a recipient.
+			recipientUserId: userId ? String(userId) : undefined
 		});
 	}
 }
@@ -251,8 +253,26 @@ export function toPlatformEventEnvelope(
 			typeof sequence === 'number' && Number.isInteger(sequence) && Math.abs(sequence) <= GRAPHQL_INT_MAX
 				? sequence
 				: null,
-		data: payload.data ?? {}
+		data: withoutRecipients(payload)
 	};
+}
+
+/**
+ * The payload a subscriber reads. An addressed event's recipient list has done its work by the time the event is
+ * delivered (the hub matched the subscriber against it), so a recipient is not handed the other recipients.
+ *
+ * @param payload The hub envelope.
+ * @returns The data to deliver.
+ */
+function withoutRecipients(payload: SubscriptionEnvelope): unknown {
+	const data = payload.data ?? {};
+
+	if (payload.recipientUserIds === undefined || data === null || typeof data !== 'object' || Array.isArray(data)) {
+		return data;
+	}
+
+	const { recipientUserIds: _recipients, ...rest } = data as Record<string, unknown>;
+	return rest;
 }
 
 /**
