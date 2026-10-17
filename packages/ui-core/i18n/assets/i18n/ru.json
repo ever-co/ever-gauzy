@@ -6330,6 +6330,7 @@
 		"FORGOT_PASSWORD_TITLE": "Забыли пароль?",
 		"OR_SIGN_IN_WITH": "Или войдите с",
 		"SIGN_IN_WITH_EVER_ID": "Войти через Ever ID",
+		"LOGIN_WITH_EVER_ID": "Войти через {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Войти через Keycloak",
 		"FORGOT_EMAIL_TITLE": "Забыли адрес электронной почты?",
 		"LOGIN_MAGIC": {
