@@ -2,10 +2,17 @@ import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { EVER_REDIS_CLIENT } from '@gauzy/core';
 
-/** The part of the Redis client the guard uses (`SET key value NX PX ttl`). */
+/** The part of the Redis client the guard uses (`SET key value [NX] PX ttl`). */
 interface ReplayRedis {
-	set(key: string, value: string, options: { NX: true; PX: number }): Promise<string | null>;
+	set(key: string, value: string, options: { NX?: true; PX: number }): Promise<string | null>;
 }
+
+/**
+ * How long a delivery being stored is claimed. A process that dies before storing finishes leaves only this short
+ * claim behind, so the provider's retry gets through once it expires; a stored delivery is then remembered for its
+ * whole window ({@link InboundReplayGuard.complete}).
+ */
+export const INBOUND_PROCESSING_CLAIM_MS = 2 * 60_000;
 
 /** The most remembered deliveries in process (a burst never grows the set without bound). */
 const MAX_LOCAL_ENTRIES = 20_000;
@@ -13,6 +20,9 @@ const MAX_LOCAL_ENTRIES = 20_000;
 /**
  * Single-use webhook signatures (plan 04 §5.2): a verified delivery is remembered until its freshness window has
  * passed, and a repeat is refused, so a captured request cannot be replayed inside the window.
+ *
+ * Two steps: `consume` claims the delivery briefly while it is stored, `complete` remembers it for its window once it
+ * is, and `release` forgets it when storing failed. A crash between the steps costs a short wait, never the mail.
  *
  * With Redis (`REDIS_ENABLED=true`), `SET NX PX` makes it single-use across every API replica. Without it, an
  * in-process set does it per process (a deployment with several replicas then admits at most one replay per
@@ -42,6 +52,20 @@ export class InboundReplayGuard {
 			}
 		}
 		return this.consumeLocally(key, ttlMs);
+	}
+
+	/** Remembers a stored delivery for its whole window (after a successful `consume`). Best effort. */
+	async complete(scope: string, fingerprint: string, ttlMs: number): Promise<void> {
+		const key = this.keyOf(scope, fingerprint);
+		const px = Math.max(1000, Math.ceil(ttlMs));
+		this.local.set(key, Date.now() + px);
+		if (this.redis && typeof this.redis.set === 'function') {
+			try {
+				await this.redis.set(key, '2', { PX: px });
+			} catch (error) {
+				this.logger.warn(`Redis replay completion failed: ${(error as Error)?.name}`);
+			}
+		}
 	}
 
 	/** Forgets a delivery again (its storage failed: the provider's retry must get through). Best effort. */

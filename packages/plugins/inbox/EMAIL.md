@@ -129,14 +129,18 @@ and providers read forms with `readInboundForm`.
    account's tenant and, for an organization's account, organization; a custom-domain mailbox only once its domain is
    verified; and only from senders its allowlist admits. The `From` header alone is forgeable: an allowlisted sender
    without a DMARC `pass` from the provider (a relay that reports no verdict, or a failed one) is stored but **held in
-   the quarantine** (`x-gauzy-inbox-hold: unverified-sender`) until a manager releases it. The mailbox row decides the
-   tenant, never the payload. Everything else is dropped. A `+tag` is kept in the message's headers.
+   the quarantine** (`x-gauzy-inbox-hold: unverified-sender`) until a manager releases it. A provider can hold a
+   message the same way whatever its spam verdict (`x-gauzy-inbox-hold: virus` when the provider's virus scan failed).
+   The mailbox row decides the tenant, never the payload. Everything else is dropped. A `+tag` is kept in the
+   message's headers.
 3. The raw message is stored (`.eml`, or the normalized `.json` when the provider delivers no MIME; FileStorage, or with
    local storage a private directory, `GAUZY_INBOX_LOCAL_STORAGE_PATH`, never the public asset root), and
    one `inbox_email` row per mailbox (`RECEIVED`; unique on `(mailboxId, messageId)`, so a retry is a duplicate).
    Email files always use the deployment's storage settings (`FILE_PROVIDER`, `AWS_*` and co.), never a tenant's own
    storage overrides, so the webhook, the worker and a signed-in download read and write the same place.
-4. The answer is 202 `{ accepted, duplicates, dropped }`, and the rows go to the worker.
+4. The answer is 202 `{ accepted, duplicates, dropped }`, and the rows go to the worker. The delivery is single use:
+   claimed for two minutes while it is stored, remembered for its provider's window once stored, released when storing
+   fails (a crash in between costs the provider's retry a short wait, never the mail).
 
 The **worker** runs in the API process (a background task right after the webhook, plus a sweep every two minutes for a
 message whose hand-over was lost; `GAUZY_INBOX_EMAIL_WORKER=off` keeps a process out). Each message is claimed with a
