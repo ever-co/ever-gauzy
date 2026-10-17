@@ -10,6 +10,10 @@ import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
 import { MigrationLockingDataSource } from './migration-run-lock';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 import { getORMType, MultiORMEnum } from '../core/utils';
+import { applyTypeOrmReadPathPatches } from './typeorm-read-path.patches';
+
+// Before any query is built: see typeorm-read-path.patches.ts.
+applyTypeOrmReadPathPatches();
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
