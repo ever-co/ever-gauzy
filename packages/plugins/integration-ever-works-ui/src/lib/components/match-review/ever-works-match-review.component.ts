@@ -573,8 +573,19 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	private setInitiatives(view: EverWorksInitiativesView): void {
 		const previous = this.missionChoice;
 		const valid = new Set(['', CREATE, ...view.unmatchedInitiatives.map((initiative) => initiative.initiativeId)]);
+		// A same-title suggestion is preselected only when no other free initiative has that title too (an older
+		// API may still suggest the first of several): which one is meant is the admin's call.
+		const titleKey = (title: string | null | undefined) => (title ?? '').trim().toLowerCase();
+		const titles = new Map<string, number>();
+		for (const initiative of view.unmatchedInitiatives) titles.set(titleKey(initiative.title), (titles.get(titleKey(initiative.title)) ?? 0) + 1);
+		const unambiguous = (initiativeId: string | undefined) => {
+			const initiative = view.unmatchedInitiatives.find((row) => row.initiativeId === initiativeId);
+			return initiative && (titles.get(titleKey(initiative.title)) ?? 0) === 1 ? initiative.initiativeId : null;
+		};
 		const fresh = preselect(
-			view.missions.filter((row) => !row.linkedInitiativeId).map((row) => ({ id: row.ewMissionId, suggested: row.suggestion?.initiativeId ?? null })),
+			view.missions
+				.filter((row) => !row.linkedInitiativeId)
+				.map((row) => ({ id: row.ewMissionId, suggested: unambiguous(row.suggestion?.initiativeId) })),
 			this.removed.initiatives
 		);
 		this.missionChoice = Object.fromEntries(

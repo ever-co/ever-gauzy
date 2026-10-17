@@ -271,6 +271,17 @@ describe('EverWorksMatchReviewComponent', () => {
 			expect(component.initiativesUnavailable).toBe(true);
 		});
 
+		it('does not preselect a suggestion when another free initiative has the same title', () => {
+			api.initiatives.mockReturnValue(
+				of({
+					missions: [INITIATIVES.missions[0]],
+					unmatchedInitiatives: [...INITIATIVES.unmatchedInitiatives, { initiativeId: 'i4', title: ' grow the COMMUNITY ', state: 'active' }]
+				})
+			);
+			const { component } = render();
+			expect(component.missionChoice).toEqual({ 'm-1': '' });
+		});
+
 		it('says the tab is not available when the API has no initiatives route yet', () => {
 			api.initiatives.mockReturnValue(throwError(() => ({ status: 404 })));
 			const { component } = render();
