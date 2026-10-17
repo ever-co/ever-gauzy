@@ -1122,6 +1122,29 @@ describe('SearchReindexService — a sweep partitioned by organization (Q16)', (
 		expect(versions(fixture)).toEqual([]);
 	});
 
+	it('removes only the caller’s tenant’s documents for ids an id-scoped run cannot read (CodeRabbit)', async () => {
+		const foreign = {
+			id: 'd-foreign',
+			entity: 'product_variant',
+			entityId: 'x-1',
+			tenantId: 'another-tenant',
+			organizationId: 'another-org',
+			definitionVersion: 1
+		};
+
+		for (const definitions of [[shipped({ isActive: false }), ownCopy()], [shipped(), ownCopy()]]) {
+			const fixture = reindexFixture({ variants: [variantRow('v1')], definitions, documents: [{ ...foreign }] });
+
+			await fixture.service.run({
+				scope: SearchReindexScope.ENTITY,
+				entity: 'product_variant',
+				ids: ['x-1']
+			} as never);
+
+			expect(fixture.documents().map((document) => document.id)).toEqual(['d-foreign']);
+		}
+	});
+
 	it('reads past a page full of rows of an organization that switched the entity off', async () => {
 		await withBatchSize(2, async () => {
 			const fixture = reindexFixture({

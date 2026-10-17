@@ -371,8 +371,10 @@ export class SearchReindexService {
 			if (copies.length > 0 && request.ids?.length) {
 				// The named rows are read once and each is written under its own organization's copy, or removed.
 				// Narrowed to one organization at a time, a run reads none of another organization's ids — and an
-				// id-scoped run that reads nothing removes those ids' documents as sources that are gone.
-				await this.sweep(definition, request, version, run, {});
+				// id-scoped run that reads nothing removes those ids' documents as sources that are gone — so the named
+				// ids are read, and removed, in the caller's tenant only: they are the caller's to name, not any
+				// tenant's (CodeRabbit on #10850).
+				await this.sweep(definition, request, version, run, this.tenantScope());
 			} else {
 				for (const copy of copies) {
 					await this.sweep(definition, request, normaliseVersion(copy.version), run, {
@@ -391,7 +393,8 @@ export class SearchReindexService {
 			return run;
 		}
 
-		await this.sweep(definition, request, version, run, {});
+		// An id-scoped run reads and removes in the caller's tenant only, as above; a full sweep is unchanged.
+		await this.sweep(definition, request, version, run, request.ids?.length ? this.tenantScope() : {});
 
 		// The orphan sweep runs for either shape of request, exactly as it did before: a document whose
 		// source has been hard-deleted is unreachable by any event, and this is the only path that
