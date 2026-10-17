@@ -19,6 +19,7 @@ import {
 	IInboxProviderAccountCheck,
 	IInboxProviderAccountCreated,
 	IInboxProviderAccountCreateInput,
+	IInboxProviderAccountRemoved,
 	IInboxProviderAccountUpdateInput,
 	InboxProviderAccountScopeEnum,
 	InboxProviderAccountStatusEnum,
@@ -259,6 +260,43 @@ export class InboxProviderAccountService {
 			checkedAt,
 			...(result?.details ? { details: result.details } : {})
 		};
+	}
+
+	/**
+	 * Removes an account (Settings → Inbox → Providers, "Delete"). Soft, as everywhere in Gauzy: the row stays, marked
+	 * deleted, disabled and no longer the scope's outbound default, so nothing is received or sent through it and it
+	 * leaves every list. Refused (409) while a mailbox still receives through it: those mailboxes are pointed at another
+	 * account first. A tenant-wide account also needs `ALL_ORG_EDIT`.
+	 */
+	async remove(id: ID, organizationId?: ID): Promise<IInboxProviderAccountRemoved> {
+		const row = await this.managed(id, organizationId, true);
+		await this.inTransaction(async (manager) => {
+			// Under the row lock (where the database has one), so a parallel edit of the account waits for the removal.
+			await this.lockedRow(manager, row.id as ID);
+			const mailboxes = await manager
+				.createQueryBuilder()
+				.select('m.id', 'id')
+				.from('inbox_mailbox', 'm')
+				.where('m.providerAccountId = :id', { id: row.id })
+				.andWhere('m.deletedAt IS NULL')
+				.getRawMany<{ id: ID }>();
+			if (mailboxes.length > 0) {
+				throw new ConflictException(
+					mailboxes.length === 1
+						? 'A mailbox receives through this account: point it at another account first.'
+						: `${mailboxes.length} mailboxes receive through this account: point them at another account first.`
+				);
+			}
+			await manager.getRepository(InboxProviderAccount).update(
+				{ id: row.id },
+				{
+					deletedAt: new Date(),
+					status: InboxProviderAccountStatusEnum.DISABLED,
+					isDefaultOutbound: false
+				}
+			);
+		});
+		return { id: row.id as ID, deleted: true };
 	}
 
 	// ---------------------------------------------------------------- for the pipeline and the transport

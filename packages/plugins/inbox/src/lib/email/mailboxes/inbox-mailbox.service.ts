@@ -323,7 +323,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		const stored = (await repository.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
 		return {
 			...this.toMailbox(stored),
-			...(domain ? { verification: this.verification(stored) } : {})
+			...(domain ? { verification: this.verificationOf(stored) } : {})
 		};
 	}
 
@@ -389,9 +389,21 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 			.getRepository(InboxMailbox)
 			.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
 		return {
-			...this.verification(stored),
+			...this.verificationOf(stored),
 			...(matched ? {} : { message: message ?? 'The expected TXT record was not found.' })
 		};
+	}
+
+	/**
+	 * The DNS record that proves a custom-domain mailbox, and its last known status, without a new DNS lookup (the
+	 * Settings page shows it for a domain still to be set up; `verify` checks it).
+	 */
+	async verification(id: ID, organizationId?: ID): Promise<IInboxMailboxDomainVerification> {
+		const row = await this.managed(id, organizationId);
+		if (row.kind !== InboxMailboxKindEnum.CUSTOM_DOMAIN || !row.domain) {
+			throw new BadRequestException('Only a custom-domain mailbox has a DNS record to create.');
+		}
+		return this.verificationOf(row);
 	}
 
 	/** A new relay secret (stored as a scrypt digest), answered this once. */
@@ -510,7 +522,11 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		const row = await this.dataSource
 			.getRepository(InboxOrganizationSetting)
 			.findOne({ where: { tenantId, organizationId: orgId } });
-		return { organizationId: orgId, autoProvisionEmployees: !!row?.autoProvisionEmployees };
+		return {
+			organizationId: orgId,
+			autoProvisionEmployees: !!row?.autoProvisionEmployees,
+			platformDomain: getInboxEmailConfig().domain
+		};
 	}
 
 	async updateSettings(
@@ -863,7 +879,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		}
 	}
 
-	private verification(row: InboxMailbox): IInboxMailboxDomainVerification {
+	private verificationOf(row: InboxMailbox): IInboxMailboxDomainVerification {
 		return {
 			recordType: 'TXT',
 			recordName: `${INBOX_DOMAIN_TXT_PREFIX}.${row.domain}`,

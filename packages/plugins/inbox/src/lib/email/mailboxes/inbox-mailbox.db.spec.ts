@@ -399,6 +399,8 @@ describe('Mailbox management on SQLite', () => {
 			expect(created.domainStatus).toBe(InboxMailboxDomainStatusEnum.PENDING);
 			const record = created.verification as { recordName: string; recordValue: string };
 			expect(record.recordName).toBe('_gauzy-inbox.acme.test');
+			// The Settings page reads the record again without a DNS lookup.
+			expect(await service.verification(created.id as string)).toEqual(record);
 
 			const lookup = jest.spyOn(service as never, 'resolveTxt');
 			lookup.mockResolvedValueOnce(['unrelated'] as never);
@@ -408,6 +410,14 @@ describe('Mailbox management on SQLite', () => {
 			lookup.mockRejectedValueOnce(new Error('NXDOMAIN') as never);
 			const lost = await service.verify(created.id as string);
 			expect([lost.status, lost.message]).toEqual([InboxMailboxDomainStatusEnum.FAILED, 'NXDOMAIN']);
+		});
+
+		it('has a DNS record to read for a custom-domain mailbox only', async () => {
+			const support = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				localPart: 'support'
+			});
+			await expect(service.verification(support.id as string)).rejects.toBeInstanceOf(BadRequestException);
 		});
 
 		it("checks one mailbox without touching another's status on the same domain", async () => {
@@ -541,7 +551,12 @@ describe('Mailbox management on SQLite', () => {
 			const employee = { id: BOB_EMPLOYEE, tenantId: TENANT, organizationId: ORG, kind: 'human' };
 			await service.onEmployeeCreated(employee);
 			expect(await dataSource.getRepository(InboxMailbox).count()).toBe(0);
-			expect((await service.updateSettings({ autoProvisionEmployees: true })).autoProvisionEmployees).toBe(true);
+			expect(await service.updateSettings({ autoProvisionEmployees: true })).toEqual({
+				organizationId: ORG,
+				autoProvisionEmployees: true,
+				// The Settings page shows the domain platform addresses are allocated on.
+				platformDomain: DOMAIN
+			});
 			await service.onEmployeeCreated(employee);
 			await service.onEmployeeCreated({ ...employee, id: AGENT_EMPLOYEE, kind: 'agent' });
 			expect((await dataSource.getRepository(InboxMailbox).find()).map((row) => row.address)).toEqual([
