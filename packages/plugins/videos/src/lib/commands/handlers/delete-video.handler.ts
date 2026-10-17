@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { assertCallerOwnsUpload } from '@gauzy/core';
 import { DeleteResult } from 'typeorm';
 import { VideosService } from '../../services/videos.service';
 import { DeleteVideoCommand } from '../delete-video.command';
@@ -31,6 +32,9 @@ export class DeleteVideoHandler implements ICommandHandler<DeleteVideoCommand> {
 		if (!video) {
 			throw new NotFoundException(`Video with ID ${id} not found.`);
 		}
+
+		// Another employee's video answers like an unknown id
+		assertCallerOwnsUpload(video, 'The requested record was not found');
 
 		// Step 3: Delete the video entity from the database
 		return this.videosService.delete(id, {

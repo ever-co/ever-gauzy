@@ -2,7 +2,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { SoundshotService } from '../../services/soundshot.service';
 import { DeleteSoundshotCommand } from '../delete-soundshot.command';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { assertCallerOwnsUpload, RequestContext } from '@gauzy/core';
 
 @CommandHandler(DeleteSoundshotCommand)
 export class DeleteSoundshotCommandHandler implements ICommandHandler<DeleteSoundshotCommand> {
@@ -34,6 +34,9 @@ export class DeleteSoundshotCommandHandler implements ICommandHandler<DeleteSoun
 		if (!soundshot) {
 			throw new NotFoundException(`Soundshot with ID ${id} not found`);
 		}
+
+		// Another employee's soundshot answers like an unknown id
+		assertCallerOwnsUpload(soundshot, 'The requested record was not found');
 
 		if (forceDelete) {
 			await this.soundshotService.delete(id);
