@@ -31,6 +31,7 @@ import { ChangelogEntryComponent, NgxFaqModule, PasswordFormFieldModule, SharedM
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
+import { EverIdLoginLabelComponent } from './components/social-links/ever-id-login-label.component';
 import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
 import { NgxLoginMagicComponent } from './components/login-magic/login-magic.component';
 import { NgxMagicSignInWorkspaceComponent } from './components/magic-login-workspace/magic-login-workspace.component';
@@ -104,7 +105,9 @@ const COMPONENTS = [
 		SharedModule,
 		PasswordFormFieldModule,
 		// Standalone card shared with the changelog sidebar
-		ChangelogEntryComponent
+		ChangelogEntryComponent,
+		// The content of the "Login with Ever ID" button
+		EverIdLoginLabelComponent
 	],
 	declarations: [...COMPONENTS],
 	providers: [

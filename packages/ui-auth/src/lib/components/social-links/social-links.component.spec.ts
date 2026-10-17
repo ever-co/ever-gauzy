@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { environment } from '@gauzy/ui-config';
 import { AppService } from '@gauzy/ui-core/core';
 import { ISignInProvider, SocialLinksComponent, configuredSignInLink } from './social-links.component';
+import { EverIdLoginLabelComponent, everIdLoginLabelParts } from './ever-id-login-label.component';
 
 describe('SocialLinksComponent', () => {
 	let component: SocialLinksComponent;
@@ -15,7 +16,7 @@ describe('SocialLinksComponent', () => {
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
 			declarations: [SocialLinksComponent],
-			imports: [NbButtonModule, NbIconModule],
+			imports: [NbButtonModule, NbIconModule, EverIdLoginLabelComponent],
 			providers: [{ provide: AppService, useValue: { getAppConfigs: () => of({}) } }]
 		}).compileComponents();
 		http = TestBed.inject(HttpTestingController);
@@ -87,5 +88,19 @@ describe('SocialLinksComponent', () => {
 		expect(configuredSignInLink('  ')).toBe('');
 		expect(configuredSignInLink(undefined)).toBe('');
 		expect(configuredSignInLink('https://api.example.test/api/auth/zitadel')).toBe('https://api.example.test/api/auth/zitadel');
+	});
+});
+
+describe('"Login with Ever ID" label', () => {
+	const mark = (text: string) => text.replace('{{ everId }}', '\u2063EVER_ID\u2063');
+
+	it('keeps the words around the wordmark in the order of each language', () => {
+		expect(everIdLoginLabelParts(mark('Login with {{ everId }}'))).toEqual({ before: 'Login with', after: '' });
+		expect(everIdLoginLabelParts(mark('Mit {{ everId }} anmelden'))).toEqual({ before: 'Mit', after: 'anmelden' });
+		expect(everIdLoginLabelParts(mark('使用 {{ everId }} 登录'))).toEqual({ before: '使用', after: '登录' });
+	});
+
+	it('reads "Login with" when the translation is missing', () => {
+		expect(everIdLoginLabelParts('LOGIN_PAGE.LOGIN_WITH_EVER_ID')).toEqual({ before: 'Login with', after: '' });
 	});
 });

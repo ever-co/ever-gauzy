@@ -1,3 +1,4 @@
+@use 'themes' as *;
 @use '@shared/reusable' as *;
 
 .sign-in-providers {
@@ -6,6 +7,29 @@
   gap: 8px;
   margin-top: 16px;
   margin-bottom: 12px;
+}
+
+// "Login with Ever ID": the size of the form's primary button (login and register: full width, 9px 20px, 14px,
+// radius 8px) in the card look of the Ever Teams button, in both themes. Specific enough to win over the theme's
+// `[nbButton].appearance-filled.status-basic` rules.
+a[nbButton].sign-in-provider.ever-id-sign-in {
+  width: 100%;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-transform: none;
+  letter-spacing: normal;
+  border-radius: 8px;
+  color: nb-theme(text-basic-color);
+  background-color: nb-theme(background-basic-color-1);
+  border: 1px solid nb-theme(border-basic-color-4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  &:hover,
+  &:focus {
+    color: nb-theme(text-basic-color);
+    background-color: nb-theme(background-basic-color-2);
+  }
 }
 
 .links {
