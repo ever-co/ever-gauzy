@@ -216,18 +216,21 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 					});
 				}
 				const shipped = Number(input.shippedQuantity);
-				if (!Number.isFinite(shipped) || shipped < 0 || shipped > Number(line.requestedQuantity)) {
+				// A dispatch may name the same line once per carton or scan: the entries add up, so the line
+				// records every unit the source loses and the sum, not each entry, is held to the request.
+				const total = Number(line.shippedQuantity ?? 0) + shipped;
+				if (!Number.isFinite(shipped) || shipped < 0 || total > Number(line.requestedQuantity)) {
 					throw inventoryError(
 						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
 						'A line cannot ship more than it requested.',
-						{ details: { lineId: line.id, requested: Number(line.requestedQuantity), shipped } }
+						{ details: { lineId: line.id, requested: Number(line.requestedQuantity), shipped: total } }
 					);
 				}
 				if (shipped === 0) {
 					continue;
 				}
 
-				line.shippedQuantity = shipped;
+				line.shippedQuantity = total;
 				await manager.save(StockTransferLine, line);
 
 				// The movement joins this dispatch's transaction: a line refused later in the loop takes
