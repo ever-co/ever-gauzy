@@ -7,6 +7,7 @@ import { ProductOption } from './product-option.entity';
 import { TypeOrmProductOptionRepository } from './repository/type-orm-product-option.repository';
 import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
 import { TypeOrmProductOptionTranslationRepository } from './repository/type-orm-product-option-translation.repository';
+import { assertTranslationsOfTenant } from './translation-ownership.helper';
 
 @Injectable()
 export class ProductOptionService extends TenantAwareCrudService<ProductOption> {
@@ -21,10 +22,20 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	async saveProductOptionTranslations(
 		translationsInput: ProductOptionTranslation[]
 	): Promise<ProductOptionTranslation[]> {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductOptionTranslationRepository,
+			translationsInput,
+			this.typeOrmProductOptionRepository
+		);
 		return this.typeOrmProductOptionTranslationRepository.save(translationsInput);
 	}
 
 	async saveProductOptionTranslation(translationInput: ProductOptionTranslation): Promise<ProductOptionTranslation> {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductOptionTranslationRepository,
+			translationInput,
+			this.typeOrmProductOptionRepository
+		);
 		return this.typeOrmProductOptionTranslationRepository.save(translationInput);
 	}
 
@@ -39,6 +50,10 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	}
 
 	async deleteOptionTranslationsBulk(productOptionTranslationsInput: IProductOptionTranslation[]) {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductOptionTranslationRepository,
+			productOptionTranslationsInput
+		);
 		return this.typeOrmProductOptionTranslationRepository.remove(productOptionTranslationsInput as any);
 	}
 }
