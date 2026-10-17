@@ -268,6 +268,70 @@ export async function ensureCatalogue(api, organizationId, prefix, options = {})
 }
 
 /**
+ * A promotion the engine applies by its code: a fixed amount off the order, active.
+ *
+ * Since R3-07 the cart records only what the promotion engine grants for a code it is handed, so a run that
+ * wants a discounted cart seeds a real promotion rather than stating an amount.
+ *
+ * @param {(method: string, path: string, body?: unknown) => Promise<any>} api The scoped caller.
+ * @param {string} organizationId The organization.
+ * @param {{code: string, value: string, currency?: string}} promotion The code and the amount off.
+ * @returns {Promise<any | undefined>} The promotion.
+ */
+export async function ensurePromotion(api, organizationId, promotion) {
+	const currency = promotion.currency ?? 'USD';
+	const row = await ensureRow(api, {
+		label: `promotion ${promotion.code}`,
+		path: '/api/promotions',
+		member: 'code',
+		value: promotion.code,
+		body: {
+			code: promotion.code,
+			title: `E2E ${promotion.code}`,
+			type: 'STANDARD',
+			currency,
+			isAutomatic: false,
+			isCombinable: true,
+			organizationId
+		}
+	});
+
+	if (!row?.id) return undefined;
+
+	const actions = await api('PUT', `/api/promotions/${row.id}/actions`, {
+		actions: [
+			{
+				promotionId: row.id,
+				type: 'FIXED',
+				targetType: 'ORDER',
+				allocation: 'ACROSS',
+				value: promotion.value,
+				currency,
+				position: 0
+			}
+		]
+	});
+
+	record(
+		`promotion ${promotion.code} takes ${promotion.value} ${currency} off the order`,
+		ok(actions),
+		`HTTP ${actions.status}${ok(actions) ? '' : ` ${brief(actions)}`}`
+	);
+
+	if (row.status !== 'ACTIVE') {
+		const activated = await api('POST', `/api/promotions/${row.id}/activate`, {});
+
+		record(
+			`promotion ${promotion.code} is active`,
+			ok(activated),
+			`HTTP ${activated.status}${ok(activated) ? '' : ` ${brief(activated)}`}`
+		);
+	}
+
+	return row;
+}
+
+/**
  * The version a versioned write must state, read from a response.
  *
  * @param {{json?: any, headers?: Headers}} result A response.
