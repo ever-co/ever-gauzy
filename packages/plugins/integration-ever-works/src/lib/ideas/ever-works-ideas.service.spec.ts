@@ -422,10 +422,13 @@ describe('EverWorksIdeasService — EW → G', () => {
 		);
 		expect(tasks).toHaveLength(1);
 		expect(links).toHaveLength(0);
-		expect(await service.apply(envelope('idea.created', failed) as never, applyContext)).toMatchObject({
+		// The idea changed in Ever Works before the retry: the retry writes its current fields over the task.
+		const renamed = { ...failed, title: 'Customer portal v2', description: 'Self-service' };
+		expect(await service.apply(envelope('idea.created', renamed) as never, applyContext)).toMatchObject({
 			status: 'applied'
 		});
 		expect(tasks).toHaveLength(1);
+		expect(tasks[0]).toMatchObject({ title: 'Customer portal v2', description: '<p>Self-service</p>' });
 		expect(resourceLinks).toHaveLength(1);
 		expect(comments).toHaveLength(1);
 		expect(commandBus.execute.mock.calls.filter(([command]) => command instanceof TaskCreateCommand)).toHaveLength(
@@ -437,7 +440,7 @@ describe('EverWorksIdeasService — EW → G', () => {
 		});
 		// The id is derived from the mapping and the idea: the same on every retry, in any process.
 		const again = setup();
-		await again.service.apply(envelope('idea.created', failed) as never, applyContext);
+		await again.service.apply(envelope('idea.created', renamed) as never, applyContext);
 		expect(again.tasks[0]['id']).toBe(tasks[0]['id']);
 	});
 

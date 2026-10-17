@@ -306,6 +306,8 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 					)
 				)) as Task);
 		const taskId = ((created?.id as ID | undefined) ?? stableId) as ID;
+		if (reuse)
+			await this.catchUp(context, written as Task, next, statusFields, teams.teamIds, idea.source, actorUserId);
 		// The resource link and the failure comment take stable ids too, so the retry does not add them twice.
 		if (idea.webUrl)
 			await this.resourceLink(
@@ -322,6 +324,43 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 			`Ever Works idea ${idea.id} created as Gauzy task ${taskId} (organization ${context.organizationId}).`
 		);
 		return { status: 'applied' };
+	}
+
+	/**
+	 * The task a failed attempt created, found again by its stable id: Ever Works' current fields are written over
+	 * it before its link records them (the idea may have changed between the attempts — a refetch, a newer
+	 * event), as the update of a linked idea would. Only what differs is written; nothing is created or renumbered.
+	 */
+	private async catchUp(
+		context: EverWorksMappingContext,
+		task: Task,
+		next: IdeaSharedFields,
+		statusFields: Record<string, unknown>,
+		teamIds: ID[],
+		source: string | null | undefined,
+		actorUserId: ID | null
+	): Promise<void> {
+		const taskId = task.id as ID;
+		const wanted: Record<string, unknown> = {
+			title: next.title || 'Idea',
+			description: ideaTextToHtml(next.description),
+			...statusFields
+		};
+		const row = task as unknown as Record<string, unknown>;
+		const changes = Object.fromEntries(
+			Object.entries(wanted).filter(([key, value]) => (row[key] ?? null) !== (value ?? null))
+		);
+		if (Object.keys(changes).length) {
+			await runAsGauzyUser(context, actorUserId, () =>
+				this.commandBus.execute(new TaskUpdateCommand(taskId, changes as never, true))
+			);
+		}
+		const relation = this.dataSource.createQueryBuilder().relation(Task, 'teams').of(taskId);
+		const current = ((await relation.loadMany()) as Array<{ id: ID }>).map((team) => team.id);
+		const toAdd = teamIds.filter((id) => !current.includes(id));
+		const toRemove = current.filter((id) => !teamIds.includes(id));
+		if (toAdd.length || toRemove.length) await relation.addAndRemove(toAdd, toRemove);
+		await this.tagSource(context, taskId, source);
 	}
 
 	/** A deleted idea archives its task (delete policy: nothing is hard-deleted) and stops syncing. */
