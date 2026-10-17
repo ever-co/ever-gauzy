@@ -2,6 +2,7 @@ import { EventSubscriber } from 'typeorm';
 import { getTenantLogo } from '../core/utils';
 import { Tenant } from './tenant.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
+import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 @EventSubscriber()
 export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
@@ -79,23 +80,22 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the logo.
+	 * Sets `logo` from the image's `fullUrl`, falling back to the existing `logo`. Waits only for the
+	 * image's own URL resolution, and not at all when there is no image (see `imageAssetUrlsReady`).
 	 *
 	 * @param entity
 	 * @returns
 	 */
-	private setImageUrl(entity: Tenant): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.logo = entity.image?.fullUrl ?? entity.logo;
-					resolve();
-				});
-			} catch (error) {
-				console.error('UserSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
+	private async setImageUrl(entity: Tenant): Promise<void> {
+		try {
+			const ready = imageAssetUrlsReady(entity.image);
+			if (ready) {
+				await ready;
 			}
-		});
+			entity.logo = entity.image?.fullUrl ?? entity.logo;
+		} catch (error) {
+			console.error('UserSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }

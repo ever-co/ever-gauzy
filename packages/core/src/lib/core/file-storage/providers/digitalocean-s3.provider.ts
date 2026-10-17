@@ -12,6 +12,7 @@ import {
 	HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { cachedPresign, getCachedS3Client, PRESIGNED_URL_EXPIRES_IN_SECONDS } from './s3-client-cache';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
@@ -184,15 +185,12 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			const s3Client = this.getDigitalOceanInstance();
 
 			if (s3Client) {
-				const signedUrl = await getSignedUrl(
-					s3Client,
-					new GetObjectCommand({
-						Bucket: this.getDigitalOceanBucket(),
-						Key: fileURL
-					}),
-					{
-						expiresIn: 3600
-					}
+				// One signature per object for a few minutes, from a client shared per configuration (s3-client-cache.ts).
+				const bucket = this.getDigitalOceanBucket();
+				const signedUrl = await cachedPresign(s3Client, bucket, fileURL, () =>
+					getSignedUrl(s3Client, new GetObjectCommand({ Bucket: bucket, Key: fileURL }), {
+						expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS
+					})
 				);
 
 				return signedUrl;
@@ -408,7 +406,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			if (this.config && this.config.digitalocean_access_key_id && this.config.digitalocean_secret_access_key) {
 				const endpoint = ensureHttpPrefix(this.config.digitalocean_service_url);
 
-				const s3Client = new S3Client({
+				const s3Client = getCachedS3Client({
 					/**
 					 * Whether to force path style URLs for S3 objects
 					 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>

@@ -1,8 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { isJSON } from 'class-validator';
 import { RequestMethodEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
+
+// Per-request trace lines: printed at debug level, i.e. only when LOG_LEVEL is debug/verbose (or unset).
+const logger = new Logger('TenantBaseGuard');
 
 @Injectable()
 export class TenantBaseGuard implements CanActivate {
@@ -24,7 +27,7 @@ export class TenantBaseGuard implements CanActivate {
 			return this.canActivateGraphqlOperation(context, currentTenantId);
 		}
 
-		console.log('TenantBaseGuard canActivate called');
+		logger.debug('TenantBaseGuard canActivate called');
 
 		const request: any = context.switchToHttp().getRequest();
 		const method: RequestMethodEnum = request.method;
@@ -95,7 +98,7 @@ export class TenantBaseGuard implements CanActivate {
 		if (!isAuthorized) {
 			console.log('Guard TenantBase: Unauthorized access blocked. TenantId:', headerTenantId);
 		} else {
-			console.log('Guard TenantBase: Access Allowed. TenantId:', headerTenantId);
+			logger.debug(`Guard TenantBase: Access Allowed. TenantId: ${headerTenantId}`);
 		}
 		return isAuthorized;
 	}

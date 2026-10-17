@@ -74,6 +74,53 @@ interface ConnectionPoolSettings {
 	dbConnectionTimeout: number;
 	idleTimeoutMillis: number;
 	dbSlowQueryLoggingTimeout: number;
+	dbPoolMin: number;
+}
+
+/**
+ * The idle timeout of every pool when DB_IDLE_TIMEOUT is unset.
+ *
+ * It was 10 s. With pools that keep no connection open (min 0), every connection a burst opened was
+ * closed 10 s later, so the first requests after any lull paid a full reconnect again: TCP, TLS (with the
+ * CA parsed again), a new PostgreSQL backend and SCRAM authentication (whose key derivation runs on the
+ * libuv threadpool next to bcrypt and DNS) — several round trips and milliseconds of CPU on the request path.
+ */
+export const DEFAULT_DB_IDLE_TIMEOUT_MS = 30000;
+
+/**
+ * Per-connection settings shared by the three PostgreSQL clients (TypeORM's pg pool, MikroORM's and Knex's).
+ *
+ * - TCP keep-alive (DB_KEEP_ALIVE, on unless set to `false`): a connection a load balancer or a database
+ *   failover silently dropped is detected by the kernel instead of hanging the next query on it.
+ * - `application_name` (DB_APPLICATION_NAME, default `gauzy`): the API's connections are named in
+ *   `pg_stat_activity`, which is where a stuck query or an exhausted pool is diagnosed.
+ * - DB_STATEMENT_TIMEOUT / DB_LOCK_TIMEOUT / DB_IDLE_IN_TRANSACTION_SESSION_TIMEOUT (milliseconds, unset =
+ *   PostgreSQL's own default, i.e. none): server-side limits that stop one runaway query, lock wait or
+ *   abandoned transaction from holding pool connections forever. Opt-in, because a transaction-mode
+ *   PgBouncer refuses them as startup parameters, and because a long report may legitimately need more.
+ */
+export function postgresConnectionExtras(env: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
+	const extras: Record<string, unknown> = {};
+	if (String(env.DB_KEEP_ALIVE ?? '').trim().toLowerCase() !== 'false') {
+		extras.keepAlive = true;
+		extras.keepAliveInitialDelayMillis = 10000;
+	}
+	const applicationName = env.DB_APPLICATION_NAME === undefined ? 'gauzy' : env.DB_APPLICATION_NAME.trim();
+	if (applicationName) {
+		extras.application_name = applicationName;
+	}
+	const timeouts: Array<[string, string]> = [
+		['DB_STATEMENT_TIMEOUT', 'statement_timeout'],
+		['DB_LOCK_TIMEOUT', 'lock_timeout'],
+		['DB_IDLE_IN_TRANSACTION_SESSION_TIMEOUT', 'idle_in_transaction_session_timeout']
+	];
+	for (const [name, key] of timeouts) {
+		const value = parseIntEnv(name, env[name], 0, { onInvalid: 'warn' });
+		if (value > 0) {
+			extras[key] = value;
+		}
+	}
+	return extras;
 }
 
 /**
@@ -120,10 +167,14 @@ function readConnectionPoolSettings(type: DatabaseTypeEnum.postgres | DatabaseTy
 		{ min: minTimeout, onInvalid: onInvalidTimeout }
 	);
 
-	const idleTimeout = parseIntEnv('DB_IDLE_TIMEOUT', process.env.DB_IDLE_TIMEOUT, 10000, {
+	const idleTimeout = parseIntEnv('DB_IDLE_TIMEOUT', process.env.DB_IDLE_TIMEOUT, DEFAULT_DB_IDLE_TIMEOUT_MS, {
 		min: minTimeout,
 		onInvalid: onInvalidTimeout
-	}); // 10 seconds
+	});
+
+	// Connections the active ORM's pool keeps open even when idle, so that a request after a quiet spell
+	// does not pay for a new connection. 0 restores the previous behaviour (every idle connection closes).
+	const poolMin = Math.min(parseIntEnv('DB_POOL_MIN', process.env.DB_POOL_MIN, 2, { onInvalid: 'warn' }), poolSize);
 
 	// 0 turns TypeORM's slow-query warning off: it only logs when maxQueryExecutionTime is truthy. An
 	// unparsable value also switched it off and a negative one logged every query, but neither stopped
@@ -141,13 +192,15 @@ function readConnectionPoolSettings(type: DatabaseTypeEnum.postgres | DatabaseTy
 	console.log('DB Connection Timeout: ' + connectionTimeout);
 	console.log('DB Idle Timeout: ' + idleTimeout);
 	console.log('DB Slow Query Logging Timeout: ' + slowQueryLoggingTimeout);
+	console.log('DB Pool Min: ' + poolMin);
 
 	return {
 		dbPoolSize: poolSize,
 		dbPoolSizeKnex: knexPoolSize,
 		dbConnectionTimeout: connectionTimeout,
 		idleTimeoutMillis: idleTimeout,
-		dbSlowQueryLoggingTimeout: slowQueryLoggingTimeout
+		dbSlowQueryLoggingTimeout: slowQueryLoggingTimeout,
+		dbPoolMin: poolMin
 	};
 }
 
@@ -163,7 +216,9 @@ function logConnectionPoolSettingsUnvalidated(): void {
 	const connectionTimeout = process.env.DB_CONNECTION_TIMEOUT
 		? Number.parseInt(process.env.DB_CONNECTION_TIMEOUT)
 		: defaultConnectionTimeout;
-	const idleTimeout = process.env.DB_IDLE_TIMEOUT ? Number.parseInt(process.env.DB_IDLE_TIMEOUT) : 10000;
+	const idleTimeout = process.env.DB_IDLE_TIMEOUT
+		? Number.parseInt(process.env.DB_IDLE_TIMEOUT)
+		: DEFAULT_DB_IDLE_TIMEOUT_MS;
 	const slowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
 		? Number.parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
 		: 10000;
@@ -182,6 +237,7 @@ let dbPoolSizeKnex: number;
 let dbConnectionTimeout: number;
 let idleTimeoutMillis: number;
 let dbSlowQueryLoggingTimeout: number;
+let dbPoolMin: number;
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
@@ -296,8 +352,11 @@ switch (dbType) {
 	case DatabaseTypeEnum.postgres:
 		// Read here rather than at module level so SQLite never validates them (see readConnectionPoolSettings).
 		// DB_PORT below accepts 0 as before: like an unset port, it makes every driver use its default port.
-		({ dbPoolSize, dbPoolSizeKnex, dbConnectionTimeout, idleTimeoutMillis, dbSlowQueryLoggingTimeout } =
+		({ dbPoolSize, dbPoolSizeKnex, dbConnectionTimeout, idleTimeoutMillis, dbSlowQueryLoggingTimeout, dbPoolMin } =
 			readConnectionPoolSettings(dbType));
+
+		// keep-alive, application_name and the opt-in server-side timeouts, for every PostgreSQL client.
+		const pgConnectionExtras = postgresConnectionExtras();
 
 		// MikroORM DB Config (PostgreSQL)
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
@@ -313,11 +372,13 @@ switch (dbType) {
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			driverOptions: {
 				connection: {
-					ssl: getTlsOptions(dbSslMode)
+					ssl: getTlsOptions(dbSslMode),
+					...pgConnectionExtras
 				}
 			},
 			pool: {
-				min: 0,
+				// MikroORM's pool only serves requests under DB_ORM=mikro-orm; under TypeORM it keeps nothing open.
+				min: dbORM === MultiORMEnum.MikroORM ? dbPoolMin : 0,
 				max: dbPoolSize,
 				// number of milliseconds a client must sit idle in the pool and not be checked out
 				// before it is disconnected from the backend and discarded
@@ -358,9 +419,12 @@ switch (dbType) {
 			extra: {
 				// based on  https://node-postgres.com/api/pool max connection pool size
 				max: dbPoolSize,
+				// pg-pool reads `min` (the two keys below it are not pg-pool options and are ignored by it).
+				min: dbORM === MultiORMEnum.TypeORM ? dbPoolMin : 0,
 				minConnection: 0,
 				maxConnection: dbPoolSize,
 				poolSize: dbPoolSize,
+				...pgConnectionExtras,
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
 				connectionTimeoutMillis: dbConnectionTimeout,
 				// number of milliseconds a client must sit idle in the pool and not be checked out
@@ -385,7 +449,8 @@ switch (dbType) {
 					port: parseIntEnv('DB_PORT', process.env.DB_PORT, 5432, { radix: 10, onInvalid: 'warn' }), // Database port (default: 5432)
 					database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
 					user: process.env.DB_USER || 'postgres', // Database username (default: postgres)
-					password: process.env.DB_PASS || 'root' // Database password (default: root)
+					password: process.env.DB_PASS || 'root', // Database password (default: root)
+					...pgConnectionExtras
 				},
 				// Connection pool settings
 				pool: {

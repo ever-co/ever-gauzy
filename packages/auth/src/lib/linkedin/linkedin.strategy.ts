@@ -15,23 +15,21 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 	 * Validates the provided OAuth profile and constructs a simplified user object.
 	 *
 	 * This function extracts the user's email(s) from the OAuth profile and combines it
-	 * with the access token. If validation succeeds, the user object is passed to the callback.
-	 * Otherwise, the error is forwarded to the callback.
+	 * with the access token. If validation succeeds, the user object is returned.
+	 * Otherwise, the error is thrown.
 	 *
 	 * @param _request - The incoming request object.
 	 * @param accessToken - The OAuth access token.
 	 * @param refreshToken - The OAuth refresh token.
 	 * @param profile - The user profile returned by the OAuth provider.
-	 * @param done - The callback to be invoked with either an error or the user object.
-	 * @returns A promise that resolves when the validation process is complete.
+	 *
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
+	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
+	 * method never calls `done` itself (doing both reported every sign-in twice: a success, then a failure).
+	 *
+	 * @returns The user object built from the profile.
 	 */
-	async validate(
-		_request: any,
-		accessToken: string,
-		refreshToken: string,
-		profile: any,
-		done: (err: unknown, user?: unknown) => void
-	): Promise<void> {
+	async validate(_request: any, accessToken: string, refreshToken: string, profile: any) {
 		try {
 			// Extract emails from the OAuth profile.
 			const { emails } = profile;
@@ -43,12 +41,12 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 				refreshToken
 			};
 
-			// Invoke the callback with no error and the constructed user.
-			done(null, user);
+			// The returned user is what passport authenticates.
+			return user;
 		} catch (error) {
-			// If an error occurs, pass the error to the callback.
+			// The thrown error is what passport reports as the authentication failure.
 			console.error('Error during LinkedIn OAuth validation:', error);
-			done(error, false);
+			throw error;
 		}
 	}
 }

@@ -28,7 +28,7 @@ export function startTracing(): void {
 startTracing(); // Start tracing if OTEL is enabled.
 
 // import * as csurf from 'csurf';
-import { ConflictException, INestApplication, Type } from '@nestjs/common';
+import { ConflictException, INestApplication, Logger, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { EventSubscriber, MikroORM, RequestContext } from '@mikro-orm/core';
@@ -58,12 +58,16 @@ import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
 import { ValidatorModule } from '../shared/validators/validator.module';
+import { CachedValidatorContainer } from '../shared/validators/cached-validator-container';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
 import { setupSwagger } from './swagger';
+import { applyKeepAliveTimeouts, resolveKeepAliveTimeout } from './server-timeouts';
 import { resolveTrustProxy } from './trust-proxy';
 import { validateApplicationSecrets } from './validate-secrets';
+import { createPerfMetricsMiddleware, instrumentPg, isPerfMetricsEnabled, startEventLoopMonitor } from './perf-metrics';
+import { resolveLogLevels } from './log-levels';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -99,13 +103,25 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Create the NestJS application
 	console.time(chalk.yellow('✔ Create NestJS Application Time'));
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
+		logger: resolveLogLevels(process.env.LOG_LEVEL), // LOG_LEVEL, every level when unset (see ./log-levels.ts)
 		bufferLogs: environment.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
 	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
 	app.set('query parser', 'extended');
+
+	// Opt-in request performance instrumentation (off unless API_PERF_METRICS / API_SERVER_TIMING /
+	// API_SLOW_REQUEST_LOG_MS / API_EVENT_LOOP_MONITOR_MS is set — see ./perf-metrics.ts). Registered before every
+	// other middleware, so the session store, body parsing and authentication are all inside the measured time.
+	if (isPerfMetricsEnabled()) {
+		instrumentPg();
+		app.use(createPerfMetricsMiddleware({ logger: new Logger('PerfMetrics') }));
+	}
+	if (process.env.API_EVENT_LOOP_MONITOR_MS) {
+		instrumentPg();
+		startEventLoopMonitor({ logger: new Logger('EventLoopMonitor') });
+	}
 
 	// Register custom entity fields for Mikro ORM (under DB_ORM=mikro-orm they were registered above,
 	// before MikroORM discovered the entities)
@@ -132,6 +148,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const { sentry } = environment;
 	if (sentry && sentry.dsn && config.logger) {
 		app.useLogger(config.logger); // Use Sentry logger
+		// The Sentry logger is a ConsoleLogger with every level enabled by default: give it LOG_LEVEL's levels too.
+		(config.logger as { setLogLevels?: (levels: string[]) => void }).setLogLevels?.(resolveLogLevels(process.env.LOG_LEVEL));
 	} else {
 		// Handle uncaught exceptions and unhandled rejections
 		process.on('uncaughtException', handleUncaughtException);
@@ -362,9 +380,14 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	await seedDatabaseIfEmpty(app, appService);
 
 	/**
-	 * Dependency injection with class-validator
+	 * Dependency injection with class-validator.
+	 *
+	 * class-validator asks this container for every constraint of every validated property. Handing it Nest's
+	 * context directly made Nest throw (and class-validator catch) an `UnknownElementException` for every
+	 * built-in constraint on every request; the cached container asks Nest once per class and otherwise
+	 * behaves as class-validator's own default container does (see CachedValidatorContainer).
 	 */
-	useContainer(app.select(ValidatorModule), { fallbackOnErrors: true });
+	useContainer(new CachedValidatorContainer(app.select(ValidatorModule)), { fallbackOnErrors: true });
 
 	// Start the server
 	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
@@ -406,6 +429,16 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 				});
 		}
 	});
+
+	// Behind nginx / an ingress, idle upstream connections are reused for up to its keepalive_timeout (60 s by
+	// default). Node's 5 s keepAliveTimeout let the API close a socket nginx was about to reuse — a sporadic
+	// 502. The API now outlives the proxy's idle timeout (API_KEEP_ALIVE_TIMEOUT_MS, default 65 s); see
+	// ./server-timeouts.ts.
+	const { keepAliveTimeout, headersTimeout } = applyKeepAliveTimeouts(
+		app.getHttpServer(),
+		resolveKeepAliveTimeout(process.env.API_KEEP_ALIVE_TIMEOUT_MS)
+	);
+	console.log(chalk.green(`HTTP keepAliveTimeout ${keepAliveTimeout} ms, headersTimeout ${headersTimeout} ms`));
 
 	console.timeEnd(chalk.yellow('✔ Total Application Bootstrap Time'));
 
