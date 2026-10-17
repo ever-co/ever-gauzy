@@ -412,6 +412,120 @@ describe('Mailbox management on SQLite', () => {
 			expect([lost.status, lost.message]).toEqual([InboxMailboxDomainStatusEnum.FAILED, 'NXDOMAIN']);
 		});
 
+		it("an unproven claim of another tenant never blocks the domain's owner for good (review F28)", async () => {
+			const providerAccountId = await account();
+			const OTHER_TENANT = randomUUID();
+			const SQUATTER_ORG = randomUUID();
+			await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [OTHER_TENANT]);
+			await dataSource.query(`INSERT INTO "organization" ("id", "tenantId", "name") VALUES (?, ?, 'Squatter')`, [
+				SQUATTER_ORG,
+				OTHER_TENANT
+			]);
+			const repository = dataSource.getRepository(InboxMailbox);
+			const squat = async (address: string, over: Record<string, unknown> = {}) => {
+				const id = randomUUID();
+				await repository.insert({
+					id,
+					tenantId: OTHER_TENANT,
+					organizationId: SQUATTER_ORG,
+					address,
+					kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+					purpose: 'INBOX',
+					domain: 'acme.test',
+					domainStatus: InboxMailboxDomainStatusEnum.PENDING,
+					domainVerificationToken: 'gauzy-inbox-verify=squatter',
+					isDefault: false,
+					autoProvisioned: false,
+					messageCount: 0,
+					...over
+				} as never);
+				return id;
+			};
+			const create = (localPart: string) =>
+				service.create({
+					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+					kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+					localPart,
+					domain: 'acme.test',
+					providerAccountId
+				});
+			const supportSquat = await squat('support@acme.test');
+			const verifiedElsewhere = await squat('sales@acme.test', {
+				domainStatus: InboxMailboxDomainStatusEnum.VERIFIED
+			});
+			const lapsed = await squat('ops@acme.test', {
+				domainStatus: InboxMailboxDomainStatusEnum.FAILED,
+				createdAt: new Date(Date.now() - 30 * 86_400_000)
+			});
+			// A fresh unproven claim holds the address while nobody has proven the domain.
+			await expect(create('support')).rejects.toBeInstanceOf(ConflictException);
+			// A claim left unverified past the hold is released, proof or not; the row is kept, FAILED.
+			const stale = await squat('info@acme.test', { createdAt: new Date(Date.now() - 4 * 86_400_000) });
+			expect((await create('info')).address).toBe('info@acme.test');
+			const released = (await repository.findOne({ where: { id: stale } })) as InboxMailbox;
+			expect(released.address).toBe(`released-${stale.replace(/-/g, '')}@acme.test`);
+			expect(released.domainStatus).toBe(InboxMailboxDomainStatusEnum.FAILED);
+			expect(JSON.parse(released.settings as string)).toMatchObject({ releasedAddress: 'info@acme.test' });
+			// Once this tenant proves the domain, another tenant's unproven claim on it gives way at once.
+			const hello = await create('hello');
+			const lookup = jest.spyOn(service as never, 'resolveTxt');
+			lookup.mockResolvedValueOnce([(hello.verification as { recordValue: string }).recordValue] as never);
+			expect((await service.verify(hello.id as string)).status).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
+			expect((await create('support')).address).toBe('support@acme.test');
+			expect((await repository.findOne({ where: { id: supportSquat } }))?.domainStatus).toBe(
+				InboxMailboxDomainStatusEnum.FAILED
+			);
+			expect((await create('ops')).address).toBe('ops@acme.test');
+			expect((await repository.findOne({ where: { id: lapsed } }))?.address).not.toBe('ops@acme.test');
+			// A claim the other tenant proved stays theirs.
+			await expect(create('sales')).rejects.toBeInstanceOf(ConflictException);
+			expect((await repository.findOne({ where: { id: verifiedElsewhere } }))?.address).toBe('sales@acme.test');
+		});
+
+		it('an unproven claim of the same tenant still holds its address, and an old FAILED one is not released by age (review F28)', async () => {
+			const providerAccountId = await account();
+			const repository = dataSource.getRepository(InboxMailbox);
+			const OTHER_TENANT = randomUUID();
+			const SQUATTER_ORG = randomUUID();
+			await dataSource.query(`INSERT INTO "tenant" ("id") VALUES (?)`, [OTHER_TENANT]);
+			await dataSource.query(`INSERT INTO "organization" ("id", "tenantId", "name") VALUES (?, ?, 'Squatter')`, [
+				SQUATTER_ORG,
+				OTHER_TENANT
+			]);
+			const create = (localPart: string) =>
+				service.create({
+					ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+					kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+					localPart,
+					domain: 'acme.test',
+					providerAccountId
+				});
+			const mine = await create('desk');
+			await repository.update({ id: mine.id as string }, {
+				createdAt: new Date(Date.now() - 30 * 86_400_000),
+				organizationId: OTHER_ORG
+			} as never);
+			await expect(create('desk')).rejects.toBeInstanceOf(ConflictException);
+			await repository.insert({
+				id: randomUUID(),
+				tenantId: OTHER_TENANT,
+				organizationId: SQUATTER_ORG,
+				address: 'help@acme.test',
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				purpose: 'INBOX',
+				domain: 'acme.test',
+				domainStatus: InboxMailboxDomainStatusEnum.FAILED,
+				createdAt: new Date(Date.now() - 30 * 86_400_000),
+				isDefault: false,
+				autoProvisioned: false,
+				messageCount: 0
+			} as never);
+			// Verified once and failing now (a DNS outage): only a proof of the domain releases it, never its age.
+			await expect(create('help')).rejects.toBeInstanceOf(ConflictException);
+		});
+
 		it('never leaves a mailbox on a removed account: removing it and pointing a mailbox at it never both succeed', async () => {
 			const providerAccountId = await account();
 			const [removed, created] = await Promise.allSettled([

@@ -62,6 +62,11 @@ const DNS_TIMEOUT_MS = 5_000;
 const MAX_ALLOWLIST = 200;
 const MAX_MEMBERS = 500;
 const MAX_ALLOCATION_ATTEMPTS = 50;
+/**
+ * How long another tenant's custom-domain address, never verified, holds the address against everyone (review F28):
+ * such a row receives no mail (`match` skips unverified domains), so past this it gives way to the next claim.
+ */
+export const INBOX_UNVERIFIED_CLAIM_HOLD_MS = 3 * 24 * 60 * 60_000;
 
 const parse = <T>(value: string | null | undefined, fallback: T): T => {
 	if (!value) return fallback;
@@ -272,7 +277,9 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				throw new BadRequestException('That domain is reserved by the platform.');
 			}
 			address = `${localPart}@${domain}`;
-			if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
+			if ((await this.isTaken(address)) && !(await this.unprovenClaimOf(tenantId, address, domain))) {
+				throw new ConflictException('That address is already taken.');
+			}
 		} else {
 			address = await this.allocate(organizationId, input?.localPart ?? null, owner);
 		}
@@ -281,6 +288,7 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		// The last check and the save under the address's claim (shared with the Docs capture addresses).
 		const save = () =>
 			this.claim(address, async () => {
+				if (domain) await this.releaseUnprovenClaim(tenantId, address, domain);
 				if (await this.isTaken(address)) throw new ConflictException('That address is already taken.');
 				try {
 					return await repository.save(
@@ -638,6 +646,61 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 	}
 
 	// ---------------------------------------------------------------- helpers
+
+	/**
+	 * Another tenant's custom-domain mailbox that holds `address` without having proven the domain, when it must give
+	 * way to `tenantId` (review F28): this tenant has proven the domain (a VERIFIED mailbox on it), or the claim was never
+	 * verified and is older than {@link INBOX_UNVERIFIED_CLAIM_HOLD_MS}. A claim that was verified once and fails now (a
+	 * DNS outage) gives way to a proof only, never to its age. `null`: the address stays taken.
+	 */
+	private async unprovenClaimOf(tenantId: ID, address: string, domain: string): Promise<InboxMailbox | null> {
+		const repository = this.dataSource.getRepository(InboxMailbox);
+		const holder = await repository.findOne({ where: { address: normalizeAddress(address)?.address ?? address } });
+		if (!holder || holder.tenantId === tenantId || holder.kind !== InboxMailboxKindEnum.CUSTOM_DOMAIN) return null;
+		if (holder.domainStatus === InboxMailboxDomainStatusEnum.VERIFIED) return null;
+		const proven = await repository.count({
+			where: {
+				tenantId,
+				domain,
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				domainStatus: InboxMailboxDomainStatusEnum.VERIFIED
+			}
+		});
+		if (proven > 0) return holder;
+		const createdAt = (holder as { createdAt?: Date | string | null }).createdAt;
+		const stale =
+			holder.domainStatus !== InboxMailboxDomainStatusEnum.FAILED &&
+			!!createdAt &&
+			Date.now() - new Date(createdAt).getTime() >= INBOX_UNVERIFIED_CLAIM_HOLD_MS;
+		return stale ? holder : null;
+	}
+
+	/**
+	 * Frees `address` from another tenant's unproven claim ({@link unprovenClaimOf}); call under the address's claim. The
+	 * row is kept, FAILED, at a released address of its domain (it could hold no mail), with the address it asked for in
+	 * its settings, so its tenant sees what happened.
+	 */
+	private async releaseUnprovenClaim(tenantId: ID, address: string, domain: string): Promise<void> {
+		const holder = await this.unprovenClaimOf(tenantId, address, domain);
+		if (!holder) return;
+		const settings = parse<Record<string, unknown>>(holder.settings, {});
+		await this.dataSource.getRepository(InboxMailbox).update(
+			{ id: holder.id as ID },
+			{
+				address: `released-${String(holder.id).replace(/-/g, '')}@${holder.domain ?? domain}`,
+				domainStatus: InboxMailboxDomainStatusEnum.FAILED,
+				isDefault: false,
+				settings: JSON.stringify({
+					...settings,
+					releasedAddress: holder.address,
+					releasedAt: new Date().toISOString()
+				})
+			}
+		);
+		this.logger.warn(
+			`Released ${holder.address} from an unverified custom-domain mailbox of another tenant (mailbox ${holder.id}).`
+		);
+	}
 
 	/** A mailbox of the caller's tenant and organization (404 otherwise, so ids are not probed). */
 	private async managed(id: ID, organizationId?: ID): Promise<InboxMailbox> {
