@@ -23,6 +23,7 @@ describe('SimulatePriceListDTO — the REST dry run keeps the currency it prices
 	it('refuses a body with no currency, or with one that is not a three-letter code', async () => {
 		await expect(read({ variantIds: [VARIANT] })).rejects.toBeInstanceOf(BadRequestException);
 		await expect(read({ variantIds: [VARIANT], currency: 'DOLLAR' })).rejects.toBeInstanceOf(BadRequestException);
+		await expect(read({ variantIds: [VARIANT], currency: 'US' })).rejects.toBeInstanceOf(BadRequestException);
 		await expect(read({ variantIds: [VARIANT], currency: 840 })).rejects.toBeInstanceOf(BadRequestException);
 	});
 });
