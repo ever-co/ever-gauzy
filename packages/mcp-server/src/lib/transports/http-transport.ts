@@ -907,8 +907,8 @@ export class HttpTransport {
 				logger.debug(`Calling tool: ${name} with args:`, validation.sanitized);
 			}
 
-			// Use the public method for tool invocation with sanitized args
-			const result = await this.mcpServer.invokeTool(name, validation.sanitized);
+			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is
+			const result = await this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {});
 			logger.debug(`Tool ${name} executed successfully`);
 
 			return result;
