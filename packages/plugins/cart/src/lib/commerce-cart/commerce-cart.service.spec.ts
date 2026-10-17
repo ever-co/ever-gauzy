@@ -3063,6 +3063,39 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
 	});
 
+	it('rates a carried-over delivery choice for the merged contents before copying anything', async () => {
+		// The source's option serves at most three items: the surviving cart's two and the source's two exceed it,
+		// so the merge is refused with nothing copied rather than after the lines were.
+		const fixture = cartFixture({ shippingOptions: { 'opt-small': { ...STANDARD } } });
+		fixture.shippingPort!.calculate.mockImplementation(async (_id: string, context: any) => ({
+			amount: 7,
+			currency: 'USD',
+			eligible: Number(context.itemCount ?? 0) <= 3,
+			reason: 'SHIPPING_OPTION_ITEM_COUNT_EXCEEDED'
+		}));
+		const target = await openCart(fixture);
+		const source = await openCart(fixture);
+		await fixture.service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+		await fixture.service.addLine(source.id, { variantId: 'v2', title: 'B', quantity: 2, unitPrice: 10 });
+		await fixture.service.setShippingMethod(source.id, { shippingOptionId: 'opt-small' } as any);
+
+		await expect(fixture.service.merge(target.id, source.id)).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_INELIGIBLE' }
+		});
+		const copied = fixture.tables.commerce_cart_line.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+		expect(copied).toHaveLength(1);
+	});
+
+	it('refuses a delivery choice written straight to the child resource without the cart’s rating', async () => {
+		const { shippingMethodService } = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+
+		await expect(
+			shippingMethodService.create({ cartId: 'cart-1', shippingOptionId: 'opt-standard' } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_SHIPPING_OPTION_REQUIRED' } });
+	});
+
 	it('sets every line’s tax category from the catalogue at checkout', async () => {
 		const fixture = cartFixture({ prices: { v1: 20 }, taxCategories: { v1: 'tc-standard' } });
 		const cart = await openCart(fixture);

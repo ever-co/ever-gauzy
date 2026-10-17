@@ -309,6 +309,20 @@ describe('TaxCategoryService.taxCategoriesOf — the category a variant is taxed
 		]);
 	});
 
+	it('takes the default of the caller’s organization, not another organization’s of the tenant', async () => {
+		const service = withVariants(
+			[
+				category({ id: 'category-theirs', code: 'STANDARD', isDefault: true, organizationId: OTHER_ORG }),
+				category({ id: 'category-mine', code: 'STANDARD', isDefault: true })
+			],
+			[{ id: 'variant-b' }]
+		);
+
+		await expect(service.taxCategoriesOf(['variant-b'])).resolves.toEqual([
+			{ variantId: 'variant-b', taxCategoryId: 'category-mine' }
+		]);
+	});
+
 	it('answers null for a variant with no category when the organization declares no default', async () => {
 		const service = withVariants([category({ id: 'category-1', code: 'STANDARD' })], [{ id: 'variant-b' }]);
 

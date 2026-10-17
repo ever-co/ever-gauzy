@@ -183,7 +183,10 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 						select: { id: true, taxCategoryId: true } as any
 				  })) as any[]);
 		const named = new Map(rows.map((row) => [String(row.id), row.taxCategoryId ?? null]));
-		const fallback = ids.some((id) => !named.get(id)) ? (await this.findDefault())?.id ?? null : null;
+		// The default is the caller's organization's: another organization of the tenant may declare its own.
+		const fallback = ids.some((id) => !named.get(id))
+			? (await this.findDefault(RequestContext.currentOrganizationId() ?? undefined))?.id ?? null
+			: null;
 
 		return ids.map((id) => ({ variantId: id as ID, taxCategoryId: named.get(id) ?? fallback }));
 	}

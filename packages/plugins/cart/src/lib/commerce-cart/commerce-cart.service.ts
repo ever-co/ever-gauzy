@@ -1195,7 +1195,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await this.assertLinesPriceable(target, lines);
 
 		if (method) {
-			await this.resolveShippingRate(target, method.shippingOptionId as ID);
+			// Rated against what the surviving cart will hold once the lines are copied — its own shippable items
+			// and the source's — which is what `setShippingMethod` rates it against below.
+			await this.resolveShippingRate(target, method.shippingOptionId as ID, {
+				extraItemCount: lines
+					.filter((line) => line.requiresShipping !== false)
+					.reduce((count, line) => count + Number(line.quantity ?? 0), 0),
+				extraOrderTotal: Number(source.itemSubtotal ?? 0)
+			});
 		}
 
 		for (const line of lines) {
@@ -2437,6 +2444,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cart The cart: its channel, region, currency and what it holds.
 	 * @param optionId The option the delivery choice names.
+	 * @param pending What the cart is about to hold besides its own lines, for a merge rated before it copies.
 	 * @returns The option and what it costs on this cart.
 	 * @throws BadRequestException `CART_SHIPPING_OPTION_REQUIRED` when no option is named,
 	 * `CART_SHIPPING_OPTION_INELIGIBLE` when the option does not serve this cart, or `CART_SHIPPING_RATE_UNRESOLVED`
@@ -2445,7 +2453,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 */
 	private async resolveShippingRate(
 		cart: CommerceCart,
-		optionId: ID | undefined
+		optionId: ID | undefined,
+		pending: { extraItemCount?: number; extraOrderTotal?: number } = {}
 	): Promise<{ option: ICartShippingOption; amount: number | string }> {
 		if (!optionId) {
 			throw new BadRequestException({
@@ -2488,8 +2497,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		const rate = await this.shippingRate.calculate(optionId, {
 			channelId: cart.channelId,
 			regionId: cart.regionId,
-			itemCount: shippable.reduce((count, line) => count + Number(line.quantity ?? 0), 0),
-			orderTotal: Number(cart.itemSubtotal ?? 0)
+			itemCount:
+				shippable.reduce((count, line) => count + Number(line.quantity ?? 0), 0) +
+				Number(pending.extraItemCount ?? 0),
+			orderTotal: Number(cart.itemSubtotal ?? 0) + Number(pending.extraOrderTotal ?? 0)
 		});
 
 		if (!rate?.eligible) {
