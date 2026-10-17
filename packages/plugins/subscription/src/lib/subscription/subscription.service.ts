@@ -903,6 +903,74 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	}
 
 	/**
+	 * Withdraws a cancellation at the end of the period, so the subscription keeps billing (Q16 4).
+	 *
+	 * `cancel({ immediate: false })` leaves an active subscription running to the end of the period it paid for and
+	 * records `cancelAtPeriodEnd`, which the billing run acts on. That key is the service's own (SEC-B-03, #10655): a
+	 * caller's metadata can neither set nor erase it, so before this action a customer who changed their mind had no
+	 * way back short of letting the subscription end and creating another. This clears the key and the cancellation
+	 * it recorded (`canceledAt`, `cancelReason`); the period, the next billing instant and the rights stay as they
+	 * were, because a deferred cancellation never moved them.
+	 *
+	 * A live subscription with no deferred cancellation is returned as it stands — the outcome the caller wanted has
+	 * already happened. A cancellation that already took effect is not undone: the subscription is reactivated as a
+	 * new one. The write is predicated on the version the read saw, so a billing run that ends the period between the
+	 * read and the write is not overwritten: the action re-reads, finds the subscription cancelled and refuses.
+	 *
+	 * @param id The subscription.
+	 * @param expectation The version the caller read the subscription at.
+	 * @returns The subscription, billing on.
+	 * @throws BadRequestException when the subscription is already cancelled or expired.
+	 */
+	public async undoCancellation(id: ID, expectation: IVersionExpectation = ANY_VERSION): Promise<Subscription> {
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(id);
+
+			this.assertLive(subscription);
+
+			if (subscription.metadata?.[CANCEL_AT_PERIOD_END] !== true) {
+				return subscription;
+			}
+
+			const predicate = this.readVersionPredicate(subscription, expectation);
+			const metadata = Object.fromEntries(
+				Object.entries(subscription.metadata ?? {}).filter(([key]) => key !== CANCEL_AT_PERIOD_END)
+			);
+
+			try {
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: predicate,
+					patch: {
+						canceledAt: null,
+						cancelReason: null,
+						metadata
+					}
+				});
+			} catch (error) {
+				// The row moved on between the read and the write — a billing pass, or another edit. The next read
+				// decides again from the row as it now stands.
+				if (predicate !== expectation && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+
+			await this.emit('subscription.cancellation-undone', id, {
+				subscriptionId: id,
+				undoneAt: new Date(),
+				undoneBy: RequestContext.currentUserId(),
+				currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+				nextBillingAt: subscription.nextBillingAt ?? null
+			});
+
+			return await this.findOneScoped(id);
+		}
+	}
+
+	/**
 	 * Ends a subscription because it ran out rather than because somebody stopped it.
 	 *
 	 * Reaching the plan's cycle ceiling is the case this exists for, which is why `EXPIRED` and
