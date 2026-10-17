@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Header,
 	HttpCode,
@@ -84,6 +85,17 @@ export class InboxProviderAccountController {
 		@Query() query: InboxOrganizationQueryDTO
 	) {
 		return this.accounts.update(id, body, query?.organizationId);
+	}
+
+	@Delete('/provider-accounts/:id')
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ transform: true, whitelist: true })
+	@Header('Cache-Control', 'no-store')
+	@ApiOperation({
+		summary: 'Remove an account (kept as deleted and disabled); refused while a mailbox receives through it.'
+	})
+	remove(@Param('id', UUIDValidationPipe) id: ID, @Query() query: InboxOrganizationQueryDTO) {
+		return this.accounts.remove(id, query?.organizationId);
 	}
 
 	@Post('/provider-accounts/:id/verify')
