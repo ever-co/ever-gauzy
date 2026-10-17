@@ -198,6 +198,8 @@ export class ExportService {
 		/**
 		 * Include global (default) entities used in the current organization.
 		 * E.g., task statuses, task priorities, etc.
+		 * The probe is meant for shared defaults only: tables flagged `excludeGlobalDefaults` keep
+		 * tenantless rows that belong to other tenants, so they export the caller's own rows alone.
 		 */
 
 		const columnNames = repository.metadata.columns.map((col) => col.databaseName);
@@ -207,7 +209,7 @@ export class ExportService {
 		let defaultItems: unknown[] = [];
 		let defaultItemsCount = 0;
 
-		if (item.isTenantBased !== false && hasTenantId && hasOrganizationId) {
+		if (item.isTenantBased !== false && item.excludeGlobalDefaults !== true && hasTenantId && hasOrganizationId) {
 			[defaultItems, defaultItemsCount] = await repository.findAndCount({
 				where: {
 					tenantId: IsNull(),

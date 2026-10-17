@@ -463,6 +463,12 @@ export interface IRepositoryModel<T = any> {
 		originalField: string;
 		substituteField: string;
 	};
+	/**
+	 * This table never holds shared default rows: a row with no tenant and no organization belongs
+	 * to some tenant that could not be resolved (e.g. an email sent from a public route), so the
+	 * export must not add it to another tenant's archive.
+	 */
+	excludeGlobalDefaults?: boolean;
 }
 
 @Injectable()
@@ -1260,14 +1266,15 @@ export class RepositoriesService implements OnModuleInit {
 	async buildRepositoriesRelationsGraph() {
 		const result: IRepositoryModel[] = [];
 		for await (const item of this.repositories) {
-			const { repository, isStatic, substitute } = item;
+			const { repository, isStatic, substitute, excludeGlobalDefaults } = item;
 
 			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(repository);
 
 			result.push({
 				...repositoryRelationsGraph,
 				isStatic,
-				substitute
+				substitute,
+				excludeGlobalDefaults
 			});
 		}
 
@@ -1509,7 +1516,8 @@ export class RepositoriesService implements OnModuleInit {
 				repository: this.typeOrmEmailTemplateRepository
 			},
 			{
-				repository: this.typeOrmEmailHistoryRepository
+				repository: this.typeOrmEmailHistoryRepository,
+				excludeGlobalDefaults: true
 			},
 			{
 				repository: this.typeOrmEstimateEmailRepository
