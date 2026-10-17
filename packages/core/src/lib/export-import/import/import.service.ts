@@ -121,6 +121,7 @@ export class ImportService {
 		// legacy dump, a filled-in `/export/template` or an externally built CSV set would otherwise
 		// lose a legitimate leading apostrophe from a value such as `'=notes` (GHSA-7xp5-j564-4752).
 		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
+		const junctionOwners: IRepositoryModel[] = [];
 		for await (const item of repositories) {
 			const { repository, isStatic = false, relations = [] } = item;
 			const nameFile = repository.metadata.tableName;
@@ -188,15 +189,23 @@ export class ImportService {
 				await this.rebuildProductCategoryClosure(tenantId);
 			}
 
-			// export pivot relational tables
 			if (isNotEmpty(relations)) {
-				await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
+				junctionOwners.push(item);
 			}
+		}
+
+		// A junction row links two master tables, so both must be imported first: `tag_task` names
+		// tags, and tags are imported after tasks.
+		for (const item of junctionOwners) {
+			await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
 		}
 	}
 
 	/**
 	 * Imports the junction tables of one entity.
+	 *
+	 * Each row is written between the destination ids of its two ends. A row with an end that was not
+	 * imported for the tenant is skipped. Run it once every master table is imported.
 	 *
 	 * @param extractPath - This request's extraction directory.
 	 * @param entity - The entity whose junction tables to read.
@@ -238,22 +247,39 @@ export class ImportService {
 					stream.on('end', async () => {
 						results = results.filter(isNotEmpty);
 
+						// `orIgnore` hides whether a pair was new, so the count is of rows linked, new or already there.
+						let linked = 0;
+						let skipped = 0;
 						for await (const data of results) {
 							try {
 								if (isNotEmpty(data)) {
 									const fields = await this.mapRelationFields(item, data);
-									const sql = `INSERT INTO "${joinTableName}" (${
-										'"' + Object.keys(fields).join(`", "`) + '"'
-									}) VALUES ("$1", "$2")`;
-									// const items = await getManager().query(sql, Object.values(fields));
-									console.log(sql);
-									// console.log(chalk.green(`Success to inserts data for table: ${joinTableName}`));
+									const row = Object.fromEntries(
+										item.foreignKeys.map(({ column }) => [column, fields[column]])
+									);
+									// An end with no import record for this tenant maps to undefined: nothing to link.
+									if (item.foreignKeys.some(({ column }) => !isNotEmpty(row[column]))) {
+										skipped++;
+										continue;
+									}
+									// `orIgnore` lets a merge re-import of the same archive pass the composite primary key.
+									await entity.repository.manager
+										.createQueryBuilder()
+										.insert()
+										.into(joinTableName)
+										.values(row)
+										.orIgnore()
+										.execute();
+									linked++;
 								}
 							} catch (error) {
 								console.log(chalk.red(`Failed to inserts data for table: ${joinTableName}`), error);
-								reject(error);
+								return reject(error);
 							}
 						}
+						this.logger.log(
+							`Imported junction table ${joinTableName}: ${linked} rows linked (new or already present), ${skipped} skipped with an end not imported`
+						);
 						resolve(true);
 					});
 				} catch (error) {
