@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, In, MoreThanOrEqual } from 'typeorm';
 import {
 	ID,
 	IInboxEmailDelivered,
@@ -80,6 +80,37 @@ export class InboxEmailHandoffs implements IInboxEmailHandoffs {
 				);
 			}
 		}
+	}
+
+	/** The inbound messages of a tenant delivered since a time, oldest first, with their mailbox's settings. */
+	async deliveredSince(tenantId: ID, since: Date, limit: number): Promise<IInboxEmailDelivered[]> {
+		const rows = await this.dataSource.getRepository(InboxEmail).find({
+			where: {
+				tenantId,
+				direction: InboxEmailDirectionEnum.IN,
+				status: InboxEmailStatusEnum.PROCESSED,
+				updatedAt: MoreThanOrEqual(since)
+			},
+			order: { updatedAt: 'ASC', id: 'ASC' },
+			take: Math.min(Math.max(limit, 1), 1000)
+		});
+		const mailboxIds = [...new Set(rows.map((row) => row.mailboxId as ID))];
+		const mailboxes = mailboxIds.length
+			? await this.dataSource.getRepository(InboxMailbox).find({ where: { id: In(mailboxIds), tenantId } })
+			: [];
+		const settings = new Map(
+			mailboxes.map((mailbox) => [mailbox.id as ID, json<Record<string, unknown>>(mailbox.settings)])
+		);
+		return rows
+			.filter((row) => settings.has(row.mailboxId as ID))
+			.map((row) => ({
+				tenantId,
+				organizationId: (row.organizationId as ID) ?? null,
+				mailboxId: row.mailboxId as ID,
+				mailboxSettings: settings.get(row.mailboxId as ID) ?? null,
+				emailId: row.id as ID,
+				inboxItemId: (row.inboxItemId as ID) ?? null
+			}));
 	}
 
 	/** The stored, delivered inbound message of a tenant, for its hand-off; `null` otherwise. */

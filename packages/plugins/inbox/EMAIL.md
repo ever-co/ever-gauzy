@@ -118,7 +118,8 @@ Management also needs an active membership of the organization; the tenant is al
 (`provider.inbound.verify`; there is no unsigned mode), with a per-client-address rate limit
 (`GAUZY_INBOX_INBOUND_REQUESTS_PER_MINUTE`, default 600). The platform route `/api/inbox/inbound/generic/platform` is
 proven with `GAUZY_INBOX_PLATFORM_SECRET` (at least 24 characters; unset, the route answers 404); the Cloudflare Email
-Worker of the platform domain (`GAUZY_INBOX_DOMAIN`) posts there. JSON and URL-encoded bodies arrive parsed with their
+Worker of the platform domain (`GAUZY_INBOX_DOMAIN`; script and setup in `.deploy/cloudflare/inbox-email-worker/`) posts
+there. JSON and URL-encoded bodies arrive parsed with their
 raw bytes; a `multipart/form-data` body (a form with files: Mailgun, SendGrid) or a `text/plain` one (SNS) is kept raw
 by the route itself (`InboundRawBodyMiddleware`, up to twice `GAUZY_INBOX_MAX_MESSAGE_BYTES` plus 1 MB; 413 beyond),
 and providers read forms with `readInboundForm`.
@@ -129,14 +130,18 @@ and providers read forms with `readInboundForm`.
    account's tenant and, for an organization's account, organization; a custom-domain mailbox only once its domain is
    verified; and only from senders its allowlist admits. The `From` header alone is forgeable: an allowlisted sender
    without a DMARC `pass` from the provider (a relay that reports no verdict, or a failed one) is stored but **held in
-   the quarantine** (`x-gauzy-inbox-hold: unverified-sender`) until a manager releases it. The mailbox row decides the
-   tenant, never the payload. Everything else is dropped. A `+tag` is kept in the message's headers.
+   the quarantine** (`x-gauzy-inbox-hold: unverified-sender`) until a manager releases it. A provider can hold a
+   message the same way whatever its spam verdict (`x-gauzy-inbox-hold: virus` when the provider's virus scan failed).
+   The mailbox row decides the tenant, never the payload. Everything else is dropped. A `+tag` is kept in the
+   message's headers.
 3. The raw message is stored (`.eml`, or the normalized `.json` when the provider delivers no MIME; FileStorage, or with
    local storage a private directory, `GAUZY_INBOX_LOCAL_STORAGE_PATH`, never the public asset root), and
    one `inbox_email` row per mailbox (`RECEIVED`; unique on `(mailboxId, messageId)`, so a retry is a duplicate).
    Email files always use the deployment's storage settings (`FILE_PROVIDER`, `AWS_*` and co.), never a tenant's own
    storage overrides, so the webhook, the worker and a signed-in download read and write the same place.
-4. The answer is 202 `{ accepted, duplicates, dropped }`, and the rows go to the worker.
+4. The answer is 202 `{ accepted, duplicates, dropped }`, and the rows go to the worker. The delivery is single use:
+   claimed for two minutes while it is stored, remembered for its provider's window once stored, released when storing
+   fails (a crash in between costs the provider's retry a short wait, never the mail).
 
 The **worker** runs in the API process (a background task right after the webhook, plus a sweep every two minutes for a
 message whose hand-over was lost; `GAUZY_INBOX_EMAIL_WORKER=off` keeps a process out). Each message is claimed with a

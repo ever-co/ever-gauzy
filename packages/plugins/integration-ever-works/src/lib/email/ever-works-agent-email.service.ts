@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { DataSource, In } from 'typeorm';
 import {
 	ID,
 	IInboxEmailDelivered,
@@ -9,6 +10,7 @@ import {
 	INBOX_EMAIL_HANDOFFS
 } from '@gauzy/contracts';
 import type { EverWorksInboundEmail, EverWorksInboundEmailResult } from '../client/ever-works-client.types';
+import { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import {
@@ -17,6 +19,7 @@ import {
 	EverWorksOutboundChange
 } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
+import type { EverWorksSyncSweeper } from '../sync/ever-works-sync.loop';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import type {
 	EverWorksOutboundHandler,
@@ -33,6 +36,13 @@ export const EVER_WORKS_EMAIL_WRITE_SCOPE = 'email:write';
 
 /** A message the Inbox email features of this process cannot read yet waits this long (another process may). */
 export const AGENT_EMAIL_WAIT_MS = 15 * 60_000;
+
+/** How often the recovery sweep looks for delivered messages whose hand-off was never queued. */
+export const AGENT_EMAIL_SWEEP_MS = 10 * 60_000;
+/** How far back the sweep looks (it outlasts an outage of the process; older misses are not recovered). */
+export const AGENT_EMAIL_SWEEP_WINDOW_MS = 24 * 60 * 60_000;
+/** Messages one sweep reads at most per connection. */
+export const AGENT_EMAIL_SWEEP_LIMIT = 500;
 
 /** `InboundEmail` limits (`requests.schema.json`). */
 const LIMITS = { address: 254, subject: 998, body: 2_000_000, list: 100, id: 255, attachments: 20, name: 255 } as const;
@@ -90,8 +100,11 @@ export function inboundEmailBody(agentId: string, email: IInboxEmailHandoff): Ev
  * - Optional: where the Inbox email features are off, nothing registers and no change is ever queued.
  */
 @Injectable()
-export class EverWorksAgentEmailService implements EverWorksOutboundHandler, OnModuleInit, OnModuleDestroy {
+export class EverWorksAgentEmailService
+	implements EverWorksOutboundHandler, EverWorksSyncSweeper, OnModuleInit, OnModuleDestroy
+{
 	readonly entityTypes = [EverWorksLinkType.AGENT_EMAIL];
+	readonly sweepIntervalMs = AGENT_EMAIL_SWEEP_MS;
 	private readonly logger = new Logger('EverWorksAgentEmail');
 
 	readonly listener: IInboxEmailHandoffListener = {
@@ -100,6 +113,7 @@ export class EverWorksAgentEmailService implements EverWorksOutboundHandler, OnM
 	};
 
 	constructor(
+		private readonly dataSource: DataSource,
 		private readonly contexts: EverWorksMappingContextService,
 		private readonly connections: EverWorksConnectionService,
 		private readonly links: EverWorksLinkService,
@@ -131,6 +145,49 @@ export class EverWorksAgentEmailService implements EverWorksOutboundHandler, OnM
 			gauzyId: email.emailId
 		});
 		if (!queued) this.logger.debug?.(`Inbox email ${email.emailId}: its organization has no Ever Works mapping.`);
+	}
+
+	/**
+	 * The recovery sweep (every {@link AGENT_EMAIL_SWEEP_MS}, under the connection's lease): a message delivered to a
+	 * routed mailbox in the last {@link AGENT_EMAIL_SWEEP_WINDOW_MS} that has neither a link nor any outbound change
+	 * yet — its notice was missed (a restart between the delivery and the queue write) — is queued now.
+	 */
+	async sweep(connection: EverWorksConnection): Promise<void> {
+		if (!this.handoffs) return;
+		const contexts = (await this.contexts.forConnection(connection)).filter((context) => context.isEnabled);
+		if (!contexts.length) return;
+		const byOrganization = new Map(contexts.map((context) => [context.organizationId as ID, context]));
+		const delivered = await this.handoffs.deliveredSince(
+			connection.tenantId as ID,
+			new Date(Date.now() - AGENT_EMAIL_SWEEP_WINDOW_MS),
+			AGENT_EMAIL_SWEEP_LIMIT
+		);
+		const routed = delivered.filter(
+			(email) =>
+				agentOfMailbox(email.mailboxSettings) &&
+				email.organizationId &&
+				byOrganization.has(email.organizationId)
+		);
+		if (!routed.length) return;
+		const mappings = contexts.map((context) => context.integrationTenantId as ID);
+		const ids = routed.map((email) => email.emailId);
+		// Anything already queued (in any state) or handed off is the pusher's: the sweep adds only what nothing covers.
+		const queued = await this.dataSource.getRepository(EverWorksOutboundChange).find({
+			where: {
+				integrationTenantId: In(mappings),
+				entityType: EverWorksLinkType.AGENT_EMAIL,
+				gauzyId: In(ids)
+			} as never,
+			select: { gauzyId: true } as never
+		});
+		const covered = new Set(queued.map((row) => row.gauzyId as ID));
+		for (const email of routed) {
+			if (covered.has(email.emailId)) continue;
+			const context = byOrganization.get(email.organizationId as ID) as EverWorksMappingContext;
+			if (await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.AGENT_EMAIL, email.emailId))
+				continue;
+			await this.delivered(email);
+		}
 	}
 
 	/** The pusher's handler: hands one stored message to the mailbox's agent. */

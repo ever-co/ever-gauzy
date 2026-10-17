@@ -48,14 +48,20 @@ function setup(email: Row | null) {
 			InboxEmail,
 			{
 				findOne: async ({ where }: { where: Row }) =>
-					email && email['id'] === where['id'] && email['tenantId'] === where['tenantId'] ? email : null
+					email && email['id'] === where['id'] && email['tenantId'] === where['tenantId'] ? email : null,
+				// The recovery read: the stand-in answers the stored message of the tenant when it is delivered.
+				find: async ({ where }: { where: Row }) =>
+					email && email['tenantId'] === where['tenantId'] && email['status'] === where['status']
+						? [email]
+						: []
 			}
 		],
 		[
 			InboxMailbox,
 			{
 				findOne: async ({ where }: { where: Row }) =>
-					mailbox['id'] === where['id'] && mailbox['tenantId'] === where['tenantId'] ? mailbox : null
+					mailbox['id'] === where['id'] && mailbox['tenantId'] === where['tenantId'] ? mailbox : null,
+				find: async ({ where }: { where: Row }) => (mailbox['tenantId'] === where['tenantId'] ? [mailbox] : [])
 			}
 		],
 		[
@@ -134,6 +140,28 @@ describe('InboxEmailHandoffs', () => {
 			attachments: [{ filename: 'receipt.pdf', contentType: 'application/pdf', size: 1200 }],
 			receivedAt: new Date('2026-10-17T08:00:00.000Z')
 		});
+	});
+
+	it('lists the delivered messages of a tenant since a time, with their mailbox settings (the recovery sweep)', async () => {
+		const { handoffs } = setup(stored);
+		expect(await handoffs.deliveredSince('t1', new Date(0), 100)).toEqual([
+			{
+				tenantId: 't1',
+				organizationId: 'o1',
+				mailboxId: 'mb1',
+				mailboxSettings: { everWorksAgentId: 'ew-agent-1' },
+				emailId: 'e1',
+				inboxItemId: 'item-1'
+			}
+		]);
+		expect(await handoffs.deliveredSince('t2', new Date(0), 100)).toEqual([]);
+		expect(
+			await setup({ ...stored, status: InboxEmailStatusEnum.QUARANTINED }).handoffs.deliveredSince(
+				't1',
+				new Date(0),
+				100
+			)
+		).toEqual([]);
 	});
 
 	it('answers nothing for another tenant, a message not delivered (quarantined, failed), an outbound or a deleted one', async () => {
