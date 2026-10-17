@@ -72,7 +72,12 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ISearchIndexRegistration, SearchFieldKind, SearchFilterOperator, SearchMatchMode } from '@gauzy/contracts';
+import {
+	ISearchIndexRegistration,
+	SearchFieldKind,
+	SearchFilterOperator,
+	SearchMatchMode
+} from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { DatabaseSearchProvider } from '../providers/database-search.provider';
@@ -314,14 +319,7 @@ const VARIANT: ISearchIndexRegistration = {
 	fields: [
 		{ name: 'sku', kind: SearchFieldKind.KEYWORD, weight: 3, searchable: true, filterable: true, facetable: true },
 		{ name: 'name', kind: SearchFieldKind.TEXT, weight: 2, searchable: true, filterable: false, facetable: false },
-		{
-			name: 'enabled',
-			kind: SearchFieldKind.BOOLEAN,
-			weight: 1,
-			searchable: false,
-			filterable: true,
-			facetable: true
-		}
+		{ name: 'enabled', kind: SearchFieldKind.BOOLEAN, weight: 1, searchable: false, filterable: true, facetable: true }
 	]
 };
 const PRODUCT: ISearchIndexRegistration = {
@@ -335,14 +333,7 @@ const PRODUCT: ISearchIndexRegistration = {
 		{ name: 'sku', kind: SearchFieldKind.KEYWORD, weight: 3, searchable: true, filterable: true, facetable: true },
 		{ name: 'name', kind: SearchFieldKind.TEXT, weight: 2, searchable: true, filterable: false, facetable: false },
 		// Declared and indexed, but not filterable: a filter naming it must be refused.
-		{
-			name: 'internalNote',
-			kind: SearchFieldKind.TEXT,
-			weight: 1,
-			searchable: true,
-			filterable: false,
-			facetable: false
-		}
+		{ name: 'internalNote', kind: SearchFieldKind.TEXT, weight: 1, searchable: true, filterable: false, facetable: false }
 	]
 };
 const SECRET: ISearchIndexRegistration = {
@@ -352,9 +343,7 @@ const SECRET: ISearchIndexRegistration = {
 	titleTemplate: '{{name}}',
 	keywordFields: ['sku'],
 	sourceUpdatedAtField: 'updatedAt',
-	fields: [
-		{ name: 'sku', kind: SearchFieldKind.KEYWORD, weight: 3, searchable: true, filterable: true, facetable: true }
-	]
+	fields: [{ name: 'sku', kind: SearchFieldKind.KEYWORD, weight: 3, searchable: true, filterable: true, facetable: true }]
 };
 
 /** One source row of a declaration. */
@@ -412,12 +401,7 @@ function searchFixture(
 			name: (target as Row).name,
 			targetName: (target as Row).name,
 			target,
-			columns: [
-				{ propertyName: 'id' },
-				{ propertyName: 'updatedAt' },
-				{ propertyName: 'tenantId' },
-				{ propertyName: 'organizationId' }
-			],
+			columns: [{ propertyName: 'id' }, { propertyName: 'updatedAt' }, { propertyName: 'tenantId' }, { propertyName: 'organizationId' }],
 			relations: []
 		})),
 		getRepository: (target: unknown) => ({
@@ -436,13 +420,10 @@ function searchFixture(
 	 */
 	const createQueryBuilder = (): any => {
 		const fragments: Array<{ sql: string; params: Row }> = [];
-		const state: { skip?: number; take?: number; order: Array<[string, string]>; grouping?: string } = {
-			order: []
-		};
+		const state: { skip?: number; take?: number; order: Array<[string, string]>; grouping?: string } = { order: [] };
 
 		const bag = (): Row => fragments.reduce<Row>((all, fragment) => ({ ...all, ...fragment.params }), {});
-		const matched = (): Row[] =>
-			tables.search_document.filter((doc) => fragments.every((fragment) => evaluate(fragment.sql, doc, bag())));
+		const matched = (): Row[] => tables.search_document.filter((doc) => fragments.every((fragment) => evaluate(fragment.sql, doc, bag())));
 		const page = (rows: Row[]): Row[] => {
 			const from = state.skip && state.skip > 0 ? state.skip : 0;
 			const sliced = rows.slice(from);
@@ -605,8 +586,7 @@ function searchFixture(
 		find: async () => []
 	} as never);
 	const reindex = {
-		status: async (entities: string[]) =>
-			entities.map((entity) => ({ entity, indexedCount: tables.search_document.length, pendingCount: 0 }))
+		status: async (entities: string[]) => entities.map((entity) => ({ entity, indexedCount: tables.search_document.length, pendingCount: 0 }))
 	};
 
 	const service = new SearchService(indexRegistry, providerRegistry, indexer, reindex as never);
@@ -653,9 +633,7 @@ describe('SearchService — what a request must carry (doc 06 §6.15)', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -666,9 +644,7 @@ describe('SearchService — what a request must carry (doc 06 §6.15)', () => {
 		const fixture = searchFixture();
 
 		await expect(fixture.service.search({})).rejects.toThrow(/SEARCH_QUERY_INVALID/);
-		await expect(fixture.service.search({ entities: ['product_variant'] })).rejects.toBeInstanceOf(
-			BadRequestException
-		);
+		await expect(fixture.service.search({ entities: ['product_variant'] })).rejects.toBeInstanceOf(BadRequestException);
 	});
 
 	it('refuses a suggestion request with no text to complete', async () => {
@@ -737,9 +713,7 @@ describe('SearchService — which entities a caller may search (doc 05 §3.18)',
 	it('never widens the permitted set with the entities a request names', async () => {
 		const fixture = searchFixture({ permissions: [VISIBLE] });
 
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 
 		expect(fixture.service.permittedEntities({ entities: ['secret_ledger'] })).toEqual([]);
 		expect(fixture.service.permittedEntities({ entities: ['product'] })).toEqual(['product']);
@@ -748,9 +722,7 @@ describe('SearchService — which entities a caller may search (doc 05 §3.18)',
 	it('reports the freshness of the index through the reindex service', async () => {
 		const fixture = searchFixture();
 
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 
 		expect((await fixture.service.indexStatus(['product'])).map((status) => status.entity)).toEqual(['product']);
 	});
@@ -760,9 +732,7 @@ describe('SearchService — how a text query’s terms compose (doc 05 §3.18)',
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -856,9 +826,7 @@ describe('SearchService — how filters compose (doc 05 §3.18, §3.17)', () => 
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -969,9 +937,9 @@ describe('SearchService — how filters compose (doc 05 §3.18, §3.17)', () => 
 		// Exactly one variant carries the word, so its token occurs once.
 		expect(facets).toEqual([{ attribute: 'sku', values: [{ value: 'sku-v1', count: 1 }] }]);
 		// A facet the request names but no declaration marks facetable is absent rather than zero.
-		expect(await fixture.service.facets({ q: 'blue', facets: ['name'], entities: ['product_variant'] })).toEqual(
-			[]
-		);
+		expect(
+			await fixture.service.facets({ q: 'blue', facets: ['name'], entities: ['product_variant'] })
+		).toEqual([]);
 	});
 
 	// The defect: `computeFacets` walks the entity types in scope and calls the aggregation once for each
@@ -1003,9 +971,7 @@ describe('SearchService — re-reading a hit from the entity that owns it (I-72,
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -1101,18 +1067,14 @@ describe('SearchService — the page it answers with (doc 05 §3.18)', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
 
 	it('bounds the page size whatever the request asks for, and treats a negative offset as none', async () => {
 		const fixture = searchFixture({
-			variants: Array.from({ length: 5 }, (_value, index) =>
-				sourceRow(`v${index}`, { name: `Blue widget ${index}` })
-			)
+			variants: Array.from({ length: 5 }, (_value, index) => sourceRow(`v${index}`, { name: `Blue widget ${index}` }))
 		});
 
 		await indexAll(fixture);
@@ -1126,9 +1088,7 @@ describe('SearchService — the page it answers with (doc 05 §3.18)', () => {
 
 	it('walks a result set with its cursors, which carry the offset they resume at', async () => {
 		const fixture = searchFixture({
-			variants: Array.from({ length: 5 }, (_value, index) =>
-				sourceRow(`v${index}`, { name: `Blue widget ${index}` })
-			)
+			variants: Array.from({ length: 5 }, (_value, index) => sourceRow(`v${index}`, { name: `Blue widget ${index}` }))
 		});
 
 		await indexAll(fixture);
@@ -1167,9 +1127,7 @@ describe('SearchService — the organization a search is answered inside', () =>
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
 	});
 
@@ -1188,11 +1146,7 @@ describe('SearchService — the organization a search is answered inside', () =>
 			fixture.service.search({ q: 'blue', entities: ['product_variant'], organizationId: 'another-organization' })
 		).rejects.toBeInstanceOf(ForbiddenException);
 		await expect(
-			fixture.service.suggest({
-				q: 'blue',
-				entities: ['product_variant'],
-				organizationId: 'another-organization'
-			})
+			fixture.service.suggest({ q: 'blue', entities: ['product_variant'], organizationId: 'another-organization' })
 		).rejects.toBeInstanceOf(ForbiddenException);
 	});
 
@@ -1228,9 +1182,7 @@ describe('SearchService — a caller’s wildcard is a character, not a wildcard
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -1255,9 +1207,7 @@ describe('SearchService — a channel-scoped search reads the token the builder 
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-			(permission: never) => permission === (VISIBLE as never)
-		);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 	});
 
 	afterEach(() => jest.restoreAllMocks());
