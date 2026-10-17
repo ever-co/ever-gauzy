@@ -729,12 +729,15 @@ export class EverWorksInitiativesService
 					.relation(OrganizationStrategicInitiative, 'teams')
 					.of(initiativeId)
 					.loadMany()) as Array<{ id: ID }>;
-				if (own.length || !shared.teamIds.length) return;
-				const unmapped = await this.applyTeams(context, initiativeId, [], shared.teamIds, []);
-				if (unmapped.length < shared.teamIds.length)
-					await this.dataSource
-						.getRepository(OrganizationStrategicInitiative)
-						.update({ id: initiativeId } as never, { visibilityScope: OrganizationStrategicVisibilityScopeEnum.TEAM } as never);
+				if (own.length) return;
+				const teamOf = await this.pairs(context, EverWorksLinkType.TEAM);
+				if (!shared.teamIds.some((teamId) => teamOf.has(teamId))) return;
+				// Team-scoped first, then the teams: a failure in between leaves it narrower (team-scoped, no team yet),
+				// never wider, and pairing again finishes it (it still has no team of its own).
+				await this.dataSource
+					.getRepository(OrganizationStrategicInitiative)
+					.update({ id: initiativeId } as never, { visibilityScope: OrganizationStrategicVisibilityScopeEnum.TEAM } as never);
+				await this.applyTeams(context, initiativeId, [], shared.teamIds, []);
 			}
 		);
 	}

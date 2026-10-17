@@ -570,6 +570,20 @@ describe('EverWorksInitiativesService — Initiatives tab', () => {
 			expect(JSON.stringify(request.body ?? {})).not.toContain('"visibility":"organization"');
 	});
 
+	it('pairing again finishes an alignment that failed half-way, never leaving the initiative wider (#11026 review)', async () => {
+		const { service, missionsMock, ewOrg, initiatives, addLink } = setup();
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');
+		missionsMock.addMission(ewOrg.id, { id: 'ew-m-6', title: 'Grow', teamIds: ['ew-team-1'] });
+		initiatives.push({ id: 'init-6', tenantId: 't1', organizationId: 'o1', title: 'Grow', state: 'active', visibilityScope: 'organization', teams: [], projects: [] });
+		// The teams write fails after the scope was written: the initiative is team-scoped (narrower), with no team yet.
+		const teams = jest.spyOn(service as never, 'applyTeams').mockRejectedValueOnce(new Error('connection reset') as never);
+		await expect(service.decide('m1' as never, { links: [{ ewMissionId: 'ew-m-6', initiativeId: 'init-6' as never }] })).rejects.toThrow('connection reset');
+		expect(initiatives[0]).toMatchObject({ visibilityScope: 'team', teams: [] });
+		teams.mockRestore();
+		await service.decide('m1' as never, { links: [{ ewMissionId: 'ew-m-6', initiativeId: 'init-6' as never }] });
+		expect(initiatives[0]).toMatchObject({ visibilityScope: 'team', teams: [{ id: 'g-team-1' }] });
+	});
+
 	it('pairing keeps on the link what the mission has that Gauzy cannot map, so a push never removes it', async () => {
 		const { service, missionsMock, ewOrg, initiatives, links } = setup();
 		missionsMock.addMission(ewOrg.id, {
