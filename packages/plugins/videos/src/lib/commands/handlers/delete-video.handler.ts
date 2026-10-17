@@ -36,9 +36,9 @@ export class DeleteVideoHandler implements ICommandHandler<DeleteVideoCommand> {
 		// Another employee's video answers like an unknown id
 		assertCallerOwnsUpload(video, 'The requested record was not found');
 
-		// Step 3: Delete the video entity from the database
+		// Step 3: Delete the checked video; the path id goes last so a query `id` cannot point at another row
 		return this.videosService.delete(id, {
-			where: options
+			where: { ...options, id }
 		});
 	}
 }
