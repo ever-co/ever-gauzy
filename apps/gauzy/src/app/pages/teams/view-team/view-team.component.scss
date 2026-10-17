@@ -223,8 +223,9 @@ $weight-medium: 500;
   margin-bottom: $gap-md;
 
   .project-logo {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.6875rem;
   }
 }
 
@@ -235,6 +236,9 @@ $weight-medium: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25rem;
 }
 
 .project-view-edit {
@@ -243,77 +247,242 @@ $weight-medium: 500;
 
 // The drawer's panels: progress, then who worked the most, above the details.
 .project-view-panel {
-  margin-bottom: $gap-md;
+  margin-bottom: $gap-sm;
+
+  .panel-header {
+    min-height: 2.25rem;
+    padding: 0.375rem 1rem;
+  }
+
+  .panel-title {
+    font-size: 0.75rem;
+    line-height: 1rem;
+
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .panel-caption {
+    font-size: 0.625rem;
+    line-height: 0.875rem;
+  }
+
+  .panel-body:not(.panel-body--flush) {
+    padding: 0.75rem 1rem;
+  }
 }
 
-.project-progress-percent {
+/* ── Progress ── */
+
+.progress-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $gap-md;
+  margin-bottom: 0.375rem;
+}
+
+.progress-value {
   font-size: 0.875rem;
-  font-weight: $weight-medium;
+  font-weight: 600;
+  line-height: 1.25rem;
   color: var(--gauzy-text-color-1);
   font-variant-numeric: tabular-nums;
 }
 
+.progress-caption {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
 // Done then in progress, end to end; the rest of the track is what is left to do.
-.project-progress-track {
+.progress-track {
   display: flex;
-  height: 0.5rem;
+  gap: 2px;
+  height: 0.25rem;
   border-radius: 999px;
   background-color: var(--gauzy-hover-tint);
   overflow: hidden;
 }
 
-.project-progress-done {
-  background-color: var(--gauzy-chart-revenue);
-}
+.progress-segment {
+  height: 100%;
 
-.project-progress-active {
-  background-color: var(--gauzy-chart-profit);
-}
-
-.project-progress-meta {
-  margin: $gap-sm 0 0;
-  font-size: 0.75rem;
-  color: var(--gauzy-text-color-2);
-  font-variant-numeric: tabular-nums;
-}
-
-.project-progress-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $gap-xs $gap-md;
-  margin: $gap-sm 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.75rem;
-  color: var(--gauzy-text-color-2);
-
-  li {
-    display: inline-flex;
-    align-items: center;
-    gap: $gap-xs;
+  &--done {
+    background-color: var(--gauzy-chart-revenue);
   }
 
-  strong {
+  &--active {
+    background-color: var(--gauzy-chart-profit);
+  }
+}
+
+// Three figures in a row, divided by hairlines.
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: $gap-sm 0 0;
+  border-radius: var(--gauzy-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  padding: 0.375rem $gap-sm;
+
+  & + & {
+    border-left: 1px solid var(--gauzy-border-default-color);
+  }
+
+  dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 0.625rem;
     font-weight: $weight-medium;
+    line-height: 0.875rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--gauzy-text-color-2);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.125rem;
     color: var(--gauzy-text-color-1);
     font-variant-numeric: tabular-nums;
   }
 }
 
-.legend-dot {
-  width: 0.5rem;
-  height: 0.5rem;
+.progress-dot {
+  flex: 0 0 auto;
+  width: 0.375rem;
+  height: 0.375rem;
   border-radius: 50%;
-  background-color: var(--gauzy-hover-tint);
-  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  background-color: color-mix(in srgb, var(--gauzy-text-color-2) 55%, transparent);
 
   &--done {
     background-color: var(--gauzy-chart-revenue);
-    box-shadow: none;
   }
 
   &--active {
     background-color: var(--gauzy-chart-profit);
-    box-shadow: none;
+  }
+}
+
+/* ── Who worked the most ── */
+
+.contributor-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Photo and name | bar, sized against the top contributor | time over share — one line.
+.contributor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(3rem, 1fr) 3.5rem;
+  align-items: center;
+  column-gap: $gap-md;
+  padding: $gap-sm 1rem;
+
+  & + & {
+    border-top: 1px solid var(--gauzy-border-default-color);
+  }
+}
+
+.contributor-person {
+  display: flex;
+  align-items: center;
+  gap: $gap-sm;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .contributor-name {
+    color: var(--gauzy-action-info-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 2px;
+    border-radius: var(--gauzy-radius-sm);
+  }
+}
+
+.contributor-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.5625rem;
+}
+
+.contributor-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contributor-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: $weight-medium;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+  transition: color 0.12s ease-in-out;
+}
+
+.contributor-meta {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.contributor-figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.contributor-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.contributor-share {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.contributor-bar {
+  display: block;
+  height: 0.25rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--gauzy-chart-profit);
   }
 }
