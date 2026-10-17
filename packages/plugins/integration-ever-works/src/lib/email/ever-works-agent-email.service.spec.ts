@@ -217,7 +217,7 @@ describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works
 		expect(email.received[0]).toMatchObject({ agentId: 'ew-agent-1' });
 	});
 
-	it('refuses and logs what no retry changes: no email:write, an agent not paired here, no sender, an unrouted mailbox', async () => {
+	it('refuses and logs what no retry changes: no email:write, an agent not paired here, no sender, a mailbox no longer routed', async () => {
 		const noScope = setup({ scopes: ['email:read'] });
 		expect(await noScope.service.push(noScope.change, noScope.pushContext)).toMatchObject({
 			status: 'skipped',
@@ -244,8 +244,10 @@ describe('EverWorksAgentEmailService — a Gauzy mailbox routed to an Ever Works
 			message: 'the message has no sender address'
 		});
 
-		const unrouted = setup({ stored: message({ mailboxSettings: {} }) });
-		expect(await unrouted.service.push(unrouted.change, unrouted.pushContext)).toMatchObject({ status: 'skipped' });
+		const notRouted = setup({ stored: message({ mailboxSettings: {} }) });
+		expect(await notRouted.service.push(notRouted.change, notRouted.pushContext)).toMatchObject({
+			status: 'skipped'
+		});
 
 		const gone = setup({ stored: null });
 		expect(await gone.service.push(gone.change, gone.pushContext)).toMatchObject({ status: 'skipped' });
