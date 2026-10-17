@@ -29,8 +29,14 @@ describe('TenantSettingService saves (MikroORM)', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	it.each([
-		['saveSettings', (service: TenantSettingService) => service.saveSettings({ theme: 'dark', locale: 'fr' }, 'tenant-1')],
-		['saveGlobalSettings', (service: TenantSettingService) => service.saveGlobalSettings({ theme: 'dark', locale: 'fr' })]
+		[
+			'saveSettings',
+			(service: TenantSettingService) => service.saveSettings({ theme: 'dark', locale: 'fr' }, 'tenant-1')
+		],
+		[
+			'saveGlobalSettings',
+			(service: TenantSettingService) => service.saveGlobalSettings({ theme: 'dark', locale: 'fr' })
+		]
 	])('%s writes the managed entity of an existing setting, with its new value', async (_, save) => {
 		const existing = new TenantSetting({ name: 'theme', value: 'light', tenantId: 'tenant-1' });
 		const { service, persistAndFlush } = build([existing]);
