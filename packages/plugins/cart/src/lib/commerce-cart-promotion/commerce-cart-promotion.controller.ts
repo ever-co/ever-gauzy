@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Delete,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID } from '@gauzy/contracts';
 import {
@@ -13,6 +25,7 @@ import {
 } from '@gauzy/core';
 import { CommerceCartPromotion } from './commerce-cart-promotion.entity';
 import { CommerceCartPromotionService } from './commerce-cart-promotion.service';
+import { CommerceCartService } from '../commerce-cart/commerce-cart.service';
 import { CART_PERMISSIONS } from '../cart.permissions';
 import { CreateCommerceCartPromotionDTO, UpdateCommerceCartPromotionDTO } from './dto';
 
@@ -27,9 +40,20 @@ import { CreateCommerceCartPromotionDTO, UpdateCommerceCartPromotionDTO } from '
 @Permissions(CART_PERMISSIONS.CARTS_VIEW)
 @Controller('/cart-promotions')
 export class CommerceCartPromotionController extends CrudController<CommerceCartPromotion> {
-	constructor(private readonly commerceCartPromotionService: CommerceCartPromotionService) {
+	constructor(
+		private readonly commerceCartPromotionService: CommerceCartPromotionService,
+		private readonly commerceCartService: CommerceCartService
+	) {
 		super(commerceCartPromotionService);
 	}
+
+	/**
+	 * The members of an applied promotion no caller may write (R3-07): the discount itself, and what it
+	 * is attributed to. The amount is the promotion engine's answer for one cart and one promotion, so
+	 * stating it, moving the row to another cart or re-pointing it at another promotion would each be a
+	 * discount the engine never granted.
+	 */
+	private static readonly ENGINE_OWNED_FIELDS = ['amount', 'cartId', 'promotionId', 'couponId', 'code'] as const;
 
 	/**
 	 * Creates an applied promotion.
@@ -40,6 +64,11 @@ export class CommerceCartPromotionController extends CrudController<CommerceCart
 	 * for. An inherited `create` therefore accepts any body at all — an unknown enumeration member, a
 	 * missing required field, a property the resource does not have. Declaring the DTO is what makes
 	 * the request validated, and it is also what gives the route a documented body.
+	 *
+	 * **The row is the cart's application, not the caller's (R3-07).** This route used to write the body
+	 * as it came, `amount` included, and the cart re-priced from it — a discount of the caller's choosing.
+	 * It now applies the named promotion through the cart, whose amount is the promotion engine's, and
+	 * answers with the row that application recorded.
 	 */
 	@ApiOperation({ summary: 'Create an applied cart promotion' })
 	@ApiResponse({
@@ -52,7 +81,20 @@ export class CommerceCartPromotionController extends CrudController<CommerceCart
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateCommerceCartPromotionDTO): Promise<CommerceCartPromotion> {
-		return this.commerceCartPromotionService.create(entity as any);
+		await this.commerceCartService.applyPromotion(entity.cartId, entity as any);
+
+		const applied = (
+			(await this.commerceCartPromotionService.findAll({
+				where: { cartId: entity.cartId }
+			})) as { items: CommerceCartPromotion[] }
+		).items;
+		const code = `${entity.code ?? ''}`.trim().toUpperCase();
+
+		return (
+			applied.find((row) => (entity.promotionId ? row.promotionId === entity.promotionId : false)) ??
+			applied.find((row) => code !== '' && `${row.code ?? ''}`.trim().toUpperCase() === code) ??
+			applied[applied.length - 1]
+		);
 	}
 
 	/**
@@ -60,6 +102,9 @@ export class CommerceCartPromotionController extends CrudController<CommerceCart
 	 *
 	 * The return type is the base class's own: the inherited service answers `update` with the ORM's
 	 * update result as readily as with the row, so narrowing it to the entity would be untrue.
+	 *
+	 * The discount and what it is attributed to are refused here (R3-07, `CART_PROMOTION_NOT_WRITABLE`):
+	 * a different amount is re-applying the promotion through the cart, which asks the engine again.
 	 */
 	@ApiOperation({ summary: 'Update an applied cart promotion' })
 	@ApiResponse({
@@ -75,6 +120,19 @@ export class CommerceCartPromotionController extends CrudController<CommerceCart
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateCommerceCartPromotionDTO
 	): Promise<any> {
+		const stated = CommerceCartPromotionController.ENGINE_OWNED_FIELDS.filter(
+			(field) => (entity as Record<string, unknown>)?.[field] !== undefined
+		);
+
+		if (stated.length) {
+			throw new BadRequestException({
+				message:
+					'CART_PROMOTION_NOT_WRITABLE: an applied promotion's amount and attribution are the promotion engine's; re-apply the promotion through POST /carts/:id/promotions instead.',
+				code: 'CART_PROMOTION_NOT_WRITABLE',
+				details: { fields: stated }
+			});
+		}
+
 		return this.commerceCartPromotionService.update(id, entity as any);
 	}
 

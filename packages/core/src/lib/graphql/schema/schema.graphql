@@ -49314,7 +49314,7 @@ input ApplyCartPromotionInput {
   promotionId: ID
   couponId: ID
   code: String
-  amount: Decimal!
+  amount: Decimal
   isAutomatic: Boolean
   version: Int
   idempotencyKey: String
