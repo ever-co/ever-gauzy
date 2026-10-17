@@ -535,6 +535,41 @@ describe('EverWorksInitiativesService — Initiatives tab', () => {
 		expect(missionsMock.missions.size).toBe(0);
 	});
 
+	it("pairing aligns the initiative, so its first Gauzy save never strips the mission's teams or works (review F25)", async () => {
+		const { service, missionsMock, ewOrg, initiatives, addLink, mock } = setup();
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');
+		addLink(EverWorksLinkType.PROJECT_WORK, 'p-1', 'ew-work-1');
+		addLink(EverWorksLinkType.PROJECT_WORK, 'p-2', 'ew-work-2');
+		const remote = missionsMock.addMission(ewOrg.id, {
+			id: 'ew-m-5',
+			title: 'Grow',
+			teamIds: ['ew-team-1'],
+			works: [{ workId: 'ew-work-1', relation: 'improves' }]
+		});
+		// An organization-scoped initiative with no team of its own, aligned with another project.
+		initiatives.push({
+			id: 'init-5',
+			tenantId: 't1',
+			organizationId: 'o1',
+			title: 'Grow',
+			state: 'active',
+			visibilityScope: 'organization',
+			teams: [],
+			projects: [{ id: 'p-2' }]
+		});
+		await service.decide('m1' as never, { links: [{ ewMissionId: 'ew-m-5', initiativeId: 'init-5' as never }] });
+		// The mission's teams (it is team-scoped now, D11) and works are the initiative's too; nothing was removed.
+		expect(initiatives[0]).toMatchObject({ visibilityScope: 'team', teams: [{ id: 'g-team-1' }] });
+		expect((initiatives[0]['projects'] as Row[]).map((p) => p['id']).sort()).toEqual(['p-1', 'p-2']);
+		// The first Gauzy save after pairing: the mission keeps its team and visibility, and gains the Gauzy work.
+		initiatives[0]['title'] = 'Grow faster';
+		expect(await service.push(change('init-5'), pushContext)).toMatchObject({ status: 'pushed' });
+		expect(remote).toMatchObject({ title: 'Grow faster', visibility: 'team', teamIds: ['ew-team-1'] });
+		expect((remote['works'] as Row[]).map((w) => w['workId']).sort()).toEqual(['ew-work-1', 'ew-work-2']);
+		for (const request of mock.requests.filter((r) => r.method !== 'GET'))
+			expect(JSON.stringify(request.body ?? {})).not.toContain('"visibility":"organization"');
+	});
+
 	it('pairing keeps on the link what the mission has that Gauzy cannot map, so a push never removes it', async () => {
 		const { service, missionsMock, ewOrg, initiatives, links } = setup();
 		missionsMock.addMission(ewOrg.id, {
