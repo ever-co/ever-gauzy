@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DataSource, DeepPartial, Like } from 'typeorm';
+import { isUUID } from 'class-validator';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { ConfigService, environment } from '@gauzy/config';
 import {
@@ -155,12 +156,10 @@ export class ZapierService {
 	 * @throws {ForbiddenException} - If the caller is not a member of the integration's organization.
 	 */
 	async getZapierTokenForCurrentUser(integrationId: ID): Promise<IIntegrationSetting> {
-		let integration: IIntegrationTenant | null;
-		try {
-			integration = await this._integrationTenantService.findOneByOptions({ where: { id: integrationId } });
-		} catch {
-			integration = null;
-		}
+		// A malformed ID is a missing integration, not a lookup failure: PostgreSQL rejects it as a uuid.
+		const integration = isUUID(integrationId)
+			? await this._integrationTenantService.findOneByOptions({ where: { id: integrationId } })
+			: null;
 		if (!integration) {
 			throw new NotFoundException(`Access token for integration ID ${integrationId} not found`);
 		}
