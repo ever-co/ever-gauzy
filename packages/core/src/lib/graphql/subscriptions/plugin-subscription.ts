@@ -7,6 +7,7 @@ import type { GraphqlPubSub } from './graphql-pubsub.service';
 import type { SubscriptionCatalogue } from './subscription-catalogue';
 import type { GraphqlSubscriptionConsumer } from './subscription-consumer';
 import { DEFAULT_SUBSCRIPTION_LIMITS } from './subscription-limits';
+import { isAddressedTo } from './subscription-scope';
 
 /**
  * The one way a package streams its events to a GraphQL subscriber.
@@ -45,7 +46,10 @@ import { DEFAULT_SUBSCRIPTION_LIMITS } from './subscription-limits';
  *    the event rather than delivering an empty frame;
  * 5. the value's own `tenantId` and `organizationId`, when it carries them, checked against the scope
  *    again — and a value that carries no tenant is delivered only when step 2 established one. A stream
- *    with no tenant evidence at all delivers nothing.
+ *    with no tenant evidence at all delivers nothing;
+ * 6. the event's recipients, when it is **addressed** (`recipientsOf`; on a tenant topic, the envelope's own
+ *    `recipientUserIds`): it reaches the subscriber only when the user captured with the scope is one of
+ *    them — a personal fact (an inbox item) is never delivered to another user of the tenant.
  *
  * Two feeds are supported, because the platform has two:
  *
@@ -106,6 +110,15 @@ export interface TenantEventStreamOptions<E, R> {
 	 */
 	readonly read?: (event: E, scope: SubscriberScope) => R | null | undefined | Promise<R | null | undefined>;
 	/**
+	 * The users an **addressed** event is for. `undefined` (or no option): the event is not addressed. A list:
+	 * the event is admitted only when the subscriber's user (captured when the stream opens, see
+	 * {@link currentSubscriberUserId}) is in it. Anything else drops the event. On a tenant topic it defaults
+	 * to the envelope's own `recipientUserIds`, which the outbox consumer sets from the payload.
+	 */
+	readonly recipientsOf?: (event: E) => unknown;
+	/** The subscriber's user, when the caller already captured it. Defaults to {@link currentSubscriberUserId}. */
+	readonly recipientUserId?: string | null;
+	/**
 	 * How many admitted events may wait for the subscriber to pull them. A subscriber that falls this
 	 * far behind is ended, so it reconnects and re-reads, rather than growing the process without bound.
 	 */
@@ -136,6 +149,21 @@ export function currentSubscriberScope(): SubscriberScope {
 }
 
 /**
+ * The user of the operation being resolved, for addressed events — `null` when the credential carries none
+ * (an API key), in which case no addressed event is delivered to the stream.
+ *
+ * @returns The user id, or null.
+ */
+export function currentSubscriberUserId(): string | null {
+	try {
+		const userId = RequestContext.currentUserId();
+		return userId ? String(userId) : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * The resolver option every stream built here is delivered with: the payload is the value itself.
  *
  * @param payload The value the stream yielded.
@@ -158,11 +186,12 @@ export function tenantScopedEventStream<E, R = E>(
 	options: TenantEventStreamOptions<E, R> = {}
 ): AsyncIterableIterator<R> {
 	const scope = options.scope ?? currentSubscriberScope();
+	const recipient = recipientOf(options);
 	const admitted = new Observable<E>((subscriber) =>
 		source.subscribe({
 			// Runs in the publisher's context: it reads the captured scope and the event, nothing ambient.
 			next: (event) => {
-				if (admits(event, scope, options)) {
+				if (admits(event, scope, options, recipient)) {
 					subscriber.next(event);
 				}
 			},
@@ -171,7 +200,7 @@ export function tenantScopedEventStream<E, R = E>(
 		})
 	);
 
-	return screened(observableToAsyncIterable(admitted, options.maxBuffered), scope, options);
+	return screened(observableToAsyncIterable(admitted, options.maxBuffered), scope, options, recipient);
 }
 
 /**
@@ -196,12 +225,13 @@ export function tenantScopedTopicStream<E extends object, R = E>(
 	const resolved: TenantEventStreamOptions<E, R> = {
 		...options,
 		tenantOf: options.tenantOf ?? ((event: E) => memberOf(event, 'tenantId')),
-		organizationOf: options.organizationOf ?? ((event: E) => memberOf(event, 'organizationId'))
+		organizationOf: options.organizationOf ?? ((event: E) => memberOf(event, 'organizationId')),
+		recipientsOf: options.recipientsOf ?? ((event: E) => memberOf(event, 'recipientUserIds'))
 	};
 	const names = (typeof eventNames === 'string' ? [eventNames] : [...eventNames]).filter(Boolean);
 	const topics = names.map((name) => pubSub.asyncIterableIterator<E>(pubSub.topicFor(name, scope.tenantId)));
 
-	return screened(mergeAsyncIterators(topics), scope, resolved, true);
+	return screened(mergeAsyncIterators(topics), scope, resolved, recipientOf(options), true);
 }
 
 /**
@@ -330,14 +360,31 @@ export function observableToAsyncIterable<T>(
 const DROPPED = Symbol('dropped');
 
 /**
- * Whether an event may be queued for a subscriber: the narrowing, the tenant and the organization.
+ * The subscriber's user a stream checks addressed events against, captured when it opens.
+ *
+ * @param options The stream's options.
+ * @returns The user id, or null.
+ */
+function recipientOf<E, R>(options: TenantEventStreamOptions<E, R>): string | null {
+	return options.recipientUserId !== undefined ? (options.recipientUserId ?? null) : currentSubscriberUserId();
+}
+
+/**
+ * Whether an event may be queued for a subscriber: the narrowing, the tenant, the organization and, for an
+ * addressed event, the recipients.
  *
  * @param event The event.
  * @param scope The captured subscriber.
  * @param options The stream's checks.
+ * @param recipient The subscriber's user, captured with the scope.
  * @returns True when the event is admitted.
  */
-function admits<E, R>(event: E, scope: SubscriberScope, options: TenantEventStreamOptions<E, R>): boolean {
+function admits<E, R>(
+	event: E,
+	scope: SubscriberScope,
+	options: TenantEventStreamOptions<E, R>,
+	recipient: string | null
+): boolean {
 	if (event === null || event === undefined) {
 		return false;
 	}
@@ -359,6 +406,14 @@ function admits<E, R>(event: E, scope: SubscriberScope, options: TenantEventStre
 			const organizationId = options.organizationOf(event);
 
 			if (isPresent(organizationId) && String(organizationId) !== scope.organizationId) {
+				return false;
+			}
+		}
+
+		if (options.recipientsOf) {
+			const recipients = options.recipientsOf(event);
+
+			if (recipients !== undefined && !isAddressedTo(recipients, recipient)) {
 				return false;
 			}
 		}
@@ -425,6 +480,7 @@ async function settle<E, R>(
  * @param source The admitted events.
  * @param scope The captured subscriber.
  * @param options The stream's checks.
+ * @param recipient The subscriber's user, captured with the scope.
  * @param admitOnPull Whether the admission checks still have to run (a pull-based source).
  * @returns The stream.
  */
@@ -432,6 +488,7 @@ function screened<E, R>(
 	source: AsyncIterator<E>,
 	scope: SubscriberScope,
 	options: TenantEventStreamOptions<E, R>,
+	recipient: string | null,
 	admitOnPull = false
 ): AsyncIterableIterator<R> {
 	const context = new AsyncResource('GraphqlTenantEventStream');
@@ -456,7 +513,7 @@ function screened<E, R>(
 					break;
 				}
 
-				if (admitOnPull && !admits(result.value, scope, options)) {
+				if (admitOnPull && !admits(result.value, scope, options, recipient)) {
 					continue;
 				}
 
@@ -552,6 +609,6 @@ function isPresent(value: unknown): boolean {
  * @param member The member.
  * @returns The member, or undefined.
  */
-function memberOf(value: unknown, member: 'tenantId' | 'organizationId'): unknown {
+function memberOf(value: unknown, member: 'tenantId' | 'organizationId' | 'recipientUserIds'): unknown {
 	return value !== null && typeof value === 'object' ? (value as Record<string, unknown>)[member] : undefined;
 }
