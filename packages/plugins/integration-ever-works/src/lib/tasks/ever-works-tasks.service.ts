@@ -57,6 +57,7 @@ import {
 	titleForEverWorks,
 	transitionBlockedMessage
 } from './ever-works-task.mapper';
+import { taskSyncExclusion } from './ever-works-task-exclusion';
 import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksTaskScope, EverWorksTaskStore, TASK_IN_ANOTHER_ORGANIZATION } from './ever-works-task.store';
 
 const fromEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'ew_to_gauzy';
@@ -915,16 +916,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 
 	/** Why a Gauzy task is not pushed, or `null` when it is. */
 	private async excluded(context: EverWorksMappingContext, task: Task): Promise<string | null> {
-		const ideaTypeId = setting(context, EverWorksSettingName.IDEA_ISSUE_TYPE_ID);
-		if (String(task.issueType ?? '').toLowerCase() === 'idea' || (ideaTypeId && task.taskTypeId === ideaTypeId)) {
-			return 'ideas sync as Ever Works ideas (plan 01 §8), not as tasks';
-		}
-		const projectLink = task.projectId ? await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, task.projectId as ID) : null;
-		const linkedProject = !!projectLink && projectLink.state !== EverWorksLinkState.UNLINKED;
-		if (!linkedProject && setting(context, EverWorksSettingName.SYNC_UNLINKED_PROJECT_TASKS) === 'false') {
-			return 'tasks of projects not linked to a work are not synced (setting)';
-		}
-		return null;
+		return taskSyncExclusion(this.links, context, task);
 	}
 
 	/** What a push sends, computed from the Gauzy task; or why it has to wait. */
