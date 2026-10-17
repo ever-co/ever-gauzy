@@ -14,7 +14,7 @@ import { firstValueFrom, catchError, throwError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IsNull } from 'typeorm';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
+import { IntegrationService, IntegrationSettingService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
 	IActivepiecesConnection,
 	IActivepiecesConnectionRequest,
@@ -36,7 +36,8 @@ export class ActivepiecesService {
 		private readonly httpService: HttpService,
 		private readonly configService: ConfigService,
 		private readonly integrationService: IntegrationService,
-		private readonly integrationTenantService: IntegrationTenantService
+		private readonly integrationTenantService: IntegrationTenantService,
+		private readonly integrationSettingService: IntegrationSettingService
 	) {}
 
 	/**
@@ -165,20 +166,12 @@ export class ActivepiecesService {
 				}
 			};
 
-			// Get API key for Activepieces API calls
-			let existingIntegrationTenant: any = null;
-			try {
-				existingIntegrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					}
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
+			// Get API key for Activepieces API calls from the row the connection is saved on, so creating, reading
+			// and deleting the connection use the same key. When that row holds no key, any tenant row holding one is used.
+			const scopedIntegrationTenant = await this.findExistingIntegrationTenant(tenantId, organizationId, true);
+			const existingIntegrationTenant = this.hasApiKey(scopedIntegrationTenant)
+				? scopedIntegrationTenant
+				: await this.findExistingIntegrationTenant(tenantId);
 
 			if (!existingIntegrationTenant) {
 				this.logger.warn(
@@ -232,7 +225,8 @@ export class ActivepiecesService {
 				response.data,
 				input.accessToken,
 				tenantId,
-				organizationId
+				organizationId,
+				scopedIntegrationTenant
 			);
 
 			this.logger.log(
@@ -655,13 +649,14 @@ export class ActivepiecesService {
 	}
 
 	/**
-	 * Save connection settings to the database
+	 * Save connection settings to the database, on the integration tenant of the connection's scope when one exists
 	 */
 	private async saveConnectionSettings(
 		connection: IActivepiecesConnection,
 		accessToken: string,
 		tenantId: string,
-		organizationId?: string
+		organizationId?: string,
+		existingTenant?: any
 	): Promise<any> {
 		try {
 			// Find or create the integration
@@ -712,8 +707,6 @@ export class ActivepiecesService {
 			];
 
 			// Reuse the integration tenant created by setupIntegration for the same scope so the connection keeps its API key
-			const existingTenant = await this.findExistingIntegrationTenant(tenantId, organizationId, true);
-
 			let integrationTenant: any;
 
 			if (existingTenant?.id) {
@@ -747,6 +740,7 @@ export class ActivepiecesService {
 	 * Find the ActivePieces integration tenant of the tenant, scoped to the organization when one is given.
 	 * With `exactScope`, a call without an organization only matches the tenant-level row (organizationId IS NULL),
 	 * so a tenant-level connection never lands on an organization's row.
+	 * Connection calls used to add a row without an API key each time, so among matching rows the one holding a key wins.
 	 */
 	private async findExistingIntegrationTenant(
 		tenantId: string,
@@ -760,50 +754,57 @@ export class ActivepiecesService {
 			organizationFilter = { organizationId: IsNull() };
 		}
 
-		try {
-			return await this.integrationTenantService.findOneByOptions({
-				where: {
-					tenantId,
-					...organizationFilter,
-					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-				},
-				relations: ['settings']
-			});
-		} catch (error) {
-			if (!(error instanceof NotFoundException)) {
-				throw error;
-			}
-			return null;
-		}
+		const integrationTenants = await this.integrationTenantService.find({
+			where: {
+				tenantId,
+				...organizationFilter,
+				integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+			},
+			relations: ['settings']
+		});
+
+		return (
+			integrationTenants.find((integrationTenant) => this.hasApiKey(integrationTenant)) ??
+			integrationTenants[0] ??
+			null
+		);
 	}
 
 	/**
-	 * Merge settings into an existing integration tenant by settingsName and save it.
-	 * Matching rows are updated in place so they keep their database id, missing ones are appended.
+	 * Whether the integration tenant holds an Activepieces API key.
+	 */
+	private hasApiKey(integrationTenant: any): boolean {
+		return !!integrationTenant?.settings?.some(
+			(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY && setting.settingsValue
+		);
+	}
+
+	/**
+	 * Merge settings into an existing integration tenant by settingsName.
+	 * Matching rows are updated in place so they keep their database id, missing ones are added to the tenant.
+	 * Only the rows of the given settings are written, so a setting saved meanwhile by another call, such as a new
+	 * API key, is never written back with the value read here.
 	 */
 	private async saveMergedSettings(existingTenant: any, settings: any[]): Promise<void> {
 		const existingSettings: any[] = existingTenant.settings ?? [];
 		const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
 
 		const updatedNames = new Set<string>();
-		const mergedSettings = existingSettings.map((existing: any) => {
+		const rows: any[] = [];
+		for (const existing of existingSettings) {
 			const update = settingsByName.get(existing.settingsName);
 			if (update) {
 				updatedNames.add(existing.settingsName);
-				return { ...existing, settingsValue: update.settingsValue };
-			}
-			return existing;
-		});
-
-		for (const [name, setting] of settingsByName) {
-			if (!updatedNames.has(name)) {
-				mergedSettings.push(setting);
+				rows.push({ ...existing, settingsValue: update.settingsValue });
 			}
 		}
 
-		await this.integrationTenantService.save({
-			...existingTenant,
-			settings: mergedSettings
-		});
+		for (const [name, setting] of settingsByName) {
+			if (!updatedNames.has(name)) {
+				rows.push({ ...setting, integration: { id: existingTenant.id } });
+			}
+		}
+
+		await this.integrationSettingService.saveMany(rows);
 	}
 }
