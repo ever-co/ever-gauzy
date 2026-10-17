@@ -266,6 +266,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		delete (entity as Record<string, unknown>)['token'];
 		entity.tokenHash = digestCartToken(token);
 
+		// R2-G19: `createCart` states no organization and the tenant-aware base stamps the tenant only, so a
+		// cart created over GraphQL had `organizationId = NULL`. A stated organization is kept (REST states it,
+		// validated against the caller).
+		entity.organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const cart = await super.create(entity);
 		const created = await this.recalculate(cart.id, 'CART_CREATED');
 
@@ -416,6 +421,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			await this.lineService.create({
 				...line,
 				cartId: cart.id,
+				// A line belongs to its cart's organization (R2-G19).
+				organizationId: line.organizationId ?? cart.organizationId,
 				unitPrice: this.toColumnAmount(line.unitPrice, cart),
 				originalUnitPrice: this.toColumnAmount(line.originalUnitPrice ?? line.unitPrice, cart),
 				isTaxInclusive: line.isTaxInclusive ?? false,
@@ -545,6 +552,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		await this.shippingMethodService.create({
 			...method,
 			cartId,
+			organizationId: method.organizationId ?? cart.organizationId,
 			amount: this.toColumnAmount(method.amount, cart),
 			isTaxInclusive: method.isTaxInclusive ?? false,
 			isManual: method.isManual ?? false
@@ -627,6 +635,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			await this.promotionService.create({
 				...promotion,
 				cartId,
+				organizationId: promotion.organizationId ?? cart.organizationId,
 				// The identity and the amount are the engine's: the row records what was granted, under
 				// the promotion that granted it, whatever the request said about either.
 				promotionId: granted.promotionId,
