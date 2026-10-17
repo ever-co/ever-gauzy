@@ -61,6 +61,12 @@ export class EverWorksRequestContextUnavailableError extends Error {
 	}
 }
 
+/**
+ * Inbound writes stop on a synced task that was moved to another organization of the tenant (PUT /tasks/:id
+ * accepts organizationId): the mapping's Ever Works data belongs to its own organization (review F23).
+ */
+export const TASK_IN_ANOTHER_ORGANIZATION = 'the Gauzy task belongs to another organization now';
+
 /** The relations every task read of the sync loads. */
 const TASK_RELATIONS = { members: true, teams: true, tags: true, project: true, taskStatus: true, taskPriority: true } as const;
 
@@ -110,6 +116,16 @@ export class EverWorksTaskStore {
 			relations: TASK_RELATIONS as never,
 			withDeleted: true
 		});
+	}
+
+	/** The organization a task is in now (soft-deleted included); `null` when there is no such task. */
+	async organizationOfTask(tenantId: ID, taskId: ID): Promise<ID | null> {
+		const row = await this.dataSource.getRepository(Task).findOne({
+			where: { id: taskId, tenantId } as never,
+			select: { id: true, organizationId: true } as never,
+			withDeleted: true
+		});
+		return (row?.organizationId as ID | undefined) ?? null;
 	}
 
 	/** The ids among `taskIds` whose task still exists (not deleted, soft or hard). */

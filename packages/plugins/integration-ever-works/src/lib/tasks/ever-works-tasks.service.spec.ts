@@ -248,6 +248,7 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 	const store = {
 		asActor: async (_scope: unknown, _actor: unknown, work: () => Promise<unknown>) => work(),
 		load: async (_tenantId: string, id: string) => (tasks.has(id) ? { ...(tasks.get(id) as GauzyTask) } : null),
+		organizationOfTask: async (_tenantId: string, id: string) => (tasks.get(id)?.['organizationId'] as string | undefined) ?? null,
 		create: async (input: Record<string, any>) => {
 			const id = `g-task-${tasks.size + 1}`;
 			const row: GauzyTask = { id, tenantId: 't1', organizationId: 'o1', members: [], teams: [], tags: [], createdAt: new Date() };
@@ -934,6 +935,43 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		// A new PR URL updates the same link.
 		await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime: { ...runtime, prUrl: 'https://github.com/acme/site/pull/13' } }, aggregate: { id: task['id'] as string, version: 1 } });
 		expect(t.resourceLinks.filter((row) => row.title === 'Pull request').map((row) => row.url)).toEqual(['https://github.com/acme/site/pull/13']);
+	});
+});
+
+describe('inbound writes re-check the Gauzy task organization (review F23)', () => {
+	it('writes nothing of Ever Works onto a synced task moved to another organization', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Org A plan', slug: 'T-9' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const row = t.tasks.get('g-task-1') as GauzyTask;
+		// PUT /tasks/:id moves it to organization B of the same tenant.
+		row['organizationId'] = 'o2';
+		t.writes.length = 0;
+		const moved = { status: 'skipped', message: 'the Gauzy task belongs to another organization now' };
+		expect(await t.deliver({ type: 'task.updated', data: { ...task, title: 'Org A secret' }, aggregate: { id: task['id'] as string, version: 2 } })).toEqual(moved);
+		const message = { id: 'ew-comment-1', taskId: task['id'], authorType: 'user', authorId: 'ew-nobody', body: 'Org A only', createdAt: '2026-10-17T10:00:00Z', updatedAt: '2026-10-17T10:00:00Z', externalLinks: [] };
+		expect(await t.deliver({ type: 'task.comment.created', data: message, aggregate: { id: task['id'] as string, version: 2 } })).toEqual(moved);
+		const runtime = { prUrl: 'https://github.com/acme/site/pull/12', prState: 'open', ciState: 'pending', latestRunStatus: 'running' };
+		expect(await t.deliver({ type: 'task.runtime_updated', data: { ...task, runtime }, aggregate: { id: task['id'] as string, version: 2 } })).toEqual(moved);
+		// A child of it in Ever Works is not parented under the organization-B task.
+		const child = t.mock.addTask(t.org.id, { title: 'Child', parentTaskId: task['id'] });
+		await t.deliver({ type: 'task.created', data: child, aggregate: { id: child['id'] as string, version: 1 } });
+		expect((t.tasks.get('g-task-2') as GauzyTask)?.['parentId']).toBeUndefined();
+		// Nor does a Gauzy comment on the moved task go to the Ever Works task of organization A.
+		t.comments.push({ id: 'gc-moved', taskId: 'g-task-1', html: '<p>Org B note</p>', actorType: 'User', employeeId: null });
+		expect(await t.pushComment('gc-moved')).toEqual(moved);
+		t.comments.length = 0;
+		// An Ever Works delete ends the pairing but leaves the organization-B task alone.
+		expect(await t.deliver({ type: 'task.deleted', data: { id: task['id'] }, aggregate: { id: task['id'] as string, version: 3 } })).toEqual({
+			status: 'skipped',
+			message: 'deleted in Ever Works; the Gauzy task belongs to another organization now and is kept'
+		});
+		expect(row['title']).toBe('Org A plan');
+		expect(row['deletedAt']).toBeUndefined();
+		expect(t.comments).toEqual([]);
+		expect(t.resourceLinks.filter((link) => link.taskId === 'g-task-1').map((link) => link.title)).toEqual(['Ever Works task T-9']);
+		expect(t.writes.filter((write) => write.id === 'g-task-1')).toEqual([]);
+		expect(t.links.find((link) => link.gauzyId === 'g-task-1')?.state).toBe(EverWorksLinkState.UNLINKED);
 	});
 });
 
