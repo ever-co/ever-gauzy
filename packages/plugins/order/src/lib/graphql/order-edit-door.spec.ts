@@ -190,9 +190,13 @@ describe('R2-G21 — updateOrder writes only fields of the order', () => {
 	it('does not hand the version to updateMutable as a patch key', async () => {
 		const orderService = { updateMutable: jest.fn().mockResolvedValue({ id: ORDER_ID }) };
 
-		await resolverWith(orderService).updateOrder(ORDER_ID, { email: 'buyer@example.com', version: 3 }, {
-			req: REQUEST
-		});
+		await resolverWith(orderService).updateOrder(
+			ORDER_ID,
+			{ email: 'buyer@example.com', version: 3 },
+			{
+				req: REQUEST
+			}
+		);
 
 		expect(orderService.updateMutable).toHaveBeenCalledWith(ORDER_ID, { email: 'buyer@example.com' }, EXPECTATION);
 	});
