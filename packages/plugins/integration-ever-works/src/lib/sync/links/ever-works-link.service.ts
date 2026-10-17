@@ -184,6 +184,11 @@ export class EverWorksLinkService {
 		await this.repo(manager).delete({ id: link.id });
 	}
 
+	/** Marks a synced link whose Gauzy record is gone (the orphan sweep); the delete push then unlinks it. */
+	async markOrphaned(link: EverWorksEntityLink, reason: string, manager?: EntityManager): Promise<void> {
+		await this.repo(manager).update({ id: link.id, state: EverWorksLinkState.OK }, { state: EverWorksLinkState.ORPHANED, lastError: reason.slice(0, 2000) });
+	}
+
 	/** Marks a link as no longer synced (both records are kept). */
 	async unlink(link: EverWorksEntityLink, reason: string, manager?: EntityManager): Promise<void> {
 		await this.repo(manager).update({ id: link.id }, { state: EverWorksLinkState.UNLINKED, lastError: reason.slice(0, 2000) });

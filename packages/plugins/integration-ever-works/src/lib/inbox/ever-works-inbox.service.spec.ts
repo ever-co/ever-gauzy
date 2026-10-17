@@ -9,6 +9,7 @@ jest.mock('@gauzy/core', () => {
 	return {
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
+		ExportRedacted: decorator,
 		MultiORMEntity: decorator,
 		MultiORMManyToOne: decorator,
 		TenantOrganizationBaseEntity: class {},
@@ -47,7 +48,7 @@ import { TestEverWorksClientFactory } from '../client/ever-works-client.factory'
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
 import { EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
 import { DEFAULT_EVER_WORKS_DIRECTIONS } from '../mapping/ever-works-mapping.defaults';
-import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
+import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { MockEverWorksServer } from '../testing/mock-ever-works.server';
 import { EVER_WORKS_INBOX_EXTERNAL_SOURCE, everWorksStateOf, inboxUpsertOf } from './ever-works-inbox.mapper';
 import { EverWorksInboxService } from './ever-works-inbox.service';
@@ -64,6 +65,7 @@ interface LinkRow {
 	gauzyId: string;
 	ewId: string;
 	ewVersion: number | null;
+	state?: string;
 }
 
 function setup(options: { inbox?: boolean } = {}) {
@@ -186,7 +188,7 @@ function setup(options: { inbox?: boolean } = {}) {
 			externalId: ewItem['id'],
 			...overrides
 		}) as IInboxItem;
-	return { mock, ewOrg, adaEw, service, writes, registered, link, envelope, apply, gauzyItem, writer };
+	return { mock, ewOrg, adaEw, service, writes, registered, link, links, envelope, apply, gauzyItem, writer };
 }
 
 describe('EverWorksInboxService', () => {
@@ -355,6 +357,23 @@ describe('EverWorksInboxService', () => {
 		await expect(
 			service.reply(gauzyItem(item, { organizationId: 'org-elsewhere' }), { optionId: 'pro' }, { id: ADA_USER })
 		).rejects.toBeInstanceOf(ServiceUnavailableException);
+	});
+
+	it('an undone pairing neither acts as the Ever Works member nor receives their items (security review)', async () => {
+		const { mock, ewOrg, adaEw, service, link, gauzyItem, envelope, apply, writes, links } = setup();
+		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);
+		const item = mock.addInboxItem(ewOrg.id, { recipientUserId: adaEw });
+		// The pairing is undone: Ada's Gauzy account no longer speaks for her Ever Works account…
+		const pairing = links.find((row) => row.entityType === EverWorksLinkType.MEMBER) as LinkRow;
+		pairing.state = EverWorksLinkState.UNLINKED;
+		await expect(service.reply(gauzyItem(item), { optionId: 'pro' }, { id: ADA_USER, tenantId: TENANT })).rejects.toBeInstanceOf(ForbiddenException);
+		expect(mock.requests.some((r) => r.method === 'POST' && r.path.endsWith('/reply'))).toBe(false);
+		// …her read / archive stays in Gauzy (no PATCH, no error)…
+		await expect(service.mirrorState(gauzyItem(item), { userId: ADA_USER } as never, { isRead: true, isArchived: true })).resolves.toBeUndefined();
+		expect(mock.requests.some((r) => r.method === 'PATCH' && r.path.endsWith('/state'))).toBe(false);
+		// …and her Ever Works items are not delivered to it.
+		await expect(apply(envelope('inbox.item.created', item))).resolves.toMatchObject({ status: 'deferred' });
+		expect(writes).toHaveLength(0);
 	});
 
 	it('mirrors read and archive as the recipient (snoozing stays in Gauzy)', async () => {

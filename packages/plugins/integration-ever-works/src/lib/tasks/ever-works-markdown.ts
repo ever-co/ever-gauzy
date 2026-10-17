@@ -79,8 +79,10 @@ function renderInline(source: string): string {
 	const slots: string[] = [];
 	const hold = (html: string) => `\u0000${slots.push(html) - 1}\u0000`;
 	let text = source;
-	// Code spans first: nothing inside them is markup.
-	text = text.replace(/(`{1,16})(?!`)([\s\S]{0,4000}?[^`])\1(?!`)/g, (_match, _ticks: string, code: string) =>
+	// Code spans first: nothing inside them is markup. A backtick after an odd run of backslashes is escaped
+	// and never opens one (the escape is read below), so the escaped backticks of plain text read back as
+	// backticks; after an even run the backslashes escape each other and the span opens.
+	text = text.replace(/(?<!(?:^|[^\\])\\(?:\\\\)*)(`{1,16})(?!`)([\s\S]{0,4000}?[^`])\1(?!`)/g, (_match, _ticks: string, code: string) =>
 		hold(`<code>${escapeHtml(/^ [\s\S]* $/.test(code) && code.trim() ? code.slice(1, -1) : code)}</code>`)
 	);
 	// A backslash keeps the next punctuation character literal.
@@ -252,7 +254,8 @@ export function markdownToHtml(markdown: string | null | undefined): string {
 
 // ── HTML → Markdown ──────────────────────────────────────────────────────────────────────────────
 
-interface HtmlNode {
+/** A parsed HTML element (also read by the docs sync, which walks it into TipTap nodes). */
+export interface HtmlNode {
 	tag: string;
 	attributes: Record<string, string>;
 	children: Array<HtmlNode | string>;
@@ -273,7 +276,7 @@ function decodeEntities(text: string): string {
 }
 
 /** A tolerant parser for the HTML Gauzy stores (already sanitised, so well formed in practice). */
-function parseHtml(html: string): HtmlNode {
+export function parseHtml(html: string): HtmlNode {
 	const root: HtmlNode = { tag: '#root', attributes: {}, children: [] };
 	const stack: HtmlNode[] = [root];
 	const token = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*(\/?)>|([^<]+|<)/g;
@@ -305,7 +308,8 @@ function parseHtml(html: string): HtmlNode {
 	return root;
 }
 
-function textContent(node: HtmlNode | string): string {
+/** The text of a parsed node (`<br>` → a line break). */
+export function textContent(node: HtmlNode | string): string {
 	if (typeof node === 'string') return node;
 	if (node.tag === 'br') return '\n';
 	return node.children.map(textContent).join('');
