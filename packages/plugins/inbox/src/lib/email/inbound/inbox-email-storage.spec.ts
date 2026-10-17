@@ -1,9 +1,24 @@
 const mockProvider = { name: 'LOCAL', putFile: jest.fn(), getFile: jest.fn() };
+/** The request each provider was picked under (`null`: outside the storage's own context). */
+const mockPickedUnder: unknown[] = [];
+let mockRequest: unknown = null;
 
 jest.mock('@gauzy/core', () => ({
 	FileStorage: class {
 		getProvider() {
+			mockPickedUnder.push(mockRequest);
 			return mockProvider;
+		}
+	},
+	RequestContext: {
+		async runWithRequest(request: unknown, work: () => Promise<unknown>) {
+			const outer = mockRequest;
+			mockRequest = request;
+			try {
+				return await work();
+			} finally {
+				mockRequest = outer;
+			}
 		}
 	}
 }));
@@ -20,6 +35,7 @@ describe('InboxEmailStorage', () => {
 		directory = mkdtempSync(join(tmpdir(), 'gauzy-inbox-storage-'));
 		process.env['GAUZY_INBOX_LOCAL_STORAGE_PATH'] = directory;
 		mockProvider.name = 'LOCAL';
+		mockPickedUnder.length = 0;
 		jest.clearAllMocks();
 	});
 
@@ -49,5 +65,21 @@ describe('InboxEmailStorage', () => {
 		const stored = await storage.put(Buffer.from('remote'), 'inbox/t1/b.eml');
 		expect(stored).toEqual({ key: 'inbox/t1/b.eml', provider: 'S3' });
 		expect((await storage.get(stored)).toString()).toBe('remote');
+	});
+
+	it("writes and reads with the deployment's settings, never a caller's tenant storage overrides", async () => {
+		mockProvider.name = 'S3';
+		mockProvider.putFile.mockResolvedValue({ key: 'inbox/t1/c.eml' });
+		mockProvider.getFile.mockResolvedValue(Buffer.from('remote'));
+		// A signed-in download: the caller's request carries its tenant's storage settings.
+		mockRequest = { tenantSettings: { fileStorageProvider: 'WASABI', aws_bucket: 'tenant-bucket' } };
+		try {
+			const storage = new InboxEmailStorage();
+			await storage.get(await storage.put(Buffer.from('remote'), 'inbox/t1/c.eml'));
+		} finally {
+			mockRequest = null;
+		}
+		// Every provider was picked in the storage's own context: a request without tenant settings.
+		expect(mockPickedUnder).toEqual([{}, {}]);
 	});
 });

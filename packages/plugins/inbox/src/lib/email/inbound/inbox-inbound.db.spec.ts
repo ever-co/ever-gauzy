@@ -53,7 +53,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { NotFoundException, PayloadTooLargeException, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, PayloadTooLargeException, UnauthorizedException } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
 import {
 	InboxEmailDirectionEnum,
@@ -493,18 +493,30 @@ describe('Inbound email pipeline on SQLite', () => {
 			).rejects.toThrow(/already received/);
 		});
 
-		it('admits an allowlisted sender only with a DMARC pass', async () => {
+		it('admits an allowlisted sender with a DMARC pass, and holds one without it in the quarantine', async () => {
 			await dataSource.getRepository(InboxMailbox).update(
 				{ id: supportBox.id as string },
 				{
 					senderAllowlist: JSON.stringify(['@acme.test'])
 				}
 			);
-			const raw = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
-			expect((await deliver({ ...raw, authenticationResults: 'mx; dmarc=none' })).accepted).toBe(0);
+			// No verdict proves the From domain: stored, but held for a manager (never dropped unseen).
+			const unproven = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
+			expect((await deliver({ ...unproven, authenticationResults: 'mx; dmarc=none' })).accepted).toBe(1);
+			await processor.drain();
+			const held = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-2@acme.test>' });
+			expect([held.status, held.inboxItemId ?? null]).toEqual([InboxEmailStatusEnum.QUARANTINED, null]);
+			expect(JSON.parse(held.headers as string)['x-gauzy-inbox-hold']).toBe('unverified-sender');
+
+			const later = SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-8@acme.test>');
+			const proven = mime(later, ['support.ever@inbox.example.test']);
 			expect(
-				(await deliver({ ...raw, authenticationResults: 'mx; spf=pass; dkim=pass; dmarc=pass' })).accepted
+				(await deliver({ ...proven, authenticationResults: 'mx; spf=pass; dkim=pass; dmarc=pass' })).accepted
 			).toBe(1);
+			await processor.drain();
+			expect(
+				(await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-8@acme.test>' })).status
+			).toBe(InboxEmailStatusEnum.PROCESSED);
 		});
 
 		it('drops unknown recipients, and mailboxes another account receives for', async () => {
@@ -716,6 +728,8 @@ describe('Inbound email pipeline on SQLite', () => {
 				7,
 				null
 			]);
+			// Nor did it write attachment rows: those go with the claimed state, in one transaction.
+			expect(await dataSource.getRepository(InboxEmailAttachment).count({ where: { emailId: id } })).toBe(0);
 		});
 
 		it('retries a failure, then leaves the message FAILED with its error', async () => {
@@ -801,6 +815,39 @@ describe('Inbound email pipeline on SQLite', () => {
 			as(BOB);
 			// Bob still reads the message he received, but not what arrived after he left.
 			expect((await emails.thread(email.id as string)).map((row) => row.messageId)).toEqual(['<m-2@acme.test>']);
+		});
+
+		it('lets a former member read what was addressed to them, but no longer send from the mailbox', async () => {
+			const email = await stored();
+			await dataSource.getRepository(InboxMailboxMember).delete({ userId: BOB });
+			as(BOB);
+			expect((await emails.get(email.id as string)).id).toBe(email.id);
+			await expect(emails.reply(email.id as string, { text: 'Still here?' })).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+			await expect(emails.forward(email.id as string, { to: ['eve@elsewhere.test'] })).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+			expect(sent).toHaveLength(0);
+		});
+
+		it('stops delivering to a member removed from the organization', async () => {
+			const access = new InboxMailboxAccessService(dataSource);
+			expect(await access.recipientsOf(supportBox)).toEqual([BOB]);
+			await dataSource.query(`DELETE FROM "user_organization" WHERE "userId" = ?`, [BOB]);
+			// The saved mailbox membership is kept, but grants nothing while Bob is not in the organization.
+			expect(await access.recipientsOf(supportBox)).toEqual([]);
+			expect(await access.canManage(supportBox, BOB)).toBe(false);
+		});
+
+		it('follows up on a sent message to its recipients again', async () => {
+			const email = await stored();
+			as(BOB);
+			const first = await emails.reply(email.id as string, { text: 'Thanks!' });
+			const followUp = await emails.reply(first.id as string, { text: 'Any news?' });
+			expect(followUp.status).toBe(InboxEmailStatusEnum.SENT);
+			expect(sent[1]?.message['to']).toEqual(['ada@acme.test']);
+			expect(sent[1]?.message['inReplyTo']).toBe(first.messageId);
 		});
 
 		it('keeps the refused recipients of a partly accepted reply', async () => {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from '@gauzy/core';
+import { FileStorage, RequestContext } from '@gauzy/core';
 
 /** Where a stored file is. */
 export interface IInboxStoredFile {
@@ -31,6 +31,14 @@ export async function toBuffer(content: unknown): Promise<Buffer> {
 	throw new Error('The stored file has a form this storage cannot read.');
 }
 
+/**
+ * Runs a storage call in a fresh context without a caller (no request, so no tenant's storage overrides): the
+ * deployment's own settings, the same for the webhook, the worker and a signed-in download.
+ */
+function withDeploymentSettings<T>(work: () => Promise<T>): Promise<T> {
+	return RequestContext.runWithRequest({} as never, work);
+}
+
 /** The provider name recorded for files kept in the Inbox's own private local directory. */
 export const INBOX_LOCAL_PROVIDER = 'INBOX_LOCAL';
 
@@ -50,10 +58,22 @@ export function inboxLocalRoot(env: Record<string, string | undefined> = process
  * public asset root), its folders created as needed. The provider is recorded with each file, so a later change of the
  * default provider still reads what was stored before. Email files are only ever served through the checked download
  * routes; no storage URL is answered by any route.
+ *
+ * Every email file is written and read with the **deployment's** storage settings (`FILE_PROVIDER`, `AWS_*` and co.),
+ * never a tenant's own storage overrides: Gauzy's providers apply those from the caller's request, and a webhook or the
+ * background worker has none, so a file written there would otherwise be looked for in another bucket by a download.
  */
 @Injectable()
 export class InboxEmailStorage {
-	async put(content: Buffer, key: string): Promise<IInboxStoredFile> {
+	put(content: Buffer, key: string): Promise<IInboxStoredFile> {
+		return withDeploymentSettings(() => this.write(content, key));
+	}
+
+	get(file: IInboxStoredFile): Promise<Buffer> {
+		return withDeploymentSettings(() => this.read(file));
+	}
+
+	private async write(content: Buffer, key: string): Promise<IInboxStoredFile> {
 		const provider = new FileStorage().getProvider();
 		if (String(provider.name).toUpperCase() === FileStorageProviderEnum.LOCAL) {
 			const path = this.localPath(key);
@@ -67,7 +87,7 @@ export class InboxEmailStorage {
 		return { key: stored.key, provider: String(provider.name).toUpperCase() };
 	}
 
-	async get(file: IInboxStoredFile): Promise<Buffer> {
+	private async read(file: IInboxStoredFile): Promise<Buffer> {
 		if (file.provider === INBOX_LOCAL_PROVIDER) {
 			return readFile(this.localPath(file.key));
 		}

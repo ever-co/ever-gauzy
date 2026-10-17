@@ -61,8 +61,9 @@ export interface InboxEmailDownload {
  *
  * A caller reads a message when it is addressed to them (an inbox item recipient), when they are one of the mailbox's
  * recipients, or with `INBOX_MAILBOX_READ_ALL` in the tenant. The raw source, the quarantine and its release need the
- * mailbox's management (see `InboxMailboxAccessService`). Replies and forwards need read access. Everything is scoped
- * to the caller's tenant; a message of another tenant does not exist.
+ * mailbox's management (see `InboxMailboxAccessService`). Replies and forwards send as the mailbox, so they need
+ * **current** access to it (a former member keeps reading what was addressed to them, but no longer sends from it).
+ * Everything is scoped to the caller's tenant; a message of another tenant does not exist.
  */
 @Injectable()
 export class InboxEmailService {
@@ -192,13 +193,23 @@ export class InboxEmailService {
 		return { ...this.toEmail(released), attachments: attachments.map((row) => this.toAttachment(row)) };
 	}
 
-	/** Replies from the mailbox's address, in the message's thread (`In-Reply-To` / `References`). */
+	/**
+	 * Replies from the mailbox's address, in the message's thread (`In-Reply-To` / `References`). A reply to a message
+	 * the mailbox sent goes to that message's recipients again (a follow-up), never back to the mailbox.
+	 */
 	async reply(id: ID, input: IInboxEmailReplyInput): Promise<IInboxEmail> {
-		const { email, mailbox } = await this.readable(id);
+		const { email, mailbox } = await this.sendable(id);
 		const text = this.text(input?.text, true);
 		const original = this.toEmail(email);
-		const to = original.replyTo.length > 0 ? original.replyTo : original.from ? [original.from] : [];
-		const others = input?.replyAll ? [...original.to, ...original.cc] : [];
+		const followUp = email.direction === InboxEmailDirectionEnum.OUT;
+		const to = followUp
+			? original.to
+			: original.replyTo.length > 0
+				? original.replyTo
+				: original.from
+					? [original.from]
+					: [];
+		const others = input?.replyAll ? (followUp ? original.cc : [...original.to, ...original.cc]) : [];
 		const cc = this.addresses(
 			[...others.map((entry) => entry.address), ...(input?.cc ?? [])],
 			[mailbox.address, ...to.map((entry) => entry.address)]
@@ -221,17 +232,18 @@ export class InboxEmailService {
 
 	/** Forwards the message (with its attachments unless stated otherwise) from the mailbox's address. */
 	async forward(id: ID, input: IInboxEmailForwardInput): Promise<IInboxEmail> {
-		const { email, mailbox } = await this.readable(id);
+		const { email, mailbox } = await this.sendable(id);
 		const to = this.addresses(input?.to ?? [], [mailbox.address]);
 		if (to.length === 0) throw new BadRequestException('A forward needs at least one recipient.');
 		const original = this.toEmail(email);
 		const note = this.text(input?.text, false);
+		// Every stored attachment (the worker keeps at most 100 per message): a forward is never a partial copy.
 		const stored =
 			input?.includeAttachments === false
 				? []
 				: await this.dataSource
 						.getRepository(InboxEmailAttachment)
-						.find({ where: { emailId: email.id as ID }, take: 50 });
+						.find({ where: { emailId: email.id as ID }, order: { createdAt: 'ASC' } });
 		const attachments = await Promise.all(
 			stored.map(async (row) => ({
 				filename: row.filename,
@@ -296,9 +308,10 @@ export class InboxEmailService {
 		);
 		const attachmentRepository = this.dataSource.getRepository(InboxEmailAttachment);
 		// The attachment rows inside the send's try: a failure marks the kept message FAILED, never a QUEUED orphan.
+		// They are saved in one call (one transaction): a FAILED message never keeps part of its attachments.
 		try {
-			for (const stored of storedAttachments) {
-				await attachmentRepository.save(
+			await attachmentRepository.save(
+				storedAttachments.map((stored) =>
 					attachmentRepository.create({
 						tenantId: stored.tenantId,
 						organizationId: stored.organizationId ?? null,
@@ -312,8 +325,8 @@ export class InboxEmailService {
 						...(stored.contentId ? { contentId: stored.contentId } : {}),
 						isInline: !!stored.isInline
 					} as InboxEmailAttachment)
-				);
-			}
+				)
+			);
 			const sent = await this.sender.sendMessage(
 				{ ...message, from, to: message.to, ...(message.cc.length ? { cc: message.cc } : {}), messageId },
 				{
@@ -395,6 +408,18 @@ export class InboxEmailService {
 			throw new NotFoundException('The message does not exist.');
 		}
 		return { email, mailbox };
+	}
+
+	/**
+	 * The message and its mailbox, when the caller may send as the mailbox: read access to the message and current
+	 * access to the mailbox (an old inbox item recipient row is not enough).
+	 */
+	private async sendable(id: ID): Promise<{ email: InboxEmail; mailbox: InboxMailbox }> {
+		const found = await this.readable(id);
+		if (!(await this.access.canRead(found.mailbox, RequestContext.currentUserId() as ID))) {
+			throw new ForbiddenException('Sending from this mailbox needs current access to it.');
+		}
+		return found;
 	}
 
 	private async mailbox(id: ID): Promise<InboxMailbox> {

@@ -22,7 +22,7 @@ import { InboxMailboxAccessService } from '../mailboxes/inbox-mailbox-access.ser
 import { IInboundEmailAddress, ParsedInboundEmail } from '../providers/email-provider.types';
 import { getInboxEmailConfig, InboxEmailConfig } from './inbox-email.config';
 import { InboxEmailStorage } from './inbox-email-storage';
-import { IInboxEmailProcessor } from './inbox-email-processor.types';
+import { IInboxEmailProcessor, INBOX_HOLD_HEADER } from './inbox-email-processor.types';
 import { deserializeParsedMessage, parseMimeMessage } from './mime';
 import { sanitizeEmailHtml, snippetOf, textFromHtml } from './sanitize';
 
@@ -41,6 +41,8 @@ export const SWEEP_BATCH = 50;
 export const THREAD_SUBJECT_WINDOW_MS = 30 * 24 * 60 * 60_000;
 /** The longest text body kept (the item body keeps less). */
 export const MAX_TEXT_BODY = 1_000_000;
+/** The most attachments stored per message (a forward carries all of them). */
+export const MAX_STORED_ATTACHMENTS = 100;
 export const MAX_ITEM_BODY = 5_000;
 /** MIME types that are never offered as what they claim (they could run script when opened inline). */
 const ACTIVE_CONTENT_TYPES =
@@ -62,6 +64,18 @@ function senderOf(email: InboxEmail): IInboundEmailAddress | null {
 	try {
 		const parsed = JSON.parse(email.sender) as IInboundEmailAddress | null;
 		return parsed && typeof parsed.address === 'string' ? parsed : null;
+	} catch {
+		return null;
+	}
+}
+
+/** The reason the webhook held the message in the quarantine (its `x-gauzy-inbox-hold` header), if it did. */
+export function heldBy(email: Pick<InboxEmail, 'headers'>): string | null {
+	if (!email.headers) return null;
+	try {
+		const headers = JSON.parse(email.headers) as Record<string, unknown> | null;
+		const reason = headers?.[INBOX_HOLD_HEADER];
+		return typeof reason === 'string' && reason ? reason : null;
 	} catch {
 		return null;
 	}
@@ -94,7 +108,7 @@ export function spamVerdictOf(
  * Per message: read the raw message back and parse it; sanitize the HTML on the server; store the attachments (each
  * with its SHA-256; active content is never offered as what it claims); thread it (`In-Reply-To` / `References`, else
  * the normalized subject with a shared participant within 30 days); decide the spam verdict (quarantined mail gets
- * no inbox item until a mailbox manager releases it); create the `EMAIL` inbox item for the mailbox's recipients;
+ * no inbox item until a mailbox manager releases it; the webhook's hold quarantines whatever the verdict); create the `EMAIL` inbox item for the mailbox's recipients;
  * update the mailbox's counters. A failure is retried up to three times, then the message is left `FAILED` with the
  * error kept.
  */
@@ -265,22 +279,40 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 		const config = this.config();
 		const html = message.html ? sanitizeEmailHtml(message.html) : null;
 		const text = (message.text ?? (message.html ? textFromHtml(message.html) : '')).slice(0, MAX_TEXT_BODY);
-		const attachments = await this.storeAttachments(row, message);
+		// The files first, outside the database (stable keys: a retry or a replaced worker rewrites the same objects).
+		const files = await this.uploadAttachments(row, message);
 		const threadId = await this.thread(row, mailbox, message);
-		const verdict = spamVerdictOf(
+		const computed = spamVerdictOf(
 			{ spf: message.spf, dkim: message.dkim, dmarc: message.dmarc, spamScore: message.spamScore },
 			config
 		);
-		const quarantined = verdict === InboxEmailSpamVerdictEnum.SPAM;
+		const held = !!heldBy(row);
+		const quarantined = computed === InboxEmailSpamVerdictEnum.SPAM || held;
+		const verdict =
+			held && computed === InboxEmailSpamVerdictEnum.HAM ? InboxEmailSpamVerdictEnum.SUSPECT : computed;
 
-		const owned = await this.updateClaimed(row.id as ID, attempt, {
-			threadId,
-			textBody: text || null,
-			htmlSanitized: html,
-			snippet: snippetOf(text) || null,
-			spamVerdict: verdict,
-			error: null,
-			...(quarantined ? { status: InboxEmailStatusEnum.QUARANTINED } : {})
+		// Then the message's state and its attachment rows in one transaction, opened by the claimed update: a worker
+		// another replica took over changes neither (it deletes no rows of the newer attempt, and adds none twice).
+		const owned = await this.dataSource.transaction(async (manager) => {
+			const claimed = await this.updateClaimed(
+				row.id as ID,
+				attempt,
+				{
+					threadId,
+					textBody: text || null,
+					htmlSanitized: html,
+					snippet: snippetOf(text) || null,
+					spamVerdict: verdict,
+					error: null,
+					...(quarantined ? { status: InboxEmailStatusEnum.QUARANTINED } : {})
+				},
+				manager
+			);
+			if (!claimed) return false;
+			const attachments = manager.getRepository(InboxEmailAttachment);
+			await attachments.delete({ emailId: row.id as ID });
+			if (files.length > 0) await attachments.save(files.map((file) => attachments.create(file)));
+			return true;
 		});
 		if (!owned) return null;
 
@@ -293,7 +325,7 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 			.findOne({ where: { id: row.id as ID } })) as InboxEmail;
 		const itemId = await this.deliver(stored, mailbox, {
 			from: message.from ?? null,
-			attachments: attachments.length
+			attachments: files.length
 		});
 		if (
 			!(await this.updateClaimed(row.id as ID, attempt, {
@@ -312,8 +344,13 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 	 * `PROCESSING`), so a worker that stalled past the take-over never overwrites the newer attempt's result. Answers
 	 * whether it wrote.
 	 */
-	private async updateClaimed(id: ID, attempt: number, values: EmailUpdate): Promise<boolean> {
-		const result = await this.dataSource
+	private async updateClaimed(
+		id: ID,
+		attempt: number,
+		values: EmailUpdate,
+		manager: EntityManager = this.dataSource.manager
+	): Promise<boolean> {
+		const result = await manager
 			.getRepository(InboxEmail)
 			.createQueryBuilder()
 			.update(InboxEmail)
@@ -328,15 +365,17 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 	}
 
 	/**
-	 * Stores the attachments. On a retry the earlier rows of this message are replaced, and the files are written to the
-	 * same keys again (index + content digest), so a retry leaves no unreachable copies behind.
+	 * Uploads the attachments' files and answers their rows (written by `apply` with the claimed state, replacing a
+	 * retry's earlier rows). The keys are the index and the content digest, so a repeat writes the same objects again
+	 * and leaves no unreachable copies behind.
 	 */
-	private async storeAttachments(row: InboxEmail, message: ParsedInboundEmail): Promise<InboxEmailAttachment[]> {
-		const repository = this.dataSource.getRepository(InboxEmailAttachment);
-		await repository.delete({ emailId: row.id as ID });
+	private async uploadAttachments(
+		row: InboxEmail,
+		message: ParsedInboundEmail
+	): Promise<Array<Partial<InboxEmailAttachment>>> {
 		const max = this.config().maxMessageBytes;
-		const out: InboxEmailAttachment[] = [];
-		for (const [index, part] of message.attachments.slice(0, 100).entries()) {
+		const out: Array<Partial<InboxEmailAttachment>> = [];
+		for (const [index, part] of message.attachments.slice(0, MAX_STORED_ATTACHMENTS).entries()) {
 			if (!part.content?.length || part.content.length > max) continue;
 			const sha256 = createHash('sha256').update(part.content).digest('hex');
 			const contentType =
@@ -345,23 +384,19 @@ export class InboxEmailProcessor implements IInboxEmailProcessor, OnApplicationB
 					: 'application/octet-stream';
 			const key = `inbox/${row.tenantId}/attachments/${row.id}/${index}-${sha256.slice(0, 32)}`;
 			const stored = await this.storage.put(part.content, key);
-			out.push(
-				await repository.save(
-					repository.create({
-						tenantId: row.tenantId,
-						organizationId: row.organizationId ?? null,
-						emailId: row.id as ID,
-						filename: part.filename,
-						contentType: contentType.slice(0, 255),
-						size: part.content.length,
-						sha256,
-						storageKey: stored.key,
-						storageProvider: stored.provider,
-						...(part.contentId ? { contentId: part.contentId.slice(0, 255) } : {}),
-						isInline: !!part.isInline
-					} as InboxEmailAttachment)
-				)
-			);
+			out.push({
+				tenantId: row.tenantId,
+				...(row.organizationId ? { organizationId: row.organizationId } : {}),
+				emailId: row.id as ID,
+				filename: part.filename,
+				contentType: contentType.slice(0, 255),
+				size: part.content.length,
+				sha256,
+				storageKey: stored.key,
+				storageProvider: stored.provider,
+				...(part.contentId ? { contentId: part.contentId.slice(0, 255) } : {}),
+				isInline: !!part.isInline
+			});
 		}
 		return out;
 	}
