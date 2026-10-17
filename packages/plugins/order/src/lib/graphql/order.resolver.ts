@@ -249,10 +249,29 @@ export class OrderResolver {
 	/**
 	 * Updates the fields of an order that may change outside a change.
 	 *
+	 * **The change set is the input without what is not a field of the order (R2-G21).** Three members of
+	 * `UpdateOrderInput` used to reach `updateMutable` as if they were columns:
+	 *
+	 * - `version` is the precondition the version guard has already read (and the conditional write
+	 *   compares, through the request's expectation); handed on as a key of the patch, it was one more
+	 *   field `updateMutable` does not list for a placed order, so every `updateOrder` that stated the
+	 *   version it read — which the guard requires — answered `400 ORDER_IMMUTABLE` on any non-draft order.
+	 *   It is taken out, exactly as the REST route's validation pipe never lets a body carry it.
+	 * - `note` names no column of `order` (the order's notes live on its changes and its timeline), so the
+	 *   write failed in the ORM. It is refused with `400 ORDER_NOTE_NOT_A_FIELD` instead.
+	 * - `cancelReason` is the reason `cancelOrder` records under `ORDERS_CANCEL`; here it was writable
+	 *   under `ORDERS_EDIT`, so an editor could rewrite why an order was cancelled — or give a live order
+	 *   one. `PUT /orders/:id` never accepted it (its DTO has no such member). It is refused with
+	 *   `400 ORDER_CANCEL_REASON_NOT_WRITABLE`.
+	 *
+	 * Both refusals happen before anything is read or written. The members stay in the input type, so a
+	 * client document that selects them still validates and is answered with the code.
+	 *
 	 * @param id The order.
 	 * @param input The fields to change, with the version the caller read the order at.
 	 * @param context The GraphQL context, whose request carries the version the caller stated.
 	 * @returns The order.
+	 * @throws BadRequestException `ORDER_NOTE_NOT_A_FIELD` / `ORDER_CANCEL_REASON_NOT_WRITABLE`.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	@Versioned({ resource: OrderService })
@@ -262,7 +281,7 @@ export class OrderResolver {
 		@Args('input', { type: () => Object }) input: Record<string, any>,
 		@Context() context: any
 	): Promise<Order> {
-		return this.orderService.updateMutable(id, input as any, versionExpectationOf(context?.req));
+		return this.orderService.updateMutable(id, orderUpdateOf(input) as any, versionExpectationOf(context?.req));
 	}
 
 	/**
@@ -778,7 +797,15 @@ export class OrderResolver {
 	/**
 	 * Creates a change.
 	 *
-	 * @param input The change and its actions.
+	 * **The version rides in the input (R2-G20).** The field is `@Versioned` against the order the input
+	 * names, as `POST /orders/:id/changes` is against the order in its path, and the guard reads a GraphQL
+	 * write's version from `input.version` — but `RequestOrderEditInput` declared no `version`, so no
+	 * document could state one and every call answered `428 VERSION_REQUIRED`: the only GraphQL door to an
+	 * edit of a placed order was shut. The input now declares it (nullable, so an omitted version is the
+	 * kernel's 428, as on the route); it is a precondition, never a field of the change, and is not handed
+	 * to the service.
+	 *
+	 * @param input The change and its actions, with the version the caller read the order at.
 	 * @returns The created change.
 	 */
 	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
@@ -882,4 +909,38 @@ export class OrderResolver {
 	async history(@Parent() order: Order): Promise<OrderHistory[]> {
 		return this.historyService.timeline(order.id);
 	}
+}
+
+/**
+ * The change set `updateOrder` hands to `updateMutable`: its input without the members that are not a
+ * field of the order, refusing the two a caller may not write this way. See `OrderResolver.updateOrder`.
+ *
+ * @param input The mutation's input.
+ * @returns The change set, without `version`.
+ * @throws BadRequestException `ORDER_NOTE_NOT_A_FIELD` when the input states a note, and
+ * `ORDER_CANCEL_REASON_NOT_WRITABLE` when it states a cancellation reason.
+ */
+export function orderUpdateOf(input: Record<string, any> | null | undefined): Record<string, any> {
+	// The version is the guard's precondition, read from `input.version` before this runs.
+	const { version: _version, note, cancelReason, ...changes } = input ?? {};
+
+	if (note !== undefined && note !== null) {
+		throw new BadRequestException({
+			message:
+				'ORDER_NOTE_NOT_A_FIELD: an order has no note column; state a note on the change that edits the order (requestOrderEdit) instead.',
+			code: 'ORDER_NOTE_NOT_A_FIELD',
+			details: { field: 'note' }
+		});
+	}
+
+	if (cancelReason !== undefined && cancelReason !== null) {
+		throw new BadRequestException({
+			message:
+				'ORDER_CANCEL_REASON_NOT_WRITABLE: the cancellation reason is recorded by cancelOrder (POST /orders/:id/cancel), under ORDERS_CANCEL.',
+			code: 'ORDER_CANCEL_REASON_NOT_WRITABLE',
+			details: { field: 'cancelReason', mutation: 'cancelOrder' }
+		});
+	}
+
+	return changes;
 }
