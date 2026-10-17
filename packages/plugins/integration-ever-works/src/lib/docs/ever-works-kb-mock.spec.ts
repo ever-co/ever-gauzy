@@ -73,6 +73,19 @@ describe('mock Ever Works Knowledge Base (contract v1 CR-7)', () => {
 		expect((await refusal(reader.request('POST', '/kb/documents', { body: base }))).status).toBe(403);
 	});
 
+	it('refuses a PATCH the contract refuses before changing anything, and omits a large body from events (review #10829)', async () => {
+		const { mock, kb, client, ewOrg } = setup();
+		const document = kb.addDocument(ewOrg.id, { body: 'Short' });
+		const id = document['id'] as string;
+		expect(await refusal(client.request('PATCH', `/kb/documents/${id}`, { body: { status: 'archived' } }))).toEqual({ status: 400, code: 'validation_failed' });
+		expect(await refusal(client.request('PATCH', `/kb/documents/${id}`, { body: { body: null } }))).toEqual({ status: 400, code: 'validation_failed' });
+		expect(document).toMatchObject({ body: 'Short', version: 1, revision: 1 });
+		const large = 'x'.repeat(262_145);
+		const edited = await client.request<EverWorksKbDocument>('PATCH', `/kb/documents/${id}`, { body: { body: `${large} words` } });
+		expect(edited).toMatchObject({ body: `${large} words`, wordCount: 2 });
+		expect(mock.events[0]?.data).toMatchObject({ body: null, bodyOmitted: true });
+	});
+
 	it('moves revision only on a content change, version on every change, and keeps archived documents out of lists', async () => {
 		const { mock, kb, client, ewOrg } = setup();
 		const document = kb.addDocument(ewOrg.id);

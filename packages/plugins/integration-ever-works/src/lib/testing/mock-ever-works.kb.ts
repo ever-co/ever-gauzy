@@ -1,7 +1,7 @@
 // cspell:ignore wikilink wikilinks unfiled
 import { createHash, randomUUID } from 'node:crypto';
 import type { EverWorksHttpResponse } from '../client/ever-works-transport';
-import { KB_DOCUMENT_CLASSES } from '../docs/ever-works-kb.types';
+import { KB_DOCUMENT_CLASSES, KB_LIMITS } from '../docs/ever-works-kb.types';
 import { MockEverWorksExtension, MockEverWorksRouteContext, MockEverWorksServer } from './mock-ever-works.server';
 
 type Row = Record<string, unknown>;
@@ -83,7 +83,7 @@ export class MockEverWorksKb {
 			createdById: randomUUID(),
 			updatedById: null,
 			archivedAt: null,
-			wordCount: body.split(/\s+/).filter(Boolean).length,
+			wordCount: wordsOf(body),
 			webUrl: `https://app.example.test/memory?view=library&doc=${id}`,
 			externalLinks: [],
 			...document
@@ -274,6 +274,8 @@ export class MockEverWorksKb {
 		const keys = Object.keys(input);
 		if (!keys.length || keys.some((key) => !UPDATE_FIELDS.has(key)))
 			return MockEverWorksServer.error(400, 'validation_failed', `Only ${[...UPDATE_FIELDS].join(', ')} can change.`);
+		const invalid = invalidUpdate(input);
+		if (invalid) return MockEverWorksServer.error(400, 'validation_failed', invalid);
 		if (document['locked'] && document['lockMode'] !== 'additions-only')
 			return MockEverWorksServer.error(422, 'domain_rule', 'The document is locked.');
 		if ('status' in input && document['status'] === 'archived')
@@ -284,6 +286,7 @@ export class MockEverWorksKb {
 			document['revision'] = Number(document['revision']) + 1;
 			document['revisionAt'] = new Date().toISOString();
 			document['normalizedContentHash'] = hashOf(document['body'] as string);
+			document['wordCount'] = wordsOf(document['body'] as string);
 		}
 		return this.changed(context, document, 'kb.document.updated');
 	}
@@ -431,7 +434,10 @@ export class MockEverWorksKb {
 	}
 
 	private emitDocument(context: MockEverWorksRouteContext, type: string, document: Row): void {
-		this.emit(context, type, { type: 'kb_document', id: document['id'] as string, version: Number(document['version']) }, MockEverWorksKb.dto(document));
+		const data = MockEverWorksKb.dto(document);
+		// An event over the body limit carries no body (CR-7): the consumer reads the document for it.
+		if (typeof data['body'] === 'string' && Buffer.byteLength(data['body'], 'utf8') > EVENT_BODY_LIMIT_BYTES) Object.assign(data, { body: null, bodyOmitted: true });
+		this.emit(context, type, { type: 'kb_document', id: document['id'] as string, version: Number(document['version']) }, data);
 	}
 
 	private emitFolder(context: MockEverWorksRouteContext, type: string, folder: Row): void {
@@ -449,6 +455,28 @@ export class MockEverWorksKb {
 			data
 		});
 	}
+}
+
+/** The event body limit (CR-7: 256 KiB of UTF-8). */
+export const EVENT_BODY_LIMIT_BYTES = 262_144;
+
+/** What a PATCH body breaks of `UpdateKbDocument` (types, closed values, `KB_LIMITS`), or `null`. */
+function invalidUpdate(input: Row): string | null {
+	const text = (value: unknown, min: number, max: number) => typeof value === 'string' && value.length >= min && value.length <= max;
+	const list = (value: unknown) => Array.isArray(value) && value.length <= KB_LIMITS.tags && value.every((item) => text(item, 1, KB_LIMITS.tag));
+	if ('title' in input && !text(input['title'], 1, KB_LIMITS.title)) return 'title is 1 to 255 characters.';
+	if ('body' in input && !text(input['body'], 0, KB_LIMITS.body)) return 'body is a string of at most 1000000 characters.';
+	if ('description' in input && input['description'] !== null && !text(input['description'], 0, KB_LIMITS.description)) return 'description is a string of at most 4000 characters, or null.';
+	if ('class' in input && !(KB_DOCUMENT_CLASSES as readonly string[]).includes(input['class'] as string)) return 'Unknown class.';
+	if ('tags' in input && !list(input['tags'])) return 'tags are at most 50 strings of at most 100 characters.';
+	if ('categories' in input && !list(input['categories'])) return 'categories are at most 50 strings of at most 100 characters.';
+	if ('language' in input && !text(input['language'], 2, 8)) return 'language is 2 to 8 characters.';
+	if ('status' in input && input['status'] !== 'draft' && input['status'] !== 'active') return 'status is draft or active (archive has its own route).';
+	return null;
+}
+
+function wordsOf(body: string): number {
+	return body.split(/\s+/).filter(Boolean).length;
 }
 
 /** The mock's `normalizedContentHash`: SHA-256 of the trimmed body. */

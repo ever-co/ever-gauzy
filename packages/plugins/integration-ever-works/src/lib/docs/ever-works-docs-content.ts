@@ -167,8 +167,10 @@ function blockOf(node: HtmlNode, options: MarkdownToDocumentOptions): TiptapNode
 		case 'h4':
 		case 'h5':
 		case 'h6': {
-			const content = trimBreaks(inlineChildren(node, [], options)).filter((child) => child.type !== 'image');
-			return [{ type: 'heading', attrs: { level: Number(node.tag[1]) }, ...(content.length ? { content } : {}) }];
+			const inline = trimBreaks(inlineChildren(node, [], options));
+			const content = inline.filter((child) => child.type !== 'image');
+			// An image is a block in the editor: it follows the heading instead of being lost.
+			return [{ type: 'heading', attrs: { level: Number(node.tag[1]) }, ...(content.length ? { content } : {}) }, ...inline.filter((child) => child.type === 'image')];
 		}
 		case 'pre': {
 			const code = textContent(node).replace(/\n$/, '');
@@ -253,8 +255,9 @@ function tableOf(node: HtmlNode, options: MarkdownToDocumentOptions): TiptapNode
 			content: kept.map((row) => ({
 				type: 'tableRow',
 				content: row.cells.map((cell) => {
-					const paragraph = paragraphsOf(inlineChildren(cell, [], options)).filter((block) => block.type === 'paragraph');
-					return { type: cell.tag === 'th' ? 'tableHeader' : 'tableCell', content: paragraph.length ? paragraph : [{ type: 'paragraph' }] };
+					// A cell holds blocks: its paragraphs and images (at least one paragraph).
+					const blocks = paragraphsOf(inlineChildren(cell, [], options));
+					return { type: cell.tag === 'th' ? 'tableHeader' : 'tableCell', content: blocks.length ? blocks : [{ type: 'paragraph' }] };
 				})
 			}))
 		}
@@ -492,8 +495,6 @@ function flattenText(nodes: ReadonlyArray<TiptapNode>): string {
 	return nodes.map((node) => (node.type === 'text' ? (node.text ?? '') : node.type === 'hardBreak' ? '\n' : flattenText(node.content ?? []))).join('');
 }
 
-const MARK_DELIMITERS: Readonly<Record<string, string>> = { bold: '**', italic: '*', strike: '~~' };
-
 /** Inline nodes → Markdown: text with its bold / italic / strike / code / link marks, breaks and mentions. */
 function inlineToMarkdown(nodes: ReadonlyArray<TiptapNode>, options: DocumentToMarkdownOptions): string {
 	return nodes
@@ -542,11 +543,13 @@ function markText(node: TiptapNode): string {
 	const link = marks.find((mark) => mark.type === 'link');
 	const target = link?.attrs?.['href'];
 	const href = typeof target === 'string' ? target.trim() : '';
-	let text = marks.some((mark) => mark.type === 'code') ? codeSpan(raw.replace(/\n/g, ' ')) : escapeText(raw);
-	for (const mark of marks) {
-		const delimiter = MARK_DELIMITERS[mark.type];
-		if (delimiter) text = wrap(delimiter, text);
-	}
+	const has = (type: string) => marks.some((mark) => mark.type === type);
+	let text = has('code') ? codeSpan(raw.replace(/\n/g, ' ')) : escapeText(raw);
+	// Innermost first. Italic inside bold is written `**_text_**`: the reader takes `***text***` as bold
+	// followed by a stray `*`.
+	if (has('italic')) text = wrap(has('bold') ? '_' : '*', text);
+	if (has('bold')) text = wrap('**', text);
+	if (has('strike')) text = wrap('~~', text);
 	if (link && isSafeUrl(href)) text = text.trim() === href ? `<${href}>` : `[${text.replace(/\n/g, ' ')}](${encodeParens(href)})`;
 	return text;
 }

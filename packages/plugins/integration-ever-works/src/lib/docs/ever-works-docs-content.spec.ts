@@ -208,6 +208,37 @@ describe('Gauzy Docs page → Ever Works Markdown', () => {
 		expect(markdownToDocument(markdown).contentJson.content?.[0]?.content).toEqual([{ type: 'text', text: '# not a heading *nor bold* [[kept.md]]' }]);
 	});
 
+	it('round-trips bold italic text and plain text with backticks unchanged (review #10829)', () => {
+		const doc: TiptapNode = {
+			type: 'doc',
+			content: [
+				{
+					type: 'paragraph',
+					content: [
+						{ type: 'text', text: 'both', marks: [{ type: 'bold' }, { type: 'italic' }] },
+						{ type: 'text', text: ' and use `x` here' }
+					]
+				}
+			]
+		};
+		const markdown = documentToMarkdown(doc);
+		expect(markdown).toBe(String.raw`**_both_** and use \`x\` here`);
+		const back = markdownToDocument(markdown).contentJson.content?.[0]?.content ?? [];
+		expect(back.map((node) => [node.text, (node.marks ?? []).map((mark) => mark.type).sort()])).toEqual([
+			['both', ['bold', 'italic']],
+			[' and use `x` here', []]
+		]);
+	});
+
+	it('keeps images of a table cell and of a heading (review #10829)', () => {
+		const { contentJson } = markdownToDocument(['# Logo ![a](https://example.com/a.png)', '', '| Diagram |', '| --- |', '| ![b](https://example.com/b.png) |'].join('\n'));
+		const blocks = contentJson.content ?? [];
+		expect(blocks.map((block) => block.type)).toEqual(['heading', 'image', 'table']);
+		expect(blocks[1].attrs?.['src']).toBe('https://example.com/a.png');
+		const cell = blocks[2].content?.[1]?.content?.[0];
+		expect(cell?.content).toEqual([{ type: 'image', attrs: { src: 'https://example.com/b.png', alt: 'b', title: null } }]);
+	});
+
 	it('accepts the SQLite text form of the column', () => {
 		const doc = markdownToDocument('Hello **world**').contentJson;
 		expect(documentToMarkdown(JSON.stringify(doc))).toBe(documentToMarkdown(doc));
