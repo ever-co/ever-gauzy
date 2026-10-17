@@ -158,6 +158,10 @@ export class InboundAddressService implements IInboundAddressResolver {
 		if (platformDomain && (domain === platformDomain || domain.endsWith(`.${platformDomain}`))) {
 			throw new BadRequestException('That domain is reserved by the platform.');
 		}
+		// Nor the Inbox's platform mailbox domain (`GAUZY_INBOX_DOMAIN`), whose addresses the Inbox allocates.
+		if (this.namespace?.isReservedDomain?.(domain)) {
+			throw new BadRequestException('That domain is reserved by the platform.');
+		}
 
 		// The check and the save under the namespace's claim of the address (where the Inbox provides one), so an Inbox
 		// mailbox and a capture address for the same address are never both created.

@@ -405,4 +405,6 @@ export interface IInboundAddressNamespace {
 	 * either feature and across the replicas, so two requests for one address never both pass their checks.
 	 */
 	claim?<T>(address: string, work: () => Promise<T>): Promise<T>;
+	/** Whether a domain (lower-case) is the Inbox's platform mailbox domain or under it: no custom address there. */
+	isReservedDomain?(domain: string): boolean;
 }

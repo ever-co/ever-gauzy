@@ -72,6 +72,19 @@ const parse = <T>(value: string | null | undefined, fallback: T): T => {
 	}
 };
 
+/** Whether a query failed because its table does not exist (PostgreSQL 42P01, MySQL 1146, SQLite). */
+export function isMissingTable(error: unknown): boolean {
+	const code = String(
+		(error as { code?: unknown })?.code ?? (error as { driverError?: { code?: unknown } })?.driverError?.code ?? ''
+	);
+	const message = String((error as Error)?.message ?? '');
+	return (
+		code === '42P01' ||
+		code === 'ER_NO_SUCH_TABLE' ||
+		/no such table|relation .* does not exist|table .* doesn't exist/i.test(message)
+	);
+}
+
 /** An owner's names, as the address is allocated from them. */
 interface OwnerNames {
 	name: string;
@@ -553,6 +566,11 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 
 	// ---------------------------------------------------------------- the address namespace
 
+	/** Whether a domain is the platform mailbox domain (`GAUZY_INBOX_DOMAIN`) or under it (the Docs hook asks). */
+	isReservedDomain(domain: string): boolean {
+		return isWithinDomain(normalizeDomain(domain) ?? domain.trim().toLowerCase(), getInboxEmailConfig().domain);
+	}
+
 	/** Runs `work` (an address's check and save) while no other claim of the address runs, in either feature. */
 	claim<T>(address: string, work: () => Promise<T>): Promise<T> {
 		const normalized = normalizeAddress(address)?.address ?? address.trim().toLowerCase();
@@ -573,9 +591,11 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 				.limit(1)
 				.getRawMany();
 			return rows.length > 0;
-		} catch {
-			// The Docs plugin is not installed here (no such table): nothing more to check.
-			return false;
+		} catch (error) {
+			// The Docs plugin is not installed here (no such table): nothing more to check. Any other failure is not an
+			// answer: the address could be taken, so the caller fails rather than allocating it.
+			if (isMissingTable(error)) return false;
+			throw error;
 		}
 	}
 

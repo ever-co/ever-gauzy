@@ -293,6 +293,26 @@ describe('Mailbox management on SQLite', () => {
 			).rejects.toBeInstanceOf(ConflictException);
 		});
 
+		it('reserves its platform domain for the Docs hook, and fails on a Docs lookup error', async () => {
+			expect(service.isReservedDomain(DOMAIN)).toBe(true);
+			expect(service.isReservedDomain(`Team.${DOMAIN}`)).toBe(true);
+			expect(service.isReservedDomain('acme.test')).toBe(false);
+			// A missing Docs table means no Docs addresses; any other failure is not "free".
+			await dataSource.query(`DROP TABLE "document_inbound_address"`);
+			expect(await service.isTaken('x@acme.test')).toBe(false);
+			// Only the Docs lookup (a bare query builder) fails; the mailbox lookup goes through.
+			const original = dataSource.createQueryBuilder.bind(dataSource) as (...args: unknown[]) => unknown;
+			const query = jest.spyOn(dataSource, 'createQueryBuilder').mockImplementation(((...args: unknown[]) => {
+				if (args.length === 0) throw new Error('connection reset');
+				return original(...args);
+			}) as never);
+			try {
+				await expect(service.isTaken('y@acme.test')).rejects.toThrow('connection reset');
+			} finally {
+				query.mockRestore();
+			}
+		});
+
 		it('shares one namespace with the Docs capture addresses', async () => {
 			await dataSource.query(`INSERT INTO "document_inbound_address" ("id", "address") VALUES (?, ?)`, [
 				randomUUID(),
