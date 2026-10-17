@@ -49344,8 +49344,8 @@ input UpdateCartLineInput {
 input SetCartShippingMethodInput {
   cartId: ID!
   shippingOptionId: ID
-  name: String!
-  amount: Decimal!
+  name: String
+  amount: Decimal
   isTaxInclusive: Boolean
   isManual: Boolean
   taxCategoryId: ID

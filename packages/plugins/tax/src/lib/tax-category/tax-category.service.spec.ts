@@ -261,3 +261,55 @@ describe('TaxCategoryService.update — a row may keep its own code (05 §6.1)',
 		expect(categories).toHaveLength(1);
 	});
 });
+
+/**
+ * R3-07c: a cart line's tax category is the catalogue's, through this service.
+ *
+ * The variant's own category wins; a variant that names none is taxed under the organization's default when it
+ * has declared one, and under none otherwise.
+ */
+describe('TaxCategoryService.taxCategoriesOf — the category a variant is taxed under (R3-07c)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The service, over a store of variants its TypeORM manager reads. */
+	const withVariants = (categories: ICategoryRow[], variants: Array<{ id: string; taxCategoryId?: string | null }>) => {
+		const { service } = serviceUnderTest(categories);
+
+		(service as any).typeOrmTaxCategoryRepository.manager = {
+			find: async (_entity: unknown, options: { where: { id: FindOperator<string[]> } }) =>
+				variants.filter((variant) => (options.where.id.value as unknown as string[]).includes(variant.id))
+		};
+
+		return service;
+	};
+
+	it('answers each variant’s own category, and the organization default for one that names none', async () => {
+		const service = withVariants(
+			[category({ id: 'category-default', code: 'STANDARD', isDefault: true })],
+			[
+				{ id: 'variant-a', taxCategoryId: 'category-reduced' },
+				{ id: 'variant-b', taxCategoryId: null }
+			]
+		);
+
+		await expect(service.taxCategoriesOf(['variant-a', 'variant-b', 'variant-a', 'variant-unknown'])).resolves.toEqual([
+			{ variantId: 'variant-a', taxCategoryId: 'category-reduced' },
+			{ variantId: 'variant-b', taxCategoryId: 'category-default' },
+			{ variantId: 'variant-unknown', taxCategoryId: 'category-default' }
+		]);
+	});
+
+	it('answers null for a variant with no category when the organization declares no default', async () => {
+		const service = withVariants([category({ id: 'category-1', code: 'STANDARD' })], [{ id: 'variant-b' }]);
+
+		await expect(service.taxCategoriesOf(['variant-b'])).resolves.toEqual([
+			{ variantId: 'variant-b', taxCategoryId: null }
+		]);
+		await expect(service.taxCategoriesOf([])).resolves.toEqual([]);
+	});
+});

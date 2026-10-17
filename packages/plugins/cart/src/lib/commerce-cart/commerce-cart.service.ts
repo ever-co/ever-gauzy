@@ -57,9 +57,14 @@ import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
 import {
 	CART_PRICE_RESOLUTION,
 	CART_PROMOTION_EVALUATION,
+	CART_SHIPPING_RATE,
 	CART_STOCK_AVAILABILITY,
 	CART_TAX_CALCULATION,
+	CART_TAX_CATEGORY,
 	ICartPricePort,
+	ICartShippingOption,
+	ICartShippingRatePort,
+	ICartTaxCategoryPort,
 	ICartPromotionApplication,
 	ICartPromotionPort,
 	ICartResolvedPrice,
@@ -182,7 +187,13 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		private readonly promotionEvaluation?: ICartPromotionPort,
 		@Optional()
 		@Inject(CART_PRICE_RESOLUTION)
-		private readonly priceResolution?: ICartPricePort
+		private readonly priceResolution?: ICartPricePort,
+		@Optional()
+		@Inject(CART_SHIPPING_RATE)
+		private readonly shippingRate?: ICartShippingRatePort,
+		@Optional()
+		@Inject(CART_TAX_CATEGORY)
+		private readonly taxCategories?: ICartTaxCategoryPort
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
 	}
@@ -436,6 +447,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		);
 		const total = Number(line.quantity) + Number(match?.quantity ?? 0);
 		const priced = stated ? null : await this.resolveLinePrice(cart, line.variantId as ID, total);
+		// R3-07c: the line's tax category is the catalogue's, never the request's (the in-process caller that
+		// states a price states the category it resolved with it).
+		const taxCategoryId = stated
+			? line.taxCategoryId
+			: (await this.taxCategoriesOfVariants([line.variantId as ID])).get(String(line.variantId)) ?? null;
 
 		// What the cart would hold after the addition, which is what has to be available: a line that
 		// merges into an existing one asks for the sum of the two. The refusal happens here, where the
@@ -455,7 +471,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		if (match) {
 			await this.lineService.update(match.id, {
 				quantity: total,
-				...(priced ? this.pricedFields(priced, cart, match.metadata) : {})
+				...(priced ? { ...this.pricedFields(priced, cart, match.metadata), taxCategoryId } : {})
 			} as any);
 		} else {
 			await this.lineService.create({
@@ -463,6 +479,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				cartId: cart.id,
 				// A line belongs to its cart's organization (R2-G19).
 				organizationId: line.organizationId ?? cart.organizationId,
+				taxCategoryId,
 				...(priced
 					? this.pricedFields(priced, cart, line.metadata as Record<string, unknown>)
 					: {
@@ -520,6 +537,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			delete editable['unitPrice'];
 			delete editable['originalUnitPrice'];
 			delete editable['isTaxInclusive'];
+			// R3-07c: nor is its tax category, which is the catalogue's.
+			delete editable['taxCategoryId'];
 
 			// The source of the line's price is the line's, not the request's.
 			if (editable['metadata'] !== undefined) {
@@ -589,8 +608,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * A cart holds at most one method per call to this method: setting a new one soft-deletes the
 	 * previous rows so that `shippingSubtotal` is never the sum of a stale and a current choice.
 	 *
+	 * **The amount is the configured option's rate, never the caller's (R3-07c).** The caller names a
+	 * shipping option; its name, its amount on this cart and how it is taxed come from the fulfilment package
+	 * (`CART_SHIPPING_RATE`), and a `name`, `amount`, `isTaxInclusive`, `taxCategoryId` or `isManual` in the
+	 * request is ignored. A choice with no option is refused (there is no operator override), as is one the
+	 * capability cannot rate on this cart; with no capability bound every choice is refused.
+	 *
 	 * @param cartId The cart.
-	 * @param method The chosen method.
+	 * @param method The chosen method: its `shippingOptionId`.
 	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the choice, re-priced.
 	 */
@@ -601,21 +626,14 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	): Promise<CommerceCart> {
 		const cart = await this.assertMutable(cartId);
 
-		if (!method.name) {
-			throw new BadRequestException('CART_SHIPPING_METHOD_NAME_REQUIRED: a shipping method needs a name.');
-		}
-		if (method.amount === undefined || method.amount === null) {
-			throw new BadRequestException(
-				'CART_SHIPPING_PRICE_REQUIRED: the computed shipping amount must be supplied by the calculator.'
-			);
-		}
-
 		const existing = (await this.shippingMethodService.findAll({
 			where: { cartId }
 		})) as IPagination<CommerceCartShippingMethod>;
 
 		// A choice naming another tenant's option is refused here, before the previous choice is retired (P0 #6c).
 		await this.shippingMethodService.assertReferences(method);
+
+		const rated = await this.resolveShippingRate(cart, method.shippingOptionId as ID);
 
 		// The caller's version decides before any row is replaced: the docstring above promises the
 		// previous choice is replaced by this one, not that it is destroyed by a request the cart then
@@ -633,9 +651,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			...method,
 			cartId,
 			organizationId: method.organizationId ?? cart.organizationId,
-			amount: this.toColumnAmount(method.amount, cart),
-			isTaxInclusive: method.isTaxInclusive ?? false,
-			isManual: method.isManual ?? false
+			...this.ratedFields(rated, cart),
+			isManual: false
 		} as DeepPartial<CommerceCartShippingMethod>);
 
 		return this.recalculate(cartId, 'SHIPPING_CHANGED', ANY_VERSION);
@@ -991,7 +1008,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		try {
 			// R3-07b: every line the price capability priced is priced again now, so the order is built from
 			// today's price and never from one a line was given before the rule (or before the price changed).
-			await this.repriceLines(existing);
+			await this.priceForCheckout(existing);
 
 			// The caller's version was spent by the claim; the recomputation rides on the version the
 			// claim produced, and the claim keeps every other writer off the cart meanwhile.
@@ -1144,8 +1161,12 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 					metadata: line.metadata
 				}) as DeepPartial<CommerceCartLine>
 		);
+		// R3-07c: a delivery choice is carried over only when it names a configured option, which the surviving
+		// cart rates again; a choice from before the rule, with no option, is left behind for the buyer to make.
 		const sourceMethod =
-			(target.shippingMethods ?? []).length === 0 ? (source.shippingMethods ?? [])[0] : undefined;
+			(target.shippingMethods ?? []).length === 0
+				? (source.shippingMethods ?? []).find((candidate) => Boolean(candidate.shippingOptionId))
+				: undefined;
 		const method = sourceMethod
 			? ({
 					shippingOptionId: sourceMethod.shippingOptionId,
@@ -1172,6 +1193,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		// the capability cannot price there refuses the merge with the target untouched — rather than after the
 		// lines before it were copied, which a retry would copy again.
 		await this.assertLinesPriceable(target, lines);
+
+		if (method) {
+			await this.resolveShippingRate(target, method.shippingOptionId as ID);
+		}
 
 		for (const line of lines) {
 			await this.addLine(target.id, line, spend());
@@ -2316,7 +2341,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Prices **every** line again at checkout (R3-07b).
+	 * Prices **every** line, and rates every delivery choice, again at checkout (R3-07b, R3-07c).
 	 *
 	 * Nothing a line carries is trusted at the moment it becomes an order: not its stored price, and not its
 	 * `metadata.priceSource`, which a direct write to the line resource can set. The cart a buyer completes is
@@ -2328,13 +2353,22 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 *
 	 * @param cart The cart being checked out.
 	 */
-	private async repriceLines(cart: CommerceCart): Promise<void> {
+	private async priceForCheckout(cart: CommerceCart): Promise<void> {
 		const lines = (
 			(await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>
 		).items;
+		const methods = (
+			(await this.shippingMethodService.findAll({
+				where: { cartId: cart.id }
+			})) as IPagination<CommerceCartShippingMethod>
+		).items;
+		const categories = await this.taxCategoriesOfVariants(
+			lines.map((line) => line.variantId).filter(Boolean) as ID[]
+		);
 
-		// Every price is resolved before any line is written: a line that cannot be priced refuses the checkout
-		// with the cart exactly as it was, rather than with some lines re-priced under totals that were not.
+		// Every price and rate is resolved before anything is written: a line or a delivery choice that cannot
+		// be priced refuses the checkout with the cart exactly as it was, rather than with some rows re-priced
+		// under totals that were not.
 		const repriced: Array<{ line: CommerceCartLine; fields: Record<string, unknown> }> = [];
 
 		for (const line of lines) {
@@ -2348,7 +2382,23 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 			const priced = await this.resolveLinePrice(cart, line.variantId, Number(line.quantity));
 
-			repriced.push({ line, fields: this.pricedFields(priced, cart, line.metadata) });
+			repriced.push({
+				line,
+				fields: {
+					...this.pricedFields(priced, cart, line.metadata),
+					// R3-07c: the catalogue's category, whatever the line was written with.
+					taxCategoryId: categories.get(String(line.variantId)) ?? null
+				}
+			});
+		}
+
+		const rerated: Array<{ method: CommerceCartShippingMethod; fields: Record<string, unknown> }> = [];
+
+		for (const method of methods) {
+			rerated.push({
+				method,
+				fields: this.ratedFields(await this.resolveShippingRate(cart, method.shippingOptionId), cart)
+			});
 		}
 
 		for (const { line, fields } of repriced) {
@@ -2360,6 +2410,7 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				Number(line.unitPrice) !== fields['unitPrice'] ||
 				Number(line.originalUnitPrice) !== fields['originalUnitPrice'] ||
 				Boolean(line.isTaxInclusive) !== fields['isTaxInclusive'] ||
+				(line.taxCategoryId ?? null) !== fields['taxCategoryId'] ||
 				this.priceSourceOf(line) !== 'ENGINE' ||
 				(line.metadata?.['priceId'] ?? null) !== (trace['priceId'] ?? null) ||
 				(line.metadata?.['priceListId'] ?? null) !== (trace['priceListId'] ?? null)
@@ -2367,6 +2418,144 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 				await this.lineService.update(line.id, fields as any);
 			}
 		}
+
+		for (const { method, fields } of rerated) {
+			if (
+				Number(method.amount) !== fields['amount'] ||
+				method.name !== fields['name'] ||
+				Boolean(method.isTaxInclusive) !== fields['isTaxInclusive'] ||
+				(method.taxCategoryId ?? null) !== fields['taxCategoryId'] ||
+				Boolean(method.isManual)
+			) {
+				await this.shippingMethodService.update(method.id, { ...fields, isManual: false } as any);
+			}
+		}
+	}
+
+	/**
+	 * Rates a configured shipping option on a cart (R3-07c).
+	 *
+	 * @param cart The cart: its channel, region, currency and what it holds.
+	 * @param optionId The option the delivery choice names.
+	 * @returns The option and what it costs on this cart.
+	 * @throws BadRequestException `CART_SHIPPING_OPTION_REQUIRED` when no option is named,
+	 * `CART_SHIPPING_OPTION_INELIGIBLE` when the option does not serve this cart, or `CART_SHIPPING_RATE_UNRESOLVED`
+	 * when it cannot be rated here — an unknown option, a calculated rate no strategy prices, another currency.
+	 * @throws ServiceUnavailableException `CART_SHIPPING_ENGINE_MISSING` when no capability is bound.
+	 */
+	private async resolveShippingRate(
+		cart: CommerceCart,
+		optionId: ID | undefined
+	): Promise<{ option: ICartShippingOption; amount: number | string }> {
+		if (!optionId) {
+			throw new BadRequestException({
+				message:
+					'CART_SHIPPING_OPTION_REQUIRED: a delivery choice names a configured shipping option; its amount is that option\'s rate.',
+				code: 'CART_SHIPPING_OPTION_REQUIRED'
+			});
+		}
+
+		if (!this.shippingRate) {
+			throw new ServiceUnavailableException({
+				message:
+					'CART_SHIPPING_ENGINE_MISSING: no delivery-rate capability is bound for this installation, and a delivery choice is never recorded at what its caller stated.',
+				code: 'CART_SHIPPING_ENGINE_MISSING'
+			});
+		}
+
+		const unresolved = (reason: string, details: Record<string, unknown> = {}) =>
+			new BadRequestException({
+				message: `CART_SHIPPING_RATE_UNRESOLVED: shipping option ${optionId} cannot be rated for this cart (${reason}).`,
+				code: 'CART_SHIPPING_RATE_UNRESOLVED',
+				details: { shippingOptionId: optionId, reason, ...details }
+			});
+
+		const option = await this.shippingRate.findOneByIdString(optionId).catch((error: unknown) => {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		});
+
+		if (!option) {
+			throw unresolved('SHIPPING_OPTION_NOT_FOUND');
+		}
+
+		const shippable = (
+			(await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>
+		).items.filter((line) => line.requiresShipping !== false);
+		const rate = await this.shippingRate.calculate(optionId, {
+			channelId: cart.channelId,
+			regionId: cart.regionId,
+			itemCount: shippable.reduce((count, line) => count + Number(line.quantity ?? 0), 0),
+			orderTotal: Number(cart.itemSubtotal ?? 0)
+		});
+
+		if (!rate?.eligible) {
+			throw new BadRequestException({
+				message: `CART_SHIPPING_OPTION_INELIGIBLE: shipping option ${optionId} does not serve this cart.`,
+				code: 'CART_SHIPPING_OPTION_INELIGIBLE',
+				details: { shippingOptionId: optionId, reason: rate?.reason ?? null }
+			});
+		}
+
+		// A calculated option is priced by a provider strategy, and nothing in this installation calls one yet:
+		// its `0` is not a rate, and recording it would ship for free.
+		if (rate.providerKey) {
+			throw unresolved('CALCULATED_BY_STRATEGY', { providerKey: rate.providerKey });
+		}
+
+		if (
+			Number(rate.amount) !== 0 &&
+			rate.currency &&
+			`${rate.currency}`.toUpperCase() !== `${cart.currency ?? ''}`.toUpperCase()
+		) {
+			throw unresolved('CURRENCY_MISMATCH', { rateCurrency: rate.currency });
+		}
+
+		return { option, amount: rate.amount };
+	}
+
+	/**
+	 * The columns a rated option writes onto a delivery choice.
+	 *
+	 * @param rated The option and its rate.
+	 * @param cart The cart, which carries the currency's scale.
+	 * @returns The fields to write.
+	 */
+	private ratedFields(
+		rated: { option: ICartShippingOption; amount: number | string },
+		cart: Pick<CommerceCart, 'currency' | 'currencyDecimals'>
+	): Record<string, unknown> {
+		return {
+			shippingOptionId: rated.option.id,
+			name: rated.option.name,
+			amount: this.toColumnAmount(rated.amount, cart),
+			isTaxInclusive: rated.option.isTaxInclusive === true,
+			taxCategoryId: rated.option.taxCategoryId ?? null
+		};
+	}
+
+	/**
+	 * The tax category each variant is taxed under, by the catalogue (R3-07c).
+	 *
+	 * @param variantIds The variants.
+	 * @returns The category per variant id; a variant with none, or every variant when no capability is bound,
+	 * maps to nothing — the rate resolution then applies the organization's default.
+	 */
+	private async taxCategoriesOfVariants(variantIds: ID[]): Promise<Map<string, ID | null>> {
+		const categories = new Map<string, ID | null>();
+
+		if (!this.taxCategories || !variantIds.length) {
+			return categories;
+		}
+
+		for (const answer of (await this.taxCategories.taxCategoriesOf(variantIds)) ?? []) {
+			categories.set(String(answer.variantId), answer.taxCategoryId ?? null);
+		}
+
+		return categories;
 	}
 
 	/**
