@@ -5,7 +5,7 @@ import { CurrencyCode, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { IPriceContext, IResolvedPrice, PriceListStatus } from '../pricing.types';
 import { ProductPriceService } from '../product-price/product-price.service';
-import { assertOrganizationUnchanged } from '../organization-scope';
+import { assertOrganizationUnchanged, statedOrganizations } from '../organization-scope';
 import { PriceList } from './price-list.entity';
 import { TypeOrmPriceListRepository } from './repository/type-orm-price-list.repository';
 import { MikroOrmPriceListRepository } from './repository/mikro-orm-price-list.repository';
@@ -196,7 +196,8 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			throw new BadRequestException('PRICE_ORGANIZATION_REQUIRED: a price list belongs to an organization.');
 		}
 
-		if (entity.organizationId && String(entity.organizationId) !== String(organizationId)) {
+		// The column and the relation alike: the ORM writes either (R2-G34).
+		if (statedOrganizations(entity).some((stated) => stated && String(stated) !== String(organizationId))) {
 			throw new BadRequestException('PRICE_ORGANIZATION_MISMATCH: a price list belongs to the caller\'s organization.');
 		}
 

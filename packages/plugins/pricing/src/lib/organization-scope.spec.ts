@@ -162,6 +162,16 @@ describe('pricing — the organization a row is written into (R2-G31, R2-G34)', 
 			expect(created).not.toHaveBeenCalled();
 		});
 
+		it('refuses a list created into another organization through the relation', async () => {
+			const { created } = stubPersistence();
+			const service = new PriceListService(emptyRepository as never, {} as never, {} as never);
+
+			await expect(
+				service.createOne({ name: 'Wholesale', code: 'WHOLESALE', organization: { id: OTHER_ORG } } as never)
+			).rejects.toThrow(/PRICE_ORGANIZATION_MISMATCH/);
+			expect(created).not.toHaveBeenCalled();
+		});
+
 		it('keeps a list in its own organization when it is updated from another one', async () => {
 			const { updated } = stubPersistence();
 			const service = new PriceListService(emptyRepository as never, {} as never, {} as never);
