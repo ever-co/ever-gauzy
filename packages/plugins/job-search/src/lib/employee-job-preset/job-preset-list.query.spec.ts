@@ -24,7 +24,13 @@ describe('jobPresetListQuery', () => {
 		await db('job_preset').insert([
 			{ id: 'p1', tenantId: 'tenant-1', organizationId: 'org-1', name: 'Angular jobs', deletedAt: null },
 			{ id: 'p2', tenantId: 'tenant-1', organizationId: 'org-1', name: 'Node jobs', deletedAt: null },
-			{ id: 'p3', tenantId: 'tenant-1', organizationId: 'org-1', name: 'Old jobs', deletedAt: '2026-10-01 00:00:00' },
+			{
+				id: 'p3',
+				tenantId: 'tenant-1',
+				organizationId: 'org-1',
+				name: 'Old jobs',
+				deletedAt: '2026-10-01 00:00:00'
+			},
 			{ id: 'p4', tenantId: 'tenant-2', organizationId: 'org-2', name: 'Other tenant', deletedAt: null }
 		]);
 		await db('employee_job_preset').insert([{ jobPresetId: 'p2', employeeId: 'employee-1' }]);
