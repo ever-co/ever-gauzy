@@ -26,7 +26,10 @@ describe('FeedbackUpdateHandler', () => {
 	};
 
 	it('recomputes the rating of the interview named by the flat interviewId (REST)', async () => {
-		const { candidateFeedbackService, candidateInterviewService } = await run({ interviewId: 'interview-1', rating: 2 });
+		const { candidateFeedbackService, candidateInterviewService } = await run({
+			interviewId: 'interview-1',
+			rating: 2
+		});
 
 		expect(candidateFeedbackService.getFeedbacksByInterviewId).toHaveBeenCalledWith('interview-1');
 		expect(candidateInterviewService.create).toHaveBeenCalledWith({ id: 'interview-1', rating: 3 });
