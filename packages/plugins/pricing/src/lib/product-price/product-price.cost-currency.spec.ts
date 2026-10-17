@@ -194,6 +194,19 @@ describe('ProductPriceService — a cost is used in the price’s currency (R2-3
 		expect(resolved.notices ?? []).toEqual([]);
 	});
 
+	it('reports an unchecked margin when no rate covers the legacy cost of a fixed-amount row', async () => {
+		const [resolved] = await resolve(
+			serviceUnderTest([amountRow({ id: 'p-default', amount: '12.000000', minMarginPercent: '0.250000' })], {
+				unitCost: 10,
+				unitCostCurrency: 'GBP'
+			})
+		);
+
+		// The price is still charged: the margin check reports, it never refuses.
+		expect(resolved.amount).toBe('12.000000');
+		expect(resolved.notices?.some((notice) => notice.startsWith('MARGIN_UNCHECKED'))).toBe(true);
+	});
+
 	it('reports a stored margin floor no price can satisfy instead of failing the resolution', async () => {
 		const [resolved] = await resolve(
 			serviceUnderTest([amountRow({ id: 'p-default', amount: '12.000000', minMarginPercent: '1.000000' })], {

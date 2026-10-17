@@ -166,13 +166,51 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		options: { ignoreTierOf?: Set<string> } = {}
 	): Promise<UpdateResult | ProductPrice> {
 		const existing = await this.findOneByIdString(id);
-		// The row as it would stand after the change: the fields the caller did not state keep the value
-		// they already hold, which is what makes the overlap and margin checks meaningful on a partial
-		// update rather than against a half-built row.
+		const prepared = this.prepare(this.mergeWithStored(existing, entity));
+
+		// Only a list the caller names is checked: a row of a list deleted since stays editable — it no
+		// longer resolves anyway — and can be moved to a live list.
+		await this.assertListsAreLive({
+			priceListId: entity.priceListId !== undefined ? prepared.priceListId : undefined,
+			basePriceListId: entity.basePriceListId !== undefined ? prepared.basePriceListId : undefined
+		});
+		await this.assertTierIsFree(prepared, options.ignoreTierOf);
+		this.assertMarginFloor(prepared);
+		await this.assertBaseChainIsUsable(prepared, []);
+
+		// Only what the caller stated is written, with the normalisation the full row received: omitting a
+		// field leaves it alone rather than clearing it, so a partial update cannot silently drop a
+		// guard rail or a quantity band. The mode and the amount travel together, because they are one
+		// fact: writing one without the other would leave a row whose shape contradicts its own rule.
+		const changes: DeepPartial<ProductPrice> = { ...this.suppliedOnly(entity, prepared) };
+
+		if (entity.computeMode !== undefined || entity.amount !== undefined) {
+			changes.computeMode = prepared.computeMode;
+			changes.amount = prepared.amount;
+		}
+
+		return await super.update(id, changes);
+	}
+
+	/**
+	 * The row as it would stand after a partial update: the fields the caller did not state keep the
+	 * value they already hold, which is what makes the overlap and margin checks meaningful on a partial
+	 * update rather than against a half-built row.
+	 *
+	 * It is the one merge both the update and the pre-flight of an atomic batch check, so the two cannot
+	 * drift apart: a pre-flight that built its row differently (without the stored margin floor, say)
+	 * passed a row the update then refused, half-writing the batch.
+	 *
+	 * @param existing The stored row.
+	 * @param entity The fields to change.
+	 * @returns The merged row, not yet normalised.
+	 */
+	private mergeWithStored(existing: ProductPrice, entity: DeepPartial<ProductPrice>): DeepPartial<ProductPrice> {
 		const computeMode = (entity.computeMode as PriceComputeMode) ?? existing.computeMode;
-		const merged: DeepPartial<ProductPrice> = {
+
+		return {
 			...entity,
-			id,
+			id: existing.id,
 			variantId: (entity.variantId as ID) ?? existing.variantId,
 			currency: (entity.currency as CurrencyCode) ?? existing.currency,
 			priceListId: entity.priceListId !== undefined ? (entity.priceListId as ID) : existing.priceListId,
@@ -201,30 +239,6 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			startsAt: entity.startsAt !== undefined ? (entity.startsAt as Date) : existing.startsAt,
 			endsAt: entity.endsAt !== undefined ? (entity.endsAt as Date) : existing.endsAt
 		};
-		const prepared = this.prepare(merged);
-
-		// Only a list the caller names is checked: a row of a list deleted since stays editable — it no
-		// longer resolves anyway — and can be moved to a live list.
-		await this.assertListsAreLive({
-			priceListId: entity.priceListId !== undefined ? prepared.priceListId : undefined,
-			basePriceListId: entity.basePriceListId !== undefined ? prepared.basePriceListId : undefined
-		});
-		await this.assertTierIsFree(prepared, options.ignoreTierOf);
-		this.assertMarginFloor(prepared);
-		await this.assertBaseChainIsUsable(prepared, []);
-
-		// Only what the caller stated is written, with the normalisation the full row received: omitting a
-		// field leaves it alone rather than clearing it, so a partial update cannot silently drop a
-		// guard rail or a quantity band. The mode and the amount travel together, because they are one
-		// fact: writing one without the other would leave a row whose shape contradicts its own rule.
-		const changes: DeepPartial<ProductPrice> = { ...this.suppliedOnly(entity, prepared) };
-
-		if (entity.computeMode !== undefined || entity.amount !== undefined) {
-			changes.computeMode = prepared.computeMode;
-			changes.amount = prepared.amount;
-		}
-
-		return await super.update(id, changes);
 	}
 
 	/**
@@ -350,13 +364,11 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 					addressed.add(String(existing.id));
 				}
 
-				// A matrix item states no window, so a row it updates keeps its own, which the overlap checks
-				// below have to see; the write path reads it from the stored row the same way.
-				prepared.push({
-					...this.prepare(this.toPricePayload(item, existing)),
-					startsAt: existing?.startsAt,
-					endsAt: existing?.endsAt
-				});
+				// The row the write will check: a row the batch updates is merged with its stored fields
+				// exactly as `updateOne` merges it (its window, its margin floor, …).
+				const payload = this.toPricePayload(item, existing);
+
+				prepared.push(this.prepare(existing ? this.mergeWithStored(existing, payload) : payload));
 			} catch (error) {
 				throw new BadRequestException(
 					`PRICE_BULK_INVALID: row ${index} of the batch cannot be written — ${this.messageOf(error)}`
@@ -369,7 +381,9 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 				await this.assertListsAreLive(row);
 				await this.assertTierIsFree(row, addressed);
 				this.assertMarginFloor(row);
-				await this.assertBaseChainIsUsable(row, []);
+				// The chain is followed through the batch's own derivations too: written one by one, a chain
+				// the batch builds is only found too deep — or cyclic — once most of it is saved.
+				await this.assertBaseChainIsUsable(row, [], prepared);
 
 				const rival = prepared.findIndex(
 					(other, otherIndex) => otherIndex < index && this.competesWith(row, other)
@@ -1492,7 +1506,11 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 	 * @throws BadRequestException with `PRICE_BASE_CYCLE` when the chain returns to a list it has
 	 * already read, or with `PRICE_BASE_CHAIN_TOO_DEEP` when it exceeds the resolution depth cap.
 	 */
-	private async assertBaseChainIsUsable(entity: DeepPartial<ProductPrice>, visited: ID[]): Promise<void> {
+	private async assertBaseChainIsUsable(
+		entity: DeepPartial<ProductPrice>,
+		visited: ID[],
+		batch: DeepPartial<ProductPrice>[] = []
+	): Promise<void> {
 		if (entity.computeMode !== PriceComputeMode.PERCENT_OFF) {
 			return;
 		}
@@ -1516,20 +1534,30 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 		}
 
 		const { tenantId, organizationId } = this.scope;
-		const base = await this.typeOrmProductPriceRepository.findOne({
-			where: {
-				tenantId,
-				organizationId,
-				priceListId: basePriceListId,
-				computeMode: PriceComputeMode.PERCENT_OFF
-			} as FindOptionsWhere<ProductPrice>
-		});
+		// A derivation of the base list that the same batch writes is followed before a stored one.
+		const fromBatch = batch.find(
+			(row) =>
+				row !== entity &&
+				String(row.priceListId ?? '') === String(basePriceListId) &&
+				row.computeMode === PriceComputeMode.PERCENT_OFF &&
+				row.baseSource === PriceBaseSource.PRICE_LIST
+		);
+		const base =
+			fromBatch ??
+			(await this.typeOrmProductPriceRepository.findOne({
+				where: {
+					tenantId,
+					organizationId,
+					priceListId: basePriceListId,
+					computeMode: PriceComputeMode.PERCENT_OFF
+				} as FindOptionsWhere<ProductPrice>
+			}));
 
 		if (!base) {
 			return;
 		}
 
-		await this.assertBaseChainIsUsable(base, [...visited, basePriceListId]);
+		await this.assertBaseChainIsUsable(base, [...visited, basePriceListId], batch);
 	}
 
 	/**

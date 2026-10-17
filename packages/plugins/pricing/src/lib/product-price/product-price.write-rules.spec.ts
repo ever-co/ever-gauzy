@@ -50,9 +50,15 @@ interface IPriceRow {
 	maxQuantity?: string;
 	startsAt?: Date;
 	endsAt?: Date;
+	costAmount?: string;
+	minMarginPercent?: string;
 }
 
+/** Seven live lists, for a chain of derived lists a batch builds. */
+const CHAIN = Array.from({ length: 7 }, (_, index) => `00000000-0000-4000-8000-00000000020${index}`);
+
 const LISTS: IListRow[] = [
+	...CHAIN.map((id) => ({ id, tenantId: TENANT, organizationId: ORG })),
 	{ id: LIVE_LIST, tenantId: TENANT, organizationId: ORG },
 	{ id: OTHER_ORG_LIST, tenantId: TENANT, organizationId: OTHER_ORG },
 	{ id: DELETED_LIST, tenantId: TENANT, organizationId: ORG, deletedAt: new Date('2026-01-10T00:00:00.000Z') }
@@ -317,6 +323,53 @@ describe('ProductPriceService — write rules (R2-30)', () => {
 			expect(result.failed).toEqual([]);
 			expect(updated).toHaveBeenCalledTimes(1);
 			expect(created).toHaveBeenCalledTimes(2);
+		});
+
+		it('checks a row it updates against the stored margin floor before writing anything', async () => {
+			const { service } = serviceUnderTest([
+				stored({
+					id: 'p-floor',
+					amount: '14.000000',
+					costAmount: '10.000000',
+					minMarginPercent: '0.250000',
+					maxQuantity: '9.000000'
+				})
+			]);
+			const { created, updated } = stubWrites(service);
+
+			// Row 0 is unrelated and valid; row 1 lowers the stored row to 12.00, below its 13.33 floor
+			// (10.00 / 0.75), which the batch itself does not restate.
+			await expect(
+				service.bulkUpsert({
+					atomic: true,
+					items: [
+						{ variantId: VARIANT, currency: 'CAD', amount: '9.000000', minQuantity: '10.000000' },
+						{ id: 'p-floor', currency: 'CAD', amount: '12.000000' }
+					]
+				})
+			).rejects.toThrow(/PRICE_BULK_INVALID: row 1 .*PRICE_BELOW_MIN_MARGIN/);
+			expect(created).not.toHaveBeenCalled();
+			expect(updated).not.toHaveBeenCalled();
+		});
+
+		it('follows a chain of derived lists the batch builds itself', async () => {
+			const { service } = serviceUnderTest([]);
+			const { created } = stubWrites(service);
+
+			// L5 → L6, then L4 → L5, … L0 → L1: each derivation's base has no saved derivation yet, so a
+			// check against saved rows alone passed every row and the sixth write found the chain too deep.
+			const items = [5, 4, 3, 2, 1, 0].map((index) => ({
+				variantId: VARIANT,
+				priceListId: CHAIN[index],
+				currency: 'CAD',
+				computeMode: PriceComputeMode.PERCENT_OFF,
+				percent: '0.100000',
+				baseSource: PriceBaseSource.PRICE_LIST,
+				basePriceListId: CHAIN[index + 1]
+			}));
+
+			await expect(service.bulkUpsert({ atomic: true, items })).rejects.toThrow(/PRICE_BASE_CHAIN_TOO_DEEP/);
+			expect(created).not.toHaveBeenCalled();
 		});
 	});
 });
