@@ -28,6 +28,7 @@ describe('SubscriptionStreamedEvents', () => {
 		expect(catalogue.names()).toEqual([
 			'subscription.activated',
 			'subscription.canceled',
+			'subscription.cancellation-undone',
 			'subscription.created',
 			'subscription.expired',
 			'subscription.paused',
@@ -48,7 +49,7 @@ describe('SubscriptionStreamedEvents', () => {
 		const catalogue = new SubscriptionCatalogue();
 
 		expect(() => new SubscriptionStreamedEvents(catalogue).onModuleInit()).not.toThrow();
-		expect(catalogue.size).toBe(8);
+		expect(catalogue.size).toBe(9);
 	});
 
 	it('declares only names the package really appends to the outbox', () => {
