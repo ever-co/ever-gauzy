@@ -487,6 +487,8 @@ export const schemaExtensions = gql`
 		recoverCollection(id: ID!): Collection!
 		addCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+		"Writes the whole product set of a collection in one call, in order — the set route's own operation."
+		replaceCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		"Retires one collection membership recoverably, so the product stays curated into the collection."
 		softDeleteCollectionProduct(id: ID!): CollectionProduct!
 		"Restores a soft-deleted collection membership."
