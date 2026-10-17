@@ -178,6 +178,7 @@ class PushActivities {
 
 	startPooling() {
 		try {
+			this.workerQueue?.desktopQueue?.resumeQueue();
 			this.workerQueue?.desktopQueue?.initWorker();
 			this.workerQueue?.immediatelyCheckUnSync();
 			this.agentLogger.info('Polling scheduler started');
