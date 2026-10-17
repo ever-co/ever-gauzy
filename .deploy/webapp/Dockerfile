@@ -113,6 +113,8 @@ COPY --chown=node:node packages/plugins/dashboard-time-track-angular-ui/package.
 COPY --chown=node:node packages/plugins/dashboard-time-track-react-ui/package.json ./packages/plugins/dashboard-time-track-react-ui/
 COPY --chown=node:node packages/plugins/ai-chat-react-ui/package.json ./packages/plugins/ai-chat-react-ui/
 COPY --chown=node:node packages/plugins/docs-ui/package.json ./packages/plugins/docs-ui/
+# @gauzy/plugin-integration-ever-works depends on @gauzy/plugin-docs; without its manifest yarn looks it up on npm and the install fails
+COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
 COPY --chown=node:node packages/plugins/inbox-ui/package.json ./packages/plugins/inbox-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
