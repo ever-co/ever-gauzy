@@ -180,7 +180,7 @@ describe('the timestamp', () => {
 		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},${signature}`, { now: TS })).toBe(true);
 		// Every other spelling of the same instant would verify under Number() and re-send one captured delivery
 		// past a receiver's single-use guard.
-		for (const spelling of [`0${TS}`, `+${TS}`, `${TS}.0`, '1.7e9', `${TS}e0`, `0x${TS.toString(16)}`, ` ${TS}x`]) {
+		for (const spelling of [`0${TS}`, `+${TS}`, `${TS}.0`, '1.7e9', `${TS}e0`, `0x${TS.toString(16)}`, ` ${TS}`]) {
 			expect(verifyWebhookSignature(SECRET, BODY, `t=${spelling},${signature}`, { now: TS })).toBe(false);
 		}
 	});
