@@ -371,7 +371,11 @@ export const fulfillmentSchemaExtensions = gql`
 		older \`input\`, the create's shape, which restates \`name\` and \`code\` and keeps working. Both, or neither,
 		is refused.
 		"""
-		updateShippingProfile(id: ID!, input: CreateShippingProfileInput, patch: UpdateShippingProfileInput): ShippingProfile!
+		updateShippingProfile(
+			id: ID!
+			input: CreateShippingProfileInput
+			patch: UpdateShippingProfileInput
+		): ShippingProfile!
 		deleteShippingProfile(id: ID!): Boolean!
 		"Retire a shipping profile recoverably, so the variants that ship under it keep their group."
 		softDeleteShippingProfile(id: ID!): ShippingProfile!
@@ -388,7 +392,11 @@ export const fulfillmentSchemaExtensions = gql`
 		older \`input\`, the create's shape, which restates \`name\`, \`code\` and \`priceType\` and keeps working. Both, or
 		neither, is refused.
 		"""
-		updateShippingOption(id: ID!, input: CreateShippingOptionInput, patch: UpdateShippingOptionInput): ShippingOption!
+		updateShippingOption(
+			id: ID!
+			input: CreateShippingOptionInput
+			patch: UpdateShippingOptionInput
+		): ShippingOption!
 		deleteShippingOption(id: ID!): Boolean!
 		"Retire a shipping option recoverably, so the carts that selected it keep their record."
 		softDeleteShippingOption(id: ID!): ShippingOption!

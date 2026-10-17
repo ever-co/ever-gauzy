@@ -462,7 +462,9 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		const orderLineId = line?.orderLineId as ID;
 
 		if (!orderLineId) {
-			throw new BadRequestException('FULFILLMENT_LINE_ORDER_LINE_REQUIRED: a line names the order line it ships.');
+			throw new BadRequestException(
+				'FULFILLMENT_LINE_ORDER_LINE_REQUIRED: a line names the order line it ships.'
+			);
 		}
 
 		const direction = fulfillment.direction ?? FulfillmentDirection.OUTBOUND;

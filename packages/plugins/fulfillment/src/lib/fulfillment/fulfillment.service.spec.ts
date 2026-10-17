@@ -2563,7 +2563,10 @@ describe('FulfillmentService — appending a line to a pending shipment (review 
 	it('appends the line, moves the order line’s counter and re-derives the order', async () => {
 		const fixture = fulfillmentFixture({
 			seed: {
-				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 2 }), orderLine(LINE_B, { quantity: 4 })],
+				order_line: [
+					orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 2 }),
+					orderLine(LINE_B, { quantity: 4 })
+				],
 				fulfillment: [shipment('open')],
 				fulfillment_line: [shipmentLine('first', 'open', LINE_A, 2)]
 			}
