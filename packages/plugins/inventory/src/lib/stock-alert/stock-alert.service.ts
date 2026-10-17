@@ -44,9 +44,10 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 	public async createAlert(input: Partial<StockAlert>): Promise<StockAlert> {
 		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
 		// stamps only the tenant, so a rule created over GraphQL was written with `organizationId = NULL` — and the
-		// organization-scoped reads and the organization's evaluation pass never found it again (review R2-G37, the R2-23
-		// class). The caller's organization is stamped when the input states none; an organization the request stated is
-		// kept (REST validates it against the caller).
+		// rule belonged to no organization: a read narrowed to the caller's organization never listed it (review
+		// R2-G37, the R2-23 class). The evaluation pass reads by tenant, so the rule still fired. The caller's
+		// organization is stamped when the input states none; an organization the request stated is kept (REST
+		// validates it against the caller).
 		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
 
 		const existing = await this.typeOrmStockAlertRepository.findOne({
