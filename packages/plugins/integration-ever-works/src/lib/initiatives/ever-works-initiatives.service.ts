@@ -1356,9 +1356,12 @@ export class EverWorksInitiativesService
 		return {
 			missions: missions.map((mission) => {
 				const linkedInitiativeId = linkByEw.get(mission.id) ?? null;
-				const match = linkedInitiativeId
-					? undefined
-					: initiatives.find((row) => !linked.has(row.id as ID) && sameTitle(row.title, mission.title));
+				// A suggestion only when exactly one free initiative has the title: with two of the same title,
+				// which one is meant is the admin's call (and "accept every suggestion" must not pick one).
+				const candidates = linkedInitiativeId
+					? []
+					: initiatives.filter((row) => !linked.has(row.id as ID) && sameTitle(row.title, mission.title));
+				const match = candidates.length === 1 ? candidates[0] : undefined;
 				return {
 					ewMissionId: mission.id,
 					title: mission.title ?? '',
