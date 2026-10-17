@@ -117,7 +117,7 @@ describe('EverWorksMatchReviewComponent', () => {
 		expect(api.decideTeams).toHaveBeenCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }], createInGauzy: ['t2'], createInEverWorks: ['g2'] });
 	});
 
-	it('lists the inbox items waiting for an unpaired member, by name (or id once they left), and nothing when none wait', () => {
+	it('lists the inbox items waiting for an unpaired member, by name (or id once they left)', () => {
 		api.people.mockReturnValue(
 			of({
 				...PEOPLE,
@@ -133,8 +133,11 @@ describe('EverWorksMatchReviewComponent', () => {
 		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('Approve the deploy?');
 		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('u-gone');
 		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('i2');
-		TestBed.resetTestingModule();
-		api.people.mockReturnValue(of(PEOPLE));
+	});
+
+	// Its own test: a TestBed reset inside a test also drops the app-wide defaults (jest.angular-defaults.ts:
+	// the translate service, Nebular's forRoot modules) that a top-level beforeEach adds once per test.
+	it('lists nothing when no inbox item waits', () => {
 		expect(render().el.querySelector('[data-test="deferred-inbox"]')).toBeNull();
 	});
 

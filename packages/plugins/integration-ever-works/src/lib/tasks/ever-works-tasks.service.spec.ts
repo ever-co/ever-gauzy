@@ -334,7 +334,14 @@ function setup(options: { directions?: Record<string, string>; settings?: Record
 		tasks.set(full['id'], full);
 		return full;
 	};
-	const queue = { enqueued: [] as Array<Record<string, unknown>>, enqueue: async (trigger: Record<string, unknown>) => void queue.enqueued.push(trigger) };
+	// Like the real queue, `enqueue` says whether the change was queued (the orphan sweep marks a link only then).
+	const queue = {
+		enqueued: [] as Array<Record<string, unknown>>,
+		enqueue: async (trigger: Record<string, unknown>): Promise<boolean> => {
+			queue.enqueued.push(trigger);
+			return true;
+		}
+	};
 	const logged: Array<Record<string, unknown>> = [];
 	const log = { write: async (entry: Record<string, unknown>) => void logged.push(entry) };
 	const contexts = { forEverWorksOrganization: async () => context, forOrganization: async () => context, forConnection: async () => [context] };

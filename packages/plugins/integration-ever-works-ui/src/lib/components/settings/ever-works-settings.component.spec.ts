@@ -103,7 +103,8 @@ describe('EverWorksSettingsComponent', () => {
 			providers: [
 				{ provide: EverWorksUiService, useValue: api },
 				{ provide: Store, useValue: { selectedOrganization$: of(ORGANIZATION) } },
-				{ provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ integrationTenantId: ID })) } }
+				// `params` too: the settings tabs (`nb-tabset`) read `route.params` when their content is ready.
+				{ provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ integrationTenantId: ID })), params: of({ integrationTenantId: ID }) } }
 			]
 		});
 		const fixture = TestBed.createComponent(EverWorksSettingsComponent);
