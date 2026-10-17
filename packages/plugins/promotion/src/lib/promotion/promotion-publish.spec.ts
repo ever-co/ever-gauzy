@@ -83,6 +83,16 @@ describe('a create that publishes a discount needs PROMOTIONS_EDIT (R2-G29)', ()
 		expect(service.createPromotion).toHaveBeenCalledTimes(1);
 	});
 
+	it('publishes an ACTIVE promotion on REST for a caller who may also edit', async () => {
+		grants(PromotionPermission.PROMOTIONS_CREATE, PromotionPermission.PROMOTIONS_EDIT);
+		const { service, controller } = surfaces();
+
+		await expect(controller.create({ title: 'Live', status: PromotionStatus.ACTIVE } as never)).resolves.toEqual(
+			expect.objectContaining({ status: PromotionStatus.ACTIVE })
+		);
+		expect(service.createPromotion).toHaveBeenCalledTimes(1);
+	});
+
 	it('names what published in the refusal', () => {
 		grants();
 
