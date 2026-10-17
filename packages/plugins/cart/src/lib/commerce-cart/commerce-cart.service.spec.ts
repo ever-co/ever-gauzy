@@ -1,4 +1,4 @@
-// cspell:ignore TENOFF
+// cspell:ignore TENOFF SHIPFREE
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a cart service needs and none of which is available
@@ -461,7 +461,28 @@ type StockLevel = number | { sellableQuantity: number; allowBackorder?: boolean;
  * @param options.stock Per-variant levels, overriding `DEFAULT_STOCK_LEVEL`; `false` for an
  * installation with no stock capability registered.
  */
-function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxRate?: number } = {}) {
+/** What the promotion engine double grants for one code: an amount, or an amount under a stated promotion id. */
+type PromotionGrant = number | string | { amount: number | string; promotionId?: string };
+
+/**
+ * What the promotion engine double grants when a fixture states nothing (R3-07).
+ *
+ * The cart no longer records the amount a caller states beside a code — it asks the engine — so the suite's
+ * money cases, which apply `TENOFF` for 4 and `PENNIES` for 0.10, are answered by an engine that grants
+ * exactly those amounts for exactly those codes. A case that needs a different grant states its own table.
+ */
+const DEFAULT_PROMOTION_GRANTS: Record<string, PromotionGrant> = {
+	TENOFF: { amount: 4, promotionId: 'promo-1' },
+	PENNIES: '0.1'
+};
+
+function cartFixture(
+	options: {
+		stock?: Record<string, StockLevel> | false;
+		taxRate?: number;
+		promotions?: Record<string, PromotionGrant> | false;
+	} = {}
+) {
 	const tables: ITables = {
 		commerce_cart: [],
 		commerce_cart_line: [],
@@ -620,6 +641,45 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 					})
 				};
 
+	/**
+	 * The promotion capability (R3-07), in the engine's own shape: it is handed the cart's codes and lines —
+	 * never an amount — and answers from a table of what each code grants, with a notice for a code that
+	 * names nothing. `promotions: false` leaves the port absent, which is the installation with no engine.
+	 */
+	const promotionTable = options.promotions === false ? {} : options.promotions ?? DEFAULT_PROMOTION_GRANTS;
+	const promotionPort =
+		options.promotions === false
+			? undefined
+			: {
+					evaluate: jest.fn(async (query: any): Promise<any> => {
+						const codes: string[] = query.codes ?? [];
+						const applications = codes
+							.filter((code) => promotionTable[code] !== undefined)
+							.map((code) => {
+								const grant = promotionTable[code];
+								const stated = typeof grant === 'object' ? grant : { amount: grant };
+
+								return {
+									promotionId: stated.promotionId ?? `promotion-${code}`,
+									code,
+									isAutomatic: false,
+									amount: String(stated.amount),
+									currency: query.currency
+								};
+							});
+						const notices = codes
+							.filter((code) => promotionTable[code] === undefined)
+							.map((code) => ({
+								promotionId: '',
+								code,
+								notice: 'COUPON_INACTIVE',
+								message: `No promotion carries the code "${code}".`
+							}));
+
+						return { result: { applications, notices, discountTotal: '0', currency: query.currency } };
+					})
+				};
+
 	const service = new CommerceCartService(
 		repository(tables, 'commerce_cart') as never,
 		{} as never,
@@ -630,7 +690,8 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 		adjustmentService as never,
 		taxLineService as never,
 		stockPort as never,
-		taxPort as never
+		taxPort as never,
+		promotionPort as never
 	);
 
 	return {
@@ -641,7 +702,8 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 		shippingMethodService,
 		promotionService,
 		checkoutSessionService,
-		stockPort
+		stockPort,
+		promotionPort
 	};
 }
 
@@ -1185,7 +1247,7 @@ describe('CommerceCartService — money', () => {
 	it('rates the amount the buyer actually pays, after the discount the promotion allocated', async () => {
 		// The money specification's rule: `baseAmount` is the owner's net after discount. Rating the
 		// catalogue price instead would charge tax on money nobody pays.
-		const { service, ledger } = cartFixture({ taxRate: 0.2 });
+		const { service, ledger } = cartFixture({ taxRate: 0.2, promotions: { TENOFF: 10 } });
 		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
 
 		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
@@ -2106,5 +2168,177 @@ describe('CommerceCartService — the guest-access token', () => {
 		jest.spyOn(service, 'findOneByOptions').mockRejectedValue(new Error('the store is unreachable'));
 
 		await expect(service.findByToken('any-token')).rejects.toThrow('the store is unreachable');
+	});
+});
+
+/**
+ * R3-07: the cart accepted a caller-stated discount.
+ *
+ * `applyPromotion` recorded whatever `amount` it was handed beside a code, and `POST /carts/:id/promotions`
+ * and `applyCartPromotion` handed it the request's — so a buyer could name any code and any discount and the
+ * cart re-priced from it. The discount is now the promotion engine's answer for this cart, reached through
+ * `CART_PROMOTION_EVALUATION`; the request names the promotion and nothing it says about an amount is read.
+ */
+describe('CommerceCartService — the discount is the promotion engine’s (R3-07)', () => {
+	it('records the amount the engine grants, never the amount the caller states', async () => {
+		const { service, tables } = cartFixture({ promotions: { TENOFF: 4 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20 });
+
+		// The buyer asks for the whole cart off.
+		const priced = await service.applyPromotion(cart.id, { code: 'tenoff', amount: 40 } as any);
+
+		expect(tables.commerce_cart_promotion).toHaveLength(1);
+		expect(Number(tables.commerce_cart_promotion[0].amount)).toBe(4);
+		expect(tables.commerce_cart_promotion[0].code).toBe('TENOFF');
+		expect(priced.discountTotal).toBe(4);
+		expect(priced.grandTotal).toBe(36);
+	});
+
+	it('hands the engine the cart and every code it carries, and no amount', async () => {
+		const { service, promotionPort } = cartFixture({ promotions: { TENOFF: 4, FIVE: 5 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', customerId: 'customer-1' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20, sku: 'SKU-A' });
+		// A line the catalogue excluded from promotions is not the engine's to discount.
+		await service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			unitPrice: 7,
+			isDiscountable: false
+		});
+
+		await service.applyPromotion(cart.id, { code: 'TENOFF', amount: 999 } as any);
+		await service.applyPromotion(cart.id, { code: 'FIVE', amount: 999 } as any);
+
+		const query = promotionPort!.evaluate.mock.calls[1][0];
+
+		expect(query).toMatchObject({ currency: 'USD', channelId: 'channel-1', customerId: 'customer-1' });
+		expect(query.codes).toEqual(['TENOFF', 'FIVE']);
+		expect(query.lines).toHaveLength(1);
+		expect(query.lines[0]).toMatchObject({ quantity: 2, variantId: 'v1', sku: 'SKU-A' });
+		expect(Number(query.lines[0].amount)).toBe(40);
+		expect(JSON.stringify(promotionPort!.evaluate.mock.calls)).not.toContain('999');
+	});
+
+	it('refuses a promotion the engine grants nothing, with the engine’s notice, and writes nothing', async () => {
+		const { service, tables } = cartFixture({ promotions: {} });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const added = await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await expect(service.applyPromotion(cart.id, { code: 'BOGUS', amount: 20 } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: {
+					code: 'BOGUS',
+					notices: [expect.objectContaining({ code: 'BOGUS', notice: 'COUPON_INACTIVE' })]
+				}
+			}
+		});
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+		expect(Number(tables.commerce_cart[0].version)).toBe(Number(added.version));
+	});
+
+	it('fails closed when no promotion engine is bound', async () => {
+		const { service, tables } = cartFixture({ promotions: false });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await expect(service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4 } as any)).rejects.toMatchObject({
+			response: { code: 'CART_PROMOTION_ENGINE_MISSING' }
+		});
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+
+		const untouched = await service.findOneByIdString(cart.id);
+		expect(untouched.discountTotal ?? 0).toBe(0);
+	});
+
+	it('retires what the engine no longer grants beside the new code, so exclusive discounts never stack', async () => {
+		// LOW and HIGH are exclusive members of one stacking group, HIGH first by priority: applied alone LOW is
+		// granted, evaluated together only HIGH is. The cart keeps the engine's answer for the whole set.
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const codes: string[] = query.codes ?? [];
+			const grant = codes.includes('HIGH') ? { code: 'HIGH', amount: '20' } : { code: 'LOW', amount: '5' };
+
+			return {
+				result: {
+					applications: [
+						{
+							promotionId: `promotion-${grant.code}`,
+							code: grant.code,
+							isAutomatic: false,
+							amount: grant.amount,
+							currency: 'USD'
+						}
+					],
+					notices: [],
+					discountTotal: '0',
+					currency: 'USD'
+				}
+			};
+		});
+
+		await service.applyPromotion(cart.id, { code: 'LOW' } as any);
+		const priced = await service.applyPromotion(cart.id, { code: 'HIGH' } as any);
+
+		const live = tables.commerce_cart_promotion.filter((row: any) => !row.deletedAt);
+		expect(live.map((row: any) => row.code)).toEqual(['HIGH']);
+		expect(priced.discountTotal).toBe(20);
+		expect(priced.grandTotal).toBe(80);
+	});
+
+	it('records only what the engine takes off the lines, and refuses a delivery-only discount', async () => {
+		// The cart spreads a promotion over its lines, so a part the engine took off a delivery choice is not
+		// moved onto the items (it would reduce their tax base instead of shipping's).
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 10 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const line = query.lines[0];
+			const method = query.shipping[0];
+			const applications: any[] = [];
+			const allocations: any[] = [];
+
+			if ((query.codes ?? []).includes('BUNDLE')) {
+				applications.push({ promotionId: 'p-bundle', code: 'BUNDLE', isAutomatic: false, amount: '15' });
+				allocations.push(
+					{ ownerType: 'LINE', ownerId: line.id, promotionId: 'p-bundle', amount: '5' },
+					{ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-bundle', amount: '10' }
+				);
+			}
+
+			if ((query.codes ?? []).includes('SHIPFREE')) {
+				applications.push({ promotionId: 'p-ship', code: 'SHIPFREE', isAutomatic: false, amount: '10' });
+				allocations.push({ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-ship', amount: '10' });
+			}
+
+			return { result: { applications, notices: [], discountTotal: '0', currency: 'USD' }, allocations };
+		});
+
+		await expect(service.applyPromotion(cart.id, { code: 'SHIPFREE' } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: { notices: [expect.objectContaining({ notice: 'SHIPPING_DISCOUNT_NOT_SUPPORTED' })] }
+			}
+		});
+
+		await service.applyPromotion(cart.id, { code: 'BUNDLE' } as any);
+
+		expect(tables.commerce_cart_promotion.map((row: any) => Number(row.amount))).toEqual([5]);
+	});
+
+	it('refuses a request that names no promotion at all', async () => {
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await expect(service.applyPromotion(cart.id, { amount: 4 } as any)).rejects.toMatchObject({
+			response: { code: 'CART_PROMOTION_REFERENCE_REQUIRED' }
+		});
 	});
 });

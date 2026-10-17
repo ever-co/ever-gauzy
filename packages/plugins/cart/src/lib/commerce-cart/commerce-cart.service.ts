@@ -54,7 +54,15 @@ import {
 	TotalsCalculator
 } from '../totals/totals-calculator';
 import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
-import { CART_STOCK_AVAILABILITY, CART_TAX_CALCULATION, ICartStockPort, ICartTaxPort } from '../cart.types';
+import {
+	CART_PROMOTION_EVALUATION,
+	CART_STOCK_AVAILABILITY,
+	CART_TAX_CALCULATION,
+	ICartPromotionApplication,
+	ICartPromotionPort,
+	ICartStockPort,
+	ICartTaxPort
+} from '../cart.types';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -145,7 +153,10 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		private readonly stockAvailability?: ICartStockPort,
 		@Optional()
 		@Inject(CART_TAX_CALCULATION)
-		private readonly taxCalculation?: ICartTaxPort
+		private readonly taxCalculation?: ICartTaxPort,
+		@Optional()
+		@Inject(CART_PROMOTION_EVALUATION)
+		private readonly promotionEvaluation?: ICartPromotionPort
 	) {
 		super(typeOrmCommerceCartRepository, mikroOrmCommerceCartRepository);
 	}
@@ -545,12 +556,18 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	/**
 	 * Applies a promotion to the cart as a snapshot row.
 	 *
-	 * The discount amount is produced by the promotion engine and handed here; this service records it
-	 * and re-prices, so removing a promotion later rebuilds the whole set from the ledger rather than
-	 * unpicking one row.
+	 * **The discount is the promotion engine's, never the caller's (R3-07).** The caller names the
+	 * promotion — its code, or its id for an automatic one — and the amount is what the engine grants
+	 * on this cart, through `CART_PROMOTION_EVALUATION`. An `amount` in the request is ignored: this
+	 * method used to record whatever amount it was handed, so `POST /carts/:id/promotions` and
+	 * `applyCartPromotion` let a buyer state their own discount. With no engine bound the application
+	 * is refused (`CART_PROMOTION_ENGINE_MISSING`) rather than falling back to the stated amount.
+	 *
+	 * The engine's answer is recorded and the cart re-priced, so removing a promotion later rebuilds the
+	 * whole set from the ledger rather than unpicking one row.
 	 *
 	 * @param cartId The cart.
-	 * @param promotion The applied promotion.
+	 * @param promotion The promotion to apply: its `code` and/or `promotionId` (and `couponId`).
 	 * @param expectation The version the caller read the cart at.
 	 * @returns The cart after the application, re-priced.
 	 */
@@ -561,11 +578,11 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	): Promise<CommerceCart> {
 		const cart = await this.assertMutable(cartId);
 
-		if (promotion.amount === undefined || promotion.amount === null) {
-			throw new BadRequestException(
-				'CART_PROMOTION_AMOUNT_REQUIRED: the discount amount must be produced by the promotion engine.'
-			);
-		}
+		// A promotion or coupon of another tenant is refused before anything is evaluated or the version
+		// moves (P0 #6c).
+		await this.promotionService.assertReferences(promotion);
+
+		const { granted, amount, answerFor } = await this.grantedPromotion(cart, promotion);
 
 		const existing = (await this.promotionService.findAll({
 			where: { cartId }
@@ -573,25 +590,49 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 
 		const duplicate = existing.items.find(
 			(candidate: CommerceCartPromotion) =>
-				(promotion.promotionId && candidate.promotionId === promotion.promotionId) ||
-				(promotion.code && candidate.code === promotion.code)
+				(granted.promotionId && candidate.promotionId === granted.promotionId) ||
+				(granted.code && candidate.code === granted.code)
 		);
-
-		// A promotion or coupon of another tenant is refused before the version moves (P0 #6c).
-		await this.promotionService.assertReferences(promotion);
 
 		await this.spendVersion(cartId, expectation);
 
+		// Every promotion already on the cart takes the engine's answer for the whole set (R3-07): the set was
+		// evaluated together, so a promotion the new one excludes - an exclusive member of its stacking group,
+		// or one left nothing to discount - is retired rather than kept beside it, and one whose share moved
+		// is recorded at its new amount. Keeping only the new grant would let two exclusive discounts stack.
+		for (const row of existing.items) {
+			if (duplicate && row.id === duplicate.id) {
+				continue;
+			}
+
+			const answer = answerFor(row.promotionId, row.code);
+
+			if (!answer) {
+				await this.promotionService.softDelete(row.id);
+				continue;
+			}
+
+			const recorded = this.toColumnAmount(answer, cart);
+
+			if (Number(row.amount) !== recorded) {
+				await this.promotionService.update(row.id, { amount: recorded } as any);
+			}
+		}
+
 		if (duplicate) {
 			await this.promotionService.update(duplicate.id, {
-				amount: this.toColumnAmount(promotion.amount, cart)
+				amount: this.toColumnAmount(amount, cart)
 			} as any);
 		} else {
 			await this.promotionService.create({
 				...promotion,
 				cartId,
-				amount: this.toColumnAmount(promotion.amount, cart),
-				isAutomatic: promotion.isAutomatic ?? false,
+				// The identity and the amount are the engine's: the row records what was granted, under
+				// the promotion that granted it, whatever the request said about either.
+				promotionId: granted.promotionId,
+				code: granted.code ?? promotion.code,
+				amount: this.toColumnAmount(amount, cart),
+				isAutomatic: granted.isAutomatic ?? false,
 				appliedAt: new Date()
 			} as DeepPartial<CommerceCartPromotion>);
 		}
@@ -1840,6 +1881,169 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		const discounted = discount?.isPositive() ? rounded.subtract(discount) : rounded;
 
 		return (discounted.isNegative() ? Money.zero(currency, decimals) : discounted).toStorageString();
+	}
+
+	/**
+	 * Asks the promotion engine what a promotion grants on this cart (R3-07).
+	 *
+	 * The engine is handed the cart as it is — its discountable lines at their unit price times their
+	 * quantity, its delivery choices, its currency, channel and buyer — and **every code the cart already
+	 * carries plus the one being applied**, so stacking, exclusivity and the remaining-discountable amount
+	 * are judged on the whole set rather than on the new promotion alone. The application that names the
+	 * requested promotion is the answer; nothing the request said about an amount is read.
+	 *
+	 * @param cart The cart.
+	 * @param requested The promotion the caller named.
+	 * @returns What the engine granted for it.
+	 * @throws BadRequestException `CART_PROMOTION_REFERENCE_REQUIRED` when the request names no promotion,
+	 * or `CART_PROMOTION_NOT_APPLICABLE` (with the engine's notices) when the engine grants it nothing.
+	 * @throws ServiceUnavailableException `CART_PROMOTION_ENGINE_MISSING` when no engine is bound.
+	 */
+	private async grantedPromotion(
+		cart: CommerceCart,
+		requested: DeepPartial<CommerceCartPromotion>
+	): Promise<{
+		granted: ICartPromotionApplication;
+		amount: string;
+		answerFor: (promotionId?: ID, code?: string) => string | null;
+	}> {
+		const normalized = (value?: string | null): string => `${value ?? ''}`.trim().toUpperCase();
+		const code = normalized(requested?.code as string) || undefined;
+		const promotionId = requested?.promotionId ? String(requested.promotionId) : undefined;
+
+		if (!code && !promotionId) {
+			throw new BadRequestException({
+				message:
+					'CART_PROMOTION_REFERENCE_REQUIRED: name the promotion by its code or its id; the discount is computed by the promotion engine.',
+				code: 'CART_PROMOTION_REFERENCE_REQUIRED'
+			});
+		}
+
+		if (!this.promotionEvaluation) {
+			throw new ServiceUnavailableException({
+				message:
+					'CART_PROMOTION_ENGINE_MISSING: no promotion engine is bound for this installation, and a cart never records a discount the caller stated.',
+				code: 'CART_PROMOTION_ENGINE_MISSING'
+			});
+		}
+
+		const currency = cart.currency as CurrencyCode;
+		const decimals = cart.currencyDecimals ?? this.decimalsOf(currency);
+		const lines = (
+			(await this.lineService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartLine>
+		).items.filter((line) => line.isDiscountable !== false && Number(line.quantity) > 0);
+		const shipping = (
+			(await this.shippingMethodService.findAll({
+				where: { cartId: cart.id }
+			})) as IPagination<CommerceCartShippingMethod>
+		).items;
+		const applied = (
+			(await this.promotionService.findAll({ where: { cartId: cart.id } })) as IPagination<CommerceCartPromotion>
+		).items;
+		const codes = [...new Set([...applied.map((row) => normalized(row.code)), code].filter(Boolean))];
+
+		const evaluation = await this.promotionEvaluation.evaluate({
+			currency: cart.currency,
+			channelId: cart.channelId,
+			customerId: cart.customerId,
+			codes,
+			lines: lines.map((line) => ({
+				id: line.id,
+				amount: Money.fromStorage(line.unitPrice, currency, decimals)
+					.multiply(Number(line.quantity))
+					.toStorageString(),
+				quantity: Number(line.quantity),
+				variantId: line.variantId,
+				sku: line.sku
+			})),
+			shipping: shipping.map((method) => ({
+				id: method.id,
+				amount: Money.fromStorage(method.amount, currency, decimals).toStorageString()
+			}))
+		});
+
+		const applications = evaluation?.result?.applications ?? [];
+		const allocations = evaluation?.allocations;
+		const find = (id?: ID, stated?: string): ICartPromotionApplication | undefined =>
+			id || stated
+				? applications.find(
+						(application) =>
+							(!id || String(application.promotionId) === String(id)) &&
+							(!stated || normalized(application.code) === normalized(stated))
+				  )
+				: undefined;
+		/**
+		 * What the cart records for one application: the part the engine allocated to the cart's lines.
+		 * The cart attributes a promotion's amount across its lines (`syncPromotionAdjustments`), so a part the
+		 * engine allocated to a delivery choice would be moved onto the items - reducing their tax base instead
+		 * of shipping's. That part is not recorded until the cart applies delivery discounts (Q7). An engine
+		 * that reports no allocations is taken at its application's amount.
+		 */
+		const lineAmountOf = (application: ICartPromotionApplication): string => {
+			if (!Array.isArray(allocations)) {
+				return application.amount;
+			}
+
+			return Money.sum(
+				allocations
+					.filter(
+						(allocation) =>
+							allocation.ownerType === 'LINE' &&
+							String(allocation.promotionId) === String(application.promotionId)
+					)
+					.map((allocation) => Money.of(allocation.amount as never, currency, decimals).abs()),
+				currency
+			).toStorageString();
+		};
+
+		const granted = find(promotionId, code);
+		const amount = granted ? lineAmountOf(granted) : '0';
+
+		if (!granted || !(Number(amount) > 0)) {
+			const notices = (evaluation?.result?.notices ?? []).filter(
+				(notice) =>
+					(promotionId && String(notice.promotionId) === promotionId) ||
+					(code && normalized(notice.code) === code)
+			);
+
+			throw new BadRequestException({
+				message: 'CART_PROMOTION_NOT_APPLICABLE: the promotion engine grants this cart nothing for that promotion.',
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: {
+					code: code ?? null,
+					promotionId: promotionId ?? null,
+					notices: granted
+						? [
+								...notices,
+								{
+									promotionId: granted.promotionId,
+									code: granted.code ?? code ?? '',
+									notice: 'SHIPPING_DISCOUNT_NOT_SUPPORTED',
+									message:
+										'The promotion discounts delivery only, and the cart does not yet apply delivery discounts.'
+								}
+						  ]
+						: notices
+				}
+			});
+		}
+
+		return {
+			granted,
+			amount,
+			answerFor: (id?: ID, stated?: string) => {
+				// A row recorded under a promotion id is matched by it; a row recorded by code alone, by its code.
+				const answer = find(id || undefined, id ? undefined : stated);
+
+				if (!answer) {
+					return null;
+				}
+
+				const share = lineAmountOf(answer);
+
+				return Number(share) > 0 ? share : null;
+			}
+		};
 	}
 
 	/**
