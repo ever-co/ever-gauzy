@@ -21,7 +21,7 @@ import {
 	OrderChangeStatus,
 	OrderStatus
 } from '@gauzy/contracts';
-import { SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { Money, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { Order } from './order.entity';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
@@ -215,6 +215,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// and the ledger carry-over below needs it to move each cart row's discount and tax to the right owner.
 		const carried = options.carryCartLedgers === true;
 		const lineMap = new Map<ID, ID>();
+		const lineWeights = new Map<ID, string>();
 		const shippingMap = new Map<ID, ID>();
 
 		let position = 0;
@@ -244,6 +245,11 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 			if (line.id && created?.id) {
 				lineMap.set(line.id, created.id);
+				// What the line is worth, which a document-level discount or fee is spread over in proportion to.
+				lineWeights.set(
+					created.id,
+					lineValueOf(line.unitPrice, line.quantity, cart.currency, cart.currencyDecimals)
+				);
 			}
 		}
 
@@ -283,7 +289,12 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		}
 
 		if (carried) {
-			await this.carryCartLedgers(cart.id, order, { lines: lineMap, shippingMethods: shippingMap });
+			await this.carryCartLedgers(cart.id, order, {
+				lines: lineMap,
+				shippingMethods: shippingMap,
+				lineWeights,
+				currencyDecimals: cart.currencyDecimals
+			});
 		}
 
 		// The timeline entry is written once, by the step that actually places the order, and it
@@ -866,4 +877,24 @@ export const COMPLETABLE_CART_STATUSES = [CommerceCartStatus.ACTIVE, CommerceCar
  */
 function describeError(error: unknown): string {
 	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
+}
+
+/**
+ * A cart line's value — unit price × quantity — as exact decimal text, or zero when it cannot be read.
+ *
+ * @param unitPrice The line's unit price.
+ * @param quantity The line's quantity.
+ * @param currency The cart's currency.
+ * @param decimals The currency's decimal places.
+ * @returns The value.
+ */
+function lineValueOf(unitPrice: unknown, quantity: unknown, currency: string, decimals?: number): string {
+	try {
+		return Money.fromStorage(String(unitPrice ?? '0'), currency as never, decimals)
+			.multiply(String(quantity ?? '0'))
+			.abs()
+			.toStorageString();
+	} catch {
+		return '0';
+	}
 }

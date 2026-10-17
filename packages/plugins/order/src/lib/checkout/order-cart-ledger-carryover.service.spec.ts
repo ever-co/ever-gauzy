@@ -7,7 +7,8 @@
  */
 jest.mock('@gauzy/core', () => ({
 	AdjustmentService: class {},
-	TaxLineService: class {}
+	TaxLineService: class {},
+	Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money
 }));
 
 import { AdjustmentOwnerType, AdjustmentType, TaxLineOwnerType } from '@gauzy/contracts';
@@ -114,7 +115,7 @@ const ROWS = {
 };
 
 describe('OrderCartLedgerCarryover (Q7-W1a)', () => {
-	it('moves every cart line, shipping and document adjustment onto its order counterpart', async () => {
+	it('moves every cart line and shipping adjustment onto its order counterpart', async () => {
 		const { adjustments, carryover } = fixture();
 
 		const result = await carryover.carry('cart-1', 'order-1', ROWS);
@@ -122,11 +123,48 @@ describe('OrderCartLedgerCarryover (Q7-W1a)', () => {
 		const copied = adjustments.rows.filter((row) => String(row.ownerType).startsWith('ORDER'));
 
 		expect(result.adjustments).toBe(3);
-		expect(copied.map((row) => [row.ownerType, row.ownerId, row.amount])).toEqual([
-			[AdjustmentOwnerType.ORDER_LINE, 'order-line-1', '-4.000000'],
-			[AdjustmentOwnerType.ORDER_SHIPPING, 'order-shipping-1', '-1.000000'],
-			[AdjustmentOwnerType.ORDER, 'order-1', '-2.000000']
+		expect(copied.map((row) => [row.ownerType, row.ownerId, Number(row.amount)])).toEqual([
+			[AdjustmentOwnerType.ORDER_LINE, 'order-line-1', -4],
+			[AdjustmentOwnerType.ORDER_SHIPPING, 'order-shipping-1', -1],
+			// The document-level row, spread over the order's one line.
+			[AdjustmentOwnerType.ORDER_LINE, 'order-line-1', -2]
 		]);
+		// Nothing is owned by the order as a whole: its per-line breakdown bills lines and delivery choices.
+		expect(copied.some((row) => row.ownerType === AdjustmentOwnerType.ORDER)).toBe(false);
+	});
+
+	it('spreads a document-level row over the lines by their value, exactly', async () => {
+		const { adjustments, carryover } = fixture();
+
+		await carryover.carry('cart-1', 'order-1', {
+			lines: new Map([
+				['cart-line-1', 'order-line-1'],
+				['cart-line-2', 'order-line-2'],
+				['cart-line-3', 'order-line-3']
+			]),
+			shippingMethods: new Map(),
+			lineWeights: new Map([
+				['order-line-1', '40'],
+				['order-line-2', '10'],
+				['order-line-3', '0']
+			]),
+			currencyDecimals: 2
+		});
+
+		const shares = adjustments.rows.filter(
+			(row) => row.metadata?.carriedFrom?.ownerType === AdjustmentOwnerType.CART
+		);
+
+		expect(shares.map((row) => [row.ownerId, Number(row.amount)])).toEqual([
+			['order-line-1', -1.6],
+			['order-line-2', -0.4]
+		]);
+		expect(shares[0].metadata.carriedFrom).toEqual({
+			ownerType: AdjustmentOwnerType.CART,
+			ownerId: 'cart-1',
+			adjustmentId: 'adj-document',
+			allocatedTo: 'order-line-1'
+		});
 	});
 
 	it('keeps what produced the discount and records where the copy came from', async () => {

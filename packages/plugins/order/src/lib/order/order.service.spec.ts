@@ -145,9 +145,9 @@ jest.mock('@gauzy/core', () => {
 		},
 		AdjustmentService: class {},
 		TaxLineService: class {},
-		SequenceService: class {},
-	// Added when core grew this export: the double has to carry it, or the code under
-	// test calls nothing and the suite fails for a reason that is not its own.
+		SequenceService: class {}
+		// Added when core grew this export: the double has to carry it, or the code under
+		// test calls nothing and the suite fails for a reason that is not its own.
 	};
 });
 
@@ -602,10 +602,13 @@ describe('OrderService — creating and numbering (doc 10 §4.4, §7.1)', () => 
 		expect(
 			fixture.adjustmentLedger.rows
 				.filter((row: any) => String(row.ownerType).startsWith('ORDER'))
-				.map((row: any) => [row.ownerType, row.ownerId, row.amount])
+				.map((row: any) => [row.ownerType, row.ownerId, Number(row.amount)])
 		).toEqual([
-			['ORDER_LINE', first.id, '-4'],
-			['ORDER', order.id, '-2']
+			['ORDER_LINE', first.id, -4],
+			// The cart-level 2 off, spread over the lines by value (40 : 10), so the per-line breakdown the
+			// invoice is built from still adds up to the totals.
+			['ORDER_LINE', first.id, -1.6],
+			['ORDER_LINE', second.id, -0.4]
 		]);
 		expect(
 			fixture.taxLineLedger.rows
@@ -1007,5 +1010,39 @@ describe('OrderService — what an update may change (doc 10 §6.1)', () => {
 		const updated = await fixture.service.updateMutable('order-1', { currency: 'EUR' } as never);
 
 		expect(updated.currency).toBe('EUR');
+	});
+});
+
+describe('OrderTotalsService — a net amount stated as decimal text (Q7-W1a, Greptile on #10863)', () => {
+	const totalsWith = async (netAmount: unknown) => {
+		const fixture = orderFixture({
+			lines: [line('L1', { quantity: 1, unitPrice: 20, isTaxInclusive: true })],
+			ledger: {
+				adjustments: [
+					{
+						id: 'adj-1',
+						ownerType: 'ORDER_LINE',
+						ownerId: 'L1',
+						amount: '-6.000000',
+						currency: 'USD',
+						isTaxInclusive: true,
+						type: 'PROMOTION',
+						metadata: { netAmount }
+					}
+				]
+			}
+		});
+
+		return fixture.totalsService.computeTotals(fixture.order as never);
+	};
+
+	it('reads a carried row whose net amount is decimal text exactly as the cart did', async () => {
+		const asNumber = await totalsWith(-5);
+		const asText = await totalsWith('-5.000000');
+
+		// The cart reads both forms; a checkout carries the row as it stands, so the order must too, or its
+		// discount — and its grand total — moves off the amount the buyer was quoted.
+		expect(asText.itemDiscountTotal).toEqual(asNumber.itemDiscountTotal);
+		expect(asText.grandTotal).toEqual(asNumber.grandTotal);
 	});
 });
