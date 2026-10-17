@@ -3,11 +3,16 @@ import { In, ObjectLiteral, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from './../core/context/request-context';
 
+/** A relation as a request can state it: by an object carrying its id, or by the id itself. */
+type RelationInput = { id?: ID } | ID | null;
+
 /** What a product save hands over for one translation: the stored row it names and the row it translates. */
 interface ITranslationInput {
 	id?: ID;
+	tenantId?: ID | null;
+	tenant?: RelationInput;
 	referenceId?: ID;
-	reference?: { id?: ID } | null;
+	reference?: RelationInput;
 }
 
 interface ITenantRow {
@@ -24,6 +29,10 @@ const sameId = (a: unknown, b: unknown): boolean =>
 
 const uniqueIds = (ids: unknown[]): ID[] => [...new Set(ids.filter((id) => id != null && id !== ''))] as ID[];
 
+/** TypeORM writes a relation stated as a bare id as that id, so both forms name the same row. */
+const relationId = (relation: RelationInput | undefined): unknown =>
+	relation != null && typeof relation === 'object' ? relation.id : relation;
+
 /**
  * Refuses a translation write or removal that reaches another tenant's product data.
  *
@@ -31,8 +40,9 @@ const uniqueIds = (ids: unknown[]): ID[] => [...new Set(ids.filter((id) => id !=
  * to the translation repositories, which save or remove the row the stated id names, under the parent the
  * input states, without any tenant check. A stored row is the caller's when it carries the caller's tenant,
  * or when it carries none and the row it translates does: option and option group translations sent by the
- * product form are stored without a tenant. A stated parent must be a row of the caller's tenant. Ids that
- * name no row are left to the write, as before, and nothing is checked without a request tenant (seeds).
+ * product form are stored without a tenant. On the save paths a stated tenant must be the caller's, since
+ * the write keeps it, and a stated parent, by object or by bare id, must be a row of the caller's tenant. Ids
+ * that name no row are left to the write, as before, and nothing is checked without a request tenant (seeds).
  *
  * @param translationRepository The TypeORM repository the translations are written through.
  * @param input The translation or translations about to be saved or removed.
@@ -49,6 +59,13 @@ export async function assertTranslationsOfTenant(
 	);
 	if (!tenantId || translations.length === 0) {
 		return;
+	}
+
+	const statedTenantIds = uniqueIds(
+		translations.flatMap((translation) => [translation.tenantId, relationId(translation.tenant)])
+	);
+	if (parentRepository && !statedTenantIds.every((id) => sameId(id, tenantId))) {
+		throw new ForbiddenException('The record belongs to another tenant');
 	}
 
 	const ids = uniqueIds(translations.map((translation) => translation.id));
@@ -72,7 +89,7 @@ export async function assertTranslationsOfTenant(
 		return;
 	}
 	const parentIds = uniqueIds(
-		translations.map((translation) => translation.reference?.id ?? translation.referenceId)
+		translations.flatMap((translation) => [relationId(translation.reference), translation.referenceId])
 	);
 	if (parentIds.length) {
 		const parents = (await parentRepository.find({
