@@ -2380,6 +2380,44 @@ describe('CommerceCartService — rows are written in the organization (R2-G19)'
 		expect(tables.commerce_cart_line[0].organizationId).toBe('org-2');
 	});
 
+	it('stamps the request’s organization on a child row created directly, and keeps a stated one', async () => {
+		// The REST child routes (`/cart-lines`, `/cart-shipping-methods`, `/cart-promotions`) reach the child
+		// services' own `create`, which the cart's verbs do not exercise on their own.
+		const { lineService, shippingMethodService, promotionService } = cartFixture();
+
+		const line = await lineService.create({ cartId: 'cart-1', variantId: 'v1', quantity: 1, unitPrice: 1 } as any);
+		const method = await shippingMethodService.create({ cartId: 'cart-1', name: 'Standard', amount: 5 } as any);
+		const applied = await promotionService.create({ cartId: 'cart-1', code: 'TENOFF', amount: 4 } as any);
+
+		expect([line, method, applied].map((row: any) => row.organizationId)).toEqual(['org-1', 'org-1', 'org-1']);
+
+		const stated = await lineService.create({
+			cartId: 'cart-1',
+			variantId: 'v1',
+			quantity: 1,
+			unitPrice: 1,
+			organizationId: 'org-2'
+		} as any);
+		const statedMethod = await shippingMethodService.create({
+			cartId: 'cart-1',
+			name: 'Express',
+			amount: 9,
+			organizationId: 'org-2'
+		} as any);
+		const statedPromotion = await promotionService.create({
+			cartId: 'cart-1',
+			code: 'FIVE',
+			amount: 5,
+			organizationId: 'org-2'
+		} as any);
+
+		expect([stated, statedMethod, statedPromotion].map((row: any) => row.organizationId)).toEqual([
+			'org-2',
+			'org-2',
+			'org-2'
+		]);
+	});
+
 	it('opens a checkout session in the request’s organization when none is stated', async () => {
 		const { checkoutSessionService, tables } = cartFixture();
 
