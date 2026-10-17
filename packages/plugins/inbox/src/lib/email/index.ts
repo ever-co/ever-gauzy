@@ -11,6 +11,7 @@ export * from './entities/inbox-email-attachment.entity';
 export * from './providers/email-provider.types';
 export * from './providers/email-provider.registry';
 export * from './providers/provider-config';
+export * from './providers/outbound-mail';
 export * from './providers/generic/generic-webhook.provider';
 export * from './provider-accounts/inbox-provider-account.service';
 export * from './secrets/inbox-secret-box';

@@ -16,7 +16,8 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 		name !== '@gauzy/plugin-ever-connect' &&
 		name !== '@gauzy/plugin-integration-ever-works' &&
 		name !== '@gauzy/plugin-inbox' &&
-		name !== '@gauzy/plugin-email-provider-resend'
+		name !== '@gauzy/plugin-email-provider-resend' &&
+		name !== '@gauzy/plugin-email-provider-postmark'
 );
 
 class AuthZitadelPlugin {}
@@ -25,6 +26,7 @@ class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
 class InboxPlugin {}
+class EmailProviderPostmarkPlugin {}
 class InboxEmailPlugin {}
 class EmailProviderResendPlugin {}
 
@@ -81,6 +83,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-email-provider-resend', () => ({
 				EmailProviderResendPlugin,
 				isResendEnabled: jest.requireActual('../../../packages/plugins/email-provider-resend/src/lib/resend-enabled').isResendEnabled
+			}));
+			jest.doMock('@gauzy/plugin-email-provider-postmark', () => ({
+				EmailProviderPostmarkPlugin,
+				isPostmarkEnabled: jest.requireActual('../../../packages/plugins/email-provider-postmark/src/lib/postmark-enabled').isPostmarkEnabled
 			}));
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			plugins = require('./plugins').plugins;
@@ -314,6 +320,30 @@ describe('API plugin list: Resend email provider', () => {
 	it('comes after the Inbox email plugin', () => {
 		const plugins = loadPlugins({ GAUZY_INBOX_ENABLED: 'true', GAUZY_INBOX_EMAIL_ENABLED: 'true', EMAIL_PROVIDER_RESEND_ENABLED: 'true' });
 		expect(plugins.indexOf(EmailProviderResendPlugin)).toBeGreaterThan(plugins.indexOf(InboxEmailPlugin));
+	});
+});
+
+describe('API plugin list: Postmark email provider', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1]
+	])('EMAIL_PROVIDER_POSTMARK_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ EMAIL_PROVIDER_POSTMARK_ENABLED: value });
+			expect(plugins.includes(EmailProviderPostmarkPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('EMAIL_PROVIDER_POSTMARK_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	it('comes after the Inbox email plugin', () => {
+		const plugins = loadPlugins({ GAUZY_INBOX_ENABLED: 'true', GAUZY_INBOX_EMAIL_ENABLED: 'true', EMAIL_PROVIDER_POSTMARK_ENABLED: 'true' });
+		expect(plugins.indexOf(EmailProviderPostmarkPlugin)).toBeGreaterThan(plugins.indexOf(InboxEmailPlugin));
 	});
 });
 
