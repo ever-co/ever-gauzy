@@ -74,7 +74,9 @@ export function mirroredEmailUpsertOf(
 				webUrl: message.webUrl ?? null
 			}
 		},
-		recipients: [{ userId: scope.recipientUserId }]
+		recipients: [{ userId: scope.recipientUserId }],
+		// The owner's pairing may be replaced: the former Gauzy user stops reading the copy.
+		replaceRecipients: true
 	};
 }
 
