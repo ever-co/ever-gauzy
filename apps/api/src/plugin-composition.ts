@@ -146,9 +146,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// An entitlement names the product and the variant it is over, and only the catalogue can say
 		// what those identifiers name.
 		{ provide: ENTITLEMENT_CATALOG_PORT, useExisting: CatalogItemService },
-		// An order asks, at placement, what right each of its lines grants — the line's own policy, else the
-		// variant's or the product's — so its `order.placed` event carries the lines the grant path issues a
-		// right for (Q7-W5). Unbound, an order announces no lines and a purchase grants nothing.
+		// An order asks, at placement, what right each of its lines grants — the variant's catalogue policy, else
+		// the product's; never the line's own metadata, which the cart editor writes — so its `order.placed` event
+		// carries the lines the grant path issues a right for (Q7-W5). Unbound, an order announces no lines and a
+		// purchase grants nothing.
 		{ provide: ORDER_LINE_ENTITLEMENT_POLICY, useExisting: EntitlementOrderLinePolicyAdapter },
 		// A purchase order is approved by the platform's own approval machinery: the purchasing package
 		// files the request, and the core approval service owns the row.
