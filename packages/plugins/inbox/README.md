@@ -92,9 +92,28 @@ a parameter. Answers are `Cache-Control: no-store`.
 - **`POST /items/mark-all-read`:** `{ tab? }`. Each item's source handler is
   told, as for one item (in the background, best effort).
 
-The Notifications tab of the UI reads `/employee-notification` directly. A
-GraphQL mirror of the read routes, and the mailbox, email and provider routes
-(P4), come later.
+The Notifications tab of the UI reads `/employee-notification` directly. The
+mailbox, email and provider routes (P4) are described in `EMAIL.md`.
+
+## GraphQL (served only with the plugin)
+
+The read routes and the state route have GraphQL twins (plan 04 §3). They
+call the same service methods, with the same DTO rules, guards and
+`INBOX_VIEW` permission (plus the `FEATURE_GRAPHQL` gate every resolver
+carries); no argument names a user or a recipient, so the recipient is
+always the caller.
+
+| GraphQL                             | REST                     |
+| ----------------------------------- | ------------------------ |
+| `inboxItems(filter, cursor, limit)` | `GET /items`             |
+| `inboxItemCounts`                   | `GET /items/counts`      |
+| `inboxItem(id)`                     | `GET /items/:id`         |
+| `markInboxItem(id, input)`          | `PATCH /items/:id/state` |
+
+Enumerated values (`kind`, `status`, `tab`, …) are the REST strings. Replies
+and mark-all-read stay REST-only for now. With the plugin off, the schema has
+none of these fields (and the committed schema snapshot, composed from the
+default plugin list, does not carry them).
 
 ## Feeding the Inbox from another plugin
 
@@ -148,6 +167,9 @@ node --experimental-vm-modules node_modules/jest/bin/jest.js \
 ```
 
 - The switch and the registry.
+- The GraphQL mirror: its SDL composes onto the core root types, each root
+  field has its resolver method, the guards and `INBOX_VIEW`, the delegation
+  to the routes' service methods, and the routes' DTO rules.
 - The entity metadata: every column has a type both ORMs map.
 - On a real SQLite database: the migrations (up, up again, down), the role
   grants, recipient-scoped reads with tabs, filters, search and pages, the
