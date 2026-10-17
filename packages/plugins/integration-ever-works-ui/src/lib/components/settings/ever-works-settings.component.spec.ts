@@ -269,8 +269,10 @@ describe('EverWorksSettingsComponent', () => {
 		const { component } = render();
 		api.syncStatus.mockReturnValue(late);
 		component.refreshStatus();
-		component.reload(); // the page reads its mapping again (another organization would do the same)
+		// The page reads its mapping again (another organization would do the same); that load reads the status
+		// afresh, so it gets its own answer, not the late one.
 		api.syncStatus.mockReturnValue(of(SYNC));
+		component.reload();
 		late.next({ ...SYNC, conflicts: { open: 42 } });
 		expect(component.sync?.conflicts.open).not.toBe(42);
 	});
