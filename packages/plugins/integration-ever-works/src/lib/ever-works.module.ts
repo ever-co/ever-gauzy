@@ -23,6 +23,9 @@ import { EverWorksInitiativeCapture, EverWorksInitiativeGoalSubscriber, EverWork
 import { EverWorksInitiativesController } from './initiatives/ever-works-initiatives.controller';
 import { EverWorksInitiativesService } from './initiatives/ever-works-initiatives.service';
 import { EverWorksIdeasService } from './ideas/ever-works-ideas.service';
+import { EverWorksDocsService } from './docs/ever-works-docs.service';
+import { EverWorksDocumentCapture, EverWorksDocumentSubscriber } from './docs/ever-works-docs.signals';
+import { EverWorksDocsStore } from './docs/ever-works-docs.store';
 import { EverWorksLifecycle } from './ever-works.lifecycle';
 import { EVER_WORKS_CONFIG } from './ever-works.tokens';
 import { EverWorksMappingController } from './mapping/ever-works-mapping.controller';
@@ -116,7 +119,8 @@ export const EVER_WORKS_SUBSCRIBERS = [
 	EverWorksKeyResultSubscriber,
 	EverWorksKeyResultUpdateSubscriber,
 	EverWorksInitiativeSubscriber,
-	EverWorksInitiativeGoalSubscriber
+	EverWorksInitiativeGoalSubscriber,
+	EverWorksDocumentSubscriber
 ];
 
 /** Every table the plugin owns (its migrations create them). */
@@ -194,6 +198,10 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		// Missions ↔ Strategic Initiatives (G-P2-2): registers itself with the applier and the pusher.
 		EverWorksInitiativesService,
 		EverWorksInitiativeCapture,
+		// Ever Works Knowledge Base ↔ Gauzy Docs (G-P3-4): registers itself with the applier, the pusher and the loop.
+		EverWorksDocsStore,
+		EverWorksDocsService,
+		EverWorksDocumentCapture,
 		EverWorksHandlersRegistrar,
 		TypeOrmEverWorksConnectionRepository,
 		MikroOrmEverWorksConnectionRepository,

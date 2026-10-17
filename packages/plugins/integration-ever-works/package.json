@@ -34,6 +34,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-docs": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.2",
 		"@nestjs/cqrs": "^12.1.0",
