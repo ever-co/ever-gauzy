@@ -31,7 +31,7 @@ describe('EquipmentSharingService.findEquipmentSharingsByOrganizationId on MySQL
 	});
 
 	it('joins the approval requests and scopes the query with MySQL syntax', async () => {
-		const query: Record<string, any> = { alias: 'equipment_sharing' };
+		let query: Record<string, any> = { alias: 'equipment_sharing' };
 		for (const method of ['leftJoinAndSelect', 'innerJoinAndSelect', 'where']) {
 			query[method] = jest.fn().mockReturnValue(query);
 		}
@@ -50,9 +50,9 @@ describe('EquipmentSharingService.findEquipmentSharingsByOrganizationId on MySQL
 
 		const scope = { andWhere: jest.fn() };
 		(query.where.mock.calls[0][0] as Brackets).whereFactory(scope as any);
-		expect(scope.andWhere.mock.calls.map(([condition]) => condition)).toEqual([
-			'`equipment_sharing`.`tenantId` = :tenantId',
-			'`equipment_sharing`.`organizationId` = :organizationId'
+		expect(scope.andWhere.mock.calls).toEqual([
+			['`equipment_sharing`.`tenantId` = :tenantId', { tenantId: tenantA.tenantId }],
+			['`equipment_sharing`.`organizationId` = :organizationId', { organizationId: tenantA.organizationId }]
 		]);
 	});
 });
