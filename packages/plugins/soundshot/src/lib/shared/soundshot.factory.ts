@@ -15,11 +15,11 @@ export class SoundshotFactory {
 		const tenantId = input.tenantId || RequestContext.currentTenantId();
 		const organizationId = input.organizationId;
 		const employeeId = RequestContext.currentEmployeeId();
-		// Like TenantAwareCrudService.create: an employee without CHANGE_SELECTED_EMPLOYEE uploads as themselves
-		const uploadedById =
-			employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-				? employeeId
-				: input.uploadedById || employeeId;
+		// Without CHANGE_SELECTED_EMPLOYEE the upload is filed under the caller (none without an employee
+		// record), the same owner the read and write routes check
+		const uploadedById = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			? input.uploadedById || employeeId
+			: employeeId;
 		const userId = RequestContext.currentUserId();
 
 		return {
