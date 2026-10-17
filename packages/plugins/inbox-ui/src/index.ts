@@ -9,3 +9,5 @@ export * from './lib/services/inbox-availability.service';
 export * from './lib/services/inbox-email-settings.service';
 export * from './lib/services/inbox-email-availability.service';
 export * from './lib/settings/provider-config-form.helpers';
+export * from './lib/services/inbox-directory.service';
+export * from './lib/settings/mailbox-settings.helpers';
