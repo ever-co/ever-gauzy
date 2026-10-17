@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { EmployeeAgentSourceEnum, ID, IAgentEmployeeCreateInput, IEmployeeAgentProfileInput } from '@gauzy/contracts';
 import { Employee, EmployeeAgentProfileService, EmployeeService, User } from '@gauzy/core';
+import { EverWorksApiError } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
@@ -10,6 +11,9 @@ import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-wor
 import type { EverWorksApplyContext, EverWorksApplyOutcome, EverWorksInboundHandler } from '../sync/inbound/ever-works-inbound.applier';
 import { EverWorksInboundStore } from '../sync/inbound/ever-works-inbound.store';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
+import { isSyncedVisibility } from '../teams/ever-works-team-scope';
+
+const NO_LONGER_SHARED = 'no longer shared from Ever Works (private)';
 
 /** An Ever Works agent (contract v1 agent DTO). */
 export interface EverWorksAgent {
@@ -142,14 +146,52 @@ export class EverWorksAgentsService implements EverWorksInboundHandler {
 		if (link && link.ewVersion != null && envelope.aggregate.version != null && envelope.aggregate.version <= link.ewVersion) {
 			return { status: 'skipped', message: 'already applied (version)' };
 		}
+		const version = envelope.aggregate.version ?? null;
 		if (envelope.type === 'agent.visibility_changed' && data.visibility === 'private') {
-			if (link) await this.links.unlink(link, 'no longer shared from Ever Works (private)');
+			if (link) {
+				// The notice's version stays on the ended link (a tombstone): an older public state of the agent (a late
+				// webhook, an import listed before it turned private) is skipped by the version check (D11, review F19).
+				if (version != null) {
+					await this.links.record({
+						tenantId: context.tenantId,
+						organizationId: context.organizationId,
+						integrationTenantId: context.integrationTenantId,
+						entityType: EverWorksLinkType.AGENT,
+						gauzyId: link.gauzyId as ID,
+						ewId: envelope.aggregate.id,
+						ewVersion: version,
+						direction: 'inbound',
+						state: EverWorksLinkState.UNLINKED
+					});
+				}
+				await this.links.unlink(link, NO_LONGER_SHARED);
+			}
 			return { status: 'skipped', message: 'agent turned private: no longer synced' };
 		}
+		// A private agent stays out until Ever Works shares it again (a newer visibility change to team or organization).
+		const sharedAgain = envelope.type === 'agent.visibility_changed' && typeof data.visibility === 'string' && isSyncedVisibility(data.visibility);
+		if (link?.state === EverWorksLinkState.UNLINKED && !sharedAgain) return { status: 'skipped', message: 'the agent is no longer synced (private)' };
 		const archived = envelope.type === 'agent.deleted' || envelope.type === 'agent.archived' || data.deleted === true;
-		const agent: EverWorksAgent = { ...data, id: envelope.aggregate.id, version: envelope.aggregate.version, ...(archived ? { status: 'archived' } : {}) };
+		let agent: EverWorksAgent = { ...data, id: envelope.aggregate.id, version: envelope.aggregate.version, ...(archived ? { status: 'archived' } : {}) };
+		if (!link || link.state === EverWorksLinkState.UNLINKED) {
+			// An agent not linked yet (or shared again) is read from Ever Works first, which never answers a private one:
+			// an event or list entry older than a private notice Gauzy had nothing to end for never brings it in.
+			const current = await this.fetchAgent(context, envelope.aggregate.id);
+			if (!current) return { status: 'skipped', message: 'the agent is not visible in Ever Works (private or gone)' };
+			agent = { ...current, id: envelope.aggregate.id, version: current.version ?? envelope.aggregate.version, ...(archived ? { status: 'archived' } : {}) };
+		}
 		await this.provision(context, agent);
 		return { status: 'applied' };
+	}
+
+	/** The agent as Ever Works serves it to the integration now, or `null` (private or gone: 404). */
+	private async fetchAgent(context: EverWorksMappingContext, agentId: string): Promise<EverWorksAgent | null> {
+		try {
+			return await this.connections.client(context.connection, context.everWorksOrganizationSlug).request<EverWorksAgent>('GET', `/agents/${encodeURIComponent(agentId)}`);
+		} catch (error) {
+			if (error instanceof EverWorksApiError && error.status === 404) return null;
+			throw error;
+		}
 	}
 
 	/** Creates or updates the agent employee of one Ever Works agent, and records its link. */
