@@ -1335,10 +1335,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 						this.withActAs(actAs, (actor) => client.request<EverWorksTask>('PATCH', `/tasks/${ewTaskId}`, { body, ifMatchVersion: version, actAsUserId: actor }));
 					let body: Record<string, unknown> = patch;
 					let parentRefusal: Error | null = null;
+					/** The body's parent before the parent refusal detached it (`undefined`: the body did not send one). */
+					let parentBeforeRefusal: unknown;
 					let subtasksRefusal: Error | null = null;
 					let detachedSubtasks: string[] | null = null;
 					let heldOwners: string[] = [];
-					// Each refusal below is handled once, so this ends after at most four sends.
+					// Each refusal below is handled once (the parent's once more after a held move), so this ends after at
+					// most five sends.
 					for (;;) {
 						try {
 							if (Object.keys(body).length) dto = await send(body);
@@ -1355,12 +1358,19 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 								// Sub-tasks Gauzy does not sync are left alone: the move is held, the rest goes out.
 								heldOwners = OWNER_FIELDS.filter(([field]) => field in body).map(([field]) => field);
 								body = Object.fromEntries(Object.entries(body).filter(([field]) => !heldOwners.includes(field)));
+								// The task keeps its owners, so a parent refused for the move may fit them: it goes out as it was.
+								if (parentRefusal) {
+									parentRefusal = null;
+									if (parentBeforeRefusal === undefined) delete body['parentTaskId'];
+									else body['parentTaskId'] = parentBeforeRefusal;
+								}
 								continue;
 							}
 							// The parent (sent now, or the one Ever Works has, when the task moves to another team or work) is
 							// not in the task's scope there: the rest goes out, and the task has no parent in Ever Works.
 							if (parentRefusal || body['parentTaskId'] === null || !isParentScopeRefusal(error)) throw error;
 							parentRefusal = error as Error;
+							parentBeforeRefusal = body['parentTaskId'];
 							body = { ...body, parentTaskId: null };
 						}
 					}
