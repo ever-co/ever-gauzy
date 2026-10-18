@@ -175,10 +175,10 @@ describe('RoleAuthorizationService', () => {
 				service.getAuthorizationState('role-1'),
 				service.getAuthorizationState('role-2')
 			]);
-			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(2);
 
 			release();
 			const [first, second] = await pending;
+			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(2);
 			expect(first?.role).toEqual(expect.objectContaining({ id: 'role-1', name: RolesEnum.EMPLOYEE }));
 			expect(first?.permissions).toEqual([PermissionsEnum.ORG_TEAM_VIEW]);
 			expect(second?.role).toEqual(expect.objectContaining({ id: 'role-2', name: RolesEnum.ADMIN }));
