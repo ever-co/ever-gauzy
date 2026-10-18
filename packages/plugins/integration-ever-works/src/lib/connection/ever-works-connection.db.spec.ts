@@ -411,6 +411,138 @@ describe('Ever Works connection on SQLite', () => {
 			expect([...mock.webhooks.values()][0].id).not.toBe(subscription.id);
 		});
 
+		/** A mapping of tenant A through a connection, with its stored directions (the agentEmail one among them). */
+		const mapping = (connectionId: string, directions: Record<string, string>, archived = false) =>
+			dataSource.getRepository(IntegrationTenant).save({
+				id: randomUUID(),
+				tenantId: A.tenantId,
+				organizationId: A.organizationId,
+				name: 'Ever_Works',
+				isActive: !archived,
+				isArchived: archived,
+				settings: [
+					{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, settingsName: EverWorksSettingName.CONNECTION_ID, settingsValue: connectionId },
+					{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, settingsName: EverWorksSettingName.ENTITY_DIRECTIONS, settingsValue: JSON.stringify(directions) }
+				]
+			} as never) as unknown as Promise<{ id: string; settings: Array<{ settingsName: string; settingsValue: string }> }>;
+		const setDirections = async (row: { settings: Array<{ settingsName: string; settingsValue: string }> }, directions: Record<string, string>) => {
+			const setting = row.settings.find((s) => s.settingsName === EverWorksSettingName.ENTITY_DIRECTIONS) as unknown as { id: string };
+			await dataSource.getRepository(IntegrationSetting).update({ id: setting.id } as never, { settingsValue: JSON.stringify(directions) } as never);
+		};
+
+		it('subscribes to agent mail (email.*) while a mapping through the connection mirrors it, and follows the direction in place (G-P4-6)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			// Mappings that never count: another connection's, an archived one.
+			await mapping(randomUUID(), { agentEmail: 'ew_to_gauzy' });
+			await mapping(view.id, { agentEmail: 'ew_to_gauzy' }, true);
+			await service.registerWebhook(view.id);
+			const subscription = () => [...mock.webhooks.values()][0];
+			expect(subscription().events).toEqual(expect.arrayContaining(['task.*', 'inbox.*', 'kb.*']));
+			expect(subscription().events).not.toContain('email.*');
+			// The agentEmail direction on: registered again, the subscription asks for agent mail too.
+			const mirror = await mapping(view.id, { tasks: 'both', agentEmail: 'ew_to_gauzy' });
+			await service.registerWebhook(view.id);
+			expect(subscription().events).toEqual(expect.arrayContaining(['task.*', 'inbox.*', 'kb.*', 'email.*']));
+			// The direction changed later: the same subscription (same id, same secret) is changed in place.
+			const { id, secret } = subscription();
+			await setDirections(mirror, { tasks: 'both', agentEmail: 'off' });
+			await service.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(subscription()).toMatchObject({ id, secret });
+			expect(subscription().events).not.toContain('email.*');
+			await setDirections(mirror, { agentEmail: 'ew_to_gauzy' });
+			await service.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(subscription().events).toContain('email.*');
+			expect(mock.webhooks.size).toBe(1);
+		});
+
+		it('a refused change of the events never fails, and a connection with no webhook has nothing to change', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
+			expect(mock.requests.filter((r) => r.method === 'PATCH')).toEqual([]);
+			await service.registerWebhook(view.id);
+			await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+			mock.fail({ method: 'PATCH', path: /^\/webhooks\//, status: 503, times: 3 });
+			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
+		});
+
+		it('a direction changed while paused reaches the subscription, and a resume sends the events with the status (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await service.registerWebhook(view.id);
+			const subscription = () => [...mock.webhooks.values()][0];
+			await service.pause(view.id);
+			expect(subscription().status).toBe('paused');
+			await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+			await service.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(subscription()).toMatchObject({ status: 'paused', events: expect.arrayContaining(['email.*']) });
+			// A change the paused subscription missed (e.g. Ever Works refused it then) is sent with the resume.
+			mock.webhooks.set(subscription().id, { ...subscription(), events: subscription().events.filter((event) => event !== 'email.*') });
+			await service.resume(view.id);
+			expect(subscription()).toMatchObject({ status: 'active', events: expect.arrayContaining(['email.*']) });
+		});
+
+		it('a direction saved while a refresh is on the way is sent too: the refresh reads the directions again after its write (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await service.registerWebhook(view.id);
+			const mirror = await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+			const subscriptionId = [...mock.webhooks.keys()][0] as string;
+			let flipped = false;
+			const racing = new EverWorksConnectionService(
+				dataSource,
+				new TestEverWorksClientFactory({
+					send: async (request) => {
+						// Another worker turns agent mail off while this refresh's PATCH is on the way.
+						if (request.method === 'PATCH' && !flipped) {
+							flipped = true;
+							await setDirections(mirror, { agentEmail: 'off' });
+						}
+						return mock.handle(request);
+					}
+				}),
+				new EverWorksScopeService(dataSource),
+				new EverWorksNotifier(dataSource),
+				CONFIG
+			);
+			await racing.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(mock.webhooks.get(subscriptionId)?.events).not.toContain('email.*');
+			expect(mock.requests.filter((r) => r.method === 'PATCH')).toHaveLength(2);
+		});
+
+		it('a direction saved while the subscription is being created is sent to the new one (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			let saved = false;
+			const registering = new EverWorksConnectionService(
+				dataSource,
+				new TestEverWorksClientFactory({
+					send: async (request) => {
+						// A mapping turns agent mail on while Ever Works creates the subscription.
+						if (request.method === 'POST' && new URL(request.url).pathname.endsWith('/webhooks') && !saved) {
+							saved = true;
+							await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+						}
+						return mock.handle(request);
+					}
+				}),
+				new EverWorksScopeService(dataSource),
+				new EverWorksNotifier(dataSource),
+				CONFIG
+			);
+			await registering.registerWebhook(view.id);
+			expect([...mock.webhooks.values()][0]?.events).toContain('email.*');
+			// Nothing moved: a registration sends no second write.
+			const before = mock.requests.filter((r) => r.method === 'PATCH').length;
+			await registering.registerWebhook(view.id);
+			expect(mock.requests.filter((r) => r.method === 'PATCH')).toHaveLength(before);
+		});
+
+		it('a refresh that cannot read the connection never fails the mapping change (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			const read = jest.spyOn(dataSource, 'getRepository').mockImplementationOnce(() => {
+				throw new Error('database gone');
+			});
+			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
+			read.mockRestore();
+		});
+
 		it('needs a public HTTPS API address for the webhook', async () => {
 			const local = new EverWorksConnectionService(
 				dataSource,

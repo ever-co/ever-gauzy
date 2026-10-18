@@ -537,7 +537,7 @@ describe('EverWorksProjectsService', () => {
 		expect(client.request).not.toHaveBeenCalled();
 	});
 
-	it('private works never sync: not listed, not pairable, and a linked work that turns private stops syncing', async () => {
+	it('private works never sync: not listed, cannot be paired, and a linked work that turns private stops syncing', async () => {
 		const { service, projects, client, links } = setup();
 		projects.push({ id: 'p1', name: 'Acme Site' });
 		client.request.mockResolvedValue({
