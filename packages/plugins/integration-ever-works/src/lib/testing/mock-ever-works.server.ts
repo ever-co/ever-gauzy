@@ -11,7 +11,8 @@ import type { EverWorksHttpRequest, EverWorksHttpResponse, EverWorksTransport } 
  * It answers in-process through {@link MockEverWorksServer.transport} (no socket) or over HTTP with
  * {@link MockEverWorksServer.listen}. Implemented so far: `GET /whoami`, `GET /events`, webhooks v2
  * (`/webhooks` create/get/list/patch/delete/rotate-secret) with signed delivery, `Idempotency-Key`
- * replay, the error envelope, injected failures and a request log; `GET /members`, `GET /agents`; tasks
+ * replay, the error envelope, injected failures and a request log; `GET /members`, `POST /members/invite`
+ * (CR-13), `GET /agents`; tasks
  * (`GET`/`POST /tasks`, `GET`/`PATCH`/`DELETE /tasks/:id`, `POST /tasks/:id/transition` with gates,
  * `PUT /tasks/:id/assignees|watchers|blocks|relations`, task comments) and `GET`/`PUT`/`DELETE /links`,
  * each task write bumping the version, honouring `If-Match` and recording its event. Resources are added
@@ -94,6 +95,7 @@ export type MockEverWorksExtension = (context: MockEverWorksRouteContext) => Eve
 export const MOCK_PRESET_SCOPES = [
 	'org:read',
 	'members:read',
+	'members:write',
 	'agents:read',
 	'teams:read',
 	'teams:write',
@@ -127,6 +129,8 @@ export class MockEverWorksServer {
 	readonly agents = new Map<string, Record<string, unknown>>();
 	/** Inbox items (contract `inbox-item.schema.json`, CR-4) the inbox routes answer from. */
 	readonly inboxItems = new Map<string, Record<string, unknown>>();
+	/** Member invitations `POST /members/invite` issued (CR-13), with who sent them. */
+	readonly memberInvitations: Array<{ organizationId: string; invitedBy: string | null; invitedName: string | null; dto: Record<string, unknown> }> = [];
 	/** Tasks (contract task DTOs) and their comments, by id. */
 	readonly tasks = new Map<string, Record<string, unknown>>();
 	readonly comments = new Map<string, Record<string, unknown>>();
@@ -334,6 +338,36 @@ export class MockEverWorksServer {
 		}
 		if (method === 'GET' && path === '/members') {
 			return scoped('members:read') ?? ok(MockEverWorksServer.page(this.members.filter((m) => m['organizationId'] === org?.id), query));
+		}
+		if (method === 'POST' && path === '/members/invite') {
+			// CR-13 (contract v1-draft.15): the app's own invitation, idempotent per email.
+			const denied = scoped('members:write');
+			if (denied) return denied;
+			const input = (body ?? {}) as { email?: unknown; role?: unknown; invitedName?: unknown };
+			const email = typeof input.email === 'string' ? input.email.trim() : '';
+			if (!email.includes('@')) return MockEverWorksServer.error(400, 'validation_failed', 'email must be an email address.');
+			if (input.role !== undefined && input.role !== 'member') return MockEverWorksServer.error(400, 'validation_failed', 'role must be member.');
+			const normalized = email.toLowerCase();
+			const member = this.members.find((m) => m['organizationId'] === org?.id && String(m['email'] ?? '').toLowerCase() === normalized);
+			if (member) return ok({ status: 'already_member', invitation: null, userId: member['userId'] });
+			const pending = this.memberInvitations.find((i) => i.organizationId === org?.id && String(i.dto['email']).toLowerCase() === normalized);
+			if (pending) return ok({ status: 'pending', invitation: pending.dto, userId: null });
+			const now = Date.now();
+			const dto = {
+				id: randomUUID(),
+				email,
+				role: 'member',
+				status: 'pending',
+				expiresAt: new Date(now + 7 * 86_400_000).toISOString(),
+				createdAt: new Date(now).toISOString()
+			};
+			this.memberInvitations.push({
+				organizationId: org?.id as string,
+				invitedBy: headers['x-act-as-user'] ?? null,
+				invitedName: typeof input.invitedName === 'string' ? input.invitedName : null,
+				dto
+			});
+			return ok({ status: 'invited', invitation: dto, userId: null }, 201);
 		}
 		if (method === 'GET' && path === '/agents') {
 			return scoped('agents:read') ?? ok(MockEverWorksServer.page([...this.agents.values()].filter((a) => a['organizationId'] === org?.id), query));
