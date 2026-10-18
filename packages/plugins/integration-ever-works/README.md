@@ -375,7 +375,14 @@ and answered `202`.
   the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first
   document: `Organization/` holds the organization documents and the library
   folder tree, `Works/<Work name>/` each Work's documents (the folder is linked
-  to the Work's paired project). An Ever Works document becomes a Docs page:
+  to the Work's paired project). Changing the root (`docsRootFolderId` of
+  `PUT …/mappings/:id`) moves `Organization/` and `Works/` under the new root at
+  the next sync step or sweep, with everything in them, so links and pages
+  keep syncing; the old root folder stays. The move is idempotent and finishes
+  if it was cut short. An archived root keeps being used (it still holds its
+  pages); a deleted one, or a folder inside the synced tree, gives way to the
+  sync's own "Ever Works" folder, and the tree moves there. A tree folder an
+  admin moves out of the root still stops syncing what is in it. An Ever Works document becomes a Docs page:
   title, description, the Markdown body as the editor's content (headings,
   lists and task lists, quotes, code, tables, links, images; a `[[path]]`
   link of a synced document becomes a document mention, any other stays

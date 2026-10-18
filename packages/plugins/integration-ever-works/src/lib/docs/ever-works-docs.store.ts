@@ -194,30 +194,86 @@ export class EverWorksDocsStore {
 	// ── The tree (plan 05 §1) ─────────────────────────────────────────────────────────────────────
 
 	/**
-	 * The root folder synced documents land in: the configured one (`DOCS_ROOT_FOLDER_ID`) while it is a
-	 * live folder, else the sync's own "Ever Works" folder, created at the top of the organization's
-	 * Docs when first needed (and saved as the setting).
+	 * The root folder synced documents land in: the configured one (`DOCS_ROOT_FOLDER_ID`) while it is a folder of the
+	 * organization, archived or not (an archived folder still holds its pages, OQ5), else the sync's own "Ever Works"
+	 * folder, created at the top of the organization's Docs when first needed (and saved as the setting). The synced
+	 * tree is moved under it first when the root changed (`placeTree`).
 	 */
 	async root(context: EverWorksMappingContext): Promise<ID> {
-		const configured = context.mapping.settings?.find((row) => row.settingsName === EverWorksSettingName.DOCS_ROOT_FOLDER_ID)?.settingsValue;
-		if (configured) {
-			const folder = await this.load(context, configured as ID);
-			if (folder && folder.kind === DocumentKindEnum.FOLDER && !folder.isArchived) return folder.id as ID;
+		const configured = this.setting(context, EverWorksSettingName.DOCS_ROOT_FOLDER_ID);
+		const usable = configured ? await this.usableRoot(context, configured as ID) : null;
+		if (usable) {
+			await this.placeTree(context, usable);
+			return usable;
 		}
 		const id = await this.treeFolder(context, DOCS_TREE.root, null, EVER_WORKS_DOCS_ROOT_NAME);
 		if (id !== configured) await this.saveSetting(context, EverWorksSettingName.DOCS_ROOT_FOLDER_ID, id);
+		await this.placeTree(context, id);
 		return id;
 	}
 
-	/** The root folder when it exists already (a push never creates the tree), else `null`. */
+	/** The root folder when it exists already (a push never creates the tree), else `null`; the tree follows it as in `root`. */
 	async existingRoot(context: EverWorksMappingContext): Promise<ID | null> {
-		const configured = context.mapping.settings?.find((row) => row.settingsName === EverWorksSettingName.DOCS_ROOT_FOLDER_ID)?.settingsValue;
-		if (configured) {
-			const folder = await this.load(context, configured as ID);
-			if (folder && folder.kind === DocumentKindEnum.FOLDER && !folder.isArchived) return folder.id as ID;
+		const configured = this.setting(context, EverWorksSettingName.DOCS_ROOT_FOLDER_ID);
+		let root = configured ? await this.usableRoot(context, configured as ID) : null;
+		if (!root) {
+			const own = await this.byExternalId(context, DOCS_TREE.root);
+			root = own && !(own as { deletedAt?: Date | null }).deletedAt && own.kind === DocumentKindEnum.FOLDER ? (own.id as ID) : null;
 		}
-		const own = await this.byExternalId(context, DOCS_TREE.root);
-		return own && !(own as { deletedAt?: Date | null }).deletedAt && !own.isArchived ? (own.id as ID) : null;
+		if (root) await this.placeTree(context, root);
+		return root;
+	}
+
+	/**
+	 * A configured root that can hold the tree: a live (not deleted) folder of the organization, archived ones included,
+	 * that is not itself part of the synced tree (a root inside `Organization/` or `Works/` would put the tree under
+	 * itself).
+	 */
+	private async usableRoot(context: EverWorksMappingContext, id: ID): Promise<ID | null> {
+		const folder = await this.load(context, id);
+		if (!folder || folder.kind !== DocumentKindEnum.FOLDER) return null;
+		// The root the tree was placed under was checked when it was placed.
+		if (id === this.setting(context, EverWorksSettingName.DOCS_TREE_ROOT_ID)) return id;
+		const tree = new Set<string>();
+		for (const marker of [DOCS_TREE.organization, DOCS_TREE.works]) {
+			const node = await this.byExternalId(context, marker);
+			if (node) tree.add(node.id as string);
+		}
+		if (tree.has(folder.id as string)) return null;
+		const { folders } = await this.ancestry(context, folder, '' as ID);
+		return folders.some((above) => tree.has(above.id as string)) ? null : (folder.id as ID);
+	}
+
+	/**
+	 * Keeps the synced tree under the current root (OQ5): when the root changed (an admin set another
+	 * `docsRootFolderId`, or the configured one was deleted), the `Organization/` and `Works/` folders move from the
+	 * root they were placed under (`DOCS_TREE_ROOT_ID`) to the new one, with everything in them, so every link and
+	 * page keeps syncing. Idempotent and safe to stop part-way: each folder moves in one write, a folder under the new
+	 * root already is left, and the new root is recorded only after both moved. A tree folder an admin put somewhere
+	 * else is left where it is. A mapping placed before this setting existed takes the tree folders' current parent as
+	 * the root they were placed under.
+	 */
+	private async placeTree(context: EverWorksMappingContext, rootId: ID): Promise<void> {
+		const recorded = this.setting(context, EverWorksSettingName.DOCS_TREE_ROOT_ID);
+		if (recorded === rootId) return;
+		const folders: Document[] = [];
+		for (const marker of [DOCS_TREE.organization, DOCS_TREE.works]) {
+			const folder = await this.byExternalId(context, marker);
+			if (folder && !(folder as { deletedAt?: Date | null }).deletedAt) folders.push(folder);
+		}
+		const from = recorded || folders.find((folder) => folder.parentId && folder.parentId !== rootId)?.parentId || null;
+		for (const folder of folders) {
+			if (folder.parentId === rootId || !from || folder.parentId !== from) continue;
+			await this.dataSource
+				.getRepository(Document)
+				.update({ id: folder.id, tenantId: context.tenantId } as never, { parentId: rootId, index: await this.nextIndex(context, rootId) } as never);
+			folder.parentId = rootId;
+		}
+		await this.saveSetting(context, EverWorksSettingName.DOCS_TREE_ROOT_ID, rootId);
+	}
+
+	private setting(context: EverWorksMappingContext, name: EverWorksSettingName): string {
+		return context.mapping.settings?.find((row) => row.settingsName === name)?.settingsValue ?? '';
 	}
 
 	/** `Ever Works/Organization/`: organization documents and the library folder tree. */
@@ -242,7 +298,8 @@ export class EverWorksDocsStore {
 
 	/**
 	 * A folder the sync keeps, found by its marker (and revived when it was archived or deleted), else
-	 * created under `parentId`. A folder an admin moved elsewhere is left where it is.
+	 * created under `parentId`. A folder an admin moved elsewhere is left where it is (a change of the docs root moves
+	 * the tree folders, `placeTree`).
 	 */
 	async treeFolder(context: EverWorksMappingContext, marker: string, parentId: ID | null, name: string): Promise<ID> {
 		const existing = await this.byExternalId(context, marker);

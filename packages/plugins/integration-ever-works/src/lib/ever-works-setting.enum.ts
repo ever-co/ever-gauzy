@@ -17,6 +17,11 @@ export enum EverWorksSettingName {
 	IDEAS_PROJECT_ID = 'IDEAS_PROJECT_ID',
 	/** The Docs folder synced Ever Works documents land in (P3). */
 	DOCS_ROOT_FOLDER_ID = 'DOCS_ROOT_FOLDER_ID',
+	/**
+	 * The root folder the synced tree (`Organization/`, `Works/`) was last placed under. When the docs root changes
+	 * (OQ5), the sync moves the tree from this folder to the new root, then records the new one.
+	 */
+	DOCS_TREE_ROOT_ID = 'DOCS_TREE_ROOT_ID',
 	/** Include flags (plan 06 G-P1-4). */
 	INCLUDE_HIDDEN_TASKS = 'INCLUDE_HIDDEN_TASKS',
 	INCLUDE_TRIAGE_TASKS = 'INCLUDE_TRIAGE_TASKS',
