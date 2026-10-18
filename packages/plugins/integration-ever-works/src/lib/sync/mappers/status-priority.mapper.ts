@@ -62,6 +62,40 @@ export function gauzyStatusSlug(value: string | null | undefined): string {
 		.replace(/[\s_]+/g, '-');
 }
 
+/** The status and priority fields of a Gauzy task the sync reads (the string and the option row). */
+export interface GauzyTaskOptionFields {
+	status?: string | null;
+	taskStatus?: ({ value?: string | null } & GauzyStatusFlags) | null;
+	priority?: string | null;
+	taskPriority?: { value?: string | null } | null;
+}
+
+/**
+ * The status of a Gauzy task as the sync reads it: the `status` string first, the `taskStatus` row only when
+ * the task has no string. The string is what every client keeps current — the Gauzy web app and REST clients
+ * write only it, and Ever Teams' status menu writes it next to the task's OLD `taskStatusId` — so a row that
+ * disagrees with it is stale. (Reading the row first hid every such change of a synced task from the sync:
+ * "nothing changed", found by the local Gauzy ↔ Ever Works end-to-end run.)
+ */
+export function gauzyTaskStatusValue(task: GauzyTaskOptionFields): string | null {
+	const value = task.status || task.taskStatus?.value || null;
+	return value ? String(value) : null;
+}
+
+/** The flags of the task's status row, only when that row is the task's current status (not a stale one). */
+export function gauzyTaskStatusFlags(task: GauzyTaskOptionFields): GauzyStatusFlags {
+	const row = task.taskStatus;
+	if (!row) return {};
+	if (task.status && gauzyStatusSlug(row.value) !== gauzyStatusSlug(task.status)) return {};
+	return { isTodo: row.isTodo, isInProgress: row.isInProgress, isDone: row.isDone };
+}
+
+/** The priority of a Gauzy task: the `priority` string first, the `taskPriority` row only without one (as status). */
+export function gauzyTaskPriorityValue(task: GauzyTaskOptionFields): string | null {
+	const value = task.priority || task.taskPriority?.value || null;
+	return value ? String(value) : null;
+}
+
 /** EW → G: the Gauzy status slug (and flag fallback) for an Ever Works status; `null` for an unknown one. */
 export function everWorksStatusToGauzy(status: string | null | undefined): GauzyStatusTarget | null {
 	return (EW_TO_GAUZY_STATUS as Record<string, GauzyStatusTarget>)[String(status ?? '')] ?? null;
