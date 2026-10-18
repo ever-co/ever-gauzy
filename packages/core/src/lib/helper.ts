@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as chalk from 'chalk';
 import { ConfigService, environment } from '@gauzy/config';
 import { getApiPublicPath } from './core/util/path-util';
+import { resolvePublicAssetsMaxAgeSeconds } from './public-assets-cache';
 
 /**
  * Resolves the path for serving static files based on the environment and configuration.
@@ -32,6 +33,9 @@ export async function resolveServeStaticPath(config: ConfigService): Promise<Ser
 			rootPath: assetPublicPath,
 			serveRoot: '/public/', // Root URL from which the static files are served
 			serveStaticOptions: {
+				// `Cache-Control: public, max-age=...` for the uploaded files (written once under generated
+				// names); without it every page load revalidated each avatar and logo. See ./public-assets-cache.ts.
+				maxAge: resolvePublicAssetsMaxAgeSeconds(process.env) * 1000,
 				setHeaders: (res: any) => {
 					// Everything under `/public/` is user-uploaded and served unauthenticated, with a
 					// Content-Type derived from the on-disk extension. These two headers neutralize the
