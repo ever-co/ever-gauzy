@@ -132,6 +132,9 @@ export { InvoiceModule } from './lib/invoice/invoice.module';
 export { InvoiceService } from './lib/invoice/invoice.service';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
+// The command that invites people through the platform's own invite flow (its e-mail, its role rules, its accept
+// path), for a package that invites someone it found elsewhere: the Ever Works integration's "invite to Gauzy".
+export { InviteBulkCreateCommand } from './lib/invite/commands/invite.bulk.create.command';
 // The membership check a REST DTO makes through `@IsOrganizationBelongsToUser()`, for a package that resolves the
 // organization from a stored record rather than from the request (an integration ID, for instance).
 export { assertCurrentUserBelongsToOrganization } from './lib/user-organization/assert-organization-membership';
