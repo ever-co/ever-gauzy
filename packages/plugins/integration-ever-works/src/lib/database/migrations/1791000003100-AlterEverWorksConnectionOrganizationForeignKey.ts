@@ -83,9 +83,34 @@ export class AlterEverWorksConnectionOrganizationForeignKey1791000003100 impleme
 		}
 	}
 
-	/** MySQL: the same, one probed statement at a time (each DDL statement commits on its own). */
+	/**
+	 * MySQL: the same, one probed statement at a time (each DDL statement commits on its own). Nothing serialises the
+	 * API's and the worker's migration runs on MySQL, so a statement that fails is accepted when the catalog, read
+	 * again, shows another process got there first (the plugin's other MySQL DDL does the same).
+	 */
 	private async mysql(queryRunner: QueryRunner, rule: DeleteRule): Promise<void> {
-		const keys: Array<{ name: string; rule: string }> = await queryRunner.query(
+		const keys = await this.mysqlKeys(queryRunner);
+		for (const key of keys.filter((key) => key.rule !== rule)) {
+			try {
+				await queryRunner.query(`ALTER TABLE \`${TABLE}\` DROP FOREIGN KEY \`${key.name}\``);
+			} catch (error) {
+				if ((await this.mysqlKeys(queryRunner)).some((fresh) => fresh.name === key.name && fresh.rule !== rule))
+					throw error;
+			}
+		}
+		if (keys.some((key) => key.rule === rule)) return;
+		try {
+			await queryRunner.query(
+				`ALTER TABLE \`${TABLE}\` ADD CONSTRAINT \`${FK}\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE ${rule} ON UPDATE NO ACTION`
+			);
+		} catch (error) {
+			if (!(await this.mysqlKeys(queryRunner)).some((fresh) => fresh.rule === rule)) throw error;
+		}
+	}
+
+	/** MySQL: the organization foreign keys of the connection table, with their delete rule. */
+	private mysqlKeys(queryRunner: QueryRunner): Promise<Array<{ name: string; rule: string }>> {
+		return queryRunner.query(
 			`SELECT rc.\`CONSTRAINT_NAME\` AS \`name\`, rc.\`DELETE_RULE\` AS \`rule\`
 			FROM \`information_schema\`.\`REFERENTIAL_CONSTRAINTS\` rc
 			JOIN \`information_schema\`.\`KEY_COLUMN_USAGE\` k
@@ -94,14 +119,6 @@ export class AlterEverWorksConnectionOrganizationForeignKey1791000003100 impleme
 			AND k.\`COLUMN_NAME\` = 'organizationId'`,
 			[TABLE]
 		);
-		for (const key of keys.filter((key) => key.rule !== rule)) {
-			await queryRunner.query(`ALTER TABLE \`${TABLE}\` DROP FOREIGN KEY \`${key.name}\``);
-		}
-		if (!keys.some((key) => key.rule === rule)) {
-			await queryRunner.query(
-				`ALTER TABLE \`${TABLE}\` ADD CONSTRAINT \`${FK}\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE ${rule} ON UPDATE NO ACTION`
-			);
-		}
 	}
 
 	/**

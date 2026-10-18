@@ -296,4 +296,44 @@ describe('ever_works_connection organization foreign key on Postgres and MySQL (
 		await new AlterOrganizationForeignKey().down(down.queryRunner);
 		expect(down.ddl()[1]).toContain('ON DELETE CASCADE');
 	});
+
+	it('MySQL: the API and the worker migrating at once — a statement the other process already made is accepted', async () => {
+		/** Probes answer in turn (the last answer repeats); DDL fails as listed. */
+		const racing = (probes: Array<Array<{ name: string; rule: string }>>, failures: Record<string, Error>) => {
+			const answers = [...probes];
+			const sent: string[] = [];
+			const queryRunner = {
+				connection: { options: { type: 'mysql' } },
+				hasTable: async () => true,
+				query: async (sql: string) => {
+					const text = sql.replace(/\s+/g, ' ').trim();
+					sent.push(text);
+					if (text.startsWith('SELECT rc.')) return answers.length > 1 ? answers.shift() : answers[0];
+					const failure = Object.entries(failures).find(([start]) => text.startsWith(start));
+					if (failure) throw failure[1];
+					return [];
+				}
+			} as unknown as QueryRunner;
+			return { queryRunner, sent };
+		};
+		const gone = Object.assign(new Error("Can't DROP 'FK_ever_works_connection_organization'"), {
+			code: 'ER_CANT_DROP_FIELD_OR_KEY'
+		});
+		const duplicate = Object.assign(new Error('Duplicate foreign key constraint name'), { code: 'ER_FK_DUP_NAME' });
+
+		// The other process dropped the old key and added the new one between this one's probe and its statements.
+		const lost = racing([[{ name: FK, rule: 'CASCADE' }], [{ name: FK, rule: 'SET NULL' }]], {
+			'ALTER TABLE `ever_works_connection` DROP': gone,
+			'ALTER TABLE `ever_works_connection` ADD': duplicate
+		});
+		await expect(new AlterOrganizationForeignKey().up(lost.queryRunner)).resolves.toBeUndefined();
+
+		// A failure the catalog does not explain still fails the migration.
+		const real = racing([[{ name: FK, rule: 'CASCADE' }]], {
+			'ALTER TABLE `ever_works_connection` DROP': new Error('lock wait timeout')
+		});
+		await expect(new AlterOrganizationForeignKey().up(real.queryRunner)).rejects.toThrow('lock wait timeout');
+		const noKey = racing([[]], { 'ALTER TABLE `ever_works_connection` ADD': new Error('no such table') });
+		await expect(new AlterOrganizationForeignKey().up(noKey.queryRunner)).rejects.toThrow('no such table');
+	});
 });
