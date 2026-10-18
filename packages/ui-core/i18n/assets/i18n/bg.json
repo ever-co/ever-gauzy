@@ -6899,6 +6899,18 @@
 		"YOUR_TIME_CAPTION": "Вашето време по този проект · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Времето на членовете на екипа по този проект · {{ range }}",
 		"BUDGET_USED": "Използвани {{ used }} от {{ budget }}",
-		"OVER_BUDGET": "{{ value }} над бюджета"
+		"OVER_BUDGET": "{{ value }} над бюджета",
+		"TOTAL_TRACKED": "Общо отчетено",
+		"TOTAL_TRACKED_HINT": "От началото на проекта",
+		"THIS_PERIOD": "Този период",
+		"VS_PREVIOUS": "{{ value }} спрямо предишния период",
+		"TIMELINE": "Времева линия",
+		"NO_DATES": "Няма зададени дати",
+		"STARTS_IN": "Започва след {{ count }} дни",
+		"FINISHED": "Завършен",
+		"TEAM": "Екип",
+		"NO_MEMBERS": "Все още няма членове в този проект",
+		"MODULES": "Модули",
+		"MODULE_TASKS": "{{ count }} задачи"
 	}
 }

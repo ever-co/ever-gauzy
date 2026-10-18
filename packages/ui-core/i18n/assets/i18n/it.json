@@ -6854,6 +6854,18 @@
 		"YOUR_TIME_CAPTION": "Il tuo tempo su questo progetto · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Tempo dei membri del team su questo progetto · {{ range }}",
 		"BUDGET_USED": "{{ used }} di {{ budget }} utilizzate",
-		"OVER_BUDGET": "{{ value }} oltre il budget"
+		"OVER_BUDGET": "{{ value }} oltre il budget",
+		"TOTAL_TRACKED": "Totale registrato",
+		"TOTAL_TRACKED_HINT": "Dall'inizio del progetto",
+		"THIS_PERIOD": "Questo periodo",
+		"VS_PREVIOUS": "{{ value }} rispetto al periodo precedente",
+		"TIMELINE": "Cronologia",
+		"NO_DATES": "Nessuna data impostata",
+		"STARTS_IN": "Inizia tra {{ count }} giorni",
+		"FINISHED": "Concluso",
+		"TEAM": "Team",
+		"NO_MEMBERS": "Ancora nessun membro in questo progetto",
+		"MODULES": "Moduli",
+		"MODULE_TASKS": "{{ count }} attività"
 	}
 }

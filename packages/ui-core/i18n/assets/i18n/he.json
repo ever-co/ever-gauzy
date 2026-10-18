@@ -6864,6 +6864,18 @@
 		"YOUR_TIME_CAPTION": "הזמן שלך על פרויקט זה · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
 		"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
-		"OVER_BUDGET": "{{ value }} מעל התקציב"
+		"OVER_BUDGET": "{{ value }} מעל התקציב",
+		"TOTAL_TRACKED": "סה\"כ זמן שנרשם",
+		"TOTAL_TRACKED_HINT": "מאז תחילת הפרויקט",
+		"THIS_PERIOD": "התקופה הנוכחית",
+		"VS_PREVIOUS": "{{ value }} לעומת התקופה הקודמת",
+		"TIMELINE": "ציר זמן",
+		"NO_DATES": "לא הוגדרו תאריכים",
+		"STARTS_IN": "מתחיל בעוד {{ count }} ימים",
+		"FINISHED": "הסתיים",
+		"TEAM": "צוות",
+		"NO_MEMBERS": "אין עדיין חברים בפרויקט זה",
+		"MODULES": "מודולים",
+		"MODULE_TASKS": "{{ count }} משימות"
 	}
 }

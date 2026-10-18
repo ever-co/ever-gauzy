@@ -6854,6 +6854,18 @@
 		"YOUR_TIME_CAPTION": "您在此项目上的时间 · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "团队成员在此项目上的时间 · {{ range }}",
 		"BUDGET_USED": "已使用 {{ used }} / {{ budget }}",
-		"OVER_BUDGET": "超出预算 {{ value }}"
+		"OVER_BUDGET": "超出预算 {{ value }}",
+		"TOTAL_TRACKED": "累计记录",
+		"TOTAL_TRACKED_HINT": "自项目开始以来",
+		"THIS_PERIOD": "本期",
+		"VS_PREVIOUS": "较上期 {{ value }}",
+		"TIMELINE": "时间线",
+		"NO_DATES": "未设置日期",
+		"STARTS_IN": "{{ count }} 天后开始",
+		"FINISHED": "已完成",
+		"TEAM": "团队",
+		"NO_MEMBERS": "此项目暂无成员",
+		"MODULES": "模块",
+		"MODULE_TASKS": "{{ count }} 个任务"
 	}
 }

@@ -6846,6 +6846,18 @@
 		"YOUR_TIME_CAPTION": "وقتك على هذا المشروع · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "وقت أعضاء الفريق على هذا المشروع · {{ range }}",
 		"BUDGET_USED": "تم استخدام {{ used }} من {{ budget }}",
-		"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}"
+		"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}",
+		"TOTAL_TRACKED": "إجمالي الوقت المسجل",
+		"TOTAL_TRACKED_HINT": "منذ بدء المشروع",
+		"THIS_PERIOD": "هذه الفترة",
+		"VS_PREVIOUS": "{{ value }} مقارنة بالفترة السابقة",
+		"TIMELINE": "الجدول الزمني",
+		"NO_DATES": "لم يتم تحديد تواريخ",
+		"STARTS_IN": "يبدأ خلال {{ count }} أيام",
+		"FINISHED": "منتهٍ",
+		"TEAM": "الفريق",
+		"NO_MEMBERS": "لا يوجد أعضاء في هذا المشروع بعد",
+		"MODULES": "الوحدات",
+		"MODULE_TASKS": "{{ count }} مهام"
 	}
 }
