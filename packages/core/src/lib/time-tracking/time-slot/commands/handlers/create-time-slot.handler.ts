@@ -3,7 +3,6 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
-import * as chalk from 'chalk';
 import { ID, ITimeLog, ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
