@@ -661,6 +661,20 @@ describe('G → EW tasks', () => {
 		expect(t.links.find((l) => l.gauzyId === 'g1')?.state).toBe(EverWorksLinkState.UNLINKED);
 	});
 
+	it('a Gauzy delete also removes the Gauzy link from the Ever Works task, this installation only (I3c)', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Doomed' });
+		await t.push('g1');
+		const [ew] = [...t.mock.tasks.values()];
+		const ewId = ew?.['id'] as string;
+		t.mock.links.push({ organizationId: t.org.id, entityType: 'task', entityId: ewId, source: 'gauzy', installationId: 'c-other', externalId: 'g-elsewhere', externalUrl: null });
+		expect(t.mock.links.filter((link) => link.entityId === ewId)).toHaveLength(2);
+		(t.tasks.get('g1') as GauzyTask)['deletedAt'] = new Date();
+		expect(await t.push('g1', 'delete')).toEqual({ status: 'pushed', message: 'cancelled in Ever Works (delete policy)' });
+		expect(t.mock.links.filter((link) => link.entityId === ewId)).toEqual([expect.objectContaining({ installationId: 'c-other' })]);
+		expect(t.mock.requests.filter((r) => r.method === 'DELETE')).toEqual([expect.objectContaining({ path: `/links/task/${ewId}`, query: { installationId: 'c1' } })]);
+	});
+
 	it('ideas and (with the setting off) tasks of unlinked projects are not pushed', async () => {
 		const t = setup({ settings: { SYNC_UNLINKED_PROJECT_TASKS: 'false' } });
 		t.addGauzyTask({ id: 'g1', title: 'An idea', issueType: 'Idea' });

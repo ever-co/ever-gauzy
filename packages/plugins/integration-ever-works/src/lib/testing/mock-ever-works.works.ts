@@ -20,9 +20,29 @@ export class MockEverWorksWorks {
 		mock.extensions.push(this.route);
 	}
 
-	/** Adds (or replaces) a work (contract work DTO) of an organization and returns it. */
+	/**
+	 * Adds (or replaces) a work (contract work DTO) of an organization and returns it. Its `externalLinks` are kept
+	 * in the mock's own links, as Ever Works keeps them (`external_record_links`): the work serves them filtered to
+	 * the caller's source, and `PUT` / `DELETE /links/work/:id` change them.
+	 */
 	addWork(organizationId: string, work: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
 		const id = (work['id'] as string) ?? randomUUID();
+		const given = (work['externalLinks'] as Array<Record<string, unknown>> | undefined) ?? [];
+		for (let i = this.mock.links.length - 1; i >= 0; i--) {
+			const link = this.mock.links[i];
+			if (link && link.entityType === 'work' && link.entityId === id) this.mock.links.splice(i, 1);
+		}
+		for (const link of given) {
+			this.mock.links.push({
+				organizationId,
+				entityType: 'work',
+				entityId: id,
+				source: (link['source'] as string) ?? 'gauzy',
+				installationId: (link['installationId'] as string | null | undefined) ?? null,
+				externalId: link['externalId'] as string,
+				externalUrl: (link['externalUrl'] as string | null | undefined) ?? null
+			});
+		}
 		const now = new Date().toISOString();
 		const teamIds = (work['teamIds'] as string[]) ?? [];
 		const row = {
@@ -35,7 +55,6 @@ export class MockEverWorksWorks {
 			visibilityExplicit: false,
 			owner: { type: 'user', id: randomUUID() },
 			createdBy: { type: 'user', id: randomUUID(), label: 'owner' },
-			externalLinks: [],
 			teamIds,
 			name: 'Acme site',
 			slug: `work-${id.slice(0, 6)}`,
@@ -46,10 +65,25 @@ export class MockEverWorksWorks {
 			repoUrls: [],
 			members: [],
 			webUrl: `https://app.example.test/works/${id}`,
-			...work
+			...work,
+			externalLinks: []
 		};
 		this.works.set(id, row);
 		return row;
+	}
+
+	/** A work as served: its `externalLinks` read from the mock's links, filtered to the caller's source. */
+	private view(work: Record<string, unknown>, context: MockEverWorksRouteContext): Record<string, unknown> {
+		const source = MockEverWorksServer.linkSource(context.key);
+		const externalLinks = this.mock.links
+			.filter((link) => link.entityType === 'work' && link.entityId === work['id'] && link.source === source)
+			.map((link) => ({
+				source: link.source,
+				installationId: link.installationId,
+				externalId: link.externalId,
+				externalUrl: link.externalUrl
+			}));
+		return { ...work, externalLinks };
 	}
 
 	private readonly route: MockEverWorksExtension = (context) => {
@@ -72,9 +106,9 @@ export class MockEverWorksWorks {
 	};
 
 	private visible(context: MockEverWorksRouteContext): Array<Record<string, unknown>> {
-		return [...this.works.values()].filter(
-			(work) => work['organizationId'] === context.org?.id && work['visibility'] !== 'private'
-		);
+		return [...this.works.values()]
+			.filter((work) => work['organizationId'] === context.org?.id && work['visibility'] !== 'private')
+			.map((work) => this.view(work, context));
 	}
 
 	private create(context: MockEverWorksRouteContext): EverWorksHttpResponse {
@@ -146,14 +180,15 @@ export class MockEverWorksWorks {
 					]
 				: []
 		});
+		const served = this.view(work, context);
 		void this.mock.emit({
 			type: 'work.created',
 			organizationId: context.org?.id as string,
 			aggregate: { type: 'work', id: work['id'] as string, version: 1 },
 			actor: actAs ? { type: 'user', id: actAs } : { type: 'integration', id: context.key.keyId },
 			origin: { tag: context.headers['x-sync-origin'] ?? null, integrationKeyId: context.key.keyId },
-			data: work
+			data: served
 		});
-		return context.ok(work, 201);
+		return context.ok(served, 201);
 	}
 }

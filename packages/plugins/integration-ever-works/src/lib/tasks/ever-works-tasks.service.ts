@@ -1513,6 +1513,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				body: { body: 'This task was deleted in Ever Gauzy. It is cancelled here and no longer synced.', externalAuthor: { name: 'Ever Gauzy', source: EVER_WORKS_LINK_SOURCE } },
 				idempotencyKey: createHash('sha256').update(`${connectionId}:${EverWorksLinkType.TASK}:${change.gauzyId}:deleted`).digest('hex')
 			});
+			// No longer synced: the task stops showing the Gauzy task (this installation's link only, contract CR-2(3)).
+			await client.request('DELETE', `/links/task/${ewTaskId}`, { query: { installationId: connectionId } });
 		} catch (error) {
 			if (!(error instanceof EverWorksApiError && error.status === 404)) throw error;
 		}
