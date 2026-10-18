@@ -241,7 +241,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 					await this.deleteTimeLog(timeLog, forceDelete);
 				}
 			} catch (error) {
-				this.logger.warn(`Error while updating startedAt time: ${error?.message ?? error}`);
+				this.logger.warn(`Error while updating startedAt time: ${error?.message ?? error}`, error?.stack);
 			}
 		} else {
 			// Delete the time log if remaining duration is 0
@@ -314,7 +314,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 					await this.deleteTimeLog(timeLog, forceDelete);
 				}
 			} catch (error) {
-				this.logger.warn(`Error while updating stoppedAt time: ${error?.message ?? error}`);
+				this.logger.warn(`Error while updating stoppedAt time: ${error?.message ?? error}`, error?.stack);
 			}
 		} else {
 			this.debug(() => 'Remaining duration is 0, so we are deleting the time log during update stoppedAt time');
@@ -410,7 +410,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				await this.typeOrmTimeLogRepository.save(newLog);
 			} catch (error) {
-				this.logger.warn(`Error while creating new log: ${error?.message ?? error}`);
+				this.logger.warn(`Error while creating new log: ${error?.message ?? error}`, error?.stack);
 			}
 
 			try {
@@ -451,7 +451,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		} catch (error) {
 			// Log any errors that occur during deletion
 			this.logger.warn(
-				`Error while deleting the time log overlapping the entire time for ID: ${timeLog.id}: ${error?.message ?? error}`
+				`Error while deleting the time log overlapping the entire time for ID: ${timeLog.id}: ${error?.message ?? error}`,
+				error?.stack
 			);
 		}
 	}
