@@ -676,7 +676,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				await client.request('PUT', `/links/work/${encodeURIComponent(link.ewId)}`, { body: { externalId: link.gauzyId, installationId: context.connection.id } });
 			} catch (error) {
 				this.logger.warn(`The Ever Works work ${link.ewId} was not linked back to Gauzy project ${link.gauzyId} (${describeError(error)}).`);
-				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable)) return;
+				// An outage, or a key Ever Works no longer takes (401): the rest of this run would fail the same way.
+				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && (error.retryable || error.status === 401))) return;
 				await mark(link, { linkBackTriedAt: new Date().toISOString() });
 				continue;
 			}

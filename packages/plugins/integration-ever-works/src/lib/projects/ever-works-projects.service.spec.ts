@@ -349,6 +349,19 @@ describe('EverWorksProjectsService', () => {
 		expect(client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT')).toHaveLength(1);
 	});
 
+	it('a key Ever Works no longer takes (401) ends the run, unstamped (#11049 review)', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'First' }, { id: 'p2', name: 'Second' });
+		client.request.mockImplementation(async (...args: unknown[]) => {
+			if (args[0] === 'PUT') throw new EverWorksApiError(401, 'unauthorized', 'The key was revoked.');
+			return { data: [{ id: 'ew-work-1', ...work }, { id: 'ew-work-2', ...work, name: 'Other' }], nextCursor: null, hasMore: false };
+		});
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }, { ewWorkId: 'ew-work-2', projectId: 'p2' }] });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT')).toHaveLength(1);
+		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK).map((l) => JSON.parse(l.ewOnly as string)['linkBackTriedAt'])).toEqual([null, null]);
+	});
+
 	it('a marker refused by an Ever Works event written in between is made on a fresh read (#11049 review)', async () => {
 		const { service, projects, client, links, linkService } = setup();
 		projects.push({ id: 'p1', name: 'Our name' });
