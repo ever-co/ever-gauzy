@@ -982,12 +982,26 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		});
 	}
 
-	/** The organization's Idea tasks, by the push's own rule (`isIdeaTask`), for the dry run. */
+	/**
+	 * The organization's Idea tasks, by the push's own rule (`isIdeaTask`), for the dry run. Only the candidates are
+	 * read (an issue type named idea in any case, or the seeded type id), not every task (review on #11047).
+	 */
 	private async ideaTasksOf(context: EverWorksMappingContext): Promise<ID[]> {
-		const rows: Task[] = await this.dataSource.getRepository(Task).find({
-			select: { id: true, issueType: true, taskTypeId: true } as never,
-			where: { tenantId: context.tenantId, organizationId: context.organizationId } as never
-		});
+		const ideaTypeId =
+			context.mapping.settings?.find((row) => row.settingsName === EverWorksSettingName.IDEA_ISSUE_TYPE_ID)?.settingsValue ?? null;
+		const query = this.dataSource
+			.getRepository(Task)
+			.createQueryBuilder('task')
+			.select(['task.id', 'task.issueType', 'task.taskTypeId'])
+			.where('task.tenantId = :tenantId AND task.organizationId = :organizationId', {
+				tenantId: context.tenantId,
+				organizationId: context.organizationId
+			})
+			.andWhere(ideaTypeId ? '(LOWER(task.issueType) = :idea OR task.taskTypeId = :ideaTypeId)' : 'LOWER(task.issueType) = :idea', {
+				idea: 'idea',
+				ideaTypeId
+			});
+		const rows: Task[] = await query.getMany();
 		return rows.filter((row) => isIdeaTask(context, row as never)).map((row) => row.id as ID);
 	}
 
