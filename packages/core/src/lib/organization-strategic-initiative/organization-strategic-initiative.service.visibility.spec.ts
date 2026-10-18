@@ -334,16 +334,38 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 				initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION),
 				initiative(OrganizationStrategicVisibilityScopeEnum.TEAM)
 			];
-			const paginate = jest
-				.spyOn(TenantAwareCrudService.prototype, 'paginate')
+			const findAll = jest
+				.spyOn(TenantAwareCrudService.prototype, 'findAll')
 				.mockResolvedValue({ items: rows, total: rows.length } as never);
-			const page = await service.paginate({ take: 5 } as any);
-			expect(page.items).toEqual([rows[0]]);
-			expect(page.total).toBe(1);
-			const [options] = paginate.mock.calls[0] as any[];
-			expect(options).toMatchObject({ take: 5 });
+			const paginate = jest.spyOn(TenantAwareCrudService.prototype, 'paginate');
+			const page = await service.paginate({ take: 5, order: { title: 'ASC' } } as any);
+			expect(page).toEqual({ items: [rows[0]], total: 1 });
+			expect(paginate).not.toHaveBeenCalled();
+			const [options] = findAll.mock.calls[0] as any[];
+			expect(options).toMatchObject({ order: { title: 'ASC' } });
+			expect(options).not.toHaveProperty('take');
 			expect(organizationsOf(options.where)).toEqual([ORGANIZATION]);
 			expect(options.relations).toEqual(['teams', 'projects', 'projects.teams']);
+		});
+
+		it('later pages: the page is cut from the visible initiatives, and the total counts all of them (#11052 review)', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			const rows = Array.from({ length: 30 }, (_, i) => ({
+				...initiative(
+					i % 6 === 5 ? OrganizationStrategicVisibilityScopeEnum.TEAM : OrganizationStrategicVisibilityScopeEnum.ORGANIZATION
+				),
+				id: `initiative-${i}`
+			}));
+			jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({ items: rows, total: rows.length } as never);
+			const visible = rows.filter((_, i) => i % 6 !== 5).map((row) => row.id);
+			expect(visible).toHaveLength(25);
+			// `skip` is the page number, as in the CRUD base's paginate (10 per page unless `take` says otherwise).
+			const second = await service.paginate({ take: 10, skip: 2 } as any);
+			expect(second.total).toBe(25);
+			expect(second.items.map((row) => row.id)).toEqual(visible.slice(10, 20));
+			const first = await service.paginate({} as any);
+			expect(first.items.map((row) => row.id)).toEqual(visible.slice(0, 10));
+			expect((await service.paginate({ take: 10, skip: 3 } as any)).items.map((row) => row.id)).toEqual(visible.slice(20, 25));
 		});
 
 		it('the count (`GET /count`, GraphQL) counts what the caller may see (#11052 review)', async () => {
