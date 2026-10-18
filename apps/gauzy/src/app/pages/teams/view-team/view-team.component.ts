@@ -350,6 +350,8 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	public projectSections: IRecordViewSection[] = [];
 	public projectFacts: IProjectFacts | null = null;
 	private _projectSequence = 0;
+	/** Bumped by every reload of the project's period figures, so an older reply never lands over a newer one. */
+	private _projectPeriodSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
 
 	private _organization: IOrganization | null = null;
@@ -829,7 +831,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this.projectTaskFilter = 'open';
 		this.showAllProjectTasks = false;
 		void this.loadProjectProgress(row.id, sequence);
-		this.loadProjectPeriodFigures(row.id, sequence);
+		this.loadProjectPeriodFigures(row.id);
 		try {
 			const project = await firstValueFrom(this._projectsService.getById(row.id, PROJECT_VIEW_RELATIONS));
 			if (sequence === this._projectSequence && this.viewedProject?.id === row.id && project) {
@@ -855,9 +857,24 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		return this.showAllProjectTasks ? rows : rows.slice(0, PROJECT_TASK_LIMIT);
 	}
 
+	/** "Ann B., Carl D." — the people behind a "+N" chip. */
+	peopleNames(people: ITaskPerson[]): string {
+		return (people || []).map((person) => person.name).join(', ');
+	}
+
 	setProjectTaskFilter(filter: TaskFilter): void {
 		this.projectTaskFilter = filter;
 		this.showAllProjectTasks = false;
+	}
+
+	/**
+	 * The open project's row in the Projects panel as it stands now — its time follows the
+	 * period and the statistics as they load. Until the row exists, the card it was opened from.
+	 */
+	get viewedProjectRow(): IProjectOverviewRow | null {
+		const id = this.viewedProject?.id;
+		if (!id) return null;
+		return this.projectOverview.find((row) => row.id === id) || this.viewedProjectCard;
 	}
 
 	/** The team's hours on the open project over the period, tracked and manual. */
@@ -898,10 +915,9 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			const tasks = result?.items || [];
 			this.projectAttention = this.toAttentionTasks(tasks);
 			this.projectTasks = this.toTaskRows(tasks);
-			const done = tasks.filter((task) => isTaskFinished(task)).length;
-			const progress = tasks.filter(
-				(task) => !isTaskFinished(task) && ViewTeamComponent.statusGroupOf(task.status) === 'progress'
-			).length;
+			// Counted from the rows, so Progress and the task list always agree.
+			const done = this.projectTasks.filter((row) => row.statusGroup === 'done').length;
+			const progress = this.projectTasks.filter((row) => row.statusGroup === 'progress').length;
 			this.projectProgress = {
 				loading: false,
 				failed: false,
@@ -936,15 +952,22 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 			}));
 	}
 
-	/** What the project's figures read over the period: contributors, hours per day, top tasks. */
-	private loadProjectPeriodFigures(projectId: string, sequence: number): void {
-		void this.loadProjectContributors(projectId, sequence);
-		void this.loadProjectHours(projectId, sequence);
-		void this.loadProjectTopTasks(projectId, sequence);
+	/**
+	 * What the project's figures read over the period: contributors, hours per day, top tasks.
+	 * Each reload takes its own token: a reply counts only while both the project and this
+	 * reload are still the latest, so a slow reply for an earlier period is dropped.
+	 */
+	private loadProjectPeriodFigures(projectId: string): void {
+		const project = this._projectSequence;
+		const period = ++this._projectPeriodSequence;
+		const isCurrent = () => project === this._projectSequence && period === this._projectPeriodSequence;
+		void this.loadProjectContributors(projectId, isCurrent);
+		void this.loadProjectHours(projectId, isCurrent);
+		void this.loadProjectTopTasks(projectId, isCurrent);
 	}
 
 	/** The team's hours on the project per day of the period, tracked and manual. */
-	private async loadProjectHours(projectId: string, sequence: number): Promise<void> {
+	private async loadProjectHours(projectId: string, isCurrent: () => boolean): Promise<void> {
 		this.projectHours = { ...this.projectHours, loading: true, failed: false };
 		if (!this.members.length) {
 			this.projectHours = { loading: false, failed: false, value: [] };
@@ -955,15 +978,15 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				...this.buildRequest(this.periodRange()),
 				projectIds: [projectId]
 			});
-			if (sequence !== this._projectSequence) return;
+			if (!isCurrent()) return;
 			this.projectHours = { loading: false, failed: false, value: this.toHoursDays(rows) };
 		} catch {
-			if (sequence === this._projectSequence) this.projectHours = { loading: false, failed: true, value: [] };
+			if (isCurrent()) this.projectHours = { loading: false, failed: true, value: [] };
 		}
 	}
 
 	/** The project's tasks the team worked on the most in the period. */
-	private async loadProjectTopTasks(projectId: string, sequence: number): Promise<void> {
+	private async loadProjectTopTasks(projectId: string, isCurrent: () => boolean): Promise<void> {
 		this.projectTopTasks = { ...this.projectTopTasks, loading: true, failed: false };
 		if (!this.members.length) {
 			this.projectTopTasks = { loading: false, failed: false, value: [] };
@@ -974,14 +997,14 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				...this.buildRequest(this.periodRange()),
 				projectIds: [projectId]
 			});
-			if (sequence !== this._projectSequence) return;
+			if (!isCurrent()) return;
 			this.projectTopTasks = {
 				loading: false,
 				failed: false,
 				value: this.rank(rows, (task: ITasksStatistics) => ({ id: task.id, name: task.title }), 5)
 			};
 		} catch {
-			if (sequence === this._projectSequence) this.projectTopTasks = { loading: false, failed: true, value: [] };
+			if (isCurrent()) this.projectTopTasks = { loading: false, failed: true, value: [] };
 		}
 	}
 
@@ -1023,7 +1046,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	 * The team members who worked on the project the most in the period — the
 	 * same people and window as the card's time, so the shares add up to it.
 	 */
-	private async loadProjectContributors(projectId: string, sequence: number): Promise<void> {
+	private async loadProjectContributors(projectId: string, isCurrent: () => boolean): Promise<void> {
 		this.projectContributors = { ...this.projectContributors, loading: true, failed: false };
 		// No members: an empty employee filter would read the whole organization.
 		if (!this.members.length) {
@@ -1035,7 +1058,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				...this.buildRequest(this.periodRange()),
 				projectIds: [projectId]
 			});
-			if (sequence !== this._projectSequence) return;
+			if (!isCurrent()) return;
 			const people = new Map(this.members.map((member) => [member.id, member]));
 			const ranked = this.rank(
 				(rows || []).map((row: IMembersStatistics) => ({
@@ -1062,8 +1085,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 				})
 			};
 		} catch {
-			if (sequence === this._projectSequence)
-				this.projectContributors = { loading: false, failed: true, value: [] };
+			if (isCurrent()) this.projectContributors = { loading: false, failed: true, value: [] };
 		}
 	}
 
@@ -1145,7 +1167,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 
 		// An open project quick look follows the period too.
 		if (this.viewedProject) {
-			this.loadProjectPeriodFigures(this.viewedProject.id, this._projectSequence);
+			this.loadProjectPeriodFigures(this.viewedProject.id);
 		}
 
 		// A team with nobody on it has no figures: an empty employee filter would
@@ -1309,7 +1331,9 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	private toTaskRow(task: ITask, today: moment.Moment): ITeamTaskRow {
-		const statusGroup = ViewTeamComponent.statusGroupOf(task.status);
+		// Finished by the task views' own rule (a tenant status's `isDone` flag included), so a
+		// custom finished status lands in Done, not Open or Overdue.
+		const statusGroup = isTaskFinished(task) ? 'done' : ViewTeamComponent.statusGroupOf(task.status);
 		const isDone = statusGroup === 'done';
 		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
 		const people = (task.members || [])

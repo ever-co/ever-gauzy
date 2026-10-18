@@ -735,10 +735,10 @@
 		<div recordViewHeader class="project-view-top">
 			<div class="project-view-header">
 				<span class="project-logo">
-					@if (viewedProjectCard?.imageUrl) {
-					<img [src]="viewedProjectCard.imageUrl" [alt]="viewedProject.name" />
+					@if (viewedProjectRow?.imageUrl) {
+					<img [src]="viewedProjectRow.imageUrl" [alt]="viewedProject.name" />
 					} @else {
-					<span aria-hidden="true">{{ viewedProjectCard?.initials }}</span>
+					<span aria-hidden="true">{{ viewedProjectRow?.initials }}</span>
 					}
 				</span>
 				<div class="project-view-title">
@@ -782,7 +782,7 @@
 			<dl class="project-facts">
 				<div class="project-fact">
 					<dt>{{ 'EMPLOYEES_PAGE.VIEW.WORKED_PERIOD' | translate }}</dt>
-					<dd>{{ viewedProjectCard?.duration ? formatDuration(viewedProjectCard.duration) : '—' }}</dd>
+					<dd>{{ viewedProjectRow?.duration ? formatDuration(viewedProjectRow.duration) : '—' }}</dd>
 				</div>
 				<div class="project-fact">
 					<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS' | translate }}</dt>
