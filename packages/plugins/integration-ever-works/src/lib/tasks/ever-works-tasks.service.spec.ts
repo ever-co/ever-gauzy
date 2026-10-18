@@ -924,6 +924,10 @@ describe('task sync review fixes (#10804)', () => {
 		const [created] = [...t.mock.tasks.values()];
 		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: created?.['id'] });
 		t.mock.expireIdempotencyKeys(); // a later edit, after Ever Works forgot the create's key
+		// An Ever Works edit arrives before that push: it is applied, and the watchers still to send stay to send (#11079 review).
+		Object.assign(created as Record<string, unknown>, { title: 'Work, renamed in Ever Works', version: Number(created?.['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...(created as Record<string, unknown>) }, aggregate: { id: created?.['id'] as string, version: Number(created?.['version']) } });
+		expect(t.tasks.get('g1')).toMatchObject({ title: 'Work, renamed in Ever Works' });
 		expect(await t.push('g1')).toEqual({ status: 'pushed' });
 		expect(t.mock.tasks.size).toBe(1);
 		expect(created).toMatchObject({ status: 'in_progress', watchers: ['ew-alice'] });
@@ -1020,6 +1024,20 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		// Paired later, she fixes a typo in the Gauzy copy: Ever Works gets her text, not Gauzy's attribution line.
 		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
 		copy.html = '<p><strong>An Ever Works member</strong> (Ever Works):</p><p>hello!</p>';
+		expect(await t.pushComment(copy.id, 'upsert', 'u-alice')).toEqual({ status: 'pushed' });
+		expect(t.mock.comments.get(ew.id)).toMatchObject({ body: 'hello!' });
+	});
+
+	it('the attribution line stays in Gauzy for a name with Markdown in it too (#11079 review)', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Chatty' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const ew = comment(task['id'] as string, { authorType: 'user', authorId: 'ew-alice', externalAuthor: { name: 'Ops*Bot' }, body: 'hello' });
+		t.mock.comments.set(ew.id, ew);
+		await t.deliver({ type: 'task.comment.created', data: ew, aggregate: { id: task['id'] as string, version: 1 } });
+		const copy = t.comments[0] as { id: string; html: string };
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		copy.html = copy.html.replace('hello', 'hello!');
 		expect(await t.pushComment(copy.id, 'upsert', 'u-alice')).toEqual({ status: 'pushed' });
 		expect(t.mock.comments.get(ew.id)).toMatchObject({ body: 'hello!' });
 	});

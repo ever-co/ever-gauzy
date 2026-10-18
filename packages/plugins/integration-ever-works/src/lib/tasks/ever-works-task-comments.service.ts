@@ -74,16 +74,22 @@ export function commentBodyForEverWorks(html: string | null | undefined): string
 	return cutForEverWorks(htmlToMarkdown(html));
 }
 
-/** The line `htmlOf` puts in front of the comment of an Ever Works author Gauzy cannot attribute, as Markdown. */
-const ATTRIBUTION = /^\*\*[^*\n]+\*\* \(Ever Works\):\n+/;
+/**
+ * The line `htmlOf` puts in front of the comment of an Ever Works author Gauzy cannot attribute, as Markdown. The name
+ * may carry escaped Markdown (`Ops\*Bot` for `Ops*Bot`, #11079 review).
+ */
+const ATTRIBUTION = /^\*\*(?:\\.|[^*\\\n])+\*\* \(Ever Works\):\n+/;
 
 /**
  * The attribution line in front of the synced Gauzy text of a comment, when it is Gauzy's own (Ever Works' text does
  * not start with it): it is never sent back into the Ever Works message (review F84).
  */
 function attributionOf(snapshot: { g?: { body?: string }; e?: { body?: string } }): string | null {
-	const match = ATTRIBUTION.exec(snapshot.g?.body ?? '');
-	return match && !ATTRIBUTION.test(snapshot.e?.body ?? '') ? match[0] : null;
+	const gauzy = ATTRIBUTION.exec(snapshot.g?.body ?? '')?.[0] ?? null;
+	// Only Ever Works' own text starting with that very line keeps it; another attribution-form line does not (#11079
+	// review).
+	const everWorks = ATTRIBUTION.exec(snapshot.e?.body ?? '')?.[0] ?? null;
+	return gauzy && gauzy !== everWorks ? gauzy : null;
 }
 
 function cutForEverWorks(body: string): string {

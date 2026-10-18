@@ -611,8 +611,12 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		// The Gauzy snapshot moves only for what was applied here: a Gauzy edit not pushed yet stays a difference.
 		const gAfter = await this.gauzySide(context, after);
 		const nextG: TaskGauzySide = { ...prevG };
+		// A link with no Gauzy side at all (a create recovered or still finishing, a task adopted back) has Gauzy values
+		// still to send: only what was applied here joins its snapshot, so the next push still sends the rest (#11079
+		// review). A field added after the link was made (an older link) takes Gauzy's current value as before.
+		const noGauzySide = !Object.keys(prevG).length;
 		for (const field of Object.keys(gAfter) as Array<keyof TaskGauzySide>) {
-			if (applied.has(field) || !(field in prevG)) Object.assign(nextG, { [field]: gAfter[field] });
+			if (applied.has(field) || (!(field in prevG) && !noGauzySide)) Object.assign(nextG, { [field]: gAfter[field] });
 		}
 		Object.assign(nextG, setSnapshots, unsyncedPlanning);
 		await this.record(
