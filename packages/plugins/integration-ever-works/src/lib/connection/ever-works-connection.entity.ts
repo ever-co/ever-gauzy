@@ -25,7 +25,9 @@ export enum EverWorksConnectionStatus {
 /**
  * One Gauzy tenant's connection to one Ever Works tenant (plan 02 §4, 03 §C.1). Tenant-level: at most
  * one active row per tenant; `organizationId` is the organization it was connected from. Each mapped
- * Gauzy organization is an `integration_tenant` named `Ever_Works` that points at this row.
+ * Gauzy organization is an `integration_tenant` named `Ever_Works` that points at this row. Deleting the
+ * organization it was connected from keeps the connection and sets `organizationId` to NULL (its foreign
+ * key is `ON DELETE SET NULL`, migration 1791000003100); deleting the tenant deletes it.
  *
  * The integration key and the webhook signing secret are stored ONLY encrypted
  * (`EverWorksSecretBox`, AES-256-GCM bound to this row's id), never in `integration_setting`, whose

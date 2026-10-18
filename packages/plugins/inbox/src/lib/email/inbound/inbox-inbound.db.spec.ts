@@ -74,7 +74,7 @@ import { InboxItemRecipient } from '../../entities/inbox-item-recipient.entity';
 import { InboxService } from '../../inbox.service';
 import { InboxSourceHandlerRegistry } from '../../inbox-source-handler.registry';
 import { INBOX_EMAIL_MIGRATIONS } from '../database/inbox-email-migrations';
-import { InboxEmailService } from '../emails/inbox-email.service';
+import { InboxEmailService, THREAD_MESSAGES } from '../emails/inbox-email.service';
 import { InboxEmail } from '../entities/inbox-email.entity';
 import { InboxEmailAttachment } from '../entities/inbox-email-attachment.entity';
 import { InboxEmailThread } from '../entities/inbox-email-thread.entity';
@@ -922,6 +922,111 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect(fromOldest).toHaveLength(201);
 			expect(fromOldest[0].messageId).toBe('<alert-205@acme.test>');
 			expect(fromOldest[fromOldest.length - 1].id).toBe(email.id);
+		});
+
+		it('shows a former member their earlier messages of a thread that grew by a page after they left (#11096 review)', async () => {
+			// Two messages of one thread addressed to Bob while he is a member.
+			const email = await stored();
+			await deliver(
+				mime(SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-3@acme.test>'), [
+					'support.ever@inbox.example.test'
+				])
+			);
+			await processor.drain();
+			// Bob leaves; Eve receives the mailbox's mail from then on.
+			const members = dataSource.getRepository(InboxMailboxMember);
+			await members.delete({ userId: BOB });
+			await members.save(
+				members.create({
+					tenantId: TENANT,
+					organizationId: ORG,
+					mailboxId: supportBox.id as string,
+					userId: EVE,
+					role: InboxMailboxMemberRoleEnum.READER
+				} as InboxMailboxMember)
+			);
+			await deliver(
+				mime(SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-4@acme.test>'), [
+					'support.ever@inbox.example.test'
+				])
+			);
+			await processor.drain();
+			const repository = dataSource.getRepository(InboxEmail);
+			const evesMail = await repository.findOneByOrFail({ messageId: '<m-4@acme.test>' });
+			expect(evesMail.threadId).toBe(email.threadId);
+			expect(evesMail.inboxItemId).toBeTruthy();
+			// A full page of newer messages in the thread, all addressed to Eve.
+			const start = new Date(evesMail.receivedAt as Date).getTime();
+			await repository.save(
+				Array.from({ length: THREAD_MESSAGES }, (_, index) => {
+					const at = new Date(start + (index + 1) * 60_000);
+					return repository.create({
+						tenantId: TENANT,
+						organizationId: ORG,
+						mailboxId: supportBox.id as string,
+						threadId: email.threadId,
+						inboxItemId: evesMail.inboxItemId,
+						direction: InboxEmailDirectionEnum.IN,
+						messageId: `<later-${index + 1}@acme.test>`,
+						status: InboxEmailStatusEnum.PROCESSED,
+						receivedAt: at,
+						createdAt: at,
+						attemptCount: 0
+					} as InboxEmail);
+				})
+			);
+			as(BOB);
+			// Both of Bob's messages are listed: the page is the newest messages he may read, not the newest ones
+			// filtered down to his afterwards (which left only the one he asked for).
+			expect((await emails.thread(email.id as string)).map((row) => row.messageId).sort()).toEqual([
+				'<m-2@acme.test>',
+				'<m-3@acme.test>'
+			]);
+		});
+
+		it('fills a thread page with the messages it lists: failed inbound work takes no place in it (#11096 review)', async () => {
+			const email = await stored();
+			const repository = dataSource.getRepository(InboxEmail);
+			const start = new Date(email.receivedAt as Date).getTime();
+			const newer = (minutes: number, values: Partial<InboxEmail>) =>
+				repository.create({
+					tenantId: TENANT,
+					organizationId: ORG,
+					mailboxId: supportBox.id as string,
+					threadId: email.threadId,
+					direction: InboxEmailDirectionEnum.IN,
+					status: InboxEmailStatusEnum.PROCESSED,
+					createdAt: new Date(start + minutes * 60_000),
+					attemptCount: 0,
+					...values
+				} as InboxEmail);
+			// A page of newer messages: the newest are an inbound message whose processing failed, and an unsent reply.
+			await repository.save([
+				...Array.from({ length: THREAD_MESSAGES - 1 }, (_, index) =>
+					newer(index + 1, {
+						messageId: `<later-${index + 1}@acme.test>`,
+						receivedAt: new Date(start + (index + 1) * 60_000)
+					})
+				),
+				newer(THREAD_MESSAGES, {
+					messageId: '<failed@acme.test>',
+					status: InboxEmailStatusEnum.FAILED,
+					receivedAt: new Date(start + THREAD_MESSAGES * 60_000)
+				}),
+				newer(THREAD_MESSAGES + 1, {
+					direction: InboxEmailDirectionEnum.OUT,
+					messageId: '<unsent@acme.test>',
+					status: InboxEmailStatusEnum.FAILED
+				})
+			]);
+			as(BOB);
+			const thread = await emails.thread(email.id as string);
+			// The unsent reply and every later message: a page of listed messages, after the (older) one asked for.
+			expect(thread.length).toBe(THREAD_MESSAGES + 1);
+			expect(thread[0].id).toBe(email.id);
+			expect(thread[1].messageId).toBe('<later-1@acme.test>');
+			expect(thread[thread.length - 1].messageId).toBe('<unsent@acme.test>');
+			expect(thread.map((row) => row.messageId)).not.toContain('<failed@acme.test>');
 		});
 
 		it('lets a former member read what was addressed to them, but no longer send from the mailbox', async () => {

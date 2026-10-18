@@ -11,7 +11,9 @@ import {
 	InboxItemPriorityEnum,
 	InboxItemSourceEnum
 } from '@gauzy/contracts';
-import { Employee, EmployeeNotification } from '@gauzy/core';
+import { Employee, EmployeeNotification, IntegrationTenant } from '@gauzy/core';
+import { EVER_WORKS_INTEGRATION_NAME } from '../ever-works.constants';
+import { EverWorksSettingName } from '../ever-works-setting.enum';
 import { EverWorksConnection } from './ever-works-connection.entity';
 
 /** The identity of the integration's notices in the Inbox: one item per connection and kind of notice. */
@@ -49,6 +51,8 @@ interface EverWorksNotice {
  * - **Otherwise**, or when the Inbox refuses: the earlier fallback, an employee notification (the bell of
  *   Gauzy and Ever Teams) for that admin's employee in the organization the connection was made from. An admin
  *   without an employee record there gets the notice in the API log only.
+ * - Once that organization is deleted (the connection is kept with `organizationId` NULL, review F59), the notices
+ *   go to the organization of the oldest active mapping through the connection.
  */
 @Injectable()
 export class EverWorksNotifier {
@@ -103,7 +107,8 @@ export class EverWorksNotifier {
 		options: { fallback: boolean } = { fallback: true }
 	): Promise<boolean> {
 		const tenantId = connection.tenantId as ID | undefined;
-		const organizationId = connection.organizationId as ID | undefined;
+		const organizationId =
+			(connection.organizationId as ID | undefined) || (await this.mappedOrganizationOf(connection));
 		const userId = connection.connectedByUserId as ID | undefined;
 		if (!tenantId || !organizationId || !userId) {
 			this.logger.warn(`Connection ${connection.id}: ${notice.title} (no admin to notify).`);
@@ -115,6 +120,32 @@ export class EverWorksNotifier {
 		return options.fallback
 			? this.toEmployeeNotification(connection, notice, { tenantId, organizationId, userId })
 			: false;
+	}
+
+	/**
+	 * Where a connection's notices go once the organization it was connected from is deleted (its `organizationId`
+	 * is NULL then, review F59): the organization of an active mapping through the connection, the oldest first.
+	 */
+	private async mappedOrganizationOf(connection: EverWorksConnection): Promise<ID | undefined> {
+		if (!connection.tenantId) return undefined;
+		const mappings = await this.dataSource.getRepository(IntegrationTenant).find({
+			where: {
+				tenantId: connection.tenantId,
+				name: EVER_WORKS_INTEGRATION_NAME,
+				isActive: true,
+				isArchived: false
+			} as never,
+			relations: { settings: true } as never,
+			order: { createdAt: 'ASC' } as never
+		});
+		const mapping = mappings.find((row) =>
+			row.settings?.some(
+				(setting) =>
+					setting.settingsName === EverWorksSettingName.CONNECTION_ID &&
+					setting.settingsValue === connection.id
+			)
+		);
+		return (mapping?.organizationId as ID | undefined) ?? undefined;
 	}
 
 	/** The Inbox notice; `false` when the Inbox did not deliver it (the caller falls back). */

@@ -31,6 +31,10 @@
 		"typecheck",
 		"sendgrid",
 		"mailgun",
+		"sigv",
+		"tablist",
+		"bytewise",
+		"callouts",
 		"svgs",
 		"subuser",
 		"charsets",
@@ -1591,7 +1595,11 @@
 		"poolers",
 		"pooler's",
 		"keepalive",
-		"Brotli"
+		"Brotli",
+		"sigv",
+		"tablist",
+		"bytewise",
+		"callouts"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

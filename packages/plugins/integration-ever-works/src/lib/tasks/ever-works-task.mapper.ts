@@ -169,13 +169,20 @@ export const EVER_WORKS_LABEL_LIMIT = 80;
 export const EVER_WORKS_LABELS_MAX = 50;
 
 const FULL_TITLE_LABEL = '**Full title (from Gauzy):**';
-const FULL_TITLE_APPENDIX = /(?:^|\n\n)> \*\*Full title \(from Gauzy\):\*\* [^\n]*\s*$/;
+const FULL_TITLE_APPENDIX = /(?:^|\n\n)> \*\*Full title \(from Gauzy\):\*\* ([^\n]*)\s*$/;
 
-/** G → EW title: at most 200 characters; `truncated` when the full title has to travel in the description. */
+/**
+ * G → EW title: at most 200 characters; `truncated` when the full title has to travel in the description. A longer
+ * title has its whitespace collapsed first, as the full-title line has it (one that then fits goes whole), so its cut
+ * copy follows from that line alone (#11108 review). No title was sent cut before this rule (the integration is new,
+ * off by default), so there is no older cut to recognise.
+ */
 export function titleForEverWorks(title: string | null | undefined): { title: string; truncated: boolean } {
 	const value = String(title ?? '').trim() || 'Untitled';
 	if (value.length <= EVER_WORKS_TITLE_LIMIT) return { title: value, truncated: false };
-	return { title: `${value.slice(0, EVER_WORKS_TITLE_LIMIT - 1).trimEnd()}…`, truncated: true };
+	const collapsed = value.replace(/\s+/g, ' ');
+	if (collapsed.length <= EVER_WORKS_TITLE_LIMIT) return { title: collapsed, truncated: false };
+	return { title: `${collapsed.slice(0, EVER_WORKS_TITLE_LIMIT - 1).trimEnd()}…`, truncated: true };
 }
 
 /** G → EW description: the Markdown, with the full title appended when the title had to be cut (plan 01 §7). */
@@ -190,6 +197,14 @@ export function descriptionForEverWorks(markdown: string, title: string | null |
 /** EW → G description: the Markdown without the full-title line Gauzy appended itself. */
 export function stripTitleAppendix(markdown: string | null | undefined): string {
 	return normaliseMarkdown(normaliseMarkdown(markdown).replace(FULL_TITLE_APPENDIX, ''));
+}
+
+/** Whether an Ever Works title is still the cut copy `titleForEverWorks` made of the full title in its description. */
+export function isCutTitleCopy(title: string | null | undefined, markdown: string | null | undefined): boolean {
+	const full = FULL_TITLE_APPENDIX.exec(normaliseMarkdown(markdown))?.[1]?.trim();
+	if (!full || !title) return false;
+	const copy = titleForEverWorks(full);
+	return copy.truncated && copy.title === title;
 }
 
 /** Ever Works labels from Gauzy tag names: trimmed, ≤ 80 characters, unique (case-insensitive), at most 50. */
