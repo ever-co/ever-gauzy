@@ -342,11 +342,13 @@ export class InboxEmailService {
 				sent.rejected.length > 0 ? `Not accepted for: ${sent.rejected.join(', ')}`.slice(0, 1000) : null;
 			// A transport that sent the message under another Message-ID (Amazon SES replaces the one given) reports
 			// it: the row keeps that one, the id the recipients' replies name, so they thread (review F64).
+			// Whole or not at all: a cut id would never match the `In-Reply-To` of an answer (#11095 review).
 			const sentAs =
 				typeof sent.messageId === 'string' &&
+				sent.messageId.length <= 512 &&
 				SENT_MESSAGE_ID.test(sent.messageId) &&
 				sent.messageId !== messageId
-					? sent.messageId.slice(0, 512)
+					? sent.messageId
 					: null;
 			const nobody = sent.accepted.length === 0 && sent.rejected.length > 0;
 			await repository.update(

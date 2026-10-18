@@ -931,6 +931,17 @@ describe('Inbound email pipeline on SQLite', () => {
 			);
 			const second = await emails.reply(email.id as string, { text: 'One more thing.' });
 			expect(second.messageId).toMatch(/@inbox\.example\.test>$/);
+			// A reported id longer than the column is not cut (it would match nothing): the generated one stays.
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					messageId: `<${'x'.repeat(520)}@eu-west-1.amazonses.com>`,
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:ses'
+				})
+			);
+			const third = await emails.reply(email.id as string, { text: 'And another.' });
+			expect(third.messageId).toMatch(/@inbox\.example\.test>$/);
 		});
 
 		it('keeps the refused recipients of a partly accepted reply', async () => {
