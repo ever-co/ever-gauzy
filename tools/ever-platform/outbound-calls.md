@@ -34,7 +34,7 @@ from it. The row number is the contract's. Where Gauzy calls on a schedule of it
 
 <!-- generated:version (node tools/ever-platform/outbound-calls.mjs --write, from the pinned contract; do not edit by hand) -->
 
-Contract version: `1.0.0-rc.6` (`@ever-co/connect-contracts` and `@ever-co/connect-tools` at the same version).
+Contract version: `1.0.0-rc.7` (`@ever-co/connect-contracts` and `@ever-co/connect-tools` at the same version).
 
 <!-- /generated:version -->
 
@@ -81,6 +81,7 @@ The contract describes more calls for Gauzy than this release makes. These are n
 | 27 | Usage reports | not served by version 1 of the Ever Platform API |
 | 30 | Webhook endpoint | not built in this release |
 | 33 | In-product consent | not served by version 1 of the Ever Platform API |
+| 35 | Live event stream | not built in this release |
 
 <!-- /generated:not-made -->
 
