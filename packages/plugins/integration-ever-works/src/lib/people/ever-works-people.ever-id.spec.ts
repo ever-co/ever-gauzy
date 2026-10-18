@@ -320,6 +320,16 @@ describe('EverWorksPeopleService — Ever ID matching', () => {
 		expect(links.map((l) => [l.ewId, l.gauzyId])).toEqual([['U-bob', 'E-ada']]);
 	});
 
+	it('a person suggested for two members goes to the one an explicit link leaves open (#11076 review)', async () => {
+		const { service, links } = setup({ members: [member('U-ada', { email: 'ada@example.test' }), member('U-ann', { email: 'ada@example.test' })] });
+		// Both are suggested E-ada; the admin pairs Ada with E-bob by hand, so Ann is the only one left for E-ada.
+		await service.decide('m1' as never, { links: [{ ewUserId: 'U-ada', employeeId: 'E-bob' as never }], acceptSuggestions: true });
+		expect(links.map((l) => [l.ewId, l.gauzyId]).sort()).toEqual([
+			['U-ada', 'E-bob'],
+			['U-ann', 'E-ada']
+		]);
+	});
+
 	it('records how every People-tab pairing was made: an accepted e-mail suggestion, a hand-picked person', async () => {
 		const { service, links } = setup({ members: [member('U-ada', { email: 'ada@example.test' }), member('U-bob')] });
 		await service.decide('m1' as never, { links: [{ ewUserId: 'U-ada', employeeId: 'E-ada' as never }, { ewUserId: 'U-bob', employeeId: 'E-cy' as never }] });

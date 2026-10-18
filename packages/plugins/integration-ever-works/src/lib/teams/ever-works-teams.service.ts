@@ -144,6 +144,11 @@ function childStateAfter(link: EverWorksEntityLink, ew: TeamEverWorksOnly, child
 	return { fullVersion: childFloorOf(link, ew), childVersions: { ...(ew.childVersions ?? {}), ...(version != null ? { [child]: version } : {}) } };
 }
 
+/** The child state after a push: Ever Works' answer is not applied to Gauzy, so the floor of the child events stays. */
+function childStateAfterPush(link: EverWorksEntityLink, ew: TeamEverWorksOnly): TeamChildState {
+	return { fullVersion: childFloorOf(link, ew), ...(ew.childVersions ? { childVersions: ew.childVersions } : {}) };
+}
+
 /** The child state as stored, for a record that does not change it. */
 function childStateOf(ew: TeamEverWorksOnly): TeamChildState {
 	return { ...(ew.fullVersion !== undefined ? { fullVersion: ew.fullVersion } : {}), ...(ew.childVersions ? { childVersions: ew.childVersions } : {}) };
@@ -575,11 +580,13 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 					version = updated?.version ?? version;
 					ew = { ...ew, members: updated?.members ?? merged.members };
 				}
+				// Ever Works' answer is not applied to Gauzy as a full team state: the child events since the last one applied
+				// still apply by child, so the child history is kept (#11076 review).
 				await this.record(context, row.id as ID, { ...this.teamFrom(pair), ...ew, id: ewTeamId, name: row.name, avatarIcon: emoji }, version ?? null, {
 					name: row.name,
 					emoji,
 					members: nowMembers
-				}, 'outbound');
+				}, 'outbound', undefined, childStateAfterPush(pair, this.everWorksOnly(pair)));
 				return { status: 'pushed' };
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && error.status === 412) || attempt === 1) throw error;

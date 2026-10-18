@@ -248,6 +248,22 @@ describe('EverWorksTeamsService', () => {
 		expect(JSON.parse(team().ewOnly as string).childVersions).toBeUndefined();
 	});
 
+	it('a Gauzy rename pushed between member events keeps their history: a delayed older one still applies (#11076 review)', async () => {
+		const { service, person, teams, memberships, client } = setup();
+		person('emp-ann', 'ew-user-ann');
+		person('emp-bob', 'ew-user-bob');
+		const ref = (memberId: string) => ({ teamId: 'ew-team-1', memberType: 'user', memberId, role: 'member' });
+		await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }, 3) as never, applyContext);
+		await service.apply(envelope('team.member.added', ref('ew-user-bob'), 5) as never, applyContext);
+		// Renamed in Gauzy: the PATCH answers v6, before Ann's add (v4) is delivered.
+		teams[0]['name'] = 'Platform team';
+		client.request.mockResolvedValueOnce({ id: 'ew-team-1', name: 'Platform team', version: 6 });
+		const pushContext = { connection: { id: 'c1' }, mapping: { id: 'm1' } } as never;
+		expect(await service.push({ id: 'p', tenantId: 't1', organizationId: 'o1', gauzyId: teams[0]['id'], op: 'upsert' } as never, pushContext)).toEqual({ status: 'pushed' });
+		expect(await service.apply(envelope('team.member.added', ref('ew-user-ann'), 4) as never, applyContext)).toEqual({ status: 'applied' });
+		expect(memberships.map((m) => m['employeeId']).sort()).toEqual(['emp-ann', 'emp-bob']);
+	});
+
 	it('a team deleted in Gauzy stops its pair: its member events are skipped, not dead-lettered (review F76)', async () => {
 		const { service, person, teams, memberships, links } = setup();
 		await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }) as never, applyContext);
