@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as chalk from 'chalk';
 import { ConfigService, environment } from '@gauzy/config';
 import { getApiPublicPath } from './core/util/path-util';
-import { resolvePublicAssetsMaxAgeSeconds } from './public-assets-cache';
+import { publicAssetsCacheControl, resolvePublicAssetsMaxAgeSeconds } from './public-assets-cache';
 
 /**
  * Resolves the path for serving static files based on the environment and configuration.
@@ -28,14 +28,16 @@ export async function resolveServeStaticPath(config: ConfigService): Promise<Ser
 
 	console.log(chalk.green(`✔ Server Static Config -> rootPath: ${assetPublicPath}`));
 
+	// `Cache-Control: private, max-age=...` for the uploaded files (written once under generated names); without
+	// it every page load revalidated each avatar and logo. `null` (0 s) keeps serve-static's `public, max-age=0`.
+	// See ./public-assets-cache.ts.
+	const cacheControl = publicAssetsCacheControl(resolvePublicAssetsMaxAgeSeconds(process.env));
+
 	return [
 		{
 			rootPath: assetPublicPath,
 			serveRoot: '/public/', // Root URL from which the static files are served
 			serveStaticOptions: {
-				// `Cache-Control: public, max-age=...` for the uploaded files (written once under generated
-				// names); without it every page load revalidated each avatar and logo. See ./public-assets-cache.ts.
-				maxAge: resolvePublicAssetsMaxAgeSeconds(process.env) * 1000,
 				setHeaders: (res: any) => {
 					// Everything under `/public/` is user-uploaded and served unauthenticated, with a
 					// Content-Type derived from the on-disk extension. These two headers neutralize the
@@ -48,6 +50,11 @@ export async function resolveServeStaticPath(config: ConfigService): Promise<Ser
 					// displaying legitimate avatars, logos and screenshots inline.
 					res.setHeader('X-Content-Type-Options', 'nosniff');
 					res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+					// `send` emits this hook before it writes its own `Cache-Control`, and writes that only
+					// when none is set, so this one wins (on 200 and 304 alike).
+					if (cacheControl) {
+						res.setHeader('Cache-Control', cacheControl);
+					}
 				}
 			}
 		}

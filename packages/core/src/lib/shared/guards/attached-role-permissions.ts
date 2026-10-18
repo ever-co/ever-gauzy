@@ -29,18 +29,20 @@ export function attachedRolePermissionVerdict(
 		return null;
 	}
 
+	const granted = user.permissions as PermissionsEnum[];
+
 	// The lean role of the attached state (or the managed entity under MikroORM) carries its tenant. A role
 	// attached as a bare name (`RegisterAuthorizationGuard`) carries none, so it is not decided here.
-	const role = user.role as IRole | string | undefined;
-	if (role !== undefined && role !== null) {
-		if (typeof role !== 'object') {
-			return null;
-		}
-		if (role.tenantId !== tenantId) {
-			return null;
-		}
+	const role = user.role as IRole | string | undefined | null;
+	if (role === undefined || role === null) {
+		// `attachAuthorizationState` leaves no role and NO permissions behind when the role does not resolve:
+		// denied here, fail closed. A permission set with no role to tie it to the request's tenant is never
+		// granted from the request: the tenant-scoped query decides it.
+		return granted.length === 0 ? false : null;
+	}
+	if (typeof role !== 'object' || role.tenantId !== tenantId) {
+		return null;
 	}
 
-	const granted = user.permissions as PermissionsEnum[];
 	return permissions.some((permission) => granted.includes(permission));
 }

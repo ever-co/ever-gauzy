@@ -22,6 +22,11 @@ describe('attachedRolePermissionVerdict', () => {
 		expect(attachedRolePermissionVerdict(user, TENANT, required)).toBe(false);
 	});
 
+	it('never grants from permissions with no role to tie them to the tenant: the query decides', () => {
+		const user: any = { id: 'u', tenantId: TENANT, permissions: [PermissionsEnum.ORG_TEAM_EDIT] };
+		expect(attachedRolePermissionVerdict(user, TENANT, required)).toBeNull();
+	});
+
 	it('does not decide without an attached state', () => {
 		expect(attachedRolePermissionVerdict(null, TENANT, required)).toBeNull();
 		expect(attachedRolePermissionVerdict(undefined, TENANT, required)).toBeNull();

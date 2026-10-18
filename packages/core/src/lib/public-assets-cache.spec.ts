@@ -1,4 +1,18 @@
-import { DEFAULT_PUBLIC_ASSETS_MAX_AGE_SECONDS, resolvePublicAssetsMaxAgeSeconds } from './public-assets-cache';
+import {
+	DEFAULT_PUBLIC_ASSETS_MAX_AGE_SECONDS,
+	publicAssetsCacheControl,
+	resolvePublicAssetsMaxAgeSeconds
+} from './public-assets-cache';
+
+describe('publicAssetsCacheControl', () => {
+	it('lets only the browser keep a file, never a shared cache', () => {
+		expect(publicAssetsCacheControl(86400)).toBe('private, max-age=86400');
+	});
+
+	it("keeps serve-static's revalidate-every-time header for 0", () => {
+		expect(publicAssetsCacheControl(0)).toBeNull();
+	});
+});
 
 describe('resolvePublicAssetsMaxAgeSeconds', () => {
 	const silent = { warn: jest.fn() };
