@@ -75,7 +75,7 @@ describe('EmailSendService and the email transport registry', () => {
 
 		await service.getEmailInstance(scope);
 
-		expect(asked).toEqual([{ ...scope, providerAccountId: undefined }]);
+		expect(asked).toEqual([{ ...scope, providerAccountId: undefined, requireFromAddress: true }]);
 		expect(customSmtpService.findOneByOptions).toHaveBeenCalledTimes(1);
 	});
 
@@ -95,6 +95,32 @@ describe('EmailSendService and the email transport registry', () => {
 		expect(instance.config.message.from).toBe('team@acme.test');
 		expect(customSmtpService.findOneByOptions).not.toHaveBeenCalled();
 		expect(verify).not.toHaveBeenCalled();
+	});
+
+	it('a templated mail never goes out through a provider account without its own sender, but a message does (review F63)', async () => {
+		jest.spyOn(SMTPUtils, 'verifyTransporter').mockResolvedValue(true);
+		const { transport, sent } = recordingTransport();
+		const registry = new EmailTransportRegistry();
+		registry.register({
+			id: 'inbox',
+			resolve: async () => ({ transport, fromAddress: null, source: 'resend:acct-1' })
+		});
+		const customSmtpService = { findOneByOptions: jest.fn(async () => ({ ...smtpRow })) };
+		const service = new EmailSendService(customSmtpService as any, {} as any, registry);
+		jest.spyOn(service as any, 'getEmailConfig').mockImplementation((config: unknown) => ({ config }));
+
+		// A password reset or an invite: the provider would send as MAIL_FROM_ADDRESS, so the SMTP chain sends it.
+		const instance: any = await service.getEmailInstance(scope);
+		expect(instance.config.host).toBe('smtp.example.test');
+		expect(customSmtpService.findOneByOptions).toHaveBeenCalledTimes(1);
+
+		// An Inbox reply names its own sender (the mailbox): the provider sends it.
+		const result = await service.sendMessage(
+			{ from: 'support@acme.test', to: ['ada@acme.test'], subject: 'Re: Invoice 42', text: 'Paid.' } as any,
+			scope
+		);
+		expect(result.transport).toBe('provider:resend:acct-1');
+		expect(sent).toHaveLength(1);
 	});
 
 	it('sends a message no template renders through the provider, with its threading headers', async () => {

@@ -1,4 +1,4 @@
-// cspell:ignore dmarc
+// cspell:ignore dmarc amazonses
 /**
  * The inbound email pipeline (G-P4-2) end to end on a real database (better-sqlite3, the demo's engine): the provider
  * webhook through the built-in generic provider (the platform route and a provider account), the mailbox rules, the
@@ -970,6 +970,59 @@ describe('Inbound email pipeline on SQLite', () => {
 				})
 			);
 			expect((await emails.reply(email.id as string, { text: 'Thanks!' })).providerMessageId).toBe('pm-9');
+		});
+
+		it('keeps the Message-ID a transport sent a reply under, so the answer to it threads (review F64)', async () => {
+			const email = await stored();
+			as(BOB);
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					// Amazon SES replaced the Message-ID the Inbox generated.
+					messageId: '<0100abc@eu-west-1.amazonses.com>',
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:ses:account',
+					providerMessageId: '0100abc'
+				})
+			);
+			const reply = await emails.reply(email.id as string, { text: 'Thanks!' });
+			expect([reply.messageId, reply.providerMessageId]).toEqual([
+				'<0100abc@eu-west-1.amazonses.com>',
+				'0100abc'
+			]);
+			// Ada answers the reply: her mail names the id SES sent under, and joins the thread.
+			const answer = SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-20@acme.test>')
+				.replace('In-Reply-To: <m-1@acme.test>', 'In-Reply-To: <0100abc@eu-west-1.amazonses.com>')
+				.replace('References: <m-0@acme.test> <m-1@acme.test>', 'References: <0100abc@eu-west-1.amazonses.com>')
+				.replace('Subject: Re: Invoice 42', 'Subject: Something else');
+			await deliver(mime(answer, ['support.ever@inbox.example.test']));
+			await processor.drain();
+			const answered = await dataSource
+				.getRepository(InboxEmail)
+				.findOneByOrFail({ messageId: '<m-20@acme.test>' });
+			expect(answered.threadId).toBe(email.threadId);
+			// A transport reporting a provider id (not a Message-ID) keeps the generated one.
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					messageId: 're_123',
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:resend'
+				})
+			);
+			const second = await emails.reply(email.id as string, { text: 'One more thing.' });
+			expect(second.messageId).toMatch(/@inbox\.example\.test>$/);
+			// A reported id longer than the column is not cut (it would match nothing): the generated one stays.
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					messageId: `<${'x'.repeat(520)}@eu-west-1.amazonses.com>`,
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:ses'
+				})
+			);
+			const third = await emails.reply(email.id as string, { text: 'And another.' });
+			expect(third.messageId).toMatch(/@inbox\.example\.test>$/);
 		});
 
 		it('keeps the refused recipients of a partly accepted reply', async () => {

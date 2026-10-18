@@ -172,7 +172,14 @@ export class EmailSendService {
 		tenantId = RequestContext.currentTenantId(),
 		providerAccountId
 	}: IBasePerTenantAndOrganizationEntityModel & { providerAccountId?: ID | null }) {
-		const provided = await this.providerEmailInstance({ tenantId, organizationId, providerAccountId });
+		// A templated mail goes out as the transport's default sender: a provider account without its own would send
+		// as `MAIL_FROM_ADDRESS`, which the provider refuses, so only one with a sender is used (review F63).
+		const provided = await this.providerEmailInstance({
+			tenantId,
+			organizationId,
+			providerAccountId,
+			requireFromAddress: true
+		});
 		if (provided) {
 			return provided.email;
 		}
@@ -231,6 +238,10 @@ export class EmailSendService {
 		}
 		const resolution = await this.transportRegistry.resolve(request);
 		if (!resolution) {
+			return null;
+		}
+		if (request.requireFromAddress && !resolution.fromAddress) {
+			this.logger.debug(`Email transport ${resolution.source} has no sender of its own; using SMTP.`);
 			return null;
 		}
 		this.logger.debug(`Email transport: ${resolution.source}`);
