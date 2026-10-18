@@ -671,6 +671,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * An employee is considered to be 'working' if:
 	 * 1. The startedWorkOn date is (not null and) less than the last day forMonth
 	 * 2. The endWork date is either null or greater than the first day forMonth
+	 *
+	 * Counted as {@link findWorkingEmployees} lists them by default (the pickers' read, which this count sizes): an
+	 * agent employee needs no organization membership of its user and, in a range, no start date (review F70).
+	 * People are counted exactly as before.
 	 * @param organizationId
 	 * @param forRange
 	 * @returns
@@ -696,7 +700,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							moment.utc(forRange.startDate),
 							moment.utc(forRange.endDate)
 						);
-						mWhere.startedWorkOn = { $lte: endDate };
+						// An agent with no employment start date is working, as in the list (review F70).
+						mWhere.$and = [
+							{
+								$or: [
+									{ startedWorkOn: { $lte: endDate } },
+									{ kind: EmployeeKindEnum.AGENT, startedWorkOn: null }
+								]
+							}
+						];
 						mWhere.$or = [{ endWork: null }, { endWork: { $gte: startDate } }];
 					}
 
@@ -713,12 +725,22 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				case MultiORMEnum.TypeORM:
 					const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
 					query.innerJoin(`${query.alias}.user`, 'user');
-					query.innerJoin(`user.organizations`, 'organizations');
+					// As the list: a person needs an organization membership of its user, an agent (which never
+					// signs in) has none (review F70).
+					query.leftJoin(`user.organizations`, 'organizations');
 
 					// Set up the where clause using the provided filter function
 					query.where((qb: SelectQueryBuilder<Employee>) => {
-						this.getFilterQuery(qb, organizationId, forRange);
+						this.getFilterQuery(qb, organizationId, forRange, false, true);
 					});
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.where(p(`"organizations"."id" IS NOT NULL`));
+							web.orWhere(p(`"${query.alias}"."kind" = :agentKind`), {
+								agentKind: EmployeeKindEnum.AGENT
+							});
+						})
+					);
 
 					const total = await query.getCount();
 					return { total };
