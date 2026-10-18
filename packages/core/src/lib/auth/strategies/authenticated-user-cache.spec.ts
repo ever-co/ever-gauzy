@@ -226,6 +226,36 @@ describe('AuthenticatedUserCache', () => {
 		expect(other).toHaveBeenCalledTimes(1);
 	});
 
+	it.each([
+		['forgotten', (cache: AuthenticatedUserCache) => cache.forget('user-1')],
+		['cleared', (cache: AuthenticatedUserCache) => cache.clear()]
+	])('keeps nothing a lookup in flight resolves once the cache is %s, and no later request joins it', async (_label, invalidate) => {
+		const { cache } = build();
+		const lookup = deferred<any>();
+		const load = jest.fn(() => lookup.promise);
+		const inFlight = cache.resolve(claims, load);
+
+		invalidate(cache);
+
+		// A request after the invalidation starts its own lookup rather than joining the stale one.
+		const fresh = deferred<any>();
+		const reload = jest.fn(() => fresh.promise);
+		const later = cache.resolve(claims, reload);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(reload).toHaveBeenCalledTimes(1);
+
+		// The stale lookup still answers its own request, but its context is not kept.
+		lookup.resolve(validated());
+		await expect(inFlight).resolves.toMatchObject({ id: 'user-1' });
+		expect(cache.size).toBe(0);
+
+		fresh.resolve(validated());
+		await later;
+		expect(cache.size).toBe(1);
+		await cache.resolve(claims, load);
+		expect(load).toHaveBeenCalledTimes(1);
+	});
+
 	it('clears everything', async () => {
 		const { cache, load } = build();
 		await cache.resolve(claims, load);

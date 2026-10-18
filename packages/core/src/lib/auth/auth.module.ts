@@ -34,7 +34,7 @@ import { LoginAttemptModule } from './login-attempt.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { OAuthClientModule } from './oauth-client/oauth-client.module';
 import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.module';
-import { AuthenticatedUserCache, JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
+import { AuthenticatedUserCacheProvider, JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 
 // Core service providers for handling authentication and related functionalities
 const providers = [
@@ -47,7 +47,7 @@ const providers = [
 ];
 
 // Authentication strategies for token validation and management
-const strategies = [AuthenticatedUserCache, JwtStrategy, JwtRefreshTokenStrategy];
+const strategies = [AuthenticatedUserCacheProvider, JwtStrategy, JwtRefreshTokenStrategy];
 
 @Module({
 	imports: [
@@ -96,6 +96,7 @@ const strategies = [AuthenticatedUserCache, JwtStrategy, JwtRefreshTokenStrategy
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...EventHandlers, ...strategies],
-	exports: [...providers]
+	// The validated-context cache is exported so an off-boarding write can `forget` a user from another module.
+	exports: [...providers, AuthenticatedUserCacheProvider]
 })
 export class AuthModule {}

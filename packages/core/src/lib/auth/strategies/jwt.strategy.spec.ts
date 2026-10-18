@@ -17,7 +17,12 @@ jest.mock('../../role/role-authorization.service', () => ({
 	RoleAuthorizationService: class RoleAuthorizationService {}
 }));
 
-import { AuthenticatedUserCache } from './authenticated-user-cache';
+import { Test } from '@nestjs/testing';
+import { AuthService } from '../auth.service';
+import { EmployeeService } from '../../employee/employee.service';
+import { RoleAuthorizationService } from '../../role/role-authorization.service';
+import { UserOrganizationService } from '../../user-organization/user-organization.services';
+import { AuthenticatedUserCache, AuthenticatedUserCacheProvider } from './authenticated-user-cache';
 import { JwtStrategy } from './jwt.strategy';
 
 /**
@@ -656,6 +661,28 @@ describe('JwtStrategy.validate', () => {
 	 * membership — is reused for the next requests that carry the same claims (JWT_AUTHENTICATED_USER_TTL_MS),
 	 * and concurrent requests with one token share a single lookup. A refusal is never reused.
 	 */
+	describe('module wiring', () => {
+		it('is built by Nest with the module-wide cache', async () => {
+			// The cache's constructor takes plain options: registered as a class provider, Nest tried to resolve them
+			// as a dependency and the API did not start. The factory provider is what AuthModule registers.
+			const moduleRef = await Test.createTestingModule({
+				providers: [
+					AuthenticatedUserCacheProvider,
+					JwtStrategy,
+					{ provide: AuthService, useValue: {} },
+					{ provide: EmployeeService, useValue: {} },
+					{ provide: UserOrganizationService, useValue: {} },
+					{ provide: RoleAuthorizationService, useValue: {} }
+				]
+			}).compile();
+
+			const strategy = moduleRef.get(JwtStrategy);
+			const cache = moduleRef.get(AuthenticatedUserCache);
+			expect(cache).toBeInstanceOf(AuthenticatedUserCache);
+			expect((strategy as any).authenticatedUsers).toBe(cache);
+		});
+	});
+
 	describe('validated context reuse', () => {
 		const payload = { id: 'first-user', tenantId: 'tenant', employeeId: 'emp-1', organizationId: 'org-1' };
 		const activeEmployee = {

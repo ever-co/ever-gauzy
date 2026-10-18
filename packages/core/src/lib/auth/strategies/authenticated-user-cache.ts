@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Provider, UnauthorizedException } from '@nestjs/common';
 import { IAuthenticatedUser } from '../../core/context/types';
 import { getORMType, MultiORM, MultiORMEnum } from '../../core/utils';
 
@@ -102,14 +102,18 @@ interface AuthenticatedUserEntry {
  *
  * Under MikroORM the reuse is off: the user is an entity the request's unit of work manages, and cannot be handed
  * to another request.
+ *
+ * Not `@Injectable()`: its constructor takes plain options, which Nest would try to resolve as a dependency.
+ * A module registers it through {@link AuthenticatedUserCacheProvider}.
  */
-@Injectable()
 export class AuthenticatedUserCache {
 	private readonly ttlMs: number;
 	private readonly maxEntries: number;
 	private readonly now: () => number;
 	private readonly entries = new Map<string, AuthenticatedUserEntry>();
 	private readonly loading = new Map<string, Promise<IAuthenticatedUser | UnauthorizedException>>();
+	/** Bumped by `forget` and `clear`: a lookup that started before is not kept when it settles. */
+	private generation = 0;
 
 	constructor(options: AuthenticatedUserCacheOptions = {}) {
 		const ormType = options.ormType ?? getORMType();
@@ -156,16 +160,22 @@ export class AuthenticatedUserCache {
 
 		let pending = this.loading.get(key);
 		if (!pending) {
-			pending = load()
+			const generation = this.generation;
+			const lookup = load()
 				.then((outcome) => {
-					if (outcome && !(outcome instanceof UnauthorizedException)) {
+					// Not kept when the cache was forgotten or cleared while the lookup ran: the context it
+					// resolved may be the one that was invalidated.
+					if (outcome && !(outcome instanceof UnauthorizedException) && generation === this.generation) {
 						this.store(key, outcome);
 					}
 					return outcome;
 				})
 				.finally(() => {
-					this.loading.delete(key);
+					if (this.loading.get(key) === lookup) {
+						this.loading.delete(key);
+					}
 				});
+			pending = lookup;
 			this.loading.set(key, pending);
 		}
 
@@ -175,7 +185,8 @@ export class AuthenticatedUserCache {
 
 	/**
 	 * Drops the contexts of one user (every token of theirs, whatever employee or organization it names), so the
-	 * next request of theirs is judged against the database.
+	 * next request of theirs is judged against the database. A lookup in flight is left to its own requests: no
+	 * later request joins it, and what it resolves is not kept.
 	 *
 	 * @param userId The user.
 	 */
@@ -185,11 +196,23 @@ export class AuthenticatedUserCache {
 				this.entries.delete(key);
 			}
 		}
+		this.invalidatePending();
 	}
 
-	/** Drops every context. */
+	/** Drops every context, and keeps nothing a lookup in flight resolves. */
 	clear(): void {
 		this.entries.clear();
+		this.invalidatePending();
+	}
+
+	/**
+	 * Detaches every lookup in flight: a later request starts its own, and what the detached ones resolve is not
+	 * kept. A pending lookup does not know which user it will resolve (a third-party token names none), so all of
+	 * them are detached, whichever user is forgotten.
+	 */
+	private invalidatePending(): void {
+		this.generation += 1;
+		this.loading.clear();
 	}
 
 	/**
@@ -219,3 +242,13 @@ export class AuthenticatedUserCache {
 		}
 	}
 }
+
+/**
+ * Registers one {@link AuthenticatedUserCache} per process under the class token, so a module provides it and
+ * `JwtStrategy` receives it. The class is not `@Injectable()`: Nest would otherwise try to resolve its options
+ * parameter as a dependency, and fail to build the module.
+ */
+export const AuthenticatedUserCacheProvider: Provider = {
+	provide: AuthenticatedUserCache,
+	useFactory: () => new AuthenticatedUserCache()
+};
