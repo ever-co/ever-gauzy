@@ -255,6 +255,11 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 
 	/** The project open in the quick-look drawer, by id: its card is read live from the Projects panel. */
 	public viewedProjectId: string | null = null;
+	/**
+	 * The card the drawer was opened from, with no time: one object for as long as the
+	 * drawer is open, so the drawer's `project` input does not change on every check.
+	 */
+	private _viewedProjectIdle: IProjectOverviewRow | null = null;
 	/** The employee, as the drawer shows them among the project's contributors. */
 	public projectPeople: IProjectQuickLookPerson[] = [];
 
@@ -638,19 +643,23 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	openProject(row: IProjectOverviewRow): void {
 		this.closeTask();
 		this.viewedProjectId = row.id;
+		this._viewedProjectIdle = { ...row, duration: 0, share: 0, width: 0 };
 	}
 
 	closeProject(): void {
 		this.viewedProjectId = null;
+		this._viewedProjectIdle = null;
 	}
 
 	/**
 	 * The open project's card as it stands now, so the drawer's "worked in period"
-	 * follows the period and the statistics as they load.
+	 * follows the period and the statistics as they load. A project they are not a
+	 * member of drops out of the panel once it has no time in the period: the drawer
+	 * then stays open on the card's logo with no time, instead of closing by itself.
 	 */
 	get viewedProjectRow(): IProjectOverviewRow | null {
 		const id = this.viewedProjectId;
-		return id ? this.projectOverview.find((row) => row.id === id) || null : null;
+		return id ? this.projectOverview.find((row) => row.id === id) || this._viewedProjectIdle : null;
 	}
 
 	/** The period as ISO dates — stable strings, so the drawer reloads only when the window moves. */
