@@ -42,6 +42,18 @@ describe('InboxNotificationsComponent', () => {
 		expect(component.hasUnread()).toBe(true);
 	});
 
+	it("once 'Mark all read' went through, the notifications not loaded count as read (#11098 review)", () => {
+		api.list.mockReturnValue(
+			of({ items: Array.from({ length: 20 }, (_, n) => notification(`n${n}`, true)), total: 25 })
+		);
+		api.markAllRead.mockReturnValue(of({ count: 25 }));
+		const { component } = render();
+		expect(component.hasUnread()).toBe(true);
+		component.markAllRead();
+		expect(api.list).toHaveBeenCalledTimes(2);
+		expect(component.hasUnread()).toBe(false);
+	});
+
 	it("'Mark all read' is off when every notification is loaded and read", () => {
 		api.list.mockReturnValue(of({ items: [notification('n1', true)], total: 1 }));
 		expect(render().component.hasUnread()).toBe(false);

@@ -132,12 +132,14 @@ export class InboxNotificationsComponent implements OnInit {
 	readonly error = signal(false);
 	readonly noEmployee = signal(false);
 	private scope: NotificationScope = { tenantId: null, organizationId: null, employeeId: null };
+	/** "Mark all read" went through for this employee: the notifications not loaded are read too (#11098 review). */
+	private readonly markedAll = signal(false);
 
 	/** Something to mark read: an unread notification listed, or more of them not loaded yet (review F69). */
 	hasUnread(): boolean {
 		return (
 			this.notifications().some((notification) => !notification.isRead) ||
-			this.total() > this.notifications().length
+			(!this.markedAll() && this.total() > this.notifications().length)
 		);
 	}
 
@@ -204,6 +206,7 @@ export class InboxNotificationsComponent implements OnInit {
 			)
 			.subscribe((scope) => {
 				this.scope = scope;
+				this.markedAll.set(false);
 				this.notifications.set([]);
 				this.total.set(0);
 				this.reload$.next(0);
@@ -233,7 +236,10 @@ export class InboxNotificationsComponent implements OnInit {
 	 */
 	markAllRead(): void {
 		this.api.markAllRead().subscribe({
-			next: () => this.reload$.next(0),
+			next: () => {
+				this.markedAll.set(true);
+				this.reload$.next(0);
+			},
 			error: () => this.error.set(true)
 		});
 	}

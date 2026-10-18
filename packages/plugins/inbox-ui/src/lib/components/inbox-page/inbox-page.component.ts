@@ -396,7 +396,11 @@ export class InboxPageComponent implements OnInit {
 	 * Something to mark read: an unread item listed, or more pages to load (older items, which may be unread: the API
 	 * marks them all, so the button does not wait for "Load more", review F69).
 	 */
-	readonly hasUnread = computed(() => this.items().some((item) => isUnread(item)) || !!this.nextCursor());
+	readonly hasUnread = computed(
+		() => this.items().some((item) => isUnread(item)) || (!this.markedAll() && !!this.nextCursor())
+	);
+	/** "Mark all read" went through for the list as it is: its older pages are read too (#11098 review). */
+	private readonly markedAll = signal(false);
 
 	/** The search box, debounced into `query`. */
 	readonly search$ = new Subject<string>();
@@ -484,6 +488,7 @@ export class InboxPageComponent implements OnInit {
 		this.search$
 			.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
 			.subscribe((value) => {
+				this.markedAll.set(false);
 				this.query.set(value ?? '');
 				this.reload();
 			});
@@ -505,6 +510,7 @@ export class InboxPageComponent implements OnInit {
 
 	selectTab(tab: InboxUiTab): void {
 		if (tab === this.tab()) return;
+		this.markedAll.set(false);
 		this.tab.set(tab);
 		this.items.set([]);
 		this.nextCursor.set(null);
@@ -514,16 +520,19 @@ export class InboxPageComponent implements OnInit {
 	}
 
 	setKind(kind: InboxItemKindEnum | null): void {
+		this.markedAll.set(false);
 		this.kind.set(kind);
 		this.reload();
 	}
 
 	setSource(source: string | null): void {
+		this.markedAll.set(false);
 		this.source.set(source);
 		this.reload();
 	}
 
 	setUnread(unread: boolean): void {
+		this.markedAll.set(false);
 		this.unreadOnly.set(!!unread);
 		this.reload();
 	}
@@ -561,14 +570,7 @@ export class InboxPageComponent implements OnInit {
 		this.api.reply(id, input).subscribe({
 			next: (next) => {
 				this.setReplying(id, false);
-				if (this.opened()?.id === next.id) this.opened.set(next);
-				// An answered decision is no longer a decision: it leaves the Decisions tab (and stays open), as the
-				// API's list no longer has it (review F66).
-				if (this.tab() === 'decisions' && next.status !== InboxItemStatusEnum.OPEN) {
-					this.items.set(this.items().filter((entry) => entry.id !== next.id));
-				} else {
-					this.items.set(replaceItem(this.items(), next));
-				}
+				this.useAnswered(next);
 				this.api.notifyChanged();
 			},
 			error: (error: HttpErrorResponse) => {
@@ -578,6 +580,19 @@ export class InboxPageComponent implements OnInit {
 				if (error?.status === 409) this.refresh(id);
 			}
 		});
+	}
+
+	/**
+	 * An item as the API answers it now. An answered decision is no longer a decision: it leaves the Decisions tab
+	 * (and stays open), as the API's list no longer has it (review F66), also when it was decided elsewhere first.
+	 */
+	private useAnswered(next: IInboxItemWithState): void {
+		if (this.opened()?.id === next.id) this.opened.set(next);
+		if (this.tab() === 'decisions' && next.status !== InboxItemStatusEnum.OPEN) {
+			this.items.set(this.items().filter((entry) => entry.id !== next.id));
+		} else {
+			this.items.set(replaceItem(this.items(), next));
+		}
 	}
 
 	private setReplying(id: string, on: boolean): void {
@@ -639,6 +654,7 @@ export class InboxPageComponent implements OnInit {
 		// Only what the list shows: its kind, source and text filters go along (review F65).
 		this.api.markAllRead(tab, { kind: this.kind(), source: this.source(), q: this.query() }).subscribe({
 			next: () => {
+				this.markedAll.set(true);
 				this.api.notifyChanged();
 				this.reload();
 			},
@@ -648,10 +664,8 @@ export class InboxPageComponent implements OnInit {
 
 	private refresh(id: string): void {
 		this.api.get(id).subscribe({
-			next: (next) => {
-				this.items.set(replaceItem(this.items(), next));
-				if (this.opened()?.id === next.id) this.opened.set(next);
-			}
+			// "Already decided" elsewhere (409): the decided item leaves the Decisions tab too (#11098 review).
+			next: (next) => this.useAnswered(next)
 		});
 	}
 }

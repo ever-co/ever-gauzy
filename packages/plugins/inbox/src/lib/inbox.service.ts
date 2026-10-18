@@ -465,13 +465,13 @@ export class InboxService implements IInboxItemWriter {
 	 */
 	async markAllRead(
 		tab?: InboxTabEnum,
-		filters: Pick<IInboxItemFindInput, 'kind' | 'source' | 'q'> = {}
+		{ kind, source, q }: Pick<IInboxItemFindInput, 'kind' | 'source' | 'q'> = {}
 	): Promise<{ updated: number }> {
 		const { tenantId, userId } = this.caller();
 		const rows = await this.recipientItems(tenantId, userId, {
-			kind: filters?.kind,
-			source: filters?.source,
-			q: filters?.q,
+			kind,
+			source,
+			q,
 			tab: tab ?? InboxTabEnum.ALL,
 			unread: true
 		})
