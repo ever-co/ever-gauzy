@@ -195,17 +195,21 @@ describe('EverWorksConnectComponent', () => {
 		expect(find('webhook-kept')).toBeNull();
 	});
 
-	it('a disconnect that leaves the webhook subscription in Ever Works says how to remove it, until a reconnect (#11096 review)', () => {
+	it.each([
+		['the same connection, its subscription deleted now', { ...CONNECTION, earlierWebhookDeleted: true }, false],
+		['the same connection, Ever Works still failing', { ...CONNECTION, earlierWebhookDeleted: false }, true],
+		['another Ever Works tenant (a new connection)', { ...CONNECTION, id: 'c2', ewTenant: { id: 'ew-other', slug: 'other' } }, true]
+	])('a disconnect that leaves the webhook subscription in Ever Works warns until a reconnect confirms it is gone: %s (#11096 review)', (_case, reconnected, warns) => {
 		api.disconnect.mockReturnValue(of({ success: true, webhookDeleted: false }));
 		api.validate.mockReturnValue(of(VALIDATION));
-		api.connect.mockReturnValue(of(CONNECTION));
+		api.connect.mockReturnValue(of(reconnected));
 		const { component, find, click } = render({ connection: { ...CONNECTION, status: 'error' } as EverWorksConnection });
 		click('recover-disconnect');
 		click('recover-confirm-disconnect');
 		expect(component.step).toBe('key');
 		expect(find('webhook-kept')?.getAttribute('status')).toBe('warning');
 		expect(find('webhook-kept')?.textContent).toContain('EVER_WORKS.SETTINGS.DISCONNECT_WEBHOOK_KEPT');
-		// Still shown on the way to a new key; the reconnect (which deletes the subscription) clears it.
+		// Still shown on the way to a new key; only a reconnect of that connection that deleted the subscription clears it.
 		component.apiKey = 'ew_int_new';
 		click('have-key');
 		expect(find('webhook-kept')).not.toBeNull();
@@ -213,7 +217,7 @@ describe('EverWorksConnectComponent', () => {
 		click('connect');
 		expect(api.connect).toHaveBeenCalledWith(ORGANIZATION_ID, 'https://api.example.test/api', 'ew_int_new');
 		expect(component.step).toBe('organization');
-		expect(find('webhook-kept')).toBeNull();
+		expect(!!find('webhook-kept')).toBe(warns);
 	});
 
 	it('start registers the webhook (best effort), then starts the first sync and hands the run back', () => {

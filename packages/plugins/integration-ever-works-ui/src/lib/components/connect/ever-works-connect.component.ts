@@ -325,10 +325,11 @@ export class EverWorksConnectComponent implements OnChanges {
 	/** Disconnect asks once more before it goes out. */
 	confirmDisconnect = false;
 	/**
-	 * The disconnect could not delete the Ever Works webhook subscription: the admin is told how to remove it, until a
-	 * reconnect (which deletes it) (#11096 review).
+	 * The connection whose disconnect could not delete its Ever Works webhook subscription, or `null`: the admin is told
+	 * how to remove it until a reconnect resumes that connection (same Ever Works tenant) and confirms it is gone
+	 * (#11096 review).
 	 */
-	webhookKept = false;
+	webhookKept: string | null = null;
 	busy = false;
 	error: string | null = null;
 	/** Set once the first sync has started: the wizard stays locked until the page moves on. */
@@ -373,7 +374,8 @@ export class EverWorksConnectComponent implements OnChanges {
 		if (!this.canConnect) return;
 		this.request(this.api.connect(this.organizationId, this.apiBaseUrl.trim(), this.apiKey.trim()), (connection) => {
 			this.connection = connection;
-			this.webhookKept = false;
+			// Another Ever Works tenant (a new connection) leaves the kept subscription as it is; a failed retry keeps it too.
+			if (connection.id === this.webhookKept && connection.earlierWebhookDeleted === true) this.webhookKept = null;
 			this.apiKey = '';
 			this.validation = null;
 			this.preselectOrganization();
@@ -418,7 +420,7 @@ export class EverWorksConnectComponent implements OnChanges {
 			this.connection = null;
 			this.confirmDisconnect = false;
 			// Disconnected, but Ever Works kept the webhook subscription (the server keeps its id): say so (#11096 review).
-			this.webhookKept = result?.webhookDeleted === false;
+			this.webhookKept = result?.webhookDeleted === false ? connection.id : null;
 			this.newKey = '';
 			this.everWorksOrganizationId = '';
 			this.step = 'key';
