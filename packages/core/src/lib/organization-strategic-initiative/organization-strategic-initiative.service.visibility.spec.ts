@@ -29,7 +29,8 @@ const USER = 'f0000000-0000-4000-8000-000000000001';
 describe('OrganizationStrategicInitiativeService — who sees an initiative', () => {
 	let service: OrganizationStrategicInitiativeService;
 	let membership: { find: jest.Mock; findOne: jest.Mock };
-	let memberOf: string[];
+	/** The caller's `user_organization` rows: an organization id, or a row with its own `isActive` / `isArchived`. */
+	let memberOf: Array<string | { organizationId: string; isActive?: boolean | null; isArchived?: boolean | null }>;
 	let permissions: PermissionsEnum[];
 	let manager: { find: jest.Mock };
 	let project: { findOne: jest.Mock };
@@ -54,7 +55,7 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 	const signIn = (
 		employeeId: string | null,
 		granted: PermissionsEnum[] = [],
-		organizations: string[] = [ORGANIZATION]
+		organizations: typeof memberOf = [ORGANIZATION]
 	) => {
 		permissions = granted;
 		memberOf = organizations;
@@ -63,16 +64,21 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER, employeeId } as any);
 	};
 	/** What the three reads answer for one initiative: the row, or `null` for a miss (404 / filtered out). */
-	const reads = async (row: any) => {
+	const reads = async (row: any, projectOrganizationId: string = row.organizationId) => {
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByOptions').mockResolvedValue(row as never);
 		jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({ items: [row], total: 1 } as never);
-		project.findOne.mockResolvedValue({ id: 'project-1', organizationStrategicInitiatives: [row] });
-		const one = await service.findOneById('initiative-1').catch((error) => {
+		project.findOne.mockResolvedValue({
+			id: 'project-1',
+			organizationId: projectOrganizationId,
+			organizationStrategicInitiatives: [row]
+		});
+		const miss = (error: unknown) => {
 			if (error instanceof NotFoundException) return null;
 			throw error;
-		});
+		};
+		const one = await service.findOneById('initiative-1').catch(miss);
 		const list = (await service.findAll({} as any)).items;
-		const ofProject = await service.findByProject('project-1' as any);
+		const ofProject = (await service.findByProject('project-1' as any).catch(miss)) ?? [];
 		return { one: one ? one.id : null, list: list.length, ofProject: ofProject.length };
 	};
 	const seen = { one: 'initiative-1', list: 1, ofProject: 1 };
@@ -83,7 +89,7 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 		manager = {
 			find: jest.fn(async (entity: unknown, { where }: any) =>
 				entity === UserOrganization && where.userId === USER && where.tenantId === TENANT
-					? memberOf.map((organizationId) => ({ organizationId }))
+					? memberOf.map((row) => (typeof row === 'string' ? { organizationId: row } : row))
 					: []
 			)
 		};
@@ -208,6 +214,93 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 		it('a user with no employee never matches an initiative with no steward', async () => {
 			signIn(null, [PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ]);
 			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.TEAM, null))).toEqual(hidden);
+		});
+	});
+
+	/**
+	 * The reads are bound to the caller's organizations (#11050 review, CWE-863): the CRUD base adds the tenant,
+	 * not the organization, and neither the routes nor the GraphQL fields check membership of the record's
+	 * organization, so an organization- or leadership-scoped initiative of another organization of the tenant
+	 * was readable by id, by project or in the list. Every read now answers only initiatives of an organization
+	 * the caller is a current member of (a `user_organization` row of the tenant that is not deactivated or
+	 * archived); inside them the scope rule, the steward and the initiative admins' rule are unchanged.
+	 */
+	describe('only initiatives of the organizations the caller belongs to', () => {
+		const reader = [PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ];
+		const asLeadership = () => {
+			jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue('role-manager');
+			Object.assign(service, {
+				_roleService: { findOneByIdString: jest.fn().mockResolvedValue({ name: 'MANAGER' }) }
+			});
+		};
+
+		it('an organization-scoped one: seen in their organization, never in another one of the tenant', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(seen);
+			expect(
+				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION))
+			).toEqual(hidden);
+		});
+
+		it('a leadership-scoped one: leadership of their organization only', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			asLeadership();
+			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.LEADERSHIP))).toEqual(seen);
+			expect(
+				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.LEADERSHIP, STEWARD, OTHER_ORGANIZATION))
+			).toEqual(hidden);
+		});
+
+		it('a member of both organizations sees both', async () => {
+			signIn(OTHER, reader, [ORGANIZATION, OTHER_ORGANIZATION]);
+			expect(
+				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION))
+			).toEqual(seen);
+		});
+
+		it('the steward of one in an organization they are no longer a member of does not', async () => {
+			signIn(STEWARD, reader, [ORGANIZATION]);
+			expect(
+				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.TEAM, STEWARD, OTHER_ORGANIZATION))
+			).toEqual(hidden);
+		});
+
+		it('a deactivated or archived membership does not count (nor for the initiative admins)', async () => {
+			for (const row of [
+				{ organizationId: ORGANIZATION, isActive: false },
+				{ organizationId: ORGANIZATION, isArchived: true }
+			]) {
+				signIn(OTHER, reader, [row]);
+				expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(hidden);
+				signIn(null, [...reader, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE], [row]);
+				expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.TEAM, OTHER))).toEqual(hidden);
+			}
+			// A row that states neither (as the column defaults leave it) is a current membership.
+			signIn(OTHER, reader, [{ organizationId: ORGANIZATION, isActive: null, isArchived: null }]);
+			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(seen);
+		});
+
+		it('nothing without a user in the request (fails closed)', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(null);
+			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(hidden);
+		});
+
+		it("a project of another organization answers 404, as one that is not there", async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			project.findOne.mockResolvedValue({
+				id: 'project-1',
+				organizationId: OTHER_ORGANIZATION,
+				organizationStrategicInitiatives: []
+			});
+			await expect(service.findByProject('project-1' as any)).rejects.toBeInstanceOf(NotFoundException);
+		});
+
+		it('an initiative read with no organization is never answered', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			expect(
+				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, null), ORGANIZATION)
+			).toEqual(hidden);
 		});
 	});
 });
