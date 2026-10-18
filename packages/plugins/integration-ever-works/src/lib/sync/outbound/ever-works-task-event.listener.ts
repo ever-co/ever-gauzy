@@ -5,6 +5,7 @@ import { BaseEntityEventTypeEnum, EventBus, RequestContext, TaskEvent } from '@g
 import { EverWorksSyncContext } from '../ever-works-sync.context';
 import { EverWorksLinkType } from '../entities/ever-works-sync.entities';
 import { EverWorksOutboundQueue } from './ever-works-outbound.queue';
+import { runDetached } from './ever-works-detached';
 
 /**
  * Outbound trigger 1 (plan 03 §C.2): Gauzy's `TaskEvent` (created, updated and — with G-P1-1 — deleted)
@@ -50,8 +51,9 @@ export class EverWorksTaskEventListener implements OnModuleInit, OnModuleDestroy
 		});
 		this.subscription.add(
 			this.triggers.subscribe((trigger) => {
-				void this.queue
-					.enqueue({
+				// Outside the task write's transaction context (see ever-works-detached.ts).
+				void runDetached(() =>
+					this.queue.enqueue({
 						tenantId: trigger.tenantId,
 						organizationId: trigger.organizationId,
 						entityType: EverWorksLinkType.TASK,
@@ -59,7 +61,7 @@ export class EverWorksTaskEventListener implements OnModuleInit, OnModuleDestroy
 						op: trigger.deleted ? 'delete' : 'upsert',
 						actorUserId: trigger.actorUserId
 					})
-					.catch((error) => this.logger.warn(`A task change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
+				).catch((error) => this.logger.warn(`A task change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
 			})
 		);
 	}

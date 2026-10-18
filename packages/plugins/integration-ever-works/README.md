@@ -74,6 +74,14 @@ the seed) and answers the routes below.
   employee services, which the sync's writes go through, stays out on its own
   and logs why once: today that is the worker (see Runtime below).
 - `EVER_WORKS_HEALTH_CHECK=off`: keeps this process out of the daily key check.
+- `EVER_WORKS_ALLOW_LOOPBACK=true`: **local development only**, for running
+  Gauzy against an Ever Works API on the same machine. In a process whose
+  `NODE_ENV` is `development` or `test`, a loopback Ever Works API URL
+  (`localhost`, `127.0.0.1` or `[::1]`, HTTP or HTTPS, for example
+  `http://127.0.0.1:3100/api`) is accepted, and so is a loopback
+  `API_BASE_URL` for the webhook. Every other private, link-local or metadata
+  address stays refused. Off by default; any other value, and any other
+  `NODE_ENV` (production included), keeps it off with one warning.
 
 ## Configure the integration
 

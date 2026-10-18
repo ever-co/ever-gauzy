@@ -56,6 +56,27 @@ describe('normaliseApiBaseUrl', () => {
 		'ftp://api.example.test',
 		''
 	])('refuses %s', (input) => expect(() => normaliseApiBaseUrl(input)).toThrow(EverWorksUrlError));
+
+	describe('with the development-only loopback switch', () => {
+		it.each([
+			['http://127.0.0.1:3100/api', 'http://127.0.0.1:3100/api'],
+			['http://localhost:3100/api/integrations/v1', 'http://localhost:3100/api'],
+			['http://[::1]:3100/api/', 'http://[::1]:3100/api'],
+			['https://localhost/api', 'https://localhost/api']
+		])('%s → %s', (input, expected) => expect(normaliseApiBaseUrl(input, { allowLoopback: true })).toBe(expected));
+
+		it.each([
+			'http://10.0.0.5/api',
+			'http://192.168.1.10:3100/api',
+			'http://169.254.169.254/latest',
+			'http://127.0.0.2:3100/api',
+			'http://api.example.test/api',
+			'http://user:pass@127.0.0.1:3100/api',
+			'http://127.0.0.1:3100/api?x=1'
+		])('still refuses %s', (input) => expect(() => normaliseApiBaseUrl(input, { allowLoopback: true })).toThrow(EverWorksUrlError));
+
+		it('is off unless asked for', () => expect(() => normaliseApiBaseUrl('http://127.0.0.1:3100/api')).toThrow(EverWorksUrlError));
+	});
 });
 
 describe('EverWorksClient', () => {

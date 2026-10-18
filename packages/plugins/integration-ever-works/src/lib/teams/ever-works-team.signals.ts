@@ -6,6 +6,7 @@ import { BaseEntityEventSubscriber, OrganizationTeam, OrganizationTeamEmployee, 
 import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import { runDetached } from '../sync/outbound/ever-works-detached';
 
 /** A Gauzy team (or one of its memberships) changed. */
 export interface EverWorksTeamSignal {
@@ -89,8 +90,9 @@ export class EverWorksTeamCapture implements OnModuleInit, OnModuleDestroy {
 
 	onModuleInit(): void {
 		this.subscription = EVER_WORKS_TEAM_SIGNALS.subscribe((change) => {
-			void this.queue
-				.enqueue({
+			// Outside the team write's transaction context (see ever-works-detached.ts).
+			void runDetached(() =>
+				this.queue.enqueue({
 					tenantId: change.tenantId,
 					organizationId: change.organizationId,
 					entityType: EverWorksLinkType.TEAM,
@@ -98,7 +100,7 @@ export class EverWorksTeamCapture implements OnModuleInit, OnModuleDestroy {
 					op: change.deleted ? 'delete' : 'upsert',
 					actorUserId: change.actorUserId
 				})
-				.catch((error) => this.logger.warn(`A team change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
+			).catch((error) => this.logger.warn(`A team change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
 		});
 	}
 

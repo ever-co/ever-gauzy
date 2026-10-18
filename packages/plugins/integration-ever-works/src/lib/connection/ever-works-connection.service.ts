@@ -611,7 +611,7 @@ export class EverWorksConnectionService {
 
 	private apiBaseUrl(raw: string): string {
 		try {
-			return normaliseApiBaseUrl(raw);
+			return normaliseApiBaseUrl(raw, { allowLoopback: this.config.allowLoopback === true });
 		} catch (error) {
 			throw new BadRequestException(error instanceof EverWorksUrlError ? error.message : 'Invalid Ever Works API URL.');
 		}

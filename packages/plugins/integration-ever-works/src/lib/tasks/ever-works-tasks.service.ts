@@ -20,7 +20,10 @@ import {
 	everWorksStatusToGauzy,
 	gauzyPriorityToEverWorks,
 	gauzyStatusSlug,
-	gauzyStatusToEverWorks
+	gauzyStatusToEverWorks,
+	gauzyTaskPriorityValue,
+	gauzyTaskStatusFlags,
+	gauzyTaskStatusValue
 } from '../sync/mappers/status-priority.mapper';
 import type { EverWorksSyncSweeper } from '../sync/ever-works-sync.loop';
 import type { EverWorksOutboundHandler, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
@@ -93,11 +96,11 @@ function edgeOf(key: string): { kind: 'blocked' | 'related' | 'duplicates'; id: 
 
 /** The normalised Gauzy side of a task (what the sync compares and pushes). */
 export function gauzySideOf(task: Task): TaskGauzySide {
-	const priority = task.taskPriority?.value ?? task.priority ?? null;
+	const priority = gauzyTaskPriorityValue(task);
 	return {
 		title: task.title ?? '',
 		description: htmlToMarkdown(task.description),
-		status: gauzyStatusSlug(task.taskStatus?.value ?? task.status) || null,
+		status: gauzyStatusSlug(gauzyTaskStatusValue(task)) || null,
 		priority: priority ? gauzyStatusSlug(priority) : null,
 		tags: [...new Set((task.tags ?? []).map((tag) => (tag.name ?? '').trim()).filter(Boolean))].sort((a, b) => lower(a).localeCompare(lower(b))),
 		teamIds: sortedIds((task.teams ?? []).map((team) => team.id)),
@@ -112,11 +115,7 @@ export function gauzySideOf(task: Task): TaskGauzySide {
 
 /** The Ever Works status a Gauzy task's status maps to (known slugs, else the row's flags; plan 01 §7.1). */
 function everWorksStatusOf(task: Task): string | null {
-	return gauzyStatusToEverWorks(task.taskStatus?.value ?? task.status, {
-		isTodo: task.taskStatus?.isTodo,
-		isInProgress: task.taskStatus?.isInProgress,
-		isDone: task.taskStatus?.isDone
-	});
+	return gauzyStatusToEverWorks(gauzyTaskStatusValue(task), gauzyTaskStatusFlags(task));
 }
 
 /**
@@ -1309,7 +1308,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const remote = (await this.fetchTask(context, everWorksTaskId)) as EverWorksTask;
 			if (!remote) throw error;
 			const target = everWorksStatusToGauzy(remote.status);
-			let revertedTo: string | null = gauzyStatusSlug(task.taskStatus?.value ?? task.status) || null;
+			let revertedTo: string | null = gauzyStatusSlug(gauzyTaskStatusValue(task)) || null;
 			await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `task-409:${everWorksTaskId}` }, async () => {
 				if (target) {
 					const option = await this.store.statusFor(this.scopeOf(context, task), remote.status, target.slug);
