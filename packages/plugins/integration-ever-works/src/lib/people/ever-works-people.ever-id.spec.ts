@@ -313,6 +313,13 @@ describe('EverWorksPeopleService — Ever ID matching', () => {
 		expect(JSON.parse(links[0].ewOnly as string)).toEqual(expect.objectContaining({ matchedBy: 'ever_id' }));
 	});
 
+	it('an explicit pairing and "accept suggestions" in one request: the explicit one wins over a suggestion for either side (review F79)', async () => {
+		const { service, links } = setup({ members: [member('U-ada', { email: 'ada@example.test' }), member('U-bob', { email: 'bob@example.test' })] });
+		// Ada is suggested E-ada, Bob E-bob; the admin pairs Bob with E-ada by hand and accepts the rest.
+		await service.decide('m1' as never, { links: [{ ewUserId: 'U-bob', employeeId: 'E-ada' as never }], acceptSuggestions: true });
+		expect(links.map((l) => [l.ewId, l.gauzyId])).toEqual([['U-bob', 'E-ada']]);
+	});
+
 	it('records how every People-tab pairing was made: an accepted e-mail suggestion, a hand-picked person', async () => {
 		const { service, links } = setup({ members: [member('U-ada', { email: 'ada@example.test' }), member('U-bob')] });
 		await service.decide('m1' as never, { links: [{ ewUserId: 'U-ada', employeeId: 'E-ada' as never }, { ewUserId: 'U-bob', employeeId: 'E-cy' as never }] });

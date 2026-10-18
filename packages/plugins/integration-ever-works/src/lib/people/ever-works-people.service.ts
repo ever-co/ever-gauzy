@@ -200,8 +200,15 @@ export class EverWorksPeopleService {
 			}
 		}
 		if (decision.acceptSuggestions) {
+			// An explicit link in the same request wins over a suggestion for either side, and a person suggested for
+			// several members is left for the admin to pair one by one, instead of failing the whole request (review F79).
+			const claimedUsers = new Set(pairs.map((pair) => pair.ewUserId));
+			const claimedEmployees = new Set<string>(pairs.map((pair) => pair.employeeId));
+			const timesSuggested = new Map<string, number>();
+			for (const suggestion of suggested.values()) timesSuggested.set(suggestion.employeeId, (timesSuggested.get(suggestion.employeeId) ?? 0) + 1);
 			for (const [ewUserId, suggestion] of suggested) {
-				if (!pairs.some((pair) => pair.ewUserId === ewUserId)) pairs.push({ ewUserId, employeeId: suggestion.employeeId });
+				if (claimedUsers.has(ewUserId) || claimedEmployees.has(suggestion.employeeId) || timesSuggested.get(suggestion.employeeId) !== 1) continue;
+				pairs.push({ ewUserId, employeeId: suggestion.employeeId });
 			}
 		}
 		const employees = await this.people$(context, pairs.map((p) => p.employeeId));

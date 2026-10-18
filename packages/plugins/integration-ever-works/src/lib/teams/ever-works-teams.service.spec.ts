@@ -224,6 +224,75 @@ describe('EverWorksTeamsService', () => {
 		expect(links.find((l) => l.entityType === EverWorksLinkType.TEAM)?.state).toBe(EverWorksLinkState.UNLINKED);
 	});
 
+	it('member events are applied by member, never skipped by a team version another member moved on (review F75)', async () => {
+		const { service, person, memberships, links } = setup();
+		person('emp-ann', 'ew-user-ann');
+		person('emp-bob', 'ew-user-bob');
+		person('emp-cy', 'ew-user-cy');
+		const ref = (memberId: string) => ({ teamId: 'ew-team-1', memberType: 'user', memberId, role: 'member' });
+		await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }, 3) as never, applyContext);
+		// Bob's add (v5) is delivered before Ann's (v4): Ann's still carries a change Bob's does not.
+		await service.apply(envelope('team.member.added', ref('ew-user-bob'), 5) as never, applyContext);
+		expect(await service.apply(envelope('team.member.added', ref('ew-user-ann'), 4) as never, applyContext)).toEqual({ status: 'applied' });
+		expect(memberships.map((m) => m['employeeId']).sort()).toEqual(['emp-ann', 'emp-bob']);
+		const team = () => links.find((l) => l.entityType === EverWorksLinkType.TEAM)!;
+		expect(team().ewVersion).toBe(5); // an older child event never lowers the link's version
+		// An older event of the same member is still skipped: Bob removed at v6, his add of v5 replayed afterwards.
+		await service.apply(envelope('team.member.removed', { ...ref('ew-user-bob'), deleted: true }, 6) as never, applyContext);
+		expect(await service.apply(envelope('team.member.added', ref('ew-user-bob'), 5) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		expect(memberships.map((m) => m['employeeId'])).toEqual(['emp-ann']);
+		// A full team state covers the older child events of every member.
+		await service.apply(envelope('team.updated', { name: 'Platform', members: [{ memberType: 'user', memberId: 'ew-user-ann', role: 'member' }], resources: [] }, 8) as never, applyContext);
+		expect(await service.apply(envelope('team.member.added', ref('ew-user-cy'), 7) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		expect(memberships.map((m) => m['employeeId'])).toEqual(['emp-ann']);
+		expect(JSON.parse(team().ewOnly as string).childVersions).toBeUndefined();
+	});
+
+	it('a team deleted in Gauzy stops its pair: its member events are skipped, not dead-lettered (review F76)', async () => {
+		const { service, person, teams, memberships, links } = setup();
+		await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }) as never, applyContext);
+		teams.splice(0, 1); // DELETE /organization-team/:id deletes the row
+		person('emp-ann', 'ew-user-ann');
+		expect(
+			await service.apply(envelope('team.member.added', { teamId: 'ew-team-1', memberType: 'user', memberId: 'ew-user-ann', role: 'member' }, 4) as never, applyContext)
+		).toEqual({ status: 'skipped', message: 'the Gauzy team is gone' });
+		expect(memberships).toHaveLength(0);
+		expect(links.find((l) => l.entityType === EverWorksLinkType.TEAM)?.state).toBe(EverWorksLinkState.UNLINKED);
+	});
+
+	it('the sweep stops the pair of a team deleted in Gauzy, and one failing team never stops the others (review F76)', async () => {
+		const { service, person, teams, memberships, links, queue } = setup();
+		const eve = [{ memberType: 'user', memberId: 'ew-user-eve', role: 'member' }];
+		for (const id of ['ew-team-gone', 'ew-team-failing', 'ew-team-ok']) {
+			await service.apply({ ...envelope('team.created', { name: id, members: eve, resources: [] }), aggregate: { type: 'team', id, version: 3 } } as never, applyContext);
+		}
+		const gauzyOf = (ewId: string) => links.find((l) => l.entityType === EverWorksLinkType.TEAM && l.ewId === ewId)!.gauzyId;
+		teams.splice(teams.findIndex((row) => row['id'] === gauzyOf('ew-team-gone')), 1); // deleted in Gauzy
+		const failing = gauzyOf('ew-team-failing');
+		const push = memberships.push.bind(memberships);
+		memberships.push = (...rows: Array<Record<string, any>>) => {
+			if (rows.some((row) => row['organizationTeamId'] === failing)) throw new Error('a constraint refused the membership');
+			return push(...rows);
+		};
+		person('emp-eve', 'ew-user-eve'); // paired on the People tab: every team's unmapped Eve joins at the next sweep
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(memberships.map((m) => m['organizationTeamId'])).toEqual([gauzyOf('ew-team-ok')]);
+		expect(links.find((l) => l.ewId === 'ew-team-gone')?.state).toBe(EverWorksLinkState.UNLINKED);
+		expect(queue.enqueue).not.toHaveBeenCalledWith(expect.objectContaining({ gauzyId: gauzyOf('ew-team-gone') }));
+	});
+
+	it('a team resource of a work or task that no longer syncs never changes its team scope (review F78)', async () => {
+		const { service, links } = setup();
+		await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }) as never, applyContext);
+		// The work turned private in Ever Works: its pair is unlinked, yet the (non-private) team's resource event is served.
+		links.push({ id: 'w1', integrationTenantId: 'm1', entityType: EverWorksLinkType.PROJECT_WORK, gauzyId: 'p1', ewId: 'ew-work-private', ewVersion: 2, snapshot: null, ewOnly: null, state: EverWorksLinkState.UNLINKED });
+		const outcome = await service.apply(envelope('team.resource.added', { teamId: 'ew-team-1', resourceType: 'work', resourceId: 'ew-work-private' }, 4) as never, applyContext);
+		// The test data source has no query builder: a team scope write would throw here.
+		expect(outcome).toEqual({ status: 'applied', message: 'the work is no longer synced' });
+		const team = links.find((l) => l.entityType === EverWorksLinkType.TEAM)!;
+		expect(JSON.parse(team.ewOnly as string).resources).toEqual([{ resourceType: 'work', resourceId: 'ew-work-private' }]);
+	});
+
 	it('a Gauzy rename and a new member are pushed as a patch and a merged member set (Ever Works-only members kept)', async () => {
 		const { service, person, teams, memberships, links, client } = setup();
 		person('emp-ann', 'ew-user-ann');
