@@ -302,7 +302,11 @@ export class ProjectQuickLookComponent implements OnChanges {
 	 */
 	get contributorsCaptionKey(): string {
 		if (this.contributorsCaption) return this.contributorsCaption;
-		if (!this.viewedProject || !this.canReadProjectTotal(this.viewedProject)) {
+		// Rows with anyone else in them already show the wider scope, even before the project's
+		// full read (and so its managers) has landed.
+		const ownId = this._store.user?.employeeId;
+		const showsOthers = (this.contributors.value || []).some((person) => person.id !== ownId);
+		if (!showsOthers && (!this.viewedProject || !this.canReadProjectTotal(this.viewedProject))) {
 			return 'PROJECT_QUICK_LOOK.YOUR_TIME_CAPTION';
 		}
 		return this.scopeEmployeeIds
