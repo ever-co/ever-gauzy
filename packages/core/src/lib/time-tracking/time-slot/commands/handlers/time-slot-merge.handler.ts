@@ -196,29 +196,39 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 * @returns The saved slot, listing the moved screenshots and activities as the cascade used to
 	 */
 	private async saveMergedTimeSlotWithTypeOrm(newTimeSlot: TimeSlot, slots: ITimeSlot[]): Promise<TimeSlot> {
+		const { screenshots, activities } = newTimeSlot;
 		// Left off the saved slot: the cascade would otherwise rewrite them one by one (and detach the kept slot's
 		// own children that are not in the list).
-		const { screenshots, activities } = newTimeSlot;
-		const slotToSave = Object.assign(Object.create(Object.getPrototypeOf(newTimeSlot)), newTimeSlot) as TimeSlot;
+		let slotToSave = Object.assign(Object.create(Object.getPrototypeOf(newTimeSlot)), newTimeSlot) as TimeSlot;
 		delete slotToSave.screenshots;
 		delete slotToSave.activities;
-		const saved = await this.typeOrmTimeSlotRepository.save(slotToSave);
 
 		const mergedSlotIds = pluck(slots.slice(1), 'id') as ID[];
-		if (isNotEmpty(mergedSlotIds)) {
-			// What the cascade's updates carried: the new slot, the author (the subscriber sets it on an entity
-			// save, not on a statement) and `updatedAt`, which the update builder sets on its own.
-			const updatedByUserId = RequestContext.currentUserId();
-			const changes = { timeSlotId: saved.id, ...(updatedByUserId ? { updatedByUserId } : {}) };
-			for (const target of [Screenshot, Activity]) {
-				await this.typeOrmTimeSlotRepository.manager
-					.createQueryBuilder()
-					.update(target)
-					.set(changes)
-					.where({ timeSlotId: In(mergedSlotIds) })
-					.execute();
+		// What the cascade's updates carried: the new slot, the author (the subscriber sets it on an entity save,
+		// not on a statement) and `updatedAt`, which the update builder sets on its own.
+		const updatedByUserId = RequestContext.currentUserId();
+		const changes = { timeSlotId: newTimeSlot.id, ...(updatedByUserId ? { updatedByUserId } : {}) };
+
+		// One transaction, as the cascading save was: a child update that fails (a lock timeout) must not leave the
+		// kept slot holding the group's totals while the merged slots still exist to be counted again.
+		let saved = await this.typeOrmTimeSlotRepository.manager.transaction(async (manager) => {
+			const savedSlot = await manager.save(TimeSlot, slotToSave);
+			if (isNotEmpty(mergedSlotIds)) {
+				for (const target of [Screenshot, Activity]) {
+					// Without the entity listeners: they run on the SET values of a statement as if those were the
+					// whole row, and ActivitySubscriber would then stamp every moved activity's `recordedAt` with the
+					// merge time (it derives a missing one from `date` + `time`, else now).
+					await manager
+						.createQueryBuilder()
+						.update(target)
+						.set(changes)
+						.where({ timeSlotId: In(mergedSlotIds) })
+						.callListeners(false)
+						.execute();
+				}
 			}
-		}
+			return savedSlot;
+		});
 
 		saved.screenshots = screenshots;
 		saved.activities = activities;

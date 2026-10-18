@@ -145,15 +145,18 @@ describe('TimeSlotMergeHandler on TypeORM', () => {
 		...values
 	});
 
+	type Executed = { target: unknown; set: unknown; where: unknown; listeners: unknown };
+
 	/** An update query builder that records what it is asked to do. */
-	function updateBuilder(executed: Array<{ target: unknown; set: unknown; where: unknown }>) {
-		const call: { target?: unknown; set?: unknown; where?: unknown } = {};
+	function updateBuilder(executed: Executed[]) {
+		let call: Partial<Executed> = {};
 		const builder: any = {
 			update: jest.fn((target: unknown) => ((call.target = target), builder)),
 			set: jest.fn((values: unknown) => ((call.set = values), builder)),
 			where: jest.fn((condition: unknown) => ((call.where = condition), builder)),
+			callListeners: jest.fn((enabled: boolean) => ((call.listeners = enabled), builder)),
 			execute: jest.fn(async () => {
-				executed.push({ target: call.target, set: call.set, where: call.where });
+				executed.push({ target: call.target, set: call.set, where: call.where, listeners: call.listeners });
 				return { affected: 1 };
 			})
 		};
@@ -161,10 +164,18 @@ describe('TimeSlotMergeHandler on TypeORM', () => {
 	}
 
 	const setup = () => {
-		const executed: Array<{ target: unknown; set: unknown; where: unknown }> = [];
+		const executed: Executed[] = [];
+		// The transaction's manager: what the slot is saved with and the updates are built from.
+		const transactionManager = {
+			save: jest.fn(async (_target: unknown, entity: any) => ({ ...entity })),
+			createQueryBuilder: jest.fn(() => updateBuilder(executed))
+		};
 		const typeOrmTimeSlotRepository = {
-			save: jest.fn(async (entity: any) => ({ ...entity })),
-			manager: { createQueryBuilder: jest.fn(() => updateBuilder(executed)) }
+			save: jest.fn(),
+			manager: {
+				transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(transactionManager)),
+				createQueryBuilder: jest.fn()
+			}
 		};
 		const handler = new TimeSlotMergeHandler(
 			typeOrmTimeSlotRepository as never,
@@ -180,11 +191,11 @@ describe('TimeSlotMergeHandler on TypeORM', () => {
 				scope.organizationId,
 				scope.employeeId
 			);
-		return { executed, typeOrmTimeSlotRepository, createNewTimeSlot };
+		return { executed, typeOrmTimeSlotRepository, transactionManager, createNewTimeSlot };
 	};
 
-	it('saves the kept slot without its children and moves the other slots’ screenshots and activities in one statement each', async () => {
-		const { executed, typeOrmTimeSlotRepository, createNewTimeSlot } = setup();
+	it('saves the kept slot without its children and moves the other slots’ screenshots and activities in one statement each, in one transaction', async () => {
+		const { executed, typeOrmTimeSlotRepository, transactionManager, createNewTimeSlot } = setup();
 
 		const merged = await createNewTimeSlot([
 			slot('slot-1', {
@@ -207,23 +218,31 @@ describe('TimeSlotMergeHandler on TypeORM', () => {
 			slot('slot-3', { duration: 50, keyboard: 0, mouse: 0, overall: 0 })
 		]);
 
+		// Everything runs inside one transaction, through its manager; nothing is written outside it.
+		expect(typeOrmTimeSlotRepository.manager.transaction).toHaveBeenCalledTimes(1);
+		expect(typeOrmTimeSlotRepository.save).not.toHaveBeenCalled();
+		expect(typeOrmTimeSlotRepository.manager.createQueryBuilder).not.toHaveBeenCalled();
+
 		// The kept slot is saved with the aggregated values and the time logs (each one once) — and WITHOUT the
 		// screenshots and activities, which the cascade would have written one by one.
-		expect(typeOrmTimeSlotRepository.save).toHaveBeenCalledTimes(1);
-		const [saved] = typeOrmTimeSlotRepository.save.mock.calls[0];
+		expect(transactionManager.save).toHaveBeenCalledTimes(1);
+		const [target, saved] = transactionManager.save.mock.calls[0];
+		expect(target).toBe(TimeSlot);
 		expect(saved).toMatchObject({ id: 'slot-1', duration: 550, keyboard: 10, mouse: 25, overall: 45, ...scope });
 		expect(saved.timeLogs.map((log: any) => log.id)).toEqual(['log-1', 'log-2']);
 		expect(saved).not.toHaveProperty('screenshots');
 		expect(saved).not.toHaveProperty('activities');
 
-		// One UPDATE per table, over the merged slots' ids, onto the kept slot
+		// One UPDATE per table, over the merged slots' ids, onto the kept slot — without the entity listeners,
+		// which would stamp every moved activity's `recordedAt` with the merge time
+		const where = { timeSlotId: In(['slot-2', 'slot-3']) };
 		expect(executed).toEqual([
-			{ target: Screenshot, set: { timeSlotId: 'slot-1' }, where: { timeSlotId: In(['slot-2', 'slot-3']) } },
-			{ target: Activity, set: { timeSlotId: 'slot-1' }, where: { timeSlotId: In(['slot-2', 'slot-3']) } }
+			{ target: Screenshot, set: { timeSlotId: 'slot-1' }, where, listeners: false },
+			{ target: Activity, set: { timeSlotId: 'slot-1' }, where, listeners: false }
 		]);
 		// They move after the slot is saved
-		expect(typeOrmTimeSlotRepository.manager.createQueryBuilder.mock.invocationCallOrder[0]).toBeGreaterThan(
-			typeOrmTimeSlotRepository.save.mock.invocationCallOrder[0]
+		expect(transactionManager.createQueryBuilder.mock.invocationCallOrder[0]).toBeGreaterThan(
+			transactionManager.save.mock.invocationCallOrder[0]
 		);
 
 		// The merged slot handed back keeps the kept slot's id and lists the moved children, as before
@@ -233,13 +252,32 @@ describe('TimeSlotMergeHandler on TypeORM', () => {
 	});
 
 	it('a group of one slot is saved without moving any child', async () => {
-		const { executed, typeOrmTimeSlotRepository, createNewTimeSlot } = setup();
+		const { executed, transactionManager, createNewTimeSlot } = setup();
 
 		await createNewTimeSlot([slot('slot-1', { duration: 600, keyboard: 1, mouse: 1, overall: 1 })]);
 
-		expect(typeOrmTimeSlotRepository.save).toHaveBeenCalledTimes(1);
+		expect(transactionManager.save).toHaveBeenCalledTimes(1);
 		expect(executed).toEqual([]);
-		expect(typeOrmTimeSlotRepository.manager.createQueryBuilder).not.toHaveBeenCalled();
+		expect(transactionManager.createQueryBuilder).not.toHaveBeenCalled();
+	});
+
+	it('a failed child update fails the merge, and the slot save is not committed on its own', async () => {
+		const { typeOrmTimeSlotRepository, transactionManager, createNewTimeSlot } = setup();
+		const failing = updateBuilder([]);
+		failing.execute.mockRejectedValue(new Error('canceling statement due to lock timeout'));
+		transactionManager.createQueryBuilder.mockReturnValue(failing);
+
+		await expect(
+			createNewTimeSlot([
+				slot('slot-1', { duration: 300, keyboard: 1, mouse: 1, overall: 1 }),
+				slot('slot-2', { duration: 200, keyboard: 1, mouse: 1, overall: 1 })
+			])
+		).rejects.toThrow('lock timeout');
+
+		// The save happened inside the transaction the update failed in: the transaction's manager saw it, the
+		// repository (outside any transaction) never did.
+		expect(transactionManager.save).toHaveBeenCalledTimes(1);
+		expect(typeOrmTimeSlotRepository.save).not.toHaveBeenCalled();
 	});
 
 	it('recalculates each timesheet of the merged slot once', async () => {
