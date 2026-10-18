@@ -4,7 +4,7 @@ import { BadRequestException } from '@nestjs/common';
 import { IOrganizationStrategicInitiativeRead, OrganizationStrategicVisibilityScopeEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { OrganizationTeam } from '../core/entities/internal';
+import { OrganizationTeam, UserOrganization } from '../core/entities/internal';
 import { OrganizationStrategicInitiativeService, withRelations } from './organization-strategic-initiative.service';
 
 const TENANT = 'a0000000-0000-4000-8000-000000000001';
@@ -13,6 +13,7 @@ const TEAM_A = 'c0000000-0000-4000-8000-00000000000a';
 const TEAM_B = 'c0000000-0000-4000-8000-00000000000b';
 const OTHER_ORG_TEAM = 'c0000000-0000-4000-8000-00000000000f';
 const EMPLOYEE = 'e0000000-0000-4000-8000-000000000001';
+const USER = 'f0000000-0000-4000-8000-000000000001';
 
 /**
  * Strategic initiatives can be linked to teams directly (G-P2-4): an Ever Works Mission scoped to a Team maps
@@ -33,6 +34,8 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 			{ id: OTHER_ORG_TEAM, organizationId: 'b0000000-0000-4000-8000-0000000000ff', tenantId: TENANT }
 		];
 		const find = jest.fn(async (entity: unknown, { where }: any) => {
+			// The caller is a member of the organization (reads answer only their organizations' initiatives)
+			if (entity === UserOrganization) return where.userId === USER ? [{ organizationId: ORGANIZATION }] : [];
 			if (entity !== OrganizationTeam) return [];
 			const ids: string[] = where.id?._value ?? where.id?.value ?? [];
 			return teamsInTenant.filter(
@@ -55,6 +58,7 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
 		jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(null);
 		save = jest
 			.spyOn(TenantAwareCrudService.prototype, 'create')
@@ -149,7 +153,7 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 		it('the single-row read merges teams into an object-form request', async () => {
 			const findOne = jest
 				.spyOn(TenantAwareCrudService.prototype, 'findOneByOptions')
-				.mockResolvedValue({ id: 'initiative-1', stewardId: EMPLOYEE, teams: [] } as never);
+				.mockResolvedValue({ id: 'initiative-1', organizationId: ORGANIZATION, stewardId: EMPLOYEE, teams: [] } as never);
 
 			await service.findOneById('initiative-1', { relations: { steward: true } } as any);
 			expect((findOne.mock.calls[0][0] as any).relations).toEqual({ steward: true, teams: true });
@@ -180,6 +184,7 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 		const initiative = (teams: string[], projectTeams: string[] = []) =>
 			({
 				id: 'initiative-1',
+				organizationId: ORGANIZATION,
 				visibilityScope: OrganizationStrategicVisibilityScopeEnum.TEAM,
 				stewardId: 'someone-else',
 				teams: teams.map((id) => ({ id })),
