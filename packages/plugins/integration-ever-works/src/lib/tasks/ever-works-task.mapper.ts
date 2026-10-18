@@ -150,7 +150,7 @@ export interface TaskEverWorksOnly {
 	/**
 	 * The Gauzy parent Ever Works refused at the last push (its owners are not the task's: Gauzy allows a parent
 	 * on another team or project), so the task has no parent in Ever Works. Sent again once `key` (the parent
-	 * and both sides' owners, `TaskOutgoing.parentKey`) changes; `null` once the parent is in Ever Works.
+	 * and both sides' owners, as JSON) changes; `null` once the parent is in Ever Works.
 	 */
 	heldParent?: { parentId: string; key: string } | null;
 	/**

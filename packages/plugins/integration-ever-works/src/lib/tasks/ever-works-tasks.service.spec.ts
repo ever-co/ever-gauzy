@@ -1387,6 +1387,68 @@ describe('a parent Ever Works refuses (another team or work; local e2e)', () => 
 		expect(heldOf(t, 'g-child')).toMatchObject({ parentId: 'g-parent' });
 	});
 
+	it('the parent moving onto the task’s team: the sweep queues the task, and the parent goes out (#11048 review)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.TEAM, 'g-team-a', 'ew-team-a');
+		t.link(EverWorksLinkType.TEAM, 'g-team-b', 'ew-team-b');
+		t.addGauzyTask({ id: 'g-parent', title: 'Parent', teams: [{ id: 'g-team-a' }] });
+		t.addGauzyTask({ id: 'g-child', title: 'Child', parentId: 'g-parent', teams: [{ id: 'g-team-b' }] });
+		await t.push('g-parent');
+		await t.push('g-child');
+		expect(heldOf(t, 'g-child')).toMatchObject({ parentId: 'g-parent' });
+		// Nothing moved: the sweep leaves the held task alone.
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued.filter((row) => row['gauzyId'] === 'g-child')).toEqual([]);
+		// Only the parent moves (onto the child's team).
+		Object.assign(t.tasks.get('g-parent') as GauzyTask, { teams: [{ id: 'g-team-b' }] });
+		expect(await t.push('g-parent')).toEqual({ status: 'pushed' });
+		await t.service.sweep(t.context.connection as never);
+		expect(t.queue.enqueued.filter((row) => row['gauzyId'] === 'g-child')).toEqual([expect.objectContaining({ op: 'upsert' })]);
+		expect(await t.push('g-child')).toEqual({ status: 'pushed' });
+		expect(ewOf(t, 'g-child')).toMatchObject({ teamIds: ['ew-team-b'], parentTaskId: ewOf(t, 'g-parent')?.['id'] });
+		expect(heldOf(t, 'g-child')).toBeNull();
+	});
+
+	it('the task put in its parent’s mission in Ever Works: the parent is sent again with the next Gauzy change (#11048 review)', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g-parent', title: 'Parent' });
+		t.addGauzyTask({ id: 'g-child', title: 'Child', parentId: 'g-parent' });
+		await t.push('g-parent');
+		// The parent is in a mission in Ever Works (a mission is Ever Works-only): the child does not fit.
+		Object.assign(ewOf(t, 'g-parent') as Record<string, unknown>, { missionId: 'ew-mission-1' });
+		const parent = ewOf(t, 'g-parent') as Record<string, unknown>;
+		await t.deliver({ type: 'task.updated', data: { ...parent, version: Number(parent['version']) + 1 }, aggregate: { id: parent['id'] as string, version: Number(parent['version']) + 1 } });
+		expect(await t.push('g-child')).toEqual({ status: 'pushed', message: 'created in Ever Works' });
+		expect(ewOf(t, 'g-child')?.['parentTaskId']).toBeNull();
+		// Someone puts the child in the same mission in Ever Works; the next Gauzy edit sends the parent too.
+		const child = ewOf(t, 'g-child') as Record<string, unknown>;
+		child['missionId'] = 'ew-mission-1';
+		child['version'] = Number(child['version']) + 1;
+		await t.deliver({ type: 'task.updated', data: { ...child }, aggregate: { id: child['id'] as string, version: Number(child['version']) } });
+		Object.assign(t.tasks.get('g-child') as GauzyTask, { title: 'Child edited' });
+		expect(await t.push('g-child')).toEqual({ status: 'pushed' });
+		expect(ewOf(t, 'g-child')).toMatchObject({ title: 'Child edited', parentTaskId: parent['id'] });
+		expect(heldOf(t, 'g-child')).toBeNull();
+	});
+
+	it('a 412 on a later write of the same push never reads the detach as an Ever Works edit (#11048 review)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.TEAM, 'g-team-a', 'ew-team-a');
+		t.link(EverWorksLinkType.TEAM, 'g-team-b', 'ew-team-b');
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g-parent', title: 'Parent', teams: [{ id: 'g-team-a' }] });
+		t.addGauzyTask({ id: 'g-child', title: 'Child', parentId: 'g-parent', teams: [{ id: 'g-team-a' }] });
+		await t.push('g-parent');
+		await t.push('g-child');
+		// The child moves to another team and gets an assignee; the assignee write answers 412 once.
+		Object.assign(t.tasks.get('g-child') as GauzyTask, { teams: [{ id: 'g-team-b' }], members: [{ id: 'e-alice' }] });
+		t.mock.fail({ method: 'PUT', path: /\/assignees$/, status: 412, body: { error: { code: 'version_mismatch', message: 'The task changed.' } } });
+		expect(await t.push('g-child')).toEqual({ status: 'pushed' });
+		expect((t.tasks.get('g-child') as GauzyTask)['parentId']).toBe('g-parent');
+		expect(ewOf(t, 'g-child')).toMatchObject({ teamIds: ['ew-team-b'], parentTaskId: null, assignees: [{ type: 'user', id: 'ew-alice' }] });
+		expect(heldOf(t, 'g-child')).toMatchObject({ parentId: 'g-parent' });
+	});
+
 	it('another refusal of a sub-task still stops the change (no retry without the parent)', async () => {
 		const t = setup();
 		t.addGauzyTask({ id: 'g-parent', title: 'Parent' });
