@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -16,6 +16,14 @@ export enum ProjectViewPeriod {
 	LAST_30_DAYS = 'LAST_30_DAYS'
 }
 
+/** The page's tabs, in the manner of Jira's project pages; the open one is in the URL (`?tab=`). */
+export type ProjectViewTab = 'overview' | 'board' | 'planning' | 'time' | 'activity';
+
+const TABS: ProjectViewTab[] = ['overview', 'board', 'planning', 'time', 'activity'];
+
+/** Tabs whose figures read over the period, and so show the period switcher. */
+const PERIOD_TABS = new Set<ProjectViewTab>(['overview', 'planning', 'time']);
+
 /**
  * A project on its own page, `/pages/organization/projects/view/:id`: what the project list's View
  * button opens. The URL is the project's — bookmark it, share it, reload it. Its body is the project
@@ -29,7 +37,7 @@ export enum ProjectViewPeriod {
 @Component({
 	selector: 'ga-project-view-page',
 	templateUrl: './project-view-page.component.html',
-	styleUrls: ['./project-view-page.component.scss'],
+	styleUrls: ['../../../employees/view-employee/view-employee.component.scss', './project-view-page.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
@@ -37,6 +45,14 @@ export class ProjectViewPageComponent implements OnInit {
 	/** The list a project belongs to, for the page's back button. */
 	readonly backLink = '/pages/organization/projects';
 	readonly periods: ProjectViewPeriod[] = Object.values(ProjectViewPeriod);
+	readonly tabs: { id: ProjectViewTab; label: string; icon: string }[] = [
+		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
+		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
+		{ id: 'planning', label: 'PROJECT_VIEW.TABS.PLANNING', icon: 'activity-outline' },
+		{ id: 'time', label: 'PROJECT_VIEW.TABS.TIME', icon: 'clock-outline' },
+		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
+	];
+	tab: ProjectViewTab = 'overview';
 
 	state: RecordViewPageState = 'loading';
 	/** The project as the quick look opens it: its name and logo; the quick look reads the rest. */
@@ -57,6 +73,7 @@ export class ProjectViewPageComponent implements OnInit {
 
 	constructor(
 		private readonly route: ActivatedRoute,
+		private readonly router: Router,
 		private readonly store: Store,
 		private readonly projectsService: OrganizationProjectsService
 	) {}
@@ -80,6 +97,30 @@ export class ProjectViewPageComponent implements OnInit {
 				this.organization = organization;
 				void this.load();
 			});
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
+		this.route.queryParamMap
+			.pipe(
+				map((params) => params.get('tab') as ProjectViewTab),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((tab) => (this.tab = TABS.includes(tab) ? tab : 'overview'));
+	}
+
+	/** Opens a tab, keeping it in the URL without a new history entry per click. */
+	selectTab(tab: ProjectViewTab): void {
+		this.tab = tab;
+		void this.router.navigate([], {
+			relativeTo: this.route,
+			queryParams: { tab: tab === 'overview' ? null : tab },
+			queryParamsHandling: 'merge',
+			replaceUrl: true
+		});
+	}
+
+	/** Whether the open tab reads over the period, and so shows the period switcher. */
+	get showsPeriod(): boolean {
+		return PERIOD_TABS.has(this.tab);
 	}
 
 	/** Loads (or reloads, after an error) the project the URL names. */
