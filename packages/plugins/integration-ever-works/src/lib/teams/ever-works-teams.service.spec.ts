@@ -264,6 +264,32 @@ describe('EverWorksTeamsService', () => {
 		expect(memberships.map((m) => m['employeeId']).sort()).toEqual(['emp-ann', 'emp-bob']);
 	});
 
+	it('a member set pushed between member events covers the older ones: a delayed removal never undoes it (#11096 review)', async () => {
+		const { service, person, teams, memberships, links, client } = setup();
+		person('emp-ann', 'ew-user-ann');
+		person('emp-bob', 'ew-user-bob');
+		person('emp-cy', 'ew-user-cy');
+		const member = (memberId: string) => ({ memberType: 'user', memberId, role: 'member' });
+		const ref = (memberId: string) => ({ teamId: 'ew-team-1', ...member(memberId) });
+		await service.apply(envelope('team.created', { name: 'Platform', members: [member('ew-user-ann')], resources: [] }, 3) as never, applyContext);
+		await service.apply(envelope('team.member.added', ref('ew-user-bob'), 5) as never, applyContext);
+		// Cy joins in Gauzy: the PUT of the member set (Ann included) answers v6, before Ann's removal (v4) is delivered.
+		memberships.push({ id: 'tm-cy', organizationTeamId: teams[0]['id'], employeeId: 'emp-cy', isManager: false });
+		client.request.mockResolvedValueOnce({ id: 'ew-team-1', name: 'Platform', version: 6, members: ['ew-user-ann', 'ew-user-bob', 'ew-user-cy'].map(member) });
+		const pushContext = { connection: { id: 'c1' }, mapping: { id: 'm1' } } as never;
+		expect(await service.push({ id: 'p', tenantId: 't1', organizationId: 'o1', gauzyId: teams[0]['id'], op: 'upsert' } as never, pushContext)).toEqual({ status: 'pushed' });
+		expect(client.request.mock.calls.map(([method]) => method)).toEqual(['PUT']);
+		expect(await service.apply(envelope('team.member.removed', { ...ref('ew-user-ann'), deleted: true }, 4) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		expect(memberships.map((m) => m['employeeId']).sort()).toEqual(['emp-ann', 'emp-bob', 'emp-cy']);
+		// The member set covers only members: a delayed resource event of the same window still applies by child.
+		await service.apply(envelope('team.resource.added', { teamId: 'ew-team-1', resourceType: 'goal', resourceId: 'ew-goal-1' }, 4) as never, applyContext);
+		const team = links.find((l) => l.entityType === EverWorksLinkType.TEAM)!;
+		expect(JSON.parse(team.ewOnly as string).resources).toEqual([{ resourceType: 'goal', resourceId: 'ew-goal-1' }]);
+		// A newer member event still applies.
+		expect(await service.apply(envelope('team.member.removed', { ...ref('ew-user-ann'), deleted: true }, 7) as never, applyContext)).toEqual({ status: 'applied' });
+		expect(memberships.map((m) => m['employeeId']).sort()).toEqual(['emp-bob', 'emp-cy']);
+	});
+
 	it('a team deleted in Gauzy stops its pair: its member events are skipped, not dead-lettered (review F76)', async () => {
 		const { service, person, teams, memberships, links } = setup();
 		await service.apply(envelope('team.created', { name: 'Platform', members: [], resources: [] }) as never, applyContext);
