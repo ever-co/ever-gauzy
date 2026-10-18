@@ -316,6 +316,63 @@ describe('EverWorksInitiativesService — EW → G', () => {
 		expect(initiatives).toHaveLength(1);
 	});
 
+	it('a retry that finds the initiative it wrote gives it Ever Works\u2019 current fields (review F87)', async () => {
+		const { service, initiatives, links } = setup();
+		await service.apply(envelope('mission.created', mission, 1) as never, applyContext);
+		links.splice(0, links.length); // the link was never written (a failure after the insert)
+		await service.apply(envelope('mission.created', { ...mission, title: 'Win the SMB market in Europe' }, 2) as never, applyContext);
+		expect(initiatives).toHaveLength(1);
+		expect(initiatives[0]['title']).toBe('Win the SMB market in Europe');
+	});
+
+	it('a retry after the mission resumed clears the "stalled" its first attempt set and keeps a person’s notes (#11081 review)', async () => {
+		const { service, initiatives, links } = setup();
+		await service.apply(envelope('mission.created', mission, 1) as never, applyContext); // paused → stalled
+		links.splice(0, links.length); // the link was never written
+		initiatives[0]['signals'] = { perceivedMomentum: 'stalled', strategicNotes: 'Board asked' };
+		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 2) as never, applyContext);
+		expect(initiatives[0]['signals']).toEqual({ strategicNotes: 'Board asked' });
+	});
+
+	it('a retry keeps a "stalled" a person set on the row after the first attempt (#11081 review)', async () => {
+		const { service, initiatives, links } = setup();
+		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 1) as never, applyContext);
+		links.splice(0, links.length); // the link was never written
+		Object.assign(initiatives[0], {
+			signals: { perceivedMomentum: 'stalled' },
+			createdAt: new Date('2026-10-18T10:00:00Z'),
+			updatedAt: new Date('2026-10-18T10:05:00Z')
+		});
+		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 2) as never, applyContext);
+		expect(initiatives[0]['signals']).toEqual({ perceivedMomentum: 'stalled' });
+	});
+
+	it('a retry removes the teams its first attempt linked that the mission no longer has (#11081 review)', async () => {
+		const { service, initiatives, links, addLink } = setup();
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');
+		addLink(EverWorksLinkType.TEAM, 'g-team-2', 'ew-team-2');
+		const onTeams = { ...mission, teamIds: ['ew-team-1', 'ew-team-2'], visibility: 'team' };
+		await service.apply(envelope('mission.created', onTeams, 1) as never, applyContext);
+		expect(initiatives[0]['teams']).toEqual([{ id: 'g-team-1' }, { id: 'g-team-2' }]);
+		// The mission's link was never written; the mission lost a team before the retry.
+		links.splice(links.findIndex((l) => l['entityType'] === EverWorksLinkType.INITIATIVE_MISSION), 1);
+		await service.apply(envelope('mission.created', { ...onTeams, teamIds: ['ew-team-1'] }, 2) as never, applyContext);
+		expect(initiatives[0]['teams']).toEqual([{ id: 'g-team-1' }]);
+	});
+
+	it('a mission on a team not paired yet waits for it instead of making an initiative nobody can see (review F89)', async () => {
+		const { service, initiatives, addLink, missionsMock, ewOrg } = setup();
+		const onTeam = { ...mission, teamIds: ['ew-team-9'], visibility: 'team' };
+		expect(await service.apply(envelope('mission.created', onTeam) as never, applyContext)).toMatchObject({ status: 'deferred' });
+		expect(initiatives).toHaveLength(0);
+		missionsMock.addMission(ewOrg.id, { id: 'ew-m-team', title: 'Team only', teamIds: ['ew-team-9'], visibility: 'team' });
+		await expect(service.decide('m1' as never, { createInGauzy: ['ew-m-team'] })).rejects.toThrow(/teams first/);
+		expect(initiatives).toHaveLength(0);
+		addLink(EverWorksLinkType.TEAM, 'g-team-9', 'ew-team-9');
+		expect(await service.apply(envelope('mission.created', onTeam) as never, applyContext)).toMatchObject({ status: 'applied' });
+		expect(initiatives[0]).toMatchObject({ visibilityScope: 'team', teams: [{ id: 'g-team-9' }] });
+	});
+
 	it('a resume clears only the "stalled" the sync set; a person\u2019s own assessment stays', async () => {
 		const { service, initiatives } = setup();
 		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 1) as never, applyContext);

@@ -74,6 +74,24 @@ export function commentBodyForEverWorks(html: string | null | undefined): string
 	return cutForEverWorks(htmlToMarkdown(html));
 }
 
+/**
+ * The line `htmlOf` puts in front of the comment of an Ever Works author Gauzy cannot attribute, as Markdown. The name
+ * may carry escaped Markdown (`Ops\*Bot` for `Ops*Bot`, #11079 review).
+ */
+const ATTRIBUTION = /^\*\*(?:\\.|[^*\\\n])+\*\* \(Ever Works\):\n+/;
+
+/**
+ * The attribution line in front of the synced Gauzy text of a comment, when it is Gauzy's own (Ever Works' text does
+ * not start with it): it is never sent back into the Ever Works message (review F84).
+ */
+function attributionOf(snapshot: { g?: { body?: string }; e?: { body?: string } }): string | null {
+	const gauzy = ATTRIBUTION.exec(snapshot.g?.body ?? '')?.[0] ?? null;
+	// Only Ever Works' own text starting with that very line keeps it; another attribution-form line does not (#11079
+	// review).
+	const everWorks = ATTRIBUTION.exec(snapshot.e?.body ?? '')?.[0] ?? null;
+	return gauzy && gauzy !== everWorks ? gauzy : null;
+}
+
 function cutForEverWorks(body: string): string {
 	if (body.length <= EVER_WORKS_COMMENT_LIMIT) return body;
 	return body.slice(0, EVER_WORKS_COMMENT_LIMIT - CUT_NOTE.length).trimEnd() + CUT_NOTE;
@@ -302,11 +320,15 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		if ((snapshot.g?.body ?? null) === full) return { status: 'skipped', message: 'nothing changed' };
 		if ((ewOnly.refusedBody ?? null) === full) return { status: 'skipped', message: 'Ever Works refused this edit before; it stays in Gauzy' };
 		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments/${encodeURIComponent(link.ewId)}`;
+		// The Gauzy copy of an unattributed author's comment starts with Gauzy's attribution line: Ever Works gets the
+		// edited text without it (review F84).
+		const attribution = attributionOf(snapshot);
+		const sent = attribution && full.startsWith(attribution) ? full.slice(attribution.length) : full;
 		try {
 			// Only Ever Works' author of the comment may edit it: the person it was written as (only when that person made
 			// the edit in Gauzy), or the integration — so anyone else's edit is refused by Ever Works (review F21).
 			const updated = await client.request<EverWorksComment>('PATCH', path, {
-				body: { body: cutForEverWorks(full) },
+				body: { body: cutForEverWorks(sent) },
 				actAsUserId: await this.actAsAuthor(context, ewOnly, editorUserIds)
 			});
 			await this.record(context, link.gauzyId as ID, { ...updated, taskId: taskLink.ewId }, { g: { body: full }, e: { body: normaliseMarkdown(updated.body) } }, 'outbound', link, null);

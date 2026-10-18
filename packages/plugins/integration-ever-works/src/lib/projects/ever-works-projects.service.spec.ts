@@ -582,6 +582,58 @@ describe('EverWorksProjectsService', () => {
 		expect(JSON.parse(link.ewOnly as string)).toMatchObject({ unmappedMembers: [], unmappedTeams: [], kind: 'website', repoUrls: ['https://github.com/acme/site'] });
 	});
 
+	it('work member events are applied by member, never skipped by a work version another member moved on (review F75)', async () => {
+		const { service, client, projects, members, addLink, links } = setup();
+		projects.push({ id: 'p1', name: 'Acme Site' });
+		addLink(EverWorksLinkType.MEMBER, 'emp-ann', 'ew-ann');
+		addLink(EverWorksLinkType.MEMBER, 'emp-bob', 'ew-bob');
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work, members: [], version: 3 }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		await service.apply(envelope('work.updated', { ...work, members: [] }, 3) as never, applyContext);
+		// Bob's add (v5) is delivered before Ann's (v4).
+		await service.apply(envelope('work.member.added', { userId: 'ew-bob', role: 'editor' }, 5) as never, applyContext);
+		expect(await service.apply(envelope('work.member.added', { userId: 'ew-ann', role: 'editor' }, 4) as never, applyContext)).toEqual({ status: 'applied' });
+		expect(members.map((m) => m['employeeId']).sort()).toEqual(['emp-ann', 'emp-bob']);
+		const link = links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)!;
+		expect(link.ewVersion).toBe(5);
+		// The same member's older event stays skipped.
+		await service.apply(envelope('work.member.removed', { userId: 'ew-bob', role: 'editor', deleted: true }, 6) as never, applyContext);
+		expect(await service.apply(envelope('work.member.added', { userId: 'ew-bob', role: 'editor' }, 5) as never, applyContext)).toMatchObject({ status: 'skipped' });
+		expect(members.map((m) => m['employeeId'])).toEqual(['emp-ann']);
+	});
+
+	it('"create from work" makes a project for a work whose earlier pair stopped syncing (review F80)', async () => {
+		const { service, client, links, projects, commandBus } = setup();
+		// The work was paired with p1, turned private (the pair unlinked) and is public again: the tab lists it unpaired.
+		projects.push({ id: 'p1', name: 'Acme Site' });
+		links.push({ id: 'old', integrationTenantId: 'm1', entityType: EverWorksLinkType.PROJECT_WORK, gauzyId: 'p1', ewId: 'ew-work-1', ewVersion: 2, snapshot: null, ewOnly: null, state: EverWorksLinkState.UNLINKED });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work, version: 7 }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { createInGauzy: ['ew-work-1'] });
+		expect(commandBus.execute).toHaveBeenCalledTimes(1);
+		const pairs = links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK);
+		expect(pairs).toEqual([expect.objectContaining({ ewId: 'ew-work-1', gauzyId: 'p-new-2', state: 'ok' })]);
+	});
+
+	it('the project sweep goes on past a pair it cannot sweep, and skips a project deleted in Gauzy (review F76)', async () => {
+		const { service, client, members, addLink, links, projects } = setup();
+		for (const id of ['ew-work-1', 'ew-work-2', 'ew-work-3']) {
+			client.request.mockResolvedValueOnce({ data: [{ ...work, id, teamIds: [] }], nextCursor: null, hasMore: false });
+			await service.decide('m1' as never, { createInGauzy: [id] });
+		}
+		const projectOf = (ewId: string) => links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK && l.ewId === ewId)!.gauzyId;
+		projects.splice(projects.findIndex((p) => p['id'] === projectOf('ew-work-1')), 1); // deleted in Gauzy
+		const failing = projectOf('ew-work-2');
+		const push = members.push.bind(members);
+		members.push = (...rows: Array<Record<string, any>>) => {
+			if (rows.some((row) => row['organizationProjectId'] === failing)) throw new Error('a constraint refused the member');
+			return push(...rows);
+		};
+		addLink(EverWorksLinkType.MEMBER, 'emp-ann', 'ew-ann'); // paired: Ann joins every project at the next sweep
+		client.request.mockResolvedValue({ data: [], nextCursor: null, hasMore: false });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(members.map((m) => m['organizationProjectId'])).toEqual([projectOf('ew-work-3')]);
+	});
+
 	it('a member event keeps the kind, the slug and every repository URL on the link', async () => {
 		const { service, client, links, projects, members, addLink } = setup();
 		projects.push({ id: 'p1', name: 'Acme Site' });
