@@ -28,6 +28,11 @@ export enum EverWorksSettingName {
 	IDEAS_TASK_VIEW_ID = 'IDEAS_TASK_VIEW_ID',
 	/** Initial-sync checkpoint (plan 03 §C.6). */
 	INITIAL_SYNC_STATE = 'INITIAL_SYNC_STATE',
+	/**
+	 * JSON array of Ever Works user ids an admin unpaired after Ever ID paired them automatically (plan 01 §3): they are
+	 * not paired again by Ever ID alone, only suggested, until an admin pairs them.
+	 */
+	PEOPLE_EVER_ID_DECLINED = 'PEOPLE_EVER_ID_DECLINED',
 	/** The integration's on/off flag under the spelling every Gauzy integration uses. */
 	IS_ENABLED = 'IS_ENABLED'
 }
