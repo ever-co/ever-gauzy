@@ -37,11 +37,22 @@ jest.mock('@gauzy/core', () => {
 		OrganizationTeam: class {},
 		OrganizationTeamEmployee: class {},
 		IntegrationTenant: class {},
-		RequestContext: { currentTenantId: () => 't1', currentUserId: () => 'u1', currentOrganizationId: () => null }
+		// The request context lives in the write's context too (review on #11044): read outside it, it is gone.
+		RequestContext: {
+			currentTenantId: () => mockWrite.getStore()?.tenantId ?? null,
+			currentUserId: () => mockWrite.getStore()?.userId ?? null,
+			currentOrganizationId: () => null
+		}
 	};
 });
 
-const write = new AsyncLocalStorage<string>();
+/** The write's context: the stand-in for the transaction claim and the request context of `@gauzy/core`. */
+const mockWrite = new AsyncLocalStorage<{ name: string; tenantId: string; userId: string }>();
+const WRITE = { name: 'write-transaction', tenantId: 't1', userId: 'u1' };
+const write = {
+	getStore: () => mockWrite.getStore()?.name,
+	run: <T>(_name: string, work: () => T): T => mockWrite.run(WRITE, work)
+};
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
 /** An outbound queue that records the write context each enqueue ran in. */
@@ -137,12 +148,13 @@ describe('the capture drains enqueue outside the signalling write', () => {
 		const listener = new EverWorksTaskEventListener(eventBus as never, queue as never);
 		listener.onModuleInit();
 		try {
+			// No tenant on the event: it can only come from the request context, read inside the write.
 			write.run('write-transaction', () =>
-				events.next({ entity: { id: 'task-1', tenantId: 't1', organizationId: 'o1' }, type: 'updated' })
+				events.next({ entity: { id: 'task-1', organizationId: 'o1' }, type: 'updated' })
 			);
 			await flush();
 			expect(queue.enqueue).toHaveBeenCalledWith(
-				expect.objectContaining({ gauzyId: 'task-1', actorUserId: 'u1' })
+				expect.objectContaining({ gauzyId: 'task-1', tenantId: 't1', actorUserId: 'u1' })
 			);
 			expect(seen).toEqual([undefined, undefined]);
 		} finally {
