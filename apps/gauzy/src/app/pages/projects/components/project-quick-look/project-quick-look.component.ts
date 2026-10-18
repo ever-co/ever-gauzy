@@ -297,13 +297,17 @@ export class ProjectQuickLookComponent implements OnChanges {
 
 	/**
 	 * The host's caption, else whose time the contributors are: a viewer who may not read
-	 * everyone's time on the project gets back only their own, so it must not say "everyone's".
+	 * everyone's time on the project gets back only their own, so it must not say "everyone's";
+	 * one who may reads the host's scope — a team's members, or everyone on the project.
 	 */
 	get contributorsCaptionKey(): string {
 		if (this.contributorsCaption) return this.contributorsCaption;
-		return this.viewedProject && this.canReadProjectTotal(this.viewedProject)
-			? 'PROJECT_QUICK_LOOK.CONTRIBUTORS_CAPTION'
-			: 'PROJECT_QUICK_LOOK.YOUR_TIME_CAPTION';
+		if (!this.viewedProject || !this.canReadProjectTotal(this.viewedProject)) {
+			return 'PROJECT_QUICK_LOOK.YOUR_TIME_CAPTION';
+		}
+		return this.scopeEmployeeIds
+			? 'PROJECT_QUICK_LOOK.TEAM_CONTRIBUTORS_CAPTION'
+			: 'PROJECT_QUICK_LOOK.CONTRIBUTORS_CAPTION';
 	}
 
 	/** The team's or everyone's hours on the project over the period, tracked and manual. */
