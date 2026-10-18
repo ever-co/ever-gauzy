@@ -127,8 +127,8 @@ export const INBOX_SETTINGS_NAV_ITEMS = [
 export function registerInboxSettingsEntryPoints(injector: Injector): Subscription {
 	const state = { available: false, added: false };
 	return injector.get(InboxEmailAvailabilityService).available$.subscribe((available) => {
-		const changed = !!available !== state.available;
-		state.available = !!available;
+		const changed = available !== state.available;
+		state.available = available;
 		// Added on the first `true`, and again (it replaces itself) at every change after: the menu reads `hide`
 		// only when it is built, so a new emission is what shows or hides the entries (review F68).
 		if ((available && !state.added) || (state.added && changed)) {
@@ -171,8 +171,8 @@ export const INBOX_NAV_SECTION = {
 export function registerInboxEntryPoints(injector: Injector): Subscription {
 	const state = { available: false, navAdded: false, badgeAdded: false };
 	return injector.get(InboxAvailabilityService).available$.subscribe((available) => {
-		const changed = !!available !== state.available;
-		state.available = !!available;
+		const changed = available !== state.available;
+		state.available = available;
 		const header = injector.get(NavigationBuilderService);
 		// Added on the first `true`, and again (the same id replaces itself) at every change after: the menu reads
 		// `hide` only when it is built, so a later sign-in would otherwise leave the entry hidden (review F68).

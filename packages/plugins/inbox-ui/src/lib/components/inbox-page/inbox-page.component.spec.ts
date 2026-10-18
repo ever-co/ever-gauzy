@@ -158,7 +158,8 @@ describe('InboxPageComponent', () => {
 			})
 		);
 		const { component, fixture } = render();
-		const [first, second] = component.items();
+		const first = component.items()[0] as IInboxItemWithState;
+		const second = component.items()[1] as IInboxItemWithState;
 		const answer = new Subject<IInboxItemWithState>();
 		api.reply.mockReturnValue(answer);
 		component.open(first);
