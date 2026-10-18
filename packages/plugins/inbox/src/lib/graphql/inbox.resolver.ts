@@ -48,9 +48,11 @@ export async function validatedInboxInput<T extends object>(type: new () => T, v
  *
  * - **Guards and permissions are the controller's:** `TenantPermissionGuard` and `PermissionGuard` with
  *   `INBOX_VIEW` on every field, plus the GraphQL capability gate every resolver carries (`FEATURE_GRAPHQL`).
- * - **The recipient is the caller:** the service reads the tenant and the user from the request context;
- *   no field takes a user, a recipient or a tenant argument, so nobody reads, marks or answers another user's items.
- *   A holder of `INBOX_MAILBOX_READ_ALL` reads (never marks) what the route lets them read.
+ * - **The caller acts as themselves:** the service reads the tenant and the user from the request context, and no
+ *   field takes a user, a recipient or a tenant argument. Every write (`markInboxItem`, `replyInboxItem`,
+ *   `markAllInboxItemsRead`) is the caller's own, on the caller's recipient state. The reads answer the caller's
+ *   items, except that a holder of `INBOX_MAILBOX_READ_ALL` also reads the mailbox EMAIL items the route lets them
+ *   read (`recipient` is then `null`); such a holder never marks or answers another user's items.
  */
 @Resolver('InboxItem')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)

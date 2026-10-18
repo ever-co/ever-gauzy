@@ -8,8 +8,10 @@ import { gql } from 'graphql-tag';
  * `GATED_PLUGIN_SCHEMAS` of `tools/scripts/graphql-field-binding-check.mjs` — so it must stay a plain `gql`
  * template (no `${…}`), registered by `InboxPlugin` as `schema: inboxSchemaExtensions`.
  *
- * Every field answers the caller's own items: the recipient is taken from the credential, never from an
- * argument, exactly as on `/api/inbox/items`. Enumerated values (`kind`, `status`, `tab`, …) are strings
+ * Every field acts as the caller, taken from the credential and never from an argument, exactly as on
+ * `/api/inbox/items`: the writes change only the caller's own state, and the reads answer the caller's items (plus,
+ * for a holder of `INBOX_MAILBOX_READ_ALL`, the mailbox EMAIL items the route lets them read, with a null
+ * `recipient`). Enumerated values (`kind`, `status`, `tab`, …) are strings
  * holding the REST values, so a value read over GraphQL and over REST are identical, and a new value is an
  * additive change.
  */

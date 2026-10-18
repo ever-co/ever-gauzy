@@ -101,7 +101,11 @@ mailbox, email and provider routes (P4) are described in `EMAIL.md`.
 Every route has a GraphQL twin (plan 04 §3). The twins call the same service
 methods, with the same DTO rules, guards and `INBOX_VIEW` permission (plus the
 `FEATURE_GRAPHQL` gate every resolver carries); no argument names a user or a
-recipient, so the recipient is always the caller.
+recipient. Every write (`markInboxItem`, `replyInboxItem`,
+`markAllInboxItemsRead`) acts as the caller, on the caller's own recipient
+state. The reads answer the caller's items too, except that a holder of
+`INBOX_MAILBOX_READ_ALL` may read the mailbox EMAIL items that the route lets
+them read; on those items `recipient` is `null`.
 
 | GraphQL                             | REST                        |
 | ----------------------------------- | --------------------------- |
