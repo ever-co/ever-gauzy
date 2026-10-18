@@ -26,6 +26,38 @@ const PEOPLE = {
 	]
 };
 
+/** The People tab with the invite actions and match sources (G-P1-6). */
+const PEOPLE_INVITES = {
+	members: [
+		{ ...PEOPLE.members[0] },
+		{ ...PEOPLE.members[1], matchedBy: 'ever_id' as const },
+		{ ...PEOPLE.members[2] },
+		{ ewUserId: 'u4', username: 'dee', displayName: 'Dee', email: 'dee@example.com', emailVerified: true, role: 'member', isActive: true, linkedEmployeeId: null, suggestion: null, gauzyInvite: null },
+		{
+			ewUserId: 'u5',
+			username: 'eve',
+			displayName: 'Eve',
+			email: 'eve@example.com',
+			emailVerified: true,
+			role: 'member',
+			isActive: true,
+			linkedEmployeeId: null,
+			suggestion: null,
+			gauzyInvite: { inviteId: 'inv-5', expireDate: '2026-10-25T00:00:00.000Z' }
+		},
+		{ ewUserId: 'u6', username: 'fay', displayName: 'Fay', email: 'fay@example.com', emailVerified: false, role: 'member', isActive: true, linkedEmployeeId: null, suggestion: null },
+		{ ewUserId: 'u7', username: 'gus', displayName: 'Gus', email: 'gus@example.com', emailVerified: true, role: 'member', isActive: true, linkedEmployeeId: 'e7', suggestion: null, matchedBy: 'verified_email' as const },
+		{ ewUserId: 'u8', username: 'hal', displayName: 'Hal', email: 'hal@example.com', emailVerified: true, role: 'member', isActive: true, linkedEmployeeId: 'e8', suggestion: null, matchedBy: 'manual' as const },
+		{ ewUserId: 'u9', username: 'ivy', displayName: 'Ivy', email: 'ivy@example.com', emailVerified: true, role: 'member', isActive: true, linkedEmployeeId: null, suggestion: { employeeId: 'e9', reason: 'ever_id' as const } }
+	],
+	unmatchedEmployees: [
+		{ employeeId: 'e1', name: 'Ann G', email: 'ann@example.com' },
+		{ employeeId: 'e2', name: 'Cy G', email: null },
+		{ employeeId: 'e3', name: 'Zoe G', email: 'zoe@example.com' },
+		{ employeeId: 'e9', name: 'Ivy G', email: 'ivy@example.com' }
+	]
+};
+
 const TEAMS = {
 	teams: [
 		{ ewTeamId: 't1', name: 'Platform', slug: null, parentTeamId: null, linkedTeamId: null, suggestion: { teamId: 'g1', reason: 'same_name' as const } },
@@ -59,6 +91,8 @@ describe('EverWorksMatchReviewComponent', () => {
 		projects: jest.fn(),
 		initiatives: jest.fn(),
 		decidePeople: jest.fn(),
+		inviteToGauzy: jest.fn(),
+		inviteToEverWorks: jest.fn(),
 		decideTeams: jest.fn(),
 		decideProjects: jest.fn(),
 		decideInitiatives: jest.fn()
@@ -311,6 +345,93 @@ describe('EverWorksMatchReviewComponent', () => {
 			const { component } = render();
 			expect(component.initiativesUnavailable).toBe(true);
 			expect(component.errors.initiatives).toBeNull();
+		});
+	});
+
+	describe('People: invite actions and match sources', () => {
+		const text = (el: HTMLElement, selector: string) => el.querySelector(selector)?.textContent?.trim() ?? null;
+
+		beforeEach(() => api.people.mockReturnValue(of(PEOPLE_INVITES)));
+
+		it('shows how each pairing was made, and why a member is suggested', () => {
+			const { el } = render();
+			expect(text(el, '[data-test="match-source-u2"]')).toContain('EVER_WORKS.REVIEW.MATCHED_BY.ever_id');
+			expect(text(el, '[data-test="match-source-u7"]')).toContain('EVER_WORKS.REVIEW.MATCHED_BY.verified_email');
+			expect(text(el, '[data-test="match-source-u8"]')).toContain('EVER_WORKS.REVIEW.MATCHED_BY.manual');
+			expect(text(el, '[data-test="suggestion-reason-u1"]')).toContain('EVER_WORKS.REVIEW.MATCHED_BY.verified_email');
+			expect(text(el, '[data-test="suggestion-reason-u9"]')).toContain('EVER_WORKS.REVIEW.MATCHED_BY.ever_id');
+			// An older API sends no source: a pairing then shows none.
+			expect(el.querySelector('[data-test="match-source-u1"]')).toBeNull();
+		});
+
+		it('offers "invite to Gauzy" only for an unpaired, verified member with no Gauzy person and no pending invitation', () => {
+			const { el } = render();
+			const offered = Array.from(el.querySelectorAll('[data-test^="invite-gauzy-"]')).map((button) => button.getAttribute('data-test'));
+			expect(offered).toEqual(['invite-gauzy-u4']);
+			expect(el.querySelector('[data-test="gauzy-invite-pending-u5"]')).not.toBeNull();
+		});
+
+		it('asks before inviting to Gauzy, then invites with the Employee role and reloads the tab', () => {
+			api.inviteToGauzy.mockReturnValue(of({ status: 'invited', inviteId: 'inv-4', email: 'dee@example.com', roleId: 'r-employee', expireDate: null }));
+			const { component, fixture, el } = render();
+			(el.querySelector('[data-test="invite-gauzy-u4"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			const dialog = el.querySelector('[data-test="invite-confirm"]');
+			expect(dialog?.getAttribute('role')).toBe('dialog');
+			expect(dialog?.textContent).toContain('dee@example.com');
+			expect(dialog?.textContent).toContain('EVER_WORKS.REVIEW.INVITE.ROLE_EMPLOYEE');
+			expect(api.inviteToGauzy).not.toHaveBeenCalled();
+
+			(el.querySelector('[data-test="invite-confirm-yes"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(api.inviteToGauzy).toHaveBeenCalledWith('org-1', 'm1', { ewUserId: 'u4' });
+			expect(api.people).toHaveBeenCalledTimes(2);
+			expect(component.inviteResults['gauzy:u4']).toBe('EVER_WORKS.REVIEW.INVITE.RESULT.invited');
+			expect(el.querySelector('[data-test="invite-confirm"]')).toBeNull();
+		});
+
+		it('cancelling the confirmation invites nobody', () => {
+			const { fixture, el } = render();
+			(el.querySelector('[data-test="invite-gauzy-u4"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			(el.querySelector('[data-test="invite-confirm-no"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(el.querySelector('[data-test="invite-confirm"]')).toBeNull();
+			expect(api.inviteToGauzy).not.toHaveBeenCalled();
+		});
+
+		it('offers "invite to Ever Works" for a Gauzy person with an e-mail that no member is suggested for or chosen for', () => {
+			const { component, fixture, el } = render();
+			const offered = () => Array.from(el.querySelectorAll('[data-test^="invite-ew-"]')).map((button) => button.getAttribute('data-test'));
+			// e1 is suggested for u1, e9 for u9 (Ever ID), e2 has no e-mail.
+			expect(offered()).toEqual(['invite-ew-e3']);
+			component.personChoice['u4'] = 'e3';
+			fixture.detectChanges();
+			expect(offered()).toEqual([]);
+		});
+
+		it('asks before inviting to Ever Works, then shows what Ever Works did', () => {
+			api.inviteToEverWorks.mockReturnValue(of({ status: 'already_member', email: 'zoe@example.com', invitationId: null, expiresAt: null, ewUserId: 'u-zoe' }));
+			const { component, fixture, el } = render();
+			(el.querySelector('[data-test="invite-ew-e3"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(el.querySelector('[data-test="invite-confirm"]')?.textContent).toContain('zoe@example.com');
+			expect(el.querySelector('[data-test="invite-confirm"]')?.textContent).toContain('EVER_WORKS.REVIEW.INVITE.ROLE_MEMBER');
+			(el.querySelector('[data-test="invite-confirm-yes"]') as HTMLButtonElement).click();
+			fixture.detectChanges();
+			expect(api.inviteToEverWorks).toHaveBeenCalledWith('org-1', 'm1', { employeeId: 'e3' });
+			expect(component.inviteResults['ew:e3']).toBe('EVER_WORKS.REVIEW.INVITE.RESULT.already_member');
+			expect(api.people).toHaveBeenCalledTimes(2);
+		});
+
+		it('an invite refusal is shown on the People tab and nothing is reloaded', () => {
+			api.inviteToGauzy.mockReturnValue(throwError(() => ({ status: 403, error: { message: 'Inviting people to Gauzy needs the permission to edit invites.' } })));
+			const { component, fixture, el } = render();
+			component.askInviteToGauzy(PEOPLE_INVITES.members[3]);
+			component.confirmInvite();
+			fixture.detectChanges();
+			expect(text(el, '[data-test="people-error"]')).toContain('permission to edit invites');
+			expect(api.people).toHaveBeenCalledTimes(1);
 		});
 	});
 
