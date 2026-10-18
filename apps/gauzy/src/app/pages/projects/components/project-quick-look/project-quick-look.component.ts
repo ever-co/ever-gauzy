@@ -31,7 +31,7 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
-import { OrganizationProjectsService, TimesheetService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
+import { OrganizationProjectsService, Store, TimesheetService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
 import { IRecordViewSection, IRecordViewStatus, RecordViewModule, TimeZoneService } from '@gauzy/ui-core/shared';
 import {
 	EmployeeHoursChartComponent,
@@ -217,7 +217,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 	@Input() highlightEmployeeId: string | null = null;
 	/** i18n key under "Who worked the most"; takes `{{ range }}`. */
 	@Input() contributorsCaption = 'PROJECT_QUICK_LOOK.CONTRIBUTORS_CAPTION';
-	@Output() closed = new EventEmitter<void>();
+	@Output() readonly closed = new EventEmitter<void>();
 
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly taskFilters: ProjectTaskFilter[] = ['open', 'progress', 'overdue', 'done'];
@@ -247,7 +247,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 		private readonly _timeZoneService: TimeZoneService,
 		private readonly _projectsService: OrganizationProjectsService,
 		private readonly _statisticsService: TimesheetStatisticsService,
-		private readonly _timesheetService: TimesheetService
+		private readonly _timesheetService: TimesheetService,
+		private readonly _store: Store
 	) {}
 
 	ngOnChanges(changes: SimpleChanges): void {
@@ -338,6 +339,10 @@ export class ProjectQuickLookComponent implements OnChanges {
 		this.attention = [];
 		this.budget = null;
 		this.tasks = [];
+		// Another project's figures never show under this one's name while its own load.
+		this.hours = loading([]);
+		this.contributors = loading([]);
+		this.topTasks = loading([]);
 		this.taskFilter = 'open';
 		this.showAllTasks = false;
 		this.show({ id: card.id, name: card.name, imageUrl: card.imageUrl } as IOrganizationProject);
@@ -507,6 +512,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 	private async loadBudget(project: IOrganizationProject, sequence: number): Promise<void> {
 		const budgetHours = Number(project.budget) || 0;
 		if (project.budgetType !== OrganizationProjectBudgetTypeEnum.HOURS || budgetHours <= 0) return;
+		// A caller who would get back only their own time has no project-wide usage to show.
+		if (!this.canReadProjectTotal(project)) return;
 		const timeZone = this._timeZoneService.currentTimeZone;
 		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
 		try {
@@ -531,6 +538,21 @@ export class ProjectQuickLookComponent implements OnChanges {
 		} catch {
 			// No budget bar; the Details panel still lists the budget.
 		}
+	}
+
+	/**
+	 * Whether the project statistics read counts everyone's time, as the server scopes it
+	 * (ManagedEmployeeService.filterAccessibleEmployeeIds): anyone may be selected, an
+	 * organization-wide viewer with no employee record, or a manager of this project.
+	 * Anyone else gets back only their own time.
+	 */
+	private canReadProjectTotal(project: IOrganizationProject): boolean {
+		if (this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) return true;
+		const employeeId = this._store.user?.employeeId;
+		if (!employeeId) return this._store.hasPermission(PermissionsEnum.ALL_ORG_VIEW);
+		return (project.members || []).some(
+			(member) => member.isManager && (member.employeeId || member.employee?.id) === employeeId
+		);
 	}
 
 	/* ── Period figures ──────────────────────────────────────────────────── */

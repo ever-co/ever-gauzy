@@ -88,8 +88,12 @@ export function buildProjectViewSections(project: IOrganizationProject, text: IP
 					divider: true
 				},
 				{
+					// Blank until the full read says: the card the drawer opens with has no `public`.
 					label: 'ORGANIZATIONS_PAGE.EDIT.VISIBILITY',
-					value: text.translate(project.public ? 'BUTTONS.PUBLIC' : 'BUTTONS.PRIVATE'),
+					value:
+						typeof project.public === 'boolean'
+							? text.translate(project.public ? 'BUTTONS.PUBLIC' : 'BUTTONS.PRIVATE')
+							: null,
 					icon: project.public ? 'globe-outline' : 'lock-outline'
 				},
 				{
