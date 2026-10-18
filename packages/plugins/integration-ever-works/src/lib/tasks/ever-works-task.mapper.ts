@@ -196,10 +196,13 @@ export function stripTitleAppendix(markdown: string | null | undefined): string 
 export function isCutTitleCopy(title: string | null | undefined, markdown: string | null | undefined): boolean {
 	const full = FULL_TITLE_APPENDIX.exec(normaliseMarkdown(markdown))?.[1]?.trim();
 	if (!full || !title?.endsWith('…')) return false;
-	// The appendix has the title's whitespace collapsed and the cut copy has not: its start is compared collapsed.
 	const flat = (value: string) => value.replace(/\s+/g, ' ').trim();
-	const start = flat(title.slice(0, -1));
-	return !!start && flat(full).startsWith(start);
+	// Only the copy cut where Gauzy cuts it: a shorter start of the title is a rename in Ever Works (#11108 review).
+	if (flat(title) === flat(titleForEverWorks(full).title)) return true;
+	// The appendix has the title's whitespace collapsed, so a title with a run of spaces was cut further on: its
+	// copy is still the whole limit before the `…`, and the full title starts with it.
+	const start = title.slice(0, -1);
+	return start.length === EVER_WORKS_TITLE_LIMIT - 1 && flat(full).startsWith(flat(start));
 }
 
 /** Ever Works labels from Gauzy tag names: trimmed, ≤ 80 characters, unique (case-insensitive), at most 50. */

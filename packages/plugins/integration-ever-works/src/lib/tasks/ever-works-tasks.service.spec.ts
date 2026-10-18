@@ -148,6 +148,11 @@ describe('task field rules', () => {
 		const description = descriptionForEverWorks('Body', long);
 		expect(isCutTitleCopy(titleForEverWorks(long).title, description)).toBe(true);
 		expect(isCutTitleCopy('Renamed', description)).toBe(false);
+		// A rename to a shorter start of the title is Ever Works' own, not the copy cut at the limit.
+		expect(isCutTitleCopy(`${'x'.repeat(20)}…`, description)).toBe(false);
+		const plain = 'Investigate customer billing failures '.repeat(8).trim();
+		expect(isCutTitleCopy(titleForEverWorks(plain).title, descriptionForEverWorks('', plain))).toBe(true);
+		expect(isCutTitleCopy('Investigate…', descriptionForEverWorks('', plain))).toBe(false);
 		expect(isCutTitleCopy(titleForEverWorks('z'.repeat(250)).title, description)).toBe(false);
 		expect(isCutTitleCopy(titleForEverWorks(long).title, 'Body')).toBe(false);
 	});
@@ -593,16 +598,20 @@ describe('EW → G tasks', () => {
 		const renamed = 'B'.repeat(250);
 		t.addGauzyTask({ id: 'g1', title: renamed });
 		t.addGauzyTask({ id: 'g2', title: renamed });
+		t.addGauzyTask({ id: 'g3', title: renamed });
 		// Both went out with the long title `sent` (cut, the full one in the description); Gauzy renamed them since.
 		const description = descriptionForEverWorks('Body', sent);
 		const kept = t.mock.addTask(t.org.id, { title: titleForEverWorks(sent).title, description });
 		const edited = t.mock.addTask(t.org.id, { title: 'Renamed in Ever Works', description });
-		for (const [ew, gauzyId] of [[kept, 'g1'], [edited, 'g2']] as const) {
+		const shortened = t.mock.addTask(t.org.id, { title: `${'A'.repeat(20)}…`, description });
+		for (const [ew, gauzyId] of [[kept, 'g1'], [edited, 'g2'], [shortened, 'g3']] as const) {
 			const own = [{ source: 'gauzy', installationId: 'c1', externalId: gauzyId, externalUrl: null }];
 			expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 2 } })).toEqual({ status: 'applied' });
 		}
 		expect((t.tasks.get('g1') as GauzyTask)['title']).toBe(renamed);
 		expect((t.tasks.get('g2') as GauzyTask)['title']).toBe('Renamed in Ever Works');
+		// Shortened in Ever Works to a start of the title: a rename too, not the cut copy (#11108 review).
+		expect((t.tasks.get('g3') as GauzyTask)['title']).toBe(`${'A'.repeat(20)}…`);
 	});
 
 	it('both sides changed the title: the later writer wins and the conflict is logged', async () => {
