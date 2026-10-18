@@ -404,6 +404,9 @@ export class EverWorksConnectionService {
 		if (previousId && previousId !== subscription.id) {
 			await client.deleteWebhook(previousId).catch((error) => this.logger.warn(`The replaced webhook subscription could not be deleted (${this.reason(error)}).`));
 		}
+		// A direction saved while the subscription was being created (its refresh addressed the old one): the new one
+		// is given the events the saved directions need (no write when they are the ones it was created with).
+		await this.refreshWebhookEvents(connection.id as ID, saved.tenantId as ID, events);
 		return this.view(saved);
 	}
 
@@ -419,9 +422,9 @@ export class EverWorksConnectionService {
 	 * @param connectionId - The connection.
 	 * @param tenantId - Its tenant.
 	 */
-	async refreshWebhookEvents(connectionId: ID, tenantId: ID): Promise<void> {
+	async refreshWebhookEvents(connectionId: ID, tenantId: ID, sentEvents?: string[]): Promise<void> {
 		const previous = this.eventRefreshes.get(connectionId) ?? Promise.resolve();
-		const current = previous.catch(() => undefined).then(() => this.refreshWebhookEventsOnce(connectionId, tenantId));
+		const current = previous.catch(() => undefined).then(() => this.refreshWebhookEventsOnce(connectionId, tenantId, sentEvents));
 		this.eventRefreshes.set(connectionId, current);
 		try {
 			await current;
@@ -430,12 +433,13 @@ export class EverWorksConnectionService {
 		}
 	}
 
-	private async refreshWebhookEventsOnce(connectionId: ID, tenantId: ID): Promise<void> {
-		const connection = await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId, tenantId } as never });
-		if (!connection?.webhookSubscriptionId || !connection.isActive) return;
+	/** @param sentEvents - The events the subscription was just given, when known (no write while they still hold). */
+	private async refreshWebhookEventsOnce(connectionId: ID, tenantId: ID, sentEvents?: string[]): Promise<void> {
 		try {
+			const connection = await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId, tenantId } as never });
+			if (!connection?.webhookSubscriptionId || !connection.isActive) return;
 			const client = this.client(connection);
-			let sent: string | null = null;
+			let sent: string | null = sentEvents ? [...sentEvents].sort().join(',') : null;
 			for (let write = 0; write < 3; write++) {
 				const events = await this.webhookEvents(connection);
 				const key = [...events].sort().join(',');
