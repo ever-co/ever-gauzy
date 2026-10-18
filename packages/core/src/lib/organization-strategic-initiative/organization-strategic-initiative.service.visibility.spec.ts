@@ -26,7 +26,10 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 	let membership: { find: jest.Mock; findOne: jest.Mock };
 	let permissions: PermissionsEnum[];
 
-	const initiative = (visibilityScope: OrganizationStrategicVisibilityScopeEnum, stewardId: string | null = STEWARD) =>
+	const initiative = (
+		visibilityScope: OrganizationStrategicVisibilityScopeEnum,
+		stewardId: string | null = STEWARD
+	) =>
 		({
 			id: 'initiative-1',
 			tenantId: TENANT,
@@ -62,7 +65,9 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 		});
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(null);
-		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: PermissionsEnum) => permissions.includes(permission));
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: PermissionsEnum) =>
+			permissions.includes(permission)
+		);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -77,7 +82,9 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 
 		it('a leadership-scoped one too', async () => {
 			signIn(STEWARD, [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
-			await expect(readOne(initiative(OrganizationStrategicVisibilityScopeEnum.LEADERSHIP))).resolves.toMatchObject({ id: 'initiative-1' });
+			await expect(
+				readOne(initiative(OrganizationStrategicVisibilityScopeEnum.LEADERSHIP))
+			).resolves.toMatchObject({ id: 'initiative-1' });
 		});
 	});
 
@@ -92,8 +99,15 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 	});
 
 	it('an organization admin who may edit initiatives sees every one, steward or not, team or not', async () => {
-		signIn(null, [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ, PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE]);
-		for (const scope of [OrganizationStrategicVisibilityScopeEnum.TEAM, OrganizationStrategicVisibilityScopeEnum.LEADERSHIP]) {
+		signIn(null, [
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE
+		]);
+		for (const scope of [
+			OrganizationStrategicVisibilityScopeEnum.TEAM,
+			OrganizationStrategicVisibilityScopeEnum.LEADERSHIP
+		]) {
 			const row = initiative(scope, OTHER);
 			await expect(readOne(row)).resolves.toMatchObject({ id: 'initiative-1' });
 			expect(await readAll(row)).toHaveLength(1);
@@ -102,7 +116,10 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 
 	describe('everybody else keeps the rule', () => {
 		it('an employee who is not the steward nor on the team', async () => {
-			signIn(OTHER, [PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ, PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE]);
+			signIn(OTHER, [
+				PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+				PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE
+			]);
 			const row = initiative(OrganizationStrategicVisibilityScopeEnum.TEAM);
 			await expect(readOne(row)).rejects.toBeInstanceOf(NotFoundException);
 			expect(await readAll(row)).toHaveLength(0);
@@ -117,7 +134,9 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 
 		it('a user with no employee never matches an initiative with no steward', async () => {
 			signIn(null, [PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ]);
-			await expect(readOne(initiative(OrganizationStrategicVisibilityScopeEnum.TEAM, null))).rejects.toBeInstanceOf(NotFoundException);
+			await expect(
+				readOne(initiative(OrganizationStrategicVisibilityScopeEnum.TEAM, null))
+			).rejects.toBeInstanceOf(NotFoundException);
 		});
 	});
 });
