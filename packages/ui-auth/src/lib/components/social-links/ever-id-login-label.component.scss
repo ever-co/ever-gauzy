@@ -24,13 +24,19 @@
 }
 
 // Words and wordmark stay on one row in the 40 px button, and wrap (the button grows) only when the text is
-// enlarged or a translation is long, so nothing is pushed out of the button.
-.label {
+// enlarged or a translation is long, so nothing is pushed out of the button. Not named `.label`: Nebular styles every
+// `.label` (hint colour, 12 px bold) and the login page gives its `.label` descendants a bottom margin, which made
+// the words grey and the button 44 px. The text takes the button's colour and type.
+.ever-id-label {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 8px;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 20px;
   white-space: normal;
 }
 
