@@ -6,6 +6,7 @@ import {
 	ForbiddenException,
 	HttpException,
 	Injectable,
+	Logger,
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -20,7 +21,7 @@ import {
 	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
-import { Employee, IntegrationSetting, Invite, InviteBulkCreateCommand, RequestContext, Role } from '@gauzy/core';
+import { Employee, IntegrationSetting, Invite, InviteBulkCreateCommand, isUniqueViolation, RequestContext, Role } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient, EverWorksNetworkError } from '../client/ever-works-client';
 import { EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
@@ -84,7 +85,7 @@ export interface EverWorksPeopleView {
 
 /** How many e-mails one pending-invitation query names at most (and Ever ID subjects one identity query names). */
 const PENDING_INVITE_CHUNK = 500;
-/** How long an invitation waits for another one of the same e-mail (then 409), and how often Postgres retries. */
+/** How long a claim waits for another holder (then 409; see `withClaim`), and how often Postgres retries. */
 const INVITE_LOCK_WAIT_MS = 30_000;
 const INVITE_LOCK_POLL_MS = 200;
 
@@ -165,14 +166,23 @@ export class EverWorksPeopleService {
 		private readonly commandBus: CommandBus
 	) {}
 
-	/** Invitations in flight per organization and e-mail (see `withInviteClaim`). */
-	private readonly inviteClaims = new Map<string, Promise<unknown>>();
+	private readonly logger = new Logger(EverWorksPeopleService.name);
 
-	/** `GET /mappings/:id/people`: pairs the Ever ID matches first (see the class comment), then lists. */
+	/** Work in flight per claim name (see `withClaim`): invitations per e-mail, People decisions per mapping. */
+	private readonly claims = new Map<string, Promise<unknown>>();
+
+	/**
+	 * `GET /mappings/:id/people`: pairs the Ever ID matches first (see the class comment), then lists. A failure of
+	 * that pairing is logged and the tab is still answered (the next read tries again).
+	 */
 	async people(integrationTenantId: ID, organizationId?: ID): Promise<EverWorksPeopleView> {
 		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
 		const members = await this.members(context);
-		await this.linkEverIdMatches(context, members);
+		try {
+			await this.linkEverIdMatches(context, members);
+		} catch (error) {
+			this.logger.warn(`Ever ID pairing of mapping ${context.integrationTenantId} did not complete (${error instanceof Error ? error.message : String(error)}).`);
+		}
 		return this.view(context, members);
 	}
 
@@ -208,7 +218,8 @@ export class EverWorksPeopleService {
 			seenUsers.add(pair.ewUserId);
 			seenEmployees.add(pair.employeeId);
 		}
-		await this.dataSource.transaction(async (manager) => {
+		// One People decision or Ever ID pairing of a mapping at a time (see `linkEverIdMatches`).
+		await this.withClaim(this.peopleClaim(context), () => this.dataSource.transaction(async (manager) => {
 			const declined = await this.declinedEverId(context, manager);
 			const declinedBefore = JSON.stringify([...declined].sort());
 			for (const ewUserId of decision.unlinks ?? []) {
@@ -247,7 +258,7 @@ export class EverWorksPeopleService {
 				);
 			}
 			if (JSON.stringify([...declined].sort()) !== declinedBefore) await this.saveDeclinedEverId(context, declined, manager);
-		});
+		}));
 		await this.wakeDeferredInbox(context, new Set(pairs.map((pair) => pair.ewUserId)));
 		return this.view(context, members);
 	}
@@ -268,63 +279,93 @@ export class EverWorksPeopleService {
 
 	// ── Ever ID ────────────────────────────────────────────────────────────────────────────────────
 
+	/** The claim every People decision and Ever ID pairing of a mapping holds (see `withClaim`). */
+	private peopleClaim(context: EverWorksMappingContext): string {
+		return `ever-works:people:${context.integrationTenantId}`;
+	}
+
 	/**
 	 * Pairs the Ever ID matches (plan 01 §3 step 1): an unpaired, active member whose Ever ID is the Ever ID of exactly
-	 * one unpaired person of the organization, unless an admin declined that member. Each pairing is re-checked in its
-	 * own transaction (two readers of the tab at once pair once: the loser finds the link and leaves it).
+	 * one unpaired person of the organization (no other member leading to that person), unless an admin declined that
+	 * member. It holds the mapping's People claim, the one admin decisions hold, and reads the links and the declines
+	 * under it, so it never pairs what an admin just undid or overwrites a pairing an admin just made; each pairing is
+	 * also re-checked in its own transaction. The deferred inbox items of the paired members are woken after.
 	 */
 	private async linkEverIdMatches(context: EverWorksMappingContext, members: EverWorksMember[]): Promise<void> {
-		const links = await this.links.list(context.integrationTenantId, EverWorksLinkType.MEMBER);
-		const pairedUsers = new Set(links.map((l) => l.ewId));
-		const pairedPeople = new Set(links.map((l) => l.gauzyId as ID));
-		const unpaired = members.filter((m) => !pairedUsers.has(m.userId) && m.isActive !== false && m.everIdSubjects?.length);
-		if (!unpaired.length) return;
-		const declined = await this.declinedEverId(context);
-		const candidates = unpaired.filter((m) => !declined.has(m.userId));
-		const matches = await this.everIdMatchesOf(context, candidates, pairedPeople);
-		const paired = new Set<string>();
-		const byUser = new Map(candidates.map((m) => [m.userId, m]));
-		for (const [ewUserId, employeeId] of matches) {
-			const member = byUser.get(ewUserId) as EverWorksMember;
-			try {
-				const linked = await this.dataSource.transaction(async (manager) => {
-					if (
-						(await this.links.byEw(context.integrationTenantId, EverWorksLinkType.MEMBER, ewUserId, manager)) ||
-						(await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, employeeId, manager))
-					) {
-						return false;
-					}
-					await this.links.record(
-						{
-							tenantId: context.tenantId,
-							organizationId: context.organizationId,
-							integrationTenantId: context.integrationTenantId,
-							entityType: EverWorksLinkType.MEMBER,
-							gauzyId: employeeId,
-							ewId: ewUserId,
-							ewUpdatedAt: member.updatedAt,
-							snapshot: { email: member.email, username: member.username },
-							ewOnly: { everIdSubjects: member.everIdSubjects ?? [], role: member.role, matchedBy: 'ever_id' },
-							direction: 'inbound'
-						},
-						manager
-					);
-					return true;
-				});
-				if (linked) paired.add(ewUserId);
-			} catch (error) {
-				// A concurrent reader paired them first (the link table's unique keys refused this one): nothing to do.
-				if (!(await this.links.byEw(context.integrationTenantId, EverWorksLinkType.MEMBER, ewUserId))) throw error;
+		const withEverId = (pairedUsers: ReadonlySet<string>) => members.filter((m) => !pairedUsers.has(m.userId) && m.everIdSubjects?.length);
+		// Without a candidate there is nothing to claim.
+		const before = await this.links.list(context.integrationTenantId, EverWorksLinkType.MEMBER);
+		if (!withEverId(new Set(before.map((l) => l.ewId))).some((m) => m.isActive !== false)) return;
+		const paired = await this.withClaim(this.peopleClaim(context), async () => {
+			const links = await this.links.list(context.integrationTenantId, EverWorksLinkType.MEMBER);
+			const unpaired = withEverId(new Set(links.map((l) => l.ewId)));
+			const declined = await this.declinedEverId(context);
+			const exclude = new Set([...declined, ...unpaired.filter((m) => m.isActive === false).map((m) => m.userId)]);
+			const matches = await this.everIdMatchesOf(context, unpaired, new Set(links.map((l) => l.gauzyId as ID)), exclude);
+			const byUser = new Map(unpaired.map((m) => [m.userId, m]));
+			const done = new Set<string>();
+			for (const [ewUserId, employeeId] of matches) {
+				if (await this.pairByEverId(context, byUser.get(ewUserId) as EverWorksMember, employeeId)) done.add(ewUserId);
 			}
+			return done;
+		});
+		try {
+			await this.wakeDeferredInbox(context, paired);
+		} catch (error) {
+			// The pairing is committed; the hourly retry delivers the waiting items.
+			this.logger.warn(`Waking the deferred inbox items of mapping ${context.integrationTenantId} failed (${error instanceof Error ? error.message : String(error)}).`);
 		}
-		await this.wakeDeferredInbox(context, paired);
+	}
+
+	/**
+	 * Records one Ever ID pairing, unless either side is paired by now (then nothing is written, so a pairing made
+	 * meanwhile is never replaced). A lost race on the link table's unique keys reads as "paired meanwhile"; any other
+	 * failure surfaces.
+	 */
+	private async pairByEverId(context: EverWorksMappingContext, member: EverWorksMember, employeeId: ID): Promise<boolean> {
+		const ewUserId = member.userId;
+		try {
+			const linked = await this.dataSource.transaction(async (manager) => {
+				if (
+					(await this.links.byEw(context.integrationTenantId, EverWorksLinkType.MEMBER, ewUserId, manager)) ||
+					(await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, employeeId, manager))
+				) {
+					return false;
+				}
+				await this.links.record(
+					{
+						tenantId: context.tenantId,
+						organizationId: context.organizationId,
+						integrationTenantId: context.integrationTenantId,
+						entityType: EverWorksLinkType.MEMBER,
+						gauzyId: employeeId,
+						ewId: ewUserId,
+						ewUpdatedAt: member.updatedAt,
+						snapshot: { email: member.email, username: member.username },
+						ewOnly: { everIdSubjects: member.everIdSubjects ?? [], role: member.role, matchedBy: 'ever_id' },
+						direction: 'inbound'
+					},
+					manager
+				);
+				return true;
+			});
+			return linked;
+		} catch (error) {
+			if (!isUniqueViolation(error)) throw error;
+			return false;
+		}
 	}
 
 	/**
 	 * The Ever ID matches of these members among the people of the organization not in `pairedPeople` (see
 	 * {@link everIdMatches}); empty when no member carries an Ever ID or Gauzy has no Ever ID links.
 	 */
-	private async everIdMatchesOf(context: EverWorksMappingContext, members: EverWorksMember[], pairedPeople: ReadonlySet<ID>): Promise<Map<string, ID>> {
+	private async everIdMatchesOf(
+		context: EverWorksMappingContext,
+		members: EverWorksMember[],
+		pairedPeople: ReadonlySet<ID>,
+		exclude: ReadonlySet<string> = new Set()
+	): Promise<Map<string, ID>> {
 		const identities = members.flatMap((m) => m.everIdSubjects ?? []);
 		if (!identities.length) return new Map();
 		const usersByIdentity = await this.everIdUsers(context, identities);
@@ -333,7 +374,7 @@ export class EverWorksPeopleService {
 		for (const [employeeId, person] of await this.people$(context)) {
 			if (person.userId && !pairedPeople.has(employeeId)) personOfUser.set(person.userId, employeeId);
 		}
-		return everIdMatches(members, usersByIdentity, personOfUser);
+		return everIdMatches(members, usersByIdentity, personOfUser, exclude);
 	}
 
 	/**
@@ -360,7 +401,8 @@ export class EverWorksPeopleService {
 					.andWhere(`${column('subject')} IN (:...subjects)`, { subjects: subjects.slice(i, i + PENDING_INVITE_CHUNK) })
 					.andWhere(`${column('deletedAt')} IS NULL`)
 					.getRawMany();
-			} catch {
+			} catch (error) {
+				this.logger.warn(`Ever ID links could not be read (${error instanceof Error ? error.message : String(error)}); people are matched by e-mail only.`);
 				return new Map();
 			}
 			for (const row of rows) {
@@ -434,7 +476,7 @@ export class EverWorksPeopleService {
 		const email = member.email;
 		const key = email.toLowerCase();
 		const roleId = await this.employeeRoleId(context, input.roleId);
-		return this.withInviteClaim(`${context.tenantId}:${context.organizationId}:${key}`, async () => {
+		return this.withClaim(`ever-works:invite-gauzy:${context.tenantId}:${context.organizationId}:${key}`, async () => {
 			for (const [employeeId, person] of await this.people$(context)) {
 				if (person.email?.toLowerCase() === key) {
 					throw new ConflictException(`A person of this organization already has this e-mail (${employeeId}): pair them instead.`);
@@ -584,17 +626,18 @@ export class EverWorksPeopleService {
 	}
 
 	/**
-	 * Runs `fn` with the e-mail claimed: one invitation at a time per organization and e-mail in this process, and
-	 * across processes a session lock on Postgres (advisory lock) or MySQL (`GET_LOCK`). SQLite runs in one process.
+	 * Runs `fn` with `name` claimed: one at a time per name in this process, and across processes a session lock on
+	 * Postgres (advisory lock) or MySQL (`GET_LOCK`). SQLite runs in one process. Names: an invitation per
+	 * organization and e-mail, People decisions and Ever ID pairings per mapping.
 	 */
-	private async withInviteClaim<T>(key: string, fn: () => Promise<T>): Promise<T> {
-		const previous = this.inviteClaims.get(key) ?? Promise.resolve();
-		const current = previous.catch(() => undefined).then(() => this.withDatabaseLock(`ever-works:invite-gauzy:${key}`, fn));
-		this.inviteClaims.set(key, current);
+	private async withClaim<T>(name: string, fn: () => Promise<T>): Promise<T> {
+		const previous = this.claims.get(name) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.withDatabaseLock(name, fn));
+		this.claims.set(name, current);
 		try {
 			return await current;
 		} finally {
-			if (this.inviteClaims.get(key) === current) this.inviteClaims.delete(key);
+			if (this.claims.get(name) === current) this.claims.delete(name);
 		}
 	}
 
@@ -621,7 +664,7 @@ export class EverWorksPeopleService {
 				const rows = (await runner.query('SELECT GET_LOCK(?, ?) AS locked', [lockName, INVITE_LOCK_WAIT_MS / 1000])) as Array<{ locked: number | string | null }>;
 				locked = Number(rows?.[0]?.locked) === 1;
 			}
-			if (!locked) throw new ConflictException('Another request is inviting this e-mail; try again.');
+			if (!locked) throw new ConflictException('Another request holds this; try again.');
 			try {
 				return await fn();
 			} finally {
