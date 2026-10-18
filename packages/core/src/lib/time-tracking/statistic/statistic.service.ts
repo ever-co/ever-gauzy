@@ -2793,17 +2793,15 @@ export class StatisticService {
 				};
 
 				// The activities of those slots, in the range, scoped to the organization (and the employees and
-				// projects): the base of both queries below.
+				// projects): the base of both queries below. `whereIn` with the builder: knex parenthesises a bound
+				// builder, which would turn the Postgres `ANY(ARRAY(...))` form into a scalar sub-query.
 				const activityQuery = () => {
 					let qb = knex('activity')
 						.modify(excludeSoftDeleted, 'activity')
 						.whereRaw(activityDurationFilter, { start, end })
 						.andWhere('activity.tenantId', tenantId)
-						.andWhere('activity.organizationId', organizationId);
-					qb =
-						dbType === DatabaseTypeEnum.postgres
-							? qb.whereRaw('?? = ANY(ARRAY(?))', ['activity.timeSlotId', timeSlotIds()])
-							: qb.whereIn('activity.timeSlotId', timeSlotIds());
+						.andWhere('activity.organizationId', organizationId)
+						.whereIn('activity.timeSlotId', timeSlotIds());
 					if (isNotEmpty(employeeIds)) {
 						qb = qb.whereIn('activity.employeeId', employeeIds);
 					}

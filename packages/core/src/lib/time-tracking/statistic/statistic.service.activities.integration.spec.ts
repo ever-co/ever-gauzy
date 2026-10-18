@@ -296,7 +296,8 @@ class ActivitiesStatisticService extends StatisticService {
 		ormType: MultiORMEnum,
 		typeOrmTimeSlotRepository: any,
 		typeOrmActivityRepository: any,
-		mikroOrmTimeLogRepository: any
+		mikroOrmTimeLogRepository: any,
+		dbType: DatabaseTypeEnum = DatabaseTypeEnum.betterSqlite3
 	) {
 		super(
 			typeOrmTimeSlotRepository,
@@ -305,7 +306,7 @@ class ActivitiesStatisticService extends StatisticService {
 			{} as any,
 			mikroOrmTimeLogRepository,
 			{} as any,
-			{ dbConnectionOptions: { type: DatabaseTypeEnum.betterSqlite3 } } as any,
+			{ dbConnectionOptions: { type: dbType } } as any,
 			{ filterAccessibleEmployeeIds: async (employeeIds: string[]) => employeeIds } as any
 		);
 		this.ormType = ormType;
@@ -459,6 +460,54 @@ describe('activities statistics BetterSqlite integration', () => {
 
 			await expectActivities(service);
 			expectSlotsResolvedFirst(capture.queries);
+		} finally {
+			await knex.destroy();
+		}
+	});
+});
+
+/**
+ * The Postgres statements of the knex path, compiled by knex's own pg client and captured instead of executed (no
+ * database: the client's connection and query steps are replaced). knex parenthesises a bound builder, so a
+ * `whereRaw('... ANY(ARRAY(?))', [builder])` form compiled to `ANY(ARRAY((select ...)))` — a scalar sub-query to
+ * Postgres, which fails as soon as the range holds more than one slot. The `whereIn` sub-query is what must compile.
+ */
+describe('activities statistics on Postgres (knex, compiled only)', () => {
+	it('compiles the slot sub-query as IN (select ...), never as a scalar ARRAY((select ...))', async () => {
+		const knex: Knex = createKnex({ client: 'pg' });
+		const captured: Array<{ sql: string; bindings: unknown[] }> = [];
+		const client: any = knex.client;
+		client.acquireConnection = async () => ({});
+		client.releaseConnection = async () => undefined;
+		client._query = async (_connection: unknown, obj: any) => {
+			captured.push({ sql: obj.sql, bindings: obj.bindings });
+			obj.response = { command: 'SELECT', rowCount: 1, rows: [{ sessions: 1, duration: 10, title: 'VS Code' }] };
+			return obj;
+		};
+
+		try {
+			const service = new ActivitiesStatisticService(
+				MultiORMEnum.MikroORM,
+				{},
+				{},
+				{ getKnex: () => knex },
+				DatabaseTypeEnum.postgres
+			);
+			const activities = await service.getActivities(filteredRequest);
+
+			expect(activities).toEqual([{ sessions: 1, duration: 10, title: 'VS Code', durationPercentage: 100 }]);
+			expect(captured).toHaveLength(2);
+			for (const { sql, bindings } of captured) {
+				expect(sql).toMatch(/"activity"\."timeSlotId" in \(select "time_slot"\."id" from "time_slot" inner join/);
+				expect(sql).not.toMatch(/ARRAY\(\(/i);
+				expect(sql).toMatch(/"time_log"\."organizationTeamId" in \(\$\d+\)/);
+				expect(sql).toMatch(/"activity"\."employeeId" in \(\$\d+\)/);
+				expect(sql).toMatch(/"activity"\."projectId" in \(\$\d+\)/);
+				for (const alias of ['activity', 'time_slot', 'time_log']) {
+					expect(sql).toMatch(new RegExp(`"${alias}"\\."deletedAt" is null`));
+				}
+				expect(bindings).toEqual(expect.arrayContaining([TENANT_ID, ORGANIZATION_ID, TEAM_ID, EMPLOYEE_ID, PROJECT_ID]));
+			}
 		} finally {
 			await knex.destroy();
 		}

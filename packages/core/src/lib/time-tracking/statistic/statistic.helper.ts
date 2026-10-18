@@ -148,7 +148,9 @@ export const getActivityDurationQueryString = (dbType: string, queryAlias: strin
  * the same widget takes 107 ms (measured on production with `EXPLAIN (ANALYZE, BUFFERS)`).
  *
  * On Postgres the slot ids are materialised first (`= ANY(ARRAY(...))`, an init plan), so the planner cannot fold
- * the sub-query back into the join it used to produce; elsewhere a plain `IN (...)` sub-query does the same.
+ * the sub-query back into the join it used to produce; elsewhere a plain `IN (...)` sub-query does the same. This
+ * is the TypeORM query builder's form; the MikroORM/knex path uses knex's own `whereIn` sub-query on every
+ * dialect, because knex parenthesises a bound builder and `ARRAY((SELECT ...))` is a scalar sub-query to Postgres.
  *
  * It also counts an activity once: the joins counted it once per time log of its slot, so an activity of a slot
  * linked to two time logs weighed twice in the durations.
