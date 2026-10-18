@@ -265,7 +265,7 @@ describe('AuthenticatedUserCache', () => {
 		expect(load).toHaveBeenCalledTimes(2);
 	});
 
-	it('makes room when full: expired contexts first, then the oldest', async () => {
+	it('makes room when full by evicting the oldest live context', async () => {
 		const { cache, load, tick } = build({ maxEntries: 3, ttlMs: 10_000 });
 		await cache.resolve({ id: 'a' }, load);
 		tick(5_000);
@@ -280,7 +280,7 @@ describe('AuthenticatedUserCache', () => {
 		await cache.resolve({ id: 'a' }, load);
 		expect(load).toHaveBeenCalledTimes(5); // a, b, c, d, then a again
 
-		// b and c expire; d (younger) and a survive the next insertion.
+		// Still nothing has expired (a was re-read at +5 s): c is the oldest and goes on the next insertion.
 		tick(5_000);
 		await cache.resolve({ id: 'e' }, load);
 		expect(cache.size).toBe(3);
@@ -288,6 +288,19 @@ describe('AuthenticatedUserCache', () => {
 		await cache.resolve({ id: 'd' }, load);
 		await cache.resolve({ id: 'e' }, load);
 		expect(load).toHaveBeenCalledTimes(6);
+	});
+
+	it('drops every expired context before evicting a live one', async () => {
+		const { cache, load, tick } = build({ maxEntries: 3, ttlMs: 10_000 });
+		await cache.resolve({ id: 'a' }, load);
+		await cache.resolve({ id: 'b' }, load);
+		tick(6_000);
+		await cache.resolve({ id: 'c' }, load);
+		tick(5_000); // a and b have expired; c is still live
+		await cache.resolve({ id: 'd' }, load);
+		expect(cache.size).toBe(2); // both expired contexts went, c survived
+		await cache.resolve({ id: 'c' }, load);
+		expect(load).toHaveBeenCalledTimes(4); // a, b, c, d — c was still kept
 	});
 
 	it('is off when the window is 0', async () => {
