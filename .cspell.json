@@ -1586,7 +1586,12 @@
 		"UI's",
 		"cancelation",
 		"cancelations",
-		"resyncs"
+		"resyncs",
+		"pooler",
+		"poolers",
+		"pooler's",
+		"keepalive",
+		"Brotli"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

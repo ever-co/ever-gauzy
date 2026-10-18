@@ -331,6 +331,50 @@ describe('InboxService announces created items (SQLite)', () => {
 		expect([...appended[0].input['data'].recipientUserIds].sort()).toEqual([ADA, BOB].sort());
 	});
 
+	it('a re-delivery that adds a recipient tells that recipient only (review F104)', async () => {
+		// The first delivery could reach Ada only (Carol is not a user of the tenant yet: a pairing made later).
+		const carol = randomUUID();
+		const { item } = await notice({ recipients: [{ userId: ADA }, { userId: carol }] });
+		expect(appended).toHaveLength(1);
+		expect(appended[0].input['data'].recipientUserIds).toEqual([ADA]);
+		await dataSource.query(`INSERT INTO "user" ("id", "tenantId") VALUES (?, ?)`, [carol, TENANT]);
+		const again = await notice({ recipients: [{ userId: ADA }, { userId: carol }] });
+		expect(again.created).toBe(false);
+		expect(appended).toHaveLength(2);
+		expect(appended[1].input).toMatchObject({ name: INBOX_ITEM_CREATED, aggregateId: item.id });
+		expect(appended[1].input['data'].recipientUserIds).toEqual([carol]);
+	});
+
+	it('an item whose first delivery stored no recipient is announced once the re-delivery adds them (review F104)', async () => {
+		// The recipients' write failed after the item was stored; the source retries.
+		await dataSource.query(
+			`INSERT INTO "inbox_item" ("id", "tenantId", "organizationId", "kind", "source", "title", "externalSource", "externalId") VALUES (?, ?, ?, 'NOTICE', 'EVER_WORKS', 'Stored alone', 'ever_works', 'ew-item-9')`,
+			[randomUUID(), TENANT, ORG]
+		);
+		const { created } = await notice({ externalId: 'ew-item-9', recipients: [{ userId: BOB }] });
+		expect(created).toBe(false);
+		expect(appended).toHaveLength(1);
+		expect(appended[0].input['data'].recipientUserIds).toEqual([BOB]);
+	});
+
+	it('a recipient stored before a later recipient write failed is announced then, and the retry announces the rest (#11091 review)', async () => {
+		const repository = dataSource.getRepository(InboxItemRecipient);
+		const save = repository.save.bind(repository);
+		let failed = false;
+		jest.spyOn(repository, 'save').mockImplementation((async (entity: { userId?: string }) => {
+			if (entity?.userId === BOB && !failed) {
+				failed = true;
+				throw new Error('deadlock detected');
+			}
+			return save(entity as never);
+		}) as never);
+		await expect(notice({ recipients: [{ userId: ADA }, { userId: BOB }] })).rejects.toThrow('deadlock detected');
+		expect(appended.map((entry) => entry.input['data'].recipientUserIds)).toEqual([[ADA]]);
+		const retried = await notice({ recipients: [{ userId: ADA }, { userId: BOB }] });
+		expect(retried.created).toBe(false);
+		expect(appended.map((entry) => entry.input['data'].recipientUserIds)).toEqual([[ADA], [BOB]]);
+	});
+
 	it('appends nothing when a source re-delivers the same item, or creates one nobody can receive', async () => {
 		await notice();
 		await notice({ title: 'The nightly run finished (edited)' });
