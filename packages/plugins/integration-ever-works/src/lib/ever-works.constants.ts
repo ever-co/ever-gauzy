@@ -27,3 +27,9 @@ export const EVER_WORKS_ROUTE_PREFIX = '/integration/ever-works';
  * (contract v1, CR-1) — and refuses any other value with `400 validation_failed` (`externalRef.source`).
  */
 export const EVER_WORKS_LINK_SOURCE = 'gauzy';
+
+/**
+ * The `integrationKind` (`GET /whoami`) of an Ever Works key made for Ever Gauzy. A key of another kind links its
+ * records under another source, so every link write of this plugin would be refused (review F60).
+ */
+export const EVER_WORKS_INTEGRATION_KIND = 'ever-gauzy';
