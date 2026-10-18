@@ -1,0 +1,46 @@
+<!-- A project's own page: the list's back button, a favorite star and the period, then the project's quick look as the page body. -->
+<ngx-record-view-page
+	heading="SM_TABLE.PROJECT"
+	[backLink]="backLink"
+	[state]="state"
+	(retry)="load()"
+>
+	@if (card) {
+	<div recordPageActions class="project-page-actions">
+		<ngx-favorite-toggle
+			[entityType]="'OrganizationProject'"
+			[entityId]="card.id"
+			[entityName]="card.name"
+			size="small"
+			status="basic"
+			spacing="list"
+		></ngx-favorite-toggle>
+		<span class="project-page-range">
+			<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+			{{ rangeLabel }}
+		</span>
+		<nb-select
+			class="project-page-period"
+			size="small"
+			status="basic"
+			[(selected)]="period"
+			[attr.aria-label]="'EMPLOYEES_PAGE.VIEW.PERIOD' | translate"
+		>
+			@for (option of periods; track option) {
+			<nb-option [value]="option">{{ 'EMPLOYEES_PAGE.VIEW.PERIODS.' + option | translate }}</nb-option>
+			}
+		</nb-select>
+	</div>
+	}
+	@if (card) {
+	<ngx-project-quick-look
+		mode="page"
+		[project]="card"
+		[organizationId]="organization?.id"
+		[tenantId]="organization?.tenantId"
+		[rangeStart]="periodStartIso"
+		[rangeEnd]="periodEndIso"
+		[scopeEmployeeIds]="null"
+	></ngx-project-quick-look>
+	}
+</ngx-record-view-page>
