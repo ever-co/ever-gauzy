@@ -143,8 +143,8 @@ describe('EverIdLoginLabelComponent (rendered)', () => {
 		const { element } = render('en');
 
 		expect(element.querySelector('.visually-hidden')?.textContent?.trim()).toBe('Login with Ever ID');
-		expect(element.querySelector('.label')?.getAttribute('aria-hidden')).toBe('true');
-		expect(element.querySelector('.label')?.textContent?.trim()).toBe('Login with');
+		expect(element.querySelector('.ever-id-label')?.getAttribute('aria-hidden')).toBe('true');
+		expect(element.querySelector('.ever-id-label')?.textContent?.trim()).toBe('Login with');
 		const svgs = Array.from(element.querySelectorAll('svg'));
 		expect(svgs.map((svg) => svg.getAttribute('viewBox'))).toEqual(['0 0 40 42', '0 0 92 17']);
 		expect(svgs.every((svg) => svg.getAttribute('aria-hidden') === 'true')).toBe(true);
@@ -157,7 +157,7 @@ describe('EverIdLoginLabelComponent (rendered)', () => {
 		fixture.detectChanges();
 
 		expect(element.querySelector('.visually-hidden')?.textContent?.trim()).toBe('Mit Ever ID anmelden');
-		const words = Array.from(element.querySelectorAll('.label > span')).map((span) => span.textContent?.trim());
+		const words = Array.from(element.querySelectorAll('.ever-id-label > span')).map((span) => span.textContent?.trim());
 		expect(words).toEqual(['Mit', 'anmelden']);
 	});
 });
