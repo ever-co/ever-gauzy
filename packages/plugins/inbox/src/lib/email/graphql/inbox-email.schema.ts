@@ -5,11 +5,11 @@ import { gql } from 'graphql-tag';
  * The Inbox email features' contribution to the one GraphQL schema: the GraphQL twins of the management routes
  * (`/api/inbox/providers`, `/api/inbox/provider-accounts*`, `/api/inbox/mailboxes*`) and of the stored-message routes
  * (`/api/inbox/emails*`, except the raw-message and attachment downloads, which are byte streams). It is registered
- * only with `InboxEmailPlugin`, so a deployment without `GAUZY_INBOX_ENABLED=true` and `GAUZY_INBOX_EMAIL_ENABLED=true` serves none of it (and the
- * committed schema snapshot, composed from the default plugin list, does not carry it). The field-binding gate reads
- * this document on top of the snapshot — it is named in `GATED_PLUGIN_SCHEMAS` of
- * `tools/scripts/graphql-field-binding-check.mjs` — so it must stay a plain `gql` template (no `${…}`), registered
- * by `InboxEmailPlugin` as `schema: inboxEmailSchemaExtensions`.
+ * only with `InboxEmailPlugin`, so a deployment without `GAUZY_INBOX_ENABLED=true` and
+ * `GAUZY_INBOX_EMAIL_ENABLED=true` serves none of it (and the committed schema snapshot, composed from the default
+ * plugin list, does not carry it). The field-binding gate reads this document on top of the snapshot — it is named in
+ * `GATED_PLUGIN_SCHEMAS` of `tools/scripts/graphql-field-binding-check.mjs` — so it must stay a plain `gql` template
+ * (no `${…}`), registered by `InboxEmailPlugin` as `schema: inboxEmailSchemaExtensions`.
  *
  * Every field reaches the service method its REST route reaches, with the route's DTO rules, guards and permission.
  * Secrets are write-only exactly as over REST: an account answers which secret fields are set (`secretsSet`), never
