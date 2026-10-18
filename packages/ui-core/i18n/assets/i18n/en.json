@@ -8036,6 +8036,7 @@
 		"ACTIVITY": "Daily activity",
 		"TOP_CONTRIBUTORS": "Who worked the most",
 		"CONTRIBUTORS_CAPTION": "Everyone's time on this project · {{ range }}",
+		"YOUR_TIME_CAPTION": "Your time on this project · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Team members' time on this project · {{ range }}",
 		"BUDGET_USED": "{{ used }} of {{ budget }} used",
 		"OVER_BUDGET": "{{ value }} over budget"

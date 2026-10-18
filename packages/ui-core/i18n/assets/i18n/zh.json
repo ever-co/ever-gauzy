@@ -6840,6 +6840,7 @@
 		"ACTIVITY": "每日活动",
 		"TOP_CONTRIBUTORS": "谁投入最多",
 		"CONTRIBUTORS_CAPTION": "所有人在此项目上的时间 · {{ range }}",
+		"YOUR_TIME_CAPTION": "您在此项目上的时间 · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "团队成员在此项目上的时间 · {{ range }}",
 		"BUDGET_USED": "已使用 {{ used }} / {{ budget }}",
 		"OVER_BUDGET": "超出预算 {{ value }}"

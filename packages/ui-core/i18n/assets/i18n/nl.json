@@ -6840,6 +6840,7 @@
 		"ACTIVITY": "Dagelijkse activiteit",
 		"TOP_CONTRIBUTORS": "Wie het meest heeft gewerkt",
 		"CONTRIBUTORS_CAPTION": "Ieders tijd aan dit project · {{ range }}",
+		"YOUR_TIME_CAPTION": "Jouw tijd aan dit project · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Tijd van teamleden aan dit project · {{ range }}",
 		"BUDGET_USED": "{{ used }} van {{ budget }} gebruikt",
 		"OVER_BUDGET": "{{ value }} boven budget"

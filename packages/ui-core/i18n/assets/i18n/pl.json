@@ -6839,6 +6839,7 @@
 		"ACTIVITY": "Aktywność dzienna",
 		"TOP_CONTRIBUTORS": "Kto pracował najwięcej",
 		"CONTRIBUTORS_CAPTION": "Czas wszystkich przy tym projekcie · {{ range }}",
+		"YOUR_TIME_CAPTION": "Twój czas przy tym projekcie · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Czas członków zespołu przy tym projekcie · {{ range }}",
 		"BUDGET_USED": "Wykorzystano {{ used }} z {{ budget }}",
 		"OVER_BUDGET": "{{ value }} ponad budżet"

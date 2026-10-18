@@ -6850,6 +6850,7 @@
 		"ACTIVITY": "פעילות יומית",
 		"TOP_CONTRIBUTORS": "מי עבד הכי הרבה",
 		"CONTRIBUTORS_CAPTION": "הזמן של כולם על פרויקט זה · {{ range }}",
+		"YOUR_TIME_CAPTION": "הזמן שלך על פרויקט זה · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
 		"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
 		"OVER_BUDGET": "{{ value }} מעל התקציב"

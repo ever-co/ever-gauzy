@@ -215,8 +215,11 @@ export class ProjectQuickLookComponent implements OnChanges {
 	@Input() people: IProjectQuickLookPerson[] = [];
 	/** A person to pick out among the contributors (the employee whose page it is). */
 	@Input() highlightEmployeeId: string | null = null;
-	/** i18n key under "Who worked the most"; takes `{{ range }}`. */
-	@Input() contributorsCaption = 'PROJECT_QUICK_LOOK.CONTRIBUTORS_CAPTION';
+	/**
+	 * i18n key under "Who worked the most"; takes `{{ range }}`. Unset, it says whose time the
+	 * server counts for the viewer: everyone's, or only their own (see `contributorsCaptionKey`).
+	 */
+	@Input() contributorsCaption: string | null = null;
 	@Output() readonly closed = new EventEmitter<void>();
 
 	public readonly PermissionsEnum = PermissionsEnum;
@@ -290,6 +293,17 @@ export class ProjectQuickLookComponent implements OnChanges {
 
 	formatPercent(value: number | undefined): string {
 		return `${Math.round(Number(value) || 0)}%`;
+	}
+
+	/**
+	 * The host's caption, else whose time the contributors are: a viewer who may not read
+	 * everyone's time on the project gets back only their own, so it must not say "everyone's".
+	 */
+	get contributorsCaptionKey(): string {
+		if (this.contributorsCaption) return this.contributorsCaption;
+		return this.viewedProject && this.canReadProjectTotal(this.viewedProject)
+			? 'PROJECT_QUICK_LOOK.CONTRIBUTORS_CAPTION'
+			: 'PROJECT_QUICK_LOOK.YOUR_TIME_CAPTION';
 	}
 
 	/** The team's or everyone's hours on the project over the period, tracked and manual. */

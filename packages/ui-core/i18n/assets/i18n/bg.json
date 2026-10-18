@@ -6885,6 +6885,7 @@
 		"ACTIVITY": "Дневна активност",
 		"TOP_CONTRIBUTORS": "Кой е работил най-много",
 		"CONTRIBUTORS_CAPTION": "Времето на всички по този проект · {{ range }}",
+		"YOUR_TIME_CAPTION": "Вашето време по този проект · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Времето на членовете на екипа по този проект · {{ range }}",
 		"BUDGET_USED": "Използвани {{ used }} от {{ budget }}",
 		"OVER_BUDGET": "{{ value }} над бюджета"

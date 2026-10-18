@@ -6858,6 +6858,7 @@
 		"ACTIVITY": "Ежедневная активность",
 		"TOP_CONTRIBUTORS": "Кто работал больше всех",
 		"CONTRIBUTORS_CAPTION": "Время всех участников по этому проекту · {{ range }}",
+		"YOUR_TIME_CAPTION": "Ваше время по этому проекту · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Время участников команды по этому проекту · {{ range }}",
 		"BUDGET_USED": "Использовано {{ used }} из {{ budget }}",
 		"OVER_BUDGET": "Превышение бюджета на {{ value }}"
