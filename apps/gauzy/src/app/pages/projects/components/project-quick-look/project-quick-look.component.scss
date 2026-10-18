@@ -798,8 +798,10 @@ $weight-medium: 500;
   }
 }
 
-// On a page: the headline across the full width, then the work (tasks, hours, top tasks)
-// in a wide main column beside where it stands (progress, attention, who worked).
+// On a page: the headline, its four figures as one even row, then rows of panel pairs — the
+// wide panel beside its narrow one, both stretched to the taller, so every edge lines up:
+//   activity | progress,  tasks | team,  top tasks | who worked,  modules | needs attention.
+// A row without one of its panels gives the other the full width; a row with neither goes.
 :host(.is-page) {
   display: block;
 
@@ -807,54 +809,410 @@ $weight-medium: 500;
     display: grid;
     grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
     grid-template-areas:
-      'headline headline'
-      'main side';
-    align-items: start;
+      'headline  headline'
+      'activity  progress'
+      'tasks     team'
+      'tasks     details'
+      'top       who'
+      'modules   attention';
+    align-items: stretch;
     gap: 1rem 1.25rem;
   }
 
+  .project-view-top:not(:has(.project-view-order-2)) {
+    grid-template-areas:
+      'headline  headline'
+      'activity  progress'
+      'tasks     team'
+      'tasks     details'
+      'top       who'
+      'modules   modules';
+  }
+
+  .project-view-top:not(:has(.project-view-modules)) {
+    grid-template-areas:
+      'headline   headline'
+      'activity   progress'
+      'tasks      team'
+      'tasks      details'
+      'top        who'
+      'attention  attention';
+  }
+
+  .project-view-top:not(:has(.project-view-order-2)):not(:has(.project-view-modules)) {
+    grid-template-areas:
+      'headline  headline'
+      'activity  progress'
+      'tasks     team'
+      'tasks     details'
+      'top       who';
+  }
+
+  // Team and Details share the rows beside the task list; neither stretches past its content.
+  .project-view-team,
+  .project-view-details {
+    align-self: start;
+  }
+
+  .project-view-details {
+    grid-area: details;
+    min-width: 0;
+  }
+
+  // The panel groups do not box anything on a page either: each panel is placed on the grid.
+  .project-view-col {
+    display: contents;
+  }
+
+  .project-view-order-1 {
+    grid-area: progress;
+  }
+
+  .project-view-order-2 {
+    grid-area: attention;
+  }
+
+  .project-view-order-3 {
+    grid-area: tasks;
+  }
+
+  .project-view-order-4 {
+    grid-area: activity;
+  }
+
+  .project-view-order-5 {
+    grid-area: who;
+  }
+
+  .project-view-order-6 {
+    grid-area: top;
+  }
+
+  .project-view-team {
+    grid-area: team;
+  }
+
+  .project-view-modules {
+    grid-area: modules;
+  }
+
+  // The headline: who it is across the top, then its four figures in even columns.
   .project-view-headline {
     grid-area: headline;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem 1.25rem;
     min-width: 0;
     padding-bottom: 0.25rem;
   }
 
-  .project-view-col {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 0;
+  .project-view-header {
+    grid-column: 1 / -1;
   }
 
-  .project-view-col--main {
-    grid-area: main;
+  .project-facts {
+    display: contents;
   }
 
-  .project-view-col--side {
-    grid-area: side;
+  .project-fact dd {
+    gap: 0.25rem;
   }
 
-  // Inside a column the reading order is the DOM's own.
-  .project-view-panel {
-    order: 0;
+  // Panels in a row share one header height, whether a header holds a caption, filters or neither.
+  .project-view-panel .panel-header {
+    min-height: 3.5rem;
   }
 
-  // The chart has room to breathe on a page.
+  // The chart fills its panel, which grows to its row.
   .project-view-panel .project-chart-body {
-    height: 14rem;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 14rem;
   }
 }
 
-// Narrow pages: one column, where it stands before the work.
+/* ── The page's figures ── */
+
+.project-fact-muted {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--gauzy-text-color-2);
+}
+
+.project-fact-hint.is-done {
+  color: var(--gauzy-chart-revenue);
+}
+
+// "▲ 12% vs previous period": direction only; more or fewer hours is neither good nor bad.
+.project-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+
+  nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+// How far through its dates the project is.
+.project-timeline-track,
+.project-fact .project-budget-track {
+  display: block;
+  height: 0.25rem;
+  margin-top: 0.125rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  overflow: hidden;
+
+  > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--gauzy-chart-profit);
+  }
+}
+
+.project-timeline-track {
+  &.is-overdue > span {
+    background-color: var(--gauzy-chart-negative);
+  }
+
+  &.is-done > span {
+    background-color: var(--gauzy-chart-revenue);
+  }
+}
+
+.project-fact .project-budget-track > span {
+  background-color: var(--budget-color);
+}
+
+.project-fact.project-budget .project-budget-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.project-fact.project-budget.is-warning .project-budget-value,
+.project-fact.project-budget.is-over .project-budget-value {
+  color: var(--budget-color);
+}
+
+.project-status.tone-warning {
+  --tone: var(--gauzy-chart-expenses);
+}
+
+/* ── Team ── */
+
+.team-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Photo, name and role | time on the project in the period.
+.team-member {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: $gap-md;
+  padding: $gap-sm 1rem;
+
+  & + & {
+    border-top: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  }
+}
+
+.team-role {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+
+  &.is-manager {
+    font-weight: 600;
+    color: var(--gauzy-action-info-text);
+  }
+}
+
+.team-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+  font-variant-numeric: tabular-nums;
+
+  &.is-idle {
+    font-weight: 400;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+/* ── Modules ── */
+
+.module-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Name over dates | status | task count.
+.module-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 4.5rem;
+  align-items: center;
+  column-gap: $gap-md;
+  padding: $gap-sm 1rem;
+
+  & + & {
+    border-top: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  }
+}
+
+.module-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.module-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: $weight-medium;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.module-dates,
+.module-tasks {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.module-tasks {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+/* ── Details, compact (page only) ── */
+
+// The record's own sections under the panels: Details as a compact panel whose rows sit side by
+// side in columns, then the description and the created / updated stamps, all in the panels'
+// small type. Scoped to the page's host, so the shared record view keeps its look everywhere else.
+:host(.is-page) ::ng-deep ngx-record-view {
+  gap: 1rem;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+
+  .record-section-title {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+
+    nb-icon {
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
+    }
+  }
+
+  .record-panel-header {
+    min-height: 3rem;
+    padding: 0.5rem 1rem;
+  }
+
+  // Rows flow into as many columns as fit, label beside value.
+  .record-panel .record-rows {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.125rem 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .record-row {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 0.25rem 0.375rem;
+
+    // Groups are already apart in columns; no hairline between them.
+    &.has-divider {
+      margin-top: 0;
+
+      &::before {
+        content: none;
+      }
+    }
+  }
+
+  .record-label {
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+    line-height: 1.25rem;
+
+    nb-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  .record-value {
+    gap: 0.375rem;
+    min-height: 1.25rem;
+    font-size: 0.75rem;
+  }
+
+  .record-tag,
+  .record-chip {
+    font-size: 0.6875rem;
+  }
+
+  // The description, as prose in the same small type.
+  .record-plain-title {
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+  }
+
+  .record-rich,
+  .record-multiline {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+
+  // The created / updated stamps.
+  .record-meta {
+    font-size: 0.625rem;
+  }
+}
+
+// Narrow pages: one column, where it stands before the work; figures two by two.
 @media screen and (max-width: 60rem) {
-  :host(.is-page) .project-view-top {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'headline'
-      'side'
-      'main';
+  :host(.is-page) {
+    .project-view-top,
+    .project-view-top:not(:has(.project-view-order-2)),
+    .project-view-top:not(:has(.project-view-modules)),
+    .project-view-top:not(:has(.project-view-order-2)):not(:has(.project-view-modules)) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'headline'
+        'progress'
+        'attention'
+        'team'
+        'details'
+        'who'
+        'tasks'
+        'activity'
+        'top'
+        'modules';
+    }
+
+    .project-view-headline {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 }
