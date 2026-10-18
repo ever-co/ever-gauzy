@@ -607,6 +607,7 @@ describe('Ever Works connection on SQLite', () => {
 			expect(await service.current()).toBeNull();
 			const again = await service.connect(connectDto(mock.addKey()));
 			expect(again.id).toBe(view.id);
+			expect(again).not.toHaveProperty('earlierWebhookDeleted');
 			expect(again.status).toBe(EverWorksConnectionStatus.ACTIVE);
 		});
 	});
@@ -735,8 +736,25 @@ describe('Ever Works connection on SQLite', () => {
 				const again = await service.connect(connectDto(reconnectWithAnotherKey ? mock.addKey() : key));
 				expect(again.id).toBe(view.id);
 				expect(mock.webhooks.has(orphan)).toBe(false);
+				expect(again.earlierWebhookDeleted).toBe(true);
 				expect(again.webhook).toMatchObject({ registered: false, subscriptionId: null });
 			}
+		});
+
+		it('the reconnect answer says whether the subscription the disconnect kept is gone; a plain connect says nothing (#11096 review)', async () => {
+			const key = mock.addKey();
+			const view = await service.connect(connectDto(key));
+			expect(view).not.toHaveProperty('earlierWebhookDeleted');
+			await service.registerWebhook(view.id);
+			const [orphan] = [...mock.webhooks.keys()];
+			mock.fail({ method: 'DELETE', path: `/webhooks/${orphan}`, status: 503, times: 3 });
+			expect(await service.disconnect(view.id)).toEqual({ success: true, webhookDeleted: false });
+			// Ever Works still cannot delete it at the reconnect: the answer says so, and the wizard keeps its warning.
+			mock.fail({ method: 'DELETE', path: `/webhooks/${orphan}`, status: 503, times: 100 });
+			const again = await service.connect(connectDto(key));
+			expect(again.id).toBe(view.id);
+			expect(again.earlierWebhookDeleted).toBe(false);
+			expect(mock.webhooks.has(orphan)).toBe(true);
 		});
 
 		it('a key rotation moves the webhook to the new key: the old subscription is deleted, a new one registered', async () => {

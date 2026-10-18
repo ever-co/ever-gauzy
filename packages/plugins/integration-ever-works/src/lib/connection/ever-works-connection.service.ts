@@ -100,6 +100,11 @@ export interface EverWorksConnectionView {
 	lastCheckedAt: Date | null;
 	connectedByUserId: ID | null;
 	createdAt: Date | null;
+	/**
+	 * `POST /connections` only, when it resumed a connection holding a subscription its disconnect could not delete:
+	 * whether this reconnect deleted it (`false`: it may still deliver), so the wizard warns until it is gone (#11096 review).
+	 */
+	earlierWebhookDeleted?: boolean;
 }
 
 /** The outcome of a health check. */
@@ -223,11 +228,12 @@ export class EverWorksConnectionService {
 			// It still delivers to this connection's URL (the id is reused) and every delivery would be refused.
 			// A subscription belongs to the key that made it: the new key first, then the earlier one.
 			const earlier = orphan.apiKeyEncrypted;
-			await this.deleteUnusedWebhook(
+			const earlierWebhookDeleted = await this.deleteUnusedWebhook(
 				orphan.subscriptionId,
 				[() => this.client(saved), ...(earlier ? [() => this.client({ ...saved, apiKeyEncrypted: earlier } as EverWorksConnection)] : [])],
 				'Reconnect'
 			);
+			return { ...this.view(saved), earlierWebhookDeleted };
 		}
 		return this.view(saved);
 	}

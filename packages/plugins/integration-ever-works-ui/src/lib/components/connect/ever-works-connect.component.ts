@@ -57,6 +57,9 @@ export interface EverWorksConnectResult {
 		@if (error) {
 			<nb-alert status="danger" role="alert" data-test="connect-error">{{ error }}</nb-alert>
 		}
+		@if (webhookKept.size) {
+			<nb-alert status="warning" role="status" data-test="webhook-kept">{{ 'EVER_WORKS.SETTINGS.DISCONNECT_WEBHOOK_KEPT' | translate }}</nb-alert>
+		}
 		@switch (step) {
 			@case ('key') {
 				<section data-test="step-key">
@@ -321,6 +324,11 @@ export class EverWorksConnectComponent implements OnChanges {
 	newKey = '';
 	/** Disconnect asks once more before it goes out. */
 	confirmDisconnect = false;
+	/**
+	 * The connections whose disconnect could not delete their Ever Works webhook subscription: the admin is told how to
+	 * remove them until a reconnect resumes each one (same Ever Works tenant) and confirms it is gone (#11096 review).
+	 */
+	readonly webhookKept = new Set<string>();
 	busy = false;
 	error: string | null = null;
 	/** Set once the first sync has started: the wizard stays locked until the page moves on. */
@@ -365,6 +373,8 @@ export class EverWorksConnectComponent implements OnChanges {
 		if (!this.canConnect) return;
 		this.request(this.api.connect(this.organizationId, this.apiBaseUrl.trim(), this.apiKey.trim()), (connection) => {
 			this.connection = connection;
+			// Only this connection's kept subscription can be gone now: another tenant's (a new connection) and a failed retry stay.
+			if (connection.earlierWebhookDeleted === true) this.webhookKept.delete(connection.id);
 			this.apiKey = '';
 			this.validation = null;
 			this.preselectOrganization();
@@ -405,9 +415,12 @@ export class EverWorksConnectComponent implements OnChanges {
 	disconnect(): void {
 		const connection = this.connection;
 		if (!connection) return;
-		this.request(this.api.disconnect(this.organizationId, connection.id), () => {
+		this.request(this.api.disconnect(this.organizationId, connection.id), (result) => {
 			this.connection = null;
 			this.confirmDisconnect = false;
+			// Disconnected, but Ever Works kept the webhook subscription (the server keeps its id): say so (#11096 review). A
+			// disconnect that deleted its own never clears another connection's kept one (#11107 review).
+			if (result?.webhookDeleted === false) this.webhookKept.add(connection.id);
 			this.newKey = '';
 			this.everWorksOrganizationId = '';
 			this.step = 'key';
