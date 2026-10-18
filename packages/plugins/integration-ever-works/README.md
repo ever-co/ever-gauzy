@@ -257,7 +257,10 @@ and answered `202`.
   a later Gauzy edit is logged, not pushed. The Gauzy task links to its Ever
   Works page and, once there is one, its pull request. Due and start dates and
   the estimate sync too (Gauzy seconds ↔ Ever Works minutes; a start after the
-  due date is not sent, as Ever Works refuses it). Each
+  due date is not sent, as Ever Works refuses it). Ever Works keeps a sub-task
+  in its parent's work and team; a Gauzy parent on another team or project is
+  left out in Ever Works (logged as `parent_scope_refused`), the rest of the
+  task still syncs, and the parent is sent again once one of them moved. Each
   side is compared with its own last-synced value, so a value the other side
   cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
   changed a field the later edit wins, and a lost description is kept as a

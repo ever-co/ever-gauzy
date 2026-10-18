@@ -148,6 +148,12 @@ export interface TaskEverWorksOnly {
 	pendingWatchers?: string[];
 	pendingEdges?: string[];
 	/**
+	 * The Gauzy parent Ever Works refused at the last push (its owners are not the task's: Gauzy allows a parent
+	 * on another team or project), so the task has no parent in Ever Works. Sent again once `key` (the parent
+	 * and both sides' owners, `TaskOutgoing.parentKey`) changes; `null` once the parent is in Ever Works.
+	 */
+	heldParent?: { parentId: string; key: string } | null;
+	/**
 	 * The task's Gauzy resource links to Ever Works (its web page, its pull request); `*Owned` when the sync
 	 * made the link (a link a person added with the same URL is reused, never removed).
 	 */

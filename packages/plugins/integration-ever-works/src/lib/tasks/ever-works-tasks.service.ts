@@ -150,6 +150,11 @@ type TaskOutgoing = {
 	teamIds: string[];
 	workId: string | null;
 	parentTaskId: string | null;
+	/**
+	 * The parent and the owners it is checked against (the parent's Ever Works owners, this task's team and
+	 * work), as one key: a parent Ever Works refused is tried again once this changes. `null` without a parent.
+	 */
+	parentKey: string | null;
 	assignees: EverWorksPrincipalRef[];
 	labels: string[];
 	watchers: string[];
@@ -166,6 +171,18 @@ type TaskOutgoing = {
 function waitsFor(out: TaskOutgoingWait | TaskOutgoing): out is TaskOutgoingWait {
 	return out.wait !== undefined;
 }
+
+/**
+ * Ever Works' refusal of a parent whose owners (work, mission, idea, team, agent, goal) are not the task's own:
+ * `400 validation_failed` "Parent Task scope (…) must match child Task scope (…)". Gauzy allows a parent on
+ * another team or project (local e2e), so the push goes out without the parent instead of stopping.
+ */
+export function isParentScopeRefusal(error: unknown): boolean {
+	return error instanceof EverWorksApiError && error.status === 400 && /parent task scope\b[\s\S]*\bmust match child task scope/i.test(error.message);
+}
+
+const PARENT_HELD_MESSAGE =
+	'Ever Works keeps a sub-task in its parent’s work and team, and the Gauzy parent is in another one: the task syncs without its parent in Ever Works. The parent is sent again with a later change of the task once the task or the parent has moved.';
 
 @Injectable()
 export class EverWorksTasksService implements EverWorksInboundHandler, EverWorksOutboundHandler, EverWorksSyncSweeper {
@@ -929,10 +946,12 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		const scope = teamScopeFor((g.teamIds ?? []) as ID[], teamOf);
 		if (!scope.scope) return { wait: `the team ${scope.waitingFor} is not linked to Ever Works yet` };
 		let parentTaskId: string | null = null;
+		let parentOwners: Array<string | null> = [];
 		if (g.parentId) {
 			const parentLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, g.parentId as ID);
 			if (parentLink && parentLink.state !== EverWorksLinkState.UNLINKED) {
 				parentTaskId = parentLink.ewId;
+				parentOwners = this.everWorksOwnersOf(parentLink);
 			} else if (!parentLink) {
 				// Parents go first: a parent that will sync is queued, and this task waits for its link.
 				const parent = await this.store.load(context.tenantId, g.parentId as ID);
@@ -977,6 +996,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			teamIds: scope.scope.teamIds,
 			workId,
 			parentTaskId,
+			parentKey: parentTaskId ? JSON.stringify([parentTaskId, parentOwners, [...scope.scope.teamIds].sort(), workId]) : null,
 			assignees,
 			labels: labelsForEverWorks(g.tags ?? []),
 			watchers: watchers.sort(),
@@ -1105,13 +1125,30 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, task.id as ID);
 			if (link) return this.updateInEverWorks(context, client, task, link, actAs);
 		}
-		const created = await this.withActAs(actAs, (actor) =>
-			client.request<EverWorksTask>('POST', '/tasks', {
-				body,
-				idempotencyKey: actor === actAs ? idempotencyKey : createHash('sha256').update(`${idempotencyKey}:no-act-as`).digest('hex'),
-				actAsUserId: actor
-			})
-		);
+		const post = (sent: typeof body, key: string) =>
+			this.withActAs(actAs, (actor) =>
+				client.request<EverWorksTask>('POST', '/tasks', {
+					body: sent,
+					idempotencyKey: actor === actAs ? key : createHash('sha256').update(`${key}:no-act-as`).digest('hex'),
+					actAsUserId: actor
+				})
+			);
+		let created: EverWorksTask;
+		let heldParent: TaskEverWorksOnly['heldParent'] = null;
+		try {
+			created = await post(body, idempotencyKey);
+		} catch (error) {
+			if (!out.parentTaskId || !isParentScopeRefusal(error)) throw error;
+			// A parent on another team or work (Gauzy allows it, Ever Works does not): created without it. A key of its
+			// own, as the refused request's body differs.
+			created = await post({ ...body, parentTaskId: null }, createHash('sha256').update(`${idempotencyKey}:no-parent`).digest('hex'));
+			heldParent = { parentId: out.g.parentId as string, key: out.parentKey as string };
+			await this.logConflict(context, task.id as ID, created.id, 'parent_scope_refused', PARENT_HELD_MESSAGE, {
+				gauzyParentId: out.g.parentId,
+				everWorksParentId: out.parentTaskId,
+				refusal: (error as Error).message
+			});
+		}
 		let dto = created;
 		let g: TaskGauzySide = { ...out.g, ...planning.held };
 		if (wanted && wanted !== dto.status) {
@@ -1131,7 +1168,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		}
 		await this.record(context, task.id as ID, dto, dto.version ?? null, { g, e: everWorksSideOf(dto) }, 'outbound', {
 			pendingWatchers: out.pendingWatchers,
-			pendingEdges: out.pendingEdges
+			pendingEdges: out.pendingEdges,
+			heldParent
 		});
 		await this.syncResourceLinks(context, task.id as ID, dto, {});
 		this.logger.log(`Gauzy task ${task.id} created in Ever Works as ${dto.id}.`);
@@ -1173,7 +1211,11 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				const teamIds = applySetChange(prevE.teamIds ?? [], before, out.teamIds);
 				if (!sameField(teamIds, prevE.teamIds)) patch['teamIds'] = teamIds;
 			}
-			if (changed('parentId') && out.parentTaskId !== (prevE.parentTaskId ?? null)) patch['parentTaskId'] = out.parentTaskId;
+			// A parent Ever Works refused at the last push is sent again only once the task or the parent moved (its key changed).
+			const ewOnly = this.everWorksOnly(pair);
+			const heldParent = ewOnly.heldParent && ewOnly.heldParent.parentId === g.parentId ? ewOnly.heldParent : null;
+			const retryParent = !!heldParent && heldParent.key !== out.parentKey;
+			if ((changed('parentId') || retryParent) && out.parentTaskId !== (prevE.parentTaskId ?? null)) patch['parentTaskId'] = out.parentTaskId;
 			if (changed('projectId') && out.workId !== (prevE.workId ?? null)) patch['workId'] = out.workId;
 			const planning = this.planningFor(context, row.id as ID, g, prevE, (field) => changed(field));
 			Object.assign(patch, planning.fields);
@@ -1193,7 +1235,6 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			const status = wanted && wanted !== prevE.status ? wanted : null;
 			// Watchers and edges: Gauzy's change applied onto Ever Works' sets. What was pending at the last push
 			// (no person or task link then) counts as added now, so it goes out once it can.
-			const ewOnly = this.everWorksOnly(pair);
 			const sets: { watchers?: string[]; blockedBy?: string[]; relations?: string[] } = {};
 			const pendingWatchers = new Set(ewOnly.pendingWatchers ?? []);
 			if (changed('watcherIds') || pendingWatchers.size) {
@@ -1221,7 +1262,12 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				if (!sameField(blockedBy, prevE.blockedBy)) sets.blockedBy = blockedBy;
 				if (!sameField(relations, prevE.relations)) sets.relations = relations;
 			}
-			const pendingNow = { pendingWatchers: out.pendingWatchers, pendingEdges: out.pendingEdges };
+			const pendingNow: Pick<TaskEverWorksOnly, 'pendingWatchers' | 'pendingEdges' | 'heldParent'> = {
+				pendingWatchers: out.pendingWatchers,
+				pendingEdges: out.pendingEdges,
+				// Kept while the task still has that Gauzy parent and Ever Works does not have it (set below by the push).
+				heldParent: heldParent && !('parentTaskId' in patch) && out.parentTaskId !== (prevE.parentTaskId ?? null) ? heldParent : null
+			};
 			if (!Object.keys(patch).length && !assignees && !status && !Object.keys(sets).length) {
 				// Nothing Ever Works can take (a custom status without flags, a member with no person link, …):
 				// recorded, so the same difference is not looked at again.
@@ -1237,9 +1283,22 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				let nextG = gRecorded;
 				const ewTaskId = encodeURIComponent(pair.ewId);
 				if (Object.keys(patch).length) {
-					dto = await this.withActAs(actAs, (actor) =>
-						client.request<EverWorksTask>('PATCH', `/tasks/${ewTaskId}`, { body: patch, ifMatchVersion: version, actAsUserId: actor })
-					);
+					const send = (body: Record<string, unknown>) =>
+						this.withActAs(actAs, (actor) => client.request<EverWorksTask>('PATCH', `/tasks/${ewTaskId}`, { body, ifMatchVersion: version, actAsUserId: actor }));
+					try {
+						dto = await send(patch);
+					} catch (error) {
+						// The parent (sent now, or the one Ever Works has, when the task moves to another team or work) is
+						// not in the task's scope there: the rest goes out, and the task has no parent in Ever Works.
+						if (patch['parentTaskId'] === null || !isParentScopeRefusal(error)) throw error;
+						dto = await send({ ...patch, parentTaskId: null });
+						pendingNow.heldParent = g.parentId ? { parentId: g.parentId, key: out.parentKey ?? '' } : null;
+						await this.logConflict(context, row.id as ID, pair.ewId, 'parent_scope_refused', PARENT_HELD_MESSAGE, {
+							gauzyParentId: g.parentId ?? null,
+							everWorksParentId: out.parentTaskId,
+							refusal: (error as Error).message
+						});
+					}
 					version = dto?.version ?? version;
 				}
 				if (assignees) {
@@ -1532,7 +1591,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		version: number | null,
 		snapshot: TaskSnapshot,
 		direction: 'inbound' | 'outbound',
-		extras: Pick<TaskEverWorksOnly, 'unmappedTeams' | 'unmappedAssignees' | 'unmappedWatchers' | 'unmappedEdges' | 'pendingWatchers' | 'pendingEdges'> | null,
+		extras: Pick<TaskEverWorksOnly, 'unmappedTeams' | 'unmappedAssignees' | 'unmappedWatchers' | 'unmappedEdges' | 'pendingWatchers' | 'pendingEdges' | 'heldParent'> | null,
 		previous?: EverWorksEntityLink
 	): Promise<void> {
 		const before = this.everWorksOnly(previous ?? null);
@@ -1556,9 +1615,15 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 					unmappedEdges: extras?.unmappedEdges ?? before.unmappedEdges ?? [],
 					pendingWatchers: extras?.pendingWatchers ?? before.pendingWatchers ?? [],
 					pendingEdges: extras?.pendingEdges ?? before.pendingEdges ?? [],
+					heldParent: extras && extras.heldParent !== undefined ? extras.heldParent : (before.heldParent ?? null),
 					...(before.resourceLinks ? { resourceLinks: before.resourceLinks } : {})
 				}
-			: { ...before, ...(extras?.pendingWatchers ? { pendingWatchers: extras.pendingWatchers } : {}), ...(extras?.pendingEdges ? { pendingEdges: extras.pendingEdges } : {}) };
+			: {
+					...before,
+					...(extras?.pendingWatchers ? { pendingWatchers: extras.pendingWatchers } : {}),
+					...(extras?.pendingEdges ? { pendingEdges: extras.pendingEdges } : {}),
+					...(extras && extras.heldParent !== undefined ? { heldParent: extras.heldParent } : {})
+				};
 		await this.links.record({
 			tenantId: context.tenantId,
 			organizationId: context.organizationId,
@@ -1581,6 +1646,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		} catch {
 			return {};
 		}
+	}
+
+	/** A linked task's Ever Works owners as last synced: work, mission, idea, teams, agent, goal. */
+	private everWorksOwnersOf(link: EverWorksEntityLink): Array<string | null> {
+		const e = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(link)).e;
+		const only = this.everWorksOnly(link);
+		return [e.workId ?? null, only.missionId ?? null, only.ideaId ?? null, (e.teamIds ?? []).join(',') || null, only.agentId ?? null, only.goalId ?? null];
 	}
 
 	private async logConflict(
