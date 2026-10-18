@@ -9,6 +9,7 @@ import {
 	EverWorksWhoami
 } from './ever-works-client.types';
 import type { EverWorksHttpRequest, EverWorksHttpResponse, EverWorksTransport } from './ever-works-transport';
+import { isEverWorksLoopbackUrl } from './ever-works-loopback';
 
 /** The contract namespace appended to the API base URL the admin enters (`https://…/api`). */
 export const EVER_WORKS_CONTRACT_PATH = `/integrations/v${EVER_WORKS_CONTRACT_VERSION}`;
@@ -77,6 +78,8 @@ export interface EverWorksClientOptions {
 	random?: () => number;
 	/** Test seam: allow `http://` and private hosts (the mock Ever Works server). Never set in production. */
 	allowInsecureBaseUrlForTests?: boolean;
+	/** `EVER_WORKS_ALLOW_LOOPBACK` (development only): a loopback API base URL is accepted, over HTTP too. */
+	allowLoopback?: boolean;
 }
 
 export interface EverWorksRequestOptions {
@@ -97,9 +100,11 @@ export interface EverWorksRequestOptions {
  * no trailing slash, and without the contract path when it was pasted with it. Throws a message that is
  * safe to show (it never repeats the URL's credentials).
  */
-export function normaliseApiBaseUrl(raw: string, options: { allowInsecure?: boolean } = {}): string {
+export function normaliseApiBaseUrl(raw: string, options: { allowInsecure?: boolean; allowLoopback?: boolean } = {}): string {
 	const value = (raw ?? '').trim();
-	const reason = options.allowInsecure ? null : getUnsafeOutboundUrlReason(value);
+	// The loopback switch (development only) admits `localhost`, `127.0.0.1` and `[::1]`, nothing else.
+	const loopback = options.allowLoopback === true && isEverWorksLoopbackUrl(value);
+	const reason = options.allowInsecure || loopback ? null : getUnsafeOutboundUrlReason(value);
 	if (reason) {
 		throw new EverWorksUrlError(reason);
 	}
@@ -112,7 +117,7 @@ export function normaliseApiBaseUrl(raw: string, options: { allowInsecure?: bool
 	if (url.search || url.hash) {
 		throw new EverWorksUrlError('The URL must not contain a query or fragment');
 	}
-	if (!options.allowInsecure && url.protocol !== 'https:') {
+	if (!options.allowInsecure && !loopback && url.protocol !== 'https:') {
 		throw new EverWorksUrlError('URL must use HTTPS');
 	}
 	let path = url.pathname.replace(/\/+$/, '');
@@ -145,7 +150,10 @@ export class EverWorksClient {
 
 	constructor(private readonly options: EverWorksClientOptions) {
 		this.baseUrl =
-			normaliseApiBaseUrl(options.apiBaseUrl, { allowInsecure: options.allowInsecureBaseUrlForTests }) +
+			normaliseApiBaseUrl(options.apiBaseUrl, {
+				allowInsecure: options.allowInsecureBaseUrlForTests,
+				allowLoopback: options.allowLoopback
+			}) +
 			EVER_WORKS_CONTRACT_PATH;
 		this.retry = { ...DEFAULT_RETRY_POLICY, ...(options.retry ?? {}) };
 		this.timeoutMs = options.timeoutMs ?? 15_000;
