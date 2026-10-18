@@ -3,9 +3,55 @@ import * as os from 'os';
 import * as path from 'path';
 import {
 	PRODUCTION_SUBSTITUTION_MARKER,
+	compiledEnvironmentContent,
 	parseSelectionArguments,
 	selectCompiledEnvironment
 } from './select-compiled-environment';
+
+describe('compiledEnvironmentContent (what a production build copies into its own node_modules)', () => {
+	const DEVELOPMENT = '"use strict";\nexports.environment = { production: false };';
+	const PRODUCTION = '"use strict";\nexports.environment = { production: true };';
+
+	let outputDirectory: string;
+
+	const file = (name: string): string => path.join(outputDirectory, name);
+
+	beforeEach(() => {
+		outputDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'gauzy-config-content-'));
+		fs.writeFileSync(file('environment.js'), DEVELOPMENT);
+		fs.writeFileSync(file('environment.prod.js'), PRODUCTION);
+	});
+
+	afterEach(() => {
+		fs.rmSync(outputDirectory, { recursive: true, force: true });
+	});
+
+	it('returns the marked production compile for production and the fresh compile for development', () => {
+		expect(compiledEnvironmentContent(outputDirectory, 'production')).toBe(
+			`${PRODUCTION_SUBSTITUTION_MARKER}\n${PRODUCTION}`
+		);
+		expect(compiledEnvironmentContent(outputDirectory, 'development')).toBe(DEVELOPMENT);
+	});
+
+	it('answers for either environment while dist carries a production substitution, so concurrent builds cannot cross', () => {
+		// Another build (or `lib:build:prod`) has substituted production in the shared dist/packages/config.
+		selectCompiledEnvironment(outputDirectory, 'production');
+
+		expect(compiledEnvironmentContent(outputDirectory, 'development')).toBe(DEVELOPMENT);
+		expect(compiledEnvironmentContent(outputDirectory, 'production')).toBe(
+			`${PRODUCTION_SUBSTITUTION_MARKER}\n${PRODUCTION}`
+		);
+		// And it changed nothing on disk.
+		expect(fs.readFileSync(file('environment.js'), 'utf8')).toBe(
+			`${PRODUCTION_SUBSTITUTION_MARKER}\n${PRODUCTION}`
+		);
+	});
+
+	it('refuses to run before the package is compiled', () => {
+		fs.rmSync(file('environment.prod.js'));
+		expect(() => compiledEnvironmentContent(outputDirectory, 'development')).toThrow(/compile @gauzy\/config/);
+	});
+});
 
 describe('selectCompiledEnvironment', () => {
 	const DEVELOPMENT =

@@ -6,12 +6,26 @@ This library was generated with [Nx](https://nx.dev). It contains the configurat
 
 Run `nx build config` to build the library.
 
-`nx run config:select-environment --configuration=production` builds the library and then makes the
-compiled `environment.js` a copy of `environment.prod.js` (`src/lib/environments/select-compiled-environment.ts`,
-run from `dist/`). The API and worker `build` targets depend on `select-environment`, with their own
-configuration, which is how `environment.production` is `true` in their production images: the package
-is consumed prebuilt, so a `fileReplacements` entry in their own webpack build cannot swap it. The
-default (development) configuration puts the development compile back. The source tree is never modified.
+### Development and production environment
+
+`src/lib/environments/environment.ts` (development) and `environment.prod.ts`
+(production) are both compiled. The package is consumed prebuilt — the API and
+worker externalize `@gauzy/*` and copy `dist/packages/config` into their own
+`node_modules` — so a `fileReplacements` entry in their webpack builds cannot
+swap the two. The compiled file is selected instead
+(`src/lib/environments/select-compiled-environment.ts`, used from `dist/`):
+
+- A production build of the API or worker writes the production file as
+  `environment.js` while copying the package into its own `node_modules`
+  (`apps/api/config/webpack-package-copy-patterns.js`). `dist/packages/config`
+  itself is left alone, so builds with different configurations never
+  interfere.
+- `nx run config:select-environment --configuration=production` (the
+  `lib:build:prod` script) makes `dist/packages/config` itself a production
+  dist, for publishing; the default configuration puts the development
+  compile back.
+
+The source tree is never modified.
 
 ## Running unit tests
 

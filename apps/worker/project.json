@@ -15,7 +15,6 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/webpack:webpack",
-			"dependsOn": ["^build", { "projects": ["config"], "target": "select-environment" }],
 			"outputs": ["{options.outputPath}"],
 			"defaultConfiguration": "development",
 			"options": {
