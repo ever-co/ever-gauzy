@@ -15,6 +15,7 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/webpack:webpack",
+			"dependsOn": ["^build", { "projects": ["config"], "target": "select-environment" }],
 			"outputs": ["{options.outputPath}"],
 			"defaultConfiguration": "development",
 			"options": {
@@ -46,8 +47,8 @@
 					"sourceMap": true,
 					"fileReplacements": [
 						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
+							"replace": "packages/config/src/lib/environments/environment.ts",
+							"with": "packages/config/src/lib/environments/environment.prod.ts"
 						}
 					]
 				}
@@ -112,8 +113,8 @@
 					"sourceMap": true,
 					"fileReplacements": [
 						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
+							"replace": "packages/config/src/lib/environments/environment.ts",
+							"with": "packages/config/src/lib/environments/environment.prod.ts"
 						}
 					]
 				}
@@ -156,8 +157,8 @@
 					"sourceMap": true,
 					"fileReplacements": [
 						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
+							"replace": "packages/config/src/lib/environments/environment.ts",
+							"with": "packages/config/src/lib/environments/environment.prod.ts"
 						}
 					]
 				}
@@ -200,8 +201,8 @@
 					"sourceMap": true,
 					"fileReplacements": [
 						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
+							"replace": "packages/config/src/lib/environments/environment.ts",
+							"with": "packages/config/src/lib/environments/environment.prod.ts"
 						}
 					]
 				}
