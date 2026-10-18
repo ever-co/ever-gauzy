@@ -106,7 +106,7 @@ export class InboxEmailService {
 		if (!email.threadId) return [this.toEmail(email)];
 		// What is listed, and what the caller may read, is checked in the query, before its limit: the page is the
 		// newest messages the caller may read, never the newest messages filtered down afterwards (#11096 review).
-		const query = this.dataSource
+		let query = this.dataSource
 			.getRepository(InboxEmail)
 			.createQueryBuilder('email')
 			.where('email.tenantId = :tenantId', { tenantId: email.tenantId })
@@ -144,7 +144,7 @@ export class InboxEmailService {
 			);
 			query.setParameters({ userId, emailId: email.id });
 		}
-		const rows = await query.getMany();
+		let rows = await query.getMany();
 		// The message asked for is listed too when it is older than those (as before, if its status is listed).
 		if (
 			!rows.some((row) => row.id === email.id) &&
