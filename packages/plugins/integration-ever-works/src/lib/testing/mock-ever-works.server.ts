@@ -675,9 +675,13 @@ export class MockEverWorksServer {
 			return ok(stamp(row));
 		}
 		if (method === 'DELETE') {
+			// Every installation of the caller's source, unless `?installationId=` names one (contract CR-2(3)).
+			const installationId = query['installationId'];
 			for (let i = this.links.length - 1; i >= 0; i--) {
 				const link = this.links[i];
-				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source) this.links.splice(i, 1);
+				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source && (!installationId || link.installationId === installationId)) {
+					this.links.splice(i, 1);
+				}
 			}
 			return { status: 204, headers: {}, data: undefined };
 		}

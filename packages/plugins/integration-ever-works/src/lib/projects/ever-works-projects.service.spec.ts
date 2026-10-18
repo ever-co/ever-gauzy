@@ -337,6 +337,51 @@ describe('EverWorksProjectsService', () => {
 		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)).toEqual([]);
 	});
 
+	/** The `DELETE /links/work/:id` calls the client made. */
+	const deletes = (client: { request: jest.Mock }) => client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'DELETE');
+
+	it('unpairing a work removes the Gauzy link from it in Ever Works, this installation only (I3c)', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'Our name' });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(deletes(client)).toEqual([]);
+		await service.decide('m1' as never, { unlinks: ['ew-work-1'] });
+		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)).toEqual([]);
+		expect(deletes(client)).toEqual([['DELETE', '/links/work/ew-work-1', { query: { installationId: 'c1' } }]]);
+	});
+
+	it('a project paired with another work: the old work loses the link; a work paired with another project keeps one (I3c)', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'First' }, { id: 'p2', name: 'Second' });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }, { id: 'ew-work-2', ...work, name: 'Other' }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		// p1 now goes with ew-work-2: ew-work-1 is unpaired.
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-2', projectId: 'p1' }] });
+		expect(deletes(client)).toEqual([['DELETE', '/links/work/ew-work-1', { query: { installationId: 'c1' } }]]);
+		// ew-work-2 now goes with p2: still paired, so its link is replaced by the sweep, never removed.
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-2', projectId: 'p2' }] });
+		expect(deletes(client)).toHaveLength(1);
+		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK).map((l) => [l.ewId, l.gauzyId])).toEqual([['ew-work-2', 'p2']]);
+	});
+
+	it('a work unpaired and paired again in one request keeps its link; a refused removal never fails the tab (I3c)', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'First' }, { id: 'p2', name: 'Second' });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }, { id: 'ew-work-2', ...work, name: 'Other' }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }, { ewWorkId: 'ew-work-2', projectId: 'p2' }] });
+		await service.decide('m1' as never, { unlinks: ['ew-work-1'], links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		expect(deletes(client)).toEqual([]);
+		client.request.mockImplementation(async (...args: unknown[]) => {
+			if (args[0] === 'DELETE') throw new EverWorksApiError(500, 'internal_error', 'Try again.');
+			return { data: [{ id: 'ew-work-1', ...work }, { id: 'ew-work-2', ...work, name: 'Other' }], nextCursor: null, hasMore: false };
+		});
+		await expect(service.decide('m1' as never, { unlinks: ['ew-work-1', 'ew-work-2'] })).resolves.toBeDefined();
+		expect(deletes(client)).toHaveLength(2);
+		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)).toEqual([]);
+	});
+
 	it('a member or team saved by the same sweep keeps the link-back (#11049 review)', async () => {
 		const { service, client, addLink, links } = setup();
 		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
