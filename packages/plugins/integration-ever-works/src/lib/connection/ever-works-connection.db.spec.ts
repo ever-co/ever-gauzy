@@ -693,7 +693,7 @@ describe('Ever Works connection on SQLite', () => {
 			const [first] = [...mock.webhooks.keys()];
 			// While the disconnect deletes the first subscription, another tab registers a new one.
 			const racing = buildWith({ during: { path: `/webhooks/${first}`, run: async () => void (await service.registerWebhook(view.id)) } });
-			expect((await racing.disconnect(view.id)).success).toBe(true);
+			expect(await racing.disconnect(view.id)).toEqual({ success: true, webhookDeleted: true });
 			expect(mock.webhooks.size).toBe(0);
 			expect((await raw().findOneByOrFail({ id: view.id })).webhookSubscriptionId).toBeNull();
 			// The same race while Ever Works cannot delete the new one: its id stays, and the reconnect deletes it.
@@ -710,7 +710,7 @@ describe('Ever Works connection on SQLite', () => {
 					}
 				}
 			});
-			await failing.disconnect(again.id);
+			expect(await failing.disconnect(again.id)).toEqual({ success: true, webhookDeleted: false });
 			const late = (await raw().findOneByOrFail({ id: again.id })).webhookSubscriptionId as string;
 			expect(late).toBeTruthy();
 			expect(mock.webhooks.has(late)).toBe(true);

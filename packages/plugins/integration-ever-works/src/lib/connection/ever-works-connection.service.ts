@@ -498,7 +498,13 @@ export class EverWorksConnectionService {
 			}
 		}
 		await this.transaction(scope.tenantId, async (manager) => {
-			const row = await manager.findOneOrFail(EverWorksConnection, { where: { id, tenantId: scope.tenantId } });
+			// Under the row lock a registration takes (`mutate`): one that stores its subscription first is seen here, one
+			// that comes after sees the connection inactive and deletes its own (#11074 review).
+			const type = manager.connection.options.type;
+			const row = await manager.findOneOrFail(EverWorksConnection, {
+				where: { id, tenantId: scope.tenantId },
+				...(type === 'postgres' || type === 'mysql' || type === 'mariadb' ? { lock: { mode: 'pessimistic_write' as const } } : {})
+			});
 			// Only the subscription deleted above is forgotten: one a registration stored meanwhile is still at Ever Works,
 			// and its id stays so it is deleted below (or by a reconnect) instead of being orphaned (review F58).
 			const deletedNow = webhookDeleted && (row.webhookSubscriptionId ?? null) === (connection.webhookSubscriptionId ?? null);
@@ -518,8 +524,11 @@ export class EverWorksConnectionService {
 		const racedId = raced.subscriptionId;
 		const racedRow = raced.row;
 		if (racedId && racedRow && racedId !== connection.webhookSubscriptionId) {
-			// Registered while the disconnect ran: deleted now, best effort; once gone, the stored id is cleared.
-			if (await this.deleteUnusedWebhook(racedId, [() => this.client(racedRow)], 'Disconnect')) {
+			// Registered while the disconnect ran: deleted now, best effort; once gone, the stored id is cleared. The answer
+			// says whether a subscription is left at Ever Works (#11074 review).
+			const racedDeleted = await this.deleteUnusedWebhook(racedId, [() => this.client(racedRow)], 'Disconnect');
+			webhookDeleted = webhookDeleted && racedDeleted;
+			if (racedDeleted) {
 				await this.dataSource
 					.getRepository(EverWorksConnection)
 					.update({ id, tenantId: scope.tenantId, webhookSubscriptionId: racedId } as never, { webhookSubscriptionId: null } as never);
