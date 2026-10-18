@@ -50,7 +50,7 @@ import { EverWorksGoalsService, keyResultEwId } from './ever-works-goals.service
 
 type Row = Record<string, any>;
 
-function setup(options: { goals?: string } = {}) {
+function setup(options: { goals?: string; entitySync?: Record<string, boolean> } = {}) {
 	const mock = new MockEverWorksServer();
 	const ewOrg = { id: 'ew-org-1', slug: 'acme', displayName: 'Acme' };
 	const key = mock.addKey({ organizations: [ewOrg] });
@@ -72,6 +72,7 @@ function setup(options: { goals?: string } = {}) {
 		connection: { id: 'c1', connectedByUserId: 'u-admin' },
 		everWorksOrganizationSlug: 'acme',
 		directions: { goals: options.goals ?? 'both' },
+		entitySync: options.entitySync ?? {},
 		isEnabled: true
 	};
 	const links: Row[] = [];
@@ -184,7 +185,7 @@ function setup(options: { goals?: string } = {}) {
 		{ registerSweeper: jest.fn() } as never,
 		queue as never
 	);
-	return { service, mock, goalsMock, ewOrg, links, addLink, goals, keyResults, frames, queue };
+	return { service, mock, goalsMock, ewOrg, links, addLink, goals, keyResults, frames, queue, context };
 }
 
 const envelope = (type: string, data: Row, version = 1) => ({
@@ -512,5 +513,106 @@ describe('EverWorksGoalsService — G → EW', () => {
 		goals[0]['level'] = 'Organization';
 		keyResults[0]['type'] = 'Task';
 		expect(await service.push(change('goal-1'), pushContext)).toMatchObject({ status: 'skipped' });
+	});
+});
+
+describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77)', () => {
+	const off = { KeyResult: false };
+	const gauzyGoal = (extra: Row = {}) => ({
+		id: 'goal-1',
+		tenantId: 't1',
+		organizationId: 'o1',
+		name: 'Close deals',
+		description: 'Q4',
+		deadline: '2026',
+		level: 'Organization',
+		progress: 0,
+		...extra
+	});
+	const keyResult = (id: string, extra: Row = {}) => ({
+		id,
+		tenantId: 't1',
+		organizationId: 'o1',
+		goalId: 'goal-1',
+		name: `KR ${id}`,
+		type: 'Numerical',
+		targetValue: 10,
+		initialValue: 0,
+		unit: 'deals',
+		update: 0,
+		progress: 0,
+		weight: '1',
+		isArchived: false,
+		...extra
+	});
+
+	it('off: an Ever Works goal syncs without key results; on again, the next event brings them', async () => {
+		const { service, goals, keyResults, links, context } = setup({ entitySync: off });
+		expect(await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext)).toMatchObject({
+			status: 'applied'
+		});
+		expect(goals[0]).toMatchObject({ name: 'Grow paying customers', progress: 40 });
+		expect(keyResults).toEqual([]);
+		expect(links.filter((l) => l['entityType'] === EverWorksLinkType.KEY_RESULT)).toEqual([]);
+		// The goal's snapshot keeps the key result fields of the last sync (none yet), not Ever Works' new ones.
+		const snapshot = JSON.parse(links.find((l) => l['entityType'] === EverWorksLinkType.GOAL)?.['snapshot']);
+		expect(snapshot).toMatchObject({ criteria: [], dodCriteria: [] });
+
+		context.entitySync = {};
+		await service.apply(envelope('goal.updated', ewGoal, 2) as never, applyContext);
+		expect(keyResults.map((k) => k['type'])).toEqual(['Numerical', 'True/False']);
+	});
+
+	it('off: a new Gauzy goal is not created in Ever Works (it would be made from its key results)', async () => {
+		const { service, mock, goals, keyResults } = setup({ entitySync: off });
+		goals.push(gauzyGoal());
+		keyResults.push(keyResult('kr-a', { update: 4 }));
+		expect(await service.push(change('goal-1'), pushContext)).toMatchObject({
+			status: 'skipped',
+			message: expect.stringMatching(/key results are not synced/)
+		});
+		expect(mock.requests.filter((r) => r.method !== 'GET')).toEqual([]);
+	});
+
+	it('off: a linked goal pushes its own fields only — no criteria, Definition of Done or sample; a key result change is skipped', async () => {
+		const { service, mock, goalsMock, goals, keyResults, context } = setup();
+		goals.push(gauzyGoal());
+		keyResults.push(
+			keyResult('kr-a', { update: 4 }),
+			keyResult('kr-b', { type: 'True/False', targetValue: 1, unit: null })
+		);
+		await service.push(change('goal-1'), pushContext);
+		const [created] = [...goalsMock.goals.values()];
+		const samples = goalsMock.samples.length;
+
+		context.entitySync = off;
+		goals[0]['name'] = 'Close more deals';
+		keyResults[0]['update'] = 9;
+		keyResults[0]['targetValue'] = 20;
+		keyResults[1]['update'] = 1;
+		const before = mock.requests.length;
+		expect(await service.push(change('goal-1'), pushContext)).toMatchObject({ status: 'pushed' });
+		const sent = mock.requests.slice(before).filter((r) => r.method !== 'GET');
+		expect(sent.map((r) => r.method)).toEqual(['PATCH']);
+		expect(sent[0].body).toEqual({ title: 'Close more deals' });
+		expect(created).toMatchObject({ title: 'Close more deals', targetValue: 10 });
+		expect((created['dodCriteria'] as Row[])[0]['status']).toBe('open');
+		expect(await service.push(change('kr-a', EverWorksLinkType.KEY_RESULT), pushContext)).toMatchObject({
+			status: 'skipped',
+			message: expect.stringMatching(/key results are not synced/)
+		});
+		expect(goalsMock.samples).toHaveLength(samples);
+	});
+
+	it('off: the key result sweep leaves the mapping alone', async () => {
+		const { service, goalsMock, goals, keyResults, queue, context } = setup();
+		goals.push(gauzyGoal());
+		keyResults.push(keyResult('kr-a'), keyResult('kr-b', { type: 'True/False', targetValue: 1, unit: null }));
+		await service.push(change('goal-1'), pushContext);
+		expect(goalsMock.goals.size).toBe(1);
+		keyResults.splice(1, 1);
+		context.entitySync = off;
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(queue.enqueue).not.toHaveBeenCalled();
 	});
 });

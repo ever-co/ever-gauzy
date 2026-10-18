@@ -1,7 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { DataSource, In } from 'typeorm';
-import { GoalLevelEnum, ID, KeyResultTypeEnum, KeyResultUpdateStatusEnum, TimeFrameStatusEnum } from '@gauzy/contracts';
+import {
+	GoalLevelEnum,
+	ID,
+	IntegrationEntity,
+	KeyResultTypeEnum,
+	KeyResultUpdateStatusEnum,
+	TimeFrameStatusEnum
+} from '@gauzy/contracts';
 import { Employee, Goal, GoalTimeFrame, IntegrationTenant, KeyResult } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
@@ -9,7 +16,7 @@ import type { EverWorksConnection } from '../connection/ever-works-connection.en
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
-import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
+import { entitySynced, type EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { everWorksUserOfGauzyUser } from '../sync/ever-works-actor';
 import { stableUuid } from '../sync/ever-works-stable-id';
@@ -156,6 +163,33 @@ const KEY_RESULT_FIELDS: ReadonlyArray<keyof KeyResultShared> = [
 	'hardDeadline'
 ];
 
+/** The outcome when the mapping's per-entity KEY_RESULT toggle is off (OQ4, review F77). */
+export const KEY_RESULTS_NOT_SYNCED =
+	'key results are not synced for this mapping (its Key Result sync setting is off)';
+
+/** Whether a mapping syncs key results: its KEY_RESULT toggle (OQ4). Off, its goals sync without them. */
+function keyResultsSynced(context: EverWorksMappingContext): boolean {
+	return entitySynced(context, IntegrationEntity.KEY_RESULT);
+}
+
+/**
+ * The goal fields Ever Works builds from key results (the metric, the criteria, the Definition of Done), as the last
+ * sync left them. While a mapping does not sync key results neither direction moves them, so turning the toggle on
+ * again compares both sides with the last state they agreed on.
+ */
+function withSyncedKeyResultFields<T extends GoalShared>(shared: T, before: Partial<GoalShared>): T {
+	return {
+		...shared,
+		goalKind: before.goalKind ?? shared.goalKind,
+		comparator: before.comparator ?? null,
+		targetValue: before.targetValue ?? null,
+		unit: before.unit ?? null,
+		baselineValue: before.baselineValue ?? null,
+		criteria: before.criteria ?? [],
+		dodCriteria: before.dodCriteria ?? []
+	};
+}
+
 /**
  * Goals ↔ Goal + KeyResults (plan 01 §6, plan 06 G-P2-1), linked as `GOAL` (and `KEY_RESULT` per key
  * result, Ever Works id `<goal id>:<key>`).
@@ -208,7 +242,7 @@ export class EverWorksGoalsService
 	 */
 	async sweep(connection: EverWorksConnection): Promise<void> {
 		for (const context of await this.contextsOf(connection)) {
-			if (!context.isEnabled || !toEverWorks(context.directions.goals)) continue;
+			if (!context.isEnabled || !toEverWorks(context.directions.goals) || !keyResultsSynced(context)) continue;
 			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.KEY_RESULT)).filter(
 				(link) => link.state === EverWorksLinkState.OK
 			);
@@ -456,8 +490,10 @@ export class EverWorksGoalsService
 			}
 			if (Object.keys(changes).length) await repository.update({ id: goalId } as never, changes as never);
 		}
+		// A mapping that does not sync key results (OQ4) writes none, and its snapshot keeps the last synced ones.
+		const syncsKeyResults = keyResultsSynced(context);
 		const missing =
-			madeInGauzy || keepGauzy.has('keyResults')
+			madeInGauzy || keepGauzy.has('keyResults') || !syncsKeyResults
 				? 0
 				: await this.applyKeyResults(
 						context,
@@ -471,7 +507,15 @@ export class EverWorksGoalsService
 			goalId,
 			goal,
 			version,
-			{ ...next, teamIds, progress, archived, leadEmployeeId, primaryMissionId, gauzyDeadline },
+			{
+				...(syncsKeyResults ? next : withSyncedKeyResultFields(next, before)),
+				teamIds,
+				progress,
+				archived,
+				leadEmployeeId,
+				primaryMissionId,
+				gauzyDeadline
+			},
 			link,
 			teamsWait
 				? { extraTeams: ew.extraTeams ?? [], unmappedTeams: ew.unmappedTeams ?? [] }
@@ -597,9 +641,12 @@ export class EverWorksGoalsService
 		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (!toEverWorks(context.directions.goals))
 			return { status: 'skipped', message: 'goals are not pushed to Ever Works' };
-		return change.entityType === EverWorksLinkType.KEY_RESULT
-			? this.pushSample(context, change)
-			: this.pushGoal(context, change);
+		if (change.entityType === EverWorksLinkType.KEY_RESULT) {
+			return keyResultsSynced(context)
+				? this.pushSample(context, change)
+				: { status: 'skipped', message: KEY_RESULTS_NOT_SYNCED };
+		}
+		return this.pushGoal(context, change);
 	}
 
 	private async pushGoal(
@@ -625,6 +672,12 @@ export class EverWorksGoalsService
 			// Delete policy: Ever Works goals are not deleted from Gauzy (and an integration cannot archive one).
 			return { status: 'skipped', message: 'Gauzy goal deletes are not pushed to Ever Works (delete policy)' };
 		}
+		// A new Ever Works goal is made from the Gauzy goal's key results (its metric or Definition of Done).
+		if (!link && !keyResultsSynced(context))
+			return {
+				status: 'skipped',
+				message: `${KEY_RESULTS_NOT_SYNCED}: a goal is created in Ever Works from them`
+			};
 		const prepared = await this.prepare(context, goal, link);
 		if ('outcome' in prepared) return prepared.outcome;
 		const client = this.client(context);
@@ -666,9 +719,11 @@ export class EverWorksGoalsService
 			link && before.deadline !== undefined && goal.deadline === (before.gauzyDeadline ?? undefined)
 				? (before.deadline ?? null)
 				: await this.deadlineOf(context, goal.deadline);
-		const now = link
+		const merged = link
 			? mergeGauzyGoal(goal, deadline, rows, [...new Set(teamIds)], before as GoalShared)
 			: gauzyGoalToEverWorks(goal, deadline, rows, [...new Set(teamIds)], null);
+		// Not syncing key results (OQ4): the push leaves Ever Works' metric, criteria and Definition of Done as they are.
+		const now = merged && link && !keyResultsSynced(context) ? withSyncedKeyResultFields(merged, before) : merged;
 		if (!now)
 			return {
 				outcome: {
@@ -995,6 +1050,7 @@ export class EverWorksGoalsService
 		goalId: ID,
 		rows: GauzyKeyResultRow[]
 	): Promise<void> {
+		if (!keyResultsSynced(context)) return;
 		const goalLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.GOAL, goalId);
 		if (!goalLink) return;
 		for (const row of rows.filter((r) => isNumeric(r.type))) {
@@ -1022,6 +1078,7 @@ export class EverWorksGoalsService
 		now: GoalShared,
 		rows: LinkedKeyResultRow[]
 	): Promise<void> {
+		if (!keyResultsSynced(context)) return;
 		const numbers = rows.filter((row) => isNumeric(row.type));
 		const sent = new Map(
 			keyResultsOfGoal({

@@ -265,7 +265,8 @@ const coreSchemas = [
 	}),
 	s('IntegrationSetting', entities.IntegrationSetting, 'integration_setting', { settingsName: str(false), settingsValue: str() }, {
 		integration: { type: 'many-to-one', target: 'IntegrationTenant', joinColumn: { name: 'integrationId' } }
-	})
+	}),
+	s('IntegrationEntitySetting', entities.IntegrationEntitySetting, 'integration_entity_setting', { entity: str(false), sync: { type: Boolean, default: true }, integrationId: str() })
 ];
 const pluginSchemas = [
 	s('EverWorksConnection', EverWorksConnection, 'ever_works_connection', {

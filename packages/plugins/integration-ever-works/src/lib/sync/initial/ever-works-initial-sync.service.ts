@@ -10,7 +10,7 @@ import { EverWorksConnectionService } from '../../connection/ever-works-connecti
 import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
 import { isIdeaTask } from '../../tasks/ever-works-task-exclusion';
-import type { EverWorksDirection, EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
+import { entitySynced, type EverWorksDirection, type EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkState, EverWorksLinkType } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
@@ -464,6 +464,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 
 	/** What a phase does for a mapping: import (EW → G), export (G → EW), or nothing (and why). */
 	private planOf(spec: EverWorksSyncPhaseSpec, context: EverWorksMappingContext): { import: boolean; export: boolean; done?: boolean; note: string | null } {
+		if (spec.entity && !entitySynced(context, spec.entity)) return { import: false, export: false, note: `${spec.name} are not synced for this mapping` };
 		const direction = context.directions[spec.domain];
 		if (direction === 'off') return { import: false, export: false, note: `${spec.domain} are not synced for this mapping` };
 		if (spec.kind === 'mapping_only') return { import: false, export: false, done: true, note: 'people are paired on the People tab; nobody is created' };
@@ -953,7 +954,8 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	// ── Dry run ────────────────────────────────────────────────────────────────────────────────────
 
 	private async previewPhase(context: EverWorksMappingContext, client: EverWorksClient, spec: EverWorksSyncPhaseSpec): Promise<EverWorksSyncPhasePreview> {
-		const direction = context.directions[spec.domain];
+		// A phase whose own toggle is off (comments) previews as `off`, like a domain whose direction is.
+		const direction = spec.entity && !entitySynced(context, spec.entity) ? 'off' : context.directions[spec.domain];
 		const plan = this.planOf(spec, context);
 		const preview: EverWorksSyncPhasePreview = {
 			phase: spec.name,

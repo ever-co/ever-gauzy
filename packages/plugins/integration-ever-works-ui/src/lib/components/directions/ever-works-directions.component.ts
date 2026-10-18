@@ -47,6 +47,9 @@ import { errorText } from '../shared/ever-works-ui.utils';
 									<option [ngValue]="option">{{ 'EVER_WORKS.DIRECTIONS.VALUES.' + option | translate }}</option>
 								}
 							</select>
+							@if (offBySyncSetting(domain)) {
+								<small class="off-by-setting" [attr.data-test]="'direction-off-' + domain">{{ 'EVER_WORKS.DIRECTIONS.OFF_BY_SYNC_SETTING' | translate }}</small>
+							}
 						</td>
 					</tr>
 				}
@@ -73,6 +76,10 @@ import { errorText } from '../shared/ever-works-ui.utils';
 		`
 			.actions {
 				margin-top: 1rem;
+			}
+			.off-by-setting {
+				display: block;
+				margin-top: 0.25rem;
 			}
 		`
 	]
@@ -107,6 +114,15 @@ export class EverWorksDirectionsComponent implements OnChanges {
 		// The settings page hands the saved mapping back as the input: that is this save, not another mapping.
 		this.saved = this.saved && !!this.mapping && this.mapping === this.lastSaved;
 		this.error = null;
+	}
+
+	/**
+	 * The saved direction is not `off`, but the mapping's sync setting for that record type is (OQ4): nothing syncs
+	 * until the setting is on again, whatever the direction says.
+	 */
+	offBySyncSetting(domain: string): boolean {
+		const effective = this.mapping?.effectiveDirections?.[domain];
+		return effective === 'off' && (this.mapping?.directions?.[domain] ?? 'off') !== 'off';
 	}
 
 	allowed(domain: string): ReadonlyArray<EverWorksDirection> {

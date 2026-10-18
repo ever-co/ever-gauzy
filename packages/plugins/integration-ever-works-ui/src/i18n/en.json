@@ -144,6 +144,7 @@
 		"DOMAIN": "Records",
 		"DIRECTION": "Direction",
 		"SYNC_UNLINKED_PROJECT_TASKS": "Also sync tasks of projects that are not paired with a work",
+		"OFF_BY_SYNC_SETTING": "Not synced: the sync setting of this record type is off for the mapping.",
 		"VALUES": {
 			"both": "Both ways",
 			"ew_to_gauzy": "Ever Works → Gauzy",

@@ -90,6 +90,8 @@ export interface EverWorksMapping {
 	everWorksOrganization: { id: string; slug: string; displayName: string | null };
 	isEnabled: boolean;
 	directions: Record<string, EverWorksDirection>;
+	/** The directions that take effect: a domain whose record type's sync setting is off is `off` (OQ4). */
+	effectiveDirections?: Record<string, EverWorksDirection>;
 	defaultProjectId: string | null;
 	ideasProjectId: string | null;
 	docsRootFolderId: string | null;
