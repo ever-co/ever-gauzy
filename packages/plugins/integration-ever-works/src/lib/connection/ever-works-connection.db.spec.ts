@@ -507,6 +507,42 @@ describe('Ever Works connection on SQLite', () => {
 			expect(mock.requests.filter((r) => r.method === 'PATCH')).toHaveLength(2);
 		});
 
+		it('a direction saved while the subscription is being created is sent to the new one (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			let saved = false;
+			const registering = new EverWorksConnectionService(
+				dataSource,
+				new TestEverWorksClientFactory({
+					send: async (request) => {
+						// A mapping turns agent mail on while Ever Works creates the subscription.
+						if (request.method === 'POST' && new URL(request.url).pathname.endsWith('/webhooks') && !saved) {
+							saved = true;
+							await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+						}
+						return mock.handle(request);
+					}
+				}),
+				new EverWorksScopeService(dataSource),
+				new EverWorksNotifier(dataSource),
+				CONFIG
+			);
+			await registering.registerWebhook(view.id);
+			expect([...mock.webhooks.values()][0]?.events).toContain('email.*');
+			// Nothing moved: a registration sends no second write.
+			const before = mock.requests.filter((r) => r.method === 'PATCH').length;
+			await registering.registerWebhook(view.id);
+			expect(mock.requests.filter((r) => r.method === 'PATCH')).toHaveLength(before);
+		});
+
+		it('a refresh that cannot read the connection never fails the mapping change (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			const read = jest.spyOn(dataSource, 'getRepository').mockImplementationOnce(() => {
+				throw new Error('database gone');
+			});
+			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
+			read.mockRestore();
+		});
+
 		it('needs a public HTTPS API address for the webhook', async () => {
 			const local = new EverWorksConnectionService(
 				dataSource,
