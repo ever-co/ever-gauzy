@@ -76,6 +76,20 @@ interface WorkEverWorksOnly {
 	linkBackTriedAt?: string | null;
 }
 
+/** One Ever Works external link as `GET /links` lists it (contract v1, CR-2(3)). */
+interface EverWorksLinkRow {
+	entityType: string;
+	entityId: string;
+	installationId: string | null;
+	externalId: string;
+}
+
+/** Whether a `GET /links` entry is a link (an answer of another shape changes nothing). */
+function isEverWorksLinkRow(row: unknown): row is EverWorksLinkRow {
+	const value = row as Partial<EverWorksLinkRow> | null;
+	return !!value && typeof value === 'object' && typeof value.entityType === 'string' && typeof value.entityId === 'string' && typeof value.externalId === 'string' && 'installationId' in value;
+}
+
 /** One Ever Works work as the Projects tab shows it. */
 export interface EverWorksWorkRow {
 	ewWorkId: string;
@@ -250,7 +264,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			}
 		}
 		// The works whose pair this request removes: unpaired, or their project paired with another work.
-		const unpaired = new Set<string>();
+		let unpaired = new Set<string>();
 		for (const ewWorkId of decision.unlinks ?? []) {
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId);
 			if (link) {
@@ -646,8 +660,13 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 					await this.record(context, projectId, this.workFrom(link), link.ewVersion ?? null, snapshot, link, { members, teams });
 				});
 			}
-			// After the member and team saves above (they rewrite the whole row from this sweep's read).
-			await this.linkBack(context, links);
+			// After the member and team saves above (they rewrite the whole row from this sweep's read): Ever Works'
+			// links made to match the pairs, then the link-backs, on the pairs as they are now.
+			await this.reconcileLinks(context);
+			await this.linkBack(
+				context,
+				(await this.links.list(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK)).filter((link) => link.state === EverWorksLinkState.OK)
+			);
 		}
 	}
 
@@ -716,6 +735,53 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				if (error instanceof EverWorksApiError && error.status === 404) continue;
 				this.logger.warn(`The Gauzy link of the unpaired Ever Works work ${ewWorkId} was not removed (${describeError(error)}).`);
 			}
+		}
+	}
+
+	/**
+	 * Brings Ever Works' links of this installation's works (`GET /links?entityType=work`, contract CR-2(3)) in line
+	 * with the pairs, so a removal that did not happen, or happened too late, is mended by a later sweep:
+	 *
+	 * - a work that still shows a Gauzy project but has no pair (its removal on the Projects tab failed, e.g. an
+	 *   outage) loses the link (`DELETE /links/work/:id?installationId=`), at most
+	 *   {@link PROJECT_LINK_BACKS_PER_SWEEP} per run, each pair read again right before;
+	 * - a pair whose link-back is recorded while Ever Works shows another project or none (a removal that arrived
+	 *   after the work was paired again) has its link-back marker cleared, so the link-back below sends it again.
+	 *
+	 * Only this installation's links are read; an answer that is not a list of links changes nothing. Best effort:
+	 * a failure is logged, and an outage ends the run.
+	 */
+	private async reconcileLinks(context: EverWorksMappingContext): Promise<void> {
+		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
+		let rows: unknown;
+		try {
+			rows = (await client.request<{ data?: unknown }>('GET', '/links', { query: { entityType: 'work' } }))?.data;
+		} catch (error) {
+			this.logger.warn(`Mapping ${context.integrationTenantId}: the Ever Works work links could not be read (${describeError(error)}).`);
+			return;
+		}
+		if (!Array.isArray(rows) || !rows.every(isEverWorksLinkRow)) return;
+		const ours = rows.filter((row) => row.entityType === 'work' && row.installationId === context.connection.id);
+		let removals = 0;
+		for (const row of ours) {
+			if (removals >= PROJECT_LINK_BACKS_PER_SWEEP) break;
+			const pair = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, row.entityId);
+			if (pair && pair.state === EverWorksLinkState.OK) continue;
+			removals++;
+			try {
+				await client.request('DELETE', `/links/work/${encodeURIComponent(row.entityId)}`, { query: { installationId: context.connection.id } });
+			} catch (error) {
+				if (error instanceof EverWorksApiError && error.status === 404) continue;
+				this.logger.warn(`The Gauzy link of the unpaired Ever Works work ${row.entityId} was not removed (${describeError(error)}).`);
+				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && (error.retryable || error.status === 401))) return;
+			}
+		}
+		const shown = new Map(ours.map((row) => [row.entityId, row.externalId]));
+		for (const link of (await this.links.list(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK)).filter((row) => row.state === EverWorksLinkState.OK)) {
+			const ew = this.ewOnlyOf(link);
+			if (ew.linkedBack !== link.gauzyId || shown.get(link.ewId) === link.gauzyId) continue;
+			// Only the marker moves, on the row as just read (a write in between refuses it; the next sweep looks again).
+			await this.links.patchEverWorksOnly(link, { ...ew, linkedBack: null });
 		}
 	}
 

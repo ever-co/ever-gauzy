@@ -434,7 +434,7 @@ describe('EverWorksProjectsService', () => {
 		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
 		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
 		expect(JSON.parse(links[0]?.ewOnly as string)['linkedBack']).toBe('p1');
-		// A removal from an earlier unpair arrives after the pair was made and linked back again.
+		// A removal from an earlier removed pair arrives after the pair was made and linked back again.
 		ew.links = [];
 		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
 		expect(ew.links).toEqual([expect.objectContaining({ entityId: 'ew-work-1', installationId: 'c1', externalId: 'p1' })]);

@@ -367,7 +367,7 @@ describe('EverWorksProjectsService — create in Ever Works (G-P2-5)', () => {
 		expect(postsOf(mock)).toHaveLength(0);
 	});
 
-	it('create in Ever Works, unpair, create again: a new work, the first one keeps no Gauzy link (#11054 review)', async () => {
+	it('create in Ever Works, remove the pair, create again: a new work, the first one keeps no Gauzy link (#11054 review)', async () => {
 		const { service, mock, works, links, projects } = setup();
 		projects.push({ id: 'p1', organizationId: 'o1', name: 'Portal' });
 		await service.decide('m1' as never, { createInEverWorks: ['p1'] as never });
