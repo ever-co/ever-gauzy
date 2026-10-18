@@ -920,6 +920,50 @@ describe('serializeEmbeddedTransactions — work a transaction leaves running, T
 		]);
 	});
 
+	it('hands a commit that fails back to its owner, whose rollback frees the connection for the queued work (#11051 review)', async () => {
+		// A deferred foreign key fails the COMMIT and SQLite keeps the transaction open: the claim stays with its
+		// owner (no longer ending), the owner's rollback gives the connection back, and the work that reached its
+		// own transaction during the failed COMMIT runs after it.
+		store = await openTypeOrm({ waitTimeoutMs: 300 });
+		const dataSource = store.dataSource;
+		await dataSource.query('PRAGMA foreign_keys = ON');
+		await dataSource.query('CREATE TABLE "queue_parent" ("id" varchar PRIMARY KEY NOT NULL)');
+		await dataSource.query(
+			'CREATE TABLE "queue_child" ("id" varchar PRIMARY KEY NOT NULL, "parentId" varchar REFERENCES "queue_parent" ("id") DEFERRABLE INITIALLY DEFERRED)'
+		);
+		store.log.clear();
+		let background!: Promise<{ value?: unknown; error?: Error }>;
+
+		const write = await settle(
+			dataSource.manager.transaction(async (manager) => {
+				await manager.insert(QueueRow, { id: 'w1', tag: 'w' });
+				await manager.query('INSERT INTO "queue_child" ("id", "parentId") VALUES (?, ?)', ['c1', 'missing']);
+				background = atNextCommit(store!.log, () =>
+					dataSource.transaction((transactional) => transactional.insert(QueueRow, { id: 'q1', tag: 'q' }))
+				);
+			})
+		);
+
+		expect(write.error?.message).toMatch(/FOREIGN KEY/);
+		expect((await background).error).toBeUndefined();
+		expect(
+			(await settle(dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'n1', tag: 'n' })))).error
+		).toBeUndefined();
+		expect(store.file.committed()).toEqual(['n1', 'q1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT w1',
+			'COMMIT',
+			'ROLLBACK',
+			'BEGIN TRANSACTION',
+			'INSERT q1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT n1',
+			'COMMIT'
+		]);
+	});
+
 	it('does the same for a transaction it opens by hand on a query runner', async () => {
 		store = await openTypeOrm({ waitTimeoutMs: 300 });
 		const dataSource = store.dataSource;
