@@ -194,6 +194,28 @@ const OWNER_FIELDS: ReadonlyArray<readonly [string, keyof TaskGauzySide]> = [
 ];
 
 /**
+ * The Ever Works side of a link's snapshot each Gauzy field is synced with. Both sides are recorded together, so a
+ * Gauzy field missing while its Ever Works field is there was never sent (see `updateFromEverWorks`, #11096 review).
+ */
+const EVER_WORKS_FIELD_OF: Readonly<Record<keyof TaskGauzySide, keyof TaskEverWorksSide>> = {
+	title: 'title',
+	description: 'description',
+	status: 'status',
+	priority: 'priority',
+	tags: 'labels',
+	teamIds: 'teamIds',
+	memberIds: 'assignees',
+	parentId: 'parentTaskId',
+	projectId: 'workId',
+	watcherIds: 'watchers',
+	blockedBy: 'blockedBy',
+	relations: 'relations',
+	dueDate: 'dueAt',
+	startDate: 'startAt',
+	estimate: 'estimateMinutes'
+};
+
+/**
  * The held-parent key of a sub-task detached so its parent could move: never a push's key, so the next sweep
  * queues the sub-task and its push sends the parent again (Ever Works takes it when the sub-task fits the moved
  * parent; when not, the #11048 path holds it with its real key and logs `parent_scope_refused`).
@@ -611,13 +633,17 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		// The Gauzy snapshot moves only for what was applied here: a Gauzy edit not pushed yet stays a difference.
 		const gAfter = await this.gauzySide(context, after);
 		const nextG: TaskGauzySide = { ...prevG };
-		// A link with no Gauzy side at all (a create recovered or still finishing, a task adopted back) has Gauzy values
-		// still to send: only what was applied here joins its snapshot, so the next push still sends the rest (#11079
-		// review). A field added after the link was made (an older link) takes Gauzy's current value as before.
-		const noGauzySide = !Object.keys(prevG).length;
+		// A Gauzy field with no snapshot while its Ever Works side has one was never sent (a create recovered or still
+		// finishing, a task adopted back, a held move): only what was applied here joins the snapshot, so the next push
+		// still sends the rest (#11079 review). That holds on every inbound edit, not only while the Gauzy side is empty:
+		// a first edit records the title it applied, and a second one must not take the watchers as sent (#11096
+		// review). A field neither side has (an older link, the field added since) takes Gauzy's current value as before.
+		const unsent = (field: keyof TaskGauzySide) => !(field in prevG) && EVER_WORKS_FIELD_OF[field] in prevE;
 		for (const field of Object.keys(gAfter) as Array<keyof TaskGauzySide>) {
-			if (applied.has(field) || (!(field in prevG) && !noGauzySide)) Object.assign(nextG, { [field]: gAfter[field] });
+			if (applied.has(field) || (!(field in prevG) && !unsent(field))) Object.assign(nextG, { [field]: gAfter[field] });
 		}
+		// An Ever Works change of a set never sent leaves it to send whole: Gauzy's own members of it are not in Ever Works yet.
+		for (const field of Object.keys(setSnapshots) as Array<keyof typeof setSnapshots>) if (unsent(field)) delete setSnapshots[field];
 		Object.assign(nextG, setSnapshots, unsyncedPlanning);
 		await this.record(
 			context,
