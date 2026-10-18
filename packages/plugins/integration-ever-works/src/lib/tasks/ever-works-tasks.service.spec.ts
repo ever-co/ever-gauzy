@@ -63,6 +63,7 @@ import {
 	LINKED_ISSUE,
 	LinkedIssueRow,
 	gauzyWins,
+	isCutTitleCopy,
 	labelsForEverWorks,
 	stripTitleAppendix,
 	titleForEverWorks,
@@ -140,6 +141,15 @@ describe('task field rules', () => {
 		expect(stripTitleAppendix(description)).toBe('Body');
 		expect(titleForEverWorks('Short')).toEqual({ title: 'Short', truncated: false });
 		expect(descriptionForEverWorks('Body', 'Short')).toBe('Body');
+	});
+
+	it('knows a title Ever Works still has as the cut copy of the full title in its description (#11108 review)', () => {
+		const long = `${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`;
+		const description = descriptionForEverWorks('Body', long);
+		expect(isCutTitleCopy(titleForEverWorks(long).title, description)).toBe(true);
+		expect(isCutTitleCopy('Renamed', description)).toBe(false);
+		expect(isCutTitleCopy(titleForEverWorks('z'.repeat(250)).title, description)).toBe(false);
+		expect(isCutTitleCopy(titleForEverWorks(long).title, 'Body')).toBe(false);
 	});
 
 	it('labels: trimmed, ≤ 80 characters, unique case-insensitively, at most 50', () => {
@@ -562,6 +572,37 @@ describe('EW → G tasks', () => {
 		expect(t.queue.enqueued).toEqual([]);
 		expect(await t.deliver(event)).toEqual({ status: 'skipped', message: 'already applied (version)' });
 		expect(t.tasks.size).toBe(1);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back takes Ever Works’ sets and dates as they are, not only what they add (#11108 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Sets', tags: [{ id: 'tag-old', name: 'Old' }], members: [{ id: 'e-alice' }], dueDate: new Date('2026-11-01T00:00:00Z') });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		const ew = t.mock.addTask(t.org.id, { title: 'Sets', labels: ['New'], assignees: [{ type: 'user', id: 'ew-bob' }], watchers: ['ew-bob'], dueAt: null });
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 3 } })).toEqual({ status: 'applied' });
+		expect(t.tasks.get('g1')).toMatchObject({ tags: [{ id: 'tag-new', name: 'New' }], members: [{ id: 'e-bob' }], dueDate: null });
+		expect(t.subscriptions.filter((row) => row.taskId === 'g1').map((row) => row.employeeId)).toEqual(['e-bob']);
+	});
+
+	it('tasks synced one way from Ever Works: a long title renamed in Gauzy before the adoption stays; a rename in Ever Works is taken (#11108 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		const sent = 'A'.repeat(250);
+		const renamed = 'B'.repeat(250);
+		t.addGauzyTask({ id: 'g1', title: renamed });
+		t.addGauzyTask({ id: 'g2', title: renamed });
+		// Both went out with the long title `sent` (cut, the full one in the description); Gauzy renamed them since.
+		const description = descriptionForEverWorks('Body', sent);
+		const kept = t.mock.addTask(t.org.id, { title: titleForEverWorks(sent).title, description });
+		const edited = t.mock.addTask(t.org.id, { title: 'Renamed in Ever Works', description });
+		for (const [ew, gauzyId] of [[kept, 'g1'], [edited, 'g2']] as const) {
+			const own = [{ source: 'gauzy', installationId: 'c1', externalId: gauzyId, externalUrl: null }];
+			expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 2 } })).toEqual({ status: 'applied' });
+		}
+		expect((t.tasks.get('g1') as GauzyTask)['title']).toBe(renamed);
+		expect((t.tasks.get('g2') as GauzyTask)['title']).toBe('Renamed in Ever Works');
 	});
 
 	it('both sides changed the title: the later writer wins and the conflict is logged', async () => {

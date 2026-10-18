@@ -169,7 +169,7 @@ export const EVER_WORKS_LABEL_LIMIT = 80;
 export const EVER_WORKS_LABELS_MAX = 50;
 
 const FULL_TITLE_LABEL = '**Full title (from Gauzy):**';
-const FULL_TITLE_APPENDIX = /(?:^|\n\n)> \*\*Full title \(from Gauzy\):\*\* [^\n]*\s*$/;
+const FULL_TITLE_APPENDIX = /(?:^|\n\n)> \*\*Full title \(from Gauzy\):\*\* ([^\n]*)\s*$/;
 
 /** G → EW title: at most 200 characters; `truncated` when the full title has to travel in the description. */
 export function titleForEverWorks(title: string | null | undefined): { title: string; truncated: boolean } {
@@ -190,6 +190,16 @@ export function descriptionForEverWorks(markdown: string, title: string | null |
 /** EW → G description: the Markdown without the full-title line Gauzy appended itself. */
 export function stripTitleAppendix(markdown: string | null | undefined): string {
 	return normaliseMarkdown(normaliseMarkdown(markdown).replace(FULL_TITLE_APPENDIX, ''));
+}
+
+/** Whether an Ever Works title is still the cut copy of the full title Gauzy appended to its description. */
+export function isCutTitleCopy(title: string | null | undefined, markdown: string | null | undefined): boolean {
+	const full = FULL_TITLE_APPENDIX.exec(normaliseMarkdown(markdown))?.[1]?.trim();
+	if (!full || !title?.endsWith('…')) return false;
+	// The appendix has the title's whitespace collapsed and the cut copy has not: its start is compared collapsed.
+	const flat = (value: string) => value.replace(/\s+/g, ' ').trim();
+	const start = flat(title.slice(0, -1));
+	return !!start && flat(full).startsWith(start);
 }
 
 /** Ever Works labels from Gauzy tag names: trimmed, ≤ 80 characters, unique (case-insensitive), at most 50. */
