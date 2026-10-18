@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DataSource, In } from 'typeorm';
@@ -8,9 +9,10 @@ import {
 	ID,
 	InvitationTypeEnum,
 	InviteStatusEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	RolesEnum
 } from '@gauzy/contracts';
-import { Employee, Invite, InviteBulkCreateCommand, RequestContext } from '@gauzy/core';
+import { Employee, Invite, InviteBulkCreateCommand, RequestContext, Role } from '@gauzy/core';
 import { EverWorksClient } from '../client/ever-works-client';
 import { EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
@@ -64,10 +66,16 @@ export interface EverWorksPeopleView {
 	deferredInbox: EverWorksDeferredInboxRow[];
 }
 
-/** "Invite to Gauzy": the Ever Works member to invite and the Gauzy role the admin chose. */
+/** How many e-mails one pending-invitation query names at most. */
+const PENDING_INVITE_CHUNK = 500;
+
+/**
+ * "Invite to Gauzy": the Ever Works member to invite and, optionally, the role (the tenant's Employee role, the only
+ * one whose acceptance creates an employee the People tab can pair).
+ */
 export interface EverWorksInviteToGauzyInput {
 	ewUserId: string;
-	roleId: ID;
+	roleId?: ID;
 }
 
 /** What "invite to Gauzy" did: a new invitation was sent, or one still pending for that e-mail is answered again. */
@@ -75,6 +83,7 @@ export interface EverWorksInviteToGauzyResult {
 	status: 'invited' | 'pending';
 	inviteId: ID;
 	email: string;
+	roleId: ID;
 	expireDate: Date | null;
 }
 
@@ -108,6 +117,9 @@ export class EverWorksPeopleService {
 		private readonly links: EverWorksLinkService,
 		private readonly commandBus: CommandBus
 	) {}
+
+	/** Invitations in flight per organization and e-mail (see `withInviteClaim`). */
+	private readonly inviteClaims = new Map<string, Promise<unknown>>();
 
 	/** `GET /mappings/:id/people`. */
 	async people(integrationTenantId: ID, organizationId?: ID): Promise<EverWorksPeopleView> {
@@ -188,13 +200,19 @@ export class EverWorksPeopleService {
 	/**
 	 * `POST /mappings/:id/people/invite-to-gauzy`: invites an Ever Works member who has no Gauzy person yet as an
 	 * employee of the mapped organization, through the platform's own invite flow (`InviteBulkCreateCommand`: its
-	 * e-mail, its role rules — an employee inviter can only invite employees, only a super admin invites a super
-	 * admin — and its accept path). Needs the invite permission on top of the integration's.
+	 * e-mail, its rules on who may invite, and its accept path). Needs the invite permission on top of the
+	 * integration's.
+	 *
+	 * The invitation is for the tenant's Employee role: the accept path creates an employee only for that role (any
+	 * other joins as a user with no employee, whom the People tab could never pair), so `roleId` may name only it;
+	 * the admin changes the role in Gauzy once the person has joined.
 	 *
 	 * Only a verified Ever Works e-mail is invited, so the invitation reaches the member and not whoever else typed
 	 * that address. A member already paired, or whose e-mail a person of the organization already has (pair them
-	 * instead), is refused. An invitation still pending for the e-mail is answered again rather than sent twice.
-	 * Nothing is accepted or paired here: once the invitee joins, the verified e-mail suggests the pairing.
+	 * instead), is refused. An invitation still pending for the e-mail is answered again rather than sent twice, and
+	 * overlapping requests for one e-mail are serialised (in this process, and by a session lock on Postgres and
+	 * MySQL), so two clicks or two admins send one invitation. Nothing is accepted or paired here: once the invitee
+	 * joins, the verified e-mail suggests the pairing.
 	 */
 	async inviteToGauzy(integrationTenantId: ID, input: EverWorksInviteToGauzyInput, organizationId?: ID): Promise<EverWorksInviteToGauzyResult> {
 		if (!RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT)) {
@@ -212,46 +230,124 @@ export class EverWorksPeopleService {
 		}
 		const email = member.email;
 		const key = email.toLowerCase();
-		for (const [employeeId, person] of await this.people$(context)) {
-			if (person.email?.toLowerCase() === key) {
-				throw new ConflictException(`A person of this organization already has this e-mail (${employeeId}): pair them instead.`);
+		const roleId = await this.employeeRoleId(context, input.roleId);
+		return this.withInviteClaim(`${context.tenantId}:${context.organizationId}:${key}`, async () => {
+			for (const [employeeId, person] of await this.people$(context)) {
+				if (person.email?.toLowerCase() === key) {
+					throw new ConflictException(`A person of this organization already has this e-mail (${employeeId}): pair them instead.`);
+				}
 			}
-		}
-		const pending = (await this.pendingInvites(context)).get(key);
-		if (pending) return { status: 'pending', inviteId: pending.id as ID, email: pending.email, expireDate: pending.expireDate ?? null };
-		const invite = {
-			emailIds: [email],
-			tenantId: context.tenantId,
-			organizationId: context.organizationId,
-			roleId: input.roleId,
-			inviteType: InvitationTypeEnum.EMPLOYEE,
-			fullName: member.displayName || member.username,
-			projectIds: [],
-			teamIds: [],
-			departmentIds: [],
-			organizationContactIds: []
-		} as unknown as ICreateEmailInvitesInput;
-		const output: ICreateEmailInvitesOutput = await this.commandBus.execute(new InviteBulkCreateCommand(invite, RequestContext.getLanguageCode()));
-		const created = output?.items?.[0];
-		if (!created) throw new ConflictException('Gauzy did not issue an invitation for this e-mail.');
-		return { status: 'invited', inviteId: created.id as ID, email: created.email, expireDate: created.expireDate ?? null };
+			const pending = (await this.pendingInvites(context, [email])).get(key);
+			if (pending) {
+				if (pending.roleId && pending.roleId !== roleId) {
+					throw new ConflictException("An invitation for another role is still pending for this e-mail: revoke it on Gauzy's Invites page first.");
+				}
+				return { status: 'pending', inviteId: pending.id as ID, email: pending.email, roleId, expireDate: pending.expireDate ?? null };
+			}
+			const invite = {
+				emailIds: [email],
+				tenantId: context.tenantId,
+				organizationId: context.organizationId,
+				roleId,
+				inviteType: InvitationTypeEnum.EMPLOYEE,
+				fullName: member.displayName || member.username,
+				projectIds: [],
+				teamIds: [],
+				departmentIds: [],
+				organizationContactIds: []
+			} as unknown as ICreateEmailInvitesInput;
+			const output: ICreateEmailInvitesOutput = await this.commandBus.execute(new InviteBulkCreateCommand(invite, RequestContext.getLanguageCode()));
+			const created = output?.items?.[0];
+			if (!created) throw new ConflictException('Gauzy did not issue an invitation for this e-mail.');
+			return { status: 'invited', inviteId: created.id as ID, email: created.email, roleId, expireDate: created.expireDate ?? null };
+		});
 	}
 
-	/** The Gauzy invitations still pending (invited, not expired) in the mapped organization, by lower-cased e-mail. */
-	private async pendingInvites(context: EverWorksMappingContext): Promise<Map<string, Invite>> {
-		const rows = await this.dataSource.getRepository(Invite).find({
-			where: { tenantId: context.tenantId, organizationId: context.organizationId, status: InviteStatusEnum.INVITED } as never,
-			select: { id: true, email: true, expireDate: true, status: true } as never,
-			order: { createdAt: 'DESC' } as never
+	/**
+	 * The tenant's Employee role, the one "invite to Gauzy" invites with (see `inviteToGauzy`). A `roleId` naming any
+	 * other role answers 400.
+	 */
+	private async employeeRoleId(context: EverWorksMappingContext, roleId?: ID): Promise<ID> {
+		const role = await this.dataSource.getRepository(Role).findOne({
+			where: { tenantId: context.tenantId, name: RolesEnum.EMPLOYEE } as never,
+			select: { id: true } as never
 		});
-		const now = Date.now();
+		if (!role?.id) throw new BadRequestException('This tenant has no Employee role to invite with.');
+		if (roleId && roleId !== role.id) {
+			throw new BadRequestException(
+				'Only the Employee role makes a Gauzy person the People tab can pair (another role joins without an employee); change the role in Gauzy once they have joined.'
+			);
+		}
+		return role.id as ID;
+	}
+
+	/**
+	 * The Gauzy invitations still pending (invited, not expired) in the mapped organization for these e-mails, by
+	 * lower-cased e-mail (the newest one of each).
+	 */
+	private async pendingInvites(context: EverWorksMappingContext, emails: ReadonlyArray<string | null>): Promise<Map<string, Invite>> {
+		const keys = [...new Set(emails.filter((email): email is string => !!email).map((email) => email.toLowerCase()))];
 		const result = new Map<string, Invite>();
-		for (const row of rows) {
-			if (!row.email || (row.expireDate && new Date(row.expireDate).getTime() <= now)) continue;
-			const key = row.email.toLowerCase();
-			if (!result.has(key)) result.set(key, row);
+		const now = Date.now();
+		for (let i = 0; i < keys.length; i += PENDING_INVITE_CHUNK) {
+			const rows = await this.dataSource
+				.getRepository(Invite)
+				.createQueryBuilder('invite')
+				.select(['invite.id', 'invite.email', 'invite.expireDate', 'invite.status', 'invite.roleId', 'invite.createdAt'])
+				.where('invite.tenantId = :tenantId', { tenantId: context.tenantId })
+				.andWhere('invite.organizationId = :organizationId', { organizationId: context.organizationId })
+				.andWhere('invite.status = :status', { status: InviteStatusEnum.INVITED })
+				.andWhere('LOWER(invite.email) IN (:...emails)', { emails: keys.slice(i, i + PENDING_INVITE_CHUNK) })
+				.andWhere('(invite.expireDate IS NULL OR invite.expireDate > :now)', { now: new Date(now) })
+				.orderBy('invite.createdAt', 'DESC')
+				.getMany();
+			for (const row of rows) {
+				if (!row.email || (row.expireDate && new Date(row.expireDate).getTime() <= now)) continue;
+				const key = row.email.toLowerCase();
+				if (!result.has(key)) result.set(key, row);
+			}
 		}
 		return result;
+	}
+
+	/**
+	 * Runs `fn` with the e-mail claimed: one invitation at a time per organization and e-mail in this process, and
+	 * across processes a session lock on Postgres (advisory lock) or MySQL (`GET_LOCK`). SQLite runs in one process.
+	 */
+	private async withInviteClaim<T>(key: string, fn: () => Promise<T>): Promise<T> {
+		const previous = this.inviteClaims.get(key) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.withDatabaseLock(`ever-works:invite-gauzy:${key}`, fn));
+		this.inviteClaims.set(key, current);
+		try {
+			return await current;
+		} finally {
+			if (this.inviteClaims.get(key) === current) this.inviteClaims.delete(key);
+		}
+	}
+
+	private async withDatabaseLock<T>(name: string, fn: () => Promise<T>): Promise<T> {
+		const type = this.dataSource.options?.type;
+		if (type !== 'postgres' && type !== 'mysql' && type !== 'mariadb') return fn();
+		// MySQL lock names are at most 64 characters: a digest of the name.
+		const lockName = type === 'postgres' ? name : `ew:${createHash('sha256').update(name).digest('hex').slice(0, 48)}`;
+		const runner = this.dataSource.createQueryRunner();
+		await runner.connect();
+		try {
+			if (type === 'postgres') {
+				await runner.query('SELECT pg_advisory_lock(hashtext($1))', [lockName]);
+			} else {
+				const rows = (await runner.query('SELECT GET_LOCK(?, 30) AS locked', [lockName])) as Array<{ locked: number | string | null }>;
+				if (Number(rows?.[0]?.locked) !== 1) throw new ConflictException('Another request is inviting this e-mail; try again.');
+			}
+			try {
+				return await fn();
+			} finally {
+				if (type === 'postgres') await runner.query('SELECT pg_advisory_unlock(hashtext($1))', [lockName]);
+				else await runner.query('SELECT RELEASE_LOCK(?)', [lockName]);
+			}
+		} finally {
+			await runner.release();
+		}
 	}
 
 	/**
@@ -295,7 +391,10 @@ export class EverWorksPeopleService {
 		const people = await this.people$(context);
 		const byEmail = new Map<string, ID>();
 		for (const [id, person] of people) if (person.email) byEmail.set(person.email.toLowerCase(), id);
-		const invites = await this.pendingInvites(context);
+		const invites = await this.pendingInvites(
+			context,
+			members.filter((m) => !linkByUser.has(m.userId)).map((m) => m.email)
+		);
 		const rows: EverWorksPersonRow[] = members.map((m) => {
 			const linkedEmployeeId = linkByUser.get(m.userId) ?? null;
 			const match = !linkedEmployeeId && m.emailVerified && m.email ? byEmail.get(m.email.toLowerCase()) : undefined;

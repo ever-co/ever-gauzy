@@ -17,7 +17,7 @@ jest.mock('@gauzy/core', () => {
 		MikroOrmBaseEntityRepository: class {},
 		createSsrfSafeHttpsAgent: () => undefined,
 		...Object.fromEntries(
-			['Tenant', 'Organization', 'UserOrganization', 'Employee', 'EmployeeNotification', 'User', 'Invite', 'IntegrationTenant', 'IntegrationSetting'].map(
+			['Tenant', 'Organization', 'UserOrganization', 'Employee', 'EmployeeNotification', 'User', 'Invite', 'Role', 'IntegrationTenant', 'IntegrationSetting'].map(
 				(name) => [name, entity(name)]
 			)
 		),
@@ -42,13 +42,14 @@ jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
 import 'reflect-metadata';
 import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InvitationTypeEnum, InviteStatusEnum, PermissionsEnum } from '@gauzy/contracts';
-import { Employee, Invite, InviteBulkCreateCommand, RequestContext } from '@gauzy/core';
+import { Employee, Invite, InviteBulkCreateCommand, RequestContext, Role } from '@gauzy/core';
 import { EverWorksInboundEvent, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksMember, EverWorksPeopleService } from './ever-works-people.service';
 
 const granted = (RequestContext as unknown as { __granted: Set<string> }).__granted;
 const context = { tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', connection: { id: 'c1' }, everWorksOrganizationSlug: 'acme' };
 const ROLE = '7f1c2a8e-5b0d-4c3e-9a41-2d6f8b9e0c11';
+const ADMIN_ROLE = '0c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
 
 function member(overrides: Partial<EverWorksMember> = {}): EverWorksMember {
 	return {
@@ -73,15 +74,27 @@ function setup(
 		members?: EverWorksMember[];
 		links?: Array<{ ewId: string; gauzyId: string }>;
 		employees?: Array<{ id: string; email: string; kind?: string }>;
-		invites?: Array<{ id: string; email: string; status: InviteStatusEnum; expireDate: Date | null }>;
+		invites?: Array<{ id: string; email: string; status: InviteStatusEnum; expireDate: Date | null; roleId?: string }>;
+		noEmployeeRole?: boolean;
 	} = {}
 ) {
 	const links = options.links ?? [];
-	const invites = options.invites ?? [];
+	const invites = [...(options.invites ?? [])];
+	const inviteQuery = () => {
+		const chain = {
+			select: () => chain,
+			where: () => chain,
+			andWhere: () => chain,
+			orderBy: () => chain,
+			getMany: async () => [...invites]
+		};
+		return chain;
+	};
 	const employees = (options.employees ?? []).map((e) => ({ id: e.id, kind: e.kind ?? 'human', user: { firstName: 'G', lastName: e.id, email: e.email } }));
 	const repositories = new Map<unknown, unknown>([
 		[Employee, { find: jest.fn(async () => employees) }],
-		[Invite, { find: jest.fn(async () => invites) }],
+		[Invite, { createQueryBuilder: jest.fn(inviteQuery) }],
+		[Role, { findOne: jest.fn(async () => (options.noEmployeeRole ? null : { id: ROLE })) }],
 		[EverWorksInboundEvent, { find: jest.fn(async () => []) }]
 	]);
 	const dataSource = { getRepository: (target: unknown) => repositories.get(target), transaction: jest.fn() };
@@ -95,11 +108,19 @@ function setup(
 		remove: jest.fn()
 	};
 	const commandBus = {
-		execute: jest.fn(async (command: { input: { emailIds: string[] } }) => ({
-			items: [{ id: 'invite-new', email: command.input.emailIds[0], expireDate: new Date('2026-10-25T00:00:00.000Z'), status: InviteStatusEnum.INVITED }],
-			total: 1,
-			ignored: 0
-		}))
+		execute: jest.fn(async (command: { input: { emailIds: string[]; roleId: string } }) => {
+			// Yield first, like the real command's own database work, so overlapping calls really overlap.
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			const created = {
+				id: invites.length ? `invite-${invites.length + 1}` : 'invite-new',
+				email: command.input.emailIds[0],
+				expireDate: new Date('2026-10-25T00:00:00.000Z'),
+				status: InviteStatusEnum.INVITED,
+				roleId: command.input.roleId
+			};
+			invites.push(created);
+			return { items: [created], total: 1, ignored: 0 };
+		})
 	};
 	const service = new EverWorksPeopleService(dataSource as never, contexts as never, connections as never, linkService as never, commandBus as never);
 	return { service, commandBus, linkService };
@@ -129,7 +150,45 @@ describe('EverWorksPeopleService — invite to Gauzy', () => {
 			})
 		);
 		expect(command.languageCode).toBe('en');
-		expect(result).toEqual({ status: 'invited', inviteId: 'invite-new', email: 'Ada@Example.test', expireDate: new Date('2026-10-25T00:00:00.000Z') });
+		expect(result).toEqual({ status: 'invited', inviteId: 'invite-new', email: 'Ada@Example.test', roleId: ROLE, expireDate: new Date('2026-10-25T00:00:00.000Z') });
+	});
+
+	it("invites with the tenant's Employee role when the admin names none", async () => {
+		const { service, commandBus } = setup();
+		const result = await service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada' });
+		expect((commandBus.execute.mock.calls[0][0] as unknown as InviteBulkCreateCommand).input.roleId).toBe(ROLE);
+		expect(result.roleId).toBe(ROLE);
+	});
+
+	it('refuses a role other than Employee (400): accepting it would create no employee to pair', async () => {
+		const { service, commandBus } = setup();
+		await expect(service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada', roleId: ADMIN_ROLE as never })).rejects.toBeInstanceOf(BadRequestException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
+	});
+
+	it('refuses when the tenant has no Employee role (400)', async () => {
+		const { service, commandBus } = setup({ noEmployeeRole: true });
+		await expect(service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada' })).rejects.toBeInstanceOf(BadRequestException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
+	});
+
+	it('sends one invitation when two requests for the same member overlap', async () => {
+		const { service, commandBus } = setup();
+		const [first, second] = await Promise.all([
+			service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada', roleId: ROLE as never }),
+			service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada', roleId: ROLE as never })
+		]);
+		expect(commandBus.execute).toHaveBeenCalledTimes(1);
+		expect([first.status, second.status].sort()).toEqual(['invited', 'pending']);
+	});
+
+	it('refuses (409) when an invitation for another role is still pending for that e-mail', async () => {
+		const expireDate = new Date(Date.now() + 86_400_000);
+		const { service, commandBus } = setup({
+			invites: [{ id: 'invite-admin', email: 'ada@example.test', status: InviteStatusEnum.INVITED, expireDate, roleId: ADMIN_ROLE }]
+		});
+		await expect(service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada' })).rejects.toBeInstanceOf(ConflictException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
 	});
 
 	it('names the invitee by username when the member has no display name', async () => {
@@ -182,7 +241,7 @@ describe('EverWorksPeopleService — invite to Gauzy', () => {
 		const { service, commandBus } = setup({ invites: [{ id: 'invite-old', email: 'ada@example.test', status: InviteStatusEnum.INVITED, expireDate }] });
 		const result = await service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada', roleId: ROLE as never });
 		expect(commandBus.execute).not.toHaveBeenCalled();
-		expect(result).toEqual({ status: 'pending', inviteId: 'invite-old', email: 'ada@example.test', expireDate });
+		expect(result).toEqual({ status: 'pending', inviteId: 'invite-old', email: 'ada@example.test', roleId: ROLE, expireDate });
 	});
 
 	it('sends a new invitation when the earlier one expired', async () => {

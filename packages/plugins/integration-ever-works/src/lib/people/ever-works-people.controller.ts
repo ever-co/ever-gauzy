@@ -25,9 +25,12 @@ export class EverWorksInviteToGauzyDto {
 	@MaxLength(64)
 	readonly ewUserId!: string;
 
-	@ApiProperty({ description: 'The Gauzy role the invitation is for (the platform invite rules apply).' })
+	@ApiPropertyOptional({
+		description: "The tenant's Employee role (the default): the only role whose acceptance creates an employee the People tab can pair."
+	})
+	@ValidateIf((_o, v) => v !== undefined)
 	@IsUUID()
-	readonly roleId!: string;
+	readonly roleId?: string;
 }
 
 export class EverWorksPeopleDecisionDto {
@@ -90,7 +93,7 @@ export class EverWorksPeopleController {
 		summary: 'Invite an Ever Works member with no Gauzy person as an employee (the platform invite flow; needs ORG_INVITE_EDIT too).'
 	})
 	inviteToGauzy(@Param('integrationTenantId', UUIDValidationPipe) id: ID, @Body() dto: EverWorksInviteToGauzyDto, @Query('organizationId') organizationId?: ID) {
-		return this.people.inviteToGauzy(id, { ewUserId: dto.ewUserId, roleId: dto.roleId as ID }, organizationId);
+		return this.people.inviteToGauzy(id, { ewUserId: dto.ewUserId, roleId: dto.roleId as ID | undefined }, organizationId);
 	}
 
 	@Get('/agents')

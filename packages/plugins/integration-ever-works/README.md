@@ -209,11 +209,13 @@ and answered `202`.
   confirms (one by one or all at once); nothing is linked silently and
   unlinking removes only the pairing. Ever ID matching waits for Gauzy to
   store Ever ID subjects. A member with no Gauzy person can be **invited to
-  Gauzy**: the platform's own employee invitation (its email, role rules and
-  accept path) with the role the admin picks, for a verified Ever Works email
-  only. It needs `ORG_INVITE_EDIT` too, sends nothing while an invitation
-  for that email is still pending (the tab shows it as `gauzyInvite`), and
-  pairs nobody: once the invitee joins, the email match suggests the pairing.
+  Gauzy**: the platform's own employee invitation (its email, invite rules and
+  accept path) for the tenant's Employee role, the only role whose acceptance
+  creates an employee to pair (change the role once they have joined), for a
+  verified Ever Works email only. It needs `ORG_INVITE_EDIT` too, sends one
+  invitation per email (overlapping requests are serialised; a pending one is
+  answered again and shows on the tab as `gauzyInvite`), and pairs nobody:
+  once the invitee joins, the email match suggests the pairing.
 - **Agents.** Each Ever Works agent of a mapped organization becomes a Gauzy
   employee of kind `agent` (created through the platform's agent path: no
   password, no invite, an `@agents.invalid` address) with a profile managed by
