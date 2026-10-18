@@ -123,7 +123,9 @@ export class EmployeesService {
 	 * @returns A promise that resolves with the updated employee object.
 	 */
 	setEmployeeProfileStatus(id: ID, status: IEmployeeUpdateProfileStatus): Promise<IEmployee> {
-		return firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, status));
+		return this.forgettingMe(() =>
+			firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, status))
+		);
 	}
 
 	/**
@@ -135,11 +137,13 @@ export class EmployeesService {
 	 * @returns A promise that resolves with the updated employee object.
 	 */
 	setEmployeeEndWork(id: ID, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
-		return firstValueFrom(
-			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				endWork: date,
-				...request
-			})
+		return this.forgettingMe(() =>
+			firstValueFrom(
+				this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+					endWork: date,
+					...request
+				})
+			)
 		);
 	}
 
@@ -156,11 +160,13 @@ export class EmployeesService {
 		action: boolean,
 		request: IBasePerTenantAndOrganizationEntityModel
 	): Promise<IEmployee> {
-		return firstValueFrom(
-			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				isTrackingEnabled: action,
-				...request
-			})
+		return this.forgettingMe(() =>
+			firstValueFrom(
+				this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+					isTrackingEnabled: action,
+					...request
+				})
+			)
 		);
 	}
 
@@ -172,7 +178,7 @@ export class EmployeesService {
 	 * @returns A promise that resolves when the update operation is completed.
 	 */
 	update(id: ID, updateInput: IEmployeeUpdateInput): Promise<any> {
-		return firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}`, updateInput));
+		return this.forgettingMe(() => firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}`, updateInput)));
 	}
 
 	/**
@@ -185,10 +191,12 @@ export class EmployeesService {
 	 * @returns A promise resolving to the result of the DELETE operation or an error message.
 	 */
 	delete(id: ID, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
-		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/employee/${id}`, {
-				params: toParams({ ...options })
-			})
+		return this.forgettingMe(() =>
+			firstValueFrom(
+				this.http.delete(`${API_PREFIX}/employee/${id}`, {
+					params: toParams({ ...options })
+				})
+			)
 		);
 	}
 
@@ -200,10 +208,12 @@ export class EmployeesService {
 	 * @returns A promise resolving to the deleted employee or a success indicator.
 	 */
 	softRemove(id: ID, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
-		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/employee/${id}/soft`, {
-				params: toParams({ ...options })
-			})
+		return this.forgettingMe(() =>
+			firstValueFrom(
+				this.http.delete(`${API_PREFIX}/employee/${id}/soft`, {
+					params: toParams({ ...options })
+				})
+			)
 		);
 	}
 
@@ -215,7 +225,9 @@ export class EmployeesService {
 	 * @returns A promise resolving to the restored employee or a success indicator.
 	 */
 	softRecover(id: ID, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
-		return firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}/recover`, { ...options }));
+		return this.forgettingMe(() =>
+			firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}/recover`, { ...options }))
+		);
 	}
 
 	/**
@@ -225,13 +237,10 @@ export class EmployeesService {
 	 * @param payload - The data to update in the employee's profile.
 	 * @returns A promise that resolves with the updated employee profile.
 	 */
-	async updateProfile(id: ID, payload: IEmployeeUpdateInput): Promise<IEmployee> {
-		try {
-			return await firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload));
-		} finally {
-			// `getMe(..., includeEmployee)` returns this employee: the recent answer must not outlive the write.
-			this.usersService?.forgetMe();
-		}
+	updateProfile(id: ID, payload: IEmployeeUpdateInput): Promise<IEmployee> {
+		return this.forgettingMe(() =>
+			firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload))
+		);
 	}
 
 	/**
@@ -263,11 +272,28 @@ export class EmployeesService {
 	 * @returns A promise of the updated employee.
 	 */
 	setEmployeeStartWork(id: ID, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
-		return firstValueFrom(
-			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
-				startedWorkOn: date,
-				...request
-			})
+		return this.forgettingMe(() =>
+			firstValueFrom(
+				this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
+					startedWorkOn: date,
+					...request
+				})
+			)
 		);
+	}
+
+	/**
+	 * Runs a write that may change the signed-in employee — `getMe(..., includeEmployee)` returns that
+	 * employee — and forgets the user service's recent answers once it has settled, so a read made within
+	 * the reuse window after the write asks the API again.
+	 *
+	 * @param request - Makes the request.
+	 */
+	private async forgettingMe<R>(request: () => Promise<R>): Promise<R> {
+		try {
+			return await request();
+		} finally {
+			this.usersService?.forgetMe();
+		}
 	}
 }
