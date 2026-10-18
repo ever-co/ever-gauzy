@@ -7,7 +7,6 @@ import { RequestContext } from '../core/context';
 import { ApiCallLogService } from './api-call-log.service';
 import { ApiCallLog } from './api-call-log.entity';
 import { resolveApiCallLogEnabled } from './api-call-log.settings';
-import { debugInDevelopment } from '../logger';
 
 @Injectable()
 export class ApiCallLogMiddleware implements NestMiddleware {
@@ -130,11 +129,11 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 				userId: userId || null
 			});
 
-			// Lazily: the bodies are serialized only when the line is printed, not on every tracked call.
-			debugInDevelopment(
-				this.logger,
-				() => `ApiCallLogMiddleware: logging API call entity: ${JSON.stringify(entity)}`
-			);
+			// Only when debug lines are printed (LOG_LEVEL, not NODE_ENV): the bodies are not serialized on every
+			// tracked call otherwise.
+			if (Logger.isLevelEnabled('debug')) {
+				this.logger.debug(`ApiCallLogMiddleware: logging API call entity: ${JSON.stringify(entity)}`);
+			}
 
 			try {
 				// Asynchronously log the API call to the database
