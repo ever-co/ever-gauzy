@@ -164,10 +164,12 @@ describe('RoleAuthorizationService', () => {
 					rolePermissions: [rolePermission(PermissionsEnum.ALL_ORG_EDIT)]
 				}
 			};
-			const { service, typeOrmRoleRepository, release } = buildSlow(null);
+			const { service, typeOrmRoleRepository } = build(null);
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => (release = resolve));
 			// Each lookup answers for the role it was asked about, once released.
 			(typeOrmRoleRepository.findOne as jest.Mock).mockImplementation(async ({ where }: any) => {
-				await new Promise((resolve) => setImmediate(resolve));
+				await gate;
 				return roles[where.id];
 			});
 
@@ -175,10 +177,12 @@ describe('RoleAuthorizationService', () => {
 				service.getAuthorizationState('role-1'),
 				service.getAuthorizationState('role-2')
 			]);
+			// Both loads are in flight at once, one per role.
+			await new Promise((resolve) => setImmediate(resolve));
+			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(2);
 
 			release();
 			const [first, second] = await pending;
-			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(2);
 			expect(first?.role).toEqual(expect.objectContaining({ id: 'role-1', name: RolesEnum.EMPLOYEE }));
 			expect(first?.permissions).toEqual([PermissionsEnum.ORG_TEAM_VIEW]);
 			expect(second?.role).toEqual(expect.objectContaining({ id: 'role-2', name: RolesEnum.ADMIN }));
