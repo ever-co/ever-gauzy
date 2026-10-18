@@ -2,6 +2,7 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	EventEmitter,
+	HostBinding,
 	Input,
 	OnChanges,
 	Output,
@@ -48,9 +49,15 @@ export interface IProjectQuickLookCard {
 	name: string;
 	imageUrl?: string;
 	initials: string;
-	/** Seconds the host page counts for it in the period (the employee's, or the team's). */
-	duration: number;
+	/**
+	 * Seconds the host page counts for it in the period (the employee's, or the team's).
+	 * Absent on the project's own page, where the headline shows the period's total instead.
+	 */
+	duration?: number;
 }
+
+/** Where the quick look renders: a Projects panel's right-side drawer, or the project's own page. */
+export type ProjectQuickLookMode = 'drawer' | 'page';
 
 /** A person the host page already knows, so a contributor shows their name, photo and presence. */
 export interface IProjectQuickLookPerson {
@@ -220,7 +227,15 @@ export class ProjectQuickLookComponent implements OnChanges {
 	 * server counts for the viewer: everyone's, or only their own (see `contributorsCaptionKey`).
 	 */
 	@Input() contributorsCaption: string | null = null;
+	/** `drawer` (default) frames the quick look in a right-side drawer; `page` lays it out as a page body. */
+	@Input() mode: ProjectQuickLookMode = 'drawer';
 	@Output() readonly closed = new EventEmitter<void>();
+
+	/** On a page, the panels lay out in two columns instead of the drawer's one. */
+	@HostBinding('class.is-page')
+	get isPage(): boolean {
+		return this.mode === 'page';
+	}
 
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly taskFilters: ProjectTaskFilter[] = ['open', 'progress', 'overdue', 'done'];
@@ -317,6 +332,15 @@ export class ProjectQuickLookComponent implements OnChanges {
 	/** The team's or everyone's hours on the project over the period, tracked and manual. */
 	get hoursTotal(): number {
 		return (this.hours.value || []).reduce((sum, day) => sum + day.tracked + day.manual, 0);
+	}
+
+	/**
+	 * The headline's "worked in period": the host's own figure (an employee's or a team's time,
+	 * as on its card); without one, the period's total from the daily activity.
+	 */
+	get workedSeconds(): number {
+		const own = this.project?.duration;
+		return own !== undefined && own !== null ? own : this.hoursTotal * 3600;
 	}
 
 	taskCount(filter: ProjectTaskFilter): number {
