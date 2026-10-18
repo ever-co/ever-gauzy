@@ -332,6 +332,10 @@ describe('Ever Works organization mapping on SQLite', () => {
 		expect(refresh).toHaveBeenCalledWith(connection?.id, A.tenantId);
 		await mappings.remove(view.integrationTenantId);
 		expect(refresh).toHaveBeenCalledTimes(2);
+		// Restored (mapped again), its directions come back with it: so do the events (#11055 review).
+		await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+		expect(refresh).toHaveBeenCalledTimes(3);
+		expect(refresh).toHaveBeenLastCalledWith(connection?.id, A.tenantId);
 		refresh.mockRestore();
 	});
 

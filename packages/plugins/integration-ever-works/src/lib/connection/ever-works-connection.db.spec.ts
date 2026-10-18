@@ -465,6 +465,48 @@ describe('Ever Works connection on SQLite', () => {
 			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
 		});
 
+		it('a direction changed while paused reaches the subscription, and a resume sends the events with the status (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await service.registerWebhook(view.id);
+			const subscription = () => [...mock.webhooks.values()][0];
+			await service.pause(view.id);
+			expect(subscription().status).toBe('paused');
+			await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+			await service.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(subscription()).toMatchObject({ status: 'paused', events: expect.arrayContaining(['email.*']) });
+			// A change the paused subscription missed (e.g. Ever Works refused it then) is sent with the resume.
+			mock.webhooks.set(subscription().id, { ...subscription(), events: subscription().events.filter((event) => event !== 'email.*') });
+			await service.resume(view.id);
+			expect(subscription()).toMatchObject({ status: 'active', events: expect.arrayContaining(['email.*']) });
+		});
+
+		it('a direction saved while a refresh is on the way is sent too: the refresh reads the directions again after its write (#11055 review)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await service.registerWebhook(view.id);
+			const mirror = await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+			const subscriptionId = [...mock.webhooks.keys()][0] as string;
+			let flipped = false;
+			const racing = new EverWorksConnectionService(
+				dataSource,
+				new TestEverWorksClientFactory({
+					send: async (request) => {
+						// Another worker turns agent mail off while this refresh's PATCH is on the way.
+						if (request.method === 'PATCH' && !flipped) {
+							flipped = true;
+							await setDirections(mirror, { agentEmail: 'off' });
+						}
+						return mock.handle(request);
+					}
+				}),
+				new EverWorksScopeService(dataSource),
+				new EverWorksNotifier(dataSource),
+				CONFIG
+			);
+			await racing.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(mock.webhooks.get(subscriptionId)?.events).not.toContain('email.*');
+			expect(mock.requests.filter((r) => r.method === 'PATCH')).toHaveLength(2);
+		});
+
 		it('needs a public HTTPS API address for the webhook', async () => {
 			const local = new EverWorksConnectionService(
 				dataSource,
