@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { In, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -86,6 +86,39 @@ export function withSelected(requested: unknown, required: string[]): unknown {
 		return merged;
 	}
 	return requested;
+}
+
+/**
+ * A read's `where` bound to the caller's organizations: an `organizationId` the caller did not state becomes one of
+ * theirs (`In`, so a page is cut from their initiatives only); a stated one of theirs is kept, another one reads
+ * nothing; an operator the caller stated is kept (each row is still checked after the read). Each condition of a
+ * list (`OR`) is bound alike.
+ *
+ * @param where - The caller's `where`, if any.
+ * @param memberOf - The caller's organizations.
+ * @returns The bound `where`, or `null` when nothing can match.
+ */
+export function whereInOrganizations(where: unknown, memberOf: ReadonlySet<ID>): unknown | null {
+	const organizationIds = [...memberOf];
+	if (!organizationIds.length) {
+		return null;
+	}
+	const bind = (condition: unknown): Record<string, unknown> | null => {
+		const values = condition && typeof condition === 'object' ? { ...(condition as Record<string, unknown>) } : {};
+		const stated = values['organizationId'];
+		if (stated === undefined || stated === null || stated === '') {
+			return { ...values, organizationId: In(organizationIds) };
+		}
+		if (typeof stated === 'string') {
+			return memberOf.has(stated as ID) ? values : null;
+		}
+		return values;
+	};
+	if (Array.isArray(where)) {
+		const conditions = where.map(bind).filter((condition) => condition !== null);
+		return conditions.length ? conditions : null;
+	}
+	return bind(where);
 }
 
 /**
@@ -269,17 +302,75 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	async findAll(
 		filters: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
-		const { employeeId: currentEmployeeId, seesAllIn } = await this.viewer();
+		return this.readVisible(filters, (options) => super.findAll(options));
+	}
+
+	/**
+	 * The CRUD controller's inherited `GET /pagination`: the same read as the list (the caller's organizations, then
+	 * the visibility rule), then one page of what the caller may see, and the number of all of it. The rule has no
+	 * query form (the steward, the caller's teams through the linked teams and the projects' teams), so the page is cut
+	 * after it: a page cut in the query would come back short, and its total would hide the later pages. As in the
+	 * CRUD base, `skip` is the page number and a page holds `take` initiatives (10 unless stated).
+	 *
+	 * @param filters - Filter criteria and the page.
+	 * @returns The page of initiatives the caller may see, and how many they may see in all.
+	 */
+	async paginate(
+		filters?: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
+	): Promise<IPagination<IOrganizationStrategicInitiative>> {
+		const { take, skip, ...rest } = (filters ?? {}) as BaseQueryDTO<OrganizationStrategicInitiative> & { take?: number; skip?: number };
+		// With no order of the caller's, by primary key, as the CRUD base orders a page: pages never overlap.
+		const ordered = (rest as { order?: unknown }).order ? rest : { ...rest, order: { id: 'ASC' } };
+		const { items } = await this.readVisible(ordered as typeof filters, (options) => super.findAll(options));
+		const size = Number(take) > 0 ? Number(take) : 10;
+		const offset = Number(skip) > 0 ? size * (Number(skip) - 1) : 0;
+		return { items: items.slice(offset, offset + size), total: items.length };
+	}
+
+	/**
+	 * How many initiatives the caller may see (the CRUD controller's inherited `GET /count`, the GraphQL count):
+	 * counted on the list's read, so a count never answers for another organization, nor for an initiative the
+	 * visibility rule hides (the rule has no query form; the read is bound to the caller's organizations and costs
+	 * what the list route costs).
+	 *
+	 * @param where - Filter criteria.
+	 * @returns The number of initiatives the caller may see.
+	 */
+	async countBy(where?: FindOptionsWhere<OrganizationStrategicInitiative>): Promise<number> {
+		const { total } = await this.findAll({ ...(where ? { where } : {}) } as BaseQueryDTO<OrganizationStrategicInitiative>);
+		return total;
+	}
+
+	/**
+	 * A list read narrowed to what the caller may see: bound to the caller's organizations in the query itself (before
+	 * a page is cut), then each row through the organization check and the visibility rule.
+	 *
+	 * @param filters - Filter criteria for initiatives.
+	 * @param read - The base read (the whole list, or a page).
+	 * @returns The initiatives the caller may see.
+	 */
+	private async readVisible(
+		filters: (BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput) | undefined,
+		read: (options: BaseQueryDTO<OrganizationStrategicInitiative>) => Promise<IPagination<OrganizationStrategicInitiative>>
+	): Promise<IPagination<IOrganizationStrategicInitiative>> {
+		const { employeeId: currentEmployeeId, memberOf, seesAllIn } = await this.viewer();
+
+		// Nothing to read outside the caller's organizations
+		const where = whereInOrganizations(filters?.where, memberOf);
+		if (!where) {
+			return { items: [], total: 0 };
+		}
 
 		// Ensure relations for visibility check are loaded (the directly linked teams, projects and their teams),
 		// next to the ones the caller asked for, in whichever form it asked (a list or an object)
-		const { items } = await super.findAll({
+		const { items } = await read({
 			...filters,
-			relations: withRelations(filters.relations, ['teams', 'projects', 'projects.teams']),
+			where,
+			relations: withRelations(filters?.relations, ['teams', 'projects', 'projects.teams']),
 			// The rule's own columns are read even when the caller selected others (the admin override needs the
 			// organization)
 			...(filters?.select ? { select: withSelected(filters.select, VISIBILITY_COLUMNS) } : {})
-		} as typeof filters);
+		} as BaseQueryDTO<OrganizationStrategicInitiative>);
 
 		// Pre-fetch employee team memberships to avoid N+1 queries
 		const employeeTeamIds = await this.getEmployeeTeamIds(currentEmployeeId);
@@ -287,9 +378,12 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		// Check leadership access once (instead of per-initiative)
 		const hasLeadership = await this.hasLeadershipAccess();
 
-		// Filter organization strategic initiatives based on visibility scope (no extra queries)
-		const filteredOrganizationStrategicInitiatives = items.filter((initiative) =>
-			this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership, seesAllIn)
+		// Filter organization strategic initiatives: the caller's organizations only, then the visibility scope (no
+		// extra queries)
+		const filteredOrganizationStrategicInitiatives = items.filter(
+			(initiative) =>
+				this.isInMemberOrganization(initiative, memberOf) &&
+				this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership, seesAllIn)
 		);
 
 		return {
@@ -310,7 +404,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		id: ID,
 		params?: BaseQueryDTO<OrganizationStrategicInitiative>
 	): Promise<IOrganizationStrategicInitiative> {
-		const { employeeId: currentEmployeeId, seesAllIn } = await this.viewer();
+		const { employeeId: currentEmployeeId, memberOf, seesAllIn } = await this.viewer();
 
 		// Find the organization strategic initiative with the requested relations (a list or an object), and its
 		// directly linked teams
@@ -332,8 +426,11 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			throw new NotFoundException(`Organization strategic initiative with id ${id} not found`);
 		}
 
-		// Check visibility
-		const canView = await this.canViewOrganizationStrategicInitiative(organizationStrategicInitiative, currentEmployeeId, seesAllIn);
+		// Check visibility: an initiative of an organization the caller is not a member of is answered as one that
+		// is not there, before the scope rule is read
+		const canView =
+			this.isInMemberOrganization(organizationStrategicInitiative, memberOf) &&
+			(await this.canViewOrganizationStrategicInitiative(organizationStrategicInitiative, currentEmployeeId, seesAllIn));
 		if (!canView) {
 			throw new NotFoundException(
 				`Organization strategic initiative with id ${id} not found or you don't have permission to view it`
@@ -351,7 +448,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 */
 	async findByProject(projectId: ID): Promise<IOrganizationStrategicInitiative[]> {
 		const tenantId = RequestContext.currentTenantId();
-		const { employeeId: currentEmployeeId, seesAllIn } = await this.viewer();
+		const { employeeId: currentEmployeeId, memberOf, seesAllIn } = await this.viewer();
 
 		// Get the project with its strategic initiatives and their projects/teams for visibility check
 		const project = await this._typeOrmOrganizationProjectRepository.findOne({
@@ -366,7 +463,8 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			}
 		});
 
-		if (!project) {
+		// A project of an organization the caller is not a member of is answered as one that is not there
+		if (!project || !memberOf.has(project.organizationId as ID)) {
 			throw new NotFoundException(`Project with id ${projectId} not found`);
 		}
 
@@ -378,16 +476,18 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		// Check leadership access once (instead of per-initiative)
 		const hasLeadership = await this.hasLeadershipAccess();
 
-		// Filter by visibility (no extra queries)
+		// Filter: the caller's organizations only, then the visibility scope (no extra queries)
 		return organizationStrategicInitiatives
-			.filter((initiative) =>
-				this.canViewOrganizationStrategicInitiativeSync(
-					initiative,
-					currentEmployeeId,
-					employeeTeamIds,
-					hasLeadership,
-					seesAllIn
-				)
+			.filter(
+				(initiative) =>
+					this.isInMemberOrganization(initiative, memberOf) &&
+					this.canViewOrganizationStrategicInitiativeSync(
+						initiative,
+						currentEmployeeId,
+						employeeTeamIds,
+						hasLeadership,
+						seesAllIn
+					)
 			)
 			.map((initiative) => this.withTeamIds(initiative));
 	}
@@ -441,6 +541,10 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	/**
 	 * Who reads, for the visibility rule.
 	 *
+	 * - `memberOf`: the organizations of the tenant the caller is a current member of (see
+	 *   `memberOrganizationIds`). Every read answers only initiatives of these organizations, whatever their scope:
+	 *   the CRUD base adds the tenant, not the organization, and the routes and GraphQL fields check permissions,
+	 *   not membership of the record's organization (#11050 review, CWE-863).
 	 * - `employeeId`: the caller's own employee. `RequestContext.currentEmployeeId()` is empty for a user who may
 	 *   act for every employee (`CHANGE_SELECTED_EMPLOYEE`, an admin), which hid a team-scoped initiative from its
 	 *   own steward when the steward was an admin not on the team, and never counted an admin's team membership.
@@ -450,9 +554,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 *   (a `user_organization` row, as `assertCurrentUserBelongsToOrganization` checks): they already edit them,
 	 *   and could not read what they edit. Never another organization of the tenant; empty for everybody else.
 	 *
-	 * @returns The caller's employee (or `null`) and the organizations whose every initiative they see.
+	 * @returns The caller's employee (or `null`), their organizations and those whose every initiative they see.
 	 */
-	private async viewer(): Promise<{ employeeId: ID | null; seesAllIn: ReadonlySet<ID> }> {
+	private async viewer(): Promise<{ employeeId: ID | null; memberOf: ReadonlySet<ID>; seesAllIn: ReadonlySet<ID> }> {
 		let ownEmployeeId: ID | null = null;
 		try {
 			ownEmployeeId = (RequestContext.currentUser()?.employeeId as ID) ?? null;
@@ -463,15 +567,19 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		const initiativeAdmin =
 			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
 			RequestContext.hasPermission(PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE);
+		const memberOf = await this.memberOrganizationIds();
 		return {
 			employeeId: employeeId || null,
-			seesAllIn: initiativeAdmin ? await this.memberOrganizationIds() : new Set<ID>()
+			memberOf,
+			seesAllIn: initiativeAdmin ? memberOf : new Set<ID>()
 		};
 	}
 
 	/**
-	 * The organizations of the caller's tenant they are a member of (`user_organization`); none without a tenant
-	 * or user in the request (fails closed).
+	 * The organizations of the caller's tenant they are a current member of: a `user_organization` row of the
+	 * tenant and user (as `assertCurrentUserBelongsToOrganization` checks) that is not deactivated
+	 * (`isActive = false`) or archived (`isArchived = true`); a row that states neither, as the column defaults
+	 * leave it, counts. None without a tenant or user in the request (fails closed).
 	 *
 	 * @returns Their organization ids.
 	 */
@@ -484,13 +592,34 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		try {
 			const memberships = await this.typeOrmRepository.manager.find(UserOrganization, {
 				where: { tenantId, userId },
-				select: { organizationId: true }
+				select: { organizationId: true, isActive: true, isArchived: true }
 			});
-			return new Set(memberships.map((membership) => membership.organizationId as ID).filter(Boolean));
+			return new Set(
+				memberships
+					.filter((membership) => membership.isActive !== false && membership.isArchived !== true)
+					.map((membership) => membership.organizationId as ID)
+					.filter(Boolean)
+			);
 		} catch (error) {
 			console.error('Error fetching organization memberships:', error.message);
 			return new Set();
 		}
+	}
+
+	/**
+	 * Whether an initiative belongs to one of the caller's organizations (see `viewer`). One read without its
+	 * organization is not (fails closed).
+	 *
+	 * @param organizationStrategicInitiative - The initiative (its `organizationId` read).
+	 * @param memberOf - The caller's organizations.
+	 * @returns True when the initiative is in one of them.
+	 */
+	private isInMemberOrganization(
+		organizationStrategicInitiative: IOrganizationStrategicInitiative,
+		memberOf: ReadonlySet<ID>
+	): boolean {
+		const organizationId = organizationStrategicInitiative?.organizationId as ID;
+		return !!organizationId && memberOf.has(organizationId);
 	}
 
 	/**

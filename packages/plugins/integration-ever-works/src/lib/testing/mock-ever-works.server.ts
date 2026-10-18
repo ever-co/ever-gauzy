@@ -426,6 +426,18 @@ export class MockEverWorksServer {
 			: MockEverWorksServer.error(400, 'validation_failed', `Parent Task scope (${parentScope}) must match child Task scope (${childScope}).`);
 	}
 
+	/**
+	 * Ever Works' refusal to change the owners (work, mission, idea, first team, agent, goal) of a task that has
+	 * sub-tasks: `400 validation_failed` with Ever Works' own message (`TasksService.update`).
+	 */
+	static subtasksRefusal(taskId: string, children: number): EverWorksHttpResponse {
+		return MockEverWorksServer.error(
+			400,
+			'validation_failed',
+			`Task ${taskId} has ${children} sub-task(s); re-file or detach them before changing its owners so parent and child scopes cannot diverge.`
+		);
+	}
+
 	/** An `ever-gauzy` key links as `gauzy` (contract v1, CR-1). */
 	static linkSource(key: Pick<MockEverWorksKey, 'integrationKind'>): string {
 		return key.integrationKind === 'ever-gauzy' ? 'gauzy' : key.integrationKind || 'generic';
@@ -542,6 +554,13 @@ export class MockEverWorksServer {
 				if (!visible(parent)) return MockEverWorksServer.error(400, 'validation_failed', `Parent Task ${parentId} not found.`);
 				const refused = MockEverWorksServer.parentScopeRefusal({ ...row, ...input }, parent);
 				if (refused) return refused;
+			}
+			// A task with sub-tasks keeps its owners (Ever Works refuses to strand them in another scope).
+			const ownersOf = (task: Record<string, unknown>) =>
+				JSON.stringify(['workId', 'missionId', 'ideaId', 'agentId', 'goalId'].map((field) => task[field] ?? null).concat([((task['teamIds'] as string[] | null | undefined) ?? [])[0] ?? null]));
+			if (ownersOf({ ...row, ...input }) !== ownersOf(row)) {
+				const children = [...this.tasks.values()].filter((task) => task['organizationId'] === organizationId && task['parentTaskId'] === row['id']).length;
+				if (children) return MockEverWorksServer.subtasksRefusal(row['id'] as string, children);
 			}
 			const previous: Record<string, unknown> = {};
 			for (const [field, value] of Object.entries(input)) {
