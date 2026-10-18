@@ -16,7 +16,7 @@ import {
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { TenantPermissionGuard, Permissions } from '@gauzy/core';
+import { TenantPermissionGuard, PermissionGuard, Permissions } from '@gauzy/core';
 import { UseGuards } from '@nestjs/common';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import {
@@ -25,8 +25,14 @@ import {
 	IActivepiecesMcpServersListResponsePublic
 } from '@gauzy/contracts';
 
+/**
+ * `TenantPermissionGuard` asks only whether ANY role of the tenant holds the permission a route states;
+ * `PermissionGuard` is what asks it of the caller's own role. With the tenant guard alone, every
+ * `@Permissions` below let any authenticated member of the tenant through (VIEWER, EMPLOYEE, CANDIDATE),
+ * while the `INTEGRATION_*` grants belong to ADMIN and SUPER_ADMIN by default.
+ */
 @ApiTags('ActivePieces MCP Server Integration')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @ApiBearerAuth()
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 @Controller('/integration/activepieces/mcp')
