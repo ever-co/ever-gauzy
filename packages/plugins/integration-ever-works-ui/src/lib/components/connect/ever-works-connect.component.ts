@@ -57,6 +57,9 @@ export interface EverWorksConnectResult {
 		@if (error) {
 			<nb-alert status="danger" role="alert" data-test="connect-error">{{ error }}</nb-alert>
 		}
+		@if (webhookKept) {
+			<nb-alert status="warning" role="status" data-test="webhook-kept">{{ 'EVER_WORKS.SETTINGS.DISCONNECT_WEBHOOK_KEPT' | translate }}</nb-alert>
+		}
 		@switch (step) {
 			@case ('key') {
 				<section data-test="step-key">
@@ -321,6 +324,11 @@ export class EverWorksConnectComponent implements OnChanges {
 	newKey = '';
 	/** Disconnect asks once more before it goes out. */
 	confirmDisconnect = false;
+	/**
+	 * The disconnect could not delete the Ever Works webhook subscription: the admin is told how to remove it, until a
+	 * reconnect (which deletes it) (#11096 review).
+	 */
+	webhookKept = false;
 	busy = false;
 	error: string | null = null;
 	/** Set once the first sync has started: the wizard stays locked until the page moves on. */
@@ -365,6 +373,7 @@ export class EverWorksConnectComponent implements OnChanges {
 		if (!this.canConnect) return;
 		this.request(this.api.connect(this.organizationId, this.apiBaseUrl.trim(), this.apiKey.trim()), (connection) => {
 			this.connection = connection;
+			this.webhookKept = false;
 			this.apiKey = '';
 			this.validation = null;
 			this.preselectOrganization();
@@ -405,9 +414,11 @@ export class EverWorksConnectComponent implements OnChanges {
 	disconnect(): void {
 		const connection = this.connection;
 		if (!connection) return;
-		this.request(this.api.disconnect(this.organizationId, connection.id), () => {
+		this.request(this.api.disconnect(this.organizationId, connection.id), (result) => {
 			this.connection = null;
 			this.confirmDisconnect = false;
+			// Disconnected, but Ever Works kept the webhook subscription (the server keeps its id): say so (#11096 review).
+			this.webhookKept = result?.webhookDeleted === false;
 			this.newKey = '';
 			this.everWorksOrganizationId = '';
 			this.step = 'key';

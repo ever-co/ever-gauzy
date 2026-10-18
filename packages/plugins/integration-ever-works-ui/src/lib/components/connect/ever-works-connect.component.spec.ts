@@ -192,6 +192,28 @@ describe('EverWorksConnectComponent', () => {
 		expect(component.connection).toBeNull();
 		expect(component.step).toBe('key');
 		expect(find('step-key')).not.toBeNull();
+		expect(find('webhook-kept')).toBeNull();
+	});
+
+	it('a disconnect that leaves the webhook subscription in Ever Works says how to remove it, until a reconnect (#11096 review)', () => {
+		api.disconnect.mockReturnValue(of({ success: true, webhookDeleted: false }));
+		api.validate.mockReturnValue(of(VALIDATION));
+		api.connect.mockReturnValue(of(CONNECTION));
+		const { component, find, click } = render({ connection: { ...CONNECTION, status: 'error' } as EverWorksConnection });
+		click('recover-disconnect');
+		click('recover-confirm-disconnect');
+		expect(component.step).toBe('key');
+		expect(find('webhook-kept')?.getAttribute('status')).toBe('warning');
+		expect(find('webhook-kept')?.textContent).toContain('EVER_WORKS.SETTINGS.DISCONNECT_WEBHOOK_KEPT');
+		// Still shown on the way to a new key; the reconnect (which deletes the subscription) clears it.
+		component.apiKey = 'ew_int_new';
+		click('have-key');
+		expect(find('webhook-kept')).not.toBeNull();
+		click('validate');
+		click('connect');
+		expect(api.connect).toHaveBeenCalledWith(ORGANIZATION_ID, 'https://api.example.test/api', 'ew_int_new');
+		expect(component.step).toBe('organization');
+		expect(find('webhook-kept')).toBeNull();
 	});
 
 	it('start registers the webhook (best effort), then starts the first sync and hands the run back', () => {
