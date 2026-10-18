@@ -36,7 +36,7 @@ jest.mock('@gauzy/core', () => {
 jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
 
 import 'reflect-metadata';
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { Employee, RequestContext } from '@gauzy/core';
 import { TestEverWorksClientFactory } from '../client/ever-works-client.factory';
@@ -68,16 +68,38 @@ function setup(options: { scopes?: string[]; links?: Array<{ ewId: string; gauzy
 		entityType: EverWorksLinkType.MEMBER,
 		state: 'ok'
 	}));
+	const person = (id: string, user: Record<string, unknown>, overrides: Record<string, unknown> = {}) => ({
+		id,
+		userId: `user-${id.slice('employee-'.length)}`,
+		kind: 'human',
+		tenantId: 't1',
+		organizationId: 'o1',
+		isActive: true,
+		isArchived: false,
+		user,
+		...overrides
+	});
 	const employees = [
-		{ id: 'employee-admin', userId: 'user-admin', kind: 'human', user: { firstName: 'Ann', lastName: 'Admin', email: 'admin@example.test' } },
-		{ id: 'employee-grace', userId: 'user-grace', kind: 'human', user: { firstName: 'Grace', lastName: 'Hopper', email: 'Grace@Example.test' } },
-		{ id: 'employee-mute', userId: 'user-mute', kind: 'human', user: { firstName: 'No', lastName: 'Mail', email: null } },
-		{ id: 'employee-bot', userId: 'user-bot', kind: 'agent', user: { firstName: 'Scout', lastName: '', email: 'scout@agents.invalid' } }
+		person('employee-admin', { firstName: 'Ann', lastName: 'Admin', email: 'admin@example.test' }),
+		person('employee-grace', { firstName: 'Grace', lastName: 'Hopper', email: 'Grace@Example.test' }),
+		person('employee-mute', { firstName: 'No', lastName: 'Mail', email: null }),
+		person('employee-bot', { firstName: 'Scout', lastName: '', email: 'scout@agents.invalid' }, { kind: 'agent' }),
+		person('employee-gone', { firstName: 'Gone', lastName: 'Away', email: 'gone@example.test' }, { isActive: false }),
+		person('employee-shelved', { firstName: 'Old', lastName: 'Timer', email: 'old@example.test' }, { isArchived: true }),
+		person('employee-far', { firstName: 'Far', lastName: 'Away', email: 'far@example.test' }, { organizationId: 'o2' })
 	];
+	// Honours the people query's filters, so dropping one of them would let an ineligible employee through.
 	const employeeRepo = {
-		find: jest.fn(async ({ where }: { where: { id?: { _value?: string[] } } }) => {
+		find: jest.fn(async ({ where }: { where: Record<string, unknown> & { id?: { _value?: string[] } } }) => {
 			const only = where.id && (where.id as { _value?: string[] })._value;
-			return employees.filter((e) => !only || only.includes(e.id));
+			return employees.filter(
+				(e) =>
+					e.tenantId === where['tenantId'] &&
+					e.organizationId === where['organizationId'] &&
+					e.isActive === where['isActive'] &&
+					e.isArchived === where['isArchived'] &&
+					(!only || only.includes(e.id))
+			);
 		}),
 		findOne: jest.fn(async ({ where }: { where: { userId?: string } }) => employees.find((e) => e.userId === where.userId) ?? null)
 	};
@@ -104,7 +126,7 @@ function setup(options: { scopes?: string[]; links?: Array<{ ewId: string; gauzy
 	const contexts = { forRequest: jest.fn(async () => context) };
 	const service = new EverWorksPeopleService(dataSource as never, contexts as never, connections as never, linkService as never, { execute: jest.fn() } as never);
 	const invites = () => mock.requests.filter((r) => r.method === 'POST' && r.path === '/members/invite');
-	return { service, mock, invites, linkService };
+	return { service, mock, invites, linkService, employeeRepo };
 }
 
 describe('EverWorksPeopleService — invite to Ever Works', () => {
@@ -148,6 +170,28 @@ describe('EverWorksPeopleService — invite to Ever Works', () => {
 		expect(mock.memberInvitations).toHaveLength(1);
 	});
 
+	it('sends a new invitation once the earlier one has expired', async () => {
+		const { service, mock } = setup();
+		await service.inviteToEverWorks(MAPPING as never, { employeeId: 'employee-grace' as never });
+		mock.memberInvitations[0].dto['expiresAt'] = new Date(Date.now() - 1000).toISOString();
+		const again = await service.inviteToEverWorks(MAPPING as never, { employeeId: 'employee-grace' as never });
+		expect(again.status).toBe('invited');
+		expect(mock.memberInvitations).toHaveLength(2);
+	});
+
+	it('answers an Ever Works failure as an HTTP error the tab can read, never a 500 or a 401', async () => {
+		for (const [status, code, expected] of [
+			[401, 'invalid_key', BadRequestException],
+			[403, 'org_not_pinned', BadRequestException],
+			[429, 'rate_limited', ServiceUnavailableException],
+			[503, 'internal_error', BadGatewayException]
+		] as const) {
+			const { service, mock } = setup();
+			mock.failures.push({ method: 'POST', path: '/members/invite', status, body: MockEverWorksServer.error(status, code, 'Injected.').data, times: 10 });
+			await expect(service.inviteToEverWorks(MAPPING as never, { employeeId: 'employee-grace' as never })).rejects.toBeInstanceOf(expected);
+		}
+	});
+
 	it('refuses an admin without the invite permission (403) and sends nothing', async () => {
 		granted.clear();
 		const { service, invites } = setup();
@@ -155,8 +199,14 @@ describe('EverWorksPeopleService — invite to Ever Works', () => {
 		expect(invites()).toHaveLength(0);
 	});
 
-	it('refuses an agent, an unknown id, or a person without an e-mail (400)', async () => {
-		for (const employeeId of ['employee-bot', 'employee-nobody', 'employee-mute']) {
+	it('asks only for active, unarchived people of the mapped organization', async () => {
+		const { service, employeeRepo } = setup();
+		await service.inviteToEverWorks(MAPPING as never, { employeeId: 'employee-grace' as never });
+		expect(employeeRepo.find.mock.calls[0][0].where).toEqual(expect.objectContaining({ tenantId: 't1', organizationId: 'o1', isActive: true, isArchived: false }));
+	});
+
+	it('refuses an agent, an unknown id, a person without an e-mail, an inactive, archived or other-organization employee (400)', async () => {
+		for (const employeeId of ['employee-bot', 'employee-nobody', 'employee-mute', 'employee-gone', 'employee-shelved', 'employee-far']) {
 			const { service, invites } = setup();
 			await expect(service.inviteToEverWorks(MAPPING as never, { employeeId: employeeId as never })).rejects.toBeInstanceOf(BadRequestException);
 			expect(invites()).toHaveLength(0);

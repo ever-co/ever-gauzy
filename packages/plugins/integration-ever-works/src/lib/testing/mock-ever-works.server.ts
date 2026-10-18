@@ -350,7 +350,14 @@ export class MockEverWorksServer {
 			const normalized = email.toLowerCase();
 			const member = this.members.find((m) => m['organizationId'] === org?.id && String(m['email'] ?? '').toLowerCase() === normalized);
 			if (member) return ok({ status: 'already_member', invitation: null, userId: member['userId'] });
-			const pending = this.memberInvitations.find((i) => i.organizationId === org?.id && String(i.dto['email']).toLowerCase() === normalized);
+			// Only a live invitation (pending, not expired) is answered again; an expired one gets a new invitation.
+			const pending = this.memberInvitations.find(
+				(i) =>
+					i.organizationId === org?.id &&
+					String(i.dto['email']).toLowerCase() === normalized &&
+					i.dto['status'] === 'pending' &&
+					Date.parse(String(i.dto['expiresAt'])) > Date.now()
+			);
 			if (pending) return ok({ status: 'pending', invitation: pending.dto, userId: null });
 			const now = Date.now();
 			const dto = {
