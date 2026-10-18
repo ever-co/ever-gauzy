@@ -12,7 +12,7 @@ import { UsersService } from './users.service';
 describe('UsersService.getMe', () => {
 	let service: UsersService;
 	let backend: HttpTestingController;
-	const store = { userId: 'user-1', token: 'token-a' };
+	let store = { userId: 'user-1', token: 'token-a' };
 	const me = { id: 'user-1', email: 'ada@example.com' };
 
 	beforeEach(() => {
@@ -62,6 +62,20 @@ describe('UsersService.getMe', () => {
 
 		service.getMe();
 		backend.expectOne((request) => request.url.endsWith('/user/me')).flush(me);
+	});
+
+	it('does not keep a read that overlapped a write, once the write has settled', async () => {
+		const writing = service.update('user-1', { firstName: 'Ada' });
+		// A route read while the save is pending remembers the old row...
+		const stale = service.getMe();
+		backend.expectOne((request) => request.url.endsWith('/user/me')).flush({ ...me, firstName: 'Old' });
+		expect(await stale).toEqual({ ...me, firstName: 'Old' });
+		backend.expectOne((request) => request.method === 'PUT').flush({});
+		await writing;
+		// ...and is not served again after the save.
+		const fresh = service.getMe();
+		backend.expectOne((request) => request.url.endsWith('/user/me')).flush({ ...me, firstName: 'Ada' });
+		expect(await fresh).toEqual({ ...me, firstName: 'Ada' });
 	});
 
 	it('asks again after a failed request', async () => {

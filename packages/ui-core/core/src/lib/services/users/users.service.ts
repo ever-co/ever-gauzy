@@ -52,6 +52,20 @@ export class UsersService {
 	}
 
 	/**
+	 * Runs a write of the signed-in user with the recent answers of {@link getMe} forgotten before it starts
+	 * and again once it has settled: a read that overlapped the write and remembered the old row must not
+	 * outlive the write.
+	 */
+	private async write<R>(request: () => Promise<R>): Promise<R> {
+		this.forgetMe();
+		try {
+			return await request();
+		} finally {
+			this.forgetMe();
+		}
+	}
+
+	/**
 	 * Retrieves a user by their email address.
 	 *
 	 * @param emailId - The email address of the user to retrieve.
@@ -81,8 +95,7 @@ export class UsersService {
 	 * @returns A Promise that resolves with the server's response after updating the user.
 	 */
 	async update(id: ID, input: IUserUpdateInput): Promise<any> {
-		this.forgetMe();
-		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/${id}`, input));
+		return this.write(() => firstValueFrom(this.http.put(`${API_PREFIX}/user/${id}`, input)));
 	}
 
 	/**
@@ -93,8 +106,7 @@ export class UsersService {
 	 * @returns A Promise that resolves with the server's response after deleting the user.
 	 */
 	async delete(id: ID, user: any): Promise<any> {
-		this.forgetMe();
-		return await firstValueFrom(this.http.delete(`${API_PREFIX}/user/${id}`, { body: user }));
+		return this.write(() => firstValueFrom(this.http.delete(`${API_PREFIX}/user/${id}`, { body: user })));
 	}
 
 	/**
@@ -103,8 +115,7 @@ export class UsersService {
 	 * @returns A Promise that resolves once all user data has been successfully deleted.
 	 */
 	async deleteAllData(): Promise<any> {
-		this.forgetMe();
-		return await firstValueFrom(this.http.delete(`${API_PREFIX}/user/reset`));
+		return this.write(() => firstValueFrom(this.http.delete(`${API_PREFIX}/user/reset`)));
 	}
 
 	/**
@@ -114,8 +125,7 @@ export class UsersService {
 	 * @returns A Promise that resolves once the preferred language has been successfully updated.
 	 */
 	async updatePreferredLanguage(input: IUserUpdateInput): Promise<any> {
-		this.forgetMe();
-		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-language`, input));
+		return this.write(() => firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-language`, input)));
 	}
 
 	/**
@@ -125,8 +135,7 @@ export class UsersService {
 	 * @returns A Promise that resolves once the preferred layout has been successfully updated.
 	 */
 	async updatePreferredComponentLayout(input: IUserUpdateInput): Promise<any> {
-		this.forgetMe();
-		return await firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-layout`, input));
+		return this.write(() => firstValueFrom(this.http.put(`${API_PREFIX}/user/preferred-layout`, input)));
 	}
 
 	/**
@@ -137,7 +146,8 @@ export class UsersService {
 	 * @returns A Promise resolving to the merged preferences as now stored.
 	 */
 	async updateUiPreferences(patch: IUserUiPreferencesUpdateInput): Promise<IUserUiPreferences> {
-		this.forgetMe();
-		return await firstValueFrom(this.http.put<IUserUiPreferences>(`${API_PREFIX}/user/ui-preferences`, patch));
+		return this.write(() =>
+			firstValueFrom(this.http.put<IUserUiPreferences>(`${API_PREFIX}/user/ui-preferences`, patch))
+		);
 	}
 }

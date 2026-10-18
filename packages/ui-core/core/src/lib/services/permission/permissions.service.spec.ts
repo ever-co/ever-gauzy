@@ -15,7 +15,7 @@ describe('PermissionsService.loadPermissions', () => {
 	let service: PermissionsService;
 	let backend: HttpTestingController;
 	let ngxPermissions: { flushPermissions: jest.Mock; loadPermissions: jest.Mock };
-	const store: { userId: string | null; token: string; userRolePermissions?: unknown } = {
+	let store: { userId: string | null; token: string; userRolePermissions?: unknown } = {
 		userId: 'user-1',
 		token: 'token-a'
 	};
