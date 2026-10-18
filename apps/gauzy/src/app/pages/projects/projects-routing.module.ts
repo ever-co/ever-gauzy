@@ -7,6 +7,7 @@ import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
 import { ProjectListComponent } from './components/project-list/list.component';
+import { ProjectViewPageComponent } from './components/project-view/project-view-page.component';
 import { ProjectManagerOrPermissionGuard } from './guards/project-manager-or-permission.guard';
 
 const routes: Routes = [
@@ -40,6 +41,20 @@ const routes: Routes = [
 						employee: false,
 						organization: false
 					}
+				}
+			},
+			{
+				// The project's own page — status, budget, progress, tasks, hours, contributors and its record —
+				// at a URL of its own: what the list's View button and a sidebar favorite open.
+				path: 'view/:id',
+				component: ProjectViewPageComponent,
+				canActivate: [PermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW],
+						redirectTo: '/pages/organization/projects'
+					},
+					selectors: { project: false, team: false, employee: false, date: false }
 				}
 			},
 			{
