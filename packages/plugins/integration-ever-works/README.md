@@ -208,8 +208,13 @@ and answered `202`.
 - **People.** Ever Works members are paired with Gauzy people on the People
   tab: a verified, case-insensitive email match is only a suggestion the admin
   confirms (one by one or all at once); nothing is linked silently and
-  unlinking removes only the pairing. Ever ID matching waits for Gauzy to
-  store Ever ID subjects. A member with no Gauzy person can be **invited to
+  unlinking removes only the pairing. **Ever ID comes first:** a member whose
+  Ever ID (`everIdSubjects`) is the Ever ID of exactly one Gauzy person (the
+  Ever ID sign-in links, `zitadel_account`) is paired automatically when the
+  tab is read; an admin who undoes such a pairing is not overruled (the member
+  is only suggested from then on). Without Ever ID data on either side nothing
+  changes. Every pairing shows how it was made (`matchedBy`: `ever_id`,
+  `verified_email` or `manual`). A member with no Gauzy person can be **invited to
   Gauzy**: the platform's own employee invitation (its email, invite rules and
   accept path) for the tenant's Employee role, the only role whose acceptance
   creates an employee to pair (change the role once they have joined), for a

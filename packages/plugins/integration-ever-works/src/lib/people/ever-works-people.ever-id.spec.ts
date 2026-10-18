@@ -2,7 +2,7 @@
  * Ever ID matching on the People tab (G-P1-6, plan 01 §3 step 1, decision D5): when an Ever Works member and a Gauzy
  * person carry the same Ever ID (Ever Works `everIdSubjects` ↔ Gauzy `zitadel_account`), they are paired
  * automatically; otherwise a verified e-mail is a suggestion and the admin confirms (as before). Every pairing keeps
- * how it was made (`matchedBy`: ever_id / verified_email / manual), and an admin who unpairs an Ever ID pair is not
+ * how it was made (`matchedBy`: ever_id / verified_email / manual), and an admin who undoes an Ever ID pairing is not
  * overruled: that member is only suggested from then on.
  */
 jest.mock('@gauzy/core', () => {
@@ -99,7 +99,7 @@ describe('everIdMatches', () => {
 		expect(shared.size).toBe(0);
 	});
 
-	it('ignores identities of users who are not a pairable person of the organization', () => {
+	it('ignores identities of users who are not a person of the organization who may be paired', () => {
 		expect(everIdMatches([{ userId: 'U', everIdSubjects: [{ issuer: ISSUER, subject: 'a' }] }], users([[ISSUER, 'a', ['user-elsewhere']]]), new Map()).size).toBe(0);
 	});
 });
@@ -262,7 +262,7 @@ describe('EverWorksPeopleService — Ever ID matching', () => {
 		expect(queried).toEqual([]);
 	});
 
-	it('keeps an admin unpairing of an Ever ID pair: the member is declined, then only suggested (reason ever_id)', async () => {
+	it('keeps an admin undoing an Ever ID pairing: the member is declined, then only suggested (reason ever_id)', async () => {
 		const { service, links, declined } = setup({ members: [ada({ email: 'nobody@example.test' })], accounts: [adaAccount], links: [{ ewId: 'U-ada', gauzyId: 'E-ada', matchedBy: 'ever_id' }] });
 		await service.decide('m1' as never, { unlinks: ['U-ada'] });
 		expect(links).toHaveLength(0);
