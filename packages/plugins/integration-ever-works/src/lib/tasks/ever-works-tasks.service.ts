@@ -336,8 +336,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!link && task.hiddenFromBoard && !includeHidden) return { status: 'skipped', message: 'tasks hidden from the board (triage) are not synced (setting)' };
 		const actor = await this.actorOf(context, envelope.actor);
 		if (!link) {
-			const adopted = await this.adoptOwn(context, task);
+			const adopted = await this.adoptOwn(context, task, version);
 			if (!adopted) return this.createFromEverWorks(context, task, version, actor, depth);
+			if (adopted === 'adopted') return { status: 'applied', message: 'linked to the Gauzy task it was created from; the Gauzy values are pushed' };
 			link = adopted;
 		}
 		return this.updateFromEverWorks(context, link, task, version, envelope.occurredAt, actor, depth);
@@ -347,7 +348,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	 * A task Gauzy pushed itself whose link was not recorded (the answer was lost): Ever Works lists our
 	 * external link on it, so it is linked back instead of being created a second time in Gauzy.
 	 */
-	private async adoptOwn(context: EverWorksMappingContext, task: EverWorksTask): Promise<EverWorksEntityLink | null> {
+	private async adoptOwn(context: EverWorksMappingContext, task: EverWorksTask, version: number | null): Promise<EverWorksEntityLink | 'adopted' | null> {
 		const own = (task.externalLinks ?? []).find(
 			(row) => row.source === EVER_WORKS_LINK_SOURCE && (!row.installationId || row.installationId === context.connection.id)
 		);
@@ -356,10 +357,13 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!gauzyTask || gauzyTask.organizationId !== context.organizationId) return null;
 		const existing = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, gauzyTask.id as ID);
 		if (existing) return existing.ewId === task.id ? existing : null;
-		// The Gauzy side as it is and no Ever Works side yet: the update that follows applies Ever Works'
-		// current values (the task was created from this one; Ever Works may have edited it since).
-		await this.record(context, gauzyTask.id as ID, task, null, { g: await this.gauzySide(context, gauzyTask), e: {} }, 'inbound', {});
-		return this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, gauzyTask.id as ID);
+		// Gauzy created it, and what it was created with is not known: the transition or a set may not have run, and
+		// Ever Works keeps a cut title and cut labels. So nothing of Ever Works' copy is written into Gauzy: the pair is
+		// linked with no Gauzy side, and the push queued here sends every Gauzy value that differs from Ever Works
+		// (review F81), as the outbound recovery of a lost answer does (CR-2).
+		await this.record(context, gauzyTask.id as ID, task, version ?? task.version ?? null, { g: {}, e: everWorksSideOf(task) }, 'inbound', {});
+		await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: gauzyTask.id as ID, op: 'upsert' });
+		return 'adopted';
 	}
 
 	private async createFromEverWorks(
@@ -497,7 +501,16 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (everWorksChanged('labels')) {
 			const names = applySetChange(g.tags ?? [], prevE.labels ?? [], e.labels ?? [], lower);
 			if (!sameField(names, g.tags)) {
-				input.tags = (await this.store.ensureTags(context.tenantId, context.organizationId, names)).map((tag) => ({ id: tag.id })) as never;
+				// The task's own tags (a team-scoped one included) stay for the names it has: only the names Ever Works
+				// added are resolved or created, so a label change never swaps a team tag for an organization copy (review F83).
+				const own = new Map<string, ID>();
+				for (const tag of (row.tags ?? []) as Array<{ id?: ID; name?: string | null }>) if (tag.id && tag.name) own.set(lower(tag.name), tag.id);
+				const added = names.filter((name) => !own.has(lower(name)));
+				const resolved = new Map((await this.store.ensureTags(context.tenantId, context.organizationId, added)).map((tag) => [lower(tag.name), tag.id as ID]));
+				input.tags = names.flatMap((name) => {
+					const id = own.get(lower(name)) ?? resolved.get(lower(name));
+					return id ? [{ id }] : [];
+				}) as never;
 			}
 			setSnapshots.tags = applySetChange(prevG.tags ?? g.tags ?? [], prevE.labels ?? [], e.labels ?? [], lower).sort((a, b) => lower(a).localeCompare(lower(b)));
 		}
@@ -1113,7 +1126,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		everWorksTaskId: string,
 		sets: { watchers?: string[]; blockedBy?: string[]; relations?: string[] },
 		version: number | undefined,
-		actAs: string | null
+		actAs: string | null,
+		/** Called with Ever Works' answer after each set it took (a create records its link as it goes, review F82). */
+		onApplied?: (task: EverWorksTask) => Promise<void>
 	): Promise<{ task: EverWorksTask | null; version: number | undefined }> {
 		const path = `/tasks/${encodeURIComponent(everWorksTaskId)}`;
 		const calls: Array<[string, Record<string, unknown>]> = [];
@@ -1125,6 +1140,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			try {
 				task = await this.withActAs(actAs, (actor) => client.request<EverWorksTask>('PUT', `${path}/${name}`, { body, ifMatchVersion: version, actAsUserId: actor }));
 				version = task?.version ?? version;
+				if (task && onApplied) await onApplied(task);
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && error.status === 422)) throw error;
 				await this.logConflict(context, taskId, everWorksTaskId, `${name}_refused`, error.message, { details: error.details ?? null });
@@ -1195,12 +1211,20 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				refusal: (error as Error).message
 			});
 		}
+		// Linked at once, and again after each step Ever Works took (review F82): a refusal of the transition or of a set
+		// below never leaves the Ever Works task unlinked (each later edit would create it again), nor its link behind
+		// Ever Works' version. With no Gauzy side yet, so whatever did not reach Ever Works is a difference the next push
+		// sends; the full snapshot is recorded once every step went through.
+		const linkAsIs = (answer: EverWorksTask) =>
+			this.record(context, task.id as ID, answer, answer.version ?? null, { g: {}, e: everWorksSideOf(answer) }, 'outbound', { heldParent });
+		await linkAsIs(created);
 		let dto = created;
 		let g: TaskGauzySide = { ...out.g, ...planning.held };
 		if (wanted && wanted !== dto.status) {
 			const moved = await this.transition(context, client, task, dto.id, wanted, actAs);
 			dto = moved.task;
 			if (moved.revertedTo !== undefined) g = { ...g, status: moved.revertedTo };
+			await linkAsIs(dto);
 		}
 		// Watchers, blockers and relations are sets of their own (not in the create body).
 		const sets = {
@@ -1209,7 +1233,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			...(out.relations.length ? { relations: out.relations } : {})
 		};
 		if (Object.keys(sets).length) {
-			const put = await this.putSets(context, client, task.id as ID, dto.id, sets, dto.version ?? undefined, actAs);
+			const put = await this.putSets(context, client, task.id as ID, dto.id, sets, dto.version ?? undefined, actAs, linkAsIs);
 			dto = put.task ?? dto;
 		}
 		await this.record(context, task.id as ID, dto, dto.version ?? null, { g, e: everWorksSideOf(dto) }, 'outbound', {
