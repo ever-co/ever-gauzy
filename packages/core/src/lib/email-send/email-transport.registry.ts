@@ -114,6 +114,12 @@ export class EmailTransportRegistry {
 					this.logger.warn(`Email transport resolver ${id} answered without a transport; skipped.`);
 					continue;
 				}
+				// A sender that needs the transport's own default sender: one without is passed over, and the next
+				// resolver is asked (#11095 review; a resolver may not know the flag).
+				if (request?.requireFromAddress && !resolution.fromAddress) {
+					this.logger.debug(`Email transport resolver ${id} answered a transport without a sender; skipped.`);
+					continue;
+				}
 				return { ...resolution, source: resolution.source || id };
 			} catch (error) {
 				// Log-safe: a provider's error text can carry addresses, so they are masked.
