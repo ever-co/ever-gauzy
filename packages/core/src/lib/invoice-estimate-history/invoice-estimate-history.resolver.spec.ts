@@ -485,17 +485,25 @@ describe('InvoiceEstimateHistoryResolver — the guard stack and the permission 
 		];
 
 		for (const [field, handler] of routes) {
-			// The controller states nothing on its class, so the class here carries the gate alone and each
-			// field supplies exactly what its own route supplies — which for the list is the guards and the
-			// permission the list route states on itself, and for the rest is nothing at all.
+			// The controller states the guard pair on its class and no route restates it, so the class here
+			// carries the same pair beside the gate and no field adds a guard of its own.
 			expect([...guardsOfRoute(InvoiceEstimateHistoryController, handler), FeatureFlagGuard].sort()).toEqual(
 				[...guardsOfField(field)].sort()
 			);
 		}
 	});
 
-	it('states no permission on the class, because the controller states none', () => {
-		expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceEstimateHistoryController)).toBeUndefined();
+	it('gates every route of the controller, inherited ones included, and states every field\'s permission on the field', () => {
+		// The class-level grant is what every inherited route the controller does not override runs under
+		// (the edit and the removal). The resolver states nothing on its class: each field below states the
+		// permission its own route runs under, which the next test compares route by route.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceEstimateHistoryController)).toEqual([
+			PermissionsEnum.INVOICES_EDIT
+		]);
+		expect(Reflect.getMetadata('__guards__', InvoiceEstimateHistoryController)).toEqual([
+			TenantPermissionGuard,
+			PermissionGuard
+		]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceEstimateHistoryResolver)).toBeUndefined();
 	});
 
@@ -519,40 +527,39 @@ describe('InvoiceEstimateHistoryResolver — the guard stack and the permission 
 		expect(stated).toEqual(expected);
 	});
 
-	it('carries the invoice view permission on the list, and the edit permission on the retire-and-restore pair', () => {
-		// The list route states the pair of guards and the permission on itself; the controller's class
-		// states neither, and the CRUD base's own routes state neither either.
-		expect(permissionOfField('invoiceEstimateHistories')).toEqual([PermissionsEnum.INVOICES_VIEW]);
-		expect(Reflect.getMetadata('__guards__', handlersOf(InvoiceEstimateHistoryController)['findAll'])).toEqual([
-			TenantPermissionGuard,
-			PermissionGuard
+	it('reads under the invoices view grant, files under the grants of the actions it records, and edits under the edit grant', () => {
+		// Every route but the list and the two soft routes used to be the CRUD base's own, with no guard and no
+		// permission: any member of the tenant could read, file, rewrite or delete the log of any invoice.
+		for (const field of ['invoiceEstimateHistories', 'invoiceEstimateHistory', 'invoiceEstimateHistoryCount']) {
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.INVOICES_VIEW]);
+		}
+
+		// Downloading or commenting (view), changing or sending (edit), and recording a payment each file an
+		// entry, and `checkRolePermission` passes on any one of them.
+		expect(permissionOfField('createInvoiceEstimateHistory')).toEqual([
+			PermissionsEnum.INVOICES_VIEW,
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_PAYMENT_ADD_EDIT
 		]);
 
-		// The retire-and-restore pair was inherited with no guard and no permission, so any authenticated
-		// caller could retire or restore a history row (GHSA-v79w-54p2-wmh5). The controller overrides both to
-		// state the list's pair of guards and the invoices' edit grant, and the fields state the same.
-		for (const [field, route] of [
-			['softDeleteInvoiceEstimateHistory', 'softRemove'],
-			['recoverInvoiceEstimateHistory', 'softRecover']
+		for (const field of [
+			'updateInvoiceEstimateHistory',
+			'deleteInvoiceEstimateHistory',
+			'softDeleteInvoiceEstimateHistory',
+			'recoverInvoiceEstimateHistory'
 		]) {
-			expect(Reflect.getMetadata('__guards__', handlersOf(InvoiceEstimateHistoryController)[route])).toEqual([
-				TenantPermissionGuard,
-				PermissionGuard
-			]);
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(InvoiceEstimateHistoryController)[route])).toEqual([
-				PermissionsEnum.INVOICES_EDIT
-			]);
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.INVOICES_EDIT]);
 		}
 
-		for (const field of [
-			'invoiceEstimateHistory',
-			'invoiceEstimateHistoryCount',
-			'createInvoiceEstimateHistory',
-			'updateInvoiceEstimateHistory',
-			'deleteInvoiceEstimateHistory'
-		]) {
-			expect(permissionOfField(field)).toBeUndefined();
+		// The controller overrides every inherited read and the creation only to state their grants, and lets
+		// the edit and the removal run under the class's; none of them restates the class's guards.
+		for (const route of ['getCount', 'pagination', 'findAll', 'findById', 'create', 'softRemove', 'softRecover']) {
+			expect(Object.prototype.hasOwnProperty.call(InvoiceEstimateHistoryController.prototype, route)).toBe(true);
+			expect(Reflect.getMetadata('__guards__', handlersOf(InvoiceEstimateHistoryController)[route])).toBeUndefined();
+		}
+		for (const route of ['update', 'delete']) {
+			expect(Object.prototype.hasOwnProperty.call(InvoiceEstimateHistoryController.prototype, route)).toBe(false);
+			expect(permissionOfRoute(InvoiceEstimateHistoryController, route)).toEqual([PermissionsEnum.INVOICES_EDIT]);
 		}
 	});
 });

@@ -1,12 +1,19 @@
-import { ID } from '@gauzy/contracts';
-import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
+import {
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { VerifyPluginCommand } from '../../application';
 import { VerifyPluginDTO } from '../../shared';
 
 @ApiTags('Plugin Security')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/plugins/:id/verifications')
 export class PluginSecurityController {
 	constructor(private readonly commandBus: CommandBus) {}
@@ -18,6 +25,7 @@ export class PluginSecurityController {
 	@ApiResponse({ status: 400, description: 'Bad request - validation failed' })
 	@ApiResponse({ status: 404, description: 'Plugin not found' })
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Post()
 	public async createVerification(
 		@Param('id', UUIDValidationPipe) id: ID,

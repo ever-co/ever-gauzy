@@ -1,6 +1,6 @@
 import { Public } from '@gauzy/common';
-import { ID, IPagination } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -44,8 +44,14 @@ import { IPluginTag, IPluginTagBulkCreateResponse } from '../../shared/models/pl
  * - PluginTagsController: /plugins/{id}/tags (managing tags for a specific plugin)
  * - TagPluginsController: /tags/{id}/plugins (managing plugins for a specific tag)
  * - PluginRecommendationsController: /plugins/{id}?similar=true (plugin recommendations)
+ *
+ * Permissions: the guard pair is stated on the class and the two reads stay `@Public`. The writes used to state
+ * the guards with no permission, which `PermissionGuard` answers `true` to, and the update stated nothing at
+ * all, so any member of the tenant could tag or untag any plugin. Tagging a plugin edits it, so every write now
+ * states `PLUGIN_UPDATE`, the grant `PUT /plugins/:id` states.
  */
 @ApiTags('Plugin Tags')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-tags')
 export class PluginTagController {
 	constructor(private readonly pluginTagService: PluginTagService) {}
@@ -135,6 +141,7 @@ export class PluginTagController {
 	 * @param createDto Plugin-tag creation data
 	 * @returns Created plugin-tag relationship
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Post()
 	@ApiOperation({
 		summary: 'Create plugin-tag relationship',
@@ -151,7 +158,6 @@ export class PluginTagController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input data or relationship already exists'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async create(@Body(new ValidationPipe({ transform: true })) createDto: CreatePluginTagDTO): Promise<IPluginTag> {
 		return this.pluginTagService.create(createDto);
 	}
@@ -163,6 +169,7 @@ export class PluginTagController {
 	 * @param updateDto Update data
 	 * @returns Updated plugin-tag relationship
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Put(':id')
 	@ApiOperation({
 		summary: 'Update plugin-tag relationship',
@@ -192,6 +199,7 @@ export class PluginTagController {
 	 * @param id Plugin-tag relationship ID
 	 * @returns Deletion result
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Delete(':id')
 	@ApiOperation({
 		summary: 'Delete plugin-tag relationship',
@@ -206,7 +214,6 @@ export class PluginTagController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin-tag relationship not found'
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.pluginTagService.delete(id);
 	}
@@ -214,6 +221,7 @@ export class PluginTagController {
 	/**
 	 * Batch create plugin-tag relationships
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Post('batch')
 	@ApiOperation({
 		summary: 'Batch create plugin-tag relationships',
@@ -232,7 +240,6 @@ export class PluginTagController {
 			}
 		}
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async batchCreate(
 		@Body(new ValidationPipe({ transform: true })) bulkCreateDto: BulkCreatePluginTagDTO
 	): Promise<IPluginTagBulkCreateResponse> {
@@ -242,6 +249,7 @@ export class PluginTagController {
 	/**
 	 * Batch delete plugin-tag relationships
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Delete('batch')
 	@ApiOperation({
 		summary: 'Batch delete plugin-tag relationships',
@@ -259,7 +267,6 @@ export class PluginTagController {
 			}
 		}
 	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	async batchDelete(
 		@Body(new ValidationPipe({ transform: true })) bulkDeleteDto: BulkDeletePluginTagDTO
 	): Promise<{ deleted: number }> {
