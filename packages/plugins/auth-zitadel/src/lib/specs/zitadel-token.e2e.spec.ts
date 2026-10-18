@@ -45,7 +45,12 @@ describe('Token route for first-party clients (HTTP, against a mock OpenID Provi
 	});
 
 	it('refuses a valid ID token whose e-mail is not verified with 401 email_unverified, and signs nothing in', async () => {
-		const idToken = await t.issuer.sign(t.issuer.idTokenClaims('teams-user', { aud: 'teams-web', email_verified: false }));
+		// The token is valid for the route: an allow-listed audience *and* authorized party. The mock issuer's
+		// default `azp` is this product's own web client, which the route refuses with a bare 401 before it
+		// ever reads `email_verified`, so the case has to state the allow-listed client as `azp` too.
+		const idToken = await t.issuer.sign(
+			t.issuer.idTokenClaims('teams-user', { aud: 'teams-web', azp: 'teams-web', email_verified: false })
+		);
 		const response = await post({ id_token: idToken });
 		expect(response.status).toBe(401);
 		const body = await response.json();
