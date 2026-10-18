@@ -134,7 +134,10 @@ export function inboxUpsertOf(
 				isRead: !item.unread,
 				isArchived: deleted || item.status === 'archived'
 			}
-		]
+		],
+		// An Ever Works item has exactly one recipient: a member paired again takes it from the person paired before,
+		// who stops reading it and its later updates (review F93).
+		replaceRecipients: true
 	};
 }
 
