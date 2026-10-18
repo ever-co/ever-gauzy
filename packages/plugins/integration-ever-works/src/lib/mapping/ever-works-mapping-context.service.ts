@@ -1,12 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { ID } from '@gauzy/contracts';
-import { IntegrationTenant } from '@gauzy/core';
+import { ID, IntegrationEntity } from '@gauzy/contracts';
+import { IntegrationEntitySetting, IntegrationTenant } from '@gauzy/core';
 import { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EVER_WORKS_INTEGRATION_NAME } from '../ever-works.constants';
 import { EverWorksSettingName as S } from '../ever-works-setting.enum';
 import { EverWorksScopeService } from '../ever-works-scope.service';
-import { DEFAULT_EVER_WORKS_DIRECTIONS, EverWorksDirection, EverWorksDomain } from './ever-works-mapping.defaults';
+import {
+	DEFAULT_EVER_WORKS_DIRECTIONS,
+	effectiveDirections,
+	EVER_WORKS_SYNCED_ENTITIES,
+	EverWorksDirection,
+	EverWorksDomain,
+	EverWorksEntitySync
+} from './ever-works-mapping.defaults';
 
 /** One organization mapping, resolved with its connection: what every per-entity sync step needs. */
 export interface EverWorksMappingContext {
@@ -17,7 +24,13 @@ export interface EverWorksMappingContext {
 	connection: EverWorksConnection;
 	everWorksOrganizationId: string;
 	everWorksOrganizationSlug: string;
+	/**
+	 * The directions that take effect: the stored `ENTITY_DIRECTIONS`, with the domains of an entity whose
+	 * `integration_entity_setting` toggle is `sync: false` set to `off` (OQ4, review F77).
+	 */
 	directions: Record<EverWorksDomain, EverWorksDirection>;
+	/** The per-entity toggles as stored (`false`: not synced; missing: on). Read with `entitySynced()`. */
+	entitySync?: EverWorksEntitySync;
 	isEnabled: boolean;
 }
 
@@ -103,6 +116,7 @@ export class EverWorksMappingContextService {
 		} catch {
 			stored = {};
 		}
+		const entitySync = await this.entitySyncOf(mapping);
 		return {
 			tenantId: mapping.tenantId as ID,
 			organizationId: mapping.organizationId as ID,
@@ -111,9 +125,30 @@ export class EverWorksMappingContextService {
 			connection,
 			everWorksOrganizationId: setting(mapping, S.EVER_WORKS_ORGANIZATION_ID),
 			everWorksOrganizationSlug: setting(mapping, S.EVER_WORKS_ORGANIZATION_SLUG),
-			directions: { ...DEFAULT_EVER_WORKS_DIRECTIONS, ...stored },
+			directions: effectiveDirections({ ...DEFAULT_EVER_WORKS_DIRECTIONS, ...stored }, entitySync),
+			entitySync,
 			isEnabled: setting(mapping, S.IS_ENABLED) === 'true'
 		};
+	}
+
+	/**
+	 * The mapping's per-entity toggles (`PUT /mappings/:id` `entitySettings`, or the platform's integration API): the
+	 * rows already loaded with the mapping, else read. Only the synced entities count; a missing row is on.
+	 */
+	private async entitySyncOf(mapping: IntegrationTenant): Promise<EverWorksEntitySync> {
+		const rows =
+			mapping.entitySettings ??
+			(await this.dataSource.getRepository(IntegrationEntitySetting).find({
+				// The mapping's own rows (its id is tenant-scoped already), as the mapping view reads them.
+				where: { integrationId: mapping.id } as never,
+				select: { id: true, entity: true, sync: true } as never
+			}));
+		const entitySync: EverWorksEntitySync = {};
+		for (const row of rows) {
+			const entity = row.entity as IntegrationEntity;
+			if (EVER_WORKS_SYNCED_ENTITIES.includes(entity) && row.sync === false) entitySync[entity] = false;
+		}
+		return entitySync;
 	}
 }
 

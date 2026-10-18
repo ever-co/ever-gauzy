@@ -40,7 +40,8 @@ export const DEFAULT_EVER_WORKS_DIRECTIONS: Record<EverWorksDomain, EverWorksDir
 
 /**
  * The `integration_entity_setting` rows of a mapping (the per-entity `sync` toggles every Gauzy
- * integration has), all on by default; the direction of each domain is the `ENTITY_DIRECTIONS` setting.
+ * integration has), all on by default; the direction of each domain is the `ENTITY_DIRECTIONS` setting, and a
+ * toggle set to `sync: false` turns its domains off (`EVER_WORKS_ENTITY_DOMAINS`).
  */
 export const EVER_WORKS_SYNCED_ENTITIES: ReadonlyArray<IntegrationEntity> = [
 	IntegrationEntity.EMPLOYEE,
@@ -55,6 +56,50 @@ export const EVER_WORKS_SYNCED_ENTITIES: ReadonlyArray<IntegrationEntity> = [
 	IntegrationEntity.INBOX_ITEM,
 	IntegrationEntity.DOCUMENT
 ];
+
+/**
+ * The domains a per-entity `sync: false` turns off (owner decision OQ4, review F77): the toggle acts as direction
+ * `off` for every domain that writes that Gauzy entity, in both directions, live, in the initial sync and in a
+ * resync. A missing row is `sync: true`, so a mapping without toggles keeps its directions.
+ *
+ * - `TASK` also turns off `ideas` (an idea is a Gauzy task of the "Idea" issue type), and `INBOX_ITEM` also turns off
+ *   `agentEmail` (the agent mail mirror writes Inbox items).
+ * - `KEY_RESULT` and `COMMENT` have no domain of their own: `false` stops only those records. Goals keep syncing
+ *   without their key results (no key result is written in Gauzy, no sample is pushed, and a goal push leaves the
+ *   Ever Works criteria, metric and Definition of Done as they are); tasks keep syncing without their comments.
+ */
+export const EVER_WORKS_ENTITY_DOMAINS: Readonly<Partial<Record<IntegrationEntity, ReadonlyArray<EverWorksDomain>>>> = {
+	[IntegrationEntity.EMPLOYEE]: ['members'],
+	[IntegrationEntity.AGENT]: ['agents'],
+	[IntegrationEntity.ORGANIZATION_TEAM]: ['teams'],
+	[IntegrationEntity.PROJECT]: ['works'],
+	[IntegrationEntity.STRATEGIC_INITIATIVE]: ['missions'],
+	[IntegrationEntity.GOAL]: ['goals'],
+	[IntegrationEntity.TASK]: ['tasks', 'ideas'],
+	[IntegrationEntity.INBOX_ITEM]: ['inbox', 'agentEmail'],
+	[IntegrationEntity.DOCUMENT]: ['docs']
+};
+
+/** The per-entity `sync` toggles of a mapping as stored: `false` for an entity that is not synced; missing is on. */
+export type EverWorksEntitySync = Partial<Record<IntegrationEntity, boolean>>;
+
+/** The directions that take effect: the stored ones, with every domain of an entity whose toggle is off set to `off`. */
+export function effectiveDirections(
+	directions: Record<EverWorksDomain, EverWorksDirection>,
+	entitySync: EverWorksEntitySync | null | undefined
+): Record<EverWorksDomain, EverWorksDirection> {
+	const effective = { ...directions };
+	for (const [entity, domains] of Object.entries(EVER_WORKS_ENTITY_DOMAINS) as Array<[IntegrationEntity, ReadonlyArray<EverWorksDomain>]>) {
+		if (entitySync?.[entity] !== false) continue;
+		for (const domain of domains) effective[domain] = 'off';
+	}
+	return effective;
+}
+
+/** Whether a mapping syncs an entity: only a stored `sync: false` stops it. */
+export function entitySynced(context: { entitySync?: EverWorksEntitySync | null }, entity: IntegrationEntity): boolean {
+	return context.entitySync?.[entity] !== false;
+}
 
 /** The seeded issue type of Ideas (plan 01 §8). `value` follows the platform's spelling ('Bug', 'Story', …). */
 export const EVER_WORKS_IDEA_ISSUE_TYPE = {

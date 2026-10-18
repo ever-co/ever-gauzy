@@ -6,7 +6,8 @@ jest.mock('@gauzy/core', () => {
 	const entity = (name: string) => ({ [name]: class {} })[name];
 	return {
 		Employee: entity('Employee'),
-		EmployeeNotification: entity('EmployeeNotification')
+		EmployeeNotification: entity('EmployeeNotification'),
+		IntegrationTenant: entity('IntegrationTenant')
 	};
 });
 
@@ -18,7 +19,7 @@ import {
 	InboxItemPriorityEnum,
 	InboxItemSourceEnum
 } from '@gauzy/contracts';
-import { Employee, EmployeeNotification } from '@gauzy/core';
+import { Employee, EmployeeNotification, IntegrationTenant } from '@gauzy/core';
 import type { DataSource } from 'typeorm';
 import type { EverWorksConnection } from './ever-works-connection.entity';
 import { EVER_WORKS_NOTICE_SOURCE, EverWorksNotifier } from './ever-works-notifier.service';
@@ -36,9 +37,10 @@ const connection = {
 	status: 'needs_reauth'
 } as unknown as EverWorksConnection;
 
-function fakeDataSource(employee: { id: string } | null = { id: EMPLOYEE }) {
+function fakeDataSource(employee: { id: string } | null = { id: EMPLOYEE }, mappings: unknown[] = []) {
 	const saved: unknown[] = [];
 	const repositories = new Map<unknown, unknown>([
+		[IntegrationTenant, { find: jest.fn(async () => mappings) }],
 		[Employee, { findOne: jest.fn(async () => employee) }],
 		[
 			EmployeeNotification,
@@ -184,5 +186,27 @@ describe('EverWorksNotifier', () => {
 		await expect(new EverWorksNotifier(dataSource, writer).needsReauth(orphan)).resolves.toBe(false);
 		expect(calls).toHaveLength(0);
 		expect(saved).toHaveLength(0);
+	});
+
+	it('once the organization it was connected from is deleted, the notice goes to the oldest mapped organization (F59)', async () => {
+		const mapped = '55555555-5555-4555-8555-555555555555';
+		const mapping = (organizationId: string, connectionId: string) => ({
+			organizationId,
+			settings: [{ settingsName: 'CONNECTION_ID', settingsValue: connectionId }]
+		});
+		const { dataSource } = fakeDataSource({ id: EMPLOYEE }, [
+			mapping('66666666-6666-4666-8666-666666666666', 'other-conn'),
+			mapping(mapped, 'conn-1')
+		]);
+		const { writer, calls } = fakeInbox();
+		const kept = { ...connection, organizationId: null } as unknown as EverWorksConnection;
+		await expect(new EverWorksNotifier(dataSource, writer).needsReauth(kept)).resolves.toBe(true);
+		expect(calls[0]).toMatchObject({ tenantId: TENANT, organizationId: mapped, entityId: mapped });
+
+		// No mapping left through the connection: nobody to notify (logged), as before.
+		const none = fakeDataSource({ id: EMPLOYEE }, [mapping(mapped, 'other-conn')]);
+		const inbox = fakeInbox();
+		await expect(new EverWorksNotifier(none.dataSource, inbox.writer).needsReauth(kept)).resolves.toBe(false);
+		expect(inbox.calls).toHaveLength(0);
 	});
 });

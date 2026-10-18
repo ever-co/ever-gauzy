@@ -212,6 +212,10 @@ describe('EverWorksMatchReviewComponent', () => {
 		expect(component.canCreateProjects).toBe(false);
 		component.mapping = { isEnabled: true, directions: { works: 'link_only' } } as never;
 		expect(component.canCreateProjects).toBe(true);
+		// The Project sync setting is off (OQ4): what takes effect is off, whatever the stored direction (the API refuses too).
+		component.mapping = { isEnabled: true, directions: { works: 'link_only' }, effectiveDirections: { works: 'off' } } as never;
+		expect(component.canCreateProjects).toBe(false);
+		component.mapping = { isEnabled: true, directions: { works: 'link_only' } } as never;
 		component.workChoice['w2'] = CREATE;
 		component.saveProjects();
 		expect(api.decideProjects).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewWorkId: 'w1', projectId: 'p1' }], createInGauzy: ['w2'] });

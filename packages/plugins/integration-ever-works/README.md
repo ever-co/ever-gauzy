@@ -98,11 +98,34 @@ the seed) and answers the routes below.
    "Ideas" view; the "Ever Works" and "Ever Works — Ideas" projects are created
    when they are first needed.
 
+Each mapping has a direction per domain (`directions`: off, one way or both)
+and the per-entity sync settings every Gauzy integration has (`entitySettings`,
+also writable through the platform's integration API). A setting with
+`sync: false` turns its domains off, whatever their direction: live events and
+changes, sweeps, the initial sync and a resync all skip them. `Employee` →
+people, `Agent` → agents, `OrganizationTeam` → teams, `Project` → works,
+`StrategicInitiative` → missions, `Goal` → goals, `Task` → tasks and ideas (an
+idea is a Gauzy task), `InboxItem` → inbox and agent mail (both write Inbox
+items), `Document` → docs. `KeyResult` and `Comment` stop only those records:
+goals keep syncing without their key results (none is written in Gauzy, no
+sample is pushed, a goal push leaves the Ever Works criteria, metric and
+Definition of Done as they are, and a new Gauzy goal is not created in Ever
+Works, which makes it from its key results), and tasks keep syncing without
+their comments. A missing setting is on. The mapping answers
+`effectiveDirections` next to `directions`, and the settings page marks a
+domain its setting turns off. Turning a setting on again syncs what changes
+from then on; a resync brings over what changed meanwhile. The webhook keeps
+asking for agent mail while the `agentEmail` direction is on (the mirror skips
+it).
+
 A revoked or expired key turns the connection `needs_reauth`: the sync pauses
 and the admin who connected gets a notice. Entering a new key of the same
 Ever Works tenant resumes it. Disconnecting archives the connection and its
 mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
+The connection belongs to the tenant: deleting the organization it was made
+from keeps it (that organization's own mapping goes, the other mappings keep
+syncing), and only deleting the tenant deletes it.
 
 Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
 Inbox items (`NOTICE`, `source = SYSTEM`), one per connection, admin and kind
