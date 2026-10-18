@@ -13,12 +13,13 @@ import {
 	RolesEnum
 } from '@gauzy/contracts';
 import { Employee, Invite, InviteBulkCreateCommand, RequestContext, Role } from '@gauzy/core';
-import { EverWorksClient } from '../client/ever-works-client';
+import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import { EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EVER_WORKS_INBOX_AGGREGATE } from '../inbox/ever-works-inbox.service';
 import { EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
+import { everWorksUserOfGauzyUser } from '../sync/ever-works-actor';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import { DEFERRED_INBOX_SCAN, EverWorksDeferredInboxRow, deferredInboxOf, requeueDeferredInbox } from './ever-works-deferred-inbox';
 
@@ -90,6 +91,29 @@ export interface EverWorksInviteToGauzyResult {
 	expireDate: Date | null;
 }
 
+/** "Invite to Ever Works": the Gauzy person to invite. */
+export interface EverWorksInviteToEverWorksInput {
+	employeeId: ID;
+}
+
+/** Ever Works' answer to `POST /members/invite` (contract v1-draft.15, `member-invite-result.schema.json`). */
+export interface EverWorksMemberInviteResult {
+	status: 'invited' | 'pending' | 'already_member' | 'added';
+	invitation: { id: string; email: string; role: string; status: string; expiresAt: string; createdAt: string } | null;
+	userId: string | null;
+}
+
+/** What "invite to Ever Works" did, as the People tab shows it. */
+export interface EverWorksInviteToEverWorksResult {
+	/** `invited` (emailed), `pending` (answered again), `already_member`, or `added` (joined the roster directly). */
+	status: EverWorksMemberInviteResult['status'];
+	email: string;
+	invitationId: string | null;
+	expiresAt: string | null;
+	/** The Ever Works member (`already_member`, `added`): the People tab then suggests the pairing. */
+	ewUserId: string | null;
+}
+
 /** The admin's decisions on the People tab. */
 export interface EverWorksPeopleDecision {
 	links?: Array<{ ewUserId: string; employeeId: ID }>;
@@ -105,9 +129,9 @@ export interface EverWorksPeopleDecision {
  *   happens today; the member's `everIdSubjects` are kept for when it does.
  * - **Verified email**: an exact, case-insensitive match of a verified Ever Works email with a Gauzy
  *   person's email is a **suggestion**; the admin confirms it (one by one or "accept all").
- * - **No match**: the admin links by hand, invites the member to Gauzy (the platform's own employee invitation,
- *   with the role the admin chose; accepting it is the invitee's step, and pairing stays the admin's), or leaves
- *   the member unmapped. Agents are never people.
+ * - **No match**: the admin links by hand, invites the member to Gauzy (the platform's own employee invitation;
+ *   accepting it is the invitee's step, and pairing stays the admin's), invites a Gauzy person to Ever Works (the
+ *   Ever Works organization invitation, `POST /members/invite`), or leaves them unmapped. Agents are never people.
  *
  * Nothing is linked silently and nothing is deleted: unlinking only removes the pairing.
  */
@@ -264,6 +288,67 @@ export class EverWorksPeopleService {
 			if (!created) throw new ConflictException('Gauzy did not issue an invitation for this e-mail.');
 			return { status: 'invited', inviteId: created.id as ID, email: created.email, roleId, expireDate: created.expireDate ?? null };
 		});
+	}
+
+	/**
+	 * `POST /mappings/:id/people/invite-to-ever-works`: invites a Gauzy person who has no Ever Works member yet into
+	 * the mapped Ever Works organization through the integration API (`POST /members/invite`, contract v1-draft.15):
+	 * Ever Works' own invitation e-mail, as the admin's paired Ever Works user (else as the key's owner), role
+	 * `member`. Needs the invite permission on top of the integration's, like "invite to Gauzy".
+	 *
+	 * Refused: an agent or anyone who is not an active person of the organization, a person without an e-mail, one
+	 * already paired, or one whose e-mail a member of the Ever Works organization already has (pair them instead).
+	 * Ever Works answers a repeat as the pending invitation, so nothing is sent twice. Nothing is paired here: once
+	 * they join, the verified e-mail suggests the pairing.
+	 */
+	async inviteToEverWorks(integrationTenantId: ID, input: EverWorksInviteToEverWorksInput, organizationId?: ID): Promise<EverWorksInviteToEverWorksResult> {
+		if (!RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT)) {
+			throw new ForbiddenException('Inviting people to Ever Works needs the permission to edit invites.');
+		}
+		const context = await this.contexts.forRequest(integrationTenantId, organizationId);
+		const person = (await this.people$(context, [input.employeeId])).get(input.employeeId);
+		if (!person) throw new BadRequestException(`${input.employeeId} is not an active person of this organization.`);
+		if (await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, input.employeeId)) {
+			throw new ConflictException('This person is already paired with an Ever Works member.');
+		}
+		if (!person.email) throw new BadRequestException('This person has no e-mail to invite.');
+		const email = person.email;
+		const key = email.toLowerCase();
+		const same = (await this.members(context)).find((m) => m.email?.toLowerCase() === key);
+		if (same) {
+			throw new ConflictException(`A member of the Ever Works organization already has this e-mail (${same.userId}): pair them instead.`);
+		}
+		const actAsUserId = await everWorksUserOfGauzyUser(this.dataSource, this.links, context, RequestContext.currentUserId() as ID | null);
+		const client: EverWorksClient = this.connections.client(context.connection, context.everWorksOrganizationSlug);
+		let result: EverWorksMemberInviteResult;
+		try {
+			result = await client.request<EverWorksMemberInviteResult>('POST', '/members/invite', {
+				body: { email, role: 'member', invitedName: person.name },
+				actAsUserId
+			});
+		} catch (error) {
+			throw this.inviteError(error);
+		}
+		return {
+			status: result.status,
+			email,
+			invitationId: result.invitation?.id ?? null,
+			expiresAt: result.invitation?.expiresAt ?? null,
+			ewUserId: result.userId ?? null
+		};
+	}
+
+	/** An Ever Works refusal of `POST /members/invite`, as the People tab should read it. */
+	private inviteError(error: unknown): unknown {
+		if (!(error instanceof EverWorksApiError)) return error;
+		if (error.status === 403 && error.code === 'scope_missing') {
+			return new ForbiddenException('The Ever Works key cannot invite members: give it the members:write scope (Ever Works, Settings → API keys).');
+		}
+		if (error.status === 404 || error.status === 405) {
+			return new BadRequestException('This Ever Works server cannot invite members yet: it needs integration contract v1-draft.15 (POST /members/invite).');
+		}
+		if (error.status === 400 || error.status === 409 || error.status === 422) return new BadRequestException(`Ever Works refused the invitation: ${error.message}`);
+		return error;
 	}
 
 	/**
