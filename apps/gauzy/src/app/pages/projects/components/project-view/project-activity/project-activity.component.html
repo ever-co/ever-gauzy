@@ -1,0 +1,76 @@
+<!-- What changed on the project and its tasks, by whom and when, newest first under each day. -->
+<section class="panel project-view-panel" [nbSpinner]="feed.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+	<header class="panel-header">
+		<div class="panel-heading">
+			<h5 class="panel-title panel-title--icon">
+				<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+				{{ 'PROJECT_VIEW.ACTIVITY' | translate }}
+				@if (count) {
+				<span class="title-count">{{ count }}</span>
+				}
+			</h5>
+			<span class="panel-caption">{{ 'PROJECT_VIEW.ACTIVITY_CAPTION' | translate }}</span>
+		</div>
+	</header>
+	<div class="panel-body">
+		@if (feed.failed) {
+		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+		} @else if (!feed.loading && !count) {
+		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_VIEW.NO_ACTIVITY', icon: 'clock-outline' }"></ng-container>
+		} @else {
+		@for (day of feed.value; track day.label) {
+		<h6 class="feed-day">{{ day.labelKey ? (day.labelKey | translate) : day.label }}</h6>
+		<ol class="feed">
+			@for (entry of day.entries; track entry.id) {
+			<li class="feed-entry">
+				<span class="feed-icon" [class]="'feed-icon tone-' + entry.tone" aria-hidden="true">
+					<nb-icon [icon]="entry.icon"></nb-icon>
+				</span>
+				<span class="feed-main">
+					<span class="feed-sentence">
+						@if (entry.actor; as actor) {
+						<a class="feed-actor" [routerLink]="['/pages/employees/view', actor.id]">
+							<span class="member-avatar feed-avatar">
+								@if (actor.avatarUrl) {
+								<img [src]="actor.avatarUrl" [alt]="actor.name" />
+								} @else {
+								<span aria-hidden="true">{{ actor.initials }}</span>
+								}
+							</span>
+						</a>
+						}
+						<span>
+							{{ entry.sentence | translate : { actor: entry.actor?.name || ('PROJECT_VIEW.SOMEONE' | translate) } }}
+							@if (entry.link) {
+							<a class="feed-target" [routerLink]="entry.link">{{ entry.target }}</a>
+							} @else {
+							<strong class="feed-target">{{ entry.target }}</strong>
+							}
+						</span>
+					</span>
+					@if (entry.fields) {
+					<span class="feed-fields">{{ 'PROJECT_VIEW.ACTIVITY_FIELDS' | translate : { fields: entry.fields } }}</span>
+					}
+				</span>
+				<time class="feed-time" [attr.datetime]="entry.time" [nbTooltip]="entry.timeLong" nbTooltipPlacement="top">{{ timeOf(entry) }}</time>
+			</li>
+			}
+		</ol>
+		}
+		}
+	</div>
+</section>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #unavailable>
+	<div class="state">
+		<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EMPLOYEES_PAGE.VIEW.UNAVAILABLE' | translate }}</p>
+	</div>
+</ng-template>
