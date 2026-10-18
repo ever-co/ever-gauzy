@@ -192,17 +192,26 @@ export function stripTitleAppendix(markdown: string | null | undefined): string 
 	return normaliseMarkdown(normaliseMarkdown(markdown).replace(FULL_TITLE_APPENDIX, ''));
 }
 
-/** Whether an Ever Works title is still the cut copy of the full title Gauzy appended to its description. */
+/**
+ * Whether an Ever Works title is still the cut copy of the full title Gauzy appended to its description, i.e. what
+ * `titleForEverWorks` made of it: the first 199 characters, `trimEnd()`, and `…` (#11108 review).
+ */
 export function isCutTitleCopy(title: string | null | undefined, markdown: string | null | undefined): boolean {
-	const full = FULL_TITLE_APPENDIX.exec(normaliseMarkdown(markdown))?.[1]?.trim();
-	if (!full || !title?.endsWith('…')) return false;
 	const flat = (value: string) => value.replace(/\s+/g, ' ').trim();
-	// Only the copy cut where Gauzy cuts it: a shorter start of the title is a rename in Ever Works (#11108 review).
-	if (flat(title) === flat(titleForEverWorks(full).title)) return true;
-	// The appendix has the title's whitespace collapsed, so a title with a run of spaces was cut further on: its
-	// copy is still the whole limit before the `…`, and the full title starts with it.
+	const full = flat(FULL_TITLE_APPENDIX.exec(normaliseMarkdown(markdown))?.[1] ?? '');
+	if (!full || !title?.endsWith('…')) return false;
+	// The appendix has the title's whitespace collapsed: the start before `…` is compared collapsed, as its start.
 	const start = title.slice(0, -1);
-	return start.length === EVER_WORKS_TITLE_LIMIT - 1 && flat(full).startsWith(flat(start));
+	const kept = flat(start);
+	if (!kept || !full.startsWith(kept)) return false;
+	const cut = EVER_WORKS_TITLE_LIMIT - 1;
+	if (start.length >= cut) return start.length === cut;
+	// The collapse never shortens the raw start; only `trimEnd()` does, by the whitespace run the cut fell on. So the
+	// full title goes on with a space there, and that run is taken to be at most one character longer than all the
+	// whitespace the start keeps (a run of one, the usual cut between two words, always is). A rename to a shorter
+	// start (`Investigate…`) falls far below that window; one cut off mid-word is not followed by a space.
+	const whitespace = start.length - start.replace(/\s/g, '').length;
+	return full.charAt(kept.length) === ' ' && start.length >= cut - (whitespace + 1);
 }
 
 /** Ever Works labels from Gauzy tag names: trimmed, ≤ 80 characters, unique (case-insensitive), at most 50. */

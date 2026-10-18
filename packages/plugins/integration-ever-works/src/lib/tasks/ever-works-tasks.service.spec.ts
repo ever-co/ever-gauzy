@@ -143,18 +143,33 @@ describe('task field rules', () => {
 		expect(descriptionForEverWorks('Body', 'Short')).toBe('Body');
 	});
 
-	it('knows a title Ever Works still has as the cut copy of the full title in its description (#11108 review)', () => {
-		const long = `${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`;
-		const description = descriptionForEverWorks('Body', long);
-		expect(isCutTitleCopy(titleForEverWorks(long).title, description)).toBe(true);
-		expect(isCutTitleCopy('Renamed', description)).toBe(false);
-		// A rename to a shorter start of the title is Ever Works' own, not the copy cut at the limit.
-		expect(isCutTitleCopy(`${'x'.repeat(20)}…`, description)).toBe(false);
+	describe('a title Ever Works still has as the cut copy of the full title in its description (#11108 review)', () => {
 		const plain = 'Investigate customer billing failures '.repeat(8).trim();
-		expect(isCutTitleCopy(titleForEverWorks(plain).title, descriptionForEverWorks('', plain))).toBe(true);
-		expect(isCutTitleCopy('Investigate…', descriptionForEverWorks('', plain))).toBe(false);
-		expect(isCutTitleCopy(titleForEverWorks('z'.repeat(250)).title, description)).toBe(false);
-		expect(isCutTitleCopy(titleForEverWorks(long).title, 'Body')).toBe(false);
+		const copy = (original: string) => titleForEverWorks(original).title;
+		const appendix = (original: string) => descriptionForEverWorks('Body', original);
+		/** Cut at the limit with runs of spaces before it (collapsed in the appendix, so the cut lands elsewhere there). */
+		const runs = `${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`;
+		/** The cut falls on a space after a run of spaces: `trimEnd()` leaves 198 characters (review boundary case). */
+		const boundary = `${'A'.repeat(100)}  ${'B'.repeat(96)} ${'C'.repeat(30)}`;
+		/** The cut falls on the single space between two words. */
+		const trailing = `${'x'.repeat(198)} ${'y'.repeat(30)}`;
+		/** The cut falls on a run of two spaces. */
+		const runAtCut = `${'x '.repeat(98)}z  ${'tail '.repeat(10)}`.trim();
+		it.each<[string, string, string, boolean]>([
+			['the exact cut copy', copy(plain), appendix(plain), true],
+			['a cut copy of a title with runs of spaces', copy(runs), appendix(runs), true],
+			['a cut copy cut on a space after a run of spaces', copy(boundary), appendix(boundary), true],
+			['a cut copy cut on a single space', copy(trailing), appendix(trailing), true],
+			['a cut copy cut on a run of spaces', copy(runAtCut), appendix(runAtCut), true],
+			['a rename shortened to a start of the title', 'Investigate…', appendix(plain), false],
+			['a rename that keeps a start of the title but is clearly shorter', `${'Investigate customer billing failures '.repeat(2)}Investigate customer…`, appendix(plain), false],
+			['a rename that cuts a few letters off mid-word', `${copy(plain).slice(0, -4)}…`, appendix(plain), false],
+			['another title', 'Renamed', appendix(plain), false],
+			['the cut copy of another title', copy('z'.repeat(250)), appendix(plain), false],
+			['no full title in the description', copy(plain), 'Body', false]
+		])('%s', (_case, title, description, expected) => {
+			expect(isCutTitleCopy(title, description)).toBe(expected);
+		});
 	});
 
 	it('labels: trimmed, ≤ 80 characters, unique case-insensitively, at most 50', () => {
