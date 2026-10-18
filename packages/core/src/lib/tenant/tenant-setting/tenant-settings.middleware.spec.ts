@@ -1,0 +1,136 @@
+import * as jwt from 'jsonwebtoken';
+
+// The middleware only uses the service as a DI token plus two methods; loading the real one would pull in
+// the whole entity graph for a unit test.
+jest.mock('./tenant-setting.service', () => ({ TenantSettingService: class {} }));
+
+import {
+	EMPTY_TENANT_SETTINGS_TTL_MS,
+	TENANT_SETTINGS_TTL_MS,
+	TenantSettingsMiddleware
+} from './tenant-settings.middleware';
+
+/**
+ * `TenantSettingsMiddleware` runs on every route. A request costs one cache read; when a tenant's entry has
+ * expired, the requests that miss together share one load of two queries, and the request fields it attaches
+ * are the same as they always were.
+ */
+describe('TenantSettingsMiddleware', () => {
+	const TENANT = 'tenant-1';
+	const bearer = (payload: object) => `Bearer ${jwt.sign(payload, 'test-secret')}`;
+
+	function build(options: { global?: Record<string, any>; tenant?: Record<string, any> } = {}) {
+		const cache = new Map<string, { value: unknown; ttl: number }>();
+		const cacheManager = {
+			get: jest.fn(async (key: string) => cache.get(key)?.value),
+			set: jest.fn(async (key: string, value: unknown, ttl: number) => {
+				cache.set(key, { value, ttl });
+			})
+		};
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		const tenantSettingService = {
+			getGlobalSettings: jest.fn(async () => {
+				await gate;
+				return options.global ?? {};
+			}),
+			getSettings: jest.fn(async () => {
+				await gate;
+				return options.tenant ?? {};
+			})
+		};
+		const middleware = new TenantSettingsMiddleware(cacheManager as any, tenantSettingService as any);
+		const run = (authorization?: string) => {
+			const request: any = { headers: authorization ? { authorization } : {}, path: '/api/x', url: '/api/x' };
+			const next = jest.fn();
+			return { request, next, done: middleware.use(request, {} as any, next) };
+		};
+		return { middleware, cacheManager, cache, tenantSettingService, run, release: () => release() };
+	}
+
+	it('attaches the tenant settings and the resolved (global overridden by tenant) settings', async () => {
+		const { run, release } = build({
+			global: { fileStorageProvider: 'LOCAL', aws_bucket: 'global' },
+			tenant: { aws_bucket: 'tenant' }
+		});
+		const { request, next, done } = run(bearer({ tenantId: TENANT }));
+		release();
+		await done;
+
+		expect(request.tenantSettings).toEqual({ aws_bucket: 'tenant' });
+		expect(request.resolvedSettings).toEqual({ fileStorageProvider: 'LOCAL', aws_bucket: 'tenant' });
+		expect(next).toHaveBeenCalledTimes(1);
+	});
+
+	it('runs the two queries once and caches the bundle for five minutes, then answers from one cache read', async () => {
+		const { run, release, cacheManager, cache, tenantSettingService } = build({ tenant: { aws_bucket: 'b' } });
+		release();
+		await run(bearer({ tenantId: TENANT })).done;
+		await run(bearer({ tenantId: TENANT })).done;
+
+		expect(tenantSettingService.getGlobalSettings).toHaveBeenCalledTimes(1);
+		expect(tenantSettingService.getSettings).toHaveBeenCalledTimes(1);
+		expect(tenantSettingService.getSettings).toHaveBeenCalledWith({ where: { tenantId: TENANT } });
+		expect(cacheManager.set).toHaveBeenCalledTimes(1);
+		expect([...cache.values()][0].ttl).toBe(TENANT_SETTINGS_TTL_MS);
+		// One read per request: both requests, one key.
+		expect(cacheManager.get).toHaveBeenCalledTimes(2);
+	});
+
+	it('shares one load between the requests of a tenant that miss together', async () => {
+		const { run, release, tenantSettingService, middleware } = build({ tenant: { aws_bucket: 'b' } });
+		const requests = [1, 2, 3, 4].map(() => run(bearer({ tenantId: TENANT })));
+		await new Promise((resolve) => setImmediate(resolve));
+		expect(tenantSettingService.getSettings).toHaveBeenCalledTimes(1);
+
+		release();
+		await Promise.all(requests.map(({ done }) => done));
+
+		for (const { request } of requests) {
+			expect(request.tenantSettings).toEqual({ aws_bucket: 'b' });
+		}
+		expect((middleware as any).loading.size).toBe(0);
+	});
+
+	it('keeps an empty answer for one minute only, and attaches no resolved settings for it', async () => {
+		const { run, release, cache } = build();
+		release();
+		const { request, done } = run(bearer({ tenantId: TENANT }));
+		await done;
+
+		expect(request.tenantSettings).toEqual({});
+		expect(request.resolvedSettings).toBeUndefined();
+		expect([...cache.values()][0].ttl).toBe(EMPTY_TENANT_SETTINGS_TTL_MS);
+	});
+
+	it('attaches empty tenant settings for a token without a tenant, and nothing without a token', async () => {
+		const { run, tenantSettingService } = build();
+		const withoutTenant = run(bearer({ id: 'user-1' }));
+		await withoutTenant.done;
+		expect(withoutTenant.request.tenantSettings).toEqual({});
+		expect(withoutTenant.request.resolvedSettings).toBeUndefined();
+
+		const anonymous = run();
+		await anonymous.done;
+		expect(anonymous.request.tenantSettings).toBeUndefined();
+		expect(anonymous.next).toHaveBeenCalledTimes(1);
+		expect(tenantSettingService.getSettings).not.toHaveBeenCalled();
+	});
+
+	it('still calls next when the settings cannot be read', async () => {
+		const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		try {
+			const { run, tenantSettingService, middleware } = build();
+			tenantSettingService.getSettings.mockRejectedValue(new Error('database is away'));
+			tenantSettingService.getGlobalSettings.mockRejectedValue(new Error('database is away'));
+			const { request, next, done } = run(bearer({ tenantId: TENANT }));
+			await done;
+
+			expect(next).toHaveBeenCalledTimes(1);
+			expect(request.tenantSettings).toBeUndefined();
+			expect((middleware as any).loading.size).toBe(0);
+		} finally {
+			consoleError.mockRestore();
+		}
+	});
+});
