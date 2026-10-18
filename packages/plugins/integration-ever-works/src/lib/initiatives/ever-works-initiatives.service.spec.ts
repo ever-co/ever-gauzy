@@ -334,6 +334,19 @@ describe('EverWorksInitiativesService — EW → G', () => {
 		expect(initiatives[0]['signals']).toEqual({ strategicNotes: 'Board asked' });
 	});
 
+	it('a retry keeps a "stalled" a person set on the row after the first attempt (#11081 review)', async () => {
+		const { service, initiatives, links } = setup();
+		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 1) as never, applyContext);
+		links.splice(0, links.length); // the link was never written
+		Object.assign(initiatives[0], {
+			signals: { perceivedMomentum: 'stalled' },
+			createdAt: new Date('2026-10-18T10:00:00Z'),
+			updatedAt: new Date('2026-10-18T10:05:00Z')
+		});
+		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 2) as never, applyContext);
+		expect(initiatives[0]['signals']).toEqual({ perceivedMomentum: 'stalled' });
+	});
+
 	it('a retry removes the teams its first attempt linked that the mission no longer has (#11081 review)', async () => {
 		const { service, initiatives, links, addLink } = setup();
 		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');

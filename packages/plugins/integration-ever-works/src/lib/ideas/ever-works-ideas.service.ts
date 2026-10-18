@@ -680,7 +680,7 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				// (a failure after it). Ever Works' idea as it is now is applied (the status stays), and the link moves on
 				// with it, instead of refusing the same move at every push (#11081 review).
 				const remote = await client.request<EverWorksIdea>('GET', `/ideas/${encodeURIComponent(link.ewId)}`);
-				await EverWorksSyncContext.run(
+				const reconciled = await EverWorksSyncContext.run(
 					{ connectionId: context.connection.id as ID, eventId: `idea-${action}:${link.ewId}` },
 					() =>
 						this.applyIdea(
@@ -692,7 +692,19 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 							new Set(['status'] as const)
 						)
 				);
-				return this.links.byEw(context.integrationTenantId, EverWorksLinkType.IDEA_TASK, link.ewId);
+				if (reconciled.status === 'applied')
+					return this.links.byEw(context.integrationTenantId, EverWorksLinkType.IDEA_TASK, link.ewId);
+				// No task left to take it (the task was deleted): the move is recorded on the link, as a move is.
+				return this.record(
+					context,
+					link.gauzyId as ID,
+					remote,
+					remote.version ?? null,
+					{ ...(before as IdeaSnapshot), status: remote.status ?? kept },
+					link,
+					ew.unmappedTeams ?? [],
+					'outbound'
+				);
 			}
 			if (task && kept) {
 				const changes = await this.statusChanges(context, task.projectId as ID, kept);

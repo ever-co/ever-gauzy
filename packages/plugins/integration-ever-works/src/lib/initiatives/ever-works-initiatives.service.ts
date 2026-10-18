@@ -629,9 +629,13 @@ export class EverWorksInitiativesService
 		// A stable id: a retry after a failure half-way finds the initiative it wrote instead of a second one.
 		const id = stableUuid(`${context.integrationTenantId}:initiative:${mission.id}`) as ID;
 		const written = await this.initiative(context, id, true);
-		// A retry merges the mission's status into the signals the initiative has (a person's assessment stays); the
-		// "stalled" there was set by the attempt that wrote the row, so a mission resumed since clears it (#11081 review).
-		const merged = this.mergedSignals(written ? this.signalsOf(written) : null, status, !!written);
+		// A retry merges the mission's status into the signals the initiative has (a person's assessment stays). Its
+		// "stalled" counts as the sync's own only while nobody changed the row since the attempt that wrote it, so a
+		// mission resumed since clears it, and a person's own assessment stays (#11081 review).
+		const untouched =
+			!!written &&
+			new Date((written as { updatedAt?: Date }).updatedAt ?? 0).getTime() === new Date((written as { createdAt?: Date }).createdAt ?? 0).getTime();
+		const merged = this.mergedSignals(written ? this.signalsOf(written) : null, status, untouched);
 		const signals = merged.signals;
 		const values = {
 			title: next.title || 'Mission',
