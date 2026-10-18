@@ -540,6 +540,30 @@ describe('EW → G tasks', () => {
 		expect(t.mock.tasks.size).toBe(1);
 	});
 
+	it('tasks synced one way from Ever Works: a task adopted back takes Ever Works’ change at once, and keeps its full title (#11096 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		const title = 'T'.repeat(250);
+		t.addGauzyTask({ id: 'g1', title, description: '<p>Old</p>', status: 'in-progress', priority: 'medium' });
+		// Gauzy created it (cut title, full title in the description) and lost the answer; Ever Works edited it since.
+		const ew = t.mock.addTask(t.org.id, {
+			title: `${'T'.repeat(199)}…`,
+			description: descriptionForEverWorks('Edited in Ever Works', title),
+			status: 'done',
+			priority: 'p1',
+			labels: ['Ops']
+		});
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		const event = { type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 4 } };
+		const outcome = await t.deliver(event);
+		expect(t.tasks.get('g1')).toMatchObject({ title, description: '<p>Edited in Ever Works</p>', status: 'done', priority: 'high', tags: [{ id: 'tag-ops', name: 'Ops' }] });
+		expect(outcome).toEqual({ status: 'applied' });
+		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: ew['id'], ewVersion: 4 });
+		// Nothing is left to a push this direction never sends; the same delivery again has nothing left to apply.
+		expect(t.queue.enqueued).toEqual([]);
+		expect(await t.deliver(event)).toEqual({ status: 'skipped', message: 'already applied (version)' });
+		expect(t.tasks.size).toBe(1);
+	});
+
 	it('both sides changed the title: the later writer wins and the conflict is logged', async () => {
 		const t = setup();
 		const task = t.mock.addTask(t.org.id, { title: 'Original' });

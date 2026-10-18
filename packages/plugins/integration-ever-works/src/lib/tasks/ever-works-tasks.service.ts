@@ -379,6 +379,16 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!gauzyTask || gauzyTask.organizationId !== context.organizationId) return null;
 		const existing = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, gauzyTask.id as ID);
 		if (existing) return existing.ewId === task.id ? existing : null;
+		if (!toEverWorks(context.directions.tasks)) {
+			// Tasks sync one way from Ever Works: no push sends the Gauzy values, so linking it as below would leave this
+			// change (and every value Ever Works has) out of Gauzy, and its delivery skipped as applied (#11096 review).
+			// It is reconciled inbound instead: linked with the Gauzy side as it is, no version yet (a failed apply is
+			// retried), and the update that follows applies Ever Works' values. Only the title Gauzy sent counts as Ever
+			// Works' already: its cut copy is never written over the full Gauzy title.
+			const e = { title: titleForEverWorks(gauzyTask.title).title };
+			await this.record(context, gauzyTask.id as ID, task, null, { g: await this.gauzySide(context, gauzyTask), e }, 'inbound', {});
+			return this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, gauzyTask.id as ID);
+		}
 		// Gauzy created it, and what it was created with is not known: the transition or a set may not have run, and
 		// Ever Works keeps a cut title and cut labels. So nothing of Ever Works' copy is written into Gauzy: the pair is
 		// linked with no Gauzy side, and the push queued here sends every Gauzy value that differs from Ever Works
