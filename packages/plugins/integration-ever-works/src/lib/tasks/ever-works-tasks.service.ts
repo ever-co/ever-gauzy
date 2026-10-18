@@ -179,6 +179,28 @@ export function isParentScopeRefusal(error: unknown): boolean {
 }
 
 /**
+ * Ever Works' refusal to change the owners (work, mission, idea, first team, agent, goal) of a task that has
+ * sub-tasks: `400` "Task … has N sub-task(s); re-file or detach them before changing its owners …". Gauzy moves a
+ * parent to another team or project on its own, so the sub-tasks are detached there first (see `detachSubtasks`).
+ */
+export function isSubtasksRefusal(error: unknown): boolean {
+	return error instanceof EverWorksApiError && error.status === 400 && /\bhas \d+ sub-tasks?(\(s\))?;?\s*re-file or detach them\b/i.test(error.message);
+}
+
+/** The owner fields of a task PATCH Ever Works keeps while the task has sub-tasks, and their Gauzy sides. */
+const OWNER_FIELDS: ReadonlyArray<readonly [string, keyof TaskGauzySide]> = [
+	['teamIds', 'teamIds'],
+	['workId', 'projectId']
+];
+
+/**
+ * The held-parent key of a sub-task detached so its parent could move: never a push's key, so the next sweep
+ * queues the sub-task and its push sends the parent again (Ever Works takes it when the sub-task fits the moved
+ * parent; when not, the #11048 path holds it with its real key and logs `parent_scope_refused`).
+ */
+export const HELD_PARENT_RECHECK = 'recheck';
+
+/**
  * What a parent Ever Works refused was checked against: the parent and its Ever Works owners, this task's teams
  * and work (from Gauzy), and its Ever Works-only owners. The parent is sent again once any of it changed.
  */
@@ -198,6 +220,12 @@ function heldParentKeyOf(out: TaskOutgoing, own: TaskEverWorksOnly): string {
 	const key: HeldParentKey = { parent: out.parentTaskId, parentOwners: out.parentOwners, teamIds: [...out.teamIds].sort(), workId: out.workId, own: ownOwnersOf(own) };
 	return JSON.stringify(key);
 }
+
+const SUBTASKS_DETACHED_MESSAGE =
+	'Ever Works keeps a task in the team and work of its sub-tasks, and the task moved in Gauzy: its synced sub-tasks were detached from it in Ever Works (each keeps its own team; Gauzy keeps them under it), and the task moved. A sub-task gets its parent back in Ever Works once it is in the same team and work.';
+
+const OWNER_CHANGE_HELD_MESSAGE =
+	'Ever Works keeps a task in the team and work of its sub-tasks, and this task has sub-tasks there that Gauzy does not sync: its team / project change is not sent (the rest is). It is sent again with a later change of the task, once those sub-tasks are moved or detached in Ever Works.';
 
 const PARENT_HELD_MESSAGE =
 	'Ever Works keeps a sub-task in its parent’s work and team, and the Gauzy parent is in another one: the task syncs without its parent in Ever Works. The parent is sent again with a later change of the task once the task or the parent has moved.';
@@ -1305,23 +1333,69 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				if (Object.keys(patch).length) {
 					const send = (body: Record<string, unknown>) =>
 						this.withActAs(actAs, (actor) => client.request<EverWorksTask>('PATCH', `/tasks/${ewTaskId}`, { body, ifMatchVersion: version, actAsUserId: actor }));
-					try {
-						dto = await send(patch);
-					} catch (error) {
-						// The parent (sent now, or the one Ever Works has, when the task moves to another team or work) is
-						// not in the task's scope there: the rest goes out, and the task has no parent in Ever Works.
-						if (patch['parentTaskId'] === null || !isParentScopeRefusal(error)) throw error;
-						const detached = await send({ ...patch, parentTaskId: null });
-						dto = detached;
+					let body: Record<string, unknown> = patch;
+					let parentRefusal: Error | null = null;
+					let subtasksRefusal: Error | null = null;
+					let detachedSubtasks: string[] | null = null;
+					let heldOwners: string[] = [];
+					// Each refusal below is handled once, so this ends after at most four sends.
+					for (;;) {
+						try {
+							if (Object.keys(body).length) dto = await send(body);
+							break;
+						} catch (error) {
+							if (isSubtasksRefusal(error) && !heldOwners.length && OWNER_FIELDS.some(([field]) => field in body)) {
+								subtasksRefusal = error as Error;
+								// The task moves to another team or work and has sub-tasks in Ever Works, which keeps a parent in its
+								// sub-tasks' scope: the synced ones are detached there first (D11: each keeps its own team), once.
+								if (!detachedSubtasks) {
+									detachedSubtasks = await this.detachSubtasks(context, client, row.id as ID, pair, actAs);
+									if (detachedSubtasks.length) continue;
+								}
+								// Sub-tasks Gauzy does not sync are left alone: the move is held, the rest goes out.
+								heldOwners = OWNER_FIELDS.filter(([field]) => field in body).map(([field]) => field);
+								body = Object.fromEntries(Object.entries(body).filter(([field]) => !heldOwners.includes(field)));
+								continue;
+							}
+							// The parent (sent now, or the one Ever Works has, when the task moves to another team or work) is
+							// not in the task's scope there: the rest goes out, and the task has no parent in Ever Works.
+							if (parentRefusal || body['parentTaskId'] === null || !isParentScopeRefusal(error)) throw error;
+							parentRefusal = error as Error;
+							body = { ...body, parentTaskId: null };
+						}
+					}
+					if (parentRefusal) {
 						pendingNow.heldParent = g.parentId ? { parentId: g.parentId, key: parentKey } : null;
 						// Recorded at once (Ever Works as it is now, the held parent): a later write's 412 recovery, a retry
 						// or a late event then never reads the detach as an Ever Works edit that clears Gauzy's parent.
-						await this.record(context, row.id as ID, detached, detached.version ?? null, { g: prevG, e: everWorksSideOf(detached) }, 'outbound', { heldParent: pendingNow.heldParent }, pair);
-						pair = (await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, row.id as ID)) ?? pair;
+						if (dto) {
+							await this.record(context, row.id as ID, dto, dto.version ?? null, { g: prevG, e: everWorksSideOf(dto) }, 'outbound', { heldParent: pendingNow.heldParent }, pair);
+							pair = (await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, row.id as ID)) ?? pair;
+						}
 						await this.logConflict(context, row.id as ID, pair.ewId, 'parent_scope_refused', PARENT_HELD_MESSAGE, {
 							gauzyParentId: g.parentId ?? null,
 							everWorksParentId: out.parentTaskId,
-							refusal: (error as Error).message
+							refusal: parentRefusal.message
+						});
+					}
+					if (detachedSubtasks?.length) {
+						await this.logConflict(context, row.id as ID, pair.ewId, 'subtasks_detached', SUBTASKS_DETACHED_MESSAGE, {
+							subtasks: detachedSubtasks,
+							refusal: subtasksRefusal?.message ?? null
+						});
+					}
+					if (heldOwners.length) {
+						// Gauzy's side is recorded without the held move, so the next change of the task sends it again.
+						const held: Record<string, unknown> = { ...nextG };
+						for (const [field, gauzyField] of OWNER_FIELDS) {
+							if (!heldOwners.includes(field)) continue;
+							if (gauzyField in prevG) held[gauzyField] = prevG[gauzyField];
+							else delete held[gauzyField];
+						}
+						nextG = held as TaskGauzySide;
+						await this.logConflict(context, row.id as ID, pair.ewId, 'owner_change_held', OWNER_CHANGE_HELD_MESSAGE, {
+							held: heldOwners,
+							refusal: subtasksRefusal?.message ?? null
 						});
 					}
 					version = dto?.version ?? version;
@@ -1478,12 +1552,56 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	}
 
 	/**
+	 * The synced sub-tasks Ever Works has under a task, detached there (`parentTaskId: null`) so the task can move to
+	 * another team or work: Ever Works keeps a parent in its sub-tasks' scope, and in Gauzy each sub-task keeps its own
+	 * team and its parent (D11: the team decides), which is the #11048 state of a sub-task whose parent is on another
+	 * team. A sub-task is one whose Ever Works side, as last synced, has this parent; one that changed in Ever Works
+	 * since (`412`) is left for the move to be held. Each is recorded at once (Ever Works as it is now, Gauzy as it
+	 * was, the parent held with `HELD_PARENT_RECHECK`), so its own event is not read as an edit that clears Gauzy's
+	 * parent, and the next sweep sends the parent again: taken when the sub-task fits the moved parent (or when the
+	 * move did not go out), held with its real key and logged when not.
+	 *
+	 * @returns The Gauzy ids of the sub-tasks detached.
+	 */
+	private async detachSubtasks(context: EverWorksMappingContext, client: EverWorksClient, taskId: ID, link: EverWorksEntityLink, actAs: string | null): Promise<string[]> {
+		const subtasks = (await this.links.list(context.integrationTenantId, EverWorksLinkType.TASK)).filter(
+			(candidate) =>
+				candidate.state === EverWorksLinkState.OK &&
+				candidate.gauzyId !== taskId &&
+				parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(candidate)).e.parentTaskId === link.ewId
+		);
+		const detached: string[] = [];
+		for (const subtask of subtasks) {
+			const snapshot = parseTaskSnapshot(this.links.snapshot<TaskSnapshot>(subtask));
+			let dto: EverWorksTask;
+			try {
+				dto = await this.withActAs(actAs, (actor) =>
+					client.request<EverWorksTask>('PATCH', `/tasks/${encodeURIComponent(subtask.ewId)}`, {
+						body: { parentTaskId: null },
+						ifMatchVersion: subtask.ewVersion ?? undefined,
+						actAsUserId: actor
+					})
+				);
+			} catch (error) {
+				if (error instanceof EverWorksApiError && (error.status === 412 || error.status === 404)) continue;
+				throw error;
+			}
+			const heldParent = snapshot.g.parentId ? { parentId: snapshot.g.parentId as string, key: HELD_PARENT_RECHECK } : null;
+			await this.record(context, subtask.gauzyId as ID, dto, dto.version ?? null, { g: snapshot.g, e: everWorksSideOf(dto) }, 'outbound', { heldParent }, subtask);
+			detached.push(subtask.gauzyId as string);
+		}
+		return detached;
+	}
+
+	/**
 	 * Whether a parent Ever Works refused may fit now: the parent moved (its Ever Works owners as last synced), or
 	 * the task's Ever Works-only owners did. The task's own Gauzy moves are pushed by their capture anyway.
 	 */
 	private async heldParentMoved(context: EverWorksMappingContext, ewOnly: TaskEverWorksOnly): Promise<boolean> {
 		const held = ewOnly.heldParent;
 		if (!held) return false;
+		// Detached so its parent could move: sent again once (see `detachSubtasks`)
+		if (held.key === HELD_PARENT_RECHECK) return true;
 		let key: Partial<HeldParentKey>;
 		try {
 			key = JSON.parse(held.key) as Partial<HeldParentKey>;
