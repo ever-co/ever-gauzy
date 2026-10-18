@@ -6,6 +6,7 @@ import { BaseEntityEventSubscriber, Comment, EntitySubscription, RequestContext,
 import { EverWorksEntityLink, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import { runDetached } from '../sync/outbound/ever-works-detached';
 
 /** A Gauzy task's watchers or linked issues changed. */
 export interface EverWorksTaskSignal {
@@ -163,9 +164,10 @@ export class EverWorksTaskEdgeCapture implements OnModuleInit, OnModuleDestroy {
 	) {}
 
 	onModuleInit(): void {
+		// Both drains run outside the write's transaction context (see ever-works-detached.ts).
 		this.subscription = EVER_WORKS_TASK_SIGNALS.subscribe((change) => {
-			void this.queue
-				.enqueue({
+			void runDetached(() =>
+				this.queue.enqueue({
 					tenantId: change.tenantId,
 					organizationId: change.organizationId,
 					entityType: EverWorksLinkType.TASK,
@@ -173,12 +175,13 @@ export class EverWorksTaskEdgeCapture implements OnModuleInit, OnModuleDestroy {
 					op: 'upsert',
 					actorUserId: change.actorUserId
 				})
-				.catch((error) => this.logger.warn(`A task change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
+			).catch((error) => this.logger.warn(`A task change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
 		});
 		this.subscription.add(
 			EVER_WORKS_COMMENT_SIGNALS.subscribe((change) => {
-				void this.resolve(change)
-					.then((scope) =>
+				// The whole chain is started detached: a `.then` added out here would run in the write's context.
+				void runDetached(() =>
+					this.resolve(change).then((scope) =>
 						scope
 							? this.queue.enqueue({
 									tenantId: scope.tenantId,
@@ -190,7 +193,7 @@ export class EverWorksTaskEdgeCapture implements OnModuleInit, OnModuleDestroy {
 								})
 							: false
 					)
-					.catch((error) => this.logger.warn(`A comment change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
+				).catch((error) => this.logger.warn(`A comment change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
 			})
 		);
 	}

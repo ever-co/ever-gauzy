@@ -6,6 +6,7 @@ import { BaseEntityEventSubscriber, Goal, OrganizationStrategicInitiative, Reque
 import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import { runDetached } from '../sync/outbound/ever-works-detached';
 
 /**
  * A Gauzy strategic initiative changed, or a goal moved onto it. The row as the ORM handed it to the
@@ -108,7 +109,8 @@ export class EverWorksInitiativeCapture implements OnModuleInit, OnModuleDestroy
 
 	onModuleInit(): void {
 		this.subscription = EVER_WORKS_INITIATIVE_SIGNALS.subscribe((change) => {
-			void this.capture(change).catch((error) =>
+			// Outside the initiative write's transaction context (see ever-works-detached.ts).
+			void runDetached(() => this.capture(change)).catch((error) =>
 				this.logger.warn(
 					`An initiative change could not be queued (${error instanceof Error ? error.name : 'error'}).`
 				)

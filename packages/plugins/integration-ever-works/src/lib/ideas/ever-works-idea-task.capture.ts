@@ -8,6 +8,7 @@ import { EverWorksEntityLink, EverWorksLinkType } from '../sync/entities/ever-wo
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 import { isIdeaTask } from './ever-works-idea.mapper';
+import { runDetached } from '../sync/outbound/ever-works-detached';
 
 /** How long a mapping's "Idea" issue type id is cached. */
 const IDEA_TYPE_CACHE_MS = 30_000;
@@ -56,7 +57,11 @@ export class EverWorksIdeaTaskCapture implements OnModuleInit, OnModuleDestroy {
 					taskTypeId: task.taskTypeId ?? input.taskTypeId ?? null
 				};
 				const actorUserId = RequestContext.currentUserId() ?? null;
-				void this.capture(tenantId, organizationId, task.id, seen, deleted, actorUserId).catch((error) =>
+				// Outside the task write's transaction context (see ever-works-detached.ts); the context reads are done.
+				const taskId = task.id;
+				void runDetached(() =>
+					this.capture(tenantId, organizationId, taskId, seen, deleted, actorUserId)
+				).catch((error) =>
 					this.logger.warn(
 						`An idea task change could not be queued (${error instanceof Error ? error.name : 'error'}).`
 					)
