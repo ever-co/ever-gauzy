@@ -13,6 +13,7 @@ import {
 	IEmployee,
 	IMembersStatistics,
 	IOrganization,
+	IOrganizationProject,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IPagination,
@@ -21,13 +22,16 @@ import {
 	ITasksStatistics,
 	ITimeLogFilters,
 	ITimeLogTodayFilters,
+	OrganizationProjectBudgetTypeEnum,
 	PermissionsEnum,
+	ProjectStatusEnum,
 	RolesEnum,
 	TaskStatusEnum,
 	TimeLogType
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
 import {
+	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
 	TasksService,
@@ -40,9 +44,11 @@ import { IEmployeeHoursDay } from '../../employees/view-employee/employee-hours-
 import { AssigneePopoverKeyboard } from '../../employees/view-employee/assignee-popover-keyboard';
 import {
 	buildTaskViewSections,
+	isTaskFinished,
 	taskStatusOf,
 	TASK_VIEW_RELATIONS
 } from '../../tasks/components/task-view/task-view-sections';
+import { buildProjectViewSections, PROJECT_VIEW_RELATIONS, projectStatusOf } from './project-view-sections';
 
 /** The date windows the overview can be read over — the same as an employee's page. */
 export enum TeamViewPeriod {
@@ -96,6 +102,63 @@ interface IProjectOverviewRow {
 	/** False for a project the members worked on that is not linked to the team. */
 	linked: boolean;
 }
+
+/** A project's task completion: done, in progress and still to do, out of all its tasks. */
+interface IProjectProgress {
+	total: number;
+	done: number;
+	progress: number;
+	todo: number;
+	/** Done share of all tasks, 0–100. */
+	percent: number;
+}
+
+/** The project quick look's headline: its status line and key figures. */
+interface IProjectFacts {
+	status: IRecordViewStatus | null;
+	isPublic?: boolean;
+	client?: string;
+	/** Null until the project's full read lands. */
+	members: number | null;
+	endDate?: string;
+	due: { key: string; count?: number } | null;
+	overdue: boolean;
+}
+
+/** One person in a project's "who worked the most": their photo, time, share and activity. */
+interface IContributorRow extends IRankedRow {
+	initials: string;
+	avatarUrl?: string;
+	/** Average activity in the period, 0–100; absent when unknown. */
+	activity?: number;
+	/** Live presence, for the "tracking now" dot. */
+	presence?: Presence;
+}
+
+/** An open task of the project that is overdue or due within {@link ATTENTION_DAYS} days. */
+interface IAttentionTask {
+	id: string;
+	title: string;
+	due: { key: string; count?: number };
+	overdue: boolean;
+}
+
+/** A project's hours budget against the hours worked on it since it started. */
+interface IProjectBudget {
+	usedHours: number;
+	budgetHours: number;
+	/** Used share of the budget, 0–100 (capped for the bar; `over` says when it is exceeded). */
+	percent: number;
+	over: boolean;
+	/** Amber from 80% used. */
+	warning: boolean;
+}
+
+/** Rows the project drawer's task list shows before "Show all". */
+const PROJECT_TASK_LIMIT = 6;
+
+/** Tasks due within this many days count as due soon. */
+const ATTENTION_DAYS = 3;
 
 /** A member's period figures, keyed by employee id. */
 interface IMemberFigures {
@@ -266,6 +329,29 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	/** Keyboard access to the assignee cards and the "+N" list. */
 	public readonly assigneeKeyboard = new AssigneePopoverKeyboard();
 	private _viewSequence = 0;
+
+	/** The project open in the quick-look drawer, and its sections. */
+	public viewedProject: IOrganizationProject | null = null;
+	/** The card it was opened from — its logo and initials head the drawer. */
+	public viewedProjectCard: IProjectOverviewRow | null = null;
+	/** Its task completion, and the team members who worked on it the most in the period. */
+	public projectProgress: Loadable<IProjectProgress | null> = Loadable.empty(null);
+	public projectContributors: Loadable<IContributorRow[]> = Loadable.empty([]);
+	/** Its hours per day in the period, its most worked tasks, what needs attention, and its budget. */
+	public projectHours: Loadable<IEmployeeHoursDay[]> = Loadable.empty([]);
+	public projectTopTasks: Loadable<IRankedRow[]> = Loadable.empty([]);
+	public projectAttention: IAttentionTask[] = [];
+	/** All the project's tasks as list rows, the filter over them, and whether the list is cut. */
+	public projectTasks: ITeamTaskRow[] = [];
+	public projectTaskFilter: TaskFilter = 'open';
+	public showAllProjectTasks = false;
+	public readonly projectTaskLimit = PROJECT_TASK_LIMIT;
+	public projectBudget: IProjectBudget | null = null;
+	public projectSections: IRecordViewSection[] = [];
+	public projectFacts: IProjectFacts | null = null;
+	private _projectSequence = 0;
+	/** Bumped by every reload of the project's period figures, so an older reply never lands over a newer one. */
+	private _projectPeriodSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
 
 	private _organization: IOrganization | null = null;
@@ -289,7 +375,8 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		private readonly _teamsService: OrganizationTeamsService,
 		private readonly _statisticsService: TimesheetStatisticsService,
 		private readonly _timesheetService: TimesheetService,
-		private readonly _tasksService: TasksService
+		private readonly _tasksService: TasksService,
+		private readonly _projectsService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -357,6 +444,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		// Nothing of the previous team stays on screen: not its open task, not its
 		// figures, and no reply still in flight for it may land afterwards.
 		this.closeTask();
+		this.closeProject();
 		this.resetPanels();
 		this.state = 'loading';
 		this.team = null;
@@ -692,6 +780,7 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	 * size, sprint, description…); a failed read keeps what the row had.
 	 */
 	async openTask(row: ITeamTaskRow): Promise<void> {
+		this.closeProject();
 		const sequence = ++this._viewSequence;
 		this.showTask(row.task);
 		try {
@@ -723,6 +812,311 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 		this.viewedTask = task;
 	}
 
+	/* ── Projects ────────────────────────────────────────────────────────── */
+
+	/**
+	 * Opens a project in the quick-look drawer without leaving the team page. It
+	 * opens at once with the card's name and logo, then fills in from the
+	 * project's full read (members, dates, billing, description…); a failed read
+	 * (e.g. no permission to view projects) keeps what the card had.
+	 */
+	async openProject(row: IProjectOverviewRow): Promise<void> {
+		this.closeTask();
+		const sequence = ++this._projectSequence;
+		this.viewedProjectCard = row;
+		this.showProject({ id: row.id, name: row.name, imageUrl: row.imageUrl } as IOrganizationProject);
+		this.projectAttention = [];
+		this.projectBudget = null;
+		this.projectTasks = [];
+		this.projectTaskFilter = 'open';
+		this.showAllProjectTasks = false;
+		void this.loadProjectProgress(row.id, sequence);
+		this.loadProjectPeriodFigures(row.id);
+		try {
+			const project = await firstValueFrom(this._projectsService.getById(row.id, PROJECT_VIEW_RELATIONS));
+			if (sequence === this._projectSequence && this.viewedProject?.id === row.id && project) {
+				this.showProject(project);
+				void this.loadProjectBudget(project, sequence);
+			}
+		} catch {
+			// The card's own data stays on screen.
+		}
+	}
+
+	/** How many of the project's tasks a filter keeps. */
+	projectTaskCount(filter: TaskFilter): number {
+		return this.filterTaskRows(this.projectTasks, filter).length;
+	}
+
+	get filteredProjectTasks(): ITeamTaskRow[] {
+		return this.filterTaskRows(this.projectTasks, this.projectTaskFilter);
+	}
+
+	get visibleProjectTasks(): ITeamTaskRow[] {
+		const rows = this.filteredProjectTasks;
+		return this.showAllProjectTasks ? rows : rows.slice(0, PROJECT_TASK_LIMIT);
+	}
+
+	/** "Ann B., Carl D." — the people behind a "+N" chip. */
+	peopleNames(people: ITaskPerson[]): string {
+		return (people || []).map((person) => person.name).join(', ');
+	}
+
+	setProjectTaskFilter(filter: TaskFilter): void {
+		this.projectTaskFilter = filter;
+		this.showAllProjectTasks = false;
+	}
+
+	/**
+	 * The open project's row in the Projects panel as it stands now — its time follows the
+	 * period and the statistics as they load. A project not linked to the team drops out of
+	 * the panel once it has no time in the period: it keeps the card's logo, not its old time.
+	 */
+	get viewedProjectRow(): IProjectOverviewRow | null {
+		const id = this.viewedProject?.id;
+		if (!id) return null;
+		const row = this.projectOverview.find((item) => item.id === id);
+		if (row) return row;
+		return this.viewedProjectCard ? { ...this.viewedProjectCard, duration: 0, share: 0, width: 0 } : null;
+	}
+
+	/** The team's hours on the open project over the period, tracked and manual. */
+	get projectHoursTotal(): number {
+		return (this.projectHours.value || []).reduce((sum, day) => sum + day.tracked + day.manual, 0);
+	}
+
+	closeProject(): void {
+		this._projectSequence++;
+		this.viewedProject = null;
+		this.viewedProjectCard = null;
+		this.projectFacts = null;
+	}
+
+	/** The project's edit page, where its details are managed. */
+	projectEditLink(id: string): string[] {
+		return ['/pages/organization/projects', id, 'edit'];
+	}
+
+	/**
+	 * The project's task completion. A task counts as done when its status is
+	 * terminal (a tenant status's own `isDone` flag included), the same rule the
+	 * task views use.
+	 */
+	private async loadProjectProgress(projectId: string, sequence: number): Promise<void> {
+		const { organizationId, tenantId } = this.team;
+		this.projectProgress = Loadable.empty(null);
+		try {
+			const result = await firstValueFrom(
+				this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
+					params: toParams({
+						where: { organizationId, tenantId, projectId },
+						relations: ['taskStatus', 'taskPriority', 'members', 'members.user']
+					})
+				})
+			);
+			if (sequence !== this._projectSequence) return;
+			const tasks = result?.items || [];
+			this.projectAttention = this.toAttentionTasks(tasks);
+			this.projectTasks = this.toTaskRows(tasks);
+			// Counted from the rows, so Progress and the task list always agree.
+			const done = this.projectTasks.filter((row) => row.statusGroup === 'done').length;
+			const progress = this.projectTasks.filter((row) => row.statusGroup === 'progress').length;
+			this.projectProgress = {
+				loading: false,
+				failed: false,
+				value: {
+					total: tasks.length,
+					done,
+					progress,
+					todo: tasks.length - done - progress,
+					percent: tasks.length ? (done / tasks.length) * 100 : 0
+				}
+			};
+		} catch {
+			if (sequence === this._projectSequence)
+				this.projectProgress = { loading: false, failed: true, value: null };
+		}
+	}
+
+	/** Overdue first, then soonest due: open tasks past due or due within a few days. */
+	private toAttentionTasks(tasks: ITask[]): IAttentionTask[] {
+		const today = moment().startOf('day');
+		return tasks
+			.filter((task) => !!task.dueDate && !isTaskFinished(task))
+			.map((task) => ({ task, daysLeft: moment(task.dueDate).startOf('day').diff(today, 'days') }))
+			.filter(({ daysLeft }) => daysLeft <= ATTENTION_DAYS)
+			.sort((a, b) => a.daysLeft - b.daysLeft)
+			.slice(0, LIST_LIMIT)
+			.map(({ task, daysLeft }) => ({
+				id: task.id,
+				title: task.title,
+				due: ViewTeamComponent.dueInWords(daysLeft, false),
+				overdue: daysLeft < 0
+			}));
+	}
+
+	/**
+	 * What the project's figures read over the period: contributors, hours per day, top tasks.
+	 * Each reload takes its own token: a reply counts only while both the project and this
+	 * reload are still the latest, so a slow reply for an earlier period is dropped.
+	 */
+	private loadProjectPeriodFigures(projectId: string): void {
+		const project = this._projectSequence;
+		const period = ++this._projectPeriodSequence;
+		const isCurrent = () => project === this._projectSequence && period === this._projectPeriodSequence;
+		void this.loadProjectContributors(projectId, isCurrent);
+		void this.loadProjectHours(projectId, isCurrent);
+		void this.loadProjectTopTasks(projectId, isCurrent);
+	}
+
+	/** The team's hours on the project per day of the period, tracked and manual. */
+	private async loadProjectHours(projectId: string, isCurrent: () => boolean): Promise<void> {
+		this.projectHours = { ...this.projectHours, loading: true, failed: false };
+		if (!this.members.length) {
+			this.projectHours = { loading: false, failed: false, value: [] };
+			return;
+		}
+		try {
+			const rows = await this._timesheetService.getDailyReportChart({
+				...this.buildRequest(this.periodRange()),
+				projectIds: [projectId]
+			});
+			if (!isCurrent()) return;
+			this.projectHours = { loading: false, failed: false, value: this.toHoursDays(rows) };
+		} catch {
+			if (isCurrent()) this.projectHours = { loading: false, failed: true, value: [] };
+		}
+	}
+
+	/** The project's tasks the team worked on the most in the period. */
+	private async loadProjectTopTasks(projectId: string, isCurrent: () => boolean): Promise<void> {
+		this.projectTopTasks = { ...this.projectTopTasks, loading: true, failed: false };
+		if (!this.members.length) {
+			this.projectTopTasks = { loading: false, failed: false, value: [] };
+			return;
+		}
+		try {
+			const rows = await this._statisticsService.getTasksStatistics({
+				...this.buildRequest(this.periodRange()),
+				projectIds: [projectId]
+			});
+			if (!isCurrent()) return;
+			this.projectTopTasks = {
+				loading: false,
+				failed: false,
+				value: this.rank(rows, (task: ITasksStatistics) => ({ id: task.id, name: task.title }), 5)
+			};
+		} catch {
+			if (isCurrent()) this.projectTopTasks = { loading: false, failed: true, value: [] };
+		}
+	}
+
+	/**
+	 * An hours budget against all the time worked on the project since it started,
+	 * by anyone. A cost budget needs rates, so it is left to the Details row.
+	 */
+	private async loadProjectBudget(project: IOrganizationProject, sequence: number): Promise<void> {
+		const budgetHours = Number(project.budget) || 0;
+		if (project.budgetType !== OrganizationProjectBudgetTypeEnum.HOURS || budgetHours <= 0) return;
+		const { organizationId, tenantId } = this.team;
+		const timeZone = this._timeZoneService.currentTimeZone;
+		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
+		try {
+			const rows = await this._statisticsService.getProjects({
+				tenantId,
+				organizationId,
+				projectIds: [project.id],
+				startDate: format(moment(project.startDate || project.createdAt).startOf('day')),
+				endDate: format(moment().endOf('day'))
+			});
+			if (sequence !== this._projectSequence) return;
+			const seconds = (rows || []).find((row) => row.id === project.id)?.duration || 0;
+			const usedHours = Number(seconds) / 3600;
+			const used = (usedHours / budgetHours) * 100;
+			this.projectBudget = {
+				usedHours,
+				budgetHours,
+				percent: Math.min(100, used),
+				over: used > 100,
+				warning: used >= 80
+			};
+		} catch {
+			// No budget bar; the Details panel still lists the budget.
+		}
+	}
+
+	/**
+	 * The team members who worked on the project the most in the period — the
+	 * same people and window as the card's time, so the shares add up to it.
+	 */
+	private async loadProjectContributors(projectId: string, isCurrent: () => boolean): Promise<void> {
+		this.projectContributors = { ...this.projectContributors, loading: true, failed: false };
+		// No members: an empty employee filter would read the whole organization.
+		if (!this.members.length) {
+			this.projectContributors = { loading: false, failed: false, value: [] };
+			return;
+		}
+		try {
+			const rows = await this._statisticsService.getMembers({
+				...this.buildRequest(this.periodRange()),
+				projectIds: [projectId]
+			});
+			if (!isCurrent()) return;
+			const people = new Map(this.members.map((member) => [member.id, member]));
+			const ranked = this.rank(
+				(rows || []).map((row: IMembersStatistics) => ({
+					id: row.id,
+					name: people.get(row.id)?.name || row.user?.name,
+					duration: Number(row.weekTime?.duration) || 0
+				})),
+				(row) => row
+			);
+			const stats = new Map((rows || []).map((row) => [row.id, row]));
+			this.projectContributors = {
+				loading: false,
+				failed: false,
+				value: ranked.map((row) => {
+					const member = people.get(row.id);
+					const weekTime = stats.get(row.id)?.weekTime;
+					return {
+						...row,
+						initials: member?.initials || ViewTeamComponent.initialsOf(row.name),
+						avatarUrl: member?.avatarUrl || stats.get(row.id)?.user?.imageUrl || undefined,
+						activity: weekTime ? Number(weekTime.overall) || 0 : undefined,
+						presence: member?.presence
+					};
+				})
+			};
+		} catch {
+			if (isCurrent()) this.projectContributors = { loading: false, failed: true, value: [] };
+		}
+	}
+
+	private showProject(project: IOrganizationProject): void {
+		this.projectSections = buildProjectViewSections(project, {
+			translate: (key) => this.getTranslation(key)
+		});
+		this.projectFacts = this.toProjectFacts(project);
+		this.viewedProject = project;
+	}
+
+	/** Status line and key figures; a finished project's end date is no longer a deadline. */
+	private toProjectFacts(project: IOrganizationProject): IProjectFacts {
+		const isFinished = [ProjectStatusEnum.COMPLETED, ProjectStatusEnum.CANCELLED].includes(project.status);
+		const daysLeft = project.endDate
+			? moment(project.endDate).startOf('day').diff(moment().startOf('day'), 'days')
+			: null;
+		return {
+			status: projectStatusOf(project),
+			isPublic: project.public,
+			client: project.organizationContact?.name,
+			members: project.members ? project.members.filter((member) => !!member?.employee).length : null,
+			endDate: project.endDate ? moment(project.endDate).format('ll') : undefined,
+			due: daysLeft === null || isFinished ? null : ViewTeamComponent.dueInWords(daysLeft, false),
+			overdue: !isFinished && daysLeft !== null && daysLeft < 0
+		};
+	}
+
 	get taskSummary(): TaskSummary {
 		const rows = this.tasks.value || [];
 		if (this._taskSummary?.from !== rows) {
@@ -746,8 +1140,12 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	get filteredTasks(): ITeamTaskRow[] {
-		const rows = this.tasks.value || [];
-		switch (this.taskFilter) {
+		return this.filterTaskRows(this.tasks.value || [], this.taskFilter);
+	}
+
+	/** Open hides done tasks; Done lists the most recently finished first. */
+	private filterTaskRows(rows: ITeamTaskRow[], filter: TaskFilter): ITeamTaskRow[] {
+		switch (filter) {
 			case 'progress':
 				return rows.filter((row) => row.statusGroup === 'progress');
 			case 'overdue':
@@ -769,6 +1167,11 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	private loadFigures(): void {
 		const team = this.team;
 		if (!team?.organizationId) return;
+
+		// An open project quick look follows the period too.
+		if (this.viewedProject) {
+			this.loadProjectPeriodFigures(this.viewedProject.id);
+		}
 
 		// A team with nobody on it has no figures: an empty employee filter would
 		// read the whole organization instead.
@@ -931,7 +1334,9 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	private toTaskRow(task: ITask, today: moment.Moment): ITeamTaskRow {
-		const statusGroup = ViewTeamComponent.statusGroupOf(task.status);
+		// Finished by the task views' own rule (a tenant status's `isDone` flag included), so a
+		// custom finished status lands in Done, not Open or Overdue.
+		const statusGroup = isTaskFinished(task) ? 'done' : ViewTeamComponent.statusGroupOf(task.status);
 		const isDone = statusGroup === 'done';
 		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
 		const people = (task.members || [])

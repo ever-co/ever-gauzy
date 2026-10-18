@@ -25,6 +25,21 @@
 			},
 			"dependsOn": ["^build"]
 		},
+		"select-environment": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"defaultConfiguration": "development",
+			"options": {
+				"command": "node dist/packages/config/src/lib/environments/select-compiled-environment.js --environment=development"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"command": "node dist/packages/config/src/lib/environments/select-compiled-environment.js --environment=production"
+				}
+			},
+			"dependsOn": ["build"]
+		},
 		"nx-release-publish": {
 			"options": {
 				"packageRoot": "dist/{projectRoot}"

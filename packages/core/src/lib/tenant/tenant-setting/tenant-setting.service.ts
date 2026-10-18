@@ -1,5 +1,6 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { FindManyOptions, In, IsNull } from 'typeorm';
+import { FindOptions } from '@mikro-orm/core';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
 import { ID, ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
@@ -113,10 +114,11 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
 					where: { name: In(keys(input)), tenantId: IsNull() }
 				});
-				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				// The managed entities, written back below: a serialized copy is a plain object, which
-				// persistAndFlush rejects (not a discovered entity), so saving an existing setting failed
-				settings = items;
+				// persistAndFlush rejects (not a discovered entity), so saving an existing setting failed.
+				// Read with the default load hints: with the helper's `any` hints, `find` would return
+				// `Loaded<TenantSetting, any, any, any>[]`, which is not assignable to `TenantSetting[]`.
+				settings = await this.mikroOrmRepository.find(where, mikroOptions as FindOptions<TenantSetting>);
 				break;
 			}
 			case MultiORMEnum.TypeORM: {
@@ -242,10 +244,11 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>({
 					where: { name: In(keys(input)), tenantId }
 				});
-				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				// The managed entities, written back below: a serialized copy is a plain object, which
-				// persistAndFlush rejects (not a discovered entity), so saving an existing setting failed
-				settings = items;
+				// persistAndFlush rejects (not a discovered entity), so saving an existing setting failed.
+				// Read with the default load hints: with the helper's `any` hints, `find` would return
+				// `Loaded<TenantSetting, any, any, any>[]`, which is not assignable to `TenantSetting[]`.
+				settings = await this.mikroOrmRepository.find(where, mikroOptions as FindOptions<TenantSetting>);
 				break;
 			}
 			case MultiORMEnum.TypeORM: {
