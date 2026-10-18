@@ -179,6 +179,28 @@ export class EverWorksLinkService {
 		return (result.affected ?? 0) > 0;
 	}
 
+	/**
+	 * Writes only a link's Ever Works-only fields, and only while the row still pairs the same two records, is
+	 * synced, and holds the fields as `link` read them: a pairing changed, undone or written meanwhile is left
+	 * alone (the caller reads it again later), and a missing row is never recreated. Returns whether it wrote.
+	 */
+	async patchEverWorksOnly(link: EverWorksEntityLink, ewOnly: Record<string, unknown>, manager?: EntityManager): Promise<boolean> {
+		const builder = (manager ?? this.dataSource.manager)
+			.createQueryBuilder()
+			.update(EverWorksEntityLink)
+			.set({ ewOnly: JSON.stringify(ewOnly) } as never);
+		const q = (name: string) => builder.escape(name);
+		builder
+			.where(`${q('id')} = :id`, { id: link.id })
+			.andWhere(`${q('gauzyId')} = :gauzyId`, { gauzyId: link.gauzyId })
+			.andWhere(`${q('ewId')} = :ewId`, { ewId: link.ewId })
+			.andWhere(`${q('state')} = :state`, { state: EverWorksLinkState.OK });
+		if (link.ewOnly === null || link.ewOnly === undefined) builder.andWhere(`${q('ewOnly')} IS NULL`);
+		else builder.andWhere(`${q('ewOnly')} = :ewOnlyBefore`, { ewOnlyBefore: link.ewOnly });
+		const result = await builder.execute();
+		return (result.affected ?? 0) > 0;
+	}
+
 	/** Deletes a link (a pairing an admin undid; neither record is touched). */
 	async remove(link: EverWorksEntityLink, manager?: EntityManager): Promise<void> {
 		await this.repo(manager).delete({ id: link.id });
