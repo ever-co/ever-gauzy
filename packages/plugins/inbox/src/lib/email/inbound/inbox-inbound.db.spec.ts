@@ -539,6 +539,50 @@ describe('Inbound email pipeline on SQLite', () => {
 			).toBe(InboxEmailStatusEnum.PROCESSED);
 		});
 
+		it("keeps the provider's virus hold when the allowlist would hold the message too (review F107)", async () => {
+			await dataSource
+				.getRepository(InboxMailbox)
+				.update({ id: supportBox.id as string }, { senderAllowlist: JSON.stringify(['@acme.test']) });
+			// The provider's scan failed (SES: virusVerdict FAILED); the sender is allowlisted without a DMARC pass.
+			const side = (
+				registry.get('generic') as unknown as {
+					inbound: { parse: (request: unknown) => Promise<Array<Record<string, unknown>>> };
+				}
+			).inbound;
+			const parse = side.parse.bind(side);
+			jest.spyOn(side, 'parse').mockImplementation(async (request) =>
+				(await parse(request)).map((message) => ({ ...message, hold: 'virus' }))
+			);
+			const body = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
+			expect((await deliver({ ...body, authenticationResults: 'mx; dmarc=none' })).accepted).toBe(1);
+			const held = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-2@acme.test>' });
+			expect(JSON.parse(held.headers as string)['x-gauzy-inbox-hold']).toBe('virus');
+		});
+
+		it('stores a message whose address lists overflow a MySQL text column, cut to fit, instead of failing every retry (review F109)', async () => {
+			jest.spyOn(inbound as never, 'textColumnBytes').mockReturnValue(2_000 as never);
+			const crowd = Array.from({ length: 300 }, (_, n) => `member-${n}@lists.example.test`).join(', ');
+			const raw = SAMPLE_MIME.replace('Cc: Bob <bob@acme.test>', `Cc: ${crowd}`);
+			expect(await deliver(mime(raw, ['support.ever@inbox.example.test']))).toEqual({
+				accepted: 1,
+				duplicates: 0,
+				dropped: 0
+			});
+			const row = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-2@acme.test>' });
+			const cc = JSON.parse(row.ccAddresses as string) as Array<{ address: string }>;
+			expect(Buffer.byteLength(row.ccAddresses as string)).toBeLessThanOrEqual(2_000);
+			expect(cc.length).toBeGreaterThan(0);
+			expect(cc.length).toBeLessThan(300);
+			expect(cc[0].address).toBe('member-0@lists.example.test');
+			expect(Buffer.byteLength(row.headers as string)).toBeLessThanOrEqual(2_000);
+			// Postgres and SQLite keep everything (no budget): the next message of 300 is stored whole.
+			(inbound as unknown as { textColumnBytes: jest.Mock }).textColumnBytes.mockReturnValue(null);
+			const whole = raw.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-3@acme.test>');
+			await deliver(mime(whole, ['support.ever@inbox.example.test']));
+			const full = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-3@acme.test>' });
+			expect((JSON.parse(full.ccAddresses as string) as unknown[]).length).toBe(300);
+		});
+
 		it('drops unknown recipients, and mailboxes another account receives for', async () => {
 			const created = await accounts.create({ providerId: 'generic', name: 'Relay' } as never);
 			await mailbox({
@@ -841,6 +885,43 @@ describe('Inbound email pipeline on SQLite', () => {
 			as(BOB);
 			// Bob still reads the message he received, but not what arrived after he left.
 			expect((await emails.thread(email.id as string)).map((row) => row.messageId)).toEqual(['<m-2@acme.test>']);
+		});
+
+		it('a long thread shows its newest messages, and the one asked for (review F110)', async () => {
+			const email = await stored();
+			const repository = dataSource.getRepository(InboxEmail);
+			const start = new Date(email.receivedAt as Date).getTime();
+			// 205 older alerts in the same thread, one a minute before the message read.
+			const older: string[] = [];
+			for (let n = 1; n <= 205; n++) {
+				const at = new Date(start - n * 60_000);
+				const row = await repository.save(
+					repository.create({
+						tenantId: TENANT,
+						organizationId: ORG,
+						mailboxId: supportBox.id as string,
+						threadId: email.threadId,
+						direction: InboxEmailDirectionEnum.IN,
+						messageId: `<alert-${n}@acme.test>`,
+						status: InboxEmailStatusEnum.PROCESSED,
+						receivedAt: at,
+						createdAt: at,
+						attemptCount: 0
+					} as InboxEmail)
+				);
+				older.push(row.id as string);
+			}
+			as(BOB);
+			const thread = await emails.thread(email.id as string);
+			expect(thread).toHaveLength(200);
+			// Oldest first, ending with the newest message: the one read.
+			expect(thread[thread.length - 1].id).toBe(email.id);
+			expect(thread[0].messageId).toBe('<alert-199@acme.test>');
+			// Asked for from the oldest alert: it is listed with the newest ones.
+			const fromOldest = await emails.thread(older[older.length - 1]);
+			expect(fromOldest).toHaveLength(201);
+			expect(fromOldest[0].messageId).toBe('<alert-205@acme.test>');
+			expect(fromOldest[fromOldest.length - 1].id).toBe(email.id);
 		});
 
 		it('lets a former member read what was addressed to them, but no longer send from the mailbox', async () => {

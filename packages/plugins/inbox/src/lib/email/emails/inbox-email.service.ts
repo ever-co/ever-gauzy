@@ -40,6 +40,15 @@ const SENT_MESSAGE_ID = /^<[^<>\s@]+@[^<>\s@]+>$/;
 /** The most recipients a reply or a forward may name. */
 export const MAX_OUTBOUND_RECIPIENTS = 50;
 export const MAX_OUTBOUND_TEXT = 100_000;
+/** The most messages the thread view lists: the newest ones (review F110). */
+export const THREAD_MESSAGES = 200;
+/** The messages a thread lists: mail, sent or still to send (failed inbound work is not mail). */
+const THREAD_STATUSES = [
+	InboxEmailStatusEnum.PROCESSED,
+	InboxEmailStatusEnum.SENT,
+	InboxEmailStatusEnum.QUEUED,
+	InboxEmailStatusEnum.FAILED
+];
 
 const parse = <T>(value: string | null | undefined, fallback: T): T => {
 	if (!value) return fallback;
@@ -88,7 +97,10 @@ export class InboxEmailService {
 		return { ...this.toEmail(email), attachments: attachments.map((row) => this.toAttachment(row)) };
 	}
 
-	/** The messages of the message's thread the caller may read, oldest first. */
+	/**
+	 * The messages of the message's thread the caller may read, oldest first: the newest {@link THREAD_MESSAGES} (a
+	 * long thread, an hourly alert say, shows its latest messages), and the message asked for if it is older.
+	 */
 	async thread(id: ID): Promise<IInboxEmail[]> {
 		const { email, mailbox } = await this.readable(id);
 		if (!email.threadId) return [this.toEmail(email)];
@@ -97,18 +109,21 @@ export class InboxEmailService {
 				tenantId: email.tenantId as ID,
 				mailboxId: email.mailboxId,
 				threadId: email.threadId,
-				status: In([
-					InboxEmailStatusEnum.PROCESSED,
-					InboxEmailStatusEnum.SENT,
-					InboxEmailStatusEnum.QUEUED,
-					InboxEmailStatusEnum.FAILED
-				]),
+				status: In(THREAD_STATUSES),
 				deletedAt: IsNull()
 			},
-			// In the order they were stored: received, then sent (a sent message has no receivedAt).
-			order: { createdAt: 'ASC' },
-			take: 200
+			// The newest first, in the order they were stored (received, then sent: a sent message has no receivedAt);
+			// sorted oldest first below (review F110).
+			order: { createdAt: 'DESC', id: 'DESC' },
+			take: THREAD_MESSAGES
 		});
+		// The message asked for is listed too when it is older than those (as before, if its status is listed).
+		if (
+			!found.some((row) => row.id === email.id) &&
+			THREAD_STATUSES.includes(email.status as InboxEmailStatusEnum)
+		) {
+			found.push(email);
+		}
 		// A failed message is shown only when it is an unsent reply or forward (failed inbound work is not mail).
 		let rows = found.filter(
 			(row) => row.status !== InboxEmailStatusEnum.FAILED || row.direction === InboxEmailDirectionEnum.OUT
