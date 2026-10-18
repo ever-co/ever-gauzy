@@ -834,6 +834,109 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(setting('DOCS_ROOT_FOLDER_ID')).toBe(ownRoot);
 		});
 
+		/** Sets (or, with `undefined`, removes) a mapping setting as stored in the context. */
+		const put = (name: string, value: string | undefined) => {
+			const rows = context['mapping'].settings as Row[];
+			const at = rows.findIndex((r) => r['settingsName'] === name);
+			if (value === undefined) {
+				if (at >= 0) rows.splice(at, 1);
+			} else if (at >= 0) rows[at]['settingsValue'] = value;
+			else rows.push({ settingsName: name, settingsValue: value });
+		};
+		const moveFolder = async (externalId: string, parentId: string | null) =>
+			documents().update({ id: (await marker(externalId))['id'] } as never, { parentId } as never);
+		const parentOf = async (externalId: string) => (await marker(externalId))['parentId'];
+
+		it('a root changed while a tree folder sits where an admin put it: the other folder moves, the admin\'s stays (#11115 review)', async () => {
+			await syncedTree();
+			const elsewhere = await gauzyFolder(null as never, 'Elsewhere');
+			await moveFolder(DOCS_TREE.organization, elsewhere);
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			await store.root(context as never);
+			expect(await parentOf(DOCS_TREE.works)).toBe(knowledge);
+			expect(await parentOf(DOCS_TREE.organization)).toBe(elsewhere);
+		});
+
+		it('a mapping placed before the setting existed: only its own "Ever Works" folder counts as an earlier root (#11115 review)', async () => {
+			const { ownRoot } = await syncedTree();
+			const elsewhere = await gauzyFolder(null as never, 'Elsewhere');
+			// One folder an admin moved, the other under the root: nothing moves, the root is recorded.
+			put('DOCS_TREE_ROOT_ID', undefined);
+			await moveFolder(DOCS_TREE.organization, elsewhere);
+			expect(await store.root(context as never)).toBe(ownRoot);
+			expect(await parentOf(DOCS_TREE.organization)).toBe(elsewhere);
+			expect(await parentOf(DOCS_TREE.works)).toBe(ownRoot);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(ownRoot);
+
+			// The tree under the sync's own folder and another root configured: it moves.
+			put('DOCS_TREE_ROOT_ID', undefined);
+			await moveFolder(DOCS_TREE.organization, ownRoot);
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([knowledge, knowledge]);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(knowledge);
+
+			// The tree under a folder the sync cannot tell was a root: it stays, and nothing is recorded.
+			put('DOCS_TREE_ROOT_ID', undefined);
+			const unknown = await gauzyFolder(null as never, 'Unknown');
+			await moveFolder(DOCS_TREE.organization, unknown);
+			await moveFolder(DOCS_TREE.works, unknown);
+			const other = await gauzyFolder(null as never, 'Other');
+			configureRoot(other);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([unknown, unknown]);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBeUndefined();
+		});
+
+		it('a move cut short and then pointed at another root, or back at the old one, still gathers the whole tree (#11115 review)', async () => {
+			const { ownRoot } = await syncedTree();
+			const b = await gauzyFolder(null as never, 'B');
+			// A → B stopped after Organization/ moved: the target is written, the old root still recorded.
+			put('DOCS_TREE_MOVING_TO', b);
+			await moveFolder(DOCS_TREE.organization, b);
+			const c = await gauzyFolder(null as never, 'C');
+			configureRoot(c);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([c, c]);
+			expect([setting('DOCS_TREE_ROOT_ID'), setting('DOCS_TREE_MOVING_TO')]).toEqual([c, '']);
+
+			// C → B stopped part-way again, then the admin sets C back: Organization/ comes back.
+			put('DOCS_TREE_MOVING_TO', b);
+			await moveFolder(DOCS_TREE.organization, b);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([c, c]);
+			expect(setting('DOCS_TREE_MOVING_TO')).toBe('');
+			expect(await page(ownRoot)).toMatchObject({ id: ownRoot });
+		});
+
+		it('the sync\'s own folder dragged into the tree and set as the root goes back to the top first: no folder contains its parent (#11115 review)', async () => {
+			const { ownRoot } = await syncedTree();
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			await store.root(context as never);
+			await documents().update({ id: ownRoot } as never, { parentId: (await marker(DOCS_TREE.organization))['id'] } as never);
+			configureRoot(ownRoot);
+			expect(await store.root(context as never)).toBe(ownRoot);
+			expect((await page(ownRoot))['parentId']).toBeNull();
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([ownRoot, ownRoot]);
+		});
+
+		it('the sweep finds a tree whose configured root was deleted, with no "Ever Works" folder yet (#11115 review)', async () => {
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			const document = kb.addDocument(ewOrg.id, { title: 'Policy', body: 'First' });
+			await apply('kb.document.created', document);
+			expect(await documents().findOne({ where: { externalId: DOCS_TREE.root } as never, withDeleted: true })).toBeNull();
+			await documents().softDelete({ id: knowledge } as never);
+			await service.sweep(connection as never);
+			const own = await marker(DOCS_TREE.root);
+			expect(own).toMatchObject({ name: 'Ever Works', parentId: null });
+			expect(await parentOf(DOCS_TREE.organization)).toBe(own['id']);
+			expect(queue.enqueue).toHaveBeenCalled();
+		});
+
 		it('an admin moving Organization/ out of the root is still respected: its pages stop syncing, as before', async () => {
 			const { document } = await syncedTree();
 			const elsewhere = await gauzyFolder(null as never, 'Elsewhere');

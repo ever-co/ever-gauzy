@@ -379,10 +379,12 @@ and answered `202`.
   `PUT …/mappings/:id`) moves `Organization/` and `Works/` under the new root at
   the next sync step or sweep, with everything in them, so links and pages
   keep syncing; the old root folder stays. The move is idempotent and finishes
-  if it was cut short. An archived root keeps being used (it still holds its
-  pages); a deleted one, or a folder inside the synced tree, gives way to the
-  sync's own "Ever Works" folder, and the tree moves there. A tree folder an
-  admin moves out of the root still stops syncing what is in it. An Ever Works document becomes a Docs page:
+  if it was cut short, also when the root changed again (or back) meanwhile.
+  An archived root keeps being used (it still holds its pages); a deleted one,
+  or a folder inside the synced tree, gives way to the sync's own "Ever Works"
+  folder (moved back to the top if it was dragged into the tree), and the tree
+  moves there. A tree folder an admin moves out of the root still stops syncing
+  what is in it, and is never moved back. An Ever Works document becomes a Docs page:
   title, description, the Markdown body as the editor's content (headings,
   lists and task lists, quotes, code, tables, links, images; a `[[path]]`
   link of a synced document becomes a document mention, any other stays
