@@ -33,6 +33,10 @@ import { ProjectEditMutationComponent } from './components/project-edit/edit.com
 import { ProjectListComponent } from './components/project-list/list.component';
 import { ProjectQuickLookComponent } from './components/project-quick-look/project-quick-look.component';
 import { ProjectViewPageComponent } from './components/project-view/project-view-page.component';
+import { ProjectBoardComponent } from './components/project-view/project-board/project-board.component';
+import { ProjectPlanningComponent } from './components/project-view/project-planning/project-planning.component';
+import { ProjectTimeComponent } from './components/project-view/project-time/project-time.component';
+import { ProjectActivityComponent } from './components/project-view/project-activity/project-activity.component';
 
 @NgModule({
 	imports: [
@@ -60,7 +64,12 @@ import { ProjectViewPageComponent } from './components/project-view/project-view
 		// The project page's shell (back button, heading, not-found / no-access states).
 		RecordViewModule,
 		// The project page's body. Standalone, shared with the team and employee pages' drawers.
-		ProjectQuickLookComponent
+		ProjectQuickLookComponent,
+		// The project page's other tabs. Standalone, used only by the project page.
+		ProjectBoardComponent,
+		ProjectPlanningComponent,
+		ProjectTimeComponent,
+		ProjectActivityComponent
 	],
 	declarations: [
 		ProjectLayoutComponent,
