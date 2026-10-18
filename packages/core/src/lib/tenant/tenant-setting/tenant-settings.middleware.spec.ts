@@ -100,7 +100,7 @@ describe('TenantSettingsMiddleware', () => {
 			'tenant-1': { aws_bucket: 'bucket-one' },
 			'tenant-2': { aws_bucket: 'bucket-two' }
 		};
-		tenantSettingService.getSettings.mockImplementation(async ({ where }: any) => {
+		(tenantSettingService.getSettings as jest.Mock).mockImplementation(async ({ where }: any) => {
 			await new Promise((resolve) => setImmediate(resolve));
 			return perTenant[where.tenantId];
 		});
