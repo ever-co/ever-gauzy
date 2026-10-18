@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { In, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -86,6 +86,39 @@ export function withSelected(requested: unknown, required: string[]): unknown {
 		return merged;
 	}
 	return requested;
+}
+
+/**
+ * A read's `where` bound to the caller's organizations: an `organizationId` the caller did not state becomes one of
+ * theirs (`In`, so a page is cut from their initiatives only); a stated one of theirs is kept, another one reads
+ * nothing; an operator the caller stated is kept (each row is still checked after the read). Each condition of a
+ * list (`OR`) is bound alike.
+ *
+ * @param where - The caller's `where`, if any.
+ * @param memberOf - The caller's organizations.
+ * @returns The bound `where`, or `null` when nothing can match.
+ */
+export function whereInOrganizations(where: unknown, memberOf: ReadonlySet<ID>): unknown | null {
+	const organizationIds = [...memberOf];
+	if (!organizationIds.length) {
+		return null;
+	}
+	const bind = (condition: unknown): Record<string, unknown> | null => {
+		const values = condition && typeof condition === 'object' ? { ...(condition as Record<string, unknown>) } : {};
+		const stated = values['organizationId'];
+		if (stated === undefined || stated === null || stated === '') {
+			return { ...values, organizationId: In(organizationIds) };
+		}
+		if (typeof stated === 'string') {
+			return memberOf.has(stated as ID) ? values : null;
+		}
+		return values;
+	};
+	if (Array.isArray(where)) {
+		const conditions = where.map(bind).filter((condition) => condition !== null);
+		return conditions.length ? conditions : null;
+	}
+	return bind(where);
 }
 
 /**
@@ -269,17 +302,65 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	async findAll(
 		filters: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
+		return this.readVisible(filters, (options) => super.findAll(options));
+	}
+
+	/**
+	 * The CRUD controller's inherited `GET /pagination`: the same read as the list (the caller's organizations, then
+	 * the visibility rule), on one page.
+	 *
+	 * @param filters - Filter criteria and the page.
+	 * @returns The page of initiatives the caller may see.
+	 */
+	async paginate(
+		filters?: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
+	): Promise<IPagination<IOrganizationStrategicInitiative>> {
+		return this.readVisible(filters, (options) => super.paginate(options));
+	}
+
+	/**
+	 * How many initiatives the caller may see (the CRUD controller's inherited `GET /count`, the GraphQL count):
+	 * counted on the list's read, so a count never answers for another organization, nor for an initiative the
+	 * visibility rule hides.
+	 *
+	 * @param where - Filter criteria.
+	 * @returns The number of initiatives the caller may see.
+	 */
+	async countBy(where?: FindOptionsWhere<OrganizationStrategicInitiative>): Promise<number> {
+		const { total } = await this.findAll({ ...(where ? { where } : {}) } as BaseQueryDTO<OrganizationStrategicInitiative>);
+		return total;
+	}
+
+	/**
+	 * A list read narrowed to what the caller may see: bound to the caller's organizations in the query itself (before
+	 * a page is cut), then each row through the organization check and the visibility rule.
+	 *
+	 * @param filters - Filter criteria for initiatives.
+	 * @param read - The base read (the whole list, or a page).
+	 * @returns The initiatives the caller may see.
+	 */
+	private async readVisible(
+		filters: (BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput) | undefined,
+		read: (options: BaseQueryDTO<OrganizationStrategicInitiative>) => Promise<IPagination<OrganizationStrategicInitiative>>
+	): Promise<IPagination<IOrganizationStrategicInitiative>> {
 		const { employeeId: currentEmployeeId, memberOf, seesAllIn } = await this.viewer();
+
+		// Nothing to read outside the caller's organizations
+		const where = whereInOrganizations(filters?.where, memberOf);
+		if (!where) {
+			return { items: [], total: 0 };
+		}
 
 		// Ensure relations for visibility check are loaded (the directly linked teams, projects and their teams),
 		// next to the ones the caller asked for, in whichever form it asked (a list or an object)
-		const { items } = await super.findAll({
+		const { items } = await read({
 			...filters,
-			relations: withRelations(filters.relations, ['teams', 'projects', 'projects.teams']),
+			where,
+			relations: withRelations(filters?.relations, ['teams', 'projects', 'projects.teams']),
 			// The rule's own columns are read even when the caller selected others (the admin override needs the
 			// organization)
 			...(filters?.select ? { select: withSelected(filters.select, VISIBILITY_COLUMNS) } : {})
-		} as typeof filters);
+		} as BaseQueryDTO<OrganizationStrategicInitiative>);
 
 		// Pre-fetch employee team memberships to avoid N+1 queries
 		const employeeTeamIds = await this.getEmployeeTeamIds(currentEmployeeId);
