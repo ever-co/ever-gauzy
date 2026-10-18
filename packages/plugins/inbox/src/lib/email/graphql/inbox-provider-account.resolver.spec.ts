@@ -5,61 +5,12 @@
  * controller's guards and `INBOX_MAILBOX_MANAGE`, every field reaches the service method of its route, the routes' DTO
  * rules refuse what the routes refuse, and no answer type can carry a secret.
  *
- * `@gauzy/core` is doubled at the module boundary (its barrel boots the whole application), as the plugin's other
- * suites do; the double names every export the Inbox email module's files read, so the module and the plugin load.
+ * `@gauzy/core`, `@gauzy/common` and `@gauzy/plugin` are doubled at the module boundary (`../testing/graphql-core-double`),
+ * with every export the Inbox email module's files read, so the module and the plugin load.
  */
-jest.mock('@gauzy/core', () => {
-	const decorator = () => () => undefined;
-	const { SetMetadata, NotAcceptableException } = jest.requireActual('@nestjs/common');
-	return {
-		ExportRedacted: decorator,
-		MultiORMColumn: decorator,
-		MultiORMEntity: decorator,
-		UseValidationPipe: decorator,
-		TenantOrganizationBaseEntity: class {},
-		MikroOrmBaseEntityRepository: class {},
-		BaseEntityEventSubscriber: class {},
-		Employee: class {},
-		UserOrganization: class {},
-		FileStorage: class {},
-		EmailSendService: class {},
-		EmailSendModule: class EmailSendModule {},
-		RolePermissionModule: class RolePermissionModule {},
-		EVER_REDIS_CLIENT: 'EVER_REDIS_CLIENT',
-		WEBHOOK_SIGNATURE_TOLERANCE_SECONDS: 300,
-		describeEmailSendError: (error: unknown) => String((error as Error)?.message ?? error),
-		getEmailTransportRegistry: () => ({ register: () => undefined, unregister: () => undefined }),
-		verifyWebhookSignature: () => false,
-		RequestContext: {
-			currentTenantId: () => null,
-			currentUserId: () => null,
-			currentOrganizationId: () => null,
-			hasPermission: () => false
-		},
-		FEATURE_GRAPHQL: 'FEATURE_GRAPHQL',
-		FeatureFlagGuard: class FeatureFlagGuard {},
-		PermissionGuard: class PermissionGuard {},
-		TenantPermissionGuard: class TenantPermissionGuard {},
-		Permissions: (...permissions: string[]) => SetMetadata('permissions', permissions),
-		UUIDValidationPipe: class UUIDValidationPipe {
-			transform(value: string) {
-				if (!/^[0-9a-f-]{36}$/i.test(value ?? ''))
-					throw new NotAcceptableException('Validation failed (valid uuid is expected)');
-				return value;
-			}
-		}
-	};
-});
-jest.mock('@gauzy/common', () => ({
-	FeatureFlag: (flag: string) => jest.requireActual('@nestjs/common').SetMetadata('feature', flag),
-	Public: () => () => undefined
-}));
-// The plugin decorator records what the plugin declares (the real one loads the configuration package).
-jest.mock('@gauzy/plugin', () => ({
-	GauzyCorePlugin: (metadata: unknown) => (target: { declared?: unknown }) => {
-		target.declared = metadata;
-	}
-}));
+jest.mock('@gauzy/core', () => jest.requireActual('../testing/graphql-core-double').coreDouble());
+jest.mock('@gauzy/common', () => jest.requireActual('../testing/graphql-core-double').commonDouble());
+jest.mock('@gauzy/plugin', () => jest.requireActual('../testing/graphql-core-double').pluginDouble());
 
 import 'reflect-metadata';
 import { BadRequestException } from '@nestjs/common';

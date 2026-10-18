@@ -138,6 +138,29 @@ answers a custom-domain mailbox's TXT record and its last status without a DNS l
 the settings answer `platformDomain` too (`GAUZY_INBOX_DOMAIN`, or `null`). The Settings → Inbox pages of
 `@gauzy/plugin-inbox-ui` are built on these routes.
 
+GraphQL twins (`InboxMailboxResolver`, served only with the plugin; same service methods, DTO rules, guards and
+permissions; the class default is `INBOX_MAILBOX_MANAGE`). A mailbox never answers its relay secret's digest or its
+verification token; `rotateInboxMailboxSecret` answers the new secret once. Routing a mailbox to an Ever Works agent is
+`updateInboxMailbox(id, { settings: { everWorksAgentId } })`.
+
+| GraphQL                                               | REST                                          |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `myInboxMailboxes` (`INBOX_VIEW`)                     | `GET /api/inbox/mailboxes/mine`               |
+| `inboxMailboxes(organizationId)`                      | `GET /api/inbox/mailboxes`                    |
+| `createInboxMailbox(input)`                           | `POST /api/inbox/mailboxes`                   |
+| `inboxMailbox(id, organizationId)`                    | `GET /api/inbox/mailboxes/:id`                |
+| `updateInboxMailbox(id, input, organizationId)`       | `PATCH /api/inbox/mailboxes/:id`              |
+| `inboxMailboxDomainVerification(id, organizationId)`  | `GET /api/inbox/mailboxes/:id/verification`   |
+| `verifyInboxMailboxDomain(id, organizationId)`        | `POST /api/inbox/mailboxes/:id/verify`        |
+| `rotateInboxMailboxSecret(id, organizationId)`        | `POST /api/inbox/mailboxes/:id/rotate-secret` |
+| `inboxMailboxMembers(id, organizationId)`             | `GET /api/inbox/mailboxes/:id/members`        |
+| `setInboxMailboxMembers(id, members, organizationId)` | `PUT /api/inbox/mailboxes/:id/members`        |
+| `provisionInboxMailboxes(input)`                      | `POST /api/inbox/mailboxes/provision`         |
+| `inboxEmailSettings(organizationId)`                  | `GET /api/inbox/mailboxes/settings`           |
+| `updateInboxEmailSettings(input, organizationId)`     | `PUT /api/inbox/mailboxes/settings`           |
+
+There is no mailbox delete route (a mailbox is switched off with `isActive: false`), so there is no delete field either.
+
 ## Inbound: the provider webhook and the worker
 
 `POST /api/inbox/inbound/:providerId/:accountId` is `@Public()`: the provider account's own secret proves each request
@@ -209,6 +232,12 @@ what was addressed to them). A reply to a sent message follows up with its recip
 attachment. Replies and forwards go out through the core transport seam with the mailbox's provider account first
 (then the organization's and the tenant's default outbound accounts, then Custom SMTP / `MAIL_*`), and are kept as `OUT`
 messages of the thread (`SENT`, or `FAILED` with the error).
+
+GraphQL twins (`InboxEmailMessageResolver`, served only with the plugin; `INBOX_VIEW`, then the same mailbox access
+checks in the service): `inboxEmail(id)`, `inboxEmailThread(id)`, `inboxQuarantinedEmails(mailboxId)`,
+`replyInboxEmail(id, input)`, `forwardInboxEmail(id, input)` and `releaseInboxEmail(id)`. The raw source and the
+attachment downloads are byte streams with download headers, so they stay REST-only; a message answers its attachments'
+metadata.
 
 ## Tables (migrations for PostgreSQL, MySQL and SQLite)
 

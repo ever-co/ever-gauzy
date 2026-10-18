@@ -5,6 +5,8 @@ import { INBOUND_ADDRESS_NAMESPACE, INBOX_EMAIL_HANDOFFS, INBOX_EMAIL_PROVIDER_R
 import { EmailSendModule, RolePermissionModule } from '@gauzy/core';
 import { InboxEmailController } from './emails/inbox-email.controller';
 import { InboxEmailService } from './emails/inbox-email.service';
+import { InboxEmailMessageResolver } from './graphql/inbox-email-message.resolver';
+import { InboxMailboxResolver } from './graphql/inbox-mailbox.resolver';
 import { InboxProviderAccountResolver } from './graphql/inbox-provider-account.resolver';
 import { InboxEmailHandoffs } from './handoff/inbox-email-handoffs';
 import { InboxEmail } from './entities/inbox-email.entity';
@@ -74,6 +76,8 @@ export const INBOX_EMAIL_ENTITIES = [
 		// GraphQL twins of the management routes. Listed here as well as in the plugin's `extensions`: a resolver only
 		// the plugin metadata names is never registered, and the schema would advertise fields nothing resolves.
 		InboxProviderAccountResolver,
+		InboxMailboxResolver,
+		InboxEmailMessageResolver,
 		InboxEmailTransportResolver,
 		InboundReplayGuard,
 		GenericWebhookProvider,
