@@ -20,7 +20,7 @@ import {
 	UseValidationPipe,
 	UUIDValidationPipe
 } from '@gauzy/core';
-import { InboxItemQueryDTO, InboxMarkAllReadDTO, InboxReplyDTO, InboxStateDTO, InboxTabDTO } from './dto/inbox.dto';
+import { InboxItemQueryDTO, InboxMarkAllReadDTO, InboxReplyDTO, InboxStateDTO } from './dto/inbox.dto';
 import { INBOX_ROUTE_PREFIX } from './inbox.constants';
 import { InboxService } from './inbox.service';
 
