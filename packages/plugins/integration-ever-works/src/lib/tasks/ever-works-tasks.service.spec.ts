@@ -1550,6 +1550,24 @@ describe('a parent with sub-tasks moved to another team or project (I3c)', () =>
 		expect(t.logged).toHaveLength(1);
 	});
 
+	it('a task in the middle of a tree with a sub-task Gauzy does not sync keeps its parent while its move is held (#11053 review)', async () => {
+		const t = withTeams();
+		t.addGauzyTask({ id: 'g-top', title: 'Top', teams: [{ id: 'g-team-a' }] });
+		t.addGauzyTask({ id: 'g-mid', title: 'Mid', parentId: 'g-top', teams: [{ id: 'g-team-a' }] });
+		await t.push('g-top');
+		await t.push('g-mid');
+		const topId = ewOf(t, 'g-top')?.['id'];
+		expect(ewOf(t, 'g-mid')?.['parentTaskId']).toBe(topId);
+		t.mock.addTask(t.org.id, { title: 'Ever Works only', parentTaskId: ewOf(t, 'g-mid')?.['id'], teamIds: ['ew-team-a'] });
+		Object.assign(t.tasks.get('g-mid') as GauzyTask, { title: 'Mid renamed', teams: [{ id: 'g-team-b' }] });
+		expect(await t.push('g-mid')).toEqual({ status: 'pushed' });
+		// The move is held, so the parent (on the team the task keeps) stays: no detach goes out.
+		expect(ewOf(t, 'g-mid')).toMatchObject({ title: 'Mid renamed', teamIds: ['ew-team-a'], parentTaskId: topId });
+		expect(heldOf(t, 'g-mid')).toBeNull();
+		expect(t.logged.map((row) => row['action'])).toEqual(['owner_change_held']);
+		expect(t.mock.requests.filter((r) => r.method === 'PATCH').map((r) => r.body).pop()).toEqual({ title: 'Mid renamed' });
+	});
+
 	it('only the move: when nothing else changed, nothing else is sent', async () => {
 		const t = withTeams();
 		t.addGauzyTask({ id: 'g-parent', title: 'Parent', teams: [{ id: 'g-team-a' }] });
