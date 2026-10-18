@@ -15,7 +15,7 @@ interface ReplayRedis {
 export const INBOUND_PROCESSING_CLAIM_MS = 2 * 60_000;
 
 /** The most remembered deliveries in process (a burst never grows the set without bound). */
-const MAX_LOCAL_ENTRIES = 20_000;
+export const MAX_LOCAL_ENTRIES = 20_000;
 
 /**
  * Single-use webhook signatures (plan 04 §5.2): a verified delivery is remembered until its freshness window has
@@ -58,7 +58,8 @@ export class InboundReplayGuard {
 	async complete(scope: string, fingerprint: string, ttlMs: number): Promise<void> {
 		const key = this.keyOf(scope, fingerprint);
 		const px = Math.max(1000, Math.ceil(ttlMs));
-		this.local.set(key, Date.now() + px);
+		// Also with Redis (it takes over if Redis fails), so bounded like every in-process entry (review F108).
+		this.remember(key, Date.now() + px);
 		if (this.redis && typeof this.redis.set === 'function') {
 			try {
 				await this.redis.set(key, '2', { PX: px });
@@ -88,16 +89,32 @@ export class InboundReplayGuard {
 
 	private consumeLocally(key: string, ttlMs: number): boolean {
 		const now = Date.now();
-		for (const [seen, expiresAt] of this.local) {
-			if (expiresAt <= now) this.local.delete(seen);
-		}
+		this.prune(now);
 		if (this.local.has(key)) return false;
+		this.remember(key, now + ttlMs);
+		return true;
+	}
+
+	/**
+	 * Adds (or renews) an in-process entry. A full set first drops what has expired, then the oldest entries: with Redis
+	 * every stored delivery lands here too ({@link complete}), and only this keeps the set from growing for good.
+	 */
+	private remember(key: string, expiresAt: number): void {
+		// Renewed entries move to the end: the set stays in the order the entries were last written.
+		this.local.delete(key);
+		if (this.local.size >= MAX_LOCAL_ENTRIES) this.prune(Date.now());
 		while (this.local.size >= MAX_LOCAL_ENTRIES) {
 			const oldest = this.local.keys().next();
 			if (oldest.done) break;
 			this.local.delete(oldest.value);
 		}
-		this.local.set(key, now + ttlMs);
-		return true;
+		this.local.set(key, expiresAt);
+	}
+
+	/** Drops the expired in-process entries. */
+	private prune(now: number): void {
+		for (const [seen, expiresAt] of this.local) {
+			if (expiresAt <= now) this.local.delete(seen);
+		}
 	}
 }

@@ -1,3 +1,4 @@
+// cspell:ignore ESERVFAIL
 /**
  * Mailbox management (G-P4-1) on a real database (better-sqlite3): platform addresses allocated on
  * `GAUZY_INBOX_DOMAIN` (organization in the local part, numeric suffix on a collision), one namespace with the Docs
@@ -159,6 +160,9 @@ const SCHEMAS = [
 		}
 	})
 ];
+
+/** An error of Node's resolver, as `dns.promises.resolveTxt` rejects with it. */
+const dnsError = (code: string) => Object.assign(new Error(`queryTxt ${code} _gauzy-inbox.acme.test`), { code });
 
 describe('Mailbox management on SQLite', () => {
 	let directory: string;
@@ -407,9 +411,47 @@ describe('Mailbox management on SQLite', () => {
 			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.PENDING);
 			lookup.mockResolvedValueOnce([record.recordValue] as never);
 			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
-			lookup.mockRejectedValueOnce(new Error('NXDOMAIN') as never);
+			// The resolver answers that the name does not exist (NXDOMAIN): the record is gone.
+			lookup.mockRejectedValueOnce(dnsError('ENOTFOUND') as never);
 			const lost = await service.verify(created.id as string);
-			expect([lost.status, lost.message]).toEqual([InboxMailboxDomainStatusEnum.FAILED, 'NXDOMAIN']);
+			expect([lost.status, lost.message]).toEqual([
+				InboxMailboxDomainStatusEnum.FAILED,
+				'queryTxt ENOTFOUND _gauzy-inbox.acme.test'
+			]);
+		});
+
+		it('a DNS outage while checking a verified domain keeps it verified, so its mail keeps arriving (review F111)', async () => {
+			const providerAccountId = await account();
+			const created = await service.create({
+				ownerType: InboxMailboxOwnerTypeEnum.ORGANIZATION,
+				kind: InboxMailboxKindEnum.CUSTOM_DOMAIN,
+				localPart: 'help',
+				domain: 'acme.test',
+				providerAccountId
+			});
+			const lookup = jest.spyOn(service as never, 'resolveTxt');
+			lookup.mockResolvedValueOnce([(created.verification as { recordValue: string }).recordValue] as never);
+			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
+			// A timeout (the lookup's own 5 s race), SERVFAIL, a refused query: nothing is known about the record.
+			for (const failure of [
+				new Error('The DNS lookup timed out.'),
+				dnsError('ESERVFAIL'),
+				dnsError('ECONNREFUSED')
+			]) {
+				lookup.mockRejectedValueOnce(failure as never);
+				const checked = await service.verify(created.id as string);
+				expect([checked.status, checked.message]).toEqual([
+					InboxMailboxDomainStatusEnum.VERIFIED,
+					failure.message
+				]);
+			}
+			expect(
+				(await dataSource.getRepository(InboxMailbox).findOneByOrFail({ id: created.id as string }))
+					.domainStatus
+			).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
+			// A pending domain stays pending through an outage too; an answer without the record still fails it.
+			lookup.mockRejectedValueOnce(dnsError('ENODATA') as never);
+			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.FAILED);
 		});
 
 		it("an unproven claim of another tenant never blocks the domain's owner for good (review F28)", async () => {
@@ -541,9 +583,13 @@ describe('Mailbox management on SQLite', () => {
 			const lookup = jest.spyOn(service as never, 'resolveTxt');
 			lookup.mockResolvedValueOnce([(created.verification as { recordValue: string }).recordValue] as never);
 			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.VERIFIED);
-			lookup.mockRejectedValueOnce(new Error('SERVFAIL') as never);
+			// The record is gone (the resolver answers: no TXT record), and stays gone (review F111: an answer, not an outage).
+			lookup.mockRejectedValueOnce(dnsError('ENODATA') as never);
 			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.FAILED);
-			lookup.mockRejectedValueOnce(new Error('SERVFAIL') as never);
+			lookup.mockRejectedValueOnce(dnsError('ENOTFOUND') as never);
+			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.FAILED);
+			// An outage then proves nothing: the mailbox stays FAILED, never back to PENDING or VERIFIED.
+			lookup.mockRejectedValueOnce(dnsError('ESERVFAIL') as never);
 			expect((await service.verify(created.id as string)).status).toBe(InboxMailboxDomainStatusEnum.FAILED);
 			// Another tenant's stale claim read as PENDING, then verified before the release writes: the release gives up.
 			const OTHER_TENANT = randomUUID();
