@@ -131,7 +131,7 @@ const coreSchemas = [
 	s('EmployeeNotification', EmployeeNotification, 'employee_notification', { receiverEmployeeId: str() }),
 	s('OrganizationTeam', OrganizationTeam, 'organization_team', { name: str(false), emoji: str() }),
 	s('OrganizationProject', OrganizationProject, 'organization_project', { name: str(false), description: txt() }),
-	s('Task', Task, 'task', { title: str(false), projectId: str(), issueType: str() }),
+	s('Task', Task, 'task', { title: str(false), projectId: str(), issueType: str(), taskTypeId: str() }),
 	s('IntegrationTenant', IntegrationTenant, 'integration_tenant', { name: str(false) }, {
 		settings: { type: 'one-to-many', target: 'IntegrationSetting', inverseSide: 'integration', cascade: true }
 	}),
@@ -405,7 +405,21 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 	it('the dry run counts as creates only what a run creates (local e2e: idea tasks, stopped links)', async () => {
 		// An Idea task syncs as an Ever Works idea, never as a task; a record whose link stopped syncing (the Gauzy task
 		// was deleted, so Ever Works cancelled it) is known and is not created again.
-		await dataSource.getRepository(Task).save({ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, title: 'An idea', issueType: 'Idea' } as never);
+		// Every form the push treats as an idea (review on #11047): the name in any case, and the seeded type's id.
+		const ideaTypeId = randomUUID();
+		await dataSource.getRepository(IntegrationSetting).save({
+			id: randomUUID(),
+			tenantId: A.tenantId,
+			organizationId: A.organizationId,
+			integration: { id: integrationTenantId },
+			settingsName: EverWorksSettingName.IDEA_ISSUE_TYPE_ID,
+			settingsValue: ideaTypeId
+		} as never);
+		await dataSource.getRepository(Task).save([
+			{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, title: 'An idea', issueType: 'Idea' },
+			{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, title: 'another idea', issueType: 'idea' },
+			{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, title: 'a typed idea', taskTypeId: ideaTypeId }
+		] as never);
 		await dataSource.getRepository(EverWorksEntityLink).save({
 			id: randomUUID(),
 			tenantId: A.tenantId,
@@ -421,7 +435,7 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		const byPhase = Object.fromEntries(preview.phases.map((p) => [p.phase, p]));
 		// Two agents listed, none active-linked, one known through a stopped link: one is created.
 		expect(byPhase['agents']).toMatchObject({ everWorks: { total: 2, linked: 0 }, creates: { inGauzy: 1, inEverWorks: 0 } });
-		// Three Gauzy tasks, one of them an Idea task: two go to Ever Works as tasks.
+		// Five Gauzy tasks, three of them ideas: two go to Ever Works as tasks.
 		expect(byPhase['tasks']).toMatchObject({ gauzy: { total: 2, linked: 0 }, creates: { inGauzy: 0, inEverWorks: 2 } });
 	});
 

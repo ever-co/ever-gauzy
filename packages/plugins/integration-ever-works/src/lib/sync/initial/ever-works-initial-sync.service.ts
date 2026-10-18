@@ -9,7 +9,7 @@ import { EverWorksConnection, EverWorksConnectionStatus } from '../../connection
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
-import { EVER_WORKS_IDEA_ISSUE_TYPE } from '../../mapping/ever-works-mapping.defaults';
+import { isIdeaTask } from '../../tasks/ever-works-task-exclusion';
 import type { EverWorksDirection, EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkState, EverWorksLinkType } from '../entities/ever-works-sync.entities';
@@ -980,13 +980,13 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		});
 	}
 
-	/** The organization's Idea tasks (the issue type the mapping seeds), for the dry run. */
+	/** The organization's Idea tasks, by the push's own rule (`isIdeaTask`), for the dry run. */
 	private async ideaTasksOf(context: EverWorksMappingContext): Promise<ID[]> {
 		const rows: Task[] = await this.dataSource.getRepository(Task).find({
-			select: { id: true } as never,
-			where: { tenantId: context.tenantId, organizationId: context.organizationId, issueType: EVER_WORKS_IDEA_ISSUE_TYPE.value } as never
+			select: { id: true, issueType: true, taskTypeId: true } as never,
+			where: { tenantId: context.tenantId, organizationId: context.organizationId } as never
 		});
-		return rows.map((row) => row.id as ID);
+		return rows.filter((row) => isIdeaTask(context, row as never)).map((row) => row.id as ID);
 	}
 
 	private links(context: EverWorksMappingContext, entityType: EverWorksLinkType): Promise<EverWorksEntityLink[]> {

@@ -12,6 +12,20 @@ export interface EverWorksTaskExclusionInput {
 }
 
 /**
+ * Whether a Gauzy task is an idea (it syncs as an Ever Works idea, never as a task): the `Idea` issue type by name,
+ * in any case, or the mapping's seeded Idea issue type by id. Shared by the push and the sync's dry run.
+ */
+export function isIdeaTask(
+	context: EverWorksMappingContext,
+	task: Pick<EverWorksTaskExclusionInput, 'issueType' | 'taskTypeId'>
+): boolean {
+	const ideaTypeId =
+		context.mapping.settings?.find((row) => row.settingsName === EverWorksSettingName.IDEA_ISSUE_TYPE_ID)
+			?.settingsValue ?? '';
+	return String(task.issueType ?? '').toLowerCase() === 'idea' || (!!ideaTypeId && task.taskTypeId === ideaTypeId);
+}
+
+/**
  * Why a Gauzy task is not pushed to Ever Works at all, or `null` when it is (plan 01 §7, §8): an idea syncs as an
  * Ever Works idea, and a task of a project not linked to a work only when the mapping allows it. Shared by the task
  * handler and the comment handler, whose comments of such a task never wait for it (review F22).
@@ -23,8 +37,7 @@ export async function taskSyncExclusion(
 ): Promise<string | null> {
 	const setting = (name: EverWorksSettingName) =>
 		context.mapping.settings?.find((row) => row.settingsName === name)?.settingsValue ?? '';
-	const ideaTypeId = setting(EverWorksSettingName.IDEA_ISSUE_TYPE_ID);
-	if (String(task.issueType ?? '').toLowerCase() === 'idea' || (ideaTypeId && task.taskTypeId === ideaTypeId)) {
+	if (isIdeaTask(context, task)) {
 		return 'ideas sync as Ever Works ideas (plan 01 §8), not as tasks';
 	}
 	const projectLink = task.projectId
