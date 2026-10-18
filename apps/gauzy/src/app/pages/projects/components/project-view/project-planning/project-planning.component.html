@@ -1,0 +1,97 @@
+<div class="planning">
+	<!-- Burn-up: the tasks in scope and the tasks done at the end of each day of the period. -->
+	<section class="panel project-view-panel" [nbSpinner]="burnUp.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+		<header class="panel-header">
+			<div class="panel-heading">
+				<h5 class="panel-title panel-title--icon">
+					<nb-icon icon="activity-outline" aria-hidden="true"></nb-icon>
+					{{ 'PROJECT_VIEW.BURN_UP' | translate }}
+				</h5>
+				<span class="panel-caption">{{ 'PROJECT_VIEW.BURN_UP_CAPTION' | translate : { range: rangeLabel } }}</span>
+			</div>
+			@if (burnUp.value; as value) {
+			<span class="burnup-summary">{{ 'PROJECT_VIEW.BURN_UP_SUMMARY' | translate : { done: value.finished, total: value.total } }}</span>
+			}
+		</header>
+		<div class="panel-body burnup-body">
+			@if (burnUp.failed) {
+			<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+			} @else if (burnUp.value && !burnUp.value.total) {
+			<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+			} @else {
+			<ul class="burnup-legend">
+				<li><span class="burnup-swatch burnup-swatch--scope" aria-hidden="true"></span>{{ 'PROJECT_VIEW.SCOPE' | translate }}</li>
+				<li><span class="burnup-swatch" [style.background-color]="palette.revenue" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate }}</li>
+			</ul>
+			<div class="burnup-canvas">
+				<canvas baseChart type="line" [data]="chartData" [options]="chartOptions"></canvas>
+			</div>
+			}
+		</div>
+	</section>
+
+	<!-- Sprints: active first, each with its dates, how far through them it is, and its tasks done. -->
+	<section class="panel project-view-panel" [nbSpinner]="sprints.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+		<header class="panel-header">
+			<h5 class="panel-title panel-title--icon">
+				<nb-icon icon="flash-outline" aria-hidden="true"></nb-icon>
+				{{ 'PROJECT_VIEW.SPRINTS' | translate }}
+				@if (sprints.value.length) {
+				<span class="title-count">{{ sprints.value.length }}</span>
+				}
+			</h5>
+		</header>
+		<div class="panel-body panel-body--flush">
+			@if (sprints.failed) {
+			<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+			} @else if (!sprints.loading && !sprints.value.length) {
+			<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_VIEW.NO_SPRINTS', icon: 'flash-outline' }"></ng-container>
+			} @else {
+			<ul class="sprint-list">
+				@for (sprint of sprints.value; track sprint.id) {
+				<li class="sprint">
+					<div class="sprint-head">
+						<span class="sprint-name" [nbTooltip]="sprint.goal || sprint.name" nbTooltipPlacement="top">{{ sprint.name }}</span>
+						@if (sprint.status) {
+						<span [class]="'project-status tone-' + sprint.tone">{{ sprint.status }}</span>
+						}
+					</div>
+					<div class="sprint-meta">
+						<span>{{ sprint.dates || ('PROJECT_QUICK_LOOK.NO_DATES' | translate) }}</span>
+						@if (sprint.hint; as hint) {
+						<span>{{ hint.key | translate : { count: hint.count } }}</span>
+						}
+						<span class="sprint-tasks">{{ 'PROJECT_VIEW.SPRINT_TASKS' | translate : { done: sprint.done, total: sprint.tasks } }}</span>
+					</div>
+					@if (sprint.elapsed !== null) {
+					<span
+						class="sprint-track"
+						role="progressbar"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						[attr.aria-valuenow]="sprint.elapsed | number : '1.0-0'"
+						[attr.aria-label]="sprint.name"
+						><span [style.width.%]="sprint.elapsed"></span
+					></span>
+					}
+				</li>
+				}
+			</ul>
+			}
+		</div>
+	</section>
+</div>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #unavailable>
+	<div class="state">
+		<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EMPLOYEES_PAGE.VIEW.UNAVAILABLE' | translate }}</p>
+	</div>
+</ng-template>
