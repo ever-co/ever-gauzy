@@ -641,6 +641,27 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				`/ideas/${encodeURIComponent(link.ewId)}/${action}`,
 				{ actAsUserId: this.ownerOf(ew) }
 			);
+			const jumped = moved.version != null && (link.ewVersion == null || moved.version !== link.ewVersion + 1);
+			if (jumped && fromEverWorks(context.directions.ideas)) {
+				// Ever Works changed the idea in between (its version moved by more than this move): its answer is the
+				// idea as it is now, applied first (the status Gauzy just moved stays), as a 412 merge does. Recording
+				// its version alone would skip that change as applied (review F86). With no task left to take it (the
+				// task was deleted), the move is recorded as before (#11081 review).
+				const outcome = await EverWorksSyncContext.run(
+					{ connectionId: context.connection.id as ID, eventId: `idea-${action}:${link.ewId}` },
+					() =>
+						this.applyIdea(
+							context,
+							link,
+							{ ...moved, id: link.ewId },
+							moved.version ?? null,
+							(context.connection.connectedByUserId as ID) ?? null,
+							new Set(['status'] as const)
+						)
+				);
+				if (outcome.status === 'applied')
+					return this.links.byEw(context.integrationTenantId, EverWorksLinkType.IDEA_TASK, link.ewId);
+			}
 			return this.record(
 				context,
 				link.gauzyId as ID,
@@ -654,6 +675,37 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		} catch (error) {
 			if (!(error instanceof EverWorksApiError && error.status === 422)) throw error;
 			const kept = String((error.details?.['status'] as string | undefined) ?? before.status ?? '');
+			if (kept === (action === 'dismiss' ? 'dismissed' : 'pending') && fromEverWorks(context.directions.ideas)) {
+				// The idea is where this move takes it already: an earlier move went through but its answer was not applied
+				// (a failure after it). Ever Works' idea as it is now is applied (the status stays), and the link moves on
+				// with it, instead of refusing the same move at every push (#11081 review).
+				const remote = await client.request<EverWorksIdea>('GET', `/ideas/${encodeURIComponent(link.ewId)}`);
+				const reconciled = await EverWorksSyncContext.run(
+					{ connectionId: context.connection.id as ID, eventId: `idea-${action}:${link.ewId}` },
+					() =>
+						this.applyIdea(
+							context,
+							link,
+							{ ...remote, id: link.ewId },
+							remote.version ?? null,
+							(context.connection.connectedByUserId as ID) ?? null,
+							new Set(['status'] as const)
+						)
+				);
+				if (reconciled.status === 'applied')
+					return this.links.byEw(context.integrationTenantId, EverWorksLinkType.IDEA_TASK, link.ewId);
+				// No task left to take it (the task was deleted): the move is recorded on the link, as a move is.
+				return this.record(
+					context,
+					link.gauzyId as ID,
+					remote,
+					remote.version ?? null,
+					{ ...(before as IdeaSnapshot), status: remote.status ?? kept },
+					link,
+					ew.unmappedTeams ?? [],
+					'outbound'
+				);
+			}
 			if (task && kept) {
 				const changes = await this.statusChanges(context, task.projectId as ID, kept);
 				if (Object.keys(changes).length) {
