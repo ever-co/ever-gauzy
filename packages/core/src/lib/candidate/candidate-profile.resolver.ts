@@ -208,15 +208,21 @@ const SOURCE_SORTABLE = [...PROFILE_BASE_SORTABLE, 'name'] as const;
  * interview, they are all keyed by `candidateId` (except the source, which the candidacy points at),
  * and the routes the platform serves them under are five spellings of `/api/candidate*`.
  *
- * **The guard chain is the five controllers' own, and one of them differs — which is why the permission
- * guard is stated per field rather than on the class.** Four of the five controllers carry
- * `TenantPermissionGuard` and `PermissionGuard` on the class; the experience controller carries
- * `TenantPermissionGuard` twice and no permission guard at all. A class-level `PermissionGuard` here
- * would therefore put a guard on the experience fields that their own route does not carry, so the class
- * states only what all five share — the tenant guard — and each field of the other four restates the
- * permission guard exactly as its own controller states it. That restatement is not decoration: the
- * guard is read per handler, and a resolver that approximated this would be a second answer to the
- * question of what guards a route runs under.
+ * **The guard chain is the five controllers' own, and all five now agree.** Each of them carries
+ * `TenantPermissionGuard` and `PermissionGuard` on the class, so the class here carries both beside
+ * the gate, and each field restates the permission guard exactly as its own controller states it.
+ * That restatement is not decoration: the guard is read per handler, and a resolver that approximated
+ * this would be a second answer to the question of what guards a route runs under.
+ *
+ * 🛑 This paragraph used to say the opposite, and the reason it gave was a defect rather than a
+ * design. The experience controller carried `@UseGuards(TenantPermissionGuard, TenantPermissionGuard)`
+ * — the tenant guard twice, `PermissionGuard` nowhere — so this class left the permission guard off
+ * and the eight experience fields below stated `@Permissions` with no guard to read it. `@Permissions`
+ * is metadata: `PermissionGuard` is the only provider that reads it, so those eight fields, five of
+ * them writes, ran for any authenticated member of the tenant while their four sibling groups did not.
+ * Mirroring a broken controller faithfully reproduces the hole rather than the contract; the
+ * controller has been given the chain its four siblings have, and this class and those eight fields
+ * now state the permission guard like everything around them.
  *
  * All five carry the edit permission on the class. Every field below therefore states the permission its
  * own route runs under: four lists state the candidate view permission, the document list states the
@@ -236,7 +242,7 @@ const SOURCE_SORTABLE = [...PROFILE_BASE_SORTABLE, 'name'] as const;
  * of it.
  */
 @Resolver()
-@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 export class CandidateProfileResolver {
@@ -450,6 +456,7 @@ export class CandidateProfileResolver {
 	 * store returns whole, and no organization member is carried on the type for that reason.
 	 */
 	@Query('candidateExperiences')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	async candidateExperiences(
 		@Args('filter') filter?: ConnectionFilter,
@@ -472,6 +479,7 @@ export class CandidateProfileResolver {
 
 	/** One prior engagement, or null when there is none. */
 	@Query('candidateExperience')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async candidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<CandidateExperience | null> {
 		return await this.oneOrNone(this.candidateExperienceService, id);
@@ -479,6 +487,7 @@ export class CandidateProfileResolver {
 
 	/** How many prior engagements the caller's tenant holds. */
 	@Query('candidateExperienceCount')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async candidateExperienceCount(): Promise<number> {
 		return await this.candidateExperienceService.countBy();
@@ -486,6 +495,7 @@ export class CandidateProfileResolver {
 
 	/** Files a prior engagement under a candidacy. */
 	@Mutation('createCandidateExperience')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async createCandidateExperience(
 		@Args('input') input: ICreateCandidateExperienceInput
@@ -495,6 +505,7 @@ export class CandidateProfileResolver {
 
 	/** Edits a prior engagement, answering the row the write produced. */
 	@Mutation('updateCandidateExperience')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async updateCandidateExperience(
 		@Args('input') input: IUpdateCandidateExperienceInput
@@ -506,6 +517,7 @@ export class CandidateProfileResolver {
 
 	/** Removes a prior engagement outright. */
 	@Mutation('deleteCandidateExperience')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async deleteCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.candidateExperienceService.delete(id);
@@ -515,6 +527,7 @@ export class CandidateProfileResolver {
 
 	/** Withdraws a prior engagement without removing it. */
 	@Mutation('softDeleteCandidateExperience')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async softDeleteCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<CandidateExperience> {
 		return await this.candidateExperienceService.softRemove(id);
@@ -522,6 +535,7 @@ export class CandidateProfileResolver {
 
 	/** Puts a withdrawn prior engagement back. */
 	@Mutation('recoverCandidateExperience')
+	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	async recoverCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<CandidateExperience> {
 		return await this.candidateExperienceService.softRecover(id);

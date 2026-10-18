@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -9,7 +9,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
@@ -81,11 +82,15 @@ const ORGANIZATION_EMPLOYMENT_TYPE_DEFAULT_SORT: readonly ConnectionSortKey[] = 
  * than a statement about the write. The field calls the same method with the same merge, so a caller
  * gets the same behaviour and the same answer over either protocol.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere, so
- * every one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
- * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
- * two-protocol rule forbids.
+ * **The guard chain and the permission are the controller's, read route by route.** The delivered
+ * controller carries `TenantPermissionGuard` on the class, so the class here carries it too; its
+ * *reads* state no permission, so the query fields state none either. Its five writes do state one —
+ * `@UseGuards(PermissionGuard)` with `@Permissions(ALL_ORG_EDIT)` on the create, the edit, the
+ * removal, the withdrawal and the recovery — so each of the five mutations below repeats exactly that
+ * pair. This used to say the controller stated no permission anywhere and the mutations carried none,
+ * which was wrong in the one direction that matters: every caller the REST route refused could file,
+ * edit and remove an employment type over GraphQL instead. Two surfaces of one concept have one
+ * scope, and the surface that is easier to reach must never be the weaker one.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -169,6 +174,8 @@ export class OrganizationEmploymentTypeResolver {
 	 * and never which tenant it is written into.
 	 */
 	@Mutation('createOrganizationEmploymentType')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async createOrganizationEmploymentType(
 		@Args('input') input: ICreateOrganizationEmploymentTypeInput
 	): Promise<OrganizationEmploymentType> {
@@ -186,6 +193,8 @@ export class OrganizationEmploymentTypeResolver {
 	 * write path for one fact.
 	 */
 	@Mutation('updateOrganizationEmploymentType')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async updateOrganizationEmploymentType(
 		@Args('input') input: IUpdateOrganizationEmploymentTypeInput
 	): Promise<OrganizationEmploymentType> {
@@ -201,6 +210,8 @@ export class OrganizationEmploymentTypeResolver {
 	 * Removes an employment type outright.
 	 */
 	@Mutation('deleteOrganizationEmploymentType')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationEmploymentType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationEmploymentTypeService.delete(id);
 
@@ -212,6 +223,8 @@ export class OrganizationEmploymentTypeResolver {
 	 * it back.
 	 */
 	@Mutation('softDeleteOrganizationEmploymentType')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async softDeleteOrganizationEmploymentType(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<OrganizationEmploymentType> {
@@ -222,6 +235,8 @@ export class OrganizationEmploymentTypeResolver {
 	 * Puts a withdrawn employment type back, clearing the marker the withdrawal set.
 	 */
 	@Mutation('recoverOrganizationEmploymentType')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async recoverOrganizationEmploymentType(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<OrganizationEmploymentType> {

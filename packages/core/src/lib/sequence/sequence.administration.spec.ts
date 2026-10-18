@@ -134,7 +134,21 @@ class SeriesTable {
 	private readonly manager = {
 		transaction: (work: (manager: unknown) => Promise<unknown>) => this.transaction(work),
 		createQueryBuilder: (_entity: unknown, alias: string) => this.queryBuilder(alias),
-		save: async (_entity: unknown, row: SeriesRow) => this.persist(row)
+		save: async (_entity: unknown, row: SeriesRow) => this.persist(row),
+		/**
+		 * The conditional write the restart commits through.
+		 *
+		 * The criteria are "this row, still holding the counter I read": the restart predicates its
+		 * rewind on `nextValue` as the transaction observed it, so an allocation that moved the counter
+		 * beside it matches nothing and the restart is refused instead of silently reissuing numbers
+		 * that were already handed out. The double therefore matches on every criterion rather than on
+		 * the identifier alone — an `update` keyed only by id would report one row affected for a write
+		 * the database would have declined, and this suite would certify a race it does not survive.
+		 *
+		 * The answer is TypeORM's `UpdateResult` shape, which is one of the five `readAffectedRows`
+		 * reads a count out of.
+		 */
+		update: async (_entity: unknown, criteria: Row, values: Row) => this.conditionalUpdate(criteria, values)
 	};
 
 	/** The repository the service is constructed with. */
@@ -168,9 +182,11 @@ class SeriesTable {
 		this.depth += 1;
 
 		// What the table held when the transaction opened. A body that throws rolls back to it, which is
-		// the property that makes a declined move a declined move rather than a write nobody saved: the
-		// kernel's restart path mutates the row it read, so without the rollback an operation that
-		// refused would still look as though it had stamped the period.
+		// what makes a declined move a declined move rather than a write nobody saved. It is the second
+		// of the two properties that keep a refusal off the table — the first is that a read hands back
+		// a snapshot, so the kernel's restart path mutates a copy and never the stored row — and both
+		// are true of a database. The rollback is kept because it is the one that still holds once a
+		// body has written something before deciding to refuse.
 		const opened = this.rows.map((row) => ({ ...row }));
 
 		try {
@@ -216,10 +232,44 @@ class SeriesTable {
 
 				return builder;
 			},
-			getOne: async () => this.rows.find((row) => matchesRow(row, conditions)) ?? null
+			/**
+			 * 🛑 A snapshot, not the stored row.
+			 *
+			 * A database read hands back values; this used to hand back the object the table holds, so
+			 * every mutation the service made to what it had read was already in the table before the
+			 * write that decides it ran. The restart rewinds the counter on the row it read and then
+			 * predicates its `UPDATE` on the value it observed *before* the rewind — against a live
+			 * handle that predicate can never match, and a restart that should have landed came out as a
+			 * conflict. Copying at the read restores the boundary the conditional write is built on.
+			 */
+			getOne: async () => {
+				const row = this.rows.find((candidate) => matchesRow(candidate, conditions));
+
+				return row ? { ...row } : null;
+			}
 		};
 
 		return builder;
+	}
+
+	/**
+	 * A conditional `UPDATE`: every criterion has to still hold, and only a row satisfying all of them
+	 * is written. The affected-row count is the whole answer the caller acts on.
+	 */
+	private async conditionalUpdate(criteria: Row, values: Row): Promise<{ affected: number }> {
+		this.depths.push(this.depth);
+		await Promise.resolve();
+
+		let affected = 0;
+
+		for (const row of this.rows) {
+			if (matchesRow(row, criteria)) {
+				Object.assign(row, values);
+				affected += 1;
+			}
+		}
+
+		return { affected };
 	}
 
 	private findRow(id: string): SeriesRow | undefined {

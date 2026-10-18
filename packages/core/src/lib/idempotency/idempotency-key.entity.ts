@@ -8,10 +8,20 @@ import { MikroOrmIdempotencyKeyRepository } from './repository/mikro-orm-idempot
 /**
  * A stored idempotency key.
  *
- * The row is the lock. Two concurrent identical requests cannot both insert the unique tuple
- * `(organizationId, scope, key)`, so the loser of the race learns that the work is already in
- * flight rather than repeating it; a row that holds a terminal response is replayed verbatim
- * without the work running again.
+ * The row is the lock. Two concurrent identical requests cannot both insert the unique tuple the
+ * table carries, so the loser of the race learns that the work is already in flight rather than
+ * repeating it; a row that holds a terminal response is replayed verbatim without the work running
+ * again.
+ *
+ * **The tuple is not literally `(organizationId, scope, key)`, and the difference is load-bearing.**
+ * `organizationId` is nullable, and every dialect the platform supports treats nulls in a unique
+ * index as distinct from one another — so spelled that way the index constrained nothing at all for
+ * a caller with no organization selected, which is every service account, every integration and
+ * every token issued without `lastOrganizationId`. The delivered index therefore coalesces the
+ * column to a zero uuid before it is indexed (`UQ_idempotency_org_scope_key`), and MySQL, which has
+ * neither expression indexes nor filtered ones, carries the same value in a stored generated column.
+ * It still carries no `tenantId`; {@link IdempotencyService.findByKey} states what that costs and
+ * what the index has to become.
  */
 @MultiORMEntity('idempotency_key', { mikroOrmRepository: () => MikroOrmIdempotencyKeyRepository })
 export class IdempotencyKey extends TenantOrganizationBaseEntity implements IIdempotencyKey {

@@ -96,13 +96,16 @@ const TAG_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain and the permissions are the controller's, field by field.** The delivered
  * controller carries `TenantPermissionGuard` on the class, no class-level permission, and
- * `PermissionGuard` with `ALL_ORG_EDIT` plus the add or edit permission on each of the two writes it
- * declares of its own. This resolver carries the tenant guard on the class and the permission guard
- * with the same two permissions on the same two fields; every other field mirrors a route that states
- * no permission — the list, the level lookup, the count and the node query the controller inherits
- * from the CRUD base — and therefore states none either. A field that demanded a permission the route
- * does not would refuse here a caller REST serves, and tightening the resource is a change to make in
- * both places at once.
+ * `PermissionGuard` with a permission on each of the five writes it declares of its own:
+ * `ALL_ORG_EDIT` with `ORG_TAGS_ADD` on the create, `ALL_ORG_EDIT` with `ORG_TAGS_EDIT` on the edit,
+ * and `ALL_ORG_EDIT` with `ORG_TAGS_EDIT` and `ORG_TAGS_DELETE` on the removal, the withdrawal and
+ * the recovery. This resolver carries the tenant guard on the class and the permission guard with the
+ * same permissions on the same five fields; every other field mirrors a route that states no
+ * permission — the list, the level lookup, the count and the node query the controller inherits from
+ * the CRUD base — and therefore states none either. The removal, the withdrawal and the recovery were
+ * previously counted among that second group, which was wrong: all three are declared on the
+ * controller with a permission, and a field that demanded less than its route is a way around the
+ * permission model rather than a second view of it.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -269,6 +272,8 @@ export class TagResolver {
 	 * Removes a tag outright, with the pivot rows that attach it to the records it labelled.
 	 */
 	@Mutation('deleteTag')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async deleteTag(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.tagService.delete(id);
 
@@ -276,20 +281,25 @@ export class TagResolver {
 	}
 
 	/**
-	 * Withdraws a tag without removing it. No permission is stated because the delivered route states
-	 * none: the soft removal is inherited from the CRUD base, where the controller's own tenant guard
-	 * is the whole of its scope.
+	 * Withdraws a tag without removing it, under the permission the delivered route states. `DELETE
+	 * /api/tags/:id/soft` is declared on the controller with `@UseGuards(PermissionGuard)` and
+	 * `@Permissions(ALL_ORG_EDIT, ORG_TAGS_EDIT, ORG_TAGS_DELETE)` rather than inherited, so the field
+	 * repeats that triple.
 	 */
 	@Mutation('softDeleteTag')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async softDeleteTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
 		return await this.tagService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn tag back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route carries no permission to mirror.
+	 * Puts a withdrawn tag back, under the permission `PUT /api/tags/:id/recover` states — the same
+	 * triple the withdrawal above carries.
 	 */
 	@Mutation('recoverTag')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT, PermissionsEnum.ORG_TAGS_DELETE)
 	async recoverTag(@Args('id', { type: () => ID }) id: Id): Promise<Tag> {
 		return await this.tagService.softRecover(id);
 	}

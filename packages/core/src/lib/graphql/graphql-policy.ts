@@ -237,14 +237,37 @@ export function resolveGraphqlPolicy(
 
 	// Debug output carries the same information the playground exposes, one log line at a time, so it
 	// follows the playground unless a deployment separates them on purpose.
+	//
+	// 🛑 The ternary is deliberate here and is *not* the defect that was fixed for `introspection`
+	// below. `debug` is a required member of `GraphqlConfigurationOptions` and every shipped
+	// configuration states `debug: true` unconditionally, for every environment
+	// (`packages/config/src/lib/default-config.ts` and `apps/api/src/plugin.config.ts`). A `true`
+	// arriving here is therefore the default nobody chose rather than a deployment's decision, and
+	// honouring it with `??` would put the production debug output back — which is the defect this
+	// module was written to remove. An explicit `false` stays final, and `GRAPHQL_DEBUG` remains the
+	// way to turn it on where it is wanted.
 	const debug = readBoolean(env, GRAPHQL_POLICY_ENV.DEBUG, settings.debug === false ? false : playground, warnings, 'the playground policy is used');
 
 	// Introspection is a pair with the playground: both describe the surface, and a deployment that
-	// turned the editor off has no reason to keep publishing the map.
+	// turned the editor off has no reason to keep publishing the map — *unless it says otherwise*.
+	//
+	// 🛑 This used to read `settings.introspection === false ? false : playground`, which honoured an
+	// explicit `false` and silently discarded an explicit `true`. The option's own contract
+	// (`IApplicationPluginConfig.introspection`, `IGraphql.GraphQLApiConfigurationOptions.introspection`)
+	// says it *defaults* to the playground policy, and "defaults to" means a stated value wins. The
+	// deployment the option exists for — `{ playground: false, debug: false, introspection: true }`, a
+	// hardened endpoint that still publishes its schema to a codegen pipeline — resolved to `false`
+	// and answered every introspection query with `GRAPHQL_INTROSPECTION_DISABLED`, leaving the
+	// environment variable as the only channel that worked although the docstring presents it as an
+	// override of the configuration rather than as the configuration.
+	//
+	// `??` rather than the ternary is safe here and would *not* be safe for `debug` below: no shipped
+	// configuration states `introspection` at all, so a `true` reaching this line is a deployment's
+	// own decision, while all three shipped configurations state `debug: true` for every environment.
 	const introspection = readBoolean(
 		env,
 		GRAPHQL_POLICY_ENV.INTROSPECTION,
-		settings.introspection === false ? false : playground,
+		settings.introspection ?? playground,
 		warnings,
 		'the playground policy is used'
 	);

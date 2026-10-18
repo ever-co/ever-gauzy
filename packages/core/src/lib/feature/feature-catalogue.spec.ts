@@ -137,9 +137,13 @@ const toggledCodes = (type: DatabaseTypeEnum, executed: ExecutedQuery[]): string
 };
 
 describe('the commerce feature catalogue', () => {
-	it('is the 32 codes the programme introduces, each exactly once', () => {
-		expect(COMMERCE_CATALOGUE).toHaveLength(32);
-		expect(new Set(catalogueCodes).size).toBe(32);
+	it('is the 33 codes the programme introduces, each exactly once', () => {
+		// Thirty-three since `FEATURE_MARKETPLACE_PAYOUTS` joined them: the marketplace contributes it
+		// and `FEATURE_SELLER_PAYOUT_SCHEDULER` depends on it, but no catalogue entry carried it, so the
+		// seed wrote no row and nothing could switch the flag. A count is a weak assertion on its own —
+		// the real one is below it, that every code a package contributes is seeded.
+		expect(COMMERCE_CATALOGUE).toHaveLength(33);
+		expect(new Set(catalogueCodes).size).toBe(33);
 		catalogueCodes.forEach((code) => expect(code).toMatch(/^FEATURE_[A-Z0-9_]+$/));
 	});
 

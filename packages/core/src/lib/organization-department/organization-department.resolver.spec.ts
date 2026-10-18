@@ -727,24 +727,42 @@ describe('OrganizationDepartmentResolver — the guard stack is the controller�
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(OrganizationDepartmentController, route));
 	});
 
-	it('permits the reads and the lifecycle pair exactly as far as their routes do, and no further', () => {
+	it('permits the reads exactly as far as their routes do, and gates every write as its route gates it', () => {
 		const proto = fieldsOf(OrganizationDepartmentResolver);
 
-		// The list, the node read, the count, the employee read and the two lifecycle moves are
-		// delivered without a permission — the lifecycle pair is inherited from the CRUD base, where
-		// the controller's tenant guard is the whole of its scope. A resolver that demanded one here
-		// would refuse a caller the REST route serves.
+		// The four reads are delivered without a permission: the list route, the node read and the
+		// count the controller inherits from the CRUD base, and the employee read it declares, are all
+		// scoped by the class-level tenant guard alone. A resolver that demanded one here would refuse a
+		// caller the REST route serves.
 		for (const field of [
 			'organizationDepartments',
 			'organizationDepartment',
 			'organizationDepartmentCount',
-			'organizationDepartmentsByEmployee',
+			'organizationDepartmentsByEmployee'
+		]) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata('__guards__', proto[field])).toBeUndefined();
+		}
+
+		// 🛑 The lifecycle trio is NOT inherited bare. This case used to assert that the removal, the
+		// withdrawal and the recovery carried no permission, on the reading that the controller
+		// inherited all three from `CrudController` and left the tenant guard as their whole scope. The
+		// controller does no such thing: it overrides `delete`, `softRemove` and `softRecover` for the
+		// sole purpose of attaching `@UseGuards(PermissionGuard)` and
+		// `@Permissions(ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT)`, and says so in each override's own docblock.
+		// A GraphQL field that stated nothing there let any authenticated member of the tenant delete a
+		// department that REST refused them — a privilege escalation reachable by choosing the other
+		// protocol. The expectation now asserts the pair, which is what closing that hole looks like.
+		for (const field of [
 			'deleteOrganizationDepartment',
 			'softDeleteOrganizationDepartment',
 			'recoverOrganizationDepartment'
 		]) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.ORG_EMPLOYEES_EDIT
+			]);
+			expect(Reflect.getMetadata('__guards__', proto[field])).toEqual([PermissionGuard]);
 		}
 	});
 
@@ -760,10 +778,18 @@ describe('OrganizationDepartmentResolver — the guard stack is the controller�
 		expect(Reflect.getMetadata('__guards__', proto['updateOrganizationDepartmentByEmployee'])).toEqual([
 			PermissionGuard
 		]);
-		// The two writes that carry no permission of their own are not given this one: the resource's
-		// own edit is unpermissioned on both surfaces.
+		// "Alone" is the point of this case, and it is a narrower claim than the one it used to make.
+		// It used to read the resource's own create and edit as unpermissioned, which was wrong twice
+		// over: `POST /organization-department` and `PUT /organization-department/:id` both state
+		// `@Permissions(ALL_ORG_EDIT, ORG_EMPLOYEES_EDIT)`. What is really true of the employee
+		// assignment is that it is the only field carrying `ORG_EMPLOYEES_EDIT` *by itself* — the
+		// resource's own writes demand the organization edit beside it, so a caller who may move people
+		// between departments still cannot file or rename one. That asymmetry is what is asserted now.
 		for (const field of ['createOrganizationDepartment', 'updateOrganizationDepartment']) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toBeUndefined();
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.ORG_EMPLOYEES_EDIT
+			]);
 		}
 	});
 

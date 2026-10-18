@@ -1,9 +1,9 @@
-import { CallHandler, ExecutionContext, HttpStatus, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, HttpException, HttpStatus, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Observable, from, lastValueFrom } from 'rxjs';
-import type { ID } from '@gauzy/contracts';
+import type { ID, JsonData } from '@gauzy/contracts';
 import { executionRequest, executionResponse, readRequestHeader, setResponseHeader } from '../core/context/execution-context.util';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
@@ -23,6 +23,39 @@ import {
 	planIdempotentRequest,
 	serializeResponseForStorage
 } from './idempotency.policy';
+
+/**
+ * A stored response replayed with the status the first attempt answered with.
+ *
+ * **It is an exception because that is the only way an interceptor can choose a status**, and that
+ * is a fact about Nest rather than a preference. A route's status is computed once, at
+ * route-registration time, from `@HttpCode()` or the method default, and
+ * `RouterResponseController.apply(result, res, statusCode)` hands it to the adapter, whose `reply`
+ * does `if (statusCode) response.status(statusCode)` *after* the whole interceptor chain has
+ * returned. Anything an interceptor sets on the response is therefore overwritten on the way out —
+ * so a stored `422 ORDER_INVALID` came back as the route's registered `201`, with an empty body,
+ * and the client was told its order existed after the server had refused it.
+ *
+ * Thrown, the reply is written by the application's own exception filters instead: `ApiExceptionFilter`
+ * and `DatabaseErrorFilter` both match `HttpException`, neither rewrites a status, and the last one
+ * to answer renders the carried body verbatim. Nothing new has to be registered for this to work, and
+ * the headers the replay already set on the response survive, because a filter writes a status and a
+ * body and never clears headers.
+ *
+ * It carries the stored body as its response payload, so what the client receives on the replay is
+ * what the first attempt produced rather than a description of it.
+ */
+export class IdempotentReplayException extends HttpException {
+	/**
+	 * @param status - The status the first attempt answered with.
+	 * @param body - The stored response body, replayed verbatim. A stored row with no body replays as
+	 * an empty object rather than as nothing: `reply` sends no document at all for a nil body, and a
+	 * refusal with no document is the failure this class exists to end.
+	 */
+	constructor(status: number, body?: JsonData) {
+		super((body ?? {}) as Record<string, unknown>, status);
+	}
+}
 
 /**
  * What a route declares about retrying it.
@@ -122,6 +155,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 					body: request?.body
 			  });
 
+		const routeStatus = resolveResponseStatus(this.reflector, context, method);
 		const decision = planIdempotentRequest({ method, key: header, required: options.required, requestHash });
 
 		if (decision.action === 'SKIP') {
@@ -176,6 +210,21 @@ export class IdempotencyInterceptor implements NestInterceptor {
 					response.status(settled.status);
 				}
 
+				// The line above is not enough on its own and never was: Nest applies the route's own
+				// registered status after this interceptor returns — see {@link IdempotentReplayException}.
+				// It is kept because it is right for every surface that does *not* go through that
+				// machinery, and because a status that agrees with the route's registered one costs
+				// nothing to state twice.
+				//
+				// A stored status that differs from the route's is the case that has to be thrown, and
+				// the refusal is the one that matters: a route registered `201` that stored a `422` was
+				// replaying the refusal as a created resource. GraphQL is left alone — one HTTP response
+				// carries the whole document there, so a per-operation status is not a thing it has, and
+				// the stored body is the answer.
+				if (!isGraphql && settled.status !== routeStatus) {
+					throw new IdempotentReplayException(settled.status, settled.body as JsonData);
+				}
+
 				return settled.body ?? undefined;
 			}
 
@@ -212,8 +261,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 				break;
 		}
 
-		const responseStatus = resolveResponseStatus(this.reflector, context, method);
-		const result = await this.runAndRecord(context, next, claim.record.id, responseStatus, options);
+		const result = await this.runAndRecord(context, next, claim.record.id, routeStatus, options);
 
 		return result;
 	}
@@ -243,12 +291,30 @@ export class IdempotencyInterceptor implements NestInterceptor {
 		try {
 			result = await lastValueFrom(next.handle());
 		} catch (error) {
-			// The key is settled as failed with the status the caller saw, so a retry of a request the
-			// server already refused is answered with that refusal instead of being run again. A
-			// caller that wants a fresh attempt uses a fresh key.
+			// The key is settled as failed with the status the caller saw *and with the refusal it
+			// saw*, so a retry of a request the server already refused is answered with that refusal
+			// instead of being run again. A caller that wants a fresh attempt uses a fresh key.
+			//
+			// Recording the status alone — which is what this did — left the row with a NULL body, and
+			// the replay then answered the stored status with no document at all: a client that had been
+			// told *why* its order was refused learned nothing the second time. The body is taken off
+			// the exception rather than rebuilt, so what is stored is what the framework would have
+			// rendered, minus the per-request members (`timestamp`, `path`, `traceId`) that a replay
+			// must not repeat because they belong to the first request and not to this one.
+			const { stored: storedError, dropped: errorDropped } = serializeResponseForStorage(
+				serializeErrorForStorage(error)
+			);
+
+			if (errorDropped) {
+				this.logger.warn(
+					`The refusal answering ${options.scope} was not stored for replay because it exceeded the storage cap.`
+				);
+			}
+
 			await this.settleQuietly(() =>
 				this.idempotencyService.fail(recordId, {
-					responseStatus: resolveErrorStatus(error)
+					responseStatus: resolveErrorStatus(error),
+					...(storedError === undefined ? {} : { responseBody: storedError })
 				})
 			);
 
@@ -329,6 +395,39 @@ function resolveErrorStatus(error: unknown): number {
 	const status = (error as { getStatus?: () => number })?.getStatus?.();
 
 	return typeof status === 'number' ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+}
+
+/**
+ * The body a refusal is stored and replayed with.
+ *
+ * Only a refusal the framework can describe is stored. An `HttpException` carries the document the
+ * client was sent — Nest's three-key shape, or whatever a handler threw in its place — and an
+ * `ApiException` adds the two members a client actually branches on, its catalogued `code` and its
+ * `details`, which the error envelope would otherwise be the only carrier of. Anything else is a
+ * failure the platform did not choose to describe, and inventing a body for it would replay a
+ * sentence the first caller never saw; the stored status alone stands for those.
+ *
+ * @param error The caught error.
+ * @returns The body to store, or undefined when the failure carries none.
+ */
+function serializeErrorForStorage(error: unknown): unknown {
+	if (!(error instanceof HttpException)) {
+		return undefined;
+	}
+
+	const payload = error.getResponse();
+
+	if (!(error instanceof ApiException)) {
+		return payload;
+	}
+
+	const base = payload && typeof payload === 'object' ? payload : { message: payload };
+
+	return {
+		...(base as Record<string, unknown>),
+		code: error.code,
+		...(error.details === undefined ? {} : { details: error.details })
+	};
 }
 
 /**

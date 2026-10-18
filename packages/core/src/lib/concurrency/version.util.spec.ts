@@ -319,20 +319,40 @@ describe('the precondition a request is decided by', () => {
 	it("proceeds on the version the caller stated when the row's version is unknown", () => {
 		// The comparison is deferred rather than skipped: the conditional update is predicated on the
 		// stated version, which is the half that cannot be raced.
+		//
+		// `versions` travels beside `expected` on every `PROCEED`. `If-Match: "3", "4"` states that
+		// *either* version is acceptable, and `expected` can only carry one number — it is the one a
+		// caller that has to pick a single version uses. Collapsing the header to that first member
+		// refused a write whose row sat at the second: the caller was answered `409` for a version it
+		// had explicitly accepted, re-read the row, got the same version back, and could loop. The list
+		// is therefore asserted here rather than left implicit, because it is the member that carries
+		// the caller's full statement through to the conditional update.
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"3"' })).toEqual({
 			action: 'PROCEED',
 			expected: 3,
-			wildcard: false
+			wildcard: false,
+			versions: [3]
 		});
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"3"', currentVersion: null })).toEqual({
 			action: 'PROCEED',
 			expected: 3,
-			wildcard: false
+			wildcard: false,
+			versions: [3]
 		});
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"3"', exists: true, currentVersion: null })).toEqual({
 			action: 'PROCEED',
 			expected: 3,
-			wildcard: false
+			wildcard: false,
+			versions: [3]
+		});
+		// Every version the caller listed survives the deferral, not just the first: the row's version is
+		// unknown here, so the list is the only record of what it accepted and the conditional update is
+		// the half that picks from it.
+		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"2", "3"' })).toEqual({
+			action: 'PROCEED',
+			expected: 2,
+			wildcard: false,
+			versions: [2, 3]
 		});
 		// An unusable stored version is an unknown one rather than a mismatch: a row whose column holds `0`
 		// is not known to be at a version, so the write still pins what the caller stated. Control: reading
@@ -340,11 +360,22 @@ describe('the precondition a request is decided by', () => {
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"3"', currentVersion: 0 })).toEqual({
 			action: 'PROCEED',
 			expected: 3,
-			wildcard: false
+			wildcard: false,
+			versions: [3]
 		});
-		// Control: a wildcard with no readable version names no number to predicate on. Proceeding with a
-		// guess would be the one outcome worse than not proceeding.
-		expect(evaluateVersionPrecondition({ write: true, ifMatch: '*' })).toEqual({ action: 'SKIP' });
+		// A wildcard with no readable version names no number, but it is still a statement — `*` says
+		// "any version, as long as the row exists". Answering `SKIP` left no expectation on the request
+		// at all, and the handler's own `versionExpectationOf` then threw `428 VERSION_REQUIRED`, telling
+		// a caller that had just written `If-Match: *` to state a version. It proceeds instead, carrying
+		// the wildcard and an empty list, and `resolveExpectedVersion` resolves the number against the row
+		// at write time. `expected` is stated as zero rather than omitted because the variant declares it,
+		// and it is never read for a wildcard.
+		expect(evaluateVersionPrecondition({ write: true, ifMatch: '*' })).toEqual({
+			action: 'PROCEED',
+			expected: 0,
+			wildcard: true,
+			versions: []
+		});
 	});
 
 	it('answers a mismatch as a conflict naming both versions', () => {
@@ -368,27 +399,34 @@ describe('the precondition a request is decided by', () => {
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"3"', currentVersion: 3 })).toEqual({
 			action: 'PROCEED',
 			expected: 3,
-			wildcard: false
+			wildcard: false,
+			versions: [3]
 		});
 		// The row is at 3 and the caller accepted 2 or 3: the number the update is predicated on is 3, the
-		// row's own, not the first the caller listed.
+		// row's own, not the first the caller listed. Both accepted versions still travel in `versions`,
+		// so a write that has to re-resolve the number downstream sees the caller's whole statement rather
+		// than the one member this read happened to land on.
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"2", "3"', currentVersion: 3 })).toEqual({
 			action: 'PROCEED',
 			expected: 3,
-			wildcard: false
+			wildcard: false,
+			versions: [2, 3]
 		});
 		// A wildcard against a known row proceeds at that row's version and stays a wildcard, so the write
-		// resolves the number itself rather than trusting one read here.
+		// resolves the number itself rather than trusting one read here. It states no accepted list, which
+		// is what keeps it out of the exact-version branch of `matchesExpectation`.
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '*', currentVersion: 4 })).toEqual({
 			action: 'PROCEED',
 			expected: 4,
-			wildcard: true
+			wildcard: true,
+			versions: []
 		});
 		// A row that exists and matches is not a 404.
 		expect(evaluateVersionPrecondition({ write: true, ifMatch: '"4"', exists: true, currentVersion: 4 })).toEqual({
 			action: 'PROCEED',
 			expected: 4,
-			wildcard: false
+			wildcard: false,
+			versions: [4]
 		});
 	});
 });

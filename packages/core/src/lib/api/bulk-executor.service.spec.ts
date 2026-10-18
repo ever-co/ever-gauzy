@@ -170,6 +170,137 @@ describe('BulkExecutor', () => {
 		expect(writes).toEqual([]);
 	});
 
+	it('takes a savepoint per item of an atomic batch, and rolls back to it when the item fails', async () => {
+		// A manager that answers `query`, which is what a TypeORM transactional runner hands over.
+		const statements: string[] = [];
+		const manager = { query: async (sql: string) => void statements.push(sql) };
+		const runner = async <R>(work: (candidate: any) => Promise<R>): Promise<R> => work(manager);
+		const executor = new BulkExecutor(visibilityFor([]));
+
+		const promise = executor.execute<Line>(
+			{
+				atomic: true,
+				items: [
+					{ op: 'create', sku: 'A' },
+					{ op: 'create', sku: 'B' },
+					{ op: 'create', sku: 'C' }
+				]
+			},
+			async (item) => {
+				if (item.sku === 'B') {
+					throw new ApiException(409, ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION, 'Duplicate SKU.', { field: 'sku' });
+				}
+
+				return { index: 0, id: String(item.sku), resource: 'line' };
+			},
+			{ resource: 'line', transaction: runner }
+		);
+
+		await expect(promise).rejects.toMatchObject({ code: ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION });
+
+		// The item that applied releases its savepoint; the item that failed rolls back to its own, so
+		// the connection is usable again and the item after it is applied against a live transaction
+		// rather than an aborted one. The names carry the item index and nothing a caller supplied.
+		expect(statements).toEqual([
+			'SAVEPOINT gauzy_bulk_item_0',
+			'RELEASE SAVEPOINT gauzy_bulk_item_0',
+			'SAVEPOINT gauzy_bulk_item_1',
+			'ROLLBACK TO SAVEPOINT gauzy_bulk_item_1',
+			'SAVEPOINT gauzy_bulk_item_2',
+			'RELEASE SAVEPOINT gauzy_bulk_item_2'
+		]);
+	});
+
+	it('reports every item of an atomic batch by its own reason, not by the first failure', async () => {
+		// This is the PostgreSQL case the savepoints exist for. The fake driver refuses every
+		// statement after the first failure with 25P02, exactly as an aborted transaction does; with
+		// the savepoint rolled back it accepts statements again, so items 2 and 3 reach their own
+		// validation and report their own codes.
+		let aborted = false;
+		const manager = {
+			query: async (sql: string) => {
+				if (/^ROLLBACK TO SAVEPOINT/.test(sql)) {
+					aborted = false;
+
+					return;
+				}
+
+				if (aborted) {
+					throw new Error('current transaction is aborted, commands ignored until end of transaction block');
+				}
+			},
+			write: async () => {
+				if (aborted) {
+					throw new Error('current transaction is aborted, commands ignored until end of transaction block');
+				}
+			}
+		};
+		const runner = async <R>(work: (candidate: any) => Promise<R>): Promise<R> => work(manager);
+		const executor = new BulkExecutor(visibilityFor([]));
+
+		const promise = executor.execute<Line>(
+			{
+				atomic: true,
+				items: [
+					{ op: 'create', sku: 'DUPLICATE' },
+					{ op: 'create', sku: 'BAD-PRICE' },
+					{ op: 'create', sku: 'NO-NAME' }
+				]
+			},
+			async (item) => {
+				await manager.write();
+
+				if (item.sku === 'DUPLICATE') {
+					aborted = true;
+
+					throw new ApiException(409, ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION, 'Duplicate SKU.', { field: 'sku' });
+				}
+
+				if (item.sku === 'BAD-PRICE') {
+					throw new ApiException(400, ApiErrorCode.VALIDATION_FAILED, 'The price is not a decimal.', {
+						field: 'price'
+					});
+				}
+
+				throw new ApiException(400, ApiErrorCode.VALIDATION_REQUIRED_FIELD, 'A name is required.', {
+					field: 'name'
+				});
+			},
+			{ resource: 'line', transaction: runner }
+		);
+
+		const failure = (await promise.catch((error) => error)) as ApiException;
+		const items = (failure.details as { items: { index: number; code: ApiErrorCode }[] }).items;
+
+		expect(items.map((item) => item.code)).toEqual([
+			ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION,
+			ApiErrorCode.VALIDATION_FAILED,
+			ApiErrorCode.VALIDATION_REQUIRED_FIELD
+		]);
+	});
+
+	it('applies an atomic batch against a manager that cannot take a savepoint', async () => {
+		// A runner that hands over no manager at all — several routes' own paths do — must still run
+		// the batch. The savepoint is an improvement on the report, never a precondition of the write.
+		const writes: string[] = [];
+		const { runner, commits } = transactional(writes);
+		const executor = new BulkExecutor(visibilityFor([]));
+
+		const result = await executor.execute<Line>(
+			{ atomic: true, items: [{ op: 'create', sku: 'A' }, { op: 'create', sku: 'B' }] },
+			async (item) => {
+				writes.push(String(item.sku));
+
+				return { index: 0, id: String(item.sku), resource: 'line' };
+			},
+			{ resource: 'line', transaction: runner }
+		);
+
+		expect(result.succeededCount).toBe(2);
+		expect(commits).toHaveLength(1);
+		expect(writes).toEqual(['A', 'B']);
+	});
+
 	it('refuses an atomic batch that the route cannot run transactionally', async () => {
 		const executor = new BulkExecutor(visibilityFor([]));
 

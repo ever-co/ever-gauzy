@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -9,7 +9,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationPosition } from './organization-position.entity';
 import { OrganizationPositionService } from './organization-position.service';
@@ -80,11 +81,15 @@ const ORGANIZATION_POSITION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * than a statement about the write. The field calls the same method with the same merge, so a caller
  * gets the same behaviour and the same answer over either protocol.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere, so
- * every one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
- * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
- * two-protocol rule forbids.
+ * **The guard chain and the permission are the controller's, read route by route.** The delivered
+ * controller carries `TenantPermissionGuard` on the class, so the class here carries it too; its
+ * *reads* state no permission, so the query fields state none either. Its five writes do state one —
+ * `@UseGuards(PermissionGuard)` with `@Permissions(ALL_ORG_EDIT)` on the create, the edit, the
+ * removal, the withdrawal and the recovery — so each of the five mutations below repeats exactly that
+ * pair. This used to say the controller stated no permission anywhere and the mutations carried none,
+ * which was wrong in the one direction that matters: every caller the REST route refused could file,
+ * edit and remove a position over GraphQL instead. Two surfaces of one concept have one scope, and
+ * the surface that is easier to reach must never be the weaker one.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -167,6 +172,8 @@ export class OrganizationPositionResolver {
 	 * and never which tenant it is written into.
 	 */
 	@Mutation('createOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async createOrganizationPosition(
 		@Args('input') input: ICreateOrganizationPositionInput
 	): Promise<OrganizationPosition> {
@@ -182,6 +189,8 @@ export class OrganizationPositionResolver {
 	 * write path for one fact.
 	 */
 	@Mutation('updateOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async updateOrganizationPosition(
 		@Args('input') input: IUpdateOrganizationPositionInput
 	): Promise<OrganizationPosition> {
@@ -197,6 +206,8 @@ export class OrganizationPositionResolver {
 	 * Removes a position outright.
 	 */
 	@Mutation('deleteOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationPositionService.delete(id);
 
@@ -207,6 +218,8 @@ export class OrganizationPositionResolver {
 	 * Withdraws a position: the row is marked rather than removed, and the recovery below reads it back.
 	 */
 	@Mutation('softDeleteOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async softDeleteOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationPosition> {
 		return await this.organizationPositionService.softRemove(id);
 	}
@@ -215,6 +228,8 @@ export class OrganizationPositionResolver {
 	 * Puts a withdrawn position back, clearing the marker the withdrawal set.
 	 */
 	@Mutation('recoverOrganizationPosition')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async recoverOrganizationPosition(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationPosition> {
 		return await this.organizationPositionService.softRecover(id);
 	}

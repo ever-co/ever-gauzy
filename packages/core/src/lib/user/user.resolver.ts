@@ -354,21 +354,27 @@ export class UserResolver {
 	/**
 	 * Withdraws an account without removing it.
 	 *
-	 * No permission is stated because the delivered route states none: the soft removal is inherited
-	 * from the CRUD base, where the controller's own guards are the whole of its scope, and this
-	 * controller carries none at class level — so the gate on this field is the whole of its scope too.
-	 * A resolver that demanded more would refuse a caller the REST route serves.
+	 * The permission is the delivered route's own. `DELETE /api/user/:id/soft` is declared on the
+	 * controller with `@UseGuards(TenantPermissionGuard, PermissionGuard)` and
+	 * `@Permissions(ORG_USERS_EDIT)` rather than inherited from the CRUD base, so the field states the
+	 * same chain — this class carries only the gate, so the tenant guard has to be stated per field.
+	 * It previously claimed the route was inherited and unpermissioned, which let any authenticated
+	 * caller withdraw an account over GraphQL that REST refused them.
 	 */
 	@Mutation('softDeleteUser')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async softDeleteUser(@Args('id', { type: () => ID }) id: Id): Promise<User> {
 		return await this.userService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn account back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route is inherited and carries no permission to mirror.
+	 * Puts a withdrawn account back, under the chain and the permission `PUT /api/user/:id/recover`
+	 * states — the same pair the withdrawal above carries.
 	 */
 	@Mutation('recoverUser')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async recoverUser(@Args('id', { type: () => ID }) id: Id): Promise<User> {
 		return await this.userService.softRecover(id);
 	}

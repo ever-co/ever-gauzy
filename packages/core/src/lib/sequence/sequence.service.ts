@@ -4,6 +4,7 @@ import { isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { IAllocatedNumber, ID, ISequence, IdempotencyOutcome, JsonData, SequenceResetPolicy } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { readAffectedRows } from '../database/database.helper';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { stableStringify } from '../idempotency/idempotency.policy';
@@ -24,9 +25,19 @@ const ALLOCATION_SCOPE = 'sequence.allocate';
  * Allocates human-facing document numbers from a series.
  *
  * Every allocation is serialized against the series row so two concurrent writers can never be
- * handed the same value. Where the dialect supports row locks the read takes one; on the embedded
- * dialect, which serializes writers at the file level, the read-then-update pair inside a
- * transaction is already exclusive.
+ * handed the same value. Where the dialect supports row locks the read takes one — `FOR UPDATE` on
+ * Postgres and MySQL, inside the allocation's own transaction. Where it does not, the guarantee is
+ * carried by the write instead of by the read: the counter is moved with a statement predicated on
+ * the value that was read, so an allocator whose series moved underneath it changes nothing, reads
+ * again, and takes the next number rather than repeating one.
+ *
+ * That second half is what the embedded dialects actually need. "The embedded dialect serialises
+ * writers" is true of one process, where TypeORM holds a single connection per data source and every
+ * statement on it queues; it is not true of two processes against one file in WAL mode, where both
+ * may read the counter inside their own deferred transactions. What SQLite does at that point is
+ * refuse the second commit, not order it — so without the conditional write the honest description
+ * of that configuration would be "allocations fail under contention", and with it, it is "allocations
+ * retry under contention".
  *
  * An allocation may also be claimed under an idempotency key, which is what makes a retried request
  * cost the series nothing: the retry is answered with the number the first attempt allocated instead
@@ -34,6 +45,16 @@ const ALLOCATION_SCOPE = 'sequence.allocate';
  */
 @Injectable()
 export class SequenceService extends CrudService<Sequence> {
+	/**
+	 * How many times an allocation re-reads the series after losing a compare-and-swap.
+	 *
+	 * A loss means another allocator moved the counter between this one's read and its write, which
+	 * is the ordinary outcome of contention rather than a fault. Three is enough that genuine
+	 * contention resolves and few enough that a series being hammered by a runaway client reports a
+	 * conflict instead of spinning.
+	 */
+	static readonly ALLOCATION_ATTEMPTS = 3;
+
 	constructor(
 		readonly typeOrmSequenceRepository: TypeOrmSequenceRepository,
 		readonly mikroOrmSequenceRepository: MikroOrmSequenceRepository,
@@ -146,51 +167,96 @@ export class SequenceService extends CrudService<Sequence> {
 		}
 
 		let seriesId: ID | undefined;
+		let allocated: IAllocatedNumber | undefined;
 
-		const allocated = await this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
-			const tenantId = RequestContext.currentTenantId();
-			const organizationId = RequestContext.currentOrganizationId();
+		// 🛑 **The allocation is a compare-and-swap, and the retry around it is what makes the
+		// guarantee hold on four dialects rather than on two.** Postgres and MySQL serialise two
+		// allocators with `FOR UPDATE`, so the swap there never loses. The embedded dialects have no
+		// row lock at all, and the claim that "the embedded dialect serialises writers, so the
+		// surrounding transaction is the lock" is only true of a single process: TypeORM's SQLite
+		// drivers hold one connection per data source, and statements on it are serialised. Two
+		// *processes* against one file in WAL mode are not serialised — both may read `nextValue`
+		// inside their own deferred transaction — and what SQLite does then is refuse the second
+		// writer's commit rather than order it, which is a failure, not exclusivity.
+		//
+		// Predicating the update on the value that was read turns all of that into one rule that holds
+		// everywhere: the counter moves only from the value this allocator saw, so a second allocator
+		// that saw the same value changes nothing and is told to read again. Nobody is handed a number
+		// that was handed out already, on any dialect, with or without a lock.
+		for (let attempt = 1; attempt <= SequenceService.ALLOCATION_ATTEMPTS; attempt += 1) {
+			const outcome = await this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
+				const tenantId = RequestContext.currentTenantId();
+				const organizationId = RequestContext.currentOrganizationId();
 
-			const scope = { key, tenantId, organizationId } as any;
+				const scope = { key, tenantId, organizationId } as any;
 
-			// Prefer the channel series; fall back to the organization series.
-			let series = options.channelId
-				? await this.lockSeries(manager, { ...scope, channelId: options.channelId })
-				: null;
+				// Prefer the channel series; fall back to the organization series.
+				let series = options.channelId
+					? await this.lockSeries(manager, { ...scope, channelId: options.channelId })
+					: null;
 
-			series = series ?? (await this.lockSeries(manager, { ...scope, channelId: null }));
+				series = series ?? (await this.lockSeries(manager, { ...scope, channelId: null }));
 
-			if (!series) {
-				throw new NotFoundException(
-					`No numbering series is configured for "${key}". Create one before requesting a number.`
+				if (!series) {
+					throw new NotFoundException(
+						`No numbering series is configured for "${key}". Create one before requesting a number.`
+					);
+				}
+
+				if (series.isActive === false) {
+					throw new BadRequestException(`The numbering series "${key}" is not active.`);
+				}
+
+				// The value the row held when it was read: the swap is predicated on it, so it has to be
+				// taken before the restart rewinds the counter.
+				const observedValue = series.nextValue;
+
+				const restarted = this.applyResetIfDue(series, at);
+
+				if (restarted) {
+					// Stamped before the write rather than after it, so the rewind and the record of
+					// when the period started are one statement: a row carrying one without the other
+					// would restart twice inside one period.
+					series.lastResetAt = at;
+				}
+
+				const allocatedValue = series.nextValue;
+				const nextValue = allocatedValue + (series.step ?? 1);
+
+				const result = await manager.update(
+					Sequence,
+					{ id: series.id, nextValue: observedValue } as any,
+					{ nextValue, lastResetAt: series.lastResetAt ?? null } as any
 				);
+
+				if (readAffectedRows(result) !== 1) {
+					// Another allocator moved the counter between the read and this statement. Nothing
+					// was written, so nothing has to be undone; the caller reads the series again.
+					return null;
+				}
+
+				series.nextValue = nextValue;
+				seriesId = series.id;
+
+				return {
+					formatted: this.format(series, allocatedValue),
+					value: allocatedValue,
+					key: series.key
+				};
+			});
+
+			if (outcome) {
+				allocated = outcome;
+				break;
 			}
+		}
 
-			if (series.isActive === false) {
-				throw new BadRequestException(`The numbering series "${key}" is not active.`);
-			}
-
-			const restarted = this.applyResetIfDue(series, at);
-			const allocatedValue = series.nextValue;
-
-			series.nextValue = allocatedValue + (series.step ?? 1);
-
-			await manager.save(Sequence, series);
-
-			if (restarted) {
-				// Recorded after the save so the restart and the allocation commit together.
-				series.lastResetAt = at;
-				await manager.save(Sequence, series);
-			}
-
-			seriesId = series.id;
-
-			return {
-				formatted: this.format(series, allocatedValue),
-				value: allocatedValue,
-				key: series.key
-			};
-		});
+		if (!allocated) {
+			throw new ConflictException(
+				`${ApiErrorCode.ENTITY_VERSION_CONFLICT}: the numbering series "${key}" was moved by another allocation ` +
+					`${SequenceService.ALLOCATION_ATTEMPTS} times in a row, so no number was handed out. Retry the request.`
+			);
+		}
 
 		if (claim) {
 			// Recorded once the number is committed, so an allocation that failed leaves the key
@@ -504,8 +570,10 @@ export class SequenceService extends CrudService<Sequence> {
 			}
 
 			// Whether a period was recorded has to be read before the decision, because the kernel's
-			// first-contact path records one as it declines to restart.
+			// first-contact path records one as it declines to restart. The counter is read for the
+			// same reason: the conditional write below is predicated on the value this transaction saw.
 			const hadPeriod = Boolean(series.lastResetAt);
+			const observedValue = series.nextValue;
 			const restarted = this.applyResetIfDue(series, at);
 
 			if (!restarted) {
@@ -527,7 +595,22 @@ export class SequenceService extends CrudService<Sequence> {
 			// fact, and a row carrying one without the other would restart twice in a period.
 			series.lastResetAt = at;
 
-			return manager.save(Sequence, series);
+			// Predicated on the counter this transaction read, for the same reason the allocation is:
+			// on the embedded dialects there is no row lock, so an allocation running beside this
+			// restart would otherwise be silently overwritten and its number handed out twice.
+			const result = await manager.update(
+				Sequence,
+				{ id: series.id, nextValue: observedValue } as any,
+				{ nextValue: series.nextValue, lastResetAt: series.lastResetAt } as any
+			);
+
+			if (readAffectedRows(result) !== 1) {
+				throw new ConflictException(
+					`${ApiErrorCode.ENTITY_VERSION_CONFLICT}: the series '${series.key}' was allocated from while this restart was being applied, so nothing was rewound. Read it again and decide again.`
+				);
+			}
+
+			return series;
 		});
 	}
 
@@ -572,7 +655,16 @@ export class SequenceService extends CrudService<Sequence> {
 	 * rather than true. That is how the allocator answered "no numbering series is configured" for an
 	 * organization that had all seven of them.
 	 *
-	 * @param manager The transaction manager.
+	 * 🛑 **The lock is only requested inside a transaction, and that is not an optimisation.** TypeORM
+	 * refuses a pessimistic lock outside one — `SelectQueryBuilder` raises
+	 * `PessimisticLockTransactionRequiredError` before it reaches the driver — so a reader that asked
+	 * for `FOR UPDATE` from the plain repository manager threw instead of reading. `createSeries` is
+	 * exactly that reader, so on Postgres and MySQL creating a numbering series failed outright while
+	 * SQLite, which never requests the lock at all, was fine. That is the whole shape of "verified on
+	 * SQLite only": the comment there already said the lock would be inert outside a transaction, and
+	 * now it is, because it is not requested.
+	 *
+	 * @param manager The transaction manager, or the plain entity manager for a read that takes no lock.
 	 * @param where The lookup conditions, whose `channelId` member may be an id, `null` for the
 	 * organization-wide series, or absent to accept either.
 	 * @returns The series, or null.
@@ -588,13 +680,20 @@ export class SequenceService extends CrudService<Sequence> {
 			query.andWhere('sequence.channelId = :channelId', { channelId });
 		}
 
-		if (isPostgres() || isMySQL()) {
+		// A row lock has to be taken inside a transaction to mean anything, and TypeORM refuses to
+		// issue one outside of it. `isBetterSqlite3` and plain `sqlite` request none either way: the
+		// embedded dialects have no `FOR UPDATE`, and TypeORM answers a pessimistic lock there with
+		// `LockNotSupportedOnGivenDriverError`.
+		const inTransaction = manager?.queryRunner?.isTransactionActive === true;
+
+		if (inTransaction && (isPostgres() || isMySQL())) {
 			// `pessimistic_write` maps to FOR UPDATE on both dialects.
 			return query.setLock('pessimistic_write').getOne();
 		}
 
 		if (isBetterSqlite3()) {
-			// The embedded dialect serializes writers, so the surrounding transaction is the lock.
+			// The embedded dialect has no row lock. What makes an allocation safe there is not this
+			// read but the conditional update the allocator issues: see {@link allocate}.
 			return query.getOne();
 		}
 
@@ -631,9 +730,24 @@ export class SequenceService extends CrudService<Sequence> {
 	}
 
 	/**
+	 * The start of the period a moment falls in.
+	 *
+	 * **Every part of this is UTC, and that is what makes it correct across daylight saving.** The
+	 * boundary is computed from `getUTC*` and compared against `lastResetAt` as epoch milliseconds, so
+	 * there is no local-time arithmetic anywhere: a period never gains or loses an hour, a `DAILY`
+	 * series never sees the same local midnight twice on the day a clock goes back, and never skips
+	 * one on the day it goes forward. The comparison is `lastResetAt >= boundary`, which is monotonic
+	 * in an instant and would not be in a wall-clock reading.
+	 *
+	 * **What it does not do is honour an organization's own day**, and that is a limitation rather
+	 * than an oversight. A `DAILY` series for an organization in UTC+13 restarts at 13:00 local, and a
+	 * `MONTHLY` one restarts thirteen hours into the first of the month. Fixing that needs the series
+	 * to carry the zone its period is measured in — a column, and therefore a migration — and until it
+	 * does, the honest statement is the one here: periods are UTC periods.
+	 *
 	 * @param policy The restart policy.
 	 * @param at The reference moment.
-	 * @returns The start of the period `at` falls in.
+	 * @returns The start of the UTC period `at` falls in.
 	 */
 	private currentPeriodStart(policy: SequenceResetPolicy, at: Date): Date {
 		const year = at.getUTCFullYear();

@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -12,7 +12,8 @@ import {
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
 import { BaseQueryDTO } from '../core/crud';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { UserOrganization } from './user-organization.entity';
 import { UserOrganizationService } from './user-organization.services';
@@ -82,13 +83,14 @@ const USER_ORGANIZATION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below reaches the same `UserOrganizationService` method the
  * `/api/user-organization` routes reach, or dispatches the same command.
  *
- * **The guard is the controller's guard, and no permission is stated anywhere.** The delivered
- * controller carries `TenantPermissionGuard` on the class and declares no `@Permissions` — not on its
- * own three routes and not on any route it inherits from the CRUD base — so every route it serves is
- * tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission here would refuse
- * a caller the REST route serves, which is exactly the asymmetry the two-protocol rule forbids;
- * tightening the resource is a change to make in both places at once, and it is not this delivery's
- * to make.
+ * **The guard chain and the permission are the controller's, read route by route.** The delivered
+ * controller carries `TenantPermissionGuard` **and** `PermissionGuard` on the class, and states
+ * `@Permissions(ORG_USERS_EDIT)` on every one of its five writes — the create, the edit, the removal,
+ * the withdrawal and the recovery. Its reads state none. So the query fields below state none and each
+ * of the five mutations states `@UseGuards(PermissionGuard)` with `@Permissions(ORG_USERS_EDIT)`.
+ * This used to say the controller declared no `@Permissions` at all and the mutations carried none,
+ * which was wrong: membership of an organization could be granted, changed and revoked over GraphQL
+ * by any authenticated member of the tenant, while the identical REST routes refused them.
  *
  * **No relation is a field of the type, and the delivered controller's own sensitivity policy is why
  * that is safe rather than merely narrow.** The REST list route runs an interceptor that strips an
@@ -211,6 +213,8 @@ export class UserOrganizationResolver {
 	 * membership joins and never which tenant it is written into.
 	 */
 	@Mutation('createUserOrganization')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async createUserOrganization(@Args('input') input: ICreateUserOrganizationInput): Promise<UserOrganization> {
 		return await this.userOrganizationService.create(input as unknown as UserOrganization);
 	}
@@ -228,6 +232,8 @@ export class UserOrganizationResolver {
 	 * not a row and not what a GraphQL field named `updateUserOrganization` may return.
 	 */
 	@Mutation('updateUserOrganization')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async updateUserOrganization(@Args('input') input: IUpdateUserOrganizationInput): Promise<UserOrganization> {
 		const { id, ...values } = input;
 
@@ -248,6 +254,8 @@ export class UserOrganizationResolver {
 	 * row to answer with: the handler's outcome is either a membership or an account.
 	 */
 	@Mutation('deleteUserOrganization')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async deleteUserOrganization(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.commandBus.execute(new UserOrganizationDeleteCommand(id));
 
@@ -262,6 +270,8 @@ export class UserOrganizationResolver {
 	 * list it bound from the query string, so the field states none either.
 	 */
 	@Mutation('softDeleteUserOrganization')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async softDeleteUserOrganization(@Args('id', { type: () => ID }) id: Id): Promise<UserOrganization> {
 		return await this.userOrganizationService.softRemove(id);
 	}
@@ -270,6 +280,8 @@ export class UserOrganizationResolver {
 	 * Puts a withdrawn membership back, clearing the marker the withdrawal set.
 	 */
 	@Mutation('recoverUserOrganization')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	async recoverUserOrganization(@Args('id', { type: () => ID }) id: Id): Promise<UserOrganization> {
 		return await this.userOrganizationService.softRecover(id);
 	}

@@ -13,7 +13,7 @@ import { assertComposition, assertExtendable } from './graphql-composition';
 import { createGraphqlRequestContext } from './graphql-context';
 import { createBatchLimitPlugin, createGraphqlLimitRules } from './graphql-limits';
 import { mergeLimitSettings, resolveGraphqlPolicy } from './graphql-policy';
-import { subscriptionTransportOptions } from './subscriptions/subscription-transport';
+import { graphqlContextArguments, subscriptionTransportOptions } from './subscriptions/subscription-transport';
 import { GraphqlExceptionFilter } from './errors/graphql-exception.filter';
 
 /**
@@ -42,6 +42,18 @@ export async function createGraphqlModuleOptions(
 		playground: options.playground,
 		debug: options.debug,
 		introspection: options.introspection,
+		// 🛑 `persistedQueries` is read straight from the shipped configuration and not from
+		// `options`, and it was previously read from neither. `IApplicationPluginConfig` declares it
+		// ("Whether automatic persisted queries are accepted"), `IGraphqlPolicySettings` declares it,
+		// `resolveGraphqlPolicy` resolves it and `persistedQueries: policy.persistedQueries ? {} : false`
+		// below applies it — but the settings object handed to the resolver never carried it, so a
+		// deployment that wrote `graphqlConfigOptions: { …, persistedQueries: true }` per the option's
+		// own JSDoc got `undefined`, resolved `false`, and every automatic-persisted-query request was
+		// answered `PersistedQueryNotSupported`. The four limit options on the same interface are
+		// wired through `mergeLimitSettings(configService.graphqlConfigOptions, …)` on the next line;
+		// this one was the outlier. The environment variable keeps precedence, as it does for all of
+		// them.
+		persistedQueries: configService.graphqlConfigOptions?.persistedQueries,
 		limits: mergeLimitSettings(configService.graphqlConfigOptions, options.limits)
 	});
 
@@ -153,7 +165,14 @@ export async function createGraphqlModuleOptions(
 		// The context is the request scope: every resolver in one operation shares it, and the loader
 		// registry inside it is what makes a nested relation one query per relation rather than one
 		// per parent row.
-		context: ({ req }) => createGraphqlRequestContext({ req }),
+		//
+		// 🛑 This used to destructure `{ req }`, which is the shape the driver hands over for a query
+		// or a mutation and *not* the shape it hands over for a subscription: a graphql-ws operation
+		// arrives with the connection context — `connectionParams` and `extra` — and no `req` at all,
+		// so every subscription built a context with no headers, no tenant and no scope.
+		// `graphqlContextArguments` normalises both shapes, so the two transports produce the same
+		// context and the same refusal of a scope header that contradicts the credential.
+		context: (source: unknown) => createGraphqlRequestContext(graphqlContextArguments(source)),
 		// The error contract. The platform's global filters render HTTP replies, so they step aside
 		// for a context that has no HTTP response and let the exception reach graphql-js; this is
 		// where it is given the shape the contract declares — the same stable `code`, the status the
@@ -172,8 +191,10 @@ export async function createGraphqlModuleOptions(
 		// reported as a server fault instead of a bad request.
 		formatError: (error, originalError) => formatGraphqlError(error, originalError),
 		// Subscriptions ride the same path and the same authorisation. The key is added only when the
-		// transport package is installed, so an installation without it boots as it does today.
-		...subscriptionTransportOptions()
+		// transport package is installed, so an installation without it boots as it does today. The
+		// path is handed over so the WebSocket server listens where the schema is served rather than
+		// at the driver's own default, which is `/graphql` whatever the deployment configured.
+		...subscriptionTransportOptions({ path: `/${options.path}` })
 	} as GqlModuleOptions;
 }
 

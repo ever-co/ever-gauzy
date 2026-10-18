@@ -170,12 +170,16 @@ const ORGANIZATION_CONTACT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * same command the `/api/organization-contact` routes call.
  *
  * **The guard chain and the permission are the controller's, field by field.** The controller
- * carries `TenantPermissionGuard` on the class and states `PermissionGuard` with a permission on four
- * of its routes only — the count and the three writes of its own — so this resolver carries the
- * tenant guard on the class and states exactly that pair on exactly those fields. The list, the one
- * row, the employee look-up and the two lifecycle moves the controller inherits carry no permission,
- * and neither do the fields that mirror them: a field that demanded one would refuse a caller the
- * REST route serves, and one that demanded less would be a way around the permission model.
+ * carries `TenantPermissionGuard` on the class and states `PermissionGuard` with a permission on
+ * eight of its routes: `ORG_CONTACT_VIEW` on the count and the pagination read, `ORG_EMPLOYEES_EDIT`
+ * on the employee assignment, and `ORG_CONTACT_EDIT` on the create, the edit, the removal, the
+ * withdrawal and the recovery — the last three declared on the controller itself rather than
+ * inherited from the CRUD base. This resolver carries the tenant guard on the class and states
+ * exactly that pair on exactly those fields. The list, the one row and the employee look-up carry no
+ * permission, and neither do the fields that mirror them: a field that demanded one would refuse a
+ * caller the REST route serves, and one that demanded less would be a way around the permission
+ * model. The removal, the withdrawal and the recovery used to be in that second group by mistake,
+ * which is the way around the model this paragraph describes.
  *
  * **A party is not written here.** The delivered create and edit dispatch a command whose handler
  * stores the party with its detail row in one call, so both fields dispatch that command rather than
@@ -354,10 +358,15 @@ export class OrganizationContactResolver {
 	 *
 	 * The delivered service refuses a row that is not there with the same `404` the REST route answers
 	 * with, so a caller that names one is told it is missing rather than that the removal succeeded.
-	 * No permission is stated because the delivered route states none: the removal is inherited from
-	 * the CRUD base, where the controller's tenant guard is the whole of its scope.
+	 * The permission is the delivered route's own. `DELETE /api/organization-contact/:id` is *not*
+	 * inherited from the CRUD base — the controller declares it itself with
+	 * `@UseGuards(PermissionGuard)` and `@Permissions(ORG_CONTACT_EDIT)` — so the field repeats that
+	 * pair. It previously claimed the route was inherited and stated nothing, which let any
+	 * authenticated member of the tenant delete a party over GraphQL that REST refused them.
 	 */
 	@Mutation('deleteOrganizationContact')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	async deleteOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationContactService.delete(id);
 
@@ -367,10 +376,13 @@ export class OrganizationContactResolver {
 	/**
 	 * Withdraws a party: the row is marked rather than removed, and the recovery below reads it back.
 	 *
-	 * Unpermissioned for the same reason the removal above is: the delivered route is inherited and
-	 * carries no permission to mirror.
+	 * Carries the same permission as the removal above, for the same reason: `DELETE
+	 * /api/organization-contact/:id/soft` is declared on the controller with
+	 * `@Permissions(ORG_CONTACT_EDIT)`, so the field states it too.
 	 */
 	@Mutation('softDeleteOrganizationContact')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	async softDeleteOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationContact> {
 		return await this.organizationContactService.softRemove(id);
 	}
@@ -379,6 +391,8 @@ export class OrganizationContactResolver {
 	 * Puts a withdrawn party back, clearing the marker the withdrawal set.
 	 */
 	@Mutation('recoverOrganizationContact')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	async recoverOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationContact> {
 		return await this.organizationContactService.softRecover(id);
 	}

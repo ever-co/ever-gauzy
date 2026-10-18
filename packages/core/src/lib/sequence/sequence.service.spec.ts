@@ -15,9 +15,69 @@ jest.mock('@gauzy/config', () => {
 });
 
 jest.mock('../core/crud/crud.service', () => {
-	// The subject is the allocation, not the CRUD surface, so the base class is replaced by the one
-	// thing a subclass inherits from it: a constructor.
-	class CrudService {}
+	const { NotFoundException } = jest.requireActual('@nestjs/common') as typeof import('@nestjs/common');
+
+	/**
+	 * The CRUD base, reduced to the reads and writes its subclasses in this suite actually inherit.
+	 *
+	 * The real base pulls both ORMs, the request context and the platform's error mapping in behind
+	 * it, none of which this suite is about — so it is replaced. It used to be replaced by an empty
+	 * class, on the reasoning that "the one thing a subclass inherits from it is a constructor". That
+	 * was true while `SequenceService` was the only subclass standing here: it reaches the database
+	 * through `typeOrmSequenceRepository.manager` and inherits nothing. It stopped being true when the
+	 * allocation began claiming its caller's idempotency key through the kernel's own
+	 * `IdempotencyService`, which is a `CrudService` subclass that really does inherit its reads — it
+	 * calls `this.find`, `this.findOneByIdString`, `this.save` and `this.delete` — and every one of
+	 * them was `undefined`, so a retry died with `this.find is not a function` instead of being
+	 * answered with the number the first attempt allocated.
+	 *
+	 * The methods below are therefore implemented rather than stubbed, over the repository the
+	 * subclass was constructed with, so the ledger behaves like a table and the replay the suite
+	 * asserts is a replay the service really performed. `ormType` reports TypeORM because that is the
+	 * arm whose repository the double stands in for; the MikroORM arm of the claim insert goes through
+	 * an entity manager that has no counterpart here.
+	 */
+	class CrudService {
+		constructor(readonly typeOrmRepository: any, readonly mikroOrmRepository?: any) {}
+
+		get ormType(): string {
+			return 'typeorm';
+		}
+
+		async find(options?: { where?: Record<string, unknown>; take?: number }): Promise<any[]> {
+			return this.typeOrmRepository.find(options ?? {});
+		}
+
+		async findAll(options?: { where?: Record<string, unknown>; take?: number }): Promise<{
+			items: any[];
+			total: number;
+		}> {
+			const items = await this.find(options);
+
+			return { items, total: items.length };
+		}
+
+		async findOneByIdString(id: string): Promise<any> {
+			const row = await this.typeOrmRepository.findOne({ where: { id } });
+
+			// The platform's read by identifier raises on a miss, and `IdempotencyService.findById`
+			// catches exactly that to map it back to null. A double that answered null instead would
+			// leave the branch that depends on the refusal unexercised.
+			if (!row) {
+				throw new NotFoundException(`No row was found with the id "${id}".`);
+			}
+
+			return row;
+		}
+
+		async save(entity: any): Promise<any> {
+			return this.typeOrmRepository.save(entity);
+		}
+
+		async delete(criteria: any): Promise<{ affected: number }> {
+			return this.typeOrmRepository.delete(criteria);
+		}
+	}
 
 	return { CrudService };
 });
@@ -104,7 +164,22 @@ class SeriesStore {
 	private readonly manager = {
 		transaction: (work: (manager: unknown) => Promise<unknown>) => this.transaction(work),
 		createQueryBuilder: (_entity: unknown, alias: string) => this.queryBuilder(alias),
-		save: async (_entity: unknown, row: SeriesRow) => this.persist(row)
+		save: async (_entity: unknown, row: SeriesRow) => this.persist(row),
+		/**
+		 * The conditional write the allocator and the restart both go through.
+		 *
+		 * The criteria are not "which row" but "which row, still holding what I read": the allocator
+		 * states `{ id, nextValue: observedValue }`, so a row another allocator has already advanced
+		 * matches nothing and the caller is told to read again. That is the half of the mechanism that
+		 * cannot be raced, and the double has to model it as a predicate rather than as a write by id —
+		 * a double that ignored the extra criteria would report one row affected for a write the
+		 * database would have refused, and the suite would pass while the counter handed out duplicates
+		 * on every dialect without a row lock.
+		 *
+		 * The answer is TypeORM's `UpdateResult` shape, `{ affected }`, which is one of the five the
+		 * service reads through `readAffectedRows`.
+		 */
+		update: async (_entity: unknown, criteria: Row, values: Row) => this.conditionalUpdate(criteria, values)
 	};
 
 	/** The repository the service is constructed with. */
@@ -112,8 +187,13 @@ class SeriesStore {
 		return {
 			manager: this.manager,
 			findOne: async (options: { where: Row }) => this.find(options.where),
+			// The many-row read the CRUD base performs for the ledger's scoped lookups. `take` is
+			// honoured because every caller of it states `take: 1` and reads the first member.
+			find: async (options: { where?: Row; take?: number } = {}) => this.findMany(options.where, options.take),
 			create: (input: Row) => ({ id: `seq-${this.rows.length + 1}`, ...input }),
-			save: async (row: SeriesRow) => this.persist(row)
+			save: async (row: SeriesRow) => this.persist(row),
+			delete: async (criteria: Row | string) =>
+				this.removeWhere(typeof criteria === 'string' ? { id: criteria } : criteria)
 		};
 	}
 
@@ -191,14 +271,74 @@ class SeriesStore {
 		return builder;
 	}
 
+	/**
+	 * One row, as a snapshot.
+	 *
+	 * 🛑 The copy is the point. A database read hands back values, not a handle on the stored row, and
+	 * this double used to hand back the stored object itself — which made every mutation the service
+	 * performed on what it had read land in the table before the write that was supposed to decide it.
+	 * The allocator rewinds a restarted series on the object it read and then predicates its `UPDATE`
+	 * on the value it observed *before* the rewind; against a live handle that predicate could never
+	 * match, because the table already held the rewound value, so a restart failed its retries and
+	 * came out as a conflict. The snapshot restores the boundary the conditional write depends on.
+	 */
 	private async find(where: Row): Promise<SeriesRow | null> {
 		this.reads.push(this.depth);
 		await Promise.resolve();
 
-		return (
-			this.rows.find((row) => Object.entries(where).every(([column, value]) => matches(row[column], value))) ??
-			null
+		const row = this.rows.find((candidate) =>
+			Object.entries(where).every(([column, value]) => matches(candidate[column], value))
 		);
+
+		return row ? { ...row } : null;
+	}
+
+	/** Every row matching the criteria, as snapshots, narrowed to `take` when one is stated. */
+	private async findMany(where: Row = {}, take?: number): Promise<SeriesRow[]> {
+		this.reads.push(this.depth);
+		await Promise.resolve();
+
+		const rows = this.rows
+			.filter((candidate) => Object.entries(where).every(([column, value]) => matches(candidate[column], value)))
+			.map((row) => ({ ...row }));
+
+		return typeof take === 'number' ? rows.slice(0, take) : rows;
+	}
+
+	/**
+	 * A conditional `UPDATE`: every criterion has to still hold, and only a row that satisfies all of
+	 * them is written. The count is the whole answer the caller acts on.
+	 */
+	private async conditionalUpdate(criteria: Row, values: Row): Promise<{ affected: number }> {
+		this.writes.push(this.depth);
+		await Promise.resolve();
+
+		let affected = 0;
+
+		for (const row of this.rows) {
+			if (Object.entries(criteria).every(([column, value]) => matches(row[column], value))) {
+				Object.assign(row, values);
+				affected += 1;
+			}
+		}
+
+		return { affected };
+	}
+
+	/** The delete the ledger performs when it clears a row whose replay window has closed. */
+	private async removeWhere(criteria: Row): Promise<{ affected: number }> {
+		this.writes.push(this.depth);
+		await Promise.resolve();
+
+		const kept = this.rows.filter(
+			(row) => !Object.entries(criteria).every(([column, value]) => matches(row[column], value))
+		);
+		const affected = this.rows.length - kept.length;
+
+		this.rows.length = 0;
+		this.rows.push(...kept);
+
+		return { affected };
 	}
 
 	private persist(row: SeriesRow): SeriesRow {
