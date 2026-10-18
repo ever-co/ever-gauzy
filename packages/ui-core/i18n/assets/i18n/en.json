@@ -8025,5 +8025,19 @@
 		"GO_TO_DASHBOARD": "Go to dashboard",
 		"GO_TO_LOGIN": "Go to login",
 		"CONNECTION_ERROR": "We could not reach the server to verify your email. Check your connection and open the link again."
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Show details of project {{ name }}",
+		"PROGRESS": "Progress",
+		"PROGRESS_META": "{{ done }} of {{ total }} tasks done",
+		"NO_TASKS": "No tasks in this project yet",
+		"NEEDS_ATTENTION": "Needs attention",
+		"NEEDS_ATTENTION_CAPTION": "Overdue tasks and tasks due in the next 3 days",
+		"ACTIVITY": "Daily activity",
+		"TOP_CONTRIBUTORS": "Who worked the most",
+		"CONTRIBUTORS_CAPTION": "Everyone's time on this project · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Team members' time on this project · {{ range }}",
+		"BUDGET_USED": "{{ used }} of {{ budget }} used",
+		"OVER_BUDGET": "{{ value }} over budget"
 	}
 }

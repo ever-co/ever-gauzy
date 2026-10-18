@@ -6874,5 +6874,19 @@
 			"ROTATE_FAILED": "Неуспешно ротиране на клиентската тайна",
 			"DELETE_FAILED": "Неуспешно отменяне на OAuth клиент"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Покажи подробности за проекта {{ name }}",
+		"PROGRESS": "Напредък",
+		"PROGRESS_META": "{{ done }} от {{ total }} задачи са изпълнени",
+		"NO_TASKS": "Все още няма задачи в този проект",
+		"NEEDS_ATTENTION": "Изисква внимание",
+		"NEEDS_ATTENTION_CAPTION": "Просрочени задачи и задачи с краен срок до 3 дни",
+		"ACTIVITY": "Дневна активност",
+		"TOP_CONTRIBUTORS": "Кой е работил най-много",
+		"CONTRIBUTORS_CAPTION": "Времето на всички по този проект · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Времето на членовете на екипа по този проект · {{ range }}",
+		"BUDGET_USED": "Използвани {{ used }} от {{ budget }}",
+		"OVER_BUDGET": "{{ value }} над бюджета"
 	}
 }

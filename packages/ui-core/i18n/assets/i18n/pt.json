@@ -6829,5 +6829,19 @@
 			"ROTATE_FAILED": "Falha ao rotacionar segredo do cliente",
 			"DELETE_FAILED": "Falha ao revogar cliente OAuth"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Ver detalhes do projeto {{ name }}",
+		"PROGRESS": "Progresso",
+		"PROGRESS_META": "{{ done }} de {{ total }} tarefas concluídas",
+		"NO_TASKS": "Ainda não há tarefas neste projeto",
+		"NEEDS_ATTENTION": "Requer atenção",
+		"NEEDS_ATTENTION_CAPTION": "Tarefas atrasadas e com prazo nos próximos 3 dias",
+		"ACTIVITY": "Atividade diária",
+		"TOP_CONTRIBUTORS": "Quem trabalhou mais",
+		"CONTRIBUTORS_CAPTION": "Tempo de todos neste projeto · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Tempo dos membros da equipe neste projeto · {{ range }}",
+		"BUDGET_USED": "{{ used }} de {{ budget }} usadas",
+		"OVER_BUDGET": "{{ value }} acima do orçamento"
 	}
 }

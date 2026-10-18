@@ -6829,5 +6829,19 @@
 			"ROTATE_FAILED": "轮换客户端密钥失败",
 			"DELETE_FAILED": "撤销OAuth客户端失败"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "查看项目 {{ name }} 的详情",
+		"PROGRESS": "进度",
+		"PROGRESS_META": "已完成 {{ done }}/{{ total }} 个任务",
+		"NO_TASKS": "此项目中暂无任务",
+		"NEEDS_ATTENTION": "需要关注",
+		"NEEDS_ATTENTION_CAPTION": "已逾期及 3 天内到期的任务",
+		"ACTIVITY": "每日活动",
+		"TOP_CONTRIBUTORS": "谁投入最多",
+		"CONTRIBUTORS_CAPTION": "所有人在此项目上的时间 · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "团队成员在此项目上的时间 · {{ range }}",
+		"BUDGET_USED": "已使用 {{ used }} / {{ budget }}",
+		"OVER_BUDGET": "超出预算 {{ value }}"
 	}
 }

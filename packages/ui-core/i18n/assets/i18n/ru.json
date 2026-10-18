@@ -6847,5 +6847,19 @@
 			"ROTATE_FAILED": "Не удалось повернуть секрет клиента",
 			"DELETE_FAILED": "Не удалось отозвать клиент OAuth"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Подробности проекта «{{ name }}»",
+		"PROGRESS": "Прогресс",
+		"PROGRESS_META": "Выполнено {{ done }} из {{ total }} задач",
+		"NO_TASKS": "В этом проекте пока нет задач",
+		"NEEDS_ATTENTION": "Требует внимания",
+		"NEEDS_ATTENTION_CAPTION": "Просроченные задачи и задачи со сроком в ближайшие 3 дня",
+		"ACTIVITY": "Ежедневная активность",
+		"TOP_CONTRIBUTORS": "Кто работал больше всех",
+		"CONTRIBUTORS_CAPTION": "Время всех участников по этому проекту · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Время участников команды по этому проекту · {{ range }}",
+		"BUDGET_USED": "Использовано {{ used }} из {{ budget }}",
+		"OVER_BUDGET": "Превышение бюджета на {{ value }}"
 	}
 }

@@ -6829,5 +6829,19 @@
 			"ROTATE_FAILED": "Kan clientgeheim niet roteren",
 			"DELETE_FAILED": "Kan OAuth-client niet intrekken"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Details van project {{ name }} tonen",
+		"PROGRESS": "Voortgang",
+		"PROGRESS_META": "{{ done }} van {{ total }} taken klaar",
+		"NO_TASKS": "Nog geen taken in dit project",
+		"NEEDS_ATTENTION": "Vraagt aandacht",
+		"NEEDS_ATTENTION_CAPTION": "Achterstallige taken en taken die binnen 3 dagen vervallen",
+		"ACTIVITY": "Dagelijkse activiteit",
+		"TOP_CONTRIBUTORS": "Wie het meest heeft gewerkt",
+		"CONTRIBUTORS_CAPTION": "Ieders tijd aan dit project · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Tijd van teamleden aan dit project · {{ range }}",
+		"BUDGET_USED": "{{ used }} van {{ budget }} gebruikt",
+		"OVER_BUDGET": "{{ value }} boven budget"
 	}
 }

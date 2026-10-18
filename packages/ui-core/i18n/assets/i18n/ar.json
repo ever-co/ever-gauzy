@@ -6821,5 +6821,19 @@
 			"ROTATE_FAILED": "فشل في تدوير سر العميل",
 			"DELETE_FAILED": "فشل في إلغاء عميل OAuth"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "عرض تفاصيل المشروع {{ name }}",
+		"PROGRESS": "التقدم",
+		"PROGRESS_META": "{{ done }} من {{ total }} مهام منجزة",
+		"NO_TASKS": "لا توجد مهام في هذا المشروع بعد",
+		"NEEDS_ATTENTION": "يحتاج إلى انتباه",
+		"NEEDS_ATTENTION_CAPTION": "المهام المتأخرة والمستحقة خلال 3 أيام",
+		"ACTIVITY": "النشاط اليومي",
+		"TOP_CONTRIBUTORS": "الأكثر عملاً",
+		"CONTRIBUTORS_CAPTION": "وقت الجميع على هذا المشروع · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "وقت أعضاء الفريق على هذا المشروع · {{ range }}",
+		"BUDGET_USED": "تم استخدام {{ used }} من {{ budget }}",
+		"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}"
 	}
 }

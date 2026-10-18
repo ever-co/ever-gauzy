@@ -6839,5 +6839,19 @@
 			"ROTATE_FAILED": "סיבוב סוד הלקוח נכשל",
 			"DELETE_FAILED": "ביטול לקוח OAuth נכשל"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "הצג פרטים של הפרויקט {{ name }}",
+		"PROGRESS": "התקדמות",
+		"PROGRESS_META": "{{ done }} מתוך {{ total }} משימות הושלמו",
+		"NO_TASKS": "אין עדיין משימות בפרויקט זה",
+		"NEEDS_ATTENTION": "דורש תשומת לב",
+		"NEEDS_ATTENTION_CAPTION": "משימות באיחור ומשימות לביצוע ב-3 הימים הקרובים",
+		"ACTIVITY": "פעילות יומית",
+		"TOP_CONTRIBUTORS": "מי עבד הכי הרבה",
+		"CONTRIBUTORS_CAPTION": "הזמן של כולם על פרויקט זה · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
+		"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
+		"OVER_BUDGET": "{{ value }} מעל התקציב"
 	}
 }
