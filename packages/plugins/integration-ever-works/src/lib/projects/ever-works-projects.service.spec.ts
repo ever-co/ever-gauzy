@@ -229,6 +229,30 @@ describe('EverWorksProjectsService', () => {
 		expect(members).toEqual([expect.objectContaining({ employeeId: 'emp-ann', isManager: true })]);
 	});
 
+	it('a work paired on the Projects tab, or made into a project, links back to its Gauzy project (local e2e)', async () => {
+		const { service, projects, client } = setup();
+		projects.push({ id: 'p1', name: 'Our name' });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }, { id: 'ew-work-2', ...work, name: 'Other' }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }], createInGauzy: ['ew-work-2'] });
+		// Like a task created from Ever Works (and like a work Gauzy created, through its externalRef).
+		const puts = client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT');
+		expect(puts).toEqual([
+			['PUT', '/links/work/ew-work-1', { body: { externalId: 'p1', installationId: 'c1' } }],
+			['PUT', '/links/work/ew-work-2', { body: { externalId: projects[1]?.['id'], installationId: 'c1' } }]
+		]);
+	});
+
+	it('a refused link back never undoes the pairing', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'Our name' });
+		client.request.mockImplementation(async (method: unknown) => {
+			if (method === 'PUT') throw new Error('Ever Works is down');
+			return { data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false };
+		});
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		expect(links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)).toMatchObject({ gauzyId: 'p1', ewId: 'ew-work-1', state: 'ok' });
+	});
+
 	it('a disabled mapping, or works switched off, writes nothing', async () => {
 		const serviceFor = (context: Record<string, unknown>) =>
 			new EverWorksProjectsService({} as never, { forEverWorksOrganization: async () => context } as never, {} as never, {} as never, {} as never);
