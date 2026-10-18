@@ -782,3 +782,79 @@ $weight-medium: 500;
     font-weight: 600;
   }
 }
+
+/* ── Layout: one column in the drawer, headline + two columns on a page ── */
+
+// In the drawer the groups do not box anything: their blocks stack in the drawer's one
+// column, in reading order — progress, attention, tasks, activity, who worked, top tasks.
+.project-view-headline,
+.project-view-col {
+  display: contents;
+}
+
+@for $n from 1 through 6 {
+  .project-view-order-#{$n} {
+    order: $n;
+  }
+}
+
+// On a page: the headline across the full width, then the work (tasks, hours, top tasks)
+// in a wide main column beside where it stands (progress, attention, who worked).
+:host(.is-page) {
+  display: block;
+
+  .project-view-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    grid-template-areas:
+      'headline headline'
+      'main side';
+    align-items: start;
+    gap: 1rem 1.25rem;
+  }
+
+  .project-view-headline {
+    grid-area: headline;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    padding-bottom: 0.25rem;
+  }
+
+  .project-view-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  .project-view-col--main {
+    grid-area: main;
+  }
+
+  .project-view-col--side {
+    grid-area: side;
+  }
+
+  // Inside a column the reading order is the DOM's own.
+  .project-view-panel {
+    order: 0;
+  }
+
+  // The chart has room to breathe on a page.
+  .project-view-panel .project-chart-body {
+    height: 14rem;
+  }
+}
+
+// Narrow pages: one column, where it stands before the work.
+@media screen and (max-width: 60rem) {
+  :host(.is-page) .project-view-top {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'headline'
+      'side'
+      'main';
+  }
+}
