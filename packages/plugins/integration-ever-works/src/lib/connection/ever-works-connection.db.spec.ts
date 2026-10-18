@@ -411,6 +411,60 @@ describe('Ever Works connection on SQLite', () => {
 			expect([...mock.webhooks.values()][0].id).not.toBe(subscription.id);
 		});
 
+		/** A mapping of tenant A through a connection, with its stored directions (the agentEmail one among them). */
+		const mapping = (connectionId: string, directions: Record<string, string>, archived = false) =>
+			dataSource.getRepository(IntegrationTenant).save({
+				id: randomUUID(),
+				tenantId: A.tenantId,
+				organizationId: A.organizationId,
+				name: 'Ever_Works',
+				isActive: !archived,
+				isArchived: archived,
+				settings: [
+					{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, settingsName: EverWorksSettingName.CONNECTION_ID, settingsValue: connectionId },
+					{ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, settingsName: EverWorksSettingName.ENTITY_DIRECTIONS, settingsValue: JSON.stringify(directions) }
+				]
+			} as never) as unknown as Promise<{ id: string; settings: Array<{ settingsName: string; settingsValue: string }> }>;
+		const setDirections = async (row: { settings: Array<{ settingsName: string; settingsValue: string }> }, directions: Record<string, string>) => {
+			const setting = row.settings.find((s) => s.settingsName === EverWorksSettingName.ENTITY_DIRECTIONS) as unknown as { id: string };
+			await dataSource.getRepository(IntegrationSetting).update({ id: setting.id } as never, { settingsValue: JSON.stringify(directions) } as never);
+		};
+
+		it('subscribes to agent mail (email.*) while a mapping through the connection mirrors it, and follows the direction in place (G-P4-6)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			// Mappings that never count: another connection's, an archived one.
+			await mapping(randomUUID(), { agentEmail: 'ew_to_gauzy' });
+			await mapping(view.id, { agentEmail: 'ew_to_gauzy' }, true);
+			await service.registerWebhook(view.id);
+			const subscription = () => [...mock.webhooks.values()][0];
+			expect(subscription().events).toEqual(expect.arrayContaining(['task.*', 'inbox.*', 'kb.*']));
+			expect(subscription().events).not.toContain('email.*');
+			// The agentEmail direction on: registered again, the subscription asks for agent mail too.
+			const mirror = await mapping(view.id, { tasks: 'both', agentEmail: 'ew_to_gauzy' });
+			await service.registerWebhook(view.id);
+			expect(subscription().events).toEqual(expect.arrayContaining(['task.*', 'inbox.*', 'kb.*', 'email.*']));
+			// The direction changed later: the same subscription (same id, same secret) is changed in place.
+			const { id, secret } = subscription();
+			await setDirections(mirror, { tasks: 'both', agentEmail: 'off' });
+			await service.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(subscription()).toMatchObject({ id, secret });
+			expect(subscription().events).not.toContain('email.*');
+			await setDirections(mirror, { agentEmail: 'ew_to_gauzy' });
+			await service.refreshWebhookEvents(view.id as never, A.tenantId as never);
+			expect(subscription().events).toContain('email.*');
+			expect(mock.webhooks.size).toBe(1);
+		});
+
+		it('a refused change of the events never fails, and a connection with no webhook has nothing to change', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
+			expect(mock.requests.filter((r) => r.method === 'PATCH')).toEqual([]);
+			await service.registerWebhook(view.id);
+			await mapping(view.id, { agentEmail: 'ew_to_gauzy' });
+			mock.fail({ method: 'PATCH', path: /^\/webhooks\//, status: 503, times: 3 });
+			await expect(service.refreshWebhookEvents(view.id as never, A.tenantId as never)).resolves.toBeUndefined();
+		});
+
 		it('needs a public HTTPS API address for the webhook', async () => {
 			const local = new EverWorksConnectionService(
 				dataSource,
