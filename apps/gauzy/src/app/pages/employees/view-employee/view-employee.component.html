@@ -255,7 +255,16 @@
 				@if (projectOverview.length) {
 				<ul class="project-grid">
 					@for (project of projectOverview; track project.id) {
-					<li class="project-card" [class.is-idle]="!project.duration">
+					<!-- Each card opens the project's quick look in the side drawer. -->
+					<li>
+						<button
+							type="button"
+							class="project-card project-open"
+							[class.is-idle]="!project.duration"
+							[class.is-viewed]="viewedProjectId === project.id"
+							(click)="openProject(project)"
+							[attr.aria-label]="'PROJECT_QUICK_LOOK.OPEN_DETAILS' | translate : { name: project.name }"
+						>
 						<span class="project-logo">
 							@if (project.imageUrl) {
 							<img [src]="project.imageUrl" [alt]="project.name" />
@@ -285,6 +294,7 @@
 							</span>
 							<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="project.width"></span></span>
 						</span>
+						</button>
 					</li>
 					}
 				</ul>
@@ -696,6 +706,20 @@
 	</ngx-record-view>
 	}
 </ngx-record-view-drawer>
+
+<!-- Quick look of a project from the Projects panel: the employee's time on it in the headline,
+     everyone's time on it in the panels, with the employee picked out among the contributors. -->
+<ngx-project-quick-look
+	[project]="viewedProjectRow"
+	[organizationId]="employee?.organizationId"
+	[tenantId]="employee?.tenantId"
+	[rangeStart]="periodStartIso"
+	[rangeEnd]="periodEndIso"
+	[scopeEmployeeIds]="null"
+	[people]="projectPeople"
+	[highlightEmployeeId]="employee?.id"
+	(closed)="closeProject()"
+></ngx-project-quick-look>
 
 <!-- Hover list on the "+N" avatar: the assignees it stands for, photo and name. -->
 <ng-template #morePeople let-people>
