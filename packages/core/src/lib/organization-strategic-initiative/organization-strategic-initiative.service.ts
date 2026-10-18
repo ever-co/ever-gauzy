@@ -60,6 +60,34 @@ export function withRelations(requested: unknown, required: string[]): string[] 
 	return [...new Set([...list, ...required])];
 }
 
+/** The columns the visibility rule reads from an initiative, whatever the caller selected. */
+export const VISIBILITY_COLUMNS = ['id', 'organizationId', 'visibilityScope', 'stewardId'];
+
+/**
+ * The columns to read: the ones a caller selected, in whichever form it used (a list of names, or the object
+ * form), plus the ones a read needs. No selection reads every column, and stays so.
+ *
+ * @param requested - The caller's selection, if any.
+ * @param required - The columns the read needs.
+ * @returns The selection, with the required columns.
+ */
+export function withSelected(requested: unknown, required: string[]): unknown {
+	if (Array.isArray(requested)) {
+		return requested.length ? [...new Set([...(requested as string[]), ...required])] : requested;
+	}
+	if (requested && typeof requested === 'object') {
+		const merged: Record<string, unknown> = { ...(requested as Record<string, unknown>) };
+		if (!Object.keys(merged).length) {
+			return requested;
+		}
+		for (const column of required) {
+			if (!merged[column]) merged[column] = true;
+		}
+		return merged;
+	}
+	return requested;
+}
+
 /**
  * A write input without a raw `teams` list: the directly linked teams are set through `teamIds` only, which
  * {@link OrganizationStrategicInitiativeService} checks against the initiative's organization.
@@ -247,7 +275,10 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		// next to the ones the caller asked for, in whichever form it asked (a list or an object)
 		const { items } = await super.findAll({
 			...filters,
-			relations: withRelations(filters.relations, ['teams', 'projects', 'projects.teams'])
+			relations: withRelations(filters.relations, ['teams', 'projects', 'projects.teams']),
+			// The rule's own columns are read even when the caller selected others (the admin override needs the
+			// organization)
+			...(filters?.select ? { select: withSelected(filters.select, VISIBILITY_COLUMNS) } : {})
 		} as typeof filters);
 
 		// Pre-fetch employee team memberships to avoid N+1 queries
@@ -288,6 +319,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			relations: withRelations(params?.relations, [
 				'teams'
 			]) as BaseQueryDTO<OrganizationStrategicInitiative>['relations'],
+			...(params?.select
+				? { select: withSelected(params.select, VISIBILITY_COLUMNS) as BaseQueryDTO<OrganizationStrategicInitiative>['select'] }
+				: {}),
 			where: {
 				...(params?.where && { ...params.where }),
 				id

@@ -142,6 +142,41 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 			}
 		});
 
+		it('also when the caller selected columns without the organization (#11050 review)', async () => {
+			signIn(null, initiativeAdmin);
+			const row = initiative(OrganizationStrategicVisibilityScopeEnum.TEAM, OTHER);
+			const findOne = jest
+				.spyOn(TenantAwareCrudService.prototype, 'findOneByOptions')
+				.mockResolvedValue(row as never);
+			const findAll = jest
+				.spyOn(TenantAwareCrudService.prototype, 'findAll')
+				.mockResolvedValue({ items: [row], total: 1 } as never);
+			await expect(
+				service.findOneById('initiative-1', { select: { id: true, title: true } } as any)
+			).resolves.toMatchObject({
+				id: 'initiative-1'
+			});
+			expect((await service.findAll({ select: ['id', 'title'] } as any)).items).toHaveLength(1);
+			// The rule's columns are read next to the caller's: the object form stays an object, the list a list.
+			expect((findOne.mock.calls[0][0] as any).select).toEqual({
+				id: true,
+				title: true,
+				organizationId: true,
+				visibilityScope: true,
+				stewardId: true
+			});
+			expect((findAll.mock.calls[0][0] as any).select).toEqual([
+				'id',
+				'title',
+				'organizationId',
+				'visibilityScope',
+				'stewardId'
+			]);
+			// No selection reads every column, as before.
+			await service.findAll({} as any);
+			expect(findAll.mock.calls[1][0]).not.toHaveProperty('select');
+		});
+
 		it('never one of another organization of the tenant they are not a member of (#11050 review)', async () => {
 			signIn(null, initiativeAdmin, [ORGANIZATION]);
 			expect(
