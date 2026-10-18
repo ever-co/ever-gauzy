@@ -19,7 +19,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import * as sharpModule from 'sharp';
+import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './../core/file-storage/helpers/image-thumbnail';
 import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import {
@@ -38,10 +38,6 @@ import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
 import { UploadImageAsset } from './dto';
 
-// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
-// function itself: take whichever this runtime hands back.
-const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
-	sharpModule) as unknown as typeof sharpModule.default;
 
 @ApiTags('ImageAsset')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -102,9 +98,10 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		// (SVG/XML/HTML/XHTML) that would execute as stored XSS when served from `/public/<key>`
 		// (GHSA-p334-cm7f-php5). The file is deleted on rejection because `/public` serves directly from
 		// disk regardless of whether the DB asset record is ever created.
-		const fileContent = await provider.getFile(file.key);
+		// The S3-family providers return a stream; as bytes, for the content check and the thumbnail alike.
+		const fileContent = await fileContentToBuffer(await provider.getFile(file.key));
 		try {
-			assertNotMarkupContent(fileContent);
+			assertNotMarkupContent(fileContent ?? Buffer.alloc(0));
 		} catch (error) {
 			try {
 				await provider.deleteFile(file.key);
@@ -115,18 +112,22 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		}
 
 		try {
-			// The thumbnail: 250 px wide, the height following the aspect ratio, in the image's own format. sharp
-			// (libvips) decodes and resizes on its own thread pool; Jimp did it in JavaScript on the event loop,
-			// inside the upload request, and every other request of the API waited for it.
-			const data = await sharp(fileContent).resize({ width: 250 }).toBuffer();
+			if (!fileContent) {
+				throw new Error(`The uploaded file '${file.key}' could not be read back from storage`);
+			}
+			// The thumbnail: 250 px wide, the height following the aspect ratio, in the image's own format, oriented
+			// as the image displays — sharp (libvips) on its own thread pool, Jimp only for a format libvips does not
+			// decode (BMP). Jimp did every one in JavaScript on the event loop, inside the upload request.
+			const thumb = await createImageThumbnail(fileContent);
 
-			const thumbName = `thumb-${file.filename}`;
+			// Named for what the bytes are, not for the client-supplied extension of the upload
+			const thumbName = thumbnailFileName(file.filename, thumb.extension);
 			const thumbDir = path.dirname(file.key);
 
 			// Replace double backslashes with single forward slashes
 			const fullPath = path.join(thumbDir, thumbName).replace(/\\/g, '/');
 
-			thumbnail = await provider.putFile(data, fullPath);
+			thumbnail = await provider.putFile(thumb.data, fullPath);
 		} catch (error) {
 			this.logger.error('Error while uploading media asset into file storage provider');
 		}
