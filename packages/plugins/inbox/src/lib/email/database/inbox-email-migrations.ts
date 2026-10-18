@@ -5,6 +5,7 @@ import { CreateInboxEmailThreadTable1791000002700 } from './migrations/179100000
 import { CreateInboxEmailTable1791000002800 } from './migrations/1791000002800-CreateInboxEmailTable';
 import { CreateInboxEmailAttachmentTable1791000002900 } from './migrations/1791000002900-CreateInboxEmailAttachmentTable';
 import { CreateInboxOrganizationSettingTable1791000003000 } from './migrations/1791000003000-CreateInboxOrganizationSettingTable';
+import { AlterInboxEmailJsonColumnsLongText1791000003200 } from './migrations/1791000003200-AlterInboxEmailJsonColumnsLongText';
 
 /** The Inbox email features' migrations, oldest first (ordered with the platform's by their timestamps). */
 export const INBOX_EMAIL_MIGRATIONS = [
@@ -14,5 +15,6 @@ export const INBOX_EMAIL_MIGRATIONS = [
 	CreateInboxEmailThreadTable1791000002700,
 	CreateInboxEmailTable1791000002800,
 	CreateInboxEmailAttachmentTable1791000002900,
-	CreateInboxOrganizationSettingTable1791000003000
+	CreateInboxOrganizationSettingTable1791000003000,
+	AlterInboxEmailJsonColumnsLongText1791000003200
 ];
