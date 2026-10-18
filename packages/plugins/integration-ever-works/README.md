@@ -230,7 +230,9 @@ and answered `202`.
   the kind and every repository URL stay on the link. Members and teams paired
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
-  enabled and works not switched off.
+  enabled and works not switched off. A paired work (or one a project was
+  created from) shows its Gauzy project as an external link in Ever Works
+  (`PUT /links/work/:id`, best effort), as tasks do.
 - **Create in Ever Works (G-P2-5).** On the same tab (`createInEverWorks` on
   `PUT …/projects`), an admin opts a Gauzy project in: it becomes a repo-less
   Ever Works work of kind `project`, with the project's name, description and

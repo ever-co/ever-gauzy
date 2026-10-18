@@ -236,6 +236,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId);
 			if (link) await this.links.remove(link);
 		}
+		/** Pairs made here from Ever Works' side (paired, or a project created from a work): linked back below. */
+		const linkBack: Array<{ ewWorkId: string; projectId: ID }> = [];
 		for (const pair of pairs) {
 			// Queued behind a "create in Ever Works" of the same project in this process (the later one replaces
 			// the earlier, never half of it). Across processes the create checks the project's link again right
@@ -253,6 +255,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 					}
 					// Pairing changes neither record: from now on the work's changes apply to the project.
 					await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
+					linkBack.push(pair);
 				},
 				{ database: false }
 			);
@@ -262,10 +265,12 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				// Claimed, then checked again: two overlapping requests never create two projects for one work.
 				await this.withWorkClaim(context, ewWorkId, async () => {
 					if (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId)) return;
-					await this.createFromWork(context, byEw.get(ewWorkId) as EverWorksWork);
+					linkBack.push({ ewWorkId, projectId: await this.createFromWork(context, byEw.get(ewWorkId) as EverWorksWork) });
 				});
 			}
 		});
+		// Outside the claims: a slow Ever Works holds no lock.
+		for (const pair of linkBack) await this.putExternalLink(context, pair.ewWorkId, pair.projectId);
 		const failures: Array<{ projectId: ID; message: string }> = [];
 		const created: EverWorksWork[] = [];
 		if (createInEverWorks.length) {
@@ -510,6 +515,21 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound');
 		this.logger.log(`Gauzy project ${projectId} created in Ever Works as work ${work.id} (organization ${context.organizationId}).`);
 		return work;
+	}
+
+	/**
+	 * Shows the Gauzy project on the Ever Works work (`PUT /links/work/:id`), as for a task created from Ever
+	 * Works: a work paired on the Projects tab or made into a Gauzy project then carries its link back like a
+	 * work Gauzy created (`externalRef`). Best effort: a refusal or an outage is logged and never undoes the pair.
+	 */
+	private async putExternalLink(context: EverWorksMappingContext, ewWorkId: string, projectId: ID): Promise<void> {
+		try {
+			await this.connections.client(context.connection, context.everWorksOrganizationSlug).request('PUT', `/links/work/${encodeURIComponent(ewWorkId)}`, {
+				body: { externalId: projectId, installationId: context.connection.id }
+			});
+		} catch (error) {
+			this.logger.warn(`The Ever Works work ${ewWorkId} was not linked back to Gauzy (${error instanceof EverWorksApiError ? `${error.status} ${error.code}` : 'network'}).`);
+		}
 	}
 
 	/** `POST /works`, as the admin's Ever Works user when they may act here, else as the integration (plan 03 §C.3). */
