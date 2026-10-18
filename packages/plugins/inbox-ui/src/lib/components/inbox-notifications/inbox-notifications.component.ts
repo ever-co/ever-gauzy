@@ -133,8 +133,12 @@ export class InboxNotificationsComponent implements OnInit {
 	readonly noEmployee = signal(false);
 	private scope: NotificationScope = { tenantId: null, organizationId: null, employeeId: null };
 
+	/** Something to mark read: an unread notification listed, or more of them not loaded yet (review F69). */
 	hasUnread(): boolean {
-		return this.notifications().some((notification) => !notification.isRead);
+		return (
+			this.notifications().some((notification) => !notification.isRead) ||
+			this.total() > this.notifications().length
+		);
 	}
 
 	ngOnInit(): void {

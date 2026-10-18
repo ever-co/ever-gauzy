@@ -127,8 +127,11 @@ export const INBOX_SETTINGS_NAV_ITEMS = [
 export function registerInboxSettingsEntryPoints(injector: Injector): Subscription {
 	const state = { available: false, added: false };
 	return injector.get(InboxEmailAvailabilityService).available$.subscribe((available) => {
-		state.available = available;
-		if (available && !state.added) {
+		const changed = !!available !== state.available;
+		state.available = !!available;
+		// Added on the first `true`, and again (it replaces itself) at every change after: the menu reads `hide`
+		// only when it is built, so a new emission is what shows or hides the entries (review F68).
+		if ((available && !state.added) || (state.added && changed)) {
 			state.added = true;
 			injector.get(NavMenuBuilderService).addNavMenuItems(
 				INBOX_SETTINGS_NAV_ITEMS.map((item) => ({
@@ -161,15 +164,19 @@ export const INBOX_NAV_SECTION = {
  * (`GAUZY_INBOX_ENABLED` unset, the default) neither appears, so the app looks exactly as before; the route
  * still exists and the page then says the Inbox is off.
  *
- * The nav builder has no way to remove a section, so the entry is added once and hidden (`data.hide`) while
- * the Inbox is not available; the header action is removed and added again.
+ * The nav builder has no way to remove a section, so the entry is hidden (`data.hide`) while the Inbox is not
+ * available, and added again (replacing itself) at each change, so the menu is built anew and reads `hide` again;
+ * the header action is removed and added again.
  */
 export function registerInboxEntryPoints(injector: Injector): Subscription {
 	const state = { available: false, navAdded: false, badgeAdded: false };
 	return injector.get(InboxAvailabilityService).available$.subscribe((available) => {
-		state.available = available;
+		const changed = !!available !== state.available;
+		state.available = !!available;
 		const header = injector.get(NavigationBuilderService);
-		if (available && !state.navAdded) {
+		// Added on the first `true`, and again (the same id replaces itself) at every change after: the menu reads
+		// `hide` only when it is built, so a later sign-in would otherwise leave the entry hidden (review F68).
+		if ((available && !state.navAdded) || (state.navAdded && changed)) {
 			state.navAdded = true;
 			injector.get(NavMenuBuilderService).addNavMenuSection(
 				{

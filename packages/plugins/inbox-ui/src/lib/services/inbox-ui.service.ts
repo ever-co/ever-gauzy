@@ -65,8 +65,18 @@ export class InboxUiService {
 		return this.http.patch<IInboxItemWithState>(`${INBOX}/${encodeURIComponent(id)}/state`, input);
 	}
 
-	markAllRead(tab?: InboxTabEnum): Observable<{ updated: number }> {
-		return this.http.post<{ updated: number }>(`${INBOX}/mark-all-read`, tab ? { tab } : {});
+	/** Marks my unread items read: of a tab, and of the list's filters when given (only what the list shows). */
+	markAllRead(
+		tab?: InboxTabEnum,
+		filters: { kind?: string | null; source?: string | null; q?: string | null } = {}
+	): Observable<{ updated: number }> {
+		const q = filters.q?.trim();
+		return this.http.post<{ updated: number }>(`${INBOX}/mark-all-read`, {
+			...(tab ? { tab } : {}),
+			...(filters.kind ? { kind: filters.kind } : {}),
+			...(filters.source ? { source: filters.source } : {}),
+			...(q ? { q } : {})
+		});
 	}
 }
 

@@ -98,6 +98,29 @@ export class InboxTabDTO {
 	tab?: InboxTabEnum;
 }
 
+/**
+ * `POST /inbox/items/mark-all-read`: an optional tab and the list's filters, so only the items the list shows are
+ * marked read (review F65).
+ */
+export class InboxMarkAllReadDTO extends InboxTabDTO {
+	@ApiPropertyOptional({ enum: InboxItemKindEnum })
+	@IsOptional()
+	@IsEnum(InboxItemKindEnum)
+	kind?: InboxItemKindEnum;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(32)
+	source?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(200)
+	q?: string;
+}
+
 /** `POST /inbox/items/:id/reply`. */
 export class InboxReplyDTO implements IInboxReplyInput {
 	@ApiPropertyOptional({ type: () => String, maxLength: 10000 })

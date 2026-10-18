@@ -20,7 +20,7 @@ import {
 	UseValidationPipe,
 	UUIDValidationPipe
 } from '@gauzy/core';
-import { InboxItemQueryDTO, InboxReplyDTO, InboxStateDTO, InboxTabDTO } from './dto/inbox.dto';
+import { InboxItemQueryDTO, InboxMarkAllReadDTO, InboxReplyDTO, InboxStateDTO, InboxTabDTO } from './dto/inbox.dto';
 import { INBOX_ROUTE_PREFIX } from './inbox.constants';
 import { InboxService } from './inbox.service';
 
@@ -56,9 +56,9 @@ export class InboxController {
 	@HttpCode(HttpStatus.OK)
 	@UseValidationPipe({ transform: true, whitelist: true })
 	@Header('Cache-Control', 'no-store')
-	@ApiOperation({ summary: 'Mark every unread item of mine (of a tab) read.' })
-	markAllRead(@Body() body: InboxTabDTO) {
-		return this.inbox.markAllRead(body?.tab);
+	@ApiOperation({ summary: 'Mark every unread item of mine (of a tab, and of the filters stated) read.' })
+	markAllRead(@Body() body: InboxMarkAllReadDTO) {
+		return this.inbox.markAllRead(body?.tab, { kind: body?.kind, source: body?.source, q: body?.q });
 	}
 
 	@Get('/:id')

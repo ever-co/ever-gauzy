@@ -459,10 +459,22 @@ export class InboxService implements IInboxItemWriter {
 		return this.get(id);
 	}
 
-	/** Marks every unread item of the caller (of a tab) read. */
-	async markAllRead(tab?: InboxTabEnum): Promise<{ updated: number }> {
+	/**
+	 * Marks every unread item of the caller (of a tab) read; with filters (kind, source, text), only the items the
+	 * list shows with them: an item the user does not see is neither marked nor reported read to its source (review F65).
+	 */
+	async markAllRead(
+		tab?: InboxTabEnum,
+		filters: Pick<IInboxItemFindInput, 'kind' | 'source' | 'q'> = {}
+	): Promise<{ updated: number }> {
 		const { tenantId, userId } = this.caller();
-		const rows = await this.recipientItems(tenantId, userId, { tab: tab ?? InboxTabEnum.ALL, unread: true })
+		const rows = await this.recipientItems(tenantId, userId, {
+			kind: filters?.kind,
+			source: filters?.source,
+			q: filters?.q,
+			tab: tab ?? InboxTabEnum.ALL,
+			unread: true
+		})
 			.select('recipient.id', 'recipientId')
 			.addSelect('item.id', 'itemId')
 			.addSelect('item.source', 'source')

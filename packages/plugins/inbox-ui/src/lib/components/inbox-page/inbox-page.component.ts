@@ -23,7 +23,8 @@ import {
 	IInboxRecipientStateInput,
 	IInboxReplyInput,
 	InboxItemKindEnum,
-	InboxItemSourceEnum
+	InboxItemSourceEnum,
+	InboxItemStatusEnum
 } from '@gauzy/contracts';
 import { INBOX_MY_MAILBOX_LINK, INBOX_UI_PAGE_SIZE } from '../../inbox-ui.constants';
 import {
@@ -241,7 +242,7 @@ export function apiMessage(error: unknown): string | null {
 									@if (selected(); as item) {
 										<ngx-inbox-item-detail
 											[item]="item"
-											[busy]="busy()"
+											[busy]="busy() || isReplying(item)"
 											[error]="replyError()"
 											(replied)="reply(item, $event)"
 											(stateChanged)="changeState(item, $event)"
@@ -364,8 +365,19 @@ export class InboxPageComponent implements OnInit {
 	readonly nextCursor = signal<string | null>(null);
 	readonly loading = signal(false);
 	readonly selectedId = signal<string | null>(null);
+	/** A read / archive / snooze change is on its way. */
 	readonly busy = signal(false);
-	readonly replyError = signal<string | null>(null);
+	/**
+	 * The items whose reply is on its way, and the reply errors, by item: a reply is tracked for its own item, so a
+	 * state change of another item never re-enables its Send, and its error never lands on another item (review F67).
+	 */
+	private readonly replying = signal<ReadonlySet<string>>(new Set());
+	private readonly replyErrors = signal<Readonly<Record<string, string | null>>>({});
+	/** The open item's reply error. */
+	readonly replyError = computed(() => {
+		const id = this.selectedId();
+		return id ? (this.replyErrors()[id] ?? null) : null;
+	});
 	/** Why the last read / archive / snooze failed (the API's message, or a translation key). */
 	readonly actionError = signal<string | null>(null);
 
@@ -380,7 +392,11 @@ export class InboxPageComponent implements OnInit {
 		const opened = this.opened();
 		return this.items().find((item) => item.id === id) ?? (opened?.id === id ? opened : null);
 	});
-	readonly hasUnread = computed(() => this.items().some((item) => isUnread(item)));
+	/**
+	 * Something to mark read: an unread item listed, or more pages to load (older items, which may be unread: the API
+	 * marks them all, so the button does not wait for "Load more", review F69).
+	 */
+	readonly hasUnread = computed(() => this.items().some((item) => isUnread(item)) || !!this.nextCursor());
 
 	/** The search box, debounced into `query`. */
 	readonly search$ = new Subject<string>();
@@ -524,32 +540,55 @@ export class InboxPageComponent implements OnInit {
 		return isTranslationKey(label);
 	}
 
+	/** Whether a reply to this item is on its way. */
+	isReplying(item: IInboxItemWithState): boolean {
+		return !!item.id && this.replying().has(item.id);
+	}
+
 	/** Opens an item; an unread one becomes read. */
 	open(item: IInboxItemWithState): void {
 		this.selectedId.set(item.id ?? null);
 		this.opened.set(item);
-		this.replyError.set(null);
+		// A reply error stays with its item (shown again when it is opened again): the next reply clears it.
 		if (item.id && isUnread(item)) this.changeState(item, { isRead: true });
 	}
 
 	reply(item: IInboxItemWithState, input: IInboxReplyInput): void {
-		if (!item.id || this.busy()) return;
-		this.busy.set(true);
-		this.replyError.set(null);
-		this.api.reply(item.id, input).subscribe({
+		const id = item.id;
+		if (!id || this.replying().has(id)) return;
+		this.setReplying(id, true);
+		this.setReplyError(id, null);
+		this.api.reply(id, input).subscribe({
 			next: (next) => {
-				this.busy.set(false);
-				this.items.set(replaceItem(this.items(), next));
+				this.setReplying(id, false);
 				if (this.opened()?.id === next.id) this.opened.set(next);
+				// An answered decision is no longer a decision: it leaves the Decisions tab (and stays open), as the
+				// API's list no longer has it (review F66).
+				if (this.tab() === 'decisions' && next.status !== InboxItemStatusEnum.OPEN) {
+					this.items.set(this.items().filter((entry) => entry.id !== next.id));
+				} else {
+					this.items.set(replaceItem(this.items(), next));
+				}
 				this.api.notifyChanged();
 			},
 			error: (error: HttpErrorResponse) => {
-				this.busy.set(false);
-				this.replyError.set(apiMessage(error));
+				this.setReplying(id, false);
+				this.setReplyError(id, apiMessage(error));
 				// "Already decided" (409): show what the source decided.
-				if (error?.status === 409) this.refresh(item.id as string);
+				if (error?.status === 409) this.refresh(id);
 			}
 		});
+	}
+
+	private setReplying(id: string, on: boolean): void {
+		const next = new Set(this.replying());
+		if (on) next.add(id);
+		else next.delete(id);
+		this.replying.set(next);
+	}
+
+	private setReplyError(id: string, message: string | null): void {
+		this.replyErrors.set({ ...this.replyErrors(), [id]: message });
 	}
 
 	changeState(item: IInboxItemWithState, change: IInboxRecipientStateInput): void {
@@ -597,7 +636,8 @@ export class InboxPageComponent implements OnInit {
 		const tab = apiTabOf(this.tab());
 		if (!tab) return;
 		this.actionError.set(null);
-		this.api.markAllRead(tab).subscribe({
+		// Only what the list shows: its kind, source and text filters go along (review F65).
+		this.api.markAllRead(tab, { kind: this.kind(), source: this.source(), q: this.query() }).subscribe({
 			next: () => {
 				this.api.notifyChanged();
 				this.reload();
