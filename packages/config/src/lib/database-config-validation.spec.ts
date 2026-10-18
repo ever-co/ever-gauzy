@@ -241,8 +241,9 @@ describe('database.ts at import time', () => {
 				'DB ORM Pool Size: 40',
 				'DB Knex Pool Size: 10',
 				`DB Connection Timeout: ${process.env.NODE_ENV === 'production' ? 5000 : 2000}`,
-				// 30 s since the reconnect churn of the 10 s default was measured (perf/api-request-overhead).
-				'DB Idle Timeout: 30000',
+				// 10 s: behind a session-mode PgBouncer an idle client connection holds a server connection
+				// (see DEFAULT_DB_IDLE_TIMEOUT_MS); a direct connection may opt in to 30 s.
+				'DB Idle Timeout: 10000',
 				'DB Slow Query Logging Timeout: 10000'
 			];
 
@@ -400,11 +401,17 @@ describe('database.ts at import time', () => {
 		});
 
 		describe('PostgreSQL connection keep-alive, naming, pool minimum and server-side timeouts', () => {
-			it('keep connections alive, name them and keep two open in the active ORM pool by default', () => {
+			it('keep connections alive and name them, but keep none open and close idle ones after 10 s by default', () => {
 				const { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } =
 					loadDatabaseConfig({ DB_TYPE: 'postgres' });
 				const expected = { keepAlive: true, keepAliveInitialDelayMillis: 10000, application_name: 'gauzy' };
-				expect(dbTypeOrmConnectionConfig.extra).toMatchObject({ ...expected, min: 2, idleTimeoutMillis: 30000 });
+				// A session-mode PgBouncer gives every open client connection a server connection of its own, so the
+				// defaults keep none open and release idle ones quickly (see DEFAULT_DB_IDLE_TIMEOUT_MS).
+				expect(dbTypeOrmConnectionConfig.extra).toMatchObject({
+					...expected,
+					min: 0,
+					idleTimeoutMillis: 10000
+				});
 				expect(dbKnexConnectionConfig.config.connection).toMatchObject(expected);
 				expect((dbMikroOrmConnectionConfig as any).driverOptions.connection).toMatchObject(expected);
 				// Under TypeORM nothing serves requests from MikroORM's pool, so it keeps nothing open.
@@ -415,20 +422,20 @@ describe('database.ts at import time', () => {
 				expect(dbTypeOrmConnectionConfig.extra).not.toHaveProperty('idle_in_transaction_session_timeout');
 			});
 
-			it('honour the opt-outs and the opt-in timeouts', () => {
+			it('honour the opt-outs, the opt-in warm pool and the opt-in timeouts', () => {
 				const { dbTypeOrmConnectionConfig, dbKnexConnectionConfig } = loadDatabaseConfig({
 					DB_TYPE: 'postgres',
 					DB_KEEP_ALIVE: 'false',
 					DB_APPLICATION_NAME: '',
-					DB_POOL_MIN: '0',
-					DB_IDLE_TIMEOUT: '10000',
+					DB_POOL_MIN: '2',
+					DB_IDLE_TIMEOUT: '30000',
 					DB_STATEMENT_TIMEOUT: '60000',
 					DB_LOCK_TIMEOUT: '10000',
 					DB_IDLE_IN_TRANSACTION_SESSION_TIMEOUT: '120000'
 				});
 				expect(dbTypeOrmConnectionConfig.extra).toMatchObject({
-					min: 0,
-					idleTimeoutMillis: 10000,
+					min: 2,
+					idleTimeoutMillis: 30000,
 					statement_timeout: 60000,
 					lock_timeout: 10000,
 					idle_in_transaction_session_timeout: 120000
@@ -442,8 +449,11 @@ describe('database.ts at import time', () => {
 				const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
 				try {
 					for (const value of ['-1', 'many']) {
-						const { dbTypeOrmConnectionConfig } = loadDatabaseConfig({ DB_TYPE: 'postgres', DB_POOL_MIN: value });
-						expect(dbTypeOrmConnectionConfig.extra.min).toBe(2);
+						const { dbTypeOrmConnectionConfig } = loadDatabaseConfig({
+							DB_TYPE: 'postgres',
+							DB_POOL_MIN: value
+						});
+						expect(dbTypeOrmConnectionConfig.extra.min).toBe(0);
 					}
 				} finally {
 					warn.mockRestore();
