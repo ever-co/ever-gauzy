@@ -25,3 +25,38 @@
 .project-page-period {
   min-width: 9rem;
 }
+
+/* ── Tabs: Overview, Board, Planning, Time, Activity ── */
+
+.project-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+// The employee page's tab bar, with an icon before each label; it scrolls sideways when narrow.
+.project-page-tabs {
+  overflow-x: auto;
+
+  .tabs {
+    flex-wrap: nowrap;
+  }
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+
+    nb-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.project-page-pane {
+  min-width: 0;
+}
