@@ -76,6 +76,7 @@ function setup(
 		employees?: Array<{ id: string; email: string; kind?: string }>;
 		invites?: Array<{ id: string; email: string; status: InviteStatusEnum; expireDate: Date | null; roleId?: string }>;
 		noEmployeeRole?: boolean;
+		database?: { type: string; runner: { connect: jest.Mock; release: jest.Mock; query: jest.Mock } };
 	} = {}
 ) {
 	const links = options.links ?? [];
@@ -97,7 +98,12 @@ function setup(
 		[Role, { findOne: jest.fn(async () => (options.noEmployeeRole ? null : { id: ROLE })) }],
 		[EverWorksInboundEvent, { find: jest.fn(async () => []) }]
 	]);
-	const dataSource = { getRepository: (target: unknown) => repositories.get(target), transaction: jest.fn() };
+	const dataSource = {
+		getRepository: (target: unknown) => repositories.get(target),
+		transaction: jest.fn(),
+		options: { type: options.database?.type ?? 'sqlite' },
+		createQueryRunner: () => options.database?.runner
+	};
 	const contexts = { forRequest: jest.fn(async () => context) };
 	const connections = { client: () => ({ request: jest.fn(async () => ({ data: options.members ?? [member()], hasMore: false, nextCursor: null })) }) };
 	const linkService = {
@@ -266,6 +272,51 @@ describe('EverWorksPeopleService — invite to Gauzy', () => {
 		const byUser = new Map(view.members.map((row) => [row.ewUserId, row]));
 		expect(byUser.get('U-ada')?.gauzyInvite).toEqual({ inviteId: 'invite-ada', expireDate });
 		expect(byUser.get('U-bob')?.gauzyInvite).toBeNull();
+	});
+
+	describe('the cross-process claim', () => {
+		const runner = (locked: (sql: string) => unknown) => ({
+			connect: jest.fn(async () => undefined),
+			release: jest.fn(async () => undefined),
+			query: jest.fn(async (sql: string, _params?: unknown[]) => locked(sql))
+		});
+
+		it('holds a Postgres advisory lock on the organization and e-mail while it invites, then releases it', async () => {
+			const pg = runner((sql) => (sql.includes('pg_try_advisory_lock') ? [{ locked: true }] : []));
+			const { service, commandBus } = setup({ database: { type: 'postgres', runner: pg } });
+			await service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada' });
+			const sql = pg.query.mock.calls.map(([statement]) => statement as string);
+			expect(sql[0]).toContain('pg_try_advisory_lock');
+			expect(pg.query.mock.calls[0][1]).toEqual(['ever-works:invite-gauzy:t1:o1:ada@example.test']);
+			expect(sql[sql.length - 1]).toContain('pg_advisory_unlock');
+			expect(commandBus.execute.mock.invocationCallOrder[0]).toBeLessThan(pg.query.mock.invocationCallOrder[sql.length - 1]);
+			expect(pg.release).toHaveBeenCalled();
+		});
+
+		it('gives up with 409 after 30 s when another process holds the Postgres lock, sending nothing', async () => {
+			jest.useFakeTimers();
+			try {
+				const pg = runner(() => [{ locked: false }]);
+				const { service, commandBus } = setup({ database: { type: 'postgres', runner: pg } });
+				const outcome = service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada' });
+				const assertion = expect(outcome).rejects.toBeInstanceOf(ConflictException);
+				await jest.advanceTimersByTimeAsync(31_000);
+				await assertion;
+				expect(commandBus.execute).not.toHaveBeenCalled();
+				expect(pg.release).toHaveBeenCalled();
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
+		it('answers 409 when MySQL cannot get the lock within 30 s', async () => {
+			const my = runner(() => [{ locked: 0 }]);
+			const { service, commandBus } = setup({ database: { type: 'mysql', runner: my } });
+			await expect(service.inviteToGauzy('m1' as never, { ewUserId: 'U-ada' })).rejects.toBeInstanceOf(ConflictException);
+			expect(my.query.mock.calls[0][0]).toContain('GET_LOCK');
+			expect(my.query.mock.calls[0][1]?.[1]).toBe(30);
+			expect(commandBus.execute).not.toHaveBeenCalled();
+		});
 	});
 
 	it('leaves the link table alone: an invitation pairs nobody', async () => {

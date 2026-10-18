@@ -68,6 +68,9 @@ export interface EverWorksPeopleView {
 
 /** How many e-mails one pending-invitation query names at most. */
 const PENDING_INVITE_CHUNK = 500;
+/** How long an invitation waits for another one of the same e-mail (then 409), and how often Postgres retries. */
+const INVITE_LOCK_WAIT_MS = 30_000;
+const INVITE_LOCK_POLL_MS = 200;
 
 /**
  * "Invite to Gauzy": the Ever Works member to invite and, optionally, the role (the tenant's Employee role, the only
@@ -333,12 +336,22 @@ export class EverWorksPeopleService {
 		const runner = this.dataSource.createQueryRunner();
 		await runner.connect();
 		try {
+			// Both dialects wait at most INVITE_LOCK_WAIT_MS, then answer 409: a request stuck while holding the lock
+			// (its invitation e-mail, say) must not block every later one for that e-mail, each holding a connection.
+			let locked: boolean;
 			if (type === 'postgres') {
-				await runner.query('SELECT pg_advisory_lock(hashtext($1))', [lockName]);
+				locked = false;
+				for (const deadline = Date.now() + INVITE_LOCK_WAIT_MS; ; ) {
+					const rows = (await runner.query('SELECT pg_try_advisory_lock(hashtext($1)) AS locked', [lockName])) as Array<{ locked: boolean | string | null }>;
+					locked = rows?.[0]?.locked === true || rows?.[0]?.locked === 't';
+					if (locked || Date.now() >= deadline) break;
+					await new Promise((resolve) => setTimeout(resolve, INVITE_LOCK_POLL_MS));
+				}
 			} else {
-				const rows = (await runner.query('SELECT GET_LOCK(?, 30) AS locked', [lockName])) as Array<{ locked: number | string | null }>;
-				if (Number(rows?.[0]?.locked) !== 1) throw new ConflictException('Another request is inviting this e-mail; try again.');
+				const rows = (await runner.query('SELECT GET_LOCK(?, ?) AS locked', [lockName, INVITE_LOCK_WAIT_MS / 1000])) as Array<{ locked: number | string | null }>;
+				locked = Number(rows?.[0]?.locked) === 1;
 			}
+			if (!locked) throw new ConflictException('Another request is inviting this e-mail; try again.');
 			try {
 				return await fn();
 			} finally {
