@@ -169,14 +169,18 @@ export class EverWorksDocsStore {
 	}
 
 	/** The PAGE and FOLDER nodes directly under the given folders (deleted and archived ones included). */
-	async nodesUnder(context: EverWorksMappingContext, folderIds: ID[], updatedAfter?: Date): Promise<Array<Pick<Document, 'id' | 'kind' | 'updatedAt'>>> {
-		const out: Array<Pick<Document, 'id' | 'kind' | 'updatedAt'>> = [];
+	async nodesUnder(
+		context: EverWorksMappingContext,
+		folderIds: ID[],
+		updatedAfter?: Date
+	): Promise<Array<Pick<Document, 'id' | 'kind' | 'updatedAt'> & { deletedAt?: Date | null }>> {
+		const out: Array<Pick<Document, 'id' | 'kind' | 'updatedAt'> & { deletedAt?: Date | null }> = [];
 		for (let index = 0; index < folderIds.length; index += 200) {
 			const qb = this.dataSource
 				.getRepository(Document)
 				.createQueryBuilder('document')
 				.withDeleted()
-				.select(['document.id', 'document.kind', 'document.updatedAt'])
+				.select(['document.id', 'document.kind', 'document.updatedAt', 'document.deletedAt'])
 				.where('document.tenantId = :tenantId', { tenantId: context.tenantId })
 				.andWhere('document.organizationId = :organizationId', { organizationId: context.organizationId })
 				.andWhere('document.parentId IN (:...parents)', { parents: folderIds.slice(index, index + 200) })
