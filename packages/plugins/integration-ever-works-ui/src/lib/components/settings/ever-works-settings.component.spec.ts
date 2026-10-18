@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { NbToggleComponent } from '@nebular/theme';
 import { of, Subject, throwError } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import type { EverWorksConflict, EverWorksConnection, EverWorksMapping, EverWorksSyncStatus } from '../../services/ever-works.service';
@@ -245,6 +247,39 @@ describe('EverWorksSettingsComponent', () => {
 		expect(component.noticeParams).toEqual({ reason: 'API_BASE_URL is not set.' });
 		expect(find('notice')).not.toBeNull();
 		state.mockRestore();
+	});
+
+	it('the wizard\u2019s webhook warning is read once: a reload or a back/forward visit does not show it again (review F102)', () => {
+		const state = jest.spyOn(globalThis.history, 'state', 'get').mockReturnValue({ navigationId: 3, everWorksWebhookWarning: 'API_BASE_URL is not set.' });
+		const replace = jest.spyOn(globalThis.history, 'replaceState').mockImplementation(() => undefined);
+		const { component } = render();
+		expect(component.notice).toBe('EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED');
+		// The router's own state stays on the entry; only the warning goes.
+		expect(replace).toHaveBeenCalledWith({ navigationId: 3 }, '');
+		state.mockRestore();
+		replace.mockRestore();
+	});
+
+	it('a switch of the mapping that fails shows the mapping\u2019s real state again (review F101)', () => {
+		api.currentMapping.mockReturnValue(of({ ...MAPPING, isEnabled: false }));
+		api.syncStatus.mockReturnValue(of({ ...SYNC, isEnabled: false }));
+		const answer = new Subject<EverWorksMapping>();
+		api.updateMapping.mockReturnValue(answer);
+		const { component, fixture, find } = render();
+		const toggle = fixture.debugElement.query(By.directive(NbToggleComponent)).componentInstance as NbToggleComponent;
+		const input = find('mapping-enabled')?.querySelector('input') as HTMLInputElement;
+		expect(toggle.checked).toBe(false);
+		input.click();
+		fixture.detectChanges();
+		expect(api.updateMapping).toHaveBeenCalledWith(ORGANIZATION.id, ID, { isEnabled: true });
+		expect(input.checked).toBe(true);
+		// The API refuses (403, or a transient 5xx) after the switch has moved.
+		answer.error({ status: 403, error: { message: 'Forbidden resource' } });
+		fixture.detectChanges();
+		expect(find('action-error')?.textContent).toContain('Forbidden');
+		expect(component.mapping?.isEnabled).toBe(false);
+		expect(toggle.checked).toBe(false);
+		expect(input.checked).toBe(false);
 	});
 
 	it('the sync status cannot be read (an older API): the settings still open, with the error on the overview', () => {

@@ -1,10 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule, NbTabsetModule, NbToggleModule } from '@nebular/theme';
+import { NbAlertModule, NbButtonModule, NbCardModule, NbInputModule, NbTabsetModule, NbToggleComponent, NbToggleModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest, forkJoin, merge, Observable, of, Subject } from 'rxjs';
 import { catchError, distinctUntilChanged, finalize, map, switchMap, takeUntil } from 'rxjs/operators';
@@ -19,10 +19,24 @@ import type {
 } from '../../services/ever-works.service';
 import { EverWorksUiService } from '../../services/ever-works.service';
 import { EverWorksDirectionsComponent } from '../directions/ever-works-directions.component';
-import { webhookWarningOf } from '../ever-works-page/ever-works-page.component';
+import { EVER_WORKS_WEBHOOK_WARNING, webhookWarningOf } from '../ever-works-page/ever-works-page.component';
 import { EverWorksMatchReviewComponent } from '../match-review/ever-works-match-review.component';
 import { EverWorksPreviewComponent } from '../preview/ever-works-preview.component';
 import { errorText } from '../shared/ever-works-ui.utils';
+
+/** Removes the wizard's webhook warning from the current history entry (its other state, the router's, stays). */
+function clearWebhookWarning(): void {
+	const history = globalThis.history;
+	const state = history?.state as Record<string, unknown> | null | undefined;
+	if (!history || typeof history.replaceState !== 'function' || !state || typeof state !== 'object') return;
+	try {
+		const rest = { ...state };
+		delete rest[EVER_WORKS_WEBHOOK_WARNING];
+		history.replaceState(rest, '');
+	} catch {
+		// A browser that refuses the state change only shows the warning again on a reload.
+	}
+}
 
 /** What the page shows. */
 export type EverWorksSettingsView = 'loading' | 'ready' | 'unavailable' | 'not-found' | 'error';
@@ -322,7 +336,7 @@ type Loaded =
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_WORKS.SETTINGS.TABS.ADVANCED' | translate" data-test="tab-advanced">
 								<section>
-									<nb-toggle data-test="mapping-enabled" [checked]="!!mapping?.isEnabled" [disabled]="busy" (checkedChange)="setEnabled($event)">
+									<nb-toggle #enabledToggle data-test="mapping-enabled" [checked]="!!mapping?.isEnabled" [disabled]="busy" (checkedChange)="setEnabled($event)">
 										{{ 'EVER_WORKS.SETTINGS.ENABLED' | translate }}
 									</nb-toggle>
 								</section>
@@ -448,6 +462,8 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	private readonly logRequest$ = new Subject<void>();
 	private readonly conflictsRequest$ = new Subject<void>();
 	private pollTimer: ReturnType<typeof setTimeout> | null = null;
+	/** The Advanced switch: set back to the mapping's state when switching it fails (review F101). */
+	@ViewChild('enabledToggle') private enabledToggle?: NbToggleComponent;
 
 	/** The running sync, else the latest one. */
 	get latestRun() {
@@ -460,9 +476,14 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		// The connect wizard could start the first sync but not register the webhook: say so here.
+		// The connect wizard could start the first sync but not register the webhook: say so here, once. The browser
+		// keeps a navigation's state on its history entry, so it is cleared after reading: a reload or a back/forward
+		// visit later must not bring back a warning about a webhook registered since (review F102).
 		const webhookWarning = webhookWarningOf(globalThis.history?.state);
-		if (webhookWarning) this.done('EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED', { reason: webhookWarning });
+		if (webhookWarning) {
+			this.done('EVER_WORKS.PREVIEW.WEBHOOK_NOT_REGISTERED', { reason: webhookWarning });
+			clearWebhookWarning();
+		}
 		const ids$ = this.route.paramMap.pipe(
 			map((params) => params.get('integrationTenantId')),
 			distinctUntilChanged()
@@ -639,10 +660,16 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 
 	setEnabled(isEnabled: boolean): void {
 		if (!this.mapping) return;
-		this.act(this.api.updateMapping(this.organizationId, this.id, { isEnabled }), (mapping) => {
-			this.mapping = mapping;
-			this.done(isEnabled ? 'EVER_WORKS.SETTINGS.ENABLED_ON' : 'EVER_WORKS.SETTINGS.ENABLED_OFF');
-		}, true);
+		this.act(
+			this.api.updateMapping(this.organizationId, this.id, { isEnabled }),
+			(mapping) => {
+				this.mapping = mapping;
+				this.done(isEnabled ? 'EVER_WORKS.SETTINGS.ENABLED_ON' : 'EVER_WORKS.SETTINGS.ENABLED_OFF');
+			},
+			true,
+			// The switch moved itself when clicked, and its binding did not change: it is set back by hand (review F101).
+			() => this.enabledToggle?.writeValue(!!this.mapping?.isEnabled)
+		);
 	}
 
 	rotateKey(): void {
@@ -719,8 +746,8 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 		this.cdr.markForCheck();
 	}
 
-	/** Runs an action; `refresh` reads the status again afterwards. */
-	private act<T>(request: Observable<T>, then: (value: T) => void, refresh = false): void {
+	/** Runs an action; `refresh` reads the status again afterwards; `failed` runs after the error is shown. */
+	private act<T>(request: Observable<T>, then: (value: T) => void, refresh = false, failed?: () => void): void {
 		this.busy = true;
 		this.error = null;
 		this.notice = null;
@@ -743,6 +770,7 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 				error: (error) => {
 					this.busy = false;
 					this.fail(error);
+					failed?.();
 				}
 			});
 	}
