@@ -33,6 +33,12 @@ export class EverWorksInviteToGauzyDto {
 	readonly roleId?: string;
 }
 
+export class EverWorksInviteToEverWorksDto {
+	@ApiProperty({ description: 'Gauzy employee id of an active person of this organization with no Ever Works member yet.' })
+	@IsUUID()
+	readonly employeeId!: string;
+}
+
 export class EverWorksPeopleDecisionDto {
 	@ApiPropertyOptional({ type: [EverWorksPersonLinkDto] })
 	@ValidateIf((_o, v) => v !== undefined)
@@ -94,6 +100,17 @@ export class EverWorksPeopleController {
 	})
 	inviteToGauzy(@Param('integrationTenantId', UUIDValidationPipe) id: ID, @Body() dto: EverWorksInviteToGauzyDto, @Query('organizationId') organizationId?: ID) {
 		return this.people.inviteToGauzy(id, { ewUserId: dto.ewUserId, roleId: dto.roleId as ID | undefined }, organizationId);
+	}
+
+	@Post('/people/invite-to-ever-works')
+	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
+	@HttpCode(HttpStatus.OK)
+	@UseValidationPipe({ whitelist: true })
+	@ApiOperation({
+		summary: 'Invite a Gauzy person with no Ever Works member into the mapped Ever Works organization (needs ORG_INVITE_EDIT too).'
+	})
+	inviteToEverWorks(@Param('integrationTenantId', UUIDValidationPipe) id: ID, @Body() dto: EverWorksInviteToEverWorksDto, @Query('organizationId') organizationId?: ID) {
+		return this.people.inviteToEverWorks(id, { employeeId: dto.employeeId as ID }, organizationId);
 	}
 
 	@Get('/agents')

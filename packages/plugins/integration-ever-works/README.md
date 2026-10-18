@@ -140,6 +140,7 @@ below use the `INTEGRATION_` prefix; paths share the
 | GET | `/mappings/:integrationTenantId/people` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/people` | `EDIT` |
 | POST | `/mappings/:integrationTenantId/people/invite-to-gauzy` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/people/invite-to-ever-works` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/agents` | `VIEW` |
 | POST | `/mappings/:integrationTenantId/agents/import` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/teams` | `VIEW` |
@@ -216,6 +217,13 @@ and answered `202`.
   invitation per email (overlapping requests are serialised; a pending one is
   answered again and shows on the tab as `gauzyInvite`), and pairs nobody:
   once the invitee joins, the email match suggests the pairing.
+  The other way, a Gauzy person with no Ever Works member can be **invited to
+  Ever Works** (`POST /members/invite`, contract v1-draft.15, scope
+  `members:write`): Ever Works' own organization invitation, sent as the
+  admin's paired Ever Works user (an admin with none sends it as the
+  integration key's owner), also needing `ORG_INVITE_EDIT`. A person
+  whose email an Ever Works member already has is refused (pair them instead);
+  a repeat is answered as the pending invitation; nobody is paired by it.
 - **Agents.** Each Ever Works agent of a mapped organization becomes a Gauzy
   employee of kind `agent` (created through the platform's agent path: no
   password, no invite, an `@agents.invalid` address) with a profile managed by
