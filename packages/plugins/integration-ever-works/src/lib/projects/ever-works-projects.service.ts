@@ -66,6 +66,12 @@ interface WorkEverWorksOnly {
 	unmappedMembers?: string[];
 	/** Ever Works teams Gauzy could not map at the last sync; retried on the next change and by the sweep. */
 	unmappedTeams?: string[];
+	/**
+	 * The Gauzy project the work's Ever Works external link (`PUT /links/work/:id`) points to, once Gauzy set it.
+	 * The sweep links back a pair where it is not the paired project (a work paired on the Projects tab, one a
+	 * project was created from, a pair from before the link-back); a work Gauzy created has it from its `externalRef`.
+	 */
+	linkedBack?: string | null;
 }
 
 /** One Ever Works work as the Projects tab shows it. */
@@ -102,6 +108,13 @@ export interface EverWorksProjectsDecision {
 	createInEverWorks?: ID[];
 }
 
+/** Why an Ever Works call failed, for a log line: the status and code, the network reason, or the error's name. */
+function describeError(error: unknown): string {
+	if (error instanceof EverWorksApiError) return `${error.status} ${error.code}`;
+	if (error instanceof EverWorksNetworkError) return `network: ${error.reason}`.slice(0, 200);
+	return error instanceof Error ? error.name : 'error';
+}
+
 /** A URL compared loosely: case, a trailing slash and a `.git` suffix do not matter. */
 export function sameUrl(a: string | null | undefined, b: string | null | undefined): boolean {
 	const norm = (url: string | null | undefined) =>
@@ -126,8 +139,10 @@ const sameSet = (a: ReadonlyArray<string>, b: ReadonlyArray<string>) => {
 	return left.size === new Set(b).size && b.every((value) => left.has(value));
 };
 
-/** How often the project sweep (members and teams paired since the last sync) runs per connection. */
+/** How often the project sweep (members and teams paired since the last sync, link-backs) runs per connection. */
 export const PROJECT_SWEEP_MS = 10 * 60_000;
+/** Link-backs one sweep sends at most per mapping (the rest go with the next sweep). */
+export const PROJECT_LINK_BACKS_PER_SWEEP = 50;
 
 /**
  * Projects ↔ Works (plan 01 §10, plan 06 G-P1-8): **link only** in P1, linked as `PROJECT_WORK`.
@@ -236,8 +251,6 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId);
 			if (link) await this.links.remove(link);
 		}
-		/** Pairs made here from Ever Works' side (paired, or a project created from a work): linked back below. */
-		const linkBack: Array<{ ewWorkId: string; projectId: ID }> = [];
 		for (const pair of pairs) {
 			// Queued behind a "create in Ever Works" of the same project in this process (the later one replaces
 			// the earlier, never half of it). Across processes the create checks the project's link again right
@@ -255,7 +268,6 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 					}
 					// Pairing changes neither record: from now on the work's changes apply to the project.
 					await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
-					linkBack.push(pair);
 				},
 				{ database: false }
 			);
@@ -265,12 +277,10 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				// Claimed, then checked again: two overlapping requests never create two projects for one work.
 				await this.withWorkClaim(context, ewWorkId, async () => {
 					if (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId)) return;
-					linkBack.push({ ewWorkId, projectId: await this.createFromWork(context, byEw.get(ewWorkId) as EverWorksWork) });
+					await this.createFromWork(context, byEw.get(ewWorkId) as EverWorksWork);
 				});
 			}
 		});
-		// Outside the claims: a slow Ever Works holds no lock.
-		for (const pair of linkBack) await this.putExternalLink(context, pair.ewWorkId, pair.projectId);
 		const failures: Array<{ projectId: ID; message: string }> = [];
 		const created: EverWorksWork[] = [];
 		if (createInEverWorks.length) {
@@ -512,24 +522,10 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			return `the project was paired with the Ever Works work ${pairedNow.ewId} meanwhile; the created work ${work.id} is not linked`;
 		}
 		// Recorded as Ever Works answered it, so the next Ever Works change is diffed against what it holds.
-		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound');
+		// Its `externalRef` is the link back to the project already.
+		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound', { linkedBack: projectId });
 		this.logger.log(`Gauzy project ${projectId} created in Ever Works as work ${work.id} (organization ${context.organizationId}).`);
 		return work;
-	}
-
-	/**
-	 * Shows the Gauzy project on the Ever Works work (`PUT /links/work/:id`), as for a task created from Ever
-	 * Works: a work paired on the Projects tab or made into a Gauzy project then carries its link back like a
-	 * work Gauzy created (`externalRef`). Best effort: a refusal or an outage is logged and never undoes the pair.
-	 */
-	private async putExternalLink(context: EverWorksMappingContext, ewWorkId: string, projectId: ID): Promise<void> {
-		try {
-			await this.connections.client(context.connection, context.everWorksOrganizationSlug).request('PUT', `/links/work/${encodeURIComponent(ewWorkId)}`, {
-				body: { externalId: projectId, installationId: context.connection.id }
-			});
-		} catch (error) {
-			this.logger.warn(`The Ever Works work ${ewWorkId} was not linked back to Gauzy (${error instanceof EverWorksApiError ? `${error.status} ${error.code}` : 'network'}).`);
-		}
 	}
 
 	/** `POST /works`, as the admin's Ever Works user when they may act here, else as the integration (plan 03 §C.3). */
@@ -625,6 +621,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		for (const context of await this.contextsOf(connection)) {
 			if (!context.isEnabled || context.directions.works !== 'link_only') continue;
 			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK)).filter((link) => link.state === EverWorksLinkState.OK);
+			await this.linkBack(context, links);
 			for (const link of links) {
 				const ew = this.ewOnlyOf(link);
 				if (!ew.unmappedMembers?.length && !ew.unmappedTeams?.length) continue;
@@ -638,6 +635,40 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 					await this.record(context, projectId, this.workFrom(link), link.ewVersion ?? null, snapshot, link, { members, teams });
 				});
 			}
+		}
+	}
+
+	/**
+	 * Shows the Gauzy project on each paired work that does not show it yet (`PUT /links/work/:id`, as for a task
+	 * created from Ever Works): a work paired on the Projects tab, one a project was created from, or a pair made
+	 * before the link-back. In the sweep, off the Projects tab's response, at most
+	 * {@link PROJECT_LINK_BACKS_PER_SWEEP} per run, in order: each pair is read again right before its link is sent
+	 * and before it is recorded, so a work paired again meanwhile never gets the older project. Best effort: a
+	 * refusal is logged and tried again by a later sweep; an outage ends this run's link-backs.
+	 */
+	private async linkBack(context: EverWorksMappingContext, links: EverWorksEntityLink[]): Promise<void> {
+		const due = links.filter((link) => this.ewOnlyOf(link).linkedBack !== link.gauzyId).slice(0, PROJECT_LINK_BACKS_PER_SWEEP);
+		if (!due.length) return;
+		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
+		const stillPaired = async (link: EverWorksEntityLink) => {
+			const now = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, link.ewId);
+			return now && now.id === link.id && now.gauzyId === link.gauzyId && now.state === EverWorksLinkState.OK ? now : null;
+		};
+		for (const link of due) {
+			if (!(await stillPaired(link))) continue;
+			try {
+				await client.request('PUT', `/links/work/${encodeURIComponent(link.ewId)}`, { body: { externalId: link.gauzyId, installationId: context.connection.id } });
+			} catch (error) {
+				this.logger.warn(`The Ever Works work ${link.ewId} was not linked back to Gauzy project ${link.gauzyId} (${describeError(error)}).`);
+				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable)) return;
+				continue;
+			}
+			const current = await stillPaired(link);
+			if (!current) continue;
+			// Only the link-back moves: the snapshot and the version stay as they were.
+			await this.record(context, current.gauzyId as ID, this.workFrom(current), current.ewVersion ?? null, this.links.snapshot<WorkSnapshot>(current), current, undefined, 'inbound', {
+				linkedBack: current.gauzyId as string
+			});
 		}
 	}
 
@@ -683,7 +714,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		snapshot?: WorkSnapshot,
 		link?: EverWorksEntityLink | null,
 		unmapped?: { members: string[]; teams: string[] },
-		direction: 'inbound' | 'outbound' = 'inbound'
+		direction: 'inbound' | 'outbound' = 'inbound',
+		extra: Pick<WorkEverWorksOnly, 'linkedBack'> = {}
 	): Promise<void> {
 		const previous = this.ewOnlyOf(link);
 		const ewOnly: WorkEverWorksOnly = {
@@ -693,7 +725,9 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			webUrl: work.webUrl !== undefined ? work.webUrl : (previous.webUrl ?? null),
 			visibility: work.visibility ?? previous.visibility ?? null,
 			unmappedMembers: unmapped?.members ?? previous.unmappedMembers ?? [],
-			unmappedTeams: unmapped?.teams ?? previous.unmappedTeams ?? []
+			unmappedTeams: unmapped?.teams ?? previous.unmappedTeams ?? [],
+			// Kept only for the project it was set for (a link recorded for another project is linked back again).
+			linkedBack: extra.linkedBack ?? (previous.linkedBack && previous.linkedBack === projectId ? previous.linkedBack : null)
 		};
 		await this.links.record({
 			tenantId: context.tenantId,

@@ -31,6 +31,7 @@ jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
 import 'reflect-metadata';
 import { ProjectStatusEnum } from '@gauzy/contracts';
 import { IntegrationTenant, OrganizationProject, OrganizationProjectEmployee } from '@gauzy/core';
+import { EverWorksApiError } from '../client/ever-works-client';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksProjectsService, projectStatusOf, sameUrl } from './ever-works-projects.service';
 
@@ -230,27 +231,65 @@ describe('EverWorksProjectsService', () => {
 	});
 
 	it('a work paired on the Projects tab, or made into a project, links back to its Gauzy project (local e2e)', async () => {
-		const { service, projects, client } = setup();
+		const { service, projects, client, links } = setup();
 		projects.push({ id: 'p1', name: 'Our name' });
 		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }, { id: 'ew-work-2', ...work, name: 'Other' }], nextCursor: null, hasMore: false });
 		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }], createInGauzy: ['ew-work-2'] });
+		const puts = () => client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT');
+		// Off the Projects tab's response: the sweep sends them.
+		expect(puts()).toEqual([]);
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
 		// Like a task created from Ever Works (and like a work Gauzy created, through its externalRef).
-		const puts = client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT');
-		expect(puts).toEqual([
+		expect(puts()).toEqual([
 			['PUT', '/links/work/ew-work-1', { body: { externalId: 'p1', installationId: 'c1' } }],
 			['PUT', '/links/work/ew-work-2', { body: { externalId: projects[1]?.['id'], installationId: 'c1' } }]
 		]);
+		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK).map((l) => JSON.parse(l.ewOnly as string)['linkedBack'])).toEqual(['p1', projects[1]?.['id']]);
+		// Sent once: the next sweep has nothing to link back.
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(puts()).toHaveLength(2);
 	});
 
-	it('a refused link back never undoes the pairing', async () => {
+	it('a refused link back never undoes the pairing and is tried again by a later sweep', async () => {
 		const { service, projects, client, links } = setup();
 		projects.push({ id: 'p1', name: 'Our name' });
+		let refuse = true;
 		client.request.mockImplementation(async (...args: unknown[]) => {
-			if (args[0] === 'PUT') throw new Error('Ever Works is down');
+			if (args[0] === 'PUT' && refuse) throw new EverWorksApiError(404, 'not_found', 'Not found.');
 			return { data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false };
 		});
 		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
-		expect(links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)).toMatchObject({ gauzyId: 'p1', ewId: 'ew-work-1', state: 'ok' });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		const pair = links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK);
+		expect(pair).toMatchObject({ gauzyId: 'p1', ewId: 'ew-work-1', state: 'ok' });
+		expect(JSON.parse(pair?.ewOnly as string)['linkedBack']).toBeNull();
+		refuse = false;
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT')).toHaveLength(2);
+		expect(JSON.parse(pair?.ewOnly as string)['linkedBack']).toBe('p1');
+	});
+
+	it('a work paired again while its link-back is on the way gets the newer project (#11049 review)', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'First' }, { id: 'p2', name: 'Second' });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		client.request.mockImplementation(async (...args: unknown[]) => {
+			if (args[0] === 'PUT' && (args[2] as { body: { externalId: string } }).body.externalId === 'p1') {
+				// The admin pairs the work with another project while the first link-back is on the way.
+				await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p2' }] });
+			}
+			return { data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false };
+		});
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		const pair = links.find((l) => l.entityType === EverWorksLinkType.PROJECT_WORK);
+		expect(pair).toMatchObject({ gauzyId: 'p2' });
+		// The older link-back is not recorded for the new pair, so the next sweep sends the newer project.
+		expect(JSON.parse(pair?.ewOnly as string)['linkedBack']).toBeNull();
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		const puts = client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT').map((call) => (call as unknown[])[2]);
+		expect(puts).toEqual([{ body: { externalId: 'p1', installationId: 'c1' } }, { body: { externalId: 'p2', installationId: 'c1' } }]);
+		expect(JSON.parse(pair?.ewOnly as string)['linkedBack']).toBe('p2');
 	});
 
 	it('a disabled mapping, or works switched off, writes nothing', async () => {

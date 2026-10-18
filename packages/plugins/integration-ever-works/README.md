@@ -232,7 +232,8 @@ and answered `202`.
   listed and never sync. Creating a project from a work needs the mapping
   enabled and works not switched off. A paired work (or one a project was
   created from) shows its Gauzy project as an external link in Ever Works
-  (`PUT /links/work/:id`, best effort), as tasks do.
+  (`PUT /links/work/:id`), as tasks do: the sync loop's sweep sends it (best
+  effort, retried by a later sweep), so the Projects tab never waits for it.
 - **Create in Ever Works (G-P2-5).** On the same tab (`createInEverWorks` on
   `PUT …/projects`), an admin opts a Gauzy project in: it becomes a repo-less
   Ever Works work of kind `project`, with the project's name, description and
