@@ -70,6 +70,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
+      # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
       # NO actions/cache here, deliberately — see the archive step below. The budget is full of
       # caches that other workflows genuinely need, and writing this one would evict them.
 
@@ -159,6 +165,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
+      # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
 
       - name: Download node_modules archive
         id: archive
@@ -360,6 +372,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
+      # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
 
       - name: Download node_modules archive
         id: archive
