@@ -245,8 +245,8 @@ describe('EverWorksProjectsService', () => {
 	it('a refused link back never undoes the pairing', async () => {
 		const { service, projects, client, links } = setup();
 		projects.push({ id: 'p1', name: 'Our name' });
-		client.request.mockImplementation(async (method: unknown) => {
-			if (method === 'PUT') throw new Error('Ever Works is down');
+		client.request.mockImplementation(async (...args: unknown[]) => {
+			if (args[0] === 'PUT') throw new Error('Ever Works is down');
 			return { data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false };
 		});
 		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
