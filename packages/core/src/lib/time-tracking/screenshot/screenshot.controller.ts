@@ -15,8 +15,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
-import * as fs from 'fs';
-import { Jimp, JimpMime } from 'jimp';
+import * as sharpModule from 'sharp';
 import { ID, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
@@ -29,7 +28,6 @@ import {
 	imageUploadFileFilter,
 	UploadedFileStorage
 } from '../../core/file-storage';
-import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
@@ -37,6 +35,11 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
+
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
 
 /**
  * The stored file's bytes as a Buffer. The local provider returns a Buffer; the S3, Wasabi and DigitalOcean
@@ -67,7 +70,10 @@ export class ScreenshotController {
 	private readonly logger = new Logger(ScreenshotController.name);
 	private logging: boolean = true;
 
-	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
+	constructor(
+		private readonly _screenshotService: ScreenshotService,
+		private readonly _eventBus: EventBus
+	) {}
 
 	/**
 	 * Capture a start/stop screenshot
@@ -130,7 +136,9 @@ export class ScreenshotController {
 		// A provider that could not read the object back returns nothing: that is a server-side failure, not a
 		// success without a record (the file is kept — it may be readable on the client's retry).
 		if (!fileContent) {
-			this.logger.error(`Could not read the uploaded screenshot '${file.key}' back from the file storage provider`);
+			this.logger.error(
+				`Could not read the uploaded screenshot '${file.key}' back from the file storage provider`
+			);
 			throw new InternalServerErrorException('The uploaded screenshot could not be read back from storage');
 		}
 		if (fileContent.length === 0) {
@@ -159,28 +167,11 @@ export class ScreenshotController {
 		}
 
 		try {
-			// Create a temporary file for the input of thumbnail processing
-			const inputFile = await tempFile('screenshot-thumb');
-
-			// Write the file content to the input temporary file
-			await fs.promises.writeFile(inputFile, fileContent);
-
-			// Resize the image using Jimp library
-			const image = await Jimp.read(inputFile);
-
-			// Only the width is given, so the height follows the aspect ratio (jimp 0.x's Jimp.AUTO)
-			image.resize({ w: 250 });
-
-			// jimp 1 picks the output format from a file name's extension, and nothing here has one: encode in the
-			// image's own format, as jimp 0.x's writeAsync did, straight to a buffer.
-			const data = await image.getBuffer((image.mime ?? JimpMime.png) as typeof JimpMime.png);
-
-			try {
-				// Remove the temporary input file
-				await fs.promises.unlink(inputFile);
-			} catch (error) {
-				this.logger.error('Error while unlinking temp files');
-			}
+			// The thumbnail: 250 px wide, the height following the aspect ratio, in the screenshot's own format.
+			// sharp (libvips) decodes and resizes on its own thread pool. Jimp did it in JavaScript on the event
+			// loop — a full-resolution screenshot per upload, from every tracker every few minutes, and every other
+			// request of the API waited for each one.
+			const data = await sharp(fileContent).resize({ width: 250 }).toBuffer();
 
 			// Define thumbnail file name and directory
 			const thumbName = `thumb-${file.filename}`;
