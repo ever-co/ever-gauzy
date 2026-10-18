@@ -1,4 +1,4 @@
-// cspell:ignore dmarc AKID AKIDEXAMPLE AKIDX Jalr FEMI MDENG CYEXAMPLEKEY
+// cspell:ignore dmarc AKID AKIDEXAMPLE AKIDX Jalr FEMI MDENG CYEXAMPLEKEY amazonses
 // `@gauzy/plugin-inbox` from source with its real MIME parser and settings; `@gauzy/core` (whose barrel boots the
 // application) is not needed by the parts used here.
 jest.mock('@gauzy/core', () => ({}));
@@ -12,7 +12,7 @@ import { createSign, generateKeyPairSync, KeyObject } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { UnauthorizedException } from '@nestjs/common';
 import { isSesEnabled } from './ses-enabled';
-import { SES_FAILED_VERDICT_SCORE, SesFetch, SesProvider } from './ses.provider';
+import { SES_FAILED_VERDICT_SCORE, SesFetch, SesProvider, sesMessageIdHeader } from './ses.provider';
 import { signAwsRequest } from './sigv4';
 import { snsStringToSign, SnsMessage } from './sns';
 import { CERT_URL, RAW_MIME, receivedNotification, TOPIC_ARN } from './testing/ses-payloads';
@@ -210,6 +210,28 @@ describe('Amazon SES email provider', () => {
 			).rejects.toThrow(/bucket/);
 		});
 
+		it('never reads outside the bucket: a key with a dot segment is refused, a dotted bucket stays in its path (review F61)', async () => {
+			const dotted = { ...account, config: { ...account.config, s3Bucket: 'mail.acme.com' } };
+			const objectUrl = 'https://s3.eu-west-1.amazonaws.com/mail.acme.com/inbound/msg-1';
+			const { calls, fetcher } = recorder({ [`GET ${objectUrl}`]: { body: RAW_MIME } });
+			const stored = (objectKey: string) => {
+				const notification = receivedNotification({ content: undefined });
+				notification.receipt.action = { type: 'S3', bucketName: 'mail.acme.com', objectKey } as never;
+				return request(sns({ Message: JSON.stringify(notification) }));
+			};
+			const provider = new SesProvider(undefined, fetcher);
+			expect((await provider.parse(stored('inbound/msg-1'), dotted))[0]?.messageId).toBe('<m-2@acme.test>');
+			for (const key of ['../payroll.acme.com/2026/salaries.csv', 'inbound/../../other/x', './inbound/msg-1']) {
+				await expect(provider.parse(stored(key), dotted)).rejects.toThrow(/S3 key/);
+			}
+			// A percent-encoded dot segment is a plain name once encoded: it stays inside the bucket's path.
+			await expect(provider.parse(stored('%2e%2e/x'), dotted)).rejects.toThrow(/S3 answered 404/);
+			expect(calls.map((call) => call.url)).toEqual([
+				objectUrl,
+				'https://s3.eu-west-1.amazonaws.com/mail.acme.com/%252e%252e/x'
+			]);
+		});
+
 		it('confirms a verified subscription on SNS, and stores nothing', async () => {
 			const subscribe = 'https://sns.eu-west-1.amazonaws.com/?Action=ConfirmSubscription&TopicArn=x&Token=t';
 			const { calls, fetcher } = recorder({ [`GET ${subscribe}`]: { body: '<ConfirmSubscriptionResponse/>' } });
@@ -253,6 +275,9 @@ describe('Amazon SES email provider', () => {
 				)
 			);
 			expect(info['response']).toBe('ses:ses-1');
+			// SES replaces the raw message's Message-ID: the transport reports the one SES sent (review F64).
+			expect(info['messageId']).toBe('<ses-1@eu-west-1.amazonses.com>');
+			expect(info['providerMessageId']).toBe('ses-1');
 			expect(info['accepted']).toEqual(['ada@acme.test', 'bcc@acme.test']);
 			const call = calls[0] as { init: RequestInit };
 			expect(JSON.parse(String(call.init.body))).toEqual({
@@ -265,6 +290,20 @@ describe('Amazon SES email provider', () => {
 			expect((call.init.headers as Record<string, string>)['authorization']).toContain(
 				'/eu-west-1/ses/aws4_request'
 			);
+		});
+
+		it('names the Message-ID SES sends under, per region (review F64)', () => {
+			expect(sesMessageIdHeader('0100abc', 'us-east-1')).toBe('<0100abc@email.amazonses.com>');
+			expect(sesMessageIdHeader('0200abc', 'eu-west-1')).toBe('<0200abc@eu-west-1.amazonses.com>');
+		});
+
+		it('builds no transport for an account without AWS keys or region, so the next transport sends (review F62)', () => {
+			const provider = new SesProvider(undefined, recorder({}).fetcher);
+			const receivingOnly = { ...account, config: { topicArn: TOPIC_ARN, region: 'eu-west-1' } };
+			expect(() => provider.createTransport(receivingOnly)).toThrow('The SES account has no AWS access key.');
+			const noRegion = { ...account, config: { ...account.config, region: '' } };
+			expect(() => provider.createTransport(noRegion)).toThrow('The SES account has no AWS region.');
+			expect(provider.createTransport(account)).toMatchObject({ name: 'ses' });
 		});
 
 		it('reports the account, the sandbox, and a refused key', async () => {

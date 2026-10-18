@@ -1,4 +1,4 @@
-// cspell:ignore dmarc temperror sesv
+// cspell:ignore dmarc temperror sesv amazonses
 import {
 	Inject,
 	Injectable,
@@ -96,6 +96,14 @@ function verdictOf(status: string | undefined) {
 }
 
 const asText = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+/**
+ * The `Message-ID` header SES gives a message it sends (it replaces the one in the raw message): its message id at
+ * `email.amazonses.com` in us-east-1, at `<region>.amazonses.com` elsewhere. A reply names this one (review F64).
+ */
+export function sesMessageIdHeader(messageId: string, region: string): string {
+	return `<${messageId}@${region === 'us-east-1' ? 'email' : region}.amazonses.com>`;
+}
 
 /** Reads a response body up to `cap` bytes (more is an error), never buffering beyond it. */
 async function readCapped(response: Response, cap: number): Promise<Buffer> {
@@ -277,6 +285,10 @@ export class SesProvider implements IEmailProviderPlugin, IInboundEmailProvider,
 	}
 
 	createTransport(account: IProviderAccountContext): unknown {
+		// An account set up for receiving only (no keys, or no region) has no transport: the error tells the resolver
+		// to try the next account, then SMTP, instead of handing over a transport that fails every send (review F62).
+		const region = this.region(account);
+		this.credentials(account);
 		const fallbackFrom = asText(account.config['fromAddress']) || undefined;
 		return {
 			name: 'ses',
@@ -298,7 +310,8 @@ export class SesProvider implements IEmailProviderPlugin, IInboundEmailProvider,
 							throw new SesApiError(502, 'invalid_response', 'SES accepted the email without an id.');
 						}
 						callback(null, {
-							messageId: mail.message.messageId(),
+							// The id SES sent the message under, not the one it replaced: replies thread on it.
+							messageId: sesMessageIdHeader(answer.MessageId, region),
 							envelope,
 							accepted: to,
 							rejected: [],
@@ -413,14 +426,22 @@ export class SesProvider implements IEmailProviderPlugin, IInboundEmailProvider,
 			);
 		}
 		const region = this.region(account);
-		const path = key
-			.split('/')
-			.map((segment) => encodeURIComponent(segment))
-			.join('/');
+		const segments = key.split('/');
+		// A `.` or `..` segment would be resolved by the URL (and signed so): with a path-style bucket it could read
+		// another bucket with the account's keys. SES never writes one (review F61).
+		if (segments.some((segment) => segment === '.' || segment === '..')) {
+			throw new SesApiError(422, 'bad_object_key', 'The stored message’s S3 key is not one SES writes.');
+		}
+		const path = segments.map((segment) => encodeURIComponent(segment)).join('/');
 		// Virtual-hosted style, or path style for a bucket name with dots (its certificate would not match).
+		const expected = bucket.includes('.') ? `/${bucket}/${path}` : `/${path}`;
 		const url = bucket.includes('.')
-			? `https://s3.${region}.amazonaws.com/${bucket}/${path}`
-			: `https://${bucket}.s3.${region}.amazonaws.com/${path}`;
+			? `https://s3.${region}.amazonaws.com${expected}`
+			: `https://${bucket}.s3.${region}.amazonaws.com${expected}`;
+		// Only this bucket's object is ever fetched: the URL's path is the one built, nothing resolved away.
+		if (new URL(url).pathname !== expected) {
+			throw new SesApiError(422, 'bad_object_key', 'The stored message’s S3 key is not one SES writes.');
+		}
 		const response = await this.fetch(url, {
 			method: 'GET',
 			headers: signAwsRequest({ method: 'GET', url }, this.credentials(account), region, 's3')
