@@ -69,3 +69,14 @@ export class RecentAnswers<T> {
 		}
 	}
 }
+
+/**
+ * An independent copy of an answer for one caller. The answers are the plain JSON `HttpClient` parsed, so a
+ * JSON round trip is a faithful deep copy; the original stays in the cache, so a caller that mutates what it
+ * got — `store.user.email = ...` — cannot reach another caller's copy.
+ *
+ * @param value - The cached answer.
+ */
+export function cloneJson<T>(value: T): T {
+	return value === undefined ? value : JSON.parse(JSON.stringify(value));
+}

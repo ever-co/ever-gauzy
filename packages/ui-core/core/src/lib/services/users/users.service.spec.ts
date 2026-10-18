@@ -40,6 +40,19 @@ describe('UsersService.getMe', () => {
 		expect(await second).toEqual(me);
 	});
 
+	it('gives every caller its own copy, so one caller cannot change what another holds', async () => {
+		const first = service.getMe();
+		const second = service.getMe();
+		backend.expectOne((request) => request.url.endsWith('/user/me')).flush(me);
+		const [a, b] = await Promise.all([first, second]);
+
+		expect(a).toEqual(b);
+		expect(a).not.toBe(b);
+		a.email = 'changed@example.com';
+		expect(b.email).toBe(me.email);
+		expect(await service.getMe()).toEqual(me);
+	});
+
 	it('asks again for other relations, another token, or another user', async () => {
 		service.getMe(['role']);
 		service.getMe(['role', 'tenant']);

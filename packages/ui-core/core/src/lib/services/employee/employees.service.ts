@@ -14,10 +14,15 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class EmployeesService {
-	constructor(private readonly http: HttpClient) {}
+	// Optional only for callers that construct the service by hand (specs); Angular always provides it.
+	constructor(
+		private readonly http: HttpClient,
+		private readonly usersService?: UsersService
+	) {}
 
 	getAllPublic(request: IEmployeeFindInput, relations: string[] = []): Observable<IPagination<IEmployee>> {
 		return this.http.get<IPagination<IEmployee>>(`${API_PREFIX}/public/employee`, {
@@ -220,8 +225,13 @@ export class EmployeesService {
 	 * @param payload - The data to update in the employee's profile.
 	 * @returns A promise that resolves with the updated employee profile.
 	 */
-	updateProfile(id: ID, payload: IEmployeeUpdateInput): Promise<IEmployee> {
-		return firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload));
+	async updateProfile(id: ID, payload: IEmployeeUpdateInput): Promise<IEmployee> {
+		try {
+			return await firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload));
+		} finally {
+			// `getMe(..., includeEmployee)` returns this employee: the recent answer must not outlive the write.
+			this.usersService?.forgetMe();
+		}
 	}
 
 	/**

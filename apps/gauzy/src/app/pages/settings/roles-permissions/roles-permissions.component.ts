@@ -7,7 +7,7 @@ import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { PermissionGroups, IRolePermission, RolesEnum, IUser, IRole, PermissionsEnum } from '@gauzy/contracts';
-import { RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { PermissionsService, RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	ADMINISTRATION_PERMISSION_SECTIONS,
@@ -18,11 +18,11 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-org-roles-permissions',
-    templateUrl: './roles-permissions.component.html',
-    styleUrls: ['./roles-permissions.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ga-org-roles-permissions',
+	templateUrl: './roles-permissions.component.html',
+	styleUrls: ['./roles-permissions.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class RolesPermissionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	rolesEnum = RolesEnum;
@@ -50,6 +50,7 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
+		private readonly permissionsService: PermissionsService,
 		private readonly rolesService: RoleService,
 		private readonly store: Store
 	) {
@@ -190,11 +191,18 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 			const permissionToEdit = this.permissions.find((p) => p.permission === permission);
 			const payload = { enabled, roleId, tenantId, permission };
 
-			// Update or create the permission based on its existence
-			if (permissionToEdit?.id) {
-				await this.rolePermissionsService.update(permissionToEdit.id, payload);
-			} else {
-				await this.rolePermissionsService.create(payload);
+			// The signed-in user's own permissions (`/role-permissions/me`) are answered from a recent copy for a few
+			// seconds; a change to a role must not be served from one, so the copy is forgotten around the write.
+			this.permissionsService.forgetPermissions();
+			try {
+				// Update or create the permission based on its existence
+				if (permissionToEdit?.id) {
+					await this.rolePermissionsService.update(permissionToEdit.id, payload);
+				} else {
+					await this.rolePermissionsService.create(payload);
+				}
+			} finally {
+				this.permissionsService.forgetPermissions();
 			}
 
 			// Display success message

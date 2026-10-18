@@ -55,6 +55,18 @@ describe('PermissionsService.loadPermissions', () => {
 		]);
 	});
 
+	it('gives every caller its own copy of the rows', async () => {
+		const first = service.getPermissions();
+		const second = service.getPermissions();
+		backend.expectOne((request) => request.url.endsWith('/role-permissions/me')).flush(rows);
+		const [a, b] = await Promise.all([first, second]);
+
+		expect(a).toEqual(b);
+		expect(a).not.toBe(b);
+		(a as any[]).pop();
+		expect(b).toHaveLength(rows.length);
+	});
+
 	it('loads again for another user or token, and after forgetPermissions()', async () => {
 		service.getPermissions();
 		store.token = 'token-b';

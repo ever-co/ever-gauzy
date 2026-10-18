@@ -7,7 +7,7 @@ import { IRolePermissions } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Store } from '../store/store.service';
 import { ErrorHandlingService } from '../notification/error-handling.service';
-import { RecentAnswers } from '../recent-answers';
+import { cloneJson, RecentAnswers } from '../recent-answers';
 
 /**
  * How long an answer of `GET /role-permissions/me` (~164 KB) is reused for the same user and token. The app loads
@@ -62,8 +62,11 @@ export class PermissionsService {
 	 */
 	async getPermissions(): Promise<IRolePermissions> {
 		const key = `${this._store.userId ?? ''}|${this._store.token ?? ''}`;
-		return this.recentPermissions.get(key, () =>
-			firstValueFrom(this._http.get<IRolePermissions>(`${API_PREFIX}/role-permissions/me`))
+		return (
+			this.recentPermissions
+				.get(key, () => firstValueFrom(this._http.get<IRolePermissions>(`${API_PREFIX}/role-permissions/me`)))
+				// Each caller gets its own copy of the rows.
+				.then(cloneJson)
 		);
 	}
 

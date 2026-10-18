@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ID, IUser, IUserUiPreferences, IUserUiPreferencesUpdateInput, IUserUpdateInput } from '@gauzy/contracts';
 import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 import { Store } from '../store/store.service';
-import { RecentAnswers } from '../recent-answers';
+import { cloneJson, RecentAnswers } from '../recent-answers';
 
 /**
  * How long an answer of `GET /user/me` is reused for an identical request (same user, token, relations and
@@ -23,7 +23,8 @@ export class UsersService {
 	/**
 	 * Retrieves the current user's details, optionally including specified relations and employee data.
 	 *
-	 * An identical request made within {@link ME_REUSE_WINDOW_MS} of the previous one is answered from that one.
+	 * An identical request made within {@link ME_REUSE_WINDOW_MS} of the previous one is answered from that one;
+	 * every caller receives its own copy.
 	 *
 	 * @param relations - An array of relation names to include in the response.
 	 * @param includeEmployee - Whether to include employee details.
@@ -36,10 +37,15 @@ export class UsersService {
 			[...relations].sort().join(','),
 			includeEmployee
 		].join('|');
-		return this.recentMe.get(key, () => {
-			const params = buildHttpParams({ relations, includeEmployee });
-			return firstValueFrom(this.http.get<IUser>(`${API_PREFIX}/user/me`, { params }));
-		});
+		return (
+			this.recentMe
+				.get(key, () => {
+					const params = buildHttpParams({ relations, includeEmployee });
+					return firstValueFrom(this.http.get<IUser>(`${API_PREFIX}/user/me`, { params }));
+				})
+				// Each caller gets its own copy: the cached answer is shared, what a caller does to it must not be.
+				.then(cloneJson)
+		);
 	}
 
 	/**
