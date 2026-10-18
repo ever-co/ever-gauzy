@@ -6,6 +6,7 @@ import { BaseEntityEventSubscriber, Goal, KeyResult, KeyResultUpdate, RequestCon
 import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import { runDetached } from '../sync/outbound/ever-works-detached';
 
 /**
  * A Gauzy goal or key result changed. The row as the ORM handed it to the subscriber: a partial update
@@ -129,7 +130,8 @@ export class EverWorksGoalCapture implements OnModuleInit, OnModuleDestroy {
 
 	onModuleInit(): void {
 		this.subscription = EVER_WORKS_GOAL_SIGNALS.subscribe((change) => {
-			void this.capture(change).catch((error) =>
+			// Outside the goal write's transaction context (see ever-works-detached.ts).
+			void runDetached(() => this.capture(change)).catch((error) =>
 				this.logger.warn(
 					`A goal change could not be queued (${error instanceof Error ? error.name : 'error'}).`
 				)

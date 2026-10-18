@@ -7,6 +7,7 @@ import { Document } from '@gauzy/plugin-docs';
 import { EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
+import { runDetached } from '../sync/outbound/ever-works-detached';
 
 /** A Gauzy Docs node (a page or a folder) changed. */
 export interface EverWorksDocumentSignal {
@@ -90,8 +91,9 @@ export class EverWorksDocumentCapture implements OnModuleInit, OnModuleDestroy {
 						? [EverWorksLinkType.DOC_FOLDER]
 						: [EverWorksLinkType.DOC, EverWorksLinkType.DOC_FOLDER];
 			for (const entityType of types) {
-				void this.queue
-					.enqueue({
+				// Outside the document write's transaction context (see ever-works-detached.ts).
+				void runDetached(() =>
+					this.queue.enqueue({
 						tenantId: change.tenantId,
 						organizationId: change.organizationId,
 						entityType,
@@ -99,7 +101,7 @@ export class EverWorksDocumentCapture implements OnModuleInit, OnModuleDestroy {
 						op: change.deleted ? 'delete' : 'upsert',
 						actorUserId: change.actorUserId
 					})
-					.catch((error) => this.logger.warn(`A document change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
+				).catch((error) => this.logger.warn(`A document change could not be queued (${error instanceof Error ? error.name : 'error'}).`));
 			}
 		});
 	}
