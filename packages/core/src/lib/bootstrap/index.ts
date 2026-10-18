@@ -227,6 +227,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'X-Requested-With',
 			'X-Auth-Token',
 			'X-HTTP-Method-Override',
+			// Lets a browser client opt a response out of compression (see ./response-compression.ts).
+			'X-No-Compression',
 			'Content-Type',
 			'Content-Language',
 			'Accept',

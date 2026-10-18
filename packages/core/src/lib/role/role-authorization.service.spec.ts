@@ -152,17 +152,37 @@ describe('RoleAuthorizationService', () => {
 		});
 
 		it('are independent per role', async () => {
-			const { service, typeOrmRoleRepository, release } = buildSlow({ id: 'role-1', rolePermissions: [] });
+			const roles: Record<string, unknown> = {
+				'role-1': {
+					id: 'role-1',
+					name: RolesEnum.EMPLOYEE,
+					rolePermissions: [rolePermission(PermissionsEnum.ORG_TEAM_VIEW)]
+				},
+				'role-2': {
+					id: 'role-2',
+					name: RolesEnum.ADMIN,
+					rolePermissions: [rolePermission(PermissionsEnum.ALL_ORG_EDIT)]
+				}
+			};
+			const { service, typeOrmRoleRepository, release } = buildSlow(null);
+			// Each lookup answers for the role it was asked about, once released.
+			(typeOrmRoleRepository.findOne as jest.Mock).mockImplementation(async ({ where }: any) => {
+				await new Promise((resolve) => setImmediate(resolve));
+				return roles[where.id];
+			});
 
 			const pending = Promise.all([
 				service.getAuthorizationState('role-1'),
 				service.getAuthorizationState('role-2')
 			]);
-			await new Promise((resolve) => setImmediate(resolve));
 			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(2);
 
 			release();
-			await pending;
+			const [first, second] = await pending;
+			expect(first?.role).toEqual(expect.objectContaining({ id: 'role-1', name: RolesEnum.EMPLOYEE }));
+			expect(first?.permissions).toEqual([PermissionsEnum.ORG_TEAM_VIEW]);
+			expect(second?.role).toEqual(expect.objectContaining({ id: 'role-2', name: RolesEnum.ADMIN }));
+			expect(second?.permissions).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
 			expect((service as any).loading.size).toBe(0);
 		});
 
