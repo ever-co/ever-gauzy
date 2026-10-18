@@ -550,8 +550,13 @@ export class ProjectQuickLookComponent implements OnChanges {
 		if (this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) return true;
 		const employeeId = this._store.user?.employeeId;
 		if (!employeeId) return this._store.hasPermission(PermissionsEnum.ALL_ORG_VIEW);
+		// Only a membership still in effect, as the server reads it: an unset flag counts as active, not archived.
 		return (project.members || []).some(
-			(member) => member.isManager && (member.employeeId || member.employee?.id) === employeeId
+			(member) =>
+				member.isManager &&
+				member.isActive !== false &&
+				member.isArchived !== true &&
+				(member.employeeId || member.employee?.id) === employeeId
 		);
 	}
 
