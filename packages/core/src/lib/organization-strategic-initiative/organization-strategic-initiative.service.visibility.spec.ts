@@ -302,5 +302,65 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, null), ORGANIZATION)
 			).toEqual(hidden);
 		});
+
+		/** The organizations a read's `where.organizationId` (an `In(...)`) names. */
+		const organizationsOf = (where: any): string[] => where?.organizationId?._value ?? where?.organizationId?.value;
+
+		it('the list is bound in the query, before the page is cut (#11052 review)', async () => {
+			signIn(OTHER, reader, [ORGANIZATION, OTHER_ORGANIZATION]);
+			const findAll = jest
+				.spyOn(TenantAwareCrudService.prototype, 'findAll')
+				.mockResolvedValue({ items: [], total: 0 } as never);
+			await service.findAll({ take: 10, skip: 0, where: { title: 'Agents ship' } } as any);
+			const [options] = findAll.mock.calls[0] as any[];
+			expect(options).toMatchObject({ take: 10, skip: 0, where: { title: 'Agents ship' } });
+			expect(organizationsOf(options.where)).toEqual([ORGANIZATION, OTHER_ORGANIZATION]);
+			// A stated organization of theirs is kept as it is; another one reads nothing.
+			await service.findAll({ where: { organizationId: OTHER_ORGANIZATION } } as any);
+			expect((findAll.mock.calls[1][0] as any).where).toEqual({ organizationId: OTHER_ORGANIZATION });
+			signIn(OTHER, reader, [ORGANIZATION]);
+			expect(await service.findAll({ where: { organizationId: OTHER_ORGANIZATION } } as any)).toEqual({ items: [], total: 0 });
+			expect(findAll).toHaveBeenCalledTimes(2);
+			// No organization at all: nothing is read.
+			signIn(OTHER, reader, []);
+			expect(await service.findAll({} as any)).toEqual({ items: [], total: 0 });
+			expect(findAll).toHaveBeenCalledTimes(2);
+		});
+
+		it('the inherited page read (`GET /pagination`) answers what the list answers (#11052 review)', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			const rows = [
+				initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION),
+				initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION),
+				initiative(OrganizationStrategicVisibilityScopeEnum.TEAM)
+			];
+			const paginate = jest
+				.spyOn(TenantAwareCrudService.prototype, 'paginate')
+				.mockResolvedValue({ items: rows, total: rows.length } as never);
+			const page = await service.paginate({ take: 5 } as any);
+			expect(page.items).toEqual([rows[0]]);
+			expect(page.total).toBe(1);
+			const [options] = paginate.mock.calls[0] as any[];
+			expect(options).toMatchObject({ take: 5 });
+			expect(organizationsOf(options.where)).toEqual([ORGANIZATION]);
+			expect(options.relations).toEqual(['teams', 'projects', 'projects.teams']);
+		});
+
+		it('the count (`GET /count`, GraphQL) counts what the caller may see (#11052 review)', async () => {
+			signIn(OTHER, reader, [ORGANIZATION]);
+			const findAll = jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({
+				items: [
+					initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION),
+					initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION),
+					initiative(OrganizationStrategicVisibilityScopeEnum.LEADERSHIP)
+				],
+				total: 3
+			} as never);
+			const count = jest.spyOn(TenantAwareCrudService.prototype, 'countBy');
+			expect(await service.countBy()).toBe(1);
+			expect(await service.countBy({ title: 'Agents ship' } as any)).toBe(1);
+			expect((findAll.mock.calls[1][0] as any).where).toMatchObject({ title: 'Agents ship' });
+			expect(count).not.toHaveBeenCalled();
+		});
 	});
 });
