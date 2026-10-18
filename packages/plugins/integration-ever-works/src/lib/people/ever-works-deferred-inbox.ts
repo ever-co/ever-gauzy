@@ -15,23 +15,23 @@ export interface EverWorksDeferredInboxRow {
 	ewUserId: string;
 	/** Distinct Ever Works items waiting for this member. */
 	count: number;
-	/** The newest few, newest first. */
+	/**
+	 * The newest few, newest first. `title` is always empty: an inbox item is private to its recipient, and the People
+	 * tab is read by integration admins, so only its kind and time are listed (review F103).
+	 */
 	items: Array<{ ewItemId: string; title: string; kind: string | null; occurredAt: string | null }>;
 }
 
 type DeferredEvent = Pick<EverWorksInboundEvent, 'id' | 'aggregateId' | 'payload'>;
 
-/** The recipient, title and kind an inbox event carries (`null` when its payload cannot be read). */
-function inboxOf(
-	event: DeferredEvent
-): { recipient: string; title: string; kind: string | null; occurredAt: string | null } | null {
+/** The recipient and kind an inbox event carries (`null` when its payload cannot be read); never its title. */
+function inboxOf(event: DeferredEvent): { recipient: string; kind: string | null; occurredAt: string | null } | null {
 	try {
 		const envelope = JSON.parse(event.payload) as EverWorksEventEnvelope;
-		const data = (envelope.data ?? {}) as { recipientUserId?: unknown; title?: unknown; kind?: unknown };
+		const data = (envelope.data ?? {}) as { recipientUserId?: unknown; kind?: unknown };
 		if (typeof data.recipientUserId !== 'string' || !data.recipientUserId) return null;
 		return {
 			recipient: data.recipientUserId,
-			title: typeof data.title === 'string' ? data.title : '',
 			kind: typeof data.kind === 'string' ? data.kind : null,
 			occurredAt: typeof envelope.occurredAt === 'string' ? envelope.occurredAt : null
 		};
@@ -60,7 +60,8 @@ export function deferredInboxOf(
 		if (row.items.length < DEFERRED_INBOX_SAMPLE) {
 			row.items.push({
 				ewItemId: event.aggregateId,
-				title: item.title,
+				// The title is the recipient's alone (review F103).
+				title: '',
 				kind: item.kind,
 				occurredAt: item.occurredAt
 			});

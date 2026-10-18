@@ -46,22 +46,23 @@ describe('Deferred Ever Works inbox items (People tab)', () => {
 				ewUserId: 'ew-ann',
 				count: 2,
 				items: [
-					{
-						ewItemId: 'i1',
-						title: 'Ann, newer event',
-						kind: 'question',
-						occurredAt: '2026-10-17T00:00:00.000Z'
-					},
-					{ ewItemId: 'i2', title: 'Item i2', kind: 'question', occurredAt: '2026-10-17T00:00:00.000Z' }
+					{ ewItemId: 'i1', title: '', kind: 'question', occurredAt: '2026-10-17T00:00:00.000Z' },
+					{ ewItemId: 'i2', title: '', kind: 'question', occurredAt: '2026-10-17T00:00:00.000Z' }
 				]
 			},
 			{
 				ewUserId: 'ew-bob',
 				count: 1,
-				items: [
-					{ ewItemId: 'i3', title: 'Bob, newest', kind: 'question', occurredAt: '2026-10-17T00:00:00.000Z' }
-				]
+				items: [{ ewItemId: 'i3', title: '', kind: 'question', occurredAt: '2026-10-17T00:00:00.000Z' }]
 			}
+		]);
+	});
+
+	it('never lists the title of a member’s private inbox item to the admin reading the tab (review F103)', () => {
+		const rows = deferredInboxOf([event('e1', 'i1', 'ew-ann', 'Your salary review is ready')], new Set());
+		expect(JSON.stringify(rows)).not.toContain('salary');
+		expect(rows[0].items).toEqual([
+			{ ewItemId: 'i1', title: '', kind: 'question', occurredAt: '2026-10-17T00:00:00.000Z' }
 		]);
 	});
 
