@@ -15,7 +15,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
-import * as sharpModule from 'sharp';
+import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './../../core/file-storage/helpers/image-thumbnail';
 import { ID, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
@@ -35,32 +35,6 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
-
-// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
-// function itself: take whichever this runtime hands back.
-const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
-	sharpModule) as unknown as typeof sharpModule.default;
-
-/**
- * The stored file's bytes as a Buffer. The local provider returns a Buffer; the S3, Wasabi and DigitalOcean
- * providers return the SDK's stream (`GetObjectCommandOutput.Body`). `undefined` when the provider returned nothing.
- */
-async function toBuffer(content: unknown): Promise<Buffer | undefined> {
-	if (content === null || content === undefined) return undefined;
-	if (Buffer.isBuffer(content)) return content;
-	if (content instanceof Uint8Array) return Buffer.from(content);
-	if (typeof content === 'string') return Buffer.from(content);
-	const body = content as { transformToByteArray?: () => Promise<Uint8Array> };
-	if (typeof body.transformToByteArray === 'function') return Buffer.from(await body.transformToByteArray());
-	if (typeof (content as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
-		let chunks: Buffer[] = [];
-		for await (const chunk of content as AsyncIterable<Buffer | Uint8Array | string>) {
-			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
-		}
-		return Buffer.concat(chunks);
-	}
-	return undefined;
-}
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -128,7 +102,7 @@ export class ScreenshotController {
 		const provider = new FileStorage().getProvider();
 
 		// Retrieve file content from the file storage provider (the S3-family providers return a stream)
-		const fileContent = await toBuffer(await provider.getFile(file.key));
+		const fileContent = await fileContentToBuffer(await provider.getFile(file.key));
 
 		// An empty upload (a display the desktop timer could not capture) has no image to record. Refuse it here,
 		// OUTSIDE the try/catch below: in there the thumbnail step failed on it, the error was swallowed and the
@@ -167,14 +141,15 @@ export class ScreenshotController {
 		}
 
 		try {
-			// The thumbnail: 250 px wide, the height following the aspect ratio, in the screenshot's own format.
-			// sharp (libvips) decodes and resizes on its own thread pool. Jimp did it in JavaScript on the event
-			// loop — a full-resolution screenshot per upload, from every tracker every few minutes, and every other
-			// request of the API waited for each one.
-			const data = await sharp(fileContent).resize({ width: 250 }).toBuffer();
+			// The thumbnail: 250 px wide, the height following the aspect ratio, in the screenshot's own format,
+			// oriented as the image displays — sharp (libvips) on its own thread pool, Jimp only for a format libvips
+			// does not decode (BMP). Jimp did every one in JavaScript on the event loop: a full-resolution screenshot
+			// per upload, from every tracker every few minutes, and every other request of the API waited for it.
+			const { data, extension } = await createImageThumbnail(fileContent);
 
 			// Define thumbnail file name and directory
-			const thumbName = `thumb-${file.filename}`;
+			// Named for what the bytes are, not for the client-supplied extension of the upload
+			const thumbName = thumbnailFileName(file.filename, extension);
 			const thumbDir = path.dirname(file.key);
 
 			// Replace double backslashes with single forward slashes
