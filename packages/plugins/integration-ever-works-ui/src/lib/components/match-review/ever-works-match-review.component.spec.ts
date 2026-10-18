@@ -222,7 +222,15 @@ describe('EverWorksMatchReviewComponent', () => {
 			of({
 				...PEOPLE,
 				deferredInbox: [
-					{ ewUserId: 'u3', count: 2, items: [{ ewItemId: 'i1', title: 'Approve the deploy?', kind: 'approval', occurredAt: null }] },
+					{
+						ewUserId: 'u3',
+						count: 3,
+						items: [
+							{ ewItemId: 'i1', title: 'Approve the deploy?', kind: 'approval', occurredAt: '2026-10-17T09:30:00.000Z' },
+							// A stored event with a time that is not a date: listed without it, and the tab still renders.
+							{ ewItemId: 'i3', title: '', kind: 'notice', occurredAt: 'unknown' }
+						]
+					},
 					{ ewUserId: 'u-gone', count: 1, items: [{ ewItemId: 'i2', title: '', kind: null, occurredAt: null }] }
 				]
 			})
@@ -234,6 +242,9 @@ describe('EverWorksMatchReviewComponent', () => {
 		// One entry per waiting item, by its kind: an item is its recipient's alone, so its title is never shown (review F103).
 		expect(block?.querySelector('[data-test="deferred-item-i1"]')?.textContent).toContain('EVER_WORKS.REVIEW.DEFERRED_KIND.approval');
 		expect(block?.textContent).not.toContain('Approve the deploy?');
+		expect(block?.querySelector('[data-test="deferred-item-i1"] small')?.textContent).toContain('2026');
+		expect(block?.querySelector('[data-test="deferred-item-i3"]')?.textContent).toContain('EVER_WORKS.REVIEW.DEFERRED_KIND.notice');
+		expect(block?.querySelector('[data-test="deferred-item-i3"] small')).toBeNull();
 		expect(block?.querySelector('[data-test="deferred-item-i2"]')?.textContent).toContain('—');
 	});
 

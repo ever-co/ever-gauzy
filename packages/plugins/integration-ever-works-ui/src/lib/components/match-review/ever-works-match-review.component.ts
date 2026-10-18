@@ -213,8 +213,8 @@ export const DRAFT_INITIATIVE = 'draft';
 											@for (item of row.items; track item.ewItemId) {
 												<li [attr.data-test]="'deferred-item-' + item.ewItemId">
 													{{ deferredKind(item.kind) | translate }}
-													@if (item.occurredAt) {
-														<small>· {{ item.occurredAt | date: 'medium' }}</small>
+													@if (deferredAt(item.occurredAt); as at) {
+														<small>· {{ at | date: 'medium' }}</small>
 													}
 												</li>
 											}
@@ -551,6 +551,12 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	/** What a waiting inbox item is, as a translation key (an unknown kind as it is): its title is never shown. */
 	deferredKind(kind: string | null): string {
 		return kind && DEFERRED_KINDS.has(kind) ? `EVER_WORKS.REVIEW.DEFERRED_KIND.${kind}` : kind || '—';
+	}
+
+	/** When a waiting inbox item happened, or `null` for a time that is not a date (the date pipe would throw on it). */
+	deferredAt(occurredAt: string | null): Date | null {
+		const at = occurredAt ? new Date(occurredAt) : null;
+		return at && !Number.isNaN(at.getTime()) ? at : null;
 	}
 
 	/** Gauzy teams paired with nothing and not chosen for an Ever Works team in this form. */

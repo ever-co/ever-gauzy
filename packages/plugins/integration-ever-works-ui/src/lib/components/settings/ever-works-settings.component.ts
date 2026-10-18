@@ -463,7 +463,7 @@ export class EverWorksSettingsComponent implements OnInit, OnDestroy {
 	private readonly conflictsRequest$ = new Subject<void>();
 	private pollTimer: ReturnType<typeof setTimeout> | null = null;
 	/** The Advanced switch: set back to the mapping's state when switching it fails (review F101). */
-	@ViewChild('enabledToggle') private enabledToggle?: NbToggleComponent;
+	@ViewChild('enabledToggle') private readonly enabledToggle?: NbToggleComponent;
 
 	/** The running sync, else the latest one. */
 	get latestRun() {

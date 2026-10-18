@@ -267,7 +267,8 @@ describe('EverWorksSettingsComponent', () => {
 		api.updateMapping.mockReturnValue(answer);
 		const { component, fixture, find } = render();
 		const toggle = fixture.debugElement.query(By.directive(NbToggleComponent)).componentInstance as NbToggleComponent;
-		const input = find('mapping-enabled')?.querySelector('input') as HTMLInputElement;
+		const host = find('mapping-enabled') as HTMLElement;
+		const input = host.querySelector('input') as HTMLInputElement;
 		expect(toggle.checked).toBe(false);
 		input.click();
 		fixture.detectChanges();
