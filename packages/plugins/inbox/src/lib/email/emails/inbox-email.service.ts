@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { isUUID } from 'class-validator';
-import { DataSource, In, IsNull } from 'typeorm';
+import { Brackets, DataSource, IsNull } from 'typeorm';
 import {
 	ID,
 	IInboxEmail,
@@ -104,45 +104,54 @@ export class InboxEmailService {
 	async thread(id: ID): Promise<IInboxEmail[]> {
 		const { email, mailbox } = await this.readable(id);
 		if (!email.threadId) return [this.toEmail(email)];
-		const found = await this.dataSource.getRepository(InboxEmail).find({
-			where: {
-				tenantId: email.tenantId as ID,
-				mailboxId: email.mailboxId,
-				threadId: email.threadId,
-				status: In(THREAD_STATUSES),
-				deletedAt: IsNull()
-			},
+		// What is listed, and what the caller may read, is checked in the query, before its limit: the page is the
+		// newest messages the caller may read, never the newest messages filtered down afterwards (#11096 review).
+		let query = this.dataSource
+			.getRepository(InboxEmail)
+			.createQueryBuilder('email')
+			.where('email.tenantId = :tenantId', { tenantId: email.tenantId })
+			.andWhere('email.mailboxId = :mailboxId', { mailboxId: email.mailboxId })
+			.andWhere('email.threadId = :threadId', { threadId: email.threadId })
+			.andWhere('email.status IN (:...statuses)', { statuses: THREAD_STATUSES })
+			.andWhere('email.deletedAt IS NULL')
+			// A failed message is shown only when it is an unsent reply or forward (failed inbound work is not mail).
+			.andWhere('NOT (email.status = :failed AND email.direction = :inbound)', {
+				failed: InboxEmailStatusEnum.FAILED,
+				inbound: InboxEmailDirectionEnum.IN
+			})
 			// The newest first, in the order they were stored (received, then sent: a sent message has no receivedAt);
 			// sorted oldest first below (review F110).
-			order: { createdAt: 'DESC', id: 'DESC' },
-			take: THREAD_MESSAGES
-		});
-		// The message asked for is listed too when it is older than those (as before, if its status is listed).
-		if (
-			!found.some((row) => row.id === email.id) &&
-			THREAD_STATUSES.includes(email.status as InboxEmailStatusEnum)
-		) {
-			found.push(email);
-		}
-		// A failed message is shown only when it is an unsent reply or forward (failed inbound work is not mail).
-		let rows = found.filter(
-			(row) => row.status !== InboxEmailStatusEnum.FAILED || row.direction === InboxEmailDirectionEnum.OUT
-		);
+			.orderBy('email.createdAt', 'DESC')
+			.addOrderBy('email.id', 'DESC')
+			.limit(THREAD_MESSAGES);
 		// Without current access to the mailbox (a former member reading an old message): only the messages that were
-		// addressed to the caller.
+		// addressed to the caller, and the one asked for. Newer mail of the mailbox's other recipients never pushes the
+		// caller's own out of the page (#11096 review).
 		const userId = RequestContext.currentUserId() as ID;
 		if (!(await this.access.canRead(mailbox, userId))) {
-			const itemIds = rows.map((row) => row.inboxItemId).filter((value): value is ID => !!value);
-			const mine = new Set(
-				itemIds.length === 0
-					? []
-					: (
-							await this.dataSource
-								.getRepository(InboxItemRecipient)
-								.find({ where: { inboxItemId: In(itemIds), userId, tenantId: email.tenantId as ID } })
-						).map((recipient) => recipient.inboxItemId)
+			const addressed = query
+				.subQuery()
+				.select('recipient.inboxItemId')
+				.from(InboxItemRecipient, 'recipient')
+				.where('recipient.userId = :userId')
+				.andWhere('recipient.tenantId = :tenantId')
+				.getQuery();
+			query.andWhere(
+				new Brackets((where) => {
+					where.where('email.id = :emailId');
+					where.orWhere(`email.inboxItemId IN ${addressed}`);
+				})
 			);
-			rows = rows.filter((row) => row.id === email.id || (!!row.inboxItemId && mine.has(row.inboxItemId)));
+			query.setParameters({ userId, emailId: email.id });
+		}
+		let rows = await query.getMany();
+		// The message asked for is listed too when it is older than those (as before, if its status is listed).
+		if (
+			!rows.some((row) => row.id === email.id) &&
+			THREAD_STATUSES.includes(email.status as InboxEmailStatusEnum) &&
+			(email.status !== InboxEmailStatusEnum.FAILED || email.direction === InboxEmailDirectionEnum.OUT)
+		) {
+			rows.push(email);
 		}
 		const at = (row: InboxEmail) => new Date(row.receivedAt ?? row.sentAt ?? row.createdAt ?? 0).getTime();
 		return [...rows].sort((a, b) => at(a) - at(b)).map((row) => this.toEmail(row));

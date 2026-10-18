@@ -31,6 +31,8 @@
 		"typecheck",
 		"sendgrid",
 		"mailgun",
+		"sigv",
+		"tablist",
 		"svgs",
 		"subuser",
 		"charsets",
@@ -1591,7 +1593,9 @@
 		"poolers",
 		"pooler's",
 		"keepalive",
-		"Brotli"
+		"Brotli",
+		"sigv",
+		"tablist"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

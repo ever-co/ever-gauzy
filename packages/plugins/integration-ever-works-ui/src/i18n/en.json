@@ -302,6 +302,7 @@
 		"DISCONNECT_TITLE": "Disconnect",
 		"DISCONNECT_HINT": "Disconnecting stops the sync for every organization of this tenant and removes the Ever Works webhook. Synced data stays on both sides, and the pairings are kept for a reconnect.",
 		"DISCONNECT": "Disconnect from Ever Works",
-		"CONFIRM_DISCONNECT": "Yes, disconnect"
+		"CONFIRM_DISCONNECT": "Yes, disconnect",
+		"DISCONNECT_WEBHOOK_KEPT": "Disconnected, but Ever Works could not delete the webhook subscription, so it may keep sending events (Gauzy refuses them). Revoke the integration key in Ever Works (Settings → API keys), which disables its webhooks. Reconnecting to the same Ever Works tenant tries to delete it again."
 	}
 }
