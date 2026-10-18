@@ -365,6 +365,9 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 			expect(second.items.map((row) => row.id)).toEqual(visible.slice(10, 20));
 			const first = await service.paginate({} as any);
 			expect(first.items.map((row) => row.id)).toEqual(visible.slice(0, 10));
+			// With no order of the caller's, by primary key, as the CRUD base's page (pages never overlap).
+			const reads = (TenantAwareCrudService.prototype.findAll as unknown as jest.Mock).mock.calls;
+			expect((reads[1][0] as any).order).toEqual({ id: 'ASC' });
 			expect((await service.paginate({ take: 10, skip: 3 } as any)).items.map((row) => row.id)).toEqual(visible.slice(20, 25));
 		});
 
