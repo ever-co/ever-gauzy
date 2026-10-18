@@ -74,10 +74,13 @@ export const DOCUMENT_NODE_LIMIT = 40_000;
 /** The character the Docs editor's document mentions are typed with. */
 const DOCUMENT_MENTION_CHAR = '+';
 
-/** The fingerprint the sync compares a body with: SHA-256 of its normalised Markdown. */
 /**
  * A hash of a page's stored editor JSON as it is (a JSON string is read first): it moves with edits the Markdown cannot
  * show (an uploaded image, underline, colours), which {@link markdownHash} does not see (review F92).
+ *
+ * The JSON is hashed in a canonical form (see {@link canonicalJson}), not in its key order: PostgreSQL's `jsonb` and
+ * MySQL's `json` columns hand a page back with its object keys reordered, so the content the sync wrote must hash the
+ * same once read back, else every sync write counts as an edit and is kept as a version (#11096 review).
  */
 export function contentJsonHash(json: unknown): string {
 	let value = json ?? null;
@@ -88,9 +91,27 @@ export function contentJsonHash(json: unknown): string {
 			// Kept as the string it is.
 		}
 	}
-	return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+	return createHash('sha256').update(canonicalJson(value)).digest('hex');
 }
 
+/**
+ * `JSON.stringify` with the object keys sorted at every depth (array order is content, and kept); an `undefined`
+ * property is left out and an `undefined` array item is `null`, as `JSON.stringify` writes them (#11096 review).
+ */
+function canonicalJson(value: unknown): string {
+	if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(',')}]`;
+	if (value !== null && typeof value === 'object') {
+		const record = value as Record<string, unknown>;
+		const entries = Object.keys(record)
+			.filter((key) => record[key] !== undefined)
+			.sort()
+			.map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`);
+		return `{${entries.join(',')}}`;
+	}
+	return JSON.stringify(value) ?? 'null';
+}
+
+/** The fingerprint the sync compares a body with: SHA-256 of its normalised Markdown. */
 export function markdownHash(markdown: string | null | undefined): string {
 	return createHash('sha256').update(normaliseMarkdown(markdown)).digest('hex');
 }

@@ -4,6 +4,7 @@
  * HTML render cache), plan 05 §2 (G-P3-4). Pure functions: no mocks.
  */
 import {
+	contentJsonHash,
 	DOCUMENT_NODE_LIMIT,
 	documentToHtml,
 	documentToMarkdown,
@@ -269,5 +270,40 @@ describe('markdownHash', () => {
 		expect(markdownHash('a\r\nb  \n')).toBe(markdownHash('a\nb'));
 		expect(markdownHash('a')).not.toBe(markdownHash('b'));
 		expect(markdownHash(null)).toBe(markdownHash(''));
+	});
+});
+
+describe('contentJsonHash', () => {
+	/** A value as PostgreSQL's jsonb (and MySQL's json) reads it back: object keys by length, then bytewise. */
+	const asJsonb = (value: unknown): unknown =>
+		Array.isArray(value)
+			? value.map(asJsonb)
+			: value !== null && typeof value === 'object'
+				? Object.fromEntries(
+						Object.entries(value)
+							.sort(([a], [b]) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
+							.map(([key, item]) => [key, asJsonb(item)])
+					)
+				: value;
+
+	it('hashes the content, not the key order the database reads it back in (#11096 review)', () => {
+		const { contentJson } = markdownToDocument(SAMPLE);
+		const stored = asJsonb(contentJson);
+		// The round trip does reorder this page ("text" comes before "type" in jsonb)…
+		expect(JSON.stringify(stored)).not.toBe(JSON.stringify(contentJson));
+		// …and the hash does not move with it, nor with the SQLite text form of the column.
+		expect(contentJsonHash(stored)).toBe(contentJsonHash(contentJson));
+		expect(contentJsonHash(JSON.stringify(stored))).toBe(contentJsonHash(contentJson));
+		// An undefined property is no content (JSON.stringify and the database drop it alike).
+		expect(contentJsonHash({ type: 'doc', attrs: undefined })).toBe(contentJsonHash({ type: 'doc' }));
+	});
+
+	it('still moves with every real edit, array order included', () => {
+		const edited = markdownToDocument('Hello **world**').contentJson;
+		expect(contentJsonHash(edited)).not.toBe(contentJsonHash(markdownToDocument('Hello *world*').contentJson));
+		expect(contentJsonHash({ content: [{ type: 'a' }, { type: 'b' }] })).not.toBe(contentJsonHash({ content: [{ type: 'b' }, { type: 'a' }] }));
+		expect(contentJsonHash({ attrs: { level: 1 } })).not.toBe(contentJsonHash({ attrs: { level: '1' } }));
+		expect(contentJsonHash(null)).toBe(contentJsonHash(undefined));
+		expect(contentJsonHash('not json')).not.toBe(contentJsonHash(null));
 	});
 });
