@@ -25,6 +25,11 @@ export interface IEmailTransportRequest {
 	 * the mailbox it is sent from (plan 04 §5.5, step 1).
 	 */
 	providerAccountId?: ID | null;
+	/**
+	 * Only a transport with its own default sender (`fromAddress`) will do: a templated mail is sent as the
+	 * transport's sender, and `MAIL_FROM_ADDRESS` is no sender a provider has verified (review F63).
+	 */
+	requireFromAddress?: boolean;
 }
 
 /** A transport a resolver supplies. */

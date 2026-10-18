@@ -34,6 +34,9 @@ import { messageIdOf, referencesOf } from '../inbound/mime';
 import { normalizeAddress } from '../mailboxes/address';
 import { InboxMailboxAccessService } from '../mailboxes/inbox-mailbox-access.service';
 
+/** A `Message-ID` value as a transport reports it (`<local@domain>`), not a provider's own id. */
+const SENT_MESSAGE_ID = /^<[^<>\s@]+@[^<>\s@]+>$/;
+
 /** The most recipients a reply or a forward may name. */
 export const MAX_OUTBOUND_RECIPIENTS = 50;
 export const MAX_OUTBOUND_TEXT = 100_000;
@@ -337,6 +340,14 @@ export class InboxEmailService {
 			);
 			const refused =
 				sent.rejected.length > 0 ? `Not accepted for: ${sent.rejected.join(', ')}`.slice(0, 1000) : null;
+			// A transport that sent the message under another Message-ID (Amazon SES replaces the one given) reports
+			// it: the row keeps that one, the id the recipients' replies name, so they thread (review F64).
+			const sentAs =
+				typeof sent.messageId === 'string' &&
+				SENT_MESSAGE_ID.test(sent.messageId) &&
+				sent.messageId !== messageId
+					? sent.messageId.slice(0, 512)
+					: null;
 			const nobody = sent.accepted.length === 0 && sent.rejected.length > 0;
 			await repository.update(
 				{ id: row.id as ID },
@@ -345,6 +356,7 @@ export class InboxEmailService {
 					sentAt: new Date(),
 					error: refused,
 					transport: sent.transport.slice(0, 120),
+					...(sentAs ? { messageId: sentAs } : {}),
 					...(sent.providerMessageId
 						? { providerMessageId: sent.providerMessageId.slice(0, 255) }
 						: sent.messageId && sent.messageId !== messageId
