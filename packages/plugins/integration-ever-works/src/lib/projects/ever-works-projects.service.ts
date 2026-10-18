@@ -72,6 +72,8 @@ interface WorkEverWorksOnly {
 	 * project was created from, a pair from before the link-back); a work Gauzy created has it from its `externalRef`.
 	 */
 	linkedBack?: string | null;
+	/** When a link-back of this pair was last refused (ISO): later sweeps try the never-tried and the oldest first. */
+	linkBackTriedAt?: string | null;
 }
 
 /** One Ever Works work as the Projects tab shows it. */
@@ -621,7 +623,6 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		for (const context of await this.contextsOf(connection)) {
 			if (!context.isEnabled || context.directions.works !== 'link_only') continue;
 			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK)).filter((link) => link.state === EverWorksLinkState.OK);
-			await this.linkBack(context, links);
 			for (const link of links) {
 				const ew = this.ewOnlyOf(link);
 				if (!ew.unmappedMembers?.length && !ew.unmappedTeams?.length) continue;
@@ -635,6 +636,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 					await this.record(context, projectId, this.workFrom(link), link.ewVersion ?? null, snapshot, link, { members, teams });
 				});
 			}
+			// After the member and team saves above (they rewrite the whole row from this sweep's read).
+			await this.linkBack(context, links);
 		}
 	}
 
@@ -647,12 +650,22 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 	 * refusal is logged and tried again by a later sweep; an outage ends this run's link-backs.
 	 */
 	private async linkBack(context: EverWorksMappingContext, links: EverWorksEntityLink[]): Promise<void> {
-		const due = links.filter((link) => this.ewOnlyOf(link).linkedBack !== link.gauzyId).slice(0, PROJECT_LINK_BACKS_PER_SWEEP);
+		// Never tried first, then the longest ago: a pair Ever Works keeps refusing never holds up the others.
+		const triedAt = (link: EverWorksEntityLink) => this.ewOnlyOf(link).linkBackTriedAt ?? '';
+		const due = links
+			.filter((link) => this.ewOnlyOf(link).linkedBack !== link.gauzyId)
+			.sort((a, b) => triedAt(a).localeCompare(triedAt(b)))
+			.slice(0, PROJECT_LINK_BACKS_PER_SWEEP);
 		if (!due.length) return;
 		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
 		const stillPaired = async (link: EverWorksEntityLink) => {
 			const now = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, link.ewId);
 			return now && now.id === link.id && now.gauzyId === link.gauzyId && now.state === EverWorksLinkState.OK ? now : null;
+		};
+		// Only the link-back fields move, and only on the row as just read (see `patchEverWorksOnly`).
+		const mark = async (link: EverWorksEntityLink, fields: Pick<WorkEverWorksOnly, 'linkedBack' | 'linkBackTriedAt'>) => {
+			const current = await stillPaired(link);
+			if (current) await this.links.patchEverWorksOnly(current, { ...this.ewOnlyOf(current), ...fields });
 		};
 		for (const link of due) {
 			if (!(await stillPaired(link))) continue;
@@ -661,14 +674,10 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			} catch (error) {
 				this.logger.warn(`The Ever Works work ${link.ewId} was not linked back to Gauzy project ${link.gauzyId} (${describeError(error)}).`);
 				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && error.retryable)) return;
+				await mark(link, { linkBackTriedAt: new Date().toISOString() });
 				continue;
 			}
-			const current = await stillPaired(link);
-			if (!current) continue;
-			// Only the link-back moves: the snapshot and the version stay as they were.
-			await this.record(context, current.gauzyId as ID, this.workFrom(current), current.ewVersion ?? null, this.links.snapshot<WorkSnapshot>(current), current, undefined, 'inbound', {
-				linkedBack: current.gauzyId as string
-			});
+			await mark(link, { linkedBack: link.gauzyId as string, linkBackTriedAt: null });
 		}
 	}
 
@@ -727,7 +736,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			unmappedMembers: unmapped?.members ?? previous.unmappedMembers ?? [],
 			unmappedTeams: unmapped?.teams ?? previous.unmappedTeams ?? [],
 			// Kept only for the project it was set for (a link recorded for another project is linked back again).
-			linkedBack: extra.linkedBack ?? (previous.linkedBack && previous.linkedBack === projectId ? previous.linkedBack : null)
+			linkedBack: extra.linkedBack ?? (previous.linkedBack && previous.linkedBack === projectId ? previous.linkedBack : null),
+			linkBackTriedAt: previous.linkBackTriedAt ?? null
 		};
 		await this.links.record({
 			tenantId: context.tenantId,
