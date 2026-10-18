@@ -35,11 +35,10 @@
 						"output": "public"
 					}
 				],
-				"webpackConfig": "apps/worker/config/webpack.config.js"				
+				"webpackConfig": "apps/worker/config/webpack.config.js"
 			},
 			"configurations": {
-				"development": {					
-				},
+				"development": {},
 				"production": {
 					"optimization": true,
 					"extractLicenses": true,
@@ -47,8 +46,8 @@
 					"sourceMap": true,
 					"fileReplacements": [
 						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
+							"replace": "packages/config/src/lib/environments/environment.ts",
+							"with": "packages/config/src/lib/environments/environment.prod.ts"
 						}
 					]
 				}
@@ -105,7 +104,6 @@
 			"options": {
 				"jestConfig": "apps/worker/jest.config.ts"
 			}
-		
 		}
-	}	
+	}
 }
