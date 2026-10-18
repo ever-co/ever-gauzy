@@ -607,6 +607,19 @@ describe('G → EW tasks', () => {
 		expect([...t.mock.tasks.values()][0]).toMatchObject({ title: 'After', status: 'done' });
 	});
 
+	it('pushes a status or priority change written as the string only, past the stale option rows (local e2e)', async () => {
+		// The sync writes a synced task's taskStatusId / taskPriorityId; the web app, REST clients and Ever Teams'
+		// status menu then change only `status` / `priority` (Ever Teams sends the OLD taskStatusId along). Read row
+		// first, the change was "nothing changed" and never reached Ever Works.
+		const t = setup();
+		t.addGauzyTask({ id: 'g1', title: 'Synced', status: 'backlog', taskStatus: { value: 'backlog' }, priority: 'high', taskPriority: { value: 'high' } });
+		await t.push('g1');
+		Object.assign(t.tasks.get('g1') as GauzyTask, { status: 'in-progress', priority: 'low' });
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect([...t.mock.tasks.values()][0]).toMatchObject({ status: 'in_progress', priority: 'p4' });
+		expect(t.mock.requests.some((r) => r.method === 'POST' && r.path.endsWith('/transition') && (r.body as Record<string, unknown>)['to'] === 'in_progress')).toBe(true);
+	});
+
 	it('409 transition_blocked: Gauzy takes Ever Works’ status back and says why', async () => {
 		const t = setup();
 		t.addGauzyTask({ id: 'g1', title: 'Gated' });

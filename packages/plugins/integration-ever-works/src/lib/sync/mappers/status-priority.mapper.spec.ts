@@ -5,8 +5,53 @@ import {
 	gauzyPriorityToEverWorks,
 	gauzyStatusSlug,
 	gauzyStatusToEverWorks,
+	gauzyTaskPriorityValue,
+	gauzyTaskStatusFlags,
+	gauzyTaskStatusValue,
 	resolveGauzyStatusRow
 } from './status-priority.mapper';
+
+describe('reading a Gauzy task status / priority (string first, the row only without one)', () => {
+	// A synced task carries the option rows the sync wrote; the web app, REST clients and Ever Teams' status menu
+	// then change only the string (Ever Teams sends the OLD taskStatusId along). The string is current.
+	const backlogRow = { value: 'backlog', isTodo: true, isInProgress: false, isDone: false };
+	const highRow = { value: 'high' };
+
+	it('takes the status string over a stale status row', () => {
+		expect(gauzyTaskStatusValue({ status: 'in-progress', taskStatus: backlogRow })).toBe('in-progress');
+		expect(gauzyStatusToEverWorks(gauzyTaskStatusValue({ status: 'in-progress', taskStatus: backlogRow }))).toBe(
+			'in_progress'
+		);
+	});
+
+	it('falls back to the row when the task has no status string', () => {
+		expect(gauzyTaskStatusValue({ status: null, taskStatus: backlogRow })).toBe('backlog');
+		expect(gauzyTaskStatusValue({})).toBeNull();
+	});
+
+	it('uses the row flags only when the row is the current status', () => {
+		const custom = { value: 'qa-check', isTodo: false, isInProgress: true, isDone: false };
+		expect(gauzyTaskStatusFlags({ status: 'qa-check', taskStatus: custom })).toEqual({
+			isTodo: false,
+			isInProgress: true,
+			isDone: false
+		});
+		expect(gauzyTaskStatusFlags({ taskStatus: custom })).toEqual({
+			isTodo: false,
+			isInProgress: true,
+			isDone: false
+		});
+		expect(gauzyTaskStatusFlags({ status: 'another-custom', taskStatus: custom })).toEqual({});
+		expect(gauzyTaskStatusFlags({ status: 'qa-check' })).toEqual({});
+	});
+
+	it('takes the priority string over a stale priority row', () => {
+		expect(gauzyTaskPriorityValue({ priority: 'low', taskPriority: highRow })).toBe('low');
+		expect(gauzyPriorityToEverWorks(gauzyTaskPriorityValue({ priority: 'low', taskPriority: highRow }))).toBe('p4');
+		expect(gauzyTaskPriorityValue({ priority: null, taskPriority: highRow })).toBe('high');
+		expect(gauzyTaskPriorityValue({})).toBeNull();
+	});
+});
 
 describe('status mapping (plan 01 §7.1)', () => {
 	it.each([
