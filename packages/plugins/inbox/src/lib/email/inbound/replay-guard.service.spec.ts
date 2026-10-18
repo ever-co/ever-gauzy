@@ -40,10 +40,16 @@ describe('InboundReplayGuard', () => {
 			await guard.complete('ses:a', `sns:${n}`, 60 * 60_000);
 		}
 		expect(local.size).toBeLessThanOrEqual(MAX_LOCAL_ENTRIES);
-		// Expired entries go first once the set is full.
+		// A full set is trimmed well below the cap at once: the writes after it find room without scanning the set.
+		const scans = jest.spyOn(guard as never, 'prune');
+		for (let n = 0; n < 1000; n++) await guard.complete('ses:a', `sns:more-${n}`, 60 * 60_000);
+		expect(scans.mock.calls.length).toBeLessThanOrEqual(1);
+		// Expired entries go first once the set is full again.
 		now += 60 * 60_000 + 1;
+		const before = local.size;
+		while (local.size < MAX_LOCAL_ENTRIES) await guard.complete('ses:a', `sns:fill-${local.size}`, 60 * 60_000);
 		await guard.complete('ses:a', 'sns:late', 60 * 60_000);
-		expect(local.size).toBe(1);
+		expect(local.size).toBe(MAX_LOCAL_ENTRIES - before + 1);
 		// Still a replay if Redis fails afterwards: the in-process set takes over.
 		set.mockRejectedValueOnce(new Error('down') as never);
 		expect(await guard.consume('ses:a', 'sns:late', INBOUND_PROCESSING_CLAIM_MS)).toBe(false);

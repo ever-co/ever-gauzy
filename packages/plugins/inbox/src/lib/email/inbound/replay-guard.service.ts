@@ -16,6 +16,8 @@ export const INBOUND_PROCESSING_CLAIM_MS = 2 * 60_000;
 
 /** The most remembered deliveries in process (a burst never grows the set without bound). */
 export const MAX_LOCAL_ENTRIES = 20_000;
+/** How far a full set is trimmed below the cap at once, so the next writes find room without a scan (#11094 review). */
+const LOCAL_TRIM_TO = Math.floor(MAX_LOCAL_ENTRIES * 0.9);
 
 /**
  * Single-use webhook signatures (plan 04 §5.2): a verified delivery is remembered until its freshness window has
@@ -96,17 +98,20 @@ export class InboundReplayGuard {
 	}
 
 	/**
-	 * Adds (or renews) an in-process entry. A full set first drops what has expired, then the oldest entries: with Redis
-	 * every stored delivery lands here too ({@link complete}), and only this keeps the set from growing for good.
+	 * Adds (or renews) an in-process entry. A full set first drops what has expired, then the oldest entries down to
+	 * {@link LOCAL_TRIM_TO}: with Redis every stored delivery lands here too ({@link complete}), and only this keeps
+	 * the set from growing for good. Trimmed below the cap, the next writes need no scan of the set.
 	 */
 	private remember(key: string, expiresAt: number): void {
 		// Renewed entries move to the end: the set stays in the order the entries were last written.
 		this.local.delete(key);
-		if (this.local.size >= MAX_LOCAL_ENTRIES) this.prune(Date.now());
-		while (this.local.size >= MAX_LOCAL_ENTRIES) {
-			const oldest = this.local.keys().next();
-			if (oldest.done) break;
-			this.local.delete(oldest.value);
+		if (this.local.size >= MAX_LOCAL_ENTRIES) {
+			this.prune(Date.now());
+			while (this.local.size > LOCAL_TRIM_TO) {
+				const oldest = this.local.keys().next();
+				if (oldest.done) break;
+				this.local.delete(oldest.value);
+			}
 		}
 		this.local.set(key, expiresAt);
 	}
