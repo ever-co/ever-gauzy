@@ -682,7 +682,7 @@ describe('CollectionService — the tree and the cycle refusal (doc 05 §4.3, §
 
 	it('undoes a re-parent that a concurrent move turned into a cycle, and writes nothing else of it', async () => {
 		// `a` → under `b` and, between this request's walk and its write, another request moved `b` under `a`.
-		const tables = { collection: [collectionRow('a'), collectionRow('b')] };
+		const tables: ITables = { collection: [collectionRow('a'), collectionRow('b')] };
 		const store = repository(tables, 'collection');
 		const write = store.update;
 		let concurrent = true;

@@ -784,7 +784,7 @@ function cartFixture(
 							taxCategoryId: option.taxCategoryId
 						};
 					}),
-					calculate: jest.fn(async (id: string): Promise<any> => {
+					calculate: jest.fn(async (id: string, _context: unknown): Promise<any> => {
 						const option = shippingTable[id];
 
 						return {

@@ -1746,7 +1746,7 @@ describe('the members the routes take, on the fields that mirror them', () => {
 	});
 
 	it('carries the note of an extension to the service, and leaves it out when none is stated', async () => {
-		const entitlement = { extend: jest.fn(async () => ({ id: ID })) };
+		const entitlement = { extend: jest.fn(async (..._args: unknown[]) => ({ id: ID })) };
 		const resolver = grantResolver(entitlement);
 		const endsAt = new Date('2027-01-01T00:00:00.000Z');
 		// The version the interceptor accepted, where the field reads it.

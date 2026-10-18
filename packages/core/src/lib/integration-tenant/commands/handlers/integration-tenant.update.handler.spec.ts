@@ -33,7 +33,7 @@ describe('IntegrationTenantUpdateHandler — the stated organization is the conn
 			}),
 			update: jest.fn(async () => ({ affected: 1 }))
 		};
-		const commandBus = { execute: jest.fn(async () => []) };
+		const commandBus = { execute: jest.fn(async (_command: unknown) => []) };
 		const handler = new IntegrationTenantUpdateHandler(commandBus as never, service as never);
 
 		return { row, service, commandBus, handler };

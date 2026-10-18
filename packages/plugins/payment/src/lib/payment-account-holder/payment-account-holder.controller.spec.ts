@@ -86,6 +86,9 @@ jest.mock('@gauzy/core', () => {
 		// Retry safety is left real: the kernel's own decorator writes the declaration, under the
 		// kernel's own metadata key, and the suite below drives the kernel's own interceptor over it.
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		// The account-holder resolver this suite also loads gates `methodTokens` with the platform's field
+		// decorator, evaluated when the class is defined; the real one only writes metadata, so it is used.
+		VisibleWith: jest.requireActual('@gauzy/core/src/lib/api/visible-with.decorator').VisibleWith,
 		PaymentAccountHolder: class PaymentAccountHolder {},
 		PaymentMethodToken: class PaymentMethodToken {},
 		PaymentAccountHolderService: class PaymentAccountHolderService {},
