@@ -45,6 +45,12 @@ export const EVER_WORKS_WEBHOOK_EVENTS = [
 	'kb.*'
 ];
 
+/**
+ * Agent mail (`email.message.*`, CR-11), added to the subscription while a mapping through the connection mirrors it
+ * (its `agentEmail` direction is `ew_to_gauzy`, G-P4-6), so it arrives by webhook and not only through the feed.
+ */
+export const EVER_WORKS_EMAIL_WEBHOOK_EVENTS = ['email.*'];
+
 /** A pinned Ever Works organization (from `whoami`). */
 export interface EverWorksPinnedOrganization {
 	id: string;
@@ -119,6 +125,8 @@ export class EverWorksConnectionService {
 	private readonly logger = new Logger('EverWorksConnection');
 	private readonly secretBox: EverWorksSecretBox;
 	private readonly webhookRegistrations = new Map<string, Promise<EverWorksConnectionView>>();
+	/** One change of a subscription's events per connection at a time in this process (see `refreshWebhookEvents`). */
+	private readonly eventRefreshes = new Map<string, Promise<void>>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -327,7 +335,8 @@ export class EverWorksConnectionService {
 
 	/**
 	 * `POST /connections/:id/webhook`: registers (or replaces) the webhook v2 subscription Ever Works
-	 * delivers to: every P1–P3 domain, the pinned organizations, our own origin excluded. The signing
+	 * delivers to: every P1–P3 domain (and agent mail while a mapping mirrors it), the pinned organizations, our
+	 * own origin excluded. The signing
 	 * secret (returned once) is stored encrypted; a replaced subscription is deleted afterwards.
 	 */
 	async registerWebhook(id: ID, organizationId?: ID): Promise<EverWorksConnectionView> {
@@ -357,11 +366,12 @@ export class EverWorksConnectionService {
 		}
 		const client = this.client(connection);
 		const previousId = connection.webhookSubscriptionId ?? null;
+		const events = await this.webhookEvents(connection);
 		const subscription: EverWorksWebhookSubscription = await this.call(() =>
 			client.createWebhook(
 				{
 					url,
-					events: EVER_WORKS_WEBHOOK_EVENTS,
+					events,
 					organizationIds,
 					excludeOriginTags: [`gauzy:${connection.id}`],
 					description: `Ever Gauzy (connection ${connection.id})`
@@ -394,7 +404,73 @@ export class EverWorksConnectionService {
 		if (previousId && previousId !== subscription.id) {
 			await client.deleteWebhook(previousId).catch((error) => this.logger.warn(`The replaced webhook subscription could not be deleted (${this.reason(error)}).`));
 		}
+		// A direction saved while the subscription was being created (its refresh addressed the old one): the new one
+		// is given the events the saved directions need (no write when they are the ones it was created with).
+		await this.refreshWebhookEvents(connection.id as ID, saved.tenantId as ID, events);
 		return this.view(saved);
+	}
+
+	/**
+	 * Keeps the connection's webhook subscription on the events it needs, in place (`PATCH /webhooks/:id {events}`:
+	 * same subscription, same secret), after a mapping through it changed its `agentEmail` direction, was archived or
+	 * was restored. A paused subscription is changed too (its status stays); a resume sends the events again with the
+	 * status. One change per connection at a time in this process; across processes each change reads the directions
+	 * again after its write and sends them once more when they moved meanwhile (at most three writes), so the last
+	 * write follows the saved directions. Nothing to do without a subscription. Best effort: a refusal is logged, and
+	 * agent mail keeps arriving through the feed.
+	 *
+	 * @param connectionId - The connection.
+	 * @param tenantId - Its tenant.
+	 */
+	async refreshWebhookEvents(connectionId: ID, tenantId: ID, sentEvents?: string[]): Promise<void> {
+		const previous = this.eventRefreshes.get(connectionId) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.refreshWebhookEventsOnce(connectionId, tenantId, sentEvents));
+		this.eventRefreshes.set(connectionId, current);
+		try {
+			await current;
+		} finally {
+			if (this.eventRefreshes.get(connectionId) === current) this.eventRefreshes.delete(connectionId);
+		}
+	}
+
+	/** @param sentEvents - The events the subscription was just given, when known (no write while they still hold). */
+	private async refreshWebhookEventsOnce(connectionId: ID, tenantId: ID, sentEvents?: string[]): Promise<void> {
+		try {
+			const connection = await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId, tenantId } as never });
+			if (!connection?.webhookSubscriptionId || !connection.isActive) return;
+			const client = this.client(connection);
+			let sent: string | null = sentEvents ? [...sentEvents].sort().join(',') : null;
+			for (let write = 0; write < 3; write++) {
+				const events = await this.webhookEvents(connection);
+				const key = [...events].sort().join(',');
+				if (key === sent) return;
+				await client.updateWebhook(connection.webhookSubscriptionId, { events });
+				sent = key;
+			}
+		} catch (error) {
+			this.logger.warn(`The webhook subscription's events could not be updated (${this.reason(error)}); agent mail still arrives through the feed.`);
+		}
+	}
+
+	/**
+	 * The events a connection's webhook subscribes to: every P1–P3 domain, and agent mail while one of the active
+	 * mappings through the connection mirrors it (its `agentEmail` direction is `ew_to_gauzy`).
+	 */
+	private async webhookEvents(connection: EverWorksConnection): Promise<string[]> {
+		const mappings = await this.dataSource.getRepository(IntegrationTenant).find({
+			where: { tenantId: connection.tenantId, name: EVER_WORKS_INTEGRATION_NAME, isActive: true, isArchived: false } as never,
+			relations: { settings: true } as never
+		});
+		const mirrorsMail = mappings.some((mapping) => {
+			const setting = (name: EverWorksSettingName) => mapping.settings?.find((s) => s.settingsName === name)?.settingsValue ?? '';
+			if (setting(EverWorksSettingName.CONNECTION_ID) !== connection.id) return false;
+			try {
+				return (JSON.parse(setting(EverWorksSettingName.ENTITY_DIRECTIONS) || '{}') as Record<string, unknown>)['agentEmail'] === 'ew_to_gauzy';
+			} catch {
+				return false;
+			}
+		});
+		return mirrorsMail ? [...EVER_WORKS_WEBHOOK_EVENTS, ...EVER_WORKS_EMAIL_WEBHOOK_EVENTS] : [...EVER_WORKS_WEBHOOK_EVENTS];
 	}
 
 	/**
@@ -758,11 +834,15 @@ export class EverWorksConnectionService {
 		}
 	}
 
-	/** Pauses or resumes the Ever Works side of the webhook; best effort (the feed covers any gap). */
+	/**
+	 * Pauses or resumes the Ever Works side of the webhook; best effort (the feed covers any gap). A resume sends the
+	 * events the mappings need as well, so a change the paused subscription missed is not lost.
+	 */
 	private async setWebhookStatus(connection: EverWorksConnection, status: 'active' | 'paused'): Promise<void> {
 		if (!connection.webhookSubscriptionId) return;
 		try {
-			await this.client(connection).updateWebhook(connection.webhookSubscriptionId, { status });
+			const events = status === 'active' ? await this.webhookEvents(connection) : null;
+			await this.client(connection).updateWebhook(connection.webhookSubscriptionId, events ? { status, events } : { status });
 		} catch (error) {
 			this.logger.warn(`The webhook subscription could not be set ${status} (${this.reason(error)}).`);
 		}

@@ -30,6 +30,8 @@
 		"xact",
 		"typecheck",
 		"sendgrid",
+		"mailgun",
+		"svgs",
 		"subuser",
 		"charsets",
 		"ELIFECYCLE",

@@ -2,14 +2,16 @@ import { gql } from 'graphql-tag';
 
 /**
  * The Inbox's contribution to the one GraphQL schema (plan 04 §3: "GraphQL mirrors the read routes, plus
- * `markInboxItem`"). It is registered only with the plugin, so a deployment without `GAUZY_INBOX_ENABLED=true`
- * serves none of it (and the committed schema snapshot, composed from the default plugin list, does not
+ * `markInboxItem`"; the REST↔GraphQL twins rule adds the reply and mark-all-read routes). It is registered only
+ * with the plugin, so a deployment without `GAUZY_INBOX_ENABLED=true` serves none of it (and the committed schema snapshot, composed from the default plugin list, does not
  * carry it). The field-binding gate reads this document on top of the snapshot — it is named in
  * `GATED_PLUGIN_SCHEMAS` of `tools/scripts/graphql-field-binding-check.mjs` — so it must stay a plain `gql`
  * template (no `${…}`), registered by `InboxPlugin` as `schema: inboxSchemaExtensions`.
  *
- * Every field answers the caller's own items: the recipient is taken from the credential, never from an
- * argument, exactly as on `/api/inbox/items`. Enumerated values (`kind`, `status`, `tab`, …) are strings
+ * Every field acts as the caller, taken from the credential and never from an argument, exactly as on
+ * `/api/inbox/items`: the writes change only the caller's own state, and the reads answer the caller's items (plus,
+ * for a holder of `INBOX_MAILBOX_READ_ALL`, the mailbox EMAIL items the route lets them read, with a null
+ * `recipient`). Enumerated values (`kind`, `status`, `tab`, …) are strings
  * holding the REST values, so a value read over GraphQL and over REST are identical, and a new value is an
  * additive change.
  */
@@ -121,6 +123,20 @@ export const inboxSchemaExtensions = gql`
 		snoozedUntil: DateTime
 	}
 
+	"An answer to a question, an approval or an escalation (the body of POST /inbox/items/:id/reply)."
+	input InboxItemReplyInput {
+		"Free text (at most 10000 characters); a reason where the item requires one."
+		text: String
+		"The chosen option's id (at most 100 characters)."
+		optionId: String
+	}
+
+	"What mark-all-read did."
+	type InboxMarkAllReadResult {
+		"How many of my unread items it marked read."
+		updated: Int!
+	}
+
 	extend type Query {
 		"A page of my inbox items, newest first (GET /inbox/items; INBOX_VIEW)."
 		inboxItems(filter: InboxItemFilter, cursor: String, limit: Int): InboxItemPage!
@@ -133,5 +149,9 @@ export const inboxSchemaExtensions = gql`
 	extend type Mutation {
 		"Mark one of my items read / unread, archive / unarchive or snooze it (PATCH /inbox/items/:id/state; INBOX_VIEW)."
 		markInboxItem(id: ID!, input: InboxItemStateInput!): InboxItem!
+		"Answer one of my questions, approvals or escalations; its source is told synchronously (POST /inbox/items/:id/reply; INBOX_VIEW)."
+		replyInboxItem(id: ID!, input: InboxItemReplyInput!): InboxItem!
+		"Mark every unread item of mine (of a tab: all, decisions, email, snoozed or archived) read (POST /inbox/items/mark-all-read; INBOX_VIEW)."
+		markAllInboxItemsRead(tab: String): InboxMarkAllReadResult!
 	}
 `;

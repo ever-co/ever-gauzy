@@ -62,6 +62,27 @@ A tenant-wide account (`scope: TENANT`) also needs `ALL_ORG_EDIT` to be created,
 kept by a per-scope lock and, on PostgreSQL and SQLite, partial unique indexes (a lost race answers 409). A connection test
 never re-enables an account that was disabled meanwhile.
 
+### GraphQL (served only with the plugin)
+
+Each route has a GraphQL twin (`InboxProviderAccountResolver`, SDL `inboxEmailSchemaExtensions`, registered by
+`InboxEmailPlugin`, so a server without both flags has none of these fields). It calls the same service method with the
+route's DTO rules, guards and `INBOX_MAILBOX_MANAGE` (plus the `FEATURE_GRAPHQL` gate every resolver carries); the
+organization-membership rule applies to `organizationId` as over REST. Secrets stay write-only: `InboxProviderAccount`
+answers `secretsSet`, and a generated secret is answered once, in the `InboxProviderAccountSaved` of the mutation that
+generated it.
+
+| GraphQL                                                 | REST                                           |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| `inboxEmailProviders`                                   | `GET /api/inbox/providers`                     |
+| `inboxProviderAccounts(organizationId)`                 | `GET /api/inbox/provider-accounts`             |
+| `inboxProviderAccount(id, organizationId)`              | `GET /api/inbox/provider-accounts/:id`         |
+| `createInboxProviderAccount(input)`                     | `POST /api/inbox/provider-accounts`            |
+| `updateInboxProviderAccount(id, input, organizationId)` | `PATCH /api/inbox/provider-accounts/:id`       |
+| `deleteInboxProviderAccount(id, organizationId)`        | `DELETE /api/inbox/provider-accounts/:id`      |
+| `verifyInboxProviderAccount(id, organizationId)`        | `POST /api/inbox/provider-accounts/:id/verify` |
+
+Making an account the outbound default is `updateInboxProviderAccount(id, { isDefaultOutbound: true })`, as over REST.
+
 ## Outbound: the transport seam
 
 `InboxEmailTransportResolver` supplies `@gauzy/core`'s `EmailTransportRegistry`, in the order of plan 04 §5.5:
@@ -116,6 +137,29 @@ Management also needs an active membership of the organization; the tenant is al
 answers a custom-domain mailbox's TXT record and its last status without a DNS lookup (`POST /:id/verify` looks it up);
 the settings answer `platformDomain` too (`GAUZY_INBOX_DOMAIN`, or `null`). The Settings → Inbox pages of
 `@gauzy/plugin-inbox-ui` are built on these routes.
+
+GraphQL twins (`InboxMailboxResolver`, served only with the plugin; same service methods, DTO rules, guards and
+permissions; the class default is `INBOX_MAILBOX_MANAGE`). A mailbox never answers its relay secret's digest or its
+verification token; `rotateInboxMailboxSecret` answers the new secret once. Routing a mailbox to an Ever Works agent is
+`updateInboxMailbox(id, { settings: { everWorksAgentId } })`.
+
+| GraphQL                                               | REST                                          |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `myInboxMailboxes` (`INBOX_VIEW`)                     | `GET /api/inbox/mailboxes/mine`               |
+| `inboxMailboxes(organizationId)`                      | `GET /api/inbox/mailboxes`                    |
+| `createInboxMailbox(input)`                           | `POST /api/inbox/mailboxes`                   |
+| `inboxMailbox(id, organizationId)`                    | `GET /api/inbox/mailboxes/:id`                |
+| `updateInboxMailbox(id, input, organizationId)`       | `PATCH /api/inbox/mailboxes/:id`              |
+| `inboxMailboxDomainVerification(id, organizationId)`  | `GET /api/inbox/mailboxes/:id/verification`   |
+| `verifyInboxMailboxDomain(id, organizationId)`        | `POST /api/inbox/mailboxes/:id/verify`        |
+| `rotateInboxMailboxSecret(id, organizationId)`        | `POST /api/inbox/mailboxes/:id/rotate-secret` |
+| `inboxMailboxMembers(id, organizationId)`             | `GET /api/inbox/mailboxes/:id/members`        |
+| `setInboxMailboxMembers(id, members, organizationId)` | `PUT /api/inbox/mailboxes/:id/members`        |
+| `provisionInboxMailboxes(input)`                      | `POST /api/inbox/mailboxes/provision`         |
+| `inboxEmailSettings(organizationId)`                  | `GET /api/inbox/mailboxes/settings`           |
+| `updateInboxEmailSettings(input, organizationId)`     | `PUT /api/inbox/mailboxes/settings`           |
+
+There is no mailbox delete route (a mailbox is switched off with `isActive: false`), so there is no delete field either.
 
 ## Inbound: the provider webhook and the worker
 
@@ -189,6 +233,12 @@ attachment. Replies and forwards go out through the core transport seam with the
 (then the organization's and the tenant's default outbound accounts, then Custom SMTP / `MAIL_*`), and are kept as `OUT`
 messages of the thread (`SENT`, or `FAILED` with the error).
 
+GraphQL twins (`InboxEmailMessageResolver`, served only with the plugin; `INBOX_VIEW`, then the same mailbox access
+checks in the service): `inboxEmail(id)`, `inboxEmailThread(id)`, `inboxQuarantinedEmails(mailboxId)`,
+`replyInboxEmail(id, input)`, `forwardInboxEmail(id, input)` and `releaseInboxEmail(id)`. The raw source and the
+attachment downloads are byte streams with download headers, so they stay REST-only; a message answers its attachments'
+metadata.
+
 ## Tables (migrations for PostgreSQL, MySQL and SQLite)
 
 | Table                        | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -216,3 +266,6 @@ Idempotent, serialised on PostgreSQL with an advisory lock, reversible.
 - On a real SQLite database: the migration (up, up again, down), secrets never answered or stored in the clear, kept on
   update, scope (organization, tenant, other tenant, non-member), the connection test, one default outbound account per
   scope, and the transport order.
+- The GraphQL twins: the SDL composes (alone and after the Inbox's), every root field is bound and wired (module and
+  plugin), guards, `FEATURE_GRAPHQL` and permissions match the routes, each field reaches its route's service method,
+  the routes' DTO rules refuse first, and no answer type can carry a secret.

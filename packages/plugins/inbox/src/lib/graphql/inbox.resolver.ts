@@ -8,6 +8,8 @@ import {
 	IInboxItemPage,
 	IInboxItemWithState,
 	IInboxRecipientStateInput,
+	IInboxReplyInput,
+	InboxTabEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
@@ -19,7 +21,7 @@ import {
 	TenantPermissionGuard,
 	UUIDValidationPipe
 } from '@gauzy/core';
-import { InboxItemQueryDTO, InboxStateDTO } from '../dto/inbox.dto';
+import { InboxItemQueryDTO, InboxReplyDTO, InboxStateDTO, InboxTabDTO } from '../dto/inbox.dto';
 import { InboxService } from '../inbox.service';
 
 /** The `InboxItemFilter` input (the query of `GET /inbox/items` without its page). */
@@ -40,15 +42,17 @@ export async function validatedInboxInput<T extends object>(type: new () => T, v
 }
 
 /**
- * The Inbox over GraphQL (plan 04 §3): the read routes of `/api/inbox/items` and `markInboxItem` (the state
- * route). REST and GraphQL are two views of the same operations, so this resolver owns no logic: every field
+ * The Inbox over GraphQL (plan 04 §3): the read routes of `/api/inbox/items`, `markInboxItem` (the state
+ * route), `replyInboxItem` (the reply route) and `markAllInboxItemsRead` (the mark-all-read route). REST and GraphQL are two views of the same operations, so this resolver owns no logic: every field
  * reaches the `InboxService` method its route reaches, with the arguments the route's DTO validates.
  *
  * - **Guards and permissions are the controller's:** `TenantPermissionGuard` and `PermissionGuard` with
  *   `INBOX_VIEW` on every field, plus the GraphQL capability gate every resolver carries (`FEATURE_GRAPHQL`).
- * - **The recipient is the caller:** the service reads the tenant and the user from the request context;
- *   no field takes a user, a recipient or a tenant argument, so nobody reads or marks another user's items.
- *   A holder of `INBOX_MAILBOX_READ_ALL` reads (never marks) what the route lets them read.
+ * - **The caller acts as themselves:** the service reads the tenant and the user from the request context, and no
+ *   field takes a user, a recipient or a tenant argument. Every write (`markInboxItem`, `replyInboxItem`,
+ *   `markAllInboxItemsRead`) is the caller's own, on the caller's recipient state. The reads answer the caller's
+ *   items, except that a holder of `INBOX_MAILBOX_READ_ALL` also reads the mailbox EMAIL items the route lets them
+ *   read (`recipient` is then `null`); such a holder never marks or answers another user's items.
  */
 @Resolver('InboxItem')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -95,5 +99,26 @@ export class InboxResolver {
 		@Args('input') input: IInboxRecipientStateInput
 	): Promise<IInboxItemWithState> {
 		return this.inbox.setState(id, await validatedInboxInput(InboxStateDTO, input));
+	}
+
+	/**
+	 * `POST /inbox/items/:id/reply`: delivered to the item's source synchronously, so a refusal (for example "already
+	 * decided in Ever Works") reaches the caller, exactly as over REST.
+	 */
+	@Mutation('replyInboxItem')
+	@Permissions(PermissionsEnum.INBOX_VIEW)
+	async replyInboxItem(
+		@Args('id', UUIDValidationPipe) id: ID,
+		@Args('input') input: IInboxReplyInput
+	): Promise<IInboxItemWithState> {
+		return this.inbox.reply(id, await validatedInboxInput(InboxReplyDTO, input));
+	}
+
+	/** `POST /inbox/items/mark-all-read`: the caller's own unread items of a tab (all by default). */
+	@Mutation('markAllInboxItemsRead')
+	@Permissions(PermissionsEnum.INBOX_VIEW)
+	async markAllInboxItemsRead(@Args('tab') tab?: InboxTabEnum | null): Promise<{ updated: number }> {
+		const body = await validatedInboxInput(InboxTabDTO, tab !== null && tab !== undefined ? { tab } : {});
+		return this.inbox.markAllRead(body.tab);
 	}
 }

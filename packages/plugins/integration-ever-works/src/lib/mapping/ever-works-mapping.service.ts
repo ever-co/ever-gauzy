@@ -165,7 +165,12 @@ export class EverWorksMappingService {
 			return saved;
 		});
 		this.logger.log(`Organization ${scope.organizationId} mapped to Ever Works organization ${pinned.id} (mapping ${mapping.id}).`);
-		return this.view(await this.reload(mapping.id));
+		const created = await this.reload(mapping.id);
+		// A restored mapping keeps its directions: when it mirrors agent mail, the webhook asks for it again.
+		if (this.directions(created)['agentEmail'] === 'ew_to_gauzy') {
+			await this.connections.refreshWebhookEvents(connection.id as ID, scope.tenantId);
+		}
+		return this.view(created);
 	}
 
 	/** `PUT /mappings/:integrationTenantId`: directions, projects, docs folder, include flags, enabled, entity toggles. */
@@ -176,7 +181,7 @@ export class EverWorksMappingService {
 		if (unsynced.length) {
 			throw new BadRequestException(`Not a synced Ever Works entity: ${unsynced.map((change) => change.entity).join(', ')}.`);
 		}
-		await this.transaction(scope, async (manager) => {
+		const connectionId = await this.transaction(scope, async (manager) => {
 			const mapping = await this.require(manager, scope, integrationTenantId);
 			const values: Record<string, string> = {};
 			if (dto.directions !== undefined) {
@@ -214,19 +219,27 @@ export class EverWorksMappingService {
 					await manager.save(IntegrationEntitySetting, row);
 				}
 			}
+			return (this.setting(mapping, S.CONNECTION_ID) as ID) || null;
 		});
+		// Agent mail arrives by webhook while a mapping mirrors it: the subscription follows the direction.
+		if (connectionId && dto.directions && 'agentEmail' in dto.directions) {
+			await this.connections.refreshWebhookEvents(connectionId, scope.tenantId);
+		}
 		return this.view(await this.reload(integrationTenantId));
 	}
 
 	/** `DELETE /mappings/:integrationTenantId`: archives the mapping (links and logs are kept; nothing synced is deleted). */
 	async remove(integrationTenantId: ID, organizationId?: ID): Promise<{ success: true }> {
 		const scope = await this.scopes.resolve(organizationId);
-		await this.transaction(scope, async (manager) => {
+		const connectionId = await this.transaction(scope, async (manager) => {
 			const mapping = await this.require(manager, scope, integrationTenantId);
 			Object.assign(mapping, { isActive: false, isArchived: true, archivedAt: new Date() });
 			this.set(mapping, { [S.IS_ENABLED]: 'false' }, manager, true);
 			await manager.save(IntegrationTenant, mapping);
+			return (this.setting(mapping, S.CONNECTION_ID) as ID) || null;
 		});
+		// An archived mapping mirrors no agent mail any more.
+		if (connectionId) await this.connections.refreshWebhookEvents(connectionId, scope.tenantId);
 		return { success: true };
 	}
 

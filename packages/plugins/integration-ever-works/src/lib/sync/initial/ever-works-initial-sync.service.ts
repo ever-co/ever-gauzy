@@ -9,6 +9,7 @@ import { EverWorksConnection, EverWorksConnectionStatus } from '../../connection
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
+import { isIdeaTask } from '../../tasks/ever-works-task-exclusion';
 import type { EverWorksDirection, EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkState, EverWorksLinkType } from '../entities/ever-works-sync.entities';
@@ -934,13 +935,26 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			preview.toPair = { everWorks: unlinked, gauzy: Math.max(0, gauzyTotal - linkedGauzy) };
 			return preview;
 		}
-		if (plan.import) preview.creates.inGauzy = unlinked;
+		// What a run would create is what has no link at all: a record whose link stopped syncing (deleted on the
+		// other side, turned private) is known and is not created again (local e2e: a resync created nothing).
+		const known = new Set([...linkedEw, ...(spec.linkType ? await this.stoppedLinks(context, spec.linkType) : []).map((link) => link.ewId)]);
+		const neverLinked = records.filter((record) => !known.has(idOf(record))).length;
+		if (spec.name === 'missions') {
+			// Missions that predate the mapping wait for the Initiatives tab; the run creates none of them.
+			preview.toPair = { everWorks: neverLinked, gauzy: 0 };
+			return preview;
+		}
+		if (plan.import) preview.creates.inGauzy = neverLinked;
 		if (spec.name === 'tasks') {
-			const inScope = await this.allTasksInScope(context);
+			// Idea tasks sync as Ever Works ideas (their own phase), never as tasks.
+			const ideas = new Set(await this.ideaTasksOf(context));
+			const inScope = (await this.allTasksInScope(context)).filter((id) => !ideas.has(id));
 			const linkedGauzy = new Set(links.map((link) => link.gauzyId));
+			// A Gauzy task whose link stopped syncing is skipped by the push, as on the Ever Works side (review #11047).
+			const stoppedGauzy = new Set((await this.stoppedLinks(context, EverWorksLinkType.TASK)).map((link) => link.gauzyId));
 			const linkedInScope = inScope.filter((id) => linkedGauzy.has(id)).length;
 			preview.gauzy = { total: inScope.length, linked: linkedInScope };
-			if (plan.export) preview.creates.inEverWorks = inScope.length - linkedInScope;
+			if (plan.export) preview.creates.inEverWorks = inScope.filter((id) => !linkedGauzy.has(id) && !stoppedGauzy.has(id)).length;
 		}
 		return preview;
 	}
@@ -959,6 +973,36 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				status: In([EverWorksInboundStatus.PENDING, EverWorksInboundStatus.FAILED])
 			} as never
 		});
+	}
+
+	/** Links of a type that stopped syncing (unlinked): known records, never created again. */
+	private stoppedLinks(context: EverWorksMappingContext, entityType: EverWorksLinkType): Promise<EverWorksEntityLink[]> {
+		return this.dataSource.getRepository(EverWorksEntityLink).find({
+			where: { integrationTenantId: context.integrationTenantId, entityType, state: EverWorksLinkState.UNLINKED } as never
+		});
+	}
+
+	/**
+	 * The organization's Idea tasks, by the push's own rule (`isIdeaTask`), for the dry run. Only the candidates are
+	 * read (an issue type named idea in any case, or the seeded type id), not every task (review on #11047).
+	 */
+	private async ideaTasksOf(context: EverWorksMappingContext): Promise<ID[]> {
+		const ideaTypeId =
+			context.mapping.settings?.find((row) => row.settingsName === EverWorksSettingName.IDEA_ISSUE_TYPE_ID)?.settingsValue ?? null;
+		const query = this.dataSource
+			.getRepository(Task)
+			.createQueryBuilder('task')
+			.select(['task.id', 'task.issueType', 'task.taskTypeId'])
+			.where('task.tenantId = :tenantId AND task.organizationId = :organizationId', {
+				tenantId: context.tenantId,
+				organizationId: context.organizationId
+			})
+			.andWhere(ideaTypeId ? '(LOWER(task.issueType) = :idea OR task.taskTypeId = :ideaTypeId)' : 'LOWER(task.issueType) = :idea', {
+				idea: 'idea',
+				ideaTypeId
+			});
+		const rows: Task[] = await query.getMany();
+		return rows.filter((row) => isIdeaTask(context, row as never)).map((row) => row.id as ID);
 	}
 
 	private links(context: EverWorksMappingContext, entityType: EverWorksLinkType): Promise<EverWorksEntityLink[]> {

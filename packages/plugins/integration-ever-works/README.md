@@ -139,6 +139,8 @@ below use the `INTEGRATION_` prefix; paths share the
 | POST | `/mappings/:integrationTenantId/projects/ideas` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/people` | `VIEW` |
 | PUT | `/mappings/:integrationTenantId/people` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/people/invite-to-gauzy` | `EDIT` |
+| POST | `/mappings/:integrationTenantId/people/invite-to-ever-works` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/agents` | `VIEW` |
 | POST | `/mappings/:integrationTenantId/agents/import` | `EDIT` |
 | GET | `/mappings/:integrationTenantId/teams` | `VIEW` |
@@ -205,9 +207,28 @@ and answered `202`.
   holder. A handler that keeps writing renews its lease as it goes.
 - **People.** Ever Works members are paired with Gauzy people on the People
   tab: a verified, case-insensitive email match is only a suggestion the admin
-  confirms (one by one or all at once); nothing is linked silently and
-  unlinking removes only the pairing. Ever ID matching waits for Gauzy to
-  store Ever ID subjects.
+  confirms (one by one or all at once), and unlinking removes only the
+  pairing. **Ever ID comes first:** a member whose Ever ID (`everIdSubjects`)
+  is the Ever ID of exactly one Gauzy person (the Ever ID sign-in links,
+  `zitadel_account`) is paired automatically when the tab is read; an admin
+  who undoes such a pairing is not overruled (the member is only suggested
+  from then on). Without Ever ID data on either side nothing changes. Every
+  pairing shows how it was made (`matchedBy`: `ever_id`, `verified_email` or
+  `manual`). A member with no Gauzy person can be **invited to Gauzy**: the
+  platform's own employee invitation (its email, invite rules and
+  accept path) for the tenant's Employee role, the only role whose acceptance
+  creates an employee to pair (change the role once they have joined), for a
+  verified Ever Works email only. It needs `ORG_INVITE_EDIT` too, sends one
+  invitation per email (overlapping requests are serialised; a pending one is
+  answered again and shows on the tab as `gauzyInvite`), and pairs nobody:
+  once the invitee joins, the email match suggests the pairing.
+  The other way, a Gauzy person with no Ever Works member can be **invited to
+  Ever Works** (`POST /members/invite`, contract v1-draft.15, scope
+  `members:write`): Ever Works' own organization invitation, sent as the
+  admin's paired Ever Works user (an admin with none sends it as the
+  integration key's owner), also needing `ORG_INVITE_EDIT`. A person
+  whose email an Ever Works member already has is refused (pair them instead);
+  a repeat is answered as the pending invitation; nobody is paired by it.
 - **Agents.** Each Ever Works agent of a mapped organization becomes a Gauzy
   employee of kind `agent` (created through the platform's agent path: no
   password, no invite, an `@agents.invalid` address) with a profile managed by
@@ -230,7 +251,10 @@ and answered `202`.
   the kind and every repository URL stay on the link. Members and teams paired
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
-  enabled and works not switched off.
+  enabled and works not switched off. A paired work (or one a project was
+  created from) shows its Gauzy project as an external link in Ever Works
+  (`PUT /links/work/:id`), as tasks do: the sync loop's sweep sends it (best
+  effort, retried by a later sweep), so the Projects tab never waits for it.
 - **Create in Ever Works (G-P2-5).** On the same tab (`createInEverWorks` on
   `PUT …/projects`), an admin opts a Gauzy project in: it becomes a repo-less
   Ever Works work of kind `project`, with the project's name, description and
@@ -257,7 +281,10 @@ and answered `202`.
   a later Gauzy edit is logged, not pushed. The Gauzy task links to its Ever
   Works page and, once there is one, its pull request. Due and start dates and
   the estimate sync too (Gauzy seconds ↔ Ever Works minutes; a start after the
-  due date is not sent, as Ever Works refuses it). Each
+  due date is not sent, as Ever Works refuses it). Ever Works keeps a sub-task
+  in its parent's work and team; a Gauzy parent on another team or project is
+  left out in Ever Works (logged as `parent_scope_refused`), the rest of the
+  task still syncs, and the parent is sent again once one of them moved. Each
   side is compared with its own last-synced value, so a value the other side
   cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
   changed a field the later edit wins, and a lost description is kept as a
