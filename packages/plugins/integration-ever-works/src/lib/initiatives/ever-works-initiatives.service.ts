@@ -63,6 +63,9 @@ export const INITIATIVE_SWEEP_MS = 10 * 60_000;
 /** Why a TEAM-scoped initiative with no paired team to scope its mission to is not created in Ever Works (review F24). */
 export const TEAM_SCOPE_WAITS = 'a team-scoped initiative goes to Ever Works once it is linked to a paired team';
 
+/** Why a mission is not created as a Gauzy initiative yet: none of its teams is paired (review F89). */
+export const MISSION_TEAMS_WAIT = "waiting for the mission's Ever Works team to be paired (teams first)";
+
 /** What only Ever Works has, kept on the link (fields one side lacks are preserved, never nulled). */
 interface MissionEverWorksOnly {
 	owner?: EverWorksMission['owner'];
@@ -328,6 +331,8 @@ export class EverWorksInitiativesService
 		for (const id of decision.createInGauzy ?? []) {
 			if (!byEw.has(id))
 				throw new BadRequestException(`${id} is not a mission of the mapped Ever Works organization.`);
+			if (await this.teamsWait(context, byEw.get(id) as EverWorksMission))
+				throw new BadRequestException(`${id}: ${MISSION_TEAMS_WAIT}.`);
 		}
 		for (const id of decision.createInEverWorks ?? []) {
 			const row = initiatives.get(id);
@@ -487,11 +492,11 @@ export class EverWorksInitiativesService
 					status: 'skipped',
 					message: 'the mission predates the mapping: pair it on the Initiatives tab'
 				};
-			await this.createInitiative(
-				context,
-				{ ...(data as unknown as EverWorksMission), id: envelope.aggregate.id },
-				version
-			);
+			const mission = { ...(data as unknown as EverWorksMission), id: envelope.aggregate.id };
+			// Teams first (D11 rule 4), as goals do: a team-scoped mission none of whose teams is paired yet would make a
+			// TEAM-scoped initiative with no team, which nobody can see (review F89).
+			if (await this.teamsWait(context, mission)) return { status: 'deferred', message: MISSION_TEAMS_WAIT };
+			await this.createInitiative(context, mission, version);
 			return { status: 'applied' };
 		}
 		const before = this.links.snapshot<MissionShared>(link);
@@ -626,20 +631,23 @@ export class EverWorksInitiativesService
 		const merged = this.mergedSignals(null, status, false);
 		const signals = merged.signals;
 		const written = await this.initiative(context, id, true);
+		const values = {
+			title: next.title || 'Mission',
+			intent: next.description || null,
+			state: status?.state ?? OrganizationStrategicStateEnum.ACTIVE,
+			visibilityScope: next.teamIds.length
+				? OrganizationStrategicVisibilityScopeEnum.TEAM
+				: OrganizationStrategicVisibilityScopeEnum.ORGANIZATION,
+			stewardId: await this.stewardOf(context, mission.owner ?? null),
+			...(signals ? { signals: this.signalsValue(signals) } : {})
+		};
 		if (!written)
-			await this.dataSource.getRepository(OrganizationStrategicInitiative).insert({
-				id,
-				tenantId: context.tenantId,
-				organizationId: context.organizationId,
-				title: next.title || 'Mission',
-				intent: next.description || null,
-				state: status?.state ?? OrganizationStrategicStateEnum.ACTIVE,
-				visibilityScope: next.teamIds.length
-					? OrganizationStrategicVisibilityScopeEnum.TEAM
-					: OrganizationStrategicVisibilityScopeEnum.ORGANIZATION,
-				stewardId: await this.stewardOf(context, mission.owner ?? null),
-				...(signals ? { signals: this.signalsValue(signals) } : {})
-			} as never);
+			await this.dataSource
+				.getRepository(OrganizationStrategicInitiative)
+				.insert({ id, tenantId: context.tenantId, organizationId: context.organizationId, ...values } as never);
+		// A retry finds the initiative it wrote: it takes Ever Works' current fields, so the snapshot recorded below is
+		// what Gauzy holds and a later push never sends the older ones back (review F87).
+		else await this.dataSource.getRepository(OrganizationStrategicInitiative).update({ id } as never, values as never);
 		const teams = await this.applyTeams(context, id, [], next.teamIds, []);
 		const works = await this.applyWorks(context, id, [], next.works, []);
 		const goals = await this.applyGoals(context, id, mission.id, [], next.goals, []);
@@ -1267,6 +1275,14 @@ export class EverWorksInitiativesService
 	}
 
 	/** Live pairs of a link type, Ever Works id → Gauzy id. */
+	/** Whether a team-scoped mission has none of its Ever Works teams paired with a Gauzy team yet (review F89). */
+	private async teamsWait(context: EverWorksMappingContext, mission: EverWorksMission): Promise<boolean> {
+		const teamIds = everWorksMissionShared(mission).teamIds;
+		if (!teamIds.length) return false;
+		const teamOf = await this.pairs(context, EverWorksLinkType.TEAM);
+		return !teamIds.some((teamId) => teamOf.has(teamId));
+	}
+
 	private async pairs(context: EverWorksMappingContext, type: EverWorksLinkType): Promise<Map<string, ID>> {
 		const rows = (await this.links.list(context.integrationTenantId, type)).filter(
 			(link) => link.state !== EverWorksLinkState.UNLINKED

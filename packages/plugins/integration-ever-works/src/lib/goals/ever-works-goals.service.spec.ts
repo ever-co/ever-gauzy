@@ -45,6 +45,7 @@ import { EverWorksClient } from '../client/ever-works-client';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { MockEverWorksGoals } from '../testing/mock-ever-works.goals';
 import { MockEverWorksServer } from '../testing/mock-ever-works.server';
+import { stableUuid } from '../sync/ever-works-stable-id';
 import { EverWorksGoalsService, keyResultEwId } from './ever-works-goals.service';
 
 type Row = Record<string, any>;
@@ -269,6 +270,55 @@ describe('EverWorksGoalsService — EW → G', () => {
 		expect(keyResults[1]['isArchived']).toBe(true);
 	});
 
+	it('a retry that finds the goal it wrote gives it Ever Works\u2019 current fields (review F87)', async () => {
+		const { service, goals } = setup();
+		// A first attempt inserted the goal (its stable id) with the title of then, and failed before its link.
+		goals.push({ id: stableUuid('m1:goal:ew-goal-1'), tenantId: 't1', organizationId: 'o1', name: 'Grow customers', progress: 10 });
+		await service.apply(envelope('goal.created', { ...ewGoal, title: 'Grow paying customers' }) as never, applyContext);
+		expect(goals).toHaveLength(1);
+		expect(goals[0]).toMatchObject({ name: 'Grow paying customers', progress: 40, deadline: 'Q2 2027' });
+	});
+
+	it('a Definition of Done item Ever Works removed and adds back with the same id is restored, not left archived (review F88)', async () => {
+		const { service, keyResults, links } = setup();
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		await service.apply(envelope('goal.updated', { ...ewGoal, dodCriteria: [] }, 2) as never, applyContext);
+		expect(keyResults[1]['isArchived']).toBe(true);
+		await service.apply(envelope('goal.updated', ewGoal, 3) as never, applyContext);
+		expect(keyResults).toHaveLength(2);
+		expect(keyResults[1]).toMatchObject({ isArchived: false, archivedAt: null });
+		expect(links.find((l) => l['gauzyId'] === keyResults[1]['id'])?.['state']).toBe('ok');
+	});
+
+	it('a goal Ever Works moves to a team not paired yet keeps its teams on the next Gauzy push (review F85)', async () => {
+		const { service, mock, goals, addLink } = setup();
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');
+		await service.apply(envelope('goal.created', { ...ewGoal, teamIds: ['ew-team-1'], visibility: 'team' }, 1) as never, applyContext);
+		await service.apply(envelope('goal.updated', { ...ewGoal, teamIds: ['ew-team-2'], visibility: 'team' }, 2) as never, applyContext);
+		expect(goals[0]).toMatchObject({ level: 'Team', ownerTeamId: 'g-team-1' });
+		goals[0]['name'] = 'Renamed in Gauzy';
+		const before = mock.requests.length;
+		// The Ever Works goal is not in the mock (it came from an event): the PATCH it would send is what matters.
+		await service.push(change(goals[0]['id']), pushContext).catch(() => undefined);
+		const patch = mock.requests.slice(before).find((r) => r.method === 'PATCH');
+		expect(patch?.body).toEqual({ title: 'Renamed in Gauzy' });
+	});
+
+	it('a goal Ever Works no longer has a primary mission for keeps the initiative a Gauzy user moved it to (review F90)', async () => {
+		const { service, goals, addLink } = setup();
+		addLink(EverWorksLinkType.INITIATIVE_MISSION, 'init-1', 'ew-mission-1');
+		addLink(EverWorksLinkType.INITIATIVE_MISSION, 'init-2', 'ew-mission-2');
+		await service.apply(envelope('goal.created', { ...ewGoal, primaryMissionId: 'ew-mission-1' }, 1) as never, applyContext);
+		expect(goals[0]['organizationStrategicInitiativeId']).toBe('init-1');
+		goals[0]['organizationStrategicInitiativeId'] = 'init-2'; // moved in Gauzy
+		await service.apply(envelope('goal.updated', { ...ewGoal, primaryMissionId: null }, 2) as never, applyContext);
+		expect(goals[0]['organizationStrategicInitiativeId']).toBe('init-2');
+		// Still on the old primary's initiative when Ever Works clears it: it leaves it.
+		await service.apply(envelope('goal.updated', { ...ewGoal, primaryMissionId: 'ew-mission-1' }, 3) as never, applyContext);
+		await service.apply(envelope('goal.updated', { ...ewGoal, primaryMissionId: null }, 4) as never, applyContext);
+		expect(goals[0]['organizationStrategicInitiativeId']).toBeNull();
+	});
+
 	it('a team-scoped goal waits for its team; a deleted goal archives the Gauzy goal', async () => {
 		const { service, goals, addLink } = setup();
 		expect(
@@ -372,6 +422,23 @@ describe('EverWorksGoalsService — G → EW', () => {
 		expect(mock.requests.filter((r) => r.method !== 'GET').length).toBe(
 			mock.requests.slice(0, before).filter((r) => r.method !== 'GET').length
 		);
+	});
+
+	it('a sample never records a goal version an Ever Works edit made meanwhile: that edit still applies (review F86)', async () => {
+		const { service, goalsMock, goals, keyResults, links } = setup();
+		goals.push(gauzyGoal());
+		keyResults.push(keyResult('kr-a'));
+		await service.push(change('goal-1'), pushContext);
+		const [created] = [...goalsMock.goals.values()];
+		const goalLink = () => links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
+		const version = goalLink()['ewVersion'] as number;
+		// Ever Works renames the goal (its event is still on the way), then a Gauzy key result value changes.
+		Object.assign(created, { title: 'Renamed in Ever Works', version: version + 1 });
+		keyResults[0]['update'] = 7;
+		expect(await service.push(change('kr-a', EverWorksLinkType.KEY_RESULT), pushContext)).toMatchObject({ status: 'pushed' });
+		expect(goalLink()['ewVersion']).toBe(version);
+		expect(await service.apply(envelope('goal.updated', { ...created }, version + 1) as never, applyContext)).toMatchObject({ status: 'applied' });
+		expect(goals[0]['name']).toBe('Renamed in Ever Works');
 	});
 
 	it('a key result deleted in Gauzy by id (no row for the subscriber) queues its goal from the sweep; the push takes it out', async () => {

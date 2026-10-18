@@ -48,7 +48,9 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 		membership = { find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null) };
 
 		service = Object.create(OrganizationStrategicInitiativeService.prototype);
-		Object.defineProperty(service, 'typeOrmRepository', { value: { manager: { find } }, configurable: true });
+		// `findOne` reads an initiative's stored teams back for a write answer that did not state them (review F91).
+		const findOne = jest.fn(async () => null);
+		Object.defineProperty(service, 'typeOrmRepository', { value: { manager: { find, findOne } }, configurable: true });
 		Object.assign(service, {
 			_employeeService: { findOneByIdString: jest.fn().mockResolvedValue({ id: EMPLOYEE }) },
 			_activityLogService: { logActivity: jest.fn() },
@@ -104,6 +106,26 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 
 			await service.update('initiative-1', { teamIds: [] });
 			expect((save.mock.calls[2][0] as any).teams).toEqual([]);
+		});
+	});
+
+	describe('write answers list the teams (review F91)', () => {
+		it('an update that does not state teams answers the stored ones; a create without teams answers none', async () => {
+			jest.spyOn(TenantAwareCrudService.prototype, 'findOneByWhereOptions').mockResolvedValue({
+				id: 'initiative-1',
+				title: 'T',
+				organizationId: ORGANIZATION,
+				tenantId: TENANT
+			} as never);
+			const manager = (service as unknown as { typeOrmRepository: { manager: Record<string, unknown> } }).typeOrmRepository.manager;
+			manager['findOne'] = jest.fn(async () => ({ id: 'initiative-1', teams: [{ id: TEAM_A }] }));
+
+			const updated = await service.update('initiative-1', { title: 'Renamed' });
+			expect((updated as IOrganizationStrategicInitiativeRead).teamIds).toEqual([TEAM_A]);
+			expect(save.mock.calls[0][0]).not.toHaveProperty('teams'); // the write still leaves them alone
+
+			const created = await service.create({ organizationId: ORGANIZATION, title: 'No teams' } as any);
+			expect((created as IOrganizationStrategicInitiativeRead).teamIds).toEqual([]);
 		});
 	});
 

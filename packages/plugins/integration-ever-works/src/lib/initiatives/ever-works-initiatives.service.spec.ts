@@ -316,6 +316,28 @@ describe('EverWorksInitiativesService — EW → G', () => {
 		expect(initiatives).toHaveLength(1);
 	});
 
+	it('a retry that finds the initiative it wrote gives it Ever Works\u2019 current fields (review F87)', async () => {
+		const { service, initiatives, links } = setup();
+		await service.apply(envelope('mission.created', mission, 1) as never, applyContext);
+		links.splice(0, links.length); // the link was never written (a failure after the insert)
+		await service.apply(envelope('mission.created', { ...mission, title: 'Win the SMB market in Europe' }, 2) as never, applyContext);
+		expect(initiatives).toHaveLength(1);
+		expect(initiatives[0]['title']).toBe('Win the SMB market in Europe');
+	});
+
+	it('a mission on a team not paired yet waits for it instead of making an initiative nobody can see (review F89)', async () => {
+		const { service, initiatives, addLink, missionsMock, ewOrg } = setup();
+		const onTeam = { ...mission, teamIds: ['ew-team-9'], visibility: 'team' };
+		expect(await service.apply(envelope('mission.created', onTeam) as never, applyContext)).toMatchObject({ status: 'deferred' });
+		expect(initiatives).toHaveLength(0);
+		missionsMock.addMission(ewOrg.id, { id: 'ew-m-team', title: 'Team only', teamIds: ['ew-team-9'], visibility: 'team' });
+		await expect(service.decide('m1' as never, { createInGauzy: ['ew-m-team'] })).rejects.toThrow(/teams first/);
+		expect(initiatives).toHaveLength(0);
+		addLink(EverWorksLinkType.TEAM, 'g-team-9', 'ew-team-9');
+		expect(await service.apply(envelope('mission.created', onTeam) as never, applyContext)).toMatchObject({ status: 'applied' });
+		expect(initiatives[0]).toMatchObject({ visibilityScope: 'team', teams: [{ id: 'g-team-9' }] });
+	});
+
 	it('a resume clears only the "stalled" the sync set; a person\u2019s own assessment stays', async () => {
 		const { service, initiatives } = setup();
 		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 1) as never, applyContext);

@@ -545,6 +545,20 @@ describe('EverWorksIdeasService — G → EW', () => {
 		expect(row['title']).toBe('Portal (Gauzy)');
 	});
 
+	it('a dismiss whose answer shows an Ever Works edit made meanwhile applies it, never skipping it as applied (review F86)', async () => {
+		const { service, ideas, tasks, links } = setup();
+		tasks.push(ideaTask());
+		await service.push(change('task-g'), pushContext);
+		const row = ideas.ideas.get(links[0]['ewId']) as Row;
+		// Ever Works renames the idea (its event not applied yet); then the task is cancelled in Gauzy.
+		Object.assign(row, { title: 'Portal (EW)', version: Number(row['version']) + 1 });
+		tasks[0]['status'] = 'cancelled';
+		expect(await service.push(change('task-g'), pushContext)).toMatchObject({ status: 'pushed' });
+		expect(row['status']).toBe('dismissed');
+		expect(tasks[0]).toMatchObject({ title: 'Portal (EW)', status: 'cancelled' });
+		expect(links[0]['ewVersion']).toBe(row['version']);
+	});
+
 	it('Ever Works teams Gauzy cannot map are kept when Gauzy edits the idea', async () => {
 		const { service, ideas, tasks, links, mock } = setup();
 		tasks.push(ideaTask());

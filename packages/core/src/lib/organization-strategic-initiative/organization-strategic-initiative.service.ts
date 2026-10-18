@@ -183,6 +183,8 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				// Set current employee as creator if employeeId not provided
 				stewardId: input.stewardId ?? currentEmployeeId
 			});
+			// The answer lists the teams whether the write stated them or not: none for a create without them.
+			if (!Array.isArray(organizationStrategicInitiative.teams)) organizationStrategicInitiative.teams = teams ?? [];
 			this.withTeamIds(organizationStrategicInitiative);
 
 			// Log activity for initiative creation
@@ -263,6 +265,11 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 				...(teams ? { teams } : {}),
 				id
 			});
+			// The answer lists the teams whether the write stated them or not: the stored ones when it did not (REST,
+			// GraphQL and the signals update alike), so a client refreshing from it never reads "no teams".
+			if (!Array.isArray(updatedOrganizationStrategicInitiative.teams)) {
+				updatedOrganizationStrategicInitiative.teams = teams ?? (await this.linkedTeams(id));
+			}
 			this.withTeamIds(updatedOrganizationStrategicInitiative);
 
 			// Log activity for organization strategic initiative update
@@ -896,6 +903,20 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			console.error('Error checking team membership for initiative:', error.message);
 			return false;
 		}
+	}
+
+	/**
+	 * The teams an initiative is linked to directly, as stored.
+	 *
+	 * @param id - The initiative.
+	 * @returns Its directly linked teams (none when it has none).
+	 */
+	private async linkedTeams(id: ID): Promise<NonNullable<OrganizationStrategicInitiative['teams']>> {
+		const row = await this.typeOrmRepository.manager.findOne(OrganizationStrategicInitiative, {
+			where: { id },
+			relations: { teams: true }
+		});
+		return row?.teams ?? [];
 	}
 
 	/**
