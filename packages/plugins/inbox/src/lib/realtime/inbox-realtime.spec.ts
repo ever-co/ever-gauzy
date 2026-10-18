@@ -357,6 +357,24 @@ describe('InboxService announces created items (SQLite)', () => {
 		expect(appended[0].input['data'].recipientUserIds).toEqual([BOB]);
 	});
 
+	it('a recipient stored before a later recipient write failed is announced then, and the retry announces the rest (#11091 review)', async () => {
+		const repository = dataSource.getRepository(InboxItemRecipient);
+		const save = repository.save.bind(repository);
+		let failed = false;
+		jest.spyOn(repository, 'save').mockImplementation((async (entity: { userId?: string }) => {
+			if (entity?.userId === BOB && !failed) {
+				failed = true;
+				throw new Error('deadlock detected');
+			}
+			return save(entity as never);
+		}) as never);
+		await expect(notice({ recipients: [{ userId: ADA }, { userId: BOB }] })).rejects.toThrow('deadlock detected');
+		expect(appended.map((entry) => entry.input['data'].recipientUserIds)).toEqual([[ADA]]);
+		const retried = await notice({ recipients: [{ userId: ADA }, { userId: BOB }] });
+		expect(retried.created).toBe(false);
+		expect(appended.map((entry) => entry.input['data'].recipientUserIds)).toEqual([[ADA], [BOB]]);
+	});
+
 	it('appends nothing when a source re-delivers the same item, or creates one nobody can receive', async () => {
 		await notice();
 		await notice({ title: 'The nightly run finished (edited)' });

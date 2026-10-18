@@ -188,12 +188,20 @@ export class InboxService implements IInboxItemWriter {
 			query.offset(position.offset);
 		} else {
 			// The anchor's own creation time, read in the database: compared at the column's precision (a
-			// JavaScript date keeps milliseconds only). The time in the cursor stands in for an anchor that is gone.
+			// JavaScript date keeps milliseconds only). Only an item of the caller's own Inbox anchors: any other id
+			// (another user's item, another tenant's) reads as gone, so a forged cursor learns nothing about it. The
+			// time in the cursor stands in for an anchor that is gone (#11091 review).
 			const anchor = query
 				.subQuery()
 				.select('anchor.createdAt')
 				.from(InboxItem, 'anchor')
+				.innerJoin(
+					InboxItemRecipient,
+					'anchorRecipient',
+					'anchorRecipient.inboxItemId = anchor.id AND anchorRecipient.userId = :userId AND anchorRecipient.tenantId = :tenantId'
+				)
 				.where('anchor.id = :cursorId')
+				.andWhere('anchor.tenantId = :tenantId')
 				.getQuery();
 			const at = `COALESCE(${anchor}, :cursorAt)`;
 			query.andWhere(
@@ -555,11 +563,23 @@ export class InboxService implements IInboxItemWriter {
 			}
 		}
 
-		const { recipientUserIds, skippedUserIds, addedUserIds } = await this.writeRecipients(
-			item,
-			input.recipients ?? [],
-			input.replaceRecipients === true
-		);
+		/** The recipient rows this write inserted, also when a later one fails. */
+		const addedUserIds: ID[] = [];
+		let written: { recipientUserIds: ID[]; skippedUserIds: ID[] };
+		try {
+			written = await this.writeRecipients(
+				item,
+				input.recipients ?? [],
+				input.replaceRecipients === true,
+				addedUserIds
+			);
+		} catch (error) {
+			// The rows inserted before the failure stay; the source's retry finds them and adds only the rest, so they
+			// are announced now (#11091 review).
+			if (addedUserIds.length) await this.realtime?.itemCreated(item, addedUserIds);
+			throw error;
+		}
+		const { recipientUserIds, skippedUserIds } = written;
 		const stored = (await repository.findOne({ where: { id: item.id } })) as InboxItem;
 		// The item reached these users' Inbox now: announced to their subscriptions (never fails the write). Also on
 		// a re-delivery: a recipient the first delivery could not add (a failed write, a pairing made later) is told
@@ -667,8 +687,10 @@ export class InboxService implements IInboxItemWriter {
 	private async writeRecipients(
 		item: InboxItem,
 		recipients: IInboxItemUpsertInput['recipients'],
-		replace = false
-	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[]; addedUserIds: ID[] }> {
+		replace = false,
+		/** Filled with the recipient rows this write inserts (an overlapping delivery that inserts one reports it). */
+		added: ID[] = []
+	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[] }> {
 		const stated = new Map<ID, IInboxItemUpsertInput['recipients'][number]>();
 		for (const recipient of recipients) {
 			if (recipient?.userId) stated.set(recipient.userId, recipient);
@@ -694,8 +716,6 @@ export class InboxService implements IInboxItemWriter {
 			(await repository.find({ where: { inboxItemId: item.id } })).map((row) => [row.userId, row])
 		);
 		const now = new Date();
-		/** The recipient rows this write inserted (an overlapping delivery that inserted one reports it itself). */
-		const added: ID[] = [];
 
 		for (const userId of userIds.filter((id) => known.has(id))) {
 			const recipient = stated.get(userId);
@@ -745,8 +765,7 @@ export class InboxService implements IInboxItemWriter {
 			recipientUserIds: [
 				...new Set([...[...existing.keys()].filter((userId) => !removed.includes(userId)), ...kept])
 			] as ID[],
-			skippedUserIds: userIds.filter((id) => !known.has(id)),
-			addedUserIds: added
+			skippedUserIds: userIds.filter((id) => !known.has(id))
 		};
 	}
 

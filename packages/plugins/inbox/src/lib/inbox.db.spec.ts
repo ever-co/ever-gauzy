@@ -457,6 +457,26 @@ describe('Inbox on SQLite', () => {
 			expect((first.nextCursor as string).length).toBeLessThanOrEqual(64);
 		});
 
+		it("a cursor naming another user's item learns nothing from it: only an item of the caller's Inbox anchors (#11091 review)", async () => {
+			const mine = await question({ title: 'Mine, older' });
+			const theirs = await question({ title: 'Bob, private', recipients: [{ userId: BOB }] });
+			// Bob's item is between the two by time; Ada's newer item is the newest.
+			await question({ title: 'Mine, newer' });
+			await dataSource.query(
+				`UPDATE "inbox_item" SET "createdAt" = datetime('now', '-3 minutes') WHERE "id" = ?`,
+				[mine.item.id]
+			);
+			await dataSource.query(
+				`UPDATE "inbox_item" SET "createdAt" = datetime('now', '-2 minutes') WHERE "id" = ?`,
+				[theirs.item.id]
+			);
+			const hex = (theirs.item.id as string).replace(/-/g, '');
+			// A forged cursor: Bob's id, with a time far in the past standing in for it.
+			const forged = Buffer.from(`k:${(0).toString(36)}:${hex}`, 'utf8').toString('base64url');
+			// Had Bob's item anchored the page, Ada's older item would be listed; the stand-in time lists nothing.
+			expect((await service.list({ cursor: forged })).items).toEqual([]);
+		});
+
 		it('items of the same second page by id, and the cursors issued before this release still work', async () => {
 			for (let n = 0; n < 5; n++) await question({ title: `Same ${n}` });
 			await dataSource.query(`UPDATE "inbox_item" SET "createdAt" = datetime('now', '-1 minute')`);
