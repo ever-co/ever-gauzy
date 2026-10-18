@@ -1,0 +1,437 @@
+<!-- A project's quick look, with a way to its edit page for those who may edit it. -->
+<ngx-record-view-drawer
+	[open]="!!viewedProject"
+	[heading]="'SM_TABLE.PROJECT'"
+	[wide]="true"
+	(closed)="close()"
+>
+	@if (viewedProject) {
+	<ngx-record-view [record]="viewedProject" [sections]="sections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<!-- Everything above the record's own sections, in one block with one even rhythm. -->
+		<div recordViewHeader class="project-view-top">
+			<div class="project-view-header">
+				<span class="project-logo">
+					@if (project?.imageUrl) {
+					<img [src]="project.imageUrl" [alt]="viewedProject.name" />
+					} @else {
+					<span aria-hidden="true">{{ project?.initials }}</span>
+					}
+				</span>
+				<div class="project-view-title">
+					<h5 class="project-view-name" [nbTooltip]="viewedProject.name" nbTooltipPlacement="top">{{ viewedProject.name }}</h5>
+					<!-- Status line: status, visibility and client, as far as they are known. -->
+					@if (facts?.status || facts?.isPublic !== undefined || facts?.client) {
+					<p class="project-view-meta">
+						@if (facts.status; as status) {
+						<span class="project-status" [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
+						}
+						@if (facts.isPublic !== undefined) {
+						<span class="project-meta-item">
+							<nb-icon [icon]="facts.isPublic ? 'globe-outline' : 'lock-outline'" aria-hidden="true"></nb-icon>
+							{{ (facts.isPublic ? 'BUTTONS.PUBLIC' : 'BUTTONS.PRIVATE') | translate }}
+						</span>
+						}
+						@if (facts.client) {
+						<span class="project-meta-item" [nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.CONTACT' | translate) + ': ' + facts.client" nbTooltipPlacement="top">
+							<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+							{{ facts.client }}
+						</span>
+						}
+					</p>
+					}
+				</div>
+				<a
+					*ngxPermissionsOnly="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT]"
+					nbButton
+					outline
+					size="tiny"
+					status="basic"
+					class="project-view-edit"
+					[routerLink]="projectEditLink(viewedProject.id)"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}
+				</a>
+			</div>
+
+			<!-- Key figures: the host's time on it in the period, its members, and its deadline. -->
+			<dl class="project-facts">
+				<div class="project-fact">
+					<dt>{{ 'EMPLOYEES_PAGE.VIEW.WORKED_PERIOD' | translate }}</dt>
+					<dd>{{ project?.duration ? formatDuration(project.duration) : '—' }}</dd>
+				</div>
+				<div class="project-fact">
+					<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS' | translate }}</dt>
+					<dd>{{ facts?.members ?? '—' }}</dd>
+				</div>
+				<div class="project-fact">
+					<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}</dt>
+					<dd>
+						{{ facts?.endDate || '—' }}
+						@if (facts?.due; as due) {
+						<span class="project-fact-hint" [class.is-overdue]="facts.overdue">{{ due.key | translate : { count: due.count } }}</span>
+						}
+					</dd>
+				</div>
+			</dl>
+
+			<!-- Budget burn: an hours budget against all the time worked on the project; amber from 80%, red over. -->
+			@if (budget; as budget) {
+			<div class="project-budget" [class.is-warning]="budget.warning && !budget.over" [class.is-over]="budget.over">
+				<div class="project-budget-row">
+					<span class="project-budget-label">{{ 'ORGANIZATIONS_PAGE.BUDGET' | translate }}</span>
+					<span class="project-budget-value">
+						@if (budget.over) {
+						{{ 'PROJECT_QUICK_LOOK.OVER_BUDGET' | translate : { value: formatHours(budget.usedHours - budget.budgetHours) } }}
+						} @else {
+						{{ 'PROJECT_QUICK_LOOK.BUDGET_USED' | translate : { used: formatHours(budget.usedHours), budget: formatHours(budget.budgetHours) } }}
+						}
+					</span>
+				</div>
+				<div
+					class="project-budget-track"
+					[nbTooltip]="formatPercent(budget.over ? (budget.usedHours / budget.budgetHours) * 100 : budget.percent)"
+					nbTooltipPlacement="top"
+					role="progressbar"
+					aria-valuemin="0"
+					aria-valuemax="100"
+					[attr.aria-valuenow]="budget.percent | number : '1.0-0'"
+					[attr.aria-label]="'ORGANIZATIONS_PAGE.BUDGET' | translate"
+				>
+					<span [style.width.%]="budget.percent"></span>
+				</div>
+			</div>
+			}
+
+			<!-- Progress: the share of the project's tasks that are done, and how the rest stand. -->
+			<section class="panel project-view-panel" [nbSpinner]="taskProgress.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<h5 class="panel-title panel-title--icon">
+						<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+						{{ 'PROJECT_QUICK_LOOK.PROGRESS' | translate }}
+					</h5>
+				</header>
+				<div class="panel-body">
+					@if (taskProgress.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (taskProgress.value && !taskProgress.value.total) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+					} @else if (taskProgress.value; as progress) {
+					<div class="progress-summary">
+						<span class="progress-value">{{ formatPercent(progress.percent) }}</span>
+						<span class="progress-caption">
+							{{ 'PROJECT_QUICK_LOOK.PROGRESS_META' | translate : { done: progress.done, total: progress.total } }}
+						</span>
+					</div>
+					<div
+						class="progress-track"
+						[nbTooltip]="
+							('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate) + ' ' + progress.done + ' · ' +
+							('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate) + ' ' + progress.progress + ' · ' +
+							('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate) + ' ' + progress.todo
+						"
+						nbTooltipPlacement="top"
+						role="progressbar"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						[attr.aria-valuenow]="progress.percent | number : '1.0-0'"
+						[attr.aria-label]="'PROJECT_QUICK_LOOK.PROGRESS' | translate"
+					>
+						@if (progress.done) {
+						<span class="progress-segment progress-segment--done" [style.width.%]="(progress.done / progress.total) * 100"></span>
+						}
+						@if (progress.progress) {
+						<span class="progress-segment progress-segment--active" [style.width.%]="(progress.progress / progress.total) * 100"></span>
+						}
+					</div>
+					<dl class="progress-stats">
+						<div class="progress-stat">
+							<dt><span class="progress-dot progress-dot--done" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate }}</dt>
+							<dd>{{ progress.done }}</dd>
+						</div>
+						<div class="progress-stat">
+							<dt><span class="progress-dot progress-dot--active" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate }}</dt>
+							<dd>{{ progress.progress }}</dd>
+						</div>
+						<div class="progress-stat">
+							<dt><span class="progress-dot" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate }}</dt>
+							<dd>{{ progress.todo }}</dd>
+						</div>
+					</dl>
+					}
+				</div>
+			</section>
+
+			<!-- Needs attention: open tasks overdue or due within three days; hidden when there are none. -->
+			@if (attention.length) {
+			<section class="panel project-view-panel">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROJECT_QUICK_LOOK.NEEDS_ATTENTION' | translate }}
+							<span class="title-count">{{ attention.length }}</span>
+						</h5>
+						<span class="panel-caption">{{ 'PROJECT_QUICK_LOOK.NEEDS_ATTENTION_CAPTION' | translate }}</span>
+					</div>
+				</header>
+				<ul class="attention-list">
+					@for (task of attention; track task.id) {
+					<li>
+						<a class="attention-task" [routerLink]="taskLink(task.id)">
+							<span class="attention-dot" [class.is-overdue]="task.overdue" aria-hidden="true"></span>
+							<span class="attention-title" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
+							<span class="attention-due" [class.is-overdue]="task.overdue">{{ task.due.key | translate : { count: task.due.count } }}</span>
+						</a>
+					</li>
+					}
+				</ul>
+			</section>
+			}
+
+			<!-- Tasks: every task of the project, filtered like the task lists; each row opens the task's page. -->
+			<section class="panel project-view-panel" [nbSpinner]="taskProgress.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header panel-header--wrap">
+					<h5 class="panel-title panel-title--icon">
+						<nb-icon icon="list-outline" aria-hidden="true"></nb-icon>
+						{{ 'TASKS_PAGE.HEADER' | translate }}
+						@if (tasks.length) {
+						<span class="title-count">{{ tasks.length }}</span>
+						}
+					</h5>
+					@if (tasks.length) {
+					<div class="segmented project-task-filters" role="group" [attr.aria-label]="'TASKS_PAGE.HEADER' | translate">
+						@for (filter of taskFilters; track filter) {
+						<button
+							type="button"
+							class="segment"
+							[class]="'segment--' + filter"
+							[class.is-active]="taskFilter === filter"
+							[attr.aria-pressed]="taskFilter === filter"
+							(click)="setTaskFilter(filter)"
+						>
+							{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.' + filter.toUpperCase() | translate }}
+							<span class="segment-count" [class.is-alert]="filter === 'overdue' && taskCount(filter) > 0">{{ taskCount(filter) }}</span>
+						</button>
+						}
+					</div>
+					}
+				</header>
+				<div class="panel-body panel-body--flush">
+					@if (taskProgress.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (!taskProgress.loading && !tasks.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+					} @else if (!taskProgress.loading && !filteredTasks.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TASKS_IN_VIEW', icon: 'funnel-outline' }"></ng-container>
+					} @else {
+					<ul class="project-task-list">
+						@for (task of visibleTasks; track task.id) {
+						<li>
+							<a class="project-task" [routerLink]="taskLink(task.id)">
+								<span
+									class="task-dot"
+									[class]="'group-' + task.statusGroup"
+									[nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.STATUS' | translate) + ': ' + task.status"
+									nbTooltipPlacement="top"
+								></span>
+								<span class="project-task-main">
+									<span class="project-task-title" [class.is-done]="task.statusGroup === 'done'" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
+									<span class="project-task-meta">
+										@if (task.key) {
+										<span class="project-task-key">{{ task.key }}</span>
+										}
+										<span>{{ task.status }}</span>
+										@if (task.priority) {
+										<span [class]="'project-task-priority priority-' + (task.priorityLevel || 'none')">{{ task.priority }}</span>
+										}
+									</span>
+								</span>
+								<span class="project-task-people">
+									@for (person of task.people.slice(0, 3); track $index) {
+									<span class="project-task-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
+										@if (person.avatarUrl) {
+										<img [src]="person.avatarUrl" [alt]="person.name" />
+										} @else {
+										<span aria-hidden="true">{{ person.initials }}</span>
+										}
+									</span>
+									}
+									@if (task.people.length > 3) {
+									<span class="project-task-person project-task-person--more" [nbTooltip]="peopleNames(task.morePeople)" nbTooltipPlacement="top">+{{ task.people.length - 3 }}</span>
+									}
+								</span>
+								<span
+									class="project-task-due"
+									[class.is-overdue]="task.overdue"
+									[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
+									[nbTooltip]="task.dueDate ? ('EMPLOYEES_PAGE.VIEW.COLUMNS.DUE' | translate) + ': ' + task.dueDateLong : ''"
+									[nbTooltipDisabled]="!task.dueDate"
+									nbTooltipPlacement="top"
+									>{{ task.dueDate ? (task.due.key | translate : { count: task.due.count }) : '—' }}</span
+								>
+							</a>
+						</li>
+						}
+					</ul>
+					@if (filteredTasks.length > taskLimit) {
+					<footer class="project-task-footer">
+						<span>{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}</span>
+						<button type="button" class="panel-link" (click)="showAllTasks = !showAllTasks">
+							{{ (showAllTasks ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_LESS' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_ALL') | translate }}
+						</button>
+					</footer>
+					}
+					}
+				</div>
+			</section>
+
+			<!-- Daily activity: hours on the project per day of the period, over the host's scope. -->
+			<section class="panel project-view-panel" [nbSpinner]="hours.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROJECT_QUICK_LOOK.ACTIVITY' | translate }}
+						</h5>
+						<span class="panel-caption">{{ rangeLabel }}</span>
+					</div>
+					@if (hoursTotal) {
+					<span class="project-hours-total">{{ formatHours(hoursTotal) }}</span>
+					}
+				</header>
+				<div class="panel-body project-chart-body">
+					@if (hours.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (!hours.loading && !hoursTotal) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"></ng-container>
+					} @else {
+					<ngx-employee-hours-chart
+						[days]="hours.value"
+						[formatHours]="formatHours"
+						[trackedLabel]="'EMPLOYEES_PAGE.VIEW.TRACKED' | translate"
+						[manualLabel]="'EMPLOYEES_PAGE.VIEW.MANUAL' | translate"
+					></ngx-employee-hours-chart>
+					}
+				</div>
+			</section>
+
+			<!-- Who worked the most: time on the project in the period, each with their photo; the host's person picked out. -->
+			<section class="panel project-view-panel" [nbSpinner]="contributors.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROJECT_QUICK_LOOK.TOP_CONTRIBUTORS' | translate }}
+						</h5>
+						<span class="panel-caption">{{ contributorsCaptionKey | translate : { range: rangeLabel } }}</span>
+					</div>
+				</header>
+				<div class="panel-body panel-body--flush">
+					@if (contributors.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (!contributors.loading && !contributors.value.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"></ng-container>
+					} @else {
+					<ol class="contributor-list">
+						@for (person of contributors.value; track person.id) {
+						<li class="contributor" [class.is-highlighted]="person.id === highlightEmployeeId">
+							<a class="contributor-person" [routerLink]="['/pages/employees/view', person.id]">
+								<span
+									class="member-avatar contributor-avatar"
+									[class]="'presence-' + (person.presence || 'offline')"
+									[nbTooltip]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + (person.presence || 'offline').toUpperCase() | translate"
+									[nbTooltipDisabled]="person.presence !== 'tracking' && person.presence !== 'online'"
+									nbTooltipPlacement="top"
+								>
+									@if (person.avatarUrl) {
+									<img [src]="person.avatarUrl" [alt]="person.name" />
+									} @else {
+									<span aria-hidden="true">{{ person.initials }}</span>
+									}
+									<!-- Live dot only for those tracking time or online right now. -->
+									@if (person.presence === 'tracking' || person.presence === 'online') {
+									<span class="avatar-dot" aria-hidden="true"></span>
+									}
+								</span>
+								<span class="contributor-text">
+									<span class="contributor-name" [nbTooltip]="person.name" nbTooltipPlacement="top">{{ person.name }}</span>
+									@if (person.activity !== undefined) {
+									<span class="contributor-meta">{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent(person.activity) } }}</span>
+									}
+								</span>
+							</a>
+							<span
+								class="contributor-bar"
+								aria-hidden="true"
+								[nbTooltip]="person.name + ': ' + formatDuration(person.duration) + ' · ' + formatPercent(person.share)"
+								nbTooltipPlacement="top"
+								><span [style.width.%]="person.width"></span
+							></span>
+							<span class="contributor-figures">
+								<span class="contributor-time">{{ formatDuration(person.duration) }}</span>
+								<span class="contributor-share">{{ formatPercent(person.share) }}</span>
+							</span>
+						</li>
+						}
+					</ol>
+					}
+				</div>
+			</section>
+
+			<!-- Most worked tasks: the project's tasks with the most time in the period. -->
+			<section class="panel project-view-panel" [nbSpinner]="topTasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<h5 class="panel-title panel-title--icon">
+						<nb-icon icon="checkmark-square-2-outline" aria-hidden="true"></nb-icon>
+						{{ 'EMPLOYEES_PAGE.VIEW.TOP_TASKS' | translate }}
+					</h5>
+				</header>
+				<div class="panel-body panel-body--flush">
+					@if (topTasks.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (!topTasks.loading && !topTasks.value.length) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"></ng-container>
+					} @else {
+					<ol class="contributor-list">
+						@for (task of topTasks.value; track task.id; let index = $index) {
+						<li class="contributor">
+							<a class="contributor-person" [routerLink]="taskLink(task.id)">
+								<span class="top-task-rank" aria-hidden="true">{{ index + 1 }}</span>
+								<span class="contributor-name" [nbTooltip]="task.name" nbTooltipPlacement="top">{{ task.name }}</span>
+							</a>
+							<span
+								class="contributor-bar"
+								aria-hidden="true"
+								[nbTooltip]="task.name + ': ' + formatDuration(task.duration) + ' · ' + formatPercent(task.share)"
+								nbTooltipPlacement="top"
+								><span [style.width.%]="task.width"></span
+							></span>
+							<span class="contributor-figures">
+								<span class="contributor-time">{{ formatDuration(task.duration) }}</span>
+								<span class="contributor-share">{{ formatPercent(task.share) }}</span>
+							</span>
+						</li>
+						}
+					</ol>
+					}
+				</div>
+			</section>
+		</div>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #unavailable>
+	<div class="state">
+		<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EMPLOYEES_PAGE.VIEW.UNAVAILABLE' | translate }}</p>
+	</div>
+</ng-template>

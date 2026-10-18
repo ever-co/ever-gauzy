@@ -81,6 +81,7 @@ import {
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { ViewEmployeeComponent } from './view-employee/view-employee.component';
 import { EmployeeHoursChartComponent } from './view-employee/employee-hours-chart/employee-hours-chart.component';
+import { ProjectQuickLookComponent } from '../projects/components/project-quick-look/project-quick-look.component';
 import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view-header.component';
 import { BaseChartDirective } from 'ng2-charts';
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
@@ -160,6 +161,8 @@ const COMPONENTS = [
 		EmployeeHoursChartComponent,
 		// The assigned-task quick look's header — the same one the task lists and the team page use.
 		TaskViewHeaderComponent,
+		// The Projects panel's quick look. Standalone, shared with other Projects panels.
+		ProjectQuickLookComponent,
 		// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 		// imported directly — the Documents hub module is never pulled in here.
 		DocumentLinksPanelComponent
