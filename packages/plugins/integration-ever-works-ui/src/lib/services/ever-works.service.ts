@@ -120,7 +120,29 @@ export interface EverWorksPersonRow {
 	role: string;
 	isActive: boolean;
 	linkedEmployeeId: string | null;
-	suggestion: { employeeId: string; reason: 'verified_email' } | null;
+	/** How the pairing was made (absent from an older API, `null` while unpaired). */
+	matchedBy?: EverWorksMatchSource | null;
+	suggestion: { employeeId: string; reason: 'ever_id' | 'verified_email' } | null;
+	/** A Gauzy invitation still pending for the member's e-mail (absent from an older API). */
+	gauzyInvite?: { inviteId: string; expireDate: string | null } | null;
+}
+/** How a People-tab pairing was made: the same Ever ID, an accepted verified-e-mail suggestion, or by hand. */
+export type EverWorksMatchSource = 'ever_id' | 'verified_email' | 'manual';
+/** "Invite to Gauzy": a new invitation, or the one still pending for that e-mail. */
+export interface EverWorksInviteToGauzyResult {
+	status: 'invited' | 'pending';
+	inviteId: string;
+	email: string;
+	roleId: string;
+	expireDate: string | null;
+}
+/** "Invite to Ever Works": what Ever Works did (CR-13). */
+export interface EverWorksInviteToEverWorksResult {
+	status: 'invited' | 'pending' | 'already_member' | 'added';
+	email: string;
+	invitationId: string | null;
+	expiresAt: string | null;
+	ewUserId: string | null;
 }
 export interface EverWorksPeopleView {
 	members: EverWorksPersonRow[];
@@ -409,6 +431,16 @@ export class EverWorksUiService {
 
 	decidePeople(organizationId: string | null, integrationTenantId: string, decision: EverWorksPeopleDecision): Observable<EverWorksPeopleView> {
 		return this.http.put<EverWorksPeopleView>(`${this.mapping(integrationTenantId)}/people`, decision, this.org(organizationId));
+	}
+
+	/** Invites an unpaired Ever Works member to Gauzy (the platform's employee invitation, Employee role). */
+	inviteToGauzy(organizationId: string | null, integrationTenantId: string, body: { ewUserId: string }): Observable<EverWorksInviteToGauzyResult> {
+		return this.http.post<EverWorksInviteToGauzyResult>(`${this.mapping(integrationTenantId)}/people/invite-to-gauzy`, body, this.org(organizationId));
+	}
+
+	/** Invites an unpaired Gauzy person into the mapped Ever Works organization. */
+	inviteToEverWorks(organizationId: string | null, integrationTenantId: string, body: { employeeId: string }): Observable<EverWorksInviteToEverWorksResult> {
+		return this.http.post<EverWorksInviteToEverWorksResult>(`${this.mapping(integrationTenantId)}/people/invite-to-ever-works`, body, this.org(organizationId));
 	}
 
 	agents(organizationId: string | null, integrationTenantId: string): Observable<EverWorksAgentRow[]> {

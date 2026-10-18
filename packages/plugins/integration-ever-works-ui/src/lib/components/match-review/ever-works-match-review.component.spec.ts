@@ -401,13 +401,13 @@ describe('EverWorksMatchReviewComponent', () => {
 		});
 
 		it('offers "invite to Ever Works" for a Gauzy person with an e-mail that no member is suggested for or chosen for', () => {
-			const { component, fixture, el } = render();
+			const { component, el } = render();
 			const offered = () => Array.from(el.querySelectorAll('[data-test^="invite-ew-"]')).map((button) => button.getAttribute('data-test'));
 			// e1 is suggested for u1, e9 for u9 (Ever ID), e2 has no e-mail.
 			expect(offered()).toEqual(['invite-ew-e3']);
+			// Chosen for a member in this form: paired instead, so no longer offered.
 			component.personChoice['u4'] = 'e3';
-			fixture.detectChanges();
-			expect(offered()).toEqual([]);
+			expect(component.peopleToInviteToEverWorks()).toEqual([]);
 		});
 
 		it('asks before inviting to Ever Works, then shows what Ever Works did', () => {

@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { NbAlertModule, NbButtonModule, NbCheckboxModule, NbTabsetModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { map, switchMap, takeUntil } from 'rxjs/operators';
 import {
 	EverWorksAgentRow,
 	EverWorksInitiativesView,
 	EverWorksPeopleView,
+	EverWorksPersonRow,
 	EverWorksProjectsView,
 	EverWorksTeamsView,
 	EverWorksUiService
@@ -31,14 +32,25 @@ export function preselect(rows: ReadonlyArray<{ id: string; suggested: string | 
 
 type Section = 'people' | 'agents' | 'teams' | 'projects' | 'initiatives';
 
+/** An invitation the admin is asked to confirm: to Gauzy for a member, to Ever Works for a Gauzy person. */
+export interface EverWorksPendingInvite {
+	kind: 'gauzy' | 'everWorks';
+	/** The member's Ever Works user id (`gauzy`) or the person's employee id (`everWorks`). */
+	id: string;
+	name: string;
+	email: string;
+}
+
 /** A Gauzy initiative in this state goes to Ever Works only once it is active (the API refuses a draft). */
 export const DRAFT_INITIATIVE = 'draft';
 
 /**
  * Match review of a mapping (plan 01 §3, §5, §9, §10; plan 06 G-P1-6..8, G-P1-11, G-P2-2): people, agents,
- * teams, projects ↔ works and initiatives ↔ missions. Nothing is paired silently: a suggestion (a verified email, the same name or URL) is
- * preselected and the admin confirms it, pairs by hand, creates the record on the other side where the
- * mapping allows it, or removes a pairing. Used by the connect wizard and the settings page.
+ * teams, projects ↔ works and initiatives ↔ missions. Only a shared Ever ID pairs people by itself; otherwise a
+ * suggestion (a verified email, the same name or URL) is preselected and the admin confirms it, pairs by hand,
+ * creates the record on the other side where the mapping allows it, or removes a pairing. On the People tab the
+ * admin can also invite a member to Gauzy, or a Gauzy person to Ever Works, after a confirmation; each pairing
+ * shows how it was made. Used by the connect wizard and the settings page.
  */
 @Component({
 	selector: 'ngx-ever-works-match-review',
@@ -87,13 +99,92 @@ export const DRAFT_INITIATIVE = 'draft';
 														<option [value]="employee.employeeId">{{ employee.name }}{{ employee.email ? ' — ' + employee.email : '' }}</option>
 													}
 												</select>
+												@if (row.gauzyInvite) {
+													<small class="invite-note" [attr.data-test]="'gauzy-invite-pending-' + row.ewUserId">{{ 'EVER_WORKS.REVIEW.INVITE.GAUZY_PENDING' | translate }}</small>
+												} @else if (canInviteToGauzy(row)) {
+													<button
+														nbButton
+														ghost
+														size="tiny"
+														type="button"
+														[attr.data-test]="'invite-gauzy-' + row.ewUserId"
+														[disabled]="busy.people"
+														(click)="askInviteToGauzy(row)"
+													>
+														{{ 'EVER_WORKS.REVIEW.INVITE.TO_GAUZY' | translate }}
+													</button>
+												}
+												@if (inviteResults['gauzy:' + row.ewUserId]; as result) {
+													<small class="invite-note" [attr.data-test]="'invite-result-' + row.ewUserId">{{ result | translate }}</small>
+												}
 											}
 										</td>
-										<td>{{ stateLabel(!!row.linkedEmployeeId, !!row.suggestion) | translate }}</td>
+										<td>
+											{{ stateLabel(!!row.linkedEmployeeId, !!row.suggestion) | translate }}
+											@if (row.linkedEmployeeId && row.matchedBy) {
+												<small [attr.data-test]="'match-source-' + row.ewUserId">· {{ 'EVER_WORKS.REVIEW.MATCHED_BY.' + row.matchedBy | translate }}</small>
+											} @else if (!row.linkedEmployeeId && row.suggestion) {
+												<small [attr.data-test]="'suggestion-reason-' + row.ewUserId">· {{ 'EVER_WORKS.REVIEW.MATCHED_BY.' + row.suggestion.reason | translate }}</small>
+											}
+										</td>
 									</tr>
 								}
 							</tbody>
 						</table>
+						@if (peopleToInviteToEverWorks().length) {
+							<h6>{{ 'EVER_WORKS.REVIEW.INVITE.GAUZY_PEOPLE' | translate }}</h6>
+							<ul class="invite-list" data-test="ew-invite-list">
+								@for (employee of peopleToInviteToEverWorks(); track employee.employeeId) {
+									<li>
+										{{ employee.name }} — {{ employee.email }}
+										<button
+											nbButton
+											ghost
+											size="tiny"
+											type="button"
+											[attr.data-test]="'invite-ew-' + employee.employeeId"
+											[disabled]="busy.people"
+											(click)="askInviteToEverWorks(employee)"
+										>
+											{{ 'EVER_WORKS.REVIEW.INVITE.TO_EVER_WORKS' | translate }}
+										</button>
+										@if (inviteResults['ew:' + employee.employeeId]; as result) {
+											<small class="invite-note" [attr.data-test]="'invite-result-' + employee.employeeId">{{ result | translate }}</small>
+										}
+									</li>
+								}
+							</ul>
+						}
+						@if (inviting; as invite) {
+							<div
+								class="invite-confirm"
+								role="dialog"
+								[attr.aria-label]="(invite.kind === 'gauzy' ? 'EVER_WORKS.REVIEW.INVITE.CONFIRM_GAUZY_TITLE' : 'EVER_WORKS.REVIEW.INVITE.CONFIRM_EVER_WORKS_TITLE') | translate"
+								data-test="invite-confirm"
+							>
+								<h6>
+									{{ (invite.kind === 'gauzy' ? 'EVER_WORKS.REVIEW.INVITE.CONFIRM_GAUZY_TITLE' : 'EVER_WORKS.REVIEW.INVITE.CONFIRM_EVER_WORKS_TITLE') | translate }}
+								</h6>
+								<p>
+									<strong>{{ invite.name }}</strong> — {{ invite.email }}
+								</p>
+								<dl>
+									<dt>{{ 'EVER_WORKS.REVIEW.INVITE.ORGANIZATION' | translate }}</dt>
+									<dd>{{ (invite.kind === 'gauzy' ? 'EVER_WORKS.REVIEW.INVITE.ORGANIZATION_GAUZY' : 'EVER_WORKS.REVIEW.INVITE.ORGANIZATION_EVER_WORKS') | translate }}</dd>
+									<dt>{{ 'EVER_WORKS.REVIEW.INVITE.ROLE' | translate }}</dt>
+									<dd>{{ (invite.kind === 'gauzy' ? 'EVER_WORKS.REVIEW.INVITE.ROLE_EMPLOYEE' : 'EVER_WORKS.REVIEW.INVITE.ROLE_MEMBER') | translate }}</dd>
+								</dl>
+								<p>
+									<small>{{ (invite.kind === 'gauzy' ? 'EVER_WORKS.REVIEW.INVITE.CONFIRM_GAUZY_HINT' : 'EVER_WORKS.REVIEW.INVITE.CONFIRM_EVER_WORKS_HINT') | translate }}</small>
+								</p>
+								<div class="actions">
+									<button nbButton ghost type="button" data-test="invite-confirm-no" (click)="cancelInvite()">{{ 'EVER_WORKS.COMMON.CANCEL' | translate }}</button>
+									<button nbButton status="primary" type="button" data-test="invite-confirm-yes" [disabled]="busy.people" (click)="confirmInvite()">
+										{{ 'EVER_WORKS.REVIEW.INVITE.SEND' | translate }}
+									</button>
+								</div>
+							</div>
+						}
 						<div class="actions">
 							<button nbButton ghost type="button" data-test="accept-people" [disabled]="busy.people" (click)="acceptPeople()">
 								{{ 'EVER_WORKS.REVIEW.ACCEPT_ALL' | translate }}
@@ -345,6 +436,20 @@ export const DRAFT_INITIATIVE = 'draft';
 			.nested {
 				padding-left: 1.5rem;
 			}
+			.invite-note {
+				display: block;
+				margin-top: 0.25rem;
+			}
+			.invite-list {
+				list-style: none;
+				padding-left: 0;
+			}
+			.invite-confirm {
+				margin-top: 1rem;
+				padding: 1rem;
+				border: 1px solid var(--border-basic-color-4, #e4e9f2);
+				border-radius: 0.25rem;
+			}
 		`
 	]
 })
@@ -387,6 +492,10 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		initiatives: new Set()
 	};
 	errors: Record<Section, string | null> = { people: null, agents: null, teams: null, projects: null, initiatives: null };
+	/** The invitation waiting for the admin's confirmation, or `null`. */
+	inviting: EverWorksPendingInvite | null = null;
+	/** What each invitation did, as a translation key: `gauzy:<ewUserId>` and `ew:<employeeId>`. */
+	inviteResults: Record<string, string> = {};
 
 	ngOnChanges(changes?: SimpleChanges): void {
 		if (changes && !changes['organizationId'] && !changes['integrationTenantId']) return;
@@ -397,6 +506,8 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		this.missionChoice = {};
 		this.createMissionInEverWorks = {};
 		this.removed.initiatives.clear();
+		this.inviting = null;
+		this.inviteResults = {};
 		if (!this.integrationTenantId) return;
 		const id = this.integrationTenantId;
 		this.run('people', this.api.people(this.organizationId, id), (view) => this.setPeople(view));
@@ -459,6 +570,63 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	unlinkPerson(ewUserId: string): void {
 		this.removed.people.add(ewUserId);
 		this.run('people', this.api.decidePeople(this.organizationId, this.id, { unlinks: [ewUserId] }), (view) => this.setPeople(view));
+	}
+
+	/**
+	 * A member can be invited to Gauzy: unpaired, active, with an e-mail Ever Works verified, no Gauzy person suggested
+	 * for them (that person is paired instead) and no Gauzy invitation still pending.
+	 */
+	canInviteToGauzy(row: EverWorksPersonRow): boolean {
+		return !row.linkedEmployeeId && row.isActive && !!row.email && row.emailVerified && !row.suggestion && !row.gauzyInvite;
+	}
+
+	/**
+	 * Gauzy people who can be invited to Ever Works: unpaired, with an e-mail, and neither suggested for a member nor
+	 * chosen for one in this form (those are paired instead).
+	 */
+	peopleToInviteToEverWorks(): Array<{ employeeId: string; name: string; email: string }> {
+		const taken = new Set<string>([
+			...Object.values(this.personChoice).filter(Boolean),
+			...(this.people?.members ?? []).map((row) => row.suggestion?.employeeId ?? '').filter(Boolean)
+		]);
+		return (this.people?.unmatchedEmployees ?? [])
+			.filter((employee): employee is { employeeId: string; name: string; email: string } => !!employee.email && !taken.has(employee.employeeId))
+			.map((employee) => ({ employeeId: employee.employeeId, name: employee.name, email: employee.email }));
+	}
+
+	askInviteToGauzy(row: EverWorksPersonRow): void {
+		this.inviting = { kind: 'gauzy', id: row.ewUserId, name: row.displayName || row.username, email: row.email ?? '' };
+		this.cdr.markForCheck();
+	}
+
+	askInviteToEverWorks(employee: { employeeId: string; name: string; email: string }): void {
+		this.inviting = { kind: 'everWorks', id: employee.employeeId, name: employee.name, email: employee.email };
+		this.cdr.markForCheck();
+	}
+
+	cancelInvite(): void {
+		this.inviting = null;
+		this.cdr.markForCheck();
+	}
+
+	/** Sends the confirmed invitation, notes what it did, and reads the tab again (an invitation pairs nobody). */
+	confirmInvite(): void {
+		const invite = this.inviting;
+		if (!invite) return;
+		this.inviting = null;
+		const id = this.id;
+		const sent: Observable<{ key: string; result: string }> =
+			invite.kind === 'gauzy'
+				? this.api.inviteToGauzy(this.organizationId, id, { ewUserId: invite.id }).pipe(map((result) => ({ key: `gauzy:${invite.id}`, result: result.status })))
+				: this.api.inviteToEverWorks(this.organizationId, id, { employeeId: invite.id }).pipe(map((result) => ({ key: `ew:${invite.id}`, result: result.status })));
+		this.run(
+			'people',
+			sent.pipe(switchMap((done) => this.api.people(this.organizationId, id).pipe(map((view) => ({ ...done, view }))))),
+			({ key, result, view }) => {
+				this.inviteResults = { ...this.inviteResults, [key]: `EVER_WORKS.REVIEW.INVITE.RESULT.${result}` };
+				this.setPeople(view);
+			}
+		);
 	}
 
 	// ── Teams ──────────────────────────────────────────────────────────────────────────────────────

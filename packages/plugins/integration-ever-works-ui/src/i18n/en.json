@@ -24,7 +24,8 @@
 		"LOADING": "Loading…",
 		"NONE": "None",
 		"YES": "Yes",
-		"NO": "No"
+		"NO": "No",
+		"CANCEL": "Cancel"
 	},
 	"STEPS": {
 		"KEY": "Integration key",
@@ -69,7 +70,7 @@
 		"NONE_PINNED": "The key is pinned to no Ever Works organization."
 	},
 	"REVIEW": {
-		"INTRO": "Nothing is paired silently: confirm the suggestions, pair by hand, or leave a record unpaired.",
+		"INTRO": "Only a shared Ever ID pairs people by itself: confirm the suggestions, pair by hand, or leave a record unpaired.",
 		"PEOPLE": "People",
 		"AGENTS": "Agents",
 		"TEAMS": "Teams",
@@ -101,7 +102,35 @@
 		"AGENTS_EMPTY": "No agent is provisioned yet.",
 		"PROJECTS_UNAVAILABLE": "Pairing projects with works is not available on this installation yet.",
 		"EMPTY": "Nothing to pair.",
-		"DUPLICATE_CHOICE": "The same Gauzy record is chosen for two Ever Works records. Choose it for one of them only."
+		"DUPLICATE_CHOICE": "The same Gauzy record is chosen for two Ever Works records. Choose it for one of them only.",
+		"MATCHED_BY": {
+			"ever_id": "Ever ID",
+			"verified_email": "verified email",
+			"manual": "paired by hand"
+		},
+		"INVITE": {
+			"TO_GAUZY": "Invite to Gauzy",
+			"TO_EVER_WORKS": "Invite to Ever Works",
+			"GAUZY_PENDING": "Invited to Gauzy: the invitation is pending",
+			"GAUZY_PEOPLE": "Gauzy people with no Ever Works member",
+			"CONFIRM_GAUZY_TITLE": "Invite this member to Gauzy?",
+			"CONFIRM_EVER_WORKS_TITLE": "Invite this person to Ever Works?",
+			"ORGANIZATION": "Organization",
+			"ORGANIZATION_GAUZY": "The Gauzy organization this mapping syncs",
+			"ORGANIZATION_EVER_WORKS": "The Ever Works organization this mapping syncs",
+			"ROLE": "Role",
+			"ROLE_EMPLOYEE": "Employee (the role whose acceptance creates a person to pair; change it in Gauzy once they have joined)",
+			"ROLE_MEMBER": "Member (an Ever Works owner promotes members)",
+			"CONFIRM_GAUZY_HINT": "Gauzy sends its invitation email. Nothing is paired: once they join, their verified email suggests the pairing here.",
+			"CONFIRM_EVER_WORKS_HINT": "Ever Works sends its invitation email, as your paired Ever Works user (or the integration key owner). Nothing is paired: once they join, pair them here.",
+			"SEND": "Send the invitation",
+			"RESULT": {
+				"invited": "Invitation sent",
+				"pending": "An invitation is already pending; nothing was sent again",
+				"already_member": "Already a member of the Ever Works organization: pair them above",
+				"added": "Added to the Ever Works organization: pair them above"
+			}
+		}
 	},
 	"DIRECTIONS": {
 		"INTRO": "Choose what syncs and in which direction. Records that are private in Ever Works never sync.",

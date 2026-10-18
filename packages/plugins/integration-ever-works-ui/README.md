@@ -32,7 +32,11 @@ settings; any other one gets the **connect wizard** (plan item G-P1-11):
    Missions. Suggestions are preselected and nothing is paired until saved;
    teams, projects and initiatives can be created on the other side where the
    mapping allows it (a mission created from Gauzy starts paused; a draft
-   initiative waits until it is active).
+   initiative waits until it is active). On People, a shared Ever ID pairs by
+   itself and each pairing shows how it was made (Ever ID, verified email, by
+   hand); an unpaired member can be invited to Gauzy (Employee role) and an
+   unpaired Gauzy person to Ever Works, each after a confirmation that names
+   the organization and role. An invitation pairs nobody.
 5. **Entities and directions**: one direction per synced domain (only the
    directions that domain allows) and whether tasks of projects not paired with
    a work sync too.
