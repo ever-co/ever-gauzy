@@ -131,6 +131,7 @@
 		"class-validator": "^0.15.1",
 		"clarity-decode": "^0.8.72",
 		"cloudinary": "^2.11.0",
+		"compression": "^1.8.2",
 		"connect-redis": "^10.0.0",
 		"cross-fetch": "^4.1.0",
 		"csurf": "^1.11.0",

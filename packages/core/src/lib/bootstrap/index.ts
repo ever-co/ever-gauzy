@@ -69,6 +69,7 @@ import { validateApplicationSecrets } from './validate-secrets';
 import { createPerfMetricsMiddleware, instrumentPg, isPerfMetricsEnabled, startEventLoopMonitor } from './perf-metrics';
 import { resolveLogLevels } from './log-levels';
 import { memoizeRequestQuery } from './request-query-memo';
+import { createResponseCompression, resolveResponseCompression } from './response-compression';
 import { applyClassValidatorMetadataPatches } from '../shared/validators/class-validator-metadata.patches';
 import { applyClassTransformerMetadataPatches } from '../core/interceptors/class-transformer-metadata.patches';
 
@@ -286,6 +287,21 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
     		crossOriginEmbedderPolicy: isProduction // strict in production, relaxed in dev/stage for Electron/desktop
 		})
 	);
+
+	// Compress responses (gzip / Brotli, negotiated per request). Nothing did until now — the API's JSON bodies
+	// crossed the network as they were (`/role-permissions/me` ~164 KB). See ./response-compression.ts.
+	const compressionSettings = resolveResponseCompression(process.env);
+	const responseCompression = createResponseCompression(compressionSettings);
+	if (responseCompression) {
+		app.use(responseCompression);
+		console.log(
+			chalk.green(
+				`Response compression on (level ${compressionSettings.level}, from ${compressionSettings.threshold} bytes)`
+			)
+		);
+	} else {
+		console.log(chalk.yellow('Response compression off (API_COMPRESSION)'));
+	}
 
 	// Set the global prefix for routes
 	const globalPrefix = 'api';
