@@ -404,6 +404,23 @@ export class MockEverWorksServer {
 		return row;
 	}
 
+	/**
+	 * Ever Works' sub-task rule: a task agrees with its parent on every owner (work, mission, idea, team — the
+	 * first of `teamIds` —, agent, goal), else `400 validation_failed` with Ever Works' own message.
+	 */
+	static parentScopeRefusal(child: Record<string, unknown>, parent: Record<string, unknown>): EverWorksHttpResponse | null {
+		const scopeOf = (task: Record<string, unknown>) => {
+			const owners: Record<string, unknown> = { ...task, teamId: ((task['teamIds'] as string[] | null | undefined) ?? [])[0] ?? null };
+			const parts = ['workId', 'missionId', 'ideaId', 'teamId', 'agentId', 'goalId'].filter((key) => owners[key]).map((key) => `${key.slice(0, -2)}:${String(owners[key])}`);
+			return parts.length ? parts.join('|') : 'unscoped';
+		};
+		const childScope = scopeOf(child);
+		const parentScope = scopeOf(parent);
+		return childScope === parentScope
+			? null
+			: MockEverWorksServer.error(400, 'validation_failed', `Parent Task scope (${parentScope}) must match child Task scope (${childScope}).`);
+	}
+
 	/** An `ever-gauzy` key links as `gauzy` (contract v1, CR-1). */
 	static linkSource(key: Pick<MockEverWorksKey, 'integrationKind'>): string {
 		return key.integrationKind === 'ever-gauzy' ? 'gauzy' : key.integrationKind || 'generic';
@@ -484,6 +501,12 @@ export class MockEverWorksServer {
 			const fields = { ...input };
 			delete fields['externalRef'];
 			const teamIds = (fields['teamIds'] as string[] | undefined) ?? [];
+			if (typeof fields['parentTaskId'] === 'string') {
+				const parent = this.tasks.get(fields['parentTaskId']);
+				if (!visible(parent)) return MockEverWorksServer.error(400, 'validation_failed', `Parent Task ${fields['parentTaskId']} not found.`);
+				const refused = MockEverWorksServer.parentScopeRefusal(fields, parent);
+				if (refused) return refused;
+			}
 			const task = this.addTask(organizationId, {
 				...fields,
 				status: (fields['status'] as string | undefined) ?? 'backlog',
@@ -506,6 +529,15 @@ export class MockEverWorksServer {
 		if (parts.length === 2 && method === 'PATCH') {
 			if ('status' in input) return MockEverWorksServer.error(400, 'validation_failed', 'status moves through /transition.');
 			if (input['visibility'] === 'private') return MockEverWorksServer.error(422, 'domain_rule', 'An integration cannot make a record private.');
+			// The parent the task has after this request, checked against the owners it has after it.
+			const parentId = 'parentTaskId' in input ? input['parentTaskId'] : row['parentTaskId'];
+			const owners = ['parentTaskId', 'workId', 'missionId', 'ideaId', 'teamIds', 'agentId', 'goalId'];
+			if (typeof parentId === 'string' && owners.some((field) => field in input)) {
+				const parent = this.tasks.get(parentId);
+				if (!visible(parent)) return MockEverWorksServer.error(400, 'validation_failed', `Parent Task ${parentId} not found.`);
+				const refused = MockEverWorksServer.parentScopeRefusal({ ...row, ...input }, parent);
+				if (refused) return refused;
+			}
 			const previous: Record<string, unknown> = {};
 			for (const [field, value] of Object.entries(input)) {
 				previous[field] = row[field] ?? null;

@@ -1337,3 +1337,64 @@ describe('task comments and links review round 2 (#10813)', () => {
 		expect(t.comments[0]?.html).toBe('<p>v2</p>');
 	});
 });
+
+describe('a parent Ever Works refuses (another team or work; local e2e)', () => {
+	const ewOf = (t: ReturnType<typeof setup>, gauzyId: string) => t.mock.tasks.get(t.links.find((l) => l.entityType === EverWorksLinkType.TASK && l.gauzyId === gauzyId)?.ewId as string);
+	const heldOf = (t: ReturnType<typeof setup>, gauzyId: string) =>
+		JSON.parse(t.links.find((l) => l.entityType === EverWorksLinkType.TASK && l.gauzyId === gauzyId)?.ewOnly ?? '{}')['heldParent'] ?? null;
+
+	it('a sub-task of a parent on another team is created without the parent, logged, and not refused again', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.TEAM, 'g-team-a', 'ew-team-a');
+		t.link(EverWorksLinkType.TEAM, 'g-team-b', 'ew-team-b');
+		t.addGauzyTask({ id: 'g-parent', title: 'Parent', teams: [{ id: 'g-team-a' }] });
+		t.addGauzyTask({ id: 'g-child', title: 'Child', parentId: 'g-parent', teams: [{ id: 'g-team-b' }], priority: 'urgent' });
+		await t.push('g-parent');
+		// Before: Ever Works' 400 dead-lettered the whole create.
+		expect(await t.push('g-child')).toEqual({ status: 'pushed', message: 'created in Ever Works' });
+		expect(ewOf(t, 'g-child')).toMatchObject({ title: 'Child', teamIds: ['ew-team-b'], priority: 'p0', parentTaskId: null });
+		expect(t.logged).toEqual([expect.objectContaining({ action: 'parent_scope_refused', gauzyId: 'g-child', status: 'conflict' })]);
+		expect(heldOf(t, 'g-child')).toMatchObject({ parentId: 'g-parent' });
+		// The same parent is not sent again while nothing moved: no request, no second refusal.
+		const before = t.mock.requests.length;
+		expect(await t.push('g-child')).toEqual({ status: 'skipped', message: 'nothing changed' });
+		Object.assign(t.tasks.get('g-child') as GauzyTask, { title: 'Child renamed' });
+		expect(await t.push('g-child')).toEqual({ status: 'pushed' });
+		expect(t.mock.requests.slice(before).filter((r) => r.method === 'PATCH').map((r) => r.body)).toEqual([{ title: 'Child renamed' }]);
+		expect(t.logged).toHaveLength(1);
+		// Moved onto the parent's team in Gauzy: the parent goes out with the move.
+		Object.assign(t.tasks.get('g-child') as GauzyTask, { teams: [{ id: 'g-team-a' }] });
+		expect(await t.push('g-child')).toEqual({ status: 'pushed' });
+		expect(ewOf(t, 'g-child')).toMatchObject({ teamIds: ['ew-team-a'], parentTaskId: ewOf(t, 'g-parent')?.['id'] });
+		expect(heldOf(t, 'g-child')).toBeNull();
+	});
+
+	it('a synced sub-task moved to another team keeps syncing: the rest goes out, the parent is left out', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.TEAM, 'g-team-a', 'ew-team-a');
+		t.link(EverWorksLinkType.TEAM, 'g-team-b', 'ew-team-b');
+		t.addGauzyTask({ id: 'g-parent', title: 'Parent', teams: [{ id: 'g-team-a' }] });
+		t.addGauzyTask({ id: 'g-child', title: 'Child', parentId: 'g-parent', teams: [{ id: 'g-team-a' }] });
+		await t.push('g-parent');
+		await t.push('g-child');
+		expect(ewOf(t, 'g-child')?.['parentTaskId']).toBe(ewOf(t, 'g-parent')?.['id']);
+		Object.assign(t.tasks.get('g-child') as GauzyTask, { title: 'Moved', teams: [{ id: 'g-team-b' }] });
+		expect(await t.push('g-child')).toEqual({ status: 'pushed' });
+		expect(ewOf(t, 'g-child')).toMatchObject({ title: 'Moved', teamIds: ['ew-team-b'], parentTaskId: null });
+		expect(t.logged).toEqual([expect.objectContaining({ action: 'parent_scope_refused', gauzyId: 'g-child' })]);
+		// Gauzy keeps its parent: nothing is written back.
+		expect((t.tasks.get('g-child') as GauzyTask)['parentId']).toBe('g-parent');
+		expect(heldOf(t, 'g-child')).toMatchObject({ parentId: 'g-parent' });
+	});
+
+	it('another refusal of a sub-task still stops the change (no retry without the parent)', async () => {
+		const t = setup();
+		t.addGauzyTask({ id: 'g-parent', title: 'Parent' });
+		t.addGauzyTask({ id: 'g-child', title: 'Child', parentId: 'g-parent' });
+		await t.push('g-parent');
+		t.mock.fail({ method: 'POST', path: '/tasks', status: 400, body: { error: { code: 'validation_failed', message: 'title is not valid.' } } });
+		await expect(t.push('g-child')).rejects.toMatchObject({ status: 400, code: 'validation_failed' });
+		expect(t.mock.requests.filter((r) => r.method === 'POST' && r.path === '/tasks')).toHaveLength(2);
+		expect(t.logged).toEqual([]);
+	});
+});
