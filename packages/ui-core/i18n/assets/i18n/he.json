@@ -6877,5 +6877,41 @@
 		"NO_MEMBERS": "אין עדיין חברים בפרויקט זה",
 		"MODULES": "מודולים",
 		"MODULE_TASKS": "{{ count }} משימות"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "סקירה",
+			"BOARD": "לוח",
+			"PLANNING": "תכנון",
+			"TIME": "זמן",
+			"ACTIVITY": "פעילות"
+		},
+		"BOARD": "לוח",
+		"COLUMN_EMPTY": "אין משימות",
+		"BURN_UP": "תרשים התקדמות",
+		"BURN_UP_CAPTION": "משימות בהיקף ושהושלמו · {{ range }}",
+		"BURN_UP_SUMMARY": "הושלמו {{ done }} מתוך {{ total }}",
+		"SCOPE": "היקף",
+		"SPRINTS": "ספרינטים",
+		"NO_SPRINTS": "אין עדיין ספרינטים לפרויקט זה",
+		"SPRINT_TASKS": "הושלמו {{ done }}/{{ total }} משימות",
+		"DAYS_LEFT": "נותרו {{ count }} ימים",
+		"HEATMAP": "שעות לפי יום",
+		"HEATMAP_CAPTION": "שעות העובדים הפעילים ביותר בכל יום · {{ range }}",
+		"LESS": "פחות",
+		"MORE": "יותר",
+		"COST": "עלות עבודה",
+		"COST_CAPTION": "שעות × התעריף של כל חבר",
+		"NO_RATES": "לא הוגדרו תעריפים לחברי הפרויקט",
+		"ACTIVITY": "פעילות",
+		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
+		"NO_ACTIVITY": "אין עדיין פעילות",
+		"ACTIVITY_CREATED": "{{ actor }} יצר",
+		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
+		"ACTIVITY_DELETED": "{{ actor }} מחק",
+		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
+		"SOMEONE": "מישהו",
+		"TODAY": "היום",
+		"YESTERDAY": "אתמול"
 	}
 }

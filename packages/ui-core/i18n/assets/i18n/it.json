@@ -6867,5 +6867,41 @@
 		"NO_MEMBERS": "Ancora nessun membro in questo progetto",
 		"MODULES": "Moduli",
 		"MODULE_TASKS": "{{ count }} attività"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Panoramica",
+			"BOARD": "Bacheca",
+			"PLANNING": "Pianificazione",
+			"TIME": "Tempo",
+			"ACTIVITY": "Attività"
+		},
+		"BOARD": "Bacheca",
+		"COLUMN_EMPTY": "Nessuna attività",
+		"BURN_UP": "Burn-up",
+		"BURN_UP_CAPTION": "Attività nel perimetro e completate · {{ range }}",
+		"BURN_UP_SUMMARY": "{{ done }} completate su {{ total }}",
+		"SCOPE": "Perimetro",
+		"SPRINTS": "Sprint",
+		"NO_SPRINTS": "Ancora nessuno sprint per questo progetto",
+		"SPRINT_TASKS": "{{ done }}/{{ total }} attività completate",
+		"DAYS_LEFT": "{{ count }} giorni rimanenti",
+		"HEATMAP": "Ore per giorno",
+		"HEATMAP_CAPTION": "Ore delle persone più attive ogni giorno · {{ range }}",
+		"LESS": "Meno",
+		"MORE": "Più",
+		"COST": "Costo del lavoro",
+		"COST_CAPTION": "Ore × tariffa di ogni membro",
+		"NO_RATES": "Nessuna tariffa impostata per i membri del progetto",
+		"ACTIVITY": "Attività",
+		"ACTIVITY_CAPTION": "Modifiche recenti al progetto e alle sue attività",
+		"NO_ACTIVITY": "Ancora nessuna attività",
+		"ACTIVITY_CREATED": "{{ actor }} ha creato",
+		"ACTIVITY_UPDATED": "{{ actor }} ha aggiornato",
+		"ACTIVITY_DELETED": "{{ actor }} ha eliminato",
+		"ACTIVITY_FIELDS": "Modificato: {{ fields }}",
+		"SOMEONE": "Qualcuno",
+		"TODAY": "Oggi",
+		"YESTERDAY": "Ieri"
 	}
 }

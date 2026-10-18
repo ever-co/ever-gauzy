@@ -5907,5 +5907,41 @@
 		"NO_MEMBERS": "No members on this project yet",
 		"MODULES": "Modules",
 		"MODULE_TASKS": "{{ count }} tasks"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overview",
+			"BOARD": "Board",
+			"PLANNING": "Planning",
+			"TIME": "Time",
+			"ACTIVITY": "Activity"
+		},
+		"BOARD": "Board",
+		"COLUMN_EMPTY": "No tasks",
+		"BURN_UP": "Burn-up",
+		"BURN_UP_CAPTION": "Tasks in scope and done · {{ range }}",
+		"BURN_UP_SUMMARY": "{{ done }} done of {{ total }}",
+		"SCOPE": "Scope",
+		"SPRINTS": "Sprints",
+		"NO_SPRINTS": "No sprints for this project yet",
+		"SPRINT_TASKS": "{{ done }}/{{ total }} tasks done",
+		"DAYS_LEFT": "{{ count }} days left",
+		"HEATMAP": "Hours by day",
+		"HEATMAP_CAPTION": "The busiest people's hours on each day · {{ range }}",
+		"LESS": "Less",
+		"MORE": "More",
+		"COST": "Labor cost",
+		"COST_CAPTION": "Hours × each member's bill rate",
+		"NO_RATES": "No bill rates set for the project's members",
+		"ACTIVITY": "Activity",
+		"ACTIVITY_CAPTION": "Recent changes to the project and its tasks",
+		"NO_ACTIVITY": "No activity yet",
+		"ACTIVITY_CREATED": "{{ actor }} created",
+		"ACTIVITY_UPDATED": "{{ actor }} updated",
+		"ACTIVITY_DELETED": "{{ actor }} deleted",
+		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"SOMEONE": "Someone",
+		"TODAY": "Today",
+		"YESTERDAY": "Yesterday"
 	}
 }

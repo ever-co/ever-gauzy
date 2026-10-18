@@ -6869,5 +6869,41 @@
 		"NO_MEMBERS": "Aún no hay miembros en este proyecto",
 		"MODULES": "Módulos",
 		"MODULE_TASKS": "{{ count }} tareas"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Resumen",
+			"BOARD": "Tablero",
+			"PLANNING": "Planificación",
+			"TIME": "Tiempo",
+			"ACTIVITY": "Actividad"
+		},
+		"BOARD": "Tablero",
+		"COLUMN_EMPTY": "Sin tareas",
+		"BURN_UP": "Burn-up",
+		"BURN_UP_CAPTION": "Tareas en alcance y completadas · {{ range }}",
+		"BURN_UP_SUMMARY": "{{ done }} completadas de {{ total }}",
+		"SCOPE": "Alcance",
+		"SPRINTS": "Sprints",
+		"NO_SPRINTS": "Aún no hay sprints para este proyecto",
+		"SPRINT_TASKS": "{{ done }}/{{ total }} tareas completadas",
+		"DAYS_LEFT": "Quedan {{ count }} días",
+		"HEATMAP": "Horas por día",
+		"HEATMAP_CAPTION": "Horas de las personas más activas cada día · {{ range }}",
+		"LESS": "Menos",
+		"MORE": "Más",
+		"COST": "Costo laboral",
+		"COST_CAPTION": "Horas × tarifa de cada miembro",
+		"NO_RATES": "No hay tarifas definidas para los miembros del proyecto",
+		"ACTIVITY": "Actividad",
+		"ACTIVITY_CAPTION": "Cambios recientes en el proyecto y sus tareas",
+		"NO_ACTIVITY": "Aún no hay actividad",
+		"ACTIVITY_CREATED": "{{ actor }} creó",
+		"ACTIVITY_UPDATED": "{{ actor }} actualizó",
+		"ACTIVITY_DELETED": "{{ actor }} eliminó",
+		"ACTIVITY_FIELDS": "Cambios: {{ fields }}",
+		"SOMEONE": "Alguien",
+		"TODAY": "Hoy",
+		"YESTERDAY": "Ayer"
 	}
 }

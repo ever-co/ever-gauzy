@@ -6885,5 +6885,41 @@
 		"NO_MEMBERS": "В этом проекте пока нет участников",
 		"MODULES": "Модули",
 		"MODULE_TASKS": "Задач: {{ count }}"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Обзор",
+			"BOARD": "Доска",
+			"PLANNING": "Планирование",
+			"TIME": "Время",
+			"ACTIVITY": "Активность"
+		},
+		"BOARD": "Доска",
+		"COLUMN_EMPTY": "Нет задач",
+		"BURN_UP": "Диаграмма выполнения",
+		"BURN_UP_CAPTION": "Задачи в объёме и выполненные · {{ range }}",
+		"BURN_UP_SUMMARY": "Выполнено {{ done }} из {{ total }}",
+		"SCOPE": "Объём",
+		"SPRINTS": "Спринты",
+		"NO_SPRINTS": "В этом проекте пока нет спринтов",
+		"SPRINT_TASKS": "Выполнено задач: {{ done }}/{{ total }}",
+		"DAYS_LEFT": "Осталось дней: {{ count }}",
+		"HEATMAP": "Часы по дням",
+		"HEATMAP_CAPTION": "Часы самых занятых участников по дням · {{ range }}",
+		"LESS": "Меньше",
+		"MORE": "Больше",
+		"COST": "Стоимость работы",
+		"COST_CAPTION": "Часы × ставка каждого участника",
+		"NO_RATES": "Для участников проекта ставки не заданы",
+		"ACTIVITY": "Активность",
+		"ACTIVITY_CAPTION": "Последние изменения проекта и его задач",
+		"NO_ACTIVITY": "Пока нет активности",
+		"ACTIVITY_CREATED": "{{ actor }} создал(а)",
+		"ACTIVITY_UPDATED": "{{ actor }} изменил(а)",
+		"ACTIVITY_DELETED": "{{ actor }} удалил(а)",
+		"ACTIVITY_FIELDS": "Изменено: {{ fields }}",
+		"SOMEONE": "Кто-то",
+		"TODAY": "Сегодня",
+		"YESTERDAY": "Вчера"
 	}
 }
