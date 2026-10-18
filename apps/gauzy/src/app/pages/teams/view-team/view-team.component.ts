@@ -869,12 +869,15 @@ export class ViewTeamComponent extends TranslationBaseComponent implements OnIni
 
 	/**
 	 * The open project's row in the Projects panel as it stands now — its time follows the
-	 * period and the statistics as they load. Until the row exists, the card it was opened from.
+	 * period and the statistics as they load. A project not linked to the team drops out of
+	 * the panel once it has no time in the period: it keeps the card's logo, not its old time.
 	 */
 	get viewedProjectRow(): IProjectOverviewRow | null {
 		const id = this.viewedProject?.id;
 		if (!id) return null;
-		return this.projectOverview.find((row) => row.id === id) || this.viewedProjectCard;
+		const row = this.projectOverview.find((item) => item.id === id);
+		if (row) return row;
+		return this.viewedProjectCard ? { ...this.viewedProjectCard, duration: 0, share: 0, width: 0 } : null;
 	}
 
 	/** The team's hours on the open project over the period, tracked and manual. */
