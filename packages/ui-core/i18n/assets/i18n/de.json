@@ -6836,5 +6836,20 @@
 			"ROTATE_FAILED": "Client-Geheimnis konnte nicht rotiert werden",
 			"DELETE_FAILED": "OAuth-Client konnte nicht widerrufen werden"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Details zum Projekt {{ name }} anzeigen",
+		"PROGRESS": "Fortschritt",
+		"PROGRESS_META": "{{ done }} von {{ total }} Aufgaben erledigt",
+		"NO_TASKS": "Noch keine Aufgaben in diesem Projekt",
+		"NEEDS_ATTENTION": "Erfordert Aufmerksamkeit",
+		"NEEDS_ATTENTION_CAPTION": "Überfällige und in den nächsten 3 Tagen fällige Aufgaben",
+		"ACTIVITY": "Tägliche Aktivität",
+		"TOP_CONTRIBUTORS": "Wer am meisten gearbeitet hat",
+		"CONTRIBUTORS_CAPTION": "Zeit aller an diesem Projekt · {{ range }}",
+		"YOUR_TIME_CAPTION": "Ihre Zeit an diesem Projekt · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Zeit der Teammitglieder an diesem Projekt · {{ range }}",
+		"BUDGET_USED": "{{ used }} von {{ budget }} verbraucht",
+		"OVER_BUDGET": "{{ value }} über dem Budget"
 	}
 }

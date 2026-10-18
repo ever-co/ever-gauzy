@@ -1397,6 +1397,27 @@ nb-card-body.ev-body {
 	}
 }
 
+// A card that opens the project's quick look: a plain button, marked while its drawer is open.
+.project-open {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	text-align: start;
+	color: inherit;
+	cursor: pointer;
+
+	&.is-viewed {
+		background-color: var(--gauzy-active-tint);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+	}
+}
+
 .project-body {
 	display: flex;
 	flex-direction: column;
