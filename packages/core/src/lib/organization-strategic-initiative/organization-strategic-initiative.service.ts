@@ -307,21 +307,29 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 
 	/**
 	 * The CRUD controller's inherited `GET /pagination`: the same read as the list (the caller's organizations, then
-	 * the visibility rule), on one page.
+	 * the visibility rule), then one page of what the caller may see, and the number of all of it. The rule has no
+	 * query form (the steward, the caller's teams through the linked teams and the projects' teams), so the page is cut
+	 * after it: a page cut in the query would come back short, and its total would hide the later pages. As in the
+	 * CRUD base, `skip` is the page number and a page holds `take` initiatives (10 unless stated).
 	 *
 	 * @param filters - Filter criteria and the page.
-	 * @returns The page of initiatives the caller may see.
+	 * @returns The page of initiatives the caller may see, and how many they may see in all.
 	 */
 	async paginate(
 		filters?: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
-		return this.readVisible(filters, (options) => super.paginate(options));
+		const { take, skip, ...rest } = (filters ?? {}) as BaseQueryDTO<OrganizationStrategicInitiative> & { take?: number; skip?: number };
+		const { items } = await this.readVisible(rest as typeof filters, (options) => super.findAll(options));
+		const size = Number(take) > 0 ? Number(take) : 10;
+		const offset = Number(skip) > 0 ? size * (Number(skip) - 1) : 0;
+		return { items: items.slice(offset, offset + size), total: items.length };
 	}
 
 	/**
 	 * How many initiatives the caller may see (the CRUD controller's inherited `GET /count`, the GraphQL count):
 	 * counted on the list's read, so a count never answers for another organization, nor for an initiative the
-	 * visibility rule hides.
+	 * visibility rule hides (the rule has no query form; the read is bound to the caller's organizations and costs
+	 * what the list route costs).
 	 *
 	 * @param where - Filter criteria.
 	 * @returns The number of initiatives the caller may see.
