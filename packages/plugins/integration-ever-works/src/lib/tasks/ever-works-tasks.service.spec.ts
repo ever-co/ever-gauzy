@@ -921,12 +921,12 @@ describe('task sync review fixes (#10804)', () => {
 		// The task is created and moved on, then Ever Works refuses its watchers.
 		t.mock.fail({ method: 'PUT', path: /\/watchers$/, status: 400, body: { error: { code: 'validation_failed', message: 'Refused.' } } });
 		await expect(t.push('g1')).rejects.toThrow();
-		const [created] = [...t.mock.tasks.values()];
-		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: created?.['id'] });
+		const created = [...t.mock.tasks.values()][0] as Record<string, unknown>;
+		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: created['id'] });
 		t.mock.expireIdempotencyKeys(); // a later edit, after Ever Works forgot the create's key
 		// An Ever Works edit arrives before that push: it is applied, and the watchers still to send stay to send (#11079 review).
-		Object.assign(created as Record<string, unknown>, { title: 'Work, renamed in Ever Works', version: Number(created?.['version']) + 1 });
-		await t.deliver({ type: 'task.updated', data: { ...(created as Record<string, unknown>) }, aggregate: { id: created?.['id'] as string, version: Number(created?.['version']) } });
+		Object.assign(created, { title: 'Work, renamed in Ever Works', version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...created }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
 		expect(t.tasks.get('g1')).toMatchObject({ title: 'Work, renamed in Ever Works' });
 		expect(await t.push('g1')).toEqual({ status: 'pushed' });
 		expect(t.mock.tasks.size).toBe(1);
