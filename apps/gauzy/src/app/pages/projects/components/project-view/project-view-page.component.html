@@ -1,4 +1,5 @@
-<!-- A project's own page: the list's back button, a favorite star and the period, then the project's quick look as the page body. -->
+<!-- A project's own page: the list's back button, a favorite star and the period, then tabs — Overview,
+     Board, Planning, Time and Activity — in the manner of Jira's and Hubstaff's project pages. -->
 <ngx-record-view-page
 	heading="SM_TABLE.PROJECT"
 	[backLink]="backLink"
@@ -15,6 +16,8 @@
 			status="basic"
 			spacing="list"
 		></ngx-favorite-toggle>
+		<!-- The period, on the tabs whose figures read over it. -->
+		@if (showsPeriod) {
 		<span class="project-page-range">
 			<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
 			{{ rangeLabel }}
@@ -30,17 +33,90 @@
 			<nb-option [value]="option">{{ 'EMPLOYEES_PAGE.VIEW.PERIODS.' + option | translate }}</nb-option>
 			}
 		</nb-select>
+		}
 	</div>
 	}
 	@if (card) {
-	<ngx-project-quick-look
-		mode="page"
-		[project]="card"
-		[organizationId]="organization?.id"
-		[tenantId]="organization?.tenantId"
-		[rangeStart]="periodStartIso"
-		[rangeEnd]="periodEndIso"
-		[scopeEmployeeIds]="null"
-	></ngx-project-quick-look>
+	<div class="project-page">
+		<div class="tab-row project-page-tabs">
+			<div class="tabs" role="tablist" [attr.aria-label]="card.name">
+				@for (item of tabs; track item.id) {
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					[id]="'project-view-tab-' + item.id"
+					[attr.aria-controls]="'project-view-pane-' + item.id"
+					[class.is-active]="tab === item.id"
+					[attr.aria-selected]="tab === item.id"
+					(click)="selectTab(item.id)"
+				>
+					<nb-icon [icon]="item.icon" aria-hidden="true"></nb-icon>
+					{{ item.label | translate }}
+				</button>
+				}
+			</div>
+		</div>
+
+		<!-- Overview stays loaded while another tab is open, so coming back to it does not reload it. -->
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-overview"
+			aria-labelledby="project-view-tab-overview"
+			[hidden]="tab !== 'overview'"
+		>
+			<ngx-project-quick-look
+				mode="page"
+				[project]="card"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+				[rangeStart]="periodStartIso"
+				[rangeEnd]="periodEndIso"
+				[scopeEmployeeIds]="null"
+			></ngx-project-quick-look>
+		</div>
+
+		<!-- The other tabs load when first opened. -->
+		@switch (tab) {
+		@case ('board') {
+		<div class="project-page-pane" role="tabpanel" id="project-view-pane-board" aria-labelledby="project-view-tab-board">
+			<ga-project-board [projectId]="card.id" [organizationId]="organization?.id" [tenantId]="organization?.tenantId"></ga-project-board>
+		</div>
+		}
+		@case ('planning') {
+		<div class="project-page-pane" role="tabpanel" id="project-view-pane-planning" aria-labelledby="project-view-tab-planning">
+			<ga-project-planning
+				[projectId]="card.id"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+				[rangeStart]="periodStartIso"
+				[rangeEnd]="periodEndIso"
+			></ga-project-planning>
+		</div>
+		}
+		@case ('time') {
+		<div class="project-page-pane" role="tabpanel" id="project-view-pane-time" aria-labelledby="project-view-tab-time">
+			<ga-project-time
+				[projectId]="card.id"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+				[rangeStart]="periodStartIso"
+				[rangeEnd]="periodEndIso"
+			></ga-project-time>
+		</div>
+		}
+		@case ('activity') {
+		<div class="project-page-pane" role="tabpanel" id="project-view-pane-activity" aria-labelledby="project-view-tab-activity">
+			<ga-project-activity
+				[projectId]="card.id"
+				[projectName]="card.name"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+			></ga-project-activity>
+		</div>
+		}
+		}
+	</div>
 	}
 </ngx-record-view-page>
