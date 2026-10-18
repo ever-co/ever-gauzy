@@ -235,9 +235,11 @@ export class InboxNotificationsComponent implements OnInit {
 	 * the selected organization's list; it is read again afterwards rather than patched locally.
 	 */
 	markAllRead(): void {
+		const scope = this.scope;
 		this.api.markAllRead().subscribe({
 			next: () => {
-				this.markedAll.set(true);
+				// Another employee or organization since it was sent: that one's notifications were not marked.
+				if (this.scope === scope) this.markedAll.set(true);
 				this.reload$.next(0);
 			},
 			error: () => this.error.set(true)

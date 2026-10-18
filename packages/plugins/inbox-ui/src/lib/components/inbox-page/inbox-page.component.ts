@@ -401,6 +401,8 @@ export class InboxPageComponent implements OnInit {
 	);
 	/** "Mark all read" went through for the list as it is: its older pages are read too (#11098 review). */
 	private readonly markedAll = signal(false);
+	/** Counts the changes of the list's tab and filters: a mark-all answered after one is not this list's. */
+	private listScope = 0;
 
 	/** The search box, debounced into `query`. */
 	readonly search$ = new Subject<string>();
@@ -488,7 +490,7 @@ export class InboxPageComponent implements OnInit {
 		this.search$
 			.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
 			.subscribe((value) => {
-				this.markedAll.set(false);
+				this.listChanged();
 				this.query.set(value ?? '');
 				this.reload();
 			});
@@ -510,7 +512,7 @@ export class InboxPageComponent implements OnInit {
 
 	selectTab(tab: InboxUiTab): void {
 		if (tab === this.tab()) return;
-		this.markedAll.set(false);
+		this.listChanged();
 		this.tab.set(tab);
 		this.items.set([]);
 		this.nextCursor.set(null);
@@ -520,19 +522,19 @@ export class InboxPageComponent implements OnInit {
 	}
 
 	setKind(kind: InboxItemKindEnum | null): void {
-		this.markedAll.set(false);
+		this.listChanged();
 		this.kind.set(kind);
 		this.reload();
 	}
 
 	setSource(source: string | null): void {
-		this.markedAll.set(false);
+		this.listChanged();
 		this.source.set(source);
 		this.reload();
 	}
 
 	setUnread(unread: boolean): void {
-		this.markedAll.set(false);
+		this.listChanged();
 		this.unreadOnly.set(!!unread);
 		this.reload();
 	}
@@ -652,14 +654,22 @@ export class InboxPageComponent implements OnInit {
 		if (!tab) return;
 		this.actionError.set(null);
 		// Only what the list shows: its kind, source and text filters go along (review F65).
+		const scope = this.listScope;
 		this.api.markAllRead(tab, { kind: this.kind(), source: this.source(), q: this.query() }).subscribe({
 			next: () => {
-				this.markedAll.set(true);
+				// The list may have changed (another tab or filter) while it was on its way: then it says nothing.
+				if (scope === this.listScope) this.markedAll.set(true);
 				this.api.notifyChanged();
 				this.reload();
 			},
 			error: (error: HttpErrorResponse) => this.actionError.set(apiMessage(error) ?? 'INBOX.ACTION_FAILED')
 		});
+	}
+
+	/** The tab or a filter changed: a mark-all of before no longer covers the list. */
+	private listChanged(): void {
+		this.listScope++;
+		this.markedAll.set(false);
 	}
 
 	private refresh(id: string): void {

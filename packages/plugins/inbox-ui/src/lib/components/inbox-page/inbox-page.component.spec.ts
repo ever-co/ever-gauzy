@@ -219,6 +219,20 @@ describe('InboxPageComponent', () => {
 		expect(component.hasUnread()).toBe(true);
 	});
 
+	it('a mark-all answered after the filters changed says nothing about the new list (#11098 review)', () => {
+		const read = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } };
+		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 0, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [item('a', read)], nextCursor: 'next' }));
+		const answer = new Subject<{ updated: number }>();
+		api.markAllRead.mockReturnValue(answer);
+		const { component } = render();
+		component.markAllRead();
+		component.setKind(InboxItemKindEnum.NOTICE);
+		answer.next({ updated: 1 });
+		// The notices' older pages were not marked: the button stays.
+		expect(component.hasUnread()).toBe(true);
+	});
+
 	it('a decision answered elsewhere first (409) leaves the Decisions tab too (#11098 review)', () => {
 		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 2, byMailbox: [] }));
 		const read = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } };
