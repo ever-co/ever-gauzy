@@ -364,6 +364,29 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('Third');
 		});
 
+		it('the page read back with its keys reordered (PostgreSQL jsonb) is no edit: sync writes stay one version per window (#11096 review)', async () => {
+			// jsonb orders object keys by length, then bytewise ("text" before "type"); better-sqlite3 keeps them as written.
+			const asJsonb = (value: unknown): unknown =>
+				Array.isArray(value)
+					? value.map(asJsonb)
+					: value !== null && typeof value === 'object'
+						? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)).map(([key, item]) => [key, asJsonb(item)]))
+						: value;
+			const document = kb.addDocument(ewOrg.id, { body: 'First **bold** text' });
+			await apply('kb.document.created', document);
+			Object.assign(document, { body: 'Second **bold** text', version: 2, revision: 2 });
+			await apply('kb.document.updated', document);
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(1);
+			const row = (await pageOf(document['id'])) as Row;
+			const json = typeof row['contentJson'] === 'string' ? JSON.parse(row['contentJson']) : row['contentJson'];
+			expect(JSON.stringify(asJsonb(json))).not.toBe(JSON.stringify(json));
+			await documents().update({ id: row['id'] } as never, { contentJson: asJsonb(json) } as never);
+			Object.assign(document, { body: 'Third', version: 3, revision: 3 });
+			await apply('kb.document.updated', document);
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(1);
+			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('Third');
+		});
+
 		it('a push of other fields never counts that edit as kept, and a link without the hash keeps its first replacement too (#11082 review)', async () => {
 			const imageOf = (row: Row) => {
 				const json = typeof row['contentJson'] === 'string' ? JSON.parse(row['contentJson']) : row['contentJson'];

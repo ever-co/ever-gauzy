@@ -171,6 +171,7 @@ const { EverWorksNotifier } = load('connection/ever-works-notifier.service.ts');
 const { CreateEverWorksConnection1791000001100 } = load('database/migrations/1791000001100-CreateEverWorksConnection.ts');
 const { CreateEverWorksSyncTables1791000001300 } = load('database/migrations/1791000001300-CreateEverWorksSyncTables.ts');
 const { CreateEverWorksSyncRun1791000001550 } = load('database/migrations/1791000001550-CreateEverWorksSyncRun.ts');
+const { AlterEverWorksConnectionOrganizationForeignKey1791000003100 } = load('database/migrations/1791000003100-AlterEverWorksConnectionOrganizationForeignKey.ts');
 const { EverWorksScopeService } = load('ever-works-scope.service.ts');
 const { EverWorksSettingName } = load('ever-works-setting.enum.ts');
 const { EverWorksMappingContextService } = load('mapping/ever-works-mapping-context.service.ts');
@@ -297,7 +298,7 @@ const pluginSchemas = [
 		phases: txt(), requestedByUserId: str(), startedAt: date, finishedAt: date, lastProgressAt: date, lastError: txt()
 	})
 ];
-const MIGRATIONS = [CreateEverWorksConnection1791000001100, CreateEverWorksSyncTables1791000001300, CreateEverWorksSyncRun1791000001550];
+const MIGRATIONS = [CreateEverWorksConnection1791000001100, CreateEverWorksSyncTables1791000001300, CreateEverWorksSyncRun1791000001550, AlterEverWorksConnectionOrganizationForeignKey1791000003100];
 
 // ── Ever Works teams (the mock serves whoami, the feed and webhooks; teams are kept here) ─────────
 

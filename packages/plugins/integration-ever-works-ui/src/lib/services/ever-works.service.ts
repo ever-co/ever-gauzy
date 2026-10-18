@@ -61,6 +61,8 @@ export interface EverWorksConnection {
 	lastCheckedAt: string | null;
 	connectedByUserId: string | null;
 	createdAt: string | null;
+	/** The connect answer only, when it resumed a connection holding a subscription its disconnect could not delete: whether it is gone now. */
+	earlierWebhookDeleted?: boolean;
 }
 
 /** How a domain syncs. */
