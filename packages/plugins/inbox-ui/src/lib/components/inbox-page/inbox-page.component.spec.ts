@@ -115,6 +115,141 @@ describe('InboxPageComponent', () => {
 		expect(component.busy()).toBe(false);
 	});
 
+	it("'Mark all read' marks only what the filters show (review F65)", () => {
+		api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 1, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+		api.markAllRead.mockReturnValue(of({ updated: 1 }));
+		const { component } = render();
+		component.setKind(InboxItemKindEnum.NOTICE);
+		component.setSource('EMAIL');
+		component.query.set('  invoice ');
+		component.markAllRead();
+		expect(api.markAllRead).toHaveBeenCalledWith(InboxTabEnum.ALL, {
+			kind: InboxItemKindEnum.NOTICE,
+			source: 'EMAIL',
+			q: '  invoice '
+		});
+	});
+
+	it('an answered decision leaves the Decisions tab and stays open (review F66)', () => {
+		api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 2, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [item('a'), item('b')], nextCursor: 'next' }));
+		const { component } = render();
+		component.selectTab('decisions');
+		api.setState.mockReturnValue(
+			of(item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }))
+		);
+		component.open(component.items()[0]);
+		const calls = api.list.mock.calls.length;
+		api.reply.mockReturnValue(of(item('a', { status: InboxItemStatusEnum.ANSWERED })));
+		component.reply(component.items()[0], { optionId: 'yes' });
+		expect(component.items().map((entry) => entry.id)).toEqual(['b']);
+		expect(component.selected()).toMatchObject({ id: 'a', status: InboxItemStatusEnum.ANSWERED });
+		// The API pages after the last item shown, so nothing is skipped: no reload needed.
+		expect(api.list.mock.calls.length).toBe(calls);
+	});
+
+	it("a reply's busy state and error belong to its item (review F67)", () => {
+		api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 2, byMailbox: [] }));
+		api.list.mockReturnValue(
+			of({
+				items: [item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }), item('b')],
+				nextCursor: null
+			})
+		);
+		const { component, fixture } = render();
+		const first = component.items()[0] as IInboxItemWithState;
+		const second = component.items()[1] as IInboxItemWithState;
+		const answer = new Subject<IInboxItemWithState>();
+		api.reply.mockReturnValue(answer);
+		component.open(first);
+		component.reply(first, { text: 'Ship it' });
+		expect(component.isReplying(first)).toBe(true);
+		// Another item is opened (and read) while the reply is on its way: its state change ends, the reply does not.
+		api.setState.mockReturnValue(
+			of(item('b', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }))
+		);
+		component.open(second);
+		expect(component.busy()).toBe(false);
+		expect(component.isReplying(first)).toBe(true);
+		// Back on the first: its Send stays disabled, and a second click sends nothing.
+		component.open(first);
+		component.reply(first, { text: 'Ship it' });
+		expect(api.reply).toHaveBeenCalledTimes(1);
+		// The reply fails while the other item is open: the error waits on its own item.
+		component.open(second);
+		answer.error({ status: 502, error: { message: 'The source did not take the reply.' } });
+		fixture.detectChanges();
+		expect(component.replyError()).toBeNull();
+		component.open(first);
+		expect(component.replyError()).toBe('The source did not take the reply.');
+		expect(component.isReplying(first)).toBe(false);
+	});
+
+	it("'Mark all read' stays available while older pages are not loaded yet (review F69)", () => {
+		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 0, byMailbox: [] }));
+		api.list.mockReturnValue(
+			of({
+				items: [item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } })],
+				nextCursor: 'next'
+			})
+		);
+		const { component } = render();
+		expect(component.hasUnread()).toBe(true);
+		api.list.mockReturnValue(
+			of({
+				items: [item('a', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } })],
+				nextCursor: null
+			})
+		);
+		component.reload();
+		expect(component.hasUnread()).toBe(false);
+	});
+
+	it("once 'Mark all read' went through, older pages count as read until the list changes (#11098 review)", () => {
+		const read = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } };
+		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 0, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [item('a', read)], nextCursor: 'next' }));
+		api.markAllRead.mockReturnValue(of({ updated: 3 }));
+		const { component } = render();
+		expect(component.hasUnread()).toBe(true);
+		component.markAllRead();
+		expect(component.hasUnread()).toBe(false);
+		component.setKind(InboxItemKindEnum.NOTICE);
+		expect(component.hasUnread()).toBe(true);
+	});
+
+	it('a mark-all answered after the filters changed says nothing about the new list (#11098 review)', () => {
+		const read = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } };
+		api.counts.mockReturnValue(of({ unread: 3, decisionsOpen: 0, byMailbox: [] }));
+		api.list.mockReturnValue(of({ items: [item('a', read)], nextCursor: 'next' }));
+		const answer = new Subject<{ updated: number }>();
+		api.markAllRead.mockReturnValue(answer);
+		const { component } = render();
+		component.markAllRead();
+		component.setKind(InboxItemKindEnum.NOTICE);
+		answer.next({ updated: 1 });
+		// The notices' older pages were not marked: the button stays.
+		expect(component.hasUnread()).toBe(true);
+	});
+
+	it('a decision answered elsewhere first (409) leaves the Decisions tab too (#11098 review)', () => {
+		api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 2, byMailbox: [] }));
+		const read = { recipient: { isRead: true, isArchived: false, snoozedUntil: null } };
+		api.list.mockReturnValue(of({ items: [item('a', read), item('b', read)], nextCursor: null }));
+		const { component } = render();
+		component.selectTab('decisions');
+		component.open(component.items()[0]);
+		api.reply.mockReturnValue(
+			throwError(() => ({ status: 409, error: { message: 'This item was already answered.' } }))
+		);
+		api.get.mockReturnValue(of(item('a', { ...read, status: InboxItemStatusEnum.ANSWERED })));
+		component.reply(component.items()[0], { optionId: 'yes' });
+		expect(component.items().map((entry) => entry.id)).toEqual(['b']);
+		expect(component.selected()).toMatchObject({ id: 'a', status: InboxItemStatusEnum.ANSWERED });
+		expect(component.replyError()).toBe('This item was already answered.');
+	});
+
 	it('reads the message of an API refusal', () => {
 		expect(apiMessage({ error: { message: 'Already decided in Ever Works' } })).toBe(
 			'Already decided in Ever Works'

@@ -79,15 +79,20 @@ describe('InboxUiPlugin', () => {
 		const section = nav.addNavMenuSection.mock.calls[0][0];
 		expect(section.data.hide()).toBe(false);
 
-		// Signed out (or another user without the Inbox): the badge goes, the entry is hidden.
+		// Signed out (or another user without the Inbox): the badge goes, the entry is hidden, and the menu is built
+		// again (the entry replaces itself) so it reads that (review F68).
 		available.next(false);
 		expect(header.removeHeaderAction).toHaveBeenCalledWith(INBOX_HEADER_ACTION_ID);
 		expect(section.data.hide()).toBe(true);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(2);
 
-		// Back: the badge again, the same entry shown again.
+		// Back (a later sign-in, its first counts call retried): the badge again, and the entry is added again, so
+		// the menu shows it without waiting for an unrelated rebuild (review F68).
 		available.next(true);
 		expect(header.registerHeaderAction).toHaveBeenCalledTimes(2);
-		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(1);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(3);
+		expect(nav.addNavMenuSection.mock.calls[2][0]).toMatchObject({ id: INBOX_NAV_ID });
+		expect(nav.addNavMenuSection.mock.calls[2][0].data.hide()).toBe(false);
 		expect(section.data.hide()).toBe(false);
 	});
 
@@ -134,5 +139,10 @@ describe('InboxUiPlugin', () => {
 		available.next(false);
 		expect(items[0].data.hide()).toBe(true);
 		expect(items[1].data.hide()).toBe(true);
+		// Each change builds the menu again, so the entries show again after a later sign-in (review F68).
+		expect(nav.addNavMenuItems).toHaveBeenCalledTimes(2);
+		available.next(true);
+		expect(nav.addNavMenuItems).toHaveBeenCalledTimes(3);
+		expect(nav.addNavMenuItems.mock.calls[2][0][0].data.hide()).toBe(false);
 	});
 });

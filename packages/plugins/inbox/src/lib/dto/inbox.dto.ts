@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
 	IsBoolean,
@@ -97,6 +97,12 @@ export class InboxTabDTO {
 	@IsEnum(InboxTabEnum)
 	tab?: InboxTabEnum;
 }
+
+/**
+ * `POST /inbox/items/mark-all-read`: an optional tab and the list's filters, so only the items the list shows are
+ * marked read (review F65). The fields are the list query's own, so both routes accept the same values.
+ */
+export class InboxMarkAllReadDTO extends PickType(InboxItemQueryDTO, ['tab', 'kind', 'source', 'q'] as const) {}
 
 /** `POST /inbox/items/:id/reply`. */
 export class InboxReplyDTO implements IInboxReplyInput {

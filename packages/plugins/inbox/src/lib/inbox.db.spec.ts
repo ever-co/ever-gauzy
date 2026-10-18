@@ -800,6 +800,37 @@ describe('Inbox on SQLite', () => {
 		});
 	});
 
+	describe('mark-all-read with the list filters (review F65)', () => {
+		it('marks read, and tells the sources about, only the items the filters show', async () => {
+			const onStateChange = jest.fn(async () => undefined);
+			registry.register({ source: InboxItemSourceEnum.EVER_WORKS, onReply: jest.fn(), onStateChange });
+			const decision = await question({ source: InboxItemSourceEnum.EVER_WORKS, title: 'Approve the budget?' });
+			const notice = await service.create({
+				tenantId: TENANT,
+				kind: InboxItemKindEnum.NOTICE,
+				source: InboxItemSourceEnum.SYSTEM,
+				title: 'Invoice 42 is paid',
+				recipients: [{ userId: ADA }]
+			});
+			await expect(service.markAllRead(InboxTabEnum.ALL, { kind: InboxItemKindEnum.NOTICE })).resolves.toEqual({
+				updated: 1
+			});
+			expect((await service.get(notice.item.id as string)).recipient?.isRead).toBe(true);
+			expect((await service.get(decision.item.id as string)).recipient?.isRead).toBe(false);
+			// The text and source filters too; nothing matching, nothing marked.
+			await expect(service.markAllRead(InboxTabEnum.ALL, { q: 'no such words' })).resolves.toEqual({
+				updated: 0
+			});
+			await expect(
+				service.markAllRead(InboxTabEnum.ALL, { source: InboxItemSourceEnum.SYSTEM })
+			).resolves.toEqual({ updated: 0 });
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			// The Ever Works decision was neither marked nor reported read to its source.
+			expect(onStateChange).not.toHaveBeenCalled();
+			await expect(service.markAllRead(InboxTabEnum.ALL, { q: 'BUDGET' })).resolves.toEqual({ updated: 1 });
+		});
+	});
+
 	describe('mark-all-read and the sources', () => {
 		it('tells the source of each item read in bulk (in the background), as for one item', async () => {
 			const onStateChange = jest.fn(async () => undefined);
