@@ -143,27 +143,30 @@ describe('task field rules', () => {
 		expect(descriptionForEverWorks('Body', 'Short')).toBe('Body');
 	});
 
+	it('collapses the whitespace of a long title before cutting it; one that then fits goes whole, with no full-title line (#11108 review)', () => {
+		const spaced = `${'word   '.repeat(30)}end`;
+		expect(titleForEverWorks(spaced)).toEqual({ title: `${'word '.repeat(30)}end`, truncated: false });
+		expect(descriptionForEverWorks('Body', spaced)).toBe('Body');
+		// A title within the limit goes as it is, its spaces included.
+		expect(titleForEverWorks('Two  spaces')).toEqual({ title: 'Two  spaces', truncated: false });
+		const long = `${'X'.repeat(197)}  ${'Y'.repeat(50)}`;
+		expect(titleForEverWorks(long)).toEqual({ title: `${'X'.repeat(197)} Y…`, truncated: true });
+	});
+
 	describe('a title Ever Works still has as the cut copy of the full title in its description (#11108 review)', () => {
 		const plain = 'Investigate customer billing failures '.repeat(8).trim();
 		const copy = (original: string) => titleForEverWorks(original).title;
 		const appendix = (original: string) => descriptionForEverWorks('Body', original);
-		/** Cut at the limit with runs of spaces before it (collapsed in the appendix, so the cut lands elsewhere there). */
-		const runs = `${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`;
-		/** The cut falls on a space after a run of spaces: `trimEnd()` leaves 198 characters (review boundary case). */
-		const boundary = `${'A'.repeat(100)}  ${'B'.repeat(96)} ${'C'.repeat(30)}`;
-		/** The cut falls on the single space between two words. */
-		const trailing = `${'x'.repeat(198)} ${'y'.repeat(30)}`;
-		/** The cut falls on a run of two spaces. */
-		const runAtCut = `${'x '.repeat(98)}z  ${'tail '.repeat(10)}`.trim();
 		it.each<[string, string, string, boolean]>([
-			['the exact cut copy', copy(plain), appendix(plain), true],
-			['a cut copy of a title with runs of spaces', copy(runs), appendix(runs), true],
-			['a cut copy cut on a space after a run of spaces', copy(boundary), appendix(boundary), true],
-			['a cut copy cut on a single space', copy(trailing), appendix(trailing), true],
-			['a cut copy cut on a run of spaces', copy(runAtCut), appendix(runAtCut), true],
+			['the cut copy', copy(plain), appendix(plain), true],
+			['the cut copy of a title with runs of spaces', copy(`${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`), appendix(`${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`), true],
+			['the cut copy of a title with a run of spaces at the cut', copy(`${'X'.repeat(197)}  ${'Y'.repeat(50)}`), appendix(`${'X'.repeat(197)}  ${'Y'.repeat(50)}`), true],
+			['the cut copy of a title cut on a space after a run of spaces', copy(`${'A'.repeat(100)}  ${'B'.repeat(96)} ${'C'.repeat(30)}`), appendix(`${'A'.repeat(100)}  ${'B'.repeat(96)} ${'C'.repeat(30)}`), true],
+			['the cut copy of a title cut on a single space', copy(`${'x'.repeat(198)} ${'y'.repeat(30)}`), appendix(`${'x'.repeat(198)} ${'y'.repeat(30)}`), true],
 			['a rename shortened to a start of the title', 'Investigate…', appendix(plain), false],
+			['a rename to a start of the title close to the limit', `${'x '.repeat(90)}x…`, appendix(`${'x '.repeat(100)}${'tail'.repeat(20)}`), false],
 			['a rename that keeps a start of the title but is clearly shorter', `${'Investigate customer billing failures '.repeat(2)}Investigate customer…`, appendix(plain), false],
-			['a rename that cuts a few letters off mid-word', `${copy(plain).slice(0, -4)}…`, appendix(plain), false],
+			['a rename that cuts a few letters off', `${copy(plain).slice(0, -4)}…`, appendix(plain), false],
 			['another title', 'Renamed', appendix(plain), false],
 			['the cut copy of another title', copy('z'.repeat(250)), appendix(plain), false],
 			['no full title in the description', copy(plain), 'Body', false]
@@ -605,6 +608,22 @@ describe('EW → G tasks', () => {
 		expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 3 } })).toEqual({ status: 'applied' });
 		expect(t.tasks.get('g1')).toMatchObject({ tags: [{ id: 'tag-new', name: 'New' }], members: [{ id: 'e-bob' }], dueDate: null });
 		expect(t.subscriptions.filter((row) => row.taskId === 'g1').map((row) => row.employeeId)).toEqual(['e-bob']);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back keeps a parent Ever Works cannot hold, and loses one Ever Works removed (#11108 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.addGauzyTask({ id: 'gp-gauzy-only', title: 'Parent not in Ever Works' });
+		t.addGauzyTask({ id: 'gp-linked', title: 'Parent in Ever Works' });
+		t.link(EverWorksLinkType.TASK, 'gp-linked', 'ew-parent');
+		t.addGauzyTask({ id: 'g1', title: 'Child of an unlinked parent', parentId: 'gp-gauzy-only' });
+		t.addGauzyTask({ id: 'g2', title: 'Child of a linked parent', parentId: 'gp-linked' });
+		for (const [gauzyId, title] of [['g1', 'Child of an unlinked parent'], ['g2', 'Child of a linked parent']]) {
+			const ew = t.mock.addTask(t.org.id, { title, parentTaskId: null });
+			const own = [{ source: 'gauzy', installationId: 'c1', externalId: gauzyId, externalUrl: null }];
+			expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 2 } })).toEqual({ status: 'applied' });
+		}
+		expect((t.tasks.get('g1') as GauzyTask)['parentId']).toBe('gp-gauzy-only');
+		expect((t.tasks.get('g2') as GauzyTask)['parentId']).toBeNull();
 	});
 
 	it('tasks synced one way from Ever Works: a long title renamed in Gauzy before the adoption stays; a rename in Ever Works is taken (#11108 review)', async () => {

@@ -384,8 +384,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			// Tasks sync one way from Ever Works: no push sends the Gauzy values, so linking it as below would leave this
 			// change (and every value Ever Works has) out of Gauzy, and its delivery skipped as applied (#11096 review).
 			// It is reconciled inbound instead: linked with the Gauzy side as it is, no version yet (a failed apply is
-			// retried), and the update that follows applies Ever Works' values. Gauzy's sets and dates count as Ever Works'
-			// previous ones, so what Ever Works does not have is removed too, not only what it has added (#11108 review).
+			// retried), and the update that follows applies Ever Works' values. Gauzy's sets, parent and dates count as Ever
+			// Works' previous ones, so what Ever Works does not have is removed too, not only what it has added (#11108 review).
 			// A title Ever Works still has as the cut copy of the full title in its description is Gauzy's own: Gauzy's
 			// title, renamed since or not, is never overwritten by it (#11108 review).
 			const g = await this.gauzySide(context, gauzyTask);
@@ -403,8 +403,9 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 	}
 
 	/**
-	 * A Gauzy task's sets and dates as Ever Works would hold them (Ever Works ids, labels, minutes). A member Ever Works
-	 * cannot hold (a team or person not linked, a task not in Ever Works) is left out, so it is never removed.
+	 * A Gauzy task's sets, parent and dates as Ever Works would hold them (Ever Works ids, labels, minutes). A member Ever
+	 * Works cannot hold (a team or person not linked, a task not in Ever Works) is left out, and such a parent counts as
+	 * none, so neither is ever removed (#11108 review).
 	 */
 	private async everWorksViewOf(context: EverWorksMappingContext, g: TaskGauzySide): Promise<TaskEverWorksSide> {
 		const ewIdOf = async (type: EverWorksLinkType, id: string): Promise<string | null> => {
@@ -424,6 +425,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 			if (edge && other) relations.push(`${edge.kind}:${other}`);
 		}
 		return {
+			parentTaskId: g.parentId ? await ewIdOf(EverWorksLinkType.TASK, g.parentId) : null,
 			labels: labelsForEverWorks(g.tags ?? []),
 			teamIds: await ewIds(EverWorksLinkType.TEAM, g.teamIds),
 			assignees: assignees.sort(),
