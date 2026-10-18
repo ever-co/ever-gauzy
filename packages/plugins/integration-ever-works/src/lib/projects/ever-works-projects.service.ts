@@ -66,6 +66,14 @@ interface WorkEverWorksOnly {
 	unmappedMembers?: string[];
 	/** Ever Works teams Gauzy could not map at the last sync; retried on the next change and by the sweep. */
 	unmappedTeams?: string[];
+	/**
+	 * The Gauzy project the work's Ever Works external link (`PUT /links/work/:id`) points to, once Gauzy set it.
+	 * The sweep links back a pair where it is not the paired project (a work paired on the Projects tab, one a
+	 * project was created from, a pair from before the link-back); a work Gauzy created has it from its `externalRef`.
+	 */
+	linkedBack?: string | null;
+	/** When a link-back of this pair was last refused (ISO): later sweeps try the never-tried and the oldest first. */
+	linkBackTriedAt?: string | null;
 }
 
 /** One Ever Works work as the Projects tab shows it. */
@@ -102,6 +110,13 @@ export interface EverWorksProjectsDecision {
 	createInEverWorks?: ID[];
 }
 
+/** Why an Ever Works call failed, for a log line: the status and code, the network reason, or the error's name. */
+function describeError(error: unknown): string {
+	if (error instanceof EverWorksApiError) return `${error.status} ${error.code}`;
+	if (error instanceof EverWorksNetworkError) return `network: ${error.reason}`.slice(0, 200);
+	return error instanceof Error ? error.name : 'error';
+}
+
 /** A URL compared loosely: case, a trailing slash and a `.git` suffix do not matter. */
 export function sameUrl(a: string | null | undefined, b: string | null | undefined): boolean {
 	const norm = (url: string | null | undefined) =>
@@ -126,8 +141,10 @@ const sameSet = (a: ReadonlyArray<string>, b: ReadonlyArray<string>) => {
 	return left.size === new Set(b).size && b.every((value) => left.has(value));
 };
 
-/** How often the project sweep (members and teams paired since the last sync) runs per connection. */
+/** How often the project sweep (members and teams paired since the last sync, link-backs) runs per connection. */
 export const PROJECT_SWEEP_MS = 10 * 60_000;
+/** Link-backs one sweep sends at most per mapping (the rest go with the next sweep). */
+export const PROJECT_LINK_BACKS_PER_SWEEP = 50;
 
 /**
  * Projects ↔ Works (plan 01 §10, plan 06 G-P1-8): **link only** in P1, linked as `PROJECT_WORK`.
@@ -507,7 +524,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			return `the project was paired with the Ever Works work ${pairedNow.ewId} meanwhile; the created work ${work.id} is not linked`;
 		}
 		// Recorded as Ever Works answered it, so the next Ever Works change is diffed against what it holds.
-		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound');
+		// Its `externalRef` is the link back to the project already.
+		await this.record(context, projectId, work, work.version ?? null, this.snapshotOf(work, {}), null, { members: [], teams: [] }, 'outbound', { linkedBack: projectId });
 		this.logger.log(`Gauzy project ${projectId} created in Ever Works as work ${work.id} (organization ${context.organizationId}).`);
 		return work;
 	}
@@ -618,6 +636,52 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 					await this.record(context, projectId, this.workFrom(link), link.ewVersion ?? null, snapshot, link, { members, teams });
 				});
 			}
+			// After the member and team saves above (they rewrite the whole row from this sweep's read).
+			await this.linkBack(context, links);
+		}
+	}
+
+	/**
+	 * Shows the Gauzy project on each paired work that does not show it yet (`PUT /links/work/:id`, as for a task
+	 * created from Ever Works): a work paired on the Projects tab, one a project was created from, or a pair made
+	 * before the link-back. In the sweep, off the Projects tab's response, at most
+	 * {@link PROJECT_LINK_BACKS_PER_SWEEP} per run, in order: each pair is read again right before its link is sent
+	 * and before it is recorded, so a work paired again meanwhile never gets the older project. Best effort: a
+	 * refusal is logged and tried again by a later sweep; an outage ends this run's link-backs.
+	 */
+	private async linkBack(context: EverWorksMappingContext, links: EverWorksEntityLink[]): Promise<void> {
+		// Never tried first, then the longest ago: a pair Ever Works keeps refusing never holds up the others.
+		const triedAt = (link: EverWorksEntityLink) => this.ewOnlyOf(link).linkBackTriedAt ?? '';
+		const due = links
+			.filter((link) => this.ewOnlyOf(link).linkedBack !== link.gauzyId)
+			.sort((a, b) => triedAt(a).localeCompare(triedAt(b)))
+			.slice(0, PROJECT_LINK_BACKS_PER_SWEEP);
+		if (!due.length) return;
+		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
+		const stillPaired = async (link: EverWorksEntityLink) => {
+			const now = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, link.ewId);
+			return now && now.id === link.id && now.gauzyId === link.gauzyId && now.state === EverWorksLinkState.OK ? now : null;
+		};
+		// Only the link-back fields move, and only on the row as just read (see `patchEverWorksOnly`); a write to
+		// the row in between (an Ever Works event) refuses it, and it is made once more on a fresh read.
+		const mark = async (link: EverWorksEntityLink, fields: Pick<WorkEverWorksOnly, 'linkedBack' | 'linkBackTriedAt'>) => {
+			for (let attempt = 0; attempt < 2; attempt++) {
+				const current = await stillPaired(link);
+				if (!current || (await this.links.patchEverWorksOnly(current, { ...this.ewOnlyOf(current), ...fields }))) return;
+			}
+		};
+		for (const link of due) {
+			if (!(await stillPaired(link))) continue;
+			try {
+				await client.request('PUT', `/links/work/${encodeURIComponent(link.ewId)}`, { body: { externalId: link.gauzyId, installationId: context.connection.id } });
+			} catch (error) {
+				this.logger.warn(`The Ever Works work ${link.ewId} was not linked back to Gauzy project ${link.gauzyId} (${describeError(error)}).`);
+				// An outage, or a key Ever Works no longer takes (401): the rest of this run would fail the same way.
+				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && (error.retryable || error.status === 401))) return;
+				await mark(link, { linkBackTriedAt: new Date().toISOString() });
+				continue;
+			}
+			await mark(link, { linkedBack: link.gauzyId as string, linkBackTriedAt: null });
 		}
 	}
 
@@ -663,7 +727,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		snapshot?: WorkSnapshot,
 		link?: EverWorksEntityLink | null,
 		unmapped?: { members: string[]; teams: string[] },
-		direction: 'inbound' | 'outbound' = 'inbound'
+		direction: 'inbound' | 'outbound' = 'inbound',
+		extra: Pick<WorkEverWorksOnly, 'linkedBack'> = {}
 	): Promise<void> {
 		const previous = this.ewOnlyOf(link);
 		const ewOnly: WorkEverWorksOnly = {
@@ -673,7 +738,10 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			webUrl: work.webUrl !== undefined ? work.webUrl : (previous.webUrl ?? null),
 			visibility: work.visibility ?? previous.visibility ?? null,
 			unmappedMembers: unmapped?.members ?? previous.unmappedMembers ?? [],
-			unmappedTeams: unmapped?.teams ?? previous.unmappedTeams ?? []
+			unmappedTeams: unmapped?.teams ?? previous.unmappedTeams ?? [],
+			// Kept only for the project it was set for (a link recorded for another project is linked back again).
+			linkedBack: extra.linkedBack ?? (previous.linkedBack && previous.linkedBack === projectId ? previous.linkedBack : null),
+			linkBackTriedAt: previous.linkBackTriedAt ?? null
 		};
 		await this.links.record({
 			tenantId: context.tenantId,
