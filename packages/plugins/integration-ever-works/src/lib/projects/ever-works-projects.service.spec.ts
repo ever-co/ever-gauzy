@@ -389,12 +389,19 @@ describe('EverWorksProjectsService', () => {
 	 * and the writes; `fail(method)` makes the next call of that method fail once.
 	 */
 	const remote = (client: { request: jest.Mock }, works: Array<Record<string, unknown>>) => {
-		const state = { links: [] as Array<Record<string, unknown>>, failNext: new Set<string>() };
+		let state = { links: [] as Array<Record<string, unknown>>, failNext: new Set<string>(), pageSize: 0 };
 		client.request.mockImplementation(async (...args: unknown[]) => {
 			const [method, path, options] = args as [string, string, { body?: Record<string, unknown>; query?: Record<string, string> }];
 			if (state.failNext.delete(method)) throw new EverWorksApiError(503, 'unavailable', 'Try again.');
 			const workId = path.split('/').pop();
-			if (method === 'GET' && path === '/links') return { data: state.links.map((link) => ({ entityType: 'work', source: 'gauzy', ...link })) };
+			if (method === 'GET' && path === '/links') {
+				const all = state.links.map((link) => ({ entityType: 'work', source: 'gauzy', ...link }));
+				if (!state.pageSize) return { data: all };
+				// Paged like the other lists: `cursor` is the offset of the page.
+				const at = Number(options.query?.['cursor'] ?? 0);
+				const next = at + state.pageSize;
+				return { data: all.slice(at, next), hasMore: next < all.length, nextCursor: next < all.length ? String(next) : null };
+			}
 			if (method === 'PUT') {
 				state.links = state.links.filter((link) => !(link['entityId'] === workId && link['installationId'] === options.body?.['installationId']));
 				state.links.push({ entityId: workId, installationId: options.body?.['installationId'], externalId: options.body?.['externalId'] });
@@ -425,6 +432,28 @@ describe('EverWorksProjectsService', () => {
 		expect(ew.links).toEqual([expect.objectContaining({ entityId: 'ew-work-9', installationId: 'c-other' })]);
 		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
 		expect(deletes(client)).toHaveLength(2);
+	});
+
+	it('every page of the links is read, and a pair on a later page is never taken for one with no link (#11054 review)', async () => {
+		const { service, projects, client, links } = setup();
+		const works = [1, 2, 3].map((i) => ({ id: `ew-work-${i}`, ...work, name: `Work ${i}` }));
+		projects.push({ id: 'p1', name: 'One' }, { id: 'p2', name: 'Two' }, { id: 'p3', name: 'Three' });
+		const ew = remote(client, works);
+		await service.decide('m1' as never, { links: [1, 2, 3].map((i) => ({ ewWorkId: `ew-work-${i}`, projectId: `p${i}` })) });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		const puts = () => client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT').length;
+		expect(puts()).toBe(3);
+		ew.pageSize = 1;
+		// A stale link on the last page is removed, and no pair is linked back again.
+		ew.links.push({ entityId: 'ew-work-9', installationId: 'c1', externalId: 'p9' });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(ew.links.map((link) => link['entityId'])).toEqual(['ew-work-1', 'ew-work-2', 'ew-work-3']);
+		expect(puts()).toBe(3);
+		expect(links.map((l) => JSON.parse(l.ewOnly as string)['linkedBack'])).toEqual(['p1', 'p2', 'p3']);
+		// A list that cannot be read to its end clears no marker.
+		client.request.mockImplementationOnce(async () => ({ data: [], hasMore: true, nextCursor: null }));
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(puts()).toBe(3);
 	});
 
 	it('a link a late removal took from a pair made again is put back by the next sweep (#11054 review)', async () => {

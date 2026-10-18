@@ -159,6 +159,8 @@ const sameSet = (a: ReadonlyArray<string>, b: ReadonlyArray<string>) => {
 export const PROJECT_SWEEP_MS = 10 * 60_000;
 /** Link-backs one sweep sends at most per mapping (the rest go with the next sweep). */
 export const PROJECT_LINK_BACKS_PER_SWEEP = 50;
+/** At most this many pages of Ever Works' work links are read per run (`GET /links?entityType=work`). */
+export const PROJECT_LINK_PAGES_PER_SWEEP = 20;
 
 /**
  * Projects ↔ Works (plan 01 §10, plan 06 G-P1-8): **link only** in P1, linked as `PROJECT_WORK`.
@@ -748,19 +750,35 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 	 * - a pair whose link-back is recorded while Ever Works shows another project or none (a removal that arrived
 	 *   after the work was paired again) has its link-back marker cleared, so the link-back below sends it again.
 	 *
-	 * Only this installation's links are read; an answer that is not a list of links changes nothing. Best effort:
-	 * a failure is logged, and an outage ends the run.
+	 * Only this installation's links are read, every page; an answer that is not a list of links changes nothing, and
+	 * the markers are only cleared when the whole list was read. Best effort: a failure is logged, and an outage ends
+	 * the run.
 	 */
 	private async reconcileLinks(context: EverWorksMappingContext): Promise<void> {
 		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
-		let rows: unknown;
+		// Every page (a list page may carry `hasMore` / `nextCursor`): a pair is only taken for one Ever Works shows no
+		// link for when the whole list was read.
+		const rows: EverWorksLinkRow[] = [];
+		let complete = false;
+		let cursor: string | null = null;
 		try {
-			rows = (await client.request<{ data?: unknown }>('GET', '/links', { query: { entityType: 'work' } }))?.data;
+			for (let page = 0; page < PROJECT_LINK_PAGES_PER_SWEEP; page++) {
+				const result: { data?: unknown; hasMore?: boolean; nextCursor?: string | null } = await client.request('GET', '/links', {
+					query: { entityType: 'work', ...(cursor ? { cursor } : {}) }
+				});
+				const data = result?.data;
+				if (!Array.isArray(data) || !data.every(isEverWorksLinkRow)) return;
+				rows.push(...data);
+				cursor = result.nextCursor ?? null;
+				if (!result.hasMore || !cursor) {
+					complete = !result.hasMore;
+					break;
+				}
+			}
 		} catch (error) {
 			this.logger.warn(`Mapping ${context.integrationTenantId}: the Ever Works work links could not be read (${describeError(error)}).`);
-			return;
+			if (!rows.length) return;
 		}
-		if (!Array.isArray(rows) || !rows.every(isEverWorksLinkRow)) return;
 		const ours = rows.filter((row) => row.entityType === 'work' && row.installationId === context.connection.id);
 		let removals = 0;
 		for (const row of ours) {
@@ -776,6 +794,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				if (error instanceof EverWorksNetworkError || (error instanceof EverWorksApiError && (error.retryable || error.status === 401))) return;
 			}
 		}
+		if (!complete) return;
 		const shown = new Map(ours.map((row) => [row.entityId, row.externalId]));
 		for (const link of (await this.links.list(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK)).filter((row) => row.state === EverWorksLinkState.OK)) {
 			const ew = this.ewOnlyOf(link);
