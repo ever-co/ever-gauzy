@@ -18,7 +18,7 @@
 }
 
 <ng-template #content>
-	<ngx-record-view [record]="viewedProject" [sections]="sections" [placeholder]="'SM_TABLE.NONE' | translate">
+	<ngx-record-view [record]="viewedProject" [sections]="isPage ? recordSections : sections" [placeholder]="'SM_TABLE.NONE' | translate">
 		<!-- Everything above the record's own sections, in one block with one even rhythm. -->
 		<div recordViewHeader class="project-view-top">
 			<!-- The headline: who it is, its key figures and its budget — across the full width on a page. -->
@@ -68,6 +68,102 @@
 					</a>
 				</div>
 
+				@if (isPage) {
+				<!-- The page's four figures: all the time tracked, this period against the last, the timeline,
+				     and the budget (or, without an hours budget, how it bills). -->
+				<dl class="project-facts">
+					<div class="project-fact">
+						<dt>{{ 'PROJECT_QUICK_LOOK.TOTAL_TRACKED' | translate }}</dt>
+						<dd>
+							{{ lifetime.value !== null ? formatDuration(lifetime.value) : '—' }}
+							<span class="project-fact-hint">{{ 'PROJECT_QUICK_LOOK.TOTAL_TRACKED_HINT' | translate }}</span>
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'PROJECT_QUICK_LOOK.THIS_PERIOD' | translate }}</dt>
+						<dd>
+							{{ workedSeconds ? formatDuration(workedSeconds) : '—' }}
+							@if (periodDelta; as delta) {
+							<span class="project-fact-hint project-delta">
+								<nb-icon
+									[icon]="delta.direction === 'up' ? 'arrow-upward-outline' : delta.direction === 'down' ? 'arrow-downward-outline' : 'minus-outline'"
+									aria-hidden="true"
+								></nb-icon>
+								{{ 'PROJECT_QUICK_LOOK.VS_PREVIOUS' | translate : { value: delta.percent + '%' } }}
+							</span>
+							} @else {
+							<span class="project-fact-hint">{{ rangeLabel }}</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'PROJECT_QUICK_LOOK.TIMELINE' | translate }}</dt>
+						<dd>
+							@if (timeline; as line) {
+							{{ (line.start || '…') + ' – ' + (line.end || '…') }}
+							@if (line.percent !== null) {
+							<span
+								class="project-timeline-track"
+								[class.is-overdue]="line.tone === 'danger'"
+								[class.is-done]="line.tone === 'success'"
+								role="progressbar"
+								aria-valuemin="0"
+								aria-valuemax="100"
+								[attr.aria-valuenow]="line.percent | number : '1.0-0'"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.TIMELINE' | translate"
+								[nbTooltip]="formatPercent(line.percent)"
+								nbTooltipPlacement="top"
+								><span [style.width.%]="line.percent"></span
+							></span>
+							}
+							@if (line.hint; as hint) {
+							<span class="project-fact-hint" [class.is-overdue]="line.tone === 'danger'" [class.is-done]="line.tone === 'success'">{{
+								hint.key | translate : { count: hint.count }
+							}}</span>
+							}
+							} @else {
+							<span class="project-fact-muted">{{ 'PROJECT_QUICK_LOOK.NO_DATES' | translate }}</span>
+							}
+						</dd>
+					</div>
+					@if (budget; as budget) {
+					<!-- Budget burn: amber from 80%, red over. -->
+					<div class="project-fact project-budget" [class.is-warning]="budget.warning && !budget.over" [class.is-over]="budget.over">
+						<dt>{{ 'ORGANIZATIONS_PAGE.BUDGET' | translate }}</dt>
+						<dd>
+							<span class="project-budget-value">
+								@if (budget.over) {
+								{{ 'PROJECT_QUICK_LOOK.OVER_BUDGET' | translate : { value: formatHours(budget.usedHours - budget.budgetHours) } }}
+								} @else {
+								{{ 'PROJECT_QUICK_LOOK.BUDGET_USED' | translate : { used: formatHours(budget.usedHours), budget: formatHours(budget.budgetHours) } }}
+								}
+							</span>
+							<span
+								class="project-budget-track"
+								[nbTooltip]="formatPercent(budget.over ? (budget.usedHours / budget.budgetHours) * 100 : budget.percent)"
+								nbTooltipPlacement="top"
+								role="progressbar"
+								aria-valuemin="0"
+								aria-valuemax="100"
+								[attr.aria-valuenow]="budget.percent | number : '1.0-0'"
+								[attr.aria-label]="'ORGANIZATIONS_PAGE.BUDGET' | translate"
+								><span [style.width.%]="budget.percent"></span
+							></span>
+						</dd>
+					</div>
+					} @else {
+					<div class="project-fact">
+						<dt>{{ 'ORGANIZATIONS_PAGE.EDIT.BILLING' | translate }}</dt>
+						<dd>
+							{{ billing || '—' }}
+							@if (costBudget) {
+							<span class="project-fact-hint">{{ ('ORGANIZATIONS_PAGE.BUDGET' | translate) + ': ' + costBudget }}</span>
+							}
+						</dd>
+					</div>
+					}
+				</dl>
+				} @else {
 				<!-- Key figures: the host's time on it in the period, its members, and its deadline. -->
 				<dl class="project-facts">
 					<div class="project-fact">
@@ -115,6 +211,7 @@
 						<span [style.width.%]="budget.percent"></span>
 					</div>
 				</div>
+				}
 				}
 			</div>
 
@@ -268,6 +365,64 @@
 						}
 					</div>
 				</section>
+
+				<!-- Team (page only): managers first, each with live presence and their time on the project in the period. -->
+				@if (isPage) {
+				<section class="panel project-view-panel project-view-team">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROJECT_QUICK_LOOK.TEAM' | translate }}
+							@if (team.length) {
+							<span class="title-count">{{ team.length }}</span>
+							}
+						</h5>
+					</header>
+					<div class="panel-body panel-body--flush">
+						@if (!team.length) {
+						<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_MEMBERS', icon: 'people-outline' }"></ng-container>
+						} @else {
+						<ul class="team-list">
+							@for (person of team; track person.id) {
+							<li class="team-member">
+								<a class="contributor-person" [routerLink]="['/pages/employees/view', person.id]">
+									<span
+										class="member-avatar contributor-avatar"
+										[class]="'presence-' + person.presence"
+										[nbTooltip]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate"
+										nbTooltipPlacement="top"
+									>
+										@if (person.avatarUrl) {
+										<img [src]="person.avatarUrl" [alt]="person.name" />
+										} @else {
+										<span aria-hidden="true">{{ person.initials }}</span>
+										}
+										<span class="avatar-dot" aria-hidden="true"></span>
+									</span>
+									<span class="contributor-text">
+										<span class="contributor-name" [nbTooltip]="person.name" nbTooltipPlacement="top">{{ person.name }}</span>
+										<span class="team-role" [class.is-manager]="person.isManager">{{
+											(person.isManager ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MANAGER' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MEMBER') | translate
+										}}</span>
+									</span>
+								</a>
+								<span class="team-time" [class.is-idle]="!person.duration">{{
+									person.duration === null ? '' : person.duration ? formatDuration(person.duration) : '—'
+								}}</span>
+							</li>
+							}
+						</ul>
+						}
+					</div>
+				</section>
+				}
+
+				<!-- Details (page only): the record's own Details panel, in the narrow column under the team. -->
+				@if (isPage && detailsSections.length) {
+				<div class="project-view-details">
+					<ngx-record-view [record]="viewedProject" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+				</div>
+				}
 			</div>
 
 			<!-- The work: its tasks, the hours per day, and its most worked tasks. On a page, the main column. -->
@@ -437,6 +592,35 @@
 						}
 					</div>
 				</section>
+
+				<!-- Modules (page only, when it has any): each with its status, dates and task count. -->
+				@if (isPage && modules.value.length) {
+				<section class="panel project-view-panel project-view-modules">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+							{{ 'PROJECT_QUICK_LOOK.MODULES' | translate }}
+							<span class="title-count">{{ modules.value.length }}</span>
+						</h5>
+					</header>
+					<ul class="module-list">
+						@for (module of modules.value; track module.id) {
+						<li class="module-row">
+							<span class="module-main">
+								<span class="module-name" [nbTooltip]="module.name" nbTooltipPlacement="top">{{ module.name }}</span>
+								@if (module.dates) {
+								<span class="module-dates">{{ module.dates }}</span>
+								}
+							</span>
+							@if (module.status) {
+							<span [class]="'project-status tone-' + module.tone">{{ module.status }}</span>
+							}
+							<span class="module-tasks">{{ 'PROJECT_QUICK_LOOK.MODULE_TASKS' | translate : { count: module.tasks } }}</span>
+						</li>
+						}
+					</ul>
+				</section>
+				}
 			</div>
 		</div>
 	</ngx-record-view>
