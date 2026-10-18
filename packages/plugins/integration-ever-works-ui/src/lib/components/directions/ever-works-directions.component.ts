@@ -94,6 +94,8 @@ export class EverWorksDirectionsComponent implements OnChanges {
 	busy = false;
 	saved = false;
 	error: string | null = null;
+	/** The mapping this component's last save answered: handed back as the input, it keeps "Saved" shown (review F100). */
+	private lastSaved: EverWorksMapping | null = null;
 
 	ngOnChanges(): void {
 		// A fresh copy: nothing changes on the mapping until it is saved.
@@ -102,7 +104,8 @@ export class EverWorksDirectionsComponent implements OnChanges {
 			if (!this.allowed(domain).includes(this.directions[domain])) this.directions[domain] = this.allowed(domain)[0];
 		}
 		this.syncUnlinkedProjectTasks = this.mapping?.syncUnlinkedProjectTasks ?? true;
-		this.saved = false;
+		// The settings page hands the saved mapping back as the input: that is this save, not another mapping.
+		this.saved = this.saved && !!this.mapping && this.mapping === this.lastSaved;
 		this.error = null;
 	}
 
@@ -123,6 +126,7 @@ export class EverWorksDirectionsComponent implements OnChanges {
 					this.busy = false;
 					this.saved = true;
 					this.mapping = mapping;
+					this.lastSaved = mapping;
 					this.savedMapping.emit(mapping);
 					this.cdr.markForCheck();
 				},
