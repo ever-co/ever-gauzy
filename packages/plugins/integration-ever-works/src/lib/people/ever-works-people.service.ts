@@ -1,5 +1,13 @@
 import { createHash } from 'node:crypto';
-import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+	BadGatewayException,
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	HttpException,
+	Injectable,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DataSource, In } from 'typeorm';
 import {
@@ -13,7 +21,7 @@ import {
 	RolesEnum
 } from '@gauzy/contracts';
 import { Employee, Invite, InviteBulkCreateCommand, RequestContext, Role } from '@gauzy/core';
-import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
+import { EverWorksApiError, EverWorksClient, EverWorksNetworkError } from '../client/ever-works-client';
 import { EverWorksListPage } from '../client/ever-works-client.types';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
@@ -314,7 +322,9 @@ export class EverWorksPeopleService {
 		if (!person.email) throw new BadRequestException('This person has no e-mail to invite.');
 		const email = person.email;
 		const key = email.toLowerCase();
-		const same = (await this.members(context)).find((m) => m.email?.toLowerCase() === key);
+		const same = (await this.members(context).catch((error: unknown) => Promise.reject(this.inviteError(error)))).find(
+			(m) => m.email?.toLowerCase() === key
+		);
 		if (same) {
 			throw new ConflictException(`A member of the Ever Works organization already has this e-mail (${same.userId}): pair them instead.`);
 		}
@@ -338,8 +348,13 @@ export class EverWorksPeopleService {
 		};
 	}
 
-	/** An Ever Works refusal of `POST /members/invite`, as the People tab should read it. */
+	/**
+	 * An Ever Works failure of "invite to Ever Works" as an HTTP answer the People tab can read (like the connection
+	 * routes): never a 500, and never a 401 (that would read as the Gauzy session ending).
+	 */
 	private inviteError(error: unknown): unknown {
+		if (error instanceof HttpException) return error;
+		if (error instanceof EverWorksNetworkError) return new BadGatewayException(error.message);
 		if (!(error instanceof EverWorksApiError)) return error;
 		if (error.status === 403 && error.code === 'scope_missing') {
 			return new ForbiddenException('The Ever Works key cannot invite members: give it the members:write scope (Ever Works, Settings → API keys).');
@@ -347,8 +362,10 @@ export class EverWorksPeopleService {
 		if (error.status === 404 || error.status === 405) {
 			return new BadRequestException('This Ever Works server cannot invite members yet: it needs integration contract v1-draft.15 (POST /members/invite).');
 		}
-		if (error.status === 400 || error.status === 409 || error.status === 422) return new BadRequestException(`Ever Works refused the invitation: ${error.message}`);
-		return error;
+		if (error.status === 401) return new BadRequestException(`Ever Works rejected the key (${error.code}).`);
+		if (error.status === 429) return new ServiceUnavailableException('Ever Works is rate limiting this key; try again shortly.');
+		if (error.status >= 500) return new BadGatewayException(`Ever Works failed (${error.status}).`);
+		return new BadRequestException(`Ever Works refused the invitation (${error.code}): ${error.message}`);
 	}
 
 	/**

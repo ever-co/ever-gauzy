@@ -220,7 +220,8 @@ and answered `202`.
   The other way, a Gauzy person with no Ever Works member can be **invited to
   Ever Works** (`POST /members/invite`, contract v1-draft.15, scope
   `members:write`): Ever Works' own organization invitation, sent as the
-  admin's paired Ever Works user, also needing `ORG_INVITE_EDIT`. A person
+  admin's paired Ever Works user (an admin with none sends it as the
+  integration key's owner), also needing `ORG_INVITE_EDIT`. A person
   whose email an Ever Works member already has is refused (pair them instead);
   a repeat is answered as the pending invitation; nobody is paired by it.
 - **Agents.** Each Ever Works agent of a mapped organization becomes a Gauzy
