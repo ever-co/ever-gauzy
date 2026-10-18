@@ -22,7 +22,7 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { RoleService } from '../role/role.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from '../organization-project/repository/type-orm-organization-project.repository';
-import { OrganizationTeam } from '../core/entities/internal';
+import { OrganizationTeam, UserOrganization } from '../core/entities/internal';
 import { OrganizationStrategicInitiative } from './organization-strategic-initiative.entity';
 import { TypeOrmOrganizationStrategicInitiativeRepository } from './repository/type-orm-organization-strategic-initiative.repository';
 import { MikroOrmOrganizationStrategicInitiativeRepository } from './repository/mikro-orm-organization-strategic-initiative.repository';
@@ -241,7 +241,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	async findAll(
 		filters: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
-		const { employeeId: currentEmployeeId, seesAll } = this.viewer();
+		const { employeeId: currentEmployeeId, seesAllIn } = await this.viewer();
 
 		// Ensure relations for visibility check are loaded (the directly linked teams, projects and their teams),
 		// next to the ones the caller asked for, in whichever form it asked (a list or an object)
@@ -258,7 +258,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 
 		// Filter organization strategic initiatives based on visibility scope (no extra queries)
 		const filteredOrganizationStrategicInitiatives = items.filter((initiative) =>
-			this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership, seesAll)
+			this.canViewOrganizationStrategicInitiativeSync(initiative, currentEmployeeId, employeeTeamIds, hasLeadership, seesAllIn)
 		);
 
 		return {
@@ -279,7 +279,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		id: ID,
 		params?: BaseQueryDTO<OrganizationStrategicInitiative>
 	): Promise<IOrganizationStrategicInitiative> {
-		const { employeeId: currentEmployeeId, seesAll } = this.viewer();
+		const { employeeId: currentEmployeeId, seesAllIn } = await this.viewer();
 
 		// Find the organization strategic initiative with the requested relations (a list or an object), and its
 		// directly linked teams
@@ -299,7 +299,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		}
 
 		// Check visibility
-		const canView = await this.canViewOrganizationStrategicInitiative(organizationStrategicInitiative, currentEmployeeId, seesAll);
+		const canView = await this.canViewOrganizationStrategicInitiative(organizationStrategicInitiative, currentEmployeeId, seesAllIn);
 		if (!canView) {
 			throw new NotFoundException(
 				`Organization strategic initiative with id ${id} not found or you don't have permission to view it`
@@ -317,7 +317,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 */
 	async findByProject(projectId: ID): Promise<IOrganizationStrategicInitiative[]> {
 		const tenantId = RequestContext.currentTenantId();
-		const { employeeId: currentEmployeeId, seesAll } = this.viewer();
+		const { employeeId: currentEmployeeId, seesAllIn } = await this.viewer();
 
 		// Get the project with its strategic initiatives and their projects/teams for visibility check
 		const project = await this._typeOrmOrganizationProjectRepository.findOne({
@@ -352,7 +352,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 					currentEmployeeId,
 					employeeTeamIds,
 					hasLeadership,
-					seesAll
+					seesAllIn
 				)
 			)
 			.map((initiative) => this.withTeamIds(initiative));
@@ -410,13 +410,15 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 * - `employeeId`: the caller's own employee. `RequestContext.currentEmployeeId()` is empty for a user who may
 	 *   act for every employee (`CHANGE_SELECTED_EMPLOYEE`, an admin), which hid a team-scoped initiative from its
 	 *   own steward when the steward was an admin not on the team, and never counted an admin's team membership.
-	 * - `seesAll`: an organization admin who may edit initiatives (may act for every employee and holds
-	 *   `ORG_STRATEGIC_INITIATIVE_UPDATE`, as the default super admin and admin roles do) sees every initiative of
-	 *   the organizations they can read: they already edit them, and could not read what they edit.
+	 * - `seesAllIn`: the organizations in which every initiative is visible to the caller. An organization admin
+	 *   who may edit initiatives (may act for every employee and holds `ORG_STRATEGIC_INITIATIVE_UPDATE`, as the
+	 *   default super admin and admin roles do) sees every initiative of the organizations they are a member of
+	 *   (a `user_organization` row, as `assertCurrentUserBelongsToOrganization` checks): they already edit them,
+	 *   and could not read what they edit. Never another organization of the tenant; empty for everybody else.
 	 *
-	 * @returns The caller's employee (or `null`) and whether every initiative is visible to them.
+	 * @returns The caller's employee (or `null`) and the organizations whose every initiative they see.
 	 */
-	private viewer(): { employeeId: ID | null; seesAll: boolean } {
+	private async viewer(): Promise<{ employeeId: ID | null; seesAllIn: ReadonlySet<ID> }> {
 		let ownEmployeeId: ID | null = null;
 		try {
 			ownEmployeeId = (RequestContext.currentUser()?.employeeId as ID) ?? null;
@@ -424,10 +426,52 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			ownEmployeeId = null;
 		}
 		const employeeId = (RequestContext.currentEmployeeId() as ID) ?? ownEmployeeId;
-		const seesAll =
+		const initiativeAdmin =
 			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
 			RequestContext.hasPermission(PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE);
-		return { employeeId: employeeId || null, seesAll };
+		return {
+			employeeId: employeeId || null,
+			seesAllIn: initiativeAdmin ? await this.memberOrganizationIds() : new Set<ID>()
+		};
+	}
+
+	/**
+	 * The organizations of the caller's tenant they are a member of (`user_organization`); none without a tenant
+	 * or user in the request (fails closed).
+	 *
+	 * @returns Their organization ids.
+	 */
+	private async memberOrganizationIds(): Promise<Set<ID>> {
+		const tenantId = RequestContext.currentTenantId();
+		const userId = RequestContext.currentUserId();
+		if (!tenantId || !userId) {
+			return new Set();
+		}
+		try {
+			const memberships = await this.typeOrmRepository.manager.find(UserOrganization, {
+				where: { tenantId, userId },
+				select: { organizationId: true }
+			});
+			return new Set(memberships.map((membership) => membership.organizationId as ID).filter(Boolean));
+		} catch (error) {
+			console.error('Error fetching organization memberships:', error.message);
+			return new Set();
+		}
+	}
+
+	/**
+	 * Whether every initiative of this one's organization is visible to the caller (see `viewer`).
+	 *
+	 * @param organizationStrategicInitiative - The initiative (its `organizationId` read).
+	 * @param seesAllIn - The organizations whose every initiative the caller sees.
+	 * @returns True when the initiative is in one of them.
+	 */
+	private seesEveryInitiativeOf(
+		organizationStrategicInitiative: IOrganizationStrategicInitiative,
+		seesAllIn: ReadonlySet<ID>
+	): boolean {
+		const organizationId = organizationStrategicInitiative?.organizationId as ID;
+		return !!organizationId && seesAllIn.has(organizationId);
 	}
 
 	/**
@@ -485,7 +529,7 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 * @param employeeId - The current employee ID.
 	 * @param employeeTeamIds - Pre-fetched Set of team IDs the employee belongs to.
 	 * @param hasLeadership - Pre-computed leadership access flag.
-	 * @param seesAll - Whether the caller is an organization admin who may edit initiatives (see `viewer`).
+	 * @param seesAllIn - The organizations whose every initiative the caller sees (see `viewer`).
 	 * @returns True if the user can view the organization strategic initiative.
 	 */
 	private canViewOrganizationStrategicInitiativeSync(
@@ -493,11 +537,11 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		employeeId: ID,
 		employeeTeamIds: Set<ID>,
 		hasLeadershipAccess: boolean,
-		seesAll = false
+		seesAllIn: ReadonlySet<ID> = new Set()
 	): boolean {
 		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
-		if (seesAll) {
+		if (this.seesEveryInitiativeOf(organizationStrategicInitiative, seesAllIn)) {
 			return true;
 		}
 
@@ -572,17 +616,17 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 *
 	 * @param organizationStrategicInitiative - The organization strategic initiative to check.
 	 * @param employeeId - The current employee ID.
-	 * @param seesAll - Whether the caller is an organization admin who may edit initiatives (see `viewer`).
+	 * @param seesAllIn - The organizations whose every initiative the caller sees (see `viewer`).
 	 * @returns True if the user can view the organization strategic initiative.
 	 */
 	private async canViewOrganizationStrategicInitiative(
 		organizationStrategicInitiative: IOrganizationStrategicInitiative,
 		employeeId: ID,
-		seesAll = false
+		seesAllIn: ReadonlySet<ID> = new Set()
 	): Promise<boolean> {
 		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
-		if (seesAll) {
+		if (this.seesEveryInitiativeOf(organizationStrategicInitiative, seesAllIn)) {
 			return true;
 		}
 
