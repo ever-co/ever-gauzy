@@ -933,6 +933,44 @@ describe('task sync review fixes (#10804)', () => {
 		expect(created).toMatchObject({ status: 'in_progress', watchers: ['ew-alice'] });
 	});
 
+	it('the watchers still to send stay to send across two Ever Works edits before the retry (#11096 review)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Work', status: 'in-progress' });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		t.mock.fail({ method: 'PUT', path: /\/watchers$/, status: 400, body: { error: { code: 'validation_failed', message: 'Refused.' } } });
+		await expect(t.push('g1')).rejects.toThrow();
+		const created = [...t.mock.tasks.values()][0] as Record<string, unknown>;
+		t.mock.expireIdempotencyKeys();
+		// The first edit gives the link a Gauzy side (the title it applied); the second must not take the watchers as sent.
+		Object.assign(created, { title: 'Work, renamed in Ever Works', version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...created }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		Object.assign(created, { priority: 'p1', version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...created }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		expect(t.tasks.get('g1')).toMatchObject({ title: 'Work, renamed in Ever Works' });
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect(t.mock.tasks.size).toBe(1);
+		expect(created).toMatchObject({ title: 'Work, renamed in Ever Works', priority: 'p1', status: 'in_progress', watchers: ['ew-alice'] });
+	});
+
+	it('an Ever Works watcher change before the retry leaves the Gauzy watchers still to send (#11096 review)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Watched' });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		t.mock.fail({ method: 'PUT', path: /\/watchers$/, status: 400, body: { error: { code: 'validation_failed', message: 'Refused.' } } });
+		await expect(t.push('g1')).rejects.toThrow();
+		const created = [...t.mock.tasks.values()][0] as Record<string, unknown>;
+		t.mock.expireIdempotencyKeys();
+		// Ever Works adds Bob: Gauzy takes him, and Alice (never sent) is not recorded as sent with him.
+		Object.assign(created, { watchers: ['ew-bob'], version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.watcher.added', data: { taskId: created['id'], userId: 'ew-bob' }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		expect(t.subscriptions.map((row) => row.employeeId).sort()).toEqual(['e-alice', 'e-bob']);
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect([...(created['watchers'] as string[])].sort()).toEqual(['ew-alice', 'ew-bob']);
+	});
+
 	it('a create recovered after a lost answer gets the Gauzy values edited since', async () => {
 		const t = setup();
 		t.addGauzyTask({ id: 'g1', title: 'Edited since' });
