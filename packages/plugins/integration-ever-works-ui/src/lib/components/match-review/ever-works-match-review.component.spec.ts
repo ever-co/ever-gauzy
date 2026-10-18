@@ -424,6 +424,57 @@ describe('EverWorksMatchReviewComponent', () => {
 			expect(api.people).toHaveBeenCalledTimes(2);
 		});
 
+		it('offers "invite to Ever Works" even when the Ever Works organization has no member yet', () => {
+			api.people.mockReturnValue(of({ members: [], unmatchedEmployees: [{ employeeId: 'e3', name: 'Zoe G', email: 'zoe@example.com' }] }));
+			const { el } = render();
+			expect(el.querySelector('[data-test="invite-ew-e3"]')).not.toBeNull();
+		});
+
+		it("keeps the admin's unsaved choices when the tab is read again after an invitation", () => {
+			api.inviteToEverWorks.mockReturnValue(of({ status: 'invited', email: 'zoe@example.com', invitationId: 'i-1', expiresAt: null, ewUserId: null }));
+			const { component } = render();
+			// The admin clears u1's suggestion and picks e2 for u3, unsaved.
+			component.personChoice['u1'] = '';
+			component.personChoice['u3'] = 'e2';
+			component.askInviteToEverWorks({ employeeId: 'e3', name: 'Zoe G', email: 'zoe@example.com' });
+			component.confirmInvite();
+			expect(component.personChoice['u1']).toBe('');
+			expect(component.personChoice['u3']).toBe('e2');
+		});
+
+		it('notes the invitation as soon as it is answered, even when reading the tab again fails', () => {
+			api.inviteToGauzy.mockReturnValue(of({ status: 'invited', inviteId: 'inv-4', email: 'dee@example.com', roleId: 'r', expireDate: null }));
+			const { component, fixture, el } = render();
+			api.people.mockReturnValue(throwError(() => ({ status: 503, error: { message: 'Ever Works is rate limiting this key' } })));
+			component.askInviteToGauzy(PEOPLE_INVITES.members[3]);
+			component.confirmInvite();
+			fixture.detectChanges();
+			expect(component.inviteResults['gauzy:u4']).toBe('EVER_WORKS.REVIEW.INVITE.RESULT.invited');
+			expect(el.querySelector('[data-test="invite-results"]')?.textContent).toContain('dee@example.com');
+			expect(text(el, '[data-test="people-error"]')).toContain('rate limiting');
+		});
+
+		it('keeps an "added" result listed after the person turns into a suggestion for the new member', () => {
+			api.inviteToEverWorks.mockReturnValue(of({ status: 'added', email: 'zoe@example.com', invitationId: null, expiresAt: null, ewUserId: 'u-zoe' }));
+			const { component, fixture, el } = render();
+			api.people.mockReturnValue(
+				of({
+					...PEOPLE_INVITES,
+					members: [
+						...PEOPLE_INVITES.members,
+						{ ewUserId: 'u-zoe', username: 'zoe', displayName: 'Zoe', email: 'zoe@example.com', emailVerified: true, role: 'member', isActive: true, linkedEmployeeId: null, suggestion: { employeeId: 'e3', reason: 'verified_email' as const } }
+					]
+				})
+			);
+			component.askInviteToEverWorks({ employeeId: 'e3', name: 'Zoe G', email: 'zoe@example.com' });
+			component.confirmInvite();
+			fixture.detectChanges();
+			expect(el.querySelector('[data-test="invite-ew-e3"]')).toBeNull();
+			const results = el.querySelector('[data-test="invite-results"]')?.textContent ?? '';
+			expect(results).toContain('Zoe G');
+			expect(results).toContain('EVER_WORKS.REVIEW.INVITE.RESULT.added');
+		});
+
 		it('an invite refusal is shown on the People tab and nothing is reloaded', () => {
 			api.inviteToGauzy.mockReturnValue(throwError(() => ({ status: 403, error: { message: 'Inviting people to Gauzy needs the permission to edit invites.' } })));
 			const { component, fixture, el } = render();
