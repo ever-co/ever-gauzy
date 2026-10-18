@@ -181,6 +181,11 @@ export class MockEverWorksServer {
 		this.failures.push({ times: 1, ...failure });
 	}
 
+	/** Ends the replay window of every `Idempotency-Key` seen so far (Ever Works keeps a key 24 h). */
+	expireIdempotencyKeys(): void {
+		this.idempotent.clear();
+	}
+
 	/** The newest `seq` (a string, as the contract carries it). */
 	get head(): string {
 		return String(this.seq);

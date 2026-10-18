@@ -384,6 +384,64 @@ describe('EverWorksProjectsService', () => {
 		expect(links.filter((l) => l.entityType === EverWorksLinkType.PROJECT_WORK)).toEqual([]);
 	});
 
+	/**
+	 * Ever Works' own record of the links (`GET /links?entityType=work`), and a client that answers it, the works list
+	 * and the writes; `fail(method)` makes the next call of that method fail once.
+	 */
+	const remote = (client: { request: jest.Mock }, works: Array<Record<string, unknown>>) => {
+		const state = { links: [] as Array<Record<string, unknown>>, failNext: new Set<string>() };
+		client.request.mockImplementation(async (...args: unknown[]) => {
+			const [method, path, options] = args as [string, string, { body?: Record<string, unknown>; query?: Record<string, string> }];
+			if (state.failNext.delete(method)) throw new EverWorksApiError(503, 'unavailable', 'Try again.');
+			const workId = path.split('/').pop();
+			if (method === 'GET' && path === '/links') return { data: state.links.map((link) => ({ entityType: 'work', source: 'gauzy', ...link })) };
+			if (method === 'PUT') {
+				state.links = state.links.filter((link) => !(link['entityId'] === workId && link['installationId'] === options.body?.['installationId']));
+				state.links.push({ entityId: workId, installationId: options.body?.['installationId'], externalId: options.body?.['externalId'] });
+				return {};
+			}
+			if (method === 'DELETE') {
+				state.links = state.links.filter((link) => !(link['entityId'] === workId && link['installationId'] === options.query?.['installationId']));
+				return undefined;
+			}
+			return { data: works, nextCursor: null, hasMore: false };
+		});
+		return state;
+	};
+
+	it('a removal Ever Works did not take is made by a later sweep (#11054 review)', async () => {
+		const { service, projects, client } = setup();
+		projects.push({ id: 'p1', name: 'First' });
+		const ew = remote(client, [{ id: 'ew-work-1', ...work }]);
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(ew.links).toEqual([expect.objectContaining({ entityId: 'ew-work-1', installationId: 'c1', externalId: 'p1' })]);
+		ew.failNext.add('DELETE');
+		await service.decide('m1' as never, { unlinks: ['ew-work-1'] });
+		expect(ew.links).toHaveLength(1);
+		// The sweep sees the work keep a Gauzy link with no pair, and removes it (this installation's only).
+		ew.links.push({ entityId: 'ew-work-9', installationId: 'c-other', externalId: 'p9' });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(ew.links).toEqual([expect.objectContaining({ entityId: 'ew-work-9', installationId: 'c-other' })]);
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(deletes(client)).toHaveLength(2);
+	});
+
+	it('a link a late removal took from a pair made again is put back by the next sweep (#11054 review)', async () => {
+		const { service, projects, client, links } = setup();
+		projects.push({ id: 'p1', name: 'First' });
+		const ew = remote(client, [{ id: 'ew-work-1', ...work }]);
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(JSON.parse(links[0]?.ewOnly as string)['linkedBack']).toBe('p1');
+		// A removal from an earlier unpair arrives after the pair was made and linked back again.
+		ew.links = [];
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(ew.links).toEqual([expect.objectContaining({ entityId: 'ew-work-1', installationId: 'c1', externalId: 'p1' })]);
+		expect(JSON.parse(links[0]?.ewOnly as string)['linkedBack']).toBe('p1');
+		expect(deletes(client)).toEqual([]);
+	});
+
 	it('a member or team saved by the same sweep keeps the link-back (#11049 review)', async () => {
 		const { service, client, addLink, links } = setup();
 		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
