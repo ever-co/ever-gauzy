@@ -39,6 +39,11 @@ nb-radio-group {
   }
 }
 
+// The basic-status icon renders near-invisible on the dark theme.
+.more-actions nb-icon {
+  color: nb-theme(text-basic-color);
+}
+
 .filter {
   background-color: var(--gauzy-card-2);
   width: fit-content;
