@@ -1,7 +1,12 @@
 import { Readable } from 'node:stream';
 import { Jimp, JimpMime } from 'jimp';
 import * as sharpModule from 'sharp';
-import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './image-thumbnail';
+import {
+	createImageThumbnail,
+	fileContentToBuffer,
+	MAX_BUFFERED_FILE_BYTES,
+	thumbnailFileName
+} from './image-thumbnail';
 
 const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
 	sharpModule) as unknown as typeof sharpModule.default;
@@ -55,8 +60,22 @@ describe('createImageThumbnail', () => {
 		expect(decoded.height).toBe(125);
 	});
 
+	it('refuses an image libvips recognises but will not decode, without handing it to Jimp', async () => {
+		// A PNG header declaring far more pixels than sharp's default input limit: recognised (so no Jimp
+		// fallback, which would decode it in JavaScript on the event loop), then refused by the decode.
+		const huge = await sharp({ create: { width: 2, height: 2, channels: 3, background: '#000' } })
+			.png()
+			.toBuffer();
+		huge.writeUInt32BE(300_000, 16); // IHDR width
+		huge.writeUInt32BE(300_000, 20); // IHDR height
+		const read = jest.spyOn(Jimp, 'read');
+		await expect(createImageThumbnail(huge)).rejects.toThrow();
+		expect(read).not.toHaveBeenCalled();
+		read.mockRestore();
+	});
+
 	it('refuses what is not an image at all', async () => {
-		await expect(createImageThumbnail(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'))).rejects.toThrow();
+		await expect(createImageThumbnail(Buffer.from('definitely not an image'))).rejects.toThrow();
 	});
 });
 
@@ -92,5 +111,27 @@ describe('fileContentToBuffer', () => {
 	it('reads a stream to the end', async () => {
 		const stream = Readable.from([Buffer.from('ab'), Buffer.from('c')]);
 		expect((await fileContentToBuffer(stream))?.toString()).toBe('abc');
+	});
+
+	it('is bounded by default', () => {
+		expect(MAX_BUFFERED_FILE_BYTES).toBe(64 * 1024 * 1024);
+	});
+
+	it('stops reading a stream that exceeds the bound, holding nothing more', async () => {
+		let served = 0;
+		async function* chunks() {
+			for (;;) {
+				served += 1;
+				yield Buffer.alloc(1024);
+			}
+		}
+		await expect(fileContentToBuffer(chunks(), 4096)).rejects.toThrow(/larger than the 4096 bytes/);
+		expect(served).toBe(5);
+	});
+
+	it('refuses bytes already in memory beyond the bound', async () => {
+		await expect(fileContentToBuffer(Buffer.alloc(10), 9)).rejects.toThrow(/larger than the 9 bytes/);
+		const body = { transformToByteArray: async () => new Uint8Array(10) };
+		await expect(fileContentToBuffer(body, 9)).rejects.toThrow(/larger than the 9 bytes/);
 	});
 });

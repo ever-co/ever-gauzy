@@ -62,7 +62,9 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 		// Retrieve file content from the file storage provider
 		const fileContent = await fileContentToBuffer(await provider.getFile(file.key));
 		if (!fileContent) {
-			throw new BadRequestException(`The uploaded camshot '${file.key}' could not be read back from storage`);
+			// The key names the storage path: logged here, kept out of the response (CWE-209)
+			this.logger.error(`Could not read the uploaded camshot '${file.key}' back from the file storage provider`);
+			throw new BadRequestException('The uploaded camshot could not be read back from storage');
 		}
 		try {
 			// 250 px wide, the height following the aspect ratio, as PNG (what the thumbnail always was), oriented as

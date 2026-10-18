@@ -12,14 +12,15 @@ import {
 	HttpStatus,
 	Delete,
 	UseInterceptors,
-	ExecutionContext
+	ExecutionContext,
+	InternalServerErrorException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './../core/file-storage/helpers/image-thumbnail';
+import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './../core/file-storage/helpers';
 import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import {
@@ -98,10 +99,17 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		// (SVG/XML/HTML/XHTML) that would execute as stored XSS when served from `/public/<key>`
 		// (GHSA-p334-cm7f-php5). The file is deleted on rejection because `/public` serves directly from
 		// disk regardless of whether the DB asset record is ever created.
-		// The S3-family providers return a stream; as bytes, for the content check and the thumbnail alike.
-		const fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		// The S3-family providers return a stream; as bytes, for the content check and the thumbnail alike. Read
+		// inside the cleanup: an upload that cannot be read back, is too large to buffer or is markup is deleted
+		// before the request fails, never recorded with `thumb: null`.
+		let fileContent: Buffer;
 		try {
-			assertNotMarkupContent(fileContent ?? Buffer.alloc(0));
+			fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+			if (!fileContent) {
+				this.logger.error(`Could not read the uploaded file '${file.key}' back from the file storage provider`);
+				throw new InternalServerErrorException('The uploaded file could not be read back from storage');
+			}
+			assertNotMarkupContent(fileContent);
 		} catch (error) {
 			try {
 				await provider.deleteFile(file.key);
@@ -112,9 +120,6 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		}
 
 		try {
-			if (!fileContent) {
-				throw new Error(`The uploaded file '${file.key}' could not be read back from storage`);
-			}
 			// The thumbnail: 250 px wide, the height following the aspect ratio, in the image's own format, oriented
 			// as the image displays — sharp (libvips) on its own thread pool, Jimp only for a format libvips does not
 			// decode (BMP). Jimp did every one in JavaScript on the event loop, inside the upload request.
