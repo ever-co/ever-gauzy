@@ -260,7 +260,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							members: {
 								employeeId: this.selectedEmployeeId
 							}
-					  }
+						}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -675,6 +675,19 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		const path = project ? [basePath, project.id, 'edit'] : [basePath, 'create'];
 		// Navigate to the specified path
 		this._router.navigate(path);
+	}
+
+	/**
+	 * Navigates to the read-only View of the selected project: its status, budget, progress,
+	 * tasks, hours and contributors, then its full record — like a team's View.
+	 *
+	 * @param project - The project to view.
+	 */
+	view(project?: IOrganizationProject): void {
+		const target = project ?? this.selectedProject;
+		if (target?.id) {
+			this._router.navigate(['/pages/organization/projects/view', target.id]);
+		}
 	}
 
 	/**
