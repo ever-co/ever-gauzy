@@ -1,6 +1,6 @@
 jest.mock('@gauzy/core', () => ({ EVER_REDIS_CLIENT: 'EVER_REDIS_CLIENT' }));
 
-import { INBOUND_PROCESSING_CLAIM_MS, InboundReplayGuard } from './replay-guard.service';
+import { INBOUND_PROCESSING_CLAIM_MS, InboundReplayGuard, MAX_LOCAL_ENTRIES } from './replay-guard.service';
 
 describe('InboundReplayGuard', () => {
 	afterEach(() => jest.restoreAllMocks());
@@ -27,6 +27,32 @@ describe('InboundReplayGuard', () => {
 		// The process died before storing finished: no `complete`, no `release`.
 		now += INBOUND_PROCESSING_CLAIM_MS + 1;
 		expect(await guard.consume('ses:a', 'sns:1', INBOUND_PROCESSING_CLAIM_MS)).toBe(true);
+	});
+
+	it('with Redis, the in-process set of stored deliveries stays bounded (review F108)', async () => {
+		let now = 1_000_000;
+		jest.spyOn(Date, 'now').mockImplementation(() => now);
+		const set = jest.fn(async () => 'OK');
+		const guard = new InboundReplayGuard({ set } as never);
+		const local = (guard as unknown as { local: Map<string, number> }).local;
+		for (let n = 0; n < MAX_LOCAL_ENTRIES + 50; n++) {
+			expect(await guard.consume('ses:a', `sns:${n}`, INBOUND_PROCESSING_CLAIM_MS)).toBe(true);
+			await guard.complete('ses:a', `sns:${n}`, 60 * 60_000);
+		}
+		expect(local.size).toBeLessThanOrEqual(MAX_LOCAL_ENTRIES);
+		// A full set is trimmed well below the cap at once: the writes after it find room without scanning the set.
+		const scans = jest.spyOn(guard as never, 'prune');
+		for (let n = 0; n < 1000; n++) await guard.complete('ses:a', `sns:more-${n}`, 60 * 60_000);
+		expect(scans.mock.calls.length).toBeLessThanOrEqual(1);
+		// Expired entries go first once the set is full again.
+		now += 60 * 60_000 + 1;
+		const before = local.size;
+		while (local.size < MAX_LOCAL_ENTRIES) await guard.complete('ses:a', `sns:fill-${local.size}`, 60 * 60_000);
+		await guard.complete('ses:a', 'sns:late', 60 * 60_000);
+		expect(local.size).toBe(MAX_LOCAL_ENTRIES - before + 1);
+		// Still a replay if Redis fails afterwards: the in-process set takes over.
+		set.mockRejectedValueOnce(new Error('down') as never);
+		expect(await guard.consume('ses:a', 'sns:late', INBOUND_PROCESSING_CLAIM_MS)).toBe(false);
 	});
 
 	it('claims with SET NX and completes with SET PX on Redis', async () => {

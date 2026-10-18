@@ -59,6 +59,8 @@ const scrypt = promisify(scryptCallback) as (password: string, salt: string, key
 /** The TXT record name a custom domain is proven with: `_gauzy-inbox.<domain>`. */
 export const INBOX_DOMAIN_TXT_PREFIX = '_gauzy-inbox';
 const DNS_TIMEOUT_MS = 5_000;
+/** The resolver's answers that the record does not exist (no such name, or no TXT record): a real "missing". */
+const DNS_NO_RECORD: readonly string[] = ['ENOTFOUND', 'ENODATA'];
 const MAX_ALLOWLIST = 200;
 const MAX_MEMBERS = 500;
 const MAX_ALLOCATION_ATTEMPTS = 50;
@@ -401,12 +403,23 @@ export class InboxMailboxService implements IInboundAddressNamespace {
 		}
 		let observed: string[] = [];
 		let message: string | undefined;
+		/** The lookup gave no answer (a timeout, SERVFAIL, a refused query): nothing is known about the record. */
+		let unanswered = false;
 		try {
 			observed = (await this.resolveTxt(`${INBOX_DOMAIN_TXT_PREFIX}.${row.domain}`)).map((value) => value.trim());
 		} catch (error) {
 			message = (error as Error)?.message ?? 'The DNS lookup failed.';
+			unanswered = !DNS_NO_RECORD.includes(String((error as { code?: unknown })?.code ?? ''));
 		}
 		const matched = !!row.domainVerificationToken && observed.includes(row.domainVerificationToken);
+		if (unanswered) {
+			// A DNS outage proves nothing: the mailbox keeps its status (a verified domain keeps receiving), and only
+			// an answer (the record, another record, or none at all) moves it (review F111).
+			const current = (await this.dataSource
+				.getRepository(InboxMailbox)
+				.findOne({ where: { id: row.id as ID } })) as InboxMailbox;
+			return { ...this.verificationOf(current ?? row), message: message ?? 'The DNS lookup failed.' };
+		}
 		// The write runs under the address's claim, so a release of the address (another tenant's create) never
 		// interleaves with it; the status is worked out from the row as it is then. A mailbox verified once stays FAILED
 		// (never back to PENDING) while its proof is missing, so its age never lets another tenant take it (review F28).
