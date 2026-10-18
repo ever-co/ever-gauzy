@@ -92,6 +92,44 @@ describe('TenantSettingsMiddleware', () => {
 		expect((middleware as any).loading.size).toBe(0);
 	});
 
+	it('keeps the tenants apart when two of them miss together on the same instance', async () => {
+		const { run, release, tenantSettingService, cacheManager } = build({
+			global: { fileStorageProvider: 'LOCAL' }
+		});
+		const perTenant: Record<string, Record<string, any>> = {
+			'tenant-1': { aws_bucket: 'bucket-one' },
+			'tenant-2': { aws_bucket: 'bucket-two' }
+		};
+		tenantSettingService.getSettings.mockImplementation(async ({ where }: any) => {
+			await new Promise((resolve) => setImmediate(resolve));
+			return perTenant[where.tenantId];
+		});
+
+		const first = [run(bearer({ tenantId: 'tenant-1' })), run(bearer({ tenantId: 'tenant-2' }))];
+		const second = [run(bearer({ tenantId: 'tenant-1' })), run(bearer({ tenantId: 'tenant-2' }))];
+		release();
+		await Promise.all([...first, ...second].map(({ done }) => done));
+
+		// One load per tenant, shared by that tenant's waiting requests only.
+		expect(tenantSettingService.getSettings).toHaveBeenCalledTimes(2);
+		for (const { request } of [first[0], second[0]]) {
+			expect(request.tenantSettings).toEqual({ aws_bucket: 'bucket-one' });
+			expect(request.resolvedSettings).toEqual({ fileStorageProvider: 'LOCAL', aws_bucket: 'bucket-one' });
+		}
+		for (const { request } of [first[1], second[1]]) {
+			expect(request.tenantSettings).toEqual({ aws_bucket: 'bucket-two' });
+			expect(request.resolvedSettings).toEqual({ fileStorageProvider: 'LOCAL', aws_bucket: 'bucket-two' });
+		}
+
+		// And the later cache hits are each tenant's own entry.
+		const later = [run(bearer({ tenantId: 'tenant-1' })), run(bearer({ tenantId: 'tenant-2' }))];
+		await Promise.all(later.map(({ done }) => done));
+		expect(tenantSettingService.getSettings).toHaveBeenCalledTimes(2);
+		expect(cacheManager.set).toHaveBeenCalledTimes(2);
+		expect(later[0].request.tenantSettings).toEqual({ aws_bucket: 'bucket-one' });
+		expect(later[1].request.tenantSettings).toEqual({ aws_bucket: 'bucket-two' });
+	});
+
 	it('keeps an empty answer for one minute only, and attaches no resolved settings for it', async () => {
 		const { run, release, cache } = build();
 		release();
