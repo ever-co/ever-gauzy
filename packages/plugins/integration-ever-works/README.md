@@ -103,6 +103,9 @@ and the admin who connected gets a notice. Entering a new key of the same
 Ever Works tenant resumes it. Disconnecting archives the connection and its
 mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
+The connection belongs to the tenant: deleting the organization it was made
+from keeps it (that organization's own mapping goes, the other mappings keep
+syncing), and only deleting the tenant deletes it.
 
 Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
 Inbox items (`NOTICE`, `source = SYSTEM`), one per connection, admin and kind
