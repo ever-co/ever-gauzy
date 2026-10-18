@@ -256,6 +256,14 @@ describe('EverWorksInboxService', () => {
 		await expect(apply(envelope('inbox.item.created', item))).resolves.toMatchObject({ status: 'skipped' });
 	});
 
+	it('every snapshot names its one recipient as the only one: a member paired again stops reaching the person paired before (review F93)', async () => {
+		const { mock, ewOrg, adaEw, envelope, apply, writes, link } = setup();
+		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);
+		const item = mock.addInboxItem(ewOrg.id, { recipientUserId: adaEw });
+		await apply(envelope('inbox.item.created', item));
+		expect(writes[0]).toMatchObject({ recipients: [{ userId: ADA_USER }], replaceRecipients: true });
+	});
+
 	it('overlapping snapshots of one item: an older one never replaces a newer one', async () => {
 		const { mock, ewOrg, adaEw, envelope, apply, writes, link } = setup();
 		link(EverWorksLinkType.MEMBER, ADA_EMPLOYEE, adaEw);

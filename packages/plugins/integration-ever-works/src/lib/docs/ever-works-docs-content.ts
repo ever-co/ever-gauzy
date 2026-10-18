@@ -75,6 +75,22 @@ export const DOCUMENT_NODE_LIMIT = 40_000;
 const DOCUMENT_MENTION_CHAR = '+';
 
 /** The fingerprint the sync compares a body with: SHA-256 of its normalised Markdown. */
+/**
+ * A hash of a page's stored editor JSON as it is (a JSON string is read first): it moves with edits the Markdown cannot
+ * show (an uploaded image, underline, colours), which {@link markdownHash} does not see (review F92).
+ */
+export function contentJsonHash(json: unknown): string {
+	let value = json ?? null;
+	if (typeof value === 'string') {
+		try {
+			value = JSON.parse(value);
+		} catch {
+			// Kept as the string it is.
+		}
+	}
+	return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
 export function markdownHash(markdown: string | null | undefined): string {
 	return createHash('sha256').update(normaliseMarkdown(markdown)).digest('hex');
 }

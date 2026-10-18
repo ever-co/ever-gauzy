@@ -150,15 +150,37 @@ export class EverWorksDocsStore {
 		return out;
 	}
 
+	/** Each given node's parent (`null` at the top) and whether it is deleted; a node that is gone is missing from the map. */
+	async nodeStatesOf(context: EverWorksMappingContext, ids: ID[]): Promise<Map<string, { parentId: string | null; deleted: boolean }>> {
+		const out = new Map<string, { parentId: string | null; deleted: boolean }>();
+		for (let index = 0; index < ids.length; index += 200) {
+			const rows = await this.dataSource
+				.getRepository(Document)
+				.createQueryBuilder('document')
+				.withDeleted()
+				.select(['document.id', 'document.parentId', 'document.deletedAt'])
+				.where('document.tenantId = :tenantId', { tenantId: context.tenantId })
+				.andWhere('document.organizationId = :organizationId', { organizationId: context.organizationId })
+				.andWhere('document.id IN (:...ids)', { ids: ids.slice(index, index + 200) })
+				.getMany();
+			for (const row of rows) out.set(row.id as string, { parentId: row.parentId ?? null, deleted: !!(row as { deletedAt?: Date | null }).deletedAt });
+		}
+		return out;
+	}
+
 	/** The PAGE and FOLDER nodes directly under the given folders (deleted and archived ones included). */
-	async nodesUnder(context: EverWorksMappingContext, folderIds: ID[], updatedAfter?: Date): Promise<Array<Pick<Document, 'id' | 'kind' | 'updatedAt'>>> {
-		const out: Array<Pick<Document, 'id' | 'kind' | 'updatedAt'>> = [];
+	async nodesUnder(
+		context: EverWorksMappingContext,
+		folderIds: ID[],
+		updatedAfter?: Date
+	): Promise<Array<Pick<Document, 'id' | 'kind' | 'updatedAt'> & { deletedAt?: Date | null }>> {
+		const out: Array<Pick<Document, 'id' | 'kind' | 'updatedAt'> & { deletedAt?: Date | null }> = [];
 		for (let index = 0; index < folderIds.length; index += 200) {
 			const qb = this.dataSource
 				.getRepository(Document)
 				.createQueryBuilder('document')
 				.withDeleted()
-				.select(['document.id', 'document.kind', 'document.updatedAt'])
+				.select(['document.id', 'document.kind', 'document.updatedAt', 'document.deletedAt'])
 				.where('document.tenantId = :tenantId', { tenantId: context.tenantId })
 				.andWhere('document.organizationId = :organizationId', { organizationId: context.organizationId })
 				.andWhere('document.parentId IN (:...parents)', { parents: folderIds.slice(index, index + 200) })
@@ -313,9 +335,11 @@ export class EverWorksDocsStore {
 	 * snapshot (the conflict copy is "Gauzy edit (conflict)", plan 05 §3). Returns the version id, or
 	 * `null` when the page has no content to keep.
 	 */
-	async snapshot(context: EverWorksMappingContext, page: Document, label?: string): Promise<ID | null> {
+	async snapshot(context: EverWorksMappingContext, page: Document, label?: string, force = false): Promise<ID | null> {
 		if (page.kind !== DocumentKindEnum.PAGE || (!page.contentJson && !page.contentHtml)) return null;
-		if (!label) {
+		// `force`: the page holds an edit made since the last sync write (one the Markdown may not show): it is kept even
+		// inside the window, so a later write never loses it (review F92).
+		if (!label && !force) {
 			// A run of sync writes rolls up into one snapshot per window (as the editor's autosaves do); a
 			// labelled copy (the conflict) is always kept.
 			const recent = await this.dataSource.getRepository(DocumentVersion).findOne({
