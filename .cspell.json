@@ -1595,7 +1595,9 @@
 		"keepalive",
 		"Brotli",
 		"sigv",
-		"tablist"
+		"tablist",
+		"bytewise",
+		"callouts"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
