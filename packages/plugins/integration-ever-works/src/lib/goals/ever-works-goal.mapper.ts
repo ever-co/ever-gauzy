@@ -435,6 +435,33 @@ function criterionOf(row: GauzyKeyResultRow): GoalCriterionShared {
 }
 
 /**
+ * A linked Gauzy goal in Ever Works' terms while the mapping does not sync key results (OQ4): its own fields (title,
+ * description, deadline, teams) over the last sync, and the fields Ever Works builds from key results (the metric,
+ * the criteria, the Definition of Done) exactly as the last sync left them. Unlike `mergeGauzyGoal`, it needs no key
+ * result: a goal whose key results never synced still pushes its own edits.
+ */
+export function mergeGauzyGoalOwnFields(
+	goal: { name?: string | null; description?: string | null },
+	deadline: string | null,
+	teamIds: ReadonlyArray<string>,
+	before: Partial<GoalShared>
+): GoalShared {
+	return {
+		title: text(goal.name, EVER_WORKS_GOAL_TITLE_MAX) || before.title || '',
+		description: goal.description ? String(goal.description) : null,
+		deadline,
+		teamIds: [...teamIds].sort(),
+		goalKind: before.goalKind ?? 'delivery',
+		comparator: before.comparator ?? null,
+		targetValue: before.targetValue ?? null,
+		unit: before.unit ?? null,
+		baselineValue: before.baselineValue ?? null,
+		criteria: before.criteria ?? [],
+		dodCriteria: before.dodCriteria ?? []
+	};
+}
+
+/**
  * G → EW for a goal already in Ever Works: Ever Works' own goal, criteria and Definition of Done as last
  * synced, with **only what a person changed in Gauzy** since (each key result against its link): a
  * renamed key result or a new target, a changed weight or unit, a checked item. What Gauzy only holds
