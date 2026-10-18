@@ -39,6 +39,15 @@ export const OUTBOUND_MAX_ATTEMPTS = 8;
 export const OUTBOUND_DEFER_MS = 60 * 60_000;
 /** How long a claimed (in-flight) push is held before another pass may take it over. */
 export const OUTBOUND_CLAIM_MS = 10 * 60_000;
+/**
+ * How long a change that failed `attempts` times (429 / 5xx / network) waits before its next push: 1 min, doubling,
+ * at most 1 h. The {@link OUTBOUND_MAX_ATTEMPTS} attempts span about two hours, so an Ever Works deploy or a short
+ * outage no longer dead-letters Gauzy edits (review F74: 2 s doubling gave up after about 4 minutes).
+ */
+export function outboundRetryDelayMs(attempts: number): number {
+	return Math.min(60 * 60_000, 60_000 * 2 ** Math.max(0, attempts - 1));
+}
+
 /** When a change Ever Works answered 401 is due again (the loop only works the connection once it is active again). */
 export const OUTBOUND_AUTH_RETRY_MS = 5 * 60_000;
 
@@ -219,7 +228,7 @@ export class EverWorksOutboundPusher {
 				status: dead ? EverWorksOutboundStatus.DEAD : EverWorksOutboundStatus.FAILED,
 				attempts,
 				lastError: reason.slice(0, 2000),
-				availableAt: new Date(now.getTime() + Math.max(retryAfterMs, Math.min(60 * 60_000, 2 ** attempts * 1000)))
+				availableAt: new Date(now.getTime() + Math.max(retryAfterMs, outboundRetryDelayMs(attempts)))
 			});
 			if (dead && written) {
 				await this.log.write({

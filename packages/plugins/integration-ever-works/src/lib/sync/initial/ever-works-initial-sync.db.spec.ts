@@ -575,6 +575,85 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(await held()).toBe(0);
 	});
 
+	describe('held records of a phase that stops part-way (review F72)', () => {
+		const held = () => dataSource.getRepository(EverWorksInboundEvent).count({ where: { receivedVia: 'initial', availableAt: MoreThan(new Date('9000-01-01')) } as never });
+		/** Starts a run whose agents import stores page 1 held, then fails on page 2 (it backs off, still importing). */
+		const importCutShort = async () => {
+			pageSize = 1;
+			// The depth pass reads the 3 agent pages, the import reads page 1; Ever Works fails from page 2 on (retries too).
+			onList = async (path, call) => {
+				if (path === '/agents' && call >= 5) throw new Error('connection reset');
+			};
+			await initial.start(integrationTenantId, 'initial');
+			await reload();
+			await initial.sweep(connection);
+			onList = null;
+			const run = await runs().findOneOrFail({ where: { integrationTenantId } as never });
+			expect(phase(run, 'agents')).toMatchObject({ status: 'importing' });
+			expect(await held()).toBe(1);
+			return run;
+		};
+
+		it('a phase whose direction is turned off part-way releases what it held back', async () => {
+			const run = await importCutShort();
+			// The admin stops syncing agents meanwhile, and the back-off is over.
+			await dataSource.getRepository(IntegrationSetting).save({
+				id: randomUUID(),
+				tenantId: A.tenantId,
+				organizationId: A.organizationId,
+				integration: { id: integrationTenantId },
+				settingsName: EverWorksSettingName.ENTITY_DIRECTIONS,
+				settingsValue: JSON.stringify({ agents: 'off' })
+			} as never);
+			const phases = JSON.parse(run.phases as string) as EverWorksSyncPhaseState[];
+			(phases.find((p) => p.name === 'agents') as EverWorksSyncPhaseState).retryAt = null;
+			await runs().update({ id: run.id }, { phases: JSON.stringify(phases) } as never);
+			await reload();
+			await initial.sweep(connection);
+			expect(phase(await runs().findOneByOrFail({ id: run.id }), 'agents')?.status).toBe('skipped');
+			expect(await held()).toBe(0);
+		});
+
+		it('a run whose mapping is removed is cancelled by the sweep, and what it held back is released', async () => {
+			const run = await importCutShort();
+			// DELETE /mappings/:id archives the mapping: no context reaches the run any more, and its cancel answers 404.
+			await dataSource.getRepository(IntegrationTenant).update({ id: integrationTenantId } as never, { isActive: false, isArchived: true } as never);
+			await reload();
+			await initial.sweep(connection);
+			expect(await runs().findOneByOrFail({ id: run.id })).toMatchObject({ status: 'cancelled', lastError: 'the mapping was removed' });
+			expect(await held()).toBe(0);
+		});
+	});
+
+	it('a resync queues again a record an earlier run skipped, instead of counting it as a duplicate (review F73)', async () => {
+		await initial.start(integrationTenantId, 'initial');
+		await runToEnd();
+		const events = dataSource.getRepository(EverWorksInboundEvent);
+		const where = { receivedVia: 'initial', aggregateType: 'team', aggregateId: 'ew-team-new' } as never;
+		expect(await events.findOneOrFail({ where })).toMatchObject({ status: EverWorksInboundStatus.SKIPPED });
+		expect(applied).not.toContain('team:ew-team-new');
+		// The admin pairs the team meanwhile, then resyncs: the unchanged record is read under the same event id.
+		const team = { id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, name: 'Design', isArchived: false };
+		await dataSource.getRepository(OrganizationTeam).save(team as never);
+		await dataSource.getRepository(EverWorksEntityLink).save({
+			id: randomUUID(),
+			tenantId: A.tenantId,
+			organizationId: A.organizationId,
+			integrationTenantId,
+			entityType: EverWorksLinkType.TEAM,
+			gauzyId: team.id,
+			ewId: 'ew-team-new',
+			state: 'ok'
+		} as never);
+		const resync = await initial.start(integrationTenantId, 'resync');
+		await runToEnd();
+		expect(applied).toContain('team:ew-team-new');
+		expect(await events.findOneOrFail({ where })).toMatchObject({ status: EverWorksInboundStatus.APPLIED, attempts: 0 });
+		// The applied one (the paired team) is still a duplicate; no event row was added.
+		expect(phase(await runs().findOneByOrFail({ id: resync.id }), 'teams')).toMatchObject({ queued: 1, duplicates: 1 });
+		expect(await events.count({ where: { aggregateType: 'team', receivedVia: 'initial' } as never })).toBe(2);
+	});
+
 	it('a phase waits for its records: the next phase starts only once they are applied', async () => {
 		await initial.start(integrationTenantId, 'initial');
 		await reload();
