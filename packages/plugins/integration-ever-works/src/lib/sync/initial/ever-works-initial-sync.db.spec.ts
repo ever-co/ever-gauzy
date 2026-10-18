@@ -437,6 +437,22 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(byPhase['agents']).toMatchObject({ everWorks: { total: 2, linked: 0 }, creates: { inGauzy: 1, inEverWorks: 0 } });
 		// Five Gauzy tasks, three of them ideas: two go to Ever Works as tasks.
 		expect(byPhase['tasks']).toMatchObject({ gauzy: { total: 2, linked: 0 }, creates: { inGauzy: 0, inEverWorks: 2 } });
+
+		// A Gauzy task whose link stopped syncing is not created again either (review on #11047).
+		const [stopped] = await dataSource.getRepository(Task).find({ where: { title: 'G task 1' } as never });
+		await dataSource.getRepository(EverWorksEntityLink).save({
+			id: randomUUID(),
+			tenantId: A.tenantId,
+			organizationId: A.organizationId,
+			integrationTenantId,
+			entityType: EverWorksLinkType.TASK,
+			gauzyId: stopped.id,
+			ewId: 'ew-task-gone',
+			ewVersion: 2,
+			state: 'unlinked'
+		} as never);
+		const again = (await initial.preview(integrationTenantId)).phases.find((p) => p.phase === 'tasks');
+		expect(again).toMatchObject({ gauzy: { total: 2, linked: 0 }, creates: { inEverWorks: 1 } });
 	});
 
 	it('runs the phases in order: agents parents first, paired teams refreshed and pushed, tasks queued, unsupported phases skipped', async () => {

@@ -950,9 +950,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			const ideas = new Set(await this.ideaTasksOf(context));
 			const inScope = (await this.allTasksInScope(context)).filter((id) => !ideas.has(id));
 			const linkedGauzy = new Set(links.map((link) => link.gauzyId));
+			// A Gauzy task whose link stopped syncing is skipped by the push, as on the Ever Works side (review #11047).
+			const stoppedGauzy = new Set((await this.stoppedLinks(context, EverWorksLinkType.TASK)).map((link) => link.gauzyId));
 			const linkedInScope = inScope.filter((id) => linkedGauzy.has(id)).length;
 			preview.gauzy = { total: inScope.length, linked: linkedInScope };
-			if (plan.export) preview.creates.inEverWorks = inScope.length - linkedInScope;
+			if (plan.export) preview.creates.inEverWorks = inScope.filter((id) => !linkedGauzy.has(id) && !stoppedGauzy.has(id)).length;
 		}
 		return preview;
 	}
