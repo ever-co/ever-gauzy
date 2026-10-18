@@ -220,6 +220,27 @@ describe('EverWorksConnectComponent', () => {
 		expect(!!find('webhook-kept')).toBe(warns);
 	});
 
+	it('a later disconnect that deletes its own subscription keeps the warning about an earlier kept one (#11107 review)', () => {
+		const other = { ...CONNECTION, id: 'c2', ewTenant: { id: 'ew-other', slug: 'other' } } as EverWorksConnection;
+		api.disconnect.mockReturnValueOnce(of({ success: true, webhookDeleted: false })).mockReturnValueOnce(of({ success: true, webhookDeleted: true }));
+		api.validate.mockReturnValue(of(VALIDATION));
+		api.connect.mockReturnValue(of(other));
+		const { component, find, click, fixture } = render({ connection: { ...CONNECTION, status: 'error' } as EverWorksConnection });
+		// Connection c1 keeps its subscription; the admin connects another Ever Works tenant (c2), then disconnects it.
+		click('recover-disconnect');
+		click('recover-confirm-disconnect');
+		component.apiKey = 'ew_int_other';
+		click('have-key');
+		click('validate');
+		click('connect');
+		expect(component.connection?.id).toBe('c2');
+		component.disconnect();
+		fixture.detectChanges();
+		expect(api.disconnect).toHaveBeenLastCalledWith(ORGANIZATION_ID, 'c2');
+		expect(component.step).toBe('key');
+		expect(find('webhook-kept')).not.toBeNull();
+	});
+
 	it('start registers the webhook (best effort), then starts the first sync and hands the run back', () => {
 		api.registerWebhook.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'API_BASE_URL is not set.' } })));
 		api.startSync.mockReturnValue(of({ id: 'run-1', status: 'running' }));
