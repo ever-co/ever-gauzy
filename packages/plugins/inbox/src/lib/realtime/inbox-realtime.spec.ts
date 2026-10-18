@@ -331,6 +331,32 @@ describe('InboxService announces created items (SQLite)', () => {
 		expect([...appended[0].input['data'].recipientUserIds].sort()).toEqual([ADA, BOB].sort());
 	});
 
+	it('a re-delivery that adds a recipient tells that recipient only (review F104)', async () => {
+		// The first delivery could reach Ada only (Carol is not a user of the tenant yet: a pairing made later).
+		const carol = randomUUID();
+		const { item } = await notice({ recipients: [{ userId: ADA }, { userId: carol }] });
+		expect(appended).toHaveLength(1);
+		expect(appended[0].input['data'].recipientUserIds).toEqual([ADA]);
+		await dataSource.query(`INSERT INTO "user" ("id", "tenantId") VALUES (?, ?)`, [carol, TENANT]);
+		const again = await notice({ recipients: [{ userId: ADA }, { userId: carol }] });
+		expect(again.created).toBe(false);
+		expect(appended).toHaveLength(2);
+		expect(appended[1].input).toMatchObject({ name: INBOX_ITEM_CREATED, aggregateId: item.id });
+		expect(appended[1].input['data'].recipientUserIds).toEqual([carol]);
+	});
+
+	it('an item whose first delivery stored no recipient is announced once the re-delivery adds them (review F104)', async () => {
+		// The recipients' write failed after the item was stored; the source retries.
+		await dataSource.query(
+			`INSERT INTO "inbox_item" ("id", "tenantId", "organizationId", "kind", "source", "title", "externalSource", "externalId") VALUES (?, ?, ?, 'NOTICE', 'EVER_WORKS', 'Stored alone', 'ever_works', 'ew-item-9')`,
+			[randomUUID(), TENANT, ORG]
+		);
+		const { created } = await notice({ externalId: 'ew-item-9', recipients: [{ userId: BOB }] });
+		expect(created).toBe(false);
+		expect(appended).toHaveLength(1);
+		expect(appended[0].input['data'].recipientUserIds).toEqual([BOB]);
+	});
+
 	it('appends nothing when a source re-delivers the same item, or creates one nobody can receive', async () => {
 		await notice();
 		await notice({ title: 'The nightly run finished (edited)' });

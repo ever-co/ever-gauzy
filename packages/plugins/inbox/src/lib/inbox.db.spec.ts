@@ -427,6 +427,95 @@ describe('Inbox on SQLite', () => {
 			await expect(service.list({ cursor: 'not-a-cursor' })).rejects.toBeInstanceOf(BadRequestException);
 		});
 
+		it('a page starts after the last item of the previous one: items arriving or leaving meanwhile neither repeat nor skip one (review F105)', async () => {
+			const ids: string[] = [];
+			for (const [index, minutes] of [5, 4, 3, 2, 1].entries()) {
+				const { item } = await question({ title: `Q${index + 1}` });
+				// SQLite's datetime('now') has second resolution: each item gets its own minute, Q1 the oldest.
+				await dataSource.query(
+					`UPDATE "inbox_item" SET "createdAt" = datetime('now', '-${minutes} minutes') WHERE "id" = ?`,
+					[item.id]
+				);
+				ids.push(item.id as string);
+			}
+			const titles = (page: { items: Array<{ title: string }> }) => page.items.map((item) => item.title);
+
+			const first = await service.list({ limit: 2 });
+			expect(titles(first)).toEqual(['Q5', 'Q4']);
+			// Two new items arrive before "Load more"; they are newer, so they belong to a fresh first page.
+			await question({ title: 'New 1' });
+			await question({ title: 'New 2' });
+			const second = await service.list({ limit: 2, cursor: first.nextCursor as string });
+			expect(titles(second)).toEqual(['Q3', 'Q2']);
+			// Another device archives and reads items of the pages already shown: the next one still starts at Q1.
+			await service.setState(ids[2], { isArchived: true });
+			await service.setState(ids[3], { isArchived: true });
+			const third = await service.list({ limit: 2, cursor: second.nextCursor as string });
+			expect(titles(third)).toEqual(['Q1']);
+			expect(third.nextCursor).toBeNull();
+			// The cursor is short enough for the API's 64-character cursor parameter.
+			expect((first.nextCursor as string).length).toBeLessThanOrEqual(64);
+		});
+
+		it('items of the same second page by id, and the cursors issued before this release still work', async () => {
+			for (let n = 0; n < 5; n++) await question({ title: `Same ${n}` });
+			await dataSource.query(`UPDATE "inbox_item" SET "createdAt" = datetime('now', '-1 minute')`);
+			const all = (await service.list({ limit: 10 })).items.map((item) => item.id as string);
+			expect(all).toHaveLength(5);
+			const seen: string[] = [];
+			let cursor: string | undefined;
+			do {
+				const page = await service.list({ limit: 2, ...(cursor ? { cursor } : {}) });
+				seen.push(...page.items.map((item) => item.id as string));
+				cursor = page.nextCursor ?? undefined;
+			} while (cursor);
+			expect(seen).toEqual(all);
+			// An offset cursor of the previous release (`o:<offset>`) is still read; the next one is a key again.
+			const legacy = Buffer.from('o:2', 'utf8').toString('base64url');
+			const fromLegacy = await service.list({ limit: 2, cursor: legacy });
+			expect(fromLegacy.items.map((item) => item.id as string)).toEqual(all.slice(2, 4));
+			const after = await service.list({ limit: 2, cursor: fromLegacy.nextCursor as string });
+			expect(after.items.map((item) => item.id as string)).toEqual(all.slice(4));
+			await expect(
+				service.list({ cursor: Buffer.from('k:zz:not-an-id', 'utf8').toString('base64url') })
+			).rejects.toBeInstanceOf(BadRequestException);
+		});
+
+		it('counts my unread items of each mailbox (review F106)', async () => {
+			const [first, second] = [randomUUID(), randomUUID()].sort();
+			const email = (mailboxId: string, overrides: Record<string, unknown> = {}) =>
+				service.create({
+					tenantId: TENANT,
+					organizationId: ORG,
+					kind: InboxItemKindEnum.EMAIL,
+					source: InboxItemSourceEnum.EMAIL,
+					title: 'Invoice',
+					mailboxId,
+					recipients: [{ userId: ADA }],
+					...overrides
+				});
+			await email(first);
+			await email(first);
+			await email(first, { recipients: [{ userId: ADA, isRead: true }] });
+			await email(second);
+			await email(second, { recipients: [{ userId: BOB }] });
+			await question();
+			await expect(service.counts()).resolves.toEqual({
+				unread: 4,
+				decisionsOpen: 1,
+				byMailbox: [
+					{ mailboxId: first, unread: 2 },
+					{ mailboxId: second, unread: 1 }
+				]
+			});
+			as(BOB);
+			await expect(service.counts()).resolves.toEqual({
+				unread: 1,
+				decisionsOpen: 0,
+				byMailbox: [{ mailboxId: second, unread: 1 }]
+			});
+		});
+
 		it('counts my unread items and my open decisions', async () => {
 			await question();
 			const answered = await question({ title: 'Answered' });

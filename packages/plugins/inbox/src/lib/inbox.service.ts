@@ -109,15 +109,40 @@ export function toInboxItem(row: InboxItem): IInboxItem {
 	};
 }
 
+/**
+ * Where a page starts: after an item (the last one of the previous page, by the list's order), or at an offset (the
+ * cursors this API issued before, still read so a client paging across an upgrade does not fail).
+ */
+type InboxCursor = { offset: number } | { afterId: ID; afterAt: Date };
+
 function encodeCursor(offset: number): string {
 	return Buffer.from(`o:${offset}`, 'utf8').toString('base64url');
 }
 
-function decodeCursor(cursor?: string): number {
-	if (!cursor) return 0;
-	const match = /^o:(\d{1,9})$/.exec(Buffer.from(cursor, 'base64url').toString('utf8'));
-	if (!match) throw new BadRequestException('The cursor is not one this API issued.');
-	return Number(match[1]);
+/**
+ * The cursor after an item: its id and its creation time, compact enough for the 64-character limit of the
+ * `cursor` parameter. `null` when the item cannot anchor a page (not a UUID id, no creation time).
+ */
+function encodeKeyCursor(item: Pick<InboxItem, 'id' | 'createdAt'>): string | null {
+	const at = item.createdAt instanceof Date ? item.createdAt.getTime() : new Date(item.createdAt as never).getTime();
+	if (typeof item.id !== 'string' || !UUID.test(item.id) || !Number.isFinite(at) || at < 0) return null;
+	return Buffer.from(`k:${at.toString(36)}:${item.id.replace(/-/g, '')}`, 'utf8').toString('base64url');
+}
+
+function decodeCursor(cursor?: string): InboxCursor {
+	if (!cursor) return { offset: 0 };
+	const text = Buffer.from(cursor, 'base64url').toString('utf8');
+	const offset = /^o:(\d{1,9})$/.exec(text);
+	if (offset) return { offset: Number(offset[1]) };
+	const key = /^k:([0-9a-z]{1,11}):([0-9a-f]{32})$/i.exec(text);
+	const afterAt = key ? new Date(parseInt(key[1], 36)) : null;
+	if (!key || !afterAt || Number.isNaN(afterAt.getTime())) {
+		throw new BadRequestException('The cursor is not one this API issued.');
+	}
+	const hex = key[2];
+	const afterId =
+		`${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}` as ID;
+	return { afterId, afterAt };
 }
 
 /**
@@ -145,17 +170,45 @@ export class InboxService implements IInboxItemWriter {
 
 	// ---------------------------------------------------------------- reads
 
-	/** A page of the caller's items for a tab, newest first. */
+	/**
+	 * A page of the caller's items for a tab, newest first. The next page starts after the last item of this one
+	 * (by creation time, then id), not at an offset: items that arrive, or that the user archives or reads
+	 * elsewhere, between two pages neither repeat an item nor skip one (review F105).
+	 */
 	async list(input: IInboxItemFindInput = {}): Promise<IInboxItemPage> {
 		const { tenantId, userId } = this.caller();
 		const limit = Math.min(Math.max(Number(input.limit) || INBOX_PAGE_SIZE, 1), INBOX_MAX_PAGE_SIZE);
-		const offset = decodeCursor(input.cursor);
+		const position = decodeCursor(input.cursor);
 
 		const query = this.recipientItems(tenantId, userId, input)
 			.orderBy('item.createdAt', 'DESC')
 			.addOrderBy('item.id', 'DESC')
-			.offset(offset)
 			.limit(limit + 1);
+		if ('offset' in position) {
+			query.offset(position.offset);
+		} else {
+			// The anchor's own creation time, read in the database: compared at the column's precision (a
+			// JavaScript date keeps milliseconds only). The time in the cursor stands in for an anchor that is gone.
+			const anchor = query
+				.subQuery()
+				.select('anchor.createdAt')
+				.from(InboxItem, 'anchor')
+				.where('anchor.id = :cursorId')
+				.getQuery();
+			const at = `COALESCE(${anchor}, :cursorAt)`;
+			query.andWhere(
+				new Brackets((where) => {
+					where.where(`item.createdAt < ${at}`);
+					where.orWhere(
+						new Brackets((same) => {
+							same.where(`item.createdAt = ${at}`);
+							same.andWhere('item.id < :cursorId');
+						})
+					);
+				})
+			);
+			query.setParameters({ cursorId: position.afterId, cursorAt: position.afterAt });
+		}
 		const rows = await query.getMany();
 		const page = rows.slice(0, limit);
 		const states = await this.recipientStates(
@@ -164,20 +217,38 @@ export class InboxService implements IInboxItemWriter {
 			page.map((row) => row.id as ID)
 		);
 
+		const last = page[page.length - 1];
+		const nextCursor =
+			rows.length > limit
+				? (encodeKeyCursor(last) ?? ('offset' in position ? encodeCursor(position.offset + limit) : null))
+				: null;
 		return {
 			items: page.map((row) => ({ ...toInboxItem(row), recipient: states.get(row.id as ID) ?? null })),
-			nextCursor: rows.length > limit ? encodeCursor(offset + limit) : null
+			nextCursor
 		};
 	}
 
-	/** The caller's badge numbers. */
+	/**
+	 * The caller's badge numbers. `byMailbox`: the caller's unread items of each mailbox, counted as `unread` is (the
+	 * All tab), one entry per mailbox with at least one, by mailbox id (review F106).
+	 */
 	async counts(): Promise<IInboxItemCounts> {
 		const { tenantId, userId } = this.caller();
-		const [unread, decisionsOpen] = await Promise.all([
+		const [unread, decisionsOpen, mailboxes] = await Promise.all([
 			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.ALL, unread: true }).getCount(),
-			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.DECISIONS }).getCount()
+			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.DECISIONS }).getCount(),
+			this.recipientItems(tenantId, userId, { tab: InboxTabEnum.ALL, unread: true })
+				.select('item.mailboxId', 'mailboxId')
+				.addSelect('COUNT(*)', 'unread')
+				.andWhere('item.mailboxId IS NOT NULL')
+				.groupBy('item.mailboxId')
+				.getRawMany<{ mailboxId: ID; unread: number | string }>()
 		]);
-		return { unread, decisionsOpen, byMailbox: [] };
+		const byMailbox = mailboxes
+			.map((row) => ({ mailboxId: row.mailboxId, unread: Number(row.unread) || 0 }))
+			.filter((row) => !!row.mailboxId && row.unread > 0)
+			.sort((a, b) => String(a.mailboxId).localeCompare(String(b.mailboxId)));
+		return { unread, decisionsOpen, byMailbox };
 	}
 
 	/**
@@ -484,14 +555,16 @@ export class InboxService implements IInboxItemWriter {
 			}
 		}
 
-		const { recipientUserIds, skippedUserIds } = await this.writeRecipients(
+		const { recipientUserIds, skippedUserIds, addedUserIds } = await this.writeRecipients(
 			item,
 			input.recipients ?? [],
 			input.replaceRecipients === true
 		);
 		const stored = (await repository.findOne({ where: { id: item.id } })) as InboxItem;
-		// A new item is announced to its recipients' subscriptions (never fails the write).
-		if (created) await this.realtime?.itemCreated(stored, recipientUserIds);
+		// The item reached these users' Inbox now: announced to their subscriptions (never fails the write). Also on
+		// a re-delivery: a recipient the first delivery could not add (a failed write, a pairing made later) is told
+		// too, and one who already had the item is not told again (review F104).
+		if (addedUserIds.length) await this.realtime?.itemCreated(stored, addedUserIds);
 		return { item: toInboxItem(stored), created, recipientUserIds, skippedUserIds };
 	}
 
@@ -595,7 +668,7 @@ export class InboxService implements IInboxItemWriter {
 		item: InboxItem,
 		recipients: IInboxItemUpsertInput['recipients'],
 		replace = false
-	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[] }> {
+	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[]; addedUserIds: ID[] }> {
 		const stated = new Map<ID, IInboxItemUpsertInput['recipients'][number]>();
 		for (const recipient of recipients) {
 			if (recipient?.userId) stated.set(recipient.userId, recipient);
@@ -621,6 +694,8 @@ export class InboxService implements IInboxItemWriter {
 			(await repository.find({ where: { inboxItemId: item.id } })).map((row) => [row.userId, row])
 		);
 		const now = new Date();
+		/** The recipient rows this write inserted (an overlapping delivery that inserted one reports it itself). */
+		const added: ID[] = [];
 
 		for (const userId of userIds.filter((id) => known.has(id))) {
 			const recipient = stated.get(userId);
@@ -651,6 +726,7 @@ export class InboxService implements IInboxItemWriter {
 						...state
 					} as InboxItemRecipient)
 				);
+				added.push(userId);
 			} catch (error) {
 				// Added by an overlapping delivery (unique on item + user): apply the state to that row.
 				const raced = await repository.findOne({ where: { inboxItemId: item.id, userId } });
@@ -669,7 +745,8 @@ export class InboxService implements IInboxItemWriter {
 			recipientUserIds: [
 				...new Set([...[...existing.keys()].filter((userId) => !removed.includes(userId)), ...kept])
 			] as ID[],
-			skippedUserIds: userIds.filter((id) => !known.has(id))
+			skippedUserIds: userIds.filter((id) => !known.has(id)),
+			addedUserIds: added
 		};
 	}
 
