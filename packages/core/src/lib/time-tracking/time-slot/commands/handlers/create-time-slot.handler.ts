@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
@@ -22,7 +22,7 @@ import { TimeSlot } from './../../time-slot.entity';
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
 	protected ormType: MultiORM = getORMType();
-	private logging: boolean = true;
+	private readonly logger = new Logger(CreateTimeSlotHandler.name);
 
 	constructor(
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
@@ -53,7 +53,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			logType = TimeLogType.TRACKED
 		} = input;
 
-		this.log(`Time Slot Request - Input: ${JSON.stringify(input)}`);
+		this.log(() => `Time Slot Request - Input: ${JSON.stringify(input)}`);
 
 		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Retrieve the current tenant ID
 		const user = RequestContext.currentUser(); // Retrieve the current user
@@ -95,14 +95,18 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-					const found = await em.findOneOrFail('TimeSlot', {
-						tenantId,
-						organizationId,
-						employeeId,
-						startedAt: input.startedAt
-					} as any, {
-						populate: ['timeLogs']
-					});
+					const found = await em.findOneOrFail(
+						'TimeSlot',
+						{
+							tenantId,
+							organizationId,
+							employeeId,
+							startedAt: input.startedAt
+						} as any,
+						{
+							populate: ['timeLogs']
+						}
+					);
 					timeSlot = found as any;
 					break;
 				}
@@ -118,7 +122,10 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 					query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 					query.andWhere(p(`"${query.alias}"."startedAt" = :startedAt`), { startedAt: input.startedAt });
 
-					this.log(`Get Time Slot Query & Parameters For employee (${user.name}): ${query.getQueryAndParameters()}`);
+					this.log(
+						() =>
+							`Get Time Slot Query & Parameters For employee (${user.name}): ${query.getQueryAndParameters()}`
+					);
 
 					// Get the last time slot
 					timeSlot = await query.getOneOrFail();
@@ -141,17 +148,21 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 				case MultiORMEnum.MikroORM: {
 					const em = this.mikroOrmTimeLogRepository.getEntityManager();
 					// Find TimeLog for TimeSlot Range
-					const timeLog = await em.findOneOrFail('TimeLog', {
-						tenantId,
-						organizationId,
-						employeeId,
-						source,
-						logType,
-						stoppedAt: { $ne: null }
-					} as any, {
-						orderBy: { createdAt: 'DESC' } as any
-					});
-					this.log(`Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
+					const timeLog = await em.findOneOrFail(
+						'TimeLog',
+						{
+							tenantId,
+							organizationId,
+							employeeId,
+							source,
+							logType,
+							stoppedAt: { $ne: null }
+						} as any,
+						{
+							orderBy: { createdAt: 'DESC' } as any
+						}
+					);
+					this.log(() => `Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
 					timeSlot.timeLogs.push(timeLog as any);
 					break;
 				}
@@ -168,10 +179,10 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 					query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
 					// Add order by clause
 					query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
-					this.log(`Find timelog for specific query: ${query.getQueryAndParameters()}`);
+					this.log(() => `Find timelog for specific query: ${query.getQueryAndParameters()}`);
 					// Get the last time log
 					const timeLog = await query.getOneOrFail();
-					this.log(`Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
+					this.log(() => `Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
 					timeSlot.timeLogs.push(timeLog);
 					break;
 				}
@@ -193,7 +204,10 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 							employeeId,
 							stoppedAt: { $ne: null }
 						} as any);
-						this.log(`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`);
+						this.log(
+							() =>
+								`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`
+						);
 						timeSlot.timeLogs.push(...(timeLogs as any[]));
 						break;
 					}
@@ -210,10 +224,16 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 						query.andWhere(p(`"${query.alias}"."logType" = :logType`), { logType });
 						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 						query.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
-						this.log(`Timelog query for timeLog IDs for employee (${user.name}): ${query.getQueryAndParameters()}`);
+						this.log(
+							() =>
+								`Timelog query for timeLog IDs for employee (${user.name}): ${query.getQueryAndParameters()}`
+						);
 						// Retrieve time logs
 						const timeLogs = await query.getMany();
-						this.log(`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`);
+						this.log(
+							() =>
+								`Recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`
+						);
 						timeSlot.timeLogs.push(...timeLogs);
 						break;
 					}
@@ -251,7 +271,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			}
 		}
 
-		this.log(`Bulk activities save parameters employee (${user.name}): ${JSON.stringify({ activities })}`);
+		this.log(() => `Bulk activities save parameters employee (${user.name}): ${JSON.stringify({ activities })}`);
 
 		// Save bulk activities
 		const bulkActivities = await this._commandBus.execute(
@@ -284,7 +304,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			new TimeSlotMergeCommand(organizationId, employeeId, minDate, maxDate, forceDelete)
 		);
 
-		this.log(`Newly Created Merged Time Slots: ${JSON.stringify(mergedTimeSlot)}`);
+		this.log(() => `Newly Created Merged Time Slots: ${JSON.stringify(mergedTimeSlot)}`);
 
 		if (mergedTimeSlot) {
 			timeSlot = mergedTimeSlot;
@@ -293,9 +313,9 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const em = this.mikroOrmTimeSlotRepository.getEntityManager();
-				return await em.findOne('TimeSlot', { id: timeSlot.id } as any, {
+				return (await em.findOne('TimeSlot', { id: timeSlot.id } as any, {
 					populate: ['timeLogs', 'screenshots']
-				}) as any;
+				})) as any;
 			}
 			case MultiORMEnum.TypeORM:
 			default:
@@ -307,15 +327,17 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 	}
 
 	/**
-	 * Private method for logging messages.
-	 * @param message - The message to be logged.
+	 * Diagnostic trace of a time-slot creation, at debug level.
+	 *
+	 * This handler runs for every time slot the desktop and agent trackers post. It used to print four
+	 * `console.log` lines per message — with the time logs and activities serialized — on every call,
+	 * whatever LOG_LEVEL said. The message is now built only when debug logging is on.
+	 *
+	 * @param message - Builds the message to be logged.
 	 */
-	private log(message: string): void {
-		if (this.logging) {
-			console.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')}`));
-			console.log(chalk.green(message));
-			console.log(chalk.white('--------------------------------------------------------'));
-			console.log(); // Add an empty line as a divider
+	private log(message: () => string): void {
+		if (Logger.isLevelEnabled('debug')) {
+			this.logger.debug(message());
 		}
 	}
 }

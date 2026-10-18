@@ -6,10 +6,15 @@ import { ID } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ApiCallLogService } from './api-call-log.service';
 import { ApiCallLog } from './api-call-log.entity';
+import { resolveApiCallLogEnabled } from './api-call-log.settings';
+import { debugInDevelopment } from '../logger';
 
 @Injectable()
 export class ApiCallLogMiddleware implements NestMiddleware {
 	private readonly logger = new Logger(ApiCallLogMiddleware.name);
+
+	/** `API_CALL_LOG_ENABLED` (default on); off, the middleware passes every call through untouched. */
+	private readonly enabled = resolveApiCallLogEnabled(process.env);
 
 	constructor(private readonly apiCallLogService: ApiCallLogService) {}
 
@@ -23,6 +28,10 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 	 * @param next The next middleware function in the request-response cycle.
 	 */
 	async use(req: Request, res: Response, next: NextFunction): Promise<void> {
+		if (!this.enabled) {
+			return next();
+		}
+
 		let responseBody = '';
 		const startTime = Date.now(); // Capture request start time
 
@@ -121,7 +130,11 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 				userId: userId || null
 			});
 
-			this.logger.debug(`ApiCallLogMiddleware: logging API call entity: ${JSON.stringify(entity)}`);
+			// Lazily: the bodies are serialized only when the line is printed, not on every tracked call.
+			debugInDevelopment(
+				this.logger,
+				() => `ApiCallLogMiddleware: logging API call entity: ${JSON.stringify(entity)}`
+			);
 
 			try {
 				// Asynchronously log the API call to the database
