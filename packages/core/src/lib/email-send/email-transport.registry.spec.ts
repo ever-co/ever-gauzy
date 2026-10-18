@@ -55,6 +55,21 @@ describe('EmailTransportRegistry', () => {
 		await expect(registry.resolve({ tenantId: 't' })).resolves.toMatchObject({ source: 'working' });
 	});
 
+	it('a request that needs a sender skips a transport without one and asks the next resolver (review F63, #11095)', async () => {
+		const registry = new EmailTransportRegistry();
+		const askedSecond: unknown[] = [];
+		registry.register(resolver('unaware', { transport, fromAddress: null, source: 'unaware:acct-1' }));
+		registry.register(
+			resolver('second', { transport, fromAddress: 'team@acme.test', source: 'resend:acct-2' }, askedSecond)
+		);
+		await expect(registry.resolve({ tenantId: 't', requireFromAddress: true })).resolves.toMatchObject({
+			source: 'resend:acct-2'
+		});
+		expect(askedSecond).toHaveLength(1);
+		// Without the requirement, the first transport answers as before.
+		await expect(registry.resolve({ tenantId: 't' })).resolves.toMatchObject({ source: 'unaware:acct-1' });
+	});
+
 	it('skips an answer that carries no transport', async () => {
 		const registry = new EmailTransportRegistry();
 		registry.register(resolver('empty', { transport: null, source: 'empty' }));

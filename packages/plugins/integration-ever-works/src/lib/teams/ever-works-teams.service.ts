@@ -77,10 +77,16 @@ interface TeamEverWorksOnly {
 	 */
 	fullVersion?: number | null;
 	childVersions?: Record<string, number>;
+	/**
+	 * The version of the last full member set written to Ever Works (`PUT /teams/:id/members`) since the last full
+	 * team state: Ever Works holds that set as of this version, so it covers the member events up to it, not the
+	 * resource events (#11096 review).
+	 */
+	membersVersion?: number | null;
 }
 
 /** The child-event state of a team link (see {@link TeamEverWorksOnly.fullVersion}). */
-type TeamChildState = Pick<TeamEverWorksOnly, 'fullVersion' | 'childVersions'>;
+type TeamChildState = Pick<TeamEverWorksOnly, 'fullVersion' | 'childVersions' | 'membersVersion'>;
 
 /** One Ever Works team as the Teams tab shows it. */
 export interface EverWorksTeamRow {
@@ -133,25 +139,43 @@ function childFloorOf(link: EverWorksEntityLink, ew: TeamEverWorksOnly): number 
 	return ew.fullVersion !== undefined ? ew.fullVersion : (link.ewVersion ?? null);
 }
 
-/** Whether a child event of this version was applied already: by its own child, or by a full team state as new. */
+/**
+ * Whether a child event of this version was applied already: by its own child, or by a full team state as new (a
+ * member event also by a full member set written to Ever Works as new, #11096 review).
+ */
 function childApplied(link: EverWorksEntityLink, ew: TeamEverWorksOnly, child: string, version: number): boolean {
 	const floor = childFloorOf(link, ew);
-	return (floor != null && version <= floor) || (ew.childVersions?.[child] ?? -Infinity) >= version;
+	const membersFloor = child.startsWith('m:') ? (ew.membersVersion ?? null) : null;
+	return (floor != null && version <= floor) || (membersFloor != null && version <= membersFloor) || (ew.childVersions?.[child] ?? -Infinity) >= version;
 }
+
+/** The member-set floor as stored (see {@link TeamEverWorksOnly.membersVersion}). */
+const membersFloorOf = (membersVersion: number | null | undefined): TeamChildState => (membersVersion != null ? { membersVersion } : {});
 
 /** The child state after applying one child event. */
 function childStateAfter(link: EverWorksEntityLink, ew: TeamEverWorksOnly, child: string, version: number | null): TeamChildState {
-	return { fullVersion: childFloorOf(link, ew), childVersions: { ...(ew.childVersions ?? {}), ...(version != null ? { [child]: version } : {}) } };
+	return {
+		fullVersion: childFloorOf(link, ew),
+		...membersFloorOf(ew.membersVersion),
+		childVersions: { ...(ew.childVersions ?? {}), ...(version != null ? { [child]: version } : {}) }
+	};
 }
 
-/** The child state after a push: Ever Works' answer is not applied to Gauzy, so the floor of the child events stays. */
-function childStateAfterPush(link: EverWorksEntityLink, ew: TeamEverWorksOnly): TeamChildState {
-	return { fullVersion: childFloorOf(link, ew), ...(ew.childVersions ? { childVersions: ew.childVersions } : {}) };
+/**
+ * The child state after a push: Ever Works' answer is not applied to Gauzy, so the floor of the child events stays.
+ * Only a member set written (`membersVersion`, the version Ever Works answered it with) covers the member events.
+ */
+function childStateAfterPush(link: EverWorksEntityLink, ew: TeamEverWorksOnly, membersVersion = ew.membersVersion): TeamChildState {
+	return { fullVersion: childFloorOf(link, ew), ...membersFloorOf(membersVersion), ...(ew.childVersions ? { childVersions: ew.childVersions } : {}) };
 }
 
 /** The child state as stored, for a record that does not change it. */
 function childStateOf(ew: TeamEverWorksOnly): TeamChildState {
-	return { ...(ew.fullVersion !== undefined ? { fullVersion: ew.fullVersion } : {}), ...(ew.childVersions ? { childVersions: ew.childVersions } : {}) };
+	return {
+		...(ew.fullVersion !== undefined ? { fullVersion: ew.fullVersion } : {}),
+		...membersFloorOf(ew.membersVersion),
+		...(ew.childVersions ? { childVersions: ew.childVersions } : {})
+	};
 }
 
 /** The link version recorded with a child event: an older child event never lowers it. */
@@ -551,6 +575,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			const emoji = row.emoji ?? null;
 			let ew = this.everWorksOnly(pair);
 			let version = pair.ewVersion ?? undefined;
+			let membersVersion = ew.membersVersion;
 			try {
 				const patch: Record<string, unknown> = {};
 				if (row.name !== before.name) patch['name'] = row.name;
@@ -579,14 +604,18 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 					});
 					version = updated?.version ?? version;
 					ew = { ...ew, members: updated?.members ?? merged.members };
+					// Ever Works holds the member set Gauzy just wrote as of the version it answers: an older member event
+					// delivered late (a removal of a member the set kept) must no longer apply (#11096 review).
+					membersVersion = version ?? membersVersion;
 				}
 				// Ever Works' answer is not applied to Gauzy as a full team state: the child events since the last one applied
-				// still apply by child, so the child history is kept (#11076 review).
+				// still apply by child, so the child history is kept (#11076 review); only the member events are covered by a
+				// member set written above.
 				await this.record(context, row.id as ID, { ...this.teamFrom(pair), ...ew, id: ewTeamId, name: row.name, avatarIcon: emoji }, version ?? null, {
 					name: row.name,
 					emoji,
 					members: nowMembers
-				}, 'outbound', undefined, childStateAfterPush(pair, this.everWorksOnly(pair)));
+				}, 'outbound', undefined, childStateAfterPush(pair, this.everWorksOnly(pair), membersVersion));
 				return { status: 'pushed' };
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && error.status === 412) || attempt === 1) throw error;
