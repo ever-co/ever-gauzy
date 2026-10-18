@@ -8,6 +8,7 @@ import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
 import { debugInDevelopment } from '../../logger';
 import { BaseGuard } from './base.guard';
+import { attachedRolePermissionVerdict } from './attached-role-permissions';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 const logger = new Logger('PermissionGuard');
@@ -47,29 +48,43 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 		const tenantId = RequestContext.currentTenantId();
 		const roleId = RequestContext.currentRoleId();
 
-		const cacheKey = `userPermissions_${tenantId}_${roleId}_${permissions.join('_')}`;
-
 		let isAuthorized = false;
 
-		const fromCache = await this._cacheManager.get<boolean | null>(cacheKey);
+		// The role's DB-fresh permissions are already on the request (JwtStrategy); the same predicate the
+		// query below applies, without the cache round trip and the query. See ./attached-role-permissions.ts.
+		const attached = attachedRolePermissionVerdict(RequestContext.currentUser(), tenantId, permissions);
 
-		if (fromCache == null) {
-			debugInDevelopment(logger, () => `User Permissions NOT loaded from Cache with key: ${cacheKey}`);
-
-			// Check if user has the required permissions
-			isAuthorized = await this._rolePermissionService.checkRolePermission(tenantId, roleId, permissions, true);
-
-			await this._cacheManager.set(
-				cacheKey,
-				isAuthorized,
-				5 * 60 * 1000 // 5 minutes cache expiration time for User Permissions
-			);
+		if (attached !== null) {
+			isAuthorized = attached;
+			debugInDevelopment(logger, () => `User Permissions decided from the request's role state: ${isAuthorized}`);
 		} else {
-			isAuthorized = fromCache;
-			debugInDevelopment(
-				logger,
-				() => `User Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`
-			);
+			const cacheKey = `userPermissions_${tenantId}_${roleId}_${permissions.join('_')}`;
+
+			const fromCache = await this._cacheManager.get<boolean | null>(cacheKey);
+
+			if (fromCache == null) {
+				debugInDevelopment(logger, () => `User Permissions NOT loaded from Cache with key: ${cacheKey}`);
+
+				// Check if user has the required permissions
+				isAuthorized = await this._rolePermissionService.checkRolePermission(
+					tenantId,
+					roleId,
+					permissions,
+					true
+				);
+
+				await this._cacheManager.set(
+					cacheKey,
+					isAuthorized,
+					5 * 60 * 1000 // 5 minutes cache expiration time for User Permissions
+				);
+			} else {
+				isAuthorized = fromCache;
+				debugInDevelopment(
+					logger,
+					() => `User Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`
+				);
+			}
 		}
 
 		// Blocked access stays logged in every environment: it is the only trace of a denied request.

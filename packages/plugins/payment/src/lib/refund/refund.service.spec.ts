@@ -223,8 +223,9 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
  * and the transaction manager they share.
  *
  * @param tables The whole datastore.
+ * @param dialect The database type the shared data source reports (`options.type`).
  */
-function datastore(tables: ITables) {
+function datastore(tables: ITables, dialect = 'postgres') {
 	let sequence = 0;
 	const matches = (row: Row, where: Row = {}): boolean =>
 		Object.entries(where).every(([field, expected]) => {
@@ -377,8 +378,8 @@ function datastore(tables: ITables) {
 		 * package is not installed, and the refund service then has nothing to check an identifier against.
 		 */
 		dataSource: {
-			// The dialect the refund service locks on: a row-locking one, so the order lock is taken.
-			options: { type: 'postgres' },
+			// The dialect the refund service locks on: a row-locking one by default, so the order lock is taken.
+			options: { type: dialect },
 			hasMetadata: (name: string) => Array.isArray((tables as unknown as Record<string, unknown>)[name])
 		},
 		/**
@@ -614,6 +615,8 @@ function refundFixture(
 		port?: { recordRefund: (report: any) => Promise<any> };
 		/** The order's money ledger, as the payment side reports to it (Q7-W1b). */
 		orderLedger?: any;
+		/** The database type the data source reports; a row-locking `postgres` when not stated. */
+		dialect?: string;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -631,7 +634,7 @@ function refundFixture(
 		...(options.returns ? { order_return: options.returns } : {}),
 		...(options.claims ? { order_claim: options.claims } : {})
 	};
-	const store = datastore(tables);
+	const store = datastore(tables, options.dialect);
 	const published: any[] = [];
 	const eventBus = {
 		publish: async (event: any) => {
@@ -1676,14 +1679,15 @@ describe('RefundService — two refunds of one order are measured one after the 
 	afterEach(() => jest.restoreAllMocks());
 
 	/** An order paid 10 + 10: 20 to give back between its payments, and no single payment can carry 15. */
-	const order = (refunds: Row[] = []) =>
+	const order = (refunds: Row[] = [], dialect?: string) =>
 		refundFixture({
 			payments: [paymentRow(PAYMENT, { amount: '10' }), paymentRow(SECOND_PAYMENT, { amount: '10' })],
 			captures: [
 				captureRow('capture-1', { amount: '10' }),
 				captureRow('capture-2', { paymentId: SECOND_PAYMENT, amount: '10' })
 			],
-			refunds
+			refunds,
+			dialect
 		});
 
 	/**
@@ -1795,9 +1799,8 @@ describe('RefundService — two refunds of one order are measured one after the 
 	});
 
 	it('takes no row lock on a dialect that has none, and still measures the refund', async () => {
-		const fixture = order();
-
-		fixture.service.typeOrmRefundRepository.manager.dataSource.options.type = 'better-sqlite3';
+		// A dialect without row locks, stated when the datastore is built (the data source's type is read-only).
+		const fixture = order([], 'better-sqlite3');
 
 		await fixture.service.createAttributedRefund({
 			orderId: ORDER,

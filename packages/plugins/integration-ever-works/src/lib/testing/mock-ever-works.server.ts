@@ -11,7 +11,8 @@ import type { EverWorksHttpRequest, EverWorksHttpResponse, EverWorksTransport } 
  * It answers in-process through {@link MockEverWorksServer.transport} (no socket) or over HTTP with
  * {@link MockEverWorksServer.listen}. Implemented so far: `GET /whoami`, `GET /events`, webhooks v2
  * (`/webhooks` create/get/list/patch/delete/rotate-secret) with signed delivery, `Idempotency-Key`
- * replay, the error envelope, injected failures and a request log; `GET /members`, `GET /agents`; tasks
+ * replay, the error envelope, injected failures and a request log; `GET /members`, `POST /members/invite`
+ * (CR-13), `GET /agents`; tasks
  * (`GET`/`POST /tasks`, `GET`/`PATCH`/`DELETE /tasks/:id`, `POST /tasks/:id/transition` with gates,
  * `PUT /tasks/:id/assignees|watchers|blocks|relations`, task comments) and `GET`/`PUT`/`DELETE /links`,
  * each task write bumping the version, honouring `If-Match` and recording its event. Resources are added
@@ -94,6 +95,7 @@ export type MockEverWorksExtension = (context: MockEverWorksRouteContext) => Eve
 export const MOCK_PRESET_SCOPES = [
 	'org:read',
 	'members:read',
+	'members:write',
 	'agents:read',
 	'teams:read',
 	'teams:write',
@@ -127,6 +129,8 @@ export class MockEverWorksServer {
 	readonly agents = new Map<string, Record<string, unknown>>();
 	/** Inbox items (contract `inbox-item.schema.json`, CR-4) the inbox routes answer from. */
 	readonly inboxItems = new Map<string, Record<string, unknown>>();
+	/** Member invitations `POST /members/invite` issued (CR-13), with who sent them. */
+	readonly memberInvitations: Array<{ organizationId: string; invitedBy: string | null; invitedName: string | null; dto: Record<string, unknown> }> = [];
 	/** Tasks (contract task DTOs) and their comments, by id. */
 	readonly tasks = new Map<string, Record<string, unknown>>();
 	readonly comments = new Map<string, Record<string, unknown>>();
@@ -179,6 +183,11 @@ export class MockEverWorksServer {
 	/** Forces a response on the next matching request(s). */
 	fail(failure: MockEverWorksFailure): void {
 		this.failures.push({ times: 1, ...failure });
+	}
+
+	/** Ends the replay window of every `Idempotency-Key` seen so far (Ever Works keeps a key 24 h). */
+	expireIdempotencyKeys(): void {
+		this.idempotent.clear();
 	}
 
 	/** The newest `seq` (a string, as the contract carries it). */
@@ -330,6 +339,43 @@ export class MockEverWorksServer {
 		if (method === 'GET' && path === '/members') {
 			return scoped('members:read') ?? ok(MockEverWorksServer.page(this.members.filter((m) => m['organizationId'] === org?.id), query));
 		}
+		if (method === 'POST' && path === '/members/invite') {
+			// CR-13 (contract v1-draft.15): the app's own invitation, idempotent per email.
+			const denied = scoped('members:write');
+			if (denied) return denied;
+			const input = (body ?? {}) as { email?: unknown; role?: unknown; invitedName?: unknown };
+			const email = typeof input.email === 'string' ? input.email.trim() : '';
+			if (!email.includes('@')) return MockEverWorksServer.error(400, 'validation_failed', 'email must be an email address.');
+			if (input.role !== undefined && input.role !== 'member') return MockEverWorksServer.error(400, 'validation_failed', 'role must be member.');
+			const normalized = email.toLowerCase();
+			const member = this.members.find((m) => m['organizationId'] === org?.id && String(m['email'] ?? '').toLowerCase() === normalized);
+			if (member) return ok({ status: 'already_member', invitation: null, userId: member['userId'] });
+			// Only a live invitation (pending, not expired) is answered again; an expired one gets a new invitation.
+			const pending = this.memberInvitations.find(
+				(i) =>
+					i.organizationId === org?.id &&
+					String(i.dto['email']).toLowerCase() === normalized &&
+					i.dto['status'] === 'pending' &&
+					Date.parse(String(i.dto['expiresAt'])) > Date.now()
+			);
+			if (pending) return ok({ status: 'pending', invitation: pending.dto, userId: null });
+			const now = Date.now();
+			const dto = {
+				id: randomUUID(),
+				email,
+				role: 'member',
+				status: 'pending',
+				expiresAt: new Date(now + 7 * 86_400_000).toISOString(),
+				createdAt: new Date(now).toISOString()
+			};
+			this.memberInvitations.push({
+				organizationId: org?.id as string,
+				invitedBy: headers['x-act-as-user'] ?? null,
+				invitedName: typeof input.invitedName === 'string' ? input.invitedName : null,
+				dto
+			});
+			return ok({ status: 'invited', invitation: dto, userId: null }, 201);
+		}
 		if (method === 'GET' && path === '/agents') {
 			return scoped('agents:read') ?? ok(MockEverWorksServer.page([...this.agents.values()].filter((a) => a['organizationId'] === org?.id), query));
 		}
@@ -402,6 +448,35 @@ export class MockEverWorksServer {
 		};
 		this.tasks.set(id, row);
 		return row;
+	}
+
+	/**
+	 * Ever Works' sub-task rule: a task agrees with its parent on every owner (work, mission, idea, team — the
+	 * first of `teamIds` —, agent, goal), else `400 validation_failed` with Ever Works' own message.
+	 */
+	static parentScopeRefusal(child: Record<string, unknown>, parent: Record<string, unknown>): EverWorksHttpResponse | null {
+		const scopeOf = (task: Record<string, unknown>) => {
+			const owners: Record<string, unknown> = { ...task, teamId: ((task['teamIds'] as string[] | null | undefined) ?? [])[0] ?? null };
+			const parts = ['workId', 'missionId', 'ideaId', 'teamId', 'agentId', 'goalId'].filter((key) => owners[key]).map((key) => `${key.slice(0, -2)}:${String(owners[key])}`);
+			return parts.length ? parts.join('|') : 'unscoped';
+		};
+		const childScope = scopeOf(child);
+		const parentScope = scopeOf(parent);
+		return childScope === parentScope
+			? null
+			: MockEverWorksServer.error(400, 'validation_failed', `Parent Task scope (${parentScope}) must match child Task scope (${childScope}).`);
+	}
+
+	/**
+	 * Ever Works' refusal to change the owners (work, mission, idea, first team, agent, goal) of a task that has
+	 * sub-tasks: `400 validation_failed` with Ever Works' own message (`TasksService.update`).
+	 */
+	static subtasksRefusal(taskId: string, children: number): EverWorksHttpResponse {
+		return MockEverWorksServer.error(
+			400,
+			'validation_failed',
+			`Task ${taskId} has ${children} sub-task(s); re-file or detach them before changing its owners so parent and child scopes cannot diverge.`
+		);
 	}
 
 	/** An `ever-gauzy` key links as `gauzy` (contract v1, CR-1). */
@@ -484,6 +559,12 @@ export class MockEverWorksServer {
 			const fields = { ...input };
 			delete fields['externalRef'];
 			const teamIds = (fields['teamIds'] as string[] | undefined) ?? [];
+			if (typeof fields['parentTaskId'] === 'string') {
+				const parent = this.tasks.get(fields['parentTaskId']);
+				if (!visible(parent)) return MockEverWorksServer.error(400, 'validation_failed', `Parent Task ${fields['parentTaskId']} not found.`);
+				const refused = MockEverWorksServer.parentScopeRefusal(fields, parent);
+				if (refused) return refused;
+			}
 			const task = this.addTask(organizationId, {
 				...fields,
 				status: (fields['status'] as string | undefined) ?? 'backlog',
@@ -506,6 +587,22 @@ export class MockEverWorksServer {
 		if (parts.length === 2 && method === 'PATCH') {
 			if ('status' in input) return MockEverWorksServer.error(400, 'validation_failed', 'status moves through /transition.');
 			if (input['visibility'] === 'private') return MockEverWorksServer.error(422, 'domain_rule', 'An integration cannot make a record private.');
+			// The parent the task has after this request, checked against the owners it has after it.
+			const parentId = 'parentTaskId' in input ? input['parentTaskId'] : row['parentTaskId'];
+			const owners = ['parentTaskId', 'workId', 'missionId', 'ideaId', 'teamIds', 'agentId', 'goalId'];
+			if (typeof parentId === 'string' && owners.some((field) => field in input)) {
+				const parent = this.tasks.get(parentId);
+				if (!visible(parent)) return MockEverWorksServer.error(400, 'validation_failed', `Parent Task ${parentId} not found.`);
+				const refused = MockEverWorksServer.parentScopeRefusal({ ...row, ...input }, parent);
+				if (refused) return refused;
+			}
+			// A task with sub-tasks keeps its owners (Ever Works refuses to strand them in another scope).
+			const ownersOf = (task: Record<string, unknown>) =>
+				JSON.stringify(['workId', 'missionId', 'ideaId', 'agentId', 'goalId'].map((field) => task[field] ?? null).concat([((task['teamIds'] as string[] | null | undefined) ?? [])[0] ?? null]));
+			if (ownersOf({ ...row, ...input }) !== ownersOf(row)) {
+				const children = [...this.tasks.values()].filter((task) => task['organizationId'] === organizationId && task['parentTaskId'] === row['id']).length;
+				if (children) return MockEverWorksServer.subtasksRefusal(row['id'] as string, children);
+			}
 			const previous: Record<string, unknown> = {};
 			for (const [field, value] of Object.entries(input)) {
 				previous[field] = row[field] ?? null;
@@ -643,9 +740,13 @@ export class MockEverWorksServer {
 			return ok(stamp(row));
 		}
 		if (method === 'DELETE') {
+			// Every installation of the caller's source, unless `?installationId=` names one (contract CR-2(3)).
+			const installationId = query['installationId'];
 			for (let i = this.links.length - 1; i >= 0; i--) {
 				const link = this.links[i];
-				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source) this.links.splice(i, 1);
+				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source && (!installationId || link.installationId === installationId)) {
+					this.links.splice(i, 1);
+				}
 			}
 			return { status: 204, headers: {}, data: undefined };
 		}

@@ -98,22 +98,29 @@ mailbox, email and provider routes (P4) are described in `EMAIL.md`.
 
 ### GraphQL (served only with the plugin)
 
-The read routes and the state route have GraphQL twins (plan 04 §3). They
-call the same service methods, with the same DTO rules, guards and
-`INBOX_VIEW` permission (plus the `FEATURE_GRAPHQL` gate every resolver
-carries); no argument names a user or a recipient, so the recipient is
-always the caller.
+Every route has a GraphQL twin (plan 04 §3). The twins call the same service
+methods, with the same DTO rules, guards and `INBOX_VIEW` permission (plus the
+`FEATURE_GRAPHQL` gate every resolver carries); no argument names a user or a
+recipient. Every write (`markInboxItem`, `replyInboxItem`,
+`markAllInboxItemsRead`) acts as the caller, on the caller's own recipient
+state. The reads answer the caller's items too, except that a holder of
+`INBOX_MAILBOX_READ_ALL` may read the mailbox EMAIL items that the route lets
+them read; on those items `recipient` is `null`.
 
-| GraphQL                             | REST                     |
-| ----------------------------------- | ------------------------ |
-| `inboxItems(filter, cursor, limit)` | `GET /items`             |
-| `inboxItemCounts`                   | `GET /items/counts`      |
-| `inboxItem(id)`                     | `GET /items/:id`         |
-| `markInboxItem(id, input)`          | `PATCH /items/:id/state` |
+| GraphQL                             | REST                        |
+| ----------------------------------- | --------------------------- |
+| `inboxItems(filter, cursor, limit)` | `GET /items`                |
+| `inboxItemCounts`                   | `GET /items/counts`         |
+| `inboxItem(id)`                     | `GET /items/:id`            |
+| `markInboxItem(id, input)`          | `PATCH /items/:id/state`    |
+| `replyInboxItem(id, input)`         | `POST /items/:id/reply`     |
+| `markAllInboxItemsRead(tab)`        | `POST /items/mark-all-read` |
 
-Enumerated values (`kind`, `status`, `tab`, …) are the REST strings. Replies
-and mark-all-read stay REST-only for now. With the plugin off, the schema has
-none of these fields (and the committed schema snapshot, composed from the
+Enumerated values (`kind`, `status`, `tab`, …) are the REST strings. A reply
+reaches the item's source synchronously, as over REST, so a refusal ("already
+decided") is the mutation's error. The mailbox, message and provider twins
+are listed in `EMAIL.md`. With the plugin off, the schema has none of these
+fields (and the committed schema snapshot, composed from the
 default plugin list, does not carry them).
 
 ## Feeding the Inbox from another plugin

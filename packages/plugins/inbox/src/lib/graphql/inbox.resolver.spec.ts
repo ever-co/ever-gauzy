@@ -1,7 +1,8 @@
 /**
  * The Inbox GraphQL mirror (plan 04 §3): its SDL composes onto the core root types, every root field it declares
  * has its resolver method, the class carries the controller's guards and `INBOX_VIEW`, every field reaches the
- * `InboxService` method its REST route reaches, and the route's DTO rules refuse what the route refuses.
+ * `InboxService` method its REST route reaches (the reads, the state, the reply and mark-all-read), and the route's
+ * DTO rules refuse what the route refuses.
  *
  * `@gauzy/core` is doubled at the module boundary (its barrel boots the whole application), as the plugin's other
  * suites do.
@@ -50,7 +51,7 @@ import { InboxTabEnum, PermissionsEnum } from '@gauzy/contracts';
 import { UUIDValidationPipe } from '@gauzy/core';
 import { InboxResolver, validatedInboxInput } from './inbox.resolver';
 import { inboxSchemaExtensions } from './inbox.schema';
-import { InboxStateDTO } from '../dto/inbox.dto';
+import { InboxReplyDTO, InboxStateDTO } from '../dto/inbox.dto';
 import { InboxModule } from '../inbox.module';
 import { InboxPlugin } from '../inbox.plugin';
 
@@ -64,7 +65,9 @@ function setup() {
 		list: jest.fn(async () => ({ items: [answer], nextCursor: null })),
 		counts: jest.fn(async () => ({ unread: 2, decisionsOpen: 1, byMailbox: [] })),
 		get: jest.fn(async () => answer),
-		setState: jest.fn(async () => answer)
+		setState: jest.fn(async () => answer),
+		reply: jest.fn(async () => answer),
+		markAllRead: jest.fn(async () => ({ updated: 3 }))
 	};
 	return { inbox, resolver: new InboxResolver(inbox as never) };
 }
@@ -76,7 +79,7 @@ describe('Inbox GraphQL mirror', () => {
 		const fields = (type: GraphQLObjectType | null | undefined) =>
 			Object.keys(type?.getFields() ?? {}).filter((name) => name !== 'ping');
 		expect(fields(schema.getQueryType())).toEqual(['inboxItems', 'inboxItemCounts', 'inboxItem']);
-		expect(fields(schema.getMutationType())).toEqual(['markInboxItem']);
+		expect(fields(schema.getMutationType())).toEqual(['markInboxItem', 'replyInboxItem', 'markAllInboxItemsRead']);
 		for (const name of [...fields(schema.getQueryType()), ...fields(schema.getMutationType())]) {
 			expect(typeof (InboxResolver.prototype as unknown as Record<string, unknown>)[name]).toBe('function');
 		}
@@ -108,9 +111,9 @@ describe('Inbox GraphQL mirror', () => {
 		expect(declared.extensions.resolvers).toEqual([InboxResolver]);
 	});
 
-	it('the GraphQL capability gate is FEATURE_GRAPHQL, and both id arguments go through the route’s UUID pipe', () => {
+	it('the GraphQL capability gate is FEATURE_GRAPHQL, and every id argument goes through the route’s UUID pipe', () => {
 		expect(Reflect.getMetadata('feature', InboxResolver)).toBe('FEATURE_GRAPHQL');
-		for (const name of ['inboxItem', 'markInboxItem']) {
+		for (const name of ['inboxItem', 'markInboxItem', 'replyInboxItem']) {
 			const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, InboxResolver, name) as Record<
 				string,
 				{ index: number; data: string; pipes: Array<{ name?: string }> }
@@ -127,7 +130,14 @@ describe('Inbox GraphQL mirror', () => {
 		);
 		expect(guards).toEqual(['TenantPermissionGuard', 'PermissionGuard', 'FeatureFlagGuard']);
 		expect(Reflect.getMetadata('permissions', InboxResolver)).toEqual([PermissionsEnum.INBOX_VIEW]);
-		for (const name of ['inboxItems', 'inboxItemCounts', 'inboxItem', 'markInboxItem']) {
+		for (const name of [
+			'inboxItems',
+			'inboxItemCounts',
+			'inboxItem',
+			'markInboxItem',
+			'replyInboxItem',
+			'markAllInboxItemsRead'
+		]) {
 			expect(
 				Reflect.getMetadata('permissions', (InboxResolver.prototype as unknown as Record<string, object>)[name])
 			).toEqual([PermissionsEnum.INBOX_VIEW]);
@@ -172,5 +182,36 @@ describe('Inbox GraphQL mirror', () => {
 		expect(await validatedInboxInput(InboxStateDTO, { isArchived: true, extra: 'dropped' })).toEqual(
 			Object.assign(new InboxStateDTO(), { isArchived: true })
 		);
+	});
+
+	it('replyInboxItem answers through the reply route’s method (the source is told synchronously), with its DTO', async () => {
+		const { inbox, resolver } = setup();
+		expect(
+			await resolver.replyInboxItem(ITEM_ID, { optionId: 'approve', text: 'Looks good', extra: 'x' } as never)
+		).toMatchObject({
+			id: ITEM_ID
+		});
+		const [id, reply] = inbox.reply.mock.calls[0] as unknown as [string, InboxReplyDTO];
+		expect([id, reply]).toEqual([
+			ITEM_ID,
+			Object.assign(new InboxReplyDTO(), { optionId: 'approve', text: 'Looks good' })
+		]);
+		await expect(resolver.replyInboxItem(ITEM_ID, { text: 'x'.repeat(10001) })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		await expect(resolver.replyInboxItem(ITEM_ID, { optionId: 'o'.repeat(101) })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(inbox.reply).toHaveBeenCalledTimes(1);
+	});
+
+	it('markAllInboxItemsRead marks the caller’s unread items of a tab through the route’s method', async () => {
+		const { inbox, resolver } = setup();
+		expect(await resolver.markAllInboxItemsRead(InboxTabEnum.DECISIONS)).toEqual({ updated: 3 });
+		expect(inbox.markAllRead).toHaveBeenCalledWith(InboxTabEnum.DECISIONS);
+		await resolver.markAllInboxItemsRead(null);
+		expect(inbox.markAllRead).toHaveBeenLastCalledWith(undefined);
+		await expect(resolver.markAllInboxItemsRead('everything' as never)).rejects.toBeInstanceOf(BadRequestException);
+		expect(inbox.markAllRead).toHaveBeenCalledTimes(2);
 	});
 });

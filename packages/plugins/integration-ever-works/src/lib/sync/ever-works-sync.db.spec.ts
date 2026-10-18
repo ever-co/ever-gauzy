@@ -733,6 +733,24 @@ describe('Ever Works sync engine on SQLite', () => {
 			expect(await dataSource.getRepository(EverWorksEntityLink).findOneByOrFail({ gauzyId: 'g-task-1' })).toMatchObject({ ewId: 'task-2', ewVersion: 1 });
 		});
 
+		it('patchEverWorksOnly writes only the Ever Works-only fields of the row as read, never a changed or missing one (#11049)', async () => {
+			const links = new EverWorksLinkService(dataSource);
+			await links.record(linkInput({ ewVersion: 3, snapshot: { title: 'v3' }, ewOnly: { slug: 'T-1' } }));
+			const read = await stored();
+			expect(await links.patchEverWorksOnly(read, { slug: 'T-1', linkedBack: 'g-task-1' })).toBe(true);
+			expect(await stored()).toMatchObject({ ewVersion: 3, gauzyId: 'g-task-1', snapshot: JSON.stringify({ title: 'v3' }), ewOnly: JSON.stringify({ slug: 'T-1', linkedBack: 'g-task-1' }) });
+			// The fields changed since that read (a newer write): not written.
+			expect(await links.patchEverWorksOnly(read, { slug: 'T-1', linkedBack: 'stale' })).toBe(false);
+			// Re-paired with another Gauzy record since the read: not written.
+			const fresh = await stored();
+			await dataSource.getRepository(EverWorksEntityLink).update({ id: fresh.id }, { gauzyId: 'g-task-2' } as never);
+			expect(await links.patchEverWorksOnly(fresh, { linkedBack: 'g-task-1' })).toBe(false);
+			// Gone: not recreated.
+			await dataSource.getRepository(EverWorksEntityLink).delete({ id: fresh.id });
+			expect(await links.patchEverWorksOnly(fresh, { linkedBack: 'g-task-1' })).toBe(false);
+			expect(await dataSource.getRepository(EverWorksEntityLink).count({ where: { ewId: 'task-1' } })).toBe(0);
+		});
+
 		it('a newer version written after the handler read the link wins: the stale write is one refused conditional update', async () => {
 			const links = new EverWorksLinkService(dataSource);
 			await links.record(linkInput({ ewVersion: 3, snapshot: { title: 'v3' } }));

@@ -47,6 +47,13 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *   TypeORM, which makes it a `SAVEPOINT`. It does not matter whether it is asked for through the
  *   manager the callback was handed, the data source's own manager or a query runner: a transaction
  *   never waits for itself;
+ * - **except once the holder's outermost commit or rollback has begun.** Work the transaction started and
+ *   left running (a subscriber's fire-and-forget capture, an event handler it did not await) still carries
+ *   the claim, and can reach its own transaction while that `COMMIT` is in flight. Taken for a nested one,
+ *   its `SAVEPOINT` began a transaction of its own after the `COMMIT`, the claim was never given back, and
+ *   its commit was refused (`TransactionNotStartedError`): every later request waited out the timeout —
+ *   one Gauzy comment wedged the API in the first local Gauzy ↔ Ever Works run. A claim that is ending
+ *   therefore nests nothing: such a transaction takes a claim of its own and queues behind the commit;
  * - `EntityManager.transaction` — which `DataSource.transaction`, every repository's manager and every
  *   manager a query runner carries go through — runs its whole call in a context of its own. Two
  *   transactions opened in the same tick by the same caller therefore hold two claims, not one;
@@ -162,6 +169,23 @@ export interface IEmbeddedTransactionQueueOptions {
  */
 class ConnectionClaim {
 	queued = false;
+	/**
+	 * Set while the claim's outermost commit or rollback runs. A transaction opened then from a context that
+	 * carries the claim is not part of it (the work that opens it was left running, not awaited): it queues.
+	 */
+	ending = false;
+}
+
+/**
+ * Whether a transaction opened from a context runs inside the holder's: the context carries the claim that
+ * holds the connection, and that claim is not ending.
+ *
+ * @param queue The data source's queue.
+ * @param claim The claim the context carries, if any.
+ * @returns True for a nested transaction.
+ */
+function nestsIn(queue: ConnectionQueue, claim: ConnectionClaim | undefined): boolean {
+	return queue.holds(claim) && !claim?.ending;
 }
 
 /** The first-in-first-out queue of claims on one data source's connection. */
@@ -364,7 +388,7 @@ function transactionOf(manager: EntityManager, state: IEmbeddedTransactionState)
 	const original = manager.transaction;
 
 	return function (this: EntityManager, ...args: unknown[]) {
-		if (state.queue.holds(state.context.getStore())) {
+		if (nestsIn(state.queue, state.context.getStore())) {
 			return original.apply(this, args);
 		}
 
@@ -439,7 +463,7 @@ function guardRunner(runner: QueryRunner, state: IEmbeddedTransactionState): Que
 	target.startTransaction = (isolationLevel?: Parameters<QueryRunner['startTransaction']>[0]): Promise<void> => {
 		const current = context.getStore();
 
-		if (queue.holds(current)) {
+		if (nestsIn(queue, current)) {
 			// Opened from inside the transaction that holds the connection: TypeORM makes it a savepoint.
 			return startTransaction(isolationLevel);
 		}
@@ -464,13 +488,24 @@ function guardRunner(runner: QueryRunner, state: IEmbeddedTransactionState): Que
 
 	const ending = (finish: () => Promise<void>) => async (): Promise<void> => {
 		// Read before TypeORM moves the depth: only the holder's outermost commit or rollback ends the claim.
-		const outermost = queue.holds(context.getStore()) && target.transactionDepth <= 1;
+		const claim = context.getStore();
+		const outermost = queue.holds(claim) && target.transactionDepth <= 1;
+
+		if (outermost && claim) {
+			// From here on, a transaction opened from a context carrying the claim queues behind this one.
+			claim.ending = true;
+		}
 
 		try {
 			await finish();
 		} finally {
 			if (outermost) {
 				releaseIfIdle();
+
+				// A commit that failed keeps the claim with its owner (its rollback releases it): it is theirs again.
+				if (claim && queue.holds(claim)) {
+					claim.ending = false;
+				}
 			}
 		}
 	};

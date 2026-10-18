@@ -367,6 +367,28 @@ describe('EverWorksProjectsService — create in Ever Works (G-P2-5)', () => {
 		expect(postsOf(mock)).toHaveLength(0);
 	});
 
+	it('create in Ever Works, remove the pair, create again: a new work, the first one keeps no Gauzy link (#11054 review)', async () => {
+		const { service, mock, works, links, projects } = setup();
+		projects.push({ id: 'p1', organizationId: 'o1', name: 'Portal' });
+		await service.decide('m1' as never, { createInEverWorks: ['p1'] as never });
+		const first = links.find((l) => l['entityType'] === EverWorksLinkType.PROJECT_WORK)?.['ewId'] as string;
+		expect(mock.links.filter((l) => l.entityId === first)).toHaveLength(1);
+		await service.decide('m1' as never, { unlinks: [first] });
+		expect(mock.links.filter((l) => l.entityId === first)).toEqual([]);
+		// Within a day the same create is the same request (its Idempotency-Key): Ever Works answers the same work.
+		await service.decide('m1' as never, { createInEverWorks: ['p1'] as never });
+		expect(links.find((l) => l['entityType'] === EverWorksLinkType.PROJECT_WORK)?.['ewId']).toBe(first);
+		// Later, unpaired again, a create makes a new work: the first one no longer answers the project's externalRef.
+		await service.decide('m1' as never, { unlinks: [first] });
+		mock.expireIdempotencyKeys();
+		await service.decide('m1' as never, { createInEverWorks: ['p1'] as never });
+		const second = links.find((l) => l['entityType'] === EverWorksLinkType.PROJECT_WORK)?.['ewId'] as string;
+		expect(postsOf(mock)).toHaveLength(3);
+		expect(second).not.toBe(first);
+		expect(works.works.size).toBe(2);
+		expect(mock.links.filter((l) => l.entityId === first)).toEqual([]);
+	});
+
 	it('an Ever Works work for the project that another project holds is never re-paired', async () => {
 		const { service, works, ewOrg, addLink, links, projects } = setup();
 		projects.push({ id: 'p1', organizationId: 'o1', name: 'Portal' });

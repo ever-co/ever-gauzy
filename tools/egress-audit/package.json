@@ -4,7 +4,7 @@
 	"description": "The egress audit harness for this directory's config, and the ESLint the import-boundary test runs its rule with (installed by .github/workflows/egress-audit.yml with npm ci; not a workspace).",
 	"type": "module",
 	"devDependencies": {
-		"@ever-co/connect-tools": "1.0.0-rc.6",
+		"@ever-co/connect-tools": "1.0.0-rc.7",
 		"@typescript-eslint/parser": "8.71.2",
 		"eslint": "10.12.0",
 		"typescript": "~6.0.3"

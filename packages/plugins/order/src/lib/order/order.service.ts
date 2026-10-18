@@ -212,7 +212,9 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		// The use of every promotion is taken before anything is written, so a promotion whose limit is
 		// reached refuses the checkout instead of granting a discount it no longer has (Q7-W1c).
 		if (options.recordPromotionUsage === true) {
-			await this.reservePromotionUsage(cart);
+			// The cart is a persisted one by now (it is looked up by id to get here), so its id is set even
+			// though the base entity model declares `id` optional; the reservation needs it to release the uses.
+			await this.reservePromotionUsage({ ...cart, id: cart.id as ID });
 		}
 
 		// A checkout that took promotion uses and then failed before its order was placed gives them back, so a
@@ -446,9 +448,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			hasCapture: Number(snapshot.paidTotal ?? 0) > 0,
 			hasShipped: false,
 			isSettled: await this.totalsService.isPaymentSettled(order),
-			hasOpenApproval: openChanges.some(
-				(change: OrderChange) => change.status === OrderChangeStatus.REQUESTED
-			),
+			hasOpenApproval: openChanges.some((change: OrderChange) => change.status === OrderChangeStatus.REQUESTED),
 			hasShippableLines: false,
 			fulfillmentStatus: order.fulfillmentStatus,
 			paymentStatus: await this.totalsService.derivePaymentStatus(order, snapshot)
@@ -1045,7 +1045,10 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 * @param placedWith What the placement came from, recorded on the timeline entry.
 	 * @returns The confirmed order.
 	 */
-	private async placeAndConfirm(orderId: ID, placedWith: { cartId?: ID; idempotencyKey?: string } = {}): Promise<Order> {
+	private async placeAndConfirm(
+		orderId: ID,
+		placedWith: { cartId?: ID; idempotencyKey?: string } = {}
+	): Promise<Order> {
 		await this.place(orderId, placedWith);
 
 		return this.confirm(orderId, 'SYSTEM');

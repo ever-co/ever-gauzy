@@ -63,6 +63,12 @@ const GATED_PLUGIN_SCHEMAS = [
 		flag: 'GAUZY_INBOX_ENABLED',
 		file: 'packages/plugins/inbox/src/lib/graphql/inbox.schema.ts',
 		exportName: 'inboxSchemaExtensions'
+	},
+	{
+		plugin: 'InboxEmailPlugin',
+		flag: 'GAUZY_INBOX_EMAIL_ENABLED',
+		file: 'packages/plugins/inbox/src/lib/email/graphql/inbox-email.schema.ts',
+		exportName: 'inboxEmailSchemaExtensions'
 	}
 ];
 

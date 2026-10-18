@@ -322,6 +322,23 @@ describe('Ever Works organization mapping on SQLite', () => {
 		await expect(mappings.create({ everWorksOrganizationId: ewOrgs[0].id })).rejects.toBeInstanceOf(NotFoundException);
 	});
 
+	it('a change of the agentEmail direction (or archiving the mapping) brings the webhook events along (G-P4-6)', async () => {
+		const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+		const refresh = jest.spyOn(connections, 'refreshWebhookEvents').mockResolvedValue(undefined);
+		const connection = await connections.current();
+		await mappings.update(view.integrationTenantId, { directions: { tasks: 'ew_to_gauzy' } });
+		expect(refresh).not.toHaveBeenCalled();
+		await mappings.update(view.integrationTenantId, { directions: { agentEmail: 'ew_to_gauzy' } });
+		expect(refresh).toHaveBeenCalledWith(connection?.id, A.tenantId);
+		await mappings.remove(view.integrationTenantId);
+		expect(refresh).toHaveBeenCalledTimes(2);
+		// Restored (mapped again), its directions come back with it: so do the events (#11055 review).
+		await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+		expect(refresh).toHaveBeenCalledTimes(3);
+		expect(refresh).toHaveBeenLastCalledWith(connection?.id, A.tenantId);
+		refresh.mockRestore();
+	});
+
 	it('updates directions, flags, projects and toggles; refuses an unknown domain, a disallowed direction and a foreign project', async () => {
 		const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
 		const project = await dataSource.getRepository(OrganizationProject).save({ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, name: 'P' });
