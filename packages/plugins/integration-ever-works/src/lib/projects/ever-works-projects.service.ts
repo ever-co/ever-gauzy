@@ -249,9 +249,14 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				throw new BadRequestException(`${projectId} is on the Gauzy team ${scope.waitingFor}, which is not paired with an Ever Works team yet; pair the team first.`);
 			}
 		}
+		// The works whose pair this request removes: unpaired, or their project paired with another work.
+		const unpaired = new Set<string>();
 		for (const ewWorkId of decision.unlinks ?? []) {
 			const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId);
-			if (link) await this.links.remove(link);
+			if (link) {
+				await this.links.remove(link);
+				unpaired.add(link.ewId);
+			}
 		}
 		for (const pair of pairs) {
 			// Queued behind a "create in Ever Works" of the same project in this process (the later one replaces
@@ -266,7 +271,9 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 						await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.ewWorkId),
 						await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, pair.projectId)
 					]) {
-						if (stale) await this.links.remove(stale);
+						if (!stale) continue;
+						await this.links.remove(stale);
+						if (stale.ewId !== pair.ewWorkId) unpaired.add(stale.ewId);
 					}
 					// Pairing changes neither record: from now on the work's changes apply to the project.
 					await this.record(context, pair.projectId, byEw.get(pair.ewWorkId) as EverWorksWork, null);
@@ -274,6 +281,9 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				{ database: false }
 			);
 		}
+		// A work paired (or made into a project) in this same request keeps its link: the sweep sends the new one.
+		const pairedNow = new Set([...pairs.map((pair) => pair.ewWorkId), ...(decision.createInGauzy ?? [])]);
+		await this.unlinkBack(context, [...unpaired].filter((ewWorkId) => !pairedNow.has(ewWorkId)));
 		await EverWorksSyncContext.run({ connectionId: context.connection.id as ID, eventId: `projects-tab:${context.integrationTenantId}` }, async () => {
 			for (const ewWorkId of decision.createInGauzy ?? []) {
 				// Claimed, then checked again: two overlapping requests never create two projects for one work.
@@ -682,6 +692,30 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				continue;
 			}
 			await mark(link, { linkedBack: link.gauzyId as string, linkBackTriedAt: null });
+		}
+	}
+
+	/**
+	 * Removes the Gauzy project from works whose pair was removed (`DELETE /links/work/:id?installationId=`, contract
+	 * CR-2(3): this installation's link only), so Ever Works no longer shows a project that does not follow the work,
+	 * and a later "create in Ever Works" of the project is not answered with the old work through its `externalRef`.
+	 * A work paired again meanwhile is left alone. Best effort, like the link-back: a work Ever Works no longer
+	 * serves (`404`) has nothing to remove; any other failure is logged and never fails the Projects tab.
+	 *
+	 * @param context - The mapping.
+	 * @param ewWorkIds - The works whose pair was removed.
+	 */
+	private async unlinkBack(context: EverWorksMappingContext, ewWorkIds: string[]): Promise<void> {
+		if (!ewWorkIds.length) return;
+		const client = this.connections.client(context.connection, context.everWorksOrganizationSlug);
+		for (const ewWorkId of ewWorkIds) {
+			if (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId)) continue;
+			try {
+				await client.request('DELETE', `/links/work/${encodeURIComponent(ewWorkId)}`, { query: { installationId: context.connection.id } });
+			} catch (error) {
+				if (error instanceof EverWorksApiError && error.status === 404) continue;
+				this.logger.warn(`The Gauzy link of the unpaired Ever Works work ${ewWorkId} was not removed (${describeError(error)}).`);
+			}
 		}
 	}
 

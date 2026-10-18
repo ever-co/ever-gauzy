@@ -58,6 +58,8 @@ function setup() {
 		isEnabled: true
 	};
 	const links: LinkRow[] = [];
+	// Row ids are never reused (a removed row's id never comes back), as in a database.
+	let rowIds = 0;
 	// Like rows read from a database: a read is a copy, so a stale read stays stale after a later write.
 	const copy = (row: LinkRow | undefined) => (row ? { ...row } : null);
 	const linkService = {
@@ -69,7 +71,7 @@ function setup() {
 			const existing = links.find((l) => l.entityType === input['entityType'] && (l.ewId === input['ewId'] || l.gauzyId === input['gauzyId']));
 			const values = { gauzyId: input['gauzyId'], ewId: input['ewId'], ewVersion: input['ewVersion'] ?? null, snapshot: JSON.stringify(input['snapshot']), ewOnly: JSON.stringify(input['ewOnly']), state: 'ok' };
 			if (existing) Object.assign(existing, values);
-			else links.push({ id: `l${links.length + 1}`, integrationTenantId: input['integrationTenantId'], entityType: input['entityType'], ...values });
+			else links.push({ id: `l${++rowIds}`, integrationTenantId: input['integrationTenantId'], entityType: input['entityType'], ...values });
 		},
 		remove: async (link: LinkRow) => {
 			const at = links.findIndex((l) => l.id === link.id);
@@ -340,7 +342,7 @@ describe('EverWorksProjectsService', () => {
 	/** The `DELETE /links/work/:id` calls the client made. */
 	const deletes = (client: { request: jest.Mock }) => client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'DELETE');
 
-	it('unpairing a work removes the Gauzy link from it in Ever Works, this installation only (I3c)', async () => {
+	it('a work unpaired on the Projects tab loses the Gauzy link in Ever Works, this installation only (I3c)', async () => {
 		const { service, projects, client, links } = setup();
 		projects.push({ id: 'p1', name: 'Our name' });
 		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
