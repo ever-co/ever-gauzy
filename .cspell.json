@@ -1593,7 +1593,9 @@
 		"poolers",
 		"pooler's",
 		"keepalive",
-		"Brotli"
+		"Brotli",
+		"sigv",
+		"tablist"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
