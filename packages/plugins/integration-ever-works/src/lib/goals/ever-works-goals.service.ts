@@ -384,7 +384,12 @@ export class EverWorksGoalsService
 					archivedAt: archived ? new Date() : null
 				};
 				if (!written)
-					await repository.insert({ id, tenantId: context.tenantId, organizationId: context.organizationId, ...values } as never);
+					await repository.insert({
+						id,
+						tenantId: context.tenantId,
+						organizationId: context.organizationId,
+						...values
+					} as never);
 				// A retry finds the goal it wrote: it takes Ever Works' current fields, so the snapshot recorded below is
 				// what Gauzy holds and a later push never sends the older ones back (review F87).
 				else await repository.update({ id } as never, values as never);
@@ -437,8 +442,11 @@ export class EverWorksGoalsService
 					// Ever Works no longer has a primary mission: the goal leaves the initiative of the old one only. An
 					// initiative a Gauzy user moved it to stays (its mission lists the goal, not as primary) (review F90).
 					const previousInitiativeId = await this.initiativeOf(context, before.primaryMissionId ?? null);
-					const current = (row as { organizationStrategicInitiativeId?: ID | null }).organizationStrategicInitiativeId ?? null;
-					if (current && current === previousInitiativeId) changes['organizationStrategicInitiativeId'] = null;
+					const current =
+						(row as { organizationStrategicInitiativeId?: ID | null }).organizationStrategicInitiativeId ??
+						null;
+					if (current && current === previousInitiativeId)
+						changes['organizationStrategicInitiativeId'] = null;
 				}
 			}
 			if (Object.keys(changes).length) await repository.update({ id: goalId } as never, changes as never);
@@ -460,7 +468,9 @@ export class EverWorksGoalsService
 			version,
 			{ ...next, teamIds, progress, archived, leadEmployeeId, primaryMissionId, gauzyDeadline },
 			link,
-			teamsWait ? { extraTeams: ew.extraTeams ?? [], unmappedTeams: ew.unmappedTeams ?? [] } : { extraTeams: teams.extra, unmappedTeams: teams.unmapped },
+			teamsWait
+				? { extraTeams: ew.extraTeams ?? [], unmappedTeams: ew.unmappedTeams ?? [] }
+				: { extraTeams: teams.extra, unmappedTeams: teams.unmapped },
 			'inbound'
 		);
 		return missing
@@ -519,7 +529,12 @@ export class EverWorksGoalsService
 					if ((written as { deletedAt?: Date | null }).deletedAt) await repository.restore({ id } as never);
 					await repository.update(
 						{ id } as never,
-						{ ...fields, hardDeadline: fields.hardDeadline ? new Date(fields.hardDeadline) : null, isArchived: false, archivedAt: null } as never
+						{
+							...fields,
+							hardDeadline: fields.hardDeadline ? new Date(fields.hardDeadline) : null,
+							isArchived: false,
+							archivedAt: null
+						} as never
 					);
 				} else
 					await repository.insert({
