@@ -32,6 +32,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { HashNumberPipe, IRecordViewSection, IRecordViewStatus, TimeZoneService } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from './employee-hours-chart/employee-hours-chart.component';
+import { IProjectQuickLookPerson } from '../../projects/components/project-quick-look/project-quick-look.component';
 import { AssigneePopoverKeyboard } from './assignee-popover-keyboard';
 import {
 	buildTaskViewSections,
@@ -252,6 +253,11 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	private readonly _hashPipe = new HashNumberPipe();
 	private _projectOverview: { from: IProjectsPanel; value: IProjectOverviewRow[] } | null = null;
 
+	/** The project open in the quick-look drawer, by id: its card is read live from the Projects panel. */
+	public viewedProjectId: string | null = null;
+	/** The employee, as the drawer shows them among the project's contributors. */
+	public projectPeople: IProjectQuickLookPerson[] = [];
+
 	/*
 	 * The task counts and the hours caption are DERIVED from the panel values
 	 * `track()` accepted, never written while a request is in flight: `track()`
@@ -328,8 +334,18 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 				// Period changes reload too, but keep the same employee — and the task.
 				if (this.employee && this.employee.id !== employee.id) {
 					this.closeTask();
+					this.closeProject();
 				}
 				this.employee = employee;
+				this.projectPeople = [
+					{
+						id: employee.id,
+						name: this.displayName,
+						initials: this.initials,
+						avatarUrl: this.avatarUrl,
+						presence: ViewEmployeeComponent.presenceOfPerson(employee)
+					}
+				];
 				this.updateLocalTime();
 				this.profile = this.buildProfile(employee);
 			})
@@ -581,6 +597,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	 * a failed read keeps what the row had.
 	 */
 	async openTask(row: IAssignedTaskRow): Promise<void> {
+		this.closeProject();
 		const sequence = ++this._viewSequence;
 		this.showTask(row.task);
 		try {
@@ -613,6 +630,37 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	}
 
 	/* ── Projects ────────────────────────────────────────────────────────── */
+
+	/**
+	 * Opens a project's quick look — progress, tasks, hours per day, who worked on it
+	 * the most and the full record — without leaving the employee page.
+	 */
+	openProject(row: IProjectOverviewRow): void {
+		this.closeTask();
+		this.viewedProjectId = row.id;
+	}
+
+	closeProject(): void {
+		this.viewedProjectId = null;
+	}
+
+	/**
+	 * The open project's card as it stands now, so the drawer's "worked in period"
+	 * follows the period and the statistics as they load.
+	 */
+	get viewedProjectRow(): IProjectOverviewRow | null {
+		const id = this.viewedProjectId;
+		return id ? this.projectOverview.find((row) => row.id === id) || null : null;
+	}
+
+	/** The period as ISO dates — stable strings, so the drawer reloads only when the window moves. */
+	get periodStartIso(): string {
+		return this.periodRange().start.toISOString();
+	}
+
+	get periodEndIso(): string {
+		return this.periodRange().end.toISOString();
+	}
 
 	/**
 	 * The Overview's Projects panel, as on the team page: every project the
