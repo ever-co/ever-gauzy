@@ -32,7 +32,7 @@ error, not a silent DOM fallback.
 | `GAUZY_DOCS_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model id (1536 dims) |
 | `GAUZY_DOCS_CLASSIFY_MODEL` | *(chat default)* | Classification model id |
 | `GAUZY_DOCS_OCR_ENABLED` | `true` | Provider-vision OCR for scanned PDFs and image uploads: one provider call per rendered page. Runs only when `GAUZY_DOCS_AI_ENABLED` is also on and a provider resolves credentials (tenant BYOK → environment → platform), using the classification model; otherwise a file with no text layer stays an extraction failure |
-| `GAUZY_DOCS_OCR_MAX_PAGES` | `20` | Hard cap on the pages OCR renders and transcribes per document (the OCR cost fuse). Must be a positive integer; anything else falls back to the default |
+| `GAUZY_DOCS_OCR_MAX_PAGES` | `20` | Hard cap on the pages OCR renders and transcribes per document (the OCR cost fuse). Read like the other integer variables here (`Number.parseInt`, base 10): the leading digits count, so `100pages` caps at 100 and `2.5` at 2; a value that does not start with a positive integer (empty, `0`, negative, not a number) falls back to the default |
 | `GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES` | `10` | Server-side debounce window for PAGE version snapshots |
 | `GAUZY_DOCS_QUEUE_CONCURRENCY` | `2` | `docs-processing` worker concurrency per process (queued mode only) |
 | `GAUZY_DOCS_QUEUE_ENABLED` | *(follows `isSchedulerQueueRootEnabled()`)* | Register the BullMQ queue. Off ⇒ the pipeline runs **inline** |
