@@ -2,6 +2,8 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { INBOX_EMAIL_MIGRATIONS } from './database/inbox-email-migrations';
 import { inboxEmailSchemaExtensions } from './graphql/inbox-email.schema';
+import { InboxEmailMessageResolver } from './graphql/inbox-email-message.resolver';
+import { InboxMailboxResolver } from './graphql/inbox-mailbox.resolver';
 import { InboxProviderAccountResolver } from './graphql/inbox-provider-account.resolver';
 import { INBOX_EMAIL_ENTITIES, InboxEmailModule } from './inbox-email.module';
 import { InboxEmployeeCreatedSubscriber } from './mailboxes/inbox-employee.subscriber';
@@ -25,7 +27,7 @@ export { INBOX_EMAIL_MIGRATIONS };
 	// The GraphQL twins of the management routes, served only with the plugin (both flags on).
 	extensions: {
 		schema: inboxEmailSchemaExtensions,
-		resolvers: [InboxProviderAccountResolver]
+		resolvers: [InboxProviderAccountResolver, InboxMailboxResolver, InboxEmailMessageResolver]
 	},
 	// Auto-provisioning: every employee the platform creates (the mailbox is created where the organization opted in).
 	subscribers: [InboxEmployeeCreatedSubscriber],
