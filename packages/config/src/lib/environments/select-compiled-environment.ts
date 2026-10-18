@@ -39,6 +39,23 @@ const COMPILED_PRODUCTION_ENVIRONMENT = 'environment.prod.js';
 /** The compiled `environment.ts`, preserved while `environment.js` carries the production copy. */
 const PRESERVED_DEVELOPMENT_ENVIRONMENT = 'environment.dev.js';
 
+/**
+ * Writes through a temporary file in the same directory, renamed into place, so a selection interrupted
+ * mid-write leaves the previous `environment.js` / `environment.dev.js` intact rather than a partial file
+ * (which a later selection could preserve as "the development compile").
+ */
+function writeFileAtomically(file: string, content: string): void {
+	const temporary = `${file}.${process.pid}.tmp`;
+	fs.writeFileSync(temporary, content);
+	fs.renameSync(temporary, file);
+}
+
+function copyFileAtomically(source: string, target: string): void {
+	const temporary = `${target}.${process.pid}.tmp`;
+	fs.copyFileSync(source, temporary);
+	fs.renameSync(temporary, target);
+}
+
 export interface CompiledEnvironmentSelection {
 	environment: CompiledEnvironmentName;
 	/** What had to change: `substituted` (production copied in), `restored` (development put back) or `unchanged`. */
@@ -111,9 +128,9 @@ export function selectCompiledEnvironment(
 	if (environment === 'production') {
 		if (!substituted) {
 			// A fresh compile of environment.ts: keep it for a later development selection.
-			fs.copyFileSync(target, preserved);
+			copyFileAtomically(target, preserved);
 		}
-		fs.writeFileSync(target, content);
+		writeFileAtomically(target, content);
 		return { environment, action: 'substituted', file: target };
 	}
 
@@ -121,7 +138,7 @@ export function selectCompiledEnvironment(
 		return { environment, action: 'unchanged', file: target };
 	}
 
-	fs.writeFileSync(target, content);
+	writeFileAtomically(target, content);
 	return { environment, action: 'restored', file: target };
 }
 
