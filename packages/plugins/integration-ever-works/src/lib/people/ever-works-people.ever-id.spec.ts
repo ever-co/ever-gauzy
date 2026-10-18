@@ -23,6 +23,7 @@ jest.mock('@gauzy/core', () => {
 			)
 		),
 		InviteBulkCreateCommand: class {},
+		isUniqueViolation: (error: unknown) => (error as { code?: string })?.code === '23505',
 		RequestContext: { currentTenantId: () => null, currentUserId: () => null, currentOrganizationId: () => null, hasPermission: () => true }
 	};
 });
@@ -99,6 +100,35 @@ describe('everIdMatches', () => {
 		expect(shared.size).toBe(0);
 	});
 
+	it('a person another member also leads to is never matched: ambiguous and excluded members claim too', () => {
+		const people = new Map([
+			['user-p', 'E-p' as never],
+			['user-q', 'E-q' as never]
+		]);
+		const identities = users([
+			[ISSUER, 'a', ['user-p']],
+			[ISSUER, 'b', ['user-q']]
+		]);
+		// A leads to P and Q (ambiguous), B only to P: B is not matched with P.
+		expect(
+			everIdMatches(
+				[
+					{ userId: 'A', everIdSubjects: [{ issuer: ISSUER, subject: 'a' }, { issuer: ISSUER, subject: 'b' }] },
+					{ userId: 'B', everIdSubjects: [{ issuer: ISSUER, subject: 'a' }] }
+				],
+				identities,
+				people
+			).size
+		).toBe(0);
+		// A (declined) and B both lead to P: neither is matched; without A, B is.
+		const both = [
+			{ userId: 'A', everIdSubjects: [{ issuer: ISSUER, subject: 'a' }] },
+			{ userId: 'B', everIdSubjects: [{ issuer: ISSUER, subject: 'a' }] }
+		];
+		expect(everIdMatches(both, identities, people, new Set(['A'])).size).toBe(0);
+		expect([...everIdMatches([both[1]], identities, people)]).toEqual([['B', 'E-p']]);
+	});
+
 	it('ignores identities of users who are not a person of the organization who may be paired', () => {
 		expect(everIdMatches([{ userId: 'U', everIdSubjects: [{ issuer: ISSUER, subject: 'a' }] }], users([[ISSUER, 'a', ['user-elsewhere']]]), new Map()).size).toBe(0);
 	});
@@ -119,6 +149,7 @@ function setup(
 		accounts?: Array<{ issuer: string; subject: string; userId: string }>;
 		accountsMissing?: boolean;
 		declined?: string[];
+		database?: { type: string; runner: { connect: jest.Mock; release: jest.Mock; query: jest.Mock } };
 	} = {}
 ) {
 	const links: LinkRow[] = (options.links ?? []).map((l, i) => ({
@@ -184,8 +215,9 @@ function setup(
 		getRepository: (target: unknown) => repositories.get(target),
 		transaction: jest.fn(async (fn: (m: unknown) => Promise<unknown>) => fn(manager)),
 		createQueryBuilder: jest.fn(accountQuery),
+		createQueryRunner: () => options.database?.runner,
 		driver: { escape: (name: string) => `"${name}"` },
-		options: { type: 'sqlite' }
+		options: { type: options.database?.type ?? 'sqlite' }
 	};
 	const contexts = {
 		forRequest: jest.fn(async () => ({
@@ -214,7 +246,7 @@ function setup(
 		const row = settings.find((s) => s.settingsName === EverWorksSettingName.PEOPLE_EVER_ID_DECLINED);
 		return row ? (JSON.parse(row.settingsValue) as string[]) : [];
 	};
-	return { service, links, linkService, queried, declined };
+	return { service, links, linkService, queried, declined, repositories };
 }
 
 const ada = (overrides: Partial<EverWorksMember> = {}) => member('U-ada', { everIdSubjects: [{ issuer: ISSUER, subject: 'sub-ada' }], ...overrides });
@@ -287,6 +319,37 @@ describe('EverWorksPeopleService — Ever ID matching', () => {
 		const by = new Map(links.map((l) => [l.ewId, JSON.parse(l.ewOnly as string).matchedBy]));
 		expect(by.get('U-ada')).toBe('verified_email');
 		expect(by.get('U-bob')).toBe('manual');
+	});
+
+	it('pairs and decides under one claim of the mapping (Postgres advisory lock), so neither undoes the other', async () => {
+		const runner = {
+			connect: jest.fn(async () => undefined),
+			release: jest.fn(async () => undefined),
+			query: jest.fn(async (sql: string, _params?: unknown[]) => (sql.includes('pg_try_advisory_lock') ? [{ locked: true }] : []))
+		};
+		const { service } = setup({ members: [ada()], accounts: [adaAccount], database: { type: 'postgres', runner } });
+		await service.people('m1' as never);
+		await service.decide('m1' as never, { unlinks: ['U-ada'] });
+		const locks = runner.query.mock.calls.filter(([sql]) => String(sql).includes('pg_try_advisory_lock')).map(([, params]) => (params as string[])[0]);
+		expect(locks).toEqual(['ever-works:people:m1', 'ever-works:people:m1']);
+	});
+
+	it('a pairing that lost a race on the link table reads as paired meanwhile: the tab is answered', async () => {
+		const { service, linkService } = setup({ members: [ada()], accounts: [adaAccount] });
+		linkService.record.mockRejectedValueOnce(Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' }));
+		const view = await service.people('m1' as never);
+		expect(view.members).toHaveLength(1);
+	});
+
+	it('a failure of the pairing, or of waking the inbox after it, still answers the tab', async () => {
+		const failing = setup({ members: [ada()], accounts: [adaAccount] });
+		failing.linkService.record.mockRejectedValueOnce(new Error('connection reset'));
+		expect((await failing.service.people('m1' as never)).members).toHaveLength(1);
+
+		const waking = setup({ members: [ada()], accounts: [adaAccount] });
+		(waking.repositories.get(EverWorksInboundEvent) as { find: jest.Mock }).find.mockRejectedValueOnce(new Error('timeout'));
+		const view = await waking.service.people('m1' as never);
+		expect(view.members[0]).toEqual(expect.objectContaining({ linkedEmployeeId: 'E-ada', matchedBy: 'ever_id' }));
 	});
 
 	it('shows the match source of each pairing, an older pairing without one as manual', async () => {
