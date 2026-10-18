@@ -663,6 +663,8 @@ describe('Ever Works connection on SQLite', () => {
 			const view = await service.connect(connectDto(mock.addKey()));
 			await service.pause(view.id);
 			mock.apiVersion = '2';
+			// The daily check keeps the admin's pause (#11074 review); only the error is recorded.
+			expect(await service.health(view.id)).toMatchObject({ status: EverWorksConnectionStatus.PAUSED, healthy: false });
 			await expect(service.resume(view.id)).rejects.toThrow(/api_version/);
 			const result = await service.health(view.id);
 			expect(result).toMatchObject({ healthy: false });

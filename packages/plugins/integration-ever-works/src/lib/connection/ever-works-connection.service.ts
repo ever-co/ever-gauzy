@@ -592,10 +592,11 @@ export class EverWorksConnectionService {
 			if (whoami && whoami.tenant?.id === row.ewTenantId && String(whoami.apiVersion) === EVER_WORKS_CONTRACT_VERSION) {
 				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ACTIVE;
 			} else if (whoami && whoami.tenant?.id !== row.ewTenantId) {
-				next = EverWorksConnectionStatus.ERROR;
+				// An admin pause is kept here too (#11074 review): from ERROR, a new key would make the connection active.
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
 				lastError = 'tenant_changed: the key now answers for another Ever Works tenant';
 			} else if (whoami) {
-				next = EverWorksConnectionStatus.ERROR;
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
 				lastError = `api_version: Ever Works speaks integration API v${String(whoami.apiVersion)}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}`;
 			} else if (failure instanceof EverWorksApiError && failure.status === 401) {
 				// An admin pause stays a pause (review F57): the key still has to be replaced and the admin is told so, but
