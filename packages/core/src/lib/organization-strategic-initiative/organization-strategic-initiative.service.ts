@@ -319,7 +319,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		filters?: BaseQueryDTO<OrganizationStrategicInitiative> & IOrganizationStrategicInitiativeFindInput
 	): Promise<IPagination<IOrganizationStrategicInitiative>> {
 		const { take, skip, ...rest } = (filters ?? {}) as BaseQueryDTO<OrganizationStrategicInitiative> & { take?: number; skip?: number };
-		const { items } = await this.readVisible(rest as typeof filters, (options) => super.findAll(options));
+		// With no order of the caller's, by primary key, as the CRUD base orders a page: pages never overlap.
+		const ordered = (rest as { order?: unknown }).order ? rest : { ...rest, order: { id: 'ASC' } };
+		const { items } = await this.readVisible(ordered as typeof filters, (options) => super.findAll(options));
 		const size = Number(take) > 0 ? Number(take) : 10;
 		const offset = Number(skip) > 0 ? size * (Number(skip) - 1) : 0;
 		return { items: items.slice(offset, offset + size), total: items.length };
