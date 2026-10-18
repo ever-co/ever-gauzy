@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnChanges, type SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbAlertModule, NbButtonModule, NbCheckboxModule, NbTabsetModule } from '@nebular/theme';
@@ -41,6 +42,9 @@ export interface EverWorksPendingInvite {
 	email: string;
 }
 
+/** The Ever Works inbox item kinds the People tab names (plan 04 §4). */
+const DEFERRED_KINDS: ReadonlySet<string> = new Set(['question', 'approval', 'escalation', 'notice']);
+
 /** A Gauzy initiative in this state goes to Ever Works only once it is active (the API refuses a draft). */
 export const DRAFT_INITIATIVE = 'draft';
 
@@ -55,7 +59,7 @@ export const DRAFT_INITIATIVE = 'draft';
 @Component({
 	selector: 'ngx-ever-works-match-review',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbAlertModule, NbButtonModule, NbCheckboxModule, NbTabsetModule, TranslatePipe],
+	imports: [DatePipe, FormsModule, NbAlertModule, NbButtonModule, NbCheckboxModule, NbTabsetModule, TranslatePipe],
 	template: `
 		<p>{{ 'EVER_WORKS.REVIEW.INTRO' | translate }}</p>
 		<nb-tabset>
@@ -204,9 +208,15 @@ export const DRAFT_INITIATIVE = 'draft';
 									<li [attr.data-test]="'deferred-' + row.ewUserId">
 										<strong>{{ memberName(row.ewUserId) }}</strong>:
 										{{ 'EVER_WORKS.REVIEW.DEFERRED_COUNT' | translate: { count: row.count } }}
+										<!-- Each item is private to its recipient: only its kind and time are listed, never its title (review F103). -->
 										<ul>
 											@for (item of row.items; track item.ewItemId) {
-												<li>{{ item.title || item.ewItemId }}</li>
+												<li [attr.data-test]="'deferred-item-' + item.ewItemId">
+													{{ deferredKind(item.kind) | translate }}
+													@if (deferredAt(item.occurredAt); as at) {
+														<small>· {{ at | date: 'medium' }}</small>
+													}
+												</li>
 											}
 										</ul>
 									</li>
@@ -257,7 +267,9 @@ export const DRAFT_INITIATIVE = 'draft';
 											} @else {
 												<select class="form-control" [name]="'team-' + row.ewTeamId" [(ngModel)]="teamChoice[row.ewTeamId]" [disabled]="busy.teams">
 													<option value="">{{ 'EVER_WORKS.REVIEW.NOT_PAIRED_OPTION' | translate }}</option>
-													<option [value]="create">{{ 'EVER_WORKS.REVIEW.CREATE_IN_GAUZY' | translate }}</option>
+													@if (canCreateTeamsInGauzy) {
+														<option [value]="create">{{ 'EVER_WORKS.REVIEW.CREATE_IN_GAUZY' | translate }}</option>
+													}
 													@for (team of teams.unmatchedTeams; track team.teamId) {
 														<option [value]="team.teamId">{{ team.name }}</option>
 													}
@@ -271,13 +283,16 @@ export const DRAFT_INITIATIVE = 'draft';
 						</table>
 						@if (unpairedGauzyTeams().length) {
 							<h6>{{ 'EVER_WORKS.REVIEW.UNMATCHED_GAUZY' | translate }}</h6>
+							@if (!canCreateTeamsInEverWorks) {
+								<p data-test="teams-not-created">{{ (mapping?.isEnabled === false ? 'EVER_WORKS.REVIEW.MAPPING_OFF_NO_CREATE' : 'EVER_WORKS.REVIEW.TEAMS_ONE_WAY') | translate }}</p>
+							}
 							@for (team of unpairedGauzyTeams(); track team.teamId) {
 								<div>
 									<nb-checkbox
 										[name]="'create-ew-' + team.teamId"
 										[attr.data-test]="'create-ew-' + team.teamId"
 										[(ngModel)]="createInEverWorks[team.teamId]"
-										[disabled]="busy.teams"
+										[disabled]="busy.teams || !canCreateTeamsInEverWorks"
 									>
 										{{ team.name }} — {{ 'EVER_WORKS.REVIEW.CREATE_IN_EVER_WORKS' | translate }}
 									</nb-checkbox>
@@ -324,7 +339,9 @@ export const DRAFT_INITIATIVE = 'draft';
 											} @else {
 												<select class="form-control" [name]="'work-' + row.ewWorkId" [(ngModel)]="workChoice[row.ewWorkId]" [disabled]="busy.projects">
 													<option value="">{{ 'EVER_WORKS.REVIEW.NOT_PAIRED_OPTION' | translate }}</option>
-													<option [value]="create">{{ 'EVER_WORKS.REVIEW.CREATE_IN_GAUZY' | translate }}</option>
+													@if (canCreateProjects) {
+														<option [value]="create">{{ 'EVER_WORKS.REVIEW.CREATE_IN_GAUZY' | translate }}</option>
+													}
 													@for (project of projects.unmatchedProjects; track project.projectId) {
 														<option [value]="project.projectId">{{ project.name }}</option>
 													}
@@ -461,8 +478,8 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	@Input() organizationId: string | null = null;
 	@Input() integrationTenantId: string | null = null;
 	/**
-	 * The mapping, for what it lets this review create on the other side (its switch and the missions direction,
-	 * as the API checks them). Without it every option is offered and the API decides. A new mapping object (its
+	 * The mapping, for what it lets this review create on the other side (its switch and the teams, works and missions
+	 * directions, as the API checks them). Without it every option is offered and the API decides. A new mapping object (its
 	 * switch or directions changed) changes only those options: nothing is read again and no choice is lost.
 	 */
 	@Input() mapping: EverWorksMapping | null = null;
@@ -531,10 +548,41 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		return member ? member.displayName || member.username : ewUserId;
 	}
 
+	/** What a waiting inbox item is, as a translation key (an unknown kind as it is): its title is never shown. */
+	deferredKind(kind: string | null): string {
+		return kind && DEFERRED_KINDS.has(kind) ? `EVER_WORKS.REVIEW.DEFERRED_KIND.${kind}` : kind || '—';
+	}
+
+	/** When a waiting inbox item happened, or `null` for a time that is not a date (the date pipe would throw on it). */
+	deferredAt(occurredAt: string | null): Date | null {
+		const at = occurredAt ? new Date(occurredAt) : null;
+		return at && !Number.isNaN(at.getTime()) ? at : null;
+	}
+
 	/** Gauzy teams paired with nothing and not chosen for an Ever Works team in this form. */
 	unpairedGauzyTeams(): Array<{ teamId: string; name: string }> {
 		const chosen = new Set(Object.values(this.teamChoice));
 		return (this.teams?.unmatchedTeams ?? []).filter((team) => !chosen.has(team.teamId));
+	}
+
+	/** Ever Works teams can be created in Gauzy: the mapping is on and teams sync from Ever Works (review F98). */
+	get canCreateTeamsInGauzy(): boolean {
+		if (!this.mapping) return true;
+		const direction = this.mapping.directions?.['teams'] ?? 'both';
+		return this.mapping.isEnabled && (direction === 'both' || direction === 'ew_to_gauzy');
+	}
+
+	/** Gauzy teams can be created in Ever Works: the mapping is on and teams sync to Ever Works (review F98). */
+	get canCreateTeamsInEverWorks(): boolean {
+		if (!this.mapping) return true;
+		const direction = this.mapping.directions?.['teams'] ?? 'both';
+		return this.mapping.isEnabled && (direction === 'both' || direction === 'gauzy_to_ew');
+	}
+
+	/** Works can be created as Gauzy projects: the mapping is on and works are linked (not off) (review F98). */
+	get canCreateProjects(): boolean {
+		if (!this.mapping) return true;
+		return this.mapping.isEnabled && (this.mapping.directions?.['works'] ?? 'link_only') === 'link_only';
 	}
 
 	/** Missions can be created as Gauzy initiatives: the mapping is on and missions sync from Ever Works. */
@@ -651,10 +699,13 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	saveTeams(): void {
 		const rows = (this.teams?.teams ?? []).filter((row) => !row.linkedTeamId && this.teamChoice[row.ewTeamId]);
 		const links = rows.filter((row) => this.teamChoice[row.ewTeamId] !== CREATE).map((row) => ({ ewTeamId: row.ewTeamId, teamId: this.teamChoice[row.ewTeamId] }));
-		const createInGauzy = rows.filter((row) => this.teamChoice[row.ewTeamId] === CREATE).map((row) => row.ewTeamId);
-		const createInEverWorks = this.unpairedGauzyTeams()
-			.filter((team) => this.createInEverWorks[team.teamId])
-			.map((team) => team.teamId);
+		// What the mapping does not allow is never sent: the API would refuse the whole save, pairs included (review F98).
+		const createInGauzy = this.canCreateTeamsInGauzy ? rows.filter((row) => this.teamChoice[row.ewTeamId] === CREATE).map((row) => row.ewTeamId) : [];
+		const createInEverWorks = this.canCreateTeamsInEverWorks
+			? this.unpairedGauzyTeams()
+					.filter((team) => this.createInEverWorks[team.teamId])
+					.map((team) => team.teamId)
+			: [];
 		if (!links.length && !createInGauzy.length && !createInEverWorks.length) return;
 		if (this.refuseDuplicates('teams', links.map((link) => link.teamId))) return;
 		this.run(
@@ -682,7 +733,8 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	saveProjects(): void {
 		const rows = (this.projects?.works ?? []).filter((row) => !row.linkedProjectId && this.workChoice[row.ewWorkId]);
 		const links = rows.filter((row) => this.workChoice[row.ewWorkId] !== CREATE).map((row) => ({ ewWorkId: row.ewWorkId, projectId: this.workChoice[row.ewWorkId] }));
-		const createInGauzy = rows.filter((row) => this.workChoice[row.ewWorkId] === CREATE).map((row) => row.ewWorkId);
+		// Not sent when works are off or the mapping is: the API would refuse the pairs too (review F98).
+		const createInGauzy = this.canCreateProjects ? rows.filter((row) => this.workChoice[row.ewWorkId] === CREATE).map((row) => row.ewWorkId) : [];
 		if (!links.length && !createInGauzy.length) return;
 		if (this.refuseDuplicates('projects', links.map((link) => link.projectId))) return;
 		this.run(

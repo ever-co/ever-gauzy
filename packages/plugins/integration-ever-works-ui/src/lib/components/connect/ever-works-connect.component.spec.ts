@@ -39,6 +39,9 @@ describe('EverWorksConnectComponent', () => {
 		connect: jest.fn(),
 		createMapping: jest.fn(),
 		registerWebhook: jest.fn(),
+		rotateKey: jest.fn(),
+		resume: jest.fn(),
+		disconnect: jest.fn(),
 		startSync: jest.fn(),
 		updateMapping: jest.fn(),
 		preview: jest.fn(),
@@ -145,6 +148,50 @@ describe('EverWorksConnectComponent', () => {
 		const { find } = render({ connection: { ...CONNECTION, status: 'needs_reauth' } as EverWorksConnection });
 		expect(find('connection-not-active')).not.toBeNull();
 		expect((find('map') as HTMLButtonElement).disabled).toBe(true);
+	});
+
+	it('a connection that is not active, with no mapping yet, is recovered on the organization step (review F99)', () => {
+		const needsReauth = { ...CONNECTION, status: 'needs_reauth' } as EverWorksConnection;
+		api.rotateKey.mockReturnValueOnce(throwError(() => ({ status: 400, error: { message: 'The new key belongs to another Ever Works tenant.' } })));
+		const { component, find, click, fixture } = render({ connection: needsReauth });
+		// A new key of the same tenant: the connection is active again and the organization can be mapped.
+		expect(find('recover')).not.toBeNull();
+		expect((find('recover-rotate') as HTMLButtonElement).disabled).toBe(true);
+		const keyInput = find('recover-key') as HTMLInputElement;
+		keyInput.value = ' ew_int_new ';
+		keyInput.dispatchEvent(new Event('input'));
+		fixture.detectChanges();
+		click('recover-rotate');
+		expect(api.rotateKey).toHaveBeenCalledWith(ORGANIZATION_ID, 'c1', 'ew_int_new');
+		expect(find('connect-error')?.textContent).toContain('another Ever Works tenant');
+		expect(component.newKey).toBe(' ew_int_new ');
+		api.rotateKey.mockReturnValue(of(CONNECTION));
+		click('recover-rotate');
+		expect(component.newKey).toBe('');
+		expect(component.connection?.status).toBe('active');
+		expect(find('recover')).toBeNull();
+		expect((find('map') as HTMLButtonElement).disabled).toBe(false);
+	});
+
+	it('a paused connection with no mapping can be resumed (review F99)', () => {
+		api.resume.mockReturnValue(of(CONNECTION));
+		const { component, find, click } = render({ connection: { ...CONNECTION, status: 'paused' } as EverWorksConnection });
+		click('recover-resume');
+		expect(api.resume).toHaveBeenCalledWith(ORGANIZATION_ID, 'c1');
+		expect(component.connection?.status).toBe('active');
+		expect(find('recover')).toBeNull();
+	});
+
+	it('a failed connection with no mapping can be disconnected after a confirmation, and the wizard starts over (review F99)', () => {
+		api.disconnect.mockReturnValue(of({ success: true, webhookDeleted: true }));
+		const { component, find, click } = render({ connection: { ...CONNECTION, status: 'error' } as EverWorksConnection });
+		click('recover-disconnect');
+		expect(api.disconnect).not.toHaveBeenCalled();
+		click('recover-confirm-disconnect');
+		expect(api.disconnect).toHaveBeenCalledWith(ORGANIZATION_ID, 'c1');
+		expect(component.connection).toBeNull();
+		expect(component.step).toBe('key');
+		expect(find('step-key')).not.toBeNull();
 	});
 
 	it('start registers the webhook (best effort), then starts the first sync and hands the run back', () => {
