@@ -662,10 +662,13 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			const now = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, link.ewId);
 			return now && now.id === link.id && now.gauzyId === link.gauzyId && now.state === EverWorksLinkState.OK ? now : null;
 		};
-		// Only the link-back fields move, and only on the row as just read (see `patchEverWorksOnly`).
+		// Only the link-back fields move, and only on the row as just read (see `patchEverWorksOnly`); a write to
+		// the row in between (an Ever Works event) refuses it, and it is made once more on a fresh read.
 		const mark = async (link: EverWorksEntityLink, fields: Pick<WorkEverWorksOnly, 'linkedBack' | 'linkBackTriedAt'>) => {
-			const current = await stillPaired(link);
-			if (current) await this.links.patchEverWorksOnly(current, { ...this.ewOnlyOf(current), ...fields });
+			for (let attempt = 0; attempt < 2; attempt++) {
+				const current = await stillPaired(link);
+				if (!current || (await this.links.patchEverWorksOnly(current, { ...this.ewOnlyOf(current), ...fields }))) return;
+			}
 		};
 		for (const link of due) {
 			if (!(await stillPaired(link))) continue;

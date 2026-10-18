@@ -141,7 +141,7 @@ function setup() {
 	};
 	const contexts = { forEverWorksOrganization: async () => context, forRequest: async () => context, forOrganization: async () => context };
 	const service = new EverWorksProjectsService(dataSource as never, contexts as never, { client: () => client } as never, linkService as never, commandBus as never);
-	return { service, links, addLink, projects, members, projectTeams, client, commandBus, context };
+	return { service, links, linkService, addLink, projects, members, projectTeams, client, commandBus, context };
 }
 
 const work = {
@@ -347,6 +347,23 @@ describe('EverWorksProjectsService', () => {
 		expect(JSON.parse(pair?.ewOnly as string)).toMatchObject({ unmappedMembers: [], linkedBack: pair?.gauzyId });
 		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
 		expect(client.request.mock.calls.filter((call) => (call as unknown[])[0] === 'PUT')).toHaveLength(1);
+	});
+
+	it('a marker refused by an Ever Works event written in between is made on a fresh read (#11049 review)', async () => {
+		const { service, projects, client, links, linkService } = setup();
+		projects.push({ id: 'p1', name: 'Our name' });
+		client.request.mockResolvedValue({ data: [{ id: 'ew-work-1', ...work }], nextCursor: null, hasMore: false });
+		await service.decide('m1' as never, { links: [{ ewWorkId: 'ew-work-1', projectId: 'p1' }] });
+		const patch = linkService.patchEverWorksOnly;
+		const spy = jest.spyOn(linkService, 'patchEverWorksOnly').mockImplementationOnce(async (link, ewOnly) => {
+			// An Ever Works event rewrites the pair's Ever Works-only fields between the read and this write.
+			const row = links.find((l) => l.ewId === 'ew-work-1') as { ewOnly: string | null };
+			row.ewOnly = JSON.stringify({ ...JSON.parse(row.ewOnly as string), slug: 'renamed' });
+			return patch(link, ewOnly);
+		});
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(spy).toHaveBeenCalledTimes(2);
+		expect(JSON.parse(links.find((l) => l.ewId === 'ew-work-1')?.ewOnly as string)).toMatchObject({ slug: 'renamed', linkedBack: 'p1' });
 	});
 
 	it('a disabled mapping, or works switched off, writes nothing', async () => {
