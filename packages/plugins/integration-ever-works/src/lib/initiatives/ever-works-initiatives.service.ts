@@ -628,9 +628,11 @@ export class EverWorksInitiativesService
 		const status = missionStatusToInitiative(next.status, mission.outcome ?? null);
 		// A stable id: a retry after a failure half-way finds the initiative it wrote instead of a second one.
 		const id = stableUuid(`${context.integrationTenantId}:initiative:${mission.id}`) as ID;
-		const merged = this.mergedSignals(null, status, false);
-		const signals = merged.signals;
 		const written = await this.initiative(context, id, true);
+		// A retry merges the mission's status into the signals the initiative has (a person's assessment stays); the
+		// "stalled" there was set by the attempt that wrote the row, so a mission resumed since clears it (#11081 review).
+		const merged = this.mergedSignals(written ? this.signalsOf(written) : null, status, !!written);
+		const signals = merged.signals;
 		const values = {
 			title: next.title || 'Mission',
 			intent: next.description || null,
@@ -639,7 +641,7 @@ export class EverWorksInitiativesService
 				? OrganizationStrategicVisibilityScopeEnum.TEAM
 				: OrganizationStrategicVisibilityScopeEnum.ORGANIZATION,
 			stewardId: await this.stewardOf(context, mission.owner ?? null),
-			...(signals ? { signals: this.signalsValue(signals) } : {})
+			...(signals ? { signals: this.signalsValue(signals) } : written ? { signals: null } : {})
 		};
 		if (!written)
 			await this.dataSource
@@ -648,9 +650,12 @@ export class EverWorksInitiativesService
 		// A retry finds the initiative it wrote: it takes Ever Works' current fields, so the snapshot recorded below is
 		// what Gauzy holds and a later push never sends the older ones back (review F87).
 		else await this.dataSource.getRepository(OrganizationStrategicInitiative).update({ id } as never, values as never);
-		const teams = await this.applyTeams(context, id, [], next.teamIds, []);
-		const works = await this.applyWorks(context, id, [], next.works, []);
-		const goals = await this.applyGoals(context, id, mission.id, [], next.goals, []);
+		// A retry starts from what the row has (the attempt that wrote it may have linked teams, works or goals the mission
+		// no longer has): those are removed, the rest added (#11081 review).
+		const baseline = written ? await this.everWorksSetsOf(context, id) : { teamIds: [], works: [], goals: [] };
+		const teams = await this.applyTeams(context, id, baseline.teamIds, next.teamIds, []);
+		const works = await this.applyWorks(context, id, baseline.works, next.works, []);
+		const goals = await this.applyGoals(context, id, mission.id, baseline.goals, next.goals, []);
 		await this.record(
 			context,
 			id,
@@ -836,6 +841,30 @@ export class EverWorksInitiativesService
 				);
 		}
 		return unmapped;
+	}
+
+	/** The Ever Works teams, works and goals of what an initiative is linked to in Gauzy now (through the pairs). */
+	private async everWorksSetsOf(
+		context: EverWorksMappingContext,
+		initiativeId: ID
+	): Promise<{ teamIds: string[]; works: EverWorksMissionWork[]; goals: EverWorksMissionGoal[] }> {
+		const everWorksOf = async (type: EverWorksLinkType) =>
+			new Map([...(await this.pairs(context, type)).entries()].map(([ewId, gauzyId]) => [gauzyId as string, ewId]));
+		const linked = async (relationName: 'teams' | 'projects') =>
+			((await this.dataSource
+				.createQueryBuilder()
+				.relation(OrganizationStrategicInitiative, relationName)
+				.of(initiativeId)
+				.loadMany()) as Array<{ id: ID }>).map((row) => row.id as string);
+		const teamOf = await everWorksOf(EverWorksLinkType.TEAM);
+		const workOf = await everWorksOf(EverWorksLinkType.PROJECT_WORK);
+		return {
+			teamIds: (await linked('teams')).flatMap((id) => (teamOf.has(id) ? [teamOf.get(id) as string] : [])),
+			works: (await linked('projects')).flatMap((id) =>
+				workOf.has(id) ? [{ workId: workOf.get(id) as string, relation: 'linked' } as unknown as EverWorksMissionWork] : []
+			),
+			goals: (await this.representedGoals(context, initiativeId)).map((goalId) => ({ goalId, isPrimary: false }) as unknown as EverWorksMissionGoal)
+		};
 	}
 
 	/** The Ever Works goals whose Gauzy goal is on the initiative now (what Gauzy shows on it). */

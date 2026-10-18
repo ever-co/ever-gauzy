@@ -325,6 +325,28 @@ describe('EverWorksInitiativesService — EW → G', () => {
 		expect(initiatives[0]['title']).toBe('Win the SMB market in Europe');
 	});
 
+	it('a retry after the mission resumed clears the "stalled" its first attempt set and keeps a person’s notes (#11081 review)', async () => {
+		const { service, initiatives, links } = setup();
+		await service.apply(envelope('mission.created', mission, 1) as never, applyContext); // paused → stalled
+		links.splice(0, links.length); // the link was never written
+		initiatives[0]['signals'] = { perceivedMomentum: 'stalled', strategicNotes: 'Board asked' };
+		await service.apply(envelope('mission.created', { ...mission, status: 'active' }, 2) as never, applyContext);
+		expect(initiatives[0]['signals']).toEqual({ strategicNotes: 'Board asked' });
+	});
+
+	it('a retry removes the teams its first attempt linked that the mission no longer has (#11081 review)', async () => {
+		const { service, initiatives, links, addLink } = setup();
+		addLink(EverWorksLinkType.TEAM, 'g-team-1', 'ew-team-1');
+		addLink(EverWorksLinkType.TEAM, 'g-team-2', 'ew-team-2');
+		const onTeams = { ...mission, teamIds: ['ew-team-1', 'ew-team-2'], visibility: 'team' };
+		await service.apply(envelope('mission.created', onTeams, 1) as never, applyContext);
+		expect(initiatives[0]['teams']).toEqual([{ id: 'g-team-1' }, { id: 'g-team-2' }]);
+		// The mission's link was never written; the mission lost a team before the retry.
+		links.splice(links.findIndex((l) => l['entityType'] === EverWorksLinkType.INITIATIVE_MISSION), 1);
+		await service.apply(envelope('mission.created', { ...onTeams, teamIds: ['ew-team-1'] }, 2) as never, applyContext);
+		expect(initiatives[0]['teams']).toEqual([{ id: 'g-team-1' }]);
+	});
+
 	it('a mission on a team not paired yet waits for it instead of making an initiative nobody can see (review F89)', async () => {
 		const { service, initiatives, addLink, missionsMock, ewOrg } = setup();
 		const onTeam = { ...mission, teamIds: ['ew-team-9'], visibility: 'team' };

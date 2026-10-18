@@ -320,23 +320,28 @@ describe('EverWorksGoalsService — EW → G', () => {
 	});
 
 	it('a goal Ever Works no longer has a primary mission for keeps the initiative a Gauzy user moved it to (review F90)', async () => {
-		const { service, goals, addLink } = setup();
+		const { service, goals, addLink, links } = setup();
 		addLink(EverWorksLinkType.INITIATIVE_MISSION, 'init-1', 'ew-mission-1');
 		addLink(EverWorksLinkType.INITIATIVE_MISSION, 'init-2', 'ew-mission-2');
+		const primary = (primaryMissionId: string | null, version: number) =>
+			service.apply(envelope('goal.updated', { ...ewGoal, primaryMissionId }, version) as never, applyContext);
 		await service.apply(
 			envelope('goal.created', { ...ewGoal, primaryMissionId: 'ew-mission-1' }, 1) as never,
 			applyContext
 		);
 		expect(goals[0]['organizationStrategicInitiativeId']).toBe('init-1');
 		goals[0]['organizationStrategicInitiativeId'] = 'init-2'; // moved in Gauzy
-		await service.apply(envelope('goal.updated', { ...ewGoal, primaryMissionId: null }, 2) as never, applyContext);
+		await primary(null, 2);
 		expect(goals[0]['organizationStrategicInitiativeId']).toBe('init-2');
 		// Still on the old primary's initiative when Ever Works clears it: it leaves it.
-		await service.apply(
-			envelope('goal.updated', { ...ewGoal, primaryMissionId: 'ew-mission-1' }, 3) as never,
-			applyContext
-		);
-		await service.apply(envelope('goal.updated', { ...ewGoal, primaryMissionId: null }, 4) as never, applyContext);
+		await primary('ew-mission-1', 3);
+		await primary(null, 4);
+		expect(goals[0]['organizationStrategicInitiativeId']).toBeNull();
+		// The old primary's pair ended before Ever Works cleared it (the mission was deleted): the goal still leaves it.
+		await primary('ew-mission-1', 5);
+		expect(goals[0]['organizationStrategicInitiativeId']).toBe('init-1');
+		(links.find((l) => l['ewId'] === 'ew-mission-1') as Row)['state'] = EverWorksLinkState.UNLINKED;
+		await primary(null, 6);
 		expect(goals[0]['organizationStrategicInitiativeId']).toBeNull();
 	});
 
@@ -445,7 +450,7 @@ describe('EverWorksGoalsService — G → EW', () => {
 		);
 	});
 
-	it('a sample never records a goal version an Ever Works edit made meanwhile: that edit still applies (review F86)', async () => {
+	it('a sample whose answer shows an Ever Works edit made meanwhile applies it: neither is undone by the older event (review F86)', async () => {
 		const { service, goalsMock, goals, keyResults, links } = setup();
 		goals.push(gauzyGoal());
 		keyResults.push(keyResult('kr-a'));
@@ -453,17 +458,19 @@ describe('EverWorksGoalsService — G → EW', () => {
 		const [created] = [...goalsMock.goals.values()];
 		const goalLink = () => links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
 		const version = goalLink()['ewVersion'] as number;
-		// Ever Works renames the goal (its event is still on the way), then a Gauzy key result value changes.
+		// Ever Works renames the goal: its event (with the value before the sample) is still on the way. Then a Gauzy
+		// key result value changes.
 		Object.assign(created, { title: 'Renamed in Ever Works', version: version + 1 });
+		const edit = envelope('goal.updated', { ...created }, version + 1);
 		keyResults[0]['update'] = 7;
 		expect(await service.push(change('kr-a', EverWorksLinkType.KEY_RESULT), pushContext)).toMatchObject({
 			status: 'pushed'
 		});
-		expect(goalLink()['ewVersion']).toBe(version);
-		expect(
-			await service.apply(envelope('goal.updated', { ...created }, version + 1) as never, applyContext)
-		).toMatchObject({ status: 'applied' });
 		expect(goals[0]['name']).toBe('Renamed in Ever Works');
+		expect(goalLink()['ewVersion']).toBe(version + 2);
+		expect(await service.apply(edit as never, applyContext)).toMatchObject({ status: 'skipped' });
+		// The older event never takes the sample back (#11081 review).
+		expect(keyResults[0]['update']).toBe(7);
 	});
 
 	it('a key result deleted in Gauzy by id (no row for the subscriber) queues its goal from the sweep; the push takes it out', async () => {

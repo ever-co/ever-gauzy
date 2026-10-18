@@ -441,7 +441,12 @@ export class EverWorksGoalsService
 				else if (!primaryMissionId) {
 					// Ever Works no longer has a primary mission: the goal leaves the initiative of the old one only. An
 					// initiative a Gauzy user moved it to stays (its mission lists the goal, not as primary) (review F90).
-					const previousInitiativeId = await this.initiativeOf(context, before.primaryMissionId ?? null);
+					// The old mission's pair as it was, even when it no longer syncs (deleted or unpaired since) (#11081 review).
+					const previousInitiativeId = await this.initiativeOf(
+						context,
+						before.primaryMissionId ?? null,
+						true
+					);
 					const current =
 						(row as { organizationStrategicInitiativeId?: ID | null }).organizationStrategicInitiativeId ??
 						null;
@@ -951,11 +956,24 @@ export class EverWorksGoalsService
 			{ ...(before as KeyResultShared), update: value },
 			link
 		);
-		// The sample moved the goal's version; the goal's own snapshot is unchanged. Recorded only when nothing else
-		// moved it in between (the next version): an Ever Works edit made meanwhile would otherwise be skipped as
-		// applied. Else the version stays, the edit's event applies it, and the sample's own event is our origin
-		// (review F86).
-		if (goal?.version != null && goalLink.ewVersion != null && goal.version === goalLink.ewVersion + 1) {
+		// The sample moved the goal's version; the goal's own snapshot is unchanged. Recorded alone only when nothing
+		// else moved it in between (the next version): an Ever Works edit made meanwhile would otherwise be skipped as
+		// applied (review F86). Then the answer (the goal as it is now, the sample included) is applied instead, as
+		// that edit's event would be, so neither the edit nor the sample is undone by the older event (#11081 review).
+		const nextVersion =
+			goal?.version != null && goalLink.ewVersion != null && goal.version === goalLink.ewVersion + 1;
+		if (
+			goal?.version != null &&
+			!nextVersion &&
+			fromEverWorks(context.directions.goals) &&
+			goal.title !== undefined
+		) {
+			await EverWorksSyncContext.run(
+				{ connectionId: context.connection.id as ID, eventId: `goal-sample:${goalLink.ewId}` },
+				() => this.applyGoal(context, goalLink, { ...goal, id: goalLink.ewId }, goal.version ?? null)
+			);
+		}
+		if (nextVersion) {
 			await this.links.record({
 				tenantId: context.tenantId,
 				organizationId: context.organizationId,
@@ -1177,14 +1195,18 @@ export class EverWorksGoalsService
 	}
 
 	/** The initiative paired with an Ever Works mission (G-P2-2), or `null`. */
-	private async initiativeOf(context: EverWorksMappingContext, missionId: string | null): Promise<ID | null> {
+	private async initiativeOf(
+		context: EverWorksMappingContext,
+		missionId: string | null,
+		anyState = false
+	): Promise<ID | null> {
 		if (!missionId) return null;
 		const link = await this.links.byEw(
 			context.integrationTenantId,
 			EverWorksLinkType.INITIATIVE_MISSION,
 			missionId
 		);
-		return link && link.state !== EverWorksLinkState.UNLINKED ? (link.gauzyId as ID) : null;
+		return link && (anyState || link.state !== EverWorksLinkState.UNLINKED) ? (link.gauzyId as ID) : null;
 	}
 
 	/** The connecting admin's employee in the organization (the owner of key results when the goal has no lead). */
