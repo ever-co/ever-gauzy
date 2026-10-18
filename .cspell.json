@@ -31,6 +31,8 @@
 		"typecheck",
 		"sendgrid",
 		"mailgun",
+		"sigv",
+		"tablist",
 		"svgs",
 		"subuser",
 		"charsets",
