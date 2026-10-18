@@ -181,6 +181,11 @@ export class MockEverWorksServer {
 		this.failures.push({ times: 1, ...failure });
 	}
 
+	/** Ends the replay window of every `Idempotency-Key` seen so far (Ever Works keeps a key 24 h). */
+	expireIdempotencyKeys(): void {
+		this.idempotent.clear();
+	}
+
 	/** The newest `seq` (a string, as the contract carries it). */
 	get head(): string {
 		return String(this.seq);
@@ -421,6 +426,18 @@ export class MockEverWorksServer {
 			: MockEverWorksServer.error(400, 'validation_failed', `Parent Task scope (${parentScope}) must match child Task scope (${childScope}).`);
 	}
 
+	/**
+	 * Ever Works' refusal to change the owners (work, mission, idea, first team, agent, goal) of a task that has
+	 * sub-tasks: `400 validation_failed` with Ever Works' own message (`TasksService.update`).
+	 */
+	static subtasksRefusal(taskId: string, children: number): EverWorksHttpResponse {
+		return MockEverWorksServer.error(
+			400,
+			'validation_failed',
+			`Task ${taskId} has ${children} sub-task(s); re-file or detach them before changing its owners so parent and child scopes cannot diverge.`
+		);
+	}
+
 	/** An `ever-gauzy` key links as `gauzy` (contract v1, CR-1). */
 	static linkSource(key: Pick<MockEverWorksKey, 'integrationKind'>): string {
 		return key.integrationKind === 'ever-gauzy' ? 'gauzy' : key.integrationKind || 'generic';
@@ -537,6 +554,13 @@ export class MockEverWorksServer {
 				if (!visible(parent)) return MockEverWorksServer.error(400, 'validation_failed', `Parent Task ${parentId} not found.`);
 				const refused = MockEverWorksServer.parentScopeRefusal({ ...row, ...input }, parent);
 				if (refused) return refused;
+			}
+			// A task with sub-tasks keeps its owners (Ever Works refuses to strand them in another scope).
+			const ownersOf = (task: Record<string, unknown>) =>
+				JSON.stringify(['workId', 'missionId', 'ideaId', 'agentId', 'goalId'].map((field) => task[field] ?? null).concat([((task['teamIds'] as string[] | null | undefined) ?? [])[0] ?? null]));
+			if (ownersOf({ ...row, ...input }) !== ownersOf(row)) {
+				const children = [...this.tasks.values()].filter((task) => task['organizationId'] === organizationId && task['parentTaskId'] === row['id']).length;
+				if (children) return MockEverWorksServer.subtasksRefusal(row['id'] as string, children);
 			}
 			const previous: Record<string, unknown> = {};
 			for (const [field, value] of Object.entries(input)) {
@@ -675,9 +699,13 @@ export class MockEverWorksServer {
 			return ok(stamp(row));
 		}
 		if (method === 'DELETE') {
+			// Every installation of the caller's source, unless `?installationId=` names one (contract CR-2(3)).
+			const installationId = query['installationId'];
 			for (let i = this.links.length - 1; i >= 0; i--) {
 				const link = this.links[i];
-				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source) this.links.splice(i, 1);
+				if (link && link.entityType === entityType && link.entityId === entityId && link.source === source && (!installationId || link.installationId === installationId)) {
+					this.links.splice(i, 1);
+				}
 			}
 			return { status: 204, headers: {}, data: undefined };
 		}
