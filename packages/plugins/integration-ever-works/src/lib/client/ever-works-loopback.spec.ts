@@ -1,4 +1,4 @@
-// cspell:ignore EINSECURE
+// cspell:ignore EINSECURE ESSRF
 import { createServer, Server } from 'node:http';
 import { AddressInfo } from 'node:net';
 import { EverWorksClientFactory } from './ever-works-client.factory';
