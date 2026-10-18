@@ -604,6 +604,28 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		expect(goalsMock.samples).toHaveLength(samples);
 	});
 
+	it('off: a delivery goal first synced without key results still pushes its own edits (#11114 review)', async () => {
+		const { service, mock, goals, keyResults } = setup({ entitySync: off });
+		const delivery = {
+			...ewGoal,
+			goalKind: 'delivery',
+			targetValue: null,
+			baselineValue: null,
+			currentValue: null,
+			unit: null
+		};
+		expect(await service.apply(envelope('goal.created', delivery, 1) as never, applyContext)).toMatchObject({
+			status: 'applied'
+		});
+		expect(keyResults).toEqual([]);
+		goals[0]['name'] = 'Renamed in Gauzy';
+		const before = mock.requests.length;
+		// The Ever Works goal is not in the mock (it came from an event): the PATCH it would send is what matters.
+		await service.push(change(goals[0]['id']), pushContext).catch(() => undefined);
+		const sent = mock.requests.slice(before).filter((r) => r.method !== 'GET');
+		expect(sent.map((r) => [r.method, r.body])).toEqual([['PATCH', { title: 'Renamed in Gauzy' }]]);
+	});
+
 	it('off: the key result sweep leaves the mapping alone', async () => {
 		const { service, goalsMock, goals, keyResults, queue, context } = setup();
 		goals.push(gauzyGoal());

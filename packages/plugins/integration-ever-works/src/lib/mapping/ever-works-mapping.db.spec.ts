@@ -485,6 +485,11 @@ describe('Ever Works organization mapping on SQLite', () => {
 			await dataSource.query(`DELETE FROM "integration_entity_setting"`);
 			expect(await engine()).toMatchObject({ directions: DEFAULT_EVER_WORKS_DIRECTIONS });
 			expect(await mappings.current()).toMatchObject({ effectiveDirections: DEFAULT_EVER_WORKS_DIRECTIONS });
+			// Its toggles can still be set: the missing rows are created (all on) before the change is written.
+			const updated = await mappings.update(view.integrationTenantId, { entitySettings: [toggle(IntegrationEntity.AGENT, false)] });
+			expect(updated.entitySettings).toHaveLength(EVER_WORKS_SYNCED_ENTITIES.length);
+			expect(updated.entitySettings.filter((row) => !row.sync)).toEqual([{ entity: IntegrationEntity.AGENT, sync: false }]);
+			expect(await engine()).toMatchObject({ directions: { agents: 'off', docs: 'both' } });
 		});
 	});
 

@@ -51,6 +51,7 @@ import {
 	KeyResultShared,
 	LinkedKeyResultRow,
 	mergeGauzyGoal,
+	mergeGauzyGoalOwnFields,
 	EverWorksGoal,
 	everWorksGoalShared,
 	GauzyKeyResultRow,
@@ -719,11 +720,13 @@ export class EverWorksGoalsService
 			link && before.deadline !== undefined && goal.deadline === (before.gauzyDeadline ?? undefined)
 				? (before.deadline ?? null)
 				: await this.deadlineOf(context, goal.deadline);
-		const merged = link
-			? mergeGauzyGoal(goal, deadline, rows, [...new Set(teamIds)], before as GoalShared)
+		// Not syncing key results (OQ4): only the goal's own fields go; Ever Works' metric, criteria and Definition of
+		// Done stay as they are, and no key result is needed for that.
+		const now = link
+			? keyResultsSynced(context)
+				? mergeGauzyGoal(goal, deadline, rows, [...new Set(teamIds)], before as GoalShared)
+				: mergeGauzyGoalOwnFields(goal, deadline, [...new Set(teamIds)], before)
 			: gauzyGoalToEverWorks(goal, deadline, rows, [...new Set(teamIds)], null);
-		// Not syncing key results (OQ4): the push leaves Ever Works' metric, criteria and Definition of Done as they are.
-		const now = merged && link && !keyResultsSynced(context) ? withSyncedKeyResultFields(merged, before) : merged;
 		if (!now)
 			return {
 				outcome: {

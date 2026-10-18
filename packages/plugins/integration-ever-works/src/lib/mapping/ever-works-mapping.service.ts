@@ -217,6 +217,8 @@ export class EverWorksMappingService {
 			this.set(mapping, values, manager, true);
 			await manager.save(IntegrationTenant, mapping);
 			if (dto.entitySettings?.length) {
+				// A mapping made before the toggles existed gets its rows first (all on), so its toggles can be set (OQ4).
+				await this.ensureEntitySettings(manager, mapping as Mapping);
 				const rows = await manager.find(IntegrationEntitySetting, { where: { integrationId: mapping.id } as never });
 				for (const change of dto.entitySettings) {
 					const row = rows.find((r) => r.entity === change.entity);
