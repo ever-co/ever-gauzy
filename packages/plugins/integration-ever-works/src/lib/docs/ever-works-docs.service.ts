@@ -430,15 +430,17 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (page.kind !== DocumentKindEnum.PAGE) return { status: 'skipped', message: 'only pages sync as documents' };
 		const root = await this.store.existingRoot(context);
 		const placement = root ? await this.placementOf(context, page, root) : null;
-		// A PRIVATE folder's name is metadata that must not leak (the Docs plugin's §3.2 rule): nothing under one syncs.
-		if (placement && 'privateFolder' in placement) {
-			if (link) await this.links.unlink(link, 'in a private folder in Gauzy; no longer shared with Ever Works');
-			return { status: 'skipped', message: 'pages in a private folder never sync' };
-		}
 		if (!placement || 'waitingFor' in placement) {
 			if (placement && 'waitingFor' in placement) return { status: 'deferred', message: `waiting for the folder ${placement.waitingFor} to sync first` };
 			if (link) await this.links.unlink(link, 'moved out of the synced folders; both documents are kept');
 			return { status: 'skipped', message: 'not in the synced folders' };
+		}
+		// A PRIVATE folder's name is metadata that must not leak (the Docs plugin's §3.2 rule): nothing under one syncs.
+		// Checked after the null case on purpose: the API bundles this file with `strictNullChecks` off, where
+		// `placement && 'privateFolder' in placement` cannot narrow `placement` for the calls below.
+		if ('privateFolder' in placement) {
+			if (link) await this.links.unlink(link, 'in a private folder in Gauzy; no longer shared with Ever Works');
+			return { status: 'skipped', message: 'pages in a private folder never sync' };
 		}
 		if (page.visibility === DocumentVisibilityEnum.PRIVATE) {
 			if (link) await this.links.unlink(link, 'private in Gauzy; no longer shared with Ever Works');
