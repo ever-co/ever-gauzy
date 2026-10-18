@@ -19,14 +19,17 @@ import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import * as fs from 'fs';
-import { Jimp, JimpMime } from 'jimp';
+import * as sharpModule from 'sharp';
 import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
-import { assertNotMarkupContent, FileStorage, imageUploadFileFilter, UploadedFileStorage } from './../core/file-storage';
+import {
+	assertNotMarkupContent,
+	FileStorage,
+	imageUploadFileFilter,
+	UploadedFileStorage
+} from './../core/file-storage';
 import { LazyFileInterceptor } from './../core/interceptors';
 import { RequestContext } from './../core/context';
-import { tempFile } from './../core/utils';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -35,6 +38,11 @@ import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
 import { UploadImageAsset } from './dto';
 
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
+
 @ApiTags('ImageAsset')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
@@ -42,7 +50,10 @@ import { UploadImageAsset } from './dto';
 export class ImageAssetController extends CrudController<ImageAsset> {
 	private readonly logger = new Logger(ImageAssetController.name);
 
-	constructor(private readonly _commandBus: CommandBus, private readonly _imageAssetService: ImageAssetService) {
+	constructor(
+		private readonly _commandBus: CommandBus,
+		private readonly _imageAssetService: ImageAssetService
+	) {
 		super(_imageAssetService);
 	}
 
@@ -104,24 +115,10 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		}
 
 		try {
-			const inputFile = await tempFile('media-asset-thumb');
-
-			await fs.promises.writeFile(inputFile, fileContent);
-
-			const image = await Jimp.read(inputFile);
-
-			// Only the width is given, so the height follows the aspect ratio (jimp 0.x's Jimp.AUTO)
-			image.resize({ w: 250 });
-
-			// jimp 1 picks the output format from a file name's extension, and nothing here has one: encode in the
-			// image's own format, as jimp 0.x's writeAsync did, straight to a buffer.
-			const data = await image.getBuffer((image.mime ?? JimpMime.png) as typeof JimpMime.png);
-
-			try {
-				await fs.promises.unlink(inputFile);
-			} catch (error) {
-				this.logger.error('Error while unlinking temp files');
-			}
+			// The thumbnail: 250 px wide, the height following the aspect ratio, in the image's own format. sharp
+			// (libvips) decodes and resizes on its own thread pool; Jimp did it in JavaScript on the event loop,
+			// inside the upload request, and every other request of the API waited for it.
+			const data = await sharp(fileContent).resize({ width: 250 }).toBuffer();
 
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
