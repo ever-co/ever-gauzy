@@ -165,7 +165,12 @@ export class EverWorksMappingService {
 			return saved;
 		});
 		this.logger.log(`Organization ${scope.organizationId} mapped to Ever Works organization ${pinned.id} (mapping ${mapping.id}).`);
-		return this.view(await this.reload(mapping.id));
+		const created = await this.reload(mapping.id);
+		// A restored mapping keeps its directions: when it mirrors agent mail, the webhook asks for it again.
+		if (this.directions(created)['agentEmail'] === 'ew_to_gauzy') {
+			await this.connections.refreshWebhookEvents(connection.id as ID, scope.tenantId);
+		}
+		return this.view(created);
 	}
 
 	/** `PUT /mappings/:integrationTenantId`: directions, projects, docs folder, include flags, enabled, entity toggles. */

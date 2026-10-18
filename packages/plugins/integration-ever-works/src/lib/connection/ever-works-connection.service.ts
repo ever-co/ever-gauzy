@@ -125,6 +125,8 @@ export class EverWorksConnectionService {
 	private readonly logger = new Logger('EverWorksConnection');
 	private readonly secretBox: EverWorksSecretBox;
 	private readonly webhookRegistrations = new Map<string, Promise<EverWorksConnectionView>>();
+	/** One change of a subscription's events per connection at a time in this process (see `refreshWebhookEvents`). */
+	private readonly eventRefreshes = new Map<string, Promise<void>>();
 
 	constructor(
 		private readonly dataSource: DataSource,
@@ -407,18 +409,40 @@ export class EverWorksConnectionService {
 
 	/**
 	 * Keeps the connection's webhook subscription on the events it needs, in place (`PATCH /webhooks/:id {events}`:
-	 * same subscription, same secret), after a mapping through it changed its `agentEmail` direction or was archived.
-	 * Nothing to do without a subscription or for a connection that is not active. Best effort: a refusal is logged,
-	 * and agent mail keeps arriving through the feed.
+	 * same subscription, same secret), after a mapping through it changed its `agentEmail` direction, was archived or
+	 * was restored. A paused subscription is changed too (its status stays); a resume sends the events again with the
+	 * status. One change per connection at a time in this process; across processes each change reads the directions
+	 * again after its write and sends them once more when they moved meanwhile (at most three writes), so the last
+	 * write follows the saved directions. Nothing to do without a subscription. Best effort: a refusal is logged, and
+	 * agent mail keeps arriving through the feed.
 	 *
 	 * @param connectionId - The connection.
 	 * @param tenantId - Its tenant.
 	 */
 	async refreshWebhookEvents(connectionId: ID, tenantId: ID): Promise<void> {
-		const connection = await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId, tenantId } as never });
-		if (!connection?.webhookSubscriptionId || !connection.isActive || connection.status !== EverWorksConnectionStatus.ACTIVE) return;
+		const previous = this.eventRefreshes.get(connectionId) ?? Promise.resolve();
+		const current = previous.catch(() => undefined).then(() => this.refreshWebhookEventsOnce(connectionId, tenantId));
+		this.eventRefreshes.set(connectionId, current);
 		try {
-			await this.client(connection).updateWebhook(connection.webhookSubscriptionId, { events: await this.webhookEvents(connection) });
+			await current;
+		} finally {
+			if (this.eventRefreshes.get(connectionId) === current) this.eventRefreshes.delete(connectionId);
+		}
+	}
+
+	private async refreshWebhookEventsOnce(connectionId: ID, tenantId: ID): Promise<void> {
+		const connection = await this.dataSource.getRepository(EverWorksConnection).findOne({ where: { id: connectionId, tenantId } as never });
+		if (!connection?.webhookSubscriptionId || !connection.isActive) return;
+		try {
+			const client = this.client(connection);
+			let sent: string | null = null;
+			for (let write = 0; write < 3; write++) {
+				const events = await this.webhookEvents(connection);
+				const key = [...events].sort().join(',');
+				if (key === sent) return;
+				await client.updateWebhook(connection.webhookSubscriptionId, { events });
+				sent = key;
+			}
 		} catch (error) {
 			this.logger.warn(`The webhook subscription's events could not be updated (${this.reason(error)}); agent mail still arrives through the feed.`);
 		}
@@ -806,11 +830,15 @@ export class EverWorksConnectionService {
 		}
 	}
 
-	/** Pauses or resumes the Ever Works side of the webhook; best effort (the feed covers any gap). */
+	/**
+	 * Pauses or resumes the Ever Works side of the webhook; best effort (the feed covers any gap). A resume sends the
+	 * events the mappings need as well, so a change the paused subscription missed is not lost.
+	 */
 	private async setWebhookStatus(connection: EverWorksConnection, status: 'active' | 'paused'): Promise<void> {
 		if (!connection.webhookSubscriptionId) return;
 		try {
-			await this.client(connection).updateWebhook(connection.webhookSubscriptionId, { status });
+			const events = status === 'active' ? await this.webhookEvents(connection) : null;
+			await this.client(connection).updateWebhook(connection.webhookSubscriptionId, events ? { status, events } : { status });
 		} catch (error) {
 			this.logger.warn(`The webhook subscription could not be set ${status} (${this.reason(error)}).`);
 		}
