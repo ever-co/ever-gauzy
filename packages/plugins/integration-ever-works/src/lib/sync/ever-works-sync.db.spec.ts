@@ -664,9 +664,9 @@ describe('Ever Works sync engine on SQLite', () => {
 			const event = envelope({ seq: '7' });
 			expect(await store.record(connection, event as never, 'webhook')).toEqual({ duplicate: false });
 			// The other delivery passed the existence check before this one stored the event.
-			const count = jest.spyOn(events(), 'count').mockResolvedValueOnce(0);
+			const exists = jest.spyOn(events(), 'findOne').mockResolvedValueOnce(null);
 			expect(await store.record(connection, event as never, 'feed')).toEqual({ duplicate: true });
-			count.mockRestore();
+			exists.mockRestore();
 			expect(await events().count({ where: { eventId: event.id } as never })).toBe(1);
 		});
 

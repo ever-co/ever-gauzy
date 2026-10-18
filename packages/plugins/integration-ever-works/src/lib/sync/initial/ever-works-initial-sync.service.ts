@@ -275,25 +275,28 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			if (!gone) continue;
 			const finishedAt = new Date();
 			const error = 'the mapping was removed';
-			const result = await this.dataSource.getRepository(EverWorksSyncRun).update(
-				{ id: run.id, status: EverWorksSyncRunStatus.RUNNING } as never,
-				{ status: EverWorksSyncRunStatus.CANCELLED, finishedAt, lastError: error, lastProgressAt: finishedAt } as never
-			);
-			if (!result.affected) continue;
-			const released = run.organizationId
-				? (
-						await this.dataSource.getRepository(EverWorksInboundEvent).update(
-							{
-								connectionId: connection.id as ID,
-								organizationId: run.organizationId,
-								receivedVia: 'initial',
-								status: EverWorksInboundStatus.PENDING,
-								availableAt: MoreThan(HELD_AFTER)
-							} as never,
-							{ availableAt: finishedAt } as never
-						)
-					).affected ?? 0
-				: 0;
+			// One transaction: a run cancelled here always has its held records released (no later sweep would see the
+			// run again, since only running ones are read) (#11075 review).
+			const released = await this.dataSource.transaction(async (manager) => {
+				const result = await manager.getRepository(EverWorksSyncRun).update(
+					{ id: run.id, status: EverWorksSyncRunStatus.RUNNING } as never,
+					{ status: EverWorksSyncRunStatus.CANCELLED, finishedAt, lastError: error, lastProgressAt: finishedAt } as never
+				);
+				if (!result.affected) return null;
+				if (!run.organizationId) return 0;
+				const freed = await manager.getRepository(EverWorksInboundEvent).update(
+					{
+						connectionId: connection.id as ID,
+						organizationId: run.organizationId,
+						receivedVia: 'initial',
+						status: EverWorksInboundStatus.PENDING,
+						availableAt: MoreThan(HELD_AFTER)
+					} as never,
+					{ availableAt: finishedAt } as never
+				);
+				return freed.affected ?? 0;
+			});
+			if (released === null) continue;
 			await this.log.write({
 				tenantId: run.tenantId as ID,
 				organizationId: run.organizationId as ID,
