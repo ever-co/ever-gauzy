@@ -230,7 +230,10 @@ and answered `202`.
   the kind and every repository URL stay on the link. Members and teams paired
   later join the project through the sync loop's sweep. Private works are not
   listed and never sync. Creating a project from a work needs the mapping
-  enabled and works not switched off.
+  enabled and works not switched off. A paired work (or one a project was
+  created from) shows its Gauzy project as an external link in Ever Works
+  (`PUT /links/work/:id`), as tasks do: the sync loop's sweep sends it (best
+  effort, retried by a later sweep), so the Projects tab never waits for it.
 - **Create in Ever Works (G-P2-5).** On the same tab (`createInEverWorks` on
   `PUT …/projects`), an admin opts a Gauzy project in: it becomes a repo-less
   Ever Works work of kind `project`, with the project's name, description and
@@ -257,7 +260,10 @@ and answered `202`.
   a later Gauzy edit is logged, not pushed. The Gauzy task links to its Ever
   Works page and, once there is one, its pull request. Due and start dates and
   the estimate sync too (Gauzy seconds ↔ Ever Works minutes; a start after the
-  due date is not sent, as Ever Works refuses it). Each
+  due date is not sent, as Ever Works refuses it). Ever Works keeps a sub-task
+  in its parent's work and team; a Gauzy parent on another team or project is
+  left out in Ever Works (logged as `parent_scope_refused`), the rest of the
+  task still syncs, and the parent is sent again once one of them moved. Each
   side is compared with its own last-synced value, so a value the other side
   cannot hold exactly (p2 and p3 are both medium) never flaps; when both sides
   changed a field the later edit wins, and a lost description is kept as a
