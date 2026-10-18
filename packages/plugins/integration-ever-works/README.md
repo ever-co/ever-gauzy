@@ -184,7 +184,9 @@ and answered `202`.
 - **Capture and push.** Gauzy changes (`TaskEvent`, and the entity subscribers
   of later items) become one coalesced `ever_works_outbound_change` per record;
   the pusher recomputes the state, diffs it against the link snapshot (loop
-  guard 2) and retries 429/5xx with back-off, dead-lettering after eight tries.
+  guard 2) and retries 429/5xx and network failures with back-off (a minute,
+  doubling to an hour: about two hours in all), dead-lettering after eight
+  tries.
 - **Merge.** Per field, against the snapshot: one side changed wins; both
   changed → last writer wins for scalars and rich text (the loser is kept), a
   3-way set merge for sets; Ever Works' gates decide status.
@@ -421,8 +423,10 @@ and answered `202`.
   not part of this version is skipped and picked up by a later resync. At the
   end, feed events after the head that were skipped meanwhile are applied
   again (anything a link's version covers is skipped). `POST …/sync/resync` is
-  the same run as a reconcile pass; an expired feed cursor (`410`) starts one
-  on its own.
+  the same run as a reconcile pass (a record an earlier run skipped or gave up
+  on is applied again); an expired feed cursor (`410`) starts one on its own.
+  Records a phase held back are released when it stops importing part-way, and
+  a run whose mapping is removed is cancelled by the loop.
 - **Observability.** `GET …/sync/status` returns the lag (Ever Works' feed
   head against what Gauzy read and applied), the inbound and outbound counts
   (pending, deferred, failed, dead), the open conflicts, the last error, the

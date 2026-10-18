@@ -72,7 +72,7 @@ import { EverWorksLinkInput, EverWorksLinkService, EverWorksStaleLinkError } fro
 import { EverWorksFeedPoller } from './inbound/ever-works-feed.poller';
 import { EverWorksInboundApplier } from './inbound/ever-works-inbound.applier';
 import { EverWorksInboundStore } from './inbound/ever-works-inbound.store';
-import { EverWorksOutboundPusher } from './outbound/ever-works-outbound.pusher';
+import { EverWorksOutboundPusher, OUTBOUND_MAX_ATTEMPTS, outboundRetryDelayMs } from './outbound/ever-works-outbound.pusher';
 import { EverWorksOutboundQueue } from './outbound/ever-works-outbound.queue';
 import { EverWorksWebhookController } from './webhook/ever-works-webhook.controller';
 
@@ -402,6 +402,27 @@ describe('Ever Works sync engine on SQLite', () => {
 			// A new change gets the full retry ladder (#11028 review), as a new row would.
 			expect(rows[0]).toMatchObject({ id: waiting.id, status: EverWorksOutboundStatus.PENDING, op: 'upsert', attempts: 0 });
 			expect(JSON.parse(rows[0].changedFieldsHint as string).sort()).toEqual(['status', 'title']);
+		});
+
+		it('a retryable failure waits a minute, doubling to an hour: the attempts span about two hours before a change is dead (review F74)', async () => {
+			const ladder = Array.from({ length: OUTBOUND_MAX_ATTEMPTS - 1 }, (_, i) => outboundRetryDelayMs(i + 1));
+			expect(ladder).toEqual([1, 2, 4, 8, 16, 32, 60].map((minutes) => minutes * 60_000));
+			expect(ladder.reduce((sum, ms) => sum + ms, 0)).toBeGreaterThan(2 * 60 * 60_000);
+			const queue = new EverWorksOutboundQueue(dataSource);
+			const pusher = new EverWorksOutboundPusher(dataSource, log);
+			pusher.register({
+				entityTypes: [EverWorksLinkType.TASK],
+				push: async () => {
+					const { EverWorksNetworkError } = await import('../client/ever-works-client');
+					throw new EverWorksNetworkError('ECONNRESET');
+				}
+			});
+			await queue.enqueue({ tenantId: A.tenantId, organizationId: A.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: 'blip' });
+			const t = new Date(Date.now() + 10_000);
+			await pusher.drain(connection, 100, t);
+			const failing = await dataSource.getRepository(EverWorksOutboundChange).findOneByOrFail({ gauzyId: 'blip' });
+			expect(failing).toMatchObject({ status: EverWorksOutboundStatus.FAILED, attempts: 1 });
+			expect(new Date(failing.availableAt as Date).getTime() - t.getTime()).toBeGreaterThanOrEqual(59_000);
 		});
 
 		it('pushes through the handler of the type, defers types without one, and dead-letters after retryable failures', async () => {

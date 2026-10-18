@@ -9,6 +9,9 @@ import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
 import { EverWorksInboundEvent, EverWorksInboundStatus } from '../entities/ever-works-sync.entities';
 
+/** The outcomes of an earlier initial event that a resync reading the same record queues again (review F73). */
+const REARMED_BY_RESYNC: ReadonlyArray<EverWorksInboundStatus> = [EverWorksInboundStatus.SKIPPED, EverWorksInboundStatus.DEAD];
+
 /**
  * Stores Ever Works events as they arrive (webhook, change feed, initial sync), deduplicated on the event
  * id per connection. The tenant is the connection's; the organization is the Gauzy organization mapped
@@ -29,8 +32,14 @@ export class EverWorksInboundStore {
 		options: { availableAt?: Date } = {}
 	): Promise<{ duplicate: boolean }> {
 		const repository = this.dataSource.getRepository(EverWorksInboundEvent);
-		const exists = await repository.count({ where: { connectionId: connection.id as ID, eventId: envelope.id } });
-		if (exists) return { duplicate: true };
+		const existing = await repository.findOne({
+			where: { connectionId: connection.id as ID, eventId: envelope.id },
+			select: { id: true, status: true }
+		});
+		if (existing) {
+			if (via === 'initial' && REARMED_BY_RESYNC.includes(existing.status)) return this.rearm(connection, existing, envelope, options);
+			return { duplicate: true };
+		}
 		const organizationId = envelope.organizationId ? await this.organizationFor(connection, envelope.organizationId) : null;
 		const id = randomUUID();
 		await repository
@@ -62,6 +71,35 @@ export class EverWorksInboundStore {
 		// insert differently, the stored id does not).
 		const stored = await repository.findOne({ where: { connectionId: connection.id as ID, eventId: envelope.id }, select: { id: true } });
 		return { duplicate: stored?.id !== id };
+	}
+
+	/**
+	 * A resync reads a record unchanged since an earlier run under the same event id. When that run skipped it or
+	 * gave up on it, the cause may be gone now (a setting turned on, a team paired, the mapping enabled again): it is
+	 * queued again like a new record (attempts reset, the new `seq` and hold), instead of counting as a duplicate
+	 * that never reaches Gauzy until it changes in Ever Works (review F73). An applied one stays a duplicate.
+	 */
+	private async rearm(
+		connection: EverWorksConnection,
+		existing: Pick<EverWorksInboundEvent, 'id' | 'status'>,
+		envelope: EverWorksEventEnvelope,
+		options: { availableAt?: Date }
+	): Promise<{ duplicate: boolean }> {
+		const organizationId = envelope.organizationId ? await this.organizationFor(connection, envelope.organizationId) : null;
+		const result = await this.dataSource.getRepository(EverWorksInboundEvent).update(
+			{ id: existing.id as ID, status: existing.status } as never,
+			{
+				...(organizationId ? { organizationId } : {}),
+				seq: envelope.seq,
+				aggregateVersion: envelope.aggregate.version ?? null,
+				payload: JSON.stringify(envelope),
+				status: EverWorksInboundStatus.PENDING,
+				attempts: 0,
+				error: null,
+				availableAt: options.availableAt ?? new Date()
+			} as never
+		);
+		return { duplicate: !result.affected };
 	}
 
 	/** The Gauzy organization mapped to an Ever Works organization through this connection, or `null`. */
