@@ -1,4 +1,4 @@
-import { Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, Optional, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from 'jsonwebtoken';
@@ -10,23 +10,29 @@ import { isAccessTokenPayload, JWT_ALGORITHMS } from '../purpose-token';
 import { EmployeeService } from '../../employee/employee.service';
 import { RoleAuthorizationService } from '../../role/role-authorization.service';
 import { UserOrganizationService } from '../../user-organization/user-organization.services';
+import { AuthenticatedUserCache } from './authenticated-user-cache';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	private readonly logger = new Logger(JwtStrategy.name);
 	public loggingEnabled: boolean = false;
 
+	/** The validated contexts of recently seen tokens (see {@link AuthenticatedUserCache}). */
+	private readonly authenticatedUsers: AuthenticatedUserCache;
+
 	constructor(
 		private readonly _authService: AuthService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _userOrganizationService: UserOrganizationService,
-		private readonly _roleAuthorizationService: RoleAuthorizationService
+		private readonly _roleAuthorizationService: RoleAuthorizationService,
+		@Optional() authenticatedUsers?: AuthenticatedUserCache
 	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 			secretOrKey: env.JWT_SECRET,
 			algorithms: JWT_ALGORITHMS
 		});
+		this.authenticatedUsers = authenticatedUsers ?? new AuthenticatedUserCache();
 	}
 
 	/**
@@ -97,13 +103,32 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			return new UnauthorizedException('unauthorized');
 		}
 
+		// The rest reads the database. A context validated moments ago for the same claims is reused, and
+		// concurrent requests with the same claims share one lookup (JWT_AUTHENTICATED_USER_TTL_MS; 0 judges every
+		// request afresh). Only a context that authenticated is reused: a refusal is never remembered.
+		return this.authenticatedUsers.resolve({ id, thirdPartyId, employeeId, organizationId, tenantId }, () =>
+			this.loadAuthenticatedUser(payload)
+		);
+	}
+
+	/**
+	 * Judges an access token against the database: the user it names, the role and permissions they hold now,
+	 * and the employee and organization membership the token claims.
+	 *
+	 * @param payload - The JWT payload, already known to be an access token that names a user.
+	 * @returns The authenticated user, or the `UnauthorizedException` that refuses the token.
+	 */
+	private async loadAuthenticatedUser(payload: JwtPayload): Promise<IAuthenticatedUser | UnauthorizedException> {
+		const { id, thirdPartyId, employeeId, organizationId, tenantId } = payload;
+
 		// We use this to also attach the user object to the request context.
 		const user: IAuthenticatedUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
 
 		// A token outlives the account it was issued for. Deactivating or archiving a user is an
-		// off-boarding or incident-response control, and it has to end the session on the NEXT request
-		// rather than whenever the token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by
-		// default). These are the exact predicates (`isActive: true, isArchived: false`) that `login()`
+		// off-boarding or incident-response control, and it has to end the session on the next request
+		// that is judged (within JWT_AUTHENTICATED_USER_TTL_MS, 10 s by default) rather than whenever the
+		// token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by default). These are the exact
+		// predicates (`isActive: true, isArchived: false`) that `login()`
 		// and `getJwtAccessToken()` already apply at issuance, so no one who holds a token today is
 		// locked out by them — and an account whose status is unknown (NULL) is refused, as it is there.
 		if (!user || user.isActive !== true || user.isArchived !== false) {
@@ -113,7 +138,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		// Pin the role and permissions the user holds RIGHT NOW onto the request. Every
 		// RequestContext.hasRoles/hasPermissions check during this request reads them instead of the
 		// `role` / `permissions` claims frozen into the token, so a demotion also takes effect on the
-		// next request. If the role cannot be resolved the user gets none — authorization fails closed.
+		// next request that is judged. If the role cannot be resolved the user gets none — authorization
+		// fails closed.
 		await this._roleAuthorizationService.attachAuthorizationState(user);
 
 		// Validate the employee/organization claims and attach them to the user.
@@ -138,9 +164,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 * authenticated user.
 	 *
 	 * Both claims are frozen into the token at issuance, so each one is re-resolved against the
-	 * database on every request: a deactivated or archived employee record, an employee that belongs
-	 * to another user or another organization, and an organization the user is no longer a member of
-	 * all stop granting the context the token was minted with.
+	 * database whenever the token is judged: a deactivated or archived employee record, an employee that
+	 * belongs to another user or another organization, and an organization the user is no longer a member
+	 * of all stop granting the context the token was minted with.
 	 *
 	 * The two lookups are independent — each reads only the token's claims and the user's `id` / `tenantId`,
 	 * which neither of them changes — so both are issued up front and run concurrently: one database round

@@ -34,7 +34,7 @@ import { LoginAttemptModule } from './login-attempt.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { OAuthClientModule } from './oauth-client/oauth-client.module';
 import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.module';
-import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
+import { AuthenticatedUserCache, JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 
 // Core service providers for handling authentication and related functionalities
 const providers = [
@@ -47,7 +47,7 @@ const providers = [
 ];
 
 // Authentication strategies for token validation and management
-const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
+const strategies = [AuthenticatedUserCache, JwtStrategy, JwtRefreshTokenStrategy];
 
 @Module({
 	imports: [

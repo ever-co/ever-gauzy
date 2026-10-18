@@ -17,6 +17,7 @@ jest.mock('../../role/role-authorization.service', () => ({
 	RoleAuthorizationService: class RoleAuthorizationService {}
 }));
 
+import { AuthenticatedUserCache } from './authenticated-user-cache';
 import { JwtStrategy } from './jwt.strategy';
 
 /**
@@ -42,7 +43,7 @@ describe('JwtStrategy.validate', () => {
 		isArchived: false
 	};
 
-	function build(user: any = { ...activeUser }) {
+	function build(user: any = { ...activeUser }, authenticatedUsers?: AuthenticatedUserCache) {
 		const authService = { getAuthenticatedUser: jest.fn(async () => user) };
 		const employeeService = { findOneByIdString: jest.fn() };
 		const userOrganizationService = { findOneByOptions: jest.fn() };
@@ -57,7 +58,8 @@ describe('JwtStrategy.validate', () => {
 			authService as any,
 			employeeService as any,
 			userOrganizationService as any,
-			roleAuthorizationService as any
+			roleAuthorizationService as any,
+			authenticatedUsers
 		);
 		return { strategy, authService, employeeService, userOrganizationService, roleAuthorizationService };
 	}
@@ -646,6 +648,135 @@ describe('JwtStrategy.validate', () => {
 			expect(reports).toHaveLength(1);
 			expect(reports[0][0]).toBe('error');
 			expect(reports[0][1]).toBeInstanceOf(UnauthorizedException);
+		});
+	});
+
+	/**
+	 * The database part of the judgement — the user row, its role and permissions, the employee and the
+	 * membership — is reused for the next requests that carry the same claims (JWT_AUTHENTICATED_USER_TTL_MS),
+	 * and concurrent requests with one token share a single lookup. A refusal is never reused.
+	 */
+	describe('validated context reuse', () => {
+		const payload = { id: 'first-user', tenantId: 'tenant', employeeId: 'emp-1', organizationId: 'org-1' };
+		const activeEmployee = {
+			id: 'emp-1',
+			userId: 'first-user',
+			organizationId: 'org-1',
+			isActive: true,
+			isArchived: false
+		};
+
+		function buildReusing(user: any = { ...activeUser }, cache?: AuthenticatedUserCache) {
+			const built = build(user, cache ?? new AuthenticatedUserCache({ ttlMs: 10_000, ormType: 'typeorm' }));
+			built.employeeService.findOneByIdString.mockResolvedValue(activeEmployee);
+			built.userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
+			return built;
+		}
+
+		it('judges the second request with the same claims without touching the database', async () => {
+			const { strategy, authService, employeeService, userOrganizationService, roleAuthorizationService } =
+				buildReusing();
+
+			const first = await run(strategy, payload);
+			const second = await run(strategy, payload);
+
+			expect(first.err).toBeNull();
+			expect(second.err).toBeNull();
+			expect(second.user).toEqual(first.user);
+			expect(second.user).toMatchObject({
+				id: 'first-user',
+				employeeId: 'emp-1',
+				lastOrganizationId: 'org-1',
+				role: { name: 'EMPLOYEE' },
+				permissions: ['ORG_TEAM_VIEW']
+			});
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(1);
+			expect(roleAuthorizationService.attachAuthorizationState).toHaveBeenCalledTimes(1);
+			expect(employeeService.findOneByIdString).toHaveBeenCalledTimes(1);
+			expect(userOrganizationService.findOneByOptions).toHaveBeenCalledTimes(1);
+		});
+
+		it('gives each request its own request user', async () => {
+			const { strategy } = buildReusing();
+			const first = await run(strategy, payload);
+			const second = await run(strategy, payload);
+			expect(second.user).not.toBe(first.user);
+		});
+
+		it('shares one lookup between concurrent requests carrying the same token', async () => {
+			const { strategy, authService } = buildReusing();
+
+			const outcomes = await Promise.all([
+				strategy.validate(payload),
+				strategy.validate(payload),
+				strategy.validate(payload)
+			]);
+
+			expect(outcomes.map((user) => user.id)).toEqual(['first-user', 'first-user', 'first-user']);
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(1);
+		});
+
+		it('judges a token that names another organization or employee on its own', async () => {
+			const { strategy, authService } = buildReusing();
+			await run(strategy, payload);
+			await run(strategy, { ...payload, organizationId: 'org-2' });
+			await run(strategy, { ...payload, employeeId: undefined });
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(3);
+		});
+
+		it('never reuses a refusal: a reactivated account is served at once', async () => {
+			const { strategy, authService } = buildReusing({ ...activeUser, isActive: false });
+
+			const refused = await run(strategy, payload);
+			expect(refused.err).toBeInstanceOf(UnauthorizedException);
+
+			authService.getAuthenticatedUser.mockResolvedValue({ ...activeUser });
+			const served = await run(strategy, payload);
+			expect(served.err).toBeNull();
+			expect(served.user).toMatchObject({ id: 'first-user' });
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(2);
+		});
+
+		it('never reuses a token refused for its employee or membership claim', async () => {
+			const { strategy, authService, employeeService } = buildReusing();
+			employeeService.findOneByIdString.mockResolvedValueOnce({ ...activeEmployee, isActive: false });
+
+			const refused = await run(strategy, payload);
+			expect(refused.err).toBeInstanceOf(UnauthorizedException);
+
+			const served = await run(strategy, payload);
+			expect(served.err).toBeNull();
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(2);
+		});
+
+		it('never reuses a lookup that failed: the next request is judged again', async () => {
+			const { strategy, authService } = buildReusing();
+			authService.getAuthenticatedUser.mockRejectedValueOnce(new Error('timeout exceeded when trying to connect'));
+
+			const failed = await run(strategy, payload);
+			expect(failed.err).toBeInstanceOf(ServiceUnavailableException);
+
+			const served = await run(strategy, payload);
+			expect(served.err).toBeNull();
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(2);
+		});
+
+		it('judges every request against the database when the reuse is off', async () => {
+			const { strategy, authService } = buildReusing(
+				{ ...activeUser },
+				new AuthenticatedUserCache({ ttlMs: 0, ormType: 'typeorm' })
+			);
+			await run(strategy, payload);
+			await run(strategy, payload);
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(2);
+		});
+
+		it('judges the claims that need no database on every request, before any reuse', async () => {
+			const { strategy, authService } = buildReusing();
+			await run(strategy, payload);
+			const { err } = await run(strategy, { ...payload, purpose: 'password-reset' });
+			expect(err).toBeInstanceOf(UnauthorizedException);
+			expect(authService.getAuthenticatedUser).toHaveBeenCalledTimes(1);
 		});
 	});
 });
