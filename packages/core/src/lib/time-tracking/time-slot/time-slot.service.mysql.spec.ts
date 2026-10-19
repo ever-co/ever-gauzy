@@ -22,7 +22,7 @@ describe('TimeSlotService.getTimeSlots on MySQL', () => {
 		const record = (fragment: unknown) => {
 			if (typeof fragment === 'string') sql.push(fragment);
 		};
-		const query: Record<string, unknown> = { alias: 'time_slot' };
+		let query: Record<string, unknown> = { alias: 'time_slot' };
 		query.leftJoin = jest.fn((_relation: string, _alias: string, condition?: string) => (record(condition), query));
 		query.innerJoin = jest.fn(() => query);
 		query.setFindOptions = jest.fn(() => query);
