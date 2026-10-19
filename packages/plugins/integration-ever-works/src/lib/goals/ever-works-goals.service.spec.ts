@@ -674,6 +674,47 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		expect(reads()).toBe(1);
 	});
 
+	it('key results that waited for an owner are applied once the goal’s owner is paired, the admin still without an employee (review of #11125)', async () => {
+		const { service, mock, goalsMock, keyResults, addLink, context } = setup();
+		goalsMock.addGoal('ew-org-1', { ...ewGoal });
+		const reads = () =>
+			mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		context.connection.connectedByUserId = 'u-new-admin';
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		expect(keyResults).toEqual([]);
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(0);
+
+		// The goal's owner (Ever Works user ew-ann) is paired with a Gauzy employee.
+		addLink(EverWorksLinkType.MEMBER, 'e-ann', 'ew-ann');
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+		expect(keyResults.map((k) => k['ownerId'])).toEqual(['e-ann', 'e-ann']);
+	});
+
+	it('key results that waited for an owner are applied once the goal’s agent is paired (review of #11125)', async () => {
+		const { service, mock, goalsMock, keyResults, addLink, links, context } = setup();
+		const agentGoal = { ...ewGoal, owner: { type: 'integration', id: 'key-1' }, assignedAgentId: 'ew-agent-7' };
+		goalsMock.addGoal('ew-org-1', agentGoal);
+		const reads = () =>
+			mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		context.connection.connectedByUserId = 'u-new-admin';
+		await service.apply(envelope('goal.created', agentGoal, 1) as never, applyContext);
+		const goalLink = links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
+		expect(JSON.parse(goalLink['ewOnly'])).toMatchObject({
+			keyResultsPending: 'owner',
+			agents: { activeAgentId: null, assignedAgentId: 'ew-agent-7' }
+		});
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(0);
+
+		addLink(EverWorksLinkType.AGENT, 'e-agent-7', 'ew-agent-7');
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+		expect(keyResults.map((k) => k['ownerId'])).toEqual(['e-agent-7', 'e-agent-7']);
+		expect(JSON.parse(goalLink['ewOnly'])['agents']).toBeUndefined();
+	});
+
 	it('off: a new Gauzy goal is not created in Ever Works (it would be made from its key results)', async () => {
 		const { service, mock, goals, keyResults } = setup({ entitySync: off });
 		goals.push(gauzyGoal());

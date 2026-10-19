@@ -95,9 +95,11 @@ interface GoalEverWorksOnly {
 	 * Key result work the goal was applied without: `sync` while its mapping did not sync key results (OQ4), `owner`
 	 * when some could not be created for want of an owner employee. Once the mapping syncs key results, an event at
 	 * the goal's recorded version (a resync reading it again) or the goal sweep applies them; the sweep retries an
-	 * `owner` goal once the connecting admin has an employee (the owner of last resort).
+	 * `owner` goal once one can own them: the goal's agent or owner is paired, or the connecting admin has an employee.
 	 */
 	keyResultsPending?: KeyResultsPending;
+	/** The goal's agents while its key results wait for an owner (`owner`): its lead once one of them is paired. */
+	agents?: Pick<EverWorksGoal, 'activeAgentId' | 'assignedAgentId'>;
 }
 
 /** How often the goal sweep (key results deleted in Gauzy) runs per connection. */
@@ -292,17 +294,23 @@ export class EverWorksGoalsService
 	 * Goals applied while their mapping did not sync key results (OQ4) get them now that it does: each such goal is read
 	 * from Ever Works and applied again, as the sync. An unchanged goal's events are duplicates or at its recorded
 	 * version, so no event brings them (review of #11096). A goal whose key results waited for an owner employee is
-	 * read again only once the connecting admin has one, so it is not read on every sweep meanwhile.
+	 * read again only once one can own them (its lead is paired, or the connecting admin has an employee), so it is not
+	 * read on every sweep meanwhile.
 	 */
 	private async applyPendingKeyResults(context: EverWorksMappingContext): Promise<void> {
 		const pending = (await this.links.list(context.integrationTenantId, EverWorksLinkType.GOAL)).filter(
 			(link) => link.state !== EverWorksLinkState.UNLINKED && this.ewOnlyOf(link).keyResultsPending
 		);
-		let ownerAvailable: boolean | undefined;
+		let adminEmployee: boolean | undefined;
 		for (const link of pending) {
-			if (this.ewOnlyOf(link).keyResultsPending === 'owner') {
-				ownerAvailable ??= !!(await this.adminEmployeeOf(context));
-				if (!ownerAvailable) continue;
+			const ew = this.ewOnlyOf(link);
+			if (ew.keyResultsPending === 'owner') {
+				// The lead `applyGoal` would find (its agent, else its owner), else the connecting admin (review of #11125).
+				const lead = await this.leadOf(context, { ...ew.agents, owner: ew.owner } as EverWorksGoal, null);
+				if (!lead) {
+					adminEmployee ??= !!(await this.adminEmployeeOf(context));
+					if (!adminEmployee) continue;
+				}
 			}
 			try {
 				const goal = await this.client(context).request<EverWorksGoal>(
@@ -592,7 +600,11 @@ export class EverWorksGoalsService
 				...(teamsWait
 					? { extraTeams: ew.extraTeams ?? [], unmappedTeams: ew.unmappedTeams ?? [] }
 					: { extraTeams: teams.extra, unmappedTeams: teams.unmapped }),
-				keyResultsPending
+				keyResultsPending,
+				agents:
+					keyResultsPending === 'owner'
+						? { activeAgentId: goal.activeAgentId ?? null, assignedAgentId: goal.assignedAgentId ?? null }
+						: null
 			},
 			'inbound'
 		);
@@ -1372,13 +1384,19 @@ export class EverWorksGoalsService
 		version: number | null,
 		snapshot: GoalSnapshot,
 		link: EverWorksEntityLink | null,
-		teams: { extraTeams?: string[]; unmappedTeams?: string[]; keyResultsPending?: KeyResultsPending | null },
+		teams: {
+			extraTeams?: string[];
+			unmappedTeams?: string[];
+			keyResultsPending?: KeyResultsPending | null;
+			agents?: GoalEverWorksOnly['agents'] | null;
+		},
 		direction: 'inbound' | 'outbound'
 	): Promise<void> {
 		const previous = this.ewOnlyOf(link);
 		// A push leaves it as it was (`undefined`): only an inbound apply writes or finishes (`null`) the key result work.
 		const keyResultsPending =
 			teams.keyResultsPending !== undefined ? teams.keyResultsPending : previous.keyResultsPending;
+		const agents = teams.agents !== undefined ? teams.agents : previous.agents;
 		const ewOnly: GoalEverWorksOnly = {
 			owner: goal.owner ?? previous.owner ?? null,
 			status: goal.status ?? previous.status ?? null,
@@ -1392,7 +1410,8 @@ export class EverWorksGoalsService
 			visibility: goal.visibility ?? previous.visibility ?? null,
 			extraTeams: teams.extraTeams ?? previous.extraTeams ?? [],
 			unmappedTeams: teams.unmappedTeams ?? previous.unmappedTeams ?? [],
-			...(keyResultsPending ? { keyResultsPending } : {})
+			...(keyResultsPending ? { keyResultsPending } : {}),
+			...(keyResultsPending === 'owner' && agents ? { agents } : {})
 		};
 		await this.links.record({
 			tenantId: context.tenantId,
