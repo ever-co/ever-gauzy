@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, PermissionsEnum, IOrganizationContact, IEmployee, IOrganizationAward } from '@gauzy/contracts';
+import { IOrganization, PermissionsEnum, IOrganizationContact, IEmployee, IOrganizationAward, IOrganizationLanguage } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, of, Subject } from 'rxjs';
@@ -156,6 +156,27 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 	/** Awards, most recent year first. */
 	sortedAwards(organization: IOrganization): IOrganizationAward[] {
 		return [...(organization?.awards || [])].sort((a, b) => Number(b.year || 0) - Number(a.year || 0));
+	}
+
+	/**
+	 * Proficiency on a 1–4 scale for the languages meter, read from the free-text
+	 * level ('Native or Bilingual', 'fluent', 'Conversational', 'intermediate', …).
+	 * 0 for a level it does not recognise, which then shows no meter.
+	 */
+	languageScore(level: string): number {
+		const value = (level || '').toLowerCase();
+		if (/native|bilingual/.test(value)) return 4;
+		if (/fluent|advanced|proficient/.test(value)) return 3;
+		if (/conversational|intermediate/.test(value)) return 2;
+		if (/basic|beginner|elementary/.test(value)) return 1;
+		return 0;
+	}
+
+	/** Languages, strongest first; equal levels keep their order. */
+	sortedLanguages(organization: IOrganization): IOrganizationLanguage[] {
+		return [...(organization?.languages || [])].sort(
+			(a, b) => this.languageScore(b.level) - this.languageScore(a.level)
+		);
 	}
 
 	/** The website as a link target; a bare domain gets a scheme so it is not resolved as a route. */
