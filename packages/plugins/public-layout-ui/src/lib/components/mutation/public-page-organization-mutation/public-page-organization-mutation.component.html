@@ -265,22 +265,22 @@
 			>
 				<section class="section">
 					@if (organization_languages?.length) {
-					<ul class="items">
+					<!-- Side by side and wrapping, as the languages read on the public page. -->
+					<ul class="lang-chips">
 						@for (lang of organization_languages; track lang.id || $index) {
-						<li class="item">
-							<span class="item-icon" aria-hidden="true"><nb-icon icon="message-square-outline"></nb-icon></span>
-							<span class="item-name">{{ lang.name }}</span>
+						<li class="lang-chip">
+							<span class="lang-chip-name">{{ lang.name }}</span>
 							@if (lang.level) {
-							<span class="item-meta">{{ lang.level | replace: '_' : ' ' | titlecase }}</span>
+							<span class="lang-chip-level">{{ lang.level | replace: '_' : ' ' | titlecase }}</span>
 							}
 							<button
 								type="button"
-								class="icon-button"
+								class="lang-chip-remove"
 								(click)="removeLanguage(lang)"
-								[attr.aria-label]="'BUTTONS.DELETE' | translate"
+								[attr.aria-label]="('BUTTONS.DELETE' | translate) + ' ' + lang.name"
 								[nbTooltip]="'BUTTONS.DELETE' | translate"
 							>
-								<nb-icon icon="trash-2-outline"></nb-icon>
+								<nb-icon icon="close-outline"></nb-icon>
 							</button>
 						</li>
 						}
