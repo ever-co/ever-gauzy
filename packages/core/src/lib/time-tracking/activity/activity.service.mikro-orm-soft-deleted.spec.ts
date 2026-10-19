@@ -39,7 +39,10 @@ describe('ActivityService daily aggregations (MikroORM) leave soft-deleted rows 
 			table.integer('duration');
 			table.datetime('deletedAt').nullable();
 		});
-		await db('employee').insert({ id: 'employee-1', deletedAt: null });
+		await db('employee').insert([
+			{ id: 'employee-1', deletedAt: null },
+			{ id: 'employee-deleted', deletedAt: '2026-10-19 09:00:00' }
+		]);
 		await db('time_slot').insert([
 			{ id: 'slot-live', deletedAt: null },
 			{ id: 'slot-deleted', deletedAt: '2026-10-19 10:00:00' }
@@ -48,11 +51,11 @@ describe('ActivityService daily aggregations (MikroORM) leave soft-deleted rows 
 			{ timeSlotId: 'slot-live', timeLogId: 'log-1' },
 			{ timeSlotId: 'slot-deleted', timeLogId: 'log-1' }
 		]);
-		const activity = (id: string, timeSlotId: string, deletedAt: string | null = null) => ({
+		const activity = (id: string, timeSlotId: string, deletedAt: string | null = null, employeeId = 'employee-1') => ({
 			id,
 			tenantId: 'tenant-1',
 			organizationId: 'org-1',
-			employeeId: 'employee-1',
+			employeeId,
 			timeSlotId,
 			date: '2026-10-19',
 			title: 'VS Code',
@@ -62,7 +65,9 @@ describe('ActivityService daily aggregations (MikroORM) leave soft-deleted rows 
 		await db('activity').insert([
 			activity('activity-live', 'slot-live'),
 			activity('activity-of-deleted-slot', 'slot-deleted'),
-			activity('activity-deleted', 'slot-live', '2026-10-19 11:00:00')
+			activity('activity-deleted', 'slot-live', '2026-10-19 11:00:00'),
+			// A live activity on a live slot, of a deleted employee
+			activity('activity-of-deleted-employee', 'slot-live', null, 'employee-deleted')
 		]);
 	});
 
@@ -96,6 +101,7 @@ describe('ActivityService daily aggregations (MikroORM) leave soft-deleted rows 
 		} as any);
 
 		expect(rows).toHaveLength(1);
+		expect(rows[0].employeeId).toBe('employee-1');
 		expect(Number(rows[0].sessions)).toBe(1);
 		expect(Number(rows[0].duration)).toBe(300);
 	});
