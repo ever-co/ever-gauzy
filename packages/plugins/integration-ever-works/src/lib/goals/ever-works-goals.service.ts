@@ -74,6 +74,9 @@ interface GoalSnapshot extends GoalShared {
 	gauzyDeadline?: string | null;
 }
 
+/** Why a goal's key results are not all applied yet (see `GoalEverWorksOnly.keyResultsPending`). */
+type KeyResultsPending = 'sync' | 'owner';
+
 /** What only Ever Works has, kept on the goal's link (fields one side lacks are preserved, never nulled). */
 interface GoalEverWorksOnly {
 	owner?: EverWorksGoal['owner'];
@@ -89,10 +92,12 @@ interface GoalEverWorksOnly {
 	extraTeams?: string[];
 	unmappedTeams?: string[];
 	/**
-	 * The goal was applied without its key results (its mapping did not sync them, OQ4): once the mapping syncs them,
-	 * an event at the goal's recorded version (a resync reading it again) or the goal sweep applies them.
+	 * Key result work the goal was applied without: `sync` while its mapping did not sync key results (OQ4), `owner`
+	 * when some could not be created for want of an owner employee. Once the mapping syncs key results, an event at
+	 * the goal's recorded version (a resync reading it again) or the goal sweep applies them; the sweep retries an
+	 * `owner` goal once the connecting admin has an employee (the owner of last resort).
 	 */
-	keyResultsPending?: boolean;
+	keyResultsPending?: KeyResultsPending;
 }
 
 /** How often the goal sweep (key results deleted in Gauzy) runs per connection. */
@@ -286,13 +291,19 @@ export class EverWorksGoalsService
 	/**
 	 * Goals applied while their mapping did not sync key results (OQ4) get them now that it does: each such goal is read
 	 * from Ever Works and applied again, as the sync. An unchanged goal's events are duplicates or at its recorded
-	 * version, so no event brings them (review of #11096).
+	 * version, so no event brings them (review of #11096). A goal whose key results waited for an owner employee is
+	 * read again only once the connecting admin has one, so it is not read on every sweep meanwhile.
 	 */
 	private async applyPendingKeyResults(context: EverWorksMappingContext): Promise<void> {
 		const pending = (await this.links.list(context.integrationTenantId, EverWorksLinkType.GOAL)).filter(
 			(link) => link.state !== EverWorksLinkState.UNLINKED && this.ewOnlyOf(link).keyResultsPending
 		);
+		let ownerAvailable: boolean | undefined;
 		for (const link of pending) {
+			if (this.ewOnlyOf(link).keyResultsPending === 'owner') {
+				ownerAvailable ??= !!(await this.adminEmployeeOf(context));
+				if (!ownerAvailable) continue;
+			}
 			try {
 				const goal = await this.client(context).request<EverWorksGoal>(
 					'GET',
@@ -350,7 +361,7 @@ export class EverWorksGoalsService
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.GOAL, envelope.aggregate.id);
 		if (link?.state === EverWorksLinkState.UNLINKED)
 			return { status: 'skipped', message: 'the goal is no longer synced' };
-		const version = envelope.aggregate.version ?? null;
+		let version = envelope.aggregate.version ?? null;
 		// Key results the goal was applied without (OQ4) are applied by an event at its recorded version too, once the
 		// mapping syncs them: a resync reads an unchanged goal at that version.
 		const keyResultsPending = !!link && keyResultsSynced(context) && !!this.ewOnlyOf(link).keyResultsPending;
@@ -396,6 +407,9 @@ export class EverWorksGoalsService
 			}
 			if (!isSyncedVisibility(goal.visibility))
 				return { status: 'skipped', message: 'the goal is private in Ever Works' };
+			// What was read is the goal as it is now: its version is recorded, so an older event arriving later is skipped
+			// instead of writing older fields over it (review of #11125).
+			if (typeof goal.version === 'number' && (version == null || goal.version > version)) version = goal.version;
 		}
 		return this.applyGoal(context, link, goal, version);
 	}
@@ -540,8 +554,6 @@ export class EverWorksGoalsService
 		// A mapping that does not sync key results (OQ4) writes none, and its snapshot keeps the last synced ones; the
 		// goal's link marks them pending, so they are applied once the mapping syncs them (review of #11096).
 		const syncsKeyResults = keyResultsSynced(context);
-		const keyResultsPending =
-			madeInGauzy || keepGauzy.has('keyResults') ? !!ew.keyResultsPending : !syncsKeyResults;
 		const missing =
 			madeInGauzy || keepGauzy.has('keyResults') || !syncsKeyResults
 				? 0
@@ -552,6 +564,15 @@ export class EverWorksGoalsService
 						keyResultsOfGoal({ ...goal, ...this.mergedGoal(goal, next) }),
 						leadEmployeeId
 					);
+		// What is still to do: all of them while not synced, the ones without an owner employee (review of #11125).
+		const keyResultsPending: KeyResultsPending | null =
+			madeInGauzy || keepGauzy.has('keyResults')
+				? (ew.keyResultsPending ?? null)
+				: !syncsKeyResults
+					? 'sync'
+					: missing
+						? 'owner'
+						: null;
 		await this.record(
 			context,
 			goalId,
@@ -1351,12 +1372,13 @@ export class EverWorksGoalsService
 		version: number | null,
 		snapshot: GoalSnapshot,
 		link: EverWorksEntityLink | null,
-		teams: { extraTeams?: string[]; unmappedTeams?: string[]; keyResultsPending?: boolean },
+		teams: { extraTeams?: string[]; unmappedTeams?: string[]; keyResultsPending?: KeyResultsPending | null },
 		direction: 'inbound' | 'outbound'
 	): Promise<void> {
 		const previous = this.ewOnlyOf(link);
-		// A push leaves it as it was: only an inbound apply writes or finishes the goal's key results.
-		const keyResultsPending = teams.keyResultsPending ?? previous.keyResultsPending ?? false;
+		// A push leaves it as it was (`undefined`): only an inbound apply writes or finishes (`null`) the key result work.
+		const keyResultsPending =
+			teams.keyResultsPending !== undefined ? teams.keyResultsPending : previous.keyResultsPending;
 		const ewOnly: GoalEverWorksOnly = {
 			owner: goal.owner ?? previous.owner ?? null,
 			status: goal.status ?? previous.status ?? null,
@@ -1370,7 +1392,7 @@ export class EverWorksGoalsService
 			visibility: goal.visibility ?? previous.visibility ?? null,
 			extraTeams: teams.extraTeams ?? previous.extraTeams ?? [],
 			unmappedTeams: teams.unmappedTeams ?? previous.unmappedTeams ?? [],
-			...(keyResultsPending ? { keyResultsPending: true } : {})
+			...(keyResultsPending ? { keyResultsPending } : {})
 		};
 		await this.links.record({
 			tenantId: context.tenantId,

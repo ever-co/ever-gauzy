@@ -618,6 +618,56 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		expect(keyResults).toHaveLength(2);
 	});
 
+	it('an id-only event for a goal whose key results wait records the version it read, so an older event is skipped (review of #11125)', async () => {
+		const { service, goalsMock, goals, keyResults, links, context } = setup({ entitySync: off });
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		// Ever Works is at version 3 by the time the goal is read.
+		goalsMock.addGoal('ew-org-1', { ...ewGoal, title: 'Grow paying customers fast', version: 3 });
+		context.entitySync = {};
+		expect(await service.apply(envelope('goal.updated', { id: 'ew-goal-1' }, 1) as never, applyContext)).toMatchObject({
+			status: 'applied'
+		});
+		const goalLink = links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
+		expect(goalLink['ewVersion']).toBe(3);
+		expect(goals[0]['name']).toBe('Grow paying customers fast');
+		expect(keyResults).toHaveLength(2);
+		// The delayed version-2 event is older than what was read: it never writes its fields over it.
+		expect(
+			await service.apply(envelope('goal.updated', { ...ewGoal, title: 'Older title' }, 2) as never, applyContext)
+		).toMatchObject({ status: 'skipped', message: 'already applied (version)' });
+		expect(goals[0]['name']).toBe('Grow paying customers fast');
+	});
+
+	it('key results without an owner employee wait on the link; the sweep reads the goal again once the admin has an employee (review of #11125)', async () => {
+		const { service, mock, goalsMock, keyResults, links, context } = setup();
+		goalsMock.addGoal('ew-org-1', { ...ewGoal });
+		const reads = () => mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		const pending = () =>
+			JSON.parse((links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row)['ewOnly'])['keyResultsPending'];
+		// The goal's owner is not paired, and the connecting admin has no employee yet.
+		context.connection.connectedByUserId = 'u-new-admin';
+		expect(await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext)).toMatchObject({
+			status: 'applied',
+			message: '2 key result(s) wait for an owner employee'
+		});
+		expect(keyResults).toEqual([]);
+		expect(pending()).toBe('owner');
+		// Nobody can own them yet: the sweep reads nothing.
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(0);
+
+		context.connection.connectedByUserId = 'u-admin';
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+		expect(keyResults.map((k) => [k['type'], k['ownerId']])).toEqual([
+			['Numerical', 'e-admin'],
+			['True/False', 'e-admin']
+		]);
+		expect(pending()).toBeUndefined();
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+	});
+
 	it('off: a new Gauzy goal is not created in Ever Works (it would be made from its key results)', async () => {
 		const { service, mock, goals, keyResults } = setup({ entitySync: off });
 		goals.push(gauzyGoal());
