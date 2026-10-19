@@ -23,9 +23,11 @@ jest.mock('@gauzy/core', () => {
 	return {
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
+		MultiORMManyToOne: decorator,
 		ExportRedacted: decorator,
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: BaseEntity,
+		TenantBaseEntity: BaseEntity,
 		MikroOrmBaseEntityRepository: class {},
 		createSsrfSafeHttpsAgent: () => undefined,
 		Tenant: entity('Tenant'),

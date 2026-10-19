@@ -1,5 +1,16 @@
-import { ID } from '@gauzy/contracts';
-import { ColumnIndex, ExportRedacted, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
+import { RelationId } from 'typeorm';
+import { IBasePerTenantAndOrganizationEntityModel, ID, IOrganization } from '@gauzy/contracts';
+import {
+	ColumnIndex,
+	ExportRedacted,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	Organization,
+	TenantBaseEntity
+} from '@gauzy/core';
 import { MikroOrmEverWorksConnectionRepository } from './repository/mikro-orm-ever-works-connection.repository';
 
 /** How the connection authenticates to Ever Works: an integration key now, an Ever ID token later (plan 02 §5). */
@@ -29,12 +40,37 @@ export enum EverWorksConnectionStatus {
  * organization it was connected from keeps the connection and sets `organizationId` to NULL (its foreign
  * key is `ON DELETE SET NULL`, migration 1791000003100); deleting the tenant deletes it.
  *
+ * It extends `TenantBaseEntity` and declares the organization itself: TypeORM keeps an inherited relation's options
+ * even when a subclass declares it again, so the `CASCADE` of `TenantOrganizationBaseEntity` could not be overridden,
+ * and a schema built with `DB_SYNCHRONIZE=true` would not match the migration (review of #11096).
+ *
  * The integration key and the webhook signing secret are stored ONLY encrypted
  * (`EverWorksSecretBox`, AES-256-GCM bound to this row's id), never in `integration_setting`, whose
  * values are plaintext. No route returns them.
  */
 @MultiORMEntity('ever_works_connection', { mikroOrmRepository: () => MikroOrmEverWorksConnectionRepository })
-export class EverWorksConnection extends TenantOrganizationBaseEntity {
+export class EverWorksConnection extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
+	/** The organization it was connected from; `ON DELETE SET NULL` (migration 1791000003100), never a cascade. */
+	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on update. */
+		onUpdate: 'CASCADE',
+
+		/** Database cascade action on delete: the connection stays, without an organization. */
+		onDelete: 'SET NULL'
+	})
+	organization?: IOrganization;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: EverWorksConnection) => it.organization)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	organizationId?: ID;
+
 	/** `api_key` now; `ever_id` once one-click connect through Ever ID exists. */
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EverWorksAuthMode.API_KEY })
 	authMode!: EverWorksAuthMode;

@@ -45,8 +45,10 @@ jest.mock('@gauzy/core', () => {
 		ColumnIndex: decorator,
 		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
+		MultiORMManyToOne: decorator,
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: class {},
+		TenantBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		...Object.fromEntries(
 			['Tenant', 'Employee', 'EmployeeNotification', 'IntegrationTenant', 'IntegrationSetting', 'UserOrganization'].map((name) => [name, { [name]: class {} }[name]])
