@@ -126,7 +126,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 		// A token outlives the account it was issued for. Deactivating or archiving a user is an
 		// off-boarding or incident-response control, and it has to end the session on the next request
-		// that is judged (within JWT_AUTHENTICATED_USER_TTL_MS, 10 s by default) rather than whenever the
+		// that is judged (the next one unless JWT_AUTHENTICATED_USER_TTL_MS is set) rather than whenever the
 		// token happens to expire (up to JWT_TOKEN_EXPIRATION_TIME, 24h by default). These are the exact
 		// predicates (`isActive: true, isArchived: false`) that `login()`
 		// and `getJwtAccessToken()` already apply at issuance, so no one who holds a token today is

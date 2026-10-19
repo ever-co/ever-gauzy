@@ -51,8 +51,9 @@ describe('resolveAuthenticatedUserTtlMs', () => {
 		['false', 'false', 0],
 		['off', 'OFF', 0],
 		['no', 'no', 0],
-		['unreadable', 'ten seconds', DEFAULT_AUTHENTICATED_USER_TTL_MS],
-		['negative', '-1', DEFAULT_AUTHENTICATED_USER_TTL_MS],
+		['unreadable', 'ten seconds', 0],
+		['a unit suffix', '10s', 0],
+		['negative', '-1', 0],
 		['above the cap', String(60 * 60 * 1000), MAX_AUTHENTICATED_USER_TTL_MS]
 	])('reads %s', (_label, value, expected) => {
 		expect(resolveAuthenticatedUserTtlMs(value)).toBe(expected);
@@ -301,6 +302,39 @@ describe('AuthenticatedUserCache', () => {
 		expect(cache.size).toBe(2); // both expired contexts went, c survived
 		await cache.resolve({ id: 'c' }, load);
 		expect(load).toHaveBeenCalledTimes(4); // a, b, c, d — c was still kept
+	});
+
+	it('runs the window from when the lookup started, not from when it settled', async () => {
+		const { cache, tick } = build({ ttlMs: 10_000 });
+		const lookup = deferred<any>();
+		const load = jest.fn(() => lookup.promise);
+		const first = cache.resolve(claims, load);
+		tick(4_000); // a slow lookup: the pool was saturated
+		lookup.resolve(validated());
+		await first;
+		tick(6_000); // 10 s after the database was read
+		load.mockResolvedValue(validated());
+		await cache.resolve(claims, load);
+		expect(load).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps nothing when the lookup outlasted the window', async () => {
+		const { cache, tick } = build({ ttlMs: 10_000 });
+		const lookup = deferred<any>();
+		const first = cache.resolve(claims, jest.fn(() => lookup.promise));
+		tick(10_000);
+		lookup.resolve(validated());
+		await expect(first).resolves.toMatchObject({ id: 'user-1' });
+		expect(cache.size).toBe(0);
+	});
+
+	it('lets expired contexts go as newer ones arrive, well before the cache is full', async () => {
+		const { cache, load, tick } = build({ ttlMs: 10_000 });
+		await cache.resolve({ id: 'a' }, load);
+		await cache.resolve({ id: 'b' }, load);
+		tick(10_000);
+		await cache.resolve({ id: 'c' }, load);
+		expect(cache.size).toBe(1);
 	});
 
 	it('is off when the window is 0', async () => {

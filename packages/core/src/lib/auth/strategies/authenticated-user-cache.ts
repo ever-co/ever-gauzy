@@ -11,8 +11,11 @@ export interface AuthenticatedUserClaims {
 	tenantId?: string;
 }
 
-/** How long (ms) a validated context is reused when `JWT_AUTHENTICATED_USER_TTL_MS` is not set. */
-export const DEFAULT_AUTHENTICATED_USER_TTL_MS = 10_000;
+/**
+ * How long (ms) a validated context is reused when `JWT_AUTHENTICATED_USER_TTL_MS` is not set: never. Reuse delays
+ * an off-boarding (GHSA-3cgp-wmrg-4fqg) or a demotion (GHSA-m8xc-8pwr-89fj) by up to the window, so an install opts in.
+ */
+export const DEFAULT_AUTHENTICATED_USER_TTL_MS = 0;
 
 /**
  * The longest reuse window accepted: the window within which an off-boarded account (a deactivated or archived
@@ -25,7 +28,7 @@ export const DEFAULT_AUTHENTICATED_USER_CACHE_SIZE = 10_000;
 
 /**
  * The reuse window, from `JWT_AUTHENTICATED_USER_TTL_MS`: milliseconds, `0` / `false` / `off` to re-read on every
- * request, anything unreadable the default, and never more than {@link MAX_AUTHENTICATED_USER_TTL_MS}.
+ * request, anything unreadable `0` too, and never more than {@link MAX_AUTHENTICATED_USER_TTL_MS}.
  *
  * @param value The setting's raw value (the environment variable by default).
  * @returns The window in milliseconds; `0` disables the reuse.
@@ -42,7 +45,8 @@ export function resolveAuthenticatedUserTtlMs(
 	}
 	const parsed = Number(normalized);
 	if (!Number.isFinite(parsed) || parsed < 0) {
-		return DEFAULT_AUTHENTICATED_USER_TTL_MS;
+		// Unreadable (`-1`, `disabled`, `10s`): judge every request. A typo must never open a reuse window.
+		return 0;
 	}
 	return Math.min(Math.floor(parsed), MAX_AUTHENTICATED_USER_TTL_MS);
 }
@@ -161,12 +165,14 @@ export class AuthenticatedUserCache {
 		let pending = this.loading.get(key);
 		if (!pending) {
 			const generation = this.generation;
+			// The window runs from when the database is read, not from when a slow lookup (a saturated pool) settles.
+			const expiresAt = this.now() + this.ttlMs;
 			const lookup = load()
 				.then((outcome) => {
 					// Not kept when the cache was forgotten or cleared while the lookup ran: the context it
 					// resolved may be the one that was invalidated.
 					if (outcome && !(outcome instanceof UnauthorizedException) && generation === this.generation) {
-						this.store(key, outcome);
+						this.store(key, outcome, expiresAt);
 					}
 					return outcome;
 				})
@@ -218,11 +224,23 @@ export class AuthenticatedUserCache {
 	/**
 	 * Keeps a validated context, making room first when the cache is full: expired contexts go, then the oldest.
 	 */
-	private store(key: string, user: IAuthenticatedUser): void {
+	private store(key: string, user: IAuthenticatedUser, expiresAt: number): void {
+		const now = this.now();
+		if (expiresAt <= now) {
+			return; // the lookup outlasted the window itself
+		}
+		// Expired contexts (whole user rows, `hash` included) are let go as newer ones arrive, not only when the
+		// cache is full. Entries go in roughly in expiry order, so this stops at the first live one.
+		for (const [kept, entry] of this.entries) {
+			if (entry.expiresAt > now) {
+				break;
+			}
+			this.entries.delete(kept);
+		}
 		if (!this.entries.has(key) && this.entries.size >= this.maxEntries) {
 			this.evict();
 		}
-		this.entries.set(key, { user, expiresAt: this.now() + this.ttlMs });
+		this.entries.set(key, { user, expiresAt });
 	}
 
 	private evict(): void {
