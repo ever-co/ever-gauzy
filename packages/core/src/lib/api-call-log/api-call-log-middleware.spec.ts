@@ -124,3 +124,31 @@ describe('ApiCallLogMiddleware', () => {
 		expect(entity.requestHeaders['user-agent']).toBe('jest');
 	});
 });
+
+describe('API_CALL_LOG_ENABLED', () => {
+	const previous = process.env.API_CALL_LOG_ENABLED;
+
+	afterEach(() => {
+		if (previous === undefined) delete process.env.API_CALL_LOG_ENABLED;
+		else process.env.API_CALL_LOG_ENABLED = previous;
+	});
+
+	it('off: the call passes through untouched and nothing is recorded', async () => {
+		process.env.API_CALL_LOG_ENABLED = 'false';
+		const create = jest.fn().mockResolvedValue(undefined);
+		const middleware = new ApiCallLogMiddleware({ create } as unknown as ApiCallLogService);
+		const res = createResponse(200);
+		const originalEnd = res.end;
+		const next = jest.fn();
+
+		await middleware.use(createRequest('POST', '/api/timesheet/time-slot', { a: 1 }), res, next);
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(res.end).toBe(originalEnd);
+
+		await new Promise<void>((resolve) => {
+			res.on('finish', () => setImmediate(resolve));
+			res.end('{}');
+		});
+		expect(create).not.toHaveBeenCalled();
+	});
+});
