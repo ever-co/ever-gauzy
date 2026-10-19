@@ -253,10 +253,15 @@
 					@for (award of sortedAwards(organization); track $index) {
 					<li class="award">
 						<span class="award-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
-						<span class="award-name">{{ award.name }}</span>
-						@if (award.year) {
-						<span class="award-year">{{ award.year }}</span>
-						}
+						<span class="award-text">
+							<span class="award-name" [title]="award.name">{{ award.name }}</span>
+							@if (award.year) {
+							<span class="award-year">
+								<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+								{{ award.year }}
+							</span>
+							}
+						</span>
 					</li>
 					}
 				</ul>
@@ -268,12 +273,16 @@
 			@if (focus.length) {
 			<section class="panel">
 				<h2 class="panel-title">
-					<nb-icon icon="radio-button-on-outline" aria-hidden="true"></nb-icon>
+					<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
 					{{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}
 				</h2>
-				<ul class="chips">
+				<!-- A list, not pills: an entry can be a whole sentence, and a list wraps it cleanly. -->
+				<ul class="focus">
 					@for (item of focus; track $index) {
-					<li class="chip">{{ item }}</li>
+					<li class="focus-item">
+						<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+						<span>{{ item }}</span>
+					</li>
 					}
 				</ul>
 			</section>
@@ -309,11 +318,21 @@
 					<span class="count">{{ organization.languages.length }}</span>
 				</h2>
 				<ul class="languages">
-					@for (language of organization.languages; track $index) {
+					@for (language of sortedLanguages(organization); track $index) {
+					@let score = languageScore(language.level);
 					<li class="language">
-						<span class="language-name">{{ language.name }}</span>
-						@if (language.level) {
-						<span class="language-level">{{ language.level | replace: '_' : ' ' | titlecase }}</span>
+						<span class="language-text">
+							<span class="language-name">{{ language.name }}</span>
+							@if (language.level) {
+							<span class="language-level">{{ language.level | replace: '_' : ' ' | titlecase }}</span>
+							}
+						</span>
+						@if (score) {
+						<span class="meter" aria-hidden="true">
+							@for (step of [1, 2, 3, 4]; track step) {
+							<span class="meter-step" [class.is-on]="step <= score"></span>
+							}
+						</span>
 						}
 					</li>
 					}
