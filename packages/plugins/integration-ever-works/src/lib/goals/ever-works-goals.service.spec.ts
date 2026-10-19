@@ -715,6 +715,66 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		expect(JSON.parse(goalLink['ewOnly'])['agents']).toBeUndefined();
 	});
 
+	it('an event without the key result fields of a goal whose key results wait reads the goal (review of #11125)', async () => {
+		const { service, mock, goalsMock, keyResults, context } = setup({ entitySync: off });
+		goalsMock.addGoal('ew-org-1', { ...ewGoal });
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		const reads = () =>
+			mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		context.entitySync = {};
+		// The title is there, the metric, criteria and Definition of Done are not.
+		expect(
+			await service.apply(
+				envelope('goal.updated', { id: 'ew-goal-1', title: ewGoal['title'] }, 1) as never,
+				applyContext
+			)
+		).toMatchObject({ status: 'applied' });
+		expect(reads()).toBe(1);
+		expect(keyResults.map((k) => [k['type'], k['update']])).toEqual([
+			['Numerical', 96],
+			['True/False', 1]
+		]);
+	});
+
+	it('an event that leaves out the agents keeps the ones kept for the owner (review of #11125)', async () => {
+		const { service, mock, goalsMock, keyResults, addLink, links, context } = setup();
+		const agentGoal = { ...ewGoal, owner: { type: 'integration', id: 'key-1' }, assignedAgentId: 'ew-agent-7' };
+		goalsMock.addGoal('ew-org-1', { ...agentGoal, version: 2 });
+		const reads = () =>
+			mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		context.connection.connectedByUserId = 'u-new-admin';
+		await service.apply(envelope('goal.created', agentGoal, 1) as never, applyContext);
+		const { assignedAgentId: _left, ...withoutAgents } = agentGoal;
+		await service.apply(envelope('goal.updated', { ...withoutAgents, title: 'Renamed' }, 2) as never, applyContext);
+		const goalLink = links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
+		expect(JSON.parse(goalLink['ewOnly'])).toMatchObject({
+			keyResultsPending: 'owner',
+			agents: { assignedAgentId: 'ew-agent-7' }
+		});
+		addLink(EverWorksLinkType.AGENT, 'e-agent-7', 'ew-agent-7');
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+		expect(keyResults.map((k) => k['ownerId'])).toEqual(['e-agent-7', 'e-agent-7']);
+	});
+
+	it('a goal whose owner lookup fails never stops the sweep for the others (review of #11125)', async () => {
+		const { service, mock, goalsMock, keyResults, addLink, context } = setup();
+		const second = { ...ewGoal, id: 'ew-goal-2', title: 'Second goal' };
+		goalsMock.addGoal('ew-org-1', { ...ewGoal });
+		goalsMock.addGoal('ew-org-1', second);
+		context.connection.connectedByUserId = 'u-new-admin';
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		await service.apply(envelope('goal.created', second, 1) as never, applyContext);
+		addLink(EverWorksLinkType.MEMBER, 'e-ann', 'ew-ann');
+		const leadOf = jest
+			.spyOn(service as unknown as { leadOf: () => Promise<unknown> }, 'leadOf')
+			.mockRejectedValueOnce(new Error('lookup failed'));
+		await expect(service.sweep({ id: 'c1', tenantId: 't1' } as never)).resolves.toBeUndefined();
+		leadOf.mockRestore();
+		expect(mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-2'))).toHaveLength(1);
+		expect(keyResults.filter((k) => k['ownerId'] === 'e-ann')).toHaveLength(2);
+	});
+
 	it('off: a new Gauzy goal is not created in Ever Works (it would be made from its key results)', async () => {
 		const { service, mock, goals, keyResults } = setup({ entitySync: off });
 		goals.push(gauzyGoal());

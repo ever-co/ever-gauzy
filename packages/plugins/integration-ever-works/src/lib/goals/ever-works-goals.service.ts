@@ -176,6 +176,11 @@ const KEY_RESULT_FIELDS: ReadonlyArray<keyof KeyResultShared> = [
 	'hardDeadline'
 ];
 
+/** Whether an event carries the goal fields its key results are built from (`keyResultsOfGoal`). */
+function carriesKeyResultFields(goal: EverWorksGoal): boolean {
+	return goal.goalKind !== undefined && goal.criteria !== undefined && goal.dodCriteria !== undefined;
+}
+
 /** The outcome when the mapping's per-entity KEY_RESULT toggle is off (OQ4, review F77). */
 export const KEY_RESULTS_NOT_SYNCED =
 	'key results are not synced for this mapping (its Key Result sync setting is off)';
@@ -303,28 +308,29 @@ export class EverWorksGoalsService
 		);
 		let adminEmployee: boolean | undefined;
 		for (const link of pending) {
-			const ew = this.ewOnlyOf(link);
-			if (ew.keyResultsPending === 'owner') {
-				// The lead `applyGoal` would find (its agent, else its owner), else the connecting admin (review of #11125).
-				const lead = await this.leadOf(context, { ...ew.agents, owner: ew.owner } as EverWorksGoal, null);
-				if (!lead) {
-					adminEmployee ??= !!(await this.adminEmployeeOf(context));
-					if (!adminEmployee) continue;
-				}
-			}
+			// One goal never stops the others (its owner lookup included); it is tried again by the next sweep.
 			try {
+				const ew = this.ewOnlyOf(link);
+				if (ew.keyResultsPending === 'owner') {
+					// The lead `applyGoal` would find (its agent, else its owner), else the connecting admin (review of #11125).
+					const lead = await this.leadOf(context, { ...ew.agents, owner: ew.owner } as EverWorksGoal, null);
+					if (!lead) {
+						adminEmployee ??= !!(await this.adminEmployeeOf(context));
+						if (!adminEmployee) continue;
+					}
+				}
 				const goal = await this.client(context).request<EverWorksGoal>(
 					'GET',
 					`/goals/${encodeURIComponent(link.ewId)}`
 				);
-				// A goal turned private is unlinked by its own event.
+				// A goal turned private is unlinked by its own event; a read older than the link is never applied.
 				if (!isSyncedVisibility(goal.visibility)) continue;
+				if (link.ewVersion != null && goal.version != null && goal.version < link.ewVersion) continue;
 				await EverWorksSyncContext.run(
 					{ connectionId: context.connection.id as ID, eventId: `goal-key-results:${link.ewId}` },
 					() => this.applyGoal(context, link, { ...goal, id: link.ewId }, goal.version ?? null)
 				);
 			} catch (error) {
-				// One goal never stops the others; it is tried again by the next sweep.
 				this.logger.warn(
 					`Goal ${link.ewId}: its key results could not be applied yet (${error instanceof Error ? error.message : error}).`
 				);
@@ -399,9 +405,12 @@ export class EverWorksGoalsService
 			return { status: 'applied', message: 'the goal turned private; it is no longer synced' };
 		}
 		if (!envelope.type.startsWith('goal.')) return { status: 'skipped', message: `${envelope.type} is not synced` };
-		if ((!link || keyResultsPending) && goal.title === undefined) {
-			// A first event without the goal's content (an id-only notice), or one for a goal whose key results wait (they
-			// are built from Ever Works' goal, not from the last sync): read the goal itself.
+		if (
+			(!link && goal.title === undefined) ||
+			(keyResultsPending && (goal.title === undefined || !carriesKeyResultFields(goal)))
+		) {
+			// A first event without the goal's content (an id-only notice), or one for a goal whose key results wait that
+			// lacks what they are built from (they come from Ever Works' goal, never from the last sync): read the goal.
 			try {
 				Object.assign(
 					goal,
@@ -601,9 +610,19 @@ export class EverWorksGoalsService
 					? { extraTeams: ew.extraTeams ?? [], unmappedTeams: ew.unmappedTeams ?? [] }
 					: { extraTeams: teams.extra, unmappedTeams: teams.unmapped }),
 				keyResultsPending,
+				// An agent the event leaves out stays as kept; an explicit `null` removes it.
 				agents:
 					keyResultsPending === 'owner'
-						? { activeAgentId: goal.activeAgentId ?? null, assignedAgentId: goal.assignedAgentId ?? null }
+						? {
+								activeAgentId:
+									goal.activeAgentId !== undefined
+										? goal.activeAgentId
+										: (ew.agents?.activeAgentId ?? null),
+								assignedAgentId:
+									goal.assignedAgentId !== undefined
+										? goal.assignedAgentId
+										: (ew.agents?.assignedAgentId ?? null)
+							}
 						: null
 			},
 			'inbound'
