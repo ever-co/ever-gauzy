@@ -17,12 +17,12 @@ export enum ProjectViewPeriod {
 }
 
 /** The page's tabs, in the manner of Jira's project pages; the open one is in the URL (`?tab=`). */
-export type ProjectViewTab = 'overview' | 'board' | 'planning' | 'time' | 'activity';
+export type ProjectViewTab = 'overview' | 'board' | 'activity';
 
-const TABS: ProjectViewTab[] = ['overview', 'board', 'planning', 'time', 'activity'];
+const TABS: ProjectViewTab[] = ['overview', 'board', 'activity'];
 
 /** Tabs whose figures read over the period, and so show the period switcher. */
-const PERIOD_TABS = new Set<ProjectViewTab>(['overview', 'planning', 'time']);
+const PERIOD_TABS = new Set<ProjectViewTab>(['overview']);
 
 /**
  * A project on its own page, `/pages/organization/projects/view/:id`: what the project list's View
@@ -48,8 +48,6 @@ export class ProjectViewPageComponent implements OnInit {
 	readonly tabs: { id: ProjectViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
-		{ id: 'planning', label: 'PROJECT_VIEW.TABS.PLANNING', icon: 'activity-outline' },
-		{ id: 'time', label: 'PROJECT_VIEW.TABS.TIME', icon: 'clock-outline' },
 		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
 	];
 	tab: ProjectViewTab = 'overview';
