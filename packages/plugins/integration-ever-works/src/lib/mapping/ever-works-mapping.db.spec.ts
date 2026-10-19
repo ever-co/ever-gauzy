@@ -473,6 +473,28 @@ describe('Ever Works organization mapping on SQLite', () => {
 			}
 		});
 
+		it("the sweeps' read of every mapping on a connection reads their toggles in one query, not one per mapping (review of #11096)", async () => {
+			const first = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			as(A2);
+			const second = await mappings.create({ everWorksOrganizationId: ewOrgs[1].id });
+			await mappings.update(second.integrationTenantId, { entitySettings: [toggle(IntegrationEntity.DOCUMENT, false)] });
+			as(A);
+			const connection = (await engine())!.connection;
+			const reads = jest.spyOn(dataSource.getRepository(IntegrationEntitySetting), 'find');
+			try {
+				const found = await contexts().forConnection(connection);
+				expect(reads).toHaveBeenCalledTimes(1);
+				expect(found.map((context) => [context.integrationTenantId, context.entitySync, context.directions.docs]).sort()).toEqual(
+					[
+						[first.integrationTenantId, {}, 'both'],
+						[second.integrationTenantId, { Document: false }, 'off']
+					].sort()
+				);
+			} finally {
+				reads.mockRestore();
+			}
+		});
+
 		it('a toggle written through the platform (the entity setting row itself) takes effect too; no rows at all keeps the directions', async () => {
 			const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
 			await dataSource
