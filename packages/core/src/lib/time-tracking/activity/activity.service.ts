@@ -289,6 +289,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				if (isNotEmpty(request.projectIds)) {
 					where.projectId = { $in: request.projectIds };
 				}
+				// The requested period, as the TypeORM branch reads it (`recordedAt` between the bounds): the
+				// range was ignored here, so a one-day request listed (and paged) the activities of every day
+				if (startDate && endDate) {
+					where.recordedAt = { $gte: startDate, $lte: endDate };
+				}
 
 				const populate: any[] = [];
 				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
