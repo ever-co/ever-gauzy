@@ -59,6 +59,16 @@ body {
   z-index: 1050 !important;
 }
 
+// Nebular gives the `[nbSpinner]` loading veil `z-index: 9999`, far above the
+// overlay layer (1050 here, and ng-select's own `appendTo="body"` panels). A
+// card still loading therefore drew its veil over any dropdown open above it —
+// e.g. the header employee selector while the dashboard loads. The veil only
+// has to cover its own host's content, so it stays below the overlays.
+// `!important` beats the spinner's encapsulated `:host` rule.
+nb-spinner {
+  z-index: 1000 !important;
+}
+
 // ── Card edge ────────────────────────────────────────────────────────────────
 // The hairline ring an `nb-card` is drawn with. The value itself is registered
 // as the `card-shadow` token in both gauzy theme maps (`themes.scss`), which is
