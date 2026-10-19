@@ -67,6 +67,11 @@ import { EverWorksRequestContextUnavailableError, EverWorksTaskActor, EverWorksT
 const fromEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'ew_to_gauzy';
 const toEverWorks = (direction: EverWorksDirection | undefined) => direction === 'both' || direction === 'gauzy_to_ew';
 const lower = (value: string) => value.trim().toLowerCase();
+/**
+ * A tag name as the Ever Works label it is pushed as (cut to the label limit), lower-cased: a long Gauzy tag and the
+ * label Ever Works holds for it compare equal, so removing that label removes the tag (#11096 review).
+ */
+const labelKey = (value: string) => lower(labelsForEverWorks([value])[0] ?? value);
 const sortedIds = (values: ReadonlyArray<ID | string | null | undefined>) => [...new Set(values.filter((v): v is string => !!v))].sort();
 const setting = (context: EverWorksMappingContext, name: EverWorksSettingName) =>
 	context.mapping.settings?.find((row) => row.settingsName === name)?.settingsValue ?? '';
@@ -571,7 +576,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		/** Set fields whose Gauzy snapshot moves by Ever Works' change only (not to Gauzy's whole current set). */
 		const setSnapshots: Partial<Record<'tags' | 'teamIds' | 'memberIds' | 'watcherIds' | 'blockedBy' | 'relations', string[]>> = {};
 		if (everWorksChanged('labels')) {
-			const names = applySetChange(g.tags ?? [], prevE.labels ?? [], e.labels ?? [], lower);
+			const names = applySetChange(g.tags ?? [], prevE.labels ?? [], e.labels ?? [], labelKey);
 			if (!sameField(names, g.tags)) {
 				// The task's own tags (a team-scoped one included) stay for the names it has: only the names Ever Works
 				// added are resolved or created, so a label change never swaps a team tag for an organization copy (review F83).
@@ -584,7 +589,7 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 					return id ? [{ id }] : [];
 				}) as never;
 			}
-			setSnapshots.tags = applySetChange(prevG.tags ?? g.tags ?? [], prevE.labels ?? [], e.labels ?? [], lower).sort((a, b) => lower(a).localeCompare(lower(b)));
+			setSnapshots.tags = applySetChange(prevG.tags ?? g.tags ?? [], prevE.labels ?? [], e.labels ?? [], labelKey).sort((a, b) => lower(a).localeCompare(lower(b)));
 		}
 		let unmappedTeams = ewOnly.unmappedTeams ?? [];
 		let nextTeamIds: ID[] | null = null;
