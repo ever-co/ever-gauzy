@@ -337,6 +337,21 @@ describe('AuthenticatedUserCache', () => {
 		expect(cache.size).toBe(1);
 	});
 
+	it('lets an expired context go even when lookups settled out of start order (insertion order is not expiry order)', async () => {
+		const { cache, tick } = build({ ttlMs: 10_000 });
+		const slow = deferred<any>();
+		const a = cache.resolve({ id: 'a' }, () => slow.promise); // window t0 → t0 + 10 s
+		tick(5_000);
+		await cache.resolve({ id: 'b' }, async () => validated()); // window t0 + 5 s → t0 + 15 s, stored first
+		tick(1_000);
+		slow.resolve(validated());
+		await a; // stored after b, although it expires before it
+		expect(cache.size).toBe(2);
+		tick(5_000); // t0 + 11 s: a has expired, b has not
+		await cache.resolve({ id: 'c' }, async () => validated());
+		expect(cache.size).toBe(2); // a went, b and c stay, far below capacity
+	});
+
 	it('is off when the window is 0', async () => {
 		const { cache, load } = build({ ttlMs: 0 });
 		expect(cache.enabled).toBe(false);

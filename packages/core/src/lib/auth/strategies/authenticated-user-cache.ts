@@ -118,6 +118,8 @@ export class AuthenticatedUserCache {
 	private readonly loading = new Map<string, Promise<IAuthenticatedUser | UnauthorizedException>>();
 	/** Bumped by `forget` and `clear`: a lookup that started before is not kept when it settles. */
 	private generation = 0;
+	/** When expired entries were last swept (see `store`). */
+	private lastSweepAt = Number.NEGATIVE_INFINITY;
 
 	constructor(options: AuthenticatedUserCacheOptions = {}) {
 		const ormType = options.ormType ?? getORMType();
@@ -230,12 +232,15 @@ export class AuthenticatedUserCache {
 			return; // the lookup outlasted the window itself
 		}
 		// Expired contexts (whole user rows, `hash` included) are let go as newer ones arrive, not only when the
-		// cache is full. Entries go in roughly in expiry order, so this stops at the first live one.
-		for (const [kept, entry] of this.entries) {
-			if (entry.expiresAt > now) {
-				break;
+		// cache is full: every entry is checked (lookups settle out of start order, so insertion order is not expiry
+		// order), at most once per tenth of the window, so a busy API does not scan the map on every insert.
+		if (now - this.lastSweepAt >= Math.max(1, Math.floor(this.ttlMs / 10))) {
+			this.lastSweepAt = now;
+			for (const [kept, entry] of this.entries) {
+				if (entry.expiresAt <= now) {
+					this.entries.delete(kept);
+				}
 			}
-			this.entries.delete(kept);
 		}
 		if (!this.entries.has(key) && this.entries.size >= this.maxEntries) {
 			this.evict();
