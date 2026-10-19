@@ -87,6 +87,7 @@ import { EverWorksConnectionService } from '../connection/ever-works-connection.
 import { EverWorksNotifier } from '../connection/ever-works-notifier.service';
 import { DEFAULT_EVER_WORKS_DIRECTIONS, EVER_WORKS_IDEAS_PROJECT_NAME, EVER_WORKS_SYNCED_ENTITIES } from './ever-works-mapping.defaults';
 import { EverWorksMappingService } from './ever-works-mapping.service';
+import { EverWorksMappingContextService } from './ever-works-mapping-context.service';
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 
 jest.setTimeout(60_000);
@@ -404,6 +405,92 @@ describe('Ever Works organization mapping on SQLite', () => {
 		await connections.disconnect(connection!.id);
 		expect(await mappings.current()).toBeNull();
 		expect(await dataSource.getRepository(IntegrationTenant).findOneByOrFail({ id: view.integrationTenantId })).toMatchObject({ isActive: false });
+	});
+
+	describe('per-entity sync settings take effect (OQ4, review F77)', () => {
+		const contexts = () => new EverWorksMappingContextService(dataSource, new EverWorksScopeService(dataSource));
+		const engine = () => contexts().forOrganization(A.tenantId as never, A.organizationId as never);
+		const toggle = (entity: IntegrationEntity, sync: boolean) => ({ entity, sync });
+
+		it('a toggle set to false turns its domains off for the engine and in the view; the stored directions stay', async () => {
+			const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			const updated = await mappings.update(view.integrationTenantId, {
+				entitySettings: [
+					toggle(IntegrationEntity.ORGANIZATION_TEAM, false),
+					toggle(IntegrationEntity.TASK, false),
+					toggle(IntegrationEntity.COMMENT, false),
+					toggle(IntegrationEntity.KEY_RESULT, false)
+				]
+			});
+			// The form keeps what the admin chose; what takes effect is answered next to it.
+			expect(updated.directions).toEqual(DEFAULT_EVER_WORKS_DIRECTIONS);
+			expect(updated).toMatchObject({
+				effectiveDirections: { ...DEFAULT_EVER_WORKS_DIRECTIONS, teams: 'off', tasks: 'off', ideas: 'off' }
+			});
+			// Every engine path reads the mapping through the context: inbound, outbound, sweeps, initial sync, resync.
+			expect(await engine()).toMatchObject({
+				directions: { ...DEFAULT_EVER_WORKS_DIRECTIONS, teams: 'off', tasks: 'off', ideas: 'off' },
+				entitySync: { OrganizationTeam: false, Task: false, Comment: false, KeyResult: false }
+			});
+			const connection = (await engine())!.connection;
+			expect(await contexts().forConnection(connection)).toMatchObject([{ directions: { teams: 'off', goals: 'both' } }]);
+			expect(await contexts().forEverWorksOrganization(connection, ewOrgs[0].id)).toMatchObject({ directions: { tasks: 'off' } });
+			expect(await contexts().forRequest(view.integrationTenantId as never)).toMatchObject({ directions: { ideas: 'off' } });
+
+			// On again: the stored directions take effect again.
+			await mappings.update(view.integrationTenantId, {
+				entitySettings: [toggle(IntegrationEntity.ORGANIZATION_TEAM, true), toggle(IntegrationEntity.TASK, true)]
+			});
+			expect(await engine()).toMatchObject({ directions: { ...DEFAULT_EVER_WORKS_DIRECTIONS }, entitySync: { Comment: false, KeyResult: false } });
+		});
+
+		it('each entity turns off exactly its own domains; KEY_RESULT and COMMENT turn none off', async () => {
+			const created = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			// Every domain on first (agent mail is off by default), so each toggle shows what it turns off.
+			const view = await mappings.update(created.integrationTenantId, { directions: { agentEmail: 'ew_to_gauzy' } });
+			const stored = view.directions as Record<string, string>;
+			const expected: Array<[IntegrationEntity, string[]]> = [
+				[IntegrationEntity.EMPLOYEE, ['members']],
+				[IntegrationEntity.AGENT, ['agents']],
+				[IntegrationEntity.ORGANIZATION_TEAM, ['teams']],
+				[IntegrationEntity.PROJECT, ['works']],
+				[IntegrationEntity.STRATEGIC_INITIATIVE, ['missions']],
+				[IntegrationEntity.GOAL, ['goals']],
+				[IntegrationEntity.TASK, ['tasks', 'ideas']],
+				[IntegrationEntity.INBOX_ITEM, ['inbox', 'agentEmail']],
+				[IntegrationEntity.DOCUMENT, ['docs']],
+				[IntegrationEntity.KEY_RESULT, []],
+				[IntegrationEntity.COMMENT, []]
+			];
+			for (const [entity, domains] of expected) {
+				await mappings.update(view.integrationTenantId, { entitySettings: [toggle(entity, false)] });
+				const context = await engine();
+				const off = Object.entries((context as unknown as { directions: Record<string, string> }).directions)
+					.filter(([domain, direction]) => direction === 'off' && stored[domain] !== 'off')
+					.map(([domain]) => domain);
+				expect([entity, off.sort()]).toEqual([entity, [...domains].sort()]);
+				await mappings.update(view.integrationTenantId, { entitySettings: [toggle(entity, true)] });
+			}
+		});
+
+		it('a toggle written through the platform (the entity setting row itself) takes effect too; no rows at all keeps the directions', async () => {
+			const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+			await dataSource
+				.getRepository(IntegrationEntitySetting)
+				.update({ integrationId: view.integrationTenantId, entity: IntegrationEntity.DOCUMENT } as never, { sync: false } as never);
+			expect(await engine()).toMatchObject({ directions: { docs: 'off', tasks: 'both' } });
+			expect(await mappings.current()).toMatchObject({ effectiveDirections: { docs: 'off' }, directions: { docs: 'both' } });
+
+			// A mapping without toggle rows (made before they existed) keeps its stored directions.
+			await dataSource.query(`DELETE FROM "integration_entity_setting"`);
+			expect(await engine()).toMatchObject({ directions: DEFAULT_EVER_WORKS_DIRECTIONS });
+			expect(await mappings.current()).toMatchObject({ effectiveDirections: DEFAULT_EVER_WORKS_DIRECTIONS });
+			// Its toggles can still be set: the missing rows are created (all on) before the change is written.
+			const updated = await mappings.update(view.integrationTenantId, { entitySettings: [toggle(IntegrationEntity.AGENT, false)] });
+			expect(updated.entitySettings).toHaveLength(EVER_WORKS_SYNCED_ENTITIES.length);
+			expect(updated.entitySettings.filter((row) => !row.sync)).toEqual([{ entity: IntegrationEntity.AGENT, sync: false }]);
+			expect(await engine()).toMatchObject({ directions: { agents: 'off', docs: 'both' } });
+		});
 	});
 
 	describe('review hardening (#10774)', () => {

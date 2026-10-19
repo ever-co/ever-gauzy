@@ -33,6 +33,8 @@
 		"mailgun",
 		"sigv",
 		"tablist",
+		"bytewise",
+		"callouts",
 		"svgs",
 		"subuser",
 		"charsets",
@@ -1595,7 +1597,9 @@
 		"keepalive",
 		"Brotli",
 		"sigv",
-		"tablist"
+		"tablist",
+		"bytewise",
+		"callouts"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

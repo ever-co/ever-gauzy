@@ -43,6 +43,7 @@ import {
 	EverWorksVisibilityChange,
 	everWorksSideOf,
 	gauzyWins,
+	isCutTitleCopy,
 	isoOrNull,
 	labelsForEverWorks,
 	linkedIssueRowsFor,
@@ -379,6 +380,19 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (!gauzyTask || gauzyTask.organizationId !== context.organizationId) return null;
 		const existing = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, gauzyTask.id as ID);
 		if (existing) return existing.ewId === task.id ? existing : null;
+		if (!toEverWorks(context.directions.tasks)) {
+			// Tasks sync one way from Ever Works: no push sends the Gauzy values, so linking it as below would leave this
+			// change (and every value Ever Works has) out of Gauzy, and its delivery skipped as applied (#11096 review).
+			// It is reconciled inbound instead: linked with the Gauzy side as it is, no version yet (a failed apply is
+			// retried), and the update that follows applies Ever Works' values. Gauzy's sets, parent and dates count as Ever
+			// Works' previous ones, so what Ever Works does not have is removed too, not only what it has added (#11108 review).
+			// A title Ever Works still has as the cut copy of the full title in its description is Gauzy's own: Gauzy's
+			// title, renamed since or not, is never overwritten by it (#11108 review).
+			const g = await this.gauzySide(context, gauzyTask);
+			const e = { ...(await this.everWorksViewOf(context, g)), ...(isCutTitleCopy(task.title, task.description) ? { title: task.title } : {}) };
+			await this.record(context, gauzyTask.id as ID, task, null, { g, e }, 'inbound', {});
+			return this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, gauzyTask.id as ID);
+		}
 		// Gauzy created it, and what it was created with is not known: the transition or a set may not have run, and
 		// Ever Works keeps a cut title and cut labels. So nothing of Ever Works' copy is written into Gauzy: the pair is
 		// linked with no Gauzy side, and the push queued here sends every Gauzy value that differs from Ever Works
@@ -386,6 +400,42 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		await this.record(context, gauzyTask.id as ID, task, version ?? task.version ?? null, { g: {}, e: everWorksSideOf(task) }, 'inbound', {});
 		await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType: EverWorksLinkType.TASK, gauzyId: gauzyTask.id as ID, op: 'upsert' });
 		return 'adopted';
+	}
+
+	/**
+	 * A Gauzy task's sets, parent and dates as Ever Works would hold them (Ever Works ids, labels, minutes). A member Ever
+	 * Works cannot hold (a team or person not linked, a task not in Ever Works) is left out, and such a parent counts as
+	 * none, so neither is ever removed (#11108 review).
+	 */
+	private async everWorksViewOf(context: EverWorksMappingContext, g: TaskGauzySide): Promise<TaskEverWorksSide> {
+		const ewIdOf = async (type: EverWorksLinkType, id: string): Promise<string | null> => {
+			const link = await this.links.byGauzy(context.integrationTenantId, type, id as ID);
+			return link && link.state !== EverWorksLinkState.UNLINKED ? link.ewId : null;
+		};
+		const ewIds = async (type: EverWorksLinkType, ids: ReadonlyArray<string> | undefined) => sortedIds(await Promise.all((ids ?? []).map((id) => ewIdOf(type, id))));
+		const assignees: string[] = [];
+		for (const employeeId of g.memberIds ?? []) {
+			const ref = await this.principalFor(context, employeeId as ID);
+			if (ref) assignees.push(principalKey(ref));
+		}
+		const relations: string[] = [];
+		for (const key of g.relations ?? []) {
+			const edge = edgeOf(key);
+			const other = edge ? await ewIdOf(EverWorksLinkType.TASK, edge.id) : null;
+			if (edge && other) relations.push(`${edge.kind}:${other}`);
+		}
+		return {
+			parentTaskId: g.parentId ? await ewIdOf(EverWorksLinkType.TASK, g.parentId) : null,
+			labels: labelsForEverWorks(g.tags ?? []),
+			teamIds: await ewIds(EverWorksLinkType.TEAM, g.teamIds),
+			assignees: assignees.sort(),
+			watchers: await ewIds(EverWorksLinkType.MEMBER, g.watcherIds),
+			blockedBy: await ewIds(EverWorksLinkType.TASK, g.blockedBy),
+			relations: relations.sort(),
+			dueAt: g.dueDate ?? null,
+			startAt: g.startDate ?? null,
+			estimateMinutes: estimateMinutesFor(g.estimate)
+		};
 	}
 
 	private async createFromEverWorks(

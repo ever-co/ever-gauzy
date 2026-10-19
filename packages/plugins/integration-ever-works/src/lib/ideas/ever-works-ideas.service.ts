@@ -675,26 +675,30 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		} catch (error) {
 			if (!(error instanceof EverWorksApiError && error.status === 422)) throw error;
 			const kept = String((error.details?.['status'] as string | undefined) ?? before.status ?? '');
-			if (kept === (action === 'dismiss' ? 'dismissed' : 'pending') && fromEverWorks(context.directions.ideas)) {
+			if (kept === (action === 'dismiss' ? 'dismissed' : 'pending')) {
 				// The idea is where this move takes it already: an earlier move went through but its answer was not applied
 				// (a failure after it). Ever Works' idea as it is now is applied (the status stays), and the link moves on
 				// with it, instead of refusing the same move at every push (#11081 review).
 				const remote = await client.request<EverWorksIdea>('GET', `/ideas/${encodeURIComponent(link.ewId)}`);
-				const reconciled = await EverWorksSyncContext.run(
-					{ connectionId: context.connection.id as ID, eventId: `idea-${action}:${link.ewId}` },
-					() =>
-						this.applyIdea(
-							context,
-							link,
-							{ ...remote, id: link.ewId },
-							remote.version ?? null,
-							(context.connection.connectedByUserId as ID) ?? null,
-							new Set(['status'] as const)
-						)
-				);
-				if (reconciled.status === 'applied')
-					return this.links.byEw(context.integrationTenantId, EverWorksLinkType.IDEA_TASK, link.ewId);
-				// No task left to take it (the task was deleted): the move is recorded on the link, as a move is.
+				// Ideas syncing Gauzy → Ever Works only take nothing into Gauzy: the move is only recorded below, else every
+				// later push sends it again and logs another refusal (#11096 review).
+				if (fromEverWorks(context.directions.ideas)) {
+					const reconciled = await EverWorksSyncContext.run(
+						{ connectionId: context.connection.id as ID, eventId: `idea-${action}:${link.ewId}` },
+						() =>
+							this.applyIdea(
+								context,
+								link,
+								{ ...remote, id: link.ewId },
+								remote.version ?? null,
+								(context.connection.connectedByUserId as ID) ?? null,
+								new Set(['status'] as const)
+							)
+					);
+					if (reconciled.status === 'applied')
+						return this.links.byEw(context.integrationTenantId, EverWorksLinkType.IDEA_TASK, link.ewId);
+				}
+				// One-way, or no task left to take it (the task was deleted): the move is recorded on the link, as a move is.
 				return this.record(
 					context,
 					link.gauzyId as ID,

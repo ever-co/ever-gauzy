@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EmployeeKindEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { GlobalStats } from './stats.types';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationService } from '../organization/organization.service';
@@ -11,8 +12,45 @@ import { PaymentService } from '../payment/payment.service';
 import { StatisticService } from '../time-tracking/statistic/statistic.service';
 import { OrganizationTeamService } from '../organization-team/organization-team.service';
 
+/** How long (ms) the global statistics are reused when `STATS_GLOBAL_TTL_MS` is not set. */
+export const DEFAULT_GLOBAL_STATS_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * The reuse window of the global statistics, from `STATS_GLOBAL_TTL_MS`: milliseconds, `0` / `false` / `off` to
+ * compute them on every call, anything unreadable the default.
+ *
+ * @param value The setting's raw value (the environment variable by default).
+ * @returns The window in milliseconds; `0` disables the reuse.
+ */
+export function resolveGlobalStatsTtlMs(value: string | undefined = process.env.STATS_GLOBAL_TTL_MS): number {
+	if (value === undefined || value === null || value.trim() === '') {
+		return DEFAULT_GLOBAL_STATS_TTL_MS;
+	}
+	const normalized = value.trim().toLowerCase();
+	if (normalized === 'false' || normalized === 'off' || normalized === 'no') {
+		return 0;
+	}
+	const parsed = Number(normalized);
+	if (!Number.isFinite(parsed) || parsed < 0) {
+		return DEFAULT_GLOBAL_STATS_TTL_MS;
+	}
+	return Math.floor(parsed);
+}
+
 @Injectable()
 export class StatsService {
+	private readonly logger = new Logger(StatsService.name);
+
+	/**
+	 * The reuse window. `/stats/global` is public (behind its feature flag) and answers nine aggregate statements
+	 * over the whole database — every tenant's employees, tasks, organizations, teams, invoices, payments, users
+	 * and the sum of every time log ever (1.2 s on production). The figures move slowly; one computation per
+	 * window serves every caller, and concurrent callers share the computation in flight.
+	 */
+	private readonly ttlMs = resolveGlobalStatsTtlMs();
+	private cached?: { stats: GlobalStats; expiresAt: number };
+	private computing?: Promise<GlobalStats>;
+
 	constructor(
 		readonly _employeeService: EmployeeService,
 		readonly _organizationService: OrganizationService,
@@ -35,6 +73,33 @@ export class StatsService {
 	 * @throws {Error} - Throws an error if there is an issue fetching any of the statistics.
 	 */
 	async getGlobalStats(): Promise<GlobalStats> {
+		// A request carrying a user narrows the tenant-aware counts to its tenant (over GraphQL a sibling field's
+		// authentication can attach one): such figures are that caller's own and are never shared.
+		if (this.ttlMs <= 0 || RequestContext.currentUser()) {
+			return this.computeGlobalStats();
+		}
+		if (this.cached && this.cached.expiresAt > Date.now()) {
+			return this.cached.stats;
+		}
+		if (!this.computing) {
+			this.computing = this.computeGlobalStats()
+				.then((stats) => {
+					this.cached = { stats, expiresAt: Date.now() + this.ttlMs };
+					return stats;
+				})
+				.finally(() => {
+					this.computing = undefined;
+				});
+		}
+		return this.computing;
+	}
+
+	/**
+	 * Computes the global statistics from the database (see {@link getGlobalStats} for the reuse around it).
+	 *
+	 * @returns The global statistics.
+	 */
+	private async computeGlobalStats(): Promise<GlobalStats> {
 		try {
 			// Fetch statistics from different services
 			const [
@@ -73,8 +138,8 @@ export class StatsService {
 			};
 		} catch (error) {
 			// Log the error and throw a custom error message
-			console.error('Error fetching global stats:', error);
-			throw new Error(`Failed to retrieve global statistics: ${error.message}`);
+			this.logger.error(`Error fetching global stats: ${error?.message ?? error}`, error?.stack);
+			throw new Error(`Failed to retrieve global statistics: ${error?.message ?? error}`);
 		}
 	}
 }

@@ -75,6 +75,22 @@ describe('EverWorksDirectionsComponent', () => {
 		expect(el.querySelector('[data-test="directions-saved"]')).toBeNull();
 	});
 
+	it('marks a domain whose record type sync setting is off as not synced, whatever its direction (OQ4)', () => {
+		const { el } = render({
+			...MAPPING,
+			directions: { ...(MAPPING.directions as Record<string, string>), docs: 'off' },
+			effectiveDirections: { ...(MAPPING.directions as Record<string, string>), teams: 'off', docs: 'off' }
+		} as EverWorksMapping);
+		expect(el.querySelector('[data-test="direction-off-teams"]')).not.toBeNull();
+		// Off by its own direction: nothing to explain. Without `effectiveDirections` (an older API): no hint.
+		expect(el.querySelector('[data-test="direction-off-docs"]')).toBeNull();
+		expect(el.querySelector('[data-test="direction-off-tasks"]')).toBeNull();
+	});
+
+	it('shows no such hint for a mapping answered without effectiveDirections (an older API)', () => {
+		expect(render().el.querySelector('[data-test^="direction-off-"]')).toBeNull();
+	});
+
 	it('shows the API refusal', () => {
 		api.updateMapping.mockReturnValue(throwError(() => ({ status: 400, error: { message: 'teams syncs both, ew_to_gauzy, gauzy_to_ew, off; not x.' } })));
 		const { component, fixture, el } = render();

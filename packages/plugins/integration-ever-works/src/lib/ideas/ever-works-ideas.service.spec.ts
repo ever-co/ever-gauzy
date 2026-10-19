@@ -587,6 +587,33 @@ describe('EverWorksIdeasService — G → EW', () => {
 		expect(await service.push(change('task-g'), pushContext)).toMatchObject({ status: 'skipped' });
 	});
 
+	it('ideas syncing Gauzy → Ever Works only record that dismiss too, taking nothing into Gauzy (#11096 review)', async () => {
+		const { service, mock, ideas, tasks, links, log, commandBus } = setup({ ideas: 'gauzy_to_ew' });
+		tasks.push(ideaTask({ projectId: 'p-1' }));
+		await service.push(change('task-g'), pushContext);
+		const row = ideas.ideas.get(links[0]['ewId']) as Row;
+		// An earlier dismiss went through, its answer never recorded; Ever Works also renamed the idea (not synced in).
+		Object.assign(row, { status: 'dismissed', title: 'Portal (EW)', version: Number(row['version']) + 1 });
+		const refused = {
+			method: 'POST',
+			path: /\/dismiss$/,
+			status: 422,
+			body: { error: { code: 'domain_rule', message: 'Only a pending idea is dismissed.', details: { status: 'dismissed' } } }
+		};
+		mock.fail({ ...refused, times: 2 });
+		commandBus.execute.mockClear();
+		tasks[0]['status'] = 'cancelled';
+		expect(await service.push(change('task-g'), pushContext)).toMatchObject({ status: 'pushed' });
+		expect(commandBus.execute).not.toHaveBeenCalled();
+		expect(tasks[0]).toMatchObject({ title: 'Portal', status: 'cancelled' });
+		expect(links[0]['ewVersion']).toBe(row['version']);
+		expect(JSON.parse(links[0]['snapshot'])).toMatchObject({ status: 'dismissed' });
+		expect(log.write).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'dismiss_refused' }));
+		// The next push does not send the dismiss again.
+		expect(await service.push(change('task-g'), pushContext)).toMatchObject({ status: 'skipped' });
+		expect(mock.requests.filter((r) => r.method === 'POST' && /\/dismiss$/.test(r.path))).toHaveLength(1);
+	});
+
 	it('Ever Works teams Gauzy cannot map are kept when Gauzy edits the idea', async () => {
 		const { service, ideas, tasks, links, mock } = setup();
 		tasks.push(ideaTask());
