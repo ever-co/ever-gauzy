@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, IsNull } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import {
@@ -240,11 +240,12 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 			// Update the task status to mark it as default
 			taskStatus.isDefault = true;
 
-			// Define options to find task statuses to update
+			// Define options to find task statuses to update. A scope the input does not supply is pinned to NULL (as
+			// fetchAll reads it): left out, marking an organization's default cleared its projects' and teams' defaults.
 			const findOptions: FindOptionsWhere<TaskStatus> = {
-				...(organizationId ? { organizationId } : {}),
-				...(organizationTeamId ? { organizationTeamId } : {}),
-				...(projectId ? { projectId } : {}),
+				organizationId: organizationId || IsNull(),
+				organizationTeamId: organizationTeamId || IsNull(),
+				projectId: projectId || IsNull(),
 				tenantId,
 				isSystem: false
 			};
