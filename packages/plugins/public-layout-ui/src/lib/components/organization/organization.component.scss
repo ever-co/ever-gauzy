@@ -102,7 +102,7 @@ nb-card-body.profile-body {
 }
 
 .logo-initials {
-	font-size: 1.75rem;
+	font-size: 1.5rem;
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	color: var(--gauzy-text-color-1);
@@ -176,9 +176,9 @@ nb-card-body.profile-body {
 
 .name {
 	margin: 0;
-	font-size: 1.25rem;
+	font-size: 1.125rem;
 	font-weight: 600;
-	line-height: 1.75rem;
+	line-height: 1.5rem;
 	letter-spacing: -0.01em;
 	color: var(--gauzy-text-color-1);
 	overflow-wrap: anywhere;
@@ -186,8 +186,8 @@ nb-card-body.profile-body {
 
 .banner {
 	margin: 0;
-	font-size: 0.875rem;
-	line-height: 1.375rem;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
 	color: var(--gauzy-text-color-2);
 	overflow-wrap: anywhere;
 }
@@ -198,7 +198,7 @@ nb-card-body.profile-body {
 	flex-wrap: wrap;
 	gap: $gap-xs $gap-lg;
 	margin-top: $gap-xs;
-	font-size: 0.8125rem;
+	font-size: 0.75rem;
 	line-height: 1.25rem;
 	color: var(--gauzy-text-color-2);
 }
@@ -264,9 +264,9 @@ nb-card-body.profile-body {
 
 	dd {
 		margin: 0;
-		font-size: 0.9375rem;
+		font-size: 0.875rem;
 		font-weight: 600;
-		line-height: 1.375rem;
+		line-height: 1.25rem;
 		color: var(--gauzy-text-color-1);
 		font-variant-numeric: tabular-nums;
 		overflow-wrap: anywhere;
@@ -303,7 +303,7 @@ nb-card-body.profile-body {
 	padding: $gap-sm 0 $gap-md;
 	border: 0;
 	background: none;
-	font-size: 0.875rem;
+	font-size: 0.8125rem;
 	font-weight: 500;
 	line-height: 1.25rem;
 	color: var(--gauzy-text-color-2);
@@ -399,23 +399,23 @@ nb-card-body.profile-body {
 	align-items: center;
 	gap: $gap-sm;
 	margin: 0 0 $gap-md;
-	font-size: 0.9375rem;
+	font-size: 0.875rem;
 	font-weight: 600;
-	line-height: 1.375rem;
+	line-height: 1.25rem;
 	color: var(--gauzy-text-color-1);
 
 	nb-icon {
-		width: 1.125rem;
-		height: 1.125rem;
-		font-size: 1.125rem;
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
 		color: var(--gauzy-text-color-2);
 	}
 }
 
 .about {
 	margin: 0;
-	font-size: 0.875rem;
-	line-height: 1.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.375rem;
 	color: var(--gauzy-text-color-1);
 	white-space: pre-line;
 	overflow-wrap: anywhere;
@@ -423,8 +423,8 @@ nb-card-body.profile-body {
 
 // Editor-authored HTML: tame the editor's margins to the panel's rhythm.
 .rich-text {
-	font-size: 0.875rem;
-	line-height: 1.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.375rem;
 	color: var(--gauzy-text-color-1);
 	overflow-wrap: anywhere;
 
@@ -441,6 +441,20 @@ nb-card-body.profile-body {
 		ul,
 		ol {
 			margin: 0 0 $gap-sm;
+		}
+
+		// Editor headings stay within the panel's scale instead of the browser's h1–h6.
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6 {
+			margin: $gap-md 0 $gap-xs;
+			font-size: 0.875rem;
+			font-weight: 600;
+			line-height: 1.25rem;
+			color: var(--gauzy-text-color-1);
 		}
 
 		a {
@@ -475,7 +489,7 @@ nb-card-body.profile-body {
 
 	p {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: 0.8125rem;
 		color: var(--gauzy-text-color-2);
 	}
 }
@@ -507,7 +521,7 @@ nb-card-body.profile-body {
 	padding: 0.25rem 0.75rem;
 	border-radius: 999px;
 	background-color: var(--gauzy-hover-tint);
-	font-size: 0.8125rem;
+	font-size: 0.75rem;
 	line-height: 1.25rem;
 	color: var(--gauzy-text-color-1);
 }
@@ -526,7 +540,38 @@ nb-card-body.profile-body {
 	background-color: var(--gauzy-text-color-2);
 }
 
-/* Languages: name on the left, level on the right */
+/* Client focus: a checked list, so an entry of any length wraps cleanly */
+
+.focus {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-sm;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.focus-item {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-sm;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+
+	// Sits on the first line of text, however many lines the entry runs to.
+	nb-icon {
+		flex: 0 0 auto;
+		width: 1rem;
+		height: 1rem;
+		margin-top: 0.125rem;
+		font-size: 1rem;
+		color: nb-theme(color-primary-500);
+	}
+}
+
+/* Languages: name over level on the left, a proficiency meter on the right */
 
 .languages {
 	display: flex;
@@ -538,35 +583,68 @@ nb-card-body.profile-body {
 
 .language {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	justify-content: space-between;
 	gap: $gap-md;
-	padding: 0.4375rem 0;
-	font-size: 0.8125rem;
-	line-height: 1.25rem;
+	padding: $gap-sm 0;
 
 	& + & {
 		border-top: $hairline;
 	}
+
+	&:first-child {
+		padding-top: 0;
+	}
+
+	&:last-child {
+		padding-bottom: 0;
+	}
+}
+
+.language-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
 }
 
 .language-name {
-	min-width: 0;
+	font-size: 0.8125rem;
 	font-weight: 500;
+	line-height: 1.25rem;
 	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
 }
 
 .language-level {
-	flex: 0 0 auto;
-	font-size: 0.75rem;
+	font-size: 0.6875rem;
+	line-height: 1rem;
 	color: var(--gauzy-text-color-2);
 }
 
-/* Awards */
+// Four short bars, filled in the primary colour up to the level.
+.meter {
+	flex: 0 0 auto;
+	display: inline-flex;
+	gap: 0.1875rem;
+}
+
+.meter-step {
+	width: 0.875rem;
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-border-default-color);
+
+	&.is-on {
+		background-color: nb-theme(color-primary-500);
+	}
+}
+
+/* Awards: a grid of small cards, newest first */
 
 .awards {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: $gap-sm;
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -576,11 +654,10 @@ nb-card-body.profile-body {
 	display: flex;
 	align-items: center;
 	gap: $gap-md;
-	padding: $gap-sm 0;
-
-	& + & {
-		border-top: $hairline;
-	}
+	min-width: 0;
+	padding: $gap-md;
+	border-radius: $radius;
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
 }
 
 .award-icon {
@@ -588,32 +665,53 @@ nb-card-body.profile-body {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 2rem;
-	height: 2rem;
-	border-radius: 50%;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: $radius;
 	background-color: nb-theme(color-primary-transparent-100);
 	color: nb-theme(color-primary-500);
 
 	nb-icon {
-		width: 1rem;
-		height: 1rem;
-		font-size: 1rem;
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
 	}
 }
 
-.award-name {
-	flex: 1 1 auto;
+.award-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
 	min-width: 0;
-	font-size: 0.875rem;
+}
+
+// Two lines at most; the full name is in the title tooltip.
+.award-name {
+	display: -webkit-box;
+	font-size: 0.8125rem;
+	font-weight: 500;
 	line-height: 1.25rem;
 	color: var(--gauzy-text-color-1);
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
 }
 
 .award-year {
-	flex: 0 0 auto;
-	font-size: 0.8125rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
 	color: var(--gauzy-text-color-2);
 	font-variant-numeric: tabular-nums;
+
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
 }
 
 /* ── Employees ───────────────────────────────────────────────────────────── */
@@ -668,7 +766,7 @@ nb-card-body.profile-body {
 .person-avatar {
 	width: 2.75rem;
 	height: 2.75rem;
-	font-size: 0.9375rem;
+	font-size: 0.875rem;
 }
 
 .person-avatar--anonymous {
@@ -689,7 +787,7 @@ nb-card-body.profile-body {
 }
 
 .person-name {
-	font-size: 0.9375rem;
+	font-size: 0.875rem;
 	font-weight: 600;
 	line-height: 1.375rem;
 	color: var(--gauzy-text-color-1);
@@ -705,8 +803,8 @@ a.person-name:hover {
 }
 
 .person-position {
-	font-size: 0.8125rem;
-	line-height: 1.25rem;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
 	color: var(--gauzy-text-color-2);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -715,7 +813,7 @@ a.person-name:hover {
 
 .person-rate {
 	flex: 0 0 auto;
-	font-size: 0.9375rem;
+	font-size: 0.875rem;
 	font-weight: 600;
 	color: var(--gauzy-text-color-1);
 	font-variant-numeric: tabular-nums;
@@ -725,8 +823,8 @@ a.person-name:hover {
 .person-bio {
 	display: -webkit-box;
 	margin: 0;
-	font-size: 0.8125rem;
-	line-height: 1.375rem;
+	font-size: 0.75rem;
+	line-height: 1.25rem;
 	color: var(--gauzy-text-color-2);
 	overflow: hidden;
 	-webkit-box-orient: vertical;
@@ -790,7 +888,7 @@ a.person-name:hover {
 .client-name {
 	flex: 1 1 auto;
 	min-width: 0;
-	font-size: 0.875rem;
+	font-size: 0.8125rem;
 	font-weight: 500;
 	color: var(--gauzy-text-color-1);
 	overflow-wrap: anywhere;
@@ -799,7 +897,7 @@ a.person-name:hover {
 .client-email {
 	flex: 0 1 auto;
 	min-width: 0;
-	font-size: 0.8125rem;
+	font-size: 0.75rem;
 	color: var(--gauzy-text-color-2);
 }
 
