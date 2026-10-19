@@ -68,7 +68,9 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 
 				// Decode JWT token
 				const decodedToken: any = jwt.decode(token);
-				const tenantId: string | undefined = decodedToken?.tenantId;
+				// Unverified token: only a string names a tenant (an object would reach `where` and the cache key as-is).
+				const tenantId: string | undefined =
+					typeof decodedToken?.tenantId === 'string' ? decodedToken.tenantId : undefined;
 
 				let tenantSettings: Record<string, any> = {};
 
