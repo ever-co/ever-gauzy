@@ -175,7 +175,7 @@
 				}
 				@case ('employees') {
 				{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
-				@if (isCount(employeeCount)) {
+				@if (organization.show_employees_count && isCount(employeeCount)) {
 				<span class="count">{{ employeeCount }}</span>
 				}
 				}
@@ -184,7 +184,7 @@
 				}
 				@case ('clients') {
 				{{ 'ORGANIZATIONS_PAGE.CLIENTS' | translate }}
-				@if (isCount(clientCount)) {
+				@if (organization.show_clients_count && isCount(clientCount)) {
 				<span class="count">{{ clientCount }}</span>
 				}
 				}
@@ -204,7 +204,10 @@
 			</section>
 			}
 			@case ('clients') {
+			<!-- Only an organization that publishes its clients renders them. -->
+			@if (organization.show_clients) {
 			<ng-container [ngTemplateOutlet]="clientTemplate" [ngTemplateOutletContext]="{ $implicit: canEdit }"></ng-container>
+			}
 			}
 			@default {
 			<ng-container [ngTemplateOutlet]="profileTemplate" [ngTemplateOutletContext]="{ $implicit: organization }"></ng-container>
@@ -345,8 +348,18 @@
 
 <!-- ── Employees: one card per public profile ──────────────────────────── -->
 <ng-template #employeeTemplate let-organization>
-	@if (employees$ | async; as employees) {
-	@if (employees.length) {
+	@if (employees$ | async; as state) {
+	@let employees = state.items;
+	@if (state.failed) {
+	<section class="panel empty-state empty-state--error" role="alert">
+		<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'PUBLIC_PAGE.EMPLOYEES_LOAD_FAILED' | translate }}</p>
+		<button type="button" nbButton status="basic" size="small" (click)="getEmployeesAndEmployeeCounts()">
+			<nb-icon icon="refresh-outline"></nb-icon>
+			{{ 'BUTTONS.RETRY' | translate }}
+		</button>
+	</section>
+	} @else if (employees.length) {
 	<ul class="people">
 		@for (employee of employees; track employee.id) {
 		<li class="person panel">
@@ -435,8 +448,18 @@
 
 <!-- ── Clients ───────────────────────────────────────────────────────────── -->
 <ng-template #clientTemplate let-canEdit>
-	@if (clients$ | async; as clients) {
-	@if (clients.length) {
+	@if (clients$ | async; as state) {
+	@let clients = state.items;
+	@if (state.failed) {
+	<section class="panel empty-state empty-state--error" role="alert">
+		<nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'PUBLIC_PAGE.CLIENTS_LOAD_FAILED' | translate }}</p>
+		<button type="button" nbButton status="basic" size="small" (click)="getClientsAndClientCounts()">
+			<nb-icon icon="refresh-outline"></nb-icon>
+			{{ 'BUTTONS.RETRY' | translate }}
+		</button>
+	</section>
+	} @else if (clients.length) {
 	<section class="panel panel--flush">
 		<ul class="clients">
 			@for (client of clients; track client.id) {
