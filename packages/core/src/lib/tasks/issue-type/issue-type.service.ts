@@ -253,12 +253,20 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 			// Update the issue type to mark it as default
 			issueType.isDefault = true;
 
+			// The scope of the marked row, completed from the row itself: a request naming only its project (as GraphQL
+			// allows) would otherwise pin the organization to NULL and match none of the project's rows
+			const scope = {
+				organizationId: organizationId || issueType.organizationId,
+				organizationTeamId: organizationTeamId || issueType.organizationTeamId,
+				projectId: projectId || issueType.projectId
+			};
+
 			// Define options to find issue types to update. A scope the input does not supply is pinned to NULL (as
 			// fetchAll reads it): left out, marking an organization's default cleared its projects' and teams' defaults.
 			const findOptions: FindOptionsWhere<IssueType> = {
-				organizationId: organizationId || IsNull(),
-				organizationTeamId: organizationTeamId || IsNull(),
-				projectId: projectId || IsNull(),
+				organizationId: scope.organizationId || IsNull(),
+				organizationTeamId: scope.organizationTeamId || IsNull(),
+				projectId: scope.projectId || IsNull(),
 				tenantId,
 				isSystem: false
 			};
@@ -270,12 +278,7 @@ export class IssueTypeService extends TaskMetadataService<IssueType> {
 			await super.save(issueType);
 
 			// Fetch and return all issue types based on the specified parameters
-			const { items = [] } = await super.fetchAll({
-				tenantId,
-				organizationId,
-				organizationTeamId,
-				projectId
-			});
+			const { items = [] } = await super.fetchAll({ tenantId, ...scope });
 
 			return items;
 		} catch (error) {

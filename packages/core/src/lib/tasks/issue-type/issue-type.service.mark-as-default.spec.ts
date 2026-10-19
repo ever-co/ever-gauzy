@@ -76,4 +76,26 @@ describe('IssueTypeService.markAsDefault — the cleared scope', () => {
 			{ isDefault: false }
 		);
 	});
+
+	it("completes a project-only request with the row's own organization", async () => {
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'item-1',
+			organizationId: fixture.organizationId,
+			projectId: 'project-1',
+			organizationTeamId: null
+		} as never);
+
+		await service.markAsDefault('item-1', { projectId: 'project-1' } as never);
+
+		expect(update).toHaveBeenCalledWith(
+			{
+				organizationId: fixture.organizationId,
+				organizationTeamId: IsNull(),
+				projectId: 'project-1',
+				tenantId: fixture.tenantId,
+				isSystem: false
+			},
+			{ isDefault: false }
+		);
+	});
 });
