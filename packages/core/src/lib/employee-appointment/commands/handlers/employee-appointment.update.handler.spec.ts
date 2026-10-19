@@ -43,6 +43,14 @@ describe('EmployeeAppointmentUpdateHandler false and zero values', () => {
 		expect(employeeAppointmentService.update.mock.calls[0][1]).toEqual({ bufferTimeInMins: 10, breakTimeInMins: 5 });
 	});
 
+	it('keeps explicit null minutes null instead of coercing them to 0', async () => {
+		const { employeeAppointmentService, update } = setup();
+
+		await update({ bufferTimeInMins: null, breakTimeInMins: null });
+
+		expect(employeeAppointmentService.update.mock.calls[0][1]).toEqual({ bufferTimeInMins: null, breakTimeInMins: null });
+	});
+
 	it('leaves the fields out of the request untouched', async () => {
 		const { employeeAppointmentService, update } = setup();
 
