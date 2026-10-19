@@ -8,6 +8,7 @@ import { IOrganization } from '@gauzy/contracts';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 import { RecordViewPageState, recordViewPageStateOf } from '@gauzy/ui-core/shared';
 import { IProjectQuickLookCard } from '../project-quick-look/project-quick-look.component';
+import { initialsOf } from './project-view.utils';
 
 /** The windows the page's figures can be read over — the same as the team and employee pages. */
 export enum ProjectViewPeriod {
@@ -141,7 +142,7 @@ export class ProjectViewPageComponent implements OnInit {
 				id: project.id,
 				name: project.name,
 				imageUrl: project.imageUrl || project.image?.fullUrl,
-				initials: ProjectViewPageComponent.initialsOf(project.name)
+				initials: initialsOf(project.name)
 			};
 			this.state = 'ready';
 		} catch (error) {
@@ -177,14 +178,5 @@ export class ProjectViewPageComponent implements OnInit {
 			default:
 				return { start: moment().startOf('week'), end: moment().endOf('week') };
 		}
-	}
-
-	private static initialsOf(name: string): string {
-		return (name || '')
-			.split(/\s+/)
-			.filter(Boolean)
-			.slice(0, 2)
-			.map((part) => part[0].toUpperCase())
-			.join('');
 	}
 }

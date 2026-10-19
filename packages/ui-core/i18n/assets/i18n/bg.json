@@ -6907,10 +6907,12 @@
 		"TIMELINE": "Времева линия",
 		"NO_DATES": "Няма зададени дати",
 		"STARTS_IN": "Започва след {{ count }} дни",
+		"STARTS_TOMORROW": "Започва утре",
 		"FINISHED": "Завършен",
 		"TEAM": "Екип",
 		"NO_MEMBERS": "Все още няма членове в този проект",
 		"MODULES": "Модули",
+		"MODULE_TASK": "1 задача",
 		"MODULE_TASKS": "{{ count }} задачи"
 	},
 	"PROJECT_VIEW": {
@@ -6924,6 +6926,7 @@
 		"ACTIVITY": "Активност",
 		"ACTIVITY_CAPTION": "Последни промени по проекта и задачите му",
 		"NO_ACTIVITY": "Все още няма активност",
+		"ACTIVITY_PARTIAL": "Част от активността не можа да се зареди, така че списъкът може да е непълен.",
 		"ACTIVITY_CREATED": "{{ actor }} създаде",
 		"ACTIVITY_UPDATED": "{{ actor }} обнови",
 		"ACTIVITY_DELETED": "{{ actor }} изтри",

@@ -6858,10 +6858,12 @@
 		"TIMELINE": "Calendrier",
 		"NO_DATES": "Aucune date définie",
 		"STARTS_IN": "Commence dans {{ count }} jours",
+		"STARTS_TOMORROW": "Commence demain",
 		"FINISHED": "Terminé",
 		"TEAM": "Équipe",
 		"NO_MEMBERS": "Aucun membre dans ce projet pour l'instant",
 		"MODULES": "Modules",
+		"MODULE_TASK": "1 tâche",
 		"MODULE_TASKS": "{{ count }} tâches"
 	},
 	"PROJECT_VIEW": {
@@ -6875,6 +6877,7 @@
 		"ACTIVITY": "Activité",
 		"ACTIVITY_CAPTION": "Changements récents du projet et de ses tâches",
 		"NO_ACTIVITY": "Aucune activité pour l'instant",
+		"ACTIVITY_PARTIAL": "Une partie de l'activité n'a pas pu être chargée ; cette liste peut être incomplète.",
 		"ACTIVITY_CREATED": "{{ actor }} a créé",
 		"ACTIVITY_UPDATED": "{{ actor }} a modifié",
 		"ACTIVITY_DELETED": "{{ actor }} a supprimé",

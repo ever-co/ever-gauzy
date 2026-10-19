@@ -642,7 +642,9 @@
 							@if (module.status) {
 							<span [class]="'project-status tone-' + module.tone">{{ module.status }}</span>
 							}
-							<span class="module-tasks">{{ 'PROJECT_QUICK_LOOK.MODULE_TASKS' | translate : { count: module.tasks } }}</span>
+							<span class="module-tasks">{{
+								(module.tasks === 1 ? 'PROJECT_QUICK_LOOK.MODULE_TASK' : 'PROJECT_QUICK_LOOK.MODULE_TASKS') | translate : { count: module.tasks }
+							}}</span>
 						</li>
 						}
 					</ul>

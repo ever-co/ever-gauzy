@@ -30,7 +30,6 @@ import {
 	PermissionsEnum,
 	ProjectModuleStatusEnum,
 	ProjectStatusEnum,
-	TaskStatusEnum,
 	TimeLogType
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
@@ -42,8 +41,17 @@ import {
 } from '../../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 import { isTaskFinished } from '../../../tasks/components/task-view/task-view-sections';
 import { buildProjectViewSections, PROJECT_VIEW_RELATIONS, projectStatusOf } from './project-view-sections';
-
-type Presence = 'tracking' | 'online' | 'away' | 'offline';
+import {
+	dueInWords,
+	humanize,
+	initialsOf,
+	Loadable,
+	loading,
+	nameOf,
+	Presence,
+	presenceOf,
+	statusGroupOf
+} from '../project-view/project-view.utils';
 
 /** The card a project is opened from: its name, logo and the host's time on it in the period. */
 export interface IProjectQuickLookCard {
@@ -69,11 +77,6 @@ export interface IProjectQuickLookPerson {
 	avatarUrl?: string;
 	presence?: Presence;
 }
-
-/** Each request lands or fails on its own; a failure (most often a 403) only blanks its panel. */
-type Loadable<T> = { loading: boolean; failed: boolean; value: T };
-
-const loading = <T>(value: T): Loadable<T> => ({ loading: true, failed: false, value });
 
 /** One row of a ranked list: a name and its time in the period. */
 interface IRankedRow {
@@ -204,12 +207,6 @@ interface ITaskRow {
 
 export type ProjectTaskFilter = 'open' | 'progress' | 'overdue' | 'done';
 
-const CLOSED_STATUSES = new Set<string>([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]);
-const IN_PROGRESS_STATUSES = new Set<string>([
-	TaskStatusEnum.IN_PROGRESS,
-	TaskStatusEnum.READY_FOR_REVIEW,
-	TaskStatusEnum.IN_REVIEW
-]);
 const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 
 /** Rows the ranked lists keep. */
@@ -472,16 +469,31 @@ export class ProjectQuickLookComponent implements OnChanges {
 	}
 
 	private show(project: IOrganizationProject): void {
+		this.viewedProject = project;
+		this.facts = this.toFacts(project);
+		this.timeline = this.toTimeline(project);
+		this.buildSections();
+	}
+
+	/**
+	 * The record's sections. On the page, Details leaves out a field only while the headline shows it:
+	 * billing and currency while the billing figure stands in for an hours budget, the budget while the
+	 * budget bar or the cost budget under the billing figure shows it.
+	 */
+	private buildSections(): void {
+		const project = this.viewedProject;
+		if (!project) return;
 		this.sections = buildProjectViewSections(
 			project,
 			{ translate: (key) => this._translate.instant(key) },
-			{ page: this.isPage }
+			{
+				page: this.isPage,
+				billingInHeadline: this.isPage && !this.budget,
+				budgetInHeadline: this.isPage && (!!this.budget || !!this.costBudget)
+			}
 		);
 		this.detailsSections = this.sections.filter((section) => section.title === 'BUTTONS.DETAILS');
 		this.recordSections = this.sections.filter((section) => section.title !== 'BUTTONS.DETAILS');
-		this.facts = this.toFacts(project);
-		this.timeline = this.toTimeline(project);
-		this.viewedProject = project;
 	}
 
 	/** Status line and key figures; a finished project's end date is no longer a deadline. */
@@ -496,7 +508,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 			client: project.organizationContact?.name,
 			members: project.members ? project.members.filter((member) => !!member?.employee).length : null,
 			endDate: project.endDate ? moment(project.endDate).format('ll') : undefined,
-			due: daysLeft === null || isFinished ? null : ProjectQuickLookComponent.dueInWords(daysLeft, false),
+			due: daysLeft === null || isFinished ? null : dueInWords(daysLeft, false),
 			overdue: !isFinished && daysLeft !== null && daysLeft < 0
 		};
 	}
@@ -519,10 +531,14 @@ export class ProjectQuickLookComponent implements OnChanges {
 			tone = 'success';
 			percent = percent === null ? null : 100;
 		} else if (start && today.isBefore(start)) {
-			hint = { key: 'PROJECT_QUICK_LOOK.STARTS_IN', count: start.diff(today, 'days') };
+			const daysToStart = start.diff(today, 'days');
+			hint =
+				daysToStart === 1
+					? { key: 'PROJECT_QUICK_LOOK.STARTS_TOMORROW' }
+					: { key: 'PROJECT_QUICK_LOOK.STARTS_IN', count: daysToStart };
 		} else if (end) {
 			const daysLeft = end.diff(today, 'days');
-			hint = ProjectQuickLookComponent.dueInWords(daysLeft, false);
+			hint = dueInWords(daysLeft, false);
 			tone = daysLeft < 0 ? 'danger' : null;
 		}
 		return {
@@ -540,19 +556,25 @@ export class ProjectQuickLookComponent implements OnChanges {
 	 */
 	get team(): ITeamMemberRow[] {
 		const figuresLanded = !this.contributors.loading && !this.contributors.failed;
+		// A viewer who may not read everyone's time gets back only their own: the others' is unknown, not zero.
+		const readsEveryone = !!this.viewedProject && this.canReadProjectTotal(this.viewedProject);
+		const ownId = this._store.user?.employeeId;
 		return (this.viewedProject?.members || [])
 			.filter((member) => !!member?.employee && member.isActive !== false && member.isArchived !== true)
 			.map((member) => {
 				const employee = member.employee as IEmployee;
-				const name = ProjectQuickLookComponent.nameOf(employee);
+				const name = nameOf(employee);
 				return {
 					id: employee.id,
 					name,
-					initials: ProjectQuickLookComponent.initialsOf(name),
+					initials: initialsOf(name),
 					avatarUrl: employee.user?.image?.fullUrl || employee.user?.imageUrl || undefined,
 					isManager: !!member.isManager,
-					presence: ProjectQuickLookComponent.presenceOf(employee),
-					duration: figuresLanded ? this._periodTime.get(employee.id) || 0 : null
+					presence: presenceOf(employee),
+					duration:
+						figuresLanded && (readsEveryone || employee.id === ownId)
+							? this._periodTime.get(employee.id) || 0
+							: null
 				};
 			})
 			.filter((row) => !!row.name)
@@ -572,7 +594,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 	get billing(): string | null {
 		const project = this.viewedProject;
 		if (!project) return null;
-		const parts = [ProjectQuickLookComponent.humanize(project.billing), project.currency].filter(Boolean);
+		const parts = [humanize(project.billing), project.currency].filter(Boolean);
 		return parts.length ? parts.join(' · ') : null;
 	}
 
@@ -646,16 +668,16 @@ export class ProjectQuickLookComponent implements OnChanges {
 
 	private toTaskRow(task: ITask, today: moment.Moment): ITaskRow {
 		// Finished by the task views' own rule (a tenant status's `isDone` flag included).
-		const statusGroup = isTaskFinished(task) ? 'done' : ProjectQuickLookComponent.statusGroupOf(task.status);
+		const statusGroup = isTaskFinished(task) ? 'done' : statusGroupOf(task.status);
 		const isDone = statusGroup === 'done';
 		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
 		const people = (task.members || [])
 			.map((member: IEmployee) => {
-				const name = ProjectQuickLookComponent.nameOf(member);
+				const name = nameOf(member);
 				return {
 					id: member.id,
 					name,
-					initials: ProjectQuickLookComponent.initialsOf(name),
+					initials: initialsOf(name),
 					avatarUrl: member.user?.image?.fullUrl || member.user?.imageUrl || undefined
 				};
 			})
@@ -665,15 +687,15 @@ export class ProjectQuickLookComponent implements OnChanges {
 			id: task.id,
 			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 			title: task.title,
-			status: task.taskStatus?.name || ProjectQuickLookComponent.humanize(task.status) || '',
+			status: task.taskStatus?.name || humanize(task.status) || '',
 			statusGroup,
 			dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
 			dueDateLong: task.dueDate ? moment(task.dueDate).format('dddd, LL') : undefined,
-			due: ProjectQuickLookComponent.dueInWords(daysLeft, isDone),
+			due: dueInWords(daysLeft, isDone),
 			dueTime: task.dueDate ? moment(task.dueDate).valueOf() : Infinity,
 			doneTime: moment(task.resolvedAt || task.updatedAt || 0).valueOf(),
 			overdue: !isDone && daysLeft !== null && daysLeft < 0,
-			priority: task.taskPriority?.name || ProjectQuickLookComponent.humanize(task.priority) || undefined,
+			priority: task.taskPriority?.name || humanize(task.priority) || undefined,
 			priorityLevel: PRIORITY_LEVELS.has(priority) ? (priority as ITaskRow['priorityLevel']) : undefined,
 			people,
 			morePeople: people.slice(3)
@@ -692,7 +714,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 			.map(({ task, daysLeft }) => ({
 				id: task.id,
 				title: task.title,
-				due: ProjectQuickLookComponent.dueInWords(daysLeft, false),
+				due: dueInWords(daysLeft, false),
 				overdue: daysLeft < 0
 			}));
 	}
@@ -737,6 +759,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 				over: used > 100,
 				warning: used >= 80
 			};
+			// The budget bar now stands in for Details' budget, and billing is back in Details.
+			this.buildSections();
 		} catch {
 			// No total and no budget bar; the Details panel (in the drawer) still lists the budget.
 			if (sequence === this._projectSequence) this.lifetime = { loading: false, failed: true, value: null };
@@ -779,7 +803,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 		return {
 			id: module.id,
 			name: module.name,
-			status: ProjectQuickLookComponent.humanize(module.status) || '',
+			status: humanize(module.status) || '',
 			tone: toneOf[module.status] || 'basic',
 			dates: start || end ? [start || '…', end || '…'].join(' – ') : undefined,
 			tasks: (module.tasks || []).length
@@ -833,7 +857,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 	}
 
 	/**
-	 * The hours of the period just before this one, of the same length, read the same way as the
+	 * The hours of the span just before this period, as long as the part of the period that has
+	 * already passed (this week so far against the same days last week), read the same way as the
 	 * period's own (the daily chart), so the two compare like for like.
 	 */
 	private async loadPreviousHours(projectId: string, isCurrent: () => boolean): Promise<void> {
@@ -841,7 +866,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 		const start = moment(this.rangeStart);
 		const end = moment(this.rangeEnd);
 		if (!start.isValid() || !end.isValid()) return;
-		const length = end.diff(start);
+		const length = Math.max(0, moment.min(end, moment()).diff(start));
 		const previousEnd = start.clone().subtract(1, 'millisecond');
 		const previousStart = previousEnd.clone().subtract(length, 'milliseconds');
 		const timeZone = this._timeZoneService.currentTimeZone;
@@ -924,7 +949,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 					const weekTime = stats.get(row.id)?.weekTime;
 					return {
 						...row,
-						initials: person?.initials || ProjectQuickLookComponent.initialsOf(row.name),
+						initials: person?.initials || initialsOf(row.name),
 						avatarUrl: person?.avatarUrl || stats.get(row.id)?.user?.imageUrl || undefined,
 						activity: weekTime ? Number(weekTime.overall) || 0 : undefined,
 						presence: person?.presence
@@ -973,55 +998,5 @@ export class ProjectQuickLookComponent implements OnChanges {
 			share: (row.duration / total) * 100,
 			width: Math.max(2, (row.duration / max) * 100)
 		}));
-	}
-
-	/* ── Helpers ─────────────────────────────────────────────────────────── */
-
-	private static nameOf(person: IEmployee | any): string {
-		const user = person?.user || person;
-		const parts = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
-		return person?.fullName || user?.name || parts || user?.email || '';
-	}
-
-	private static initialsOf(name: string): string {
-		return (name || '')
-			.split(/\s+/)
-			.filter(Boolean)
-			.slice(0, 2)
-			.map((part) => part[0].toUpperCase())
-			.join('');
-	}
-
-	/** Live presence from the employee's own flags. */
-	private static presenceOf(employee: IEmployee | any): Presence {
-		if (employee?.isTrackingTime) return 'tracking';
-		if (employee?.isOnline && employee?.isAway) return 'away';
-		if (employee?.isOnline) return 'online';
-		return 'offline';
-	}
-
-	private static statusGroupOf(status: string | undefined): ITaskRow['statusGroup'] {
-		const value = (status || '').toLowerCase();
-		if (CLOSED_STATUSES.has(value)) return 'done';
-		if (IN_PROGRESS_STATUSES.has(value)) return 'progress';
-		if (value === TaskStatusEnum.BLOCKED) return 'blocked';
-		return 'todo';
-	}
-
-	private static dueInWords(daysLeft: number | null, isDone: boolean): { key: string; count?: number } {
-		const prefix = 'EMPLOYEES_PAGE.VIEW.DUE.';
-		if (daysLeft === null) return { key: prefix + 'NONE' };
-		if (isDone) return { key: prefix + 'WAS_DUE' };
-		if (daysLeft < -1) return { key: prefix + 'OVERDUE_DAYS', count: -daysLeft };
-		if (daysLeft === -1) return { key: prefix + 'OVERDUE_DAY' };
-		if (daysLeft === 0) return { key: prefix + 'TODAY' };
-		if (daysLeft === 1) return { key: prefix + 'TOMORROW' };
-		return { key: prefix + 'IN_DAYS', count: daysLeft };
-	}
-
-	private static humanize(value?: string): string {
-		if (!value) return '';
-		const text = value.replace(/[-_]+/g, ' ').trim();
-		return text.charAt(0).toUpperCase() + text.slice(1);
 	}
 }

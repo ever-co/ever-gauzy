@@ -6862,10 +6862,12 @@
 		"TIMELINE": "Cronograma",
 		"NO_DATES": "Sem datas definidas",
 		"STARTS_IN": "Começa em {{ count }} dias",
+		"STARTS_TOMORROW": "Começa amanhã",
 		"FINISHED": "Concluído",
 		"TEAM": "Equipe",
 		"NO_MEMBERS": "Ainda não há membros neste projeto",
 		"MODULES": "Módulos",
+		"MODULE_TASK": "1 tarefa",
 		"MODULE_TASKS": "{{ count }} tarefas"
 	},
 	"PROJECT_VIEW": {
@@ -6879,6 +6881,7 @@
 		"ACTIVITY": "Atividade",
 		"ACTIVITY_CAPTION": "Mudanças recentes no projeto e em suas tarefas",
 		"NO_ACTIVITY": "Ainda não há atividade",
+		"ACTIVITY_PARTIAL": "Não foi possível carregar parte da atividade, por isso esta lista pode estar incompleta.",
 		"ACTIVITY_CREATED": "{{ actor }} criou",
 		"ACTIVITY_UPDATED": "{{ actor }} atualizou",
 		"ACTIVITY_DELETED": "{{ actor }} excluiu",

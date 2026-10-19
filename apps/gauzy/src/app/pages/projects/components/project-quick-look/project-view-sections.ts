@@ -23,11 +23,15 @@ export interface IProjectViewText {
 
 export interface IProjectViewOptions {
 	/**
-	 * The project's own page: its headline, figures and Team panel already show the people, status,
-	 * visibility, client, dates, billing and budget, so Details keeps only what is said nowhere else —
-	 * and an empty description is left out rather than shown as "None".
+	 * The project's own page: its headline, timeline and Team panel already show the people, status,
+	 * visibility, client and dates, so Details leaves them out — and an empty description is left out
+	 * rather than shown as "None".
 	 */
 	page?: boolean;
+	/** The page's headline shows the billing figure (it does while there is no hours-budget bar). */
+	billingInHeadline?: boolean;
+	/** The page's headline shows the budget (its bar, or a cost budget under the billing figure). */
+	budgetInHeadline?: boolean;
 }
 
 /** Status for the Details row; the standard values arrive as enum slugs ('in-progress'). */
@@ -69,9 +73,9 @@ export function buildProjectViewSections(
 	const members = (project.members || []).filter((member) => !!member?.employee);
 	const managers = members.filter((member) => member.isManager).map((member) => member.employee);
 	const others = members.filter((member) => !member.isManager).map((member) => member.employee);
-	// Rows the project's own page shows elsewhere, by label.
-	const shownElsewhere = new Set<string>(
-		options.page
+	// Rows the project's own page shows elsewhere, by label: each only while something else shows it.
+	const shownElsewhere = new Set<string>([
+		...(options.page
 			? [
 					'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS',
 					'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS',
@@ -79,13 +83,14 @@ export function buildProjectViewSections(
 					'FORM.LABELS.STATUS',
 					'ORGANIZATIONS_PAGE.EDIT.VISIBILITY',
 					'ORGANIZATIONS_PAGE.EDIT.START_DATE',
-					'ORGANIZATIONS_PAGE.EDIT.END_DATE',
-					'ORGANIZATIONS_PAGE.EDIT.BILLING',
-					'ORGANIZATIONS_PAGE.EDIT.CURRENCY',
-					'ORGANIZATIONS_PAGE.BUDGET'
+					'ORGANIZATIONS_PAGE.EDIT.END_DATE'
 				]
-			: []
-	);
+			: []),
+		...(options.page && options.billingInHeadline
+			? ['ORGANIZATIONS_PAGE.EDIT.BILLING', 'ORGANIZATIONS_PAGE.EDIT.CURRENCY']
+			: []),
+		...(options.page && options.budgetInHeadline ? ['ORGANIZATIONS_PAGE.BUDGET'] : [])
+	]);
 
 	const sections: IRecordViewSection[] = [
 		{

@@ -6862,10 +6862,12 @@
 		"TIMELINE": "时间线",
 		"NO_DATES": "未设置日期",
 		"STARTS_IN": "{{ count }} 天后开始",
+		"STARTS_TOMORROW": "明天开始",
 		"FINISHED": "已完成",
 		"TEAM": "团队",
 		"NO_MEMBERS": "此项目暂无成员",
 		"MODULES": "模块",
+		"MODULE_TASK": "1 个任务",
 		"MODULE_TASKS": "{{ count }} 个任务"
 	},
 	"PROJECT_VIEW": {
@@ -6879,6 +6881,7 @@
 		"ACTIVITY": "动态",
 		"ACTIVITY_CAPTION": "项目及其任务的最新变更",
 		"NO_ACTIVITY": "暂无动态",
+		"ACTIVITY_PARTIAL": "部分动态无法加载，此列表可能不完整。",
 		"ACTIVITY_CREATED": "{{ actor }} 创建了",
 		"ACTIVITY_UPDATED": "{{ actor }} 更新了",
 		"ACTIVITY_DELETED": "{{ actor }} 删除了",

@@ -6880,10 +6880,12 @@
 		"TIMELINE": "Сроки",
 		"NO_DATES": "Даты не заданы",
 		"STARTS_IN": "Начнётся через {{ count }} дн.",
+		"STARTS_TOMORROW": "Начнётся завтра",
 		"FINISHED": "Завершён",
 		"TEAM": "Команда",
 		"NO_MEMBERS": "В этом проекте пока нет участников",
 		"MODULES": "Модули",
+		"MODULE_TASK": "1 задача",
 		"MODULE_TASKS": "Задач: {{ count }}"
 	},
 	"PROJECT_VIEW": {
@@ -6897,6 +6899,7 @@
 		"ACTIVITY": "Активность",
 		"ACTIVITY_CAPTION": "Последние изменения проекта и его задач",
 		"NO_ACTIVITY": "Пока нет активности",
+		"ACTIVITY_PARTIAL": "Не удалось загрузить часть активности, поэтому список может быть неполным.",
 		"ACTIVITY_CREATED": "{{ actor }} создал(а)",
 		"ACTIVITY_UPDATED": "{{ actor }} изменил(а)",
 		"ACTIVITY_DELETED": "{{ actor }} удалил(а)",

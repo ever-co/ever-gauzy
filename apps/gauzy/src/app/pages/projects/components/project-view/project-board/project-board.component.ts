@@ -114,17 +114,31 @@ export class ProjectBoardComponent implements OnChanges {
 		}
 	}
 
-	/** The project's own statuses, else the organization's. */
+	/**
+	 * The project's own statuses, else the organization's, else the system defaults. A scope with no
+	 * statuses of its own does not answer empty: the server answers with the system defaults, so each
+	 * answer is kept only if its statuses belong to the scope asked for.
+	 */
 	private async fetchStatuses(): Promise<ITaskStatus[]> {
 		const { organizationId, tenantId, projectId } = this;
-		const read = (where: Record<string, string>) =>
-			firstValueFrom(
-				this._http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, { params: toParams(where) })
-			);
-		const own = await read({ organizationId, tenantId, projectId });
-		if (own?.items?.length) return own.items;
-		const shared = await read({ organizationId, tenantId });
-		return shared?.items || [];
+		const read = async (where: Record<string, string>) =>
+			(
+				await firstValueFrom(
+					this._http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
+						params: toParams(where)
+					})
+				)
+			)?.items || [];
+		const forProject = await read({ organizationId, tenantId, projectId });
+		const own = forProject.filter((status) => !status.isSystem && status.projectId === projectId);
+		if (own.length) return own;
+		const forOrganization = await read({ organizationId, tenantId });
+		const shared = forOrganization.filter(
+			(status) => !status.isSystem && status.organizationId === organizationId && !status.projectId
+		);
+		if (shared.length) return shared;
+		// Neither has its own: the system defaults either answer carried.
+		return forOrganization.length ? forOrganization : forProject;
 	}
 
 	/**
@@ -133,18 +147,18 @@ export class ProjectBoardComponent implements OnChanges {
 	 */
 	private toColumns(statuses: ITaskStatus[], tasks: ITask[]): IBoardColumn[] {
 		const normalize = (value?: string) => (value || '').trim().toLowerCase().replace(/\s+/g, '-');
-		const columns: IBoardColumn[] = [...statuses]
-			.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0))
-			.map((status) => ({
-				id: status.id,
-				name: status.name || humanize(status.value),
-				color: status.color,
-				group: status.isDone ? 'done' : statusGroupOf(status.value || status.name),
-				cards: []
-			}));
-		const byId = new Map(statuses.map((status, index) => [status.id, columns[index]]));
+		// One ordered list builds the columns and both lookups, so each status finds its own column.
+		const ordered = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+		const columns: IBoardColumn[] = ordered.map((status) => ({
+			id: status.id,
+			name: status.name || humanize(status.value),
+			color: status.color,
+			group: status.isDone ? 'done' : statusGroupOf(status.value || status.name),
+			cards: []
+		}));
+		const byId = new Map(ordered.map((status, index) => [status.id, columns[index]]));
 		const byKey = new Map<string, IBoardColumn>();
-		statuses.forEach((status, index) => {
+		ordered.forEach((status, index) => {
 			byKey.set(normalize(status.value), columns[index]);
 			byKey.set(normalize(status.name), columns[index]);
 		});

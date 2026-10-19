@@ -6862,10 +6862,12 @@
 		"TIMELINE": "Tijdlijn",
 		"NO_DATES": "Geen datums ingesteld",
 		"STARTS_IN": "Start over {{ count }} dagen",
+		"STARTS_TOMORROW": "Start morgen",
 		"FINISHED": "Afgerond",
 		"TEAM": "Team",
 		"NO_MEMBERS": "Nog geen leden in dit project",
 		"MODULES": "Modules",
+		"MODULE_TASK": "1 taak",
 		"MODULE_TASKS": "{{ count }} taken"
 	},
 	"PROJECT_VIEW": {
@@ -6879,6 +6881,7 @@
 		"ACTIVITY": "Activiteit",
 		"ACTIVITY_CAPTION": "Recente wijzigingen aan het project en zijn taken",
 		"NO_ACTIVITY": "Nog geen activiteit",
+		"ACTIVITY_PARTIAL": "Een deel van de activiteit kon niet worden geladen, dus deze lijst is mogelijk onvolledig.",
 		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
 		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
 		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",

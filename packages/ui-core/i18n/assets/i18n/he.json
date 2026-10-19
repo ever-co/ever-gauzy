@@ -6872,10 +6872,12 @@
 		"TIMELINE": "ציר זמן",
 		"NO_DATES": "לא הוגדרו תאריכים",
 		"STARTS_IN": "מתחיל בעוד {{ count }} ימים",
+		"STARTS_TOMORROW": "מתחיל מחר",
 		"FINISHED": "הסתיים",
 		"TEAM": "צוות",
 		"NO_MEMBERS": "אין עדיין חברים בפרויקט זה",
 		"MODULES": "מודולים",
+		"MODULE_TASK": "משימה אחת",
 		"MODULE_TASKS": "{{ count }} משימות"
 	},
 	"PROJECT_VIEW": {
@@ -6889,6 +6891,7 @@
 		"ACTIVITY": "פעילות",
 		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
 		"NO_ACTIVITY": "אין עדיין פעילות",
+		"ACTIVITY_PARTIAL": "לא ניתן היה לטעון חלק מהפעילות, ולכן הרשימה עשויה להיות חלקית.",
 		"ACTIVITY_CREATED": "{{ actor }} יצר",
 		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
 		"ACTIVITY_DELETED": "{{ actor }} מחק",

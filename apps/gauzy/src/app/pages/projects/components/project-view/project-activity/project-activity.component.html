@@ -15,9 +15,18 @@
 	<div class="panel-body">
 		@if (feed.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+		} @else if (!feed.loading && !count && partial) {
+		<!-- Nothing came back, but a read failed: the activity is unavailable, not absent. -->
+		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 		} @else if (!feed.loading && !count) {
 		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_VIEW.NO_ACTIVITY', icon: 'clock-outline' }"></ng-container>
 		} @else {
+		@if (partial) {
+		<p class="feed-partial" role="status">
+			<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+			{{ 'PROJECT_VIEW.ACTIVITY_PARTIAL' | translate }}
+		</p>
+		}
 		@for (day of feed.value; track day.label) {
 		<h6 class="feed-day">{{ day.labelKey ? (day.labelKey | translate) : day.label }}</h6>
 		<ol class="feed">
@@ -29,7 +38,7 @@
 				<span class="feed-main">
 					<span class="feed-sentence">
 						@if (entry.actor; as actor) {
-						<a class="feed-actor" [routerLink]="['/pages/employees/view', actor.id]">
+						<a class="feed-actor" [routerLink]="['/pages/employees/view', actor.id]" [attr.aria-label]="actor.name">
 							<span class="member-avatar feed-avatar">
 								@if (actor.avatarUrl) {
 								<img [src]="actor.avatarUrl" [alt]="actor.name" />

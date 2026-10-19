@@ -6858,10 +6858,12 @@
 		"TIMELINE": "Zeitplan",
 		"NO_DATES": "Keine Daten festgelegt",
 		"STARTS_IN": "Beginnt in {{ count }} Tagen",
+		"STARTS_TOMORROW": "Beginnt morgen",
 		"FINISHED": "Abgeschlossen",
 		"TEAM": "Team",
 		"NO_MEMBERS": "Noch keine Mitglieder in diesem Projekt",
 		"MODULES": "Module",
+		"MODULE_TASK": "1 Aufgabe",
 		"MODULE_TASKS": "{{ count }} Aufgaben"
 	},
 	"PROJECT_VIEW": {
@@ -6875,6 +6877,7 @@
 		"ACTIVITY": "Aktivität",
 		"ACTIVITY_CAPTION": "Letzte Änderungen am Projekt und seinen Aufgaben",
 		"NO_ACTIVITY": "Noch keine Aktivität",
+		"ACTIVITY_PARTIAL": "Einige Aktivitäten konnten nicht geladen werden; die Liste ist möglicherweise unvollständig.",
 		"ACTIVITY_CREATED": "{{ actor }} hat erstellt",
 		"ACTIVITY_UPDATED": "{{ actor }} hat aktualisiert",
 		"ACTIVITY_DELETED": "{{ actor }} hat gelöscht",

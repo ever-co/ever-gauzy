@@ -36,13 +36,18 @@ interface IActivityDay {
 
 /** Entries the feed shows. */
 const FEED_LIMIT = 60;
-/** Task logs read to find the project's among them: the activity log filters by one entity id at a time. */
-const TASK_LOG_WINDOW = 300;
+/** The activity log's largest page. */
+const LOG_PAGE_SIZE = 100;
+/**
+ * Pages of task logs read at most to fill the feed: the activity log filters by one entity id at a
+ * time, so the project's task logs are found page by page among the organization's.
+ */
+const TASK_LOG_PAGES = 10;
 
 /**
  * The project page's Activity tab: a feed of what changed on the project and its tasks — created,
  * updated (and which fields), deleted — by whom and when, newest first, under each day. It reads the
- * project's own log and the latest task logs, kept to this project's tasks.
+ * project's own log and the organization's task logs, kept to the events that happened in this project.
  */
 @Component({
 	selector: 'ga-project-activity',
@@ -63,6 +68,8 @@ export class ProjectActivityComponent implements OnChanges {
 	@Input() tenantId: string;
 
 	public feed: Loadable<IActivityDay[]> = loading([]);
+	/** Some of the feed's reads failed: what is shown may be missing entries. */
+	public partial = false;
 	private readonly _http = inject(HttpClient);
 	private _sequence = 0;
 
@@ -80,6 +87,7 @@ export class ProjectActivityComponent implements OnChanges {
 		const sequence = ++this._sequence;
 		const { organizationId, tenantId, projectId } = this;
 		this.feed = loading([]);
+		this.partial = false;
 		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) =>
 			firstValueFrom(
 				this._http.get<IPagination<IActivityLog>>(`${API_PREFIX}/activity-log`, {
@@ -94,38 +102,90 @@ export class ProjectActivityComponent implements OnChanges {
 					})
 				})
 			);
-		try {
-			const [tasks, projectLogs, taskLogs] = await Promise.all([
-				firstValueFrom(
-					this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
-						params: toParams({ where: { organizationId, tenantId, projectId } })
-					})
-				).catch((): IPagination<ITask> => ({ items: [], total: 0 })),
-				logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
-				logs(BaseEntityEnum.Task, { take: TASK_LOG_WINDOW }).catch((): IPagination<IActivityLog> => ({
-					items: [],
-					total: 0
-				}))
-			]);
-			if (sequence !== this._sequence) return;
-			const titles = new Map((tasks?.items || []).map((task) => [task.id, task.title]));
-			const entries = [
-				...(projectLogs?.items || []).map((log) => this.toEntry(log, this.projectName, null)),
-				...(taskLogs?.items || [])
-					.filter((log) => titles.has(log.entityId) || (log.data as any)?.projectId === projectId)
-					.map((log) =>
-						this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', [
-							'/pages/tasks/view',
-							log.entityId
-						])
-					)
-			]
-				.sort((a, b) => b.time.localeCompare(a.time))
-				.slice(0, FEED_LIMIT);
-			this.feed = loaded(this.byDay(entries));
-		} catch {
-			if (sequence === this._sequence) this.feed = failed([]);
+
+		// The project's own log, its tasks (for their titles), and its task logs — each on its own.
+		const [projectLogs, tasks, taskLogs] = await Promise.allSettled([
+			logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
+			firstValueFrom(
+				this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
+					params: toParams({ where: { organizationId, tenantId, projectId } })
+				})
+			),
+			this.fetchTaskLogs(logs)
+		]);
+		if (sequence !== this._sequence) return;
+
+		if (projectLogs.status === 'rejected' && taskLogs.status === 'rejected') {
+			this.feed = failed([]);
+			return;
 		}
+		this.partial =
+			projectLogs.status === 'rejected' ||
+			taskLogs.status === 'rejected' ||
+			(taskLogs.status === 'fulfilled' && taskLogs.value.partial);
+
+		const titles = new Map(
+			(tasks.status === 'fulfilled' ? tasks.value?.items || [] : []).map((task) => [task.id, task.title])
+		);
+		const entries = [
+			...(projectLogs.status === 'fulfilled' ? projectLogs.value?.items || [] : []).map((log) =>
+				this.toEntry(log, this.projectName, null)
+			),
+			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
+				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', [
+					'/pages/tasks/view',
+					log.entityId
+				])
+			)
+		]
+			.sort((a, b) => b.time.localeCompare(a.time))
+			.slice(0, FEED_LIMIT);
+		this.feed = loaded(this.byDay(entries));
+	}
+
+	/**
+	 * The project's task logs, newest first: the organization's task logs page by page, each kept
+	 * when its event belongs to this project, until the feed is full or the pages run out. A page
+	 * that fails after the first ends the read and marks it partial.
+	 */
+	private async fetchTaskLogs(
+		logs: (entity: BaseEntityEnum, extra: Record<string, unknown>) => Promise<IPagination<IActivityLog>>
+	): Promise<{ items: IActivityLog[]; partial: boolean }> {
+		const items: IActivityLog[] = [];
+		for (let page = 1; page <= TASK_LOG_PAGES && items.length < FEED_LIMIT; page++) {
+			let result: IPagination<IActivityLog>;
+			try {
+				result = await logs(BaseEntityEnum.Task, { take: LOG_PAGE_SIZE, skip: page });
+			} catch (error) {
+				if (page === 1) throw error;
+				return { items, partial: true };
+			}
+			const pageItems = result?.items || [];
+			items.push(...pageItems.filter((log) => this.belongsToProject(log)));
+			if (pageItems.length < LOG_PAGE_SIZE) break;
+		}
+		return { items, partial: false };
+	}
+
+	/**
+	 * Whether a task's event happened in this project, by the project the event itself records — the
+	 * task's project then (its snapshot), or either side of a move (its previous and updated values) —
+	 * not by where the task is now.
+	 */
+	private belongsToProject(log: IActivityLog): boolean {
+		const projectIds = new Set<string>();
+		const add = (value: unknown) => {
+			if (typeof value === 'string' && value) projectIds.add(value);
+		};
+		add((log.data as any)?.projectId);
+		add((log.data as any)?.project?.id);
+		for (const values of [log.previousValues, log.updatedValues, log.previousEntities, log.updatedEntities]) {
+			for (const entry of (Array.isArray(values) ? values : []) as any[]) {
+				add(entry?.projectId);
+				add(entry?.project?.id);
+			}
+		}
+		return projectIds.has(this.projectId);
 	}
 
 	private toEntry(log: IActivityLog, target: string, link: string[] | null): IActivityEntry {

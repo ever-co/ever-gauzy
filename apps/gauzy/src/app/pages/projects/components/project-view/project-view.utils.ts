@@ -1,8 +1,8 @@
 import { IEmployee, TaskStatusEnum } from '@gauzy/contracts';
 
 /**
- * Small helpers shared by the project page's tabs (Board, Activity), so each
- * reads names, times and statuses the same way the Overview does.
+ * Small helpers shared by the project page — its Overview (the project quick look) and its Board and
+ * Activity tabs — so every part of it reads names, presence and statuses the same way.
  */
 
 /** Each request lands or fails on its own; a failure (most often a 403) only blanks its panel. */
@@ -11,6 +11,8 @@ export type Loadable<T> = { loading: boolean; failed: boolean; value: T };
 export const loading = <T>(value: T): Loadable<T> => ({ loading: true, failed: false, value });
 export const loaded = <T>(value: T): Loadable<T> => ({ loading: false, failed: false, value });
 export const failed = <T>(value: T): Loadable<T> => ({ loading: false, failed: true, value });
+
+export type Presence = 'tracking' | 'online' | 'away' | 'offline';
 
 /** A person as the tabs draw them: name, initials and photo. */
 export interface IPersonChip {
@@ -48,6 +50,14 @@ export function personOf(employee: IEmployee | any): IPersonChip | null {
 	};
 }
 
+/** Live presence from the employee's own flags. */
+export function presenceOf(employee: IEmployee | any): Presence {
+	if (employee?.isTrackingTime) return 'tracking';
+	if (employee?.isOnline && employee?.isAway) return 'away';
+	if (employee?.isOnline) return 'online';
+	return 'offline';
+}
+
 /** "in-progress" -> "In progress". */
 export function humanize(value?: string): string {
 	if (!value) return '';
@@ -62,7 +72,7 @@ const IN_PROGRESS_STATUSES = new Set<string>([
 	TaskStatusEnum.IN_REVIEW
 ]);
 
-/** A task's status as a group, from its raw status slug. */
+/** A task's status as a group, from its raw status slug or name ("In Review" reads as "in-review"). */
 export function statusGroupOf(status: string | undefined): 'todo' | 'progress' | 'blocked' | 'done' {
 	const value = (status || '').toLowerCase().replace(/\s+/g, '-');
 	if (CLOSED_STATUSES.has(value)) return 'done';

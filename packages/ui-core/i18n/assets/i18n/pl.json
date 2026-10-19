@@ -6861,10 +6861,12 @@
 		"TIMELINE": "Harmonogram",
 		"NO_DATES": "Nie ustawiono dat",
 		"STARTS_IN": "Rozpoczyna się za {{ count }} dni",
+		"STARTS_TOMORROW": "Rozpoczyna się jutro",
 		"FINISHED": "Zakończony",
 		"TEAM": "Zespół",
 		"NO_MEMBERS": "Brak członków w tym projekcie",
 		"MODULES": "Moduły",
+		"MODULE_TASK": "1 zadanie",
 		"MODULE_TASKS": "{{ count }} zadań"
 	},
 	"PROJECT_VIEW": {
@@ -6878,6 +6880,7 @@
 		"ACTIVITY": "Aktywność",
 		"ACTIVITY_CAPTION": "Ostatnie zmiany w projekcie i jego zadaniach",
 		"NO_ACTIVITY": "Brak aktywności",
+		"ACTIVITY_PARTIAL": "Nie udało się wczytać części aktywności, więc lista może być niepełna.",
 		"ACTIVITY_CREATED": "{{ actor }} utworzył(a)",
 		"ACTIVITY_UPDATED": "{{ actor }} zaktualizował(a)",
 		"ACTIVITY_DELETED": "{{ actor }} usunął(-ęła)",
