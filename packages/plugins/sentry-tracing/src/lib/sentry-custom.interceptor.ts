@@ -1,7 +1,22 @@
 import { CallHandler, ExecutionContext } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { Observable, catchError, throwError } from 'rxjs';
+import { RequestContext } from '@gauzy/core';
 import { SentryInterceptor } from './ntegral';
+
+/**
+ * Whether the current tenant turned Sentry reporting off (`sentryEnabled` in its resolved settings), read the
+ * way `SentryService.isEnabled` reads it. Without the setting, reporting follows the configured DSN.
+ */
+export function isSentryReportingDisabledForRequest(): boolean {
+	try {
+		const enabled = RequestContext.currentRequest()?.['resolvedSettings']?.sentryEnabled;
+		return enabled !== undefined && !(enabled === true || enabled === 'true');
+	} catch {
+		// No request context
+		return false;
+	}
+}
 
 export class SentryCustomInterceptor extends SentryInterceptor {
 	constructor() {
@@ -31,7 +46,8 @@ export class SentryCustomInterceptor extends SentryInterceptor {
 			catchError((error) => {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
-				if (this.shouldReport(error)) {
+				// Captured directly (not through SentryService), so the tenant's own switch is checked here
+				if (!isSentryReportingDisabledForRequest() && this.shouldReport(error)) {
 					// In Sentry v9, we directly capture the exception
 					Sentry.captureException(error);
 				}
