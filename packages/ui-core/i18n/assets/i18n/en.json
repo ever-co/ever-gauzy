@@ -3836,6 +3836,7 @@
 		"VIEW_COMPANY_PROFILE": "View company profile",
 		"EDIT": {
 			"NO_AWARDS": "No awards added yet",
+			"NO_LANGUAGES": "No languages added yet",
 			"ADD_AWARD": "Add award",
 			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
 		}

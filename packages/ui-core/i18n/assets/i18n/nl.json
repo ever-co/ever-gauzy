@@ -3313,6 +3313,7 @@
 		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
 		"EDIT": {
 			"NO_AWARDS": "Nog geen onderscheidingen",
+			"NO_LANGUAGES": "Nog geen talen toegevoegd",
 			"ADD_AWARD": "Onderscheiding toevoegen",
 			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
 		}

@@ -3313,6 +3313,7 @@
 		"VIEW_COMPANY_PROFILE": "查看公司简介",
 		"EDIT": {
 			"NO_AWARDS": "尚未添加奖项",
+			"NO_LANGUAGES": "尚未添加语言",
 			"ADD_AWARD": "添加奖项",
 			"PRIVACY_HELP": "选择访客可在公开资料中看到的信息。"
 		}

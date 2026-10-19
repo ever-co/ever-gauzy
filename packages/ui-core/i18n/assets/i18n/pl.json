@@ -3312,6 +3312,7 @@
 		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
 		"EDIT": {
 			"NO_AWARDS": "Nie dodano jeszcze nagród",
+			"NO_LANGUAGES": "Nie dodano jeszcze żadnych języków",
 			"ADD_AWARD": "Dodaj nagrodę",
 			"PRIVACY_HELP": "Wybierz, które dane odwiedzający widzą w profilu publicznym."
 		}

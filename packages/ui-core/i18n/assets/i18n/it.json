@@ -3313,6 +3313,7 @@
 		"VIEW_COMPANY_PROFILE": "Vedi profilo aziendale",
 		"EDIT": {
 			"NO_AWARDS": "Nessun premio aggiunto",
+			"NO_LANGUAGES": "Nessuna lingua ancora aggiunta",
 			"ADD_AWARD": "Aggiungi premio",
 			"PRIVACY_HELP": "Scegli quali dettagli i visitatori vedono nel profilo pubblico."
 		}

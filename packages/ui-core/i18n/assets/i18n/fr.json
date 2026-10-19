@@ -3314,6 +3314,7 @@
 		"VIEW_COMPANY_PROFILE": "Voir le profil de l’entreprise",
 		"EDIT": {
 			"NO_AWARDS": "Aucune distinction ajoutée",
+			"NO_LANGUAGES": "Aucune langue ajoutée pour le moment",
 			"ADD_AWARD": "Ajouter une distinction",
 			"PRIVACY_HELP": "Choisissez les informations visibles sur le profil public."
 		}
