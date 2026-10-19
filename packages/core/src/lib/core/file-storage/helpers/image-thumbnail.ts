@@ -13,6 +13,9 @@ const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default
  */
 export const MAX_BUFFERED_FILE_BYTES = 64 * 1024 * 1024;
 
+/** The formats the image upload endpoints accept that libvips decodes (BMP, also accepted, goes to Jimp). */
+const SHARP_THUMBNAIL_FORMATS: ReadonlySet<string> = new Set(['jpeg', 'png', 'webp', 'gif']);
+
 export interface ImageThumbnailOptions {
 	/** The thumbnail's width in pixels; the height follows the aspect ratio. Default 250. */
 	width?: number;
@@ -52,8 +55,8 @@ export async function fileContentToBuffer(
 	if (Buffer.isBuffer(content)) return bounded(content);
 	if (content instanceof Uint8Array) return bounded(Buffer.from(content));
 	if (typeof content === 'string') return bounded(Buffer.from(content));
-	const body = content as { transformToByteArray?: () => Promise<Uint8Array> };
-	if (typeof body.transformToByteArray === 'function') return bounded(Buffer.from(await body.transformToByteArray()));
+	// An S3-family SDK body is a Readable AND has transformToByteArray(): read it chunk by chunk first, so the
+	// bound stops the read rather than being checked once the whole object is in memory.
 	if (typeof (content as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
 		const chunks: Buffer[] = [];
 		let length = 0;
@@ -68,6 +71,8 @@ export async function fileContentToBuffer(
 		}
 		return Buffer.concat(chunks, length);
 	}
+	const body = content as { transformToByteArray?: () => Promise<Uint8Array> };
+	if (typeof body.transformToByteArray === 'function') return bounded(Buffer.from(await body.transformToByteArray()));
 	return undefined;
 }
 
@@ -127,8 +132,15 @@ export async function createImageThumbnail(
 	content: Buffer,
 	{ width = 250, png = false }: ImageThumbnailOptions = {}
 ): Promise<ImageThumbnail> {
-	if (await sharpFormatOf(content)) {
-		const pipeline = sharp(content).autoOrient().resize({ width });
+	const recognised = await sharpFormatOf(content);
+	if (recognised) {
+		// libvips also renders SVG (librsvg), TIFF and HEIF: none is an accepted upload, so none is decoded here.
+		if (!SHARP_THUMBNAIL_FORMATS.has(recognised)) {
+			throw new Error(`Unsupported image format for a thumbnail: ${recognised}`);
+		}
+		// failOn 'error': a libvips warning ("Corrupt JPEG data: N extraneous bytes before marker", common in camera
+		// JPEGs) does not refuse an image Jimp used to thumbnail. The pixel limit still applies.
+		const pipeline = sharp(content, { failOn: 'error' }).autoOrient().resize({ width });
 		const { data, info } = await (png ? pipeline.png() : pipeline).toBuffer({ resolveWithObject: true });
 		return { data, format: info.format, extension: imageExtensionOf(info.format) };
 	}
