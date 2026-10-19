@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EmployeeKindEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { GlobalStats } from './stats.types';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationService } from '../organization/organization.service';
@@ -72,15 +73,18 @@ export class StatsService {
 	 * @throws {Error} - Throws an error if there is an issue fetching any of the statistics.
 	 */
 	async getGlobalStats(): Promise<GlobalStats> {
-		if (this.ttlMs > 0 && this.cached && this.cached.expiresAt > Date.now()) {
+		// A request carrying a user narrows the tenant-aware counts to its tenant (over GraphQL a sibling field's
+		// authentication can attach one): such figures are that caller's own and are never shared.
+		if (this.ttlMs <= 0 || RequestContext.currentUser()) {
+			return this.computeGlobalStats();
+		}
+		if (this.cached && this.cached.expiresAt > Date.now()) {
 			return this.cached.stats;
 		}
 		if (!this.computing) {
 			this.computing = this.computeGlobalStats()
 				.then((stats) => {
-					if (this.ttlMs > 0) {
-						this.cached = { stats, expiresAt: Date.now() + this.ttlMs };
-					}
+					this.cached = { stats, expiresAt: Date.now() + this.ttlMs };
 					return stats;
 				})
 				.finally(() => {
@@ -135,7 +139,7 @@ export class StatsService {
 		} catch (error) {
 			// Log the error and throw a custom error message
 			this.logger.error(`Error fetching global stats: ${error?.message ?? error}`, error?.stack);
-			throw new Error(`Failed to retrieve global statistics: ${error.message}`);
+			throw new Error(`Failed to retrieve global statistics: ${error?.message ?? error}`);
 		}
 	}
 }

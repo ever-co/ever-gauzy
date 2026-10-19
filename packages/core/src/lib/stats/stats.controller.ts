@@ -38,7 +38,7 @@ export class StatsController {
 			// Log the error and rethrow to handle it at a higher level (e.g., middleware or global exception filter)
 			this.logger.error(`Error fetching global stats: ${error?.message ?? error}`, error?.stack);
 			// Throw a custom error message
-			throw new Error(`Failed to retrieve global statistics: ${error.message}`);
+			throw new Error(`Failed to retrieve global statistics: ${error?.message ?? error}`);
 		}
 	}
 }

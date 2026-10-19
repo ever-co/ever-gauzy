@@ -1,3 +1,4 @@
+import { RequestContext } from '../core/context';
 import { DEFAULT_GLOBAL_STATS_TTL_MS, resolveGlobalStatsTtlMs, StatsService } from './stats.service';
 
 /**
@@ -129,6 +130,18 @@ describe('StatsService.getGlobalStats', () => {
 		const { service, counts } = build('0');
 		await service.getGlobalStats();
 		await service.getGlobalStats();
+		expect(counts.employees).toHaveBeenCalledTimes(2);
+	});
+
+	it('never shares figures computed for a signed-in caller (tenant-scoped counts)', async () => {
+		const { service, counts } = build();
+		const caller = jest
+			.spyOn(RequestContext, 'currentUser')
+			.mockReturnValue({ id: 'u1', tenantId: 'tenant-a' } as any);
+		counts.employees.mockResolvedValueOnce(1);
+		expect((await service.getGlobalStats()).employees).toBe(1);
+		caller.mockReturnValue(null);
+		expect(await service.getGlobalStats()).toEqual(expected);
 		expect(counts.employees).toHaveBeenCalledTimes(2);
 	});
 });
