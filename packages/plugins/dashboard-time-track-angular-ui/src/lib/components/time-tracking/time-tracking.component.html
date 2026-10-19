@@ -39,21 +39,25 @@
 					(timeFormatChange)="timeFormatChanged($event)"
 					(timeZoneChange)="timeZoneChanged($event)"
 				></ga-timezone-filter>
-				<button
-					class="manage-widget"
-					status="basic"
-					size="small"
-					nbPopoverPlacement="bottom"
-					[nbPopover]="widgetManager"
-					nbPopoverTrigger="click"
-					[nbTooltip]="'BUTTONS.MANAGE_WIDGET' | translate"
-					[attr.aria-label]="'BUTTONS.MANAGE_WIDGET' | translate"
-					type="button"
-					nbButton
-				>
-					<span class="action-label">{{ 'BUTTONS.MANAGE_WIDGET' | translate }}</span>
-					<nb-icon icon="more-vertical-outline"></nb-icon>
-				</button>
+				<!-- nbTooltip and nbPopover each provide NbDynamicOverlayHandler; on the
+				     same element they share one instance and the tooltip's hover config
+				     wins, so the popover never opens. Keep the tooltip on a wrapper. -->
+				<span class="manage-widget-tooltip" [nbTooltip]="'BUTTONS.MANAGE_WIDGET' | translate">
+					<button
+						class="manage-widget"
+						status="basic"
+						size="small"
+						nbPopoverPlacement="bottom"
+						[nbPopover]="widgetManager"
+						nbPopoverTrigger="click"
+						[attr.aria-label]="'BUTTONS.MANAGE_WIDGET' | translate"
+						type="button"
+						nbButton
+					>
+						<span class="action-label">{{ 'BUTTONS.MANAGE_WIDGET' | translate }}</span>
+						<nb-icon icon="more-vertical-outline"></nb-icon>
+					</button>
+				</span>
 			</div>
 		</div>
 	</nb-card-header>
