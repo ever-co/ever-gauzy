@@ -3312,6 +3312,8 @@
 		"NO_SKILLS": "Aún no hay habilidades",
 		"NO_EMPLOYEES": "Aún no hay empleados para mostrar",
 		"NO_CLIENTS": "Aún no hay clientes para mostrar",
+		"EMPLOYEES_LOAD_FAILED": "No se pudieron cargar los empleados.",
+		"CLIENTS_LOAD_FAILED": "No se pudieron cargar los clientes.",
 		"VIEW_COMPANY_PROFILE": "Ver perfil de la empresa",
 		"EDIT": {
 			"NO_AWARDS": "Aún no hay premios",

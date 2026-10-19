@@ -3309,6 +3309,8 @@
 		"NO_SKILLS": "Brak umiejętności",
 		"NO_EMPLOYEES": "Brak pracowników do wyświetlenia",
 		"NO_CLIENTS": "Brak klientów do wyświetlenia",
+		"EMPLOYEES_LOAD_FAILED": "Nie udało się wczytać pracowników.",
+		"CLIENTS_LOAD_FAILED": "Nie udało się wczytać klientów.",
 		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
 		"EDIT": {
 			"NO_AWARDS": "Nie dodano jeszcze nagród",

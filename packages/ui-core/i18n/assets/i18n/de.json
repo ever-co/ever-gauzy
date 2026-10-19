@@ -3306,6 +3306,8 @@
 		"NO_SKILLS": "Noch keine Fähigkeiten angegeben",
 		"NO_EMPLOYEES": "Noch keine Mitarbeiter zum Anzeigen",
 		"NO_CLIENTS": "Noch keine Kunden zum Anzeigen",
+		"EMPLOYEES_LOAD_FAILED": "Mitarbeiter konnten nicht geladen werden.",
+		"CLIENTS_LOAD_FAILED": "Kunden konnten nicht geladen werden.",
 		"VIEW_COMPANY_PROFILE": "Unternehmensprofil ansehen",
 		"EDIT": {
 			"NO_AWARDS": "Noch keine Auszeichnungen",

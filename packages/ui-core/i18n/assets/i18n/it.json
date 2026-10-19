@@ -3310,6 +3310,8 @@
 		"NO_SKILLS": "Nessuna competenza indicata",
 		"NO_EMPLOYEES": "Ancora nessun dipendente da mostrare",
 		"NO_CLIENTS": "Ancora nessun cliente da mostrare",
+		"EMPLOYEES_LOAD_FAILED": "Impossibile caricare i dipendenti.",
+		"CLIENTS_LOAD_FAILED": "Impossibile caricare i clienti.",
 		"VIEW_COMPANY_PROFILE": "Vedi profilo aziendale",
 		"EDIT": {
 			"NO_AWARDS": "Nessun premio aggiunto",

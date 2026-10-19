@@ -3311,6 +3311,8 @@
 		"NO_SKILLS": "Aucune compétence indiquée",
 		"NO_EMPLOYEES": "Aucun employé à afficher pour le moment",
 		"NO_CLIENTS": "Aucun client à afficher pour le moment",
+		"EMPLOYEES_LOAD_FAILED": "Impossible de charger les employés.",
+		"CLIENTS_LOAD_FAILED": "Impossible de charger les clients.",
 		"VIEW_COMPANY_PROFILE": "Voir le profil de l’entreprise",
 		"EDIT": {
 			"NO_AWARDS": "Aucune distinction ajoutée",
