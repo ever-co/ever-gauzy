@@ -13,6 +13,18 @@ const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default
  */
 export const MAX_BUFFERED_FILE_BYTES = 64 * 1024 * 1024;
 
+/**
+ * Thrown by {@link fileContentToBuffer} when the stored file is larger than it may buffer. The upload endpoints set no
+ * multer size limit, so the file is already stored when this is thrown: the caller deletes it (it would otherwise
+ * stay served from `/public/` with no record to delete it through) and answers 413.
+ */
+export class FileContentTooLargeError extends Error {
+	constructor(readonly maxBytes: number) {
+		super(`The file is larger than the ${maxBytes} bytes that can be processed`);
+		this.name = 'FileContentTooLargeError';
+	}
+}
+
 /** The formats the image upload endpoints accept that libvips decodes (BMP, also accepted, goes to Jimp). */
 const SHARP_THUMBNAIL_FORMATS: ReadonlySet<string> = new Set(['jpeg', 'png', 'webp', 'gif']);
 
@@ -47,7 +59,7 @@ export async function fileContentToBuffer(
 ): Promise<Buffer | undefined> {
 	const bounded = (buffer: Buffer): Buffer => {
 		if (buffer.length > maxBytes) {
-			throw new Error(`The file is larger than the ${maxBytes} bytes that can be processed`);
+			throw new FileContentTooLargeError(maxBytes);
 		}
 		return buffer;
 	};
@@ -65,7 +77,7 @@ export async function fileContentToBuffer(
 			length += buffer.length;
 			if (length > maxBytes) {
 				// Stop reading: nothing more is held, and the stream is left to its owner.
-				throw new Error(`The file is larger than the ${maxBytes} bytes that can be processed`);
+				throw new FileContentTooLargeError(maxBytes);
 			}
 			chunks.push(buffer);
 		}

@@ -11,10 +11,11 @@
  */
 import '../../core/entities/internal';
 import { Readable } from 'node:stream';
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, PayloadTooLargeException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RequestContext } from '../../core/context';
 import { FileStorage } from '../../core/file-storage';
+import { MAX_BUFFERED_FILE_BYTES } from '../../core/file-storage/helpers/image-thumbnail';
 import { ScreenshotController } from './screenshot.controller';
 describe('Screenshot Controller', () => {
 	let controller: ScreenshotController;
@@ -97,6 +98,16 @@ describe('Screenshot Controller — upload of an empty file', () => {
 			controller.create({ organizationId: 'org-1' } as never, { key: 'screenshots/u.png', filename: 'u.png' } as never)
 		).rejects.toBeInstanceOf(InternalServerErrorException);
 		expect(provider.deleteFile).not.toHaveBeenCalled();
+	});
+
+	it('is refused with 413 and the stored file is deleted when it is too large to read back (#11096 review)', async () => {
+		provider.getFile.mockResolvedValue(Buffer.allocUnsafe(MAX_BUFFERED_FILE_BYTES + 1));
+
+		await expect(
+			controller.create({ organizationId: 'org-1' } as never, { key: 'screenshots/big.png', filename: 'big.png' } as never)
+		).rejects.toBeInstanceOf(PayloadTooLargeException);
+		expect(provider.deleteFile).toHaveBeenCalledWith('screenshots/big.png');
+		expect(provider.putFile).not.toHaveBeenCalled();
 	});
 
 	it('still records a real image that a provider returns as a stream', async () => {

@@ -25,6 +25,7 @@ export {
 	createImageThumbnail,
 	createUploadFileFilter,
 	documentUploadFileFilter,
+	FileContentTooLargeError,
 	fileContentToBuffer,
 	imageUploadFileFilter,
 	isMarkupContent,

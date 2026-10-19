@@ -3,6 +3,7 @@ import { crc32 } from 'node:zlib';
 import { Jimp, JimpMime } from 'jimp';
 import * as sharpModule from 'sharp';
 import {
+	FileContentTooLargeError,
 	createImageThumbnail,
 	fileContentToBuffer,
 	MAX_BUFFERED_FILE_BYTES,
@@ -153,6 +154,7 @@ describe('fileContentToBuffer', () => {
 	});
 
 	it('refuses bytes already in memory beyond the bound', async () => {
+		await expect(fileContentToBuffer(Buffer.alloc(10), 9)).rejects.toBeInstanceOf(FileContentTooLargeError);
 		await expect(fileContentToBuffer(Buffer.alloc(10), 9)).rejects.toThrow(/larger than the 9 bytes/);
 		const body = { transformToByteArray: async () => new Uint8Array(10) };
 		await expect(fileContentToBuffer(body, 9)).rejects.toThrow(/larger than the 9 bytes/);

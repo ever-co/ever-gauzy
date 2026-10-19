@@ -3,6 +3,7 @@ import {
 	Controller,
 	InternalServerErrorException,
 	Logger,
+	PayloadTooLargeException,
 	UseGuards,
 	HttpStatus,
 	Post,
@@ -15,7 +16,12 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
-import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './../../core/file-storage/helpers/image-thumbnail';
+import {
+	createImageThumbnail,
+	FileContentTooLargeError,
+	fileContentToBuffer,
+	thumbnailFileName
+} from './../../core/file-storage/helpers/image-thumbnail';
 import { ID, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
@@ -102,7 +108,22 @@ export class ScreenshotController {
 		const provider = new FileStorage().getProvider();
 
 		// Retrieve file content from the file storage provider (the S3-family providers return a stream)
-		const fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		let fileContent: Buffer | undefined;
+		try {
+			fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		} catch (error) {
+			// Too large to read back (the route sets no multer size limit, so it is already stored): delete it, or it
+			// stays served from `/public/` with no record to delete it through, and answer 413.
+			if (error instanceof FileContentTooLargeError) {
+				try {
+					await provider.deleteFile(file.key);
+				} catch {
+					this.logger.error('Error while deleting an oversized screenshot from file storage provider');
+				}
+				throw new PayloadTooLargeException('The screenshot file is too large');
+			}
+			throw error;
+		}
 
 		// An empty upload (a display the desktop timer could not capture) has no image to record. Refuse it here,
 		// OUTSIDE the try/catch below: in there the thumbnail step failed on it, the error was swallowed and the
