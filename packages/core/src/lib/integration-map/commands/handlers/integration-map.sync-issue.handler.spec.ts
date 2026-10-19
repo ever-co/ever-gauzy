@@ -1,5 +1,6 @@
 import '../../../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { IntegrationEntity } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { TaskCreateCommand, TaskUpdateCommand } from '../../../tasks/commands';
@@ -61,7 +62,7 @@ describe('IntegrationMapSyncIssueHandler', () => {
 	});
 
 	it('creates the task and its map once when the issue is not mapped yet', async () => {
-		const integrationMapService = { findOneByWhereOptions: jest.fn().mockRejectedValue(new Error('not found')) };
+		const integrationMapService = { findOneByWhereOptions: jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found')) };
 		const { execute, handler } = setup(integrationMapService);
 		execute.mockResolvedValueOnce({ id: 'task-new' }).mockResolvedValueOnce({ id: 'map-new' });
 
@@ -85,7 +86,7 @@ describe('IntegrationMapSyncIssueHandler', () => {
 	it('re-creates the task under the mapped id when the mapped task no longer exists', async () => {
 		const integrationMap = { id: 'map-1', gauzyId: 'task-1' };
 		const integrationMapService = { findOneByWhereOptions: jest.fn().mockResolvedValue(integrationMap) };
-		const taskService = { findOneByIdString: jest.fn().mockRejectedValue(new Error('not found')) };
+		const taskService = { findOneByIdString: jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found')) };
 		const { execute, handler } = setup(integrationMapService, taskService);
 		execute.mockResolvedValue({ id: 'task-1' });
 

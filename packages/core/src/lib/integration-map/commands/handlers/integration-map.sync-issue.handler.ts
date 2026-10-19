@@ -6,6 +6,7 @@ import { TaskCreateCommand, TaskUpdateCommand } from '../../../tasks/commands';
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapSyncIssueCommand } from './../integration-map.sync-issue.command';
 import { IntegrationMapService } from '../../integration-map.service';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncIssueCommand)
 export class IntegrationMapSyncIssueHandler implements ICommandHandler<IntegrationMapSyncIssueCommand> {
@@ -36,7 +37,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 				organizationId,
 				tenantId
 			})
-			.catch(() => null);
+			.catch(nullIfNotFound);
 
 		if (!integrationMap) {
 			// Create a new task with the provided entity data
@@ -56,7 +57,7 @@ export class IntegrationMapSyncIssueHandler implements ICommandHandler<Integrati
 		}
 
 		// Try to find the corresponding task
-		const mappedTask = await this._taskService.findOneByIdString(integrationMap.gauzyId).catch(() => null);
+		const mappedTask = await this._taskService.findOneByIdString(integrationMap.gauzyId).catch(nullIfNotFound);
 		if (mappedTask) {
 			// Update the corresponding task with the new input data
 			await this._commandBus.execute(new TaskUpdateCommand(integrationMap.gauzyId, entity, triggeredEvent));
