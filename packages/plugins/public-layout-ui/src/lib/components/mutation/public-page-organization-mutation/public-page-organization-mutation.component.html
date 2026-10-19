@@ -1,503 +1,375 @@
-<nb-card class="main" xmlns="http://www.w3.org/1999/html">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel">
-			<i class="fas fa-times" (click)="close()"></i>
-		</span>
-		<h5 class="title">
-			{{ 'POP_UPS.EDIT_PAGE' | translate }}
-		</h5>
+<nb-card class="dialog">
+	<!--
+		Header: title, whose page it is, close — and the tabs under them. The tabs
+		live INSIDE the header: nb-card only projects its own header / body /
+		footer, so a bare element beside them is rendered after the body.
+	-->
+	<nb-card-header class="dialog-header">
+		<div class="dialog-top">
+			<div class="dialog-heading">
+				<h5 class="dialog-title">{{ 'POP_UPS.EDIT_PAGE' | translate }}</h5>
+				@if (organization?.name) {
+				<span class="dialog-subtitle">{{ organization.name }}</span>
+				}
+			</div>
+			<button type="button" class="dialog-close" (click)="close()" [attr.aria-label]="'BUTTONS.CLOSE' | translate">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+
+		<!-- Full tab pattern: each tab names the pane it controls, each pane the tab that labels it. -->
+		<div class="tabs" role="tablist">
+			@for (tab of tabs; track tab.id) {
+			<button
+				type="button"
+				role="tab"
+				class="tab"
+				[id]="'org-edit-tab-' + tab.id"
+				[attr.aria-controls]="'org-edit-pane-' + tab.id"
+				[attr.aria-selected]="activeTab === tab.id"
+				[class.is-active]="activeTab === tab.id"
+				(click)="activeTab = tab.id"
+			>
+				<nb-icon [icon]="tab.icon" aria-hidden="true"></nb-icon>
+				{{ tab.title | translate }}
+			</button>
+			}
+		</div>
 	</nb-card-header>
-	<nb-card-body class="body">
+
+	<nb-card-body class="dialog-body">
 		@if (form) {
 		<form [formGroup]="form">
-			<nb-tabset class="tab_sections">
-				<nb-tab tabTitle="{{ 'POP_UPS.MAIN' | translate }}" tabIcon="person-outline" responsive>
-					<div class="row">
-						<div class="col-sm-6">
-							<div class="form-group">
-								<label for="addCompanyName">{{ 'POP_UPS.COMPANY_NAME' | translate }}</label>
-								<input
-									id="addCompanyName"
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{ 'POP_UPS.COMPANY_NAME' | translate }}"
-									formControlName="name"
-									[class.status-danger]="name?.invalid && (name.dirty || name.touched)"
-									[class.status-success]="name?.valid && (name.dirty || name.touched)"
-									autocomplete="off"
-								/>
-							</div>
+			<!-- Main -->
+			<div
+				class="pane"
+				role="tabpanel"
+				id="org-edit-pane-main"
+				aria-labelledby="org-edit-tab-main"
+				[hidden]="activeTab !== 'main'"
+			>
+				<section class="section">
+					<div class="grid">
+						<div class="field field--wide">
+							<label class="label" for="addCompanyName">{{ 'POP_UPS.COMPANY_NAME' | translate }}</label>
+							<input
+								id="addCompanyName"
+								nbInput
+								type="text"
+								fullWidth
+								placeholder="{{ 'POP_UPS.COMPANY_NAME' | translate }}"
+								formControlName="name"
+								[status]="form.get('name').invalid && form.get('name').touched ? 'danger' : 'basic'"
+								autocomplete="off"
+							/>
 						</div>
-						<div class="col-sm-3">
-							<div class="form-group">
-								<label for="companySize">{{ 'POP_UPS.COMPANY_SIZE' | translate }}</label>
-								<input
-									id="companySize"
-									nbInput
-									type="number"
-									[min]="0"
-									fullWidth
-									placeholder="{{ 'POP_UPS.SIZE' | translate }}"
-									formControlName="totalEmployees"
-									[class.status-danger]="
-										totalEmployees?.invalid && (totalEmployees.dirty || totalEmployees.touched)
-									"
-									[class.status-success]="
-										totalEmployees?.valid && (totalEmployees.dirty || totalEmployees.touched)
-									"
-									autocomplete="off"
-								/>
-							</div>
+						<div class="field field--wide">
+							<label class="label" for="banner">{{ 'POP_UPS.BANNER' | translate }}</label>
+							<input
+								id="banner"
+								nbInput
+								type="text"
+								fullWidth
+								placeholder="{{ 'POP_UPS.BANNER' | translate }}"
+								formControlName="banner"
+								autocomplete="off"
+							/>
 						</div>
-						<div class="col-sm-3">
-							<div class="form-group">
-								<label for="yearFounded">{{ 'POP_UPS.YEAR_FOUNDED' | translate }}</label>
-								<input
-									id="yearFounded"
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{ 'POP_UPS.YEAR_FOUNDED' | translate }}"
-									formControlName="founded"
-									[class.status-danger]="founded?.invalid && (founded.dirty || founded.touched)"
-									[class.status-success]="founded?.valid && (founded.dirty || founded.touched)"
-									autocomplete="off"
-								/>
-							</div>
+						<div class="field">
+							<label class="label" for="companySize">{{ 'POP_UPS.COMPANY_SIZE' | translate }}</label>
+							<input
+								id="companySize"
+								nbInput
+								type="number"
+								[min]="0"
+								fullWidth
+								placeholder="{{ 'POP_UPS.SIZE' | translate }}"
+								formControlName="totalEmployees"
+								autocomplete="off"
+							/>
 						</div>
-					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label for="Banner">{{ 'POP_UPS.BANNER' | translate }}</label>
-								<nb-icon
-									class="info-btn"
-									status="info"
-									nbTooltip="{{ 'POP_UPS.BANNER' | translate }}"
-									icon="info-outline"
-								></nb-icon>
-								<input
-									id="Banner"
-									nbInput
-									type="text"
-									fullWidth
-									placeholder="{{ 'POP_UPS.BANNER' | translate }}"
-									formControlName="banner"
-									class="banner"
-									[class.status-danger]="banner?.invalid && (banner.dirty || banner.touched)"
-									[class.status-success]="banner?.valid && (banner.dirty || banner.touched)"
-									autocomplete="off"
-								/>
-							</div>
+						<div class="field">
+							<label class="label" for="yearFounded">{{ 'POP_UPS.YEAR_FOUNDED' | translate }}</label>
+							<input
+								id="yearFounded"
+								nbInput
+								type="text"
+								inputmode="numeric"
+								fullWidth
+								placeholder="{{ 'POP_UPS.YEAR_FOUNDED' | translate }}"
+								formControlName="founded"
+								autocomplete="off"
+							/>
 						</div>
 					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label for="minimumProjectSize" class="label"
-									>{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }} {{ organization.currency }}</label
-								>
-								<nb-select
-									class="d-block"
-									fullWidth
-									placeholder="{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }}"
-									formControlName="minimumProjectSize"
-									id="minimumProjectSize"
-								>
-									@for (minimumProjectSize of minimumProjectSizes; track minimumProjectSize) {
-									<nb-option value="{{ minimumProjectSize }}"
-										>{{ organization.currency }}
-										{{ minimumProjectSize }}
-									</nb-option>
-									}
-								</nb-select>
-							</div>
+				</section>
+
+				<section class="section">
+					<div class="grid">
+						<div class="field">
+							<label class="label" for="minimumProjectSize">
+								{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }}
+							</label>
+							<nb-select
+								id="minimumProjectSize"
+								class="d-block"
+								fullWidth
+								placeholder="{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }}"
+								formControlName="minimumProjectSize"
+							>
+								@for (minimumProjectSize of minimumProjectSizes; track minimumProjectSize) {
+								<nb-option [value]="minimumProjectSize">
+									{{ organization.currency }} {{ minimumProjectSize }}
+								</nb-option>
+								}
+							</nb-select>
+						</div>
+						<div class="field">
+							<label class="label" for="addClientFocus">{{ 'POP_UPS.CLIENT_FOCUS' | translate }}</label>
+							<ng-select
+								labelForId="addClientFocus"
+								[items]="client_focus"
+								[multiple]="true"
+								[(ngModel)]="selectedClientFocus"
+								[ngModelOptions]="{ standalone: true }"
+								[closeOnSelect]="false"
+								(change)="selectedClientFocusHandler($event)"
+								placeholder="{{ 'POP_UPS.CLIENT_FOCUS' | translate }}"
+								appendTo="body"
+							></ng-select>
 						</div>
 					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label for="addClientFocus">{{ 'POP_UPS.CLIENT_FOCUS' | translate }}</label>
-								<ng-select
-									[items]="client_focus"
-									[multiple]="true"
-									[(ngModel)]="selectedClientFocus"
-									[closeOnSelect]="true"
-									id="addClientFocus"
-									(change)="selectedClientFocusHandler($event)"
-									[ngModelOptions]="{ standalone: true }"
-									placeholder=""
-									appendTo="body"
-								>
-									<ng-template ng-label-tmp let-item="item" let-clear="clear">
-										<span class="ng-value-label">
-											<nb-badge
-												style="position: static !important"
-												width="20px"
-												height="20px"
-												text="{{ item }}"
-											></nb-badge>
-										</span>
-										<span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true"
-											>×</span
-										>
-									</ng-template>
-								</ng-select>
-							</div>
+				</section>
+			</div>
+
+			<!-- Description -->
+			<div
+				class="pane"
+				role="tabpanel"
+				id="org-edit-pane-description"
+				aria-labelledby="org-edit-tab-description"
+				[hidden]="activeTab !== 'description'"
+			>
+				<section class="section">
+					<div class="grid">
+						<div class="field field--wide">
+							<label class="label" for="shortDescription">{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}</label>
+							<textarea
+								id="shortDescription"
+								nbInput
+								fullWidth
+								rows="3"
+								placeholder="{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}"
+								formControlName="short_description"
+							></textarea>
+						</div>
+						<div class="field field--wide">
+							<span class="label">{{ 'POP_UPS.OVERVIEW' | translate }}</span>
+							<ga-rich-text-editor
+								formControlName="overview"
+								preset="standard"
+								outputFormat="html"
+								minHeight="200px"
+							></ga-rich-text-editor>
 						</div>
 					</div>
-				</nb-tab>
-				<nb-tab tabTitle="{{ 'POP_UPS.DESCRIPTION' | translate }}" tabIcon="alert-circle-outline" responsive>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label for="shortDescription">{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}</label>
-								<textarea
-									id="shortDescription"
-									nbInput
-									fullWidth
-									rows="3"
-									placeholder="{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}"
-									formControlName="short_description"
-									class="short_description"
-									[class.status-danger]="
-										short_description?.invalid &&
-										(short_description.dirty || short_description.touched)
-									"
-									[class.status-success]="
-										short_description?.valid &&
-										(short_description.dirty || short_description.touched)
-									"
-								>
-								</textarea>
-							</div>
+				</section>
+			</div>
+
+			<!-- Awards -->
+			<div
+				class="pane"
+				role="tabpanel"
+				id="org-edit-pane-awards"
+				aria-labelledby="org-edit-tab-awards"
+				[hidden]="activeTab !== 'awards'"
+			>
+				<section class="section">
+					@if (awards?.length) {
+					<ul class="items">
+						@for (award of awards; track award.id || $index) {
+						<li class="item">
+							<span class="item-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
+							<span class="item-name">{{ award.name }}</span>
+							<span class="item-meta">{{ award.year }}</span>
+							<button
+								type="button"
+								class="icon-button"
+								(click)="removeAward(award)"
+								[attr.aria-label]="'BUTTONS.DELETE' | translate"
+								[nbTooltip]="'BUTTONS.DELETE' | translate"
+							>
+								<nb-icon icon="trash-2-outline"></nb-icon>
+							</button>
+						</li>
+						}
+					</ul>
+					} @else if (!showAddAward) {
+					<p class="empty">{{ 'PUBLIC_PAGE.EDIT.NO_AWARDS' | translate }}</p>
+					}
+
+					@if (showAddAward) {
+					<div class="add-row">
+						<div class="field">
+							<label class="label" for="awardName">{{ 'POP_UPS.NAME' | translate }}</label>
+							<input #addInputName id="awardName" nbInput type="text" placeholder="{{ 'POP_UPS.NAME' | translate }}" fullWidth />
+						</div>
+						<div class="field field--narrow">
+							<label class="label" for="awardYear">{{ 'POP_UPS.YEAR' | translate }}</label>
+							<input #addInputYear id="awardYear" nbInput type="number" [min]="0" placeholder="{{ 'POP_UPS.YEAR' | translate }}" fullWidth />
+						</div>
+						<div class="add-row-actions">
+							<button type="button" nbButton status="basic" size="small" (click)="showAddAward = false">
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button type="button" nbButton status="primary" size="small" (click)="addAward(addInputName.value, addInputYear.value)">
+								{{ 'BUTTONS.ADD' | translate }}
+							</button>
 						</div>
 					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<p class="label">
-									{{ 'POP_UPS.OVERVIEW' | translate }}
-								</p>
-								<div class="rich-text-editor-field">
-									<ga-rich-text-editor
-										formControlName="overview"
-										class="overview"
-										preset="standard"
-										outputFormat="html"
-										minHeight="200px"
-										[class.status-danger]="
-											overview?.invalid && (overview.dirty || overview.touched)
-										"
-										[class.status-success]="overview?.valid && (overview.dirty || overview.touched)"
-									></ga-rich-text-editor>
-								</div>
-							</div>
-						</div>
+					} @else {
+					<button type="button" class="add-link" (click)="showAddAward = true">
+						<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+						{{ 'PUBLIC_PAGE.EDIT.ADD_AWARD' | translate }}
+					</button>
+					}
+				</section>
+			</div>
+
+			<!-- Skills -->
+			<div
+				class="pane"
+				role="tabpanel"
+				id="org-edit-pane-skills"
+				aria-labelledby="org-edit-tab-skills"
+				[hidden]="activeTab !== 'skills'"
+			>
+				<section class="section">
+					<div class="field">
+						<ngx-skills-input
+							[form]="form"
+							[selectedSkills]="organization.skills"
+							(selectedSkillsEvent)="selectedSkillsHandler($event)"
+						></ngx-skills-input>
 					</div>
-				</nb-tab>
-				<nb-tab tabTitle="{{ 'POP_UPS.AWARDS' | translate }}" tabIcon="award-outline" responsive>
-					<div class="row">
-						<div class="col">
-							@if (awardExist) {
-							<div class="row">
-								<div class="col">
-									<nb-tag-list>
-										@for (award of awards; track award) {
-										<nb-tag
-											(remove)="removeAward(award)"
-											[text]="award.name + ' (' + award.year + ')'"
-											removable
-										></nb-tag>
-										}
-									</nb-tag-list>
-								</div>
-							</div>
-							} @if (!showAddAward) {
-							<div (click)="showAddAward = !showAddAward" class="button-add-award">
-								<button nbButton status="success" outline size="small">
-									<i class="fas fa-plus"></i>
-								</button>
-								<span class="heading_title">{{ 'POP_UPS.AWARDS' | translate }}</span>
-							</div>
-							} @if (showAddAward) {
-							<div class="row mt-3 show-add-award">
-								<div class="col-sm-4 d-flex flex-column justify-content-end">
-									<label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
-									<input
-										#addInputName
-										nbInput
-										class="input_name"
-										type="text"
-										placeholder="{{ 'POP_UPS.NAME' | translate }}"
-										fullWidth
-									/>
-								</div>
-								<div class="col d-flex flex-column justify-content-end">
-									<label class="label">{{ 'POP_UPS.YEAR' | translate }}</label>
-									<input
-										#addInputYear
-										nbInput
-										class="input_year"
-										type="number"
-										[min]="0"
-										placeholder="{{ 'POP_UPS.YEAR' | translate }}"
-										fullWidth
-									/>
-								</div>
-								<span class="col d-flex align-items-end">
-									<button
-										(click)="addAward(addInputName.value, addInputYear.value)"
-										nbButton
-										status="success"
-										size="small"
-										class="mr-3"
-									>
-										{{ 'BUTTONS.SAVE' | translate }}</button
-									><button
-										(click)="showAddAward = !showAddAward"
-										nbButton
-										status="basic"
-										size="small"
-										outline
-									>
-										{{ 'BUTTONS.CANCEL' | translate }}
-									</button>
-								</span>
-							</div>
+				</section>
+			</div>
+
+			<!-- Languages -->
+			<div
+				class="pane"
+				role="tabpanel"
+				id="org-edit-pane-languages"
+				aria-labelledby="org-edit-tab-languages"
+				[hidden]="activeTab !== 'languages'"
+			>
+				<section class="section">
+					@if (organization_languages?.length) {
+					<ul class="items">
+						@for (lang of organization_languages; track lang.id || $index) {
+						<li class="item">
+							<span class="item-icon" aria-hidden="true"><nb-icon icon="message-square-outline"></nb-icon></span>
+							<span class="item-name">{{ lang.name }}</span>
+							@if (lang.level) {
+							<span class="item-meta">{{ lang.level | replace: '_' : ' ' | titlecase }}</span>
 							}
+							<button
+								type="button"
+								class="icon-button"
+								(click)="removeLanguage(lang)"
+								[attr.aria-label]="'BUTTONS.DELETE' | translate"
+								[nbTooltip]="'BUTTONS.DELETE' | translate"
+							>
+								<nb-icon icon="trash-2-outline"></nb-icon>
+							</button>
+						</li>
+						}
+					</ul>
+					} @else if (!showAddLanguage) {
+					<p class="empty">{{ 'PUBLIC_PAGE.EDIT.NO_LANGUAGES' | translate }}</p>
+					}
+
+					@if (showAddLanguage) {
+					<div class="add-row">
+						<div class="field">
+							<span class="label">{{ 'POP_UPS.NAME' | translate }}</span>
+							<ngx-language-selector
+								[clearable]="true"
+								[addTag]="true"
+								[template]="'ng-select'"
+								selectBy="object"
+								(selectedLanguageEvent)="selectedLanguageHandler($event)"
+							></ngx-language-selector>
+						</div>
+						<div class="field field--level">
+							<label class="label" for="languageLevel">{{ 'POP_UPS.LEVEL' | translate }}</label>
+							<nb-select
+								id="languageLevel"
+								fullWidth
+								placeholder="{{ 'POP_UPS.LEVEL' | translate }}"
+								[(selected)]="selectedLanguageLevel"
+							>
+								<nb-option value="conversational">{{ 'LANGUAGE_LEVELS.CONVERSATIONAL' | translate }}</nb-option>
+								<nb-option value="native">{{ 'LANGUAGE_LEVELS.NATIVE' | translate }}</nb-option>
+								<nb-option value="fluent">{{ 'LANGUAGE_LEVELS.FLUENT' | translate }}</nb-option>
+							</nb-select>
+						</div>
+						<div class="add-row-actions">
+							<button type="button" nbButton status="basic" size="small" (click)="showAddLanguage = false">
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button
+								type="button"
+								nbButton
+								status="primary"
+								size="small"
+								(click)="addLanguage(selectedLanguage, selectedLanguageLevel, organization, selectedLanguage?.name)"
+							>
+								{{ 'BUTTONS.ADD' | translate }}
+							</button>
 						</div>
 					</div>
-				</nb-tab>
-				<nb-tab tabTitle="{{ 'POP_UPS.SKILLS' | translate }}" tabIcon="briefcase-outline" responsive>
-					<div class="row">
-						<div class="col-sm-12">
-							<div class="form-group">
-								<ngx-skills-input
-									[form]="form"
-									[selectedSkills]="organization.skills"
-									(selectedSkillsEvent)="selectedSkillsHandler($event)"
-								>
-								</ngx-skills-input>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col">
-							<div class="tab_min_height"></div>
-						</div>
-					</div>
-				</nb-tab>
-				<nb-tab tabTitle="{{ 'POP_UPS.LANGUAGES' | translate }}" tabIcon="globe-outline" responsive>
-					<div class="row">
-						<div class="col">
-							@if (languageExist) {
-							<div class="row">
-								<div class="col">
-									<nb-tag-list>
-										@for (lang of organization_languages; track lang) {
-										<nb-tag
-											(remove)="removeLanguage(lang)"
-											[text]="lang.name + ' (' + lang.level + ')'"
-											removable
-										></nb-tag>
-										}
-									</nb-tag-list>
-								</div>
-							</div>
-							} @if (!showAddLanguage) {
-							<div (click)="showAddLanguage = !showAddLanguage" class="button-add-language">
-								<button nbButton status="success" outline size="small">
-									<i class="fas fa-plus"></i>
-								</button>
-								<span class="heading_title"> {{ 'POP_UPS.ADD_LANGUAGE' | translate }}</span>
-							</div>
-							} @if (showAddLanguage) {
-							<div class="row mt-3 show-add-language">
-								<div class="col d-flex flex-column justify-content-end">
-									<label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
-									<ngx-language-selector
-										[clearable]="true"
-										[addTag]="true"
-										[template]="'ng-select'"
-										selectBy="object"
-										(selectedLanguageEvent)="selectedLanguageHandler($event)"
-									></ngx-language-selector>
-								</div>
-								<div class="col d-flex flex-column justify-content-end">
-									<label class="label">{{ 'POP_UPS.LEVEL' | translate }}</label>
-									<nb-select placeholder="Select Showcase" [(selected)]="selectedLanguageLevel">
-										<nb-option value="conversational">{{
-											'LANGUAGE_LEVELS.CONVERSATIONAL' | translate
-										}}</nb-option>
-										<nb-option value="native">{{ 'LANGUAGE_LEVELS.NATIVE' | translate }}</nb-option>
-										<nb-option value="fluent">{{ 'LANGUAGE_LEVELS.FLUENT' | translate }}</nb-option>
-									</nb-select>
-								</div>
-								<span class="col d-flex align-items-end">
-									<button
-										(click)="
-											addLanguage(
-												selectedLanguage,
-												selectedLanguageLevel,
-												organization,
-												selectedLanguage.name
-											)
-										"
-										nbButton
-										status="success"
-										size="small"
-										class="mr-3"
-									>
-										{{ 'BUTTONS.SAVE' | translate }}
-									</button>
-									<button
-										(click)="showAddLanguage = !showAddLanguage"
-										nbButton
-										status="basic"
-										outline
-										size="small"
-									>
-										{{ 'BUTTONS.CANCEL' | translate }}
-									</button>
-								</span>
-							</div>
-							}
-						</div>
-					</div>
-					<div class="row">
-						<div class="col">
-							<div class="tab_min_height"></div>
-						</div>
-					</div>
-				</nb-tab>
-				<nb-tab tabTitle="{{ 'POP_UPS.PRIVACY' | translate }}" tabIcon="shield-outline" responsive>
-					<div class="row">
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showIncome"
-									[(checked)]="organization.show_income"
-									(change)="changeShowAction('show_income')"
-								>
-									<label class="check" for="showIncome">{{
-										'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showProfits"
-									[(checked)]="organization.show_profits"
-									(change)="changeShowAction('show_profits')"
-									><label class="check" for="showProfits">{{ 'POP_UPS.PROFITS' | translate }}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showBusinessPaid"
-									[(checked)]="organization.show_bonuses_paid"
-									(change)="changeShowAction('show_bonuses_paid')"
-									><label class="check" for="showBusinessPaid">{{
-										'POP_UPS.BONUSES_PAID' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showTotalHours"
-									[(checked)]="organization.show_total_hours"
-									(change)="changeShowAction('show_total_hours')"
-									><label class="check" for="showTotalHours">{{
-										'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showMinimumProjectSize"
-									[(checked)]="organization.show_minimum_project_size"
-									(change)="changeShowAction('show_minimum_project_size')"
-									><label class="check" for="showMinimumProjectSize">{{
-										'POP_UPS.MINIMUM_PROJECT_SIZE' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showProjectsCount"
-									[(checked)]="organization.show_projects_count"
-									(change)="changeShowAction('show_projects_count')"
-									><label class="check" for="showProjectsCount">{{
-										'POP_UPS.PROJECTS_COUNT' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showClientsCount"
-									[(checked)]="organization.show_clients_count"
-									(change)="changeShowAction('show_clients_count')"
-									><label class="check" for="showClientsCount">{{
-										'POP_UPS.CLIENTS_COUNT' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="show_clients"
-									[(checked)]="organization.show_clients"
-									(change)="changeShowAction('show_clients')"
-									><label class="check" for="show_clients">{{
-										'POP_UPS.SHOW_CLIENTS' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-						<div class="col-sm-6">
-							<div class="form-group extra_padding">
-								<nb-toggle
-									class="nb_toggle"
-									id="showEmployeesCount"
-									[(checked)]="organization.show_employees_count"
-									(change)="changeShowAction('show_employees_count')"
-									><label class="check" for="showEmployeesCount">{{
-										'POP_UPS.EMPLOYEES_COUNT' | translate
-									}}</label>
-								</nb-toggle>
-							</div>
-						</div>
-					</div>
-				</nb-tab>
-			</nb-tabset>
+					} @else {
+					<button type="button" class="add-link" (click)="showAddLanguage = true">
+						<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+						{{ 'POP_UPS.ADD_LANGUAGE' | translate }}
+					</button>
+					}
+				</section>
+			</div>
+
+			<!-- Privacy -->
+			<div
+				class="pane"
+				role="tabpanel"
+				id="org-edit-pane-privacy"
+				aria-labelledby="org-edit-tab-privacy"
+				[hidden]="activeTab !== 'privacy'"
+			>
+				<section class="section">
+					<p class="section-help">{{ 'PUBLIC_PAGE.EDIT.PRIVACY_HELP' | translate }}</p>
+					<ul class="settings">
+						<!-- The label is the toggle's own content, so the whole row is clickable. -->
+						@for (setting of privacySettings; track setting.key) {
+						<li class="setting">
+							<nb-toggle class="setting-toggle" labelPosition="start" status="primary" [formControlName]="setting.key">
+								{{ setting.translation | translate }}
+							</nb-toggle>
+						</li>
+						}
+					</ul>
+				</section>
+			</div>
 		</form>
 		}
 	</nb-card-body>
-	<nb-card-footer>
-		<button (click)="editPublicPage()" status="success" size="small" nbButton>
+
+	<!-- ── Footer: actions on the right ───────────────────────────────────── -->
+	<nb-card-footer class="dialog-footer">
+		<button type="button" nbButton status="basic" size="small" (click)="close()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" nbButton status="primary" size="small" [disabled]="form?.invalid" (click)="editPublicPage()">
 			{{ 'BUTTONS.UPDATE' | translate }}
 		</button>
 	</nb-card-footer>
