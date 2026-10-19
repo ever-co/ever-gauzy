@@ -35,12 +35,10 @@
   min-width: 0;
 }
 
-// The employee page's tab bar, with an icon before each label; it scrolls sideways when narrow.
+// The employee page's tab bar, with an icon before each label.
 .project-page-tabs {
-  overflow-x: auto;
-
   .tabs {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .tab {
