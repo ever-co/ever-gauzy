@@ -231,33 +231,60 @@
 						} @else if (taskProgress.value && !taskProgress.value.total) {
 						<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
 						} @else if (taskProgress.value; as progress) {
-						<div class="progress-summary">
-							<span class="progress-value">{{ formatPercent(progress.percent) }}</span>
-							<span class="progress-caption">
-								{{ 'PROJECT_QUICK_LOOK.PROGRESS_META' | translate : { done: progress.done, total: progress.total } }}
-							</span>
+						@if (isPage) {
+						<!-- On the page, a ring fills the panel beside the chart: done, then in progress, out of all tasks. -->
+						<div class="progress-ring-wrap">
+							<div
+								class="progress-ring"
+								[style.--done]="(progress.done / progress.total) * 100"
+								[style.--active]="(progress.progress / progress.total) * 100"
+								[nbTooltip]="
+									('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate) + ' ' + progress.done + ' · ' +
+									('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate) + ' ' + progress.progress + ' · ' +
+									('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate) + ' ' + progress.todo
+								"
+								nbTooltipPlacement="top"
+								role="progressbar"
+								aria-valuemin="0"
+								aria-valuemax="100"
+								[attr.aria-valuenow]="progress.percent | number : '1.0-0'"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.PROGRESS' | translate"
+							>
+								<span class="progress-ring-center">
+									<span class="progress-ring-value">{{ formatPercent(progress.percent) }}</span>
+									<span class="progress-ring-caption">{{ 'PROJECT_QUICK_LOOK.PROGRESS_META' | translate : { done: progress.done, total: progress.total } }}</span>
+								</span>
+							</div>
 						</div>
-						<div
-							class="progress-track"
-							[nbTooltip]="
-								('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate) + ' ' + progress.done + ' · ' +
-								('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate) + ' ' + progress.progress + ' · ' +
-								('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate) + ' ' + progress.todo
-							"
-							nbTooltipPlacement="top"
-							role="progressbar"
-							aria-valuemin="0"
-							aria-valuemax="100"
-							[attr.aria-valuenow]="progress.percent | number : '1.0-0'"
-							[attr.aria-label]="'PROJECT_QUICK_LOOK.PROGRESS' | translate"
-						>
-							@if (progress.done) {
-							<span class="progress-segment progress-segment--done" [style.width.%]="(progress.done / progress.total) * 100"></span>
-							}
-							@if (progress.progress) {
-							<span class="progress-segment progress-segment--active" [style.width.%]="(progress.progress / progress.total) * 100"></span>
-							}
-						</div>
+						} @else {
+							<div class="progress-summary">
+								<span class="progress-value">{{ formatPercent(progress.percent) }}</span>
+								<span class="progress-caption">
+									{{ 'PROJECT_QUICK_LOOK.PROGRESS_META' | translate : { done: progress.done, total: progress.total } }}
+								</span>
+							</div>
+							<div
+								class="progress-track"
+								[nbTooltip]="
+									('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate) + ' ' + progress.done + ' · ' +
+									('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.PROGRESS' | translate) + ' ' + progress.progress + ' · ' +
+									('EMPLOYEES_PAGE.VIEW.TASK_FILTERS.OPEN' | translate) + ' ' + progress.todo
+								"
+								nbTooltipPlacement="top"
+								role="progressbar"
+								aria-valuemin="0"
+								aria-valuemax="100"
+								[attr.aria-valuenow]="progress.percent | number : '1.0-0'"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.PROGRESS' | translate"
+							>
+								@if (progress.done) {
+								<span class="progress-segment progress-segment--done" [style.width.%]="(progress.done / progress.total) * 100"></span>
+								}
+								@if (progress.progress) {
+								<span class="progress-segment progress-segment--active" [style.width.%]="(progress.progress / progress.total) * 100"></span>
+								}
+							</div>
+						}
 						<dl class="progress-stats">
 							<div class="progress-stat">
 								<dt><span class="progress-dot progress-dot--done" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.DONE' | translate }}</dt>

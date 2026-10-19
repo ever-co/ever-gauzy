@@ -1216,3 +1216,77 @@ $weight-medium: 500;
     }
   }
 }
+
+/* ── Progress ring (page only) ── */
+
+// On a page the Progress panel stands as tall as the chart beside it: the ring takes the room,
+// centred, and the three figures sit at the foot of the panel.
+:host(.is-page) .project-view-order-1 .panel-body {
+  display: flex;
+  flex-direction: column;
+}
+
+:host(.is-page) .project-view-order-1 .progress-stats {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.progress-ring-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 10rem;
+  padding: 0.5rem 0;
+}
+
+// Done, then in progress, round from the top; the rest of the ring is still to do. The ring is
+// drawn behind the figures and its middle is masked out, so it sits on whatever the panel shows.
+.progress-ring {
+  --done: 0;
+  --active: 0;
+  --thickness: 0.875rem;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(11rem, 100%);
+  aspect-ratio: 1;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--gauzy-chart-revenue) 0 calc(var(--done) * 1%),
+      var(--gauzy-chart-profit) calc(var(--done) * 1%) calc((var(--done) + var(--active)) * 1%),
+      var(--gauzy-hover-tint) calc((var(--done) + var(--active)) * 1%) 100%
+    );
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--thickness)), #000 calc(100% - var(--thickness) + 1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - var(--thickness)), #000 calc(100% - var(--thickness) + 1px));
+  }
+}
+
+.progress-ring-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0 1.25rem;
+  text-align: center;
+}
+
+.progress-ring-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  color: var(--gauzy-text-color-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-ring-caption {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+}
