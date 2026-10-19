@@ -18,9 +18,11 @@ jest.mock('@gauzy/core', () => {
 	return {
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
+		MultiORMManyToOne: decorator,
 		ExportRedacted: decorator,
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: class {},
+		TenantBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		createSsrfSafeHttpsAgent: () => undefined,
 		verifyWebhookSignature: jest.requireActual('../../../../../core/src/lib/webhook/webhook-signature').verifyWebhookSignature,
