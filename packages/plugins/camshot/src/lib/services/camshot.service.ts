@@ -1,5 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { createImageThumbnail, FileStorage, fileContentToBuffer, TenantAwareCrudService, thumbnailFileName } from '@gauzy/core';
+import { BadRequestException, Injectable, Logger, PayloadTooLargeException } from '@nestjs/common';
+import {
+	createImageThumbnail,
+	FileContentTooLargeError,
+	FileStorage,
+	fileContentToBuffer,
+	TenantAwareCrudService,
+	thumbnailFileName
+} from '@gauzy/core';
 import { Camshot } from '../entity/camshot.entity';
 import { TypeOrmCamshotRepository } from '../repositories/type-orm-camshot.repository';
 import { MikroOrmCamshotRepository } from '../repositories/mikro-orm-camshot.repository';
@@ -60,7 +67,22 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 
 	public async createThumbnail(provider: any, file: FileDTO): Promise<FileDTO> {
 		// Retrieve file content from the file storage provider
-		const fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		let fileContent: Buffer | undefined;
+		try {
+			fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		} catch (error) {
+			// Too large to read back (already stored: the route sets no multer size limit): delete it, or it stays
+			// served from `/public/` with no record to delete it through, and answer 413.
+			if (error instanceof FileContentTooLargeError) {
+				try {
+					await provider.deleteFile(file.key);
+				} catch {
+					this.logger.error('Error while deleting an oversized camshot from file storage provider');
+				}
+				throw new PayloadTooLargeException('The camshot file is too large');
+			}
+			throw error;
+		}
 		if (!fileContent) {
 			// The key names the storage path: logged here, kept out of the response (CWE-209)
 			this.logger.error(`Could not read the uploaded camshot '${file.key}' back from the file storage provider`);
