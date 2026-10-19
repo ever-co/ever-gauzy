@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
@@ -106,6 +106,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// Return the newly created comment.
 			return comment;
 		} catch (error) {
+			// A missing employee (404) keeps its status; only unexpected failures become a 400
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			console.log(`Error while creating comment: ${error.message}`, error);
 			throw new BadRequestException('Comment post failed', error);
 		}
@@ -171,7 +175,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 
 			return updatedComment;
 		} catch (error) {
-			if (error instanceof ForbiddenException) {
+			// A foreign comment (403) or a missing one (404, thrown by the lookup) keeps its status
+			if (error instanceof HttpException) {
 				throw error;
 			}
 			console.log(`Error while updating comment: ${error.message}`, error);
