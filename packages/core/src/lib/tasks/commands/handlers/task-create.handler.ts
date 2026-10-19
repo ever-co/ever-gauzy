@@ -189,7 +189,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								user.name
+								user?.name
 							);
 						})
 					);
