@@ -345,7 +345,7 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		// Close the dialog.
 		dialog$.onClose
 			.pipe(
-				tap(() => this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()),
+				tap((result) => this._changeClientsTabIfActiveAndPrivacyIsTurnedOff(result)),
 				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {
@@ -369,9 +369,10 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 	/**
 	 * If clients tab is active and privacy mutation turned off clients view.
 	 * We have to removed clients tab from UI and default select profile tab.
+	 * Reads the dialog's result: its toggles no longer write to the organization.
 	 */
-	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff() {
-		if (this.activeTab === 'clients' && !this.organization.show_clients) {
+	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff(result?: Partial<IOrganization>) {
+		if (this.activeTab === 'clients' && result && !result.show_clients) {
 			this.selectTab('profile');
 		}
 	}
