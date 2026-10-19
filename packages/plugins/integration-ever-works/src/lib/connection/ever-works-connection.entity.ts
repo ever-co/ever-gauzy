@@ -1,5 +1,13 @@
-import { ID } from '@gauzy/contracts';
-import { ColumnIndex, ExportRedacted, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ID, IOrganization } from '@gauzy/contracts';
+import {
+	ColumnIndex,
+	ExportRedacted,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	Organization,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
 import { MikroOrmEverWorksConnectionRepository } from './repository/mikro-orm-ever-works-connection.repository';
 
 /** How the connection authenticates to Ever Works: an integration key now, an Ever ID token later (plan 02 §5). */
@@ -35,6 +43,13 @@ export enum EverWorksConnectionStatus {
  */
 @MultiORMEntity('ever_works_connection', { mikroOrmRepository: () => MikroOrmEverWorksConnectionRepository })
 export class EverWorksConnection extends TenantOrganizationBaseEntity {
+	/**
+	 * `ON DELETE SET NULL` (migration 1791000003100) in place of the base entity's `CASCADE`, so a schema built with
+	 * `DB_SYNCHRONIZE=true` keeps the connection when its organization is deleted, as a migrated one does.
+	 */
+	@MultiORMManyToOne(() => Organization, { nullable: true, onUpdate: 'CASCADE', onDelete: 'SET NULL' })
+	override organization?: IOrganization;
+
 	/** `api_key` now; `ever_id` once one-click connect through Ever ID exists. */
 	@MultiORMColumn({ type: 'varchar', length: 16, default: EverWorksAuthMode.API_KEY })
 	authMode!: EverWorksAuthMode;

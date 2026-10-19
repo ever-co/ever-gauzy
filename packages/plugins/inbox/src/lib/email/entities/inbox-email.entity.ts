@@ -1,7 +1,14 @@
 // cspell:ignore dmarc
+import { isMySQL } from '@gauzy/config';
 import { ID, InboxEmailDirectionEnum, InboxEmailSpamVerdictEnum, InboxEmailStatusEnum } from '@gauzy/contracts';
 import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { MikroOrmInboxEmailRepository } from './inbox-email.repositories';
+
+/**
+ * MySQL's `text` stops at 64 KB: these columns are `longtext` there (the create migration for the bodies,
+ * 1791000003200 for the JSON columns) and `text` elsewhere, so `DB_SYNCHRONIZE=true` builds what the migrations do.
+ */
+const LONG_TEXT = isMySQL() ? 'longtext' : 'text';
 
 /**
  * `inbox_email` (plan 04 §2, §5.3): one message of one mailbox, received (`IN`) or sent from it (`OUT`). Unique on
@@ -31,40 +38,40 @@ export class InboxEmail extends TenantOrganizationBaseEntity {
 	inReplyTo?: string | null;
 
 	/** JSON array of message ids. */
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	referenceIds?: string | null;
 
 	/** JSON `{ address, name? }`. */
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	sender?: string | null;
 
 	/** JSON arrays of `{ address, name? }`. */
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	toAddresses?: string | null;
 
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	ccAddresses?: string | null;
 
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	bccAddresses?: string | null;
 
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	replyToAddresses?: string | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 500, nullable: true })
 	subject?: string | null;
 
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	textBody?: string | null;
 
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	htmlSanitized?: string | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 300, nullable: true })
 	snippet?: string | null;
 
 	/** JSON object of the allowlisted headers. */
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: LONG_TEXT, nullable: true })
 	headers?: string | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 16, nullable: true })
