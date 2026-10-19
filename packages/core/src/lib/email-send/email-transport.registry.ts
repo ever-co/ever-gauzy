@@ -25,6 +25,11 @@ export interface IEmailTransportRequest {
 	 * the mailbox it is sent from (plan 04 §5.5, step 1).
 	 */
 	providerAccountId?: ID | null;
+	/**
+	 * Only a transport with its own default sender (`fromAddress`) will do: a templated mail is sent as the
+	 * transport's sender, and `MAIL_FROM_ADDRESS` is no sender a provider has verified (review F63).
+	 */
+	requireFromAddress?: boolean;
 }
 
 /** A transport a resolver supplies. */
@@ -107,6 +112,12 @@ export class EmailTransportRegistry {
 				}
 				if (!resolution.transport || typeof resolution.transport !== 'object') {
 					this.logger.warn(`Email transport resolver ${id} answered without a transport; skipped.`);
+					continue;
+				}
+				// A sender that needs the transport's own default sender: one without is passed over, and the next
+				// resolver is asked (#11095 review; a resolver may not know the flag).
+				if (request?.requireFromAddress && !resolution.fromAddress) {
+					this.logger.debug(`Email transport resolver ${id} answered a transport without a sender; skipped.`);
 					continue;
 				}
 				return { ...resolution, source: resolution.source || id };

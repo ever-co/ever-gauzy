@@ -34,7 +34,7 @@ import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
 import { EverWorksOutboundHandler, EverWorksOutboundPusher, EverWorksPushContext, EverWorksPushOutcome } from '../sync/outbound/ever-works-outbound.pusher';
 import { EverWorksOutboundQueue } from '../sync/outbound/ever-works-outbound.queue';
 import { htmlToMarkdown } from '../tasks/ever-works-markdown';
-import { documentToMarkdown, markdownHash, markdownToDocument } from './ever-works-docs-content';
+import { contentJsonHash, documentToMarkdown, markdownHash, markdownToDocument } from './ever-works-docs-content';
 import {
 	cut,
 	DOCS_TREE,
@@ -217,7 +217,7 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 				metadata: mergeMetadata(null, everWorksMetadataOf(document))
 			};
 			const id = await this.store.createPage(context, parentId, document.id, fields);
-			await this.record(context, id, document, version, this.snapshotOf(document, eHash, written(contentJson)), 'inbound');
+			await this.record(context, id, document, version, { ...this.snapshotOf(document, eHash, written(contentJson)), jHash: contentJsonHash(contentJson) }, 'inbound');
 			this.logger.log(`Ever Works document ${document.id} created as Gauzy page ${id} (organization ${context.organizationId}).`);
 			return { status: 'applied' };
 		}
@@ -241,12 +241,17 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 				await this.recordBodyConflict(context, page, document, versionId);
 				message = 'both sides changed the body: Ever Works wins, the Gauzy edit is kept as a version';
 			} else {
-				// Every write keeps the page's previous content restorable.
-				await this.store.snapshot(context, page);
+				// Every write keeps the page's previous content restorable: an edit made since the last sync write (one
+				// the Markdown cannot show, such as an uploaded image) is kept even inside the snapshot window (review F92).
+				// A link from before the hash (no baseline yet) keeps the content too: its first replacement is not judged
+				// by a hash it never had (#11082 review).
+				const editedSince = before.jHash === undefined || contentJsonHash(page.contentJson) !== before.jHash;
+				await this.store.snapshot(context, page, undefined, editedSince);
 			}
 			fields.contentJson = contentJson;
 			fields.contentHtml = contentHtml;
 			next.gHash = written(contentJson);
+			next.jHash = contentJsonHash(contentJson);
 		} else if (before.gHash === undefined) next.gHash = gauzyHash;
 		// Title and description: Ever Works' change wins over a Gauzy one not pushed yet (logged), unless Gauzy is pushing it now.
 		if (document.title !== undefined && document.title !== before.title) {
@@ -502,6 +507,7 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			description: page.description ?? null,
 			eHash: markdownHash(created.body ?? markdown),
 			gHash: markdownHash(markdown),
+			jHash: contentJsonHash(page.contentJson),
 			ewFolderId: created.folderId ?? null,
 			status: created.status,
 			reviewState: created.reviewState,
@@ -525,21 +531,37 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			const before = this.links.snapshot<DocSnapshot>(pair);
 			const ew = this.ewOnlyOf(pair);
 			const ewArea = ew.scope?.type === 'work' || ew.workId ? 'work' : 'organization';
-			if (placement.area !== ewArea || (placement.area === 'work' && placement.workId !== (ew.workId ?? ew.scope?.id))) {
-				// Ever Works moves a document only between library folders, never between the library and a Work.
+			const movedAcross = placement.area !== ewArea || (placement.area === 'work' && placement.workId !== (ew.workId ?? ew.scope?.id));
+			if (movedAcross && !before.movedAcross) {
+				// Ever Works moves a document only between library folders, never between the library and a Work. The move
+				// is logged once; the page's content keeps syncing where it is in Ever Works (review F95).
 				await this.log.write({ ...this.logBase(context), direction: 'outbound', entityType: EverWorksLinkType.DOC, gauzyId: page.id as ID, ewId: pair.ewId, action: 'move_not_synced', status: 'skipped', message: 'The page moved between the organization documents and a Work (or between Works); Ever Works cannot move it there, so it stays where it is in Ever Works.' });
-				return { status: 'skipped', message: 'moved across areas: not representable in Ever Works' };
 			}
 			const gHash = markdownHash(markdown);
 			const patch: EverWorksKbDocumentUpdate = {};
 			if (page.name !== before.title) patch.title = cut(page.name, KB_LIMITS.title) || 'Untitled';
 			if ((page.description ?? null) !== (before.description ?? null)) patch.description = page.description ? cut(page.description, KB_LIMITS.description) : null;
 			if (gHash !== before.gHash) patch.body = cut(markdown, KB_LIMITS.body);
-			const ewFolderId = placement.area === 'organization' ? placement.ewFolderId : null;
-			const move = placement.area === 'organization' && (ewFolderId ?? null) !== (before.ewFolderId ?? null);
+			const ewFolderId = !movedAcross && placement.area === 'organization' ? placement.ewFolderId : (before.ewFolderId ?? null);
+			const move = !movedAcross && placement.area === 'organization' && (ewFolderId ?? null) !== (before.ewFolderId ?? null);
 			const accept = page.reviewStatus === DocumentReviewStatusEnum.APPROVED && before.reviewState === 'proposed';
 			const unarchive = before.status === 'archived';
-			if (!Object.keys(patch).length && !move && !accept && !unarchive) return { status: 'skipped', message: 'nothing changed' };
+			if (!Object.keys(patch).length && !move && !accept && !unarchive) {
+				// Only the across-areas move to remember (so it is logged once, and again after a move back and forth).
+				if (movedAcross !== !!before.movedAcross) {
+					await this.links.record({
+						tenantId: context.tenantId,
+						organizationId: context.organizationId,
+						integrationTenantId: context.integrationTenantId,
+						entityType: EverWorksLinkType.DOC,
+						gauzyId: page.id as ID,
+						ewId: pair.ewId,
+						snapshot: { ...before, movedAcross } as unknown as Record<string, unknown>,
+						direction: 'outbound'
+					});
+				}
+				return { status: 'skipped', message: movedAcross ? 'moved across areas: not representable in Ever Works' : 'nothing changed' };
+			}
 			const id = encodeURIComponent(pair.ewId);
 			try {
 				let current: EverWorksKbDocument | null = null;
@@ -559,6 +581,10 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 					description: page.description ?? null,
 					eHash: latest.body != null ? markdownHash(latest.body) : before.eHash,
 					gHash,
+					// The hash stays the one of the content the sync last wrote into Gauzy: a push sends only the Markdown,
+					// so a Gauzy edit it cannot carry is still kept as a version before the next Ever Works write (#11082 review).
+					...(before.jHash !== undefined ? { jHash: before.jHash } : {}),
+					...(movedAcross ? { movedAcross } : {}),
 					ewFolderId: latest.folderId ?? ewFolderId ?? null,
 					status: latest.status,
 					reviewState: latest.reviewState,
@@ -670,12 +696,15 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			if (link) await this.links.unlink(link, 'moved out of the organization documents; both folders are kept');
 			return { status: 'skipped', message: 'only folders under Organization/ are library folders' };
 		}
-		const parent = folders[0] as Document;
 		let ewParentId: string | null = null;
-		if (parent.id !== top.id) {
-			const parentLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.DOC_FOLDER, parent.id as ID);
-			if (!parentLink || parentLink.state === EverWorksLinkState.UNLINKED) return { status: 'deferred', message: `waiting for the folder ${parent.id} to sync first` };
+		// The nearest library folder above that syncs, as for a page (review F96, #11082 review): one not paired yet is
+		// waited for; one whose pairing ended is passed over (it never syncs again), up to the top of the library.
+		for (const above of folders.slice(0, -1)) {
+			const parentLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.DOC_FOLDER, above.id as ID);
+			if (!parentLink) return { status: 'deferred', message: `waiting for the folder ${above.id} to sync first` };
+			if (parentLink.state === EverWorksLinkState.UNLINKED) continue;
 			ewParentId = parentLink.ewId;
+			break;
 		}
 		const client = this.client(context);
 		const name = cut(folder.name, KB_LIMITS.folderName) || 'Folder';
@@ -771,16 +800,30 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 			const last = this.lastSweep.get(context.integrationTenantId);
 			this.lastSweep.set(context.integrationTenantId, Date.now());
 			const folderIds = await this.store.treeFolderIds(context, root);
-			const nodes: Array<{ id?: unknown; kind?: DocumentKindEnum }> = await this.store.nodesUnder(context, folderIds, last ? new Date(last - 2 * 60_000) : undefined);
+			const nodes: Array<{ id?: unknown; kind?: DocumentKindEnum }> = [];
+			for (const node of await this.store.nodesUnder(context, folderIds, last ? new Date(last - 2 * 60_000) : undefined)) {
+				// A deleted node whose delete is handled is not queued (review F97, #11082 review): a deleted folder (its
+				// delete is never pushed), and a deleted page with nothing left to archive in Ever Works.
+				if ((node as { deletedAt?: Date | null }).deletedAt) {
+					if (node.kind === DocumentKindEnum.FOLDER) continue;
+					const pair = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.DOC, node.id as ID);
+					if (!pair || pair.state === EverWorksLinkState.UNLINKED || this.links.snapshot<DocSnapshot>(pair).status === 'archived') continue;
+				}
+				nodes.push(node);
+			}
 			// Pairs whose Gauzy node left the tree (a move the subscriber did not see, or a delete): their push ends
 			// the pairing (a page) or skips it (a folder).
 			const inTree = new Set<string>(folderIds as string[]);
 			for (const type of [EverWorksLinkType.DOC, EverWorksLinkType.DOC_FOLDER]) {
 				const pairs = (await this.links.list(context.integrationTenantId, type)).filter((pair) => pair.state !== EverWorksLinkState.UNLINKED);
-				const parents = await this.store.parentsOf(context, pairs.map((pair) => pair.gauzyId as ID));
+				const states = await this.store.nodeStatesOf(context, pairs.map((pair) => pair.gauzyId as ID));
 				for (const pair of pairs) {
-					const parent = parents.get(pair.gauzyId as string);
-					if (!parent || !inTree.has(parent)) nodes.push({ id: pair.gauzyId, kind: type === EverWorksLinkType.DOC ? DocumentKindEnum.PAGE : DocumentKindEnum.FOLDER });
+					const state = states.get(pair.gauzyId as string);
+					// A deleted (or gone) node whose delete is handled is not queued again every sweep (review F97): a folder
+					// delete is never pushed, and a page's archive went out already.
+					const gone = !state || state.deleted;
+					if (gone && (type === EverWorksLinkType.DOC_FOLDER || this.links.snapshot<DocSnapshot>(pair).status === 'archived')) continue;
+					if (gone || !state.parentId || !inTree.has(state.parentId)) nodes.push({ id: pair.gauzyId, kind: type === EverWorksLinkType.DOC ? DocumentKindEnum.PAGE : DocumentKindEnum.FOLDER });
 				}
 			}
 			for (const [index, node] of nodes.entries()) {
@@ -820,11 +863,15 @@ export class EverWorksDocsService implements EverWorksInboundHandler, EverWorksO
 		if (top.externalId === DOCS_TREE.organization) {
 			const below = chain.slice(1);
 			let ewFolderId: string | null = null;
-			const nearest = below[below.length - 1];
-			if (nearest) {
-				const folderLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.DOC_FOLDER, nearest.id as ID);
-				if (!folderLink || folderLink.state === EverWorksLinkState.UNLINKED) return { waitingFor: nearest.id as ID };
+			// The nearest library folder that syncs: a folder that is not paired yet is waited for (it syncs first); one
+			// whose pairing ended (deleted in Ever Works, dragged out and back) never syncs again, so the page goes to the
+			// next one up, or Unfiled, instead of waiting forever (review F96).
+			for (const folder of [...below].reverse()) {
+				const folderLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.DOC_FOLDER, folder.id as ID);
+				if (!folderLink) return { waitingFor: folder.id as ID };
+				if (folderLink.state === EverWorksLinkState.UNLINKED) continue;
 				ewFolderId = folderLink.ewId;
+				break;
 			}
 			return { area: 'organization', ewFolderId, segments: below.map((folder) => folder.name) };
 		}

@@ -98,11 +98,34 @@ the seed) and answers the routes below.
    "Ideas" view; the "Ever Works" and "Ever Works — Ideas" projects are created
    when they are first needed.
 
+Each mapping has a direction per domain (`directions`: off, one way or both)
+and the per-entity sync settings every Gauzy integration has (`entitySettings`,
+also writable through the platform's integration API). A setting with
+`sync: false` turns its domains off, whatever their direction: live events and
+changes, sweeps, the initial sync and a resync all skip them. `Employee` →
+people, `Agent` → agents, `OrganizationTeam` → teams, `Project` → works,
+`StrategicInitiative` → missions, `Goal` → goals, `Task` → tasks and ideas (an
+idea is a Gauzy task), `InboxItem` → inbox and agent mail (both write Inbox
+items), `Document` → docs. `KeyResult` and `Comment` stop only those records:
+goals keep syncing without their key results (none is written in Gauzy, no
+sample is pushed, a goal push leaves the Ever Works criteria, metric and
+Definition of Done as they are, and a new Gauzy goal is not created in Ever
+Works, which makes it from its key results), and tasks keep syncing without
+their comments. A missing setting is on. The mapping answers
+`effectiveDirections` next to `directions`, and the settings page marks a
+domain its setting turns off. Turning a setting on again syncs what changes
+from then on; a resync brings over what changed meanwhile. The webhook keeps
+asking for agent mail while the `agentEmail` direction is on (the mirror skips
+it).
+
 A revoked or expired key turns the connection `needs_reauth`: the sync pauses
 and the admin who connected gets a notice. Entering a new key of the same
 Ever Works tenant resumes it. Disconnecting archives the connection and its
 mappings and deletes the Ever Works webhook; links and logs are kept, so a
 reconnect resumes without duplicates. Nothing synced is deleted on either side.
+The connection belongs to the tenant: deleting the organization it was made
+from keeps it (that organization's own mapping goes, the other mappings keep
+syncing), and only deleting the tenant deletes it.
 
 Where the Gauzy Inbox is loaded (`GAUZY_INBOX_ENABLED=true`), the notices are
 Inbox items (`NOTICE`, `source = SYSTEM`), one per connection, admin and kind
@@ -184,7 +207,9 @@ and answered `202`.
 - **Capture and push.** Gauzy changes (`TaskEvent`, and the entity subscribers
   of later items) become one coalesced `ever_works_outbound_change` per record;
   the pusher recomputes the state, diffs it against the link snapshot (loop
-  guard 2) and retries 429/5xx with back-off, dead-lettering after eight tries.
+  guard 2) and retries 429/5xx and network failures with back-off (a minute,
+  doubling to an hour: about two hours in all), dead-lettering after eight
+  tries.
 - **Merge.** Per field, against the snapshot: one side changed wins; both
   changed → last writer wins for scalars and rich text (the loser is kept), a
   3-way set merge for sets; Ever Works' gates decide status.
@@ -373,7 +398,16 @@ and answered `202`.
   the folder the `DOCS_ROOT_FOLDER_ID` setting names), created with the first
   document: `Organization/` holds the organization documents and the library
   folder tree, `Works/<Work name>/` each Work's documents (the folder is linked
-  to the Work's paired project). An Ever Works document becomes a Docs page:
+  to the Work's paired project). Changing the root (`docsRootFolderId` of
+  `PUT …/mappings/:id`) moves `Organization/` and `Works/` under the new root at
+  the next sync step or sweep, with everything in them, so links and pages
+  keep syncing; the old root folder stays. The move is idempotent and finishes
+  if it was cut short, also when the root changed again (or back) meanwhile.
+  An archived root keeps being used (it still holds its pages); a deleted one,
+  or a folder inside the synced tree, gives way to the sync's own "Ever Works"
+  folder (moved back to the top if it was dragged into the tree), and the tree
+  moves there. A tree folder an admin moves out of the root still stops syncing
+  what is in it, and is never moved back. An Ever Works document becomes a Docs page:
   title, description, the Markdown body as the editor's content (headings,
   lists and task lists, quotes, code, tables, links, images; a `[[path]]`
   link of a synced document becomes a document mention, any other stays
@@ -421,8 +455,10 @@ and answered `202`.
   not part of this version is skipped and picked up by a later resync. At the
   end, feed events after the head that were skipped meanwhile are applied
   again (anything a link's version covers is skipped). `POST …/sync/resync` is
-  the same run as a reconcile pass; an expired feed cursor (`410`) starts one
-  on its own.
+  the same run as a reconcile pass (a record an earlier run skipped or gave up
+  on is applied again); an expired feed cursor (`410`) starts one on its own.
+  Records a phase held back are released when it stops importing part-way, and
+  a run whose mapping is removed is cancelled by the loop.
 - **Observability.** `GET …/sync/status` returns the lag (Ever Works' feed
   head against what Gauzy read and applied), the inbound and outbound counts
   (pending, deferred, failed, dead), the open conflicts, the last error, the

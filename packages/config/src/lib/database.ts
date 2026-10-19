@@ -81,12 +81,25 @@ interface ConnectionPoolSettings {
 /**
  * The idle timeout of every pool when DB_IDLE_TIMEOUT is unset.
  *
- * It was 10 s. With pools that keep no connection open (min 0), every connection a burst opened was
- * closed 10 s later, so the first requests after any lull paid a full reconnect again: TCP, TLS (with the
- * CA parsed again), a new PostgreSQL backend and SCRAM authentication (whose key derivation runs on the
- * libuv threadpool next to bcrypt and DNS) — several round trips and milliseconds of CPU on the request path.
+ * 10 s, with no connection kept open (DB_POOL_MIN 0), so that idle connections are released quickly.
+ * This matters behind a SESSION-mode PgBouncer, which is how the hosted stage and production APIs reach
+ * PostgreSQL: there every open client connection, idle or not, holds one of the pooler's few server
+ * connections. With a warm pool (min 2) and a 30 s idle timeout, the stage API, worker and Teams API held
+ * all 12 server connections of their pooler, and new connections waited up to 98 s in PgBouncer.
+ *
+ * Without such a pooler, a direct connection may set DB_POOL_MIN=2 and DB_IDLE_TIMEOUT=30000. The first
+ * requests after a lull then skip a full reconnect: TCP, TLS (with the CA parsed again), a new PostgreSQL
+ * backend and SCRAM authentication, whose key derivation runs on the libuv threadpool next to bcrypt and
+ * DNS. A transaction-mode PgBouncer also lifts the constraint, because an idle client connection holds no
+ * server connection there.
  */
-export const DEFAULT_DB_IDLE_TIMEOUT_MS = 30000;
+export const DEFAULT_DB_IDLE_TIMEOUT_MS = 10000;
+
+/**
+ * Connections the active ORM's pool keeps open when DB_POOL_MIN is unset. See DEFAULT_DB_IDLE_TIMEOUT_MS
+ * for why this is 0, and when a higher value is safe.
+ */
+export const DEFAULT_DB_POOL_MIN = 0;
 
 /**
  * Per-connection settings shared by the three PostgreSQL clients (TypeORM's pg pool, MikroORM's and Knex's).
@@ -102,7 +115,11 @@ export const DEFAULT_DB_IDLE_TIMEOUT_MS = 30000;
  */
 export function postgresConnectionExtras(env: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
 	const extras: Record<string, unknown> = {};
-	if (String(env.DB_KEEP_ALIVE ?? '').trim().toLowerCase() !== 'false') {
+	if (
+		String(env.DB_KEEP_ALIVE ?? '')
+			.trim()
+			.toLowerCase() !== 'false'
+	) {
 		extras.keepAlive = true;
 		extras.keepAliveInitialDelayMillis = 10000;
 	}
@@ -174,11 +191,17 @@ function readConnectionPoolSettings(type: DatabaseTypeEnum.postgres | DatabaseTy
 	});
 
 	// Connections the active ORM's pool keeps open even when idle, so that a request after a quiet spell
-	// does not pay for a new connection. 0 restores the previous behaviour (every idle connection closes).
+	// does not pay for a new connection. Default 0: every idle connection closes. Raise it only without a
+	// session-mode PgBouncer (see DEFAULT_DB_IDLE_TIMEOUT_MS).
 	// parseIntEnv only warns about an invalid value and still returns it, so a negative or unparsable one falls back
 	// to the default here instead of reaching the pool as -1 or NaN.
-	const parsedPoolMin = parseIntEnv('DB_POOL_MIN', process.env.DB_POOL_MIN, 2, { onInvalid: 'warn' });
-	const poolMin = Math.min(Number.isFinite(parsedPoolMin) && parsedPoolMin >= 0 ? parsedPoolMin : 2, poolSize);
+	const parsedPoolMin = parseIntEnv('DB_POOL_MIN', process.env.DB_POOL_MIN, DEFAULT_DB_POOL_MIN, {
+		onInvalid: 'warn'
+	});
+	const poolMin = Math.min(
+		Number.isFinite(parsedPoolMin) && parsedPoolMin >= 0 ? parsedPoolMin : DEFAULT_DB_POOL_MIN,
+		poolSize
+	);
 
 	// 0 turns TypeORM's slow-query warning off: it only logs when maxQueryExecutionTime is truthy. An
 	// unparsable value also switched it off and a negative one logged every query, but neither stopped

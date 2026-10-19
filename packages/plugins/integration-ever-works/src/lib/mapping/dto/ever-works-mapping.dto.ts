@@ -75,7 +75,11 @@ export class EverWorksUpdateMappingDto {
 	@IsBoolean()
 	readonly isEnabled?: boolean;
 
-	@ApiPropertyOptional({ type: [EverWorksEntitySettingDto] })
+	@ApiPropertyOptional({
+		type: [EverWorksEntitySettingDto],
+		description:
+			'Per-entity sync toggles. `sync: false` turns the domains of that entity off (both directions, live and in a resync); KEY_RESULT and COMMENT stop only those records. The mapping answers `effectiveDirections`.'
+	})
 	@ValidateIf((_o, v) => v !== undefined)
 	@IsArray()
 	@ArrayMaxSize(50)

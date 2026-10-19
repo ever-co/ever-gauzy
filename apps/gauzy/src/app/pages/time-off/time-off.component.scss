@@ -39,6 +39,16 @@ nb-radio-group {
   }
 }
 
+// The icon-only toggles are ghost buttons (no box of their own on the toolbar); the basic-status icon
+// renders near-invisible on the dark theme, so it takes the theme's text colour.
+.more-actions {
+  box-shadow: none; // not the `.action` hairline ring either: the icon sits on the toolbar itself
+
+  nb-icon {
+    color: nb-theme(text-basic-color);
+  }
+}
+
 .filter {
   background-color: var(--gauzy-card-2);
   width: fit-content;

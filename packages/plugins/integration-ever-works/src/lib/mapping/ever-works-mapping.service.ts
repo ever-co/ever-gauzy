@@ -24,6 +24,7 @@ import { EverWorksConnectionService } from '../connection/ever-works-connection.
 import { EverWorksCreateMappingDto, EverWorksUpdateMappingDto } from './dto/ever-works-mapping.dto';
 import {
 	DEFAULT_EVER_WORKS_DIRECTIONS,
+	effectiveDirections,
 	EVER_WORKS_DEFAULT_PROJECT_NAME,
 	EVER_WORKS_DOMAINS,
 	EVER_WORKS_IDEA_ISSUE_TYPE,
@@ -41,7 +42,13 @@ export interface EverWorksMappingView {
 	connectionId: ID;
 	everWorksOrganization: { id: string; slug: string; displayName: string | null };
 	isEnabled: boolean;
+	/** The directions as stored (what the directions form edits). */
 	directions: Record<EverWorksDomain, EverWorksDirection>;
+	/**
+	 * The directions that take effect: `directions` with every domain of an entity whose `entitySettings` toggle is
+	 * `sync: false` set to `off` (OQ4, review F77).
+	 */
+	effectiveDirections: Record<EverWorksDomain, EverWorksDirection>;
 	defaultProjectId: ID | null;
 	ideasProjectId: ID | null;
 	docsRootFolderId: ID | null;
@@ -210,6 +217,8 @@ export class EverWorksMappingService {
 			this.set(mapping, values, manager, true);
 			await manager.save(IntegrationTenant, mapping);
 			if (dto.entitySettings?.length) {
+				// A mapping made before the toggles existed gets its rows first (all on), so its toggles can be set (OQ4).
+				await this.ensureEntitySettings(manager, mapping as Mapping);
 				const rows = await manager.find(IntegrationEntitySetting, { where: { integrationId: mapping.id } as never });
 				for (const change of dto.entitySettings) {
 					const row = rows.find((r) => r.entity === change.entity);
@@ -519,6 +528,10 @@ export class EverWorksMappingService {
 			everWorksOrganization: { id: everWorksOrganizationId, slug: this.setting(mapping, S.EVER_WORKS_ORGANIZATION_SLUG), displayName: pin?.displayName ?? null },
 			isEnabled: mapping.isActive === true && bool(S.IS_ENABLED, false),
 			directions: this.directions(mapping),
+			effectiveDirections: effectiveDirections(
+				this.directions(mapping),
+				Object.fromEntries(entitySettings.filter((row) => row.sync === false).map((row) => [row.entity, false]))
+			),
 			defaultProjectId: id(S.DEFAULT_PROJECT_ID),
 			ideasProjectId: id(S.IDEAS_PROJECT_ID),
 			docsRootFolderId: id(S.DOCS_ROOT_FOLDER_ID),

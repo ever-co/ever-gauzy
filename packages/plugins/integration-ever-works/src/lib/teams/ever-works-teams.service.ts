@@ -70,7 +70,23 @@ interface TeamEverWorksOnly {
 	resources?: EverWorksTeamResourceRef[];
 	/** Members (`<type>:<id>`) Gauzy could not map at the last sync; tried again on the next change and by the sweep. */
 	unmapped?: string[];
+	/**
+	 * Child events (`team.member.*`, `team.resource.*`) are applied by child, not by the team's version (review F75):
+	 * the version of the last full team state applied (absent: the link's version is), and the version of the last
+	 * child event applied per child (`m:<type>:<id>`, `r:<type>:<id>`) since then.
+	 */
+	fullVersion?: number | null;
+	childVersions?: Record<string, number>;
+	/**
+	 * The version of the last full member set written to Ever Works (`PUT /teams/:id/members`) since the last full
+	 * team state: Ever Works holds that set as of this version, so it covers the member events up to it, not the
+	 * resource events (#11096 review).
+	 */
+	membersVersion?: number | null;
 }
+
+/** The child-event state of a team link (see {@link TeamEverWorksOnly.fullVersion}). */
+type TeamChildState = Pick<TeamEverWorksOnly, 'fullVersion' | 'childVersions' | 'membersVersion'>;
 
 /** One Ever Works team as the Teams tab shows it. */
 export interface EverWorksTeamRow {
@@ -110,6 +126,62 @@ const sameMembers = (a: Array<{ employeeId: ID; isManager: boolean }>, b: Array<
 	const left = new Map(a.map((m) => [m.employeeId, m.isManager]));
 	return a.length === b.length && b.every((m) => left.has(m.employeeId) && left.get(m.employeeId) === m.isManager);
 };
+
+/** The child of a `team.member.*` / `team.resource.*` event (`m:<type>:<id>`, `r:<type>:<id>`), or `null` for a team event. */
+function childKeyOf(type: string, data: Record<string, unknown>): string | null {
+	if (type.startsWith('team.member.')) return `m:${String(data['memberType'])}:${String(data['memberId'])}`;
+	if (type.startsWith('team.resource.')) return `r:${String(data['resourceType'])}:${String(data['resourceId'])}`;
+	return null;
+}
+
+/** The version below which a team link's child events are covered by a full team state (review F75). */
+function childFloorOf(link: EverWorksEntityLink, ew: TeamEverWorksOnly): number | null {
+	return ew.fullVersion !== undefined ? ew.fullVersion : (link.ewVersion ?? null);
+}
+
+/**
+ * Whether a child event of this version was applied already: by its own child, or by a full team state as new (a
+ * member event also by a full member set written to Ever Works as new, #11096 review).
+ */
+function childApplied(link: EverWorksEntityLink, ew: TeamEverWorksOnly, child: string, version: number): boolean {
+	const floor = childFloorOf(link, ew);
+	const membersFloor = child.startsWith('m:') ? (ew.membersVersion ?? null) : null;
+	return (floor != null && version <= floor) || (membersFloor != null && version <= membersFloor) || (ew.childVersions?.[child] ?? -Infinity) >= version;
+}
+
+/** The member-set floor as stored (see {@link TeamEverWorksOnly.membersVersion}). */
+const membersFloorOf = (membersVersion: number | null | undefined): TeamChildState => (membersVersion != null ? { membersVersion } : {});
+
+/** The child state after applying one child event. */
+function childStateAfter(link: EverWorksEntityLink, ew: TeamEverWorksOnly, child: string, version: number | null): TeamChildState {
+	return {
+		fullVersion: childFloorOf(link, ew),
+		...membersFloorOf(ew.membersVersion),
+		childVersions: { ...(ew.childVersions ?? {}), ...(version != null ? { [child]: version } : {}) }
+	};
+}
+
+/**
+ * The child state after a push: Ever Works' answer is not applied to Gauzy, so the floor of the child events stays.
+ * Only a member set written (`membersVersion`, the version Ever Works answered it with) covers the member events.
+ */
+function childStateAfterPush(link: EverWorksEntityLink, ew: TeamEverWorksOnly, membersVersion = ew.membersVersion): TeamChildState {
+	return { fullVersion: childFloorOf(link, ew), ...membersFloorOf(membersVersion), ...(ew.childVersions ? { childVersions: ew.childVersions } : {}) };
+}
+
+/** The child state as stored, for a record that does not change it. */
+function childStateOf(ew: TeamEverWorksOnly): TeamChildState {
+	return {
+		...(ew.fullVersion !== undefined ? { fullVersion: ew.fullVersion } : {}),
+		...membersFloorOf(ew.membersVersion),
+		...(ew.childVersions ? { childVersions: ew.childVersions } : {})
+	};
+}
+
+/** The link version recorded with a child event: an older child event never lowers it. */
+function childRecordVersion(link: EverWorksEntityLink, version: number | null): number | null {
+	return link.ewVersion != null && version != null ? Math.max(link.ewVersion, version) : version;
+}
 
 /** How often the membership sweep runs per connection. */
 export const TEAM_SWEEP_MS = 10 * 60_000;
@@ -252,10 +324,13 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		const link = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, envelope.aggregate.id);
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the team is no longer synced' };
 		const version = envelope.aggregate.version ?? null;
-		if (link && link.ewVersion != null && version != null && version <= link.ewVersion) {
+		const data = (envelope.data ?? {}) as Record<string, unknown>;
+		// A child event carries only its child: an older one can still hold a change a newer one does not, so it is
+		// skipped only by its own child's version (or a full team state at least as new), never by the team's (review F75).
+		const child = childKeyOf(envelope.type, data);
+		if (link && version != null && (child ? childApplied(link, this.everWorksOnly(link), child, version) : link.ewVersion != null && version <= link.ewVersion)) {
 			return { status: 'skipped', message: 'already applied (version)' };
 		}
-		const data = (envelope.data ?? {}) as Record<string, unknown>;
 		switch (envelope.type) {
 			case 'team.created':
 			case 'team.updated':
@@ -384,6 +459,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		version: number | null
 	): Promise<EverWorksApplyOutcome> {
 		if (!link) return { status: 'skipped', message: 'the team is not linked' };
+		if (!(await this.teamExists(context, link))) return this.teamGone(link);
 		const ew = this.everWorksOnly(link);
 		const snapshot = this.links.snapshot<TeamSnapshot>(link);
 		const previous = ew.members ?? [];
@@ -400,10 +476,11 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			context,
 			link.gauzyId as ID,
 			{ ...this.teamFrom(link), members: next },
-			version,
+			childRecordVersion(link, version),
 			{ name: snapshot.name ?? '', emoji: snapshot.emoji ?? null, members: applied.members },
 			'inbound',
-			applied.unmapped
+			applied.unmapped,
+			childStateAfter(link, ew, `m:${key(member)}`, version)
 		);
 		return { status: 'applied' };
 	}
@@ -416,6 +493,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		version: number | null
 	): Promise<EverWorksApplyOutcome> {
 		if (!link) return { status: 'skipped', message: 'the team is not linked' };
+		if (!(await this.teamExists(context, link))) return this.teamGone(link);
 		const ew = this.everWorksOnly(link);
 		const resources = (ew.resources ?? []).filter((r) => !(r.resourceType === resource.resourceType && r.resourceId === resource.resourceId));
 		if (!removed) resources.push({ resourceType: resource.resourceType, resourceId: resource.resourceId });
@@ -429,17 +507,24 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		let message: string | undefined;
 		if (target) {
 			const recordLink = await this.links.byEw(context.integrationTenantId, target.linkType, resource.resourceId);
-			if (recordLink) await this.setTeam(target.entity, recordLink.gauzyId as ID, link.gauzyId as ID, !removed);
-			else message = `the ${resource.resourceType} is not linked yet; its own sync carries its teams`;
+			if (!recordLink) message = `the ${resource.resourceType} is not linked yet; its own sync carries its teams`;
+			// Only a pair that syncs: a work or task that turned private (unlinked) or whose Gauzy record is gone never
+			// has its team scope changed from here (review F78, F76).
+			else if (recordLink.state !== EverWorksLinkState.OK) message = `the ${resource.resourceType} is no longer synced`;
+			else if (!(await this.dataSource.getRepository(target.entity).findOne({ where: { id: recordLink.gauzyId } as never, withDeleted: true, select: { id: true } as never })))
+				message = `the Gauzy ${resource.resourceType === 'work' ? 'project' : 'task'} is gone`;
+			else await this.setTeam(target.entity, recordLink.gauzyId as ID, link.gauzyId as ID, !removed);
 		}
 		const snapshot = this.links.snapshot<TeamSnapshot>(link);
 		await this.record(
 			context,
 			link.gauzyId as ID,
 			{ ...this.teamFrom(link), resources },
-			version,
+			childRecordVersion(link, version),
 			{ name: snapshot.name ?? '', emoji: snapshot.emoji ?? null, members: snapshot.members ?? [] },
-			'inbound'
+			'inbound',
+			undefined,
+			childStateAfter(link, ew, `r:${resource.resourceType}:${resource.resourceId}`, version)
 		);
 		return { status: 'applied', ...(message ? { message } : {}) };
 	}
@@ -490,6 +575,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			const emoji = row.emoji ?? null;
 			let ew = this.everWorksOnly(pair);
 			let version = pair.ewVersion ?? undefined;
+			let membersVersion = ew.membersVersion;
 			try {
 				const patch: Record<string, unknown> = {};
 				if (row.name !== before.name) patch['name'] = row.name;
@@ -503,7 +589,7 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 							name: before.name ?? row.name,
 							emoji: before.emoji ?? null,
 							members: nowMembers
-						}, 'outbound');
+						}, 'outbound', undefined, childStateOf(ew));
 					}
 					return { status: 'skipped', message: 'nothing changed' };
 				}
@@ -518,12 +604,18 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 					});
 					version = updated?.version ?? version;
 					ew = { ...ew, members: updated?.members ?? merged.members };
+					// Ever Works holds the member set Gauzy just wrote as of the version it answers: an older member event
+					// delivered late (a removal of a member the set kept) must no longer apply (#11096 review).
+					membersVersion = version ?? membersVersion;
 				}
+				// Ever Works' answer is not applied to Gauzy as a full team state: the child events since the last one applied
+				// still apply by child, so the child history is kept (#11076 review); only the member events are covered by a
+				// member set written above.
 				await this.record(context, row.id as ID, { ...this.teamFrom(pair), ...ew, id: ewTeamId, name: row.name, avatarIcon: emoji }, version ?? null, {
 					name: row.name,
 					emoji,
 					members: nowMembers
-				}, 'outbound');
+				}, 'outbound', undefined, childStateAfterPush(pair, this.everWorksOnly(pair), membersVersion));
 				return { status: 'pushed' };
 			} catch (error) {
 				if (!(error instanceof EverWorksApiError && error.status === 412) || attempt === 1) throw error;
@@ -634,44 +726,71 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			if (!context.isEnabled) continue;
 			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.TEAM)).filter((link) => link.state === EverWorksLinkState.OK);
 			for (const link of links) {
-				const ew = this.everWorksOnly(link);
-				if (fromEverWorks(context.directions.teams) && ew.unmapped?.length) {
-					await EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: `team-sweep:${link.ewId}` }, async () => {
-						const snapshot = this.links.snapshot<TeamSnapshot>(link);
-						const applied = await this.applyMemberSet(context, link.gauzyId as ID, snapshot.members ?? [], {
-							previous: ew.members ?? [],
-							next: ew.members ?? [],
-							previousManagerAgentId: ew.managerAgentId ?? null,
-							nextManagerAgentId: ew.managerAgentId ?? null,
-							previouslyUnmapped: ew.unmapped ?? []
-						});
-						// Nothing to record only when the unmapped set and the Gauzy side are both unchanged (equal
-						// counts can hide one member becoming mapped while another becomes unmapped).
-						const previouslyUnmapped = new Set(ew.unmapped ?? []);
-						const sameUnmapped = applied.unmapped.length === previouslyUnmapped.size && applied.unmapped.every((k) => previouslyUnmapped.has(k));
-						if (sameUnmapped && sameMembers(snapshot.members ?? [], applied.members)) return;
-						await this.record(context, link.gauzyId as ID, { ...this.teamFrom(link) }, link.ewVersion ?? null, {
-							name: snapshot.name ?? '',
-							emoji: snapshot.emoji ?? null,
-							members: applied.members
-						}, 'inbound', applied.unmapped);
-					});
-				}
-				if (toEverWorks(context.directions.teams)) {
-					const fresh = (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, link.ewId)) ?? link;
-					const snapshot = this.links.snapshot<TeamSnapshot>(fresh);
-					if (!sameMembers(snapshot.members ?? [], await this.currentMembers(link.gauzyId as ID))) {
-						await this.queue.enqueue({
-							tenantId: context.tenantId,
-							organizationId: context.organizationId,
-							entityType: EverWorksLinkType.TEAM,
-							gauzyId: link.gauzyId as ID,
-							op: 'upsert'
-						});
-					}
-				}
+				// One link never stops the sweep of the others (review F76).
+				await this.sweepLink(connection, context, link).catch((error) =>
+					this.logger.warn(`Team link ${link.id}: the membership sweep failed (${error instanceof Error ? error.message : 'error'}).`)
+				);
 			}
 		}
+	}
+
+	/** The sweep of one team link (see {@link sweep}). */
+	private async sweepLink(connection: EverWorksConnection, context: EverWorksMappingContext, link: EverWorksEntityLink): Promise<void> {
+		// A Gauzy team deleted (hard) in Gauzy: the pair stops syncing, instead of failing (and re-queueing) each sweep.
+		if (!(await this.teamExists(context, link))) {
+			await this.teamGone(link);
+			return;
+		}
+		const ew = this.everWorksOnly(link);
+		if (fromEverWorks(context.directions.teams) && ew.unmapped?.length) {
+			await EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: `team-sweep:${link.ewId}` }, async () => {
+				const snapshot = this.links.snapshot<TeamSnapshot>(link);
+				const applied = await this.applyMemberSet(context, link.gauzyId as ID, snapshot.members ?? [], {
+					previous: ew.members ?? [],
+					next: ew.members ?? [],
+					previousManagerAgentId: ew.managerAgentId ?? null,
+					nextManagerAgentId: ew.managerAgentId ?? null,
+					previouslyUnmapped: ew.unmapped ?? []
+				});
+				// Nothing to record only when the unmapped set and the Gauzy side are both unchanged (equal
+				// counts can hide one member becoming mapped while another becomes unmapped).
+				const previouslyUnmapped = new Set(ew.unmapped ?? []);
+				const sameUnmapped = applied.unmapped.length === previouslyUnmapped.size && applied.unmapped.every((k) => previouslyUnmapped.has(k));
+				if (sameUnmapped && sameMembers(snapshot.members ?? [], applied.members)) return;
+				await this.record(context, link.gauzyId as ID, { ...this.teamFrom(link) }, link.ewVersion ?? null, {
+					name: snapshot.name ?? '',
+					emoji: snapshot.emoji ?? null,
+					members: applied.members
+				}, 'inbound', applied.unmapped, childStateOf(ew));
+			});
+		}
+		if (toEverWorks(context.directions.teams)) {
+			const fresh = (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TEAM, link.ewId)) ?? link;
+			const snapshot = this.links.snapshot<TeamSnapshot>(fresh);
+			if (!sameMembers(snapshot.members ?? [], await this.currentMembers(link.gauzyId as ID))) {
+				await this.queue.enqueue({
+					tenantId: context.tenantId,
+					organizationId: context.organizationId,
+					entityType: EverWorksLinkType.TEAM,
+					gauzyId: link.gauzyId as ID,
+					op: 'upsert'
+				});
+			}
+		}
+	}
+
+	/** Whether the Gauzy team of a link still exists (a soft-deleted one counts; a hard-deleted one does not). */
+	private async teamExists(context: EverWorksMappingContext, link: EverWorksEntityLink): Promise<boolean> {
+		const row = await this.dataSource
+			.getRepository(OrganizationTeam)
+			.findOne({ where: { id: link.gauzyId, tenantId: context.tenantId } as never, withDeleted: true, select: { id: true } as never });
+		return !!row;
+	}
+
+	/** A pair whose Gauzy team was deleted in Gauzy stops syncing (the Teams tab can pair the Ever Works team again). */
+	private async teamGone(link: EverWorksEntityLink): Promise<EverWorksApplyOutcome> {
+		await this.links.unlink(link, 'the Gauzy team was deleted; the pair no longer syncs');
+		return { status: 'skipped', message: 'the Gauzy team is gone' };
 	}
 
 	/** The mappings that sync through a connection. */
@@ -710,7 +829,9 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 		version: number | null,
 		snapshot: TeamSnapshot,
 		direction: 'inbound' | 'outbound',
-		unmapped: string[] = (team as { unmapped?: string[] }).unmapped ?? []
+		unmapped: string[] = (team as { unmapped?: string[] }).unmapped ?? [],
+		// Absent: a full team state is recorded, and the link's version is the floor of the child events (review F75).
+		childState: TeamChildState = {}
 	): Promise<void> {
 		const ewOnly: TeamEverWorksOnly = {
 			slug: team.slug,
@@ -720,7 +841,8 @@ export class EverWorksTeamsService implements EverWorksInboundHandler, EverWorks
 			avatarIcon: team.avatarIcon ?? null,
 			members: team.members ?? [],
 			resources: team.resources ?? [],
-			unmapped
+			unmapped,
+			...childState
 		};
 		await this.links.record({
 			tenantId: context.tenantId,

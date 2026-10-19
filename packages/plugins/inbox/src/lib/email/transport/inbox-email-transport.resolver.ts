@@ -47,10 +47,13 @@ export class InboxEmailTransportResolver implements IEmailTransportResolver, OnM
 		if (!tenantId) {
 			return null;
 		}
+		// A templated mail needs the account's own sender: one without is passed over (review F63).
+		const fits = (resolution: IEmailTransportResolution | null) =>
+			!!resolution && (!request.requireFromAddress || !!resolution.fromAddress);
 		if (request.providerAccountId) {
 			const named = await this.accounts.findUsable(request.providerAccountId, tenantId);
 			const resolution = named ? await this.transportOf(named) : null;
-			if (resolution) return resolution;
+			if (fits(resolution)) return resolution;
 		}
 		// The organization's default, then the tenant's: one that cannot build a transport does not stop the next.
 		for (const candidate of await this.accounts.defaultOutboundCandidates(
@@ -58,7 +61,7 @@ export class InboxEmailTransportResolver implements IEmailTransportResolver, OnM
 			request.organizationId ?? null
 		)) {
 			const resolution = await this.transportOf(candidate);
-			if (resolution) return resolution;
+			if (fits(resolution)) return resolution;
 		}
 		return null;
 	}

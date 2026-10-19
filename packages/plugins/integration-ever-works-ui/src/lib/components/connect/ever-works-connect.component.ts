@@ -30,7 +30,9 @@ export interface EverWorksConnectResult {
  * organization, review the matches (people, agents, teams, projects), choose the entities and directions,
  * and from the dry run **Start**: the webhook is registered (best effort) and the first sync starts.
  *
- * A tenant that is already connected starts at the organization step; the key is never shown again.
+ * A tenant that is already connected starts at the organization step; the key is never shown again. When that
+ * connection is not active (paused, a revoked key, an error) and no organization is mapped yet, there are no sync
+ * settings to fix it from, so the organization step offers a new key, Resume and Disconnect itself (review F99).
  */
 @Component({
 	selector: 'ngx-ever-works-connect',
@@ -54,6 +56,9 @@ export interface EverWorksConnectResult {
 		</ol>
 		@if (error) {
 			<nb-alert status="danger" role="alert" data-test="connect-error">{{ error }}</nb-alert>
+		}
+		@if (webhookKept.size) {
+			<nb-alert status="warning" role="status" data-test="webhook-kept">{{ 'EVER_WORKS.SETTINGS.DISCONNECT_WEBHOOK_KEPT' | translate }}</nb-alert>
 		}
 		@switch (step) {
 			@case ('key') {
@@ -157,6 +162,43 @@ export interface EverWorksConnectResult {
 						</p>
 						@if (connection.status !== 'active') {
 							<nb-alert status="warning" data-test="connection-not-active">{{ 'EVER_WORKS.CONNECT.STATUS_NOT_ACTIVE' | translate: { status: connection.status } }}</nb-alert>
+							<!-- No mapping yet, so no sync settings: the connection is recovered here (review F99). -->
+							<section class="recover" data-test="recover">
+								<label for="ew-new-key">{{ 'EVER_WORKS.SETTINGS.KEY_TITLE' | translate }}</label>
+								<p>{{ 'EVER_WORKS.SETTINGS.KEY_CURRENT' | translate: { name: connection.key.name || '—', prefix: connection.key.prefix || '—' } }}</p>
+								<input
+									nbInput
+									fullWidth
+									id="ew-new-key"
+									name="newKey"
+									type="password"
+									autocomplete="new-password"
+									spellcheck="false"
+									data-test="recover-key"
+									[placeholder]="'EVER_WORKS.CONNECT.KEY' | translate"
+									[(ngModel)]="newKey"
+									[disabled]="busy"
+								/>
+								<div class="actions">
+									<button nbButton status="primary" type="button" data-test="recover-rotate" [disabled]="busy || !newKey.trim()" (click)="rotateKey()">
+										{{ 'EVER_WORKS.SETTINGS.ROTATE_KEY' | translate }}
+									</button>
+									@if (connection.status !== 'disconnected') {
+										<button nbButton ghost type="button" data-test="recover-resume" [disabled]="busy" (click)="resume()">{{ 'EVER_WORKS.SETTINGS.RESUME' | translate }}</button>
+									}
+								</div>
+								<p>{{ 'EVER_WORKS.SETTINGS.DISCONNECT_HINT' | translate }}</p>
+								@if (!confirmDisconnect) {
+									<button nbButton status="danger" outline type="button" data-test="recover-disconnect" [disabled]="busy" (click)="confirmDisconnect = true">
+										{{ 'EVER_WORKS.SETTINGS.DISCONNECT' | translate }}
+									</button>
+								} @else {
+									<button nbButton status="danger" type="button" data-test="recover-confirm-disconnect" [disabled]="busy" (click)="disconnect()">
+										{{ 'EVER_WORKS.SETTINGS.CONFIRM_DISCONNECT' | translate }}
+									</button>
+									<button nbButton ghost type="button" [disabled]="busy" (click)="confirmDisconnect = false">{{ 'EVER_WORKS.COMMON.BACK' | translate }}</button>
+								}
+							</section>
 						}
 						<p>{{ 'EVER_WORKS.ORGANIZATION.TITLE' | translate }}</p>
 						@if (!connection.pinnedOrganizations.length) {
@@ -250,6 +292,9 @@ export interface EverWorksConnectResult {
 				gap: 0.5rem;
 				margin-top: 1rem;
 			}
+			.recover {
+				margin: 1rem 0 1.5rem;
+			}
 		`
 	]
 })
@@ -275,6 +320,15 @@ export class EverWorksConnectComponent implements OnChanges {
 	apiKey = '';
 	validation: EverWorksKeyValidation | null = null;
 	everWorksOrganizationId = '';
+	/** A new key for a connection that is not active (kept only in this form, cleared once the API has it). */
+	newKey = '';
+	/** Disconnect asks once more before it goes out. */
+	confirmDisconnect = false;
+	/**
+	 * The connections whose disconnect could not delete their Ever Works webhook subscription: the admin is told how to
+	 * remove them until a reconnect resumes each one (same Ever Works tenant) and confirms it is gone (#11096 review).
+	 */
+	readonly webhookKept = new Set<string>();
 	busy = false;
 	error: string | null = null;
 	/** Set once the first sync has started: the wizard stays locked until the page moves on. */
@@ -319,6 +373,8 @@ export class EverWorksConnectComponent implements OnChanges {
 		if (!this.canConnect) return;
 		this.request(this.api.connect(this.organizationId, this.apiBaseUrl.trim(), this.apiKey.trim()), (connection) => {
 			this.connection = connection;
+			// Only this connection's kept subscription can be gone now: another tenant's (a new connection) and a failed retry stay.
+			if (connection.earlierWebhookDeleted === true) this.webhookKept.delete(connection.id);
 			this.apiKey = '';
 			this.validation = null;
 			this.preselectOrganization();
@@ -330,6 +386,44 @@ export class EverWorksConnectComponent implements OnChanges {
 		this.request(this.api.createMapping(this.organizationId, this.everWorksOrganizationId), (mapping) => {
 			this.mapping = mapping;
 			this.step = 'review';
+		});
+	}
+
+	/** A connection that is not active, with no mapping yet: a new key of the same Ever Works tenant (review F99). */
+	rotateKey(): void {
+		const connection = this.connection;
+		const key = this.newKey.trim();
+		if (!connection || !key) return;
+		this.request(this.api.rotateKey(this.organizationId, connection.id, key), (rotated) => {
+			this.connection = rotated;
+			this.newKey = '';
+			this.preselectOrganization();
+		});
+	}
+
+	/** Resumes a paused (or failed) connection; the API checks the key first and says why it stays as it is. */
+	resume(): void {
+		const connection = this.connection;
+		if (!connection) return;
+		this.request(this.api.resume(this.organizationId, connection.id), (resumed) => {
+			this.connection = resumed;
+			this.preselectOrganization();
+		});
+	}
+
+	/** Disconnects the tenant (confirmed first): synced data stays; the wizard starts over at the key. */
+	disconnect(): void {
+		const connection = this.connection;
+		if (!connection) return;
+		this.request(this.api.disconnect(this.organizationId, connection.id), (result) => {
+			this.connection = null;
+			this.confirmDisconnect = false;
+			// Disconnected, but Ever Works kept the webhook subscription (the server keeps its id): say so (#11096 review). A
+			// disconnect that deleted its own never clears another connection's kept one (#11107 review).
+			if (result?.webhookDeleted === false) this.webhookKept.add(connection.id);
+			this.newKey = '';
+			this.everWorksOrganizationId = '';
+			this.step = 'key';
 		});
 	}
 

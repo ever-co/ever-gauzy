@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { isUUID } from 'class-validator';
-import { DataSource, In, IsNull } from 'typeorm';
+import { Brackets, DataSource, IsNull } from 'typeorm';
 import {
 	ID,
 	IInboxEmail,
@@ -34,9 +34,21 @@ import { messageIdOf, referencesOf } from '../inbound/mime';
 import { normalizeAddress } from '../mailboxes/address';
 import { InboxMailboxAccessService } from '../mailboxes/inbox-mailbox-access.service';
 
+/** A `Message-ID` value as a transport reports it (`<local@domain>`), not a provider's own id. */
+const SENT_MESSAGE_ID = /^<[^<>\s@]+@[^<>\s@]+>$/;
+
 /** The most recipients a reply or a forward may name. */
 export const MAX_OUTBOUND_RECIPIENTS = 50;
 export const MAX_OUTBOUND_TEXT = 100_000;
+/** The most messages the thread view lists: the newest ones (review F110). */
+export const THREAD_MESSAGES = 200;
+/** The messages a thread lists: mail, sent or still to send (failed inbound work is not mail). */
+const THREAD_STATUSES = [
+	InboxEmailStatusEnum.PROCESSED,
+	InboxEmailStatusEnum.SENT,
+	InboxEmailStatusEnum.QUEUED,
+	InboxEmailStatusEnum.FAILED
+];
 
 const parse = <T>(value: string | null | undefined, fallback: T): T => {
 	if (!value) return fallback;
@@ -85,46 +97,61 @@ export class InboxEmailService {
 		return { ...this.toEmail(email), attachments: attachments.map((row) => this.toAttachment(row)) };
 	}
 
-	/** The messages of the message's thread the caller may read, oldest first. */
+	/**
+	 * The messages of the message's thread the caller may read, oldest first: the newest {@link THREAD_MESSAGES} (a
+	 * long thread, an hourly alert say, shows its latest messages), and the message asked for if it is older.
+	 */
 	async thread(id: ID): Promise<IInboxEmail[]> {
 		const { email, mailbox } = await this.readable(id);
 		if (!email.threadId) return [this.toEmail(email)];
-		const found = await this.dataSource.getRepository(InboxEmail).find({
-			where: {
-				tenantId: email.tenantId as ID,
-				mailboxId: email.mailboxId,
-				threadId: email.threadId,
-				status: In([
-					InboxEmailStatusEnum.PROCESSED,
-					InboxEmailStatusEnum.SENT,
-					InboxEmailStatusEnum.QUEUED,
-					InboxEmailStatusEnum.FAILED
-				]),
-				deletedAt: IsNull()
-			},
-			// In the order they were stored: received, then sent (a sent message has no receivedAt).
-			order: { createdAt: 'ASC' },
-			take: 200
-		});
-		// A failed message is shown only when it is an unsent reply or forward (failed inbound work is not mail).
-		let rows = found.filter(
-			(row) => row.status !== InboxEmailStatusEnum.FAILED || row.direction === InboxEmailDirectionEnum.OUT
-		);
+		// What is listed, and what the caller may read, is checked in the query, before its limit: the page is the
+		// newest messages the caller may read, never the newest messages filtered down afterwards (#11096 review).
+		let query = this.dataSource
+			.getRepository(InboxEmail)
+			.createQueryBuilder('email')
+			.where('email.tenantId = :tenantId', { tenantId: email.tenantId })
+			.andWhere('email.mailboxId = :mailboxId', { mailboxId: email.mailboxId })
+			.andWhere('email.threadId = :threadId', { threadId: email.threadId })
+			.andWhere('email.status IN (:...statuses)', { statuses: THREAD_STATUSES })
+			.andWhere('email.deletedAt IS NULL')
+			// A failed message is shown only when it is an unsent reply or forward (failed inbound work is not mail).
+			.andWhere('NOT (email.status = :failed AND email.direction = :inbound)', {
+				failed: InboxEmailStatusEnum.FAILED,
+				inbound: InboxEmailDirectionEnum.IN
+			})
+			// The newest first, in the order they were stored (received, then sent: a sent message has no receivedAt);
+			// sorted oldest first below (review F110).
+			.orderBy('email.createdAt', 'DESC')
+			.addOrderBy('email.id', 'DESC')
+			.limit(THREAD_MESSAGES);
 		// Without current access to the mailbox (a former member reading an old message): only the messages that were
-		// addressed to the caller.
+		// addressed to the caller, and the one asked for. Newer mail of the mailbox's other recipients never pushes the
+		// caller's own out of the page (#11096 review).
 		const userId = RequestContext.currentUserId() as ID;
 		if (!(await this.access.canRead(mailbox, userId))) {
-			const itemIds = rows.map((row) => row.inboxItemId).filter((value): value is ID => !!value);
-			const mine = new Set(
-				itemIds.length === 0
-					? []
-					: (
-							await this.dataSource
-								.getRepository(InboxItemRecipient)
-								.find({ where: { inboxItemId: In(itemIds), userId, tenantId: email.tenantId as ID } })
-						).map((recipient) => recipient.inboxItemId)
+			const addressed = query
+				.subQuery()
+				.select('recipient.inboxItemId')
+				.from(InboxItemRecipient, 'recipient')
+				.where('recipient.userId = :userId')
+				.andWhere('recipient.tenantId = :tenantId')
+				.getQuery();
+			query.andWhere(
+				new Brackets((where) => {
+					where.where('email.id = :emailId');
+					where.orWhere(`email.inboxItemId IN ${addressed}`);
+				})
 			);
-			rows = rows.filter((row) => row.id === email.id || (!!row.inboxItemId && mine.has(row.inboxItemId)));
+			query.setParameters({ userId, emailId: email.id });
+		}
+		let rows = await query.getMany();
+		// The message asked for is listed too when it is older than those (as before, if its status is listed).
+		if (
+			!rows.some((row) => row.id === email.id) &&
+			THREAD_STATUSES.includes(email.status as InboxEmailStatusEnum) &&
+			(email.status !== InboxEmailStatusEnum.FAILED || email.direction === InboxEmailDirectionEnum.OUT)
+		) {
+			rows.push(email);
 		}
 		const at = (row: InboxEmail) => new Date(row.receivedAt ?? row.sentAt ?? row.createdAt ?? 0).getTime();
 		return [...rows].sort((a, b) => at(a) - at(b)).map((row) => this.toEmail(row));
@@ -337,6 +364,16 @@ export class InboxEmailService {
 			);
 			const refused =
 				sent.rejected.length > 0 ? `Not accepted for: ${sent.rejected.join(', ')}`.slice(0, 1000) : null;
+			// A transport that sent the message under another Message-ID (Amazon SES replaces the one given) reports
+			// it: the row keeps that one, the id the recipients' replies name, so they thread (review F64).
+			// Whole or not at all: a cut id would never match the `In-Reply-To` of an answer (#11095 review).
+			const sentAs =
+				typeof sent.messageId === 'string' &&
+				sent.messageId.length <= 512 &&
+				SENT_MESSAGE_ID.test(sent.messageId) &&
+				sent.messageId !== messageId
+					? sent.messageId
+					: null;
 			const nobody = sent.accepted.length === 0 && sent.rejected.length > 0;
 			await repository.update(
 				{ id: row.id as ID },
@@ -345,6 +382,7 @@ export class InboxEmailService {
 					sentAt: new Date(),
 					error: refused,
 					transport: sent.transport.slice(0, 120),
+					...(sentAs ? { messageId: sentAs } : {}),
 					...(sent.providerMessageId
 						? { providerMessageId: sent.providerMessageId.slice(0, 255) }
 						: sent.messageId && sent.messageId !== messageId

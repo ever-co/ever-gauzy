@@ -132,9 +132,15 @@ export class InboxNotificationsComponent implements OnInit {
 	readonly error = signal(false);
 	readonly noEmployee = signal(false);
 	private scope: NotificationScope = { tenantId: null, organizationId: null, employeeId: null };
+	/** "Mark all read" went through for this employee: the notifications not loaded are read too (#11098 review). */
+	private readonly markedAll = signal(false);
 
+	/** Something to mark read: an unread notification listed, or more of them not loaded yet (review F69). */
 	hasUnread(): boolean {
-		return this.notifications().some((notification) => !notification.isRead);
+		return (
+			this.notifications().some((notification) => !notification.isRead) ||
+			(!this.markedAll() && this.total() > this.notifications().length)
+		);
 	}
 
 	ngOnInit(): void {
@@ -200,6 +206,7 @@ export class InboxNotificationsComponent implements OnInit {
 			)
 			.subscribe((scope) => {
 				this.scope = scope;
+				this.markedAll.set(false);
 				this.notifications.set([]);
 				this.total.set(0);
 				this.reload$.next(0);
@@ -228,8 +235,13 @@ export class InboxNotificationsComponent implements OnInit {
 	 * the selected organization's list; it is read again afterwards rather than patched locally.
 	 */
 	markAllRead(): void {
+		const scope = this.scope;
 		this.api.markAllRead().subscribe({
-			next: () => this.reload$.next(0),
+			next: () => {
+				// Another employee or organization since it was sent: that one's notifications were not marked.
+				if (this.scope === scope) this.markedAll.set(true);
+				this.reload$.next(0);
+			},
 			error: () => this.error.set(true)
 		});
 	}

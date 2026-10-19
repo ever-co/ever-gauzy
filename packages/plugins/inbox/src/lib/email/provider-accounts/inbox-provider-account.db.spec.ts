@@ -418,6 +418,42 @@ describe('Email provider accounts on SQLite', () => {
 			);
 		});
 
+		it('a templated mail passes over a default account without its own sender (review F63)', async () => {
+			as(ADA, TENANT, ORG, [PermissionsEnum.ALL_ORG_EDIT]);
+			const tenantDefault = await create({
+				scope: InboxProviderAccountScopeEnum.TENANT,
+				name: 'Tenant default',
+				isDefaultOutbound: true
+			});
+			const orgDefault = await create({
+				name: 'Org default, no sender',
+				isDefaultOutbound: true,
+				config: { apiKey: 'good-key' }
+			});
+			// A message with its own sender (an Inbox reply) may still use it.
+			expect((await resolver.resolve({ tenantId: TENANT, organizationId: ORG }))?.source).toBe(
+				`fake:${orgDefault.id}`
+			);
+			const templated = await resolver.resolve({
+				tenantId: TENANT,
+				organizationId: ORG,
+				requireFromAddress: true
+			});
+			expect(templated?.source).toBe(`fake:${tenantDefault.id}`);
+			expect(templated?.fromAddress).toBe('support@acme.test');
+			// The account a sender names is passed over the same way.
+			expect(
+				(
+					await resolver.resolve({
+						tenantId: TENANT,
+						organizationId: ORG,
+						providerAccountId: orgDefault.id as string,
+						requireFromAddress: true
+					})
+				)?.source
+			).toBe(`fake:${tenantDefault.id}`);
+		});
+
 		it('refuses a provider that does not send as the outbound account', async () => {
 			registry.register(fakeProvider('inbound-only', false));
 			await expect(create({ providerId: 'inbound-only', isDefaultOutbound: true })).rejects.toBeInstanceOf(

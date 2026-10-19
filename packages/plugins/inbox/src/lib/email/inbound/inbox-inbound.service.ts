@@ -41,6 +41,7 @@ import {
 	IInboxEmailProcessor
 } from './inbox-email-processor.types';
 import { ALLOWLISTED_HEADERS, serializeParsedMessage } from './mime';
+import { jsonHeadersWithin, jsonListWithin, MYSQL_TEXT_BYTES } from './text-budget';
 
 /** The JSON array text of a value (`null` for nothing). */
 const json = (value: unknown): string | null =>
@@ -240,6 +241,9 @@ export class InboxInboundService {
 				.slice(0, 48);
 			const key = `inbox/${tenantId}/messages/${digest}.${extension}`;
 			const stored = await this.storage.put(content, key);
+			// What a `text` column of this database holds: a list or the headers past it are cut to fit, so the message
+			// is stored (the raw file keeps everything) instead of failing every retry of the provider (review F109).
+			const budget = this.textColumnBytes();
 
 			for (const { mailbox, tag, hold } of fresh) {
 				try {
@@ -251,13 +255,18 @@ export class InboxInboundService {
 							direction: InboxEmailDirectionEnum.IN,
 							messageId,
 							inReplyTo: message.inReplyTo?.slice(0, 512) ?? null,
-							referenceIds: json(message.references),
+							referenceIds: jsonListWithin(message.references, budget, 'tail'),
 							sender: json(message.from ?? null),
-							toAddresses: json(message.to),
-							ccAddresses: json(message.cc),
-							replyToAddresses: json(message.replyTo),
+							toAddresses: jsonListWithin(message.to, budget),
+							ccAddresses: jsonListWithin(message.cc, budget),
+							replyToAddresses: jsonListWithin(message.replyTo, budget),
 							subject: message.subject?.slice(0, 500) ?? null,
-							headers: json(this.headersOf(message, tag, hold ?? message.hold)),
+							// The provider's hold (a failed virus scan) wins over the allowlist's: a manager must see
+							// why the message is really held before releasing it (review F107).
+							headers: jsonHeadersWithin(this.headersOf(message, tag, message.hold ?? hold), budget, [
+								'x-gauzy-inbox-tag',
+								INBOX_HOLD_HEADER
+							]),
 							spf: message.spf ?? null,
 							dkim: message.dkim ?? null,
 							dmarc: message.dmarc ?? null,
@@ -285,6 +294,12 @@ export class InboxInboundService {
 				}
 			}
 		}
+	}
+
+	/** The bytes a `text` column holds on this database: MySQL's limit, or `null` (Postgres and SQLite: no limit). */
+	protected textColumnBytes(): number | null {
+		const type = this.dataSource.options?.type;
+		return type === 'mysql' || type === 'mariadb' ? MYSQL_TEXT_BYTES : null;
 	}
 
 	/** The recipients that are active mailboxes this account may deliver to (the rules of step 3). */

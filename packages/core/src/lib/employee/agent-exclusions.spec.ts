@@ -166,6 +166,71 @@ describe('agent employees are left out of headcounts, statistics, split expenses
 				expect(people.startedWorkOn).toEqual({ $lte: expect.anything() });
 				expect(people).not.toHaveProperty('$and');
 			});
+
+			describe('GET /employee/working/count counts what the pickers list (review F70)', () => {
+				const typeOrmCount = async () => {
+					const joins: string[] = [];
+					const clauses: string[] = [];
+					const web = {
+						where: jest.fn((clause: string) => clauses.push(`where ${clause}`)),
+						andWhere: jest.fn((clause: string) => clauses.push(`and ${clause}`)),
+						orWhere: jest.fn((clause: string) => clauses.push(`or ${clause}`))
+					};
+					const expand = (condition: unknown) =>
+						typeof condition === 'string'
+							? clauses.push(condition)
+							: typeof condition === 'function'
+								? condition(qb)
+								: (condition as { whereFactory?: (builder: unknown) => void })?.whereFactory?.(web);
+					const qb: Record<string, any> = {
+						alias: 'employee',
+						innerJoin: jest.fn((path: string) => joins.push(`inner ${path}`)),
+						leftJoin: jest.fn((path: string) => joins.push(`left ${path}`)),
+						where: jest.fn(expand),
+						andWhere: jest.fn(expand),
+						getCount: jest.fn().mockResolvedValue(3)
+					};
+					jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+					const service = Object.create(EmployeeService.prototype) as EmployeeService;
+					Object.defineProperty(service, 'typeOrmEmployeeRepository', {
+						value: { createQueryBuilder: jest.fn(() => qb) },
+						configurable: true
+					});
+					Object.defineProperty(service, 'tableName', { value: 'employee', configurable: true });
+					const answer = await service.findWorkingEmployeesCount('org-1', range);
+					return { answer, joins, sql: clauses.join(' | ') };
+				};
+
+				it('TypeORM: no membership and no start date are required of an agent, as in the list', async () => {
+					const count = await typeOrmCount();
+					const list = await typeOrmRead(false);
+					expect(count.answer).toEqual({ total: 3 });
+					expect(count.joins).toEqual(list.joins);
+					expect(count.sql).toMatch(
+						/where "organizations"\."id" IS NOT NULL \| or "employee"\."kind" = :agentKind/
+					);
+					expect(count.sql).toMatch(
+						/and "employee"\."startedWorkOn" <= :startedWorkOn \| or \("employee"\."kind" = :agentKind AND "employee"\."startedWorkOn" IS NULL\)/
+					);
+				});
+
+				it('MikroORM: an agent without a start date is counted, as in the list', async () => {
+					jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
+					const count = jest.fn().mockResolvedValue(2);
+					const findAndCount = jest.fn().mockResolvedValue([[], 0]);
+					const service = new EmployeeService(
+						{ metadata: { tableName: 'employee' } } as never,
+						{ count, findAndCount } as never
+					);
+					await expect(service.findWorkingEmployeesCount('org-1', range)).resolves.toEqual({ total: 2 });
+					await service.findWorkingEmployees('org-1', range);
+					const [counted] = count.mock.calls[0];
+					const [listed] = findAndCount.mock.calls[0];
+					expect(counted).not.toHaveProperty('startedWorkOn');
+					expect(counted.$and).toEqual(listed.$and);
+					expect(counted.$or).toEqual(listed.$or);
+				});
+			});
 		});
 	});
 

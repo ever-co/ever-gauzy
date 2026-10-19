@@ -302,6 +302,17 @@ describe('Ever Works connection on SQLite', () => {
 			expect(await raw().count()).toBe(0);
 		});
 
+		it('refuses a key made for another integration on connect and on rotation; validate names its kind (review F60)', async () => {
+			const other = mock.addKey({ integrationKind: 'generic' });
+			expect(await service.validate(connectDto(other))).toMatchObject({ integrationKind: 'generic' });
+			await expect(service.connect(connectDto(other))).rejects.toThrow(/made for the "generic" integration/);
+			expect(await raw().count()).toBe(0);
+			const view = await service.connect(connectDto(mock.addKey()));
+			expect(await service.validate(connectDto(mock.addKey()))).toMatchObject({ integrationKind: 'ever-gauzy' });
+			await expect(service.rotateKey(view.id, { apiKey: mock.addKey({ integrationKind: 'generic' }) })).rejects.toBeInstanceOf(BadRequestException);
+			expect((await raw().findOneByOrFail({ id: view.id })).status).toBe(EverWorksConnectionStatus.ACTIVE);
+		});
+
 		it('stores nothing when ENCRYPTION_KEY is malformed (503), before calling Ever Works', async () => {
 			const broken = build({ ENCRYPTION_KEY: ['not', 'a', '32', 'byte', 'key'].join('-') });
 			await expect(broken.connect(connectDto(mock.addKey()))).rejects.toBeInstanceOf(ServiceUnavailableException);
@@ -343,6 +354,22 @@ describe('Ever Works connection on SQLite', () => {
 			const rotated = await service.rotateKey(view.id, { apiKey: mock.addKey() });
 			expect(rotated.status).toBe(EverWorksConnectionStatus.ACTIVE);
 			expect(rotated.lastError).toBeNull();
+		});
+
+		it('a 401 while an admin paused the connection keeps the pause, tells the admin once, and a new key keeps it paused (review F57)', async () => {
+			const key = mock.addKey();
+			const view = await service.connect(connectDto(key));
+			await service.pause(view.id);
+			mock.revokeKey(key);
+			expect(await service.health(view.id)).toMatchObject({ status: EverWorksConnectionStatus.PAUSED, healthy: false });
+			await service.health(view.id);
+			expect(await dataSource.getRepository(EmployeeNotification).count()).toBe(1);
+			const stored = await raw().findOneByOrFail({ id: view.id });
+			expect(stored.status).toBe(EverWorksConnectionStatus.PAUSED);
+			expect(stored.lastError).toBeTruthy();
+			// The new key does not restart the sync the admin stopped; resuming it does.
+			expect((await service.rotateKey(view.id, { apiKey: mock.addKey() })).status).toBe(EverWorksConnectionStatus.PAUSED);
+			expect((await service.resume(view.id)).status).toBe(EverWorksConnectionStatus.ACTIVE);
 		});
 
 		it('refuses a new key of another Ever Works tenant', async () => {
@@ -580,6 +607,7 @@ describe('Ever Works connection on SQLite', () => {
 			expect(await service.current()).toBeNull();
 			const again = await service.connect(connectDto(mock.addKey()));
 			expect(again.id).toBe(view.id);
+			expect(again).not.toHaveProperty('earlierWebhookDeleted');
 			expect(again.status).toBe(EverWorksConnectionStatus.ACTIVE);
 		});
 	});
@@ -636,6 +664,8 @@ describe('Ever Works connection on SQLite', () => {
 			const view = await service.connect(connectDto(mock.addKey()));
 			await service.pause(view.id);
 			mock.apiVersion = '2';
+			// The daily check keeps the admin's pause (#11074 review); only the error is recorded.
+			expect(await service.health(view.id)).toMatchObject({ status: EverWorksConnectionStatus.PAUSED, healthy: false });
 			await expect(service.resume(view.id)).rejects.toThrow(/api_version/);
 			const result = await service.health(view.id);
 			expect(result).toMatchObject({ healthy: false });
@@ -660,6 +690,37 @@ describe('Ever Works connection on SQLite', () => {
 			expect((await raw().findOneByOrFail({ id: view.id })).webhookSubscriptionId).toBe(other);
 		});
 
+		it('a disconnect racing a registration forgets only the subscription it deleted; the other one is deleted too, or kept for the reconnect (review F58)', async () => {
+			const view = await service.connect(connectDto(mock.addKey()));
+			await service.registerWebhook(view.id);
+			const [first] = [...mock.webhooks.keys()];
+			// While the disconnect deletes the first subscription, another tab registers a new one.
+			const racing = buildWith({ during: { path: `/webhooks/${first}`, run: async () => void (await service.registerWebhook(view.id)) } });
+			expect(await racing.disconnect(view.id)).toEqual({ success: true, webhookDeleted: true });
+			expect(mock.webhooks.size).toBe(0);
+			expect((await raw().findOneByOrFail({ id: view.id })).webhookSubscriptionId).toBeNull();
+			// The same race while Ever Works cannot delete the new one: its id stays, and the reconnect deletes it.
+			const again = await service.connect(connectDto(mock.addKey()));
+			await service.registerWebhook(again.id);
+			const [second] = [...mock.webhooks.keys()];
+			const failing = buildWith({
+				during: {
+					path: `/webhooks/${second}`,
+					run: async () => {
+						await service.registerWebhook(again.id);
+						const late = (await raw().findOneByOrFail({ id: again.id })).webhookSubscriptionId as string;
+						mock.fail({ method: 'DELETE', path: `/webhooks/${late}`, status: 503, times: 3 });
+					}
+				}
+			});
+			expect(await failing.disconnect(again.id)).toEqual({ success: true, webhookDeleted: false });
+			const late = (await raw().findOneByOrFail({ id: again.id })).webhookSubscriptionId as string;
+			expect(late).toBeTruthy();
+			expect(mock.webhooks.has(late)).toBe(true);
+			await service.connect(connectDto(mock.addKey()));
+			expect(mock.webhooks.has(late)).toBe(false);
+		});
+
 		it('a reconnect deletes the subscription a disconnect could not delete (same key, or the earlier one)', async () => {
 			for (const reconnectWithAnotherKey of [false, true]) {
 				await raw().clear();
@@ -675,8 +736,25 @@ describe('Ever Works connection on SQLite', () => {
 				const again = await service.connect(connectDto(reconnectWithAnotherKey ? mock.addKey() : key));
 				expect(again.id).toBe(view.id);
 				expect(mock.webhooks.has(orphan)).toBe(false);
+				expect(again.earlierWebhookDeleted).toBe(true);
 				expect(again.webhook).toMatchObject({ registered: false, subscriptionId: null });
 			}
+		});
+
+		it('the reconnect answer says whether the subscription the disconnect kept is gone; a plain connect says nothing (#11096 review)', async () => {
+			const key = mock.addKey();
+			const view = await service.connect(connectDto(key));
+			expect(view).not.toHaveProperty('earlierWebhookDeleted');
+			await service.registerWebhook(view.id);
+			const [orphan] = [...mock.webhooks.keys()];
+			mock.fail({ method: 'DELETE', path: `/webhooks/${orphan}`, status: 503, times: 3 });
+			expect(await service.disconnect(view.id)).toEqual({ success: true, webhookDeleted: false });
+			// Ever Works still cannot delete it at the reconnect: the answer says so, and the wizard keeps its warning.
+			mock.fail({ method: 'DELETE', path: `/webhooks/${orphan}`, status: 503, times: 100 });
+			const again = await service.connect(connectDto(key));
+			expect(again.id).toBe(view.id);
+			expect(again.earlierWebhookDeleted).toBe(false);
+			expect(mock.webhooks.has(orphan)).toBe(true);
 		});
 
 		it('a key rotation moves the webhook to the new key: the old subscription is deleted, a new one registered', async () => {

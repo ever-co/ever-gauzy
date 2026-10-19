@@ -22,7 +22,7 @@ import {
 	EverWorksWhoami
 } from '../client/ever-works-client.types';
 import { EverWorksConfig } from '../ever-works-config';
-import { EVER_WORKS_CONTRACT_VERSION, EVER_WORKS_INTEGRATION_NAME, EVER_WORKS_ROUTE_PREFIX } from '../ever-works.constants';
+import { EVER_WORKS_CONTRACT_VERSION, EVER_WORKS_INTEGRATION_KIND, EVER_WORKS_INTEGRATION_NAME, EVER_WORKS_ROUTE_PREFIX } from '../ever-works.constants';
 import { EVER_WORKS_CONFIG } from '../ever-works.tokens';
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 import { EverWorksScope, EverWorksScopeService } from '../ever-works-scope.service';
@@ -73,6 +73,8 @@ export interface EverWorksKeyValidation {
 	missingRequiredScopes: string[];
 	apiVersion: string;
 	compatible: boolean;
+	/** The integration the key was made for (`ever-gauzy`), when Ever Works states it; a key of another kind is refused. */
+	integrationKind: string | null;
 	feedHead: string;
 	limits: { readsPerMin: number; writesPerMin: number };
 }
@@ -98,6 +100,11 @@ export interface EverWorksConnectionView {
 	lastCheckedAt: Date | null;
 	connectedByUserId: ID | null;
 	createdAt: Date | null;
+	/**
+	 * `POST /connections` only, when it resumed a connection holding a subscription its disconnect could not delete:
+	 * whether this reconnect deleted it (`false`: it may still deliver), so the wizard warns until it is gone (#11096 review).
+	 */
+	earlierWebhookDeleted?: boolean;
 }
 
 /** The outcome of a health check. */
@@ -160,6 +167,7 @@ export class EverWorksConnectionService {
 				`This Ever Works speaks integration API v${validation.apiVersion}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}.`
 			);
 		}
+		this.assertGauzyKey(validation);
 		// A subscription the disconnect could not delete (Ever Works was unreachable then): deleted once this commits.
 		const orphan: { subscriptionId: string | null; apiKeyEncrypted: string | null } = { subscriptionId: null, apiKeyEncrypted: null };
 		const saved = await this.transaction(scope.tenantId, async (manager) => {
@@ -220,11 +228,12 @@ export class EverWorksConnectionService {
 			// It still delivers to this connection's URL (the id is reused) and every delivery would be refused.
 			// A subscription belongs to the key that made it: the new key first, then the earlier one.
 			const earlier = orphan.apiKeyEncrypted;
-			await this.deleteUnusedWebhook(
+			const earlierWebhookDeleted = await this.deleteUnusedWebhook(
 				orphan.subscriptionId,
 				[() => this.client(saved), ...(earlier ? [() => this.client({ ...saved, apiKeyEncrypted: earlier } as EverWorksConnection)] : [])],
 				'Reconnect'
 			);
+			return { ...this.view(saved), earlierWebhookDeleted };
 		}
 		return this.view(saved);
 	}
@@ -256,6 +265,7 @@ export class EverWorksConnectionService {
 		if (!validation.compatible) {
 			throw new BadRequestException(`The Ever Works API version changed to v${validation.apiVersion}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}.`);
 		}
+		this.assertGauzyKey(validation);
 		// A webhook subscription belongs to the key that made it: under another key it can no longer be
 		// managed, and it stops when the old key is revoked. It moves to the new key below.
 		const moved: { subscriptionId: string | null; apiKeyEncrypted: string | null } = { subscriptionId: null, apiKeyEncrypted: null };
@@ -482,6 +492,7 @@ export class EverWorksConnectionService {
 		const scope = await this.scopes.resolve(organizationId);
 		const connection = await this.require(id, scope);
 		let webhookDeleted = !connection.webhookSubscriptionId;
+		const raced: { subscriptionId: string | null; row: EverWorksConnection | null } = { subscriptionId: null, row: null };
 		if (connection.webhookSubscriptionId) {
 			try {
 				await this.client(connection).deleteWebhook(connection.webhookSubscriptionId);
@@ -493,19 +504,42 @@ export class EverWorksConnectionService {
 			}
 		}
 		await this.transaction(scope.tenantId, async (manager) => {
-			const row = await manager.findOneOrFail(EverWorksConnection, { where: { id, tenantId: scope.tenantId } });
+			// Under the row lock a registration takes (`mutate`): one that stores its subscription first is seen here, one
+			// that comes after sees the connection inactive and deletes its own (#11074 review).
+			const type = manager.connection.options.type;
+			const row = await manager.findOneOrFail(EverWorksConnection, {
+				where: { id, tenantId: scope.tenantId },
+				...(type === 'postgres' || type === 'mysql' || type === 'mariadb' ? { lock: { mode: 'pessimistic_write' as const } } : {})
+			});
+			// Only the subscription deleted above is forgotten: one a registration stored meanwhile is still at Ever Works,
+			// and its id stays so it is deleted below (or by a reconnect) instead of being orphaned (review F58).
+			const deletedNow = webhookDeleted && (row.webhookSubscriptionId ?? null) === (connection.webhookSubscriptionId ?? null);
+			if (row.webhookSubscriptionId && !deletedNow) raced.subscriptionId = row.webhookSubscriptionId;
 			Object.assign(row, {
 				status: EverWorksConnectionStatus.DISCONNECTED,
 				isActive: false,
 				isArchived: true,
 				archivedAt: new Date(),
 				disconnectedAt: new Date(),
-				webhookSubscriptionId: webhookDeleted ? null : row.webhookSubscriptionId,
+				webhookSubscriptionId: deletedNow ? null : row.webhookSubscriptionId,
 				webhookSecretEncrypted: null
 			});
-			await manager.save(EverWorksConnection, row);
+			raced.row = await manager.save(EverWorksConnection, row);
 			await this.archiveMappings(manager, scope.tenantId, id);
 		});
+		const racedId = raced.subscriptionId;
+		const racedRow = raced.row;
+		if (racedId && racedRow && racedId !== connection.webhookSubscriptionId) {
+			// Registered while the disconnect ran: deleted now, best effort; once gone, the stored id is cleared. The answer
+			// says whether a subscription is left at Ever Works (#11074 review).
+			const racedDeleted = await this.deleteUnusedWebhook(racedId, [() => this.client(racedRow)], 'Disconnect');
+			webhookDeleted = webhookDeleted && racedDeleted;
+			if (racedDeleted) {
+				await this.dataSource
+					.getRepository(EverWorksConnection)
+					.update({ id, tenantId: scope.tenantId, webhookSubscriptionId: racedId } as never, { webhookSubscriptionId: null } as never);
+			}
+		}
 		this.logger.log(`Connection ${id} of tenant ${scope.tenantId} disconnected.`);
 		return { success: true, webhookDeleted };
 	}
@@ -537,7 +571,7 @@ export class EverWorksConnectionService {
 
 	/**
 	 * The health check (`whoami`), daily from the scheduler and on demand. A 401 → `needs_reauth`, paused,
-	 * the connecting admin notified once; another failure → `error` (an admin pause is kept); success → the
+	 * the connecting admin notified once (an admin pause stays `paused`, and the admin is still told); another failure → `error` (an admin pause is kept); success → the
 	 * scopes and pins are refreshed and an `error`/`needs_reauth` connection is active again.
 	 */
 	async checkHealth(connection: EverWorksConnection, options: { resuming?: boolean } = {}): Promise<EverWorksHealthResult> {
@@ -564,14 +598,21 @@ export class EverWorksConnectionService {
 			if (whoami && whoami.tenant?.id === row.ewTenantId && String(whoami.apiVersion) === EVER_WORKS_CONTRACT_VERSION) {
 				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ACTIVE;
 			} else if (whoami && whoami.tenant?.id !== row.ewTenantId) {
-				next = EverWorksConnectionStatus.ERROR;
+				// An admin pause is kept here too (#11074 review): from ERROR, a new key would make the connection active.
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
 				lastError = 'tenant_changed: the key now answers for another Ever Works tenant';
 			} else if (whoami) {
-				next = EverWorksConnectionStatus.ERROR;
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
 				lastError = `api_version: Ever Works speaks integration API v${String(whoami.apiVersion)}; Gauzy speaks v${EVER_WORKS_CONTRACT_VERSION}`;
 			} else if (failure instanceof EverWorksApiError && failure.status === 401) {
-				next = EverWorksConnectionStatus.NEEDS_REAUTH;
+				// An admin pause stays a pause (review F57): the key still has to be replaced and the admin is told so, but
+				// a new key (`rotateKey` keeps PAUSED) must not restart a sync the admin stopped.
+				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.NEEDS_REAUTH;
 				lastError = `${failure.code}: ${failure.message}`;
+				// Once per refusal: a paused connection whose last check recorded the same refusal was told already.
+				out.notify =
+					row.status !== EverWorksConnectionStatus.NEEDS_REAUTH &&
+					!(next === EverWorksConnectionStatus.PAUSED && row.lastError === lastError.slice(0, 2000));
 			} else if (EverWorksConnectionService.transient(failure)) {
 				// An outage, a 429 / 5xx, a timeout, or a process that cannot read the key (a worker without the API's
 				// ENCRYPTION_KEY) says nothing about the connection: its status stays and only the error is recorded
@@ -582,7 +623,6 @@ export class EverWorksConnectionService {
 				next = keepPaused ? EverWorksConnectionStatus.PAUSED : EverWorksConnectionStatus.ERROR;
 				lastError = this.reason(failure);
 			}
-			out.notify = next === EverWorksConnectionStatus.NEEDS_REAUTH && row.status !== EverWorksConnectionStatus.NEEDS_REAUTH;
 			row.status = next;
 			row.lastCheckedAt = now;
 			if (lastError) {
@@ -721,9 +761,23 @@ export class EverWorksConnectionService {
 			missingRequiredScopes: EVER_WORKS_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope)),
 			apiVersion: String(whoami.apiVersion ?? ''),
 			compatible: String(whoami.apiVersion) === EVER_WORKS_CONTRACT_VERSION,
+			integrationKind: typeof whoami.integrationKind === 'string' && whoami.integrationKind ? whoami.integrationKind : null,
 			feedHead: String(whoami.feedHead ?? '0'),
 			limits: whoami.limits ?? { readsPerMin: 0, writesPerMin: 0 }
 		};
+	}
+
+	/**
+	 * Refuses a key made for another integration (review F60): Ever Works links its records under that integration's
+	 * source and refuses this plugin's `externalRef.source`, so every create would dead-letter while the connection
+	 * looks healthy. A key whose kind Ever Works does not state is accepted.
+	 */
+	private assertGauzyKey(validation: EverWorksKeyValidation): void {
+		if (validation.integrationKind && validation.integrationKind !== EVER_WORKS_INTEGRATION_KIND) {
+			throw new BadRequestException(
+				`This Ever Works key was made for the "${validation.integrationKind}" integration; create an Ever Gauzy (${EVER_WORKS_INTEGRATION_KIND}) integration key.`
+			);
+		}
 	}
 
 	private normalisePins(whoami: EverWorksWhoami): EverWorksPinnedOrganization[] {

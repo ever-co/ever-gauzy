@@ -74,6 +74,12 @@ interface WorkEverWorksOnly {
 	linkedBack?: string | null;
 	/** When a link-back of this pair was last refused (ISO): later sweeps try the never-tried and the oldest first. */
 	linkBackTriedAt?: string | null;
+	/**
+	 * `work.member.*` events are applied by member, not by the work's version (review F75): the version of the last
+	 * full work state applied (absent: the link's version is), and the version of the last member event per user since.
+	 */
+	fullVersion?: number | null;
+	childVersions?: Record<string, number>;
 }
 
 /** One Ever Works external link as `GET /links` lists it (contract v1, CR-2(3)). */
@@ -304,7 +310,11 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			for (const ewWorkId of decision.createInGauzy ?? []) {
 				// Claimed, then checked again: two overlapping requests never create two projects for one work.
 				await this.withWorkClaim(context, ewWorkId, async () => {
-					if (await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId)) return;
+					const existing = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.PROJECT_WORK, ewWorkId);
+					if (existing && existing.state !== EverWorksLinkState.UNLINKED) return;
+					// A pair that stopped syncing (the work turned private, then public again) is listed unpaired: making a
+					// project from it replaces the old row, as the Teams tab does (review F80).
+					if (existing) await this.links.remove(existing);
 					await this.createFromWork(context, byEw.get(ewWorkId) as EverWorksWork);
 				});
 			}
@@ -350,8 +360,18 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		if (!link) return { status: 'skipped', message: 'not linked: pair it on the Projects tab' };
 		if (link.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the work is no longer synced' };
 		const version = envelope.aggregate.version ?? null;
-		if (link.ewVersion != null && version != null && version <= link.ewVersion) return { status: 'skipped', message: 'already applied (version)' };
 		const data = (envelope.data ?? {}) as Record<string, unknown>;
+		// A member event carries only its member: it is skipped by that member's version (or a full work state as new),
+		// never by the work's, which a newer event of another member moved on (review F75).
+		const child = envelope.type.startsWith('work.member.') ? `m:${String(data['userId'])}` : null;
+		const ewState = this.ewOnlyOf(link);
+		const floor = ewState.fullVersion !== undefined ? ewState.fullVersion : (link.ewVersion ?? null);
+		if (version != null) {
+			const applied = child
+				? (floor != null && version <= floor) || (ewState.childVersions?.[child] ?? -Infinity) >= version
+				: link.ewVersion != null && version <= link.ewVersion;
+			if (applied) return { status: 'skipped', message: 'already applied (version)' };
+		}
 		if (envelope.type !== 'work.deleted') {
 			// Private works never sync (rule 5): a work that is (or became) private stops syncing; the project is kept.
 			const visibility = data['visibility'] !== undefined ? (data['visibility'] as string | null) : this.ewOnlyOf(link).visibility;
@@ -380,7 +400,10 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 				const snapshot = this.links.snapshot<WorkSnapshot>(link);
 				const members = (snapshot.members ?? []).filter((m) => m.userId !== member.userId);
 				if (envelope.type !== 'work.member.removed' && !member.deleted) members.push({ userId: member.userId, role: member.role });
-				await this.applyWork(context, link, { ...this.workFrom(link), members }, version);
+				await this.applyWork(context, link, { ...this.workFrom(link), members }, link.ewVersion != null && version != null ? Math.max(link.ewVersion, version) : version, {
+					fullVersion: floor,
+					childVersions: { ...(ewState.childVersions ?? {}), ...(version != null && child ? { [child]: version } : {}) }
+				});
 				return { status: 'applied' };
 			}
 			default:
@@ -389,7 +412,14 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 	}
 
 	/** Writes what changed in Ever Works since the last sync to the linked project, then records the link. */
-	private async applyWork(context: EverWorksMappingContext, link: EverWorksEntityLink, work: EverWorksWork, version: number | null): Promise<void> {
+	private async applyWork(
+		context: EverWorksMappingContext,
+		link: EverWorksEntityLink,
+		work: EverWorksWork,
+		version: number | null,
+		// A full work state by default: the link's version is then the floor of the member events (review F75).
+		childState: Pick<WorkEverWorksOnly, 'fullVersion' | 'childVersions'> = {}
+	): Promise<void> {
 		const projectId = link.gauzyId as ID;
 		const before = this.links.snapshot<WorkSnapshot>(link);
 		const next = this.snapshotOf(work, before);
@@ -411,7 +441,7 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		const ew = this.ewOnlyOf(link);
 		const members = await this.applyMembers(context, projectId, before.members ?? [], next.members ?? [], ew.unmappedMembers ?? []);
 		const teams = await this.applyTeams(context, projectId, before.teamIds ?? [], next.teamIds ?? [], ew.unmappedTeams ?? []);
-		await this.record(context, projectId, work, version, next, link, { members, teams });
+		await this.record(context, projectId, work, version, next, link, { members, teams }, 'inbound', { childState });
 	}
 
 	/**
@@ -652,15 +682,20 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			for (const link of links) {
 				const ew = this.ewOnlyOf(link);
 				if (!ew.unmappedMembers?.length && !ew.unmappedTeams?.length) continue;
+				// One link never stops the sweep of the others, nor the link reconcile below (review F76).
 				await EverWorksSyncContext.run({ connectionId: connection.id as ID, eventId: `project-sweep:${link.ewId}` }, async () => {
 					const snapshot = this.links.snapshot<WorkSnapshot>(link);
 					const projectId = link.gauzyId as ID;
+					const exists = await this.dataSource
+						.getRepository(OrganizationProject)
+						.findOne({ where: { id: projectId, tenantId: context.tenantId } as never, withDeleted: true, select: { id: true } as never });
+					if (!exists) return; // a project deleted in Gauzy: nothing to join (its events are skipped the same way)
 					const members = await this.applyMembers(context, projectId, snapshot.members ?? [], snapshot.members ?? [], ew.unmappedMembers ?? []);
 					const teams = await this.applyTeams(context, projectId, snapshot.teamIds ?? [], snapshot.teamIds ?? [], ew.unmappedTeams ?? []);
 					if (sameSet(members, ew.unmappedMembers ?? []) && sameSet(teams, ew.unmappedTeams ?? [])) return;
 					// Only the unmapped lists move: the snapshot and the version stay as they were.
 					await this.record(context, projectId, this.workFrom(link), link.ewVersion ?? null, snapshot, link, { members, teams });
-				});
+				}).catch((error) => this.logger.warn(`Work link ${link.id}: the project sweep failed (${describeError(error)}).`));
 			}
 			// After the member and team saves above (they rewrite the whole row from this sweep's read): Ever Works'
 			// links made to match the pairs, then the link-backs, on the pairs as they are now.
@@ -847,9 +882,14 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 		link?: EverWorksEntityLink | null,
 		unmapped?: { members: string[]; teams: string[] },
 		direction: 'inbound' | 'outbound' = 'inbound',
-		extra: Pick<WorkEverWorksOnly, 'linkedBack'> = {}
+		extra: Pick<WorkEverWorksOnly, 'linkedBack'> & { childState?: Pick<WorkEverWorksOnly, 'fullVersion' | 'childVersions'> } = {}
 	): Promise<void> {
 		const previous = this.ewOnlyOf(link);
+		// Kept as stored unless this record states it (an event applied, see `applyWork`).
+		const childState = extra.childState ?? {
+			...(previous.fullVersion !== undefined ? { fullVersion: previous.fullVersion } : {}),
+			...(previous.childVersions ? { childVersions: previous.childVersions } : {})
+		};
 		const ewOnly: WorkEverWorksOnly = {
 			slug: work.slug ?? previous.slug ?? null,
 			kind: work.kind ?? previous.kind ?? null,
@@ -860,7 +900,8 @@ export class EverWorksProjectsService implements EverWorksInboundHandler, EverWo
 			unmappedTeams: unmapped?.teams ?? previous.unmappedTeams ?? [],
 			// Kept only for the project it was set for (a link recorded for another project is linked back again).
 			linkedBack: extra.linkedBack ?? (previous.linkedBack && previous.linkedBack === projectId ? previous.linkedBack : null),
-			linkBackTriedAt: previous.linkBackTriedAt ?? null
+			linkBackTriedAt: previous.linkBackTriedAt ?? null,
+			...childState
 		};
 		await this.links.record({
 			tenantId: context.tenantId,

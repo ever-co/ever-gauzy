@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { ActorTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
+import { ActorTypeEnum, BaseEntityEnum, ID, IntegrationEntity } from '@gauzy/contracts';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
 import type { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EVER_WORKS_LINK_SOURCE } from '../ever-works.constants';
-import type { EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
+import { entitySynced, type EverWorksDirection } from '../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksLinkState, EverWorksLinkType, EverWorksOutboundChange } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../sync/ever-works-sync-log.service';
@@ -74,6 +74,24 @@ export function commentBodyForEverWorks(html: string | null | undefined): string
 	return cutForEverWorks(htmlToMarkdown(html));
 }
 
+/**
+ * The line `htmlOf` puts in front of the comment of an Ever Works author Gauzy cannot attribute, as Markdown. The name
+ * may carry escaped Markdown (`Ops\*Bot` for `Ops*Bot`, #11079 review).
+ */
+const ATTRIBUTION = /^\*\*(?:\\.|[^*\\\n])+\*\* \(Ever Works\):\n+/;
+
+/**
+ * The attribution line in front of the synced Gauzy text of a comment, when it is Gauzy's own (Ever Works' text does
+ * not start with it): it is never sent back into the Ever Works message (review F84).
+ */
+function attributionOf(snapshot: { g?: { body?: string }; e?: { body?: string } }): string | null {
+	const gauzy = ATTRIBUTION.exec(snapshot.g?.body ?? '')?.[0] ?? null;
+	// Only Ever Works' own text starting with that very line keeps it; another attribution-form line does not (#11079
+	// review).
+	const everWorks = ATTRIBUTION.exec(snapshot.e?.body ?? '')?.[0] ?? null;
+	return gauzy && gauzy !== everWorks ? gauzy : null;
+}
+
 function cutForEverWorks(body: string): string {
 	if (body.length <= EVER_WORKS_COMMENT_LIMIT) return body;
 	return body.slice(0, EVER_WORKS_COMMENT_LIMIT - CUT_NOTE.length).trimEnd() + CUT_NOTE;
@@ -95,6 +113,9 @@ function cutForEverWorks(body: string): string {
  *   sent again (plan 01 §7).
  * - A comment of a task that is not linked yet waits for the task (which is queued).
  */
+/** The outcome when the mapping's per-entity COMMENT toggle is off (OQ4, review F77). */
+export const COMMENTS_NOT_SYNCED = 'comments are not synced for this mapping (its Comment sync setting is off)';
+
 @Injectable()
 export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, EverWorksSyncSweeper {
 	readonly entityTypes = [EverWorksLinkType.COMMENT] as const;
@@ -114,6 +135,8 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 
 	/** `task.comment.*` for a mapping (called by the task handler, which owns the `task` aggregate). */
 	async apply(context: EverWorksMappingContext, envelope: EverWorksEventEnvelope): Promise<EverWorksApplyOutcome> {
+		// The mapping's COMMENT toggle is off (OQ4): its tasks sync, their comments do not.
+		if (!entitySynced(context, IntegrationEntity.COMMENT)) return { status: 'skipped', message: COMMENTS_NOT_SYNCED };
 		const comment = { ...(envelope.data as unknown as EverWorksComment) };
 		if (!comment?.id) return { status: 'skipped', message: 'the comment event carries no comment' };
 		const taskLink = await this.links.byEw(context.integrationTenantId, EverWorksLinkType.TASK, envelope.aggregate.id);
@@ -209,6 +232,7 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		if (!context || context.integrationTenantId !== pushContext.mapping.id) return { status: 'skipped', message: 'no mapping for the organization' };
 		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (!toEverWorks(context.directions.tasks)) return { status: 'skipped', message: 'tasks are not pushed to Ever Works' };
+		if (!entitySynced(context, IntegrationEntity.COMMENT)) return { status: 'skipped', message: COMMENTS_NOT_SYNCED };
 		const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.COMMENT, change.gauzyId as ID);
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the comment is no longer synced' };
 		const row = await this.store.loadComment(context.tenantId, change.gauzyId as ID);
@@ -302,11 +326,15 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		if ((snapshot.g?.body ?? null) === full) return { status: 'skipped', message: 'nothing changed' };
 		if ((ewOnly.refusedBody ?? null) === full) return { status: 'skipped', message: 'Ever Works refused this edit before; it stays in Gauzy' };
 		const path = `/tasks/${encodeURIComponent(taskLink.ewId)}/comments/${encodeURIComponent(link.ewId)}`;
+		// The Gauzy copy of an unattributed author's comment starts with Gauzy's attribution line: Ever Works gets the
+		// edited text without it (review F84).
+		const attribution = attributionOf(snapshot);
+		const sent = attribution && full.startsWith(attribution) ? full.slice(attribution.length) : full;
 		try {
 			// Only Ever Works' author of the comment may edit it: the person it was written as (only when that person made
 			// the edit in Gauzy), or the integration — so anyone else's edit is refused by Ever Works (review F21).
 			const updated = await client.request<EverWorksComment>('PATCH', path, {
-				body: { body: cutForEverWorks(full) },
+				body: { body: cutForEverWorks(sent) },
 				actAsUserId: await this.actAsAuthor(context, ewOnly, editorUserIds)
 			});
 			await this.record(context, link.gauzyId as ID, { ...updated, taskId: taskLink.ewId }, { g: { body: full }, e: { body: normaliseMarkdown(updated.body) } }, 'outbound', link, null);
@@ -359,7 +387,7 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 	 */
 	async sweep(connection: EverWorksConnection): Promise<void> {
 		for (const context of await this.contexts.forConnection(connection)) {
-			if (!context.isEnabled || !toEverWorks(context.directions.tasks)) continue;
+			if (!context.isEnabled || !toEverWorks(context.directions.tasks) || !entitySynced(context, IntegrationEntity.COMMENT)) continue;
 			const links = (await this.links.list(context.integrationTenantId, EverWorksLinkType.COMMENT)).filter((link) => link.state === EverWorksLinkState.OK);
 			for (let start = 0; start < links.length; start += COMMENT_SWEEP_PAGE) {
 				for (const link of links.slice(start, start + COMMENT_SWEEP_PAGE)) {

@@ -151,12 +151,90 @@ describe('EverWorksMatchReviewComponent', () => {
 		expect(api.decideTeams).toHaveBeenCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }], createInGauzy: ['t2'], createInEverWorks: ['g2'] });
 	});
 
+	it('teams: offers and sends only the creates the mapping allows, so the pairs still save (review F98)', () => {
+		api.decideTeams.mockReturnValue(of(TEAMS));
+		const { component, fixture, el } = render();
+		const createOption = () => el.querySelector('[data-test="team-t2"] option[value="' + CREATE + '"]');
+		const checkbox = () => el.querySelector('[data-test="create-ew-g2"] input') as HTMLInputElement | null;
+		// Teams sync Gauzy → Ever Works only: no team is created in Gauzy.
+		fixture.componentRef.setInput('mapping', { isEnabled: true, directions: { teams: 'gauzy_to_ew' } });
+		fixture.detectChanges();
+		expect(api.teams).toHaveBeenCalledTimes(1);
+		expect(createOption()).toBeNull();
+		expect(checkbox()?.disabled).toBe(false);
+		component.teamChoice['t2'] = CREATE;
+		component.createInEverWorks['g2'] = true;
+		component.saveTeams();
+		expect(api.decideTeams).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }], createInEverWorks: ['g2'] });
+		// Ever Works → Gauzy only: no team is created in Ever Works, and the box says why.
+		fixture.componentRef.setInput('mapping', { isEnabled: true, directions: { teams: 'ew_to_gauzy' } });
+		fixture.detectChanges();
+		expect(createOption()).not.toBeNull();
+		expect(el.querySelector('[data-test="teams-not-created"]')).not.toBeNull();
+		component.teamChoice['t1'] = 'g1';
+		component.teamChoice['t2'] = CREATE;
+		component.createInEverWorks['g2'] = true;
+		component.saveTeams();
+		expect(api.decideTeams).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }], createInGauzy: ['t2'] });
+		// A mapping that is off creates nothing on either side; the manual pair still goes out.
+		fixture.componentRef.setInput('mapping', { isEnabled: false, directions: { teams: 'both' } });
+		fixture.detectChanges();
+		expect(createOption()).toBeNull();
+		expect(component.canCreateTeamsInEverWorks).toBe(false);
+		component.teamChoice['t1'] = 'g1';
+		component.teamChoice['t2'] = CREATE;
+		component.createInEverWorks['g2'] = true;
+		component.saveTeams();
+		expect(api.decideTeams).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewTeamId: 't1', teamId: 'g1' }] });
+	});
+
+	it('projects: "Create in Gauzy" is offered and sent only while works are linked and the mapping is on (review F98)', () => {
+		const works = {
+			works: [
+				{ ewWorkId: 'w1', name: 'Site', website: null, linkedProjectId: null, suggestion: { projectId: 'p1', reason: 'same_name' as const } },
+				{ ewWorkId: 'w2', name: 'App', website: null, linkedProjectId: null, suggestion: null }
+			],
+			unmatchedProjects: [{ projectId: 'p1', name: 'Site' }]
+		};
+		api.projects.mockReturnValue(of(works));
+		api.decideProjects.mockReturnValue(of(works));
+		const { component, fixture, el } = render();
+		const createOption = () => el.querySelector('[data-test="work-w2"] option[value="' + CREATE + '"]');
+		fixture.detectChanges();
+		expect(createOption()).not.toBeNull();
+		fixture.componentRef.setInput('mapping', { isEnabled: true, directions: { works: 'off' } });
+		fixture.detectChanges();
+		expect(createOption()).toBeNull();
+		component.workChoice['w2'] = CREATE;
+		component.saveProjects();
+		expect(api.decideProjects).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewWorkId: 'w1', projectId: 'p1' }] });
+		component.mapping = { isEnabled: false, directions: { works: 'link_only' } } as never;
+		expect(component.canCreateProjects).toBe(false);
+		component.mapping = { isEnabled: true, directions: { works: 'link_only' } } as never;
+		expect(component.canCreateProjects).toBe(true);
+		// The Project sync setting is off (OQ4): what takes effect is off, whatever the stored direction (the API refuses too).
+		component.mapping = { isEnabled: true, directions: { works: 'link_only' }, effectiveDirections: { works: 'off' } } as never;
+		expect(component.canCreateProjects).toBe(false);
+		component.mapping = { isEnabled: true, directions: { works: 'link_only' } } as never;
+		component.workChoice['w2'] = CREATE;
+		component.saveProjects();
+		expect(api.decideProjects).toHaveBeenLastCalledWith('org-1', 'm1', { links: [{ ewWorkId: 'w1', projectId: 'p1' }], createInGauzy: ['w2'] });
+	});
+
 	it('lists the inbox items waiting for an unpaired member, by name (or id once they left)', () => {
 		api.people.mockReturnValue(
 			of({
 				...PEOPLE,
 				deferredInbox: [
-					{ ewUserId: 'u3', count: 2, items: [{ ewItemId: 'i1', title: 'Approve the deploy?', kind: 'approval', occurredAt: null }] },
+					{
+						ewUserId: 'u3',
+						count: 3,
+						items: [
+							{ ewItemId: 'i1', title: 'Approve the deploy?', kind: 'approval', occurredAt: '2026-10-17T09:30:00.000Z' },
+							// A stored event with a time that is not a date: listed without it, and the tab still renders.
+							{ ewItemId: 'i3', title: '', kind: 'notice', occurredAt: 'unknown' }
+						]
+					},
 					{ ewUserId: 'u-gone', count: 1, items: [{ ewItemId: 'i2', title: '', kind: null, occurredAt: null }] }
 				]
 			})
@@ -164,9 +242,14 @@ describe('EverWorksMatchReviewComponent', () => {
 		const { el } = render();
 		const block = el.querySelector('[data-test="deferred-inbox"]');
 		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('cy');
-		expect(block?.querySelector('[data-test="deferred-u3"]')?.textContent).toContain('Approve the deploy?');
 		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('u-gone');
-		expect(block?.querySelector('[data-test="deferred-u-gone"]')?.textContent).toContain('i2');
+		// One entry per waiting item, by its kind: an item is its recipient's alone, so its title is never shown (review F103).
+		expect(block?.querySelector('[data-test="deferred-item-i1"]')?.textContent).toContain('EVER_WORKS.REVIEW.DEFERRED_KIND.approval');
+		expect(block?.textContent).not.toContain('Approve the deploy?');
+		expect(block?.querySelector('[data-test="deferred-item-i1"] small')?.textContent).toContain('2026');
+		expect(block?.querySelector('[data-test="deferred-item-i3"]')?.textContent).toContain('EVER_WORKS.REVIEW.DEFERRED_KIND.notice');
+		expect(block?.querySelector('[data-test="deferred-item-i3"] small')).toBeNull();
+		expect(block?.querySelector('[data-test="deferred-item-i2"]')?.textContent).toContain('—');
 	});
 
 	// Its own test: a TestBed reset inside a test also drops the app-wide defaults (jest.angular-defaults.ts:

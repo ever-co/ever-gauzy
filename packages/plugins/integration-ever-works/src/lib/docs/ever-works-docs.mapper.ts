@@ -47,6 +47,10 @@ export interface DocSnapshot {
 	eHash?: string;
 	/** {@link markdownHash} of Gauzy's page (as Markdown) at the last sync. */
 	gHash?: string;
+	/** `contentJsonHash` of Gauzy's stored page at the last sync: an edit the Markdown cannot show moves it (review F92). */
+	jHash?: string;
+	/** The page sits in another area than its Ever Works document (a move Ever Works cannot make), logged once (review F95). */
+	movedAcross?: boolean;
 	/** The Ever Works library folder (organization documents). */
 	ewFolderId?: string | null;
 	status?: EverWorksKbDocument['status'];

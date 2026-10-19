@@ -1,4 +1,4 @@
-// cspell:ignore dmarc
+// cspell:ignore dmarc amazonses
 /**
  * The inbound email pipeline (G-P4-2) end to end on a real database (better-sqlite3, the demo's engine): the provider
  * webhook through the built-in generic provider (the platform route and a provider account), the mailbox rules, the
@@ -74,7 +74,7 @@ import { InboxItemRecipient } from '../../entities/inbox-item-recipient.entity';
 import { InboxService } from '../../inbox.service';
 import { InboxSourceHandlerRegistry } from '../../inbox-source-handler.registry';
 import { INBOX_EMAIL_MIGRATIONS } from '../database/inbox-email-migrations';
-import { InboxEmailService } from '../emails/inbox-email.service';
+import { InboxEmailService, THREAD_MESSAGES } from '../emails/inbox-email.service';
 import { InboxEmail } from '../entities/inbox-email.entity';
 import { InboxEmailAttachment } from '../entities/inbox-email-attachment.entity';
 import { InboxEmailThread } from '../entities/inbox-email-thread.entity';
@@ -539,6 +539,50 @@ describe('Inbound email pipeline on SQLite', () => {
 			).toBe(InboxEmailStatusEnum.PROCESSED);
 		});
 
+		it("keeps the provider's virus hold when the allowlist would hold the message too (review F107)", async () => {
+			await dataSource
+				.getRepository(InboxMailbox)
+				.update({ id: supportBox.id as string }, { senderAllowlist: JSON.stringify(['@acme.test']) });
+			// The provider's scan failed (SES: virusVerdict FAILED); the sender is allowlisted without a DMARC pass.
+			const side = (
+				registry.get('generic') as unknown as {
+					inbound: { parse: (request: unknown) => Promise<Array<Record<string, unknown>>> };
+				}
+			).inbound;
+			const parse = side.parse.bind(side);
+			jest.spyOn(side, 'parse').mockImplementation(async (request) =>
+				(await parse(request)).map((message) => ({ ...message, hold: 'virus' }))
+			);
+			const body = mime(SAMPLE_MIME, ['support.ever@inbox.example.test']);
+			expect((await deliver({ ...body, authenticationResults: 'mx; dmarc=none' })).accepted).toBe(1);
+			const held = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-2@acme.test>' });
+			expect(JSON.parse(held.headers as string)['x-gauzy-inbox-hold']).toBe('virus');
+		});
+
+		it('stores a message whose address lists overflow a MySQL text column, cut to fit, instead of failing every retry (review F109)', async () => {
+			jest.spyOn(inbound as never, 'textColumnBytes').mockReturnValue(2_000 as never);
+			const crowd = Array.from({ length: 300 }, (_, n) => `member-${n}@lists.example.test`).join(', ');
+			const raw = SAMPLE_MIME.replace('Cc: Bob <bob@acme.test>', `Cc: ${crowd}`);
+			expect(await deliver(mime(raw, ['support.ever@inbox.example.test']))).toEqual({
+				accepted: 1,
+				duplicates: 0,
+				dropped: 0
+			});
+			const row = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-2@acme.test>' });
+			const cc = JSON.parse(row.ccAddresses as string) as Array<{ address: string }>;
+			expect(Buffer.byteLength(row.ccAddresses as string)).toBeLessThanOrEqual(2_000);
+			expect(cc.length).toBeGreaterThan(0);
+			expect(cc.length).toBeLessThan(300);
+			expect(cc[0].address).toBe('member-0@lists.example.test');
+			expect(Buffer.byteLength(row.headers as string)).toBeLessThanOrEqual(2_000);
+			// Postgres and SQLite keep everything (no budget): the next message of 300 is stored whole.
+			(inbound as unknown as { textColumnBytes: jest.Mock }).textColumnBytes.mockReturnValue(null);
+			const whole = raw.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-3@acme.test>');
+			await deliver(mime(whole, ['support.ever@inbox.example.test']));
+			const full = await dataSource.getRepository(InboxEmail).findOneByOrFail({ messageId: '<m-3@acme.test>' });
+			expect((JSON.parse(full.ccAddresses as string) as unknown[]).length).toBe(300);
+		});
+
 		it('drops unknown recipients, and mailboxes another account receives for', async () => {
 			const created = await accounts.create({ providerId: 'generic', name: 'Relay' } as never);
 			await mailbox({
@@ -843,6 +887,148 @@ describe('Inbound email pipeline on SQLite', () => {
 			expect((await emails.thread(email.id as string)).map((row) => row.messageId)).toEqual(['<m-2@acme.test>']);
 		});
 
+		it('a long thread shows its newest messages, and the one asked for (review F110)', async () => {
+			const email = await stored();
+			const repository = dataSource.getRepository(InboxEmail);
+			const start = new Date(email.receivedAt as Date).getTime();
+			// 205 older alerts in the same thread, one a minute before the message read.
+			const older: string[] = [];
+			for (let n = 1; n <= 205; n++) {
+				const at = new Date(start - n * 60_000);
+				const row = await repository.save(
+					repository.create({
+						tenantId: TENANT,
+						organizationId: ORG,
+						mailboxId: supportBox.id as string,
+						threadId: email.threadId,
+						direction: InboxEmailDirectionEnum.IN,
+						messageId: `<alert-${n}@acme.test>`,
+						status: InboxEmailStatusEnum.PROCESSED,
+						receivedAt: at,
+						createdAt: at,
+						attemptCount: 0
+					} as InboxEmail)
+				);
+				older.push(row.id as string);
+			}
+			as(BOB);
+			const thread = await emails.thread(email.id as string);
+			expect(thread).toHaveLength(200);
+			// Oldest first, ending with the newest message: the one read.
+			expect(thread[thread.length - 1].id).toBe(email.id);
+			expect(thread[0].messageId).toBe('<alert-199@acme.test>');
+			// Asked for from the oldest alert: it is listed with the newest ones.
+			const fromOldest = await emails.thread(older[older.length - 1]);
+			expect(fromOldest).toHaveLength(201);
+			expect(fromOldest[0].messageId).toBe('<alert-205@acme.test>');
+			expect(fromOldest[fromOldest.length - 1].id).toBe(email.id);
+		});
+
+		it('shows a former member their earlier messages of a thread that grew by a page after they left (#11096 review)', async () => {
+			// Two messages of one thread addressed to Bob while he is a member.
+			const email = await stored();
+			await deliver(
+				mime(SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-3@acme.test>'), [
+					'support.ever@inbox.example.test'
+				])
+			);
+			await processor.drain();
+			// Bob leaves; Eve receives the mailbox's mail from then on.
+			const members = dataSource.getRepository(InboxMailboxMember);
+			await members.delete({ userId: BOB });
+			await members.save(
+				members.create({
+					tenantId: TENANT,
+					organizationId: ORG,
+					mailboxId: supportBox.id as string,
+					userId: EVE,
+					role: InboxMailboxMemberRoleEnum.READER
+				} as InboxMailboxMember)
+			);
+			await deliver(
+				mime(SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-4@acme.test>'), [
+					'support.ever@inbox.example.test'
+				])
+			);
+			await processor.drain();
+			const repository = dataSource.getRepository(InboxEmail);
+			const evesMail = await repository.findOneByOrFail({ messageId: '<m-4@acme.test>' });
+			expect(evesMail.threadId).toBe(email.threadId);
+			expect(evesMail.inboxItemId).toBeTruthy();
+			// A full page of newer messages in the thread, all addressed to Eve.
+			const start = new Date(evesMail.receivedAt as Date).getTime();
+			await repository.save(
+				Array.from({ length: THREAD_MESSAGES }, (_, index) => {
+					const at = new Date(start + (index + 1) * 60_000);
+					return repository.create({
+						tenantId: TENANT,
+						organizationId: ORG,
+						mailboxId: supportBox.id as string,
+						threadId: email.threadId,
+						inboxItemId: evesMail.inboxItemId,
+						direction: InboxEmailDirectionEnum.IN,
+						messageId: `<later-${index + 1}@acme.test>`,
+						status: InboxEmailStatusEnum.PROCESSED,
+						receivedAt: at,
+						createdAt: at,
+						attemptCount: 0
+					} as InboxEmail);
+				})
+			);
+			as(BOB);
+			// Both of Bob's messages are listed: the page is the newest messages he may read, not the newest ones
+			// filtered down to his afterwards (which left only the one he asked for).
+			expect((await emails.thread(email.id as string)).map((row) => row.messageId).sort()).toEqual([
+				'<m-2@acme.test>',
+				'<m-3@acme.test>'
+			]);
+		});
+
+		it('fills a thread page with the messages it lists: failed inbound work takes no place in it (#11096 review)', async () => {
+			const email = await stored();
+			const repository = dataSource.getRepository(InboxEmail);
+			const start = new Date(email.receivedAt as Date).getTime();
+			const newer = (minutes: number, values: Partial<InboxEmail>) =>
+				repository.create({
+					tenantId: TENANT,
+					organizationId: ORG,
+					mailboxId: supportBox.id as string,
+					threadId: email.threadId,
+					direction: InboxEmailDirectionEnum.IN,
+					status: InboxEmailStatusEnum.PROCESSED,
+					createdAt: new Date(start + minutes * 60_000),
+					attemptCount: 0,
+					...values
+				} as InboxEmail);
+			// A page of newer messages: the newest are an inbound message whose processing failed, and an unsent reply.
+			await repository.save([
+				...Array.from({ length: THREAD_MESSAGES - 1 }, (_, index) =>
+					newer(index + 1, {
+						messageId: `<later-${index + 1}@acme.test>`,
+						receivedAt: new Date(start + (index + 1) * 60_000)
+					})
+				),
+				newer(THREAD_MESSAGES, {
+					messageId: '<failed@acme.test>',
+					status: InboxEmailStatusEnum.FAILED,
+					receivedAt: new Date(start + THREAD_MESSAGES * 60_000)
+				}),
+				newer(THREAD_MESSAGES + 1, {
+					direction: InboxEmailDirectionEnum.OUT,
+					messageId: '<unsent@acme.test>',
+					status: InboxEmailStatusEnum.FAILED
+				})
+			]);
+			as(BOB);
+			const thread = await emails.thread(email.id as string);
+			// The unsent reply and every later message: a page of listed messages, after the (older) one asked for.
+			expect(thread.length).toBe(THREAD_MESSAGES + 1);
+			expect(thread[0].id).toBe(email.id);
+			expect(thread[1].messageId).toBe('<later-1@acme.test>');
+			expect(thread[thread.length - 1].messageId).toBe('<unsent@acme.test>');
+			expect(thread.map((row) => row.messageId)).not.toContain('<failed@acme.test>');
+		});
+
 		it('lets a former member read what was addressed to them, but no longer send from the mailbox', async () => {
 			const email = await stored();
 			await dataSource.getRepository(InboxMailboxMember).delete({ userId: BOB });
@@ -889,6 +1075,59 @@ describe('Inbound email pipeline on SQLite', () => {
 				})
 			);
 			expect((await emails.reply(email.id as string, { text: 'Thanks!' })).providerMessageId).toBe('pm-9');
+		});
+
+		it('keeps the Message-ID a transport sent a reply under, so the answer to it threads (review F64)', async () => {
+			const email = await stored();
+			as(BOB);
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					// Amazon SES replaced the Message-ID the Inbox generated.
+					messageId: '<0100abc@eu-west-1.amazonses.com>',
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:ses:account',
+					providerMessageId: '0100abc'
+				})
+			);
+			const reply = await emails.reply(email.id as string, { text: 'Thanks!' });
+			expect([reply.messageId, reply.providerMessageId]).toEqual([
+				'<0100abc@eu-west-1.amazonses.com>',
+				'0100abc'
+			]);
+			// Ada answers the reply: her mail names the id SES sent under, and joins the thread.
+			const answer = SAMPLE_MIME.replace('Message-ID: <m-2@acme.test>', 'Message-ID: <m-20@acme.test>')
+				.replace('In-Reply-To: <m-1@acme.test>', 'In-Reply-To: <0100abc@eu-west-1.amazonses.com>')
+				.replace('References: <m-0@acme.test> <m-1@acme.test>', 'References: <0100abc@eu-west-1.amazonses.com>')
+				.replace('Subject: Re: Invoice 42', 'Subject: Something else');
+			await deliver(mime(answer, ['support.ever@inbox.example.test']));
+			await processor.drain();
+			const answered = await dataSource
+				.getRepository(InboxEmail)
+				.findOneByOrFail({ messageId: '<m-20@acme.test>' });
+			expect(answered.threadId).toBe(email.threadId);
+			// A transport reporting a provider id (not a Message-ID) keeps the generated one.
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					messageId: 're_123',
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:resend'
+				})
+			);
+			const second = await emails.reply(email.id as string, { text: 'One more thing.' });
+			expect(second.messageId).toMatch(/@inbox\.example\.test>$/);
+			// A reported id longer than the column is not cut (it would match nothing): the generated one stays.
+			(emails as unknown as { sender: { sendMessage: jest.Mock } }).sender.sendMessage.mockImplementationOnce(
+				async () => ({
+					messageId: `<${'x'.repeat(520)}@eu-west-1.amazonses.com>`,
+					accepted: ['ada@acme.test'],
+					rejected: [],
+					transport: 'provider:ses'
+				})
+			);
+			const third = await emails.reply(email.id as string, { text: 'And another.' });
+			expect(third.messageId).toMatch(/@inbox\.example\.test>$/);
 		});
 
 		it('keeps the refused recipients of a partly accepted reply', async () => {

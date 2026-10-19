@@ -10,7 +10,7 @@ import { EverWorksConnectionService } from '../../connection/ever-works-connecti
 import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
 import { isIdeaTask } from '../../tasks/ever-works-task-exclusion';
-import type { EverWorksDirection, EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
+import { entitySynced, type EverWorksDirection, type EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
 import { EverWorksEntityLink, EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkState, EverWorksLinkType } from '../entities/ever-works-sync.entities';
 import { EverWorksSyncLogService } from '../ever-works-sync-log.service';
@@ -229,6 +229,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	async sweep(connection: EverWorksConnection, stillOwner?: () => Promise<boolean>): Promise<void> {
 		const deadline = Date.now() + SYNC_RUN_BUDGET_MS;
 		const contexts = await this.contextsOf(connection);
+		await this.endRunsWithoutMapping(connection, contexts).catch((error) =>
+			this.logger.warn(`Connection ${connection.id}: a run of a removed mapping could not be ended (${describeSyncError(error)}).`)
+		);
 		if (connection.resyncRequestedAt) await this.startRequestedResyncs(connection, contexts);
 		for (const context of contexts) {
 			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return;
@@ -248,6 +251,62 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				this.logger.warn(`Mapping ${context.integrationTenantId}: the sync run could not advance (${describeSyncError(error)}).`);
 				run.lastError = describeSyncError(error);
 				await this.save(run).catch(() => undefined);
+			});
+		}
+	}
+
+	/**
+	 * A run whose mapping was removed (archived) or now syncs through another connection is never advanced or
+	 * finished by the loop, and its own cancel answers 404 without an active mapping: it is cancelled here, and
+	 * what its phases held back is released, so it never holds back those aggregates' live events (review F72).
+	 */
+	private async endRunsWithoutMapping(connection: EverWorksConnection, contexts: EverWorksMappingContext[]): Promise<void> {
+		const live = new Set(contexts.map((context) => context.integrationTenantId as string));
+		const running = await this.dataSource.getRepository(EverWorksSyncRun).find({
+			where: { tenantId: connection.tenantId, connectionId: connection.id, status: EverWorksSyncRunStatus.RUNNING } as never
+		});
+		for (const run of running.filter((candidate) => !live.has(candidate.integrationTenantId as string))) {
+			const mapping = await this.dataSource.getRepository(IntegrationTenant).findOne({
+				where: { id: run.integrationTenantId, tenantId: connection.tenantId } as never,
+				relations: { settings: true } as never
+			});
+			// A mapping that is still active through this connection is only missing a context for now: left alone.
+			const gone = !mapping || !mapping.isActive || mapping.isArchived || this.setting(mapping, EverWorksSettingName.CONNECTION_ID) !== connection.id;
+			if (!gone) continue;
+			const finishedAt = new Date();
+			const error = 'the mapping was removed';
+			// One transaction: a run cancelled here always has its held records released (no later sweep would see the
+			// run again, since only running ones are read) (#11075 review).
+			const released = await this.dataSource.transaction(async (manager) => {
+				const result = await manager.getRepository(EverWorksSyncRun).update(
+					{ id: run.id, status: EverWorksSyncRunStatus.RUNNING } as never,
+					{ status: EverWorksSyncRunStatus.CANCELLED, finishedAt, lastError: error, lastProgressAt: finishedAt } as never
+				);
+				if (!result.affected) return null;
+				if (!run.organizationId) return 0;
+				const freed = await manager.getRepository(EverWorksInboundEvent).update(
+					{
+						connectionId: connection.id as ID,
+						organizationId: run.organizationId,
+						receivedVia: 'initial',
+						status: EverWorksInboundStatus.PENDING,
+						availableAt: MoreThan(HELD_AFTER)
+					} as never,
+					{ availableAt: finishedAt } as never
+				);
+				return freed.affected ?? 0;
+			});
+			if (released === null) continue;
+			await this.log.write({
+				tenantId: run.tenantId as ID,
+				organizationId: run.organizationId as ID,
+				integrationTenantId: run.integrationTenantId,
+				connectionId: connection.id as ID,
+				direction: 'system',
+				action: `${run.mode === 'initial' ? 'initial_sync' : 'resync'}_${EverWorksSyncRunStatus.CANCELLED}`,
+				status: 'skipped',
+				message: `${run.mode === 'initial' ? 'Initial sync' : 'Resync'} cancelled: ${error}.`,
+				details: { runId: run.id, released }
 			});
 		}
 	}
@@ -350,6 +409,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			return;
 		}
 		const plan = this.planOf(spec, context);
+		if (!plan.import && state.status === 'importing' && !state.imported && spec.aggregateType) {
+			// The phase stopped importing part-way (its direction or the key's scopes changed meanwhile): what it held back
+			// is released now, not at the end of the run (a run that ends DONE released nothing) (review F72).
+			await this.release(context, spec.aggregateType);
+		}
 		if (!plan.import && !plan.export) {
 			Object.assign(state, { status: plan.done ? 'done' : 'skipped', message: plan.note, finishedAt: now.toISOString() });
 			return;
@@ -400,6 +464,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 
 	/** What a phase does for a mapping: import (EW → G), export (G → EW), or nothing (and why). */
 	private planOf(spec: EverWorksSyncPhaseSpec, context: EverWorksMappingContext): { import: boolean; export: boolean; done?: boolean; note: string | null } {
+		if (spec.entity && !entitySynced(context, spec.entity)) return { import: false, export: false, note: `${spec.name} are not synced for this mapping` };
 		const direction = context.directions[spec.domain];
 		if (direction === 'off') return { import: false, export: false, note: `${spec.domain} are not synced for this mapping` };
 		if (spec.kind === 'mapping_only') return { import: false, export: false, done: true, note: 'people are paired on the People tab; nobody is created' };
@@ -889,7 +954,8 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	// ── Dry run ────────────────────────────────────────────────────────────────────────────────────
 
 	private async previewPhase(context: EverWorksMappingContext, client: EverWorksClient, spec: EverWorksSyncPhaseSpec): Promise<EverWorksSyncPhasePreview> {
-		const direction = context.directions[spec.domain];
+		// A phase whose own toggle is off (comments) previews as `off`, like a domain whose direction is.
+		const direction = spec.entity && !entitySynced(context, spec.entity) ? 'off' : context.directions[spec.domain];
 		const plan = this.planOf(spec, context);
 		const preview: EverWorksSyncPhasePreview = {
 			phase: spec.name,

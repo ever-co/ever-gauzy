@@ -1,4 +1,4 @@
-// cspell:ignore wikilink wikilinks unfiled
+// cspell:ignore wikilink wikilinks unfiled bytewise
 /**
  * Docs sync (G-P3-4, plan 05) on a real database (better-sqlite3) against the mock Ever Works Knowledge
  * Base: the synced tree, EW → G documents and folders (content, review state, archive, wikilinks, the
@@ -288,7 +288,13 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect([support['name'], playbooks['name'], organization['name'], root['name']]).toEqual(['Support', 'Playbooks', 'Organization', 'Ever Works']);
 			expect(organization['externalId']).toBe(DOCS_TREE.organization);
 			expect(root['parentId']).toBeNull();
-			expect(context['mapping'].settings).toEqual([expect.objectContaining({ settingsName: 'DOCS_ROOT_FOLDER_ID', settingsValue: root['id'] })]);
+			expect(context['mapping'].settings).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ settingsName: 'DOCS_ROOT_FOLDER_ID', settingsValue: root['id'] }),
+					// The root the tree sits under, for a later change of the docs root (OQ5).
+					expect.objectContaining({ settingsName: 'DOCS_TREE_ROOT_ID', settingsValue: root['id'] })
+				])
+			);
 			expect((await links.byEw(M as never, EverWorksLinkType.DOC_FOLDER, child['id'] as string))?.gauzyId).toBe(support['id']);
 			// The same event again changes nothing (version check).
 			expect(await apply('kb.document.created', document)).toEqual({ status: 'skipped', message: 'already applied (version)' });
@@ -343,6 +349,76 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(documentToMarkdown(versions[0]['contentJson'])).toBe('Gauzy edit');
 			expect(conflicts.record).toHaveBeenCalledWith(expect.objectContaining({ entityType: EverWorksLinkType.DOC, field: 'body', winner: 'ever_works', gauzyId: row['id'] }));
 			expect(inbox.upsertExternal).toHaveBeenCalledWith(expect.objectContaining({ entityId: row['id'], recipients: [{ userId: 'u-editor', isRead: false, isArchived: false }] }));
+		});
+
+		it('an edit the Markdown cannot show is kept as a version before an Ever Works edit replaces the page, even inside the window (review F92)', async () => {
+			const document = kb.addDocument(ewOrg.id, { body: 'First' });
+			await apply('kb.document.created', document);
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			await apply('kb.document.updated', document);
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(1);
+			// A Gauzy employee uploads an image into the page: its app-relative source has no Markdown form.
+			const row = (await pageOf(document['id'])) as Row;
+			const json = typeof row['contentJson'] === 'string' ? JSON.parse(row['contentJson']) : row['contentJson'];
+			const withImage = { ...json, content: [...(json.content ?? []), { type: 'image', attrs: { src: '/api/plugins/docs/documents/x/raw', alt: '' } }] };
+			await documents().update({ id: row['id'] } as never, { contentJson: withImage } as never);
+			Object.assign(document, { body: 'Third', version: 3, revision: 3 });
+			await apply('kb.document.updated', document);
+			const versions = (await dataSource.getRepository(DocumentVersion).find()) as Row[];
+			expect(versions).toHaveLength(2);
+			expect(versions.some((version) => JSON.stringify(version['contentJson']).includes('/api/plugins/docs/documents/x/raw'))).toBe(true);
+			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('Third');
+		});
+
+		it('the page read back with its keys reordered (PostgreSQL jsonb) is no edit: sync writes stay one version per window (#11096 review)', async () => {
+			// jsonb orders object keys by length, then bytewise ("text" before "type"); better-sqlite3 keeps them as written.
+			const asJsonb = (value: unknown): unknown =>
+				Array.isArray(value)
+					? value.map(asJsonb)
+					: value !== null && typeof value === 'object'
+						? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)).map(([key, item]) => [key, asJsonb(item)]))
+						: value;
+			const document = kb.addDocument(ewOrg.id, { body: 'First **bold** text' });
+			await apply('kb.document.created', document);
+			Object.assign(document, { body: 'Second **bold** text', version: 2, revision: 2 });
+			await apply('kb.document.updated', document);
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(1);
+			const row = (await pageOf(document['id'])) as Row;
+			const json = typeof row['contentJson'] === 'string' ? JSON.parse(row['contentJson']) : row['contentJson'];
+			expect(JSON.stringify(asJsonb(json))).not.toBe(JSON.stringify(json));
+			await documents().update({ id: row['id'] } as never, { contentJson: asJsonb(json) } as never);
+			Object.assign(document, { body: 'Third', version: 3, revision: 3 });
+			await apply('kb.document.updated', document);
+			expect(await dataSource.getRepository(DocumentVersion).count()).toBe(1);
+			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('Third');
+		});
+
+		it('a push of other fields never counts that edit as kept, and a link without the hash keeps its first replacement too (#11082 review)', async () => {
+			const imageOf = (row: Row) => {
+				const json = typeof row['contentJson'] === 'string' ? JSON.parse(row['contentJson']) : row['contentJson'];
+				return { ...json, content: [...(json.content ?? []), { type: 'image', attrs: { src: '/api/plugins/docs/documents/y/raw', alt: '' } }] };
+			};
+			const withImage = async () => ((await dataSource.getRepository(DocumentVersion).find()) as Row[]).filter((v) => JSON.stringify(v['contentJson']).includes('/documents/y/raw')).length;
+			const document = kb.addDocument(ewOrg.id, { body: 'First' });
+			await apply('kb.document.created', document);
+			Object.assign(document, { body: 'Second', version: Number(document['version']) + 1, revision: 2 });
+			await apply('kb.document.updated', document);
+			const row = (await pageOf(document['id'])) as Row;
+			// An image (no Markdown form) and a rename in Gauzy; the rename is pushed.
+			await documents().update({ id: row['id'] } as never, { contentJson: imageOf(row), name: 'Renamed in Gauzy' } as never);
+			expect(await push(row['id'])).toEqual({ status: 'pushed' });
+			Object.assign(document, { body: 'Third', version: Number(document['version']) + 1, revision: 3 });
+			await apply('kb.document.updated', document);
+			expect(await withImage()).toBe(1);
+			// A link recorded before the hash existed: its first replacement keeps the page's content as well.
+			const link = (await links.byEw(M as never, EverWorksLinkType.DOC, document['id'] as string)) as EverWorksEntityLink;
+			const snapshot = JSON.parse(link.snapshot as string);
+			delete snapshot.jHash;
+			await dataSource.getRepository(EverWorksEntityLink).update({ id: link.id } as never, { snapshot: JSON.stringify(snapshot) } as never);
+			await documents().update({ id: row['id'] } as never, { contentJson: imageOf(await page(row['id'])) } as never);
+			Object.assign(document, { body: 'Fourth', version: Number(document['version']) + 1, revision: 4 });
+			await apply('kb.document.updated', document);
+			expect(await withImage()).toBe(2);
 		});
 
 		it('turns a wikilink of a synced document into a document mention', async () => {
@@ -447,6 +523,49 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect(ewFolder).toMatchObject({ name: 'Playbooks', parentId: null });
 			expect(await push(id)).toMatchObject({ status: 'pushed' });
 			expect([...kb.documents.values()][0]).toMatchObject({ folderId: ewFolder['id'], path: 'playbooks/onboarding.md' });
+		});
+
+		it('a page moved from the organization documents into a Work keeps its content syncing, logged once (review F95)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const id = await gauzyPage(organization, 'Text');
+			await push(id);
+			const [created] = [...kb.documents.values()];
+			const workFolder = await store.workFolder(context as never, kb.addWork(ewOrg.id), 'Site', null);
+			await documents().update({ id } as never, { parentId: workFolder, contentJson: markdownToDocument('Text, edited').contentJson } as never);
+			expect(await push(id)).toEqual({ status: 'pushed' });
+			expect(created).toMatchObject({ body: 'Text, edited', scope: { type: 'organization', id: ewOrg.id } });
+			await documents().update({ id } as never, { contentJson: markdownToDocument('Text, edited again').contentJson } as never);
+			expect(await push(id)).toEqual({ status: 'pushed' });
+			expect(created).toMatchObject({ body: 'Text, edited again' });
+			expect(await dataSource.getRepository(EverWorksSyncLog).count({ where: { action: 'move_not_synced' } as never })).toBe(1);
+			// An Ever Works edit then is no conflict: the Gauzy side is in step.
+			Object.assign(created, { body: 'Edited in Ever Works', version: Number(created['version']) + 1, revision: Number(created['revision']) + 1 });
+			expect(await apply('kb.document.updated', created)).toEqual({ status: 'applied' });
+		});
+
+		it('a page in a library folder whose pairing ended goes to the next synced folder up, or Unfiled, instead of waiting forever (review F96)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const folder = await gauzyFolder(organization, 'Playbooks');
+			await push(folder, EverWorksLinkType.DOC_FOLDER);
+			// The folder was deleted in Ever Works (or dragged out of Organization/ and back): its pairing ended.
+			await links.unlink((await links.byGauzy(M as never, EverWorksLinkType.DOC_FOLDER, folder as never)) as never, 'deleted in Ever Works');
+			const id = await gauzyPage(folder, 'Text');
+			expect(await push(id)).toMatchObject({ status: 'pushed' });
+			expect([...kb.documents.values()][0]).toMatchObject({ folderId: null });
+		});
+
+		it('a new folder under a library folder whose pairing ended syncs under the next synced folder up, and so do its pages (#11082 review)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const ended = await gauzyFolder(organization, 'Archive');
+			await push(ended, EverWorksLinkType.DOC_FOLDER);
+			await links.unlink((await links.byGauzy(M as never, EverWorksLinkType.DOC_FOLDER, ended as never)) as never, 'deleted in Ever Works');
+			const nested = await gauzyFolder(ended, 'Old playbooks');
+			const id = await gauzyPage(nested, 'Text');
+			expect(await push(nested, EverWorksLinkType.DOC_FOLDER)).toEqual({ status: 'pushed', message: 'created in Ever Works' });
+			const ewNested = [...kb.folders.values()].find((folder) => folder['name'] === 'Old playbooks') as Row;
+			expect(ewNested).toMatchObject({ parentId: null });
+			expect(await push(id)).toMatchObject({ status: 'pushed' });
+			expect([...kb.documents.values()][0]).toMatchObject({ folderId: ewNested['id'] });
 		});
 
 		it('on 412 applies Ever Works first, then pushes what only Gauzy changed', async () => {
@@ -599,6 +718,235 @@ describe('Ever Works docs sync on SQLite', () => {
 		});
 	});
 
+	describe('a change of the docs root moves the synced tree (OQ5, review F94)', () => {
+		const setting = (name: string) => (context['mapping'].settings as Row[]).find((row) => row['settingsName'] === name)?.['settingsValue'];
+		/** What `PUT /mappings/:id` `docsRootFolderId` stores (the context is read again for each event). */
+		const configureRoot = (id: string) => {
+			const rows = context['mapping'].settings as Row[];
+			const row = rows.find((r) => r['settingsName'] === 'DOCS_ROOT_FOLDER_ID');
+			if (row) row['settingsValue'] = id;
+			else rows.push({ settingsName: 'DOCS_ROOT_FOLDER_ID', settingsValue: id });
+		};
+		const marker = async (externalId: string) => (await documents().findOne({ where: { externalId } as never, withDeleted: true })) as Row;
+		/** An organization document and a Work document, synced under the sync's own "Ever Works" root. */
+		const syncedTree = async () => {
+			const document = kb.addDocument(ewOrg.id, { title: 'Policy', body: 'First' });
+			await apply('kb.document.created', document);
+			const work = kb.addWork(ewOrg.id);
+			const workDocument = kb.addDocument(ewOrg.id, { workId: work, scope: { type: 'work', id: work }, path: 'freeform/notes.md', title: 'Notes', body: 'Hello' });
+			await apply('kb.document.created', workDocument);
+			const ownRoot = (await marker(DOCS_TREE.root))['id'] as string;
+			return { document, workDocument, ownRoot, page: (await pageOf(document['id'])) as Row, workPage: (await pageOf(workDocument['id'])) as Row };
+		};
+
+		it('Organization/ and Works/ move under the new root and keep syncing both ways; no link ends, nothing is deleted', async () => {
+			const { document, workDocument, ownRoot, page: row, workPage } = await syncedTree();
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+
+			// An Ever Works edit of each page is applied where the page is.
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', document)).toEqual({ status: 'applied' });
+			Object.assign(workDocument, { body: 'Hello again', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', workDocument)).toEqual({ status: 'applied' });
+			expect(documentToMarkdown((await page(row['id']))['contentJson'])).toBe('Second');
+			expect((await marker(DOCS_TREE.organization))['parentId']).toBe(knowledge);
+			expect((await marker(DOCS_TREE.works))['parentId']).toBe(knowledge);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(knowledge);
+			expect(setting('DOCS_ROOT_FOLDER_ID')).toBe(knowledge);
+
+			// A Gauzy edit is pushed, and a new Ever Works document lands under the new root.
+			await documents().update({ id: row['id'] } as never, { contentJson: markdownToDocument('Third').contentJson } as never);
+			expect(await push(row['id'])).toEqual({ status: 'pushed' });
+			const fresh = kb.addDocument(ewOrg.id, { path: 'fresh.md', title: 'Fresh', body: 'New' });
+			await apply('kb.document.created', fresh);
+			expect((await pageOf(fresh['id']))?.['parentId']).toBe((await marker(DOCS_TREE.organization))['id']);
+
+			for (const pair of [document, workDocument, fresh]) {
+				expect((await links.byEw(M as never, EverWorksLinkType.DOC, String(pair['id'])))?.state).not.toBe(EverWorksLinkState.UNLINKED);
+			}
+			expect((await page(workPage['id']))['deletedAt'] ?? null).toBeNull();
+			// The old root is kept (empty now): nothing is deleted.
+			expect(await page(ownRoot)).toMatchObject({ id: ownRoot, isArchived: false });
+		});
+
+		it('the sweep moves the tree as well, and a move cut short part-way finishes; a second pass writes nothing', async () => {
+			const { ownRoot } = await syncedTree();
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			// A run that stopped after the first folder: Organization/ moved, Works/ not yet, the old root still recorded.
+			await documents().update({ id: (await marker(DOCS_TREE.organization))['id'] } as never, { parentId: knowledge } as never);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(ownRoot);
+
+			await service.sweep(connection as never);
+			expect((await marker(DOCS_TREE.organization))['parentId']).toBe(knowledge);
+			expect((await marker(DOCS_TREE.works))['parentId']).toBe(knowledge);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(knowledge);
+
+			const writes = jest.spyOn(documents(), 'update');
+			await store.root(context as never);
+			await store.existingRoot(context as never);
+			expect(writes).not.toHaveBeenCalled();
+			writes.mockRestore();
+		});
+
+		it('an archived configured root keeps being used: no new "Ever Works" folder, the setting stays', async () => {
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			const document = kb.addDocument(ewOrg.id, { title: 'Policy', body: 'First' });
+			await apply('kb.document.created', document);
+			await documents().update({ id: knowledge } as never, { isArchived: true, archivedAt: new Date() } as never);
+
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', document)).toEqual({ status: 'applied' });
+			const fresh = kb.addDocument(ewOrg.id, { path: 'fresh.md', title: 'Fresh', body: 'New' });
+			await apply('kb.document.created', fresh);
+			expect((await marker(DOCS_TREE.organization))['parentId']).toBe(knowledge);
+			expect(await documents().findOne({ where: { externalId: DOCS_TREE.root } as never, withDeleted: true })).toBeNull();
+			expect(setting('DOCS_ROOT_FOLDER_ID')).toBe(knowledge);
+			expect((await page(knowledge))['isArchived']).toBe(true);
+			expect((await links.byEw(M as never, EverWorksLinkType.DOC, String(document['id'])))?.state).not.toBe(EverWorksLinkState.UNLINKED);
+		});
+
+		it("a deleted configured root: the tree moves under the sync's own folder and keeps syncing", async () => {
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			const document = kb.addDocument(ewOrg.id, { title: 'Policy', body: 'First' });
+			await apply('kb.document.created', document);
+			await documents().softDelete({ id: knowledge } as never);
+
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', document)).toEqual({ status: 'applied' });
+			const own = await marker(DOCS_TREE.root);
+			expect(own).toMatchObject({ name: 'Ever Works', parentId: null });
+			expect((await marker(DOCS_TREE.organization))['parentId']).toBe(own['id']);
+			expect(setting('DOCS_ROOT_FOLDER_ID')).toBe(own['id']);
+			expect((await links.byEw(M as never, EverWorksLinkType.DOC, String(document['id'])))?.state).not.toBe(EverWorksLinkState.UNLINKED);
+		});
+
+		it('a root inside the synced tree is not used (the tree would sit under itself): the tree stays and keeps syncing', async () => {
+			const { document, ownRoot } = await syncedTree();
+			const inside = await gauzyFolder((await marker(DOCS_TREE.organization))['id'] as string, 'Inside');
+			configureRoot(inside);
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', document)).toEqual({ status: 'applied' });
+			expect((await marker(DOCS_TREE.organization))['parentId']).toBe(ownRoot);
+			expect(setting('DOCS_ROOT_FOLDER_ID')).toBe(ownRoot);
+		});
+
+		/** Sets (or, with `undefined`, removes) a mapping setting as stored in the context. */
+		const put = (name: string, value: string | undefined) => {
+			const rows = context['mapping'].settings as Row[];
+			const at = rows.findIndex((r) => r['settingsName'] === name);
+			if (value === undefined) {
+				if (at >= 0) rows.splice(at, 1);
+			} else if (at >= 0) rows[at]['settingsValue'] = value;
+			else rows.push({ settingsName: name, settingsValue: value });
+		};
+		const moveFolder = async (externalId: string, parentId: string | null) =>
+			documents().update({ id: (await marker(externalId))['id'] } as never, { parentId } as never);
+		const parentOf = async (externalId: string) => (await marker(externalId))['parentId'];
+
+		it('a root changed while a tree folder sits where an admin put it: the other folder moves, the admin\'s stays (#11115 review)', async () => {
+			await syncedTree();
+			const elsewhere = await gauzyFolder(null as never, 'Elsewhere');
+			await moveFolder(DOCS_TREE.organization, elsewhere);
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			await store.root(context as never);
+			expect(await parentOf(DOCS_TREE.works)).toBe(knowledge);
+			expect(await parentOf(DOCS_TREE.organization)).toBe(elsewhere);
+		});
+
+		it('a mapping placed before the setting existed: only its own "Ever Works" folder counts as an earlier root (#11115 review)', async () => {
+			const { ownRoot } = await syncedTree();
+			const elsewhere = await gauzyFolder(null as never, 'Elsewhere');
+			// One folder an admin moved, the other under the root: nothing moves, the root is recorded.
+			put('DOCS_TREE_ROOT_ID', undefined);
+			await moveFolder(DOCS_TREE.organization, elsewhere);
+			expect(await store.root(context as never)).toBe(ownRoot);
+			expect(await parentOf(DOCS_TREE.organization)).toBe(elsewhere);
+			expect(await parentOf(DOCS_TREE.works)).toBe(ownRoot);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(ownRoot);
+
+			// The tree under the sync's own folder and another root configured: it moves.
+			put('DOCS_TREE_ROOT_ID', undefined);
+			await moveFolder(DOCS_TREE.organization, ownRoot);
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([knowledge, knowledge]);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBe(knowledge);
+
+			// The tree under a folder the sync cannot tell was a root: it stays, and nothing is recorded.
+			put('DOCS_TREE_ROOT_ID', undefined);
+			const unknown = await gauzyFolder(null as never, 'Unknown');
+			await moveFolder(DOCS_TREE.organization, unknown);
+			await moveFolder(DOCS_TREE.works, unknown);
+			const other = await gauzyFolder(null as never, 'Other');
+			configureRoot(other);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([unknown, unknown]);
+			expect(setting('DOCS_TREE_ROOT_ID')).toBeUndefined();
+		});
+
+		it('a move cut short and then pointed at another root, or back at the old one, still gathers the whole tree (#11115 review)', async () => {
+			const { ownRoot } = await syncedTree();
+			const b = await gauzyFolder(null as never, 'B');
+			// A → B stopped after Organization/ moved: the target is written, the old root still recorded.
+			put('DOCS_TREE_MOVING_TO', b);
+			await moveFolder(DOCS_TREE.organization, b);
+			const c = await gauzyFolder(null as never, 'C');
+			configureRoot(c);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([c, c]);
+			expect([setting('DOCS_TREE_ROOT_ID'), setting('DOCS_TREE_MOVING_TO')]).toEqual([c, '']);
+
+			// C → B stopped part-way again, then the admin sets C back: Organization/ comes back.
+			put('DOCS_TREE_MOVING_TO', b);
+			await moveFolder(DOCS_TREE.organization, b);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([c, c]);
+			expect(setting('DOCS_TREE_MOVING_TO')).toBe('');
+			expect(await page(ownRoot)).toMatchObject({ id: ownRoot });
+		});
+
+		it('the sync\'s own folder dragged into the tree and set as the root goes back to the top first: no folder contains its parent (#11115 review)', async () => {
+			const { ownRoot } = await syncedTree();
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			await store.root(context as never);
+			await documents().update({ id: ownRoot } as never, { parentId: (await marker(DOCS_TREE.organization))['id'] } as never);
+			configureRoot(ownRoot);
+			expect(await store.root(context as never)).toBe(ownRoot);
+			expect((await page(ownRoot))['parentId']).toBeNull();
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([ownRoot, ownRoot]);
+		});
+
+		it('the sweep finds a tree whose configured root was deleted, with no "Ever Works" folder yet (#11115 review)', async () => {
+			const knowledge = await gauzyFolder(null as never, 'Knowledge');
+			configureRoot(knowledge);
+			const document = kb.addDocument(ewOrg.id, { title: 'Policy', body: 'First' });
+			await apply('kb.document.created', document);
+			expect(await documents().findOne({ where: { externalId: DOCS_TREE.root } as never, withDeleted: true })).toBeNull();
+			await documents().softDelete({ id: knowledge } as never);
+			await service.sweep(connection as never);
+			const own = await marker(DOCS_TREE.root);
+			expect(own).toMatchObject({ name: 'Ever Works', parentId: null });
+			expect(await parentOf(DOCS_TREE.organization)).toBe(own['id']);
+			expect(queue.enqueue).toHaveBeenCalled();
+		});
+
+		it('an admin moving Organization/ out of the root is still respected: its pages stop syncing, as before', async () => {
+			const { document } = await syncedTree();
+			const elsewhere = await gauzyFolder(null as never, 'Elsewhere');
+			await documents().update({ id: (await marker(DOCS_TREE.organization))['id'] } as never, { parentId: elsewhere } as never);
+			Object.assign(document, { body: 'Second', version: 2, revision: 2 });
+			expect(await apply('kb.document.updated', document)).toMatchObject({ status: 'skipped' });
+			expect((await marker(DOCS_TREE.organization))['parentId']).toBe(elsewhere);
+		});
+	});
+
 	describe('lease fence (plan 03 §C.4)', () => {
 		/** The loop's claim: `owner` holds the connection's lease for five minutes. */
 		const holdLease = async (owner: string) => {
@@ -666,6 +1014,29 @@ describe('Ever Works docs sync on SQLite', () => {
 			await documents().update({ id } as never, { name: 'Renamed' } as never);
 			await service.sweep(connection as never);
 			expect((queue.enqueue.mock.calls as unknown as Array<[Row]>).map(([change]) => [change['entityType'], change['gauzyId']])).toEqual([[EverWorksLinkType.DOC, id]]);
+		});
+
+		it('never queues a deleted page whose archive went out, nor a deleted folder, again at every sweep (review F97)', async () => {
+			const organization = await store.organizationFolder(context as never);
+			const folder = await gauzyFolder(organization, 'Playbooks');
+			await push(folder, EverWorksLinkType.DOC_FOLDER);
+			const id = await gauzyPage(folder, 'Text');
+			await push(id);
+			await documents().softDelete({ id } as never);
+			await documents().softDelete({ id: folder } as never);
+			await push(id); // the delete archives the Ever Works document
+			queue.enqueue.mockClear();
+			await service.sweep(connection as never); // a first sweep reads every node of the tree (#11082 review)
+			const first = (queue.enqueue.mock.calls as unknown as Array<[Row]>).map(([change]) => change['gauzyId']);
+			expect(first).not.toContain(id);
+			expect(first).not.toContain(folder);
+			const hourAgo = new Date(Date.now() - 60 * 60_000).toISOString().replace('T', ' ').replace('Z', '');
+			await dataSource.query('UPDATE "document" SET "updatedAt" = ?', [hourAgo]);
+			queue.enqueue.mockClear();
+			await service.sweep(connection as never);
+			const queued = (queue.enqueue.mock.calls as unknown as Array<[Row]>).map(([change]) => change['gauzyId']);
+			expect(queued).not.toContain(id);
+			expect(queued).not.toContain(folder);
 		});
 
 		it("captures Gauzy's page and folder writes, never the sync's own nor files", async () => {

@@ -61,7 +61,7 @@
 		"MISSING_REQUIRED": "The key lacks scopes the connection cannot work without: {{ scopes }}. Create a key with the \"Ever Gauzy\" preset.",
 		"INCOMPATIBLE": "This Ever Works speaks integration API v{{ version }}; this Gauzy speaks another version. Nothing can be connected.",
 		"EXISTING": "This tenant is already connected to the Ever Works tenant {{ tenant }} (key {{ key }}).",
-		"STATUS_NOT_ACTIVE": "The connection is {{ status }}: resume it or enter a new key from the sync settings first."
+		"STATUS_NOT_ACTIVE": "The connection is {{ status }}: resume it, use a new key or disconnect below, then map this organization."
 	},
 	"ORGANIZATION": {
 		"TITLE": "Map this organization to one of the key's pinned Ever Works organizations.",
@@ -81,6 +81,7 @@
 		"CREATE_MISSION_IN_EVER_WORKS": "Create in Ever Works (paused)",
 		"INITIATIVE_DRAFT": "draft: goes to Ever Works once it is active",
 		"MISSIONS_ONE_WAY": "Initiatives are created in Ever Works only when Missions ↔ Initiatives syncs both ways (Entities and directions).",
+		"TEAMS_ONE_WAY": "Gauzy teams are created in Ever Works only when Teams syncs to Ever Works (Entities and directions).",
 		"MAPPING_OFF_NO_CREATE": "Switch the mapping on to create records on the other side.",
 		"EVER_WORKS": "Ever Works",
 		"GAUZY": "Gauzy",
@@ -91,6 +92,12 @@
 		"DEFERRED_INBOX": "Inbox items waiting for a pairing",
 		"DEFERRED_INBOX_HINT": "Ever Works addressed these inbox items to members who are not paired with a Gauzy person yet, so they were not delivered. Pair the member above and their items arrive in their Gauzy Inbox.",
 		"DEFERRED_COUNT": "{{ count }} waiting",
+		"DEFERRED_KIND": {
+			"question": "A question",
+			"approval": "An approval",
+			"escalation": "An escalation",
+			"notice": "A notice"
+		},
 		"UNLINK": "Remove pairing",
 		"NOT_PAIRED_OPTION": "— not paired —",
 		"ACCEPT_ALL": "Accept every suggestion",
@@ -137,6 +144,7 @@
 		"DOMAIN": "Records",
 		"DIRECTION": "Direction",
 		"SYNC_UNLINKED_PROJECT_TASKS": "Also sync tasks of projects that are not paired with a work",
+		"OFF_BY_SYNC_SETTING": "Not synced: the sync setting of this record type is off for the mapping.",
 		"VALUES": {
 			"both": "Both ways",
 			"ew_to_gauzy": "Ever Works → Gauzy",
@@ -295,6 +303,7 @@
 		"DISCONNECT_TITLE": "Disconnect",
 		"DISCONNECT_HINT": "Disconnecting stops the sync for every organization of this tenant and removes the Ever Works webhook. Synced data stays on both sides, and the pairings are kept for a reconnect.",
 		"DISCONNECT": "Disconnect from Ever Works",
-		"CONFIRM_DISCONNECT": "Yes, disconnect"
+		"CONFIRM_DISCONNECT": "Yes, disconnect",
+		"DISCONNECT_WEBHOOK_KEPT": "Disconnected, but Ever Works could not delete the webhook subscription, so it may keep sending events (Gauzy refuses them). Revoke the integration key in Ever Works (Settings → API keys), which disables its webhooks. Reconnecting to the same Ever Works tenant tries to delete it again."
 	}
 }

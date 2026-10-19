@@ -63,6 +63,7 @@ import {
 	LINKED_ISSUE,
 	LinkedIssueRow,
 	gauzyWins,
+	isCutTitleCopy,
 	labelsForEverWorks,
 	stripTitleAppendix,
 	titleForEverWorks,
@@ -140,6 +141,38 @@ describe('task field rules', () => {
 		expect(stripTitleAppendix(description)).toBe('Body');
 		expect(titleForEverWorks('Short')).toEqual({ title: 'Short', truncated: false });
 		expect(descriptionForEverWorks('Body', 'Short')).toBe('Body');
+	});
+
+	it('collapses the whitespace of a long title before cutting it; one that then fits goes whole, with no full-title line (#11108 review)', () => {
+		const spaced = `${'word   '.repeat(30)}end`;
+		expect(titleForEverWorks(spaced)).toEqual({ title: `${'word '.repeat(30)}end`, truncated: false });
+		expect(descriptionForEverWorks('Body', spaced)).toBe('Body');
+		// A title within the limit goes as it is, its spaces included.
+		expect(titleForEverWorks('Two  spaces')).toEqual({ title: 'Two  spaces', truncated: false });
+		const long = `${'X'.repeat(197)}  ${'Y'.repeat(50)}`;
+		expect(titleForEverWorks(long)).toEqual({ title: `${'X'.repeat(197)} Y…`, truncated: true });
+	});
+
+	describe('a title Ever Works still has as the cut copy of the full title in its description (#11108 review)', () => {
+		const plain = 'Investigate customer billing failures '.repeat(8).trim();
+		const copy = (original: string) => titleForEverWorks(original).title;
+		const appendix = (original: string) => descriptionForEverWorks('Body', original);
+		it.each<[string, string, string, boolean]>([
+			['the cut copy', copy(plain), appendix(plain), true],
+			['the cut copy of a title with runs of spaces', copy(`${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`), appendix(`${'x'.repeat(150)}  two  spaces ${'y'.repeat(100)}`), true],
+			['the cut copy of a title with a run of spaces at the cut', copy(`${'X'.repeat(197)}  ${'Y'.repeat(50)}`), appendix(`${'X'.repeat(197)}  ${'Y'.repeat(50)}`), true],
+			['the cut copy of a title cut on a space after a run of spaces', copy(`${'A'.repeat(100)}  ${'B'.repeat(96)} ${'C'.repeat(30)}`), appendix(`${'A'.repeat(100)}  ${'B'.repeat(96)} ${'C'.repeat(30)}`), true],
+			['the cut copy of a title cut on a single space', copy(`${'x'.repeat(198)} ${'y'.repeat(30)}`), appendix(`${'x'.repeat(198)} ${'y'.repeat(30)}`), true],
+			['a rename shortened to a start of the title', 'Investigate…', appendix(plain), false],
+			['a rename to a start of the title close to the limit', `${'x '.repeat(90)}x…`, appendix(`${'x '.repeat(100)}${'tail'.repeat(20)}`), false],
+			['a rename that keeps a start of the title but is clearly shorter', `${'Investigate customer billing failures '.repeat(2)}Investigate customer…`, appendix(plain), false],
+			['a rename that cuts a few letters off', `${copy(plain).slice(0, -4)}…`, appendix(plain), false],
+			['another title', 'Renamed', appendix(plain), false],
+			['the cut copy of another title', copy('z'.repeat(250)), appendix(plain), false],
+			['no full title in the description', copy(plain), 'Body', false]
+		])('%s', (_case, title, description, expected) => {
+			expect(isCutTitleCopy(title, description)).toBe(expected);
+		});
 	});
 
 	it('labels: trimmed, ≤ 80 characters, unique case-insensitively, at most 50', () => {
@@ -509,6 +542,128 @@ describe('EW → G tasks', () => {
 		expect(t.tasks.get('g-task-1')).toMatchObject({ title: 'Renamed in Gauzy', tags: [{ id: 'tag-new', name: 'new' }] });
 		// An event at or below the link's version is skipped.
 		expect(await t.deliver({ type: 'task.updated', data: task, aggregate: { id: task['id'] as string, version: 3 } })).toEqual({ status: 'skipped', message: 'already applied (version)' });
+	});
+
+	it('an Ever Works label change keeps the task\u2019s team-scoped tags instead of organization copies (review F83)', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Tagged', labels: ['Bug'] });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		// The task's "Bug" is a team-scoped Gauzy tag (the resolver of new names never picks one).
+		(t.tasks.get('g-task-1') as GauzyTask)['tags'] = [{ id: 'team-bug', name: 'Bug' }];
+		await t.deliver({ type: 'task.updated', data: { ...task, labels: ['Bug', 'UI'] }, aggregate: { id: task['id'] as string, version: 2 } });
+		expect(((t.tasks.get('g-task-1') as GauzyTask)['tags'] as Array<{ id: string }>).map((tag) => tag.id).sort()).toEqual(['tag-ui', 'team-bug']);
+	});
+
+	it('a task Gauzy created whose link was lost is linked back without taking Ever Works\u2019 lossy copy; the push sends the Gauzy values (review F81)', async () => {
+		const t = setup();
+		const title = 'T'.repeat(250);
+		t.addGauzyTask({ id: 'g1', title, status: 'in-progress' });
+		// The create reached Ever Works (a cut title, still todo: the transition never ran) but its answer was lost.
+		const ew = t.mock.addTask(t.org.id, { title: `${'T'.repeat(199)}\u2026`, status: 'todo' });
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		expect(await t.deliver({ type: 'task.created', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 1 } })).toMatchObject({
+			status: 'applied'
+		});
+		expect(t.tasks.get('g1')).toMatchObject({ title, status: 'in-progress' });
+		expect(t.writes.filter((write) => write.id === 'g1')).toEqual([]);
+		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: ew['id'] });
+		expect(t.queue.enqueued).toContainEqual(expect.objectContaining({ entityType: EverWorksLinkType.TASK, gauzyId: 'g1', op: 'upsert' }));
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect(ew['status']).toBe('in_progress');
+		expect(t.mock.tasks.size).toBe(1);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back takes Ever Works’ change at once, and keeps its full title (#11096 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		const title = 'T'.repeat(250);
+		t.addGauzyTask({ id: 'g1', title, description: '<p>Old</p>', status: 'in-progress', priority: 'medium' });
+		// Gauzy created it (cut title, full title in the description) and lost the answer; Ever Works edited it since.
+		const ew = t.mock.addTask(t.org.id, {
+			title: `${'T'.repeat(199)}…`,
+			description: descriptionForEverWorks('Edited in Ever Works', title),
+			status: 'done',
+			priority: 'p1',
+			labels: ['Ops']
+		});
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		const event = { type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 4 } };
+		const outcome = await t.deliver(event);
+		expect(t.tasks.get('g1')).toMatchObject({ title, description: '<p>Edited in Ever Works</p>', status: 'done', priority: 'high', tags: [{ id: 'tag-ops', name: 'Ops' }] });
+		expect(outcome).toEqual({ status: 'applied' });
+		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: ew['id'], ewVersion: 4 });
+		// Nothing is left to a push this direction never sends; the same delivery again has nothing left to apply.
+		expect(t.queue.enqueued).toEqual([]);
+		expect(await t.deliver(event)).toEqual({ status: 'skipped', message: 'already applied (version)' });
+		expect(t.tasks.size).toBe(1);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back takes Ever Works’ sets and dates as they are, not only what they add (#11108 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Sets', tags: [{ id: 'tag-old', name: 'Old' }], members: [{ id: 'e-alice' }], dueDate: new Date('2026-11-01T00:00:00Z') });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		const ew = t.mock.addTask(t.org.id, { title: 'Sets', labels: ['New'], assignees: [{ type: 'user', id: 'ew-bob' }], watchers: ['ew-bob'], dueAt: null });
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 3 } })).toEqual({ status: 'applied' });
+		expect(t.tasks.get('g1')).toMatchObject({ tags: [{ id: 'tag-new', name: 'New' }], members: [{ id: 'e-bob' }], dueDate: null });
+		expect(t.subscriptions.filter((row) => row.taskId === 'g1').map((row) => row.employeeId)).toEqual(['e-bob']);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back loses a long tag whose cut label Ever Works removed (#11096 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.addGauzyTask({ id: 'g1', title: 'Long tag', tags: [{ id: 'tag-long', name: 'L'.repeat(100) }, { id: 'tag-old', name: 'Old' }] });
+		const ew = t.mock.addTask(t.org.id, { title: 'Long tag', labels: ['Old'] });
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 3 } })).toEqual({ status: 'applied' });
+		expect(((t.tasks.get('g1') as GauzyTask)['tags'] as Array<{ id: string }>).map((tag) => tag.id)).toEqual(['tag-old']);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back keeps one tag for a long name whose cut label Ever Works still holds (#11119 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.addGauzyTask({ id: 'g1', title: 'Long tag kept', tags: [{ id: 'tag-long', name: 'L'.repeat(100) }, { id: 'tag-old', name: 'Old' }] });
+		const ew = t.mock.addTask(t.org.id, { title: 'Long tag kept', labels: ['L'.repeat(80), 'New'] });
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 3 } })).toEqual({ status: 'applied' });
+		expect(((t.tasks.get('g1') as GauzyTask)['tags'] as Array<{ id: string }>).map((tag) => tag.id)).toEqual(['tag-long', 'tag-new']);
+	});
+
+	it('tasks synced one way from Ever Works: a task adopted back keeps a parent Ever Works cannot hold, and loses one Ever Works removed (#11108 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.addGauzyTask({ id: 'gp-gauzy-only', title: 'Parent not in Ever Works' });
+		t.addGauzyTask({ id: 'gp-linked', title: 'Parent in Ever Works' });
+		t.link(EverWorksLinkType.TASK, 'gp-linked', 'ew-parent');
+		t.addGauzyTask({ id: 'g1', title: 'Child of an unlinked parent', parentId: 'gp-gauzy-only' });
+		t.addGauzyTask({ id: 'g2', title: 'Child of a linked parent', parentId: 'gp-linked' });
+		for (const [gauzyId, title] of [['g1', 'Child of an unlinked parent'], ['g2', 'Child of a linked parent']]) {
+			const ew = t.mock.addTask(t.org.id, { title, parentTaskId: null });
+			const own = [{ source: 'gauzy', installationId: 'c1', externalId: gauzyId, externalUrl: null }];
+			expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 2 } })).toEqual({ status: 'applied' });
+		}
+		expect((t.tasks.get('g1') as GauzyTask)['parentId']).toBe('gp-gauzy-only');
+		expect((t.tasks.get('g2') as GauzyTask)['parentId']).toBeNull();
+	});
+
+	it('tasks synced one way from Ever Works: a long title renamed in Gauzy before the adoption stays; a rename in Ever Works is taken (#11108 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		const sent = 'A'.repeat(250);
+		const renamed = 'B'.repeat(250);
+		t.addGauzyTask({ id: 'g1', title: renamed });
+		t.addGauzyTask({ id: 'g2', title: renamed });
+		t.addGauzyTask({ id: 'g3', title: renamed });
+		// Both went out with the long title `sent` (cut, the full one in the description); Gauzy renamed them since.
+		const description = descriptionForEverWorks('Body', sent);
+		const kept = t.mock.addTask(t.org.id, { title: titleForEverWorks(sent).title, description });
+		const edited = t.mock.addTask(t.org.id, { title: 'Renamed in Ever Works', description });
+		const shortened = t.mock.addTask(t.org.id, { title: `${'A'.repeat(20)}…`, description });
+		for (const [ew, gauzyId] of [[kept, 'g1'], [edited, 'g2'], [shortened, 'g3']] as const) {
+			const own = [{ source: 'gauzy', installationId: 'c1', externalId: gauzyId, externalUrl: null }];
+			expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 2 } })).toEqual({ status: 'applied' });
+		}
+		expect((t.tasks.get('g1') as GauzyTask)['title']).toBe(renamed);
+		expect((t.tasks.get('g2') as GauzyTask)['title']).toBe('Renamed in Ever Works');
+		// Shortened in Ever Works to a start of the title: a rename too, not the cut copy (#11108 review).
+		expect((t.tasks.get('g3') as GauzyTask)['title']).toBe(`${'A'.repeat(20)}…`);
 	});
 
 	it('both sides changed the title: the later writer wins and the conflict is logged', async () => {
@@ -884,6 +1039,64 @@ describe('task sync review fixes (#10804)', () => {
 		expect(t.comments).toEqual([expect.objectContaining({ taskId: 'g-task-1', html: expect.stringContaining('<p>ever works</p>') })]);
 	});
 
+	it('a refusal after the create still links the Ever Works task: the next push patches it, never creates it again (review F82)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Work', status: 'in-progress' });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		// The task is created and moved on, then Ever Works refuses its watchers.
+		t.mock.fail({ method: 'PUT', path: /\/watchers$/, status: 400, body: { error: { code: 'validation_failed', message: 'Refused.' } } });
+		await expect(t.push('g1')).rejects.toThrow();
+		const created = [...t.mock.tasks.values()][0] as Record<string, unknown>;
+		expect(t.links.find((l) => l.gauzyId === 'g1')).toMatchObject({ ewId: created['id'] });
+		t.mock.expireIdempotencyKeys(); // a later edit, after Ever Works forgot the create's key
+		// An Ever Works edit arrives before that push: it is applied, and the watchers still to send stay to send (#11079 review).
+		Object.assign(created, { title: 'Work, renamed in Ever Works', version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...created }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		expect(t.tasks.get('g1')).toMatchObject({ title: 'Work, renamed in Ever Works' });
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect(t.mock.tasks.size).toBe(1);
+		expect(created).toMatchObject({ status: 'in_progress', watchers: ['ew-alice'] });
+	});
+
+	it('the watchers still to send stay to send across two Ever Works edits before the retry (#11096 review)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.addGauzyTask({ id: 'g1', title: 'Work', status: 'in-progress' });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		t.mock.fail({ method: 'PUT', path: /\/watchers$/, status: 400, body: { error: { code: 'validation_failed', message: 'Refused.' } } });
+		await expect(t.push('g1')).rejects.toThrow();
+		const created = [...t.mock.tasks.values()][0] as Record<string, unknown>;
+		t.mock.expireIdempotencyKeys();
+		// The first edit gives the link a Gauzy side (the title it applied); the second must not take the watchers as sent.
+		Object.assign(created, { title: 'Work, renamed in Ever Works', version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...created }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		Object.assign(created, { priority: 'p1', version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.updated', data: { ...created }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		expect(t.tasks.get('g1')).toMatchObject({ title: 'Work, renamed in Ever Works' });
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect(t.mock.tasks.size).toBe(1);
+		expect(created).toMatchObject({ title: 'Work, renamed in Ever Works', priority: 'p1', status: 'in_progress', watchers: ['ew-alice'] });
+	});
+
+	it('an Ever Works watcher change before the retry leaves the Gauzy watchers still to send (#11096 review)', async () => {
+		const t = setup();
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		t.link(EverWorksLinkType.MEMBER, 'e-bob', 'ew-bob');
+		t.addGauzyTask({ id: 'g1', title: 'Watched' });
+		t.subscriptions.push({ taskId: 'g1', employeeId: 'e-alice' });
+		t.mock.fail({ method: 'PUT', path: /\/watchers$/, status: 400, body: { error: { code: 'validation_failed', message: 'Refused.' } } });
+		await expect(t.push('g1')).rejects.toThrow();
+		const created = [...t.mock.tasks.values()][0] as Record<string, unknown>;
+		t.mock.expireIdempotencyKeys();
+		// Ever Works adds Bob: Gauzy takes him, and Alice (never sent) is not recorded as sent with him.
+		Object.assign(created, { watchers: ['ew-bob'], version: Number(created['version']) + 1 });
+		await t.deliver({ type: 'task.watcher.added', data: { taskId: created['id'], userId: 'ew-bob' }, aggregate: { id: created['id'] as string, version: Number(created['version']) } });
+		expect(t.subscriptions.map((row) => row.employeeId).sort()).toEqual(['e-alice', 'e-bob']);
+		expect(await t.push('g1')).toEqual({ status: 'pushed' });
+		expect([...(created['watchers'] as string[])].sort()).toEqual(['ew-alice', 'ew-bob']);
+	});
+
 	it('a create recovered after a lost answer gets the Gauzy values edited since', async () => {
 		const t = setup();
 		t.addGauzyTask({ id: 'g1', title: 'Edited since' });
@@ -960,6 +1173,37 @@ describe('task comments and links (G-P1-9, 3/3)', () => {
 		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
 		await t.deliver({ type: 'task.comment.created', data: comment(task['id'] as string, { authorType: 'user', authorId: 'ew-nobody', externalAuthor: { name: 'Dana' } }), aggregate: { id: task['id'] as string, version: 1 } });
 		expect(t.comments[0]).toMatchObject({ html: '<p><strong>Dana</strong> (Ever Works):</p><p>Opened <strong>PR #12</strong>.</p>', employeeId: null });
+	});
+
+	it('an edit of the Gauzy copy of a comment Gauzy attributed is sent without the attribution line (review F84)', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Chatty' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		// Alice is not paired yet when she writes in Ever Works: Gauzy names her in front of the text.
+		const ew = comment(task['id'] as string, { authorType: 'user', authorId: 'ew-alice', body: 'hello' });
+		t.mock.comments.set(ew.id, ew);
+		await t.deliver({ type: 'task.comment.created', data: ew, aggregate: { id: task['id'] as string, version: 1 } });
+		const copy = t.comments[0] as { id: string; html: string };
+		expect(copy.html).toBe('<p><strong>An Ever Works member</strong> (Ever Works):</p><p>hello</p>');
+		// Paired later, she fixes a typo in the Gauzy copy: Ever Works gets her text, not Gauzy's attribution line.
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		copy.html = '<p><strong>An Ever Works member</strong> (Ever Works):</p><p>hello!</p>';
+		expect(await t.pushComment(copy.id, 'upsert', 'u-alice')).toEqual({ status: 'pushed' });
+		expect(t.mock.comments.get(ew.id)).toMatchObject({ body: 'hello!' });
+	});
+
+	it('the attribution line stays in Gauzy for a name with Markdown in it too (#11079 review)', async () => {
+		const t = setup();
+		const task = t.mock.addTask(t.org.id, { title: 'Chatty' });
+		await t.deliver({ type: 'task.created', data: task, aggregate: { id: task['id'] as string, version: 1 } });
+		const ew = comment(task['id'] as string, { authorType: 'user', authorId: 'ew-alice', externalAuthor: { name: 'Ops*Bot' }, body: 'hello' });
+		t.mock.comments.set(ew.id, ew);
+		await t.deliver({ type: 'task.comment.created', data: ew, aggregate: { id: task['id'] as string, version: 1 } });
+		const copy = t.comments[0] as { id: string; html: string };
+		t.link(EverWorksLinkType.MEMBER, 'e-alice', 'ew-alice');
+		copy.html = copy.html.replace('hello', 'hello!');
+		expect(await t.pushComment(copy.id, 'upsert', 'u-alice')).toEqual({ status: 'pushed' });
+		expect(t.mock.comments.get(ew.id)).toMatchObject({ body: 'hello!' });
 	});
 
 	it('a Gauzy comment is posted as its author with an externalRef, cut to 16384; an edit is patched', async () => {

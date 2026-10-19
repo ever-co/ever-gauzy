@@ -154,8 +154,10 @@ export class HealthService {
 				message = resDatabase?.database?.message;
 			}
 
-			const usersCount = await this.typeOrmUserRepository.count();
-			logger.debug(`Database (TypeORM) users count ${uniqueLabel} is: ${usersCount}`);
+			// Probes run this every few seconds on every pod. One row of `user` proves the database answers and the
+			// schema is there; the COUNT it replaces (a COUNT(DISTINCT) with the eager image join over the whole
+			// table, 7 ms) was the most frequent statement on production: 1.6 million calls a month.
+			await this.typeOrmUserRepository.createQueryBuilder('user').select('user.id').limit(1).getRawOne();
 			logger.debug(`Database (TypeORM) check ${uniqueLabel} completed`);
 
 			return {
@@ -195,8 +197,8 @@ export class HealthService {
 				message = resDatabase?.database?.message;
 			}
 
-			const usersCount = await this.mikroOrmUserRepository.count();
-			logger.debug(`Database (MikroORM) users count ${uniqueLabel} is: ${usersCount}`);
+			// One row, not a COUNT over the table (see the TypeORM check).
+			await this.mikroOrmUserRepository.findAll({ fields: ['id'], limit: 1 });
 			logger.debug(`Database (MikroORM) check ${uniqueLabel} completed`);
 
 			return {
