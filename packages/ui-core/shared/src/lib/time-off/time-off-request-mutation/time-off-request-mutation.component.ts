@@ -162,7 +162,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	saveRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
 		if (this.selectedEmployee.id) {
-			this.employeesArr.push(this.selectedEmployee);
+			this.employeesArr = [this.selectedEmployee];
 			this._createNewRecord();
 		}
 	}
