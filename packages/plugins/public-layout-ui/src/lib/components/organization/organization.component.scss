@@ -494,6 +494,21 @@ nb-card-body.profile-body {
 	}
 }
 
+// A failed request: the warning colour on the icon, and a retry under the message.
+.empty-state--error {
+	nb-icon {
+		color: nb-theme(color-warning-500);
+		opacity: 1;
+	}
+
+	button nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+		color: inherit;
+	}
+}
+
 /* Chips: client focus, skills */
 
 .chips {
