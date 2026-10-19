@@ -113,8 +113,14 @@ export class EverWorksMappingContextService {
 			where: { integrationId: In(ids) } as never,
 			select: { id: true, entity: true, sync: true, integrationId: true } as never
 		});
+		const byMapping = new Map<string, IntegrationEntitySetting[]>();
+		for (const row of rows) {
+			const group = byMapping.get(row.integrationId as string);
+			if (group) group.push(row);
+			else byMapping.set(row.integrationId as string, [row]);
+		}
 		for (const mapping of mappings) {
-			mapping.entitySettings ??= rows.filter((row) => row.integrationId === mapping.id);
+			mapping.entitySettings ??= byMapping.get(mapping.id as string) ?? [];
 		}
 	}
 
