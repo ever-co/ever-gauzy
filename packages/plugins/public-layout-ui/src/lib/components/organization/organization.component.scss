@@ -1,532 +1,834 @@
-@use 'gauzy/_gauzy-table' as *;
+@use 'themes' as *;
 
-.org-info {
-  border-radius: var(--border-radius);
+/*
+ * ── Public organization profile ──────────────────────────────────────────────
+ *
+ * The company counterpart of the public employee profile, built from the same
+ * parts: a cover band with the logo overlapping it, the name and banner, a strip
+ * of the figures the organization chose to publish, then underline tabs over
+ * hairline panels. Paints only with the shared gauzy-* and theme tokens, so the
+ * light and dark themes both follow.
+ */
 
-  .edit-icon {
-    margin-left: 30px;
-    position: absolute;
-    width: 36px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    right: 45px;
-    top: 35px;
+$gap-xl: 1.5rem;
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$gap-xs: 0.25rem;
 
-    svg {
-      position: absolute;
-    }
+$logo: 6rem;
+$cover-height: 7rem;
+$hairline: 1px solid var(--gauzy-border-default-color);
+$radius: var(--gauzy-radius-sm, 0.5rem);
 
-    nb-icon {
-      position: absolute;
-      cursor: pointer;
-      z-index: 999;
-    }
-  }
-
-  .org-head {
-    padding: 1rem;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-
-    .org-head-left-sec {
-      h4.org-name {
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 17px;
-        letter-spacing: 0em;
-        text-align: left;
-        color: var(--gauzy-text-color-1);
-        margin: 0;
-      }
-
-      img.org-image {
-        object-fit: cover;
-        object-position: center;
-        width: 48px;
-        height: 48px;
-        border-radius: var(--border-radius);
-        box-shadow: 0 2px 4px rgba(0, 0, 1, 0.2);
-      }
-
-      .organization-photo {
-        float: left;
-        margin-right: 17px;
-        width: fit-content;
-        height: fit-content;
-        position: relative;
-
-        div {
-          pointer-events: none;
-          background: black;
-          position: absolute;
-          height: 100%;
-          width: 100%;
-          border-radius: var(--border-radius);
-        }
-
-        img {
-          width: 48px;
-          height: 48px;
-          border-radius: var(--border-radius);
-          box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
-        }
-
-        input {
-          width: 100%;
-          height: 100%;
-          opacity: 0;
-          position: absolute;
-          z-index: 3;
-          cursor: pointer;
-        }
-
-        svg {
-          z-index: 2;
-          transition: opacity 0.2s ease-in;
-          opacity: 0.3;
-          position: absolute;
-          top: calc(50% - 24px / 2);
-          left: calc(50% - 24px / 2);
-        }
-      }
-
-      button.save_image {
-        top: 125px;
-        position: absolute;
-        left: 50px;
-        z-index: 9999;
-        padding: 5px 15px;
-        font-size: 12px;
-      }
-    }
-
-    .org-head-right-sec {
-      display: flex;
-      align-items: flex-start;
-      justify-content: flex-end;
-      gap: 17px;
-
-      .org-head-details {
-        background-color: var(--gauzy-card-2);
-        border-radius: var(--border-radius);
-        padding: 10px;
-        width: fit-content;
-      }
-
-      .org-banner {
-        color: var(--gauzy-text-color-2);
-        margin: 5px 0;
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-
-      }
-    }
-  }
-
-  .org-banner {
-    color: var(--gauzy-text-color-2);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-
-  .short_description {
-    font-size: 15px;
-    line-height: 26px;
-    font-weight: 600;
-  }
-
-  .org-details {
-    width: 100%;
-    display: block;
-    clear: both;
-    padding: 20px 0;
-  }
-
-  ul.org-value li.org_list_data {
-    display: inline-block;
-    padding-right: 5px;
-    padding-left: 5px;
-  }
-
-  ul.org-value li.org_list_data span {
-    border-radius: var(--border-radius);
-    border: 1px solid #ced9ee;
-    color: #3c495a;
-    display: inline-block;
-    padding: 6px 12px 5px;
-    font-weight: normal;
-    font-size: 12px;
-  }
-
-  ul.org-value li.org_list_data span:hover,
-  .list-inline li span.tag:hover {
-    cursor: pointer;
-    color: #fff;
-    border-color: #007bff;
-    background-color: #007bff;
-    -webkit-box-shadow: 0 2px 4px #82bfff;
-    box-shadow: 0 2px 4px #82bfff;
-  }
+:host {
+	display: block;
 }
 
-h5.org-title,
-.org-title {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 15px;
-  letter-spacing: 0em;
-  text-align: left;
-  color: var(--gauzy-text-color-1);
+// A centred column, wider than the employee profile's so the employee cards
+// can sit two abreast — but still not stretched across a wide window.
+nb-card.profile-page {
+	width: 100%;
+	max-width: 64rem;
+	margin: $gap-xl auto;
+	border: 0;
+	background-color: transparent;
+	box-shadow: none;
 }
 
-h5.org-title .org-key {
-  padding-right: 1rem;
+nb-card-body.profile-body {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	padding: 0;
+	overflow: visible;
+	background-color: transparent;
 }
 
-.org-skills {
-  display: flex;
-  align-items: center;
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.profile-header {
+	position: relative;
+	border-radius: $radius;
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
 }
 
-.org-skills p.org-title.org-key {
-  color: #222b45;
-  line-height: 1.3rem;
-  font-size: 16px;
-  font-weight: 600;
-  clear: both;
+// A quiet band in the theme's primary tint: enough to frame the logo, never
+// loud enough to compete with the name.
+.cover {
+	height: $cover-height;
+	background:
+		radial-gradient(120% 140% at 0% 0%, nb-theme(color-primary-transparent-300) 0%, transparent 60%),
+		nb-theme(color-primary-transparent-100);
 }
 
-ul.org-value {
-  clear: both;
-  line-height: 1.3rem;
-  margin: 0;
-  padding: 0;
+.identity-row {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-lg;
+	padding: 0 $gap-xl $gap-lg;
+	// The logo rides up over the cover by half its size.
+	margin-top: calc(#{$logo} / -2);
 }
 
-h5.org-title span.client-focus,
-span.org-value {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 17px;
-  letter-spacing: 0em;
-  text-align: right;
+.logo-wrap {
+	flex: 0 0 auto;
 }
 
-.section_block {
-  padding: 20px 0;
-  clear: both;
-  display: block;
+// A rounded square rather than the employee's circle: logos are drawn for
+// square frames, and the shape tells a company apart from a person at a glance.
+.logo {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: $logo;
+	height: $logo;
+	border-radius: 1rem;
+	background-color: var(--gauzy-card-1);
+	// A ring in the card colour separates the logo from the cover behind it.
+	box-shadow:
+		0 0 0 4px var(--gauzy-card-1),
+		inset 0 0 0 1px var(--gauzy-border-default-color);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 1rem;
+		object-fit: cover;
+	}
 }
 
-.nb_list {
-  overflow: unset;
+.logo-initials {
+	font-size: 1.75rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--gauzy-text-color-1);
 }
 
-.nb_list.block_style {
-  display: block;
+// Editors: the uploader's file input covers the whole logo, invisibly.
+.logo--editable {
+	cursor: pointer;
+
+	::ng-deep ngx-image-uploader {
+		position: absolute;
+		inset: 0;
+		z-index: 3;
+
+		input {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100% !important;
+			opacity: 0;
+			cursor: pointer;
+		}
+	}
+
+	&.is-hover img {
+		filter: brightness(0.85);
+	}
 }
 
-.nb_list_item.item {
-  border: none !important;
-  float: left;
-  padding-left: 0;
+// Camera badge on the logo's corner: the affordance that it can be changed.
+.logo-edit {
+	position: absolute;
+	right: -0.375rem;
+	bottom: -0.375rem;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 50%;
+	background-color: nb-theme(color-primary-500);
+	box-shadow: 0 0 0 2px var(--gauzy-card-1);
+	color: #fff;
+	pointer-events: none;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
 }
 
-.nb_list_employee {
-  border: none;
-  padding: 15px 0;
-  float: left;
-  width: 100%;
+.save-image {
+	position: absolute;
+	left: 50%;
+	bottom: 0.25rem;
+	z-index: 4;
+	transform: translateX(-50%);
 }
 
-.nb_list_employee:first-child {
-  border: none;
+.identity {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	flex: 1 1 auto;
+	min-width: 0;
+	// Starts just below the cover's edge: only the logo overlaps the band.
+	padding-top: calc(#{$logo} / 2 + 0.75rem);
 }
 
-h5.org-title.title-employees {
-  text-align: center;
-  padding: 9px;
-  margin: 0 auto;
-  max-width: 180px;
-  margin-bottom: 25px;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 17px;
-  letter-spacing: 0em;
-  text-align: left;
+.name {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	line-height: 1.75rem;
+	letter-spacing: -0.01em;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
 }
 
-p,
-.paragraph,
-.org-overview p {
-  color: #617083;
+.banner {
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-2);
+	overflow-wrap: anywhere;
 }
 
-.nb-theme-default p,
-.nb-theme-default .paragraph,
-.nb-theme-default li,
-.col ul li {
-  color: #617083;
-  line-height: 1.35rem !important;
+.identity-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $gap-xs $gap-lg;
+	margin-top: $gap-xs;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
 }
 
-.search-result {
-  display: block;
-  color: #617083;
+.meta-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	min-width: 0;
+	overflow-wrap: anywhere;
 
-  a {
-    color: #55a8fd;
-    text-decoration: none;
-    background-color: transparent;
-  }
-
-  .avatar {
-    position: relative;
-    float: left;
-    margin: 0 13px 0 0;
-    width: 36px;
-
-    img {
-      display: block;
-      width: 36px;
-      height: 36px;
-      object-fit: cover;
-      border-radius: 50%;
-      // The trailing `(0, 0, 0, 0.25)` left behind by an old find-and-replace
-      // made both declarations invalid, so the avatar drew no edge at all.
-      box-shadow: var(--gauzy-shadow);
-    }
-  }
-
-  .avatar:before {
-    width: 58px;
-    height: 58px;
-    content: '';
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    border: 2px solid transparent;
-    border-radius: 50%;
-  }
-
-  .name {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--gauzy-text-color-1);
-  }
-
-  .margin-right-10 {
-    margin-right: 10px;
-  }
-
-  .label {
-    font-size: 12px;
-    display: inline;
-    padding: 0.2em 0.6em 0.3em;
-    font-weight: 700;
-    line-height: 1;
-    color: #fff;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: 0.25em;
-  }
-
-  .label-hourly {
-    background-color: var(--color-success-transparent-200);
-    color: var(--color-success-default);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-  }
-
-  .location {
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-
-  .pay-rate {
-    color: var(--gauzy-text-color-1);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 19px;
-    letter-spacing: 0em;
-  }
-
-  .pay-label{
-    width: fit-content;
-    text-align: left;
-  }
-
-  .specialty, .position {
-    color: var(--gauzy-text-color-2);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-
-  .average-bonus {
-    color: var(--gauzy-text-color-2);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-
-  .works-at {
-    margin-top: 10px;
-    display: inline-block;
-    margin-right: 10px;
-    color: var(--gauzy-text-color-1);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-
-  .text-success {
-    color: #56d48f;
-  }
-
-  .profile-bio {
-    text-overflow: ellipsis;
-    color: var(--gauzy-text-color-1);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-    word-break: break-word;
-  }
-
-  .push-bottom-10 {
-    margin-top: 10px;
-  }
-
-  .push-bottom-20 {
-    margin-top: 20px;
-  }
-
-  .list-inline {
-    padding-left: 0;
-    list-style: none;
-    margin-left: -5px;
-  }
-
-  .list-inline>li {
-    display: inline-block;
-    padding-right: 5px;
-    padding-left: 5px;
-  }
-
-  .tag {
-    border-radius: 25px;
-    border: 1px solid #ced9ee;
-    color: #3c495a;
-    display: inline-block;
-    padding: 6px 12px 5px;
-    font-size: 12px;
-  }
-
-  .tag.tag-sm {
-    font-weight: normal;
-    font-size: 12px;
-    margin-bottom: 15px;
-  }
+	nb-icon {
+		flex: 0 0 auto;
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
 }
 
-.search-result:first-child {
-  border-top: none;
+.meta-link {
+	color: nb-theme(color-primary-500);
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: underline;
+	}
 }
 
-@media (min-width: 768px) {
-  .search-result:after {
-    clear: both;
-  }
+.actions {
+	flex: 0 0 auto;
+	padding-top: calc(#{$logo} / 2 + 0.75rem);
 }
 
-@media (min-width: 768px) {
+/* Facts strip: label over value, divided by hairlines. */
+.facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	margin: 0;
+	border-top: $hairline;
+	overflow: hidden;
 
-  .search-result:before,
-  .search-result:after {
-    display: table;
-    content: ' ';
-  }
+	// Nothing published: no strip, not an empty hairline.
+	&:not(:has(.fact)) {
+		display: none;
+	}
+
+	.fact {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1875rem;
+		min-width: 0;
+		padding: $gap-md $gap-xl;
+		// Leading hairline; the first of each row falls outside and is clipped.
+		box-shadow: -1px 0 0 0 var(--gauzy-border-default-color);
+	}
+
+	dt {
+		margin: 0;
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+
+	dd {
+		margin: 0;
+		font-size: 0.9375rem;
+		font-weight: 600;
+		line-height: 1.375rem;
+		color: var(--gauzy-text-color-1);
+		font-variant-numeric: tabular-nums;
+		overflow-wrap: anywhere;
+	}
 }
 
-@media (min-width: 768px) {
-  .search-result .main-details {
-    float: left;
-    width: calc(100% - 63px);
-  }
+.fact-unit {
+	margin-inline-start: 0.125rem;
+	font-size: 0.75rem;
+	font-weight: 400;
+	color: var(--gauzy-text-color-2);
 }
 
-.clearfix:before,
-.clearfix:after {
-  display: table;
-  content: ' ';
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+
+.tabs {
+	display: flex;
+	gap: $gap-xl;
+	border-bottom: $hairline;
+	overflow-x: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
-.clearfix:after {
-  clear: both;
+.tab {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	flex: 0 0 auto;
+	padding: $gap-sm 0 $gap-md;
+	border: 0;
+	background: none;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+	transition: color 0.15s ease;
+
+	// The underline sits on the strip's hairline, replacing it under the tab.
+	&::after {
+		content: '';
+		position: absolute;
+		inset-inline: 0;
+		bottom: -1px;
+		height: 2px;
+		border-radius: 2px 2px 0 0;
+		background-color: transparent;
+		transition: background-color 0.15s ease;
+	}
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid nb-theme(color-primary-500);
+		outline-offset: 2px;
+		border-radius: 0.25rem;
+	}
+
+	&.is-active {
+		color: nb-theme(color-primary-500);
+
+		&::after {
+			background-color: nb-theme(color-primary-500);
+		}
+
+		.count {
+			background-color: nb-theme(color-primary-transparent-100);
+			color: nb-theme(color-primary-500);
+		}
+	}
 }
 
-.label-text {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: #222b45;
+.count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.375rem;
+	height: 1.25rem;
+	padding: 0 0.375rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
 }
 
-.wrapper {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+
+.content {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+	gap: $gap-lg;
+	align-items: start;
+
+	@media screen and (max-width: 60rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
-.o__p__s__t {
-  background-color: var(--gauzy-card-2);
-  border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
-  overflow: auto;
-  height: calc(100vh - 19rem);
+.main,
+.side {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	min-width: 0;
 }
 
-.anonymous-avatar {
-  display: inline-flex;
-  position: relative;
-  float: left;
-  margin: 0 13px 0 0;
-  width: 50px;
-  height: 50px;
-  border-radius: var(--border-radius);
-  background: #cecece;
-  color: white;
-  justify-content: center;
-  align-items: center;
-  font-size: 18px;
-  font-weight: 700;
+.panel {
+	padding: $gap-lg $gap-xl $gap-xl;
+	border-radius: $radius;
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
 }
 
-nb-card {
-  nb-card-body {
-    background-color: var(--gauzy-card-2);
-    border-radius: var(--border-radius);
-    margin: 0;
-    padding: 0;
-  }
+.panel--flush {
+	padding: 0;
+	overflow: hidden;
+}
+
+.panel-title {
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	margin: 0 0 $gap-md;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+
+	nb-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.about {
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+// Editor-authored HTML: tame the editor's margins to the panel's rhythm.
+.rich-text {
+	font-size: 0.875rem;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+
+	::ng-deep {
+		> :first-child {
+			margin-top: 0;
+		}
+
+		> :last-child {
+			margin-bottom: 0;
+		}
+
+		p,
+		ul,
+		ol {
+			margin: 0 0 $gap-sm;
+		}
+
+		a {
+			color: nb-theme(color-primary-500);
+		}
+	}
+}
+
+.empty {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-style: italic;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: $gap-sm;
+	padding: 2.5rem $gap-xl;
+	text-align: center;
+
+	nb-icon {
+		width: 2rem;
+		height: 2rem;
+		font-size: 2rem;
+		color: var(--gauzy-text-color-2);
+		opacity: 0.6;
+	}
+
+	p {
+		margin: 0;
+		font-size: 0.875rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+/* Chips: client focus, skills */
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-sm;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.chips--compact {
+	gap: 0.375rem;
+
+	.chip {
+		padding: 0.125rem 0.5rem;
+		font-size: 0.75rem;
+	}
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.75rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+// Text in the text tokens; the swatch carries the skill's colour.
+.chip--outlined {
+	background-color: transparent;
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.swatch {
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-text-color-2);
+}
+
+/* Languages: name on the left, level on the right */
+
+.languages {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.language {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: $gap-md;
+	padding: 0.4375rem 0;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+
+	& + & {
+		border-top: $hairline;
+	}
+}
+
+.language-name {
+	min-width: 0;
+	font-weight: 500;
+	color: var(--gauzy-text-color-1);
+}
+
+.language-level {
+	flex: 0 0 auto;
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-2);
+}
+
+/* Awards */
+
+.awards {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.award {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	padding: $gap-sm 0;
+
+	& + & {
+		border-top: $hairline;
+	}
+}
+
+.award-icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	background-color: nb-theme(color-primary-transparent-100);
+	color: nb-theme(color-primary-500);
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+}
+
+.award-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.award-year {
+	flex: 0 0 auto;
+	font-size: 0.8125rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Employees ───────────────────────────────────────────────────────────── */
+
+.people {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+	gap: $gap-lg;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	@media screen and (max-width: 36rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.person {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-md;
+	padding: $gap-lg;
+	min-width: 0;
+}
+
+.person-head {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	min-width: 0;
+}
+
+.person-avatar,
+.client-avatar {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	overflow: hidden;
+	background-color: var(--gauzy-active-tint);
+	font-weight: 600;
+	color: var(--gauzy-text-color-1);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.person-avatar {
+	width: 2.75rem;
+	height: 2.75rem;
+	font-size: 0.9375rem;
+}
+
+.person-avatar--anonymous {
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		font-size: 1.25rem;
+	}
+}
+
+.person-identity {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.person-name {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+a.person-name:hover {
+	color: nb-theme(color-primary-500);
+	text-decoration: underline;
+}
+
+.person-position {
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.person-rate {
+	flex: 0 0 auto;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+}
+
+// Three lines at most, so the cards in a row stay a similar height.
+.person-bio {
+	display: -webkit-box;
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-2);
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	line-clamp: 3;
+}
+
+.person-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $gap-sm $gap-md;
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-2);
+
+	.chip {
+		padding: 0.0625rem 0.5rem;
+		font-size: 0.75rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.person-hours {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-xs;
+	font-variant-numeric: tabular-nums;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+}
+
+/* ── Clients ─────────────────────────────────────────────────────────────── */
+
+.clients {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.client {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	padding: $gap-md $gap-xl;
+
+	& + & {
+		border-top: $hairline;
+	}
+}
+
+.client-avatar {
+	width: 2.25rem;
+	height: 2.25rem;
+	font-size: 0.8125rem;
+}
+
+.client-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+}
+
+.client-email {
+	flex: 0 1 auto;
+	min-width: 0;
+	font-size: 0.8125rem;
+	color: var(--gauzy-text-color-2);
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 36rem) {
+	nb-card.profile-page {
+		margin-block: $gap-lg;
+	}
+
+	.identity-row {
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 0 $gap-lg $gap-lg;
+	}
+
+	// Stacked under the logo, the text no longer needs to clear the cover.
+	.identity,
+	.actions {
+		padding-top: 0;
+	}
+
+	.facts .fact,
+	.panel,
+	.client {
+		padding-inline: $gap-lg;
+	}
+
+	.panel--flush {
+		padding: 0;
+	}
 }
