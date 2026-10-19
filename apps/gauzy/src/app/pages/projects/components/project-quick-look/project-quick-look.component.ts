@@ -69,6 +69,9 @@ export interface IProjectQuickLookCard {
 /** Where the quick look renders: a Projects panel's right-side drawer, or the project's own page. */
 export type ProjectQuickLookMode = 'drawer' | 'page';
 
+/** The host's period, so the period's change compares with the same span of the one before it. */
+export type ProjectQuickLookPeriod = 'THIS_WEEK' | 'THIS_MONTH' | 'LAST_30_DAYS';
+
 /** A person the host page already knows, so a contributor shows their name, photo and presence. */
 export interface IProjectQuickLookPerson {
 	id: string;
@@ -143,7 +146,7 @@ interface IProjectTimeline {
 	tone: 'danger' | 'success' | null;
 }
 
-/** The period's time against the previous period of the same length. */
+/** The period's time so far against the same span of the previous period. */
 interface IPeriodDelta {
 	percent: number;
 	direction: 'up' | 'down' | 'flat';
@@ -254,6 +257,12 @@ export class ProjectQuickLookComponent implements OnChanges {
 	/** The host's period, as ISO dates. */
 	@Input() rangeStart: string;
 	@Input() rangeEnd: string;
+	/**
+	 * Which period the range is, for the period's change: this week is compared with the same days of
+	 * last week, this month with the same days of last month, the last 30 days with the 30 before.
+	 * Unset, the change compares with the span just before the range.
+	 */
+	@Input() period: ProjectQuickLookPeriod | null = null;
 	/** Whose time the period figures count; `null` for everyone on the project, `[]` for nobody. */
 	@Input() scopeEmployeeIds: string[] | null = null;
 	/** People the host knows, for contributors' names, photos and presence. */
@@ -329,7 +338,10 @@ export class ProjectQuickLookComponent implements OnChanges {
 			return;
 		}
 		// Same project, another window or scope: only the period figures change.
-		if (projectId && (changes['rangeStart'] || changes['rangeEnd'] || changes['scopeEmployeeIds'])) {
+		if (
+			projectId &&
+			(changes['rangeStart'] || changes['rangeEnd'] || changes['period'] || changes['scopeEmployeeIds'])
+		) {
 			this.loadPeriodFigures(projectId);
 		}
 	}
@@ -857,18 +869,36 @@ export class ProjectQuickLookComponent implements OnChanges {
 	}
 
 	/**
-	 * The hours of the span just before this period, as long as the part of the period that has
-	 * already passed (this week so far against the same days last week), read the same way as the
-	 * period's own (the daily chart), so the two compare like for like.
+	 * The hours of the same span of the previous period, cut at the same point: on a Wednesday, this
+	 * week so far against last week up to Wednesday; on the 10th, this month so far against last
+	 * month up to the 10th; the last 30 days against the 30 before — as the team page compares.
+	 * Without a known period, the span just before the range, as long as the part that has passed.
+	 * Read the same way as the period's own hours (the daily chart), so the two compare like for like.
 	 */
 	private async loadPreviousHours(projectId: string, isCurrent: () => boolean): Promise<void> {
 		this.previousHours = null;
 		const start = moment(this.rangeStart);
 		const end = moment(this.rangeEnd);
 		if (!start.isValid() || !end.isValid()) return;
-		const length = Math.max(0, moment.min(end, moment()).diff(start));
-		const previousEnd = start.clone().subtract(1, 'millisecond');
-		const previousStart = previousEnd.clone().subtract(length, 'milliseconds');
+		const cut = moment.max(start, moment.min(end, moment()));
+		const shift = (date: moment.Moment): moment.Moment | null => {
+			switch (this.period) {
+				case 'THIS_WEEK':
+					return date.clone().subtract(1, 'week');
+				case 'THIS_MONTH':
+					return date.clone().subtract(1, 'month');
+				case 'LAST_30_DAYS':
+					return date.clone().subtract(30, 'days');
+				default:
+					return null;
+			}
+		};
+		let previousStart = shift(start);
+		let previousEnd = shift(cut);
+		if (!previousStart || !previousEnd) {
+			previousEnd = start.clone().subtract(1, 'millisecond');
+			previousStart = previousEnd.clone().subtract(cut.diff(start), 'milliseconds');
+		}
 		const timeZone = this._timeZoneService.currentTimeZone;
 		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
 		try {
