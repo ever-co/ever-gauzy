@@ -27,34 +27,19 @@ export class IntegrationMapSyncScreenshotHandler implements ICommandHandler<Inte
 		const { integrationId, sourceId, organizationId, entity } = input;
 		const { time_slot, full_url, thumb_url, recorded_at, employeeId } = entity;
 
-		try {
-			// Find the existing integration map for the screenshot
-			const screenshotMap = await this._integrationMapService.findOneByWhereOptions({
+		// Only a missing map means the screenshot is new. Errors from the update below must reach the caller:
+		// they used to fall into the "no map" branch and create a second screenshot and map for the same source id.
+		const screenshotMap = await this._integrationMapService
+			.findOneByWhereOptions({
 				entity: IntegrationEntity.SCREENSHOT,
 				sourceId,
 				integrationId,
 				organizationId,
 				tenantId
-			});
+			})
+			.catch(() => null);
 
-			// Update the existing screenshot with the new data
-			await this._commandBus.execute(
-				new ScreenshotUpdateCommand(
-					Object.assign(
-						{},
-						{
-							id: screenshotMap.gauzyId,
-							recordedAt: recorded_at,
-							activityTimestamp: time_slot,
-							file: full_url,
-							thumb: thumb_url,
-							employeeId
-						}
-					)
-				)
-			);
-			return screenshotMap;
-		} catch (error) {
+		if (!screenshotMap) {
 			// If no existing map is found, create a new screenshot and map it
 			const gauzyScreenshot = await this._commandBus.execute(
 				new ScreenshotCreateCommand({
@@ -77,5 +62,23 @@ export class IntegrationMapSyncScreenshotHandler implements ICommandHandler<Inte
 				})
 			);
 		}
+
+		// Update the existing screenshot with the new data
+		await this._commandBus.execute(
+			new ScreenshotUpdateCommand(
+				Object.assign(
+					{},
+					{
+						id: screenshotMap.gauzyId,
+						recordedAt: recorded_at,
+						activityTimestamp: time_slot,
+						file: full_url,
+						thumb: thumb_url,
+						employeeId
+					}
+				)
+			)
+		);
+		return screenshotMap;
 	}
 }

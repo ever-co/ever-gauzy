@@ -27,35 +27,19 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 		const { name, color, description, isSystem } = entity;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		try {
-			// Check if an integration map already exists for the issue
-			const integrationMap = await this._integrationMapService.findOneByWhereOptions({
+		// Only a missing map means the tag is new. Errors from the update below must reach the caller:
+		// they used to fall into the "no map" branch and create a second tag and map for the same source id.
+		const integrationMap = await this._integrationMapService
+			.findOneByWhereOptions({
 				entity: IntegrationEntity.LABEL,
 				sourceId,
 				integrationId,
 				organizationId,
 				tenantId
-			});
-			// Try to find the corresponding tag
-			try {
-				await this._tagService.findOneByIdString(integrationMap.gauzyId);
-				// Update the corresponding task with the new input data
-				return await this._commandBus.execute(new TagUpdateCommand(integrationMap.gauzyId, entity));
-			} catch (error) {
-				// Create a corresponding tag with the new input data
-				return await this._commandBus.execute(
-					new TagCreateCommand({
-						id: integrationMap.gauzyId,
-						name,
-						color,
-						description,
-						isSystem,
-						organizationId,
-						tenantId
-					})
-				);
-			}
-		} catch (error) {
+			})
+			.catch(() => null);
+
+		if (!integrationMap) {
 			const tag = await this._commandBus.execute(
 				new TagCreateCommand({
 					name,
@@ -78,5 +62,24 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 			);
 			return tag;
 		}
+
+		// Try to find the corresponding tag
+		const mappedTag = await this._tagService.findOneByIdString(integrationMap.gauzyId).catch(() => null);
+		if (mappedTag) {
+			// Update the corresponding tag with the new input data
+			return await this._commandBus.execute(new TagUpdateCommand(integrationMap.gauzyId, entity));
+		}
+		// The mapped tag is gone: re-create it under the mapped id
+		return await this._commandBus.execute(
+			new TagCreateCommand({
+				id: integrationMap.gauzyId,
+				name,
+				color,
+				description,
+				isSystem,
+				organizationId,
+				tenantId
+			})
+		);
 	}
 }

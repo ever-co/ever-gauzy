@@ -28,23 +28,19 @@ export class IntegrationMapSyncActivityHandler
 		const { sourceId, organizationId, integrationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		try {
-			const activityMap = await this._integrationMapService.findOneByWhereOptions({
+		// Only a missing map means the activity is new. Errors from the update below must reach the caller:
+		// they used to fall into the "no map" branch and create a second activity and map for the same source id.
+		const activityMap = await this._integrationMapService
+			.findOneByWhereOptions({
 				entity: IntegrationEntity.ACTIVITY,
 				sourceId,
 				integrationId,
 				organizationId,
 				tenantId
-			});
-			await this._commandBus.execute(
-				new ActivityUpdateCommand(
-					Object.assign(entity, {
-						id: activityMap.gauzyId,
-					})
-				)
-			);
-			return activityMap;
-		} catch (error) {
+			})
+			.catch(() => null);
+
+		if (!activityMap) {
 			const gauzyActivity = await this._commandBus.execute(
 				new ActivityCreateCommand(entity)
 			);
@@ -59,5 +55,11 @@ export class IntegrationMapSyncActivityHandler
 				})
 			);
 		}
+
+		// A copy: the caller's entity is not ours to stamp with the Gauzy id
+		await this._commandBus.execute(
+			new ActivityUpdateCommand({ ...entity, id: activityMap.gauzyId })
+		);
+		return activityMap;
 	}
 }

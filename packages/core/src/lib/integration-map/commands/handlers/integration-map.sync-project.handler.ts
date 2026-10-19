@@ -27,20 +27,19 @@ export class IntegrationMapSyncProjectHandler implements ICommandHandler<Integra
 		const { integrationId, sourceId, organizationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		try {
-			// Attempt to find an existing project map
-			const projectMap = await this._integrationMapService.findOneByWhereOptions({
+		// Only a missing map means the project is new. Errors from the update below must reach the caller:
+		// they used to fall into the "no map" branch and create a second project and map for the same source id.
+		const projectMap = await this._integrationMapService
+			.findOneByWhereOptions({
 				entity: IntegrationEntity.PROJECT,
 				sourceId,
 				integrationId,
 				organizationId,
 				tenantId
-			});
+			})
+			.catch(() => null);
 
-			// Update the project if it exists
-			await this._commandBus.execute(new OrganizationProjectUpdateCommand(projectMap.gauzyId, entity));
-			return projectMap;
-		} catch (error) {
+		if (!projectMap) {
 			// If project map is not found, create a new project and map it
 			const project = await this._commandBus.execute(new OrganizationProjectCreateCommand(entity));
 
@@ -54,5 +53,9 @@ export class IntegrationMapSyncProjectHandler implements ICommandHandler<Integra
 				})
 			);
 		}
+
+		// Update the project if it exists
+		await this._commandBus.execute(new OrganizationProjectUpdateCommand(projectMap.gauzyId, entity));
+		return projectMap;
 	}
 }
