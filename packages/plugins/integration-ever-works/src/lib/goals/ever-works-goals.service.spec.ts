@@ -563,6 +563,61 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		expect(keyResults.map((k) => k['type'])).toEqual(['Numerical', 'True/False']);
 	});
 
+	it('on again, a resync reading the unchanged goal (same version) applies the key results it was synced without (review of #11096)', async () => {
+		const { service, keyResults, links, context } = setup({ entitySync: off });
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		expect(keyResults).toEqual([]);
+		// Still off: the same version stays applied.
+		expect(await service.apply(envelope('goal.updated', ewGoal, 1) as never, applyContext)).toMatchObject({
+			status: 'skipped',
+			message: 'already applied (version)'
+		});
+
+		context.entitySync = {};
+		expect(await service.apply(envelope('goal.updated', ewGoal, 1) as never, applyContext)).toMatchObject({
+			status: 'applied'
+		});
+		expect(keyResults.map((k) => [k['type'], k['update']])).toEqual([
+			['Numerical', 96],
+			['True/False', 1]
+		]);
+		const goalLink = links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
+		expect(JSON.parse(goalLink['ewOnly'])['keyResultsPending']).toBeUndefined();
+		expect(JSON.parse(goalLink['snapshot'])['dodCriteria']).toEqual([
+			expect.objectContaining({ id: 'launch', status: 'done' })
+		]);
+		// Done: the same version is applied again no more.
+		expect(await service.apply(envelope('goal.updated', ewGoal, 1) as never, applyContext)).toMatchObject({
+			status: 'skipped',
+			message: 'already applied (version)'
+		});
+	});
+
+	it('on again, the goal sweep applies the key results an unchanged goal was synced without, once (review of #11096)', async () => {
+		const { service, mock, goalsMock, keyResults, links, context } = setup({ entitySync: off });
+		goalsMock.addGoal('ew-org-1', { ...ewGoal });
+		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
+		const reads = () => mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+
+		// Still off: nothing is read or written.
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(0);
+		expect(keyResults).toEqual([]);
+
+		context.entitySync = {};
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+		expect(keyResults.map((k) => [k['type'], k['update']])).toEqual([
+			['Numerical', 96],
+			['True/False', 1]
+		]);
+		expect(links.filter((l) => l['entityType'] === EverWorksLinkType.KEY_RESULT)).toHaveLength(2);
+		// Done: the next sweep reads nothing.
+		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
+		expect(reads()).toBe(1);
+		expect(keyResults).toHaveLength(2);
+	});
+
 	it('off: a new Gauzy goal is not created in Ever Works (it would be made from its key results)', async () => {
 		const { service, mock, goals, keyResults } = setup({ entitySync: off });
 		goals.push(gauzyGoal());
