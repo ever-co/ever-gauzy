@@ -619,6 +619,15 @@ describe('EW → G tasks', () => {
 		expect(((t.tasks.get('g1') as GauzyTask)['tags'] as Array<{ id: string }>).map((tag) => tag.id)).toEqual(['tag-old']);
 	});
 
+	it('tasks synced one way from Ever Works: a task adopted back keeps one tag for a long name whose cut label Ever Works still holds (#11119 review)', async () => {
+		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
+		t.addGauzyTask({ id: 'g1', title: 'Long tag kept', tags: [{ id: 'tag-long', name: 'L'.repeat(100) }, { id: 'tag-old', name: 'Old' }] });
+		const ew = t.mock.addTask(t.org.id, { title: 'Long tag kept', labels: ['L'.repeat(80), 'New'] });
+		const own = [{ source: 'gauzy', installationId: 'c1', externalId: 'g1', externalUrl: null }];
+		expect(await t.deliver({ type: 'task.updated', data: { ...ew, externalLinks: own }, aggregate: { id: ew['id'] as string, version: 3 } })).toEqual({ status: 'applied' });
+		expect(((t.tasks.get('g1') as GauzyTask)['tags'] as Array<{ id: string }>).map((tag) => tag.id)).toEqual(['tag-long', 'tag-new']);
+	});
+
 	it('tasks synced one way from Ever Works: a task adopted back keeps a parent Ever Works cannot hold, and loses one Ever Works removed (#11108 review)', async () => {
 		const t = setup({ directions: { tasks: 'ew_to_gauzy' } });
 		t.addGauzyTask({ id: 'gp-gauzy-only', title: 'Parent not in Ever Works' });

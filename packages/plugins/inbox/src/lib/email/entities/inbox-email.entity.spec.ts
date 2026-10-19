@@ -4,6 +4,7 @@
  */
 import 'reflect-metadata';
 import { getMetadataArgsStorage } from 'typeorm';
+import { InboxEmail, inboxEmailLongTextType } from './inbox-email.entity';
 
 const LONG_COLUMNS = [
 	'referenceIds',
@@ -17,35 +18,19 @@ const LONG_COLUMNS = [
 	'headers'
 ];
 
-function columnTypes(dbType: string | undefined): Record<string, unknown> {
-	const original = process.env.DB_TYPE;
-	let target: unknown;
-	try {
-		if (dbType === undefined) delete process.env.DB_TYPE;
-		else process.env.DB_TYPE = dbType;
-		jest.isolateModules(() => {
-			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			target = require('./inbox-email.entity').InboxEmail;
-		});
-	} finally {
-		if (original === undefined) delete process.env.DB_TYPE;
-		else process.env.DB_TYPE = original;
-	}
-	return Object.fromEntries(
-		getMetadataArgsStorage()
-			.columns.filter((column) => column.target === target && LONG_COLUMNS.includes(column.propertyName))
-			.map((column) => [column.propertyName, column.options.type])
-	);
-}
-
-describe('InboxEmail column types', () => {
-	it('declares the long text columns as longtext on MySQL', () => {
-		expect(columnTypes('mysql')).toEqual(Object.fromEntries(LONG_COLUMNS.map((name) => [name, 'longtext'])));
+describe('InboxEmail long text columns', () => {
+	it('are longtext on MySQL and text on the other databases', () => {
+		expect(inboxEmailLongTextType(true)).toBe('longtext');
+		expect(inboxEmailLongTextType(false)).toBe('text');
 	});
 
-	it('declares them as text on the other databases', () => {
-		for (const dbType of ['postgres', 'better-sqlite3', undefined]) {
-			expect(columnTypes(dbType)).toEqual(Object.fromEntries(LONG_COLUMNS.map((name) => [name, 'text'])));
-		}
+	it('all take that type for the database in use (text here, where DB_TYPE is not mysql)', () => {
+		const types = Object.fromEntries(
+			getMetadataArgsStorage()
+				.columns.filter((column) => column.target === InboxEmail && LONG_COLUMNS.includes(column.propertyName))
+				.map((column) => [column.propertyName, column.options.type])
+		);
+		expect(types).toEqual(Object.fromEntries(LONG_COLUMNS.map((name) => [name, inboxEmailLongTextType()])));
+		expect(inboxEmailLongTextType()).toBe('text');
 	});
 });

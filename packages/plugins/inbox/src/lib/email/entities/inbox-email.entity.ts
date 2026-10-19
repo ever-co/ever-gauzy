@@ -8,7 +8,8 @@ import { MikroOrmInboxEmailRepository } from './inbox-email.repositories';
  * MySQL's `text` stops at 64 KB: these columns are `longtext` there (the create migration for the bodies,
  * 1791000003200 for the JSON columns) and `text` elsewhere, so `DB_SYNCHRONIZE=true` builds what the migrations do.
  */
-const LONG_TEXT = isMySQL() ? 'longtext' : 'text';
+export const inboxEmailLongTextType = (mysql: boolean = isMySQL()): 'longtext' | 'text' => (mysql ? 'longtext' : 'text');
+const LONG_TEXT = inboxEmailLongTextType();
 
 /**
  * `inbox_email` (plan 04 §2, §5.3): one message of one mailbox, received (`IN`) or sent from it (`OUT`). Unique on
