@@ -37,7 +37,13 @@ describe('TimesheetFirstOrCreateHandler soft-deleted timesheet (MikroORM)', () =
 		});
 
 	beforeEach(async () => {
-		db = createKnex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+		// The handler reads `knex.userParams.schema`, as the MikroORM knex carries it; SQLite's own schema is `main`
+		db = createKnex({
+			client: 'better-sqlite3',
+			connection: { filename: ':memory:' },
+			useNullAsDefault: true,
+			userParams: { schema: 'main' }
+		});
 		await db.schema.createTable('timesheet', (table) => {
 			table.string('id').primary();
 			table.string('tenantId');
