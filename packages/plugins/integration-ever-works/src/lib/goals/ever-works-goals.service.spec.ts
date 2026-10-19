@@ -597,7 +597,8 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		const { service, mock, goalsMock, keyResults, links, context } = setup({ entitySync: off });
 		goalsMock.addGoal('ew-org-1', { ...ewGoal });
 		await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext);
-		const reads = () => mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		const reads = () =>
+			mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
 
 		// Still off: nothing is read or written.
 		await service.sweep({ id: 'c1', tenantId: 't1' } as never);
@@ -624,7 +625,9 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 		// Ever Works is at version 3 by the time the goal is read.
 		goalsMock.addGoal('ew-org-1', { ...ewGoal, title: 'Grow paying customers fast', version: 3 });
 		context.entitySync = {};
-		expect(await service.apply(envelope('goal.updated', { id: 'ew-goal-1' }, 1) as never, applyContext)).toMatchObject({
+		expect(
+			await service.apply(envelope('goal.updated', { id: 'ew-goal-1' }, 1) as never, applyContext)
+		).toMatchObject({
 			status: 'applied'
 		});
 		const goalLink = links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row;
@@ -641,9 +644,12 @@ describe('EverWorksGoalsService — the KEY_RESULT sync setting (OQ4, review F77
 	it('key results without an owner employee wait on the link; the sweep reads the goal again once the admin has an employee (review of #11125)', async () => {
 		const { service, mock, goalsMock, keyResults, links, context } = setup();
 		goalsMock.addGoal('ew-org-1', { ...ewGoal });
-		const reads = () => mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
+		const reads = () =>
+			mock.requests.filter((r) => r.method === 'GET' && r.path.endsWith('/goals/ew-goal-1')).length;
 		const pending = () =>
-			JSON.parse((links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row)['ewOnly'])['keyResultsPending'];
+			JSON.parse((links.find((l) => l['entityType'] === EverWorksLinkType.GOAL) as Row)['ewOnly'])[
+				'keyResultsPending'
+			];
 		// The goal's owner is not paired, and the connecting admin has no employee yet.
 		context.connection.connectedByUserId = 'u-new-admin';
 		expect(await service.apply(envelope('goal.created', ewGoal, 1) as never, applyContext)).toMatchObject({
