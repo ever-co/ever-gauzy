@@ -118,6 +118,10 @@ $header-title-basis: 18rem;
     }
   }
 
+  .manage-widget-tooltip {
+    display: inline-flex;
+  }
+
   ga-timezone-filter ::ng-deep .popover-button[nbButton] nb-icon,
   .refresh-button[nbButton] nb-icon,
   .manage-widget[nbButton] nb-icon {
