@@ -5,6 +5,7 @@ import { IntegrationMapSyncScreenshotCommand } from '../integration-map.sync-scr
 import { IntegrationMapService } from '../../integration-map.service';
 import { RequestContext } from '../../../core/context';
 import { ScreenshotCreateCommand, ScreenshotUpdateCommand } from '../../../time-tracking/screenshot/commands';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncScreenshotCommand)
 export class IntegrationMapSyncScreenshotHandler implements ICommandHandler<IntegrationMapSyncScreenshotCommand> {
@@ -37,7 +38,7 @@ export class IntegrationMapSyncScreenshotHandler implements ICommandHandler<Inte
 				organizationId,
 				tenantId
 			})
-			.catch(() => null);
+			.catch(nullIfNotFound);
 
 		if (!screenshotMap) {
 			// If no existing map is found, create a new screenshot and map it

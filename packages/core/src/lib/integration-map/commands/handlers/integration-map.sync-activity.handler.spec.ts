@@ -1,5 +1,6 @@
 import '../../../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { IntegrationEntity } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ActivityCreateCommand, ActivityUpdateCommand } from '../../../time-tracking/activity/commands';
@@ -55,7 +56,7 @@ describe('IntegrationMapSyncActivityHandler', () => {
 
 	it('creates the activity and its map once when it is not mapped yet', async () => {
 		const { execute, handler } = setup({
-			findOneByWhereOptions: jest.fn().mockRejectedValue(new Error('not found'))
+			findOneByWhereOptions: jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found'))
 		});
 		execute.mockResolvedValueOnce({ id: 'activity-new' }).mockResolvedValueOnce({ id: 'map-new' });
 
@@ -74,5 +75,14 @@ describe('IntegrationMapSyncActivityHandler', () => {
 			organizationId: 'org-1',
 			tenantId: 'tenant-1'
 		});
+	});
+
+	it('rejects when the map lookup itself fails, creating nothing', async () => {
+		const { execute, handler } = setup({
+			findOneByWhereOptions: jest.fn().mockRejectedValue(new Error('connection lost'))
+		});
+
+		await expect(handler.execute(command())).rejects.toThrow('connection lost');
+		expect(execute).not.toHaveBeenCalled();
 	});
 });

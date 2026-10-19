@@ -5,6 +5,7 @@ import { IntegrationMapSyncOrganizationCommand } from './../integration-map.sync
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapService } from '../../integration-map.service';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './../../../organization/commands';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncOrganizationCommand)
 export class IntegrationMapSyncOrganizationHandler
@@ -38,7 +39,7 @@ export class IntegrationMapSyncOrganizationHandler
 				organizationId,
 				tenantId
 			})
-			.catch(() => null);
+			.catch(nullIfNotFound);
 
 		if (!organizationMap) {
 			const organization = await this._commandBus.execute(

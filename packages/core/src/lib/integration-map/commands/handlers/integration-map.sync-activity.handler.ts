@@ -5,6 +5,7 @@ import { IntegrationMapSyncActivityCommand } from './../integration-map.sync-act
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapService } from '../../integration-map.service';
 import { RequestContext } from '../../../core/context';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncActivityCommand)
 export class IntegrationMapSyncActivityHandler
@@ -38,7 +39,7 @@ export class IntegrationMapSyncActivityHandler
 				organizationId,
 				tenantId
 			})
-			.catch(() => null);
+			.catch(nullIfNotFound);
 
 		if (!activityMap) {
 			const gauzyActivity = await this._commandBus.execute(

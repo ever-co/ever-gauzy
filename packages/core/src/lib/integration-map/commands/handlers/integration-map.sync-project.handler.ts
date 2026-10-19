@@ -8,6 +8,7 @@ import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand
 } from '../../../organization-project/commands';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncProjectCommand)
 export class IntegrationMapSyncProjectHandler implements ICommandHandler<IntegrationMapSyncProjectCommand> {
@@ -37,7 +38,7 @@ export class IntegrationMapSyncProjectHandler implements ICommandHandler<Integra
 				organizationId,
 				tenantId
 			})
-			.catch(() => null);
+			.catch(nullIfNotFound);
 
 		if (!projectMap) {
 			// If project map is not found, create a new project and map it

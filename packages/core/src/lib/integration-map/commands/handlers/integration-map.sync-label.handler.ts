@@ -6,6 +6,7 @@ import { TagService } from '../../../tags/tag.service';
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapSyncLabelCommand } from './../integration-map.sync-label.command';
 import { IntegrationMapService } from '../../integration-map.service';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncLabelCommand)
 export class IntegrationMapSyncLabelHandler implements ICommandHandler<IntegrationMapSyncLabelCommand> {
@@ -37,7 +38,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 				organizationId,
 				tenantId
 			})
-			.catch(() => null);
+			.catch(nullIfNotFound);
 
 		if (!integrationMap) {
 			const tag = await this._commandBus.execute(
@@ -64,7 +65,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 		}
 
 		// Try to find the corresponding tag
-		const mappedTag = await this._tagService.findOneByIdString(integrationMap.gauzyId).catch(() => null);
+		const mappedTag = await this._tagService.findOneByIdString(integrationMap.gauzyId).catch(nullIfNotFound);
 		if (mappedTag) {
 			// Update the corresponding tag with the new input data
 			return await this._commandBus.execute(new TagUpdateCommand(integrationMap.gauzyId, entity));

@@ -1,5 +1,6 @@
 import '../../../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { IntegrationEntity } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { TagCreateCommand, TagUpdateCommand } from '../../../tags/commands';
@@ -49,7 +50,7 @@ describe('IntegrationMapSyncLabelHandler', () => {
 	});
 
 	it('creates the tag and its map once when the label is not mapped yet', async () => {
-		const integrationMapService = { findOneByWhereOptions: jest.fn().mockRejectedValue(new Error('not found')) };
+		const integrationMapService = { findOneByWhereOptions: jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found')) };
 		const { execute, handler } = setup(integrationMapService);
 		execute.mockResolvedValueOnce({ id: 'tag-new' }).mockResolvedValueOnce({ id: 'map-new' });
 
@@ -73,7 +74,7 @@ describe('IntegrationMapSyncLabelHandler', () => {
 	it('re-creates the tag under the mapped id when the mapped tag no longer exists', async () => {
 		const integrationMap = { id: 'map-1', gauzyId: 'tag-1' };
 		const integrationMapService = { findOneByWhereOptions: jest.fn().mockResolvedValue(integrationMap) };
-		const tagService = { findOneByIdString: jest.fn().mockRejectedValue(new Error('not found')) };
+		const tagService = { findOneByIdString: jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found')) };
 		const { execute, handler } = setup(integrationMapService, tagService);
 		execute.mockResolvedValue({ id: 'tag-1' });
 
