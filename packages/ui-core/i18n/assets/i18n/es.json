@@ -3310,6 +3310,8 @@
 		"MEMBER_SINCE": "Miembro desde",
 		"NO_DESCRIPTION": "Aún no se ha añadido una descripción",
 		"NO_SKILLS": "Aún no hay habilidades",
+		"NO_EMPLOYEES": "Aún no hay empleados para mostrar",
+		"NO_CLIENTS": "Aún no hay clientes para mostrar",
 		"VIEW_COMPANY_PROFILE": "Ver perfil de la empresa",
 		"EDIT": {
 			"NO_AWARDS": "Aún no hay premios",

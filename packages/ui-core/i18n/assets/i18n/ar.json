@@ -3306,6 +3306,8 @@
 		"MEMBER_SINCE": "عضو منذ",
 		"NO_DESCRIPTION": "لم يُضف وصف بعد",
 		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"NO_EMPLOYEES": "لا يوجد موظفون لعرضهم بعد",
+		"NO_CLIENTS": "لا يوجد عملاء لعرضهم بعد",
 		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
 		"EDIT": {
 			"NO_AWARDS": "لم تُضف جوائز بعد",

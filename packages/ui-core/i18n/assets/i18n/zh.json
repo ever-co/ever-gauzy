@@ -3308,6 +3308,8 @@
 		"MEMBER_SINCE": "加入时间",
 		"NO_DESCRIPTION": "尚未添加描述",
 		"NO_SKILLS": "尚未列出技能",
+		"NO_EMPLOYEES": "暂无可显示的员工",
+		"NO_CLIENTS": "暂无可显示的客户",
 		"VIEW_COMPANY_PROFILE": "查看公司简介",
 		"EDIT": {
 			"NO_AWARDS": "尚未添加奖项",
