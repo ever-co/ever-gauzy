@@ -33,10 +33,10 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const endOfMonth = moment(filterDate).endOf('month').toDate();
 
 			// An array `where` is an OR of clauses: the month range goes into each clause, since spreading
-			// the array itself would only add its indexes ("0", "1") as keys.
+			// the array itself would only add its indexes ("0", "1") as keys. An empty array is read as no filter.
 			return filter
 				? await this.findAll({
-						where: Array.isArray(filter.where)
+						where: Array.isArray(filter.where) && filter.where.length > 0
 							? filter.where.map((clause) => ({
 									valueDate: Between<Date>(startOfMonth, endOfMonth),
 									...(clause as Object)
