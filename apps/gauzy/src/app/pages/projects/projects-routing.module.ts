@@ -45,7 +45,7 @@ const routes: Routes = [
 			},
 			{
 				// The project's own page — status, budget, progress, tasks, hours, contributors and its record —
-				// at a URL of its own: what the list's View button and a sidebar favorite open.
+				// at a URL of its own: what the list's View button opens (a sidebar favorite still opens the edit page).
 				path: 'view/:id',
 				component: ProjectViewPageComponent,
 				canActivate: [PermissionsGuard],

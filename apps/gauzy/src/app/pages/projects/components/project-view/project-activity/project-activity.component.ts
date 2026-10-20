@@ -163,6 +163,11 @@ export class ProjectActivityComponent implements OnChanges {
 			const pageItems = result?.items || [];
 			items.push(...pageItems.filter((log) => this.belongsToProject(log)));
 			if (pageItems.length < LOG_PAGE_SIZE) break;
+			// The page budget ran out before the feed filled and more logs exist: the feed is a partial read,
+			// not "no activity".
+			if (page === TASK_LOG_PAGES && items.length < FEED_LIMIT && (result?.total ?? 0) > page * LOG_PAGE_SIZE) {
+				return { items, partial: true };
+			}
 		}
 		return { items, partial: false };
 	}
