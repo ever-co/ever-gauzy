@@ -20,11 +20,12 @@ describe('UserOrganizationService.addUserToOrganization', () => {
 
 	/** The service over scripted user organization and organization repositories. */
 	function surfaces(existing: any[] = [], organizations: any[] = []) {
+		// The repository answers only the rows that match every field of the `where`, as the database does
+		const matches = (where: Record<string, unknown>) => (row: any) =>
+			Object.entries(where).every(([key, value]) => row[key] === value);
 		const userOrganizationRepository = {
-			findOne: jest.fn(
-				async ({ where }: any) => existing.find((row) => row.organizationId === where.organizationId) ?? null
-			),
-			find: jest.fn().mockResolvedValue(existing),
+			findOne: jest.fn(async ({ where }: any) => existing.find(matches(where)) ?? null),
+			find: jest.fn(async ({ where }: any) => existing.filter(matches(where))),
 			save: jest.fn(async (entity: any) => entity)
 		};
 		const organizationRepository = { find: jest.fn().mockResolvedValue(organizations) };
@@ -38,7 +39,13 @@ describe('UserOrganizationService.addUserToOrganization', () => {
 	}
 
 	it('returns the existing membership instead of inserting a duplicate', async () => {
-		const membership = { id: 'membership-a', userId: USER_ID, organizationId: ORG_A, tenantId: TENANT_ID };
+		const membership = {
+			id: 'membership-a',
+			userId: USER_ID,
+			organizationId: ORG_A,
+			tenantId: TENANT_ID,
+			isActive: true
+		};
 		const { service, userOrganizationRepository } = surfaces([membership]);
 
 		const result = await service.addUserToOrganization(userWithRole(RolesEnum.EMPLOYEE), ORG_A);
@@ -64,11 +71,20 @@ describe('UserOrganizationService.addUserToOrganization', () => {
 	});
 
 	it('adds a Super Admin only to the organizations they are not a member of yet', async () => {
-		const membership = { id: 'membership-a', userId: USER_ID, organizationId: ORG_A, tenantId: TENANT_ID };
+		const membership = {
+			id: 'membership-a',
+			userId: USER_ID,
+			organizationId: ORG_A,
+			tenantId: TENANT_ID,
+			isActive: true
+		};
 		const { service, userOrganizationRepository } = surfaces([membership], [{ id: ORG_A }, { id: ORG_B }]);
 
 		const result = await service.addUserToOrganization(userWithRole(RolesEnum.SUPER_ADMIN), ORG_A);
 
+		expect(userOrganizationRepository.find).toHaveBeenCalledWith({
+			where: { userId: USER_ID, tenantId: TENANT_ID, isActive: true }
+		});
 		expect(userOrganizationRepository.save).toHaveBeenCalledTimes(1);
 		const saved = userOrganizationRepository.save.mock.calls[0][0];
 		expect(saved).toHaveLength(1);
@@ -80,7 +96,8 @@ describe('UserOrganizationService.addUserToOrganization', () => {
 		const memberships = [ORG_A, ORG_B].map((organizationId) => ({
 			userId: USER_ID,
 			organizationId,
-			tenantId: TENANT_ID
+			tenantId: TENANT_ID,
+			isActive: true
 		}));
 		const { service, userOrganizationRepository } = surfaces(memberships, [{ id: ORG_A }, { id: ORG_B }]);
 
@@ -88,5 +105,29 @@ describe('UserOrganizationService.addUserToOrganization', () => {
 
 		expect(userOrganizationRepository.save).not.toHaveBeenCalled();
 		expect(result).toEqual(memberships);
+	});
+
+	it('does not count an inactive membership or another user\'s membership as existing', async () => {
+		const rows = [
+			{ id: 'inactive-a', userId: USER_ID, organizationId: ORG_A, tenantId: TENANT_ID, isActive: false },
+			{ id: 'other-user-a', userId: 'another-user', organizationId: ORG_A, tenantId: TENANT_ID, isActive: true }
+		];
+
+		// One organization: a new row is created for it
+		const single = surfaces(rows);
+		await single.service.addUserToOrganization(userWithRole(RolesEnum.EMPLOYEE), ORG_A);
+		expect(single.userOrganizationRepository.save).toHaveBeenCalledTimes(1);
+		expect(single.userOrganizationRepository.save.mock.calls[0][0]).toMatchObject({
+			userId: USER_ID,
+			organizationId: ORG_A
+		});
+
+		// Every organization (Super Admin): both organizations still get a row
+		const all = surfaces(rows, [{ id: ORG_A }, { id: ORG_B }]);
+		await all.service.addUserToOrganization(userWithRole(RolesEnum.SUPER_ADMIN), ORG_A);
+		expect(all.userOrganizationRepository.save.mock.calls[0][0].map((row: any) => row.organizationId)).toEqual([
+			ORG_A,
+			ORG_B
+		]);
 	});
 });
