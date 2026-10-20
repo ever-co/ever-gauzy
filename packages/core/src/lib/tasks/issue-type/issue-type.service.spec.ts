@@ -130,7 +130,7 @@ describe('IssueTypeService.fetchAll (MikroORM) — tenant scope', () => {
  * (`getFilterQuery`) pins every other one to NULL: an organization-level request read the issue types of the
  * organization's projects and teams as well. Both branches now read the same scope.
  */
-describe('IssueTypeService.fetchAll (MikroORM) — unsupplied scopes are NULL', () => {
+describe('IssueTypeService.fetchAll (MikroORM) — scopes the request leaves out are NULL', () => {
 	const TENANT = 'caller-tenant';
 
 	let mikroOrmRepository: { findOne: jest.Mock; findAndCount: jest.Mock };
