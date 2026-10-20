@@ -36,181 +36,186 @@
 			aria-labelledby="project-form-tab-main"
 			[hidden]="currentTab !== 'main'"
 		>
-			<section class="form-section">
-				<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.DETAILS' | translate }}</h6>
-				<!-- The logo on the left, beside the Name, Code and Project URL fields. -->
-				<div class="details-grid">
-					<div class="logo-field">
-						<span class="label">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate }}</span>
-						<div
-							class="avatar"
-							[class.avatar--hover]="hoverState"
-							[title]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO_HINT' | translate"
-						>
-							<ngx-image-uploader
-								(changeHoverState)="hoverState = $event"
-								(uploadedImageAsset)="updateImageAsset($event)"
-								(uploadImageAssetError)="handleImageUploadError($event)"
-							></ngx-image-uploader>
-							@if (hasImage) {
-								<img
-									class="avatar__image"
-									[src]="form.get('imageUrl').value"
-									[alt]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate"
+			<!-- The logo alone on the left; every section of fields on the right. -->
+			<div class="main-layout">
+				<div class="logo-field">
+					<span class="label">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate }}</span>
+					<div
+						class="avatar"
+						[class.avatar--hover]="hoverState"
+						[title]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO_HINT' | translate"
+					>
+						<ngx-image-uploader
+							(changeHoverState)="hoverState = $event"
+							(uploadedImageAsset)="updateImageAsset($event)"
+							(uploadImageAssetError)="handleImageUploadError($event)"
+						></ngx-image-uploader>
+						@if (hasImage) {
+							<img
+								class="avatar__image"
+								[src]="form.get('imageUrl').value"
+								[alt]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate"
+							/>
+						} @else {
+							<div class="avatar__image avatar__image--empty">
+								<nb-icon icon="folder-outline"></nb-icon>
+							</div>
+						}
+						<span class="avatar__scrim" aria-hidden="true"></span>
+						<span class="avatar__badge" aria-hidden="true">
+							<nb-icon icon="camera-outline"></nb-icon>
+						</span>
+					</div>
+				</div>
+				<div class="main-fields">
+					<section class="form-section">
+						<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.DETAILS' | translate }}</h6>
+						<div class="grid">
+							<div class="form-group">
+								<label for="name" class="label">{{ 'FORM.PLACEHOLDERS.NAME' | translate }}</label>
+								<input
+									type="text"
+									nbInput
+									fullWidth
+									formControlName="name"
+									[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
+									id="name"
+									[status]="FormHelpers.isInvalidControl(form, 'name') ? 'danger' : 'basic'"
 								/>
-							} @else {
-								<div class="avatar__image avatar__image--empty">
-									<nb-icon icon="folder-outline"></nb-icon>
-								</div>
-							}
-							<span class="avatar__scrim" aria-hidden="true"></span>
-							<span class="avatar__badge" aria-hidden="true">
-								<nb-icon icon="camera-outline"></nb-icon>
-							</span>
+								@if (FormHelpers.isInvalidControl(form, 'name')) {
+									<p class="caption status-danger">
+										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
+									</p>
+								}
+							</div>
+							<div class="form-group">
+								<label for="code" class="label">{{ 'FORM.PLACEHOLDERS.CODE' | translate }}</label>
+								<input
+									type="text"
+									nbInput
+									fullWidth
+									formControlName="code"
+									[placeholder]="'FORM.PLACEHOLDERS.CODE' | translate"
+									id="code"
+								/>
+							</div>
+							<div class="form-group">
+								<label for="projectUrl" class="label">{{ 'FORM.LABELS.PROJECT_URL' | translate }}</label>
+								<input
+									type="text"
+									nbInput
+									fullWidth
+									[placeholder]="'FORM.PLACEHOLDERS.PROJECT_URL' | translate"
+									id="projectUrl"
+									formControlName="projectUrl"
+									[status]="FormHelpers.isInvalidControl(form, 'projectUrl') ? 'danger' : 'basic'"
+								/>
+								@if (projectUrl.hasError('pattern')) {
+									<p class="caption status-danger">
+										{{ 'FORM.ERROR.PROJECT_URL' | translate }}
+									</p>
+								}
+							</div>
+							<!-- Client or internal: a property of the project itself, so it sits with its details. -->
+							<div class="form-group">
+								<label for="owner" class="label">{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}</label>
+								<nb-select
+									fullWidth
+									[placeholder]="'FORM.PLACEHOLDERS.OWNER' | translate"
+									formControlName="owner"
+									id="owner"
+									(selectedChange)="changeProjectOwner($event)"
+								>
+									@for (owner of owners; track owner) {
+										<nb-option [value]="owner">{{ 'SM_TABLE.' + owner | translate }}</nb-option>
+									}
+								</nb-select>
+							</div>
 						</div>
-					</div>
-					<div class="form-group field-name">
-						<label for="name" class="label">{{ 'FORM.PLACEHOLDERS.NAME' | translate }}</label>
-						<input
-							type="text"
-							nbInput
-							fullWidth
-							formControlName="name"
-							[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
-							id="name"
-							[status]="FormHelpers.isInvalidControl(form, 'name') ? 'danger' : 'basic'"
-						/>
-						@if (FormHelpers.isInvalidControl(form, 'name')) {
-							<p class="caption status-danger">
-								{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
-							</p>
-						}
-					</div>
-					<div class="form-group field-code">
-						<label for="code" class="label">{{ 'FORM.PLACEHOLDERS.CODE' | translate }}</label>
-						<input
-							type="text"
-							nbInput
-							fullWidth
-							formControlName="code"
-							[placeholder]="'FORM.PLACEHOLDERS.CODE' | translate"
-							id="code"
-						/>
-					</div>
-					<div class="form-group field-url">
-						<label for="projectUrl" class="label">{{ 'FORM.LABELS.PROJECT_URL' | translate }}</label>
-						<input
-							type="text"
-							nbInput
-							fullWidth
-							[placeholder]="'FORM.PLACEHOLDERS.PROJECT_URL' | translate"
-							id="projectUrl"
-							formControlName="projectUrl"
-							[status]="FormHelpers.isInvalidControl(form, 'projectUrl') ? 'danger' : 'basic'"
-						/>
-						@if (projectUrl.hasError('pattern')) {
-							<p class="caption status-danger">
-								{{ 'FORM.ERROR.PROJECT_URL' | translate }}
-							</p>
-						}
-					</div>
-				</div>
-			</section>
+					</section>
 
-			<section class="form-section">
-				<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.PEOPLE' | translate }}</h6>
-				<div class="grid">
-					<div class="form-group">
-						<label for="owner" class="label">{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}</label>
-						<nb-select
-							fullWidth
-							[placeholder]="'FORM.PLACEHOLDERS.OWNER' | translate"
-							formControlName="owner"
-							id="owner"
-							(selectedChange)="changeProjectOwner($event)"
-						>
-							@for (owner of owners; track owner) {
-								<nb-option [value]="owner">{{ 'SM_TABLE.' + owner | translate }}</nb-option>
-							}
-						</nb-select>
-					</div>
-					<div class="form-group">
-						<label for="organizationContacts" class="label">{{ 'FORM.LABELS.CLIENTS' | translate }}</label>
-						<ng-select
-							labelForId="organizationContacts"
-							[addTag]="addNewOrganizationContact"
-							[items]="organizationContacts"
-							bindLabel="name"
-							[searchable]="true"
-							formControlName="organizationContact"
-							[placeholder]="'FORM.PLACEHOLDERS.CLIENTS' | translate"
-							appendTo="body"
-						></ng-select>
-					</div>
-					<div class="form-group">
-						<ga-employee-multi-select
-							[selectedEmployeeIds]="selectedManagerIds"
-							(selectedChange)="onManagersSelected($event)"
-							[placeholder]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
-							[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
-						></ga-employee-multi-select>
-					</div>
-					<div class="form-group">
-						<ga-employee-multi-select
-							[selectedEmployeeIds]="selectedEmployeeIds"
-							(selectedChange)="onMembersSelected($event)"
-						></ga-employee-multi-select>
-					</div>
-					<div class="form-group span-2">
-						<ga-team-selector
-							formControlName="teams"
-							[skipGlobalChange]="true"
-							[multiple]="true"
-							[showAllOption]="false"
-							[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
-							[defaultSelected]="false"
-							[label]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
-							(onChanged)="onTeamsSelected($event)"
-						></ga-team-selector>
-					</div>
-				</div>
-			</section>
+					<section class="form-section">
+						<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.PEOPLE' | translate }}</h6>
+						<div class="grid">
+							<div class="form-group">
+								<label for="organizationContacts" class="label">{{ 'FORM.LABELS.CLIENTS' | translate }}</label>
+								<ng-select
+									labelForId="organizationContacts"
+									[addTag]="addNewOrganizationContact"
+									[items]="organizationContacts"
+									bindLabel="name"
+									[searchable]="true"
+									formControlName="organizationContact"
+									[placeholder]="'FORM.PLACEHOLDERS.CLIENTS' | translate"
+									appendTo="body"
+								></ng-select>
+							</div>
+							<div class="form-group">
+								<ga-employee-multi-select
+									[selectedEmployeeIds]="selectedManagerIds"
+									(selectedChange)="onManagersSelected($event)"
+									[placeholder]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
+									[label]="'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate"
+								></ga-employee-multi-select>
+							</div>
+							<div class="form-group">
+								<ga-employee-multi-select
+									[selectedEmployeeIds]="selectedEmployeeIds"
+									(selectedChange)="onMembersSelected($event)"
+								></ga-employee-multi-select>
+							</div>
+							<div class="form-group">
+								<ga-team-selector
+									formControlName="teams"
+									[skipGlobalChange]="true"
+									[multiple]="true"
+									[showAllOption]="false"
+									[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
+									[defaultSelected]="false"
+									[label]="'FORM.PLACEHOLDERS.ADD_REMOVE_TEAMS' | translate"
+									(onChanged)="onTeamsSelected($event)"
+								></ga-team-selector>
+							</div>
+						</div>
+					</section>
 
-			<section class="form-section">
-				<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.TIMELINE' | translate }}</h6>
-				<div class="grid">
-					<div class="form-group">
-						<label for="start-date-project" class="label">
-							{{ 'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate }}
-						</label>
-						<input
-							[nbDatepicker]="startDate"
-							nbInput
-							fullWidth
-							formControlName="startDate"
-							[placeholder]="'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate"
-							id="start-date-project"
-							[status]="FormHelpers.isInvalidControl(form, 'startDate') ? 'danger' : 'basic'"
-						/>
-						<nb-datepicker #startDate></nb-datepicker>
-					</div>
-					<div class="form-group">
-						<label for="end-date-project" class="label">
-							{{ 'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate }}
-						</label>
-						<input
-							[nbDatepicker]="endDate"
-							nbInput
-							fullWidth
-							formControlName="endDate"
-							[placeholder]="'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate"
-							id="end-date-project"
-							[status]="FormHelpers.isInvalidControl(form, 'endDate') ? 'danger' : 'basic'"
-						/>
-						<nb-datepicker #endDate></nb-datepicker>
-					</div>
+					<section class="form-section">
+						<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.TIMELINE' | translate }}</h6>
+						<div class="grid">
+							<div class="form-group">
+								<label for="start-date-project" class="label">
+									{{ 'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate }}
+								</label>
+								<input
+									[nbDatepicker]="startDate"
+									nbInput
+									fullWidth
+									formControlName="startDate"
+									[placeholder]="'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate"
+									id="start-date-project"
+									[status]="FormHelpers.isInvalidControl(form, 'startDate') ? 'danger' : 'basic'"
+								/>
+								<nb-datepicker #startDate></nb-datepicker>
+							</div>
+							<div class="form-group">
+								<label for="end-date-project" class="label">
+									{{ 'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate }}
+								</label>
+								<input
+									[nbDatepicker]="endDate"
+									nbInput
+									fullWidth
+									formControlName="endDate"
+									[placeholder]="'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate"
+									id="end-date-project"
+									[status]="FormHelpers.isInvalidControl(form, 'endDate') ? 'danger' : 'basic'"
+								/>
+								<nb-datepicker #endDate></nb-datepicker>
+							</div>
+						</div>
+					</section>
 				</div>
-			</section>
+			</div>
 		</div>
 
 		<!-- Description -->

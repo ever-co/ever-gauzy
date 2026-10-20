@@ -183,10 +183,6 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	.span-2 {
-		grid-column: 1 / -1;
-	}
-
 	nb-select {
 		width: 100%;
 		max-width: none;
@@ -230,29 +226,42 @@ nb-toggle ::ng-deep {
 	}
 }
 
-/* ── Details: the logo beside Name, Code and Project URL ──────────────────── */
+/* ── Main tab: the logo on the left, every field on the right ─────────────── */
 
-// The logo spans both field rows; its tile stretches to their height, so its
-// top lines up with Name and its bottom with Project URL.
-.details-grid {
+$logo-size: 10rem;
+
+// Two columns: the logo alone, and the Details, People and Timeline sections
+// stacked beside it. Below 768px the logo sits above the fields.
+.main-layout {
 	display: grid;
-	grid-template-columns: 8.5rem minmax(0, 1fr) minmax(0, 1fr);
-	grid-template-areas:
-		'logo name code'
-		'logo url  url';
-	gap: $gap-md $gap-lg;
+	grid-template-columns: $logo-size minmax(0, 1fr);
+	align-items: start;
+	gap: $gap-xl 2rem;
 
-	@media (max-width: 767.98px) {
+	@media (max-width: $narrow) {
 		grid-template-columns: minmax(0, 1fr);
-		grid-template-areas: 'logo' 'name' 'code' 'url';
 	}
 }
 
+// The sections keep their own dividers (`.form-section + .form-section`).
+.main-fields {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-xl;
+	min-width: 0;
+}
+
+// Stays in view while the fields scroll past it.
 .logo-field {
-	grid-area: logo;
+	position: sticky;
+	top: 0;
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
+
+	@media (max-width: $narrow) {
+		position: static;
+	}
 
 	// A span, not a label: the control it names is the uploader's own file input.
 	.label {
@@ -261,28 +270,34 @@ nb-toggle ::ng-deep {
 	}
 
 	.avatar {
-		flex: 1 1 auto;
-		width: 100%;
-		min-height: 6rem;
+		width: $logo-size;
+		height: $logo-size;
 
 		@media (max-width: 767.98px) {
-			flex: none;
-			width: 6rem;
-			height: 6rem;
+			width: 7.5rem;
+			height: 7.5rem;
 		}
 	}
-}
 
-.field-name {
-	grid-area: name;
-}
+	// Scaled up with the tile
+	.avatar__image--empty nb-icon {
+		width: 3rem;
+		height: 3rem;
+		font-size: 3rem;
+	}
 
-.field-code {
-	grid-area: code;
-}
+	.avatar__badge {
+		bottom: 0.5rem;
+		inset-inline-end: 0.5rem;
+		width: 2rem;
+		height: 2rem;
 
-.field-url {
-	grid-area: url;
+		nb-icon {
+			width: 1.125rem;
+			height: 1.125rem;
+			font-size: 1.125rem;
+		}
+	}
 }
 
 /* ── Project logo: the uploader tile of the Add Organization dialog ──────── */
