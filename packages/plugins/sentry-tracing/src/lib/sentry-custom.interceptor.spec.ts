@@ -1,4 +1,10 @@
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import {
+	BadRequestException,
+	CallHandler,
+	ExecutionContext,
+	InternalServerErrorException,
+	NotFoundException
+} from '@nestjs/common';
 import { lastValueFrom, throwError } from 'rxjs';
 
 const captureException = jest.fn();
@@ -50,6 +56,21 @@ describe('SentryCustomInterceptor and the tenant switch', () => {
 
 	it('reports when the tenant has no setting', async () => {
 		await fail();
+		expect(captureException).toHaveBeenCalledTimes(1);
+	});
+
+	it('skips client errors (4xx) and reports server errors (5xx)', async () => {
+		const interceptor = new SentryCustomInterceptor();
+		const run = (error: Error) =>
+			expect(
+				lastValueFrom(interceptor.intercept({} as ExecutionContext, { handle: () => throwError(() => error) }))
+			).rejects.toBe(error);
+
+		await run(new BadRequestException());
+		await run(new NotFoundException());
+		expect(captureException).not.toHaveBeenCalled();
+
+		await run(new InternalServerErrorException());
 		expect(captureException).toHaveBeenCalledTimes(1);
 	});
 });

@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { CallHandler, ExecutionContext, HttpException } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { Observable, catchError, throwError } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
@@ -22,11 +22,14 @@ export class SentryCustomInterceptor extends SentryInterceptor {
 	constructor() {
 		super({
 			filters: [
-				/* For now let's report all, but later we can filter
+				// Client errors (4xx: validation, not found, forbidden, a failed sign-in) are expected traffic, not
+				// defects, and would spend the Sentry quota (see `SentryService.captures`). Server errors (5xx) and
+				// non-HTTP errors are reported. This is also what the original `Handlers.errorHandler()` reported.
 				{
 					type: HttpException,
 					filter: (e: HttpException) => e.getStatus() < 500
-				},
+				}
+				/* Later, if needed:
 				{
 					type: EntityNotFoundError
 				}
