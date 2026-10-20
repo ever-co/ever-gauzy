@@ -1,8 +1,47 @@
 @forward '@shared/_pg-card';
 @use '@shared/project-form-page' as *;
 
-// Record-side Documents panel: its own card under the project form.
-.project-documents {
-  display: block;
-  margin-top: 1rem;
+// The form, with the record-side Documents panel in a column on its right.
+// Both columns take the card body's full height and scroll on their own — the
+// form inside its open section, the panel inside its list — so the page itself
+// never scrolls and the tabs, action bar and panel header stay in view.
+//
+// Below 1200px a side column would squeeze the form's two-column grid, so the
+// panel drops under the form, both take their content's height, and the body
+// scrolls them together.
+$stack-below: 1199.98px;
+
+.project-edit-layout {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 0;
+
+  @media (max-width: $stack-below) {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+}
+
+.project-edit-main,
+.project-edit-aside {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.project-edit-main > ga-project-mutation {
+  flex: 1 1 auto;
+}
+
+// The panel keeps its own height, up to the column's; past that its list scrolls.
+.project-edit-aside > gz-document-links-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
 }
