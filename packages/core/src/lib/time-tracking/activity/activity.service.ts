@@ -60,7 +60,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						'activity.title as title'
 					])
 					.where('activity.tenantId', tenantId)
-					.andWhere('activity.organizationId', organizationId);
+					.andWhere('activity.organizationId', organizationId)
+					// Raw knex skips MikroORM's soft-delete filter: leave deleted rows out, as TypeORM does
+					.whereNull('activity.deletedAt')
+					.whereNull('employee.deletedAt')
+					.whereNull('time_slot.deletedAt');
 
 				if (startDate && endDate) {
 					qb = qb.whereBetween('activity.date', [startDate, endDate]);
@@ -156,7 +160,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						'activity.title as title'
 					])
 					.where('activity.tenantId', tenantId)
-					.andWhere('activity.organizationId', organizationId);
+					.andWhere('activity.organizationId', organizationId)
+					// Raw knex skips MikroORM's soft-delete filter: leave deleted rows out, as TypeORM does
+					.whereNull('activity.deletedAt')
+					.whereNull('employee.deletedAt')
+					.whereNull('time_slot.deletedAt');
 
 				if (startDate && endDate) {
 					qb = qb.whereBetween('activity.date', [startDate, endDate]);
