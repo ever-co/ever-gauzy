@@ -8,7 +8,7 @@ import { CommentCreateHandler } from './comment.create.handler';
 import { CommentUpdateHandler } from './comment.update.handler';
 
 /**
- * The comment handlers rethrew every error as a BadRequestException, so the 403 `CommentService.update` raises
+ * The comment handlers threw every error again as a BadRequestException, so the 403 `CommentService.update` raises
  * for someone else's comment reached the client as a 400. An HTTP error of the service must pass through as is;
  * any other error is still reported as a 400.
  */
