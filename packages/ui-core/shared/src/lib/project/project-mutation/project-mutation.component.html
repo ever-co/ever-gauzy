@@ -227,20 +227,48 @@
 			[hidden]="currentTab !== 'description'"
 		>
 			<section class="form-section full">
-				<div class="form-group">
-					<label class="label">{{ 'FORM.PLACEHOLDERS.DESCRIPTION' | translate }}</label>
-					<ga-rich-text-editor
-						formControlName="description"
-						preset="standard"
-						outputFormat="html"
-						[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
-					></ga-rich-text-editor>
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="file-text-outline"></nb-icon></span>
+						<div class="setting-card__text">
+							<span class="setting-card__title" id="card-description-title">
+								{{ 'ORGANIZATIONS_PAGE.DESCRIPTION' | translate }}
+							</span>
+							<span class="setting-card__description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.DESCRIPTION_CARD_DESC' | translate }}
+							</span>
+						</div>
+					</div>
+					<div class="setting-card__body" role="group" aria-labelledby="card-description-title">
+						<ga-rich-text-editor
+							formControlName="description"
+							preset="standard"
+							outputFormat="html"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+						></ga-rich-text-editor>
+					</div>
 				</div>
-				<ga-tags-color-input
-					[selectedTags]="form.get('tags').value"
-					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isOrgLevel]="true"
-				></ga-tags-color-input>
+
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="pricetags-outline"></nb-icon></span>
+						<div class="setting-card__text">
+							<span class="setting-card__title" id="card-tags-title">{{ 'TAGS_PAGE.HEADER' | translate }}</span>
+							<span class="setting-card__description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.TAGS_DESC' | translate }}
+							</span>
+						</div>
+					</div>
+					<!-- The card's title names the field, so the input's own label is off. -->
+					<div class="setting-card__body" role="group" aria-labelledby="card-tags-title">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+							[label]="false"
+						></ga-tags-color-input>
+					</div>
+				</div>
 			</section>
 		</div>
 
@@ -252,22 +280,35 @@
 			aria-labelledby="project-form-tab-billing"
 			[hidden]="currentTab !== 'billing'"
 		>
-			<section class="form-section narrow">
-				<div class="grid">
-					<div class="form-group">
-						<label for="billing" class="label">{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}</label>
-						<nb-select
-							fullWidth
-							[placeholder]="'FORM.PLACEHOLDERS.BILLING' | translate"
-							formControlName="billing"
-							id="billing"
-						>
-							@for (billing of billings; track billing) {
-								<nb-option [value]="billing">{{ 'SM_TABLE.' + billing | translate }}</nb-option>
-							}
-						</nb-select>
+			<section class="form-section full">
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="credit-card-outline"></nb-icon></span>
+						<div class="setting-card__text">
+							<span class="setting-card__title">{{ 'ORGANIZATIONS_PAGE.BILLING' | translate }}</span>
+							<span class="setting-card__description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.BILLING_DESC' | translate }}
+							</span>
+						</div>
 					</div>
-					<ga-currency formControlName="currency" (optionChange)="currencyChanged($event)"></ga-currency>
+					<div class="setting-card__body">
+						<div class="grid">
+							<div class="form-group">
+								<label for="billing" class="label">{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}</label>
+								<nb-select
+									fullWidth
+									[placeholder]="'FORM.PLACEHOLDERS.BILLING' | translate"
+									formControlName="billing"
+									id="billing"
+								>
+									@for (billing of billings; track billing) {
+										<nb-option [value]="billing">{{ 'SM_TABLE.' + billing | translate }}</nb-option>
+									}
+								</nb-select>
+							</div>
+							<ga-currency formControlName="currency" (optionChange)="currencyChanged($event)"></ga-currency>
+						</div>
+					</div>
 				</div>
 			</section>
 		</div>
@@ -280,41 +321,54 @@
 			aria-labelledby="project-form-tab-budget"
 			[hidden]="currentTab !== 'budget'"
 		>
-			<section class="form-section narrow">
-				<div class="grid">
-					<div class="form-group">
-						<label for="budgetType" class="label">{{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}</label>
-						<nb-select
-							fullWidth
-							id="budgetType"
-							[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
-							formControlName="budgetType"
-						>
-							@for (budgetType of OrganizationProjectBudgetTypeEnum | keyvalue; track budgetType) {
-								<nb-option [value]="budgetType.value">{{ budgetType.value | titlecase }}</nb-option>
-							}
-						</nb-select>
+			<section class="form-section full">
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="pie-chart-outline"></nb-icon></span>
+						<div class="setting-card__text">
+							<span class="setting-card__title">{{ 'ORGANIZATIONS_PAGE.BUDGET' | translate }}</span>
+							<span class="setting-card__description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.BUDGET_DESC' | translate }}
+							</span>
+						</div>
 					</div>
-					<div class="form-group">
-						@if (form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST) {
-							<label for="budget" class="label">{{ 'FORM.PLACEHOLDERS.COST' | translate }}</label>
-						} @else {
-							<label for="budget" class="label">{{ 'FORM.PLACEHOLDERS.HOURS' | translate }}</label>
-						}
-						<input
-							id="budget"
-							nbInput
-							type="number"
-							[min]="0"
-							fullWidth
-							formControlName="budget"
-							[placeholder]="
-								(form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST
-									? 'FORM.PLACEHOLDERS.COST'
-									: 'FORM.PLACEHOLDERS.HOURS'
-								) | translate
-							"
-						/>
+					<div class="setting-card__body">
+						<div class="grid">
+							<div class="form-group">
+								<label for="budgetType" class="label">{{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}</label>
+								<nb-select
+									fullWidth
+									id="budgetType"
+									[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
+									formControlName="budgetType"
+								>
+									@for (budgetType of OrganizationProjectBudgetTypeEnum | keyvalue; track budgetType) {
+										<nb-option [value]="budgetType.value">{{ budgetType.value | titlecase }}</nb-option>
+									}
+								</nb-select>
+							</div>
+							<div class="form-group">
+								@if (form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST) {
+									<label for="budget" class="label">{{ 'FORM.PLACEHOLDERS.COST' | translate }}</label>
+								} @else {
+									<label for="budget" class="label">{{ 'FORM.PLACEHOLDERS.HOURS' | translate }}</label>
+								}
+								<input
+									id="budget"
+									nbInput
+									type="number"
+									[min]="0"
+									fullWidth
+									formControlName="budget"
+									[placeholder]="
+										(form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST
+											? 'FORM.PLACEHOLDERS.COST'
+											: 'FORM.PLACEHOLDERS.HOURS'
+										) | translate
+									"
+								/>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -328,38 +382,71 @@
 			aria-labelledby="project-form-tab-openSource"
 			[hidden]="currentTab !== 'openSource'"
 		>
-			<section class="form-section narrow">
-				<div class="toggle">
-					<nb-toggle
-						status="primary"
-						labelPosition="end"
-						formControlName="openSource"
-						(checkedChange)="toggleOpenSource($event)"
-					>
-						{{ 'FORM.LABELS.IS_PROJECT_OPEN_SOURCE' | translate }}
-					</nb-toggle>
-				</div>
-				@if (form.get('openSource').value) {
-					<div class="form-group">
-						<label for="openSourceProjectUrl" class="label">
-							{{ 'FORM.LABELS.OPEN_SOURCE_PROJECT_URL' | translate }}
-						</label>
-						<input
-							type="text"
-							nbInput
-							fullWidth
-							placeholder="https://github.com/..."
-							id="openSourceProjectUrl"
-							formControlName="openSourceProjectUrl"
-							[status]="FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') ? 'danger' : 'basic'"
-						/>
-						@if (openSourceProjectUrl.hasError('pattern')) {
-							<p class="caption status-danger">
-								{{ 'FORM.ERROR.OPEN_SOURCE_PROJECT_URL' | translate }}
-							</p>
-						}
+			<section class="form-section full">
+				<!-- A setting card, in the manner of the SMS provider cards: what it is, what it does, and its switch. -->
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true">
+							<nb-icon icon="github-outline"></nb-icon>
+						</span>
+						<div class="setting-card__text">
+							<span class="setting-card__title" id="open-source-title">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.OPEN_SOURCE_TITLE' | translate }}
+							</span>
+							<span class="setting-card__description" id="open-source-description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.OPEN_SOURCE_DESCRIPTION' | translate }}
+							</span>
+							@if (openSourceRepositoryHref) {
+								<a
+									class="setting-card__link"
+									[href]="openSourceRepositoryHref"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.OPEN_REPOSITORY' | translate }}
+									<nb-icon icon="external-link-outline"></nb-icon>
+								</a>
+							}
+						</div>
+						<nb-toggle
+							status="primary"
+							formControlName="openSource"
+							aria-labelledby="open-source-title"
+							aria-describedby="open-source-description"
+							(checkedChange)="toggleOpenSource($event)"
+						></nb-toggle>
 					</div>
-				}
+
+					<!-- Shown once the project is marked open source. -->
+					@if (form.get('openSource').value) {
+						<div class="setting-card__body">
+							<div class="form-group">
+								<label for="openSourceProjectUrl" class="label">
+									{{ 'FORM.LABELS.OPEN_SOURCE_PROJECT_URL' | translate }}
+								</label>
+								<input
+									type="text"
+									nbInput
+									fullWidth
+									placeholder="https://github.com/..."
+									id="openSourceProjectUrl"
+									formControlName="openSourceProjectUrl"
+									aria-describedby="open-source-url-hint"
+									[status]="FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') ? 'danger' : 'basic'"
+								/>
+								@if (openSourceProjectUrl.hasError('pattern')) {
+									<p class="caption status-danger">
+										{{ 'FORM.ERROR.OPEN_SOURCE_PROJECT_URL' | translate }}
+									</p>
+								} @else {
+									<p class="hint" id="open-source-url-hint">
+										{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.OPEN_SOURCE_URL_HINT' | translate }}
+									</p>
+								}
+							</div>
+						</div>
+					}
+				</div>
 			</section>
 		</div>
 
@@ -378,65 +465,102 @@
 			aria-labelledby="project-form-tab-settings"
 			[hidden]="currentTab !== 'settings'"
 		>
-			<section class="form-section narrow">
-				<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.APPEARANCE' | translate }}</h6>
-				<div class="grid">
-					<div class="form-group">
-						<label for="color" class="label">{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}</label>
-						<div class="color-field">
-							<span
-								class="color-swatch"
-								aria-hidden="true"
-								[style.background-color]="form.get('color').value"
-							></span>
-							<input
-								type="text"
-								nbInput
-								fullWidth
-								formControlName="color"
-								[placeholder]="'FORM.PLACEHOLDERS.COLOR' | translate"
-								id="color"
-								autocomplete="off"
-								[colorPicker]="form.get('color').value"
-								[value]="form.get('color').value"
-								(colorPickerChange)="form.get('color').setValue($event)"
-							/>
+			<section class="form-section full">
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="color-palette-outline"></nb-icon></span>
+						<div class="setting-card__text">
+							<span class="setting-card__title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.APPEARANCE' | translate }}</span>
+							<span class="setting-card__description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.APPEARANCE_DESC' | translate }}
+							</span>
 						</div>
 					</div>
-					<div class="form-group">
-						<label for="taskListType" class="label">{{ 'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate }}</label>
-						<nb-select
-							fullWidth
-							[placeholder]="'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate"
-							formControlName="taskListType"
-							id="taskListType"
-						>
-							@for (mode of taskViewModeTypes; track mode) {
-								<nb-option [value]="mode">{{ mode | titlecase }}</nb-option>
-							}
-						</nb-select>
+					<div class="setting-card__body">
+						<div class="grid">
+							<div class="form-group">
+								<label for="color" class="label">{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}</label>
+								<div class="color-field">
+									<span
+										class="color-swatch"
+										aria-hidden="true"
+										[style.background-color]="form.get('color').value"
+									></span>
+									<input
+										type="text"
+										nbInput
+										fullWidth
+										formControlName="color"
+										[placeholder]="'FORM.PLACEHOLDERS.COLOR' | translate"
+										id="color"
+										autocomplete="off"
+										[colorPicker]="form.get('color').value"
+										[value]="form.get('color').value"
+										(colorPickerChange)="form.get('color').setValue($event)"
+									/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="taskListType" class="label">
+									{{ 'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate }}
+								</label>
+								<nb-select
+									fullWidth
+									[placeholder]="'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate"
+									formControlName="taskListType"
+									id="taskListType"
+								>
+									@for (mode of taskViewModeTypes; track mode) {
+										<nb-option [value]="mode">{{ mode | titlecase }}</nb-option>
+									}
+								</nb-select>
+							</div>
+						</div>
 					</div>
 				</div>
-			</section>
-			<section class="form-section narrow">
-				<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.OPTIONS' | translate }}</h6>
-				<div class="toggles">
-					<nb-toggle
-						status="primary"
-						labelPosition="end"
-						formControlName="public"
-						(checkedChange)="togglePublic($event)"
-					>
-						{{ 'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE' | translate }}
-					</nb-toggle>
-					<nb-toggle
-						status="primary"
-						labelPosition="end"
-						formControlName="billable"
-						(checkedChange)="toggleBillable($event)"
-					>
-						{{ 'FORM.PLACEHOLDERS.BILLABLE' | translate }}
-					</nb-toggle>
+
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true">
+							<nb-icon [icon]="form.get('public').value ? 'globe-outline' : 'lock-outline'"></nb-icon>
+						</span>
+						<div class="setting-card__text">
+							<span class="setting-card__title" id="card-public-title">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.PUBLIC_TITLE' | translate }}
+							</span>
+							<span class="setting-card__description" id="card-public-description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.PUBLIC_DESC' | translate }}
+							</span>
+						</div>
+						<nb-toggle
+							status="primary"
+							formControlName="public"
+							aria-labelledby="card-public-title"
+							aria-describedby="card-public-description"
+							(checkedChange)="togglePublic($event)"
+						></nb-toggle>
+					</div>
+				</div>
+
+				<div class="setting-card">
+					<div class="setting-card__row">
+						<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="clock-outline"></nb-icon></span>
+						<div class="setting-card__text">
+							<span class="setting-card__title" id="card-billable-title">
+								{{ 'FORM.PLACEHOLDERS.BILLABLE' | translate }}
+							</span>
+							<span class="setting-card__description" id="card-billable-description">
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.BILLABLE_DESC' | translate }}
+							</span>
+						</div>
+						<nb-toggle
+							status="primary"
+							formControlName="billable"
+							aria-labelledby="card-billable-title"
+							aria-describedby="card-billable-description"
+							(checkedChange)="toggleBillable($event)"
+						></nb-toggle>
+					</div>
 				</div>
 			</section>
 		</div>
@@ -450,16 +574,26 @@
 				aria-labelledby="project-form-tab-integrations"
 				[hidden]="currentTab !== 'integrations'"
 			>
-				<section class="form-section narrow">
-					<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.REPOSITORY' | translate }}</h6>
-					<div class="integration">
-						<img
-							class="integration__logo"
-							[src]="integration.integration.fullImgUrl"
-							[alt]="integration.integration.title"
-							[title]="integration.integration.name | replace : '_' : ' '"
-						/>
-						<div class="integration__picker">
+				<section class="form-section full">
+					<div class="setting-card">
+						<div class="setting-card__row">
+							<!-- The connected integration's own logo stands in for the icon. -->
+							<img
+								class="setting-card__logo"
+								[src]="integration.integration.fullImgUrl"
+								[alt]="integration.integration.title"
+								[title]="integration.integration.name | replace : '_' : ' '"
+							/>
+							<div class="setting-card__text">
+								<span class="setting-card__title">
+									{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.REPOSITORY' | translate }}
+								</span>
+								<span class="setting-card__description">
+									{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.REPOSITORY_DESC' | translate }}
+								</span>
+							</div>
+						</div>
+						<div class="setting-card__body">
 							<ngx-github-repository-selector
 								[sourceId]="$safeNavigationMigration(project?.repository?.repositoryId)"
 								[integration]="integration"
@@ -479,47 +613,66 @@
 				[hidden]="currentTab !== 'automation'"
 				[formGroup]="projectSettingForm"
 			>
-				<section class="form-section narrow">
-					<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.TASK_SYNC' | translate }}</h6>
-					<div class="form-group">
-						<span class="label">{{ 'FORM.LABELS.AUTO_SYNC_TASKS' | translate }}</span>
-						<div class="toggle">
+				<section class="form-section full">
+					<div class="setting-card">
+						<div class="setting-card__row">
+							<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="sync-outline"></nb-icon></span>
+							<div class="setting-card__text">
+								<span class="setting-card__title" id="card-auto-sync-title">
+									{{ 'FORM.LABELS.AUTO_SYNC_TASKS' | translate }}
+								</span>
+								<span class="setting-card__description" id="card-auto-sync-description">
+									{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.AUTO_SYNC_DESC' | translate }}
+								</span>
+							</div>
 							<nb-toggle
 								id="isTasksAutoSync"
 								formControlName="isTasksAutoSync"
 								status="primary"
-								labelPosition="end"
+								aria-labelledby="card-auto-sync-title"
+								aria-describedby="card-auto-sync-description"
 								(change)="updateProjectAutoSyncSetting()"
-							>
-								{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS' | translate }}
-							</nb-toggle>
+							></nb-toggle>
 						</div>
 					</div>
-					<div class="form-group">
-						<span class="label">{{ 'FORM.LABELS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}</span>
-						<div class="toggle">
+
+					<div class="setting-card">
+						<div class="setting-card__row">
+							<span class="setting-card__icon" aria-hidden="true"><nb-icon icon="pricetags-outline"></nb-icon></span>
+							<div class="setting-card__text">
+								<span class="setting-card__title" id="card-sync-label-title">
+									{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.SYNC_LABEL_TITLE' | translate }}
+								</span>
+								<span class="setting-card__description" id="card-sync-label-description">
+									{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.SYNC_LABEL_DESC' | translate }}
+								</span>
+							</div>
 							<nb-toggle
 								id="isTasksAutoSyncOnLabel"
 								formControlName="isTasksAutoSyncOnLabel"
 								status="primary"
-								labelPosition="end"
+								aria-labelledby="card-sync-label-title"
+								aria-describedby="card-sync-label-description"
 								(change)="updateProjectAutoSyncSetting()"
-							>
-								{{ 'FORM.PLACEHOLDERS.AUTO_SYNC_TASKS_BASED_ON_LABEL' | translate }}
-							</nb-toggle>
+							></nb-toggle>
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="syncTag" class="label">{{ 'FORM.LABELS.AUTO_SYNC_TAG' | translate }}</label>
-						<input
-							id="syncTag"
-							type="text"
-							nbInput
-							fullWidth
-							formControlName="syncTag"
-							[placeholder]="'FORM.PLACEHOLDERS.AUTO_SYNC_TAG' | translate"
-							(change)="changeSyncTag($event)"
-						/>
+						<!-- The label only applies to label-based sync, so it opens with it (the control is disabled otherwise). -->
+						@if (projectSettingForm.get('isTasksAutoSyncOnLabel').value) {
+							<div class="setting-card__body">
+								<div class="form-group">
+									<label for="syncTag" class="label">{{ 'FORM.LABELS.AUTO_SYNC_TAG' | translate }}</label>
+									<input
+										id="syncTag"
+										type="text"
+										nbInput
+										fullWidth
+										formControlName="syncTag"
+										[placeholder]="'FORM.PLACEHOLDERS.AUTO_SYNC_TAG' | translate"
+										(change)="changeSyncTag($event)"
+									/>
+								</div>
+							</div>
+						}
 					</div>
 				</section>
 			</div>
