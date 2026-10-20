@@ -5,7 +5,6 @@ import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
-import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as path from 'node:path';
 import * as chalk from 'chalk';
@@ -19,6 +18,7 @@ import { RequestContext } from '../../core/context';
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
+import { extractImportArchive } from './import-archive-extract';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
 	mikroOrmClosureRebuildRunner,
@@ -107,7 +107,7 @@ export class ImportService {
 	 */
 	public async unzipAndParse(extractPath: string, filePath: string, cleanup: boolean = false) {
 		const file = await new FileStorage().getProvider().getFile(filePath);
-		await unzipper.Open.buffer(file).then((d) => d.extract({ path: extractPath }));
+		await extractImportArchive(file, extractPath);
 		await this.parse(extractPath, cleanup);
 	}
 
