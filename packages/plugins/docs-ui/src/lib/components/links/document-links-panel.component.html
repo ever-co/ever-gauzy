@@ -1,5 +1,5 @@
 <!--
-	Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole card disappears
+	Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole panel disappears
 	for a user without DOCS_READ or on an organization with FEATURE_DOCUMENTS off —
 	the component decides, not the five host templates.
 
@@ -11,19 +11,39 @@
 	`readonly` hosts (the invoice/estimate VIEW page) additionally drop the
 	attach / upload / unlink affordances — open and download stay.
 -->
-<nb-card *ngIf="shown" class="docs-links-panel">
-	<nb-card-header class="docs-links-panel-header">
-		<span>{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}</span>
-		<span class="docs-links-panel-count" *ngIf="links.length">{{ links.length }}</span>
+<section *ngIf="shown" class="docs-links-panel" [attr.aria-labelledby]="'docs-links-panel-title-' + entityId">
+	<header class="docs-links-panel-header">
+		<div class="docs-links-panel-heading">
+			<h6 class="docs-links-panel-title" [id]="'docs-links-panel-title-' + entityId">
+				{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}
+			</h6>
+			<span class="docs-links-panel-count" *ngIf="links.length">{{ links.length }}</span>
+		</div>
 
-		<span class="docs-links-panel-actions">
-			<button *ngIf="!readonly && canLink" nbButton ghost size="tiny" (click)="attachExisting()">
+		<div class="docs-links-panel-actions">
+			<button
+				*ngIf="!readonly && canLink"
+				type="button"
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				(click)="attachExisting()"
+			>
 				<nb-icon icon="link-2-outline"></nb-icon>
 				{{ 'DOCS.LINKS.ATTACH_EXISTING' | translate }}
 			</button>
 
 			<ng-container *ngIf="!readonly && canUpload">
-				<button nbButton ghost size="tiny" [disabled]="uploading" (click)="fileInput.click()">
+				<button
+					type="button"
+					nbButton
+					outline
+					status="basic"
+					size="small"
+					[disabled]="uploading"
+					(click)="fileInput.click()"
+				>
 					<nb-icon icon="upload-outline"></nb-icon>
 					{{ 'DOCS.LINKS.UPLOAD_NEW' | translate }}
 				</button>
@@ -43,52 +63,67 @@
 					(change)="uploadNew(fileInput)"
 				/>
 			</ng-container>
-		</span>
-	</nb-card-header>
+		</div>
+	</header>
 
-	<nb-card-body [nbSpinner]="loading || uploading" nbSpinnerStatus="primary">
-		<div class="docs-links-panel-error" *ngIf="loadError">
+	<div class="docs-links-panel-body" [nbSpinner]="loading || uploading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+		<div class="docs-links-panel-error" *ngIf="loadError" role="alert">
 			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
 			<span>{{ 'DOCS.LINKS.PANEL_LOAD_ERROR' | translate }}</span>
-			<button nbButton size="tiny" (click)="load()">{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}</button>
-		</div>
-
-		<p class="muted" *ngIf="!loading && !loadError && !links.length">
-			{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}
-		</p>
-
-		<div class="docs-links-row" *ngFor="let link of links; trackBy: trackByLink">
-			<nb-icon [icon]="iconOf(link)" size="tiny"></nb-icon>
-
-			<button type="button" class="docs-links-row-open" [title]="labelOf(link)" (click)="open(link)">
-				{{ labelOf(link) }}
+			<button type="button" nbButton ghost status="basic" size="tiny" (click)="load()">
+				{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
 			</button>
-
-			<span class="docs-links-row-meta" *ngIf="sizeOf(link)">{{ sizeOf(link) }}</span>
-
-			<span class="docs-links-row-actions">
-				<button
-					*ngIf="isFile(link)"
-					nbButton
-					ghost
-					size="tiny"
-					[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
-					(click)="download(link)"
-				>
-					<nb-icon icon="download-outline"></nb-icon>
-				</button>
-				<button
-					*ngIf="!readonly && canLink"
-					nbButton
-					ghost
-					size="tiny"
-					status="danger"
-					[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
-					(click)="unlink(link)"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
-			</span>
 		</div>
-	</nb-card-body>
-</nb-card>
+
+		<div class="docs-links-panel-empty" *ngIf="!loading && !loadError && !links.length">
+			<span class="docs-links-icon" aria-hidden="true">
+				<nb-icon icon="folder-outline"></nb-icon>
+			</span>
+			<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
+		</div>
+
+		<ul class="docs-links-list" *ngIf="links.length">
+			<li class="docs-links-row" *ngFor="let link of links; trackBy: trackByLink">
+				<span class="docs-links-icon" aria-hidden="true">
+					<nb-icon [icon]="iconOf(link)"></nb-icon>
+				</span>
+
+				<button type="button" class="docs-links-row-open" [title]="labelOf(link)" (click)="open(link)">
+					{{ labelOf(link) }}
+				</button>
+
+				<span class="docs-links-row-meta" *ngIf="sizeOf(link)">{{ sizeOf(link) }}</span>
+
+				<span class="docs-links-row-actions">
+					<button
+						*ngIf="isFile(link)"
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="small"
+						[attr.aria-label]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+						[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+						(click)="download(link)"
+					>
+						<nb-icon icon="download-outline"></nb-icon>
+					</button>
+					<button
+						*ngIf="!readonly && canLink"
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="small"
+						class="docs-links-row-remove"
+						[attr.aria-label]="'DOCS.LINKS.REMOVE' | translate"
+						[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
+						(click)="unlink(link)"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</span>
+			</li>
+		</ul>
+	</div>
+</section>
