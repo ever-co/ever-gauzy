@@ -18,6 +18,7 @@ import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { ensureHttpPrefix, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
+import { refusalForStorageEndpoint, tenantStorageHttpsAgent } from '../storage-endpoint-policy';
 import { RequestContext } from '../../context';
 
 /**
@@ -45,6 +46,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 	private readonly detailedLoggingEnabled = false;
 	public instance: DigitalOceanS3Provider;
 	public config: IDigitalOceanProviderConfig;
+	/** Whether the service URL in use is the tenant's own (see storage-endpoint-policy.ts). */
+	private endpointFromTenant = false;
 	public defaultConfig: IDigitalOceanProviderConfig;
 
 	constructor() {
@@ -95,6 +98,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 		this.config = {
 			...this.defaultConfig
 		};
+		this.endpointFromTenant = false;
 
 		if (this.detailedLoggingEnabled) {
 			this.logger.debug('setDigitalOceanConfiguration: initializing with default config');
@@ -131,12 +135,21 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					}
 
 					if (trimIfNotEmpty(settings.digitalocean_service_url)) {
-						this.config.digitalocean_service_url = ensureHttpPrefix(
-							trimIfNotEmpty(settings.digitalocean_service_url)
-						);
+						// The API connects to it: a tenant URL that points at a private network is not used.
+						const refusal = refusalForStorageEndpoint(settings.digitalocean_service_url);
+						if (refusal) {
+							this.logger.warn(
+								`setDigitalOceanConfiguration: tenant digitalocean_service_url ignored. ${refusal}`
+							);
+						} else {
+							this.config.digitalocean_service_url = ensureHttpPrefix(
+								trimIfNotEmpty(settings.digitalocean_service_url)
+							);
+							this.endpointFromTenant = true;
 
-						if (this.detailedLoggingEnabled) {
-							this.logger.debug('setDigitalOceanConfiguration: digitalocean_service_url overridden');
+							if (this.detailedLoggingEnabled) {
+								this.logger.debug('setDigitalOceanConfiguration: digitalocean_service_url overridden');
+							}
 						}
 					}
 
@@ -417,7 +430,9 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					credentials: {
 						accessKeyId: this.config.digitalocean_access_key_id,
 						secretAccessKey: this.config.digitalocean_secret_access_key
-					}
+					},
+					// A tenant's public host name that resolves to a private address is refused at connect time.
+					...(this.endpointFromTenant ? { requestHandler: { httpsAgent: tenantStorageHttpsAgent() } } : {})
 				});
 
 				return s3Client;
