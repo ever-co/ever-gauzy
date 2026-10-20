@@ -128,6 +128,10 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			// Save the policy
 			return await this.save(policy);
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (the 404 for an unknown policy) instead of flattening them to 400
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(`Error while updating time-off policy: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
