@@ -617,9 +617,7 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'TaskViewController.delete',
 	'TaskViewController.update',
 	'WakatimeController.save',
-	'WakatimeController.saveData',
-	'ZapierWebhookController.createWebhook',
-	'ZapierWebhookController.deleteWebhook'
+	'WakatimeController.saveData'
 ]);
 
 /** Roots the scan walks. */
