@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import * as multer from 'multer';
-import * as moment from 'moment';
 import { join } from 'node:path';
 import { URL } from 'node:url';
 import * as streamifier from 'streamifier';
@@ -15,6 +14,7 @@ import { Logger } from '@nestjs/common';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
 import { toSafeStorageExtension } from '../helpers/upload-security';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 
 // Retrieve Cloudinary configuration from the environment
 const { cloudinary } = environment;
@@ -161,7 +161,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 					if (filename) {
 						public_id = typeof filename === 'string' ? filename : filename(file, format);
 					} else {
-						public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
+						public_id = defaultStoredFileName(prefix);
 					}
 
 					// Neutralize the DELIVERED format too, not just the object name.
