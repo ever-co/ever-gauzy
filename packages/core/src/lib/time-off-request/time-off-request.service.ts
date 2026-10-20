@@ -200,6 +200,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			}
 			return await this.save(timeOffRequest);
 		} catch (err) {
+			// Preserve intentional HTTP exceptions (the 404 for an unknown id, the 409 above) instead of
+			// flattening them to 400.
+			if (err instanceof HttpException) {
+				throw err;
+			}
 			throw new BadRequestException(err);
 		}
 	}
