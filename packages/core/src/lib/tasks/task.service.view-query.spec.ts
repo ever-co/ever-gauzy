@@ -76,4 +76,20 @@ describe('TaskService.findTasksByViewQuery — views without query params on SQL
 		await expect(service.findTasksByViewQuery(VIEW_ID)).rejects.toMatchObject({ status: 400 });
 		expect(findAll).not.toHaveBeenCalled();
 	});
+
+	it('uses query params that are already an object', async () => {
+		withView({ statuses: [], projects: ['project-1'] });
+
+		await service.findTasksByViewQuery(VIEW_ID);
+
+		expect(findAll.mock.calls[0][0].where).toMatchObject({ tenantId: TENANT_ID, organizationId: ORGANIZATION_ID });
+		expect(findAll.mock.calls[0][0].where.projectId).toBeDefined();
+	});
+
+	it.each(['42', '"text"', '[]'])('refuses stored query params that are not an object (%s)', async (stored) => {
+		withView(stored);
+
+		await expect(service.findTasksByViewQuery(VIEW_ID)).rejects.toMatchObject({ status: 400 });
+		expect(findAll).not.toHaveBeenCalled();
+	});
 });
