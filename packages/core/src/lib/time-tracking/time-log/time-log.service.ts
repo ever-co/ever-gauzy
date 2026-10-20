@@ -1345,8 +1345,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		 * Apply a condition to the TypeORM query based on the 'isEdited' property in the request.
 		 * If 'isEdited' is true, filter rows where the 'editedAt' column is not null.
 		 * If 'isEdited' is false, filter rows where the 'editedAt' column is null.
+		 * A key present with no value (GraphQL resolvers pass every optional argument, so an omitted
+		 * `isEdited` arrives as `undefined`) applies no filter, so edited logs stay in the report.
 		 */
-		if ('isEdited' in request) {
+		if ('isEdited' in request && request.isEdited !== undefined && request.isEdited !== null) {
 			if (request.isEdited) {
 				query.andWhere(p(`"${query.alias}"."editedAt" IS NOT NULL`));
 			} else {
@@ -1426,7 +1428,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			where.logType = request.logType instanceof Array ? { $in: request.logType } : request.logType;
 		}
 
-		if ('isEdited' in request) {
+		// An `isEdited` key with no value applies no filter, as in getFilterTimeLogQuery.
+		if ('isEdited' in request && request.isEdited !== undefined && request.isEdited !== null) {
 			where.editedAt = request.isEdited ? { $ne: null } : null;
 		}
 
