@@ -56,9 +56,25 @@ export class IntegrationMapSyncOrganizationHandler
 			);
 		}
 
-		await this._commandBus.execute(
-			new OrganizationUpdateCommand(organizationMap.gauzyId, entity)
+		// Update the mapped organization; its update errors reach the caller
+		const updated = await this._commandBus
+			.execute(new OrganizationUpdateCommand(organizationMap.gauzyId, entity))
+			.catch(nullIfNotFound);
+		if (updated) {
+			return organizationMap;
+		}
+
+		// The mapped organization was deleted here: create it again and point the EXISTING map at it
+		const organization = await this._commandBus.execute(new OrganizationCreateCommand(entity));
+		return await this._commandBus.execute(
+			new IntegrationMapSyncEntityCommand({
+				id: organizationMap.id,
+				gauzyId: organization.id,
+				integrationId,
+				sourceId,
+				entity: IntegrationEntity.ORGANIZATION,
+				organizationId
+			})
 		);
-		return organizationMap;
 	}
 }

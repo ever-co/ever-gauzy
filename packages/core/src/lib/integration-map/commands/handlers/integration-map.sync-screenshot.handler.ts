@@ -64,22 +64,43 @@ export class IntegrationMapSyncScreenshotHandler implements ICommandHandler<Inte
 			);
 		}
 
-		// Update the existing screenshot with the new data
-		await this._commandBus.execute(
-			new ScreenshotUpdateCommand(
-				Object.assign(
-					{},
-					{
-						id: screenshotMap.gauzyId,
-						recordedAt: recorded_at,
-						activityTimestamp: time_slot,
-						file: full_url,
-						thumb: thumb_url,
-						employeeId
-					}
-				)
+		// Update the existing screenshot with the new data; its update errors reach the caller
+		const updated = await this._commandBus
+			.execute(
+				new ScreenshotUpdateCommand({
+					id: screenshotMap.gauzyId,
+					recordedAt: recorded_at,
+					activityTimestamp: time_slot,
+					file: full_url,
+					thumb: thumb_url,
+					employeeId
+				})
 			)
+			.catch(nullIfNotFound);
+		if (updated) {
+			return screenshotMap;
+		}
+
+		// The mapped screenshot was deleted here: create it again and point the EXISTING map at it
+		const gauzyScreenshot = await this._commandBus.execute(
+			new ScreenshotCreateCommand({
+				file: full_url,
+				thumb: thumb_url,
+				recordedAt: recorded_at,
+				activityTimestamp: time_slot,
+				employeeId,
+				organizationId
+			})
 		);
-		return screenshotMap;
+		return await this._commandBus.execute(
+			new IntegrationMapSyncEntityCommand({
+				id: screenshotMap.id,
+				gauzyId: gauzyScreenshot.id,
+				integrationId,
+				sourceId,
+				entity: IntegrationEntity.SCREENSHOT,
+				organizationId
+			})
+		);
 	}
 }

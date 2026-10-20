@@ -55,8 +55,25 @@ export class IntegrationMapSyncProjectHandler implements ICommandHandler<Integra
 			);
 		}
 
-		// Update the project if it exists
-		await this._commandBus.execute(new OrganizationProjectUpdateCommand(projectMap.gauzyId, entity));
-		return projectMap;
+		// Update the mapped project; its update errors reach the caller
+		const updated = await this._commandBus
+			.execute(new OrganizationProjectUpdateCommand(projectMap.gauzyId, entity))
+			.catch(nullIfNotFound);
+		if (updated) {
+			return projectMap;
+		}
+
+		// The mapped project was deleted here: create it again and point the EXISTING map at it
+		const project = await this._commandBus.execute(new OrganizationProjectCreateCommand(entity));
+		return await this._commandBus.execute(
+			new IntegrationMapSyncEntityCommand({
+				id: projectMap.id,
+				gauzyId: project.id,
+				integrationId,
+				sourceId,
+				entity: IntegrationEntity.PROJECT,
+				organizationId
+			})
+		);
 	}
 }
