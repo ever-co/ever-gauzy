@@ -103,15 +103,20 @@ export class ProjectActivityComponent implements OnChanges {
 				})
 			);
 
-		// The project's own log, its tasks (for their titles), and its task logs — each on its own.
-		const [projectLogs, tasks, taskLogs] = await Promise.allSettled([
-			logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
+		// The project's tasks first (their titles, and the tasks a log that records no project belongs to), then the
+		// project's own log and its task logs — each on its own.
+		const [tasks] = await Promise.allSettled([
 			firstValueFrom(
 				this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
 					params: toParams({ where: { organizationId, tenantId, projectId } })
 				})
-			),
-			this.fetchTaskLogs(logs)
+			)
+		]);
+		if (sequence !== this._sequence) return;
+		const taskIds = new Set((tasks.status === 'fulfilled' ? tasks.value?.items || [] : []).map((task) => task.id));
+		const [projectLogs, taskLogs] = await Promise.allSettled([
+			logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
+			this.fetchTaskLogs(logs, taskIds)
 		]);
 		if (sequence !== this._sequence) return;
 
@@ -149,7 +154,8 @@ export class ProjectActivityComponent implements OnChanges {
 	 * that fails after the first ends the read and marks it partial.
 	 */
 	private async fetchTaskLogs(
-		logs: (entity: BaseEntityEnum, extra: Record<string, unknown>) => Promise<IPagination<IActivityLog>>
+		logs: (entity: BaseEntityEnum, extra: Record<string, unknown>) => Promise<IPagination<IActivityLog>>,
+		taskIds: ReadonlySet<string>
 	): Promise<{ items: IActivityLog[]; partial: boolean }> {
 		const items: IActivityLog[] = [];
 		for (let page = 1; page <= TASK_LOG_PAGES && items.length < FEED_LIMIT; page++) {
@@ -161,7 +167,7 @@ export class ProjectActivityComponent implements OnChanges {
 				return { items, partial: true };
 			}
 			const pageItems = result?.items || [];
-			items.push(...pageItems.filter((log) => this.belongsToProject(log)));
+			items.push(...pageItems.filter((log) => this.belongsToProject(log, taskIds)));
 			if (pageItems.length < LOG_PAGE_SIZE) break;
 			// The page budget ran out before the feed filled and more logs exist: the feed is a partial read,
 			// not "no activity".
@@ -175,9 +181,10 @@ export class ProjectActivityComponent implements OnChanges {
 	/**
 	 * Whether a task's event happened in this project, by the project the event itself records — the
 	 * task's project then (its snapshot), or either side of a move (its previous and updated values) —
-	 * not by where the task is now.
+	 * not by where the task is now. Only an event that records no project at all goes by the task's
+	 * current project (one of `taskIds`).
 	 */
-	private belongsToProject(log: IActivityLog): boolean {
+	private belongsToProject(log: IActivityLog, taskIds: ReadonlySet<string>): boolean {
 		const projectIds = new Set<string>();
 		const add = (value: unknown) => {
 			if (typeof value === 'string' && value) projectIds.add(value);
@@ -190,6 +197,9 @@ export class ProjectActivityComponent implements OnChanges {
 				add(entry?.project?.id);
 			}
 		}
+		// A partial update that does not touch the project (only the estimate, say) records no project at all, and
+		// neither do older logs: such an event belongs to the project its task is in now.
+		if (projectIds.size === 0) return taskIds.has(log.entityId);
 		return projectIds.has(this.projectId);
 	}
 
