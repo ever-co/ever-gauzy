@@ -3275,6 +3275,19 @@
 			"CONTINUE": "המשך",
 			"SKIP": "דלג",
 			"CREATE": "צור ארגון"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "חלקי הפרויקט",
+			"DETAILS": "פרטים",
+			"LOGO": "לוגו הפרויקט",
+			"LOGO_HINT": "אופציונלי. לחצו על הלוגו כדי להעלות תמונה ריבועית.",
+			"PEOPLE": "אנשים",
+			"TIMELINE": "לוח זמנים",
+			"APPEARANCE": "מראה",
+			"OPTIONS": "אפשרויות",
+			"REPOSITORY": "מאגר",
+			"TASK_SYNC": "סנכרון משימות",
+			"CREATE_SUBTITLE": "הגדירו פרויקט חדש עם האנשים, לוח הזמנים והחיוב שלו."
 		}
 	},
 	"CONTACTS_PAGE": {

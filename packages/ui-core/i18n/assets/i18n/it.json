@@ -3247,6 +3247,19 @@
 			"CONTINUE": "Continua",
 			"SKIP": "Salta",
 			"CREATE": "Crea organizzazione"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Sezioni del progetto",
+			"DETAILS": "Dettagli",
+			"LOGO": "Logo del progetto",
+			"LOGO_HINT": "Facoltativo. Fai clic sul logo per caricare un'immagine quadrata.",
+			"PEOPLE": "Persone",
+			"TIMELINE": "Tempistiche",
+			"APPEARANCE": "Aspetto",
+			"OPTIONS": "Opzioni",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Sincronizzazione attività",
+			"CREATE_SUBTITLE": "Configura un nuovo progetto con persone, tempistiche e fatturazione."
 		}
 	},
 	"CONTACTS_PAGE": {

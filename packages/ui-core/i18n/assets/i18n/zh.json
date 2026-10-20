@@ -3247,6 +3247,19 @@
 			"CONTINUE": "继续",
 			"SKIP": "跳过",
 			"CREATE": "创建组织"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "项目分区",
+			"DETAILS": "详情",
+			"LOGO": "项目标志",
+			"LOGO_HINT": "可选。点击标志上传一张方形图片。",
+			"PEOPLE": "人员",
+			"TIMELINE": "时间线",
+			"APPEARANCE": "外观",
+			"OPTIONS": "选项",
+			"REPOSITORY": "代码仓库",
+			"TASK_SYNC": "任务同步",
+			"CREATE_SUBTITLE": "设置新项目的人员、时间线和计费。"
 		}
 	},
 	"CONTACTS_PAGE": {

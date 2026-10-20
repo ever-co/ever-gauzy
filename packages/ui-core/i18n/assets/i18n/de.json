@@ -3243,6 +3243,19 @@
 			"CONTINUE": "Weiter",
 			"SKIP": "Überspringen",
 			"CREATE": "Organisation erstellen"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Projektbereiche",
+			"DETAILS": "Details",
+			"LOGO": "Projektlogo",
+			"LOGO_HINT": "Optional. Klicken Sie auf das Logo, um ein quadratisches Bild hochzuladen.",
+			"PEOPLE": "Personen",
+			"TIMELINE": "Zeitplan",
+			"APPEARANCE": "Darstellung",
+			"OPTIONS": "Optionen",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Aufgabensynchronisierung",
+			"CREATE_SUBTITLE": "Legen Sie ein neues Projekt mit Personen, Zeitplan und Abrechnung an."
 		}
 	},
 	"CONTACTS_PAGE": {

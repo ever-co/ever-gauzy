@@ -3247,6 +3247,19 @@
 			"CONTINUE": "Continuar",
 			"SKIP": "Pular",
 			"CREATE": "Criar organização"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Seções do projeto",
+			"DETAILS": "Detalhes",
+			"LOGO": "Logotipo do projeto",
+			"LOGO_HINT": "Opcional. Clique no logotipo para enviar uma imagem quadrada.",
+			"PEOPLE": "Pessoas",
+			"TIMELINE": "Cronograma",
+			"APPEARANCE": "Aparência",
+			"OPTIONS": "Opções",
+			"REPOSITORY": "Repositório",
+			"TASK_SYNC": "Sincronização de tarefas",
+			"CREATE_SUBTITLE": "Configure um novo projeto com suas pessoas, cronograma e faturamento."
 		}
 	},
 	"CONTACTS_PAGE": {

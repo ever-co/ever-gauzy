@@ -3246,6 +3246,19 @@
 			"CONTINUE": "Dalej",
 			"SKIP": "Pomiń",
 			"CREATE": "Utwórz organizację"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Sekcje projektu",
+			"DETAILS": "Szczegóły",
+			"LOGO": "Logo projektu",
+			"LOGO_HINT": "Opcjonalnie. Kliknij logo, aby przesłać kwadratowy obraz.",
+			"PEOPLE": "Osoby",
+			"TIMELINE": "Harmonogram",
+			"APPEARANCE": "Wygląd",
+			"OPTIONS": "Opcje",
+			"REPOSITORY": "Repozytorium",
+			"TASK_SYNC": "Synchronizacja zadań",
+			"CREATE_SUBTITLE": "Utwórz nowy projekt z jego osobami, harmonogramem i rozliczeniami."
 		}
 	},
 	"CONTACTS_PAGE": {

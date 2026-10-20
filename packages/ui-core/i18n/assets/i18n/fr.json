@@ -3248,6 +3248,19 @@
 			"CONTINUE": "Continuer",
 			"SKIP": "Passer",
 			"CREATE": "Créer l'organisation"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Sections du projet",
+			"DETAILS": "Détails",
+			"LOGO": "Logo du projet",
+			"LOGO_HINT": "Facultatif. Cliquez sur le logo pour importer une image carrée.",
+			"PEOPLE": "Personnes",
+			"TIMELINE": "Calendrier",
+			"APPEARANCE": "Apparence",
+			"OPTIONS": "Options",
+			"REPOSITORY": "Dépôt",
+			"TASK_SYNC": "Synchronisation des tâches",
+			"CREATE_SUBTITLE": "Créez un nouveau projet avec ses personnes, son calendrier et sa facturation."
 		}
 	},
 	"CONTACTS_PAGE": {

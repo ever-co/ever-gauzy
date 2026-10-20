@@ -3079,6 +3079,19 @@
 			"CONTINUE": "Continue",
 			"SKIP": "Skip",
 			"CREATE": "Create organization"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Project sections",
+			"DETAILS": "Details",
+			"LOGO": "Project logo",
+			"LOGO_HINT": "Optional. Click the logo to upload a square image.",
+			"PEOPLE": "People",
+			"TIMELINE": "Timeline",
+			"APPEARANCE": "Appearance",
+			"OPTIONS": "Options",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Task sync",
+			"CREATE_SUBTITLE": "Set up a new project with its people, timeline and billing."
 		}
 	},
 	"CONTACTS_PAGE": {

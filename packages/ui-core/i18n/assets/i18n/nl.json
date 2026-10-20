@@ -3247,6 +3247,19 @@
 			"CONTINUE": "Doorgaan",
 			"SKIP": "Overslaan",
 			"CREATE": "Organisatie aanmaken"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Projectonderdelen",
+			"DETAILS": "Details",
+			"LOGO": "Projectlogo",
+			"LOGO_HINT": "Optioneel. Klik op het logo om een vierkante afbeelding te uploaden.",
+			"PEOPLE": "Mensen",
+			"TIMELINE": "Tijdlijn",
+			"APPEARANCE": "Weergave",
+			"OPTIONS": "Opties",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Taaksynchronisatie",
+			"CREATE_SUBTITLE": "Stel een nieuw project in met de mensen, tijdlijn en facturering."
 		}
 	},
 	"CONTACTS_PAGE": {
