@@ -461,9 +461,13 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 
 	// ─── Drag and drop ───────────────────────────────────────────
 
-	/** Only a drag that carries files, onto a panel that may upload, is a drop target. */
+	/**
+	 * Only a drag that carries files, onto a panel that may upload and is not already
+	 * uploading, is a drop target. During a batch the upload buttons are disabled, and
+	 * `uploadFiles` would drop the files without a word — so the browser refuses the drop.
+	 */
 	private acceptsDrop(event: DragEvent): boolean {
-		return !this.readonly && this.canUpload && !!event.dataTransfer?.types?.includes('Files');
+		return !this.readonly && this.canUpload && !this.uploading && !!event.dataTransfer?.types?.includes('Files');
 	}
 
 	onDragEnter(event: DragEvent): void {

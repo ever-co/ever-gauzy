@@ -378,6 +378,21 @@ describe('DocumentLinksPanelComponent — record-side Documents panel (spec 00 �
 			expect(uploadFiles).toHaveBeenCalledWith(dropped);
 		});
 
+		it('is no drop target while a batch is uploading — the files would be dropped silently', () => {
+			const { panel } = createPanel();
+			const uploadFiles = jest.spyOn(panel, 'uploadFiles');
+			panel.uploading = true;
+			const drag = { preventDefault: jest.fn(), dataTransfer: { types: ['Files'], files: [] } } as unknown as DragEvent;
+
+			panel.onDragEnter(drag);
+			panel.onDrop(drag);
+
+			expect(panel.dragActive).toBe(false);
+			// Not prevented, so the browser refuses the drop instead of the panel swallowing it.
+			expect(drag.preventDefault).not.toHaveBeenCalled();
+			expect(uploadFiles).not.toHaveBeenCalled();
+		});
+
 		it('is no drop target on a read-only host', () => {
 			const { panel } = createPanel();
 			panel.readonly = true;
