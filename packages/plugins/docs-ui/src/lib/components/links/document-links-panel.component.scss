@@ -10,7 +10,12 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	display: block;
 }
 
+// A flex column so that, when a host caps its height, the header stays and the
+// list scrolls. Hosts that leave the height alone see no difference.
 .docs-links-panel {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
 	background-color: var(--gauzy-card-1);
 	border-radius: nb-theme(border-radius);
 	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
@@ -19,6 +24,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 /* ── Header ───────────────────────────────────────────────────────────────── */
 
 .docs-links-panel-header {
+	flex-shrink: 0;
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
@@ -85,8 +91,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 /* ── Body ─────────────────────────────────────────────────────────────────── */
 
 .docs-links-panel-body {
+	flex: 1 1 auto;
 	min-height: 3.5rem;
 	padding: 0.5rem 1.5rem;
+	overflow-y: auto;
+	overscroll-behavior: contain;
 }
 
 // The kind icon: a small tinted tile, shared by the rows and the empty state.

@@ -18,8 +18,13 @@ $gap-sm: 0.5rem;
 
 $hairline: 1px solid var(--gauzy-border-default-color);
 
+// Given a bounded height by its page, the tabs and the action bar stay put and
+// only the open section scrolls. Without one (a stacked narrow layout) the
+// panel takes its content's height and the page scrolls instead.
 :host {
-	display: block;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
 
 	// Filled inputs, selects and labels, as in every other Gauzy form
 	@include input-appearance($default-height, var(--gauzy-sidebar-background-4));
@@ -27,7 +32,9 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 .project-form {
 	display: flex;
+	flex: 1 1 auto;
 	flex-direction: column;
+	min-height: 0;
 	background-color: var(--gauzy-card-1);
 	border-radius: nb-theme(border-radius);
 	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
@@ -36,6 +43,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
 .tab-row {
+	flex-shrink: 0;
 	padding: 0 $gap-xl;
 	border-bottom: $hairline;
 	overflow-x: auto;
@@ -100,9 +108,15 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 /* ── Panes and sections ───────────────────────────────────────────────────── */
 
+// The scrolling region. `scrollbar-gutter` keeps the fields from shifting
+// sideways when a longer section brings the scrollbar in.
 .panes {
-	min-height: 22rem;
+	flex: 1 1 auto;
+	min-height: 12rem;
 	padding: $gap-xl;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
 }
 
 .pane {
@@ -347,10 +361,12 @@ nb-toggle ::ng-deep {
 
 /* ── Action bar ───────────────────────────────────────────────────────────── */
 
+// Sticky as well, for the stacked layout where the page scrolls rather than the panes.
 .form-footer {
 	position: sticky;
 	bottom: 0;
 	z-index: 1;
+	flex-shrink: 0;
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
