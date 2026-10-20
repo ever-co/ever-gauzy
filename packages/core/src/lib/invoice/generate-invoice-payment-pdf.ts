@@ -22,7 +22,8 @@ export async function generateInvoicePaymentPdfDefinition(
 			// The column is headed "Payment Date": print the payment's own date, not the invoice due date.
 			formatInvoiceDay(payment.paymentDate ?? payment.createdAt, organization),
 			amount(payment.amount),
-			`${payment.createdByUser.name}`,
+			// The recording user is optional (nullable, or not loaded once that user is soft-deleted)
+			payment.createdByUser?.name ?? '',
 			`${payment.note ? payment.note : '-'}`,
 			`${payment.overdue ? translatedText.overdue : translatedText.onTime}`
 		];
@@ -71,7 +72,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.receivedFrom}:\n`
 							},
-							`${organizationContact.name}`
+							organizationContact?.name ?? ''
 						]
 					}
 				]
