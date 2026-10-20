@@ -14,6 +14,21 @@ import {
 import { ActivepiecesMcpUpdateDto } from './dto';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
 
+/**
+ * The Activepieces URL of one MCP server. The id is the caller's, from the route, and Express decodes `%2F` in a route
+ * parameter: unencoded, `..%2F..%2F<path>` turned the update and the token rotation into POSTs to any other path of the
+ * Activepieces API, under the installation's key when the tenant has none of its own.
+ *
+ * @param serverId - The MCP server id.
+ * @throws BadRequestException for an empty id.
+ */
+export function mcpServerUrl(serverId: string): string {
+	if (!serverId?.trim()) {
+		throw new BadRequestException('serverId is required');
+	}
+	return `${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`;
+}
+
 @Injectable()
 export class ActivepiecesMcpService {
 	private readonly logger = new Logger(ActivepiecesMcpService.name);
@@ -58,13 +73,7 @@ export class ActivepiecesMcpService {
 	 */
 	async getMcpServer(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
-			if (!serverId?.trim()) {
-				throw new BadRequestException('serverId is required');
-			}
-			return await this.request<IActivepiecesMcpServer>(
-				'get',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`
-			);
+			return await this.request<IActivepiecesMcpServer>('get', mcpServerUrl(serverId));
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces MCP server:', error);
 			throw new HttpException(
@@ -79,11 +88,7 @@ export class ActivepiecesMcpService {
 	 */
 	async updateMcpServer(serverId: string, updateData: ActivepiecesMcpUpdateDto): Promise<IActivepiecesMcpServer> {
 		try {
-			const result = await this.request<IActivepiecesMcpServer>(
-				'post',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`,
-				updateData
-			);
+			const result = await this.request<IActivepiecesMcpServer>('post', mcpServerUrl(serverId), updateData);
 
 			this.logger.log(`Successfully updated ActivePieces MCP server: ${result.id}`);
 			return result;
@@ -103,7 +108,7 @@ export class ActivepiecesMcpService {
 		try {
 			const result = await this.request<IActivepiecesMcpServer>(
 				'post',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}/rotate`,
+				`${mcpServerUrl(serverId)}/rotate`,
 				{} // No body required for rotate
 			);
 
