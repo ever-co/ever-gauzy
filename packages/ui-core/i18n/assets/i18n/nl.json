@@ -6859,6 +6859,40 @@
 		"YOUR_TIME_CAPTION": "Jouw tijd aan dit project · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Tijd van teamleden aan dit project · {{ range }}",
 		"BUDGET_USED": "{{ used }} van {{ budget }} gebruikt",
-		"OVER_BUDGET": "{{ value }} boven budget"
+		"OVER_BUDGET": "{{ value }} boven budget",
+		"TOTAL_TRACKED": "Totaal geregistreerd",
+		"TOTAL_TRACKED_HINT": "Sinds de start van het project",
+		"THIS_PERIOD": "Deze periode",
+		"VS_PREVIOUS": "{{ value }} t.o.v. vorige periode",
+		"TIMELINE": "Tijdlijn",
+		"NO_DATES": "Geen datums ingesteld",
+		"STARTS_IN": "Start over {{ count }} dagen",
+		"STARTS_TOMORROW": "Start morgen",
+		"FINISHED": "Afgerond",
+		"TEAM": "Team",
+		"NO_MEMBERS": "Nog geen leden in dit project",
+		"MODULES": "Modules",
+		"MODULE_TASK": "1 taak",
+		"MODULE_TASKS": "{{ count }} taken"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overzicht",
+			"BOARD": "Bord",
+			"ACTIVITY": "Activiteit"
+		},
+		"BOARD": "Bord",
+		"COLUMN_EMPTY": "Geen taken",
+		"ACTIVITY": "Activiteit",
+		"ACTIVITY_CAPTION": "Recente wijzigingen aan het project en zijn taken",
+		"NO_ACTIVITY": "Nog geen activiteit",
+		"ACTIVITY_PARTIAL": "Een deel van de activiteit kon niet worden geladen, dus deze lijst is mogelijk onvolledig.",
+		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
+		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
+		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",
+		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
+		"SOMEONE": "Iemand",
+		"TODAY": "Vandaag",
+		"YESTERDAY": "Gisteren"
 	}
 }

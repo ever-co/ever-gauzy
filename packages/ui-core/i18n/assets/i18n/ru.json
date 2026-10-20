@@ -6877,6 +6877,40 @@
 		"YOUR_TIME_CAPTION": "Ваше время по этому проекту · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Время участников команды по этому проекту · {{ range }}",
 		"BUDGET_USED": "Использовано {{ used }} из {{ budget }}",
-		"OVER_BUDGET": "Превышение бюджета на {{ value }}"
+		"OVER_BUDGET": "Превышение бюджета на {{ value }}",
+		"TOTAL_TRACKED": "Всего учтено",
+		"TOTAL_TRACKED_HINT": "С начала проекта",
+		"THIS_PERIOD": "Этот период",
+		"VS_PREVIOUS": "{{ value }} к предыдущему периоду",
+		"TIMELINE": "Сроки",
+		"NO_DATES": "Даты не заданы",
+		"STARTS_IN": "Начнётся через {{ count }} дн.",
+		"STARTS_TOMORROW": "Начнётся завтра",
+		"FINISHED": "Завершён",
+		"TEAM": "Команда",
+		"NO_MEMBERS": "В этом проекте пока нет участников",
+		"MODULES": "Модули",
+		"MODULE_TASK": "1 задача",
+		"MODULE_TASKS": "Задач: {{ count }}"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Обзор",
+			"BOARD": "Доска",
+			"ACTIVITY": "Активность"
+		},
+		"BOARD": "Доска",
+		"COLUMN_EMPTY": "Нет задач",
+		"ACTIVITY": "Активность",
+		"ACTIVITY_CAPTION": "Последние изменения проекта и его задач",
+		"NO_ACTIVITY": "Пока нет активности",
+		"ACTIVITY_PARTIAL": "Не удалось загрузить часть активности, поэтому список может быть неполным.",
+		"ACTIVITY_CREATED": "{{ actor }} создал(а)",
+		"ACTIVITY_UPDATED": "{{ actor }} изменил(а)",
+		"ACTIVITY_DELETED": "{{ actor }} удалил(а)",
+		"ACTIVITY_FIELDS": "Изменено: {{ fields }}",
+		"SOMEONE": "Кто-то",
+		"TODAY": "Сегодня",
+		"YESTERDAY": "Вчера"
 	}
 }

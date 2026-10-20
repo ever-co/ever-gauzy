@@ -5899,6 +5899,40 @@
 		"YOUR_TIME_CAPTION": "Your time on this project · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Team members' time on this project · {{ range }}",
 		"BUDGET_USED": "{{ used }} of {{ budget }} used",
-		"OVER_BUDGET": "{{ value }} over budget"
+		"OVER_BUDGET": "{{ value }} over budget",
+		"TOTAL_TRACKED": "Total tracked",
+		"TOTAL_TRACKED_HINT": "Since the project started",
+		"THIS_PERIOD": "This period",
+		"VS_PREVIOUS": "{{ value }} vs previous period",
+		"TIMELINE": "Timeline",
+		"NO_DATES": "No dates set",
+		"STARTS_IN": "Starts in {{ count }} days",
+		"STARTS_TOMORROW": "Starts tomorrow",
+		"FINISHED": "Finished",
+		"TEAM": "Team",
+		"NO_MEMBERS": "No members on this project yet",
+		"MODULES": "Modules",
+		"MODULE_TASK": "1 task",
+		"MODULE_TASKS": "{{ count }} tasks"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overview",
+			"BOARD": "Board",
+			"ACTIVITY": "Activity"
+		},
+		"BOARD": "Board",
+		"COLUMN_EMPTY": "No tasks",
+		"ACTIVITY": "Activity",
+		"ACTIVITY_CAPTION": "Recent changes to the project and its tasks",
+		"NO_ACTIVITY": "No activity yet",
+		"ACTIVITY_PARTIAL": "Some activity could not be loaded, so this list may be incomplete.",
+		"ACTIVITY_CREATED": "{{ actor }} created",
+		"ACTIVITY_UPDATED": "{{ actor }} updated",
+		"ACTIVITY_DELETED": "{{ actor }} deleted",
+		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"SOMEONE": "Someone",
+		"TODAY": "Today",
+		"YESTERDAY": "Yesterday"
 	}
 }
