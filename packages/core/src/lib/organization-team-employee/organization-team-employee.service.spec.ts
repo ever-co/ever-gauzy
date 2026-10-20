@@ -5,6 +5,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 
@@ -26,9 +27,10 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			id: 'row-manager',
 			employeeId: 'manager-employee',
 			roleId: 'role-manager',
-			role: { name: RolesEnum.MANAGER }
+			role: { name: RolesEnum.MANAGER },
+			isManager: true
 		},
-		{ id: 'row-member', employeeId: 'member-employee', roleId: null, role: null }
+		{ id: 'row-member', employeeId: 'member-employee', roleId: null, role: null, isManager: false }
 	].map((row) => ({ ...row, organizationTeamId: teamId, organizationId: manager.organizationId }));
 
 	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
@@ -147,6 +149,49 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 				id: { id: 'row-member', tenantId: manager.tenantId },
 				changes: { role: { id: 'role-manager' }, isManager: true }
 			}
+		]);
+	});
+
+	it('sets the manager flag on a manager whose role is already MANAGER but whose flag was never set', async () => {
+		// Rows written by the team create and edit before the flag was set carry the MANAGER role only.
+		const managerRow = rows.find((row) => row.id === 'row-manager');
+		managerRow.isManager = false;
+
+		try {
+			await editTeam(['manager-employee'], ['member-employee']);
+		} finally {
+			managerRow.isManager = true;
+		}
+
+		expect(updated).toContainEqual({
+			id: { id: 'row-manager', tenantId: manager.tenantId },
+			changes: { role: { id: 'role-manager' }, isManager: true }
+		});
+	});
+
+	it('adds a new manager with the manager flag set, and a new member without it', async () => {
+		const saved: Record<string, unknown>[] = [];
+		jest.spyOn(TenantAwareCrudService.prototype, 'saveMany').mockImplementation(async (entities) => {
+			saved.push(...(entities as Record<string, unknown>[]));
+			return entities as never;
+		});
+
+		await requestStorage.run(new Map(), () =>
+			service.updateOrganizationTeam(
+				teamId,
+				manager.organizationId,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				[{ id: 'new-manager' }, { id: 'new-member' }] as any,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				{ id: 'role-manager' } as any,
+				['manager-employee', 'new-manager'],
+				['member-employee', 'new-member']
+			)
+		);
+
+		expect(saved).toEqual([
+			expect.objectContaining({ employeeId: 'new-manager', isManager: true, roleId: 'role-manager' }),
+			expect.objectContaining({ employeeId: 'new-member', isManager: false, roleId: null })
 		]);
 	});
 

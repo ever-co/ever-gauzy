@@ -246,6 +246,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						employee: { id: employeeId },
 						organization: { id: organizationId },
 						tenant: { id: tenantId },
+						isManager: managerIdsSet.has(employeeId),
 						role: managerIdsSet.has(employeeId) ? managerRole : null
 					})
 			);

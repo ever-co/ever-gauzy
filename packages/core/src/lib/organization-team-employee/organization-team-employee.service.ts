@@ -116,8 +116,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? role : null;
 
-				// Only update if the role has changed
-				if (newRole?.id !== member.roleId) {
+				// Only update if the role or the manager flag has changed
+				if (newRole?.id !== member.roleId || !!member.isManager !== isManager) {
 					await this.withoutEmployeeFilter(() =>
 						super.update(member.id, {
 							role: newRole,
@@ -139,6 +139,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
+						isManager: managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? role.id : null
 					})
 			);
