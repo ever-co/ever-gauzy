@@ -42,8 +42,9 @@ describe('TimesheetFirstOrCreateHandler soft-deleted timesheet (MikroORM)', () =
 			client: 'better-sqlite3',
 			connection: { filename: ':memory:' },
 			useNullAsDefault: true,
+			// `userParams` is read by knex at runtime but missing from its `Config` type (only `TransactionConfig` has it)
 			userParams: { schema: 'main' }
-		});
+		} as Knex.Config);
 		await db.schema.createTable('timesheet', (table) => {
 			table.string('id').primary();
 			table.string('tenantId');
