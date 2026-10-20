@@ -1,6 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnChanges, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	EventEmitter,
+	Input,
+	OnChanges,
+	Output,
+	type SimpleChanges,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { Router } from '@angular/router';
 import {
 	NbButtonModule,
@@ -26,6 +34,19 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DOCS_PAGE_LINK, DOCS_UPLOAD_ACCEPT } from '../../docs.constants';
 import { DocumentsService } from '../../services/documents.service';
 import { DocumentAttachDialogComponent } from './document-attach-dialog.component';
+
+/** The broad family of an attached document, for its icon and tint. */
+export type DocumentLinkFamily = 'page' | 'pdf' | 'image' | 'video' | 'audio' | 'sheet' | 'file';
+
+const DOCUMENT_LINK_ICONS: Record<DocumentLinkFamily, string> = {
+	page: 'file-text-outline',
+	pdf: 'file-outline',
+	image: 'image-outline',
+	video: 'film-outline',
+	audio: 'headphones-outline',
+	sheet: 'grid-outline',
+	file: 'attach-outline'
+};
 
 /**
  * The record-side **Documents** panel (`00-product-spec.md` §6.14 R-LNK-02,
@@ -103,8 +124,14 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	public links: IDocumentLink[] = [];
 	public loading = false;
 	public loadError = false;
-	/** Set while an upload is in flight — the button spins instead of queueing a second file. */
+	/** Set while an upload batch is in flight — the upload targets are disabled until it ends. */
 	public uploading = false;
+	/** Where an upload batch has got to, for the "Uploading 2 of 5…" line; null when idle. */
+	public uploadProgress: { done: number; total: number } | null = null;
+	/** True while files are dragged over the panel, which then shows its drop target. */
+	public dragActive = false;
+	/** `dragenter`/`dragleave` fire for every child crossed; the depth tells a real leave from those. */
+	private dragDepth = 0;
 
 	public readonly permissions = PermissionsEnum;
 	/** Accept list for the file input (UX only — the server sniffs and re-validates). */
@@ -203,9 +230,41 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		return link?.document?.name || metadata.label || String(link?.documentId ?? '');
 	}
 
-	/** Eva icon per document kind — pages and files read very differently in a list. */
+	/**
+	 * The broad family of a document, from its kind, MIME type and file extension.
+	 * Drives the row's icon and tint.
+	 */
+	familyOf(link: IDocumentLink): DocumentLinkFamily {
+		const document = link?.document;
+		if (document?.kind === DocumentKindEnum.PAGE) return 'page';
+		const mime = (document?.mimeType ?? '').toLowerCase();
+		const ext = this.extensionOf(link);
+		if (mime === 'application/pdf' || ext === 'pdf') return 'pdf';
+		if (mime.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) return 'image';
+		if (mime.startsWith('video/')) return 'video';
+		if (mime.startsWith('audio/')) return 'audio';
+		if (mime.includes('spreadsheet') || mime.includes('excel') || ['xlsx', 'xls', 'ods', 'csv'].includes(ext)) {
+			return 'sheet';
+		}
+		return 'file';
+	}
+
+	/** Eva icon per family — a picture, a PDF and a page read very differently in a list. */
 	iconOf(link: IDocumentLink): string {
-		return link?.document?.kind === DocumentKindEnum.PAGE ? 'file-text-outline' : 'attach-outline';
+		return DOCUMENT_LINK_ICONS[this.familyOf(link)];
+	}
+
+	/** Short type label for the row's meta line: the extension (`PNG`), or `Page` for a page. */
+	typeOf(link: IDocumentLink): string {
+		if (this.familyOf(link) === 'page') return '';
+		const ext = this.extensionOf(link);
+		return ext && ext.length <= 5 ? ext.toUpperCase() : '';
+	}
+
+	private extensionOf(link: IDocumentLink): string {
+		const document = link?.document;
+		const name = document?.originalFilename || document?.name || '';
+		return name.includes('.') ? name.split('.').pop()!.toLowerCase() : '';
 	}
 
 	/** `123 KB`, or an empty string when there are no bytes (a PAGE has none). */
@@ -279,9 +338,9 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		}
 	}
 
-	/** Picks an existing document and attaches it to this record. */
+	/** Picks one or more existing documents and attaches them to this record. */
 	async attachExisting(): Promise<void> {
-		const attached: IDocumentLink | null = await firstValueFrom(
+		const attached: IDocumentLink[] | null = await firstValueFrom(
 			this.dialogService.open(DocumentAttachDialogComponent, {
 				context: {
 					entity: this.entity,
@@ -291,57 +350,147 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 				}
 			}).onClose
 		);
-		if (!attached) return;
-		// Re-read rather than pushing the dialog's row: `POST /links` answers with the
+		if (!attached?.length) return;
+		// Re-read rather than pushing the dialog's rows: `POST /links` answers with the
 		// bare link, no `document` relation, and a row without it renders as an id.
 		await this.load();
 	}
 
+	/** The file being uploaded now, counted from 1 — "Uploading 2 of 5". */
+	get uploadStep(): number {
+		const progress = this.uploadProgress;
+		return progress ? Math.min(progress.done + 1, progress.total) : 0;
+	}
+
+	/** The file picker's `change`: every picked file is uploaded and attached. */
+	async uploadNew(input: HTMLInputElement): Promise<void> {
+		const files = Array.from(input?.files ?? []);
+		// Cleared immediately so picking the same files again still fires `change`.
+		if (input) input.value = '';
+		await this.uploadFiles(files);
+	}
+
 	/**
-	 * Uploads a file and links it in one gesture.
+	 * Uploads files and links each to this record, one after another — a batch of
+	 * large files in parallel would compete for the same connection and finish no
+	 * sooner. One file failing does not stop the rest; the batch ends with a single
+	 * summary instead of a toast per file.
+	 */
+	async uploadFiles(files: File[]): Promise<void> {
+		if (!files.length || this.uploading) return;
+
+		const organization = this.store.selectedOrganization;
+		const total = files.length;
+		const failed: string[] = [];
+		let lastError: unknown = null;
+
+		this.uploading = true;
+		this.uploadProgress = { done: 0, total };
+		try {
+			for (const file of files) {
+				try {
+					await this.uploadAndLink(file, organization);
+				} catch (error) {
+					failed.push(file.name);
+					lastError = error;
+				}
+				this.uploadProgress = { done: this.uploadProgress.done + 1, total };
+			}
+
+			const attached = total - failed.length;
+			if (attached > 0) {
+				this.toastrService.success(
+					attached === 1
+						? this.getTranslation('DOCS.LINKS.TOAST_ADDED')
+						: this.getTranslation('DOCS.LINKS.TOAST_ADDED_MANY', { count: attached })
+				);
+				await this.load();
+			}
+			if (failed.length) {
+				// A single file keeps the server's own reason (type rejected, too large…).
+				this.toastrService.danger(
+					total === 1
+						? lastError
+						: this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', {
+								failed: failed.length,
+								total,
+								names: failed.join(', ')
+						  })
+				);
+			}
+		} finally {
+			this.uploading = false;
+			this.uploadProgress = null;
+		}
+	}
+
+	/**
+	 * Uploads one file and links it to this record.
 	 *
 	 * Deliberately two calls, not one: the upload endpoint knows nothing about
 	 * `DocumentLink`, so the link is created from the accepted document. A failed link
 	 * write is surfaced but the document is kept — deleting a file the user just
 	 * uploaded because a follow-up call failed would be the worse outcome.
 	 */
-	async uploadNew(input: HTMLInputElement): Promise<void> {
-		const file = input?.files?.[0];
-		// Cleared immediately so picking the same file twice still fires `change`.
-		if (input) input.value = '';
-		if (!file || this.uploading) return;
-
-		const organization = this.store.selectedOrganization;
-		this.uploading = true;
-		try {
-			// 🛑 `upload()` is a progress stream: the FIRST emission is the `Sent`
-			// event, not the result. Only the `Response` event carries the document.
-			const document = await firstValueFrom(
-				this.documentsService
-					.upload(file, { organizationId: organization?.id, tenantId: organization?.tenantId })
-					.pipe(
-						filter((event): event is HttpResponse<IDocument> => event.type === HttpEventType.Response),
-						map((event) => event.body)
-					)
-			);
-			if (!document?.id) return;
-
-			await firstValueFrom(
-				this.documentsService.createLink({
-					documentId: document.id as ID,
-					entity: this.entity,
-					entityId: this.entityId,
-					metadata: { label: this.entityLabel ?? '' },
-					organizationId: organization?.id,
-					tenantId: organization?.tenantId
-				})
-			);
-			this.toastrService.success(this.getTranslation('DOCS.LINKS.TOAST_ADDED'));
-			await this.load();
-		} catch (error) {
-			this.toastrService.danger(error);
-		} finally {
-			this.uploading = false;
+	private async uploadAndLink(file: File, organization: { id?: ID; tenantId?: ID } | undefined): Promise<void> {
+		// 🛑 `upload()` is a progress stream: the FIRST emission is the `Sent`
+		// event, not the result. Only the `Response` event carries the document.
+		const document = await firstValueFrom(
+			this.documentsService
+				.upload(file, { organizationId: organization?.id, tenantId: organization?.tenantId })
+				.pipe(
+					filter((event): event is HttpResponse<IDocument> => event.type === HttpEventType.Response),
+					map((event) => event.body)
+				)
+		);
+		if (!document?.id) {
+			throw new Error(this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', { failed: 1, total: 1, names: file.name }));
 		}
+
+		await firstValueFrom(
+			this.documentsService.createLink({
+				documentId: document.id as ID,
+				entity: this.entity,
+				entityId: this.entityId,
+				metadata: { label: this.entityLabel ?? '' },
+				organizationId: organization?.id,
+				tenantId: organization?.tenantId
+			})
+		);
+	}
+
+	// ─── Drag and drop ───────────────────────────────────────────
+
+	/** Only a drag that carries files, onto a panel that may upload, is a drop target. */
+	private acceptsDrop(event: DragEvent): boolean {
+		return !this.readonly && this.canUpload && !!event.dataTransfer?.types?.includes('Files');
+	}
+
+	onDragEnter(event: DragEvent): void {
+		if (!this.acceptsDrop(event)) return;
+		event.preventDefault();
+		this.dragDepth++;
+		this.dragActive = true;
+	}
+
+	onDragOver(event: DragEvent): void {
+		if (!this.acceptsDrop(event)) return;
+		// Without this the browser refuses the drop and opens the file instead.
+		event.preventDefault();
+		if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+	}
+
+	onDragLeave(event: DragEvent): void {
+		if (!this.acceptsDrop(event)) return;
+		this.dragDepth = Math.max(0, this.dragDepth - 1);
+		if (this.dragDepth === 0) this.dragActive = false;
+	}
+
+	onDrop(event: DragEvent): void {
+		if (!this.acceptsDrop(event)) return;
+		event.preventDefault();
+		this.dragDepth = 0;
+		this.dragActive = false;
+		void this.uploadFiles(Array.from(event.dataTransfer?.files ?? []));
 	}
 }
