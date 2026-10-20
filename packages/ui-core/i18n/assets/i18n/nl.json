@@ -3308,9 +3308,14 @@
 		"MEMBER_SINCE": "Lid sinds",
 		"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd",
 		"NO_SKILLS": "Nog geen vaardigheden vermeld",
+		"NO_EMPLOYEES": "Nog geen medewerkers om te tonen",
+		"NO_CLIENTS": "Nog geen klanten om te tonen",
+		"EMPLOYEES_LOAD_FAILED": "Medewerkers konden niet worden geladen.",
+		"CLIENTS_LOAD_FAILED": "Klanten konden niet worden geladen.",
 		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
 		"EDIT": {
 			"NO_AWARDS": "Nog geen onderscheidingen",
+			"NO_LANGUAGES": "Nog geen talen toegevoegd",
 			"ADD_AWARD": "Onderscheiding toevoegen",
 			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
 		}

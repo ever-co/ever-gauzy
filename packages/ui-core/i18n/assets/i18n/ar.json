@@ -3306,9 +3306,14 @@
 		"MEMBER_SINCE": "عضو منذ",
 		"NO_DESCRIPTION": "لم يُضف وصف بعد",
 		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"NO_EMPLOYEES": "لا يوجد موظفون لعرضهم بعد",
+		"NO_CLIENTS": "لا يوجد عملاء لعرضهم بعد",
+		"EMPLOYEES_LOAD_FAILED": "تعذّر تحميل الموظفين.",
+		"CLIENTS_LOAD_FAILED": "تعذّر تحميل العملاء.",
 		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
 		"EDIT": {
 			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"NO_LANGUAGES": "لم تتم إضافة أي لغات بعد",
 			"ADD_AWARD": "إضافة جائزة",
 			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
 		}

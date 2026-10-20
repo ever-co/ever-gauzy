@@ -3307,9 +3307,14 @@
 		"MEMBER_SINCE": "Członek od",
 		"NO_DESCRIPTION": "Nie dodano jeszcze opisu",
 		"NO_SKILLS": "Brak umiejętności",
+		"NO_EMPLOYEES": "Brak pracowników do wyświetlenia",
+		"NO_CLIENTS": "Brak klientów do wyświetlenia",
+		"EMPLOYEES_LOAD_FAILED": "Nie udało się wczytać pracowników.",
+		"CLIENTS_LOAD_FAILED": "Nie udało się wczytać klientów.",
 		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
 		"EDIT": {
 			"NO_AWARDS": "Nie dodano jeszcze nagród",
+			"NO_LANGUAGES": "Nie dodano jeszcze żadnych języków",
 			"ADD_AWARD": "Dodaj nagrodę",
 			"PRIVACY_HELP": "Wybierz, które dane odwiedzający widzą w profilu publicznym."
 		}

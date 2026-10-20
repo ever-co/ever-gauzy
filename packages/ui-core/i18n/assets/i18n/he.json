@@ -3336,9 +3336,14 @@
 		"MEMBER_SINCE": "חבר מאז",
 		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
 		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"NO_EMPLOYEES": "אין עדיין עובדים להצגה",
+		"NO_CLIENTS": "אין עדיין לקוחות להצגה",
+		"EMPLOYEES_LOAD_FAILED": "לא ניתן היה לטעון את העובדים.",
+		"CLIENTS_LOAD_FAILED": "לא ניתן היה לטעון את הלקוחות.",
 		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
 		"EDIT": {
 			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"NO_LANGUAGES": "עדיין לא נוספו שפות",
 			"ADD_AWARD": "הוספת פרס",
 			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
 		}

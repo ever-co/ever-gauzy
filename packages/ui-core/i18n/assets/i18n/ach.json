@@ -3137,9 +3137,14 @@
 		"MEMBER_SINCE": "Member since",
 		"NO_DESCRIPTION": "No description has been added yet",
 		"NO_SKILLS": "No skills listed yet",
+		"NO_EMPLOYEES": "No employees to show yet",
+		"NO_CLIENTS": "No clients to show yet",
+		"EMPLOYEES_LOAD_FAILED": "Employees couldn't be loaded.",
+		"CLIENTS_LOAD_FAILED": "Clients couldn't be loaded.",
 		"VIEW_COMPANY_PROFILE": "View company profile",
 		"EDIT": {
 			"NO_AWARDS": "No awards added yet",
+			"NO_LANGUAGES": "No languages added yet",
 			"ADD_AWARD": "Add award",
 			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
 		}
