@@ -4,7 +4,6 @@ import { Component, EventEmitter, Input, OnChanges, Output, type SimpleChanges, 
 import { Router } from '@angular/router';
 import {
 	NbButtonModule,
-	NbCardModule,
 	NbDialogService,
 	NbIconModule,
 	NbSpinnerModule,
@@ -58,7 +57,6 @@ import { DocumentAttachDialogComponent } from './document-attach-dialog.componen
 		CommonModule,
 		TranslatePipe,
 		NbButtonModule,
-		NbCardModule,
 		NbIconModule,
 		NbSpinnerModule,
 		NbTooltipModule
