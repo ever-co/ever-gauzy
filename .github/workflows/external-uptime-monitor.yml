@@ -191,7 +191,8 @@ jobs:
           # Never fails the run: if Cloudflare cannot be asked, the probe still runs and its report says
           # who refused it. -e is on (see above), so every call that may fail is guarded.
           set -euo pipefail
-          # Outputs: zone_id, and rule_id only when THIS run created the rule (only then may it delete it).
+          # Outputs: zone_id; rule_id only when THIS run created the rule (only then may it delete it);
+          # uncertain=true when a create may have taken effect but could not be confirmed either way.
           NOTE_TAG='ever-gauzy-uptime-monitor'
           API='https://api.cloudflare.com/client/v4'
 
@@ -212,7 +213,11 @@ jobs:
             curl "${args[@]}" "${API}$2"
           }
           # cf_errors: Cloudflare's error list from the last response, for a warning line.
-          cf_errors() { printf '%s' "${RESP:-}" | jq -c '.errors' 2>/dev/null || echo 'no response'; }
+          cf_errors() {
+            local e=''
+            e=$(printf '%s' "${RESP:-}" | jq -c '.errors // empty' 2>/dev/null) || e=''
+            printf '%s' "${e:-no answer from Cloudflare}"
+          }
 
           RESP=''
           if ! RESP=$(cf GET "/zones?name=${CF_ZONE_NAME}") \
@@ -225,11 +230,14 @@ jobs:
           # rule, which would make this whole step unnecessary - so say which plan the zone is on.
           echo "Zone ${CF_ZONE_NAME} plan: $(jq -r '.result[0].plan.name // "unknown"' <<< "${RESP}" 2>/dev/null || echo unknown)"
 
-          # Sweep: only zone-scoped rules carrying OUR note, older than 20 minutes. The owner's own
-          # user/account-level rules show up in this listing too and are never touched.
+          # Sweep: only IP allow rules whose note starts with OUR prefix (only this workflow writes it),
+          # older than 20 minutes. The owner's own rules ("Ruslan Home", rules with no note) show up in
+          # this listing too and never match. Deliberately not keyed on `scope.type`: Cloudflare
+          # documents only "user" / "organization" there, so a zone check could hide our own leftovers.
           if RESP=$(cf GET "/zones/${ZONE_ID}/firewall/access_rules/rules?per_page=100&mode=whitelist&notes=${NOTE_TAG}"); then
-            STALE=$(jq -r --arg tag "${NOTE_TAG}" '.result[]?
-              | select(.scope.type == "zone" and ((.notes // "") | startswith($tag)))
+            STALE=$(jq -r --arg tag "${NOTE_TAG} run " '.result[]?
+              | select(.mode == "whitelist" and .configuration.target == "ip")
+              | select((.notes // "") | startswith($tag))
               | select((.created_on | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) < (now - 1200))
               | .id' <<< "${RESP}" 2>/dev/null || true)
             for id in ${STALE}; do
@@ -251,9 +259,26 @@ jobs:
             # IP Access rules apply within seconds; the probe's own retries cover any remaining lag.
             sleep 5
           else
-            # Most likely "already exists": another rule (ours from an overlapping run, or the owner's)
-            # already allows this IP. Not ours to delete, so no rule_id: the probe simply runs.
-            echo "::warning::Could not create the allow rule for ${EGRESS_IP}: $(cf_errors)"
+            echo "::warning::Could not confirm the allow rule for ${EGRESS_IP}: $(cf_errors)"
+            # A lost or cut-off answer does not mean nothing was created. The note names this run
+            # attempt, so a rule carrying exactly that note is ours: recover its id so the clean-up step
+            # still deletes it. Anything else (e.g. "already exists": another rule, the owner's or an
+            # overlapping run's, allows this IP) is not ours to delete, and the probe simply runs.
+            if LOOK=$(cf GET "/zones/${ZONE_ID}/firewall/access_rules/rules?per_page=100&mode=whitelist&configuration.target=ip&configuration.value=${EGRESS_IP}") \
+                && jq -e '.success == true' <<< "${LOOK}" > /dev/null 2>&1; then
+              RULE_ID=$(jq -r --arg n "${NOTE}" '[.result[]? | select(.notes == $n) | .id][0] // empty' <<< "${LOOK}")
+              if [ -n "${RULE_ID}" ]; then
+                echo "rule_id=${RULE_ID}" >> "$GITHUB_OUTPUT"
+                echo "The create did take effect: recovered allow rule ${RULE_ID}; the clean-up step deletes it."
+                sleep 5
+              else
+                echo "No rule of this run exists, so there is nothing to clean up; probing without one."
+              fi
+            else
+              # Cannot tell either way: make the run red at the end, so a possible leftover is not silent.
+              echo "uncertain=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::Could not check whether the allow rule exists either; the run will be marked failed at the end."
+            fi
           fi
 
       - name: Probe endpoints
@@ -449,7 +474,7 @@ jobs:
         # always(): also when the probe failed, its own tooling broke, or the run was cancelled. Placed
         # straight after the probe so the IP is allowed for as short a time as possible. It never fails
         # itself (that would skip the alert steps below); a rule it could not remove fails the run in
-        # the last step instead, and the next run's sweep removes it.
+        # the last step instead, and a later run's sweep removes it.
         if: always() && steps.cfallow.outputs.rule_id != ''
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_UPTIME_ALLOWLIST_TOKEN }}
@@ -627,11 +652,24 @@ jobs:
           echo "::error::The probe step itself failed - this run is NOT evidence about production. Investigate the runner/tooling, not the endpoints."
 
       - name: Fail the run if the temporary allow rule was left behind
-        # A leftover rule lets one Azure IP past Bot Fight Mode on gauzy.co until the next run's sweep
-        # (rules older than 20 minutes) removes it. Rare, but it must be loud, not a warning in a log.
-        if: always() && steps.cfcleanup.outcome == 'success' && steps.cfcleanup.outputs.removed != 'true'
+        # A leftover rule lets one Azure IP past Bot Fight Mode on gauzy.co until a later run's sweep
+        # removes it. Rare, but it must be loud, not a warning in a log. Two ways to get here: the
+        # clean-up step could not delete the rule, or the allow step could not tell whether its create
+        # took effect at all.
+        if: >-
+          always() && (
+            (steps.cfcleanup.outcome == 'success' && steps.cfcleanup.outputs.removed != 'true')
+            || steps.cfallow.outputs.uncertain == 'true'
+          )
         env:
           RULE_ID: ${{ steps.cfallow.outputs.rule_id }}
         run: |
-          echo "::error::Temporary Cloudflare allow rule ${RULE_ID} on gauzy.co could not be removed. The next run deletes it (sweep of rules older than 20 minutes); to remove it now: Cloudflare dashboard → gauzy.co → Security → WAF → Tools → IP Access Rules, note 'ever-gauzy-uptime-monitor run ${GITHUB_RUN_ID}/…'."
+          # A run's sweep removes only rules older than 20 minutes, and the next scheduled run starts
+          # ~15 minutes after this one, so it is usually the SECOND run after this one (~30 minutes).
+          WHERE="Cloudflare dashboard → gauzy.co → Security → WAF → Tools → IP Access Rules, note 'ever-gauzy-uptime-monitor run ${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}'"
+          if [ -n "${RULE_ID}" ]; then
+            echo "::error::Temporary Cloudflare allow rule ${RULE_ID} on gauzy.co could not be removed. A later run deletes it once it is older than 20 minutes (usually the second scheduled run after this one, ~30 minutes). To remove it now: ${WHERE}."
+          else
+            echo "::error::Could not confirm whether this run created a temporary Cloudflare allow rule on gauzy.co. If it did, a later run deletes it once it is older than 20 minutes (~30 minutes). To check now: ${WHERE}."
+          fi
           exit 1
