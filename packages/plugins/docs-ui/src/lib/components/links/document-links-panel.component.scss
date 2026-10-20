@@ -1,10 +1,12 @@
 @use 'themes' as *;
 
 // A hairline panel in the manner of the project form and the employee page:
-// a compact header row, then a divided list. Paints only with the shared
-// gauzy-* and theme tokens, so every registered theme follows.
+// one compact header row, then a list of documents. It often sits in a narrow
+// column, so the header actions are icon buttons and every row is one target.
+// Paints only with the shared gauzy-* and theme tokens, so every theme follows.
 
 $hairline: 1px solid var(--gauzy-border-default-color);
+$pad-x: 1rem;
 
 :host {
 	display: block;
@@ -13,6 +15,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 // A flex column so that, when a host caps its height, the header stays and the
 // list scrolls. Hosts that leave the height alone see no difference.
 .docs-links-panel {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
@@ -27,17 +30,10 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
-	flex-wrap: wrap;
-	gap: 0.5rem 1rem;
-	padding: 0.75rem 1.5rem;
-	border-bottom: $hairline;
-}
-
-.docs-links-panel-heading {
-	display: flex;
-	align-items: center;
 	gap: 0.5rem;
-	min-width: 0;
+	min-height: 3.25rem;
+	padding: 0.5rem 0.75rem 0.5rem $pad-x;
+	border-bottom: $hairline;
 }
 
 .docs-links-panel-title {
@@ -66,15 +62,23 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 .docs-links-panel-actions {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 0.25rem;
 	margin-inline-start: auto;
+}
 
-	[nbButton] {
-		text-transform: none;
+// Square icon-only buttons
+.docs-links-icon-button {
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	justify-content: center;
+
+	nb-icon {
+		margin: 0 !important;
 	}
 }
 
-/* The real input is driven by the button above it — visually hidden, not
+/* The real input is driven by the upload buttons — visually hidden, not
    `display: none`, so assistive tech can still reach it. */
 .docs-links-panel-file {
 	position: absolute;
@@ -88,50 +92,179 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	border: 0;
 }
 
+/* ── Upload progress and drop target ──────────────────────────────────────── */
+
+.docs-links-panel-progress {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	padding: 0.625rem $pad-x;
+	border-bottom: $hairline;
+}
+
+.docs-links-panel-progress-label {
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-variant-numeric: tabular-nums;
+	color: nb-theme(text-hint-color);
+}
+
+.docs-links-panel-progress-track {
+	display: block;
+	height: 0.25rem;
+	overflow: hidden;
+	border-radius: 0.125rem;
+	background-color: var(--gauzy-sidebar-background-4);
+}
+
+.docs-links-panel-progress-bar {
+	display: block;
+	height: 100%;
+	border-radius: inherit;
+	background-color: nb-theme(color-primary-500);
+	transition: width 0.2s ease-out;
+}
+
+// Covers the whole panel while files are dragged over it. It takes no pointer
+// events, so the drag keeps reporting to the panel underneath.
+.docs-links-panel-drop {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border: 2px dashed nb-theme(color-primary-500);
+	border-radius: nb-theme(border-radius);
+	background-color: var(--gauzy-card-1);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: nb-theme(color-primary-500);
+	pointer-events: none;
+
+	nb-icon {
+		width: 1.75rem;
+		height: 1.75rem;
+		font-size: 1.75rem;
+	}
+}
+
 /* ── Body ─────────────────────────────────────────────────────────────────── */
 
 .docs-links-panel-body {
 	flex: 1 1 auto;
 	min-height: 3.5rem;
-	padding: 0.5rem 1.5rem;
+	padding: 0.5rem;
 	overflow-y: auto;
 	overscroll-behavior: contain;
 }
 
-// The kind icon: a small tinted tile, shared by the rows and the empty state.
+// The family icon: a small tinted tile, shared by the rows and the empty state.
 .docs-links-icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	width: 2rem;
-	height: 2rem;
+	width: 2.25rem;
+	height: 2.25rem;
 	border-radius: nb-theme(border-radius);
 	color: var(--gauzy-text-color-2);
 	background-color: var(--gauzy-sidebar-background-4);
 
 	nb-icon {
-		width: 1rem;
-		height: 1rem;
-		font-size: 1rem;
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
 	}
 }
+
+// A tint per family, so a PDF, a picture and a page tell apart at a glance.
+@mixin tint($color) {
+	color: nb-theme(color-#{$color}-500);
+	background-color: nb-theme(color-#{$color}-transparent-default);
+}
+
+.docs-links-row {
+	&[data-family='pdf'] .docs-links-icon {
+		@include tint(danger);
+	}
+
+	&[data-family='image'] .docs-links-icon {
+		@include tint(info);
+	}
+
+	&[data-family='video'] .docs-links-icon,
+	&[data-family='audio'] .docs-links-icon {
+		@include tint(warning);
+	}
+
+	&[data-family='sheet'] .docs-links-icon {
+		@include tint(success);
+	}
+
+	&[data-family='page'] .docs-links-icon {
+		@include tint(primary);
+	}
+}
+
+/* ── Empty and error states ───────────────────────────────────────────────── */
 
 .docs-links-panel-empty {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	padding: 0.5rem 0;
+	width: 100%;
+	padding: 0.75rem;
+	border: 1px dashed var(--gauzy-border-default-color);
+	border-radius: nb-theme(border-radius);
+	background: none;
+	font: inherit;
 	font-size: 0.8125rem;
 	line-height: 1.25rem;
+	text-align: start;
 	color: nb-theme(text-hint-color);
+
+	&.is-action {
+		cursor: pointer;
+		transition:
+			border-color 0.12s ease-in-out,
+			background-color 0.12s ease-in-out;
+
+		&:hover:not(:disabled) {
+			border-color: nb-theme(color-primary-500);
+			background-color: nb-theme(color-primary-transparent-default);
+
+			.docs-links-icon {
+				color: nb-theme(color-primary-500);
+			}
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--gauzy-action-info-text);
+			outline-offset: 2px;
+		}
+	}
+}
+
+.docs-links-panel-empty-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.docs-links-panel-empty-hint {
+	font-weight: 500;
+	color: nb-theme(color-primary-500);
 }
 
 .docs-links-panel-error {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	padding: 0.5rem 0;
+	padding: 0.5rem;
 	font-size: 0.8125rem;
 	color: nb-theme(text-basic-color);
 
@@ -143,65 +276,113 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	}
 }
 
+/* ── Rows ─────────────────────────────────────────────────────────────────── */
+
 .docs-links-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
+// The whole row is the open target: the button's hit area is stretched
+// over the row, and the row's own action buttons sit above it.
 .docs-links-row {
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	padding: 0.5rem 0;
+	padding: 0.5rem;
+	border-radius: nb-theme(border-radius);
+	transition: background-color 0.12s ease-in-out;
 
-	& + & {
-		border-top: $hairline;
+	&:hover,
+	&:focus-within {
+		background-color: var(--gauzy-sidebar-background-4);
+
+		.docs-links-row-actions {
+			opacity: 1;
+		}
 	}
 }
 
 .docs-links-row-open {
+	display: flex;
 	flex: 1 1 auto;
+	flex-direction: column;
 	min-width: 0;
-	overflow: hidden;
 	padding: 0;
 	border: none;
 	background: none;
 	font: inherit;
-	font-size: 0.8125rem;
-	font-weight: 500;
-	line-height: 1.25rem;
 	text-align: start;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	color: nb-theme(text-basic-color);
 	cursor: pointer;
-	transition: color 0.12s ease-in-out;
 
-	&:hover {
-		color: nb-theme(color-primary-500);
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--gauzy-action-info-text);
-		outline-offset: 2px;
-		border-radius: 2px;
+		outline: none;
+
+		&::after {
+			outline: 2px solid var(--gauzy-action-info-text);
+			outline-offset: -2px;
+		}
+	}
+
+	&:hover .docs-links-row-name {
+		color: nb-theme(color-primary-500);
 	}
 }
 
+.docs-links-row-name {
+	overflow: hidden;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: nb-theme(text-basic-color);
+	transition: color 0.12s ease-in-out;
+}
+
 .docs-links-row-meta {
-	flex-shrink: 0;
-	font-size: 0.75rem;
+	display: flex;
+	gap: 0.25rem;
+	font-size: 0.6875rem;
+	line-height: 1rem;
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 	color: nb-theme(text-hint-color);
 }
 
+// Shown on hover or focus; always on touch screens, which have no hover.
 .docs-links-row-actions {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
 	gap: 0.125rem;
+	opacity: 0;
+	transition: opacity 0.12s ease-in-out;
+
+	@media (hover: none) {
+		opacity: 1;
+	}
+
+	[nbButton] {
+		width: 1.75rem;
+		height: 1.75rem;
+		padding: 0;
+		justify-content: center;
+	}
 }
 
 // Remove reads as danger only when it is about to happen.
