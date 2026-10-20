@@ -3260,7 +3260,23 @@
 			"OPTIONS": "Options",
 			"REPOSITORY": "Dépôt",
 			"TASK_SYNC": "Synchronisation des tâches",
-			"CREATE_SUBTITLE": "Créez un nouveau projet avec ses personnes, son calendrier et sa facturation."
+			"CREATE_SUBTITLE": "Créez un nouveau projet avec ses personnes, son calendrier et sa facturation.",
+			"OPEN_SOURCE_TITLE": "Projet open source",
+			"OPEN_SOURCE_DESCRIPTION": "Partagez publiquement le code de ce projet. Activez-le pour ajouter le lien vers son dépôt public.",
+			"OPEN_SOURCE_URL_HINT": "L'adresse publique du code, par exemple un dépôt GitHub ou GitLab.",
+			"OPEN_REPOSITORY": "Ouvrir le dépôt",
+			"DESCRIPTION_CARD_DESC": "Décrivez les objectifs et le périmètre du projet pour tous ceux qui y travaillent.",
+			"TAGS_DESC": "Ajoutez des tags au projet pour le retrouver et le regrouper plus facilement.",
+			"BILLING_DESC": "Comment le client est facturé pour ce projet, et dans quelle devise.",
+			"BUDGET_DESC": "Fixez un budget en heures ou en coût pour garder le projet sur les rails.",
+			"APPEARANCE_DESC": "La couleur du projet et l'affichage de ses tâches.",
+			"PUBLIC_TITLE": "Projet public",
+			"PUBLIC_DESC": "Tout le monde voit qui travaille sur un projet public. Sur un projet privé, chacun ne voit que lui-même, sauf s'il a accès aux projets privés.",
+			"BILLABLE_DESC": "Indiquez que le travail sur ce projet est facturable au client.",
+			"REPOSITORY_DESC": "Choisissez le dépôt GitHub dont les tickets sont traités dans ce projet.",
+			"AUTO_SYNC_DESC": "Gardez les tâches du projet synchronisées avec les tickets du dépôt. Les modifications ici sont enregistrées immédiatement.",
+			"SYNC_LABEL_TITLE": "Synchroniser par label",
+			"SYNC_LABEL_DESC": "Ne synchronisez que les tickets portant le label choisi. Les modifications ici sont enregistrées immédiatement."
 		}
 	},
 	"CONTACTS_PAGE": {

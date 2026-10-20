@@ -3782,7 +3782,23 @@
 			"OPTIONS": "Options",
 			"REPOSITORY": "Repository",
 			"TASK_SYNC": "Task sync",
-			"CREATE_SUBTITLE": "Set up a new project with its people, timeline and billing."
+			"CREATE_SUBTITLE": "Set up a new project with its people, timeline and billing.",
+			"OPEN_SOURCE_TITLE": "Open-source project",
+			"OPEN_SOURCE_DESCRIPTION": "Share this project's code publicly. Turn it on to add the link to its public repository.",
+			"OPEN_SOURCE_URL_HINT": "The public address of the code, for example a GitHub or GitLab repository.",
+			"OPEN_REPOSITORY": "Open repository",
+			"DESCRIPTION_CARD_DESC": "Describe the project's goals and scope for everyone working on it.",
+			"TAGS_DESC": "Label the project so it is easier to find and group.",
+			"BILLING_DESC": "How the client is billed for this project, and in which currency.",
+			"BUDGET_DESC": "Set a budget in hours or in cost to keep the project on track.",
+			"APPEARANCE_DESC": "The project's color and how its tasks are shown.",
+			"PUBLIC_TITLE": "Public project",
+			"PUBLIC_DESC": "Everyone can see who works on a public project. On a private one, people see only themselves unless they can access private projects.",
+			"BILLABLE_DESC": "Mark the work on this project as billable to the client.",
+			"REPOSITORY_DESC": "Choose the GitHub repository whose issues this project works with.",
+			"AUTO_SYNC_DESC": "Keep the project's tasks in step with the repository's issues. Changes here are saved right away.",
+			"SYNC_LABEL_TITLE": "Sync by label",
+			"SYNC_LABEL_DESC": "Only sync issues that carry the label you set. Changes here are saved right away."
 		}
 	},
 	"CONTACTS_PAGE": {

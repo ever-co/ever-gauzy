@@ -3259,7 +3259,23 @@
 			"OPTIONS": "Opções",
 			"REPOSITORY": "Repositório",
 			"TASK_SYNC": "Sincronização de tarefas",
-			"CREATE_SUBTITLE": "Configure um novo projeto com suas pessoas, cronograma e faturamento."
+			"CREATE_SUBTITLE": "Configure um novo projeto com suas pessoas, cronograma e faturamento.",
+			"OPEN_SOURCE_TITLE": "Projeto de código aberto",
+			"OPEN_SOURCE_DESCRIPTION": "Compartilhe publicamente o código deste projeto. Ative para adicionar o link do repositório público.",
+			"OPEN_SOURCE_URL_HINT": "O endereço público do código, por exemplo um repositório do GitHub ou GitLab.",
+			"OPEN_REPOSITORY": "Abrir repositório",
+			"DESCRIPTION_CARD_DESC": "Descreva os objetivos e o escopo do projeto para todos que trabalham nele.",
+			"TAGS_DESC": "Adicione tags ao projeto para facilitar encontrá-lo e agrupá-lo.",
+			"BILLING_DESC": "Como o cliente é cobrado por este projeto e em qual moeda.",
+			"BUDGET_DESC": "Defina um orçamento em horas ou em custo para manter o projeto nos trilhos.",
+			"APPEARANCE_DESC": "A cor do projeto e como suas tarefas são exibidas.",
+			"PUBLIC_TITLE": "Projeto público",
+			"PUBLIC_DESC": "Todos veem quem trabalha em um projeto público. Em um privado, cada pessoa vê apenas a si mesma, a menos que tenha acesso a projetos privados.",
+			"BILLABLE_DESC": "Marque o trabalho neste projeto como faturável ao cliente.",
+			"REPOSITORY_DESC": "Escolha o repositório do GitHub com cujas issues este projeto trabalha.",
+			"AUTO_SYNC_DESC": "Mantenha as tarefas do projeto em dia com as issues do repositório. As alterações aqui são salvas na hora.",
+			"SYNC_LABEL_TITLE": "Sincronizar por rótulo",
+			"SYNC_LABEL_DESC": "Sincronize apenas as issues com o rótulo que você definir. As alterações aqui são salvas na hora."
 		}
 	},
 	"CONTACTS_PAGE": {

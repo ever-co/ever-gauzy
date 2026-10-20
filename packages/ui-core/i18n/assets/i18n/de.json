@@ -3255,7 +3255,23 @@
 			"OPTIONS": "Optionen",
 			"REPOSITORY": "Repository",
 			"TASK_SYNC": "Aufgabensynchronisierung",
-			"CREATE_SUBTITLE": "Legen Sie ein neues Projekt mit Personen, Zeitplan und Abrechnung an."
+			"CREATE_SUBTITLE": "Legen Sie ein neues Projekt mit Personen, Zeitplan und Abrechnung an.",
+			"OPEN_SOURCE_TITLE": "Open-Source-Projekt",
+			"OPEN_SOURCE_DESCRIPTION": "Teilen Sie den Code dieses Projekts öffentlich. Aktivieren Sie es, um den Link zum öffentlichen Repository hinzuzufügen.",
+			"OPEN_SOURCE_URL_HINT": "Die öffentliche Adresse des Codes, zum Beispiel ein GitHub- oder GitLab-Repository.",
+			"OPEN_REPOSITORY": "Repository öffnen",
+			"DESCRIPTION_CARD_DESC": "Beschreiben Sie Ziele und Umfang des Projekts für alle, die daran arbeiten.",
+			"TAGS_DESC": "Versehen Sie das Projekt mit Tags, damit es leichter zu finden und zu gruppieren ist.",
+			"BILLING_DESC": "Wie der Kunde für dieses Projekt abgerechnet wird und in welcher Währung.",
+			"BUDGET_DESC": "Legen Sie ein Budget in Stunden oder Kosten fest, damit das Projekt im Plan bleibt.",
+			"APPEARANCE_DESC": "Die Farbe des Projekts und wie seine Aufgaben angezeigt werden.",
+			"PUBLIC_TITLE": "Öffentliches Projekt",
+			"PUBLIC_DESC": "Bei einem öffentlichen Projekt sehen alle, wer daran arbeitet. Bei einem privaten sieht jede Person nur sich selbst, sofern sie keinen Zugriff auf private Projekte hat.",
+			"BILLABLE_DESC": "Kennzeichnen Sie die Arbeit an diesem Projekt als gegenüber dem Kunden abrechenbar.",
+			"REPOSITORY_DESC": "Wählen Sie das GitHub-Repository, mit dessen Issues dieses Projekt arbeitet.",
+			"AUTO_SYNC_DESC": "Halten Sie die Aufgaben des Projekts mit den Issues des Repositorys synchron. Änderungen hier werden sofort gespeichert.",
+			"SYNC_LABEL_TITLE": "Nach Label synchronisieren",
+			"SYNC_LABEL_DESC": "Synchronisieren Sie nur Issues mit dem von Ihnen festgelegten Label. Änderungen hier werden sofort gespeichert."
 		}
 	},
 	"CONTACTS_PAGE": {

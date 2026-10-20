@@ -3259,7 +3259,23 @@
 			"OPTIONS": "Opties",
 			"REPOSITORY": "Repository",
 			"TASK_SYNC": "Taaksynchronisatie",
-			"CREATE_SUBTITLE": "Stel een nieuw project in met de mensen, tijdlijn en facturering."
+			"CREATE_SUBTITLE": "Stel een nieuw project in met de mensen, tijdlijn en facturering.",
+			"OPEN_SOURCE_TITLE": "Open-sourceproject",
+			"OPEN_SOURCE_DESCRIPTION": "Deel de code van dit project openbaar. Zet dit aan om de link naar de openbare repository toe te voegen.",
+			"OPEN_SOURCE_URL_HINT": "Het openbare adres van de code, bijvoorbeeld een GitHub- of GitLab-repository.",
+			"OPEN_REPOSITORY": "Repository openen",
+			"DESCRIPTION_CARD_DESC": "Beschrijf de doelen en reikwijdte van het project voor iedereen die eraan werkt.",
+			"TAGS_DESC": "Geef het project tags, zodat het makkelijker te vinden en te groeperen is.",
+			"BILLING_DESC": "Hoe de klant voor dit project wordt gefactureerd, en in welke valuta.",
+			"BUDGET_DESC": "Stel een budget in uren of kosten in om het project op koers te houden.",
+			"APPEARANCE_DESC": "De kleur van het project en hoe de taken worden getoond.",
+			"PUBLIC_TITLE": "Openbaar project",
+			"PUBLIC_DESC": "Bij een openbaar project ziet iedereen wie eraan werkt. Bij een privéproject ziet ieder alleen zichzelf, tenzij diegene toegang heeft tot privéprojecten.",
+			"BILLABLE_DESC": "Markeer het werk aan dit project als factureerbaar aan de klant.",
+			"REPOSITORY_DESC": "Kies de GitHub-repository met wiens issues dit project werkt.",
+			"AUTO_SYNC_DESC": "Houd de taken van het project gelijk met de issues van de repository. Wijzigingen hier worden direct opgeslagen.",
+			"SYNC_LABEL_TITLE": "Synchroniseren op label",
+			"SYNC_LABEL_DESC": "Synchroniseer alleen issues met het label dat je instelt. Wijzigingen hier worden direct opgeslagen."
 		}
 	},
 	"CONTACTS_PAGE": {

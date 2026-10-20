@@ -3258,7 +3258,23 @@
 			"OPTIONS": "Opcje",
 			"REPOSITORY": "Repozytorium",
 			"TASK_SYNC": "Synchronizacja zadań",
-			"CREATE_SUBTITLE": "Utwórz nowy projekt z jego osobami, harmonogramem i rozliczeniami."
+			"CREATE_SUBTITLE": "Utwórz nowy projekt z jego osobami, harmonogramem i rozliczeniami.",
+			"OPEN_SOURCE_TITLE": "Projekt open source",
+			"OPEN_SOURCE_DESCRIPTION": "Udostępnij publicznie kod tego projektu. Włącz, aby dodać link do jego publicznego repozytorium.",
+			"OPEN_SOURCE_URL_HINT": "Publiczny adres kodu, na przykład repozytorium w GitHub lub GitLab.",
+			"OPEN_REPOSITORY": "Otwórz repozytorium",
+			"DESCRIPTION_CARD_DESC": "Opisz cele i zakres projektu dla wszystkich, którzy nad nim pracują.",
+			"TAGS_DESC": "Oznacz projekt tagami, aby łatwiej go znaleźć i grupować.",
+			"BILLING_DESC": "Jak klient jest rozliczany za ten projekt i w jakiej walucie.",
+			"BUDGET_DESC": "Ustal budżet w godzinach lub kosztach, aby utrzymać projekt na właściwym torze.",
+			"APPEARANCE_DESC": "Kolor projektu i sposób wyświetlania jego zadań.",
+			"PUBLIC_TITLE": "Projekt publiczny",
+			"PUBLIC_DESC": "W projekcie publicznym wszyscy widzą, kto nad nim pracuje. W prywatnym każdy widzi tylko siebie, chyba że ma dostęp do projektów prywatnych.",
+			"BILLABLE_DESC": "Oznacz pracę nad tym projektem jako podlegającą rozliczeniu z klientem.",
+			"REPOSITORY_DESC": "Wybierz repozytorium GitHub, z którego zgłoszeniami pracuje ten projekt.",
+			"AUTO_SYNC_DESC": "Utrzymuj zadania projektu w zgodzie ze zgłoszeniami repozytorium. Zmiany tutaj są zapisywane od razu.",
+			"SYNC_LABEL_TITLE": "Synchronizacja według etykiety",
+			"SYNC_LABEL_DESC": "Synchronizuj tylko zgłoszenia z ustawioną przez Ciebie etykietą. Zmiany tutaj są zapisywane od razu."
 		}
 	},
 	"CONTACTS_PAGE": {
