@@ -44,6 +44,7 @@ import {
 	MultiORMEnum,
 	parseFindOptionsRelations,
 	parseSortOrder,
+	resolveRequestedPage,
 	splitKeywords
 } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -853,6 +854,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();
 
+			// Default the page size before deriving the offset: a `skip` sent without `take` gave a NaN offset
+			const { limit, offset } = resolveRequestedPage({ take: options?.take || 10, skip: options?.skip }) ?? {
+				limit: 10,
+				offset: 0
+			};
+
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where: mWhere } = options;
@@ -910,8 +917,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						orderBy: parseSortOrder(options.order, SORTABLE_COLUMNS),
 						// "Include deleted": turn off the soft-delete filter, as `withDeleted` does in the TypeORM branch
 						...(options.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {}),
-						offset: options.skip ? options.take * (options.skip - 1) : 0,
-						limit: options.take || 10
+						offset,
+						limit
 					});
 					return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
@@ -925,8 +932,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 					// Set pagination options and selected table properties/fields
 					query.setFindOptions({
-						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
-						take: options && options.take ? options.take : 10,
+						skip: offset,
+						take: limit,
 						order: parseSortOrder(options?.order, SORTABLE_COLUMNS),
 						select: {
 							// Selected fields for the Employee entity
