@@ -62,8 +62,12 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 
 	public search = '';
 	public results: IDocument[] = [];
-	/** The picked documents, kept across searches so a selection survives a new term. */
-	public readonly selectedIds = new Set<string>();
+	/**
+	 * The picked documents by id, kept across searches so a selection survives a new
+	 * term. The documents themselves are kept, not just their ids: `results` holds only
+	 * the latest search page, so a name looked up there could be gone by confirm time.
+	 */
+	public readonly selected = new Map<string, IDocument>();
 
 	public loading = false;
 	public saving = false;
@@ -126,7 +130,7 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 	}
 
 	get selectedCount(): number {
-		return this.selectedIds.size;
+		return this.selected.size;
 	}
 
 	get canConfirm(): boolean {
@@ -134,15 +138,15 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 	}
 
 	isSelected(document: IDocument): boolean {
-		return this.selectedIds.has(String(document.id));
+		return this.selected.has(String(document.id));
 	}
 
 	toggle(document: IDocument): void {
 		const id = String(document.id);
-		if (this.selectedIds.has(id)) {
-			this.selectedIds.delete(id);
+		if (this.selected.has(id)) {
+			this.selected.delete(id);
 		} else {
-			this.selectedIds.add(id);
+			this.selected.set(id, document);
 		}
 	}
 
@@ -154,7 +158,7 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 	async confirm(): Promise<void> {
 		if (!this.canConfirm) return;
 		const organization = this.store.selectedOrganization;
-		const ids = [...this.selectedIds];
+		const ids = [...this.selected.keys()];
 		this.saving = true;
 
 		const results = await Promise.allSettled(
@@ -192,7 +196,7 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 			} else {
 				const names = ids
 					.filter((_, index) => results[index].status === 'rejected')
-					.map((id) => this.results.find((document) => String(document.id) === id)?.name ?? id);
+					.map((id) => this.selected.get(id)?.name ?? id);
 				this.toastrService.danger(
 					this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', {
 						failed: failures.length,

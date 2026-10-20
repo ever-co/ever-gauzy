@@ -84,6 +84,26 @@ describe('DocumentAttachDialogComponent — attaching several documents at once'
 		expect(dialogRef.close).toHaveBeenCalledWith([expect.objectContaining({ documentId: 'a' })]);
 	});
 
+	it('names a failed document picked before a later search replaced the results', async () => {
+		const getTranslation = jest.fn((key: string) => key);
+		const createLink = jest.fn(({ documentId }) =>
+			documentId === 'a' ? throwError(() => new Error('forbidden')) : of({ id: 'link-c', documentId } as IDocumentLink)
+		);
+		const { dialog } = createDialog(createLink);
+		dialog.getTranslation = getTranslation as never;
+		dialog.toggle(doc('a', 'Contract.pdf'));
+		// A new search replaces the page: "Contract.pdf" is no longer in it.
+		dialog.results = [doc('c')];
+		dialog.toggle(doc('c'));
+
+		await dialog.confirm();
+
+		expect(getTranslation).toHaveBeenCalledWith(
+			'DOCS.LINKS.TOAST_FAILED_SOME',
+			expect.objectContaining({ names: 'Contract.pdf' })
+		);
+	});
+
 	it('stays open when nothing could be attached, so the user can retry', async () => {
 		const error = new Error('forbidden');
 		const { dialog, dialogRef, toastrService } = createDialog(jest.fn(() => throwError(() => error)));
