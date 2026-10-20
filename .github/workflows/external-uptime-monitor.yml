@@ -148,8 +148,11 @@ jobs:
           # exactly this address, so it must be the one the probes leave from.
           IP=""
           for svc in https://api.ipify.org https://checkip.amazonaws.com https://ifconfig.me/ip; do
-            IP=$(curl -4 -sS --connect-timeout 5 --max-time 10 "$svc" 2>/dev/null | tr -d '[:space:]') || IP=""
-            if [ -n "$IP" ]; then break; fi
+            # -f + the IPv4 check: an HTTP error page or any other non-address reply must not stop the
+            # loop, or the allow step gets no usable IP and every probe is challenged.
+            IP=$(curl -4 -fsS --connect-timeout 5 --max-time 10 "$svc" 2>/dev/null | tr -d '[:space:]') || IP=""
+            if printf '%s' "$IP" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then break; fi
+            IP=""
           done
           if [ -z "$IP" ]; then IP="unknown"; fi
           echo "Runner public egress IP: ${IP}"
@@ -653,12 +656,13 @@ jobs:
 
       - name: Fail the run if the temporary allow rule was left behind
         # A leftover rule lets one Azure IP past Bot Fight Mode on gauzy.co until a later run's sweep
-        # removes it. Rare, but it must be loud, not a warning in a log. Two ways to get here: the
-        # clean-up step could not delete the rule, or the allow step could not tell whether its create
-        # took effect at all.
+        # removes it. Rare, but it must be loud, not a warning in a log. Two ways to get here: this run
+        # owns a rule (rule_id) that the clean-up step did not confirm removed - it failed, or it was
+        # interrupted before saying so - or the allow step could not tell whether its create took
+        # effect at all. (A runner lost outright runs no later step; the next runs' sweep covers that.)
         if: >-
           always() && (
-            (steps.cfcleanup.outcome == 'success' && steps.cfcleanup.outputs.removed != 'true')
+            (steps.cfallow.outputs.rule_id != '' && steps.cfcleanup.outputs.removed != 'true')
             || steps.cfallow.outputs.uncertain == 'true'
           )
         env:
