@@ -210,6 +210,20 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		return this.form.get('openSourceProjectUrl');
 	}
 
+	/**
+	 * The open-source repository as a link, once the project is open source and its URL
+	 * passes the field's own validation — `patterns.websiteUrl` requires an `http(s)://`
+	 * address, so nothing else ever reaches the `href`.
+	 */
+	public get openSourceRepositoryHref(): string | null {
+		const control = this.openSourceProjectUrl;
+		const value = (control.value ?? '').trim();
+		if (!this.form.get('openSource').value || !value || control.invalid) {
+			return null;
+		}
+		return value;
+	}
+
 	public get hasImage(): boolean {
 		return !!this.form.get('imageUrl').value;
 	}
