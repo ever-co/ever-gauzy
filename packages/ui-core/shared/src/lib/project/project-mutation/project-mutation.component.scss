@@ -216,40 +216,66 @@ nb-toggle ::ng-deep {
 	}
 }
 
-/* ── Project logo: the uploader tile of the Add Organization dialog ──────── */
+/* ── Details: the logo beside Name, Code and Project URL ──────────────────── */
 
-.photo {
-	display: flex;
-	align-items: center;
-	gap: $gap-lg;
-	padding-bottom: 0.25rem;
+// The logo spans both field rows; its tile stretches to their height, so its
+// top lines up with Name and its bottom with Project URL.
+.details-grid {
+	display: grid;
+	grid-template-columns: 8.5rem minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-areas:
+		'logo name code'
+		'logo url  url';
+	gap: $gap-md $gap-lg;
+
+	@media (max-width: 767.98px) {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas: 'logo' 'name' 'code' 'url';
+	}
 }
 
-.photo__info {
+.logo-field {
+	grid-area: logo;
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
 	min-width: 0;
+
+	// A span, not a label: the control it names is the uploader's own file input.
+	.label {
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+
+	.avatar {
+		flex: 1 1 auto;
+		width: 100%;
+		min-height: 6rem;
+
+		@media (max-width: 767.98px) {
+			flex: none;
+			width: 6rem;
+			height: 6rem;
+		}
+	}
 }
 
-.photo__title {
-	font-size: 0.8125rem;
-	font-weight: 500;
-	line-height: 1.25rem;
-	color: nb-theme(text-basic-color);
+.field-name {
+	grid-area: name;
 }
 
-.photo__hint {
-	font-size: 0.75rem;
-	line-height: 1rem;
-	color: nb-theme(text-hint-color);
+.field-code {
+	grid-area: code;
 }
+
+.field-url {
+	grid-area: url;
+}
+
+/* ── Project logo: the uploader tile of the Add Organization dialog ──────── */
 
 .avatar {
 	position: relative;
 	flex-shrink: 0;
-	width: 4.5rem;
-	height: 4.5rem;
 	border-radius: nb-theme(border-radius);
 	overflow: hidden;
 	border: $hairline;

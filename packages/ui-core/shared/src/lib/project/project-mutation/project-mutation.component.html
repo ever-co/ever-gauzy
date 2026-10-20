@@ -38,36 +38,38 @@
 		>
 			<section class="form-section">
 				<h6 class="section-title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.DETAILS' | translate }}</h6>
-				<div class="photo">
-					<div class="avatar" [class.avatar--hover]="hoverState">
-						<ngx-image-uploader
-							(changeHoverState)="hoverState = $event"
-							(uploadedImageAsset)="updateImageAsset($event)"
-							(uploadImageAssetError)="handleImageUploadError($event)"
-						></ngx-image-uploader>
-						@if (hasImage) {
-							<img
-								class="avatar__image"
-								[src]="form.get('imageUrl').value"
-								[alt]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate"
-							/>
-						} @else {
-							<div class="avatar__image avatar__image--empty">
-								<nb-icon icon="folder-outline"></nb-icon>
-							</div>
-						}
-						<span class="avatar__scrim" aria-hidden="true"></span>
-						<span class="avatar__badge" aria-hidden="true">
-							<nb-icon icon="camera-outline"></nb-icon>
-						</span>
+				<!-- The logo on the left, beside the Name, Code and Project URL fields. -->
+				<div class="details-grid">
+					<div class="logo-field">
+						<span class="label">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate }}</span>
+						<div
+							class="avatar"
+							[class.avatar--hover]="hoverState"
+							[title]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO_HINT' | translate"
+						>
+							<ngx-image-uploader
+								(changeHoverState)="hoverState = $event"
+								(uploadedImageAsset)="updateImageAsset($event)"
+								(uploadImageAssetError)="handleImageUploadError($event)"
+							></ngx-image-uploader>
+							@if (hasImage) {
+								<img
+									class="avatar__image"
+									[src]="form.get('imageUrl').value"
+									[alt]="'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate"
+								/>
+							} @else {
+								<div class="avatar__image avatar__image--empty">
+									<nb-icon icon="folder-outline"></nb-icon>
+								</div>
+							}
+							<span class="avatar__scrim" aria-hidden="true"></span>
+							<span class="avatar__badge" aria-hidden="true">
+								<nb-icon icon="camera-outline"></nb-icon>
+							</span>
+						</div>
 					</div>
-					<div class="photo__info">
-						<span class="photo__title">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO' | translate }}</span>
-						<span class="photo__hint">{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.LOGO_HINT' | translate }}</span>
-					</div>
-				</div>
-				<div class="grid">
-					<div class="form-group">
+					<div class="form-group field-name">
 						<label for="name" class="label">{{ 'FORM.PLACEHOLDERS.NAME' | translate }}</label>
 						<input
 							type="text"
@@ -84,7 +86,7 @@
 							</p>
 						}
 					</div>
-					<div class="form-group">
+					<div class="form-group field-code">
 						<label for="code" class="label">{{ 'FORM.PLACEHOLDERS.CODE' | translate }}</label>
 						<input
 							type="text"
@@ -95,7 +97,7 @@
 							id="code"
 						/>
 					</div>
-					<div class="form-group span-2">
+					<div class="form-group field-url">
 						<label for="projectUrl" class="label">{{ 'FORM.LABELS.PROJECT_URL' | translate }}</label>
 						<input
 							type="text"
