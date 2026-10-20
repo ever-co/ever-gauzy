@@ -52,6 +52,10 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 			if (existingEntry) {
 				// Update the visitedAt date and return the existing entry
 				existingEntry.visitedAt = now;
+				// Refresh the stored snapshot, so the recent list shows the entity as it is now
+				if (input.data !== undefined) {
+					existingEntry.data = input.data;
+				}
 				return await this.save(existingEntry);
 			}
 
