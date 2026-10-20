@@ -19,7 +19,6 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 	@Input() renderComponent: any;
 	@Input() value: any;
 	@Input() rowData: any;
-	/** Extra inputs for the rendered component — what a table column sets in its `componentInitFunction`, which the grid never runs. */
 	@Input() inputs: Record<string, any>;
 	customComponent: any;
 	@ViewChild('dynamicTarget', { read: ViewContainerRef, static: true })

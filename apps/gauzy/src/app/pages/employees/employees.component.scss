@@ -29,10 +29,6 @@ nb-card {
     align-items: center;
     height: 1.75rem;
 
-    // Drawn to the header buttons' box (26px, 0.75rem bold label, 6px corners)
-    // rather than the 38px form-control floor `input-appearance` imposes on every
-    // outline select. That floor is `!important`, so the override has to be too,
-    // and `.kind-filter` gives it the extra class it needs to out-rank it.
     ::ng-deep nb-select.appearance-outline.status-basic .select-button {
       min-height: 1.625rem !important;
       height: 1.625rem;

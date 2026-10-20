@@ -29,12 +29,6 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	/** How many placeholder cards to draw while loading. */
 	@Input() skeletonCards: number = 6;
 
-	/**
-	 * Inputs to set on a custom column's component, keyed by column id. The grid
-	 * creates those components itself and does not run the table's
-	 * `componentInitFunction`, so whatever a page sets there has to be passed here
-	 * to reach the card layout as well.
-	 */
 	@Input() componentInputs: Record<string, Record<string, any>>;
 
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
