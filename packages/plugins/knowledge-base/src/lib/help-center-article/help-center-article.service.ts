@@ -459,7 +459,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			.where('id = :id', { id });
 
 		if (tenantId) {
-			qb.andWhere('"tenantId" = :tenantId', { tenantId });
+			qb.andWhere(p('"tenantId" = :tenantId'), { tenantId });
 		}
 
 		await qb.execute();
