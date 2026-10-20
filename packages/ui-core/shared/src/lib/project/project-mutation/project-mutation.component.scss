@@ -16,6 +16,12 @@ $gap-lg: 1rem;
 $gap-md: 0.75rem;
 $gap-sm: 0.5rem;
 
+// The panel's side inset, shared by the tab bar, the open section and the
+// action bar so the first tab, the fields and the buttons line up.
+$panel-x: 2.5rem;
+$panel-x-narrow: 1rem;
+$narrow: 767.98px;
+
 $hairline: 1px solid var(--gauzy-border-default-color);
 
 // Given a bounded height by its page, the tabs and the action bar stay put and
@@ -44,7 +50,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 
 .tab-row {
 	flex-shrink: 0;
-	padding: 0 $gap-xl;
+	padding: 0 $panel-x;
+
+	@media (max-width: $narrow) {
+		padding: 0 $panel-x-narrow;
+	}
 	border-bottom: $hairline;
 	overflow-x: auto;
 	scrollbar-width: none;
@@ -113,7 +123,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 .panes {
 	flex: 1 1 auto;
 	min-height: 12rem;
-	padding: $gap-xl;
+	padding: $gap-xl $panel-x;
+
+	@media (max-width: $narrow) {
+		padding: $gap-lg $panel-x-narrow;
+	}
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	scrollbar-gutter: stable;
@@ -402,7 +416,11 @@ nb-toggle ::ng-deep {
 	align-items: center;
 	flex-wrap: wrap;
 	gap: $gap-sm;
-	padding: $gap-md $gap-xl;
+	padding: $gap-md $panel-x;
+
+	@media (max-width: $narrow) {
+		padding: $gap-md $panel-x-narrow;
+	}
 	border-top: $hairline;
 	background-color: var(--gauzy-card-1);
 	border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
