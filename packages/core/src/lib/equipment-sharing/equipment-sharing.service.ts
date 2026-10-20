@@ -65,6 +65,28 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	/**
+	 * Whether the equipment a new sharing names auto-approves its shares, read from the store in the sharing's scope.
+	 *
+	 * An equipment outside the scope, or none at all, answers `false`: a request for it is filed as `REQUESTED`.
+	 *
+	 * @param equipmentId - The equipment the sharing names.
+	 * @param scope - The tenant/organization the sharing is filed in.
+	 */
+	public async autoApprovesShare(equipmentId: ID | undefined, scope: IReferenceScope): Promise<boolean> {
+		if (!equipmentId || !scope.tenantId) {
+			return false;
+		}
+		const equipment = await this.typeOrmRepository.manager.findOne('equipment', {
+			where: {
+				id: equipmentId,
+				tenantId: scope.tenantId,
+				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
+			} as any
+		});
+		return (equipment as { autoApproveShare?: boolean } | null)?.autoApproveShare === true;
+	}
+
+	/**
 	 * Retrieves equipment sharing records associated with a specific organization.
 	 *
 	 * @param organizationId - The unique identifier of the organization.
