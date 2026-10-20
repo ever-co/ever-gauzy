@@ -141,6 +141,11 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 		max-width: 40rem;
 	}
 
+	// Long-form text (the Description editor) uses the pane's whole width
+	&.full {
+		max-width: none;
+	}
+
 	& + & {
 		padding-top: $gap-xl;
 		border-top: $hairline;
