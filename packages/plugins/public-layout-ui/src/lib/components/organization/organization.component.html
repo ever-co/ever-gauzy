@@ -56,14 +56,8 @@
 					@if (organization.banner) {
 					<p class="banner">{{ organization.banner }}</p>
 					}
-					@if (organization.website || organization.officialName) {
+					@if (organization.website) {
 					<div class="identity-meta">
-						@if (organization.officialName && organization.officialName !== organization.name) {
-						<span class="meta-item">
-							<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
-							{{ organization.officialName }}
-						</span>
-						}
 						@if (organization.website) {
 						<a class="meta-item meta-link" [href]="websiteUrl(organization.website)" target="_blank" rel="noopener noreferrer">
 							<nb-icon icon="globe-2-outline" aria-hidden="true"></nb-icon>
@@ -95,7 +89,7 @@
 				@if (organization.show_employees_count && isCount(employeeCount)) {
 				<div class="fact">
 					<dt>{{ 'PUBLIC_PAGE.COMPANY_SIZE' | translate }}</dt>
-					<dd>{{ employeeCount | number }} <span class="fact-unit">{{ 'PUBLIC_PAGE.EMPLOYEES' | translate | lowercase }}</span></dd>
+					<dd>{{ employeeCount | number }} <span class="fact-unit">{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }}</span></dd>
 				</div>
 				}
 				@if (organization.show_clients_count && isCount(clientCount)) {
@@ -397,7 +391,7 @@
 			<p class="person-bio">{{ employee.short_description }}</p>
 			}
 
-			@if (employee.payPeriod || employee.totalWorkHours) {
+			@if (employee.payPeriod || employee.totalWorkHours || employee.averageBonus != null) {
 			<div class="person-meta">
 				@if (employee.payPeriod) {
 				<span class="chip">{{ employee.payPeriod | replace: '_' : ' ' | titlecase }}</span>
@@ -406,6 +400,17 @@
 				<span class="person-hours">
 					<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
 					{{ employee.totalWorkHours }} {{ 'ORGANIZATIONS_PAGE.HOURS_WORKED' | translate }}
+				</span>
+				}
+				@if (employee.averageBonus != null) {
+				<span class="person-hours">
+					<nb-icon icon="gift-outline" aria-hidden="true"></nb-icon>
+					{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
+					{{
+						employee.averageBonus
+							| currency: (employee.billRateCurrency || organization?.currency) : 'symbol'
+							| position: $safeNavigationMigration(organization?.currencyPosition)
+					}}
 				</span>
 				}
 			</div>
