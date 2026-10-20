@@ -237,7 +237,7 @@ jobs:
           # older than 20 minutes. The owner's own rules ("Ruslan Home", rules with no note) show up in
           # this listing too and never match. Deliberately not keyed on `scope.type`: Cloudflare
           # documents only "user" / "organization" there, so a zone check could hide our own leftovers.
-          if RESP=$(cf GET "/zones/${ZONE_ID}/firewall/access_rules/rules?per_page=100&mode=whitelist&notes=${NOTE_TAG}"); then
+          if RESP=$(cf GET "/zones/${ZONE_ID}/firewall/access_rules/rules?per_page=100&mode=whitelist&notes=${NOTE_TAG}")               && jq -e '.success == true' <<< "${RESP}" > /dev/null 2>&1; then
             STALE=$(jq -r --arg tag "${NOTE_TAG} run " '.result[]?
               | select(.mode == "whitelist" and .configuration.target == "ip")
               | select((.notes // "") | startswith($tag))
@@ -250,6 +250,9 @@ jobs:
                 echo "::warning::Could not remove stale allow rule ${id}; the next run will try again."
               fi
             done
+          else
+            # An error answer must not read as "nothing to sweep".
+            echo "::warning::Could not list earlier runs' allow rules, so the stale sweep was skipped this run: $(cf_errors)"
           fi
 
           NOTE="${NOTE_TAG} run ${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT} - temporary, deleted when the probe ends"
