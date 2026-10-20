@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, IsNull } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import {
@@ -240,11 +240,20 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 			// Update the task status to mark it as default
 			taskStatus.isDefault = true;
 
-			// Define options to find task statuses to update
+			// The scope of the marked row, completed from the row itself: a request naming only its project (as GraphQL
+			// allows) would otherwise pin the organization to NULL and match none of the project's rows
+			const scope = {
+				organizationId: organizationId || taskStatus.organizationId,
+				organizationTeamId: organizationTeamId || taskStatus.organizationTeamId,
+				projectId: projectId || taskStatus.projectId
+			};
+
+			// Define options to find task statuses to update. A scope the input does not supply is pinned to NULL (as
+			// fetchAll reads it): left out, marking an organization's default cleared its projects' and teams' defaults.
 			const findOptions: FindOptionsWhere<TaskStatus> = {
-				...(organizationId ? { organizationId } : {}),
-				...(organizationTeamId ? { organizationTeamId } : {}),
-				...(projectId ? { projectId } : {}),
+				organizationId: scope.organizationId || IsNull(),
+				organizationTeamId: scope.organizationTeamId || IsNull(),
+				projectId: scope.projectId || IsNull(),
 				tenantId,
 				isSystem: false
 			};
@@ -256,12 +265,7 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 			await super.save(taskStatus);
 
 			// Fetch and return all task statuses based on the specified parameters
-			const { items = [] } = await super.fetchAll({
-				tenantId,
-				organizationId,
-				organizationTeamId,
-				projectId
-			});
+			const { items = [] } = await super.fetchAll({ tenantId, ...scope });
 
 			return items;
 		} catch (error) {
