@@ -76,3 +76,80 @@ describe('WakatimeService.getSummaries', () => {
 		expect(await summaryFor([])).toMatchObject({ digital: '0:00', minute: 0, total_seconds: 0 });
 	});
 });
+
+describe('WakatimeService under MikroORM', () => {
+	/**
+	 * The ORM is read once when the service module loads (`DB_ORM`), so the MikroORM service is loaded in an
+	 * isolated registry with `DB_ORM=mikro-orm`. Its collaborators are stubbed so nothing touches a database.
+	 */
+	const loadMikroOrmService = (): typeof WakatimeService => {
+		const previous = process.env.DB_ORM;
+		let Service!: typeof WakatimeService;
+		process.env.DB_ORM = 'mikro-orm';
+		try {
+			jest.isolateModules(() => {
+				jest.doMock('@gauzy/core', () => ({
+					MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+					getORMType: () => process.env.DB_ORM
+				}));
+				jest.doMock('./wakatime.entity', () => ({ Wakatime: class {} }));
+				jest.doMock('./repository/type-orm-wakatime.repository', () => ({ TypeOrmWakatimeRepository: class {} }));
+				jest.doMock('./repository/mikro-orm-wakatime.repository', () => ({
+					MikroOrmWakatimeRepository: class {}
+				}));
+				Service = require('./wakatime.service').WakatimeService;
+			});
+		} finally {
+			if (previous === undefined) {
+				delete process.env.DB_ORM;
+			} else {
+				process.env.DB_ORM = previous;
+			}
+		}
+		return Service;
+	};
+
+	const knexStub = () => {
+		const ignore = jest.fn().mockResolvedValue([]);
+		const onConflict = jest.fn().mockReturnValue({ ignore });
+		const insert = jest.fn().mockReturnValue({ onConflict });
+		const knex = jest.fn().mockReturnValue({ insert });
+		return { knex, insert };
+	};
+
+	it('bulkSave reports one identifier per heartbeat, like TypeORM', async () => {
+		const Service = loadMikroOrmService();
+		const { knex, insert } = knexStub();
+		const service = new Service({} as any, { getKnex: () => knex } as any);
+
+		const result = await service.bulkSave([{ entities: 'a.ts' }, { entities: 'b.ts' }] as any);
+
+		expect(knex).toHaveBeenCalledWith('heartbeats');
+		expect(insert).toHaveBeenCalledWith([{ entities: 'a.ts' }, { entities: 'b.ts' }]);
+		expect(result?.identifiers).toHaveLength(2);
+	});
+
+	it('save reports one identifier for the heartbeat', async () => {
+		const Service = loadMikroOrmService();
+		const { knex } = knexStub();
+		const service = new Service({} as any, { getKnex: () => knex } as any);
+
+		const result = await service.save({ entities: 'a.ts' } as any);
+
+		expect(result?.identifiers).toHaveLength(1);
+	});
+
+	it('lets POST /heartbeats.bulk accept the payload (identifiers match the payload length)', async () => {
+		const Service = loadMikroOrmService();
+		const { knex } = knexStub();
+		const service = new Service({} as any, { getKnex: () => knex } as any);
+		const payload = [
+			{ entity: 'a.ts', time: 1 },
+			{ entity: 'b.ts', time: 2 }
+		];
+
+		const result: any = await service.parameterSanitize(payload, {});
+
+		expect(result.identifiers.length).toBe(payload.length);
+	});
+});

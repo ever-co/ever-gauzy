@@ -29,6 +29,24 @@ export function splitDuration(seconds: number | string | null | undefined): {
 	};
 }
 
+/**
+ * Shapes the outcome of a MikroORM (knex) insert like TypeORM's `InsertResult`.
+ *
+ * The MikroORM branches ran the insert and returned `undefined`, so `POST /heartbeats.bulk` read
+ * `result.identifiers.length` off nothing and answered 400 although the rows were stored. One identifier
+ * is reported per submitted value, as TypeORM does for `orIgnore()` inserts.
+ */
+export function toInsertResult(
+	count: number,
+	raw: any
+): { identifiers: Record<string, any>[]; generatedMaps: Record<string, any>[]; raw: any } {
+	return {
+		identifiers: Array.from({ length: count }, () => ({})),
+		generatedMaps: [],
+		raw
+	};
+}
+
 @Injectable()
 export class WakatimeService {
 	constructor(
@@ -111,11 +129,11 @@ export class WakatimeService {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
-				await knex('heartbeats')
+				const raw = await knex('heartbeats')
 					.insert(wakatime.map((w) => ({ ...w })))
 					.onConflict(['time', 'entities'])
 					.ignore();
-				return;
+				return toInsertResult(wakatime.length, raw);
 			}
 			case MultiORMEnum.TypeORM:
 			default:
@@ -137,11 +155,11 @@ export class WakatimeService {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
-				await knex('heartbeats')
+				const raw = await knex('heartbeats')
 					.insert({ ...wakatime })
 					.onConflict(['time', 'entities'])
 					.ignore();
-				return;
+				return toInsertResult(1, raw);
 			}
 			case MultiORMEnum.TypeORM:
 			default:
