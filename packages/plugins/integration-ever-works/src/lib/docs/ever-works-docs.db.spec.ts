@@ -15,8 +15,10 @@ jest.mock('@gauzy/core', () => {
 		ColumnIndex: decorator,
 		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
+		MultiORMManyToOne: decorator,
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: class {},
+		TenantBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		BaseEntityEventSubscriber: class {},
 		createSsrfSafeHttpsAgent: () => undefined,
@@ -909,6 +911,20 @@ describe('Ever Works docs sync on SQLite', () => {
 			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([c, c]);
 			expect(setting('DOCS_TREE_MOVING_TO')).toBe('');
 			expect(await page(ownRoot)).toMatchObject({ id: ownRoot });
+		});
+
+		it('a mapping placed before the setting existed: a move cut short and then pointed at another root still gathers the whole tree (review of #11096)', async () => {
+			await syncedTree();
+			put('DOCS_TREE_ROOT_ID', undefined);
+			const b = await gauzyFolder(null as never, 'B');
+			// Its first move, A → B, stopped after Organization/ moved: the target is written, no root recorded yet.
+			put('DOCS_TREE_MOVING_TO', b);
+			await moveFolder(DOCS_TREE.organization, b);
+			const c = await gauzyFolder(null as never, 'C');
+			configureRoot(c);
+			await store.root(context as never);
+			expect([await parentOf(DOCS_TREE.organization), await parentOf(DOCS_TREE.works)]).toEqual([c, c]);
+			expect([setting('DOCS_TREE_ROOT_ID'), setting('DOCS_TREE_MOVING_TO')]).toEqual([c, '']);
 		});
 
 		it('the sync\'s own folder dragged into the tree and set as the root goes back to the top first: no folder contains its parent (#11115 review)', async () => {

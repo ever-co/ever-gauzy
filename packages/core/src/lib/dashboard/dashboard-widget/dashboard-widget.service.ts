@@ -106,6 +106,10 @@ export class DashboardWidgetService extends TenantAwareCrudService<DashboardWidg
 
 			return updatedWidget;
 		} catch (error) {
+			// Preserve the 404 for a missing widget (as DashboardService.update does), not a generic 400
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
 			throw new HttpException(`Failed to update dashboard widget: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}

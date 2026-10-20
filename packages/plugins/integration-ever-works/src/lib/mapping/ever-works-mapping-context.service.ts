@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { ID, IntegrationEntity } from '@gauzy/contracts';
 import { IntegrationEntitySetting, IntegrationTenant } from '@gauzy/core';
 import { EverWorksConnection } from '../connection/ever-works-connection.entity';
@@ -92,13 +92,36 @@ export class EverWorksMappingContextService {
 			where: { tenantId: connection.tenantId, name: EVER_WORKS_INTEGRATION_NAME, isActive: true, isArchived: false },
 			relations: { settings: true }
 		});
+		const viaConnection = mappings.filter((mapping) => setting(mapping, S.CONNECTION_ID) === connection.id);
+		await this.loadEntitySettings(viaConnection);
 		const contexts: EverWorksMappingContext[] = [];
-		for (const mapping of mappings) {
-			if (setting(mapping, S.CONNECTION_ID) !== connection.id) continue;
+		for (const mapping of viaConnection) {
 			const context = await this.build(mapping, connection);
 			if (context) contexts.push(context);
 		}
 		return contexts;
+	}
+
+	/**
+	 * The per-entity toggles of several mappings, read in one query and kept on each mapping, so building them reads
+	 * none per mapping (review of #11096). A read that builds one mapping reads its rows once in `entitySyncOf`.
+	 */
+	private async loadEntitySettings(mappings: IntegrationTenant[]): Promise<void> {
+		const ids = mappings.filter((mapping) => !mapping.entitySettings && mapping.id).map((mapping) => mapping.id as ID);
+		if (!ids.length) return;
+		const rows = await this.dataSource.getRepository(IntegrationEntitySetting).find({
+			where: { integrationId: In(ids) } as never,
+			select: { id: true, entity: true, sync: true, integrationId: true } as never
+		});
+		const byMapping = new Map<string, IntegrationEntitySetting[]>();
+		for (const row of rows) {
+			const group = byMapping.get(row.integrationId as string);
+			if (group) group.push(row);
+			else byMapping.set(row.integrationId as string, [row]);
+		}
+		for (const mapping of mappings) {
+			mapping.entitySettings ??= byMapping.get(mapping.id as string) ?? [];
+		}
 	}
 
 	private async build(mapping: IntegrationTenant, known?: EverWorksConnection): Promise<EverWorksMappingContext | null> {

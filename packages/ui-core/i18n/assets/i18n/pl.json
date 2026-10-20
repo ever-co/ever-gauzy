@@ -3307,9 +3307,14 @@
 		"MEMBER_SINCE": "Członek od",
 		"NO_DESCRIPTION": "Nie dodano jeszcze opisu",
 		"NO_SKILLS": "Brak umiejętności",
+		"NO_EMPLOYEES": "Brak pracowników do wyświetlenia",
+		"NO_CLIENTS": "Brak klientów do wyświetlenia",
+		"EMPLOYEES_LOAD_FAILED": "Nie udało się wczytać pracowników.",
+		"CLIENTS_LOAD_FAILED": "Nie udało się wczytać klientów.",
 		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
 		"EDIT": {
 			"NO_AWARDS": "Nie dodano jeszcze nagród",
+			"NO_LANGUAGES": "Nie dodano jeszcze żadnych języków",
 			"ADD_AWARD": "Dodaj nagrodę",
 			"PRIVACY_HELP": "Wybierz, które dane odwiedzający widzą w profilu publicznym."
 		}
@@ -6853,6 +6858,40 @@
 		"YOUR_TIME_CAPTION": "Twój czas przy tym projekcie · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Czas członków zespołu przy tym projekcie · {{ range }}",
 		"BUDGET_USED": "Wykorzystano {{ used }} z {{ budget }}",
-		"OVER_BUDGET": "{{ value }} ponad budżet"
+		"OVER_BUDGET": "{{ value }} ponad budżet",
+		"TOTAL_TRACKED": "Łącznie zarejestrowano",
+		"TOTAL_TRACKED_HINT": "Od początku projektu",
+		"THIS_PERIOD": "Ten okres",
+		"VS_PREVIOUS": "{{ value }} względem poprzedniego okresu",
+		"TIMELINE": "Harmonogram",
+		"NO_DATES": "Nie ustawiono dat",
+		"STARTS_IN": "Rozpoczyna się za {{ count }} dni",
+		"STARTS_TOMORROW": "Rozpoczyna się jutro",
+		"FINISHED": "Zakończony",
+		"TEAM": "Zespół",
+		"NO_MEMBERS": "Brak członków w tym projekcie",
+		"MODULES": "Moduły",
+		"MODULE_TASK": "1 zadanie",
+		"MODULE_TASKS": "{{ count }} zadań"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Przegląd",
+			"BOARD": "Tablica",
+			"ACTIVITY": "Aktywność"
+		},
+		"BOARD": "Tablica",
+		"COLUMN_EMPTY": "Brak zadań",
+		"ACTIVITY": "Aktywność",
+		"ACTIVITY_CAPTION": "Ostatnie zmiany w projekcie i jego zadaniach",
+		"NO_ACTIVITY": "Brak aktywności",
+		"ACTIVITY_PARTIAL": "Nie udało się wczytać części aktywności, więc lista może być niepełna.",
+		"ACTIVITY_CREATED": "{{ actor }} utworzył(a)",
+		"ACTIVITY_UPDATED": "{{ actor }} zaktualizował(a)",
+		"ACTIVITY_DELETED": "{{ actor }} usunął(-ęła)",
+		"ACTIVITY_FIELDS": "Zmieniono: {{ fields }}",
+		"SOMEONE": "Ktoś",
+		"TODAY": "Dzisiaj",
+		"YESTERDAY": "Wczoraj"
 	}
 }

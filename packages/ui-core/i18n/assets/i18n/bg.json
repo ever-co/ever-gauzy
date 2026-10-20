@@ -3368,9 +3368,14 @@
 		"MEMBER_SINCE": "Член от",
 		"NO_DESCRIPTION": "Все още няма добавено описание",
 		"NO_SKILLS": "Все още няма посочени умения",
+		"NO_EMPLOYEES": "Все още няма служители за показване",
+		"NO_CLIENTS": "Все още няма клиенти за показване",
+		"EMPLOYEES_LOAD_FAILED": "Служителите не можаха да бъдат заредени.",
+		"CLIENTS_LOAD_FAILED": "Клиентите не можаха да бъдат заредени.",
 		"VIEW_COMPANY_PROFILE": "Виж профила на компанията",
 		"EDIT": {
 			"NO_AWARDS": "Все още няма награди",
+			"NO_LANGUAGES": "Все още няма добавени езици",
 			"ADD_AWARD": "Добави награда",
 			"PRIVACY_HELP": "Изберете кои данни посетителите виждат в публичния профил."
 		}
@@ -6899,6 +6904,40 @@
 		"YOUR_TIME_CAPTION": "Вашето време по този проект · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Времето на членовете на екипа по този проект · {{ range }}",
 		"BUDGET_USED": "Използвани {{ used }} от {{ budget }}",
-		"OVER_BUDGET": "{{ value }} над бюджета"
+		"OVER_BUDGET": "{{ value }} над бюджета",
+		"TOTAL_TRACKED": "Общо отчетено",
+		"TOTAL_TRACKED_HINT": "От началото на проекта",
+		"THIS_PERIOD": "Този период",
+		"VS_PREVIOUS": "{{ value }} спрямо предишния период",
+		"TIMELINE": "Времева линия",
+		"NO_DATES": "Няма зададени дати",
+		"STARTS_IN": "Започва след {{ count }} дни",
+		"STARTS_TOMORROW": "Започва утре",
+		"FINISHED": "Завършен",
+		"TEAM": "Екип",
+		"NO_MEMBERS": "Все още няма членове в този проект",
+		"MODULES": "Модули",
+		"MODULE_TASK": "1 задача",
+		"MODULE_TASKS": "{{ count }} задачи"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Общ преглед",
+			"BOARD": "Табло",
+			"ACTIVITY": "Активност"
+		},
+		"BOARD": "Табло",
+		"COLUMN_EMPTY": "Няма задачи",
+		"ACTIVITY": "Активност",
+		"ACTIVITY_CAPTION": "Последни промени по проекта и задачите му",
+		"NO_ACTIVITY": "Все още няма активност",
+		"ACTIVITY_PARTIAL": "Част от активността не можа да се зареди, така че списъкът може да е непълен.",
+		"ACTIVITY_CREATED": "{{ actor }} създаде",
+		"ACTIVITY_UPDATED": "{{ actor }} обнови",
+		"ACTIVITY_DELETED": "{{ actor }} изтри",
+		"ACTIVITY_FIELDS": "Променено: {{ fields }}",
+		"SOMEONE": "Някой",
+		"TODAY": "Днес",
+		"YESTERDAY": "Вчера"
 	}
 }

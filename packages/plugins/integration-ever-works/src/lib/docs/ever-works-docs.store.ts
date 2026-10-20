@@ -296,10 +296,10 @@ export class EverWorksDocsStore {
 	 *   before a move finished still gathers the whole tree. A folder under the new root already is left.
 	 * - **An admin's own move stays.** Only a folder directly under the recorded root (or the unfinished target) moves;
 	 *   a tree folder an admin put somewhere else is left there, and what is in it stops syncing, as before.
-	 * - **A mapping placed before this setting existed** has no recorded root. The only earlier root the sync can be
-	 *   sure of is its own "Ever Works" folder: a tree folder directly under it moves; one anywhere else stays. The
-	 *   current root is recorded once a tree folder sits under it (or there is no tree yet); otherwise nothing is
-	 *   recorded and nothing moves.
+	 * - **A mapping placed before this setting existed** has no recorded root. The only earlier roots the sync can be
+	 *   sure of are its own "Ever Works" folder and an unfinished target: a tree folder directly under one of them
+	 *   moves; one anywhere else stays. The current root is recorded once a tree folder sits under it (or there is no
+	 *   tree yet); otherwise nothing is recorded and nothing moves.
 	 */
 	private async placeTree(context: EverWorksMappingContext, rootId: ID): Promise<void> {
 		const recorded = this.setting(context, EverWorksSettingName.DOCS_TREE_ROOT_ID);
@@ -312,11 +312,13 @@ export class EverWorksDocsStore {
 		const sources = new Set<string>();
 		if (recorded) {
 			sources.add(recorded);
-			if (movingTo) sources.add(movingTo);
 		} else {
 			const own = await this.byExternalId(context, DOCS_TREE.root);
 			if (own && !(own as { deletedAt?: Date | null }).deletedAt) sources.add(own.id as string);
 		}
+		// The unfinished target is the sync's own (it is written only by a move), with or without a recorded root: a move
+		// cut short before any root was recorded still gathers the folders it already moved (review of #11096).
+		if (movingTo) sources.add(movingTo);
 		sources.delete(rootId);
 		const moving = folders.filter((folder) => folder.parentId && sources.has(folder.parentId));
 		if (moving.length) {

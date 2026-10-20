@@ -181,7 +181,8 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 					// Apply additional where filters
 					if (isNotEmpty(where)) {
 						const { name, draft, privacy, isLocked, categoryId } = where;
-						if (isNotEmpty(name)) qb = qb.andWhere('kba.name', 'ILIKE', `%${name}%`);
+						// Same operator as the TypeORM arm: `ILIKE` only exists on PostgreSQL
+						if (isNotEmpty(name)) qb = qb.andWhere('kba.name', LIKE_OPERATOR, `%${name}%`);
 						if (draft !== undefined) qb = qb.andWhere('kba.draft', draft);
 						if (privacy !== undefined) qb = qb.andWhere('kba.privacy', privacy);
 						if (isLocked !== undefined) qb = qb.andWhere('kba.isLocked', isLocked);

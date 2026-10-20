@@ -3336,9 +3336,14 @@
 		"MEMBER_SINCE": "חבר מאז",
 		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
 		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"NO_EMPLOYEES": "אין עדיין עובדים להצגה",
+		"NO_CLIENTS": "אין עדיין לקוחות להצגה",
+		"EMPLOYEES_LOAD_FAILED": "לא ניתן היה לטעון את העובדים.",
+		"CLIENTS_LOAD_FAILED": "לא ניתן היה לטעון את הלקוחות.",
 		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
 		"EDIT": {
 			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"NO_LANGUAGES": "עדיין לא נוספו שפות",
 			"ADD_AWARD": "הוספת פרס",
 			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
 		}
@@ -6864,6 +6869,40 @@
 		"YOUR_TIME_CAPTION": "הזמן שלך על פרויקט זה · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
 		"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
-		"OVER_BUDGET": "{{ value }} מעל התקציב"
+		"OVER_BUDGET": "{{ value }} מעל התקציב",
+		"TOTAL_TRACKED": "סה\"כ זמן שנרשם",
+		"TOTAL_TRACKED_HINT": "מאז תחילת הפרויקט",
+		"THIS_PERIOD": "התקופה הנוכחית",
+		"VS_PREVIOUS": "{{ value }} לעומת התקופה הקודמת",
+		"TIMELINE": "ציר זמן",
+		"NO_DATES": "לא הוגדרו תאריכים",
+		"STARTS_IN": "מתחיל בעוד {{ count }} ימים",
+		"STARTS_TOMORROW": "מתחיל מחר",
+		"FINISHED": "הסתיים",
+		"TEAM": "צוות",
+		"NO_MEMBERS": "אין עדיין חברים בפרויקט זה",
+		"MODULES": "מודולים",
+		"MODULE_TASK": "משימה אחת",
+		"MODULE_TASKS": "{{ count }} משימות"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "סקירה",
+			"BOARD": "לוח",
+			"ACTIVITY": "פעילות"
+		},
+		"BOARD": "לוח",
+		"COLUMN_EMPTY": "אין משימות",
+		"ACTIVITY": "פעילות",
+		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
+		"NO_ACTIVITY": "אין עדיין פעילות",
+		"ACTIVITY_PARTIAL": "לא ניתן היה לטעון חלק מהפעילות, ולכן הרשימה עשויה להיות חלקית.",
+		"ACTIVITY_CREATED": "{{ actor }} יצר",
+		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
+		"ACTIVITY_DELETED": "{{ actor }} מחק",
+		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
+		"SOMEONE": "מישהו",
+		"TODAY": "היום",
+		"YESTERDAY": "אתמול"
 	}
 }

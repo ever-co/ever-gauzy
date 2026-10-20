@@ -229,7 +229,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					taskId: updatedTask.id,
 					movedById: userId,
 					reason: data.taskSprintMoveReason,
-					organizationId: data.organizationId,
+					// A partial update may not carry the organization: fall back to the stored one
+					organizationId: data.organizationId ?? task.organizationId,
 					tenantId
 				});
 			}
@@ -240,7 +241,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				await this.syncTaskMentions(id, mentionEmployeeIds, updatedTask.organizationId ?? task.organizationId);
 			}
 
-			const { organizationId } = updatedTask;
+			// The save returns what was written: a partial update (e.g. only the estimate) carries no organization
+			// or title, so fall back to the stored task for the subscriptions and the activity log.
+			const organizationId = updatedTask.organizationId ?? task.organizationId;
 
 			// Unsubscribe members who were unassigned from task
 			await this.unsubscribeRemovedMembers(removedMembers, updatedTask.id, organizationId, tenantId);
@@ -254,7 +257,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
 				updatedTask.id,
-				updatedTask.title,
+				updatedTask.title ?? task.title,
 				updatedTask,
 				organizationId,
 				tenantId,

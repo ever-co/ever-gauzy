@@ -100,6 +100,8 @@ const core = {
 	Permissions: decorator,
 	UseValidationPipe: decorator,
 	TenantOrganizationBaseEntity: class {},
+	// EverWorksConnection declares its own organization relation (ON DELETE SET NULL) on the tenant base entity (#11129)
+	TenantBaseEntity: class {},
 	MikroOrmBaseEntityRepository: class {},
 	BaseEntityEventSubscriber,
 	PermissionGuard: class {},

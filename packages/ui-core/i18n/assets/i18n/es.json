@@ -3310,9 +3310,14 @@
 		"MEMBER_SINCE": "Miembro desde",
 		"NO_DESCRIPTION": "Aún no se ha añadido una descripción",
 		"NO_SKILLS": "Aún no hay habilidades",
+		"NO_EMPLOYEES": "Aún no hay empleados para mostrar",
+		"NO_CLIENTS": "Aún no hay clientes para mostrar",
+		"EMPLOYEES_LOAD_FAILED": "No se pudieron cargar los empleados.",
+		"CLIENTS_LOAD_FAILED": "No se pudieron cargar los clientes.",
 		"VIEW_COMPANY_PROFILE": "Ver perfil de la empresa",
 		"EDIT": {
 			"NO_AWARDS": "Aún no hay premios",
+			"NO_LANGUAGES": "Aún no se han añadido idiomas",
 			"ADD_AWARD": "Añadir premio",
 			"PRIVACY_HELP": "Elige qué datos pueden ver los visitantes en el perfil público."
 		}
@@ -6856,6 +6861,40 @@
 		"YOUR_TIME_CAPTION": "Tu tiempo en este proyecto · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Tiempo de los miembros del equipo en este proyecto · {{ range }}",
 		"BUDGET_USED": "{{ used }} de {{ budget }} usadas",
-		"OVER_BUDGET": "{{ value }} por encima del presupuesto"
+		"OVER_BUDGET": "{{ value }} por encima del presupuesto",
+		"TOTAL_TRACKED": "Total registrado",
+		"TOTAL_TRACKED_HINT": "Desde el inicio del proyecto",
+		"THIS_PERIOD": "Este periodo",
+		"VS_PREVIOUS": "{{ value }} frente al periodo anterior",
+		"TIMELINE": "Cronograma",
+		"NO_DATES": "Sin fechas definidas",
+		"STARTS_IN": "Empieza en {{ count }} días",
+		"STARTS_TOMORROW": "Empieza mañana",
+		"FINISHED": "Finalizado",
+		"TEAM": "Equipo",
+		"NO_MEMBERS": "Aún no hay miembros en este proyecto",
+		"MODULES": "Módulos",
+		"MODULE_TASK": "1 tarea",
+		"MODULE_TASKS": "{{ count }} tareas"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Resumen",
+			"BOARD": "Tablero",
+			"ACTIVITY": "Actividad"
+		},
+		"BOARD": "Tablero",
+		"COLUMN_EMPTY": "Sin tareas",
+		"ACTIVITY": "Actividad",
+		"ACTIVITY_CAPTION": "Cambios recientes en el proyecto y sus tareas",
+		"NO_ACTIVITY": "Aún no hay actividad",
+		"ACTIVITY_PARTIAL": "No se pudo cargar parte de la actividad, por lo que esta lista puede estar incompleta.",
+		"ACTIVITY_CREATED": "{{ actor }} creó",
+		"ACTIVITY_UPDATED": "{{ actor }} actualizó",
+		"ACTIVITY_DELETED": "{{ actor }} eliminó",
+		"ACTIVITY_FIELDS": "Cambios: {{ fields }}",
+		"SOMEONE": "Alguien",
+		"TODAY": "Hoy",
+		"YESTERDAY": "Ayer"
 	}
 }
