@@ -1,3 +1,4 @@
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext } from '@gauzy/core';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
@@ -23,8 +24,18 @@ export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCo
 	public async execute(command: CreateJobPresetCommand): Promise<JobPreset> {
 		const { input } = command;
 
-		// Set tenantId
-		input.tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		// The caller's tenant, and no other: the writes below go through raw repositories, which scope nothing
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException('Tenant context is required');
+		}
+		input.tenantId = tenantId;
+
+		// An id updates a preset, which must be one of this tenant: a raw `save` with the id of another tenant's
+		// preset updated that preset and moved it into this tenant
+		if (input.id && !(await this.typeOrmJobPresetRepository.findOneBy({ id: input.id, tenantId }))) {
+			throw new NotFoundException('Job preset not found');
+		}
 
 		// If the current user has the permission to change the selected employee, use their ID
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
@@ -39,11 +50,16 @@ export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCo
 		// Prepare job preset criteria
 		let jobPresetCriterion: JobPresetUpworkJobSearchCriterion[] = [];
 		if (input.jobPresetCriterions && input.jobPresetCriterions.length > 0) {
+			// New rows of this preset: the preset's criteria are replaced below, so a criterion id from the request
+			// would only update a row of another preset (or tenant) through the raw `save`
 			jobPresetCriterion = input.jobPresetCriterions.map(
 				(criterion) =>
 					new JobPresetUpworkJobSearchCriterion({
 						...criterion,
-						jobPresetId: jobPreset.id
+						id: undefined,
+						jobPresetId: jobPreset.id,
+						tenantId,
+						organizationId: jobPreset.organizationId
 					})
 			);
 
