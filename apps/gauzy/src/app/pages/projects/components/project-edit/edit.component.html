@@ -1,11 +1,14 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-  <nb-card-header class="main-header pb-0">
-    <div class="d-flex justify-content-between align-items-center mb-5">
-      <div class="d-flex align-items-center">
+  <nb-card-header class="main-header">
+    <div class="page-heading">
+      <div class="page-heading__title">
         <ngx-back-navigation></ngx-back-navigation>
-        <h4 class="mb-0">
-          {{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}
-        </h4>
+        <div class="heading">
+          <h4 class="title">{{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}</h4>
+          @if (project$ | async; as project) {
+            <p class="subtitle">{{ project.name }}</p>
+          }
+        </div>
       </div>
       @if (project$ | async; as project) {
         <ngx-favorite-toggle
@@ -28,11 +31,6 @@
         [project]="project$ | async"
         (onSubmitted)="onSubmit($event)"
       ></ga-project-mutation>
-    </ng-template>
-    <ng-template [ngxPermissionsExcept]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
-      <div>
-        <!-- Content to display if the user does not have 'canEditComponent' permission -->
-      </div>
     </ng-template>
 
     <!--
