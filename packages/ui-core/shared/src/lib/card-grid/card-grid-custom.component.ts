@@ -1,8 +1,10 @@
 import {
 	Component,
 	Input,
+	OnChanges,
 	OnDestroy,
 	OnInit,
+	type SimpleChanges,
 	ViewChild,
 	ViewContainerRef,
 	ChangeDetectionStrategy
@@ -15,7 +17,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class CustomViewComponent implements OnInit, OnDestroy {
+export class CustomViewComponent implements OnInit, OnChanges, OnDestroy {
 	@Input() renderComponent: any;
 	@Input() value: any;
 	@Input() rowData: any;
@@ -27,6 +29,12 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.createCustomComponent();
 		this.patchInstance();
+	}
+
+	ngOnChanges(changes: SimpleChanges) {
+		if (changes['inputs'] && !changes['inputs'].firstChange && this.customComponent) {
+			this.patchInstance();
+		}
 	}
 
 	ngOnDestroy() {
@@ -41,10 +49,10 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 
 	protected patchInstance() {
 		Object.assign(this.customComponent.instance, {
+			...(this.inputs ?? {}),
 			value: this.value,
 			rowData: this.rowData,
-			layout: ComponentLayoutStyleEnum.CARDS_GRID,
-			...(this.inputs ?? {})
+			layout: ComponentLayoutStyleEnum.CARDS_GRID
 		});
 	}
 }
