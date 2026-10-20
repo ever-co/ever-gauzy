@@ -11,7 +11,12 @@ export class GlobalSettingSaveHandler implements ICommandHandler<GlobalSettingSa
 		private readonly _tenantSettingService: TenantSettingService
 	) {}
 
+	/**
+	 * Both the REST route and the GraphQL mutation dispatch this command, so the operator check lives here:
+	 * their `GLOBAL_SETTING` permission is held by every tenant's super admin.
+	 */
 	public async execute(command: GlobalSettingSaveCommand): Promise<ITenantSetting> {
+		await this._tenantSettingService.assertMayWriteGlobalSettings();
 		return this._tenantSettingService.saveGlobalSettings(command.input);
 	}
 }
