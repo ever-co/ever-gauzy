@@ -22,6 +22,8 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			? await this.organizationService.findOneByIdString(data.organizationId)
 			: null;
 		const tenantId = organization?.tenantId ? organization.tenantId : null;
+		// `isNotEmpty` also skipped '': keep treating it as "not sent" rather than writing 0 / false
+		const isSent = (value: unknown) => value !== undefined && value !== '';
 		const newAppointment = {
 			...(isNotEmpty(employee) ? { employeeId: employee.id } : {}),
 			...(isNotEmpty(organization) ? { organizationId: organization.id } : {}),
@@ -34,12 +36,12 @@ export class EmployeeAppointmentUpdateHandler implements ICommandHandler<Employe
 			...(isNotEmpty(data.breakStartTime) ? { breakStartTime: data.breakStartTime } : {}),
 			// `isNotEmpty` treats false and 0 as empty, so switching a buffer off or setting 0 minutes was dropped:
 			// only a key left out of the request is skipped (null stays null instead of being coerced to 0)
-			...(data.breakTimeInMins !== undefined
+			...(isSent(data.breakTimeInMins)
 				? { breakTimeInMins: data.breakTimeInMins === null ? null : +data.breakTimeInMins }
 				: {}),
-			...(data.bufferTimeStart !== undefined ? { bufferTimeStart: data.bufferTimeStart } : {}),
-			...(data.bufferTimeEnd !== undefined ? { bufferTimeEnd: data.bufferTimeEnd } : {}),
-			...(data.bufferTimeInMins !== undefined
+			...(isSent(data.bufferTimeStart) ? { bufferTimeStart: data.bufferTimeStart } : {}),
+			...(isSent(data.bufferTimeEnd) ? { bufferTimeEnd: data.bufferTimeEnd } : {}),
+			...(isSent(data.bufferTimeInMins)
 				? { bufferTimeInMins: data.bufferTimeInMins === null ? null : +data.bufferTimeInMins }
 				: {}),
 			...(isNotEmpty(data.startDateTime) ? { startDateTime: data.startDateTime } : {}),

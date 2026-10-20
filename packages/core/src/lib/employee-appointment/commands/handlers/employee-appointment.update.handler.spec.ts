@@ -51,6 +51,14 @@ describe('EmployeeAppointmentUpdateHandler false and zero values', () => {
 		expect(employeeAppointmentService.update.mock.calls[0][1]).toEqual({ bufferTimeInMins: null, breakTimeInMins: null });
 	});
 
+	it('treats an empty string as not sent, as before', async () => {
+		const { employeeAppointmentService, update } = setup();
+
+		await update({ bufferTimeStart: '' as never, bufferTimeInMins: '' as never, agenda: 'Renamed' });
+
+		expect(employeeAppointmentService.update.mock.calls[0][1]).toEqual({ agenda: 'Renamed' });
+	});
+
 	it('leaves the fields out of the request untouched', async () => {
 		const { employeeAppointmentService, update } = setup();
 
