@@ -1713,8 +1713,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			let viewFilters: IGetTasksByViewFilters = {};
 
 			try {
+				// A view saved without query params stores null: fall back to no filters, as on the other databases
 				viewFilters = isSqlite()
-					? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
+					? typeof queryParams === 'string'
+						? (JSON.parse(queryParams) as IGetTasksByViewFilters) || {}
+						: (queryParams as IGetTasksByViewFilters) || {}
 					: (queryParams as IGetTasksByViewFilters) || {};
 			} catch (error) {
 				throw new HttpException('Invalid query parameters in task view', HttpStatus.BAD_REQUEST);
