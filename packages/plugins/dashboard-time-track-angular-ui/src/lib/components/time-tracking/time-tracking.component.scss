@@ -118,6 +118,10 @@ $header-title-basis: 18rem;
     }
   }
 
+  .manage-widget-tooltip {
+    display: inline-flex;
+  }
+
   ga-timezone-filter ::ng-deep .popover-button[nbButton] nb-icon,
   .refresh-button[nbButton] nb-icon,
   .manage-widget[nbButton] nb-icon {
@@ -819,14 +823,35 @@ $header-title-basis: 18rem;
     width: 11px;
   }
   &.undo {
-    font-size: 10px;
-    font-weight: 600;
-    &[nbButton].appearance-filled.status-basic {
-      color: var(--text-primary-color);
-    }
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+    &[nbButton] {
+      height: 1.5rem;
+      min-width: 0;
+      padding: 0 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      line-height: 1;
+      text-transform: none;
+      color: var(--gauzy-text-color-2);
+      background-color: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: nb-theme(gauzy-radius-sm);
+      transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+
+      &:hover,
+      &:focus-visible {
+        background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
+      }
+    }
+    i {
+      font-size: 0.625rem;
+    }
   }
 }
 
