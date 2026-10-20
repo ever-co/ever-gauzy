@@ -51,13 +51,13 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 .tab-row {
 	flex-shrink: 0;
 	padding: 0 $panel-x;
+	border-bottom: $hairline;
+	overflow-x: auto;
+	scrollbar-width: none;
 
 	@media (max-width: $narrow) {
 		padding: 0 $panel-x-narrow;
 	}
-	border-bottom: $hairline;
-	overflow-x: auto;
-	scrollbar-width: none;
 }
 
 .tabs {
@@ -124,13 +124,13 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	flex: 1 1 auto;
 	min-height: 12rem;
 	padding: $gap-xl $panel-x;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
 
 	@media (max-width: $narrow) {
 		padding: $gap-lg $panel-x-narrow;
 	}
-	overflow-y: auto;
-	overscroll-behavior: contain;
-	scrollbar-gutter: stable;
 }
 
 .pane {
@@ -291,6 +291,21 @@ nb-toggle ::ng-deep label {
 // The label margin is already cancelled above, so no offset is needed here.
 .setting-card__row nb-toggle {
 	flex: 0 0 auto;
+
+	// The card's title is projected into the switch so it names the switch's own
+	// checkbox (a name on the host would not reach it). The card already shows the
+	// title, so the copy is hidden visually but kept for assistive technology.
+	::ng-deep .text {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
 }
 
 // A connected integration's own logo, in place of the icon.
@@ -495,13 +510,13 @@ $logo-size: 10rem;
 	flex-wrap: wrap;
 	gap: $gap-sm;
 	padding: $gap-md $panel-x;
+	border-top: $hairline;
+	background-color: var(--gauzy-card-1);
+	border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 
 	@media (max-width: $narrow) {
 		padding: $gap-md $panel-x-narrow;
 	}
-	border-top: $hairline;
-	background-color: var(--gauzy-card-1);
-	border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 
 	.spacer {
 		flex: 1;

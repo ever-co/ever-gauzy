@@ -408,13 +408,10 @@
 								</a>
 							}
 						</div>
-						<nb-toggle
-							status="primary"
-							formControlName="openSource"
-							aria-labelledby="open-source-title"
-							aria-describedby="open-source-description"
-							(checkedChange)="toggleOpenSource($event)"
-						></nb-toggle>
+						<!-- The projected text names the switch's own checkbox; the card shows it, so it is hidden here. -->
+						<nb-toggle status="primary" formControlName="openSource" (checkedChange)="toggleOpenSource($event)">
+							{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.OPEN_SOURCE_TITLE' | translate }}
+						</nb-toggle>
 					</div>
 
 					<!-- Shown once the project is marked open source. -->
@@ -431,11 +428,15 @@
 									placeholder="https://github.com/..."
 									id="openSourceProjectUrl"
 									formControlName="openSourceProjectUrl"
-									aria-describedby="open-source-url-hint"
+									[attr.aria-describedby]="
+										openSourceProjectUrl.hasError('pattern') ? 'open-source-url-error' : 'open-source-url-hint'
+									"
+									[attr.aria-invalid]="openSourceProjectUrl.hasError('pattern')"
 									[status]="FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') ? 'danger' : 'basic'"
 								/>
+								<!-- Described by whichever of the two is showing: the error replaces the hint. -->
 								@if (openSourceProjectUrl.hasError('pattern')) {
-									<p class="caption status-danger">
+									<p class="caption status-danger" id="open-source-url-error">
 										{{ 'FORM.ERROR.OPEN_SOURCE_PROJECT_URL' | translate }}
 									</p>
 								} @else {
@@ -532,13 +533,9 @@
 								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.PUBLIC_DESC' | translate }}
 							</span>
 						</div>
-						<nb-toggle
-							status="primary"
-							formControlName="public"
-							aria-labelledby="card-public-title"
-							aria-describedby="card-public-description"
-							(checkedChange)="togglePublic($event)"
-						></nb-toggle>
+						<nb-toggle status="primary" formControlName="public" (checkedChange)="togglePublic($event)">
+							{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.PUBLIC_TITLE' | translate }}
+						</nb-toggle>
 					</div>
 				</div>
 
@@ -553,13 +550,9 @@
 								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.BILLABLE_DESC' | translate }}
 							</span>
 						</div>
-						<nb-toggle
-							status="primary"
-							formControlName="billable"
-							aria-labelledby="card-billable-title"
-							aria-describedby="card-billable-description"
-							(checkedChange)="toggleBillable($event)"
-						></nb-toggle>
+						<nb-toggle status="primary" formControlName="billable" (checkedChange)="toggleBillable($event)">
+							{{ 'FORM.PLACEHOLDERS.BILLABLE' | translate }}
+						</nb-toggle>
 					</div>
 				</div>
 			</section>
@@ -629,10 +622,10 @@
 								id="isTasksAutoSync"
 								formControlName="isTasksAutoSync"
 								status="primary"
-								aria-labelledby="card-auto-sync-title"
-								aria-describedby="card-auto-sync-description"
 								(change)="updateProjectAutoSyncSetting()"
-							></nb-toggle>
+							>
+								{{ 'FORM.LABELS.AUTO_SYNC_TASKS' | translate }}
+							</nb-toggle>
 						</div>
 					</div>
 
@@ -651,10 +644,10 @@
 								id="isTasksAutoSyncOnLabel"
 								formControlName="isTasksAutoSyncOnLabel"
 								status="primary"
-								aria-labelledby="card-sync-label-title"
-								aria-describedby="card-sync-label-description"
 								(change)="updateProjectAutoSyncSetting()"
-							></nb-toggle>
+							>
+								{{ 'ORGANIZATIONS_PAGE.PROJECT_FORM.SYNC_LABEL_TITLE' | translate }}
+							</nb-toggle>
 						</div>
 						<!-- The label only applies to label-based sync, so it opens with it (the control is disabled otherwise). -->
 						@if (projectSettingForm.get('isTasksAutoSyncOnLabel').value) {
