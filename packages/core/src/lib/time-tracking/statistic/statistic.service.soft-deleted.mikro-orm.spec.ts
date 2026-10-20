@@ -208,4 +208,51 @@ describe('StatisticService on MikroORM — soft-deleted rows', () => {
 			project: { name: null }
 		});
 	});
+
+	// The slot joins return one row per time slot: a manual log with several slots used to be listed once
+	// per slot, filling the top 5 with copies of the same log.
+	it('lists a manual time with several slots once', async () => {
+		const id = 'log-with-three-slots';
+		const slotIds = ['a', 'b', 'c'].map((suffix) => `slot-${suffix}-of-${id}`);
+		await knex('time_log').insert({
+			id,
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			employeeId: ADA,
+			projectId: LIVE_PROJECT,
+			logType: 'MANUAL',
+			source: 'BROWSER',
+			startedAt: '2026-10-12 13:00:00.000',
+			duration: 1800,
+			deletedAt: null
+		});
+		for (const [index, slotId] of slotIds.entries()) {
+			await knex('time_slot').insert({
+				id: slotId,
+				tenantId: TENANT_ID,
+				organizationId: ORGANIZATION_ID,
+				employeeId: ADA,
+				startedAt: `2026-10-12 13:${index}0:00.000`,
+				overall: 300,
+				duration: 600,
+				deletedAt: null
+			});
+			await knex('time_slot_time_logs').insert({ timeSlotId: slotId, timeLogId: id });
+		}
+
+		try {
+			const manualTimes = await service.manualTimes(range as IGetManualTimesStatistics);
+
+			expect(manualTimes.map((manualTime) => manualTime.id)).toEqual([id, 'log-on-deleted-project']);
+			expect(manualTimes[0]).toMatchObject({
+				duration: 1800,
+				user: { name: 'Ada Lovelace' },
+				project: { name: 'Live' }
+			});
+		} finally {
+			await knex('time_slot_time_logs').where('timeLogId', id).delete();
+			await knex('time_slot').whereIn('id', slotIds).delete();
+			await knex('time_log').where('id', id).delete();
+		}
+	});
 });
