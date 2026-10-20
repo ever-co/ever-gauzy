@@ -150,12 +150,7 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	gap: $gap-md;
 	max-width: 56rem;
 
-	// The single-purpose tabs read better at a field's width than across the page
-	&.narrow {
-		max-width: 40rem;
-	}
-
-	// Long-form text (the Description editor) uses the pane's whole width
+	// The setting-card tabs use the pane's whole width
 	&.full {
 		max-width: none;
 	}
@@ -196,33 +191,124 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 	margin-bottom: 0;
 }
 
+// A field's explanation, under the control
+.hint {
+	margin: 0.25rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: nb-theme(text-hint-color);
+}
+
 .caption {
 	margin: 0.25rem 0 0;
 	font-size: 0.75rem;
 	line-height: 1rem;
 }
 
-.toggle {
+// nb-toggle's inner label keeps the global `label { margin-bottom: 0.5rem }`, which
+// makes the host taller than its track; cancelled so the switch sits centred.
+nb-toggle ::ng-deep label {
+	margin: 0;
+}
+
+/* ── Setting cards (every tab but Main) ───────────────────────────────────── */
+
+// The SMS provider cards' pattern (settings/sms-gateway): an icon, a title with a
+// description and an optional link, and either a switch on the right or the
+// card's fields underneath. What a switch turns on opens inside the same card.
+.setting-card {
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.setting-card__row {
 	display: flex;
 	align-items: center;
-	min-height: 2.5rem;
+	gap: $gap-md;
+	padding: $gap-md $gap-lg;
 }
 
-.toggles {
+.setting-card__icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
+	}
+}
+
+.setting-card__text {
+	flex: 1 1 auto;
 	display: flex;
-	flex-wrap: wrap;
-	gap: $gap-sm $gap-xl;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.125rem;
+	min-width: 0;
 }
 
-nb-toggle ::ng-deep {
-	label {
-		margin: 0;
+.setting-card__title {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: nb-theme(text-basic-color);
+}
+
+.setting-card__description {
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.setting-card__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-top: 0.125rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: nb-theme(text-primary-color);
+	text-decoration: none;
+
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
 	}
 
-	.text {
-		font-size: 0.8125rem;
-		font-weight: 400;
-		color: nb-theme(text-basic-color);
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+// The label margin is already cancelled above, so no offset is needed here.
+.setting-card__row nb-toggle {
+	flex: 0 0 auto;
+}
+
+// A connected integration's own logo, in place of the icon.
+.setting-card__logo {
+	flex: 0 0 auto;
+	width: 2rem;
+	height: 2rem;
+	object-fit: contain;
+}
+
+// Lines up with the title, past the icon column.
+.setting-card__body {
+	padding-block: $gap-md $gap-lg;
+	padding-inline: calc(#{$gap-lg} + 2rem + #{$gap-md}) $gap-lg;
+	border-top: $hairline;
+
+	@media (max-width: $narrow) {
+		padding-inline-start: $gap-lg;
 	}
 }
 
@@ -394,29 +480,6 @@ $logo-size: 10rem;
 	input {
 		padding-inline-start: 2.25rem;
 	}
-}
-
-/* ── GitHub integration ───────────────────────────────────────────────────── */
-
-.integration {
-	display: flex;
-	align-items: center;
-	gap: $gap-lg;
-}
-
-.integration__logo {
-	flex-shrink: 0;
-	width: 3rem;
-	height: 3rem;
-	object-fit: contain;
-	padding: $gap-sm;
-	border-radius: nb-theme(border-radius);
-	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
-}
-
-.integration__picker {
-	flex: 1;
-	min-width: 0;
 }
 
 /* ── Action bar ───────────────────────────────────────────────────────────── */
