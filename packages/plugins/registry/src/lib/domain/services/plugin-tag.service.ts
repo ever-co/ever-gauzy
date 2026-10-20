@@ -1,6 +1,6 @@
 import { ID, IPagination } from '@gauzy/contracts';
 import { MultiORMEnum, RequestContext } from '@gauzy/core';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { FindOptionsWhere, In } from 'typeorm';
 import {
 	IPluginTag,
@@ -128,7 +128,19 @@ export class PluginTagService extends RegistryTenantAwareCrudService<PluginTag> 
 	 * @returns Promise<number> - Number of deleted relationships
 	 */
 	async bulkDelete(input: IPluginTagBulkDeleteInput): Promise<number> {
-		const whereConditions: FindOptionsWhere<PluginTag> = {};
+		// The delete below is a raw repository call, which scopes nothing: the tenant is always the caller's, never one
+		// from the request. It used to be added only when the request named one, so `PUT /plugins/:pluginId/tags` with
+		// `tagIds: []` (or `DELETE /plugin-tags/batch` with a pluginId) deleted that plugin's tags in every tenant.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException('Tenant context is required');
+		}
+		// Without criteria the delete would empty the tenant's plugin tags
+		if (!input.pluginId && !input.tagId && !input.ids?.length) {
+			throw new BadRequestException('A pluginId, a tagId or ids are required to delete plugin tags');
+		}
+
+		const whereConditions: FindOptionsWhere<PluginTag> = { tenantId };
 
 		// Build where conditions based on input
 		if (input.pluginId) {
@@ -148,10 +160,7 @@ export class PluginTagService extends RegistryTenantAwareCrudService<PluginTag> 
 			whereConditions.pluginId = input.pluginId;
 		}
 
-		// Add tenant/organization context
-		if (input.tenantId) {
-			whereConditions.tenantId = input.tenantId;
-		}
+		// Narrow to an organization of the caller's tenant when one is named
 		if (input.organizationId) {
 			whereConditions.organizationId = input.organizationId;
 		}
