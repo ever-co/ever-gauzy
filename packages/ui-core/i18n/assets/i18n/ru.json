@@ -2226,6 +2226,14 @@
 		"UPDATE": "Обновить",
 		"ALIGNMENTS": "Выравнивания",
 		"COMMENTS": "Комментарии",
+		"COMMENT_THREAD": {
+			"REPLY": "Ответить",
+			"ONE_MESSAGE": "1 сообщение",
+			"MESSAGES": "Сообщений: {{ count }}",
+			"NO_MESSAGES": "В этой ветке пока нет сообщений.",
+			"REPLY_PLACEHOLDER": "Ответить на этот комментарий…",
+			"UNKNOWN_AUTHOR": "Неизвестно"
+		},
 		"KEY_RESULTS": "Ключевые результаты",
 		"GROUP_BY": "Группировать по",
 		"DELETE_OBJECTIVE": "Удалить цель",

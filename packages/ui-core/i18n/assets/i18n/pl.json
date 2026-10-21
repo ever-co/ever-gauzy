@@ -2176,6 +2176,14 @@
 		"UPDATE": "Aktualizuj",
 		"ALIGNMENTS": "Wyrównania",
 		"COMMENTS": "Komentarze",
+		"COMMENT_THREAD": {
+			"REPLY": "Odpowiedz",
+			"ONE_MESSAGE": "1 wiadomość",
+			"MESSAGES": "Wiadomości: {{ count }}",
+			"NO_MESSAGES": "W tym wątku nie ma jeszcze wiadomości.",
+			"REPLY_PLACEHOLDER": "Odpowiedz na ten komentarz…",
+			"UNKNOWN_AUTHOR": "Nieznany"
+		},
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",
 		"DELETE_OBJECTIVE": "Usuń cel",

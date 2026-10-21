@@ -2059,6 +2059,14 @@
 		"UPDATE": "crwdns4986:0crwdne4986:0",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "crwdns4988:0crwdne4988:0",
+		"COMMENT_THREAD": {
+			"REPLY": "Reply",
+			"ONE_MESSAGE": "1 Message",
+			"MESSAGES": "{{ count }} Messages",
+			"NO_MESSAGES": "There are no messages in this thread yet.",
+			"REPLY_PLACEHOLDER": "Reply to this comment…",
+			"UNKNOWN_AUTHOR": "Unknown"
+		},
 		"KEY_RESULTS": "crwdns4990:0crwdne4990:0",
 		"GROUP_BY": "crwdns7454:0crwdne7454:0",
 		"DELETE_OBJECTIVE": "crwdns9556:0crwdne9556:0",

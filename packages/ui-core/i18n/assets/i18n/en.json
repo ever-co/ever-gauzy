@@ -2663,6 +2663,14 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "Reply",
+			"ONE_MESSAGE": "1 Message",
+			"MESSAGES": "{{ count }} Messages",
+			"NO_MESSAGES": "There are no messages in this thread yet.",
+			"REPLY_PLACEHOLDER": "Reply to this comment…",
+			"UNKNOWN_AUTHOR": "Unknown"
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",

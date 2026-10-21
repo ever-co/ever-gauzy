@@ -2177,6 +2177,14 @@
 		"UPDATE": "Bijwerken",
 		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
+		"COMMENT_THREAD": {
+			"REPLY": "Beantwoorden",
+			"ONE_MESSAGE": "1 bericht",
+			"MESSAGES": "{{ count }} berichten",
+			"NO_MESSAGES": "Er zijn nog geen berichten in deze thread.",
+			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
+			"UNKNOWN_AUTHOR": "Onbekend"
+		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
 		"DELETE_OBJECTIVE": "Doel verwijderen",

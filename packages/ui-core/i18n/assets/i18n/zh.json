@@ -2177,6 +2177,14 @@
 		"UPDATE": "更新",
 		"ALIGNMENTS": "对齐",
 		"COMMENTS": "评论",
+		"COMMENT_THREAD": {
+			"REPLY": "回复",
+			"ONE_MESSAGE": "1 条消息",
+			"MESSAGES": "{{ count }} 条消息",
+			"NO_MESSAGES": "此讨论串中还没有消息。",
+			"REPLY_PLACEHOLDER": "回复此评论…",
+			"UNKNOWN_AUTHOR": "未知"
+		},
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",
 		"DELETE_OBJECTIVE": "删除目标",

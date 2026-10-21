@@ -2176,6 +2176,14 @@
 		"UPDATE": "تحديث",
 		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
+		"COMMENT_THREAD": {
+			"REPLY": "رد",
+			"ONE_MESSAGE": "رسالة واحدة",
+			"MESSAGES": "{{ count }} رسائل",
+			"NO_MESSAGES": "لا توجد رسائل في هذه السلسلة بعد.",
+			"REPLY_PLACEHOLDER": "الرد على هذا التعليق…",
+			"UNKNOWN_AUTHOR": "غير معروف"
+		},
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
 		"DELETE_OBJECTIVE": "حذف الهدف",
