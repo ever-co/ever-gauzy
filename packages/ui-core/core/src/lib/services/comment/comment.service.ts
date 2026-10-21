@@ -26,22 +26,36 @@ export class CommentService {
 	constructor(private readonly _http: HttpClient) {}
 
 	/**
-	 * One page of a record's comments with their authors, oldest first.
+	 * All of a record's comments with their authors, oldest first, read page by page: one page stops at
+	 * `COMMENTS_PAGE_SIZE`, and with the oldest first, a single page would leave out the newest comments.
 	 *
 	 * The scope travels in `where` as well as the entity keys: `BaseQueryDTO.where` is `@IsNotEmpty()`, and
 	 * the tenant/organization keep the lookup on the caller's own records.
 	 */
-	getAll(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope): Promise<IPagination<IComment>> {
-		return firstValueFrom(
-			this._http.get<IPagination<IComment>>(this.API_URL, {
-				params: toParams({
-					where: { entity, entityId, ...scope },
-					relations: ['employee', 'employee.user'],
-					order: { createdAt: 'ASC' },
-					take: COMMENTS_PAGE_SIZE
+	async getAll(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope): Promise<IPagination<IComment>> {
+		const items: IComment[] = [];
+		let total = 0;
+		do {
+			const page = await firstValueFrom(
+				this._http.get<IPagination<IComment>>(this.API_URL, {
+					params: toParams({
+						where: { entity, entityId, ...scope },
+						relations: ['employee', 'employee.user'],
+						order: { createdAt: 'ASC' },
+						take: COMMENTS_PAGE_SIZE,
+						// A row offset on `GET /comment` (`findAll`), not a page number.
+						skip: items.length
+					})
 				})
-			})
-		);
+			);
+			total = page.total;
+			items.push(...page.items);
+			// An empty page ends the read even if `total` says more, so a shrinking list cannot loop forever.
+			if (!page.items.length) {
+				break;
+			}
+		} while (items.length < total);
+		return { items, total };
 	}
 
 	/**
