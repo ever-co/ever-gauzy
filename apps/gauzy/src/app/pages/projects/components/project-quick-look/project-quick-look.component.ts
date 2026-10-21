@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { Params, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -278,6 +278,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 	@Input() contributorsCaption: string | null = null;
 	/** `drawer` (default) frames the quick look in a right-side drawer; `page` lays it out as a page body. */
 	@Input() mode: ProjectQuickLookMode = 'drawer';
+	/** The host page opens a task named by `?task=<id>` in a drawer of its own: task links set that instead. */
+	@Input() tasksInDrawer = false;
 	@Output() readonly closed = new EventEmitter<void>();
 
 	/** On a page, the panels lay out in two columns instead of the drawer's one. */
@@ -438,8 +440,13 @@ export class ProjectQuickLookComponent implements OnChanges {
 		return (people || []).map((person) => person.name).join(', ');
 	}
 
+	/** Where a task leads: the host page's task drawer (`?task=`) when it has one, else the task's own page. */
 	taskLink(id: string): string[] {
-		return ['/pages/tasks/view', id];
+		return this.tasksInDrawer ? [] : ['/pages/tasks/view', id];
+	}
+
+	taskQueryParams(id: string): Params | null {
+		return this.tasksInDrawer ? { task: id } : null;
 	}
 
 	projectEditLink(id: string): string[] {
