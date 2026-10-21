@@ -50,7 +50,7 @@ interface IBoardCard {
 	done: boolean;
 	/** The task's estimate in seconds, or 0 without one. */
 	estimate: number;
-	/** Time worked against the estimate, or against the most-worked task without one; once read. */
+	/** Time worked against the estimate, or its share of the project's time without one; once read. */
 	progress?: ITaskProgress | null;
 	/** True while a move to another column is being saved. */
 	saving?: boolean;
@@ -231,7 +231,7 @@ export class ProjectBoardComponent implements OnChanges {
 
 	/**
 	 * The time worked on each of the project's tasks, all time, against its estimate — or, without one,
-	 * against the most-worked task: the cards' progress bars. They come after the board, so a slow or
+	 * as its share of the project's time: the cards' progress bars. They come after the board, so a slow or
 	 * failed read (most often a 403) never holds it up.
 	 */
 	private async loadProgress(sequence: number): Promise<void> {
