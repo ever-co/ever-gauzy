@@ -41,6 +41,11 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	/** The comment showing its inline "Delete this comment?" confirmation; one at a time. */
 	confirmingDeleteId: ID | null = null;
 	deletingComment = false;
+	/** The last read of the comments failed: the tab shows a retry instead of an empty or stale list. */
+	commentsLoadError = false;
+	loadingComments = false;
+	/** `timeAgo`'s formatter, rebuilt only when the language changes. */
+	private relativeTimeFormat: { lang: string; format: Intl.RelativeTimeFormat } | null = null;
 
 	@ViewChild(NbTabsetComponent) tabset: NbTabsetComponent;
 	@ViewChild('commentsTab') commentsTab: NbTabComponent;
@@ -80,14 +85,25 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		await this.loadComments();
 	}
 
-	/** The objective's comments, oldest first. A failed load leaves the tab empty rather than the dialog broken. */
-	async loadComments() {
+	/**
+	 * Reads the objective's comments, oldest first. Resolves `false` when the read failed: the tab then shows a
+	 * retry rather than "No Comments yet" or a stale list, so a write followed by a failed refresh is told apart
+	 * from a write that is on screen.
+	 */
+	async loadComments(): Promise<boolean> {
+		this.loadingComments = true;
 		try {
 			const { items } = await this.commentService.getAll(BaseEntityEnum.Goal, this.goal.id, this.commentScope());
 			this.comments = items;
 			this.threads = this.buildThreads(items);
+			this.commentsLoadError = false;
+			return true;
 		} catch (error) {
 			console.log('Error while loading objective comments', error);
+			this.commentsLoadError = true;
+			return false;
+		} finally {
+			this.loadingComments = false;
 		}
 	}
 
@@ -99,7 +115,10 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		}
 		this.postingComment = true;
 		if (await this.postComment(comment)) {
-			this.commentControl.reset();
+			// The box stays editable while posting: clear it only if it still holds what was sent.
+			if (this.commentControl.value.trim() === comment) {
+				this.commentControl.reset();
+			}
 			this.tabset?.selectTab(this.commentsTab);
 		}
 		this.postingComment = false;
@@ -130,7 +149,13 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			return;
 		}
 		this.postingReply = true;
-		if (await this.postComment(comment, thread.comment.id)) {
+		// The reply box is shared by every thread: clear it only if the user is still in this thread and has
+		// not typed something else meanwhile, so a finishing reply never erases another thread's draft.
+		if (
+			(await this.postComment(comment, thread.comment.id)) &&
+			this.openThreadId === thread.comment.id &&
+			this.replyControl.value.trim() === comment
+		) {
 			this.replyControl.reset();
 		}
 		this.postingReply = false;
@@ -205,10 +230,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			['hour', 3600],
 			['minute', 60]
 		];
-		const format = new Intl.RelativeTimeFormat(this.translateService.getCurrentLang() || 'en', {
-			numeric: 'auto',
-			style: 'narrow'
-		});
+		const format = this.relativeTimeFormatter();
 		for (const [unit, size] of units) {
 			if (Math.abs(seconds) >= size) {
 				return format.format(Math.round(seconds / size), unit);
@@ -218,8 +240,24 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	}
 
 	/**
+	 * `timeAgo` runs per comment on every change detection, so the formatter is kept and rebuilt only when the
+	 * current language changes.
+	 */
+	private relativeTimeFormatter(): Intl.RelativeTimeFormat {
+		const lang = this.translateService.getCurrentLang() || 'en';
+		if (this.relativeTimeFormat?.lang !== lang) {
+			this.relativeTimeFormat = {
+				lang,
+				format: new Intl.RelativeTimeFormat(lang, { numeric: 'auto', style: 'narrow' })
+			};
+		}
+		return this.relativeTimeFormat.format;
+	}
+
+	/**
 	 * Posts a comment on this objective, or a reply when `parentId` is given, then re-reads the list — the
-	 * create response carries no author relation. Resolves `false` when the post failed.
+	 * create response carries no author relation. Resolves `true` once the post is saved, whether or not the
+	 * refresh after it succeeds (a failed refresh shows as the tab's retry), and `false` when the post failed.
 	 */
 	private async postComment(comment: string, parentId?: ID): Promise<boolean> {
 		try {
