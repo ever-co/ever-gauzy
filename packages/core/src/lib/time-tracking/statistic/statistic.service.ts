@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Knex } from 'knex';
-import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
 import {
@@ -10,6 +10,8 @@ import {
 	IGetTimeSlotStatistics,
 	IGetTasksStatistics,
 	ITasksStatistics,
+	IGetTaskEmployeesStatistics,
+	ITaskEmployeesStatistics,
 	IGetProjectsStatistics,
 	IGetMembersStatistics,
 	IGetCountsStatistics,
@@ -1973,6 +1975,72 @@ export class StatisticService {
 			}
 		}
 		return projects || [];
+	}
+
+	/**
+	 * The tracked time of each employee on the requested tasks, the most first, summed by the database from
+	 * the rows {@link getTasks} sums per task. The employees are scoped as the other statistics scope them:
+	 * a caller who may see only their own time gets only their own row.
+	 *
+	 * @param request - The tasks (required), their organization, and optional projects, teams and date range
+	 * @returns One row per employee with time on the tasks: id, seconds, and name and photo
+	 */
+	async getTaskEmployees(request: IGetTaskEmployeesStatistics): Promise<ITaskEmployeesStatistics[]> {
+		const { organizationId, startDate, endDate, onlyMe = false } = request;
+		const { projectIds = [], taskIds = [], teamIds = [] } = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+
+		// Without a task, every task's rows would be read.
+		if (!isNotEmpty(taskIds)) {
+			return [];
+		}
+
+		const employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
+			request.employeeIds ?? [],
+			teamIds,
+			projectIds,
+			onlyMe
+		);
+
+		let start: string | Date;
+		let end: string | Date;
+		if (startDate && endDate) {
+			({ start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate)));
+		}
+
+		const rows = await this.getTaskDurationRows(
+			{ tenantId, organizationId, employeeIds, projectIds, taskIds, teamIds, start, end, byEmployee: true },
+			'duration'
+		);
+
+		const durations = new Map<ID, number>();
+		for (const row of rows) {
+			if (!row.employeeId) continue;
+			durations.set(row.employeeId, (durations.get(row.employeeId) ?? 0) + (Number(row.duration) || 0));
+		}
+		const ranked = [...durations.entries()]
+			.filter(([, duration]) => duration > 0)
+			.sort(([, a], [, b]) => b - a);
+		if (!ranked.length) {
+			return [];
+		}
+
+		const employees = await this.typeOrmEmployeeRepository.find({
+			where: { id: In(ranked.map(([id]) => id)), tenantId, organizationId },
+			relations: { user: true }
+		});
+		const byId = new Map(employees.map((employee) => [employee.id, employee]));
+
+		return ranked.map(([id, duration]) => {
+			const user = byId.get(id)?.user;
+			return {
+				id,
+				duration,
+				user: user
+					? { id: user.id, firstName: user.firstName, lastName: user.lastName, imageUrl: user.imageUrl }
+					: null
+			};
+		});
 	}
 
 	/**
