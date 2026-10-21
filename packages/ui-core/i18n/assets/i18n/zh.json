@@ -6927,6 +6927,7 @@
 		"TASK_PROGRESS": "进度",
 		"TASK_PROGRESS_OF": "{{ worked }} / {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · 占项目记录时间的 {{ share }}%（无估算）",
+		"TASK_TOP_PEOPLE": "投入最多的成员",
 		"TASK_NO_ESTIMATE": "无估算"
 	}
 }

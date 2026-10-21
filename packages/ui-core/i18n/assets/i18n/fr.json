@@ -6923,6 +6923,7 @@
 		"TASK_PROGRESS": "Progression",
 		"TASK_PROGRESS_OF": "{{ worked }} sur {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % du temps suivi du projet (aucune estimation)",
+		"TASK_TOP_PEOPLE": "Ont le plus travaillé dessus",
 		"TASK_NO_ESTIMATE": "Aucune estimation"
 	}
 }

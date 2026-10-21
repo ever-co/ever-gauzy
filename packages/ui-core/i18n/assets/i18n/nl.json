@@ -6927,6 +6927,7 @@
 		"TASK_PROGRESS": "Voortgang",
 		"TASK_PROGRESS_OF": "{{ worked }} van {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% van de geregistreerde projecttijd (geen schatting)",
+		"TASK_TOP_PEOPLE": "Meest aan gewerkt",
 		"TASK_NO_ESTIMATE": "Geen schatting"
 	}
 }
