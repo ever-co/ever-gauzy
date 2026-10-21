@@ -13,6 +13,8 @@ export const PROJECT_VIEW_RELATIONS: string[] = [
 	'tags',
 	'teams',
 	'teams.members',
+	'teams.members.employee',
+	'teams.members.employee.user',
 	'image'
 ];
 
