@@ -94,9 +94,8 @@ export function dueInWords(daysLeft: number | null, isDone: boolean): { key: str
 }
 
 /**
- * A task's time worked (all time), as a bar: against its estimate when it has one; without one, as the
- * "Most worked tasks" rows draw it — the bar against the project's most-worked task, the share out of the
- * project's tracked time.
+ * A task's time worked (all time), as a bar: against its estimate when it has one; without one, its share
+ * of the project's tracked time. Either way the bar fills to the percentage beside it.
  */
 export interface ITaskProgress {
 	/** "3h 05m": the time worked on the task. */
@@ -109,24 +108,20 @@ export interface ITaskProgress {
 	fill: number | null;
 	/** More time worked than the estimate. */
 	over: boolean;
-	/** The bar is drawn against the project's most-worked task, not an estimate. */
+	/** The bar is the task's share of the project's tracked time, not of an estimate. */
 	relative: boolean;
 	/** The bar's tooltip: an i18n key and its parameters. */
 	hint: { key: string; params: Record<string, string | number> } | null;
 }
 
-/** The time worked on a project's tasks: the most on any one task, and all of it. */
+/** The time worked on all of a project's tasks. */
 export interface IProjectWorkedTime {
-	top: number;
 	total: number;
 }
 
-/** The most-worked task's time and the total, from per-task seconds. */
+/** The project's total time worked, from per-task seconds. */
 export function projectWorkedTimeOf(seconds: number[]): IProjectWorkedTime {
-	return {
-		top: seconds.reduce((top, value) => Math.max(top, value), 0),
-		total: seconds.reduce((total, value) => total + value, 0)
-	};
+	return { total: seconds.reduce((total, value) => total + value, 0) };
 }
 
 /** A task's progress, or `null` for a task with neither time worked nor an estimate. */
@@ -151,20 +146,54 @@ export function taskProgressOf(
 			hint: { key: 'PROJECT_VIEW.TASK_PROGRESS_OF', params }
 		};
 	}
-	// No estimate: as the "Most worked tasks" rows, against the most-worked task.
-	const relative = !!project?.top;
-	const share = project?.total ? Math.round((worked / project.total) * 100) : null;
+	// No estimate: the task's share of the project's tracked time.
+	const relative = !!project?.total;
+	const share = relative ? Math.round((worked / project.total) * 100) : null;
 	return {
 		worked: formatDuration(worked),
 		estimate: null,
 		share,
-		fill: relative ? Math.min(100, Math.round((worked / project.top) * 100)) : null,
+		fill: relative ? Math.min(100, share) : null,
 		over: false,
 		relative,
 		hint: relative
 			? { key: 'PROJECT_VIEW.TASK_PROGRESS_SHARE', params: { worked: formatDuration(worked), share: share ?? 0 } }
 			: null
 	};
+}
+
+/** One person's time on a task, as the "Most worked tasks" rows draw it: time, share, and a bar to match. */
+export interface ITaskWorker {
+	person: IPersonChip;
+	/** "3h 05m". */
+	worked: string;
+	/** In percent, of everyone's time on the task. */
+	share: number;
+}
+
+/** The people who worked most on a task, from its time logs: the most first, at most `limit`. */
+export function taskWorkersOf(
+	logs: { employeeId?: string; employee?: IEmployee | any; duration?: number }[],
+	limit = 3
+): ITaskWorker[] {
+	const byEmployee = new Map<string, { employee: IEmployee | any; seconds: number }>();
+	for (const log of logs || []) {
+		const id = log.employeeId || log.employee?.id;
+		if (!id) continue;
+		const entry = byEmployee.get(id) || { employee: log.employee, seconds: 0 };
+		entry.seconds += Math.max(0, Number(log.duration) || 0);
+		byEmployee.set(id, entry);
+	}
+	const ranked = [...byEmployee.values()].filter((entry) => entry.seconds > 0).sort((a, b) => b.seconds - a.seconds);
+	const total = ranked.reduce((sum, entry) => sum + entry.seconds, 0) || 1;
+	return ranked
+		.map((entry) => ({
+			person: personOf(entry.employee),
+			worked: formatDuration(entry.seconds),
+			share: Math.round((entry.seconds / total) * 100)
+		}))
+		.filter((worker): worker is ITaskWorker => !!worker.person)
+		.slice(0, limit);
 }
 
 /** "3h 05m": seconds as hours and minutes. */
