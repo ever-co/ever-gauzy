@@ -40,7 +40,9 @@
 							[class.is-saving]="card.saving"
 							[class.is-draggable]="canMove"
 							[attr.aria-busy]="card.saving || null"
-							[routerLink]="taskLink(card.id)"
+							[routerLink]="[]"
+							[queryParams]="{ task: card.id }"
+							queryParamsHandling="merge"
 						>
 							<span class="board-card-title">{{ card.title }}</span>
 							<span class="board-card-meta">

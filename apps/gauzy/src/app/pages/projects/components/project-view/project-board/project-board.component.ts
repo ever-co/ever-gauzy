@@ -186,10 +186,6 @@ export class ProjectBoardComponent implements OnChanges {
 		return (this.board.value || []).reduce((sum, column) => sum + column.cards.length, 0);
 	}
 
-	taskLink(id: string): string[] {
-		return ['/pages/tasks/view', id];
-	}
-
 	peopleNames(people: IPersonChip[]): string {
 		return (people || []).map((person) => person.name).join(', ');
 	}
