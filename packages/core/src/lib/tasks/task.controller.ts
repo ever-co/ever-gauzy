@@ -14,7 +14,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput } from '@gauzy/contracts';
+import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	BulkOperation,
@@ -42,7 +42,8 @@ import {
 	TaskByNumberQueryDTO,
 	TaskMaxNumberQueryDTO,
 	TaskQueryDTO,
-	UpdateTaskDTO
+	UpdateTaskDTO,
+	UpdateTaskStatusDTO
 } from './dto';
 
 @ApiTags('Tasks')
@@ -386,6 +387,32 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateTaskDTO): Promise<ITask> {
 		return this.commandBus.execute(new TaskUpdateCommand(id, entity));
+	}
+
+	/**
+	 * PUT move a task to another status, changing nothing else
+	 *
+	 * The full update needs the title, so a client that changes only the status (a card dropped on
+	 * another column of the project board) would send back a title it read earlier and undo a rename.
+	 *
+	 * @param id The ID of the task to move.
+	 * @param input The status to move it to.
+	 * @returns The updated task.
+	 */
+	@ApiOperation({ summary: "Update a task's status." })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: "The task's status has been successfully updated."
+	})
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/status')
+	@UseValidationPipe({ whitelist: true })
+	async updateStatus(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdateTaskStatusDTO): Promise<ITask> {
+		// A partial update, as the service takes it: what the input leaves out stays as stored.
+		return this.commandBus.execute(new TaskUpdateCommand(id, input as ITaskUpdateInput));
 	}
 
 	/**
