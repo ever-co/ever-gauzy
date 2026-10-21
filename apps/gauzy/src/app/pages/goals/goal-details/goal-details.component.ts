@@ -1,9 +1,9 @@
 import { Component, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { BaseEntityEnum, IComment, ID, IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/contracts';
+import { BaseEntityEnum, IComment, ID, IGoal, IKeyResult, IKeyResultUpdate, PermissionsEnum } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
-import { CommentService, EmployeesService, GoalService, KeyResultService } from '@gauzy/ui-core/core';
+import { CommentService, EmployeesService, GoalService, KeyResultService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-core/core';
@@ -38,6 +38,9 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	openThreadId: ID | null = null;
 	readonly replyControl = new FormControl<string>('', { nonNullable: true });
 	postingReply = false;
+	/** The comment showing its inline "Delete this comment?" confirmation; one at a time. */
+	confirmingDeleteId: ID | null = null;
+	deletingComment = false;
 
 	@ViewChild(NbTabsetComponent) tabset: NbTabsetComponent;
 	@ViewChild('commentsTab') commentsTab: NbTabComponent;
@@ -49,6 +52,7 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		private readonly keyResultService: KeyResultService,
 		private readonly goalService: GoalService,
 		private readonly commentService: CommentService,
+		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService
 	) {
@@ -130,6 +134,47 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 			this.replyControl.reset();
 		}
 		this.postingReply = false;
+	}
+
+	/**
+	 * Whether the current user may delete the comment, on the server's terms (`CommentService.assertMayManage`):
+	 * a CHANGE_SELECTED_EMPLOYEE holder may delete any; anyone else only their own — by author when they have an
+	 * employee record, by `createdByUserId` when they do not.
+	 */
+	canDelete(comment: IComment): boolean {
+		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+		const user = this.store.user;
+		if (!user) {
+			return false;
+		}
+		const employeeId = user.employee?.id ?? user.employeeId;
+		return employeeId ? comment.employeeId === employeeId : comment.createdByUserId === user.id;
+	}
+
+	/**
+	 * Deletes a comment once its inline confirmation is accepted (the trash icon sets `confirmingDeleteId`).
+	 * Its replies are kept: the database unlinks them (`SET NULL`), so they show as comments of their own.
+	 */
+	async deleteComment(comment: IComment) {
+		if (this.deletingComment) {
+			return;
+		}
+		this.deletingComment = true;
+		try {
+			await this.commentService.delete(comment.id);
+			if (this.openThreadId === comment.id) {
+				this.openThreadId = null;
+			}
+			await this.loadComments();
+			this.toastrService.success('GOALS_PAGE.COMMENT_THREAD.DELETED');
+		} catch (error) {
+			this.toastrService.danger(error?.error?.message ?? error?.message, this.getTranslation('TOASTR.TITLE.ERROR'));
+		} finally {
+			this.confirmingDeleteId = null;
+			this.deletingComment = false;
+		}
 	}
 
 	authorName(comment: IComment): string {
