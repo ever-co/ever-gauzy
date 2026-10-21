@@ -414,6 +414,25 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     color: $muted;
   }
 
+  .update-status {
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    font-size: 11px;
+    text-transform: capitalize;
+  }
+
+  // A failed read of the comments: the message over its retry, centred like
+  // the other empty states.
+  .load-error {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    button {
+      margin: 0;
+    }
+  }
+
   // Comments as quiet chat messages: a small round avatar in a gutter, the
   // author and time on one line and the text under them, all at the dialog's
   // 12px scale. A comment with replies hangs a thread card off its avatar — a
