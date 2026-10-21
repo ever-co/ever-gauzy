@@ -6,7 +6,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { IOrganization, ITask } from '@gauzy/contracts';
-import { OrganizationProjectsService, Store, TasksService } from '@gauzy/ui-core/core';
+import { OrganizationProjectsService, Store, TasksService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	HashNumberPipe,
@@ -21,7 +21,7 @@ import {
 	TASK_VIEW_RELATIONS
 } from '../../../tasks/components/task-view/task-view-sections';
 import { IProjectQuickLookCard } from '../project-quick-look/project-quick-look.component';
-import { initialsOf } from './project-view.utils';
+import { initialsOf, ITaskProgress, projectWorkedTimeOf, taskProgressOf } from './project-view.utils';
 
 /** The windows the page's figures can be read over — the same as the team and employee pages. */
 export enum ProjectViewPeriod {
@@ -94,6 +94,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	viewSections: IRecordViewSection[] = [];
 	viewStatus: IRecordViewStatus | null = null;
 	viewState: RecordViewPageState = 'loading';
+	/** The open task's time worked against its estimate, once read; `null` until then, or with neither. */
+	viewProgress: ITaskProgress | null = null;
 
 	private projectId: string | null = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
@@ -107,7 +109,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		private readonly router: Router,
 		private readonly store: Store,
 		private readonly projectsService: OrganizationProjectsService,
-		private readonly tasksService: TasksService
+		private readonly tasksService: TasksService,
+		private readonly statisticsService: TimesheetStatisticsService
 	) {
 		super(translateService);
 	}
@@ -164,6 +167,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	async loadTask(taskId: string | null = this.viewedTaskId): Promise<void> {
 		const sequence = ++this.taskSequence;
 		this.viewedTaskId = taskId;
+		this.viewProgress = null;
 		this.showTask(null);
 		if (!taskId) return;
 		this.viewState = 'loading';
@@ -175,9 +179,31 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 			}
 			this.showTask(task);
 			this.viewState = 'ready';
+			void this.loadTaskProgress(task, sequence);
 		} catch (error) {
 			if (sequence !== this.taskSequence) return;
 			this.viewState = recordViewPageStateOf(error);
+		}
+	}
+
+	/**
+	 * The time worked on the open task, all time, against its estimate — or, without one, against the
+	 * project's most-worked task, so the project's tasks are read. A failed read shows no progress.
+	 */
+	private async loadTaskProgress(task: ITask, sequence: number): Promise<void> {
+		const projectId = task.projectId || this.card?.id;
+		try {
+			const rows = await this.statisticsService.getTasksStatistics({
+				organizationId: this.organization?.id,
+				tenantId: this.organization?.tenantId,
+				...(projectId ? { projectIds: [projectId] } : { taskIds: [task.id] })
+			});
+			if (sequence !== this.taskSequence) return;
+			const seconds = (rows || []).map((row) => Number(row.duration) || 0);
+			const row = (rows || []).find((item) => item.id === task.id);
+			this.viewProgress = taskProgressOf(Number(row?.duration) || 0, task.estimate, projectWorkedTimeOf(seconds));
+		} catch {
+			// The drawer stays without progress.
 		}
 	}
 
