@@ -76,6 +76,7 @@
 				[rangeEnd]="periodEndIso"
 				[period]="period"
 				[scopeEmployeeIds]="null"
+				[tasksInDrawer]="true"
 			></ngx-project-quick-look>
 		</div>
 
@@ -115,3 +116,33 @@
 	</div>
 	}
 </ngx-record-view-page>
+
+<!-- A task opened from any tab (`?task=<id>`): the quick look the task lists open, with a button on to the
+     task's own page. The projected content is gated here so the record renderer is built fresh per task. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTaskId"
+	[heading]="'TASKS_PAGE.HEADER'"
+	[wide]="true"
+	[fullViewLink]="viewedTaskId ? '/pages/tasks/view/' + viewedTaskId : null"
+	[fullViewLabel]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE_SHORT'"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+	</ngx-record-view>
+	} @else if (viewedTaskId) {
+	@if (viewState === 'loading') {
+	<div class="project-task-loading" [nbSpinner]="true" nbSpinnerSize="medium" nbSpinnerStatus="basic"></div>
+	} @else {
+	<div class="project-task-error">
+		<p>{{ (viewState === 'forbidden' ? 'RECORD_VIEW_PAGE.FORBIDDEN' : viewState === 'not-found' ? 'RECORD_VIEW_PAGE.NOT_FOUND' : 'RECORD_VIEW_PAGE.ERROR') | translate }}</p>
+		@if (viewState === 'error') {
+		<button nbButton size="small" status="basic" (click)="loadTask()">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.RETRY' | translate }}
+		</button>
+		}
+	</div>
+	}
+	}
+</ngx-record-view-drawer>
