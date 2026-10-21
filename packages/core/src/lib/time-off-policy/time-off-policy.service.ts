@@ -25,7 +25,8 @@ function toEmployeeId(employee: EmployeeReference): ID | undefined {
 
 /**
  * The ids the employee lookup takes. `In(...)` only binds ids: a row reaches the database as JSON
- * and an absent list is not iterable, so both used to fail the whole write.
+ * and an absent list is not iterable, so both used to fail the whole write. An entry without an id
+ * is refused rather than skipped, so a malformed list cannot silently clear the members.
  */
 function toEmployeeIds(employees: EmployeeReference[] | null | undefined): ID[] {
 	const ids: ID[] = [];
@@ -34,9 +35,10 @@ function toEmployeeIds(employees: EmployeeReference[] | null | undefined): ID[] 
 	}
 	for (const employee of employees) {
 		const id = toEmployeeId(employee);
-		if (id) {
-			ids.push(id);
+		if (!id) {
+			throw new HttpException('Each employee must have an id', HttpStatus.BAD_REQUEST);
 		}
+		ids.push(id);
 	}
 	return ids;
 }
