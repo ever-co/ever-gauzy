@@ -196,6 +196,8 @@ interface ITaskRow {
 	title: string;
 	status: string;
 	statusGroup: 'todo' | 'progress' | 'blocked' | 'done';
+	/** The status's own colour, as the Board's column shows it; unset, the dot takes its group's. */
+	statusColor?: string;
 	dueDate?: string;
 	dueDateLong?: string;
 	due: { key: string; count?: number };
@@ -711,6 +713,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 			title: task.title,
 			status: task.taskStatus?.name || humanize(task.status) || '',
 			statusGroup,
+			statusColor: task.taskStatus?.color || undefined,
 			dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
 			dueDateLong: task.dueDate ? moment(task.dueDate).format('dddd, LL') : undefined,
 			due: dueInWords(daysLeft, isDone),

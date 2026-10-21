@@ -497,6 +497,7 @@
 									<span
 										class="task-dot"
 										[class]="'group-' + task.statusGroup"
+										[style.--dot]="task.statusColor || null"
 										[nbTooltip]="('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.STATUS' | translate) + ': ' + task.status"
 										nbTooltipPlacement="top"
 									></span>
