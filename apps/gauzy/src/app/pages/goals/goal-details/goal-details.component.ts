@@ -44,6 +44,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	/** The last read of the comments failed: the tab shows a retry instead of an empty or stale list. */
 	commentsLoadError = false;
 	loadingComments = false;
+	/** Numbers each read of the comments, so only the latest one is applied. */
+	private commentsLoadId = 0;
 	/** `timeAgo`'s formatter, rebuilt only when the language changes. */
 	private relativeTimeFormat: { lang: string; format: Intl.RelativeTimeFormat } | null = null;
 
@@ -89,21 +91,31 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 	 * Reads the objective's comments, oldest first. Resolves `false` when the read failed: the tab then shows a
 	 * retry rather than "No Comments yet" or a stale list, so a write followed by a failed refresh is told apart
 	 * from a write that is on screen.
+	 *
+	 * A comment and a reply can post at once, each refreshing the list, so reads may finish out of order: only
+	 * the latest read applies its list, error and loading state, and an older one finishing later is dropped.
 	 */
 	async loadComments(): Promise<boolean> {
+		const loadId = ++this.commentsLoadId;
 		this.loadingComments = true;
 		try {
 			const { items } = await this.commentService.getAll(BaseEntityEnum.Goal, this.goal.id, this.commentScope());
-			this.comments = items;
-			this.threads = this.buildThreads(items);
-			this.commentsLoadError = false;
+			if (loadId === this.commentsLoadId) {
+				this.comments = items;
+				this.threads = this.buildThreads(items);
+				this.commentsLoadError = false;
+			}
 			return true;
 		} catch (error) {
 			console.log('Error while loading objective comments', error);
-			this.commentsLoadError = true;
+			if (loadId === this.commentsLoadId) {
+				this.commentsLoadError = true;
+			}
 			return false;
 		} finally {
-			this.loadingComments = false;
+			if (loadId === this.commentsLoadId) {
+				this.loadingComments = false;
+			}
 		}
 	}
 
