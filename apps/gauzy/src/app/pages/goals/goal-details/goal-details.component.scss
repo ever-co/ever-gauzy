@@ -513,8 +513,28 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     overflow-wrap: anywhere;
   }
 
-  // Reply, as a small muted link under the text, always shown.
-  .comment-reply {
+  // Reply and Delete, as small muted links under the text.
+  .comment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .delete-confirm {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.625rem;
+  }
+
+  .delete-question {
+    margin-top: 0.25rem;
+    font-size: 11px;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .comment-action {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
@@ -536,6 +556,27 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
 
     &:hover {
       color: nb-theme(color-primary-default);
+    }
+
+    &.danger:hover,
+    &.confirm {
+      color: nb-theme(color-danger-default);
+    }
+
+    &.confirm {
+      font-weight: 500;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    // The trash icon on its own, with a small hit area around it.
+    &.icon-only {
+      padding: 0.125rem;
+      margin-inline-start: -0.125rem;
+      border-radius: $radius;
     }
 
     &:focus-visible {
