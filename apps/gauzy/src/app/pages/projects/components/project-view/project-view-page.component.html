@@ -79,10 +79,16 @@
 			></ngx-project-quick-look>
 		</div>
 
-		<!-- The other tabs load when first opened. -->
-		@switch (tab) {
-		@case ('board') {
-		<div class="project-page-pane" role="tabpanel" id="project-view-pane-board" aria-labelledby="project-view-tab-board">
+		<!-- The Board loads when first opened, then stays loaded: a move still saving when another tab opens
+		     still reaches the Overview. -->
+		@if (boardOpened) {
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-board"
+			aria-labelledby="project-view-tab-board"
+			[hidden]="tab !== 'board'"
+		>
 			<!-- A card moved on the board changes its task's status: the Overview's task panels read it again. -->
 			<ga-project-board
 				[projectId]="card.id"
@@ -92,6 +98,9 @@
 			></ga-project-board>
 		</div>
 		}
+
+		<!-- Activity loads each time it is opened. -->
+		@switch (tab) {
 		@case ('activity') {
 		<div class="project-page-pane" role="tabpanel" id="project-view-pane-activity" aria-labelledby="project-view-tab-activity">
 			<ga-project-activity
