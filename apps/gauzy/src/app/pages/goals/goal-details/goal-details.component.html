@@ -198,7 +198,22 @@
 				[badgeText]="comments.length ? '' + comments.length : ''"
 				badgeStatus="basic"
 			>
-				@if (comments.length == 0) {
+				@if (commentsLoadError) {
+				<!-- A failed read, told apart from an empty list and never showing a stale one. -->
+				<div class="empty-state load-error" role="alert">
+					<span>{{ 'GOALS_PAGE.COMMENT_THREAD.LOAD_ERROR' | translate }}</span>
+					<button
+						type="button"
+						nbButton
+						status="basic"
+						size="tiny"
+						[disabled]="loadingComments"
+						(click)="loadComments()"
+					>
+						{{ 'BUTTONS.RETRY' | translate }}
+					</button>
+				</div>
+				} @else if (comments.length == 0) {
 				<div class="empty-state">
 					{{ 'GOALS_PAGE.MESSAGE.NO_COMMENTS' | translate }}
 				</div>
