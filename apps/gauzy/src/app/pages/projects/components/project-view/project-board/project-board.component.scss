@@ -205,7 +205,7 @@
 
 // Time worked against the estimate, as the "Most worked tasks" rows draw it: a thin bar, then the time
 // worked over its share of the estimate; red once past the estimate. Without an estimate, the bar is
-// grey: it is drawn against the most-worked task, and the share is of the project's tracked time.
+// drawn against the most-worked task, and the share is of the project's tracked time.
 .board-card-progress {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -220,10 +220,6 @@
     .board-card-progress-share {
       color: var(--gauzy-action-danger-text);
     }
-  }
-
-  &.is-relative .board-card-progress-bar span {
-    background-color: color-mix(in srgb, var(--gauzy-text-color-2) 60%, transparent);
   }
 }
 
