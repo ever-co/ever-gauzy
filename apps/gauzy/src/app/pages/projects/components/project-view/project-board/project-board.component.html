@@ -17,7 +17,7 @@
 		} @else {
 		<div class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
-			<section class="board-column" role="listitem" [attr.aria-label]="column.name">
+			<section class="board-column" role="listitem" [attr.aria-label]="column.name" [attr.data-column-id]="column.id" [class.is-refusing]="refusingColumnId === column.id">
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
@@ -33,7 +33,7 @@
 					(cdkDropListDropped)="drop($event)"
 				>
 					@for (card of column.cards; track card.id) {
-					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }">
+					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }" (cdkDragMoved)="onDragMoved($event)">
 						<a
 							class="board-card"
 							[class.is-done]="card.done"

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, type SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { CdkDragDrop, DragDropModule, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDragMove, DragDropModule, transferArrayItem } from '@angular/cdk/drag-drop';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -88,6 +88,8 @@ export class ProjectBoardComponent implements OnChanges {
 	@Input() tenantId: string;
 
 	public board: Loadable<IBoardColumn[]> = loading([]);
+	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
+	public refusingColumnId: string | null = null;
 	private _sequence = 0;
 
 	constructor(
@@ -104,14 +106,30 @@ export class ProjectBoardComponent implements OnChanges {
 	/** Only a column backed by a status row takes a card: its status is what the move saves. */
 	readonly acceptsDrop = (_drag: unknown, drop: { data: IBoardColumn }): boolean => !!drop.data?.statusId;
 
+	/** While a card is dragged, marks the column under the pointer if it will not take the card. */
+	onDragMoved(event: CdkDragMove<IBoardCard>): void {
+		const column = this.columnAt(event.pointerPosition);
+		const id = column && !column.statusId ? column.id : null;
+		if (id !== this.refusingColumnId) this.refusingColumnId = id;
+	}
+
 	/**
 	 * A card dropped on another column: it moves at once and the task is saved with that column's
 	 * status. If the save fails, the card goes back to where it was and an error says so.
 	 */
 	async drop(event: CdkDragDrop<IBoardColumn>): Promise<void> {
+		this.refusingColumnId = null;
 		const from = event.previousContainer.data;
 		const to = event.container.data;
-		if (from === to || !to.statusId) return;
+		if (from === to) {
+			// A column that refuses the card leaves it in its own list: say why it did not move.
+			const refused = this.columnAt(event.dropPoint);
+			if (refused && refused !== from && !refused.statusId) {
+				this._toastrService.danger('PROJECT_VIEW.CANNOT_DROP', 'TOASTR.TITLE.ERROR', { column: refused.name });
+			}
+			return;
+		}
+		if (!to.statusId) return;
 		const card = from.cards[event.previousIndex];
 		if (!card || card.saving) return;
 
@@ -160,6 +178,13 @@ export class ProjectBoardComponent implements OnChanges {
 
 	peopleNames(people: IPersonChip[]): string {
 		return (people || []).map((person) => person.name).join(', ');
+	}
+
+	/** The board column at a point on screen, if any. The drag preview takes no pointer events, so it is never the hit. */
+	private columnAt(point: { x: number; y: number }): IBoardColumn | undefined {
+		const element = point ? document.elementFromPoint(point.x, point.y) : null;
+		const id = element?.closest<HTMLElement>('[data-column-id]')?.dataset['columnId'];
+		return id ? (this.board.value || []).find((column) => column.id === id) : undefined;
 	}
 
 	private async load(): Promise<void> {

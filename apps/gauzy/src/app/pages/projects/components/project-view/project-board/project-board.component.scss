@@ -83,6 +83,14 @@
   outline-offset: -1px;
 }
 
+// A column that will not take the dragged card: it has no status of its own to save.
+.board-column.is-refusing {
+  outline: 1px dashed var(--gauzy-action-danger-text);
+  outline-offset: -1px;
+  background-color: color-mix(in srgb, var(--gauzy-action-danger-text) 8%, transparent);
+  cursor: not-allowed;
+}
+
 .board-card-item.cdk-drag-placeholder {
   opacity: 0.4;
 }
