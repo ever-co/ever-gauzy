@@ -10,7 +10,6 @@ import {
 	OrganizationProjectsService,
 	Store,
 	TasksService,
-	TimesheetService,
 	TimesheetStatisticsService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -125,8 +124,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		private readonly store: Store,
 		private readonly projectsService: OrganizationProjectsService,
 		private readonly tasksService: TasksService,
-		private readonly statisticsService: TimesheetStatisticsService,
-		private readonly timesheetService: TimesheetService
+		private readonly statisticsService: TimesheetStatisticsService
 	) {
 		super(translateService);
 	}
@@ -225,16 +223,21 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	/** Who worked most on the open task, all time, from its time logs. A failed read lists no one. */
+	/**
+	 * Who worked most on the open task, all time: each employee's time on it, summed by the server. The
+	 * project lets a manager of it see its members' time. A failed read lists no one.
+	 */
 	private async loadTaskWorkers(task: ITask, sequence: number): Promise<void> {
+		const projectId = task.projectId || this.card?.id;
 		try {
-			const logs = await this.timesheetService.getTimeLogs({
+			const rows = await this.statisticsService.getTaskEmployees({
 				organizationId: this.organization?.id,
 				tenantId: this.organization?.tenantId,
-				taskIds: [task.id]
+				taskIds: [task.id],
+				...(projectId ? { projectIds: [projectId] } : {})
 			});
 			if (sequence !== this.taskSequence) return;
-			this.viewWorkers = taskWorkersOf(logs || []);
+			this.viewWorkers = taskWorkersOf(rows || []);
 		} catch {
 			// The drawer stays without its people.
 		}

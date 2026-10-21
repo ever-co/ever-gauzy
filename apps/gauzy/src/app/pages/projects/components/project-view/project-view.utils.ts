@@ -171,20 +171,18 @@ export interface ITaskWorker {
 	share: number;
 }
 
-/** The people who worked most on a task, from its time logs: the most first, at most `limit`. */
+/**
+ * The people who worked most on a task, from each one's time on it (an employee id, seconds and their user):
+ * the most first, at most `limit`. Each share is of everyone's time on the task.
+ */
 export function taskWorkersOf(
-	logs: { employeeId?: string; employee?: IEmployee | any; duration?: number }[],
+	rows: { id: string; duration?: number; user?: IEmployee['user'] | any }[],
 	limit = 3
 ): ITaskWorker[] {
-	const byEmployee = new Map<string, { employee: IEmployee | any; seconds: number }>();
-	for (const log of logs || []) {
-		const id = log.employeeId || log.employee?.id;
-		if (!id) continue;
-		const entry = byEmployee.get(id) || { employee: log.employee, seconds: 0 };
-		entry.seconds += Math.max(0, Number(log.duration) || 0);
-		byEmployee.set(id, entry);
-	}
-	const ranked = [...byEmployee.values()].filter((entry) => entry.seconds > 0).sort((a, b) => b.seconds - a.seconds);
+	const ranked = (rows || [])
+		.map((row) => ({ employee: row, seconds: Math.max(0, Number(row.duration) || 0) }))
+		.filter((entry) => entry.seconds > 0)
+		.sort((a, b) => b.seconds - a.seconds);
 	const total = ranked.reduce((sum, entry) => sum + entry.seconds, 0) || 1;
 	return ranked
 		.map((entry) => ({
