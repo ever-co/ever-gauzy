@@ -363,6 +363,81 @@ function instantMillis(value: unknown): number | undefined {
 }
 
 /**
+ * A cursor's sort value, on the scale of the row value it is compared with.
+ *
+ * A cursor carries its row's sort value as text, a `Date` as RFC 3339 and a null as empty text, while a
+ * row carries a `Date`, a number or a boolean. Compared as they stand, epoch milliseconds against
+ * RFC 3339 text read every date as later than the cursor, so the text is read back into the row's shape.
+ *
+ * @param rowValue The row's value under the sort key.
+ * @param cursorText The sort value the cursor carries.
+ * @returns The cursor's value, comparable with the row's.
+ */
+function cursorValueOnRowScale(rowValue: unknown, cursorText: string): unknown {
+	if (cursorText === '') {
+		return null;
+	}
+
+	if (rowValue instanceof Date) {
+		const instant = instantMillis(cursorText);
+
+		if (instant === undefined) {
+			return cursorText;
+		}
+
+		return instant;
+	}
+
+	if (typeof rowValue === 'boolean') {
+		return cursorText === 'true';
+	}
+
+	if (typeof rowValue === 'number') {
+		const parsed = Number(cursorText);
+
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+
+	return cursorText;
+}
+
+/**
+ * Whether a row sorts after the position a cursor names, in the order {@link applyConnectionSort} gives.
+ *
+ * A cursor whose row is gone (deleted, or no longer matching the filter) is placed by the sort value and
+ * the id it still carries: the first key in its direction, then the id in that same direction.
+ *
+ * @param row The row.
+ * @param cursor The sort value and the id the cursor carries.
+ * @param sortKey The first sort key's field.
+ * @param direction The first sort key's direction.
+ * @returns True when the row comes after the cursor's position.
+ */
+function sortsAfterCursor(
+	row: unknown,
+	cursor: { readonly id: string; readonly sortValue: string },
+	sortKey: string,
+	direction: ConnectionSortKey['direction'] | undefined
+): boolean {
+	const rowValue = readPath(row, sortKey);
+	const cursorValue = cursorValueOnRowScale(rowValue, cursor.sortValue);
+	const isDescending = direction === 'DESC';
+	let order = compare(rowValue, cursorValue);
+
+	if (order === 0) {
+		order = compare(readPath(row, 'id'), cursor.id);
+	}
+
+	if (isDescending) {
+		order = -order;
+	}
+
+	return order > 0;
+}
+
+/**
  * Whether one row matches one condition.
  *
  * @param value The row's value for the field.
@@ -728,15 +803,16 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 	const before = request.page?.before ?? request.before;
 
 	if (after !== undefined) {
-		const { id, sortValue } = readCursor(after, sort);
-		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === id);
+		const cursor = readCursor(after, sort);
+		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === cursor.id);
 		// A row that has since been deleted cannot name a position, so the cursor's own sort value
 		// decides where the walk resumes — which is what makes cursor pagination stable under
 		// concurrent deletes rather than merely under inserts.
-		start =
-			index >= 0
-				? index + 1
-				: ordered.findIndex((row) => compare(readPath(row, sortKey), sortValue) > 0);
+		if (index >= 0) {
+			start = index + 1;
+		} else {
+			start = ordered.findIndex((row) => sortsAfterCursor(row, cursor, sortKey, sort[0]?.direction));
+		}
 		if (start < 0) {
 			start = ordered.length;
 		}
@@ -755,12 +831,14 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 	}
 
 	if (before !== undefined) {
-		const { id, sortValue } = readCursor(before, sort);
-		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === id);
-		end =
-			index >= 0
-				? index
-				: ordered.findIndex((row) => compare(readPath(row, sortKey), sortValue) >= 0);
+		const cursor = readCursor(before, sort);
+		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === cursor.id);
+		// For a gone row, the window ends at the first row that sorts after its position.
+		if (index >= 0) {
+			end = index;
+		} else {
+			end = ordered.findIndex((row) => sortsAfterCursor(row, cursor, sortKey, sort[0]?.direction));
+		}
 		if (end < 0) {
 			end = ordered.length;
 		}
