@@ -127,31 +127,34 @@ export class ProjectBoardComponent implements OnChanges {
 	 * A card dropped on another column: it moves at once and the task is saved with that column's
 	 * status. If the save fails, the card goes back to where it was and an error says so.
 	 */
-	async drop(event: CdkDragDrop<IBoardColumn>): Promise<void> {
+	async drop(event: CdkDragDrop<IBoardColumn, IBoardColumn, IBoardCard>): Promise<void> {
 		this.refusingColumnId = null;
 		const from = event.previousContainer.data;
 		const to = event.container.data;
-		if (from === to) {
-			// A column that refuses the card leaves it in its own list: say why it did not move.
-			const refused = this.columnAt(event.dropPoint);
-			if (refused && refused !== from && !refused.statusId) {
-				this._toastrService.danger('PROJECT_VIEW.CANNOT_DROP', 'TOASTR.TITLE.ERROR', { column: refused.name });
-			}
+		// Where the card was let go decides, not the last column that took it on the way: a card carried
+		// through an open column and let go over one that refuses it stays put and says why.
+		const released = this.columnAt(event.dropPoint);
+		if (released && released !== from && !released.statusId) {
+			this._toastrService.danger('PROJECT_VIEW.CANNOT_DROP', 'TOASTR.TITLE.ERROR', { column: released.name });
 			return;
 		}
-		if (!to.statusId) return;
-		const card = from.cards[event.previousIndex];
-		if (!card || card.saving) return;
+		// Let go over its own column, outside the column that took it, or on one without a status: no move.
+		if (from === to || !to.statusId || !event.isPointerOverContainer) return;
+		// The dragged card itself, at the place it has now: a move that failed while this card was dragged
+		// puts its card back and shifts the others, so the index the drag started at may name another card.
+		let card = event.item.data;
+		const index = card ? from.cards.indexOf(card) : -1;
+		if (index < 0 || card.saving) return;
 
-		transferArrayItem(from.cards, to.cards, event.previousIndex, event.currentIndex);
+		transferArrayItem(from.cards, to.cards, index, event.currentIndex);
 		const wasDone = card.done;
 		this.setDone(card, to.group === 'done');
 		card.saving = true;
 		const sequence = this._sequence;
 		try {
+			// The status alone: a title or anything else read when the board loaded would undo a newer edit.
 			await firstValueFrom(
-				this._http.put<ITask>(`${API_PREFIX}/tasks/${card.id}`, {
-					title: card.title,
+				this._http.put<ITask>(`${API_PREFIX}/tasks/${card.id}/status`, {
 					status: to.value,
 					taskStatusId: to.statusId,
 					organizationId: this.organizationId,
@@ -162,9 +165,9 @@ export class ProjectBoardComponent implements OnChanges {
 		} catch (error) {
 			// A reload since the drop replaced the board: there is no card left to put back.
 			if (sequence !== this._sequence) return;
-			const index = to.cards.indexOf(card);
-			if (index > -1) {
-				transferArrayItem(to.cards, from.cards, index, Math.min(event.previousIndex, from.cards.length));
+			const current = to.cards.indexOf(card);
+			if (current > -1) {
+				transferArrayItem(to.cards, from.cards, current, Math.min(index, from.cards.length));
 			}
 			this.setDone(card, wasDone);
 			this._toastrService.danger(error);
@@ -304,7 +307,7 @@ export class ProjectBoardComponent implements OnChanges {
 
 	private toCard(task: ITask, today: moment.Moment): IBoardCard {
 		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
-		const card: IBoardCard = {
+		let card: IBoardCard = {
 			id: task.id,
 			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 			title: task.title,
