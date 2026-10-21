@@ -4844,7 +4844,8 @@
 		"RIGHTS_RESERVED": "Tous droits réservés.",
 		"PRESENT": "Présent",
 		"TERMS_OF_SERVICE": "Conditions générales d'utilisation",
-		"PRIVACY_POLICY": "Politique de confidentialité"
+		"PRIVACY_POLICY": "Politique de confidentialité",
+		"DPIA_SUPPORT_PACK": "Pack Support AIPD"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6267,7 +6268,8 @@
 		"PRIVACY_POLICY": "Politique de confidentialité",
 		"TERMS_AND_CONDITIONS": "Conditions Générales",
 		"DOCUMENT_VERSION": "Version {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "En vigueur depuis le {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "En vigueur depuis le {{ date }}",
+		"DPIA_SUPPORT_PACK": "Pack Support AIPD"
 	},
 	"LOADING": "Chargement, veuillez patienter....",
 	"ACCOUNTING_TEMPLATES_PAGE": {

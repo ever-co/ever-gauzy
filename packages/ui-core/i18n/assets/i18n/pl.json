@@ -4843,7 +4843,8 @@
 		"RIGHTS_RESERVED": "Wszelkie prawa zastrzeżone",
 		"PRESENT": "Prezentować",
 		"TERMS_OF_SERVICE": "Warunki korzystania z usługi",
-		"PRIVACY_POLICY": "Polityka prywatności"
+		"PRIVACY_POLICY": "Polityka prywatności",
+		"DPIA_SUPPORT_PACK": "Pakiet wsparcia DPIA"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6269,7 +6270,8 @@
 		"PRIVACY_POLICY": "Polityka prywatności",
 		"TERMS_AND_CONDITIONS": "Regulamin",
 		"DOCUMENT_VERSION": "Wersja {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "Obowiązuje od {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "Obowiązuje od {{ date }}",
+		"DPIA_SUPPORT_PACK": "Pakiet wsparcia DPIA"
 	},
 	"LOADING": "Ładowanie, proszę czekać..",
 	"ACCOUNTING_TEMPLATES_PAGE": {

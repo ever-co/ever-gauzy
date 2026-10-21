@@ -5411,6 +5411,7 @@
 		"TERMS_OF_SERVICE": "Terms Of Service",
 		"PRIVACY_POLICY": "Privacy Policy",
 		"COOKIE_POLICY": "Cookie Policy",
+		"DPIA_SUPPORT_PACK": "DPIA Support Pack",
 		"VERSION": "Version",
 		"VERSION_HINT": "Release version — open on GitHub",
 		"COMMIT": "Commit",
@@ -6937,6 +6938,7 @@
 	"LEGAL": {
 		"PRIVACY_POLICY": "Privacy Policy",
 		"TERMS_AND_CONDITIONS": "Terms & Conditions",
+		"DPIA_SUPPORT_PACK": "DPIA Support Pack",
 		"DOCUMENT_VERSION": "Version {{ version }}",
 		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
 	},

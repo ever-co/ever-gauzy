@@ -4608,7 +4608,8 @@
 		"RIGHTS_RESERVED": "crwdns8420:0crwdne8420:0",
 		"PRESENT": "crwdns2939:0crwdne2939:0",
 		"TERMS_OF_SERVICE": "crwdns9776:0crwdne9776:0",
-		"PRIVACY_POLICY": "crwdns9778:0crwdne9778:0"
+		"PRIVACY_POLICY": "crwdns9778:0crwdne9778:0",
+		"DPIA_SUPPORT_PACK": "DPIA Support Pack"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -5681,7 +5682,8 @@
 		"PRIVACY_POLICY": "crwdns9998:0crwdne9998:0",
 		"TERMS_AND_CONDITIONS": "crwdns10000:0crwdne10000:0",
 		"DOCUMENT_VERSION": "Version {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}",
+		"DPIA_SUPPORT_PACK": "DPIA Support Pack"
 	},
 	"LOADING": "crwdns10002:0crwdne10002:0",
 	"ACCOUNTING_TEMPLATES_PAGE": {

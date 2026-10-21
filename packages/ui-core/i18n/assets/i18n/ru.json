@@ -4871,7 +4871,8 @@
 		"RIGHTS_RESERVED": "Все права защищены.",
 		"PRESENT": "Подарочный",
 		"TERMS_OF_SERVICE": "Условия предоставления услуг",
-		"PRIVACY_POLICY": "Политика конфиденциальности"
+		"PRIVACY_POLICY": "Политика конфиденциальности",
+		"DPIA_SUPPORT_PACK": "Пакет поддержки DPIA"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6289,7 +6290,8 @@
 		"PRIVACY_POLICY": "Политика конфиденциальности",
 		"TERMS_AND_CONDITIONS": "Условия использования",
 		"DOCUMENT_VERSION": "Версия {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "Действует с {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "Действует с {{ date }}",
+		"DPIA_SUPPORT_PACK": "Пакет поддержки DPIA"
 	},
 	"LOADING": "Загрузка, пожалуйста удерживайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
