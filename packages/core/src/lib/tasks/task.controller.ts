@@ -9,7 +9,8 @@ import {
 	Body,
 	UseGuards,
 	Post,
-	Delete
+	Delete,
+	NotFoundException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -411,8 +412,17 @@ export class TaskController extends CrudController<Task> {
 	@Put('/:id/status')
 	@UseValidationPipe({ whitelist: true })
 	async updateStatus(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdateTaskStatusDTO): Promise<ITask> {
-		// A partial update, as the service takes it: what the input leaves out stays as stored.
-		return this.commandBus.execute(new TaskUpdateCommand(id, input as ITaskUpdateInput));
+		const { organizationId, status, taskStatusId } = input;
+		// The organization is one of the caller's (the DTO checks it) and must be the task's: the guards check
+		// the tenant only, so a member of one organization could otherwise move a task of another in the same
+		// tenant. A task of another organization reads as not found, as one of another tenant does.
+		const task = await this.taskService.findOneByIdString(id);
+		if (!task || task.organizationId !== organizationId) {
+			throw new NotFoundException('The requested record was not found');
+		}
+		// Only the status reaches the update, a partial one as the service takes it: the organization is the
+		// request's context and is never written.
+		return this.commandBus.execute(new TaskUpdateCommand(id, { status, taskStatusId } as ITaskUpdateInput));
 	}
 
 	/**
