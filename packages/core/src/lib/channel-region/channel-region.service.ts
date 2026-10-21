@@ -18,6 +18,16 @@ import { TypeOrmChannelRegionRepository } from './repository/type-orm-channel-re
 import { MikroOrmChannelRegionRepository } from './repository/mikro-orm-channel-region.repository';
 
 /**
+ * Whether a member of a region set claims the channel's fallback flag.
+ *
+ * @param member The member.
+ * @returns True when the member is the set's fallback region.
+ */
+function isFallbackMember(member: IChannelRegionInput): boolean {
+	return member.isDefault === true;
+}
+
+/**
  * Which regions a channel may sell into.
  *
  * **A region is reachable from a channel only through a row here.** The channel-scope guard resolves a
@@ -188,21 +198,14 @@ export class ChannelRegionService extends TenantAwareCrudService<ChannelRegion> 
 				}
 			}
 
-			for (const member of members) {
-				const row = current.find((one) => one.regionId === member.regionId);
+			// The fallback is written last, so a kept previous holder is demoted before the flag moves and
+			// the fallback index never sees two holders, whatever order the caller listed the set in.
+			const regularMembers = members.filter((member) => !isFallbackMember(member));
+			const fallbackMembers = members.filter(isFallbackMember);
+			const writeOrder = [...regularMembers, ...fallbackMembers];
 
-				if (row) {
-					row.isDefault = member.isDefault ?? false;
-					row.deletedAt = undefined;
-					await manager.save(ChannelRegion, row);
-				} else {
-					await manager.save(ChannelRegion, {
-						channelId,
-						regionId: member.regionId,
-						isDefault: member.isDefault ?? false,
-						...this.scope
-					} as never);
-				}
+			for (const member of writeOrder) {
+				await this.saveMember(manager, channelId, current, member);
 			}
 		});
 
@@ -379,6 +382,37 @@ export class ChannelRegionService extends TenantAwareCrudService<ChannelRegion> 
 					ChannelRegionRefusalReason.CHANNEL_NOT_FOUND
 				} — channel '${String(channelId)}' could not be found.`
 			);
+		}
+	}
+
+	/**
+	 * Writes one member of a replaced region set: the row the channel already has for the region is
+	 * revived and updated, and a region the channel did not have gets a new row.
+	 *
+	 * @param manager The transaction manager.
+	 * @param channelId The channel.
+	 * @param current The channel's rows, read at the start of the replacement.
+	 * @param member The member to write.
+	 */
+	private async saveMember(
+		manager: EntityManager,
+		channelId: ID,
+		current: ChannelRegion[],
+		member: IChannelRegionInput
+	): Promise<void> {
+		const row = current.find((one) => one.regionId === member.regionId);
+
+		if (row) {
+			row.isDefault = member.isDefault ?? false;
+			row.deletedAt = undefined;
+			await manager.save(ChannelRegion, row);
+		} else {
+			await manager.save(ChannelRegion, {
+				channelId,
+				regionId: member.regionId,
+				isDefault: member.isDefault ?? false,
+				...this.scope
+			} as never);
 		}
 	}
 
