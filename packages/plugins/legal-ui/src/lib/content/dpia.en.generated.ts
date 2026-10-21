@@ -20,7 +20,7 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 	locale: 'en',
 	version: '1.0.0',
 	effectiveDate: '2026-08-02',
-	sha256: 'e601acf708f38979d84bcab7adb6ca7462990569c4ea53192ed4ec3207053d0f',
+	sha256: '4fc4fb49c650392678d7b61e557575defa8564865bc0ea8ea6d1fce5de344b70',
 	title: 'Data Protection Impact Assessment (DPIA) Support Pack',
 	html: `<h2 id="purpose-and-legal-context" tabindex="-1">1. Purpose and Legal Context</h2>
 <p>This Data Protection Impact Assessment (DPIA) Support Pack is published by <strong>Ever Technologies LTD</strong> ("we", "our", or "us") for subscribers, employers, and administrators ("Customer", "Controller", or "you") using <strong>Ever Gauzy Cloud</strong> and the Ever Gauzy desktop tracking applications. It is intended to be incorporated directly into your own data protection impact assessment, presented to your appointed Data Protection Officer (DPO), submitted to works councils (<em>Betriebsrat</em> / <em>Comit\u00e9 d'entreprise</em>), and produced during regulatory audits.</p>
@@ -79,8 +79,8 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 <h3 id="national-member-state-provisions" tabindex="-1">National Member State Provisions</h3>
 <ul>
 <li><strong>Germany (\u00a7 38 BDSG):</strong> Section 38(1) sentence 2 of the German Federal Data Protection Act (<em>Bundesdatenschutzgesetz</em>) mandates the appointment of an internal or external Data Protection Officer (<em>Datenschutzbeauftragter</em>) whenever an entity conducts processing that is subject to a mandatory DPIA, <strong>regardless of employee headcount</strong>. Activating screen or activity capture in Germany immediately triggers this requirement.</li>
-<li><strong>Netherlands (Article 36 GDPR Prior Consultation):</strong> Under published guidance from the Dutch Data Protection Authority (<em>Autoriteit Persoonsgegevens</em>), if high residual privacy risks cannot be mitigated (e.g. through strict blurring, short retention, and worker exit rights), the employer must engage in prior consultation with the supervisory authority before activating monitoring.</li>
-<li><strong>France (CNIL):</strong> The CNIL strictly prohibits continuous employee screen or keystroke surveillance. Gauzy's built-in interval controls, client-side blurring, and transparency levers are essential to satisfy CNIL proportionality standards.</li>
+<li><strong>Netherlands (Article 36 GDPR Prior Consultation):</strong> Under published guidance from the Dutch Data Protection Authority (<em>Autoriteit Persoonsgegevens</em>), if high residual privacy risks cannot be mitigated (e.g. through role-based exemptions, access parity, and worker exit rights), the employer must engage in prior consultation with the supervisory authority before activating monitoring.</li>
+<li><strong>France (CNIL):</strong> The CNIL strictly prohibits continuous employee screen or keystroke surveillance. Gauzy's built-in interval controls, access parity, and worker exit rights are essential to satisfy CNIL proportionality standards.</li>
 <li><strong>Italy (Statuto dei Lavoratori):</strong> Article 4 of Law No. 300/1970 strictly requires formal agreement with trade union representatives (<em>rappresentanze sindacali aziendali</em>) or authorization from the Territorial Labor Inspectorate (<em>Ispettorato Territoriale del Lavoro</em>) prior to deploying tools from which remote worker control may derive.</li>
 </ul>
 
@@ -100,12 +100,12 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 <tbody>
 <tr>
 <td><strong>Screen Capture (Screenshots)</strong></td>
-<td>Compressed bitmap images (JPEG/WebP) of connected displays during an active timer session. Image metadata: UTC timestamp, employee UUID, organization UUID, display identifier, resolution. Optional multi-display capture or active-display-only capture. Optional client-side Gaussian blur.</td>
+<td>Full-resolution bitmap images (PNG/JPEG) of connected displays during an active timer session, with server-generated thumbnails. Image metadata: UTC timestamp, employee UUID, organization UUID, display identifier, resolution. Optional multi-display capture or active-display-only capture. <em>Note:</em> Client-side blurring is currently not implemented by the desktop agent; original unblurred frames are captured and uploaded.</td>
 <td><strong>NO</strong> capture when timer is stopped or paused.<br /><strong>NO</strong> continuous video streaming by default.<br /><strong>NO</strong> hidden/stealth recording without user knowledge.<br /><strong>NO</strong> OCR text extraction or full-text indexing.<br /><strong>NO</strong> ingestion into AI/machine learning training sets.</td>
 </tr>
 <tr>
 <td><strong>Activity Rates (Mouse &amp; Keyboard)</strong></td>
-<td>Aggregate activity percentage computed per 10-minute time slot: ratio of active seconds with keyboard press or mouse movement/clicks against total slot elapsed time. Quantitative event counters (mouse click totals, movement units, keypress counts).</td>
+<td>Aggregate activity percentage computed per time slot: ratio of active seconds with keyboard press or mouse movement/clicks against total slot elapsed time. Quantitative event counters (mouse click totals, movement units, keypress counts).</td>
 <td><strong>NO KEYLOGGER.</strong> Specific keys, characters, passwords, credit card numbers, and message contents are <strong>NEVER</strong> intercepted, recorded, or stored.<br /><strong>NO</strong> screen coordinate tracking or cursor position recording.<br /><strong>NO</strong> clipboard reading.</td>
 </tr>
 <tr>
@@ -146,113 +146,107 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 <h2 id="capture-frequencies-and-randomisation" tabindex="-1">3. Capture Frequencies and Randomisation Mechanics</h2>
 
 <h3 id="frequency-ranges-and-daily-capture-budgets" tabindex="-1">Frequency Ranges and Daily Capture Budgets</h3>
-<p>Ever Gauzy does not use vague "reasonable frequency" defaults. Every capture feature operates within quantifiable, administrator-configurable numerical ranges:</p>
+<p>Ever Gauzy offers administrator-configurable capture frequencies within the defined options supported by the desktop client (<code>DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS = [1, 3, 5, 10]</code> minutes):</p>
 
 <table>
 <thead>
 <tr>
 <th>Setting</th>
-<th>Minimum Configurable</th>
+<th>Available Configurable Options</th>
 <th>Default Setting</th>
-<th>Maximum Configurable</th>
-<th>Records Generated (8-Hour Workday at Default)</th>
+<th>Records Generated (8-Hour Workday at Default 10-Min Setting)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Screenshot Frequency</strong></td>
-<td>1 capture every 60 minutes</td>
+<td><strong>Screenshot Frequency (Fixed Mode)</strong></td>
+<td><strong>1, 3, 5, or 10 minutes</strong></td>
 <td><strong>1 capture every 10 minutes</strong></td>
-<td>1 capture every 1 minute</td>
 <td><strong>48 screenshots</strong> per worker / day</td>
 </tr>
 <tr>
+<td><strong>Screenshot Frequency (Random Mode)</strong></td>
+<td>Dynamic selection from <strong>[1, 3, 5, 10] minutes</strong></td>
+<td>Disabled by default</td>
+<td><strong>~100 screenshots</strong> per worker / day (average ~4.75 min interval)</td>
+</tr>
+<tr>
 <td><strong>Activity Rate Calculation</strong></td>
-<td>1 calculation every 60 minutes</td>
+<td>1 calculation per active interval (1, 3, 5, or 10 min)</td>
 <td><strong>1 calculation every 10 minutes</strong></td>
-<td>1 calculation every 1 minute</td>
-<td><strong>48 time-slot aggregates</strong> per worker / day</td>
+<td><strong>48 time-slot aggregates</strong> per worker / day (at 10-min setting)</td>
 </tr>
 <tr>
 <td><strong>Camshot Frequency</strong></td>
-<td>1 capture every 60 minutes</td>
-<td><strong>Disabled by default</strong> (1 per 10 min if on)</td>
-<td>1 capture every 5 minutes</td>
-<td><strong>0</strong> (or 48 if explicitly enabled)</td>
+<td>1 capture per configured interval (if enabled)</td>
+<td><strong>Disabled by default</strong></td>
+<td><strong>0</strong> (or 48 if explicitly enabled at 10-min setting)</td>
 </tr>
 <tr>
 <td><strong>Soundshot Frequency</strong></td>
-<td>1 sample every 60 minutes</td>
-<td><strong>Disabled by default</strong> (1 per 10 min if on)</td>
-<td>1 sample every 10 minutes</td>
-<td><strong>0</strong> (or 48 if explicitly enabled)</td>
+<td>1 sample per configured interval (if enabled)</td>
+<td><strong>Disabled by default</strong></td>
+<td><strong>0</strong> (or 48 if explicitly enabled at 10-min setting)</td>
 </tr>
 </tbody>
 </table>
 
-<h3 id="what-randomisation-does-and-why-it-mitigates-risk" tabindex="-1">What Randomisation Does (Jitter Mechanics)</h3>
-<p>When screenshot capture is configured to a 10-minute interval, administrators can choose between <strong>fixed clock boundaries</strong> and <strong>pseudo-randomised windows</strong>:</p>
+<h3 id="what-randomisation-does-and-why-it-mitigates-risk" tabindex="-1">What Randomisation Does (Dynamic Interval Mechanics)</h3>
+<p>Administrators can configure the desktop agent to operate in <strong>fixed interval mode</strong> or <strong>random interval mode</strong>:</p>
 <ul>
-<li><strong>Fixed Clock Mode:</strong> The desktop agent triggers a screenshot at predetermined clock ticks (e.g. 09:00, 09:10, 09:20).</li>
-<li><strong>Pseudo-Randomised Mode:</strong> Within each 10-minute slot, a pseudo-random seed generates an unpredictable offset (e.g. slot 1 captures at minute 03:42, slot 2 captures at minute 07:18, slot 3 captures at minute 01:05).</li>
+<li><strong>Fixed Interval Mode:</strong> The desktop agent triggers a screenshot at the fixed cadence selected in settings (1, 3, 5, or 10 minutes). At the standard 10-minute setting, this produces exactly 6 captures per hour (48 captures across an 8-hour shift).</li>
+<li><strong>Random Interval Mode:</strong> When random interval is enabled, the timer dynamically re-samples the next capture interval from the predefined set <code>[1, 3, 5, 10]</code> minutes after every capture (implemented in <code>KbMouseTimer.getTimeNextScreenshot()</code>). Over time, this yields an average interval of approximately 4.75 minutes. Over an 8-hour continuous active shift, random mode produces an average of <strong>approximately 100 captures per day</strong> (ranging between ~48 and ~480 captures depending on the random sequence).</li>
 </ul>
-<p><strong>DPIA Risk Mitigation Rationale:</strong></p>
+<p><strong>DPIA Impact &amp; Trade-off Analysis:</strong></p>
 <ol>
-<li><strong>Eliminates the "Panopticon Clock-Watching" Anxiety:</strong> In fixed mode, employees experience psychological stress as the clock approaches the 10-minute mark, often interrupting their cognitive flow to prepare their desktop. Randomisation distributes captures naturally, reducing surveillance-related stress.</li>
-<li><strong>Prevents Metric Manipulation:</strong> In fixed mode, disengaged workers may artificially generate bursts of keystrokes immediately before the fixed mark. Randomisation provides an authentic, unbiased sample of work activity.</li>
-<li><strong>Strict Data Parity:</strong> Randomisation changes <em>when</em> the capture occurs within the block, but <strong>does not increase the total number of captures</strong>. The daily data volume remains exactly 48 screenshots for an 8-hour shift.</li>
+<li><strong>Reduces Clock-Watching Surveillance Stress:</strong> Unpredictable capture timing prevents workers from constantly watching the clock or suffering anxiety spikes as a fixed deadline approaches.</li>
+<li><strong>Prevents Metric Manipulation:</strong> Disengaged workers cannot game activity statistics by typing only at predetermined intervals.</li>
+<li><strong>Important Volume Disclosure for Controllers:</strong> Because random mode selects dynamically from 1, 3, 5, and 10 minutes, <strong>random mode collects more captures on average (~100/day) than a fixed 10-minute setting (48/day)</strong>. Controllers conducting a DPIA must account for this higher capture volume when balancing data minimisation under GDPR Article 5(1)(c).</li>
 </ol>
 
 <hr />
 
-<h2 id="retention-windows-and-automated-purging" tabindex="-1">4. Retention Windows and Automated Purging</h2>
-<p>To comply with the GDPR Article 5(1)(e) Storage Limitation principle, Ever Gauzy implements concrete, hard retention windows backed by automated deletion cron tasks rather than ambiguous "as long as necessary" statements.</p>
+<h2 id="retention-windows-and-automated-purging" tabindex="-1">4. Retention Arrangements and Storage Lifecycle</h2>
+<p>To comply with the GDPR Article 5(1)(e) Storage Limitation principle, Controllers must define and enforce concrete retention policies for captured workforce data. Ever Gauzy's storage architecture operates as follows:</p>
 
 <table>
 <thead>
 <tr>
 <th>Data Category</th>
-<th>Default Retention</th>
-<th>Configurable Range</th>
-<th>Automated Purge Schedule &amp; Execution Method</th>
+<th>Storage Arrangement &amp; Persistence</th>
+<th>Controller Lifecycle Management &amp; Purge Options</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Screenshots &amp; Camshot Media</strong></td>
-<td><strong>90 days</strong> (3 months)</td>
-<td>7 days to 365 days</td>
-<td><strong>Daily at 02:00 UTC:</strong> Automated cron job executes hard database deletion and sends S3/R2 <code>DeleteObjects</code> batch commands. Expired binaries are permanently erased; no soft-delete retention.</td>
+<td>Stored in configured object storage (AWS S3, Cloudflare R2, MinIO, or local filesystem). Stored persistently until deleted.</td>
+<td><strong>Controller Lifecycle Policy:</strong> Controllers should configure storage bucket lifecycle expiration rules (e.g. AWS S3 Lifecycle Rule set to 90 days) on the media bucket to automatically expire old binaries. Cloud customers may also request automated retention sweeps or invoke administrative bulk deletion.</td>
 </tr>
 <tr>
 <td><strong>Short Video Recordings</strong></td>
-<td><strong>30 days</strong></td>
-<td>7 days to 90 days</td>
-<td><strong>Daily at 02:00 UTC:</strong> Hard deletion of video blobs from object storage.</td>
+<td>Stored as media objects in object storage.</td>
+<td>Subject to the same bucket lifecycle expiration rules or administrative deletion.</td>
 </tr>
 <tr>
 <td><strong>Activity Rates &amp; App/URL Logs</strong></td>
-<td><strong>12 months</strong></td>
-<td>1 month to 24 months</td>
-<td><strong>Daily at 02:30 UTC:</strong> Rolling truncation of granular time-slot metrics older than configured threshold.</td>
+<td>Stored as database records associated with time slots.</td>
+<td>Retained in the database while corresponding time slots exist. Controllers can perform rolling database archival or truncation.</td>
 </tr>
 <tr>
 <td><strong>Time Logs &amp; Basic Timesheets</strong></td>
-<td><strong>12 months</strong> (Default)</td>
-<td>12 months to 10 years</td>
-<td>Configurable by Controller to satisfy statutory commercial, tax, and labor audit retention rules (e.g. \u00a7 257 HGB / \u00a7 147 AO in Germany, requiring 6 to 10 years for payroll and tax documentation).</td>
+<td>Relational database records.</td>
+<td>Retained by the Controller as needed to satisfy statutory commercial, tax, and labor audit retention requirements (e.g. \u00a7 257 HGB / \u00a7 147 AO in Germany, requiring 6 to 10 years for payroll and tax documentation).</td>
 </tr>
 <tr>
 <td><strong>Administrative &amp; Audit Logs</strong></td>
-<td><strong>36 months</strong> (3 years)</td>
-<td>Fixed ceiling</td>
-<td>Retained for security incident analysis, forensics, and non-repudiation of privileged supervisor access.</td>
+<td>Structured audit log entries.</td>
+<td>Retained for up to 36 months for security incident analysis, forensics, and non-repudiation of privileged supervisor access.</td>
 </tr>
 <tr>
 <td><strong>Account Deletion (Tenant Exit)</strong></td>
-<td><strong>30 days</strong> grace period</td>
-<td>Immediate on written request</td>
-<td>Upon contract termination or organization deletion, all tenant data across all databases and object buckets is hard-deleted within 30 days. Backup snapshots expire naturally within 30 days.</td>
+<td>Complete tenant data removal.</td>
+<td>Upon contract termination or organization deletion, all tenant data across databases and object buckets is permanently deleted within 30 days. Backup snapshots expire naturally within 30 days.</td>
 </tr>
 </tbody>
 </table>
@@ -287,7 +281,7 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 <td><strong>Media Storage (Screenshots, Camshots)</strong></td>
 <td>Frankfurt am Main, Germany (EU Region)</td>
 <td>AWS S3 <code>eu-central-1</code> / Cloudflare R2 (EU jurisdiction) / Hetzner Storage Box EU</td>
-<td>Server-Side Encryption with AES-256 (SSE-S3 / SSE-KMS); pre-signed short-lived URLs (15-minute expiry) for authenticated access.</td>
+<td>Server-Side Encryption with AES-256 (SSE-S3 / SSE-KMS); pre-signed authenticated access URLs with 1-hour (3,600-second) expiry (<code>PRESIGNED_URL_EXPIRES_IN_SECONDS</code>).</td>
 </tr>
 <tr>
 <td><strong>Automated Backup Snapshots</strong></td>
@@ -410,22 +404,22 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 </thead>
 <tbody>
 <tr>
-<td><strong>1. Client-Side Screenshot Blurring</strong></td>
-<td>Applies a Gaussian blur filter on the client device prior to network transmission.</td>
-<td><strong>Inadvertent capture of sensitive data</strong> (GDPR Article 9 special categories: medical records, banking details, private messages, credentials).</td>
-<td><em>Low residual risk:</em> Blurring conceals text while preserving general window layout. Recommended as default for all knowledge workers.</td>
+<td><strong>1. Visual Screen Capture Scope</strong></td>
+<td>Captures display images in full visual resolution; client-side blurring is <strong>not implemented</strong> by the desktop agent.</td>
+<td><strong>Inadvertent capture of sensitive personal data</strong> (GDPR Article 9 special categories: medical records, banking details, private messages, credentials).</td>
+<td><em>High residual risk if unmanaged:</em> Because frames are captured unblurred, Controllers must not rely on automated masking. Mitigate by using longer intervals (10 min), excluding sensitive roles/departments via per-user disable, and enforcing clear acceptable use policies for personal browsing.</td>
 </tr>
 <tr>
-<td><strong>2. Frequency Stretching</strong></td>
-<td>Adjustable capture interval from 1 minute to 60 minutes (default: 10 minutes).</td>
+<td><strong>2. Frequency Adjustment</strong></td>
+<td>Configurable capture interval from 1, 3, 5, to 10 minutes (default: 10 minutes).</td>
 <td><strong>Disproportionate surveillance &amp; excessive data collection</strong> (GDPR Article 5(1)(c) Data Minimisation).</td>
-<td><em>Controlled risk:</em> Stretching to 10 or 30 minutes reduces total volume by 90-97% compared to 1-minute intervals.</td>
+<td><em>Controlled risk:</em> Selecting the 10-minute interval reduces collection volume by 90% (48 captures/day) compared to the 1-minute interval (480 captures/day). Recommended as default.</td>
 </tr>
 <tr>
-<td><strong>3. Pseudo-Randomised Capture Window</strong></td>
-<td>Jitters capture timing within the slot instead of taking screenshots at fixed clock ticks.</td>
+<td><strong>3. Random Interval Mode</strong></td>
+<td>Randomly chooses the next capture interval from <code>[1, 3, 5, 10]</code> minutes after each capture.</td>
 <td><strong>Surveillance anxiety &amp; panopticon stress</strong> ("watching the clock"); artificial metric gaming.</td>
-<td><em>Minimal risk:</em> Keeps total daily capture volume identical while reducing cognitive stress.</td>
+<td><em>Increased collection volume:</em> Averages ~4.75 minutes between captures (~100 captures/8-hour shift vs. 48 for fixed 10-minute). Controllers must assess whether higher capture density is proportionate for their use case.</td>
 </tr>
 <tr>
 <td><strong>4. Per-User and Per-Team Disable</strong></td>
@@ -452,16 +446,16 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 <td><em>Mitigated:</em> Monitoring is strictly overt and transparent to the data subject at all times.</td>
 </tr>
 <tr>
-<td><strong>8. Manual Time Deletion &amp; Media Scrub</strong></td>
-<td>Deleting a time block instantly hard-purges all associated screenshots and activity records.</td>
+<td><strong>8. Manual Time Deletion &amp; Soft-Removal</strong></td>
+<td>Deleting a time block performs a <strong>soft-deletion</strong> in the database: time entries and screenshots are immediately removed from timesheets, dashboards, and reporting views. Permanent erasure from object storage occurs upon subsequent hard-delete or administrative purge.</td>
 <td><strong>Accidental capture of personal activity</strong> (e.g. employee forgot to stop timer before taking a lunch break or personal phone call).</td>
-<td><em>Mitigated:</em> Employees can immediately scrub mistaken captures along with the corresponding time log.</td>
+<td><em>Partially mitigated:</em> Soft-deletion immediately hides accidental captures from all supervisory and reporting views. Permanent storage scrub requires administrative database/storage purge.</td>
 </tr>
 <tr>
-<td><strong>9. Strict Retention Ceilings</strong></td>
-<td>Configurable retention (7 to 365 days, default 90 days) with automated daily 02:00 UTC hard purge.</td>
+<td><strong>9. Storage Lifecycle &amp; Retention Management</strong></td>
+<td>Media is retained until deleted or purged. Controllers manage lifecycle limits via administrative bulk deletion or by establishing S3 object storage bucket lifecycle expiration rules (e.g. 90-day S3 expiration).</td>
 <td><strong>Indefinite data hoarding</strong> (GDPR Article 5(1)(e) Storage Limitation).</td>
-<td><em>Mitigated:</em> Automatic permanent erasure prevents stale surveillance data accumulation.</td>
+<td><em>Requires Controller action:</em> The application does not automatically hard-purge captures on an arbitrary built-in schedule; Controllers must implement storage lifecycle policies or regular administrative sweeps.</td>
 </tr>
 <tr>
 <td><strong>10. Camshot &amp; Soundshot Opt-In Only</strong></td>
@@ -485,11 +479,11 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 </li>
 <li><strong>Configure Default Privacy Levers:</strong>
   <ul>
-    <li>Enable <strong>Client-Side Blurring</strong> for screenshots.</li>
-    <li>Set capture frequency to <strong>10 minutes or longer</strong>.</li>
+    <li>Note that <strong>client-side blurring is not supported</strong>; protect sensitive data by exempting roles handling special category data (e.g., HR, medical, legal) and using the longest available interval.</li>
+    <li>Set capture frequency to <strong>10 minutes (the maximum standard interval)</strong>.</li>
     <li>Ensure <code>allowEmployeeToSeeTrackedData</code> is set to <strong>true</strong>.</li>
     <li>Leave <strong>Camshot and Soundshot disabled</strong> unless an exceptional, documented security justification exists.</li>
-    <li>Set media retention to <strong>90 days or less</strong>.</li>
+    <li>Establish an <strong>S3 storage lifecycle policy (recommended 90 days or less)</strong> to automatically expire old screenshot objects from the storage bucket.</li>
   </ul>
 </li>
 <li><strong>Consult Employee Representatives:</strong>
