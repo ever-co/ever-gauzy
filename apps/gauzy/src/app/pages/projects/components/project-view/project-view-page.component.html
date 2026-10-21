@@ -129,7 +129,41 @@
 >
 	@if (viewedTask) {
 	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
-		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+		<div recordViewHeader class="project-task-head">
+			<ga-task-view-header [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+			<!-- Time worked against the estimate, as the "Most worked tasks" rows draw it: label, a thin bar, then
+			     the time worked over its share. Without an estimate, the bar is against the project's most-worked
+			     task and the share is of the project's tracked time. -->
+			@if (viewProgress; as progress) {
+			<div class="project-task-progress" [class.is-over]="progress.over" [class.is-relative]="progress.relative">
+				<span class="project-task-progress-label">
+					<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+					{{ 'PROJECT_VIEW.TASK_PROGRESS' | translate }}
+				</span>
+				@if (progress.hint; as hint) {
+				<span
+					class="project-task-progress-bar"
+					role="progressbar"
+					aria-valuemin="0"
+					[attr.aria-valuenow]="progress.share"
+					[attr.aria-label]="'PROJECT_VIEW.TASK_PROGRESS' | translate"
+					[attr.aria-valuetext]="hint.key | translate : hint.params"
+					[nbTooltip]="hint.key | translate : hint.params"
+					nbTooltipPlacement="top"
+					><span [style.width.%]="progress.fill"></span
+				></span>
+				} @else {
+				<span class="project-task-progress-none">{{ 'PROJECT_VIEW.TASK_NO_ESTIMATE' | translate }}</span>
+				}
+				<span class="project-task-progress-figures">
+					<span class="project-task-progress-time">{{ progress.worked }}</span>
+					@if (progress.share !== null) {
+					<span class="project-task-progress-share">{{ progress.share }}%</span>
+					}
+				</span>
+			</div>
+			}
+		</div>
 	</ngx-record-view>
 	} @else if (viewedTaskId) {
 	@if (viewState === 'loading') {

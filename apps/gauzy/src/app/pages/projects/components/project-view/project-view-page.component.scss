@@ -73,3 +73,92 @@
   padding: 1rem 0;
   color: var(--gauzy-text-color-2);
 }
+
+/* ── Task drawer: the task's time worked against its estimate, under its header ── */
+
+.project-task-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+// Label | bar | time worked over share — one line, as the "Most worked tasks" rows.
+.project-task-progress {
+  display: grid;
+  grid-template-columns: auto minmax(3rem, 1fr) auto;
+  align-items: center;
+  column-gap: 0.75rem;
+
+  &.is-over {
+    .project-task-progress-bar span {
+      background-color: var(--gauzy-action-danger-text);
+    }
+
+    .project-task-progress-share {
+      color: var(--gauzy-action-danger-text);
+    }
+  }
+
+  // No estimate: drawn against the project's most-worked task, in grey.
+  &.is-relative .project-task-progress-bar span {
+    background-color: color-mix(in srgb, var(--gauzy-text-color-2) 60%, transparent);
+  }
+}
+
+.project-task-progress-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+.project-task-progress-bar {
+  display: block;
+  height: 0.25rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--gauzy-chart-profit);
+  }
+}
+
+.project-task-progress-none {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.project-task-progress-figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-task-progress-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.project-task-progress-share {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+}
