@@ -2182,7 +2182,9 @@
 			"MESSAGES": "{{ count }} رسائل",
 			"NO_MESSAGES": "لا توجد رسائل في هذه السلسلة بعد.",
 			"REPLY_PLACEHOLDER": "الرد على هذا التعليق…",
-			"UNKNOWN_AUTHOR": "غير معروف"
+			"UNKNOWN_AUTHOR": "غير معروف",
+			"DELETE_CONFIRM": "حذف هذا التعليق؟",
+			"DELETED": "تم حذف التعليق"
 		},
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",

@@ -2183,7 +2183,9 @@
 			"MESSAGES": "{{ count }} 条消息",
 			"NO_MESSAGES": "此讨论串中还没有消息。",
 			"REPLY_PLACEHOLDER": "回复此评论…",
-			"UNKNOWN_AUTHOR": "未知"
+			"UNKNOWN_AUTHOR": "未知",
+			"DELETE_CONFIRM": "删除此评论？",
+			"DELETED": "评论已删除"
 		},
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",

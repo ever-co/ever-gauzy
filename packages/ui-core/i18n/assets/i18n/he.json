@@ -2225,7 +2225,9 @@
 			"MESSAGES": "{{ count }} Messages",
 			"NO_MESSAGES": "There are no messages in this thread yet.",
 			"REPLY_PLACEHOLDER": "Reply to this comment…",
-			"UNKNOWN_AUTHOR": "Unknown"
+			"UNKNOWN_AUTHOR": "Unknown",
+			"DELETE_CONFIRM": "Delete this comment?",
+			"DELETED": "Comment deleted"
 		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",

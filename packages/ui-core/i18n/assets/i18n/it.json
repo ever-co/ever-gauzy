@@ -2183,7 +2183,9 @@
 			"MESSAGES": "{{ count }} messaggi",
 			"NO_MESSAGES": "Non ci sono ancora messaggi in questa discussione.",
 			"REPLY_PLACEHOLDER": "Rispondi a questo commento…",
-			"UNKNOWN_AUTHOR": "Sconosciuto"
+			"UNKNOWN_AUTHOR": "Sconosciuto",
+			"DELETE_CONFIRM": "Eliminare questo commento?",
+			"DELETED": "Commento eliminato"
 		},
 		"KEY_RESULTS": "Risultati chiave",
 		"GROUP_BY": "Raggruppa per",

@@ -2184,7 +2184,9 @@
 			"MESSAGES": "{{ count }} messages",
 			"NO_MESSAGES": "Il n'y a pas encore de messages dans ce fil.",
 			"REPLY_PLACEHOLDER": "Répondre à ce commentaire…",
-			"UNKNOWN_AUTHOR": "Inconnu"
+			"UNKNOWN_AUTHOR": "Inconnu",
+			"DELETE_CONFIRM": "Supprimer ce commentaire ?",
+			"DELETED": "Commentaire supprimé"
 		},
 		"KEY_RESULTS": "Résultats clés",
 		"GROUP_BY": "Grouper par",

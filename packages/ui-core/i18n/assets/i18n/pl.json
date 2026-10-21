@@ -2182,7 +2182,9 @@
 			"MESSAGES": "Wiadomości: {{ count }}",
 			"NO_MESSAGES": "W tym wątku nie ma jeszcze wiadomości.",
 			"REPLY_PLACEHOLDER": "Odpowiedz na ten komentarz…",
-			"UNKNOWN_AUTHOR": "Nieznany"
+			"UNKNOWN_AUTHOR": "Nieznany",
+			"DELETE_CONFIRM": "Usunąć ten komentarz?",
+			"DELETED": "Komentarz usunięty"
 		},
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",

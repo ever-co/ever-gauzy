@@ -2185,7 +2185,9 @@
 			"MESSAGES": "{{ count }} mensajes",
 			"NO_MESSAGES": "Aún no hay mensajes en este hilo.",
 			"REPLY_PLACEHOLDER": "Responder a este comentario…",
-			"UNKNOWN_AUTHOR": "Desconocido"
+			"UNKNOWN_AUTHOR": "Desconocido",
+			"DELETE_CONFIRM": "¿Eliminar este comentario?",
+			"DELETED": "Comentario eliminado"
 		},
 		"KEY_RESULTS": "Resultados clave",
 		"GROUP_BY": "Agrupar Por",

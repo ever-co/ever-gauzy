@@ -2183,7 +2183,9 @@
 			"MESSAGES": "{{ count }} berichten",
 			"NO_MESSAGES": "Er zijn nog geen berichten in deze thread.",
 			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
-			"UNKNOWN_AUTHOR": "Onbekend"
+			"UNKNOWN_AUTHOR": "Onbekend",
+			"DELETE_CONFIRM": "Deze opmerking verwijderen?",
+			"DELETED": "Opmerking verwijderd"
 		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
