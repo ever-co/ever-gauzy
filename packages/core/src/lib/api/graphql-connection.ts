@@ -404,22 +404,66 @@ function cursorValueOnRowScale(rowValue: unknown, cursorText: string): unknown {
 }
 
 /**
+ * How {@link sortsAfterCursor} places a row that ties with a gone cursor's row on the first sort key.
+ *
+ * `id` places it by the id, which is how {@link applyConnectionSort} orders those ties when the id comes
+ * right after the first key. Otherwise a later key orders them and the cursor does not carry it, so the
+ * row goes on a fixed side: `after` or `not-after`, picked so the walk repeats rows of that tie group
+ * rather than skipping them.
+ */
+type CursorTieRule = 'id' | 'after' | 'not-after';
+
+/**
+ * Whether {@link applyConnectionSort} orders rows tied on the first key by their id alone.
+ *
+ * @param sort The effective sort.
+ * @returns True for a sort of one key, or one whose second key is the id in the first key's direction.
+ */
+function idOrdersFirstKeyTies(sort: readonly ConnectionSortKey[]): boolean {
+	if (sort.length <= 1) {
+		return true;
+	}
+
+	const secondIsId = sort[1].field === 'id';
+	const sameDirection = sort[1].direction === sort[0].direction;
+
+	return secondIsId && sameDirection;
+}
+
+/**
+ * The tie rule a gone cursor is placed with.
+ *
+ * @param sort The effective sort.
+ * @param fallback The side tied rows take when the id does not order them.
+ * @returns `id` when the id orders first-key ties, else the fallback side.
+ */
+function cursorTieRule(sort: readonly ConnectionSortKey[], fallback: Exclude<CursorTieRule, 'id'>): CursorTieRule {
+	if (idOrdersFirstKeyTies(sort)) {
+		return 'id';
+	}
+
+	return fallback;
+}
+
+/**
  * Whether a row sorts after the position a cursor names, in the order {@link applyConnectionSort} gives.
  *
  * A cursor whose row is gone (deleted, or no longer matching the filter) is placed by the sort value and
- * the id it still carries: the first key in its direction, then the id in that same direction.
+ * the id it still carries: the first key in its direction, then the tie rule for rows equal on that key.
  *
  * @param row The row.
  * @param cursor The sort value and the id the cursor carries.
  * @param sortKey The first sort key's field.
  * @param direction The first sort key's direction.
+ * @param tieRule How a row tied with the cursor on the first key is placed.
  * @returns True when the row comes after the cursor's position.
  */
 function sortsAfterCursor(
 	row: unknown,
 	cursor: { readonly id: string; readonly sortValue: string },
 	sortKey: string,
-	direction: ConnectionSortKey['direction'] | undefined
+	direction: ConnectionSortKey['direction'] | undefined,
+	tieRule: CursorTieRule
 ): boolean {
 	const rowValue = readPath(row, sortKey);
 	const cursorValue = cursorValueOnRowScale(rowValue, cursor.sortValue);
@@ -427,6 +471,14 @@ function sortsAfterCursor(
 	let order = compare(rowValue, cursorValue);
 
 	if (order === 0) {
+		if (tieRule === 'after') {
+			return true;
+		}
+
+		if (tieRule === 'not-after') {
+			return false;
+		}
+
 		order = compare(readPath(row, 'id'), cursor.id);
 	}
 
@@ -808,10 +860,13 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 		// A row that has since been deleted cannot name a position, so the cursor's own sort value
 		// decides where the walk resumes — which is what makes cursor pagination stable under
 		// concurrent deletes rather than merely under inserts.
+		// When a later key orders first-key ties, the walk resumes at the start of the tie group.
+		const tieRule = cursorTieRule(sort, 'after');
+
 		if (index >= 0) {
 			start = index + 1;
 		} else {
-			start = ordered.findIndex((row) => sortsAfterCursor(row, cursor, sortKey, sort[0]?.direction));
+			start = ordered.findIndex((row) => sortsAfterCursor(row, cursor, sortKey, sort[0]?.direction, tieRule));
 		}
 		if (start < 0) {
 			start = ordered.length;
@@ -833,11 +888,14 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 	if (before !== undefined) {
 		const cursor = readCursor(before, sort);
 		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === cursor.id);
-		// For a gone row, the window ends at the first row that sorts after its position.
+		// For a gone row, the window ends at the first row that sorts after its position, and after the
+		// whole tie group when a later key orders first-key ties.
+		const tieRule = cursorTieRule(sort, 'not-after');
+
 		if (index >= 0) {
 			end = index;
 		} else {
-			end = ordered.findIndex((row) => sortsAfterCursor(row, cursor, sortKey, sort[0]?.direction));
+			end = ordered.findIndex((row) => sortsAfterCursor(row, cursor, sortKey, sort[0]?.direction, tieRule));
 		}
 		if (end < 0) {
 			end = ordered.length;
