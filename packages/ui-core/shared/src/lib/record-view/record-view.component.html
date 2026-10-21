@@ -145,7 +145,8 @@
 			@case ('teams') {
 				<span class="record-wrap">
 					@for (team of row.teams; track team.name) {
-						<!-- A team with known members lists them on hover (or focus, or a tap on touch screens). -->
+						<!-- A team with known members lists them on hover, on a tap, or on Enter / Space, which moves
+						     focus into the list (Tab walks it, Escape closes it and returns to the chip). -->
 						@if (team.members.length) {
 							<button
 								type="button"
@@ -156,9 +157,11 @@
 								nbPopoverTrigger="hover"
 								nbPopoverPlacement="bottom"
 								nbPopoverClass="record-team-popover"
-								(click)="teamPopover.show()"
-								(focus)="teamPopover.show()"
+								(click)="openTeam($event, teamPopover)"
+								(blur)="onTeamBlur($event, teamPopover)"
+								(keydown.escape)="teamPopover.hide()"
 								aria-haspopup="true"
+								[attr.aria-expanded]="teamPopover.isShown"
 							>
 								{{ team.name }}
 								<span class="record-tag-count">{{ team.count }}</span>
@@ -238,7 +241,7 @@
 
 <!-- A team's members, on hover over its chip: photo and name, each opening the employee. -->
 <ng-template #teamMembers let-team>
-	<div class="record-team">
+	<div class="record-team" (focusout)="onTeamListFocusOut($event)" (keydown.escape)="onTeamListEscape()">
 		<div class="record-team-head">
 			<span class="record-team-name">{{ team.name }}</span>
 			<span class="record-tag-count">{{ team.members.length }}</span>

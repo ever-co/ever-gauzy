@@ -1,5 +1,6 @@
 import { Component, inject, Input, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
+import { NbPopoverDirective } from '@nebular/theme';
 import { ISelectedEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import {
@@ -43,6 +44,8 @@ export class RecordViewComponent implements OnChanges {
 
 	private readonly router = inject(Router);
 	private readonly store = inject(Store);
+	/** The team chip whose member list is open, to close it and give focus back to the chip. */
+	private teamList: { popover: NbPopoverDirective; trigger: HTMLElement } | null = null;
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['record'] || changes['sections']) {
@@ -71,6 +74,51 @@ export class RecordViewComponent implements OnChanges {
 			imageUrl: person.imageUrl
 		} as ISelectedEmployee;
 		this.router.navigate([`/pages/employees/edit/${employee.id}/account`]);
+	}
+
+	/**
+	 * A click on a team chip opens its member list — for touch screens, which have no hover. From the
+	 * keyboard (Enter / Space, a click with no pointer) focus moves into the list: the list renders in an
+	 * overlay at the end of the page, out of the tab order.
+	 */
+	openTeam(event: MouseEvent, popover: NbPopoverDirective): void {
+		this.teamList = { popover, trigger: event.currentTarget as HTMLElement };
+		popover.show();
+		if (event.detail === 0) {
+			// The list renders on the next tick, in the overlay.
+			setTimeout(() =>
+				(document.querySelector('.record-team-popover button.record-team-member') as HTMLElement | null)?.focus()
+			);
+		}
+	}
+
+	/** Leaving a team chip closes its list, unless focus went into that list. */
+	onTeamBlur(event: FocusEvent, popover: NbPopoverDirective): void {
+		if (RecordViewComponent.isInTeamList(event.relatedTarget)) return;
+		popover.hide();
+	}
+
+	/** Focus leaving the member list, other than back to its chip, closes it. */
+	onTeamListFocusOut(event: FocusEvent): void {
+		const target = event.relatedTarget;
+		if (RecordViewComponent.isInTeamList(target) || target === this.teamList?.trigger) return;
+		this.closeTeamList(false);
+	}
+
+	/** Escape closes the member list and gives focus back to its chip. */
+	onTeamListEscape(): void {
+		this.closeTeamList(true);
+	}
+
+	private closeTeamList(refocus: boolean): void {
+		const list = this.teamList;
+		this.teamList = null;
+		list?.popover.hide();
+		if (refocus) list?.trigger.focus();
+	}
+
+	private static isInTeamList(target: EventTarget | null): boolean {
+		return target instanceof Element && !!target.closest('.record-team-popover');
 	}
 
 	/**
