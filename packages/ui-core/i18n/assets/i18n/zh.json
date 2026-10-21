@@ -6923,6 +6923,10 @@
 		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
 		"SOMEONE": "某人",
 		"TODAY": "今天",
-		"YESTERDAY": "昨天"
+		"YESTERDAY": "昨天",
+		"TASK_PROGRESS": "进度",
+		"TASK_PROGRESS_OF": "{{ worked }} / {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · 占项目记录时间的 {{ share }}%（无估算）",
+		"TASK_NO_ESTIMATE": "无估算"
 	}
 }

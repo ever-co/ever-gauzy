@@ -6919,6 +6919,10 @@
 		"ACTIVITY_FIELDS": "Modifié : {{ fields }}",
 		"SOMEONE": "Quelqu'un",
 		"TODAY": "Aujourd'hui",
-		"YESTERDAY": "Hier"
+		"YESTERDAY": "Hier",
+		"TASK_PROGRESS": "Progression",
+		"TASK_PROGRESS_OF": "{{ worked }} sur {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % du temps suivi du projet (aucune estimation)",
+		"TASK_NO_ESTIMATE": "Aucune estimation"
 	}
 }

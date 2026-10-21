@@ -6915,6 +6915,10 @@
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",
-		"YESTERDAY": "أمس"
+		"YESTERDAY": "أمس",
+		"TASK_PROGRESS": "التقدم",
+		"TASK_PROGRESS_OF": "{{ worked }} من {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% من الوقت المسجل للمشروع (بدون تقدير)",
+		"TASK_NO_ESTIMATE": "لا يوجد تقدير"
 	}
 }
