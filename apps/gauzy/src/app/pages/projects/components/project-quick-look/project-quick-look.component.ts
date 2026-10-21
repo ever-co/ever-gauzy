@@ -196,6 +196,8 @@ interface ITaskRow {
 	title: string;
 	status: string;
 	statusGroup: 'todo' | 'progress' | 'blocked' | 'done';
+	/** The status's own colour, as the Board's column shows it; unset, the dot takes its group's. */
+	statusColor?: string;
 	dueDate?: string;
 	dueDateLong?: string;
 	due: { key: string; count?: number };
@@ -318,6 +320,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 	private _projectSequence = 0;
 	/** Bumped on every reload of the period figures, so an older reply never lands over a newer one. */
 	private _periodSequence = 0;
+	/** Bumped on every read of the tasks, so an older read never lands over a newer one. */
+	private _tasksSequence = 0;
 
 	constructor(
 		private readonly _http: HttpClient,
@@ -348,6 +352,11 @@ export class ProjectQuickLookComponent implements OnChanges {
 
 	close(): void {
 		this.closed.emit();
+	}
+
+	/** Re-reads the project's tasks, for a host that changed one (the project page's Board). */
+	reloadTasks(): void {
+		if (this.project?.id) void this.loadProgress(this.project.id, this._projectSequence);
 	}
 
 	/* ── View helpers ────────────────────────────────────────────────────── */
@@ -620,6 +629,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 	/* ── Tasks: progress, attention and the list, from one read ───────────── */
 
 	private async loadProgress(projectId: string, sequence: number): Promise<void> {
+		const read = ++this._tasksSequence;
 		this.taskProgress = loading(null);
 		try {
 			const result = await firstValueFrom(
@@ -630,7 +640,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 					})
 				})
 			);
-			if (sequence !== this._projectSequence) return;
+			if (sequence !== this._projectSequence || read !== this._tasksSequence) return;
 			const items = result?.items || [];
 			this.tasks = this.toTaskRows(items);
 			this.attention = this.toAttention(items);
@@ -649,7 +659,9 @@ export class ProjectQuickLookComponent implements OnChanges {
 				}
 			};
 		} catch {
-			if (sequence === this._projectSequence) this.taskProgress = { loading: false, failed: true, value: null };
+			if (sequence === this._projectSequence && read === this._tasksSequence) {
+				this.taskProgress = { loading: false, failed: true, value: null };
+			}
 		}
 	}
 
@@ -701,6 +713,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 			title: task.title,
 			status: task.taskStatus?.name || humanize(task.status) || '',
 			statusGroup,
+			statusColor: task.taskStatus?.color || undefined,
 			dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
 			dueDateLong: task.dueDate ? moment(task.dueDate).format('dddd, LL') : undefined,
 			due: dueInWords(daysLeft, isDone),

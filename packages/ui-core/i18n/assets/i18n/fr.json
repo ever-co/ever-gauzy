@@ -6879,6 +6879,7 @@
 		},
 		"BOARD": "Tableau",
 		"COLUMN_EMPTY": "Aucune tâche",
+		"CANNOT_DROP": "Les tâches ne peuvent pas être déplacées vers « {{ column }} », car ce n’est pas un statut de ce projet.",
 		"ACTIVITY": "Activité",
 		"ACTIVITY_CAPTION": "Changements récents du projet et de ses tâches",
 		"NO_ACTIVITY": "Aucune activité pour l'instant",

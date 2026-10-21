@@ -72,6 +72,45 @@
   list-style: none;
 }
 
+// A column a card can be dropped on, while a card is dragged over it.
+.board-cards.cdk-drop-list-receiving {
+  min-height: 3rem;
+}
+
+.board-cards.cdk-drop-list-dragging {
+  border-radius: 0.375rem;
+  outline: 1px dashed var(--gauzy-action-info-text);
+  outline-offset: -1px;
+}
+
+// A column that will not take the dragged card: it has no status of its own to save.
+.board-column.is-refusing {
+  outline: 1px dashed var(--gauzy-action-danger-text);
+  outline-offset: -1px;
+  background-color: color-mix(in srgb, var(--gauzy-action-danger-text) 8%, transparent);
+  cursor: not-allowed;
+}
+
+.board-card-item.cdk-drag-placeholder {
+  opacity: 0.4;
+}
+
+.board-card-item.cdk-drag-animating,
+.board-cards.cdk-drop-list-dragging .board-card-item:not(.cdk-drag-placeholder) {
+  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+// The card under the pointer while it is dragged; rendered outside the board, so it carries its own look.
+.board-card-item.cdk-drag-preview {
+  list-style: none;
+
+  .board-card {
+    border-color: var(--gauzy-action-info-text);
+    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45);
+    cursor: grabbing;
+  }
+}
+
 .board-column-empty {
   padding: 0.75rem 0.25rem;
   font-size: 0.6875rem;
@@ -102,6 +141,15 @@
   &:focus-visible {
     outline: 2px solid var(--gauzy-action-info-text);
     outline-offset: 1px;
+  }
+
+  &.is-draggable {
+    cursor: grab;
+  }
+
+  &.is-saving {
+    opacity: 0.6;
+    pointer-events: none;
   }
 
   &.is-done .board-card-title {

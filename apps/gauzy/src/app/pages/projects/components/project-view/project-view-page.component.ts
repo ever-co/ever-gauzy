@@ -66,6 +66,12 @@ export class ProjectViewPageComponent implements OnInit {
 		this.period$.next(value);
 	}
 
+	/**
+	 * The Board loads when first opened, then stays mounted behind the other tabs: a move still saving
+	 * when the user leaves it must still reach the Overview when it lands.
+	 */
+	boardOpened = false;
+
 	private projectId: string | null = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
@@ -103,18 +109,23 @@ export class ProjectViewPageComponent implements OnInit {
 				distinctUntilChanged(),
 				untilDestroyed(this)
 			)
-			.subscribe((tab) => (this.tab = TABS.includes(tab) ? tab : 'overview'));
+			.subscribe((tab) => this.openTab(TABS.includes(tab) ? tab : 'overview'));
 	}
 
 	/** Opens a tab, keeping it in the URL without a new history entry per click. */
 	selectTab(tab: ProjectViewTab): void {
-		this.tab = tab;
+		this.openTab(tab);
 		void this.router.navigate([], {
 			relativeTo: this.route,
 			queryParams: { tab: tab === 'overview' ? null : tab },
 			queryParamsHandling: 'merge',
 			replaceUrl: true
 		});
+	}
+
+	private openTab(tab: ProjectViewTab): void {
+		this.tab = tab;
+		if (tab === 'board') this.boardOpened = true;
 	}
 
 	/** Whether the open tab reads over the period, and so shows the period switcher. */

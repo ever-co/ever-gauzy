@@ -6883,6 +6883,7 @@
 		},
 		"BOARD": "看板",
 		"COLUMN_EMPTY": "暂无任务",
+		"CANNOT_DROP": "无法将任务移动到“{{ column }}”，因为它不是此项目的状态。",
 		"ACTIVITY": "动态",
 		"ACTIVITY_CAPTION": "项目及其任务的最新变更",
 		"NO_ACTIVITY": "暂无动态",

@@ -6882,6 +6882,7 @@
 		},
 		"BOARD": "Tablica",
 		"COLUMN_EMPTY": "Brak zadań",
+		"CANNOT_DROP": "Zadań nie można przenieść do „{{ column }}”, ponieważ nie jest to status tego projektu.",
 		"ACTIVITY": "Aktywność",
 		"ACTIVITY_CAPTION": "Ostatnie zmiany w projekcie i jego zadaniach",
 		"NO_ACTIVITY": "Brak aktywności",

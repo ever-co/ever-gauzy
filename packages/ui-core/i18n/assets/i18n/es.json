@@ -6885,6 +6885,7 @@
 		},
 		"BOARD": "Tablero",
 		"COLUMN_EMPTY": "Sin tareas",
+		"CANNOT_DROP": "Las tareas no se pueden mover a «{{ column }}» porque no es un estado de este proyecto.",
 		"ACTIVITY": "Actividad",
 		"ACTIVITY_CAPTION": "Cambios recientes en el proyecto y sus tareas",
 		"NO_ACTIVITY": "Aún no hay actividad",
