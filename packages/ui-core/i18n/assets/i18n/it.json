@@ -6883,6 +6883,7 @@
 		},
 		"BOARD": "Bacheca",
 		"COLUMN_EMPTY": "Nessuna attività",
+		"CANNOT_DROP": "Le attività non possono essere spostate in «{{ column }}» perché non è uno stato di questo progetto.",
 		"ACTIVITY": "Attività",
 		"ACTIVITY_CAPTION": "Modifiche recenti al progetto e alle sue attività",
 		"NO_ACTIVITY": "Ancora nessuna attività",

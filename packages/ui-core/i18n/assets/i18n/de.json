@@ -6879,6 +6879,7 @@
 		},
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "Keine Aufgaben",
+		"CANNOT_DROP": "Aufgaben können nicht nach „{{ column }}“ verschoben werden, da dies kein Status dieses Projekts ist.",
 		"ACTIVITY": "Aktivität",
 		"ACTIVITY_CAPTION": "Letzte Änderungen am Projekt und seinen Aufgaben",
 		"NO_ACTIVITY": "Noch keine Aktivität",
