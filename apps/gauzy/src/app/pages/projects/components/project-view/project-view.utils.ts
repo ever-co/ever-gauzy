@@ -92,3 +92,85 @@ export function dueInWords(daysLeft: number | null, isDone: boolean): { key: str
 	if (daysLeft === 1) return { key: prefix + 'TOMORROW' };
 	return { key: prefix + 'IN_DAYS', count: daysLeft };
 }
+
+/**
+ * A task's time worked (all time), as a bar: against its estimate when it has one; without one, as the
+ * "Most worked tasks" rows draw it — the bar against the project's most-worked task, the share out of the
+ * project's tracked time.
+ */
+export interface ITaskProgress {
+	/** "3h 05m": the time worked on the task. */
+	worked: string;
+	/** "8h 00m", or `null` for a task with no estimate. */
+	estimate: string | null;
+	/** In percent: of the estimate (past 100 once over it), else of the project's tracked time. */
+	share: number | null;
+	/** The bar's fill, 0–100; `null` for no bar. */
+	fill: number | null;
+	/** More time worked than the estimate. */
+	over: boolean;
+	/** The bar is drawn against the project's most-worked task, not an estimate. */
+	relative: boolean;
+	/** The bar's tooltip: an i18n key and its parameters. */
+	hint: { key: string; params: Record<string, string | number> } | null;
+}
+
+/** The time worked on a project's tasks: the most on any one task, and all of it. */
+export interface IProjectWorkedTime {
+	top: number;
+	total: number;
+}
+
+/** The most-worked task's time and the total, from per-task seconds. */
+export function projectWorkedTimeOf(seconds: number[]): IProjectWorkedTime {
+	return {
+		top: seconds.reduce((top, value) => Math.max(top, value), 0),
+		total: seconds.reduce((total, value) => total + value, 0)
+	};
+}
+
+/** A task's progress, or `null` for a task with neither time worked nor an estimate. */
+export function taskProgressOf(
+	workedSeconds: number,
+	estimateSeconds: number | null | undefined,
+	project?: IProjectWorkedTime
+): ITaskProgress | null {
+	const worked = Math.max(0, Number(workedSeconds) || 0);
+	const estimate = Math.max(0, Number(estimateSeconds) || 0);
+	if (!worked && !estimate) return null;
+	if (estimate) {
+		const share = Math.round((worked / estimate) * 100);
+		const params = { worked: formatDuration(worked), estimate: formatDuration(estimate) };
+		return {
+			worked: params.worked,
+			estimate: params.estimate,
+			share,
+			fill: Math.min(100, share),
+			over: worked > estimate,
+			relative: false,
+			hint: { key: 'PROJECT_VIEW.TASK_PROGRESS_OF', params }
+		};
+	}
+	// No estimate: as the "Most worked tasks" rows, against the most-worked task.
+	const relative = !!project?.top;
+	const share = project?.total ? Math.round((worked / project.total) * 100) : null;
+	return {
+		worked: formatDuration(worked),
+		estimate: null,
+		share,
+		fill: relative ? Math.min(100, Math.round((worked / project.top) * 100)) : null,
+		over: false,
+		relative,
+		hint: relative
+			? { key: 'PROJECT_VIEW.TASK_PROGRESS_SHARE', params: { worked: formatDuration(worked), share: share ?? 0 } }
+			: null
+	};
+}
+
+/** "3h 05m": seconds as hours and minutes. */
+export function formatDuration(seconds: number): string {
+	const total = Math.max(0, Math.round(Number(seconds) || 0));
+	const hours = Math.floor(total / 3600);
+	const minutes = Math.floor((total % 3600) / 60);
+	return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+}
