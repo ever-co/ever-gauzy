@@ -114,13 +114,18 @@ export class RecordViewComponent implements OnChanges {
 				row.isEmpty = row.people.length === 0;
 				break;
 			case 'teams':
-				// Team objects or plain names — the two shapes the grid's teams cell accepts.
+				// Team objects or plain names — the two shapes the grid's teams cell accepts. A team's members
+				// (team-employee rows, each carrying its employee) are listed on hover over its chip.
 				row.teams = (Array.isArray(value) ? value : [])
-					.map((team: any) =>
-						typeof team === 'string'
-							? { name: team, count: 0 }
-							: { name: team?.name, count: team?.members?.length || 0 }
-					)
+					.map((team: any) => {
+						if (typeof team === 'string') {
+							return { name: team, count: 0, members: [] };
+						}
+						const members = (team?.members || [])
+							.map((member: any) => RecordViewComponent.toPerson(member?.employee || member))
+							.filter(Boolean);
+						return { name: team?.name, count: team?.members?.length || 0, members };
+					})
 					.filter((team) => !!team.name);
 				row.isEmpty = row.teams.length === 0;
 				break;
