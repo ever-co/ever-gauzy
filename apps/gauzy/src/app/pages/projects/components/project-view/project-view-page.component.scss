@@ -98,11 +98,6 @@
       color: var(--gauzy-action-danger-text);
     }
   }
-
-  // No estimate: drawn against the project's most-worked task, in grey.
-  &.is-relative .project-task-progress-bar span {
-    background-color: color-mix(in srgb, var(--gauzy-text-color-2) 60%, transparent);
-  }
 }
 
 .project-task-progress-label {
