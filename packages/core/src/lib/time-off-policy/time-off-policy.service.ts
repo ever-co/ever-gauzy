@@ -16,6 +16,9 @@ import { TimeOffPolicy } from './time-off-policy.entity';
  */
 type EmployeeReference = ID | Pick<IEmployee, 'id'>;
 
+/**
+ * The id one employee reference carries, whether it came as an id or as a row.
+ */
 function toEmployeeId(employee: EmployeeReference): ID | undefined {
 	if (typeof employee === 'string') {
 		return employee;
