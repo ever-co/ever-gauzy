@@ -2067,7 +2067,8 @@
 			"REPLY_PLACEHOLDER": "Reply to this comment…",
 			"UNKNOWN_AUTHOR": "Unknown",
 			"DELETE_CONFIRM": "Delete this comment?",
-			"DELETED": "Comment deleted"
+			"DELETED": "Comment deleted",
+			"LOAD_ERROR": "Couldn't load the comments."
 		},
 		"KEY_RESULTS": "crwdns4990:0crwdne4990:0",
 		"GROUP_BY": "crwdns7454:0crwdne7454:0",

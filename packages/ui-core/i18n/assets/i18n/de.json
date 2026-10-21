@@ -2185,7 +2185,8 @@
 			"REPLY_PLACEHOLDER": "Auf diesen Kommentar antworten…",
 			"UNKNOWN_AUTHOR": "Unbekannt",
 			"DELETE_CONFIRM": "Diesen Kommentar löschen?",
-			"DELETED": "Kommentar gelöscht"
+			"DELETED": "Kommentar gelöscht",
+			"LOAD_ERROR": "Die Kommentare konnten nicht geladen werden."
 		},
 		"KEY_RESULTS": "Schlüsselergebnisse",
 		"GROUP_BY": "Gruppieren nach",

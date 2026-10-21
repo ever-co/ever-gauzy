@@ -2227,7 +2227,8 @@
 			"REPLY_PLACEHOLDER": "Reply to this comment…",
 			"UNKNOWN_AUTHOR": "Unknown",
 			"DELETE_CONFIRM": "Delete this comment?",
-			"DELETED": "Comment deleted"
+			"DELETED": "Comment deleted",
+			"LOAD_ERROR": "Couldn't load the comments."
 		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",

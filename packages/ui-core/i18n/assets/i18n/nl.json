@@ -2185,7 +2185,8 @@
 			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
 			"UNKNOWN_AUTHOR": "Onbekend",
 			"DELETE_CONFIRM": "Deze opmerking verwijderen?",
-			"DELETED": "Opmerking verwijderd"
+			"DELETED": "Opmerking verwijderd",
+			"LOAD_ERROR": "De opmerkingen konden niet worden geladen."
 		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",

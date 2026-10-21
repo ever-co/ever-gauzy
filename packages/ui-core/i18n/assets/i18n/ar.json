@@ -2184,7 +2184,8 @@
 			"REPLY_PLACEHOLDER": "الرد على هذا التعليق…",
 			"UNKNOWN_AUTHOR": "غير معروف",
 			"DELETE_CONFIRM": "حذف هذا التعليق؟",
-			"DELETED": "تم حذف التعليق"
+			"DELETED": "تم حذف التعليق",
+			"LOAD_ERROR": "تعذّر تحميل التعليقات."
 		},
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
