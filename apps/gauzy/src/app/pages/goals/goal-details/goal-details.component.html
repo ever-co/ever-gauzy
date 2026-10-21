@@ -223,12 +223,17 @@
 								<span class="comment-date">{{ thread.comment.createdAt | date : 'short' }}</span>
 							</div>
 							<p class="comment-text">{{ thread.comment.comment }}</p>
-							<!-- On every comment, threaded or not: it opens the thread and puts the cursor in its
-							     reply box. -->
-							<button type="button" class="comment-reply" (click)="replyTo(thread)">
-								<nb-icon icon="corner-up-left-outline" aria-hidden="true"></nb-icon>
-								{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
-							</button>
+							<!-- Reply on every comment, threaded or not: it opens the thread and puts the cursor in
+							     its reply box. Delete only where the server would allow it. -->
+							<div class="comment-actions">
+								<button type="button" class="comment-action" (click)="replyTo(thread)">
+									<nb-icon icon="corner-up-left-outline" aria-hidden="true"></nb-icon>
+									{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
+								</button>
+								<ng-container
+									*ngTemplateOutlet="deleteControl; context: { $implicit: thread.comment }"
+								></ng-container>
+							</div>
 						</div>
 						@if (open || thread.replies.length) {
 						<div class="thread">
@@ -280,6 +285,13 @@
 												<span class="comment-date">{{ reply.createdAt | date : 'short' }}</span>
 											</div>
 											<p class="comment-text">{{ reply.comment }}</p>
+											@if (canDelete(reply)) {
+											<div class="comment-actions">
+												<ng-container
+													*ngTemplateOutlet="deleteControl; context: { $implicit: reply }"
+												></ng-container>
+											</div>
+											}
 										</div>
 									</li>
 									}
@@ -321,6 +333,42 @@
 					}
 				</ul>
 				}
+				<!-- Delete as a bare trash icon; clicking it asks inline, in place of the icon, before deleting. -->
+				<ng-template #deleteControl let-comment>
+					@if (canDelete(comment)) {
+					@if (confirmingDeleteId === comment.id) {
+					<span class="delete-confirm" role="group">
+						<span class="delete-question">{{ 'GOALS_PAGE.COMMENT_THREAD.DELETE_CONFIRM' | translate }}</span>
+						<button
+							type="button"
+							class="comment-action"
+							[disabled]="deletingComment"
+							(click)="confirmingDeleteId = null"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+						<button
+							type="button"
+							class="comment-action danger confirm"
+							[disabled]="deletingComment"
+							(click)="deleteComment(comment)"
+						>
+							{{ 'BUTTONS.DELETE' | translate }}
+						</button>
+					</span>
+					} @else {
+					<button
+						type="button"
+						class="comment-action danger icon-only"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
+						[attr.aria-label]="'BUTTONS.DELETE' | translate"
+						(click)="confirmingDeleteId = comment.id"
+					>
+						<nb-icon icon="trash-2-outline" aria-hidden="true"></nb-icon>
+					</button>
+					}
+					}
+				</ng-template>
 				<ng-template #avatar let-comment let-size="size">
 					<span class="comment-avatar" [class.small]="size === 'sm'" aria-hidden="true">
 						@if (comment.employee?.user?.imageUrl) {
