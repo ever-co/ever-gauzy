@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, type SimpleChanges } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	Input,
+	OnChanges,
+	Output,
+	type SimpleChanges
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { CdkDragDrop, CdkDragMove, DragDropModule, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -86,6 +94,8 @@ export class ProjectBoardComponent implements OnChanges {
 	@Input() projectId: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** A card's task saved with another status, so the host can bring what else shows the task up to date. */
+	@Output() readonly taskMoved = new EventEmitter<string>();
 
 	public board: Loadable<IBoardColumn[]> = loading([]);
 	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
@@ -148,6 +158,7 @@ export class ProjectBoardComponent implements OnChanges {
 					tenantId: this.tenantId
 				})
 			);
+			this.taskMoved.emit(card.id);
 		} catch (error) {
 			// A reload since the drop replaced the board: there is no card left to put back.
 			if (sequence !== this._sequence) return;
