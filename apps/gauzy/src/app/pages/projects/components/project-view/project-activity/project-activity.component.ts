@@ -117,6 +117,7 @@ export class ProjectActivityComponent implements OnChanges {
 		const { organizationId, tenantId, projectId } = this;
 		this.feed = loading([]);
 		this.days = [];
+		void this.source.load([]);
 		this.partial = false;
 		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) =>
 			firstValueFrom(
