@@ -6916,6 +6916,7 @@
 		"ACTIVITY_CAPTION": "Ostatnie zmiany w projekcie i jego zadaniach",
 		"NO_ACTIVITY": "Brak aktywności",
 		"ACTIVITY_PARTIAL": "Nie udało się wczytać części aktywności, więc lista może być niepełna.",
+		"ACTIVITY_RANGE": "{{ from }}–{{ to }} z {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} utworzył(a)",
 		"ACTIVITY_UPDATED": "{{ actor }} zaktualizował(a)",
 		"ACTIVITY_DELETED": "{{ actor }} usunął(-ęła)",

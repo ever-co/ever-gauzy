@@ -6935,6 +6935,7 @@
 		"ACTIVITY_CAPTION": "Последние изменения проекта и его задач",
 		"NO_ACTIVITY": "Пока нет активности",
 		"ACTIVITY_PARTIAL": "Не удалось загрузить часть активности, поэтому список может быть неполным.",
+		"ACTIVITY_RANGE": "{{ from }}–{{ to }} из {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} создал(а)",
 		"ACTIVITY_UPDATED": "{{ actor }} изменил(а)",
 		"ACTIVITY_DELETED": "{{ actor }} удалил(а)",

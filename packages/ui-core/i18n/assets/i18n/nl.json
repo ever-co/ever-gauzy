@@ -6917,6 +6917,7 @@
 		"ACTIVITY_CAPTION": "Recente wijzigingen aan het project en zijn taken",
 		"NO_ACTIVITY": "Nog geen activiteit",
 		"ACTIVITY_PARTIAL": "Een deel van de activiteit kon niet worden geladen, dus deze lijst is mogelijk onvolledig.",
+		"ACTIVITY_RANGE": "{{ from }}–{{ to }} van {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
 		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
 		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",

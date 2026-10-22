@@ -6927,6 +6927,7 @@
 		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
 		"NO_ACTIVITY": "אין עדיין פעילות",
 		"ACTIVITY_PARTIAL": "לא ניתן היה לטעון חלק מהפעילות, ולכן הרשימה עשויה להיות חלקית.",
+		"ACTIVITY_RANGE": "{{ from }}–{{ to }} מתוך {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} יצר",
 		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
 		"ACTIVITY_DELETED": "{{ actor }} מחק",

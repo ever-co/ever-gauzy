@@ -8113,6 +8113,7 @@
 		"ACTIVITY_CAPTION": "Recent changes to the project and its tasks",
 		"NO_ACTIVITY": "No activity yet",
 		"ACTIVITY_PARTIAL": "Some activity could not be loaded, so this list may be incomplete.",
+		"ACTIVITY_RANGE": "{{ from }}–{{ to }} of {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} created",
 		"ACTIVITY_UPDATED": "{{ actor }} updated",
 		"ACTIVITY_DELETED": "{{ actor }} deleted",

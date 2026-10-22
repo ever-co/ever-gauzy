@@ -6962,6 +6962,7 @@
 		"ACTIVITY_CAPTION": "Последни промени по проекта и задачите му",
 		"NO_ACTIVITY": "Все още няма активност",
 		"ACTIVITY_PARTIAL": "Част от активността не можа да се зареди, така че списъкът може да е непълен.",
+		"ACTIVITY_RANGE": "{{ from }}–{{ to }} от {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} създаде",
 		"ACTIVITY_UPDATED": "{{ actor }} обнови",
 		"ACTIVITY_DELETED": "{{ actor }} изтри",
