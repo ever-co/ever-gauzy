@@ -90,6 +90,11 @@ jest.mock('@gauzy/core', () => {
 		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
+		// The cross-tenant reference check a grant runs is the platform's own, over the same database.
+		assertPlainReferencesNotForeign: (...args: unknown[]) =>
+			jest
+				.requireActual('@gauzy/core/src/lib/core/crud/plain-reference-ownership.helper')
+				.assertPlainReferencesNotForeign(...args),
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => mockCaller.userId,
