@@ -59,6 +59,16 @@ export class CommentService {
 		return { items, total };
 	}
 
+	/** How many comments a record has, replies included: one row is read, for the total. */
+	async count(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope): Promise<number> {
+		const page = await firstValueFrom(
+			this._http.get<IPagination<IComment>>(this.API_URL, {
+				params: toParams({ where: { entity, entityId, ...scope }, take: 1 })
+			})
+		);
+		return page.total;
+	}
+
 	/**
 	 * Posts a comment. `employeeId` is not sent: the server takes the author from the request context, so a
 	 * client cannot attribute a comment to someone else.
