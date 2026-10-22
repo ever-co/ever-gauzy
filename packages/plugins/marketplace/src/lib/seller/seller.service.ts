@@ -14,7 +14,7 @@ import {
 	SellerVerificationKind,
 	SellerVerificationStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, isUniqueViolation } from '@gauzy/core';
 import { Seller } from './seller.entity';
 import { MikroOrmSellerRepository } from './repository/mikro-orm-seller.repository';
 import { TypeOrmSellerRepository } from './repository/type-orm-seller.repository';
@@ -22,6 +22,7 @@ import { TypeOrmSellerTransactionRepository } from '../seller-transaction/reposi
 import { TypeOrmSellerPayoutRepository } from '../seller-payout/repository/type-orm-seller-payout.repository';
 import { TypeOrmSellerSettlementRepository } from '../seller-settlement/repository/type-orm-seller-settlement.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /**
  * The transitions the seller lifecycle permits, and the only ones.
@@ -59,7 +60,7 @@ const SELLER_TRANSITIONS: Record<SellerStatus, SellerStatus[]> = {
  *   balances stay held; placed orders, their fulfilments and the ledger are untouched.
  */
 @Injectable()
-export class SellerService extends TenantAwareCrudService<Seller> {
+export class SellerService extends MarketplaceCrudService<Seller> {
 	constructor(
 		readonly typeOrmSellerRepository: TypeOrmSellerRepository,
 		readonly mikroOrmSellerRepository: MikroOrmSellerRepository,

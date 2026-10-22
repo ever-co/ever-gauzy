@@ -1,13 +1,14 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { SellerPayoutLine } from './seller-payout-line.entity';
 import { MikroOrmSellerPayoutLineRepository } from './repository/mikro-orm-seller-payout-line.repository';
 import { TypeOrmSellerPayoutLineRepository } from './repository/type-orm-seller-payout-line.repository';
 import { SellerPayout } from '../seller-payout/seller-payout.entity';
 import { TypeOrmSellerPayoutRepository } from '../seller-payout/repository/type-orm-seller-payout.repository';
 import { ISellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /**
  * Reads the join between a payout and the ledger rows it pays.
@@ -22,7 +23,7 @@ import { ISellerScope } from '../seller-scope/seller-scope';
  * one.
  */
 @Injectable()
-export class SellerPayoutLineService extends TenantAwareCrudService<SellerPayoutLine> {
+export class SellerPayoutLineService extends MarketplaceCrudService<SellerPayoutLine> {
 	constructor(
 		readonly typeOrmSellerPayoutLineRepository: TypeOrmSellerPayoutLineRepository,
 		readonly mikroOrmSellerPayoutLineRepository: MikroOrmSellerPayoutLineRepository,
