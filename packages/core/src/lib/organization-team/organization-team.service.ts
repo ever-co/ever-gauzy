@@ -317,25 +317,28 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			where: { organizationId, tenantId }
 		});
 
-		// Check permission for CHANGE_SELECTED_EMPLOYEE
+		// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team, which needs an
+		// employee identity. A caller without one is refused, as deleteTeam refuses it: skipping the check
+		// let any user holding ORG_TEAM_EDIT (the default EMPLOYEE role does) with no employee record
+		// rewrite any team of the tenant, its members and managers included.
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				const employeeId = RequestContext.currentEmployeeId();
-				// If employee ID is present, restrict update to manager role
-				if (employeeId) {
-					organizationTeam = await super.findOneByIdString(id, {
-						where: {
-							organizationId,
-							tenantId,
-							members: {
-								employeeId,
-								tenantId,
-								organizationId,
-								role: { name: RolesEnum.MANAGER }
-							}
-						}
-					});
+				if (!employeeId) {
+					throw new ForbiddenException();
 				}
+				organizationTeam = await super.findOneByIdString(id, {
+					where: {
+						organizationId,
+						tenantId,
+						members: {
+							employeeId,
+							tenantId,
+							organizationId,
+							role: { name: RolesEnum.MANAGER }
+						}
+					}
+				});
 			} catch (error) {
 				throw new ForbiddenException();
 			}
