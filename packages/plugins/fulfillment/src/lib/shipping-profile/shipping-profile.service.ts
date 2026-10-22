@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { ShippingProfile } from './shipping-profile.entity';
 import { TypeOrmShippingProfileRepository } from './repository/type-orm-shipping-profile.repository';
 import { MikroOrmShippingProfileRepository } from './repository/mikro-orm-shipping-profile.repository';
 import { ShippingProfileVariant } from '../shipping-profile-variant/shipping-profile-variant.entity';
 import { ShippingProfileVariantService } from '../shipping-profile-variant/shipping-profile-variant.service';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * The sets of variants that ship the same way.
@@ -17,7 +18,7 @@ import { ShippingProfileVariantService } from '../shipping-profile-variant/shipp
  * enforces by reassigning rather than duplicating.
  */
 @Injectable()
-export class ShippingProfileService extends TenantAwareCrudService<ShippingProfile> {
+export class ShippingProfileService extends FulfillmentCrudService<ShippingProfile> {
 	constructor(
 		readonly typeOrmShippingProfileRepository: TypeOrmShippingProfileRepository,
 		readonly mikroOrmShippingProfileRepository: MikroOrmShippingProfileRepository,
@@ -67,6 +68,11 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 		}
 
 		if (entity?.isDefault) {
+			// The profile is read before anything is demoted, so promoting one that is not the caller's demotes nothing.
+			if (typeof id === 'string') {
+				await this.findOneByIdString(id);
+			}
+
 			await this.clearExistingDefault(id as ID);
 		}
 
@@ -88,7 +94,7 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 			return this.findOneByIdString(attachments.items[0].profileId);
 		}
 
-		const profiles = (await this.findAll({})) as IPagination<ShippingProfile>;
+		const profiles = (await this.findAll({ where: this.inRequestOrganization() })) as IPagination<ShippingProfile>;
 
 		return profiles.items.find((profile: ShippingProfile) => profile.isDefault) ?? null;
 	}
@@ -160,7 +166,8 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 		// `NotFoundException` on a miss, which is right for reading a resource and wrong for a test
 		// whose whole subject is the absence. `ITryRequest` carries the answer.
 		const { success, record: existing } = await this.findOneOrFailByWhereOptions({
-			code
+			code,
+			...this.inRequestOrganization()
 		} as FindOptionsWhere<ShippingProfile>);
 
 		if (success && existing.id !== exceptId) {
@@ -178,12 +185,26 @@ export class ShippingProfileService extends TenantAwareCrudService<ShippingProfi
 	 * @param exceptId The profile being promoted, which is not demoted.
 	 */
 	private async clearExistingDefault(exceptId?: ID): Promise<void> {
-		const profiles = (await this.findAll({})) as IPagination<ShippingProfile>;
+		const profiles = (await this.findAll({ where: this.inRequestOrganization() })) as IPagination<ShippingProfile>;
 
 		for (const profile of profiles.items) {
 			if (profile.isDefault && profile.id !== exceptId) {
 				await super.update(profile.id, { isDefault: false } as any);
 			}
 		}
+	}
+
+	/**
+	 * The request's organization, as a condition.
+	 *
+	 * The default, and the code, are one per organization, but the tenant-aware reads narrow to the tenant only: the
+	 * default a variant fell back to was any organization's, promoting a profile demoted every other organization's
+	 * default, and a code another organization uses was refused, naming that organization's profile. A request that
+	 * states no organization (a job) is not narrowed.
+	 */
+	private inRequestOrganization(): FindOptionsWhere<ShippingProfile> {
+		const organizationId = RequestContext.currentOrganizationId();
+
+		return (organizationId ? { organizationId } : {}) as FindOptionsWhere<ShippingProfile>;
 	}
 }

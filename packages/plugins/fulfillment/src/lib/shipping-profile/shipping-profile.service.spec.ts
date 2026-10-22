@@ -673,3 +673,59 @@ describe('ShippingProfileService — the organization a profile is created in (r
 		expect(fixture.byCode('STANDARD')).toMatchObject({ organizationId: 'org-stated' });
 	});
 });
+
+describe('ShippingProfileService — the default and the code are the request organization’s own', () => {
+	const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
+
+	beforeEach(() => jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG as never));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('demotes the caller’s default only, and leaves a sibling organization’s default alone', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('cold'),
+				profile('theirs', { isDefault: true, organizationId: SIBLING_ORG })
+			]
+		});
+
+		await fixture.service.update('cold', { isDefault: true } as never);
+
+		expect(fixture.row('standard')).toMatchObject({ isDefault: false });
+		expect(fixture.row('cold')).toMatchObject({ isDefault: true });
+		expect(fixture.row('theirs')).toMatchObject({ isDefault: true });
+	});
+
+	it('refuses to promote a sibling organization’s profile, and demotes nothing on the way', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('theirs', { organizationId: SIBLING_ORG })
+			]
+		});
+
+		await expect(fixture.service.update('theirs', { isDefault: true } as never)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+		expect(fixture.row('standard')).toMatchObject({ isDefault: true });
+		expect(fixture.row('theirs')).toMatchObject({ isDefault: false });
+	});
+
+	it('falls back to the caller’s default only, never a sibling organization’s', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [profile('theirs', { isDefault: true, organizationId: SIBLING_ORG })]
+		});
+
+		expect(await fixture.service.resolveForVariant(VARIANT_B)).toBeNull();
+	});
+
+	it('lets the caller use a code a sibling organization uses', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [profile('theirs', { code: 'STANDARD', organizationId: SIBLING_ORG })]
+		});
+
+		await fixture.service.create({ name: 'Standard', code: 'STANDARD' } as never);
+
+		expect(fixture.tables.shipping_profile.filter((row) => row.code === 'STANDARD')).toHaveLength(2);
+	});
+});

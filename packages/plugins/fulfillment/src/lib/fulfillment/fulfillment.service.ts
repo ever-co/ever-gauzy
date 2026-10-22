@@ -26,7 +26,6 @@ import {
 	IVersionedWriter,
 	MultiORMEnum,
 	RequestContext,
-	TenantAwareCrudService,
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	compareDecimalStrings,
@@ -55,6 +54,7 @@ import {
 	FULFILLMENT_LABEL_PROVIDER,
 	IFulfillmentLabelProviderPort
 } from '../fulfillment.types';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * The transitions the fulfilment lifecycle allows, and nothing else.
@@ -284,7 +284,7 @@ type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
  * the columns and the version move in one statement.
  */
 @Injectable()
-export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
+export class FulfillmentService extends FulfillmentCrudService<Fulfillment> {
 	/** Where a re-derivation that could not run is reported, since the caller is not told of it. */
 	private readonly logger = new Logger(FulfillmentService.name);
 
@@ -441,7 +441,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
 		}
 
-		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+		return this.findOneWritten(fulfillment.id, { relations: ['lines'] });
 	}
 
 	/**

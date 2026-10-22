@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination, ShippingPriceType } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, commitVersionedUpdate } from '@gauzy/core';
+import { RequestContext, commitVersionedUpdate } from '@gauzy/core';
 import { ShippingOption } from './shipping-option.entity';
 import { TypeOrmShippingOptionRepository } from './repository/type-orm-shipping-option.repository';
 import { MikroOrmShippingOptionRepository } from './repository/mikro-orm-shipping-option.repository';
 import { ANY_FULFILLMENT_VERSION } from '../fulfillment.types';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * What a caller asks for when it wants to know which deliveries are available.
@@ -44,7 +45,7 @@ export interface IShippingOptionEligibility {
  * option's own physical limits and its channel, region and profile scope.
  */
 @Injectable()
-export class ShippingOptionService extends TenantAwareCrudService<ShippingOption> {
+export class ShippingOptionService extends FulfillmentCrudService<ShippingOption> {
 	constructor(
 		readonly typeOrmShippingOptionRepository: TypeOrmShippingOptionRepository,
 		readonly mikroOrmShippingOptionRepository: MikroOrmShippingOptionRepository
