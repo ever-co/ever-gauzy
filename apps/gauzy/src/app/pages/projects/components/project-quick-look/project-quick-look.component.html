@@ -556,20 +556,170 @@
 					</div>
 				</section>
 
-				<!-- Daily activity: hours on the project per day of the period, over the host's scope. -->
-				<section class="panel project-view-panel project-view-order-4" [nbSpinner]="hours.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<!--
+					Daily activity: hours on the project per day of the period, over the host's scope. On the page,
+					it can instead show the last year as a grid of days, one square per day, shaded by its hours.
+				-->
+				@let showGrid = isPage && activityView === 'grid';
+				<section
+					class="panel project-view-panel project-view-order-4"
+					[nbSpinner]="showGrid ? activityGrid.loading : hours.loading"
+					nbSpinnerSize="small"
+					nbSpinnerStatus="basic"
+				>
 					<header class="panel-header">
 						<div class="panel-heading">
 							<h5 class="panel-title panel-title--icon">
-								<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+								<nb-icon [icon]="showGrid ? 'grid-outline' : 'bar-chart-outline'" aria-hidden="true"></nb-icon>
 								{{ 'PROJECT_QUICK_LOOK.ACTIVITY' | translate }}
 							</h5>
-							<span class="panel-caption">{{ rangeLabel }}</span>
+							<span class="panel-caption">{{ showGrid ? activityGrid.value?.range || '' : rangeLabel }}</span>
 						</div>
-						@if (hoursTotal) {
-						<span class="project-hours-total">{{ formatHours(hoursTotal) }}</span>
-						}
+						<div class="project-activity-actions">
+							@let activityTotal = showGrid ? activityGrid.value?.total || 0 : hoursTotal;
+							@if (activityTotal) {
+							<span class="project-hours-total">{{ formatHours(activityTotal) }}</span>
+							}
+							@if (isPage) {
+							<div class="segmented project-activity-views" role="group" [attr.aria-label]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEWS' | translate">
+								<button
+									type="button"
+									class="segment"
+									[class.is-active]="activityView === 'chart'"
+									[attr.aria-pressed]="activityView === 'chart'"
+									[nbTooltip]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_CHART' | translate"
+									nbTooltipPlacement="top"
+									[attr.aria-label]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_CHART' | translate"
+									(click)="setActivityView('chart')"
+								>
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+								</button>
+								<button
+									type="button"
+									class="segment"
+									[class.is-active]="activityView === 'grid'"
+									[attr.aria-pressed]="activityView === 'grid'"
+									[nbTooltip]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_GRID' | translate"
+									nbTooltipPlacement="top"
+									[attr.aria-label]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_GRID' | translate"
+									(click)="setActivityView('grid')"
+								>
+									<nb-icon icon="grid-outline" aria-hidden="true"></nb-icon>
+								</button>
+							</div>
+							}
+						</div>
 					</header>
+					@if (showGrid) {
+					<div class="panel-body project-chart-body project-grid-body">
+						@let years = gridYears;
+						@let yearIndex = years.indexOf(gridYear);
+						<div class="activity-grid-toolbar">
+						<div class="activity-grid-years">
+							<button
+								type="button"
+								class="activity-grid-step"
+								[disabled]="yearIndex >= years.length - 1"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.GRID_OLDER' | translate"
+								[nbTooltip]="'PROJECT_QUICK_LOOK.GRID_OLDER' | translate"
+								nbTooltipPlacement="top"
+								(click)="stepGridYear(1)"
+							>
+								<nb-icon icon="chevron-left-outline" aria-hidden="true"></nb-icon>
+							</button>
+							<span class="activity-grid-year" aria-live="polite">{{
+								gridYear === null ? ('PROJECT_QUICK_LOOK.GRID_LAST_YEAR' | translate) : gridYear
+							}}</span>
+							<button
+								type="button"
+								class="activity-grid-step"
+								[disabled]="yearIndex <= 0"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.GRID_NEWER' | translate"
+								[nbTooltip]="'PROJECT_QUICK_LOOK.GRID_NEWER' | translate"
+								nbTooltipPlacement="top"
+								(click)="stepGridYear(-1)"
+							>
+								<nb-icon icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+							</button>
+						</div>
+						<!-- The shown year's split: time from the timer, and time added by hand. -->
+						@let split = activityGrid.value;
+						@if (split && split.total) {
+						<dl class="activity-grid-split">
+							<div>
+								<dt><span class="swatch swatch--tracked" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TRACKED' | translate }}</dt>
+								<dd>{{ formatHours(split.tracked) }}</dd>
+							</div>
+							<div>
+								<dt><span class="swatch swatch--manual" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.MANUAL' | translate }}</dt>
+								<dd>
+									{{ formatHours(split.manual) }}
+									<span class="activity-grid-share">{{ formatPercent((split.manual / split.total) * 100) }}</span>
+								</dd>
+							</div>
+						</dl>
+						}
+						</div>
+						@if (activityGrid.failed) {
+						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+						} @else if (activityGrid.value; as grid) {
+						<!-- Scrolls sideways only once the panel is too narrow for readable squares. -->
+						<div class="activity-grid-scroll">
+							<div
+								class="activity-grid"
+								role="group"
+								[style.grid-template-columns]="grid.columns"
+								[style.--grid-weeks]="grid.weeks"
+								[style.--grid-months]="grid.months.length"
+								[attr.aria-label]="('PROJECT_QUICK_LOOK.ACTIVITY' | translate) + ' · ' + grid.range"
+								(focusin)="gridHasFocus = true"
+								(focusout)="gridHasFocus = false"
+							>
+								@for (weekday of gridWeekdays; track $index) {
+								<span class="activity-grid-weekday" aria-hidden="true" [style.grid-row]="$index + 1">{{ weekday }}</span>
+								}
+								<!-- Each day is named by its date and time; one is in the tab order, arrow keys move between them. -->
+								@for (day of grid.days; track day.key; let index = $index) {
+								@let description = gridDayTooltip(day);
+								<span
+									class="activity-day"
+									role="img"
+									[attr.data-index]="index"
+									[attr.tabindex]="index === gridFocus ? 0 : -1"
+									[attr.aria-label]="description"
+									[attr.data-level]="day.level"
+									[class.has-manual]="day.manualFill > 0"
+									[style.--manual-fill]="day.manualFill + '%'"
+									[style.grid-column]="day.column"
+									[style.grid-row]="day.row"
+									[nbTooltip]="description"
+									nbTooltipPlacement="top"
+									(focus)="gridFocus = index"
+									(keydown)="onGridDayKeydown($event, index)"
+								></span>
+								}
+								@for (month of grid.months; track month.key) {
+								<span class="activity-grid-month" aria-hidden="true" [style.grid-column]="month.column + ' / span ' + month.span">{{
+									month.label
+								}}</span>
+								}
+							</div>
+						</div>
+						<!-- The focused day, for keyboard users who see the screen: the tooltip opens on hover only. -->
+						@if (gridHasFocus && grid.days[gridFocus]; as focused) {
+						<p class="activity-grid-readout" aria-hidden="true">{{ gridDayTooltip(focused) }}</p>
+						}
+						<ul class="activity-grid-legend" aria-hidden="true">
+							@for (band of gridBands; track band.level) {
+							<li><span class="activity-day" [attr.data-level]="band.level"></span>{{ band.label }}</li>
+							}
+							<li class="activity-grid-legend-manual">
+								<span class="activity-day has-manual" data-level="3" style="--manual-fill: 40%"></span>{{ 'EMPLOYEES_PAGE.VIEW.MANUAL' | translate }}
+							</li>
+						</ul>
+						}
+					</div>
+					} @else {
 					<div class="panel-body project-chart-body">
 						@if (hours.failed) {
 						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
@@ -584,6 +734,7 @@
 						></ngx-employee-hours-chart>
 						}
 					</div>
+					}
 				</section>
 
 				<!-- Most worked tasks: the project's tasks with the most time in the period. -->
