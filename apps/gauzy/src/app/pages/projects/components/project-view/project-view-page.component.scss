@@ -22,8 +22,26 @@
   }
 }
 
+// The global input floor drew the period switcher 46px tall, which set the header's height;
+// it is drawn to a 1.75rem box instead, and the header's padding tightened to match.
 .project-page-period {
-  min-width: 9rem;
+  min-width: 8rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.size-small` so this rule outranks it.
+  &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+    min-height: 1.75rem !important;
+    height: 1.75rem;
+    padding: 0 1.75rem 0 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+}
+
+:host ::ng-deep .record-page-header {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  min-height: 0;
 }
 
 /* ── Tabs: Overview, Board, Activity ── */
