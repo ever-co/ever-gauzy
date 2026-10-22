@@ -32,4 +32,16 @@ export class ImageAssetService extends CrudService<IImageAsset> {
 	updateImageAsset(imageAsset: IImageAsset): Promise<IImageAsset> {
 		return firstValueFrom(this.http.put<IImageAsset>(`${API_PREFIX}/image-assets/${imageAsset.id}`, imageAsset));
 	}
+
+	/**
+	 * Uploads an image into `folder` and records it as an image asset; the answer carries its `fullUrl` and
+	 * `thumbUrl`. The server takes raster images only (PNG, JPEG, GIF, WebP, BMP) and refuses any other content.
+	 */
+	upload(file: File, folder: string, scope: { tenantId?: string; organizationId?: string }): Promise<IImageAsset> {
+		const form = new FormData();
+		form.append('file', file, file.name);
+		if (scope.tenantId) form.append('tenantId', scope.tenantId);
+		if (scope.organizationId) form.append('organizationId', scope.organizationId);
+		return firstValueFrom(this.http.post<IImageAsset>(`${API_PREFIX}/image-assets/upload/${folder}`, form));
+	}
 }
