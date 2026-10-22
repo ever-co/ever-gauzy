@@ -407,8 +407,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'AvailabilitySlotsController.softRemove',
 	'AvailabilitySlotsController.update',
 	'CandidateFeedbacksController.delete',
-	'CandidatePersonalQualitiesController.update',
-	'CandidateTechnologiesController.update',
 	'ContactController.create',
 	'ContactController.delete',
 	'ContactController.update',
