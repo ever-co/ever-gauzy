@@ -27,7 +27,7 @@
 			{{ 'PROJECT_VIEW.ACTIVITY_PARTIAL' | translate }}
 		</p>
 		}
-		@for (day of feed.value; track day.label) {
+		@for (day of days; track day.label) {
 		<h6 class="feed-day">{{ day.labelKey ? (day.labelKey | translate) : day.label }}</h6>
 		<ol class="feed">
 			@for (entry of day.entries; track entry.id) {

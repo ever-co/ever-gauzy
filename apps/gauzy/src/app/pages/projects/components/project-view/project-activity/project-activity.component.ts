@@ -36,6 +36,8 @@ interface IActivityDay {
 
 /** Entries the feed shows. */
 const FEED_LIMIT = 60;
+/** Entries per page of the feed, so a long feed reads page by page instead of scrolling. */
+const FEED_PAGE_SIZE = 10;
 /** The activity log's largest page. */
 const LOG_PAGE_SIZE = 100;
 /**
@@ -67,7 +69,12 @@ export class ProjectActivityComponent implements OnChanges {
 	@Input() organizationId: string;
 	@Input() tenantId: string;
 
-	public feed: Loadable<IActivityDay[]> = loading([]);
+	public feed: Loadable<IActivityEntry[]> = loading([]);
+	/** The current page's entries under their day. */
+	public days: IActivityDay[] = [];
+	/** The current page, from 0. */
+	public page = 0;
+	public readonly pageSize = FEED_PAGE_SIZE;
 	/** Some of the feed's reads failed: what is shown may be missing entries. */
 	public partial = false;
 	private readonly _http = inject(HttpClient);
@@ -80,13 +87,39 @@ export class ProjectActivityComponent implements OnChanges {
 	}
 
 	get count(): number {
-		return (this.feed.value || []).reduce((sum, day) => sum + day.entries.length, 0);
+		return (this.feed.value || []).length;
+	}
+
+	get pageCount(): number {
+		return Math.ceil(this.count / this.pageSize);
+	}
+
+	/** The pages' indexes, for the pager's page buttons. */
+	get pages(): number[] {
+		return Array.from({ length: this.pageCount }, (_, index) => index);
+	}
+
+	/** The current page's first and last entry, from 1: "11–20 of 60". */
+	get range(): { from: number; to: number; total: number } {
+		return {
+			from: this.page * this.pageSize + 1,
+			to: Math.min((this.page + 1) * this.pageSize, this.count),
+			total: this.count
+		};
+	}
+
+	setPage(page: number): void {
+		this.page = Math.max(0, Math.min(page, this.pageCount - 1));
+		const start = this.page * this.pageSize;
+		this.days = this.byDay((this.feed.value || []).slice(start, start + this.pageSize));
 	}
 
 	private async load(): Promise<void> {
 		const sequence = ++this._sequence;
 		const { organizationId, tenantId, projectId } = this;
 		this.feed = loading([]);
+		this.days = [];
+		this.page = 0;
 		this.partial = false;
 		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) =>
 			firstValueFrom(
@@ -145,7 +178,8 @@ export class ProjectActivityComponent implements OnChanges {
 		]
 			.sort((a, b) => b.time.localeCompare(a.time))
 			.slice(0, FEED_LIMIT);
-		this.feed = loaded(this.byDay(entries));
+		this.feed = loaded(entries);
+		this.setPage(0);
 	}
 
 	/**
