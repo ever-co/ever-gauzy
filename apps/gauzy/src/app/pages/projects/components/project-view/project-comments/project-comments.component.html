@@ -52,7 +52,7 @@
 				<div class="thread">
 					<div class="thread-card" [class.open]="open">
 						<div class="thread-summary">
-							<span class="thread-title">{{ entry.comment.comment }}</span>
+							<span class="thread-title">{{ entry.text || ('PROJECT_VIEW.COMMENT_IMAGE' | translate) }}</span>
 							<button type="button" class="thread-toggle" [attr.aria-expanded]="open" (click)="toggleThread(thread)">
 								{{
 									(thread.replies.length === 1
@@ -68,7 +68,7 @@
 							@if (latest) {
 							<span class="thread-latest-text">
 								<b>{{ latest.author?.name || ('GOALS_PAGE.COMMENT_THREAD.UNKNOWN_AUTHOR' | translate) }}</b>
-								{{ latest.comment.comment }}
+								{{ latest.text || ('PROJECT_VIEW.COMMENT_IMAGE' | translate) }}
 							</span>
 							<span class="thread-age" [nbTooltip]="latest.timeLong" nbTooltipPlacement="top">{{ latest.ago }}</span>
 							} @else {
@@ -97,7 +97,8 @@
 							<span class="thread-latest-text">{{ 'GOALS_PAGE.COMMENT_THREAD.NO_MESSAGES' | translate }}</span>
 						</div>
 						}
-						<div class="reply-row">
+						<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'reply' }"></ng-container>
+						<div class="reply-row" (dragover)="onDragOver($event)" (drop)="onDrop('reply', $event)">
 							<textarea
 								nbInput
 								fullWidth
@@ -106,16 +107,18 @@
 								[formControl]="replyControl"
 								[placeholder]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
 								[attr.aria-label]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
+								(paste)="onPaste('reply', $event)"
 								(keydown.control.enter)="addReply(thread)"
 								(keydown.meta.enter)="addReply(thread)"
 								(keydown.escape)="toggleThread(thread)"
 							></textarea>
+							<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'reply' }"></ng-container>
 							<button
 								type="button"
 								nbButton
 								status="primary"
 								size="tiny"
-								[disabled]="!replyControl.value.trim() || postingReply"
+								[disabled]="!canPost('reply') || postingReply"
 								(click)="addReply(thread)"
 							>
 								{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
@@ -130,9 +133,11 @@
 		</ol>
 		}
 	</div>
-	<!-- The comment box, under the list as in the objective dialog. Ctrl/Cmd+Enter posts too. -->
-	<footer class="comment-footer">
+	<!-- The comment box, under the list as in the objective dialog. Ctrl/Cmd+Enter posts too; images can be
+	     attached with the paperclip, pasted or dropped on it. -->
+	<footer class="comment-footer" (dragover)="onDragOver($event)" (drop)="onDrop('comment', $event)">
 		<label for="project-comment" class="comment-label">{{ 'PROJECT_VIEW.COMMENTS' | translate }}</label>
+		<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'comment' }"></ng-container>
 		<div class="comment-row">
 			<textarea
 				id="project-comment"
@@ -140,15 +145,17 @@
 				fullWidth
 				[formControl]="commentControl"
 				[placeholder]="'PROJECT_VIEW.COMMENT_PLACEHOLDER' | translate"
+				(paste)="onPaste('comment', $event)"
 				(keydown.control.enter)="addComment()"
 				(keydown.meta.enter)="addComment()"
 			></textarea>
+			<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'comment' }"></ng-container>
 			<button
 				type="button"
 				nbButton
 				status="primary"
 				size="small"
-				[disabled]="!commentControl.value.trim() || postingComment"
+				[disabled]="!canPost('comment') || postingComment"
 				(click)="addComment()"
 			>
 				{{ 'BUTTONS.ADD_COMMENT' | translate }}
@@ -171,7 +178,66 @@
 			{{ entry.comment.createdAt | date : 'short' }}
 		</time>
 	</div>
-	<p class="comment-text">{{ entry.comment.comment }}</p>
+	@if (entry.text) {
+	<p class="comment-text">{{ entry.text }}</p>
+	}
+	@if (entry.images.length) {
+	<!-- The attached images as thumbnails; each opens full size. -->
+	<div class="comment-images">
+		@for (image of entry.images; track $index) {
+		<button
+			type="button"
+			class="comment-image"
+			[attr.aria-label]="image.name || ('PROJECT_VIEW.COMMENT_IMAGE' | translate)"
+			(click)="openImage(image)"
+		>
+			<img [src]="image.url" [alt]="image.name" loading="lazy" />
+		</button>
+		}
+	</div>
+	}
+</ng-template>
+
+<!-- The paperclip that picks images for a box, for those the image upload lets in. -->
+<ng-template #attachButton let-box>
+	@if (canAttach) {
+	<input #picker type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" multiple hidden (change)="onPick(box, picker)" />
+	<button
+		type="button"
+		nbButton
+		ghost
+		status="basic"
+		[size]="box === 'reply' ? 'tiny' : 'small'"
+		class="attach-button"
+		[nbTooltip]="'PROJECT_VIEW.ATTACH_IMAGES' | translate"
+		[attr.aria-label]="'PROJECT_VIEW.ATTACH_IMAGES' | translate"
+		(click)="picker.click()"
+	>
+		<nb-icon icon="attach-outline"></nb-icon>
+	</button>
+	}
+</ng-template>
+
+<!-- The images picked for a box: each from its file at once, dimmed with a spinner while it uploads. -->
+<ng-template #pendingImages let-box>
+	@if (pending[box].length) {
+	<ul class="pending-images">
+		@for (image of pending[box]; track image.key) {
+		<li class="pending-image" [class.is-uploading]="image.uploading" [nbSpinner]="image.uploading" nbSpinnerSize="tiny" nbSpinnerStatus="basic">
+			<img [src]="image.preview" [alt]="image.name" />
+			<button
+				type="button"
+				class="pending-remove"
+				[nbTooltip]="'PROJECT_VIEW.REMOVE_IMAGE' | translate"
+				[attr.aria-label]="'PROJECT_VIEW.REMOVE_IMAGE' | translate"
+				(click)="removeImage(box, image)"
+			>
+				<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+			</button>
+		</li>
+		}
+	</ul>
+	}
 </ng-template>
 
 <!-- Delete as a bare trash icon, where the server would allow it; clicking it asks inline before deleting. -->
@@ -223,3 +289,23 @@
 		}
 	</span>
 </ng-template>
+
+<!-- An image open full size over the page; a click outside it, the close button or Esc closes it. -->
+@if (viewing) {
+<div class="image-viewer" role="dialog" aria-modal="true" [attr.aria-label]="viewing.name" (click)="viewing = null">
+	<button
+		type="button"
+		id="project-comment-image-close"
+		class="image-viewer-close"
+		[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		(click)="viewing = null"
+	>
+		<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+	</button>
+	<img [src]="viewing.url" [alt]="viewing.name" (click)="$event.stopPropagation()" />
+	<a class="image-viewer-open" [href]="viewing.url" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">
+		{{ 'PROJECT_VIEW.OPEN_IMAGE' | translate }}
+		<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+	</a>
+</div>
+}
