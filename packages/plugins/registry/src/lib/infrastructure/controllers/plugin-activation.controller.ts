@@ -86,7 +86,7 @@ export class PluginActivationController {
 			case InstallationStatus.ACTIVE:
 				return this.commandBus.execute(new ActivatePluginCommand(pluginId, installationId));
 			case InstallationStatus.INACTIVE:
-				return this.commandBus.execute(new DeactivatePluginCommand(installationId));
+				return this.commandBus.execute(new DeactivatePluginCommand(pluginId, installationId));
 			default:
 				throw new BadRequestException(`Invalid status value ${status}`);
 		}
