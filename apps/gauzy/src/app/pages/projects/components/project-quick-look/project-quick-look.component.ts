@@ -224,6 +224,11 @@ interface IActivityGridDay {
 	manual: number;
 	/** Hours band, 0 (no time) to 4 — see {@link GRID_BANDS}. */
 	level: number;
+	/**
+	 * How much of the square the manual fill takes from the bottom, 0–100: the day's manual share,
+	 * kept at a visible minimum when there is any.
+	 */
+	manualFill: number;
 	/** 1-based grid column and row. */
 	column: number;
 	row: number;
@@ -245,8 +250,10 @@ interface IActivityGrid {
 	columns: string;
 	days: IActivityGridDay[];
 	months: IActivityGridMonth[];
-	/** The year's hours, tracked and manual. */
+	/** The year's hours, tracked and manual, and each on its own. */
 	total: number;
+	tracked: number;
+	manual: number;
 	range: string;
 }
 
@@ -506,7 +513,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 		);
 	}
 
-	/** "1h 30m on Wed, Oct 21, 2026 · 30m manual", or "No time on …". */
+	/** "2h 18m on Wed, Oct 21, 2026 · 1h 48m tracked · 30m manual", or "No time on …". */
 	gridDayTooltip(day: IActivityGridDay): string {
 		const total = day.tracked + day.manual;
 		if (!total) return this._translate.instant('PROJECT_QUICK_LOOK.GRID_DAY_EMPTY', { date: day.label });
@@ -515,7 +522,13 @@ export class ProjectQuickLookComponent implements OnChanges {
 			date: day.label
 		});
 		if (!day.manual) return text;
-		return `${text} · ${this.formatHours(day.manual)} ${this._translate.instant('EMPLOYEES_PAGE.VIEW.MANUAL').toLowerCase()}`;
+		const part = (hours: number, key: string) =>
+			`${this.formatHours(hours)} ${this._translate.instant(key).toLowerCase()}`;
+		return [
+			text,
+			...(day.tracked ? [part(day.tracked, 'EMPLOYEES_PAGE.VIEW.TRACKED')] : []),
+			part(day.manual, 'EMPLOYEES_PAGE.VIEW.MANUAL')
+		].join(' · ');
 	}
 
 	/** The legend's bands: "No time", "< 1h", "1–4h", "4–8h", "8h+". */
@@ -1068,7 +1081,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 			let columns = 1;
 			const days: IActivityGridDay[] = [];
 			const months: IActivityGridMonth[] = [];
-			let total = 0;
+			let tracked = 0;
+			let manual = 0;
 			for (let month = start.clone(); month.isSameOrBefore(layoutEnd, 'month'); month.add(1, 'month')) {
 				const first = month.clone().startOf('month');
 				const last = moment.min(month.clone().endOf('month').startOf('day'), layoutEnd);
@@ -1085,12 +1099,14 @@ export class ProjectQuickLookComponent implements OnChanges {
 					const key = date.format('YYYY-MM-DD');
 					const hours = byDay.get(key) || { tracked: 0, manual: 0 };
 					const sum = hours.tracked + hours.manual;
-					total += sum;
+					tracked += hours.tracked;
+					manual += hours.manual;
 					days.push({
 						key,
 						label: date.format('ddd, ll'),
 						...hours,
 						level: GRID_BANDS.reduce((level, from, band) => (band && sum >= from ? band : level), 0),
+						manualFill: hours.manual ? Math.max(25, Math.round((hours.manual / sum) * 100)) : 0,
 						column: column + date.clone().startOf('week').diff(first.clone().startOf('week'), 'weeks'),
 						row: rowOf(date)
 					});
@@ -1103,7 +1119,9 @@ export class ProjectQuickLookComponent implements OnChanges {
 					columns: tracks.join(' '),
 					days,
 					months,
-					total,
+					total: tracked + manual,
+					tracked,
+					manual,
 					range: `${start.format('ll')} – ${end.format('ll')}`
 				}
 			};
