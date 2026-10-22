@@ -395,8 +395,9 @@ textarea[nbInput] {
   resize: vertical;
 }
 
+// The reply box, as tall as the comment box: room for a few lines before it scrolls.
 .reply-row textarea[nbInput] {
-  height: 2rem;
-  min-height: 2rem !important;
-  padding: 0.375rem $control-padding-x;
+  height: 4rem;
+  min-height: 4rem !important;
+  padding: 0.5rem $control-padding-x;
 }
