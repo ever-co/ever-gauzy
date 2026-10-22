@@ -1,56 +1,31 @@
-import { NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
-import { ID } from '@gauzy/contracts';
-import {
-	LegacyFindOneOptions,
-	RequestContext,
-	TenantAwareCrudService,
-	TenantOrganizationBaseEntity
-} from '@gauzy/core';
+import { LegacyFindOneOptions, TenantAwareCrudService, TenantOrganizationBaseEntity } from '@gauzy/core';
 
 /**
- * The CRUD base of the order services: a row addressed by its identifier, or by the conditions a route states, is a
- * row of the request's organization.
+ * The CRUD base of the order services: they keep every caller inside the platform's organization boundary.
  *
- * `TenantAwareCrudService` narrows its reads by identifier and by conditions to the caller's tenant only, and the
- * routes every service inherits address rows through them — `GET /:id`, `GET /orders/by-number/:number`, the update's
- * pre-read, the withdraw/restore pair, the change confirmation — while its `delete(id)` runs
- * `DELETE … WHERE id AND tenantId` with no read at all. A caller of one organization could therefore read another
- * organization's orders, confirm a change that rewrote another organization's order lines, and withdraw or delete its
- * rows by naming their ids. The versioned writes already state the caller's organization, but the reads and the
- * writes that precede them did not.
+ * `TenantAwareCrudService` used to narrow the order services to the caller's tenant only, and the routes every service
+ * inherits address rows through it — `GET /:id`, `GET /orders/by-number/:number`, the update's pre-read, the
+ * withdraw/restore pair, the change confirmation — while its `delete(id)` ran `DELETE … WHERE id AND tenantId` with no
+ * read at all. A caller of one organization could therefore read another organization's orders, confirm a change that
+ * rewrote another organization's order lines, and withdraw or delete its rows by naming their ids.
  *
- * Both reads answer a row of another organization as their own miss, and a delete by identifier reads its row first.
- * A row stored without an organization, and a caller with no organization in context (a job, the storefront before a
- * store is resolved), are not narrowed.
+ * The rule is the platform's, applied by the base (`appliesOrganizationBoundary`): a tenant admin reaches every
+ * organization of the tenant; anyone else only the organization of their token, and the rows stored without one. A row
+ * outside the boundary is answered as a missing row by every read, and no write or delete reaches it.
  */
 export abstract class OrderCrudService<T extends TenantOrganizationBaseEntity> extends TenantAwareCrudService<T> {
 	/**
-	 * Reads a row of the request's organization by its identifier.
-	 *
-	 * @param id The row's identifier.
-	 * @param options The find options the caller stated, if any.
-	 * @returns The row.
-	 * @throws NotFoundException when no row of the request's organization carries the identifier.
+	 * @returns True: the order services keep every caller inside the organization boundary.
 	 */
-	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<T>): Promise<T> {
-		return this.inCallerOrganization(await super.findOneByIdString(id, options));
+	protected override appliesOrganizationBoundary(): boolean {
+		return true;
 	}
 
 	/**
-	 * Reads a row of the request's organization by the conditions stated.
-	 *
-	 * @param options The conditions.
-	 * @returns The row.
-	 * @throws NotFoundException when no row of the request's organization matches.
-	 */
-	public async findOneByWhereOptions(options: FindOptionsWhere<T>): Promise<T> {
-		return this.inCallerOrganization(await super.findOneByWhereOptions(options));
-	}
-
-	/**
-	 * Deletes a row, reading it first when it is addressed by its identifier so a row of another organization is a
-	 * miss. A withdrawn row is still found, so a hard delete can purge it.
+	 * Deletes a row, reading it first when it is addressed by its identifier, so a row the caller cannot reach (or that
+	 * does not exist) is answered with the read's `404` rather than an empty result. A withdrawn row is still found, so
+	 * a hard delete can purge it.
 	 *
 	 * @param criteria The row's identifier, or the conditions it must satisfy.
 	 * @param options The find options the caller stated, if any.
@@ -65,20 +40,5 @@ export abstract class OrderCrudService<T extends TenantOrganizationBaseEntity> e
 		}
 
 		return super.delete(criteria, options);
-	}
-
-	/**
-	 * @param row The row a tenant-scoped read found.
-	 * @returns The row, when it belongs to the request's organization, to none, or the request states none.
-	 * @throws NotFoundException the read's own miss, when the row belongs to another organization.
-	 */
-	private inCallerOrganization(row: T): T {
-		const organizationId = RequestContext.currentOrganizationId();
-
-		if (organizationId && row?.organizationId && String(row.organizationId) !== String(organizationId)) {
-			throw new NotFoundException('The requested record was not found');
-		}
-
-		return row;
 	}
 }
