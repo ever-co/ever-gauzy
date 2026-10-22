@@ -103,8 +103,18 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	/**
 	 * Updates a cart line.
 	 *
-	 * The return type is the base class's own: the inherited service answers `update` with the ORM's
-	 * update result as readily as with the row, so narrowing it to the entity would be untrue.
+	 * **The line is changed by its cart**, as `create` adds it (R2-G25). This route used to hand the body to
+	 * the line's own `update`, so it wrote a change the cart had not agreed to: on a COMPLETED, MERGED or
+	 * EXPIRED cart, past the stock the variant has, at a price the caller stated, moved to another cart by
+	 * `cartId`, and with the cart's totals still describing the line as it was. The `updateCartLine` mutation
+	 * and `PUT /carts/:id/lines/:lineId` both go through `CommerceCartService.updateLine`, which refuses or
+	 * re-prices every one of those; this route now does the same, on the cart the line is in. It states no
+	 * version, as it never did: the nested route is the one that takes the cart's `If-Match`.
+	 *
+	 * @param id The cart line.
+	 * @param entity The fields to change.
+	 * @param request The request, whose response carries the cart's new version as its `ETag`.
+	 * @returns The line as changed.
 	 */
 	@ApiOperation({ summary: 'Update a cart line' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The cart line was updated', type: CommerceCartLine })
@@ -114,9 +124,15 @@ export class CommerceCartLineController extends CrudController<CommerceCartLine>
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: UpdateCommerceCartLineDTO
-	): Promise<any> {
-		return this.commerceCartLineService.update(id, entity as any);
+		@Body() entity: UpdateCommerceCartLineDTO,
+		@Req() request?: Request
+	): Promise<CommerceCartLine> {
+		const line = await this.commerceCartLineService.findOneByIdString(id);
+		const cart = await this.commerceCartService.updateLine(line.cartId, id, entity as any);
+
+		publishCartVersion(request, cart);
+
+		return this.commerceCartLineService.findOneByIdString(id);
 	}
 
 	/**
