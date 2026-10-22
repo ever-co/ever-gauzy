@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { Request } from 'express';
 import { HELP_CENTER_ARTICLE_MAX_BINARY_BYTES } from '@gauzy/constants';
 import {
@@ -15,7 +15,6 @@ import {
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
 	RequestContext,
-	TenantAwareCrudService,
 	BaseQueryDTO,
 	prepareSQLQuery as p,
 	LIKE_OPERATOR,
@@ -36,6 +35,7 @@ import { HelpCenterArticleVersion } from './help-center-article-version.entity';
 import { HelpCenterArticleVersionService } from './help-center-article-version.service';
 import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-center-article.repository';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
+import { KnowledgeBaseCrudService } from '../knowledge-base-crud.service';
 
 /**
  * Columns a caller may sort help-center articles by.
@@ -56,7 +56,7 @@ export const HELP_CENTER_ARTICLE_SORTABLE_FIELDS = [
 ] as const;
 
 @Injectable()
-export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
+export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCenterArticle> {
 	constructor(
 		readonly typeOrmHelpCenterArticleRepository: TypeOrmHelpCenterArticleRepository,
 		readonly mikroOrmHelpCenterArticleRepository: MikroOrmHelpCenterArticleRepository,
@@ -97,7 +97,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 */
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
 		const articles = await this.find({
-			where: { categoryId } as FindOptionsWhere<HelpCenterArticle>
+			where: { categoryId, ...this.requestOrganization() } as FindOptionsWhere<HelpCenterArticle>
 		});
 		return await this.sanitizeArticlesData(articles);
 	}
@@ -369,6 +369,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 		// 1. Get current article state
 		const { record: currentArticle } = await this.findOneOrFailByIdString(id);
+		if (!currentArticle) {
+			throw new NotFoundException('The requested record was not found');
+		}
 
 		// 2. Create version snapshot of current state (before update) — include binary
 		const versionInput: DeepPartial<HelpCenterArticleVersion> = {
@@ -407,6 +410,12 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 		if (tenantId) {
 			qb.andWhere('article.tenantId = :tenantId', { tenantId });
+		}
+
+		// The organization too: the read by id of every other route of this service is narrowed to it.
+		const organizationId = RequestContext.currentOrganizationId();
+		if (organizationId) {
+			qb.andWhere('article.organizationId = :organizationId', { organizationId });
 		}
 
 		const article = await qb.getOne();
@@ -462,6 +471,12 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			qb.andWhere('"tenantId" = :tenantId', { tenantId });
 		}
 
+		// The organization too, as the read of the description is (see `getDescriptionBinary`).
+		const organizationId = RequestContext.currentOrganizationId();
+		if (organizationId) {
+			qb.andWhere('"organizationId" = :organizationId', { organizationId });
+		}
+
 		await qb.execute();
 	}
 
@@ -475,6 +490,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		const { record: source } = await this.findOneOrFailByIdString(id, {
 			relations: { projects: true, tags: true } as any
 		});
+		if (!source) {
+			throw new NotFoundException('The requested record was not found');
+		}
 
 		const copy: DeepPartial<HelpCenterArticle> = {
 			name: `${source.name} (Copy)`,

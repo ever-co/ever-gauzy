@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { In, FindOptionsWhere, DeleteResult } from 'typeorm';
 import { IHelpCenter, ID } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import { HelpCenter } from './help-center.entity';
 import { TypeOrmHelpCenterRepository } from './repository/type-orm-help-center.repository';
 import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';
+import { KnowledgeBaseCrudService } from '../knowledge-base-crud.service';
 
 @Injectable()
-export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
+export class HelpCenterService extends KnowledgeBaseCrudService<HelpCenter> {
 	constructor(
 		typeOrmHelpCenterRepository: TypeOrmHelpCenterRepository,
 		mikroOrmHelpCenterRepository: MikroOrmHelpCenterRepository
@@ -33,11 +33,11 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 
 	async getCategoriesByBaseId(baseId: ID): Promise<HelpCenter[]> {
 		return await this.find({
-			where: { parentId: baseId } as FindOptionsWhere<HelpCenter>
+			where: { parentId: baseId, ...this.requestOrganization() } as FindOptionsWhere<HelpCenter>
 		});
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.find({});
+		return await this.find({ where: this.requestOrganization() });
 	}
 }

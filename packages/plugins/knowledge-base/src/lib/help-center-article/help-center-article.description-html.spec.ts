@@ -21,7 +21,11 @@ jest.mock('@gauzy/core', () => ({
 		}
 	},
 	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
-	RequestContext: { currentTenantId: () => 'tenant-1', currentEmployeeId: () => 'employee-1' },
+	RequestContext: {
+		currentTenantId: () => 'tenant-1',
+		currentOrganizationId: () => null,
+		currentEmployeeId: () => 'employee-1'
+	},
 	parseFindOptionsRelations: (value: any) => value,
 	parseFindOptionsSelect: (value: any) => value,
 	prepareSQLQuery: (value: string) => value,
