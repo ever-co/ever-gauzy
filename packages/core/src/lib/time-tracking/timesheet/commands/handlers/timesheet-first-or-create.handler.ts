@@ -58,6 +58,8 @@ export class TimesheetFirstOrCreateHandler implements ICommandHandler<TimesheetF
 							});
 						})
 						.andWhere({ tenantId, organizationId, employeeId })
+						// Raw knex skips the soft-delete filter the ORM applies: never reuse a deleted timesheet
+						.whereNull('deletedAt')
 						.first();
 
 					if (!record) {

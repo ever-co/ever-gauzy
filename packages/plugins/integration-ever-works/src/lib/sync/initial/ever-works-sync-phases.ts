@@ -1,3 +1,4 @@
+import { IntegrationEntity } from '@gauzy/contracts';
 import type { EverWorksEventEnvelope } from '../../client/ever-works-client.types';
 import type { EverWorksDirection, EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksLinkType } from '../entities/ever-works-sync.entities';
@@ -46,6 +47,11 @@ export interface EverWorksSyncPhaseSpec {
 	parentField?: string;
 	/** The scope the list route needs (a key without it skips the phase). */
 	scope?: string;
+	/**
+	 * The per-entity toggle of a phase whose records are not a domain of their own (comments): `sync: false` skips the
+	 * phase while its domain syncs (OQ4). A domain's own toggle already turns the domain's direction `off`.
+	 */
+	entity?: IntegrationEntity;
 }
 
 /** Plan 03 §C.6 step 3, as this version can run it. Later handlers (goals, missions, ideas, inbox, docs) plug in by aggregate type. */
@@ -59,7 +65,7 @@ export const EVER_WORKS_SYNC_PHASE_SPECS: ReadonlyArray<EverWorksSyncPhaseSpec> 
 	{ name: 'ideas', domain: 'ideas', kind: 'list', aggregateType: 'idea', linkType: EverWorksLinkType.IDEA_TASK, list: { path: '/ideas' }, scope: 'ideas:read' },
 	{ name: 'tasks', domain: 'tasks', kind: 'list', aggregateType: 'task', linkType: EverWorksLinkType.TASK, list: { path: '/tasks' }, parentField: 'parentTaskId', scope: 'tasks:read' },
 	{ name: 'task_edges', domain: 'tasks', kind: 'included', aggregateType: 'task', linkType: null },
-	{ name: 'comments', domain: 'tasks', kind: 'children', aggregateType: 'task', linkType: EverWorksLinkType.COMMENT, scope: 'tasks:read' },
+	{ name: 'comments', domain: 'tasks', kind: 'children', aggregateType: 'task', linkType: EverWorksLinkType.COMMENT, scope: 'tasks:read', entity: IntegrationEntity.COMMENT },
 	{
 		name: 'inbox',
 		domain: 'inbox',

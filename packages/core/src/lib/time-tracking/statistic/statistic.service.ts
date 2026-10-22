@@ -40,6 +40,7 @@ import {
 } from '@gauzy/config';
 import {
 	getActivityDurationQueryString,
+	getActivityTimeSlotFilterQueryString,
 	getDurationQueryString,
 	getTotalDurationQueryString
 } from './statistic.helper';
@@ -2771,66 +2772,60 @@ export class StatisticService {
 				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
 				const activityDurationFilter = getActivityDurationQueryString(dbType, 'activity');
 
+				// The time slots whose time logs fall in the range, scoped to the organization (and the teams),
+				// resolved on their own; the activities are then read by `timeSlotId` — see
+				// getActivityTimeSlotFilterQueryString for the join this replaces. A builder is consumed by the
+				// query it is bound to, hence one per query.
+				const timeSlotIds = () => {
+					const slots = knex('time_slot')
+						.select('time_slot.id')
+						.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
+						.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
+						.modify(excludeSoftDeleted, 'time_slot', 'time_log')
+						.whereBetween('time_slot.startedAt', [start, end])
+						.whereBetween('time_log.startedAt', [start, end])
+						.andWhere('time_log.tenantId', tenantId)
+						.andWhere('time_log.organizationId', organizationId);
+					if (isNotEmpty(teamIds)) {
+						slots.whereIn('time_log.organizationTeamId', teamIds);
+					}
+					return slots;
+				};
+
+				// The activities of those slots, in the range, scoped to the organization (and the employees and
+				// projects): the base of both queries below. `whereIn` with the builder: knex parenthesises a bound
+				// builder, which would turn the Postgres `ANY(ARRAY(...))` form into a scalar sub-query.
+				const activityQuery = () => {
+					let qb = knex('activity')
+						.modify(excludeSoftDeleted, 'activity')
+						.whereRaw(activityDurationFilter, { start, end })
+						.andWhere('activity.tenantId', tenantId)
+						.andWhere('activity.organizationId', organizationId)
+						.whereIn('activity.timeSlotId', timeSlotIds());
+					if (isNotEmpty(employeeIds)) {
+						qb = qb.whereIn('activity.employeeId', employeeIds);
+					}
+					if (isNotEmpty(projectIds)) {
+						qb = qb.whereIn('activity.projectId', projectIds);
+					}
+					return qb;
+				};
+
 				// Query 1: Top 5 activities grouped by title
-				let qb = knex('activity')
-					.innerJoin('time_slot', 'activity.timeSlotId', 'time_slot.id')
-					.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
-					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
-					.modify(excludeSoftDeleted, 'activity', 'time_slot', 'time_log')
+				activities = await activityQuery()
 					.select([
 						knex.raw('COUNT("activity"."id") AS sessions'),
 						knex.raw('SUM("activity"."duration") AS duration'),
 						'activity.title as title'
 					])
-					.whereRaw(activityDurationFilter, { start, end })
-					.whereBetween('time_log.startedAt', [start, end])
-					.whereBetween('time_slot.startedAt', [start, end])
-					.andWhere('activity.tenantId', tenantId)
-					.andWhere('activity.organizationId', organizationId)
-					.andWhere('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
 					.groupBy('activity.title')
 					.orderBy('duration', 'DESC')
 					.limit(5);
 
-				if (isNotEmpty(employeeIds)) {
-					qb = qb.whereIn('activity.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					qb = qb.whereIn('activity.projectId', projectIds);
-				}
-				if (isNotEmpty(teamIds)) {
-					qb = qb.whereIn('time_log.organizationTeamId', teamIds);
-				}
-
-				activities = await qb;
-
 				// Query 2: Total duration for percentage calculation
-				let totalQb = knex('activity')
-					.innerJoin('time_slot', 'activity.timeSlotId', 'time_slot.id')
-					.innerJoin('time_slot_time_logs', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
-					.innerJoin('time_log', 'time_slot_time_logs.timeLogId', 'time_log.id')
-					.modify(excludeSoftDeleted, 'activity', 'time_slot', 'time_log')
+				const totalDuration = await activityQuery()
 					.select(knex.raw('SUM("activity"."duration") AS duration'))
-					.whereRaw(activityDurationFilter, { start, end })
-					.whereBetween('time_log.startedAt', [start, end])
-					.whereBetween('time_slot.startedAt', [start, end])
-					.andWhere('activity.tenantId', tenantId)
-					.andWhere('activity.organizationId', organizationId)
-					.andWhere('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId);
-
-				if (isNotEmpty(employeeIds)) {
-					totalQb = totalQb.whereIn('activity.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					totalQb = totalQb.whereIn('activity.projectId', projectIds);
-				}
-				if (isNotEmpty(teamIds)) {
-					totalQb = totalQb.whereIn('time_log.organizationTeamId', teamIds);
-				}
-
-				const totalDuration = await totalQb.first();
+					.first();
 				activities = activities.map((activity) => {
 					activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;
 					return activity;
@@ -2839,54 +2834,50 @@ export class StatisticService {
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
-				const query = this.typeOrmActivityRepository.createQueryBuilder();
+				// The time slots whose time logs fall in the range, scoped to the organization (and the teams),
+				// resolved on their own; the activities are then read by `timeSlotId` — see
+				// getActivityTimeSlotFilterQueryString for the join this replaces. The sub-query's parameters are
+				// set on the query that embeds it.
+				const timeSlots = this.typeOrmTimeSlotRepository
+					.createQueryBuilder('time_slot')
+					.select('time_slot.id')
+					.innerJoin('time_slot.timeLogs', 'time_log')
+					.where(p(`"time_slot"."startedAt" BETWEEN :startDate AND :endDate`), {
+						startDate: start,
+						endDate: end
+					})
+					.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`))
+					.andWhere(p(`"time_log"."tenantId" = :tenantId`), { tenantId })
+					.andWhere(p(`"time_log"."organizationId" = :organizationId`), { organizationId });
+				if (isNotEmpty(teamIds)) {
+					timeSlots.andWhere(p(`"time_log"."organizationTeamId" IN (:...teamIds)`), { teamIds });
+				}
+
+				// The activities of those slots, in the range, scoped to the organization (and the employees and
+				// projects): the base of both queries below.
+				const activityQuery = () => {
+					const query = this.typeOrmActivityRepository.createQueryBuilder();
+					query
+						.where(getActivityDurationQueryString(dbType, query.alias), { start, end })
+						.andWhere(getActivityTimeSlotFilterQueryString(dbType, query.alias, timeSlots.getQuery()))
+						.setParameters(timeSlots.getParameters())
+						.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+						.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					if (isNotEmpty(employeeIds)) {
+						query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					}
+					if (isNotEmpty(projectIds)) {
+						query.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+					}
+					return query;
+				};
+
+				const query = activityQuery();
 				query
 					.select(p(`COUNT("${query.alias}"."id")`), `sessions`)
 					.addSelect(p(`SUM("${query.alias}"."duration")`), `duration`)
 					.addSelect(p(`"${query.alias}"."title"`), `title`)
-					.innerJoin(`${query.alias}.timeSlot`, 'time_slot')
-					.innerJoin(`time_slot.timeLogs`, 'time_log')
-					.addGroupBy(p(`"${query.alias}"."title"`));
-
-				query
-					.andWhere(getActivityDurationQueryString(dbType, query.alias), { start, end })
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
-								startDate: start,
-								endDate: end
-							});
-							qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :startDate AND :endDate`), {
-								startDate: start,
-								endDate: end
-							});
-						})
-					)
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-						})
-					)
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"time_log"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"time_log"."organizationId" = :organizationId`), { organizationId });
-						})
-					)
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							if (isNotEmpty(employeeIds)) {
-								qb.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
-							}
-							if (isNotEmpty(projectIds)) {
-								qb.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), { projectIds });
-							}
-							if (isNotEmpty(teamIds)) {
-								qb.andWhere(p(`"time_log"."organizationTeamId" IN (:...teamIds)`), { teamIds });
-							}
-						})
-					)
+					.addGroupBy(p(`"${query.alias}"."title"`))
 					.orderBy(p(`"duration"`), 'DESC')
 					.limit(5);
 				activities = await query.getRawMany();
@@ -2894,58 +2885,8 @@ export class StatisticService {
 				/*
 				 * Fetch total duration of the week for calculate duration percentage
 				 */
-				const totalDurationQuery = this.typeOrmActivityRepository.createQueryBuilder();
-
-				totalDurationQuery
-					.select(p(`SUM("${totalDurationQuery.alias}"."duration")`), `duration`)
-					.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'time_slot')
-					.innerJoin(`time_slot.timeLogs`, 'time_log');
-
-				totalDurationQuery
-					.andWhere(getActivityDurationQueryString(dbType, totalDurationQuery.alias), { start, end })
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
-								startDate: start,
-								endDate: end
-							});
-							qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :startDate AND :endDate`), {
-								startDate: start,
-								endDate: end
-							});
-						})
-					)
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), {
-								organizationId
-							});
-						})
-					)
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"time_log"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"time_log"."organizationId" = :organizationId`), { organizationId });
-						})
-					)
-					.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							if (isNotEmpty(employeeIds)) {
-								qb.andWhere(p(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`), {
-									employeeIds
-								});
-							}
-							if (isNotEmpty(projectIds)) {
-								qb.andWhere(p(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`), {
-									projectIds
-								});
-							}
-							if (isNotEmpty(teamIds)) {
-								qb.andWhere(p(`"time_log"."organizationTeamId" IN (:...teamIds)`), { teamIds });
-							}
-						})
-					);
+				const totalDurationQuery = activityQuery();
+				totalDurationQuery.select(p(`SUM("${totalDurationQuery.alias}"."duration")`), `duration`);
 				const totalDuration = await totalDurationQuery.getRawOne();
 				activities = activities.map((activity) => {
 					activity.durationPercentage = (activity.duration * 100) / totalDuration.duration;

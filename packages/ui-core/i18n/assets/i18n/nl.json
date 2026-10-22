@@ -3247,6 +3247,35 @@
 			"CONTINUE": "Doorgaan",
 			"SKIP": "Overslaan",
 			"CREATE": "Organisatie aanmaken"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Projectonderdelen",
+			"DETAILS": "Details",
+			"LOGO": "Projectlogo",
+			"LOGO_HINT": "Optioneel. Klik op het logo om een vierkante afbeelding te uploaden.",
+			"PEOPLE": "Mensen",
+			"TIMELINE": "Tijdlijn",
+			"APPEARANCE": "Weergave",
+			"OPTIONS": "Opties",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Taaksynchronisatie",
+			"CREATE_SUBTITLE": "Stel een nieuw project in met de mensen, tijdlijn en facturering.",
+			"OPEN_SOURCE_TITLE": "Open-sourceproject",
+			"OPEN_SOURCE_DESCRIPTION": "Deel de code van dit project openbaar. Zet dit aan om de link naar de openbare repository toe te voegen.",
+			"OPEN_SOURCE_URL_HINT": "Het openbare adres van de code, bijvoorbeeld een GitHub- of GitLab-repository.",
+			"OPEN_REPOSITORY": "Repository openen",
+			"DESCRIPTION_CARD_DESC": "Beschrijf de doelen en reikwijdte van het project voor iedereen die eraan werkt.",
+			"TAGS_DESC": "Geef het project tags, zodat het makkelijker te vinden en te groeperen is.",
+			"BILLING_DESC": "Hoe de klant voor dit project wordt gefactureerd, en in welke valuta.",
+			"BUDGET_DESC": "Stel een budget in uren of kosten in om het project op koers te houden.",
+			"APPEARANCE_DESC": "De kleur van het project en hoe de taken worden getoond.",
+			"PUBLIC_TITLE": "Openbaar project",
+			"PUBLIC_DESC": "Bij een openbaar project ziet iedereen wie eraan werkt. Bij een privéproject ziet ieder alleen zichzelf, tenzij diegene toegang heeft tot privéprojecten.",
+			"BILLABLE_DESC": "Markeer het werk aan dit project als factureerbaar aan de klant.",
+			"REPOSITORY_DESC": "Kies de GitHub-repository waarvan dit project de issues gebruikt.",
+			"AUTO_SYNC_DESC": "Houd de taken van het project gelijk met de issues van de repository. Wijzigingen hier worden direct opgeslagen.",
+			"SYNC_LABEL_TITLE": "Synchroniseren op label",
+			"SYNC_LABEL_DESC": "Synchroniseer alleen issues met het label dat je instelt. Wijzigingen hier worden direct opgeslagen."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3308,9 +3337,14 @@
 		"MEMBER_SINCE": "Lid sinds",
 		"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd",
 		"NO_SKILLS": "Nog geen vaardigheden vermeld",
+		"NO_EMPLOYEES": "Nog geen medewerkers om te tonen",
+		"NO_CLIENTS": "Nog geen klanten om te tonen",
+		"EMPLOYEES_LOAD_FAILED": "Medewerkers konden niet worden geladen.",
+		"CLIENTS_LOAD_FAILED": "Klanten konden niet worden geladen.",
 		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
 		"EDIT": {
 			"NO_AWARDS": "Nog geen onderscheidingen",
+			"NO_LANGUAGES": "Nog geen talen toegevoegd",
 			"ADD_AWARD": "Onderscheiding toevoegen",
 			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
 		}
@@ -6854,6 +6888,41 @@
 		"YOUR_TIME_CAPTION": "Jouw tijd aan dit project · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Tijd van teamleden aan dit project · {{ range }}",
 		"BUDGET_USED": "{{ used }} van {{ budget }} gebruikt",
-		"OVER_BUDGET": "{{ value }} boven budget"
+		"OVER_BUDGET": "{{ value }} boven budget",
+		"TOTAL_TRACKED": "Totaal geregistreerd",
+		"TOTAL_TRACKED_HINT": "Sinds de start van het project",
+		"THIS_PERIOD": "Deze periode",
+		"VS_PREVIOUS": "{{ value }} t.o.v. vorige periode",
+		"TIMELINE": "Tijdlijn",
+		"NO_DATES": "Geen datums ingesteld",
+		"STARTS_IN": "Start over {{ count }} dagen",
+		"STARTS_TOMORROW": "Start morgen",
+		"FINISHED": "Afgerond",
+		"TEAM": "Team",
+		"NO_MEMBERS": "Nog geen leden in dit project",
+		"MODULES": "Modules",
+		"MODULE_TASK": "1 taak",
+		"MODULE_TASKS": "{{ count }} taken"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overzicht",
+			"BOARD": "Bord",
+			"ACTIVITY": "Activiteit"
+		},
+		"BOARD": "Bord",
+		"COLUMN_EMPTY": "Geen taken",
+		"CANNOT_DROP": "Taken kunnen niet naar ‘{{ column }}’ worden verplaatst, omdat dit geen status van dit project is.",
+		"ACTIVITY": "Activiteit",
+		"ACTIVITY_CAPTION": "Recente wijzigingen aan het project en zijn taken",
+		"NO_ACTIVITY": "Nog geen activiteit",
+		"ACTIVITY_PARTIAL": "Een deel van de activiteit kon niet worden geladen, dus deze lijst is mogelijk onvolledig.",
+		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
+		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
+		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",
+		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
+		"SOMEONE": "Iemand",
+		"TODAY": "Vandaag",
+		"YESTERDAY": "Gisteren"
 	}
 }

@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, PermissionsEnum, IOrganizationContact, IEmployee } from '@gauzy/contracts';
-import { NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
+import { IOrganization, PermissionsEnum, IOrganizationContact, IEmployee, IOrganizationAward, IOrganizationLanguage } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, of, Subject } from 'rxjs';
-import { debounceTime, map, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, shareReplay, tap } from 'rxjs/operators';
 import moment from 'moment';
 import {
 	DateRangePickerBuilderService,
@@ -19,6 +19,17 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { PublicPageOrganizationMutationComponent } from '../mutation/public-page-organization-mutation/public-page-organization-mutation.component';
 
+/** The sections of the public page, in tab order. */
+export type OrganizationPublicTab = 'profile' | 'employees' | 'portfolio' | 'clients';
+
+/** A loaded list, or a failed request — so a failure is not mistaken for an empty company. */
+export interface PublicListState<T> {
+	items: T[];
+	failed: boolean;
+}
+
+const EMPTY_LIST: PublicListState<never> = { items: [], failed: false };
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-public-organization',
@@ -31,27 +42,23 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 	public hasEditPublicPage$: Observable<boolean> = of(false);
 	public organization: IOrganization;
 	public organization$: Observable<IOrganization>;
-	public employees$: Observable<IEmployee[]> = of([]);
-	public employeeCounts$: Observable<Number> = of(0);
-	public clients$: Observable<IOrganizationContact[]> = of([]);
-	public clientCounts$: Observable<Number> = of(0);
-	public projectCounts$: Observable<Number> = of(0);
+	public employees$: Observable<PublicListState<IEmployee>> = of(EMPTY_LIST);
+	public employeeCount$: Observable<number | null> = of(null);
+	public clients$: Observable<PublicListState<IOrganizationContact>> = of(EMPTY_LIST);
+	public clientCounts$: Observable<number | null> = of(null);
+	public projectCounts$: Observable<number | null> = of(null);
 	public bonusesPaid = 0;
 	public totalIncome = 0;
 	public profits = 0;
 	public imageUrl: string;
 	public hoverState: boolean;
 	public imageUpdateButton = false;
+	public activeTab: OrganizationPublicTab = 'profile';
 
 	/**
 	 * Reload Resolver Subject
 	 */
 	reload$: Subject<boolean> = new Subject();
-	/**
-	 * Tabset Type of the ViewChild metadata.
-	 */
-	@ViewChild('tabset') tabsetEl: NbTabsetComponent;
-	@ViewChild('profileTab') profileTabEl: NbTabComponent;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -77,6 +84,13 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 			map(({ organization }) => organization),
 			tap((organization: IOrganization) => (this.organization = organization)),
 			tap((organization: IOrganization) => (this.imageUrl = organization.imageUrl)),
+			// A tab this organization does not show (Clients turned off, or another
+			// organization opened from this page) falls back to the profile.
+			tap((organization: IOrganization) => {
+				if (!this.tabs(organization).includes(this.activeTab)) {
+					this.selectTab('profile');
+				}
+			}),
 			tap(() => this.getEmployeesAndEmployeeCounts()),
 			tap(() => this.getClientsAndClientCounts()),
 			tap(() => this.getProjectCounts())
@@ -92,6 +106,102 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/** The tabs this organization shows; Clients only when it publishes them. */
+	tabs(organization: IOrganization): OrganizationPublicTab[] {
+		return organization?.show_clients
+			? ['profile', 'employees', 'portfolio', 'clients']
+			: ['profile', 'employees', 'portfolio'];
+	}
+
+	selectTab(tab: OrganizationPublicTab): void {
+		this.activeTab = tab;
+	}
+
+	/**
+	 * Arrow keys, Home and End move between tabs, as the ARIA tab pattern
+	 * expects; focus follows the selection.
+	 */
+	onTabKeydown(event: KeyboardEvent): void {
+		const tabs = this.tabs(this.organization);
+		const index = tabs.indexOf(this.activeTab);
+		const rtl = (event.currentTarget as HTMLElement)?.closest('[dir=rtl]') !== null;
+		const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1 }[event.key];
+
+		let next: number;
+		if (step) {
+			next = (index + step + tabs.length) % tabs.length;
+		} else if (event.key === 'Home') {
+			next = 0;
+		} else if (event.key === 'End') {
+			next = tabs.length - 1;
+		} else {
+			return;
+		}
+
+		event.preventDefault();
+		this.selectTab(tabs[next]);
+		(event.currentTarget as HTMLElement)?.querySelector<HTMLElement>(`#org-tab-${tabs[next]}`)?.focus();
+	}
+
+	/** Up to two initials for an avatar without a picture. */
+	initials(name: string): string {
+		return (name || '')
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part) => part[0].toUpperCase())
+			.join('');
+	}
+
+	/** A count that loaded; a failed or pending request is null and stays hidden. */
+	isCount(value: number | null): boolean {
+		return typeof value === 'number' && !Number.isNaN(value);
+	}
+
+	/** The comma-separated client focus as separate items. */
+	clientFocus(organization: IOrganization): string[] {
+		return (organization?.client_focus || '')
+			.split(',')
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
+
+	/** Awards, most recent year first. */
+	sortedAwards(organization: IOrganization): IOrganizationAward[] {
+		return [...(organization?.awards || [])].sort((a, b) => Number(b.year || 0) - Number(a.year || 0));
+	}
+
+	/**
+	 * Proficiency on a 1–4 scale for the languages meter, read from the free-text
+	 * level ('Native or Bilingual', 'fluent', 'Conversational', 'intermediate', …).
+	 * 0 for a level it does not recognise, which then shows no meter.
+	 */
+	languageScore(level: string): number {
+		const value = (level || '').toLowerCase();
+		if (/native|bilingual/.test(value)) return 4;
+		if (/fluent|advanced|proficient/.test(value)) return 3;
+		if (/conversational|intermediate/.test(value)) return 2;
+		if (/basic|beginner|elementary/.test(value)) return 1;
+		return 0;
+	}
+
+	/** Languages, strongest first; equal levels keep their order. */
+	sortedLanguages(organization: IOrganization): IOrganizationLanguage[] {
+		return [...(organization?.languages || [])].sort(
+			(a, b) => this.languageScore(b.level) - this.languageScore(a.level)
+		);
+	}
+
+	/** The website as a link target; a bare domain gets a scheme so it is not resolved as a route. */
+	websiteUrl(website: string): string {
+		return /^https?:\/\//i.test(website) ? website : `https://${website}`;
+	}
+
+	/** The website without its scheme or trailing slash, as it reads in text. */
+	websiteLabel(website: string): string {
+		return website.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 	}
 
 	/**
@@ -129,7 +239,7 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 	 *
 	 * @returns
 	 */
-	private getClientsAndClientCounts() {
+	getClientsAndClientCounts() {
 		if (!this.organization) {
 			return;
 		}
@@ -137,19 +247,17 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		// Extract the organization id and tenant id.
 		const { id: organizationId } = this.organization;
 
-		// Get the clients.
-		if (!!this.organization.show_clients) {
-			// Get the clients.
-			this.clients$ = this.organizationsService
-				.getAllPublicClients({ organizationId })
-				.pipe(map(({ items }) => items));
-		}
+		// Every branch assigns, so a hidden list or count never keeps a previous organization's value.
+		this.clients$ = this.organization.show_clients
+			? this.organizationsService.getAllPublicClients({ organizationId }).pipe(
+					map(({ items }) => ({ items: items || [], failed: false })),
+					catchError(() => of({ items: [], failed: true }))
+				)
+			: of(EMPTY_LIST);
 
-		// Get the clients counts.
-		if (!!this.organization.show_clients_count) {
-			// Get the clients counts.
-			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId });
-		}
+		this.clientCounts$ = this.organization.show_clients_count
+			? this.organizationsService.getAllPublicClientCounts({ organizationId }).pipe(catchError(() => of(null)))
+			: of(null);
 	}
 
 	/**
@@ -162,14 +270,11 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 			return;
 		}
 
-		// Get the project counts.
-		if (!!this.organization.show_projects_count) {
-			// Extract the organization id and tenant id.
-			const { id: organizationId } = this.organization;
-
-			// Get the project counts.
-			this.projectCounts$ = this.organizationsService.getAllPublicProjectCounts({ organizationId });
-		}
+		// Get the project counts; a hidden count is cleared rather than kept from before.
+		const { id: organizationId } = this.organization;
+		this.projectCounts$ = this.organization.show_projects_count
+			? this.organizationsService.getAllPublicProjectCounts({ organizationId }).pipe(catchError(() => of(null)))
+			: of(null);
 	}
 
 	/**
@@ -178,24 +283,33 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 	 *
 	 * @returns
 	 */
-	private async getEmployeesAndEmployeeCounts() {
+	getEmployeesAndEmployeeCounts() {
 		if (!this.organization) {
 			return;
 		}
 
-		// Get the employees and employee counts.
-		if (!!this.organization.show_employees_count) {
-			// Extract the organization id and tenant id.
-			const { id: organizationId } = this.organization;
-
-			// Get the employees.
-			this.employees$ = this.employeesService
-				.getAllPublic({ organizationId }, ['user', 'organizationPosition', 'skills'])
-				.pipe(
-					tap(({ total }) => (this.employeeCounts$ = of(total))),
-					map(({ items }) => items)
-				);
+		// Hidden: clear both, so a previous organization's employees never show.
+		if (!this.organization.show_employees_count) {
+			this.employees$ = of(EMPTY_LIST);
+			this.employeeCount$ = of(null);
+			return;
 		}
+
+		// Extract the organization id and tenant id.
+		const { id: organizationId } = this.organization;
+
+		// One request feeds both the list and the count; a failure is null.
+		const employees$ = this.employeesService
+			.getAllPublic({ organizationId }, ['user', 'organizationPosition', 'skills'])
+			.pipe(
+				catchError(() => of(null)),
+				shareReplay({ bufferSize: 1, refCount: true })
+			);
+
+		this.employees$ = employees$.pipe(
+			map((result) => (result ? { items: result.items || [], failed: false } : { items: [], failed: true }))
+		);
+		this.employeeCount$ = employees$.pipe(map((result) => (result ? result.total : null)));
 	}
 
 	/**
@@ -259,12 +373,8 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		});
 
 		// Close the dialog.
-		dialog$.onClose
-			.pipe(
-				tap(() => this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()),
-				untilDestroyed(this)
-			)
-			.subscribe(async (result) => {
+		dialog$.onClose.pipe(untilDestroyed(this)).subscribe(async (result) => {
+			try {
 				if (!!result) {
 					await this.organizationsService.update(this.organization.id, {
 						...result,
@@ -275,21 +385,16 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 					// Display a success toastr.
 					const { name } = this.organization;
 					this.toastrService.success('TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED', { name });
-
-					// Reload the resolver.
-					this.reload$.next(true);
 				}
-			});
-	}
-
-	/**
-	 * If clients tab is active and privacy mutation turned off clients view.
-	 * We have to removed clients tab from UI and default select profile tab.
-	 */
-	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff() {
-		if (!this.organization.show_clients) {
-			this.tabsetEl.selectTab(this.profileTabEl);
-		}
+			} catch (error) {
+				this._errorHandlingService.handleError(error);
+			} finally {
+				// Reload on every close: the dialog saves awards and languages as soon
+				// as they are added or removed, so even a cancelled dialog changed them.
+				// The reload also drops a tab the new settings hide.
+				this.reload$.next(true);
+			}
+		});
 	}
 
 	ngOnDestroy() {}

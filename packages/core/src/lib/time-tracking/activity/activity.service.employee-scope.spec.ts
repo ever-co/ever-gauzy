@@ -109,11 +109,14 @@ describe('ActivityService — the employees a caller reads the activity of', () 
 	beforeAll(async () => {
 		db = createKnex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
 
+		// `deletedAt` as on every soft-deletable table: the aggregations leave deleted rows out
 		await db.schema.createTable('employee', (table) => {
 			table.string('id').primary();
+			table.datetime('deletedAt').nullable();
 		});
 		await db.schema.createTable('time_slot', (table) => {
 			table.string('id').primary();
+			table.datetime('deletedAt').nullable();
 		});
 		await db.schema.createTable('time_slot_time_logs', (table) => {
 			table.string('timeSlotId');
@@ -129,6 +132,7 @@ describe('ActivityService — the employees a caller reads the activity of', () 
 			table.string('date');
 			table.string('title');
 			table.integer('duration');
+			table.datetime('deletedAt').nullable();
 		});
 
 		// One activity of the caller's own, one of a colleague, in the same organization.

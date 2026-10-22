@@ -3243,6 +3243,35 @@
 			"CONTINUE": "Weiter",
 			"SKIP": "Überspringen",
 			"CREATE": "Organisation erstellen"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Projektbereiche",
+			"DETAILS": "Details",
+			"LOGO": "Projektlogo",
+			"LOGO_HINT": "Optional. Klicken Sie auf das Logo, um ein quadratisches Bild hochzuladen.",
+			"PEOPLE": "Personen",
+			"TIMELINE": "Zeitplan",
+			"APPEARANCE": "Darstellung",
+			"OPTIONS": "Optionen",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Aufgabensynchronisierung",
+			"CREATE_SUBTITLE": "Legen Sie ein neues Projekt mit Personen, Zeitplan und Abrechnung an.",
+			"OPEN_SOURCE_TITLE": "Open-Source-Projekt",
+			"OPEN_SOURCE_DESCRIPTION": "Teilen Sie den Code dieses Projekts öffentlich. Aktivieren Sie es, um den Link zum öffentlichen Repository hinzuzufügen.",
+			"OPEN_SOURCE_URL_HINT": "Die öffentliche Adresse des Codes, zum Beispiel ein GitHub- oder GitLab-Repository.",
+			"OPEN_REPOSITORY": "Repository öffnen",
+			"DESCRIPTION_CARD_DESC": "Beschreiben Sie Ziele und Umfang des Projekts für alle, die daran arbeiten.",
+			"TAGS_DESC": "Versehen Sie das Projekt mit Tags, damit es leichter zu finden und zu gruppieren ist.",
+			"BILLING_DESC": "Wie der Kunde für dieses Projekt abgerechnet wird und in welcher Währung.",
+			"BUDGET_DESC": "Legen Sie ein Budget in Stunden oder Kosten fest, damit das Projekt im Plan bleibt.",
+			"APPEARANCE_DESC": "Die Farbe des Projekts und wie seine Aufgaben angezeigt werden.",
+			"PUBLIC_TITLE": "Öffentliches Projekt",
+			"PUBLIC_DESC": "Bei einem öffentlichen Projekt sehen alle, wer daran arbeitet. Bei einem privaten sieht jede Person nur sich selbst, sofern sie keinen Zugriff auf private Projekte hat.",
+			"BILLABLE_DESC": "Kennzeichnen Sie die Arbeit an diesem Projekt als gegenüber dem Kunden abrechenbar.",
+			"REPOSITORY_DESC": "Wählen Sie das GitHub-Repository, mit dessen Issues dieses Projekt arbeitet.",
+			"AUTO_SYNC_DESC": "Halten Sie die Aufgaben des Projekts mit den Issues des Repositorys synchron. Änderungen hier werden sofort gespeichert.",
+			"SYNC_LABEL_TITLE": "Nach Label synchronisieren",
+			"SYNC_LABEL_DESC": "Synchronisieren Sie nur Issues mit dem von Ihnen festgelegten Label. Änderungen hier werden sofort gespeichert."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3304,9 +3333,14 @@
 		"MEMBER_SINCE": "Mitglied seit",
 		"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt",
 		"NO_SKILLS": "Noch keine Fähigkeiten angegeben",
+		"NO_EMPLOYEES": "Noch keine Mitarbeiter zum Anzeigen",
+		"NO_CLIENTS": "Noch keine Kunden zum Anzeigen",
+		"EMPLOYEES_LOAD_FAILED": "Mitarbeiter konnten nicht geladen werden.",
+		"CLIENTS_LOAD_FAILED": "Kunden konnten nicht geladen werden.",
 		"VIEW_COMPANY_PROFILE": "Unternehmensprofil ansehen",
 		"EDIT": {
 			"NO_AWARDS": "Noch keine Auszeichnungen",
+			"NO_LANGUAGES": "Noch keine Sprachen hinzugefügt",
 			"ADD_AWARD": "Auszeichnung hinzufügen",
 			"PRIVACY_HELP": "Legen Sie fest, welche Angaben Besucher im öffentlichen Profil sehen."
 		}
@@ -6850,6 +6884,41 @@
 		"YOUR_TIME_CAPTION": "Ihre Zeit an diesem Projekt · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Zeit der Teammitglieder an diesem Projekt · {{ range }}",
 		"BUDGET_USED": "{{ used }} von {{ budget }} verbraucht",
-		"OVER_BUDGET": "{{ value }} über dem Budget"
+		"OVER_BUDGET": "{{ value }} über dem Budget",
+		"TOTAL_TRACKED": "Insgesamt erfasst",
+		"TOTAL_TRACKED_HINT": "Seit Projektbeginn",
+		"THIS_PERIOD": "Dieser Zeitraum",
+		"VS_PREVIOUS": "{{ value }} ggü. Vorzeitraum",
+		"TIMELINE": "Zeitplan",
+		"NO_DATES": "Keine Daten festgelegt",
+		"STARTS_IN": "Beginnt in {{ count }} Tagen",
+		"STARTS_TOMORROW": "Beginnt morgen",
+		"FINISHED": "Abgeschlossen",
+		"TEAM": "Team",
+		"NO_MEMBERS": "Noch keine Mitglieder in diesem Projekt",
+		"MODULES": "Module",
+		"MODULE_TASK": "1 Aufgabe",
+		"MODULE_TASKS": "{{ count }} Aufgaben"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Übersicht",
+			"BOARD": "Board",
+			"ACTIVITY": "Aktivität"
+		},
+		"BOARD": "Board",
+		"COLUMN_EMPTY": "Keine Aufgaben",
+		"CANNOT_DROP": "Aufgaben können nicht nach „{{ column }}“ verschoben werden, da dies kein Status dieses Projekts ist.",
+		"ACTIVITY": "Aktivität",
+		"ACTIVITY_CAPTION": "Letzte Änderungen am Projekt und seinen Aufgaben",
+		"NO_ACTIVITY": "Noch keine Aktivität",
+		"ACTIVITY_PARTIAL": "Einige Aktivitäten konnten nicht geladen werden; die Liste ist möglicherweise unvollständig.",
+		"ACTIVITY_CREATED": "{{ actor }} hat erstellt",
+		"ACTIVITY_UPDATED": "{{ actor }} hat aktualisiert",
+		"ACTIVITY_DELETED": "{{ actor }} hat gelöscht",
+		"ACTIVITY_FIELDS": "Geändert: {{ fields }}",
+		"SOMEONE": "Jemand",
+		"TODAY": "Heute",
+		"YESTERDAY": "Gestern"
 	}
 }

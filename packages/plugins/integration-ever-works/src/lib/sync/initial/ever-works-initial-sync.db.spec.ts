@@ -24,9 +24,11 @@ jest.mock('@gauzy/core', () => {
 	return {
 		ColumnIndex: decorator,
 		MultiORMColumn: decorator,
+		MultiORMManyToOne: decorator,
 		ExportRedacted: decorator,
 		MultiORMEntity: decorator,
 		TenantOrganizationBaseEntity: class {},
+		TenantBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		createSsrfSafeHttpsAgent: () => undefined,
 		verifyWebhookSignature: () => true,
@@ -40,6 +42,7 @@ jest.mock('@gauzy/core', () => {
 				'EmployeeNotification',
 				'IntegrationTenant',
 				'IntegrationSetting',
+				'IntegrationEntitySetting',
 				'OrganizationTeam',
 				'OrganizationProject',
 				'Task'
@@ -62,6 +65,7 @@ import { join } from 'node:path';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { DataSource, EntitySchema, MoreThan } from 'typeorm';
 import {
+	IntegrationEntitySetting,
 	IntegrationSetting,
 	IntegrationTenant,
 	Organization,
@@ -137,7 +141,9 @@ const coreSchemas = [
 	}),
 	s('IntegrationSetting', IntegrationSetting, 'integration_setting', { settingsName: str(false), settingsValue: str() }, {
 		integration: { type: 'many-to-one', target: 'IntegrationTenant', joinColumn: { name: 'integrationId' } }
-	})
+	}),
+	// The per-entity toggles (OQ4): read by the mapping context; no row is "on".
+	s('IntegrationEntitySetting', IntegrationEntitySetting, 'integration_entity_setting', { entity: str(false), sync: { type: Boolean, default: true }, integrationId: str() })
 ];
 const pluginSchemas = [
 	s('EverWorksConnection', EverWorksConnection, 'ever_works_connection', {
@@ -247,6 +253,7 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 			'ever_works_sync_log',
 			'ever_works_entity_link',
 			'integration_setting',
+			'integration_entity_setting',
 			'integration_tenant',
 			'ever_works_connection',
 			'organization_team',
@@ -400,6 +407,31 @@ describe('Ever Works initial sync, resync and observability on SQLite', () => {
 		expect(await dataSource.getRepository(EverWorksInboundEvent).count()).toBe(0);
 		expect(await dataSource.getRepository(EverWorksOutboundChange).count()).toBe(0);
 		expect(await runs().count()).toBe(0);
+	});
+
+	it('the per-entity sync settings take effect (OQ4): Task off turns tasks off, Comment off skips the comments phase only', async () => {
+		const toggle = (entity: string) =>
+			dataSource.getRepository(IntegrationEntitySetting).save({ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, integrationId: integrationTenantId, entity, sync: false } as never);
+		await toggle('Comment');
+		let byPhase = Object.fromEntries((await initial.preview(integrationTenantId)).phases.map((p) => [p.phase, p]));
+		expect(byPhase['comments']).toMatchObject({ direction: 'off', supported: false, note: 'comments are not synced for this mapping' });
+		expect(byPhase['tasks']).toMatchObject({ direction: 'both', supported: true });
+
+		await toggle('Task');
+		const preview = await initial.preview(integrationTenantId);
+		byPhase = Object.fromEntries(preview.phases.map((p) => [p.phase, p]));
+		expect(preview.directions).toMatchObject({ tasks: 'off', ideas: 'off', teams: 'both' });
+		expect(byPhase['tasks']).toMatchObject({ direction: 'off', supported: false, creates: { inGauzy: 0, inEverWorks: 0 } });
+		// A resync (the initial sync runs the same phases) reads and exports no task: by default it exports both.
+		const reads = listCalls['/tasks'] ?? 0;
+		const run = await initial.start(integrationTenantId, 'resync');
+		await runToEnd();
+		const done = await runs().findOneByOrFail({ id: run.id });
+		expect(done.status).toBe('done');
+		expect(phase(done, 'tasks')).toMatchObject({ status: 'skipped', exported: 0, queued: 0 });
+		expect(phase(done, 'teams')).toMatchObject({ status: 'done', exported: 1 });
+		expect(await dataSource.getRepository(EverWorksOutboundChange).count({ where: { entityType: EverWorksLinkType.TASK } as never })).toBe(0);
+		expect(listCalls['/tasks'] ?? 0).toBe(reads);
 	});
 
 	it('the dry run counts as creates only what a run creates (local e2e: idea tasks, stopped links)', async () => {

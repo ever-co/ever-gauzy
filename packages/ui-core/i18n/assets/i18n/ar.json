@@ -3245,6 +3245,35 @@
 			"CONTINUE": "متابعة",
 			"SKIP": "تخطي",
 			"CREATE": "إنشاء المؤسسة"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "أقسام المشروع",
+			"DETAILS": "التفاصيل",
+			"LOGO": "شعار المشروع",
+			"LOGO_HINT": "اختياري. انقر على الشعار لرفع صورة مربعة.",
+			"PEOPLE": "الأشخاص",
+			"TIMELINE": "الجدول الزمني",
+			"APPEARANCE": "المظهر",
+			"OPTIONS": "الخيارات",
+			"REPOSITORY": "المستودع",
+			"TASK_SYNC": "مزامنة المهام",
+			"CREATE_SUBTITLE": "أنشئ مشروعًا جديدًا مع أشخاصه وجدوله الزمني والفوترة.",
+			"OPEN_SOURCE_TITLE": "مشروع مفتوح المصدر",
+			"OPEN_SOURCE_DESCRIPTION": "شارك شيفرة هذا المشروع علنًا. فعّله لإضافة رابط مستودعه العام.",
+			"OPEN_SOURCE_URL_HINT": "العنوان العام للشيفرة، مثل مستودع على GitHub أو GitLab.",
+			"OPEN_REPOSITORY": "فتح المستودع",
+			"DESCRIPTION_CARD_DESC": "صف أهداف المشروع ونطاقه لكل من يعمل عليه.",
+			"TAGS_DESC": "صنّف المشروع بوسوم ليسهل العثور عليه وتجميعه.",
+			"BILLING_DESC": "كيفية فوترة العميل لهذا المشروع وبأي عملة.",
+			"BUDGET_DESC": "حدد ميزانية بالساعات أو بالتكلفة لإبقاء المشروع على المسار الصحيح.",
+			"APPEARANCE_DESC": "لون المشروع وطريقة عرض مهامه.",
+			"PUBLIC_TITLE": "مشروع عام",
+			"PUBLIC_DESC": "يمكن للجميع رؤية من يعمل على المشروع العام. أما في المشروع الخاص فلا يرى الأشخاص إلا أنفسهم ما لم يكن لديهم حق الوصول إلى المشاريع الخاصة.",
+			"BILLABLE_DESC": "حدد العمل على هذا المشروع كقابل للفوترة للعميل.",
+			"REPOSITORY_DESC": "اختر مستودع GitHub الذي يعمل هذا المشروع على مشكلاته.",
+			"AUTO_SYNC_DESC": "أبقِ مهام المشروع متوافقة مع مشكلات المستودع. تُحفظ التغييرات هنا فورًا.",
+			"SYNC_LABEL_TITLE": "المزامنة حسب التسمية",
+			"SYNC_LABEL_DESC": "زامن فقط المشكلات التي تحمل التسمية التي تحددها. تُحفظ التغييرات هنا فورًا."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3306,9 +3335,14 @@
 		"MEMBER_SINCE": "عضو منذ",
 		"NO_DESCRIPTION": "لم يُضف وصف بعد",
 		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"NO_EMPLOYEES": "لا يوجد موظفون لعرضهم بعد",
+		"NO_CLIENTS": "لا يوجد عملاء لعرضهم بعد",
+		"EMPLOYEES_LOAD_FAILED": "تعذّر تحميل الموظفين.",
+		"CLIENTS_LOAD_FAILED": "تعذّر تحميل العملاء.",
 		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
 		"EDIT": {
 			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"NO_LANGUAGES": "لم تتم إضافة أي لغات بعد",
 			"ADD_AWARD": "إضافة جائزة",
 			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
 		}
@@ -6846,6 +6880,41 @@
 		"YOUR_TIME_CAPTION": "وقتك على هذا المشروع · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "وقت أعضاء الفريق على هذا المشروع · {{ range }}",
 		"BUDGET_USED": "تم استخدام {{ used }} من {{ budget }}",
-		"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}"
+		"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}",
+		"TOTAL_TRACKED": "إجمالي الوقت المسجل",
+		"TOTAL_TRACKED_HINT": "منذ بدء المشروع",
+		"THIS_PERIOD": "هذه الفترة",
+		"VS_PREVIOUS": "{{ value }} مقارنة بالفترة السابقة",
+		"TIMELINE": "الجدول الزمني",
+		"NO_DATES": "لم يتم تحديد تواريخ",
+		"STARTS_IN": "يبدأ خلال {{ count }} أيام",
+		"STARTS_TOMORROW": "يبدأ غداً",
+		"FINISHED": "منتهٍ",
+		"TEAM": "الفريق",
+		"NO_MEMBERS": "لا يوجد أعضاء في هذا المشروع بعد",
+		"MODULES": "الوحدات",
+		"MODULE_TASK": "مهمة واحدة",
+		"MODULE_TASKS": "{{ count }} مهام"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "نظرة عامة",
+			"BOARD": "اللوحة",
+			"ACTIVITY": "النشاط"
+		},
+		"BOARD": "اللوحة",
+		"COLUMN_EMPTY": "لا توجد مهام",
+		"CANNOT_DROP": "لا يمكن نقل المهام إلى «{{ column }}» لأنها ليست حالة في هذا المشروع.",
+		"ACTIVITY": "النشاط",
+		"ACTIVITY_CAPTION": "أحدث التغييرات على المشروع ومهامه",
+		"NO_ACTIVITY": "لا يوجد نشاط بعد",
+		"ACTIVITY_PARTIAL": "تعذر تحميل بعض النشاط، لذا قد تكون هذه القائمة غير مكتملة.",
+		"ACTIVITY_CREATED": "أنشأ {{ actor }}",
+		"ACTIVITY_UPDATED": "حدّث {{ actor }}",
+		"ACTIVITY_DELETED": "حذف {{ actor }}",
+		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
+		"SOMEONE": "شخص ما",
+		"TODAY": "اليوم",
+		"YESTERDAY": "أمس"
 	}
 }

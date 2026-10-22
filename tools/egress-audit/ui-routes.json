@@ -1260,7 +1260,7 @@
     },
     {
       "path": "/pages/organization/projects",
-      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:17",
+      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:18",
       "guards": [
         "PermissionsGuard"
       ],
@@ -1268,7 +1268,7 @@
     },
     {
       "path": "/pages/organization/projects/:id/edit",
-      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:65",
+      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:80",
       "guards": [
         "ProjectManagerOrPermissionGuard"
       ],
@@ -1276,7 +1276,15 @@
     },
     {
       "path": "/pages/organization/projects/create",
-      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:28",
+      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:29",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/organization/projects/view/:id",
+      "file": "apps/gauzy/src/app/pages/projects/projects-routing.module.ts:46",
       "guards": [
         "PermissionsGuard"
       ],

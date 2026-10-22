@@ -100,6 +100,8 @@ const core = {
 	Permissions: decorator,
 	UseValidationPipe: decorator,
 	TenantOrganizationBaseEntity: class {},
+	// EverWorksConnection declares its own organization relation (ON DELETE SET NULL) on the tenant base entity (#11129)
+	TenantBaseEntity: class {},
 	MikroOrmBaseEntityRepository: class {},
 	BaseEntityEventSubscriber,
 	PermissionGuard: class {},
@@ -266,7 +268,8 @@ const coreSchemas = [
 	}),
 	s('IntegrationSetting', entities.IntegrationSetting, 'integration_setting', { settingsName: str(false), settingsValue: str() }, {
 		integration: { type: 'many-to-one', target: 'IntegrationTenant', joinColumn: { name: 'integrationId' } }
-	})
+	}),
+	s('IntegrationEntitySetting', entities.IntegrationEntitySetting, 'integration_entity_setting', { entity: str(false), sync: { type: Boolean, default: true }, integrationId: str() })
 ];
 const pluginSchemas = [
 	s('EverWorksConnection', EverWorksConnection, 'ever_works_connection', {

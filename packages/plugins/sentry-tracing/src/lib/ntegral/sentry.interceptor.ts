@@ -134,20 +134,14 @@ export class SentryInterceptor implements NestInterceptor {
 	 * @param exception
 	 * @returns
 	 */
-	private shouldReport(exception: any) {
-		if (this.options && !this.options.filters) return true;
+	private shouldReport(exception: any): boolean {
+		// No options or no filters configured: report everything.
+		const filters: SentryInterceptorOptionsFilter[] = this.options?.filters || [];
 
-		// If any filter passes, then we do not report
-		if (this.options) {
-			const opts: SentryInterceptorOptions = this.options as {};
-			if (opts.filters) {
-				let filters: SentryInterceptorOptionsFilter[] = opts.filters;
-				return filters.some(({ type, filter }) => {
-					return !(exception instanceof type && (!filter || filter(exception)));
-				});
-			}
-		} else {
-			return true;
-		}
+		// Skip the exception only when one of the filters matches it. `some(!match)` used to drop every
+		// exception for an empty list and report matched ones as soon as any other filter did not match.
+		return !filters.some(({ type, filter }) => {
+			return exception instanceof type && (!filter || filter(exception));
+		});
 	}
 }

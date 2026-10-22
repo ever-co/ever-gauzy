@@ -14,7 +14,7 @@ import {
 	EverWorksTeamsView,
 	EverWorksUiService
 } from '../../services/ever-works.service';
-import type { EverWorksMapping } from '../../services/ever-works.service';
+import type { EverWorksDirection, EverWorksMapping } from '../../services/ever-works.service';
 import { errorText, isNotFound } from '../shared/ever-works-ui.utils';
 
 /** The choice of a row that creates the record on the other side instead of pairing it. */
@@ -565,37 +565,42 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 		return (this.teams?.unmatchedTeams ?? []).filter((team) => !chosen.has(team.teamId));
 	}
 
+	/** The direction that takes effect for a domain (a record type whose sync setting is off is `off`, OQ4). */
+	private directionOf(domain: string): EverWorksDirection | undefined {
+		return this.mapping?.effectiveDirections?.[domain] ?? this.mapping?.directions?.[domain];
+	}
+
 	/** Ever Works teams can be created in Gauzy: the mapping is on and teams sync from Ever Works (review F98). */
 	get canCreateTeamsInGauzy(): boolean {
 		if (!this.mapping) return true;
-		const direction = this.mapping.directions?.['teams'] ?? 'both';
+		const direction = this.directionOf('teams') ?? 'both';
 		return this.mapping.isEnabled && (direction === 'both' || direction === 'ew_to_gauzy');
 	}
 
 	/** Gauzy teams can be created in Ever Works: the mapping is on and teams sync to Ever Works (review F98). */
 	get canCreateTeamsInEverWorks(): boolean {
 		if (!this.mapping) return true;
-		const direction = this.mapping.directions?.['teams'] ?? 'both';
+		const direction = this.directionOf('teams') ?? 'both';
 		return this.mapping.isEnabled && (direction === 'both' || direction === 'gauzy_to_ew');
 	}
 
 	/** Works can be created as Gauzy projects: the mapping is on and works are linked (not off) (review F98). */
 	get canCreateProjects(): boolean {
 		if (!this.mapping) return true;
-		return this.mapping.isEnabled && (this.mapping.directions?.['works'] ?? 'link_only') === 'link_only';
+		return this.mapping.isEnabled && (this.directionOf('works') ?? 'link_only') === 'link_only';
 	}
 
 	/** Missions can be created as Gauzy initiatives: the mapping is on and missions sync from Ever Works. */
 	get canCreateInitiatives(): boolean {
 		if (!this.mapping) return true;
-		const direction = this.mapping.directions?.['missions'] ?? 'ew_to_gauzy';
+		const direction = this.directionOf('missions') ?? 'ew_to_gauzy';
 		return this.mapping.isEnabled && (direction === 'both' || direction === 'ew_to_gauzy');
 	}
 
 	/** Initiatives can be created as Ever Works missions: the mapping is on and missions sync both ways. */
 	get canCreateMissions(): boolean {
 		if (!this.mapping) return true;
-		const direction = this.mapping.directions?.['missions'];
+		const direction = this.directionOf('missions');
 		return this.mapping.isEnabled && (direction === 'both' || direction === 'gauzy_to_ew');
 	}
 

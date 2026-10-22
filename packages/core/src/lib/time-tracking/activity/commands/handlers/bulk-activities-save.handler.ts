@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -11,6 +11,8 @@ import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-
 
 @CommandHandler(BulkActivitiesSaveCommand)
 export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivitiesSaveCommand> {
+	private readonly logger = new Logger(BulkActivitiesSaveHandler.name);
+
 	constructor(
 		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
@@ -57,10 +59,12 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 			organizationId = employee.organizationId || organizationId;
 		}
 
-		// Log empty activities and filter out any invalid ones
-		console.log(
-			`Empty bulk App & URL's activities for employee (${user.name}): ${employeeId}`,
-			activities.filter((activity: IActivity) => Object.keys(activity).length === 0)
+		// Trace the empty activities (debug level; the list is serialized only when printed)
+		this.debug(
+			() =>
+				`Empty bulk App & URL's activities for employee (${user.name}): ${employeeId} ${JSON.stringify(
+					activities.filter((activity: IActivity) => Object.keys(activity).length === 0)
+				)}`
 		);
 
 		// Body-supplied activity ids / time slot ids are kept only when they are the employee's own:
@@ -75,23 +79,37 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 			{ tenantId, employeeId }
 		);
 
-		activities = validActivities
-			.map(
-				(activity: IActivity) =>
-					// `recordedAt` is guaranteed by `ActivitySubscriber.beforeEntityCreate`, which
-					// runs for every Activity write path (bulk save, single create, imports).
-					new Activity({
-						...activity,
-						employeeId,
-						organizationId,
-						tenantId
-					})
-			);
+		activities = validActivities.map(
+			(activity: IActivity) =>
+				// `recordedAt` is guaranteed by `ActivitySubscriber.beforeEntityCreate`, which
+				// runs for every Activity write path (bulk save, single create, imports).
+				new Activity({
+					...activity,
+					employeeId,
+					organizationId,
+					tenantId
+				})
+		);
 
-		// Log the activities that will be inserted into the database
-		console.log(`Activities should be inserted into database for employee (${user.name})`, { activities });
+		// Trace the activities that will be inserted (debug level; serialized only when printed)
+		this.debug(
+			() =>
+				`Activities should be inserted into database for employee (${user.name}): ${JSON.stringify(activities)}`
+		);
 
 		// Save activities if they exist, otherwise return an empty array
 		return isNotEmpty(activities) ? await this.typeOrmActivityRepository.save(activities) : [];
+	}
+
+	/**
+	 * Diagnostic trace of an activities bulk, at debug level. This runs for every activities bulk the trackers
+	 * post; the message (with the serialized activities) is built only when debug logging is on.
+	 *
+	 * @param message - Builds the message to be logged.
+	 */
+	private debug(message: () => string): void {
+		if (Logger.isLevelEnabled('debug')) {
+			this.logger.debug(message());
+		}
 	}
 }

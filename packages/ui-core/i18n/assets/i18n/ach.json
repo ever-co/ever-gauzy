@@ -3079,6 +3079,35 @@
 			"CONTINUE": "Continue",
 			"SKIP": "Skip",
 			"CREATE": "Create organization"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Project sections",
+			"DETAILS": "Details",
+			"LOGO": "Project logo",
+			"LOGO_HINT": "Optional. Click the logo to upload a square image.",
+			"PEOPLE": "People",
+			"TIMELINE": "Timeline",
+			"APPEARANCE": "Appearance",
+			"OPTIONS": "Options",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Task sync",
+			"CREATE_SUBTITLE": "Set up a new project with its people, timeline and billing.",
+			"OPEN_SOURCE_TITLE": "Open-source project",
+			"OPEN_SOURCE_DESCRIPTION": "Share this project's code publicly. Turn it on to add the link to its public repository.",
+			"OPEN_SOURCE_URL_HINT": "The public address of the code, for example a GitHub or GitLab repository.",
+			"OPEN_REPOSITORY": "Open repository",
+			"DESCRIPTION_CARD_DESC": "Describe the project's goals and scope for everyone working on it.",
+			"TAGS_DESC": "Label the project so it is easier to find and group.",
+			"BILLING_DESC": "How the client is billed for this project, and in which currency.",
+			"BUDGET_DESC": "Set a budget in hours or in cost to keep the project on track.",
+			"APPEARANCE_DESC": "The project's color and how its tasks are shown.",
+			"PUBLIC_TITLE": "Public project",
+			"PUBLIC_DESC": "Everyone can see who works on a public project. On a private one, people see only themselves unless they can access private projects.",
+			"BILLABLE_DESC": "Mark the work on this project as billable to the client.",
+			"REPOSITORY_DESC": "Choose the GitHub repository whose issues this project works with.",
+			"AUTO_SYNC_DESC": "Keep the project's tasks in step with the repository's issues. Changes here are saved right away.",
+			"SYNC_LABEL_TITLE": "Sync by label",
+			"SYNC_LABEL_DESC": "Only sync issues that carry the label you set. Changes here are saved right away."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3137,9 +3166,14 @@
 		"MEMBER_SINCE": "Member since",
 		"NO_DESCRIPTION": "No description has been added yet",
 		"NO_SKILLS": "No skills listed yet",
+		"NO_EMPLOYEES": "No employees to show yet",
+		"NO_CLIENTS": "No clients to show yet",
+		"EMPLOYEES_LOAD_FAILED": "Employees couldn't be loaded.",
+		"CLIENTS_LOAD_FAILED": "Clients couldn't be loaded.",
 		"VIEW_COMPANY_PROFILE": "View company profile",
 		"EDIT": {
 			"NO_AWARDS": "No awards added yet",
+			"NO_LANGUAGES": "No languages added yet",
 			"ADD_AWARD": "Add award",
 			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
 		}
@@ -5894,6 +5928,41 @@
 		"YOUR_TIME_CAPTION": "Your time on this project · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Team members' time on this project · {{ range }}",
 		"BUDGET_USED": "{{ used }} of {{ budget }} used",
-		"OVER_BUDGET": "{{ value }} over budget"
+		"OVER_BUDGET": "{{ value }} over budget",
+		"TOTAL_TRACKED": "Total tracked",
+		"TOTAL_TRACKED_HINT": "Since the project started",
+		"THIS_PERIOD": "This period",
+		"VS_PREVIOUS": "{{ value }} vs previous period",
+		"TIMELINE": "Timeline",
+		"NO_DATES": "No dates set",
+		"STARTS_IN": "Starts in {{ count }} days",
+		"STARTS_TOMORROW": "Starts tomorrow",
+		"FINISHED": "Finished",
+		"TEAM": "Team",
+		"NO_MEMBERS": "No members on this project yet",
+		"MODULES": "Modules",
+		"MODULE_TASK": "1 task",
+		"MODULE_TASKS": "{{ count }} tasks"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overview",
+			"BOARD": "Board",
+			"ACTIVITY": "Activity"
+		},
+		"BOARD": "Board",
+		"COLUMN_EMPTY": "No tasks",
+		"CANNOT_DROP": "Tasks can’t be moved to “{{ column }}” because it isn’t a status of this project.",
+		"ACTIVITY": "Activity",
+		"ACTIVITY_CAPTION": "Recent changes to the project and its tasks",
+		"NO_ACTIVITY": "No activity yet",
+		"ACTIVITY_PARTIAL": "Some activity could not be loaded, so this list may be incomplete.",
+		"ACTIVITY_CREATED": "{{ actor }} created",
+		"ACTIVITY_UPDATED": "{{ actor }} updated",
+		"ACTIVITY_DELETED": "{{ actor }} deleted",
+		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"SOMEONE": "Someone",
+		"TODAY": "Today",
+		"YESTERDAY": "Yesterday"
 	}
 }

@@ -80,7 +80,12 @@ describe('IssueTypeService.fetchAll (MikroORM) — tenant scope', () => {
 		});
 
 		for (const where of readWhere()) {
-			expect(where).toEqual({ tenantId: CALLER_TENANT, organizationId: 'organization-1' });
+			expect(where).toEqual({
+				tenantId: CALLER_TENANT,
+				organizationId: 'organization-1',
+				organizationTeamId: null,
+				projectId: null
+			});
 		}
 	});
 
@@ -110,7 +115,73 @@ describe('IssueTypeService.fetchAll (MikroORM) — tenant scope', () => {
 		await service.fetchAll({ tenantId: 'query-tenant' });
 
 		for (const where of readWhere()) {
-			expect(where).toEqual({ tenantId: 'query-tenant' });
+			expect(where).toEqual({
+				tenantId: 'query-tenant',
+				organizationId: null,
+				organizationTeamId: null,
+				projectId: null
+			});
+		}
+	});
+});
+
+/**
+ * The MikroORM branch of `fetchAll` added only the scope columns a request supplied, while the TypeORM branch
+ * (`getFilterQuery`) pins every other one to NULL: an organization-level request read the issue types of the
+ * organization's projects and teams as well. Both branches now read the same scope.
+ */
+describe('IssueTypeService.fetchAll (MikroORM) — scopes the request leaves out are NULL', () => {
+	const TENANT = 'caller-tenant';
+
+	let mikroOrmRepository: { findOne: jest.Mock; findAndCount: jest.Mock };
+	let service: IssueTypeService;
+
+	beforeEach(() => {
+		mikroOrmRepository = {
+			findOne: jest.fn().mockResolvedValue({ id: 'issue-type-1' }),
+			findAndCount: jest.fn().mockResolvedValue([[{ id: 'issue-type-1' }], 1])
+		};
+		service = new IssueTypeService(
+			{ metadata: { tableName: 'issue_type' } } as never,
+			mikroOrmRepository as never,
+			{} as never
+		);
+		jest.spyOn(service, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		jest.spyOn(service as any, 'serialize').mockImplementation((entity) => entity);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const readWhere = () => [
+		mikroOrmRepository.findOne.mock.calls[0][0],
+		mikroOrmRepository.findAndCount.mock.calls[0][0]
+	];
+
+	it('reads only the organization-level issue types for an organization-level request', async () => {
+		await service.fetchAll({ organizationId: 'organization-1' });
+
+		for (const where of readWhere()) {
+			expect(where).toEqual({
+				tenantId: TENANT,
+				organizationId: 'organization-1',
+				organizationTeamId: null,
+				projectId: null
+			});
+		}
+	});
+
+	it('reads the project scope a request supplies, the team still pinned to NULL', async () => {
+		await service.fetchAll({ organizationId: 'organization-1', projectId: 'project-1' });
+
+		for (const where of readWhere()) {
+			expect(where).toEqual({
+				tenantId: TENANT,
+				organizationId: 'organization-1',
+				organizationTeamId: null,
+				projectId: 'project-1'
+			});
 		}
 	});
 });
