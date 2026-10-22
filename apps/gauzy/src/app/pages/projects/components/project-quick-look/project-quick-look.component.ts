@@ -248,6 +248,8 @@ interface IActivityGridMonth {
  */
 interface IActivityGrid {
 	columns: string;
+	/** Week columns across all the month blocks, for the grid's minimum width. */
+	weeks: number;
 	days: IActivityGridDay[];
 	months: IActivityGridMonth[];
 	/** The year's hours, tracked and manual, and each on its own. */
@@ -370,6 +372,10 @@ export class ProjectQuickLookComponent implements OnChanges {
 	public activityGrid: Loadable<IActivityGrid | null> = loading(null);
 	/** The calendar year the grid shows; null for the last {@link GRID_MONTHS} months. */
 	public gridYear: number | null = null;
+	/** The index of the grid's day in the tab order; the latest day until another is focused. */
+	public gridFocus = 0;
+	/** Whether a day of the grid has keyboard focus, to show that day's figures under the grid. */
+	public gridHasFocus = false;
 	/** Whether the grid holds the current project's and scope's year, so showing it again reads nothing. */
 	private _gridRead = false;
 	/** Bumped on every read of the grid, so a reply for a year left behind never lands. */
@@ -483,13 +489,23 @@ export class ProjectQuickLookComponent implements OnChanges {
 	}
 
 	/**
-	 * The grid's choices, newest first: the last 12 months (null), then each calendar year
-	 * from this one back to the year the project started, or was created without a start.
+	 * The grid's choices, newest first: the last 12 months (null), then each calendar year from this
+	 * one back to the earlier of the project's start and creation. The start date can be moved later
+	 * than time already logged, so while the oldest year shown has any time, the year before it is
+	 * offered too: logged time is never out of reach.
 	 */
 	get gridYears(): (number | null)[] {
 		const current = moment().year();
-		const since = moment(this.viewedProject?.startDate || this.viewedProject?.createdAt);
-		const first = since.isValid() ? Math.min(since.year(), current) : current;
+		const years = [this.viewedProject?.startDate, this.viewedProject?.createdAt]
+			.map((date) => moment(date))
+			.filter((date) => date.isValid())
+			.map((date) => date.year());
+		let first = Math.min(current, ...years);
+		if (this.gridYear !== null) {
+			first = Math.min(first, this.gridYear);
+			const shown = this.activityGrid;
+			if (this.gridYear === first && !shown.loading && shown.value?.total) first--;
+		}
 		return [null, ...Array.from({ length: current - first + 1 }, (_, index) => current - index)];
 	}
 
@@ -502,9 +518,35 @@ export class ProjectQuickLookComponent implements OnChanges {
 		this.readGrid();
 	}
 
+	/**
+	 * Arrow keys move between days as the grid lays them out — a row is a weekday, so up and down
+	 * step a day and left and right a week — and Home and End go to the first and last day. Only
+	 * the day in focus is in the tab order, so the grid is one tab stop.
+	 */
+	onGridDayKeydown(event: KeyboardEvent, index: number): void {
+		const count = this.activityGrid.value?.days.length || 0;
+		const steps: Record<string, number> = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 };
+		let next: number;
+		if (event.key in steps) next = index + steps[event.key];
+		else if (event.key === 'Home') next = 0;
+		else if (event.key === 'End') next = count - 1;
+		else return;
+		event.preventDefault();
+		next = Math.max(0, Math.min(count - 1, next));
+		this.gridFocus = next;
+		const grid = (event.currentTarget as HTMLElement).parentElement;
+		grid?.querySelector<HTMLElement>(`[data-index="${next}"]`)?.focus();
+	}
+
 	/** Reads the grid for the current project, scope and year. */
 	private readGrid(): void {
 		if (!this.project?.id) return;
+		// An empty scope (a team with nobody on it) has no time: an empty employee filter would read everyone's.
+		if (Array.isArray(this.scopeEmployeeIds) && !this.scopeEmployeeIds.length) {
+			this.activityGrid = { loading: false, failed: false, value: null };
+			this._gridRead = true;
+			return;
+		}
 		const project = this._projectSequence;
 		const period = this._periodSequence;
 		void this.loadActivityGrid(
@@ -1112,11 +1154,13 @@ export class ProjectQuickLookComponent implements OnChanges {
 					});
 				}
 			}
+			this.gridFocus = days.length - 1;
 			this.activityGrid = {
 				loading: false,
 				failed: false,
 				value: {
 					columns: tracks.join(' '),
+					weeks: columns - 1 - (months.length - 1),
 					days,
 					months,
 					total: tracked + manual,
