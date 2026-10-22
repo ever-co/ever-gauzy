@@ -422,6 +422,320 @@ $row-columns: minmax(0, 1fr) 11rem 2.75rem 1.75rem;
     text-transform: capitalize;
   }
 
+  // A failed read of the comments: the message over its retry, centred like
+  // the other empty states.
+  .load-error {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    button {
+      margin: 0;
+    }
+  }
+
+  // Comments as quiet chat messages: a small round avatar in a gutter, the
+  // author and time on one line and the text under them, all at the dialog's
+  // 12px scale. A comment with replies hangs a thread card off its avatar — a
+  // hairline stem down the gutter, then an elbow into the card.
+  $avatar: 1.75rem;
+  $avatar-small: 1.25rem;
+  $gutter-gap: 0.625rem;
+  $thread-line: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.28));
+
+  .comment-list {
+    padding: 0.25rem 0;
+  }
+
+  .comment {
+    position: relative;
+    display: grid;
+    grid-template-columns: $avatar minmax(0, 1fr);
+    column-gap: $gutter-gap;
+    padding: 0.5rem 0.375rem;
+    border-radius: $radius;
+    font-size: $control-font-size;
+    line-height: 1rem;
+  }
+
+  .comment-gutter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  // The thread's line, from under the avatar to the foot of the message; the
+  // elbow on `.thread` carries it on into the card.
+  .thread-stem {
+    display: none;
+    flex: 1 1 auto;
+    width: 0;
+    margin-top: 0.25rem;
+    border-inline-start: $thread-line;
+  }
+
+  .has-thread .thread-stem {
+    display: block;
+  }
+
+  .comment-avatar {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: $avatar;
+    height: $avatar;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    color: $muted;
+    font-size: 10px;
+    font-weight: 500;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &.small {
+      width: $avatar-small;
+      height: $avatar-small;
+      font-size: 8px;
+    }
+  }
+
+  .comment-main {
+    min-width: 0;
+  }
+
+  .comment-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.125rem 0.5rem;
+  }
+
+  .comment-author {
+    font-weight: 500;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .comment-date {
+    font-size: 11px;
+    color: $muted;
+  }
+
+  .comment-text {
+    margin: 0.125rem 0 0;
+    color: var(--gauzy-text-color-1, inherit);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  // Reply and Delete, as small muted links under the text.
+  .comment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .delete-confirm {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.625rem;
+  }
+
+  .delete-question {
+    margin-top: 0.25rem;
+    font-size: 11px;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .comment-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: $muted;
+    font-size: 11px;
+    line-height: 1rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    nb-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    &:hover {
+      color: nb-theme(color-primary-default);
+    }
+
+    &.danger:hover,
+    &.confirm {
+      color: nb-theme(color-danger-default);
+    }
+
+    &.confirm {
+      font-weight: 500;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    // The trash icon on its own, with a small hit area around it.
+    &.icon-only {
+      padding: 0.125rem;
+      margin-inline-start: -0.125rem;
+      border-radius: $radius;
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  // The card under the message, in the text's column, with the elbow reaching
+  // back to the stem in the gutter and into the card's first line.
+  .thread {
+    position: relative;
+    grid-column: 2;
+    margin-top: 0.375rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -0.375rem;
+      inset-inline-start: calc(-1 * (#{$gutter-gap} + #{$avatar} / 2) - 0.5px);
+      width: calc(#{$gutter-gap} + #{$avatar} / 2 - 0.25rem);
+      height: 1.3rem;
+      border-inline-start: $thread-line;
+      border-bottom: $thread-line;
+      border-end-start-radius: 0.5rem;
+    }
+  }
+
+  .thread-card {
+    max-width: 26rem;
+    padding: 0.375rem 0.625rem;
+    border: $divider;
+    border-radius: $radius;
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+
+    &.open {
+      max-width: none;
+    }
+  }
+
+  .thread-summary,
+  .thread-latest {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .thread-title,
+  .thread-latest-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .thread-title {
+    font-weight: 500;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .thread-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.125rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: nb-theme(color-primary-default);
+    font-size: 11px;
+    font-weight: 400;
+    cursor: pointer;
+
+    nb-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  .thread-latest {
+    margin-top: 0.125rem;
+    justify-content: space-between;
+    font-size: 11px;
+    color: $muted;
+
+    b {
+      font-weight: 500;
+    }
+  }
+
+  .thread-age {
+    flex: 0 0 auto;
+  }
+
+  .replies {
+    margin: 0.375rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .reply {
+    display: grid;
+    grid-template-columns: $avatar-small minmax(0, 1fr);
+    column-gap: 0.5rem;
+    padding: 0.375rem 0;
+    border-top: $divider;
+  }
+
+  .reply-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.375rem;
+
+    button {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+
+    textarea[nbInput] {
+      height: 2rem;
+      min-height: 2rem !important;
+      padding: 0.375rem $control-padding-x;
+    }
+  }
+
   // The comment box: label, field and its button, with no card of its own
   // nested inside the footer.
   nb-card-footer.comments {

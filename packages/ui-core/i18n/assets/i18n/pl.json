@@ -2176,6 +2176,17 @@
 		"UPDATE": "Aktualizuj",
 		"ALIGNMENTS": "Wyrównania",
 		"COMMENTS": "Komentarze",
+		"COMMENT_THREAD": {
+			"REPLY": "Odpowiedz",
+			"ONE_MESSAGE": "1 wiadomość",
+			"MESSAGES": "Wiadomości: {{ count }}",
+			"NO_MESSAGES": "W tym wątku nie ma jeszcze wiadomości.",
+			"REPLY_PLACEHOLDER": "Odpowiedz na ten komentarz…",
+			"UNKNOWN_AUTHOR": "Nieznany",
+			"DELETE_CONFIRM": "Usunąć ten komentarz?",
+			"DELETED": "Komentarz usunięty",
+			"LOAD_ERROR": "Nie udało się wczytać komentarzy."
+		},
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",
 		"DELETE_OBJECTIVE": "Usuń cel",
@@ -2223,6 +2234,7 @@
 			"NO_KEY_RESULT": "Brak wyników kluczowych do wyświetlenia",
 			"NO_UPDATES": "Nie ma jeszcze aktualizacji",
 			"NO_ALIGNMENT": "Brak jeszcze wyrównań",
+			"NO_COMMENTS": "Brak komentarzy.",
 			"NO_PROGRESS_DATA": "Brak jeszcze danych postępu do wykresu"
 		},
 		"LEVELS": {
@@ -6882,6 +6894,15 @@
 		"NEEDS_ATTENTION": "Wymaga uwagi",
 		"NEEDS_ATTENTION_CAPTION": "Zadania zaległe i z terminem w ciągu 3 dni",
 		"ACTIVITY": "Aktywność dzienna",
+		"ACTIVITY_VIEWS": "Widok aktywności",
+		"ACTIVITY_VIEW_CHART": "Wykres",
+		"ACTIVITY_VIEW_GRID": "Siatka wkładu",
+		"GRID_NONE": "Brak czasu",
+		"GRID_LAST_YEAR": "Ostatnie 12 miesięcy",
+		"GRID_OLDER": "Wcześniejszy rok",
+		"GRID_NEWER": "Późniejszy rok",
+		"GRID_DAY": "{{ time }} w dniu {{ date }}",
+		"GRID_DAY_EMPTY": "Brak czasu w dniu {{ date }}",
 		"TOP_CONTRIBUTORS": "Kto pracował najwięcej",
 		"CONTRIBUTORS_CAPTION": "Czas wszystkich przy tym projekcie · {{ range }}",
 		"YOUR_TIME_CAPTION": "Twój czas przy tym projekcie · {{ range }}",
@@ -6922,6 +6943,11 @@
 		"ACTIVITY_FIELDS": "Zmieniono: {{ fields }}",
 		"SOMEONE": "Ktoś",
 		"TODAY": "Dzisiaj",
-		"YESTERDAY": "Wczoraj"
+		"YESTERDAY": "Wczoraj",
+		"TASK_PROGRESS": "Postęp",
+		"TASK_PROGRESS_OF": "{{ worked }} z {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% czasu zarejestrowanego w projekcie (brak szacunku)",
+		"TASK_TOP_PEOPLE": "Najwięcej pracowali",
+		"TASK_NO_ESTIMATE": "Brak szacunku"
 	}
 }
