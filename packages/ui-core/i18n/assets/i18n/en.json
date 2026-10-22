@@ -8138,6 +8138,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} created",
 		"ACTIVITY_UPDATED": "{{ actor }} updated",
 		"ACTIVITY_DELETED": "{{ actor }} deleted",
+		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
+		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",

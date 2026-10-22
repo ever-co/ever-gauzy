@@ -6952,6 +6952,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} יצר",
 		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
 		"ACTIVITY_DELETED": "{{ actor }} מחק",
+		"ACTIVITY_COMMENTED": "{{ actor }} הגיב/ה על",
+		"ACTIVITY_REPLIED": "{{ actor }} השיב/ה לתגובה על",
 		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
 		"SOMEONE": "מישהו",
 		"TODAY": "היום",

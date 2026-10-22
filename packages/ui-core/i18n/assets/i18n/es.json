@@ -6944,6 +6944,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} creó",
 		"ACTIVITY_UPDATED": "{{ actor }} actualizó",
 		"ACTIVITY_DELETED": "{{ actor }} eliminó",
+		"ACTIVITY_COMMENTED": "{{ actor }} comentó en",
+		"ACTIVITY_REPLIED": "{{ actor }} respondió a un comentario en",
 		"ACTIVITY_FIELDS": "Cambios: {{ fields }}",
 		"SOMEONE": "Alguien",
 		"TODAY": "Hoy",

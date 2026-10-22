@@ -6942,6 +6942,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
 		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
 		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",
+		"ACTIVITY_COMMENTED": "{{ actor }} reageerde op",
+		"ACTIVITY_REPLIED": "{{ actor }} beantwoordde een opmerking op",
 		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
 		"SOMEONE": "Iemand",
 		"TODAY": "Vandaag",

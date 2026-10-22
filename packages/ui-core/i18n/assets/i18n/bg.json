@@ -6987,6 +6987,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} създаде",
 		"ACTIVITY_UPDATED": "{{ actor }} обнови",
 		"ACTIVITY_DELETED": "{{ actor }} изтри",
+		"ACTIVITY_COMMENTED": "{{ actor }} коментира",
+		"ACTIVITY_REPLIED": "{{ actor }} отговори на коментар в",
 		"ACTIVITY_FIELDS": "Променено: {{ fields }}",
 		"SOMEONE": "Някой",
 		"TODAY": "Днес",

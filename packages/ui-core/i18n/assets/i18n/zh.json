@@ -6942,6 +6942,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} 创建了",
 		"ACTIVITY_UPDATED": "{{ actor }} 更新了",
 		"ACTIVITY_DELETED": "{{ actor }} 删除了",
+		"ACTIVITY_COMMENTED": "{{ actor }} 评论了",
+		"ACTIVITY_REPLIED": "{{ actor }} 回复了评论：",
 		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
 		"SOMEONE": "某人",
 		"TODAY": "今天",

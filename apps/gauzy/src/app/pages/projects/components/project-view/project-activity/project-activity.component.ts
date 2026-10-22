@@ -6,14 +6,18 @@ import { firstValueFrom } from 'rxjs';
 import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { ActionTypeEnum, BaseEntityEnum, IActivityLog, IPagination, ITask } from '@gauzy/contracts';
+import { ActionTypeEnum, BaseEntityEnum, IActivityLog, IComment, IPagination, ITask } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { CommentService } from '@gauzy/ui-core/core';
+import { parseCommentImages } from '../project-comments/comment-images.util';
 import { humanize, IPersonChip, Loadable, loaded, loading, failed, personOf } from '../project-view.utils';
 
 /** One entry of the feed: who did what to which, and when. */
 interface IActivityEntry {
 	id: string;
 	actor: IPersonChip | null;
+	/** The actor's employee page; none for a user without an employee record. */
+	actorLink: string[] | null;
 	/** i18n key of the sentence's start: "{{ actor }} created", …; the target follows it. */
 	sentence: string;
 	target: string;
@@ -21,10 +25,16 @@ interface IActivityEntry {
 	taskId: string | null;
 	/** "title, status, members": the fields an update changed. */
 	fields: string;
+	/** A comment's text, on one line, under the sentence; empty for the other entries. */
+	excerpt: string;
+	/** A comment of images only: "Image" stands in for its text. */
+	imageOnly: boolean;
+	/** A comment: the target opens the Comments tab. */
+	isComment: boolean;
 	time: string;
 	timeLong: string;
 	icon: string;
-	tone: 'success' | 'info' | 'danger';
+	tone: 'success' | 'info' | 'danger' | 'comment';
 }
 
 /** The feed's entries under their day: Today, Yesterday, then dates. */
@@ -46,8 +56,9 @@ const TASK_LOG_PAGES = 10;
 
 /**
  * The project page's Activity tab: a feed of what changed on the project and its tasks — created,
- * updated (and which fields), deleted — by whom and when, newest first, under each day. It reads the
- * project's own log and the organization's task logs, kept to the events that happened in this project.
+ * updated (and which fields), deleted — and of the comments posted on the project, by whom and when, newest
+ * first, under each day. It reads the project's own log, the organization's task logs kept to the events that
+ * happened in this project, and the project's newest comments (comments write no activity log of their own).
  */
 @Component({
 	selector: 'ga-project-activity',
@@ -71,6 +82,7 @@ export class ProjectActivityComponent implements OnChanges {
 	/** Some of the feed's reads failed: what is shown may be missing entries. */
 	public partial = false;
 	private readonly _http = inject(HttpClient);
+	private readonly _comments = inject(CommentService);
 	private _sequence = 0;
 
 	ngOnChanges(changes: SimpleChanges): void {
@@ -114,19 +126,21 @@ export class ProjectActivityComponent implements OnChanges {
 		]);
 		if (sequence !== this._sequence) return;
 		const taskIds = new Set((tasks.status === 'fulfilled' ? tasks.value?.items || [] : []).map((task) => task.id));
-		const [projectLogs, taskLogs] = await Promise.allSettled([
+		const [projectLogs, taskLogs, comments] = await Promise.allSettled([
 			logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
-			this.fetchTaskLogs(logs, taskIds)
+			this.fetchTaskLogs(logs, taskIds),
+			this._comments.getLatest(BaseEntityEnum.OrganizationProject, projectId, { organizationId, tenantId }, FEED_LIMIT)
 		]);
 		if (sequence !== this._sequence) return;
 
-		if (projectLogs.status === 'rejected' && taskLogs.status === 'rejected') {
+		if (projectLogs.status === 'rejected' && taskLogs.status === 'rejected' && comments.status === 'rejected') {
 			this.feed = failed([]);
 			return;
 		}
 		this.partial =
 			projectLogs.status === 'rejected' ||
 			taskLogs.status === 'rejected' ||
+			comments.status === 'rejected' ||
 			(taskLogs.status === 'fulfilled' && taskLogs.value.partial);
 
 		const titles = new Map(
@@ -138,7 +152,8 @@ export class ProjectActivityComponent implements OnChanges {
 			),
 			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
 				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', log.entityId)
-			)
+			),
+			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) => this.toCommentEntry(comment))
 		]
 			.sort((a, b) => b.time.localeCompare(a.time))
 			.slice(0, FEED_LIMIT);
@@ -221,14 +236,43 @@ export class ProjectActivityComponent implements OnChanges {
 		return {
 			id: log.id,
 			actor: log.employee ? personOf(log.employee) : null,
+			actorLink: log.employee?.id ? ['/pages/employees/view', log.employee.id] : null,
 			sentence: sentences[action] || 'PROJECT_VIEW.ACTIVITY_UPDATED',
 			target: target || '—',
 			taskId: action === ActionTypeEnum.Deleted ? null : taskId,
 			fields: (log.updatedFields || []).map((field) => humanize(field).toLowerCase()).join(', '),
+			excerpt: '',
+			imageOnly: false,
+			isComment: false,
 			time: time.toISOString(),
 			timeLong: time.format('LLL'),
 			icon: icons[action] || 'edit-2-outline',
 			tone: tones[action] || 'info'
+		};
+	}
+
+	/**
+	 * A comment as an entry: "Ann commented on Project X" (or "replied on"), with its text on one line under it —
+	 * "Image" for a comment of images only. Its author is the employee, or the user who posted it.
+	 */
+	private toCommentEntry(comment: IComment): IActivityEntry {
+		const time = moment(comment.createdAt);
+		const { text, images } = parseCommentImages(comment.comment);
+		return {
+			id: `comment-${comment.id}`,
+			actor: personOf(comment.employee) ?? personOf(comment.createdByUser),
+			actorLink: comment.employee?.id ? ['/pages/employees/view', comment.employee.id] : null,
+			sentence: comment.parentId ? 'PROJECT_VIEW.ACTIVITY_REPLIED' : 'PROJECT_VIEW.ACTIVITY_COMMENTED',
+			target: this.projectName || '—',
+			taskId: null,
+			fields: '',
+			excerpt: text.replace(/\s+/g, ' '),
+			imageOnly: !text && images.length > 0,
+			isComment: true,
+			time: time.toISOString(),
+			timeLong: time.format('LLL'),
+			icon: 'message-square-outline',
+			tone: 'comment'
 		};
 	}
 

@@ -6960,6 +6960,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} создал(а)",
 		"ACTIVITY_UPDATED": "{{ actor }} изменил(а)",
 		"ACTIVITY_DELETED": "{{ actor }} удалил(а)",
+		"ACTIVITY_COMMENTED": "{{ actor }} прокомментировал(а)",
+		"ACTIVITY_REPLIED": "{{ actor }} ответил(а) на комментарий в",
 		"ACTIVITY_FIELDS": "Изменено: {{ fields }}",
 		"SOMEONE": "Кто-то",
 		"TODAY": "Сегодня",

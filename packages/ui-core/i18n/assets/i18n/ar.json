@@ -6934,6 +6934,8 @@
 		"ACTIVITY_CREATED": "أنشأ {{ actor }}",
 		"ACTIVITY_UPDATED": "حدّث {{ actor }}",
 		"ACTIVITY_DELETED": "حذف {{ actor }}",
+		"ACTIVITY_COMMENTED": "علّق {{ actor }} على",
+		"ACTIVITY_REPLIED": "ردّ {{ actor }} على تعليق في",
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",

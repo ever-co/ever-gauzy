@@ -59,6 +59,21 @@ export class CommentService {
 		return { items, total };
 	}
 
+	/** A record's newest comments, replies included, newest first, with their authors: at most `take` (≤ 100). */
+	async getLatest(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope, take: number): Promise<IComment[]> {
+		const page = await firstValueFrom(
+			this._http.get<IPagination<IComment>>(this.API_URL, {
+				params: toParams({
+					where: { entity, entityId, ...scope },
+					relations: ['employee', 'employee.user', 'createdByUser'],
+					order: { createdAt: 'DESC' },
+					take: Math.min(take, COMMENTS_PAGE_SIZE)
+				})
+			})
+		);
+		return page.items;
+	}
+
 	/** How many comments a record has, replies included: one row is read, for the total. */
 	async count(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope): Promise<number> {
 		const page = await firstValueFrom(
