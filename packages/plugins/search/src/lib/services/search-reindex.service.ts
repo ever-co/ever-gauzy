@@ -77,15 +77,19 @@ export class SearchReindexService {
 	 */
 	async plan(request: ISearchReindexRequest): Promise<ISearchReindexResult> {
 		const entities = this.scopeEntities(request);
+		const scope = this.tenantScope();
 		let estimatedCount = 0;
 
 		for (const entity of entities) {
 			const definition = this.indexRegistry.get(entity);
 
 			if (definition) {
+				// The caller's tenant's rows, as the run sweeps them: counted across tenants, the estimate told a tenant
+				// how many rows every tenant holds, and an id-scoped plan whether an id exists in any of them.
 				estimatedCount += await this.indexer.countSourceRows(definition, {
 					ids: request.ids,
-					since: request.since
+					since: request.since,
+					...scope
 				});
 			}
 		}
@@ -136,6 +140,9 @@ export class SearchReindexService {
 	 */
 	async status(entities?: string[]): Promise<ISearchIndexStatus[]> {
 		const scope = entities?.length ? entities : this.indexRegistry.registeredEntities();
+		// The caller's tenant's index and rows: read across tenants, the report gave any tenant the size and the
+		// freshness of every tenant's index.
+		const tenant = this.tenantScope();
 		const statuses: ISearchIndexStatus[] = [];
 
 		for (const entity of scope) {
@@ -146,16 +153,16 @@ export class SearchReindexService {
 			}
 
 			const indexedCount = await this.typeOrmSearchDocumentRepository.count({
-				where: { entity, deletedAt: IsNull() } as any
+				where: { entity, deletedAt: IsNull(), ...tenant } as any
 			});
 			const newest = await this.typeOrmSearchDocumentRepository.findOne({
-				where: { entity, deletedAt: IsNull() } as any,
+				where: { entity, deletedAt: IsNull(), ...tenant } as any,
 				order: { indexedAt: 'DESC' } as any
 			});
 			const lastIndexedAt = newest?.indexedAt ?? undefined;
 			const pendingCount = lastIndexedAt
-				? await this.indexer.countSourceRows(definition, { since: lastIndexedAt })
-				: await this.indexer.countSourceRows(definition);
+				? await this.indexer.countSourceRows(definition, { since: lastIndexedAt, ...tenant })
+				: await this.indexer.countSourceRows(definition, tenant);
 
 			statuses.push({
 				entity,
@@ -393,8 +400,10 @@ export class SearchReindexService {
 			return run;
 		}
 
-		// An id-scoped run reads and removes in the caller's tenant only, as above; a full sweep is unchanged.
-		await this.sweep(definition, request, version, run, request.ids?.length ? this.tenantScope() : {});
+		// Every run reads and writes in the caller's tenant only, as the id-scoped one above does. A full sweep used to
+		// read every tenant's rows inside one tenant's request, and answer how many it had written. A run with no
+		// caller (a job) has no tenant, and still sweeps every tenant.
+		await this.sweep(definition, request, version, run, this.tenantScope());
 
 		// The orphan sweep runs for either shape of request, exactly as it did before: a document whose
 		// source has been hard-deleted is unreachable by any event, and this is the only path that
