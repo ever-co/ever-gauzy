@@ -1,6 +1,6 @@
 import { environment } from '../environments/environment';
 import { sanitizeForLogging } from './error-utils';
-import { getAuthKey } from './auth-context';
+import { getAuthKey, mayShareAutoLogin } from './auth-context';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('AuthManager');
@@ -484,14 +484,19 @@ export class AuthManager {
 
 	/**
 	 * Login state of the current caller. Without an auth key this is the process-wide login, as before.
-	 * A keyed caller with no login of its own falls back to the process-wide login only when it is the auto-login account.
+	 * A keyed caller with no login of its own falls back to the process-wide login only when it is the auto-login account,
+	 * and only when the transport found the caller on this machine (see `isLocalCaller`): anyone else who reaches the
+	 * port would otherwise act as that account without credentials.
 	 */
 	private resolveState(): IAuthState | null {
 		const authKey = getAuthKey();
 		if (authKey === undefined) {
 			return this.processState;
 		}
-		return this.keyedStates.get(authKey) ?? (this.isSharedAutoLoginIdentity() ? this.processState : null);
+		return (
+			this.keyedStates.get(authKey) ??
+			(this.isSharedAutoLoginIdentity() && mayShareAutoLogin() ? this.processState : null)
+		);
 	}
 
 	private currentTokenData(): ITokenData | null {

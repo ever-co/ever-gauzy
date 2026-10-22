@@ -10,6 +10,7 @@ import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { runWithAuthKey } from '../common/auth-context';
+import { isLocalCaller } from '../common/local-caller';
 import { authManager } from '../common/auth-manager';
 
 const logger = new Logger('WebSocketTransport');
@@ -118,6 +119,8 @@ interface WebSocketConnection {
 	isAlive: boolean;
 	sessionId?: string;
 	userContext?: UserContext;
+	/** Whether the connection comes from this machine, so may act as the GAUZY_AUTO_LOGIN account (see isLocalCaller) */
+	isLocal: boolean;
 	created: Date;
 	lastSeen: Date;
 	metadata: Record<string, any>;
@@ -288,6 +291,11 @@ export class WebSocketTransport {
 			id: connectionId,
 			socket: ws,
 			isAlive: true,
+			isLocal: isLocalCaller(
+				request.socket.remoteAddress,
+				request.headers,
+				this.transportConfig.trustedProxies || []
+			),
 			created: new Date(),
 			lastSeen: new Date(),
 			metadata: {
@@ -516,7 +524,8 @@ export class WebSocketTransport {
 				case 'tools/call': {
 					const result = await this.callTool(
 						params as Record<string, unknown>,
-						this.resolveAuthKey(connection)
+						this.resolveAuthKey(connection),
+						connection.isLocal
 					);
 					transport.send({
 						jsonrpc: '2.0',
@@ -581,7 +590,14 @@ export class WebSocketTransport {
 		return connection.id;
 	}
 
-	private async callTool(params: Record<string, unknown>, authKey?: string): Promise<unknown> {
+	/**
+	 * @param sharesAutoLogin Whether the caller may act as the GAUZY_AUTO_LOGIN account when it has no login of its own.
+	 */
+	private async callTool(
+		params: Record<string, unknown>,
+		authKey: string | undefined,
+		sharesAutoLogin: boolean
+	): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
 
@@ -604,8 +620,10 @@ export class WebSocketTransport {
 			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
 			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is
-			const result = await runWithAuthKey(authKey, () =>
-				this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {})
+			const result = await runWithAuthKey(
+				authKey,
+				() => this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {}),
+				{ sharesAutoLogin }
 			);
 			logger.debug(`Tool ${name} executed successfully`);
 
