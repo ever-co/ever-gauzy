@@ -10,15 +10,30 @@ import {
 	UnauthorizedException,
 	BadRequestException,
 	InternalServerErrorException,
-	HttpException
+	HttpException,
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions } from '@gauzy/core';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { IZapierCreateWebhookInput } from './zapier.types';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierService } from './zapier.service';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 
+/**
+ * Zapier's REST hooks: a subscription sends every timer event of the organization, with its time log, to the
+ * URL it names.
+ *
+ * Subscribing is managing the organization's Zapier integration, so the caller's own role must hold the
+ * permissions the integration's settings routes require (`ZapierController`). Without them any signed-in
+ * employee could point the organization's timer stream at a URL of their own and read everyone's time logs.
+ * `PermissionGuard` checks the role the access token names; `TenantPermissionGuard` is left out because Zapier
+ * states no tenant in a header or the payload, and the token's tenant is the one the integration is found in.
+ */
+@UseGuards(PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/zapier')
 export class ZapierWebhookController {
 	private readonly logger = new Logger(ZapierWebhookController.name);
@@ -204,7 +219,7 @@ export class ZapierWebhookController {
 				throw new BadRequestException('Integration tenant ID is required.');
 			}
 
-			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId);
+			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId, integration.organizationId);
 		} catch (error) {
 			// Invalid token (403), missing tenant (400), unknown or foreign subscription (404 / 403): keep them,
 			// as the subscribe route does, instead of answering 500
