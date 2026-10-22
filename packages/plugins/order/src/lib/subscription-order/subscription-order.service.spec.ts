@@ -178,6 +178,8 @@ jest.mock('@gauzy/core', () => {
 		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
 		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		addDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').addDecimalStrings,
+		// The order's cross-tenant reference check reads a real database, which this suite has none of
+		assertPlainReferencesNotForeign: async () => undefined,
 		RequestContext: scope,
 		Product,
 		ProductTranslation: class {},
