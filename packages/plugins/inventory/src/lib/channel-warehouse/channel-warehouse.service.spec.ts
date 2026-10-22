@@ -456,6 +456,18 @@ describe('ChannelWarehouseService — assigning locations to a sales context (do
 		expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'theirs', tenantId: OTHER_TENANT })]);
 	});
 
+	it('never removes an assignment of a sibling organization of the tenant', async () => {
+		// The delete named the tenant but not the organization: a caller of one organization unassigned another's
+		// channel/location pair by its two ids.
+		const fixture = assignmentFixture([
+			assignmentRow('sibling', WAREHOUSE, { organizationId: '00000000-0000-4000-8000-000000000003' })
+		]);
+
+		await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(false);
+
+		expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'sibling' })]);
+	});
+
 	it('answers whether it removed an assignment', async () => {
 		const fixture = assignmentFixture([assignmentRow('ours', WAREHOUSE)]);
 

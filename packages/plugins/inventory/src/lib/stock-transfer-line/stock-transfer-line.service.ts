@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
 import { assertVariantInScope, requestScope } from './../inventory.scope';
 import { StockTransferStatus } from './../inventory.enums';
@@ -9,6 +8,7 @@ import { StockTransfer } from './../stock-transfer/stock-transfer.entity';
 import { StockTransferLine } from './stock-transfer-line.entity';
 import { TypeOrmStockTransferLineRepository } from './repository/type-orm-stock-transfer-line.repository';
 import { MikroOrmStockTransferLineRepository } from './repository/mikro-orm-stock-transfer-line.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /**
  * Maintains the lines of a transfer.
@@ -18,7 +18,7 @@ import { MikroOrmStockTransferLineRepository } from './repository/mikro-orm-stoc
  * disagree about what left the building.
  */
 @Injectable()
-export class StockTransferLineService extends TenantAwareCrudService<StockTransferLine> {
+export class StockTransferLineService extends InventoryCrudService<StockTransferLine> {
 	constructor(
 		readonly typeOrmStockTransferLineRepository: TypeOrmStockTransferLineRepository,
 		readonly mikroOrmStockTransferLineRepository: MikroOrmStockTransferLineRepository

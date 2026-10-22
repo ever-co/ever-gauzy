@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { restatesStoredValue } from '@gauzy/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockTransferStatus } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
 import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
@@ -12,6 +12,7 @@ import { StockTransferLine } from './../stock-transfer-line/stock-transfer-line.
 import { StockTransfer } from './stock-transfer.entity';
 import { TypeOrmStockTransferRepository } from './repository/type-orm-stock-transfer.repository';
 import { MikroOrmStockTransferRepository } from './repository/mikro-orm-stock-transfer.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** Which state a transition may start from. */
 const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
@@ -60,7 +61,7 @@ const QUANTITY_UNITS = 1e6;
  * not arrived at the other, which is exactly what the two-movement shape records.
  */
 @Injectable()
-export class StockTransferService extends TenantAwareCrudService<StockTransfer> {
+export class StockTransferService extends InventoryCrudService<StockTransfer> {
 	constructor(
 		readonly typeOrmStockTransferRepository: TypeOrmStockTransferRepository,
 		readonly mikroOrmStockTransferRepository: MikroOrmStockTransferRepository,

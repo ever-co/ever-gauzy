@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { StockMovement } from './stock-movement.entity';
 import { TypeOrmStockMovementRepository } from './repository/type-orm-stock-movement.repository';
 import { MikroOrmStockMovementRepository } from './repository/mikro-orm-stock-movement.repository';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /**
  * Reads the ledger.
@@ -17,7 +18,7 @@ import { InventoryErrorCode, inventoryError } from './../inventory.errors';
  * gets a stated reason instead of a silent no-op, and a test can assert it.
  */
 @Injectable()
-export class StockMovementService extends TenantAwareCrudService<StockMovement> {
+export class StockMovementService extends InventoryCrudService<StockMovement> {
 	constructor(
 		readonly typeOrmStockMovementRepository: TypeOrmStockMovementRepository,
 		readonly mikroOrmStockMovementRepository: MikroOrmStockMovementRepository
