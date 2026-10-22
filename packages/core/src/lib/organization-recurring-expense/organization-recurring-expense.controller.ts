@@ -156,6 +156,11 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	/**
 	 * CREATE organization recurring expense
 	 *
+	 * States `ORG_EXPENSES_EDIT`, the grant the retire and restore routes below state. With no permission metadata,
+	 * `PermissionGuard` answered `true`, so any member of the tenant (a candidate or a viewer included) could add,
+	 * change or remove the organization's recurring expenses, the update and the delete alike (GHSA-v79w-54p2-wmh5).
+	 * The GraphQL fields that mirror the three routes state the same.
+	 *
 	 * @param entity
 	 * @returns
 	 */
@@ -169,6 +174,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Post()
 	async create(@Body() entity: OrganizationRecurringExpense): Promise<OrganizationRecurringExpense> {
 		return this.commandBus.execute(new OrganizationRecurringExpenseCreateCommand(entity));
@@ -195,6 +202,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -220,6 +229,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string, @Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput } = data;
