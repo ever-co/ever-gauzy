@@ -43,9 +43,9 @@ export enum ProjectViewPeriod {
 }
 
 /** The page's tabs, in the manner of Jira's project pages; the open one is in the URL (`?tab=`). */
-export type ProjectViewTab = 'overview' | 'board' | 'activity';
+export type ProjectViewTab = 'overview' | 'board' | 'activity' | 'comments';
 
-const TABS: ProjectViewTab[] = ['overview', 'board', 'activity'];
+const TABS: ProjectViewTab[] = ['overview', 'board', 'activity', 'comments'];
 
 /** Tabs whose figures read over the period, and so show the period switcher. */
 const PERIOD_TABS = new Set<ProjectViewTab>(['overview']);
@@ -74,7 +74,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	readonly tabs: { id: ProjectViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
-		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
+		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' },
+		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' }
 	];
 	tab: ProjectViewTab = 'overview';
 
@@ -96,6 +97,9 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	 * when the user leaves it must still reach the Overview when it lands.
 	 */
 	boardOpened = false;
+
+	/** The Comments load when first opened, then stay mounted, so a draft survives a look at another tab. */
+	commentsOpened = false;
 
 	/**
 	 * The task open in the drawer — the quick look the task lists open — named by `?task=<id>`, so it can
@@ -267,6 +271,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	private openTab(tab: ProjectViewTab): void {
 		this.tab = tab;
 		if (tab === 'board') this.boardOpened = true;
+		if (tab === 'comments') this.commentsOpened = true;
 	}
 
 	/** Whether the open tab reads over the period, and so shows the period switcher. */
