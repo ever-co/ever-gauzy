@@ -659,33 +659,52 @@
 						@if (activityGrid.failed) {
 						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 						} @else if (activityGrid.value; as grid) {
-						<div
-							class="activity-grid"
-							role="img"
-							[style.grid-template-columns]="grid.columns"
-							[attr.aria-label]="('PROJECT_QUICK_LOOK.ACTIVITY' | translate) + ' · ' + grid.range"
-						>
-							@for (weekday of gridWeekdays; track $index) {
-							<span class="activity-grid-weekday" aria-hidden="true" [style.grid-row]="$index + 1">{{ weekday }}</span>
-							}
-							@for (day of grid.days; track day.key) {
-							<span
-								class="activity-day"
-								[attr.data-level]="day.level"
-								[class.has-manual]="day.manualFill > 0"
-								[style.--manual-fill]="day.manualFill + '%'"
-								[style.grid-column]="day.column"
-								[style.grid-row]="day.row"
-								[nbTooltip]="gridDayTooltip(day)"
-								nbTooltipPlacement="top"
-							></span>
-							}
-							@for (month of grid.months; track month.key) {
-							<span class="activity-grid-month" aria-hidden="true" [style.grid-column]="month.column + ' / span ' + month.span">{{
-								month.label
-							}}</span>
-							}
+						<!-- Scrolls sideways only once the panel is too narrow for readable squares. -->
+						<div class="activity-grid-scroll">
+							<div
+								class="activity-grid"
+								role="group"
+								[style.grid-template-columns]="grid.columns"
+								[style.--grid-weeks]="grid.weeks"
+								[style.--grid-months]="grid.months.length"
+								[attr.aria-label]="('PROJECT_QUICK_LOOK.ACTIVITY' | translate) + ' · ' + grid.range"
+								(focusin)="gridHasFocus = true"
+								(focusout)="gridHasFocus = false"
+							>
+								@for (weekday of gridWeekdays; track $index) {
+								<span class="activity-grid-weekday" aria-hidden="true" [style.grid-row]="$index + 1">{{ weekday }}</span>
+								}
+								<!-- Each day is named by its date and time; one is in the tab order, arrow keys move between them. -->
+								@for (day of grid.days; track day.key; let index = $index) {
+								@let description = gridDayTooltip(day);
+								<span
+									class="activity-day"
+									role="img"
+									[attr.data-index]="index"
+									[attr.tabindex]="index === gridFocus ? 0 : -1"
+									[attr.aria-label]="description"
+									[attr.data-level]="day.level"
+									[class.has-manual]="day.manualFill > 0"
+									[style.--manual-fill]="day.manualFill + '%'"
+									[style.grid-column]="day.column"
+									[style.grid-row]="day.row"
+									[nbTooltip]="description"
+									nbTooltipPlacement="top"
+									(focus)="gridFocus = index"
+									(keydown)="onGridDayKeydown($event, index)"
+								></span>
+								}
+								@for (month of grid.months; track month.key) {
+								<span class="activity-grid-month" aria-hidden="true" [style.grid-column]="month.column + ' / span ' + month.span">{{
+									month.label
+								}}</span>
+								}
+							</div>
 						</div>
+						<!-- The focused day, for keyboard users who see the screen: the tooltip opens on hover only. -->
+						@if (gridHasFocus && grid.days[gridFocus]; as focused) {
+						<p class="activity-grid-readout" aria-hidden="true">{{ gridDayTooltip(focused) }}</p>
+						}
 						<ul class="activity-grid-legend" aria-hidden="true">
 							@for (band of gridBands; track band.level) {
 							<li><span class="activity-day" [attr.data-level]="band.level"></span>{{ band.label }}</li>
