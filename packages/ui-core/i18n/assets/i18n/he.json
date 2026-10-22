@@ -3275,6 +3275,35 @@
 			"CONTINUE": "המשך",
 			"SKIP": "דלג",
 			"CREATE": "צור ארגון"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "חלקי הפרויקט",
+			"DETAILS": "פרטים",
+			"LOGO": "לוגו הפרויקט",
+			"LOGO_HINT": "אופציונלי. לחצו על הלוגו כדי להעלות תמונה ריבועית.",
+			"PEOPLE": "אנשים",
+			"TIMELINE": "לוח זמנים",
+			"APPEARANCE": "מראה",
+			"OPTIONS": "אפשרויות",
+			"REPOSITORY": "מאגר",
+			"TASK_SYNC": "סנכרון משימות",
+			"CREATE_SUBTITLE": "הגדירו פרויקט חדש עם האנשים, לוח הזמנים והחיוב שלו.",
+			"OPEN_SOURCE_TITLE": "פרויקט קוד פתוח",
+			"OPEN_SOURCE_DESCRIPTION": "שתפו את הקוד של הפרויקט באופן ציבורי. הפעילו כדי להוסיף קישור למאגר הציבורי שלו.",
+			"OPEN_SOURCE_URL_HINT": "הכתובת הציבורית של הקוד, למשל מאגר ב-GitHub או ב-GitLab.",
+			"OPEN_REPOSITORY": "פתיחת המאגר",
+			"DESCRIPTION_CARD_DESC": "תארו את מטרות הפרויקט והיקפו לכל מי שעובד עליו.",
+			"TAGS_DESC": "הוסיפו תגיות לפרויקט כדי שיהיה קל יותר למצוא ולקבץ אותו.",
+			"BILLING_DESC": "איך הלקוח מחויב על הפרויקט הזה, ובאיזה מטבע.",
+			"BUDGET_DESC": "הגדירו תקציב בשעות או בעלות כדי לשמור על הפרויקט במסלול.",
+			"APPEARANCE_DESC": "הצבע של הפרויקט ואופן הצגת המשימות שלו.",
+			"PUBLIC_TITLE": "פרויקט ציבורי",
+			"PUBLIC_DESC": "בפרויקט ציבורי כולם רואים מי עובד עליו. בפרויקט פרטי כל אחד רואה רק את עצמו, אלא אם יש לו גישה לפרויקטים פרטיים.",
+			"BILLABLE_DESC": "סמנו את העבודה על הפרויקט הזה כניתנת לחיוב ללקוח.",
+			"REPOSITORY_DESC": "בחרו את מאגר GitHub שעם ה-Issues שלו הפרויקט הזה עובד.",
+			"AUTO_SYNC_DESC": "שמרו על משימות הפרויקט מתואמות עם ה-Issues של המאגר. שינויים כאן נשמרים מיד.",
+			"SYNC_LABEL_TITLE": "סנכרון לפי תווית",
+			"SYNC_LABEL_DESC": "סנכרנו רק Issues שנושאים את התווית שהגדרתם. שינויים כאן נשמרים מיד."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3336,9 +3365,14 @@
 		"MEMBER_SINCE": "חבר מאז",
 		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
 		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"NO_EMPLOYEES": "אין עדיין עובדים להצגה",
+		"NO_CLIENTS": "אין עדיין לקוחות להצגה",
+		"EMPLOYEES_LOAD_FAILED": "לא ניתן היה לטעון את העובדים.",
+		"CLIENTS_LOAD_FAILED": "לא ניתן היה לטעון את הלקוחות.",
 		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
 		"EDIT": {
 			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"NO_LANGUAGES": "עדיין לא נוספו שפות",
 			"ADD_AWARD": "הוספת פרס",
 			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
 		}
@@ -6864,6 +6898,41 @@
 		"YOUR_TIME_CAPTION": "הזמן שלך על פרויקט זה · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
 		"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
-		"OVER_BUDGET": "{{ value }} מעל התקציב"
+		"OVER_BUDGET": "{{ value }} מעל התקציב",
+		"TOTAL_TRACKED": "סה\"כ זמן שנרשם",
+		"TOTAL_TRACKED_HINT": "מאז תחילת הפרויקט",
+		"THIS_PERIOD": "התקופה הנוכחית",
+		"VS_PREVIOUS": "{{ value }} לעומת התקופה הקודמת",
+		"TIMELINE": "ציר זמן",
+		"NO_DATES": "לא הוגדרו תאריכים",
+		"STARTS_IN": "מתחיל בעוד {{ count }} ימים",
+		"STARTS_TOMORROW": "מתחיל מחר",
+		"FINISHED": "הסתיים",
+		"TEAM": "צוות",
+		"NO_MEMBERS": "אין עדיין חברים בפרויקט זה",
+		"MODULES": "מודולים",
+		"MODULE_TASK": "משימה אחת",
+		"MODULE_TASKS": "{{ count }} משימות"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "סקירה",
+			"BOARD": "לוח",
+			"ACTIVITY": "פעילות"
+		},
+		"BOARD": "לוח",
+		"COLUMN_EMPTY": "אין משימות",
+		"CANNOT_DROP": "לא ניתן להעביר משימות אל ״{{ column }}״, כי זה אינו סטטוס של פרויקט זה.",
+		"ACTIVITY": "פעילות",
+		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
+		"NO_ACTIVITY": "אין עדיין פעילות",
+		"ACTIVITY_PARTIAL": "לא ניתן היה לטעון חלק מהפעילות, ולכן הרשימה עשויה להיות חלקית.",
+		"ACTIVITY_CREATED": "{{ actor }} יצר",
+		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
+		"ACTIVITY_DELETED": "{{ actor }} מחק",
+		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
+		"SOMEONE": "מישהו",
+		"TODAY": "היום",
+		"YESTERDAY": "אתמול"
 	}
 }

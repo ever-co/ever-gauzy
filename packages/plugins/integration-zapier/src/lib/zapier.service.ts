@@ -1343,11 +1343,19 @@ export class ZapierService {
 				whereClause.organizationId = organizationId;
 			}
 
-			// Find the integration for the current tenant and organization
-			const integrationTenant = await this._integrationTenantService.findOneByOptions({
-				where: whereClause,
-				relations: ['settings']
-			});
+			// Find the integration for the current tenant and organization. `findOneByOptions` throws
+			// NotFoundException on a miss, so catch it to answer the "not configured" default below.
+			let integrationTenant: IIntegrationTenant | null = null;
+			try {
+				integrationTenant = await this._integrationTenantService.findOneByOptions({
+					where: whereClause,
+					relations: ['settings']
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
 
 			if (!integrationTenant) {
 				return {

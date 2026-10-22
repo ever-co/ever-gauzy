@@ -9,12 +9,13 @@ import {
 	Body,
 	UseGuards,
 	Post,
-	Delete
+	Delete,
+	NotFoundException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput } from '@gauzy/contracts';
+import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	BulkOperation,
@@ -42,7 +43,8 @@ import {
 	TaskByNumberQueryDTO,
 	TaskMaxNumberQueryDTO,
 	TaskQueryDTO,
-	UpdateTaskDTO
+	UpdateTaskDTO,
+	UpdateTaskStatusDTO
 } from './dto';
 
 @ApiTags('Tasks')
@@ -386,6 +388,41 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateTaskDTO): Promise<ITask> {
 		return this.commandBus.execute(new TaskUpdateCommand(id, entity));
+	}
+
+	/**
+	 * PUT move a task to another status, changing nothing else
+	 *
+	 * The full update needs the title, so a client that changes only the status (a card dropped on
+	 * another column of the project board) would send back a title it read earlier and undo a rename.
+	 *
+	 * @param id The ID of the task to move.
+	 * @param input The status to move it to.
+	 * @returns The updated task.
+	 */
+	@ApiOperation({ summary: "Update a task's status." })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: "The task's status has been successfully updated."
+	})
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/status')
+	@UseValidationPipe({ whitelist: true })
+	async updateStatus(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdateTaskStatusDTO): Promise<ITask> {
+		const { organizationId, status, taskStatusId } = input;
+		// The organization is one of the caller's (the DTO checks it) and must be the task's: the guards check
+		// the tenant only, so a member of one organization could otherwise move a task of another in the same
+		// tenant. A task of another organization reads as not found, as one of another tenant does.
+		const task = await this.taskService.findOneByIdString(id);
+		if (!task || task.organizationId !== organizationId) {
+			throw new NotFoundException('The requested record was not found');
+		}
+		// Only the status reaches the update, a partial one as the service takes it: the organization is the
+		// request's context and is never written.
+		return this.commandBus.execute(new TaskUpdateCommand(id, { status, taskStatusId } as ITaskUpdateInput));
 	}
 
 	/**

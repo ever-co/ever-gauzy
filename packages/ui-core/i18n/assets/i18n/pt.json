@@ -3247,6 +3247,35 @@
 			"CONTINUE": "Continuar",
 			"SKIP": "Pular",
 			"CREATE": "Criar organização"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Seções do projeto",
+			"DETAILS": "Detalhes",
+			"LOGO": "Logotipo do projeto",
+			"LOGO_HINT": "Opcional. Clique no logotipo para enviar uma imagem quadrada.",
+			"PEOPLE": "Pessoas",
+			"TIMELINE": "Cronograma",
+			"APPEARANCE": "Aparência",
+			"OPTIONS": "Opções",
+			"REPOSITORY": "Repositório",
+			"TASK_SYNC": "Sincronização de tarefas",
+			"CREATE_SUBTITLE": "Configure um novo projeto com suas pessoas, cronograma e faturamento.",
+			"OPEN_SOURCE_TITLE": "Projeto de código aberto",
+			"OPEN_SOURCE_DESCRIPTION": "Compartilhe publicamente o código deste projeto. Ative para adicionar o link do repositório público.",
+			"OPEN_SOURCE_URL_HINT": "O endereço público do código, por exemplo um repositório do GitHub ou GitLab.",
+			"OPEN_REPOSITORY": "Abrir repositório",
+			"DESCRIPTION_CARD_DESC": "Descreva os objetivos e o escopo do projeto para todos que trabalham nele.",
+			"TAGS_DESC": "Adicione tags ao projeto para facilitar encontrá-lo e agrupá-lo.",
+			"BILLING_DESC": "Como o cliente é cobrado por este projeto e em qual moeda.",
+			"BUDGET_DESC": "Defina um orçamento em horas ou em custo para manter o projeto nos trilhos.",
+			"APPEARANCE_DESC": "A cor do projeto e como suas tarefas são exibidas.",
+			"PUBLIC_TITLE": "Projeto público",
+			"PUBLIC_DESC": "Todos veem quem trabalha em um projeto público. Em um privado, cada pessoa vê apenas a si mesma, a menos que tenha acesso a projetos privados.",
+			"BILLABLE_DESC": "Marque o trabalho neste projeto como faturável ao cliente.",
+			"REPOSITORY_DESC": "Escolha o repositório do GitHub com cujas issues este projeto trabalha.",
+			"AUTO_SYNC_DESC": "Mantenha as tarefas do projeto em dia com as issues do repositório. As alterações aqui são salvas na hora.",
+			"SYNC_LABEL_TITLE": "Sincronizar por rótulo",
+			"SYNC_LABEL_DESC": "Sincronize apenas as issues com o rótulo que você definir. As alterações aqui são salvas na hora."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3308,9 +3337,14 @@
 		"MEMBER_SINCE": "Membro desde",
 		"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda",
 		"NO_SKILLS": "Nenhuma habilidade listada",
+		"NO_EMPLOYEES": "Ainda não há funcionários para mostrar",
+		"NO_CLIENTS": "Ainda não há clientes para mostrar",
+		"EMPLOYEES_LOAD_FAILED": "Não foi possível carregar os funcionários.",
+		"CLIENTS_LOAD_FAILED": "Não foi possível carregar os clientes.",
 		"VIEW_COMPANY_PROFILE": "Ver perfil da empresa",
 		"EDIT": {
 			"NO_AWARDS": "Nenhum prêmio adicionado",
+			"NO_LANGUAGES": "Ainda não foram adicionados idiomas",
 			"ADD_AWARD": "Adicionar prêmio",
 			"PRIVACY_HELP": "Escolha quais detalhes os visitantes veem no perfil público."
 		}
@@ -6854,6 +6888,41 @@
 		"YOUR_TIME_CAPTION": "Seu tempo neste projeto · {{ range }}",
 		"TEAM_CONTRIBUTORS_CAPTION": "Tempo dos membros da equipe neste projeto · {{ range }}",
 		"BUDGET_USED": "{{ used }} de {{ budget }} usadas",
-		"OVER_BUDGET": "{{ value }} acima do orçamento"
+		"OVER_BUDGET": "{{ value }} acima do orçamento",
+		"TOTAL_TRACKED": "Total registrado",
+		"TOTAL_TRACKED_HINT": "Desde o início do projeto",
+		"THIS_PERIOD": "Este período",
+		"VS_PREVIOUS": "{{ value }} em relação ao período anterior",
+		"TIMELINE": "Cronograma",
+		"NO_DATES": "Sem datas definidas",
+		"STARTS_IN": "Começa em {{ count }} dias",
+		"STARTS_TOMORROW": "Começa amanhã",
+		"FINISHED": "Concluído",
+		"TEAM": "Equipe",
+		"NO_MEMBERS": "Ainda não há membros neste projeto",
+		"MODULES": "Módulos",
+		"MODULE_TASK": "1 tarefa",
+		"MODULE_TASKS": "{{ count }} tarefas"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Visão geral",
+			"BOARD": "Quadro",
+			"ACTIVITY": "Atividade"
+		},
+		"BOARD": "Quadro",
+		"COLUMN_EMPTY": "Sem tarefas",
+		"CANNOT_DROP": "As tarefas não podem ser movidas para “{{ column }}” porque não é um status deste projeto.",
+		"ACTIVITY": "Atividade",
+		"ACTIVITY_CAPTION": "Mudanças recentes no projeto e em suas tarefas",
+		"NO_ACTIVITY": "Ainda não há atividade",
+		"ACTIVITY_PARTIAL": "Não foi possível carregar parte da atividade, por isso esta lista pode estar incompleta.",
+		"ACTIVITY_CREATED": "{{ actor }} criou",
+		"ACTIVITY_UPDATED": "{{ actor }} atualizou",
+		"ACTIVITY_DELETED": "{{ actor }} excluiu",
+		"ACTIVITY_FIELDS": "Alterado: {{ fields }}",
+		"SOMEONE": "Alguém",
+		"TODAY": "Hoje",
+		"YESTERDAY": "Ontem"
 	}
 }

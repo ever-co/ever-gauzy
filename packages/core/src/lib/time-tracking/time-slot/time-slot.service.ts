@@ -136,7 +136,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				query.leftJoin(
 					`${query.alias}.employee`,
 					'employee',
-					`"employee"."tenantId" = :tenantId AND "employee"."organizationId" = :organizationId`,
+					p(`"employee"."tenantId" = :tenantId AND "employee"."organizationId" = :organizationId`),
 					{ tenantId, organizationId }
 				);
 				query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
@@ -222,14 +222,16 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					}
 
 					// Filter by tenantId and organizationId for both time_slot and time_log in a single AND condition
+					// Through p() like every other condition here: MySQL reads a double-quoted name as a string,
+					// so these three were syntax errors and the time slots could not be listed on MySQL
 					qb.andWhere(
-						`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId AND
-						"time_log"."tenantId" = :tenantId AND "time_log"."organizationId" = :organizationId`,
+						p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId AND
+						"time_log"."tenantId" = :tenantId AND "time_log"."organizationId" = :organizationId`),
 						{ tenantId, organizationId }
 					);
 
 					// Sort by createdAt
-					qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+					qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
 				});
 
 				const slots = await query.getMany();

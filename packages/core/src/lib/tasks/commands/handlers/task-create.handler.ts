@@ -181,11 +181,15 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
 									organizationId,
-									tenantId
+									tenantId,
+									// Address the notification to the assignee, as the update path does: without a
+									// receiver it reached no one's notification list
+									receiverEmployeeId: employee.id,
+									sentByEmployeeId: user?.employeeId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								user.name
+								user?.name
 							);
 						})
 					);

@@ -161,8 +161,10 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	saveRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-		if (this.selectedEmployee.id) {
-			this.employeesArr.push(this.selectedEmployee);
+		if (this.selectedEmployee?.id) {
+			// The selector shows the request's first employee: replace that one, keep the others of a shared request
+			const [, ...others] = this.timeOff?.employees ?? [];
+			this.employeesArr = [this.selectedEmployee, ...others.filter(({ id }) => id !== this.selectedEmployee.id)];
 			this._createNewRecord();
 		}
 	}

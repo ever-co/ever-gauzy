@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets, IsNull, SaveOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { EmailTemplateEnum, ID, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
@@ -228,18 +228,28 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		tenantId: string,
 		content: IEmailTemplate
 	): Promise<IEmailTemplate> {
-		let entity: IEmailTemplate;
+		// A missing organization / tenant means the GLOBAL template row (IS NULL) — say so with the
+		// explicit operator. This service is a plain CrudService (no tenant scoping), and a literal
+		// null used to be dropped from the SQL, so the "global" lookup matched — and then overwrote —
+		// another tenant's template of the same name (GHSA-44pv-34gx-q9p4 class).
+		let emailTemplate: IEmailTemplate;
 		try {
-			// A missing organization / tenant means the GLOBAL template row (IS NULL) — say so with the
-			// explicit operator. This service is a plain CrudService (no tenant scoping), and a literal
-			// null used to be dropped from the SQL, so the "global" lookup matched — and then overwrote —
-			// another tenant's template of the same name (GHSA-44pv-34gx-q9p4 class).
-			const emailTemplate = await this.findOneByWhereOptions({
+			emailTemplate = await this.findOneByWhereOptions({
 				languageCode,
 				name: `${name}/${type}`,
 				organizationId: isEmpty(organizationId) ? IsNull() : organizationId,
 				tenantId: isEmpty(tenantId) ? IsNull() : tenantId
 			});
+		} catch (error) {
+			// Only a miss means "create": the update below used to share this catch, so a failed
+			// update inserted a second template with the same name, language, organization and tenant
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
+
+		let entity: IEmailTemplate;
+		if (emailTemplate) {
 			switch (type) {
 				case 'subject':
 					entity = {
@@ -256,7 +266,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					break;
 			}
 			await super.create({ id: emailTemplate.id, ...entity });
-		} catch (error) {
+		} else {
 			entity = new EmailTemplate({
 				organizationId,
 				tenantId,

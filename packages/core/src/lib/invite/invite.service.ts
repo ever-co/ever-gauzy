@@ -60,6 +60,7 @@ import {
 	freshTimestamp,
 	getArrayIntersection,
 	parseTypeORMFindToMikroOrm,
+	resolveRequestedPage,
 	retryQuery
 } from './../core/utils';
 import { LIKE_OPERATOR } from './../core/util';
@@ -918,17 +919,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				return conditions;
 			};
 
+			// A page only makes sense with a page size: `skip` sent without `take` gave a NaN offset,
+			// so without a valid `take` the list stays unpaginated, as it already was when neither is sent
+			const page = resolveRequestedPage({ take: options?.take, skip: options?.skip });
+
 			const invites = await super.findAll({
-				...(options && options.skip
-					? {
-							skip: options.take * (options.skip - 1)
-					  }
-					: {}),
-				...(options && options.take
-					? {
-							take: options.take
-					  }
-					: {}),
+				...(page ? { skip: page.offset, take: page.limit } : {}),
 				...(options && options.relations
 					? {
 							relations: options.relations
