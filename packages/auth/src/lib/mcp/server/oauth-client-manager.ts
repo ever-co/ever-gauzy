@@ -44,8 +44,30 @@ export interface ClientRegistrationRequest {
 }
 
 
+/**
+ * Bounds on one registration request. `POST /oauth2/register` is open to anyone and every client is kept in memory,
+ * so a request may hold only what a real client needs.
+ */
+export const CLIENT_REGISTRATION_LIMITS = Object.freeze({
+	clientNameLength: 200,
+	redirectUris: 10,
+	urlLength: 2048,
+	listEntries: 5,
+	listEntryLength: 64,
+	scopeLength: 512,
+	metadataBytes: 4096
+});
+
+/**
+ * Clients registered through `POST /oauth2/register` kept at once. Past it, the oldest is forgotten: its client asks
+ * again, as after a restart (the store is in memory), rather than every new client being refused.
+ */
+export const MAX_DYNAMIC_CLIENTS = 5000;
+
 export class OAuth2ClientManager {
 	private clients = new Map<string, OAuth2Client>();
+	// Clients registered without an id of the operator's (dynamic registration), oldest first
+	private readonly dynamicClientIds = new Set<string>();
 	private securityLogger: SecurityLogger;
 
 	// Default supported scopes for MCP
@@ -53,7 +75,7 @@ export class OAuth2ClientManager {
 	private readonly DEFAULT_GRANT_TYPES = ['authorization_code', 'refresh_token'];
 	private readonly DEFAULT_RESPONSE_TYPES = ['code'];
 
-	constructor() {
+	constructor(private readonly maxDynamicClients = MAX_DYNAMIC_CLIENTS) {
 		this.securityLogger = new SecurityLogger();
 	}
 
@@ -181,6 +203,9 @@ export class OAuth2ClientManager {
 
 			// Store client
 			this.clients.set(clientId, client);
+			if (!customClientId) {
+				this.rememberDynamicClient(clientId);
+			}
 
 			this.securityLogger.log(`OAuth 2.0 client registered: ${clientId} (${request.client_name})`);
 
@@ -319,12 +344,63 @@ export class OAuth2ClientManager {
 	 * Validate client registration request
 	 */
 	private validateClientRegistration(request: ClientRegistrationRequest) {
-		if (!request.client_name || request.client_name.trim().length === 0) {
+		const limits = CLIENT_REGISTRATION_LIMITS;
+
+		if (typeof request?.client_name !== 'string' || request.client_name.trim().length === 0) {
 			throw new Error('client_name is required');
 		}
+		if (request.client_name.length > limits.clientNameLength) {
+			throw new Error(`client_name must be at most ${limits.clientNameLength} characters`);
+		}
 
-		if (!request.redirect_uris || request.redirect_uris.length === 0) {
+		if (!Array.isArray(request.redirect_uris) || request.redirect_uris.length === 0) {
 			throw new Error('At least one redirect_uri is required');
+		}
+		if (request.redirect_uris.length > limits.redirectUris) {
+			throw new Error(`At most ${limits.redirectUris} redirect_uris are allowed`);
+		}
+		if (request.redirect_uris.some((uri) => typeof uri !== 'string' || uri.length > limits.urlLength)) {
+			throw new Error(`Each redirect_uri must be a string of at most ${limits.urlLength} characters`);
+		}
+
+		for (const field of ['grant_types', 'response_types'] as const) {
+			const list = request[field];
+			if (list === undefined) {
+				continue;
+			}
+			if (
+				!Array.isArray(list) ||
+				list.length > limits.listEntries ||
+				list.some((entry) => typeof entry !== 'string' || entry.length > limits.listEntryLength)
+			) {
+				throw new Error(`${field} must be a list of at most ${limits.listEntries} short strings`);
+			}
+		}
+
+		if (
+			request.scope !== undefined &&
+			(typeof request.scope !== 'string' || request.scope.length > limits.scopeLength)
+		) {
+			throw new Error(`scope must be a string of at most ${limits.scopeLength} characters`);
+		}
+
+		for (const field of ['logo_uri', 'client_uri', 'policy_uri', 'tos_uri'] as const) {
+			const value = request[field];
+			if (value !== undefined && (typeof value !== 'string' || value.length > limits.urlLength)) {
+				throw new Error(`${field} must be a string of at most ${limits.urlLength} characters`);
+			}
+		}
+
+		if (request.metadata !== undefined) {
+			let size: number;
+			try {
+				size = Buffer.byteLength(JSON.stringify(request.metadata) ?? '', 'utf8');
+			} catch {
+				throw new Error('metadata must be a JSON object');
+			}
+			if (size > limits.metadataBytes) {
+				throw new Error(`metadata must be at most ${limits.metadataBytes} bytes`);
+			}
 		}
 
 		// Validate client type
@@ -350,6 +426,19 @@ export class OAuth2ClientManager {
 			} catch (error) {
 				throw new Error(`Invalid redirect URI: ${uri}`);
 			}
+		}
+	}
+
+	/**
+	 * Keeps a dynamically registered client, forgetting the oldest ones past {@link MAX_DYNAMIC_CLIENTS}.
+	 */
+	private rememberDynamicClient(clientId: string): void {
+		this.dynamicClientIds.add(clientId);
+		while (this.dynamicClientIds.size > this.maxDynamicClients) {
+			const oldest = this.dynamicClientIds.values().next().value as string;
+			this.dynamicClientIds.delete(oldest);
+			this.clients.delete(oldest);
+			this.securityLogger.warn(`Dynamic client registry full: forgot the oldest client ${oldest}`);
 		}
 	}
 
