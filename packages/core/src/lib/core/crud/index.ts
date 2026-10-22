@@ -6,5 +6,6 @@ export * from './mikro-orm-insert.helper';
 export * from './plain-reference-ownership.helper';
 export * from './icrud.controller';
 export * from '../dto/base-query.dto';
+export * from './organization-boundary';
 export * from './tenant-aware-crud.service';
 export * from './try-request';
