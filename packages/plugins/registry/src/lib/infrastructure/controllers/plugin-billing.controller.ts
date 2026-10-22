@@ -1,5 +1,11 @@
-import { IPagination, PluginBillingStatus } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { IPagination, PermissionsEnum, PluginBillingStatus } from '@gauzy/contracts';
+import {
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -20,6 +26,14 @@ import { CreatePluginBillingDTO } from '../../shared/dto/create-plugin-billing.d
 import { UpdatePluginBillingDTO } from '../../shared/dto/update-plugin-billing.dto';
 import { IPluginBilling, IPluginBillingFindInput, IPluginBillingSummary } from '../../shared/models';
 
+/**
+ * A plugin subscription's billing records.
+ *
+ * The routes stated no permission, so `PermissionGuard` let every member of the tenant through: any of them could
+ * read the tenant's billing, create billing records, rewrite their amounts and mark bills paid or failed. Reading
+ * now needs `PLUGIN_CONFIGURE`, as the subscription's own edits do; writing needs `PLUGIN_RESTRICT`, which only ADMIN
+ * and SUPER_ADMIN hold — billing records are written by the purchase and payment flows, and no screen writes them.
+ */
 @ApiTags('Plugin Billing')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -37,6 +51,7 @@ export class PluginBillingController {
 		type: 'IPluginBilling'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() input: CreatePluginBillingDTO): Promise<IPluginBilling> {
@@ -58,6 +73,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Plugin billing records retrieved successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Get()
 	async findAll(
 		@Param('pluginId', UUIDValidationPipe) pluginId: string,
@@ -113,6 +129,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Billing summary retrieved successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Get('summary')
 	async getBillingSummary(
 		@Param('pluginId', UUIDValidationPipe) pluginId: string,
@@ -129,6 +146,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Plugin billing record retrieved successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Get(':id')
 	async findOne(@Param('id', UUIDValidationPipe) id: string): Promise<IPluginBilling> {
 		return this.pluginBillingService.findOneByIdString(id);
@@ -142,6 +160,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Plugin billing record updated successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
@@ -163,6 +182,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Billing record status updated successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
 	@Patch(':id')
 	@UseValidationPipe({ whitelist: true })
 	async updateStatus(

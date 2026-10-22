@@ -1,5 +1,5 @@
 import { PluginBillingStatus } from '@gauzy/contracts';
-import { MultiORMEnum, parseFindOptionsRelations } from '@gauzy/core';
+import { MultiORMEnum, parseFindOptionsRelations, RequestContext } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Between, LessThan, UpdateResult } from 'typeorm';
 import {
@@ -45,18 +45,22 @@ export class PluginBillingService extends RegistryTenantAwareCrudService<PluginB
 	 * Find billing records with advanced filtering
 	 */
 	async findBillings(options: IPluginBillingFindInput): Promise<IPluginBilling[]> {
+		// These reads go to the repository, past the tenant scope of the base service: scope them here, or a
+		// subscription id of another tenant reads that tenant's billings. No tenant, nothing to read.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return [];
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for advanced filtering with joins
 				const knex = (this.mikroOrmRepository as any).getKnex();
-				let qb = knex('plugin_billing as billing').leftJoin(
-					'plugin_subscription as subscription',
-					'billing.subscriptionId',
-					'subscription.id'
-				);
+				let qb = knex('plugin_billing as billing')
+					.leftJoin('plugin_subscription as subscription', 'billing.subscriptionId', 'subscription.id')
+					.where('billing.tenantId', tenantId);
 
 				if (options.subscriptionId) {
-					qb = qb.where('billing.subscriptionId', options.subscriptionId);
+					qb = qb.andWhere('billing.subscriptionId', options.subscriptionId);
 				}
 				if (options.status) {
 					qb = qb.andWhere('billing.status', options.status);
@@ -80,7 +84,8 @@ export class PluginBillingService extends RegistryTenantAwareCrudService<PluginB
 			default: {
 				const queryBuilder = this.typeOrmPluginBillingRepository
 					.createQueryBuilder('billing')
-					.leftJoinAndSelect('billing.subscription', 'subscription');
+					.leftJoinAndSelect('billing.subscription', 'subscription')
+					.where('billing.tenantId = :tenantId', { tenantId });
 
 				// Apply filters
 				if (options.subscriptionId) {
@@ -126,10 +131,14 @@ export class PluginBillingService extends RegistryTenantAwareCrudService<PluginB
 	 * Get billing summary for a subscription
 	 */
 	async getBillingSummary(subscriptionId: string): Promise<IPluginBillingSummary> {
-		const billings = await this.typeOrmPluginBillingRepository.find({
-			where: { subscriptionId },
-			order: { billingDate: 'DESC' }
-		});
+		// The caller's tenant only (see findBillings); no tenant, an empty summary
+		const tenantId = RequestContext.currentTenantId();
+		const billings = !tenantId
+			? []
+			: await this.typeOrmPluginBillingRepository.find({
+					where: { subscriptionId, tenantId },
+					order: { billingDate: 'DESC' }
+				});
 
 		const summary: IPluginBillingSummary = {
 			subscriptionId,
@@ -171,9 +180,15 @@ export class PluginBillingService extends RegistryTenantAwareCrudService<PluginB
 	 * Get overdue billings
 	 */
 	async getOverdueBillings(): Promise<IPluginBilling[]> {
+		// The caller's tenant only (see findBillings); no tenant, nothing overdue
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return [];
+		}
 		const now = new Date();
 		return await this.typeOrmPluginBillingRepository.find({
 			where: {
+				tenantId,
 				status: PluginBillingStatus.PENDING,
 				dueDate: LessThan(now)
 			},
