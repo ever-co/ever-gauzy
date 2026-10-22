@@ -1,78 +1,94 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
 /**
  * `@gauzy/core` boots the whole application graph from its barrel, so it is doubled at the module boundary: the base
- * the inventory services inherit is reduced to the tenant-scoped read and delete it states, and the request scope is
- * the caller's tenant and organization. **The inventory base under test is the real one.**
+ * the inventory services inherit is reduced to the reads and the delete it states. The organization boundary itself —
+ * who it confines, and how every read, write and delete of the base keeps to it — is proven against real stores on
+ * both ORMs in core (`tenant-aware-crud.service.organization-boundary.spec.ts`). What is proven here is that the
+ * inventory services ask for it, and what the inventory base adds on top. **The inventory base under test is the real
+ * one.** How the channel assignment's own delete keeps to the boundary is in `channel-warehouse.service.spec.ts`.
  */
-const ORG = '00000000-0000-4000-8000-000000000002';
-const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
-const rows: Record<string, Record<string, unknown>> = {};
 const deleted: unknown[] = [];
-let callerOrganization: string | null = ORG;
+
+/** The rows the stand-in base finds: what a caller inside the boundary reaches. */
+const reachable = new Set<string>();
 
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
 	class TenantAwareCrudService {
-		/** The tenant-scoped read: every row of the caller's tenant, of any organization. */
-		async findOneByIdString(id: string): Promise<unknown> {
-			if (!rows[id]) {
-				throw new NotFoundException('The requested record was not found');
-			}
-			return rows[id];
+		/** Off in the platform's base: a service applies the boundary only when it says so. */
+		protected appliesOrganizationBoundary(): boolean {
+			return false;
 		}
 
-		/** The tenant-scoped delete: `DELETE … WHERE id AND tenantId`, with no read. */
+		/** The read by id, kept inside the boundary: a row the caller cannot reach is a miss. */
+		async findOneByIdString(id: string): Promise<unknown> {
+			if (!reachable.has(id)) {
+				throw new NotFoundException('The requested record was not found');
+			}
+			return { id };
+		}
+
+		/** The delete, which answers a row outside the boundary as a missing one: `affected: 0`. */
 		async delete(criteria: unknown): Promise<unknown> {
 			deleted.push(criteria);
 			return { affected: 1, raw: [] };
 		}
 	}
 
-	return {
-		TenantAwareCrudService,
-		RequestContext: {
-			currentTenantId: () => '00000000-0000-4000-8000-000000000001',
-			currentOrganizationId: () => callerOrganization
-		}
-	};
+	return { TenantAwareCrudService };
 });
 
 import { NotFoundException } from '@nestjs/common';
 import { InventoryCrudService } from './inventory-crud.service';
 
-class AlertService extends InventoryCrudService<any> {}
+class AlertService extends InventoryCrudService<any> {
+	applies(): boolean {
+		return this.appliesOrganizationBoundary();
+	}
+}
 
-describe('InventoryCrudService — a row addressed by its identifier is a row of the caller’s organization', () => {
+/** Every `*.service.ts` file under a folder. */
+function serviceFiles(folder: string): string[] {
+	return readdirSync(folder).flatMap((name) => {
+		const path = join(folder, name);
+		if (statSync(path).isDirectory()) {
+			return serviceFiles(path);
+		}
+		return name.endsWith('.service.ts') ? [path] : [];
+	});
+}
+
+describe('InventoryCrudService — the inventory services keep every caller inside the organization boundary', () => {
 	const service = new AlertService(undefined as never, undefined as never);
 
 	beforeEach(() => {
-		callerOrganization = ORG;
 		deleted.length = 0;
-		rows['own'] = { id: 'own', organizationId: ORG };
-		rows['sibling'] = { id: 'sibling', organizationId: SIBLING_ORG };
-		rows['unowned'] = { id: 'unowned', organizationId: null };
+		reachable.clear();
+		reachable.add('own');
 	});
 
-	it('reads the caller’s own row, and a row stored without an organization', async () => {
-		await expect(service.findOneByIdString('own')).resolves.toMatchObject({ id: 'own' });
-		await expect(service.findOneByIdString('unowned')).resolves.toMatchObject({ id: 'unowned' });
+	it('applies the platform’s organization boundary', () => {
+		expect(service.applies()).toBe(true);
 	});
 
-	it('answers a sibling organization’s row as a miss — the GET, the update’s pre-read, withdraw and restore', async () => {
-		await expect(service.findOneByIdString('sibling')).rejects.toBeInstanceOf(NotFoundException);
+	it('is the base of every inventory service: none extends the tenant-aware base directly', () => {
+		const direct = serviceFiles(__dirname)
+			.filter((path) => !path.endsWith('inventory-crud.service.ts'))
+			.filter((path) => /extends\s+TenantAwareCrudService\b/.test(readFileSync(path, 'utf8')));
+
+		expect(direct).toEqual([]);
 	});
 
-	it('does not delete a sibling organization’s row by its identifier, and deletes the caller’s own', async () => {
+	it('answers a delete by id of a row outside the boundary with the read’s 404, and deletes nothing', async () => {
 		await expect(service.delete('sibling')).rejects.toBeInstanceOf(NotFoundException);
 		expect(deleted).toEqual([]);
-
-		await service.delete('own');
-		expect(deleted).toEqual(['own']);
 	});
 
-	it('does not narrow a caller with no organization in context (the worker)', async () => {
-		callerOrganization = null;
-
-		await expect(service.findOneByIdString('sibling')).resolves.toMatchObject({ id: 'sibling' });
+	it('deletes a row inside the boundary by its id', async () => {
+		await service.delete('own');
+		expect(deleted).toEqual(['own']);
 	});
 });

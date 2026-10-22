@@ -7,6 +7,10 @@
  * fail under jest. `@gauzy/config` reads the process environment at import time. Both are therefore
  * doubled at the module boundary, and **the service under test is the real one**.
  */
+
+/** The organization boundary the base reports; none unless a test confines the caller (the base's own suite proves it). */
+let boundary: { organizationId: string | null } | null = null;
+
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
@@ -23,6 +27,10 @@ jest.mock('@gauzy/core', () => {
 
 		get ormType(): string {
 			return 'typeorm';
+		}
+
+		protected organizationBoundary(): unknown {
+			return boundary;
 		}
 
 		async findOneByIdString(id: any): Promise<any> {
@@ -137,6 +145,7 @@ import { ChannelWarehouseService } from './channel-warehouse.service';
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const OTHER_TENANT = '00000000-0000-4000-8000-000000000009';
 const ORG = '00000000-0000-4000-8000-000000000002';
+const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
 const CHANNEL = '00000000-0000-4000-8000-000000000040';
 const OTHER_CHANNEL = '00000000-0000-4000-8000-000000000041';
 const WAREHOUSE = '00000000-0000-4000-8000-000000000010';
@@ -167,14 +176,24 @@ function repository(tables: Record<string, Row[]>) {
 		return tables[table];
 	};
 	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
-	const matches = (row: Row, where: Row = {}) =>
-		Object.entries(where).every(([field, expected]) => {
-			if (expected && typeof expected === 'object' && 'type' in (expected as Row)) {
-				throw new Error(`the in-memory double does not implement the "${(expected as Row).type}" operator`);
+	/** Whether a value satisfies what a `where` states of it: a value, or the operators the organization boundary uses. */
+	const satisfies = (value: unknown, expected: any): boolean => {
+		if (expected && typeof expected === 'object' && 'type' in expected) {
+			switch (expected.type) {
+				case 'or':
+					return expected.value.some((one: unknown) => satisfies(value, one));
+				case 'equal':
+					return same(value, expected.value);
+				case 'isNull':
+					return value === null || value === undefined;
 			}
+			throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
+		}
 
-			return expected === undefined ? true : same(row[field], expected);
-		});
+		return expected === undefined ? true : same(value, expected);
+	};
+	const matches = (row: Row, where: Row = {}) =>
+		Object.entries(where).every(([field, expected]) => satisfies(row[field], expected));
 	const snapshot = (): Record<string, Row[]> =>
 		Object.fromEntries(
 			Object.entries(tables).map(([table, tableRows]) => [table, tableRows.map((row) => ({ ...row }))])
@@ -456,16 +475,43 @@ describe('ChannelWarehouseService — assigning locations to a sales context (do
 		expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'theirs', tenantId: OTHER_TENANT })]);
 	});
 
-	it('never removes an assignment of a sibling organization of the tenant', async () => {
-		// The delete named the tenant but not the organization: a caller of one organization unassigned another's
-		// channel/location pair by its two ids.
-		const fixture = assignmentFixture([
-			assignmentRow('sibling', WAREHOUSE, { organizationId: '00000000-0000-4000-8000-000000000003' })
-		]);
+	describe('the organization boundary', () => {
+		afterEach(() => {
+			boundary = null;
+		});
 
-		await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(false);
+		it('never removes an assignment of a sibling organization for a caller confined to theirs', async () => {
+			// The delete named the tenant but not the organization: a caller of one organization unassigned another's
+			// channel/location pair by its two ids.
+			boundary = { organizationId: ORG };
+			const fixture = assignmentFixture([
+				assignmentRow('sibling', WAREHOUSE, { organizationId: SIBLING_ORG }),
+				assignmentRow('unowned', OTHER_WAREHOUSE, { organizationId: null })
+			]);
 
-		expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'sibling' })]);
+			await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(false);
+			// An assignment stored without an organization is the tenant's, inside every boundary of it.
+			await expect(fixture.service.unassign(CHANNEL, OTHER_WAREHOUSE)).resolves.toBe(true);
+
+			expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'sibling' })]);
+		});
+
+		it('removes no assignment of an organization for a confined caller whose token names none', async () => {
+			boundary = { organizationId: null };
+			const fixture = assignmentFixture([assignmentRow('ours', WAREHOUSE)]);
+
+			await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(false);
+
+			expect(fixture.rows()).toEqual([expect.objectContaining({ id: 'ours' })]);
+		});
+
+		it('removes an assignment of any organization of the tenant for a tenant admin, who is not confined', async () => {
+			const fixture = assignmentFixture([assignmentRow('sibling', WAREHOUSE, { organizationId: SIBLING_ORG })]);
+
+			await expect(fixture.service.unassign(CHANNEL, WAREHOUSE)).resolves.toBe(true);
+
+			expect(fixture.rows()).toEqual([]);
+		});
 	});
 
 	it('answers whether it removed an assignment', async () => {

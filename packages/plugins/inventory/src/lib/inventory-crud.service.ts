@@ -1,46 +1,32 @@
-import { NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
-import { ID } from '@gauzy/contracts';
 import { LegacyFindOneOptions, TenantAwareCrudService, TenantOrganizationBaseEntity } from '@gauzy/core';
-import { requestScope } from './inventory.scope';
 
 /**
- * The CRUD base of the inventory services: a row addressed by its identifier is a row of the request's organization.
+ * The CRUD base of the inventory services: they keep every caller inside the platform's organization boundary.
  *
- * `TenantAwareCrudService` narrows its read by identifier to the caller's tenant only, and the routes every service
- * inherits address rows by that read — `GET /:id`, the update's pre-read, the withdraw/restore pair — while its
- * `delete(id)` runs `DELETE … WHERE id AND tenantId` with no read at all. The domain verbs load through
- * {@link requestScope}, but those inherited routes did not, so a caller of one organization could read, rewrite or
- * delete a stock alert, count, transfer, reservation or channel assignment of a sibling organization of the tenant by
- * naming its id.
+ * `TenantAwareCrudService` used to narrow the inventory services to the caller's tenant only, and the routes every
+ * service inherits address rows through it — `GET /:id` (and the GraphQL single reads), the update's pre-read, the
+ * withdraw/restore pair — while its `delete(id)` ran `DELETE … WHERE id AND tenantId` with no read at all. The domain
+ * verbs load through `requestScope()`, but those inherited routes did not, so a caller of one organization could read,
+ * rewrite or delete a stock alert, count, transfer, reservation or channel assignment of a sibling organization of the
+ * tenant by naming its id.
  *
- * Both are narrowed here, as {@link requestScope} narrows the verbs: a row of another organization is the inherited
- * read's own miss, and a delete by identifier reads its row first. A row stored without an organization, and a
- * caller with no organization in context (the worker), are not narrowed.
+ * The rule is the platform's, applied by the base (`appliesOrganizationBoundary`): a tenant admin reaches every
+ * organization of the tenant; anyone else only the organization of their token, and the rows stored without one. A row
+ * outside the boundary is answered as a missing row by every read, and no write or delete reaches it.
  */
 export abstract class InventoryCrudService<T extends TenantOrganizationBaseEntity> extends TenantAwareCrudService<T> {
 	/**
-	 * Reads a row of the request's organization by its identifier.
-	 *
-	 * @param id The row's identifier.
-	 * @param options The find options the caller stated, if any.
-	 * @returns The row.
-	 * @throws NotFoundException when no row of the request's organization carries the identifier.
+	 * @returns True: the inventory services keep every caller inside the organization boundary.
 	 */
-	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<T>): Promise<T> {
-		const row = await super.findOneByIdString(id, options);
-		const { organizationId } = requestScope();
-
-		if (organizationId && row?.organizationId && String(row.organizationId) !== String(organizationId)) {
-			throw new NotFoundException('The requested record was not found');
-		}
-
-		return row;
+	protected override appliesOrganizationBoundary(): boolean {
+		return true;
 	}
 
 	/**
-	 * Deletes a row, reading it first when it is addressed by its identifier so a row of another organization is a
-	 * miss. A withdrawn row is still found, so a hard delete can purge it.
+	 * Deletes a row, reading it first when it is addressed by its identifier, so a row the caller cannot reach (or that
+	 * does not exist) is answered with the read's `404` rather than an empty result. A withdrawn row is still found, so
+	 * a hard delete can purge it.
 	 *
 	 * @param criteria The row's identifier, or the conditions it must satisfy.
 	 * @param options The find options the caller stated, if any.

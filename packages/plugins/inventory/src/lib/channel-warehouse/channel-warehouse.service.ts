@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { FindManyOptions } from 'typeorm';
+import { Equal, FindManyOptions, IsNull, Or } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, Warehouse } from '@gauzy/core';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
-import { requestScope } from './../inventory.scope';
 import { ChannelWarehouse } from './channel-warehouse.entity';
 import { TypeOrmChannelWarehouseRepository } from './repository/type-orm-channel-warehouse.repository';
 import { MikroOrmChannelWarehouseRepository } from './repository/mikro-orm-channel-warehouse.repository';
@@ -85,8 +84,10 @@ export class ChannelWarehouseService extends InventoryCrudService<ChannelWarehou
 	 * The delete names the tenant, as every read beside it does (SEC-B-01 = SEC-D-10): by the two ids alone it removed
 	 * another tenant's row, and since a context with no rows is unrestricted, that silently widened the other tenant's
 	 * fulfilment to every location it has. Without a tenant nothing is removed — an absent key would drop out of the
-	 * criteria and match every tenant's row. The request's organization is named too, when it states one, so an
-	 * assignment of a sibling organization of the tenant is not removed either ({@link requestScope}).
+	 * criteria and match every tenant's row. The delete keeps to the caller's organization boundary as well, as the
+	 * base keeps its own statements ({@link organizationBoundary}): a caller confined to their organization removes an
+	 * assignment of that organization, or of none, but not one of a sibling organization of the tenant. A tenant admin
+	 * is not confined.
 	 *
 	 * @returns Whether an assignment was removed; removing one that is not there leaves the state the caller asked for.
 	 */
@@ -96,10 +97,13 @@ export class ChannelWarehouseService extends InventoryCrudService<ChannelWarehou
 			return false;
 		}
 
+		const boundary = this.organizationBoundary();
 		const { affected } = await this.typeOrmChannelWarehouseRepository.delete({
 			channelId,
 			warehouseId,
-			...requestScope(),
+			...(boundary
+				? { organizationId: boundary.organizationId ? Or(Equal(boundary.organizationId), IsNull()) : IsNull() }
+				: {}),
 			tenantId
 		} as any);
 		return !!affected;
