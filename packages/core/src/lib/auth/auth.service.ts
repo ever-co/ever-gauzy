@@ -1664,9 +1664,9 @@ export class AuthService extends SocialAuthService {
 				// Skip unverified emails to prevent account takeover via unverified OAuth addresses
 				if (!verified) continue;
 
-				const userExist = await this.userService.checkIfExistsEmail(value);
-				if (userExist) {
-					const user = await this.userService.getOAuthLoginEmail(value);
+				// Never an unproven self-registration of the address (see `UserService.findOAuthLoginUser`).
+				const user = await this.userService.findOAuthLoginUser(value);
+				if (user) {
 					const token = await this.getJwtAccessToken(user);
 
 					response = {
