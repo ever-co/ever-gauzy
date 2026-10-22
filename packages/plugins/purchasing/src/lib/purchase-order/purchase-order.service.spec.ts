@@ -765,6 +765,36 @@ describe('PurchaseOrderService — amending and deleting a draft (doc 05 §16.1)
 		expect(fixture.liveLines('order-1')).toHaveLength(2);
 	});
 
+	it('withdraws the approval of a draft it amends, so the amended order is approved again before it is sent', async () => {
+		// `send` checks only that `approvedAt` is set: an approved draft whose lines were replaced afterwards used to
+		// go to the supplier on the approval of the order it no longer was.
+		const approved = {
+			approvedAt: new Date('2026-01-01T00:00:00.000Z'),
+			approvedByUserId: 'approver',
+			approvalId: 'a-1'
+		};
+		const fixture = orderFixture({ orders: [orderRow('order-1', approved)], lines: [lineRow('line-1')] });
+
+		const amended = await fixture.service.update('order-1', {
+			lines: [{ variantId: VARIANT, quantity: '1000', unitCost: '10' }]
+		} as never);
+
+		expect(amended).toMatchObject({ approvedAt: null, approvedByUserId: null, approvalId: null });
+		await expect(fixture.service.send('order-1')).rejects.toThrow(/PURCHASE_ORDER_NOT_APPROVED/);
+
+		// A line written through the line surface is an amendment too: its totals are rewritten through
+		// `recomputeTotalsFor`, which withdraws the approval with them.
+		const lineSurface = orderFixture({ orders: [orderRow('order-1', approved)], lines: [lineRow('line-1')] });
+
+		await expect(lineSurface.service.recomputeTotalsFor('order-1')).resolves.toMatchObject({ approvedAt: null });
+
+		// An unapproved draft is amended as before, with nothing to withdraw.
+		const draft = orderFixture({ orders: [orderRow('order-1')] });
+
+		await expect(draft.service.update('order-1', { note: 'x' } as never)).resolves.toMatchObject({ note: 'x' });
+		expect(draft.order('order-1')).not.toHaveProperty('approvedAt', null);
+	});
+
 	it('deletes a draft and refuses to delete anything the supplier has been told about', async () => {
 		// "an order the supplier has been told about is cancelled, and an order goods arrived against is
 		// closed, because both of those leave a document that explains what happened."
