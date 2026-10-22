@@ -607,6 +607,54 @@ $weight-medium: 500;
   gap: $gap-sm;
 }
 
+// The year stepper: older on the left, newer on the right, the shown year between.
+.activity-grid-years {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: $gap-xs;
+}
+
+.activity-grid-year {
+  min-width: 6.5rem;
+  font-size: 0.75rem;
+  font-weight: $weight-medium;
+  color: var(--gauzy-text-color-1);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-grid-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  border-radius: var(--gauzy-radius-sm);
+  background: transparent;
+  color: var(--gauzy-text-color-2);
+  cursor: pointer;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background-color: var(--gauzy-hover-tint);
+    color: var(--gauzy-text-color-1);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
 // One grid for the whole year, sized to the panel: the weekday names in the first column, then a
 // block of week columns per month with a wider gap between months, each month named under its
 // block. The track list comes from the component; every week column is an equal share of the width.
