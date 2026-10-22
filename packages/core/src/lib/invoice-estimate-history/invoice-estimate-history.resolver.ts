@@ -83,13 +83,13 @@ const INVOICE_ESTIMATE_HISTORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain and the permission are the controller's, field by field.** The controller declares
  * nothing on its class: its list route states `TenantPermissionGuard`, `PermissionGuard` and
- * `INVOICES_VIEW` on itself; the withdrawal and the restoration, which it overrides only to attach them
- * (GHSA-v79w-54p2-wmh5), state the same pair of guards and `INVOICES_EDIT`; and every other route — the
- * count, the node, the creation, the edit and the removal — is the CRUD base's own and states none of
- * them. So the list field and the two lifecycle fields here carry their routes' own pair of guards and
- * permission, the class carries the gate, and no other field narrows anything: a permission stated where
- * the route states none would give REST a wider scope than GraphQL for the same route, and this delivery
- * may not narrow REST to match.
+ * `INVOICES_VIEW` on itself; the edit, the removal, the withdrawal and the restoration, which it overrides
+ * only to attach them (GHSA-v79w-54p2-wmh5), state the same pair of guards and `INVOICES_EDIT`; and every
+ * other route — the count, the node and the creation — is the CRUD base's own and states none of them. So
+ * the list field and the four write fields here carry their routes' own pair of guards and permission, the
+ * class carries the gate, and no other field narrows anything: a permission stated where the route states
+ * none would give REST a wider scope than GraphQL for the same route, and this delivery may not narrow
+ * REST to match.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
  * GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -187,8 +187,10 @@ export class InvoiceEstimateHistoryResolver {
 	 * The delivered edit hands the store the identifier from its path and the body beside it, and a member
 	 * the caller leaves out is left as it is. The answer is the row the write produced, read back through
 	 * the same node read: the delivered route answers the store's own update result, which is a statement
-	 * about the write rather than a row.
+	 * about the write rather than a row. Under the permission that route states: `INVOICES_EDIT`.
 	 */
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('updateInvoiceEstimateHistory')
 	async updateInvoiceEstimateHistory(
 		@Args('input') input: IUpdateInvoiceEstimateHistoryInput
@@ -201,8 +203,10 @@ export class InvoiceEstimateHistoryResolver {
 	}
 
 	/**
-	 * Removes a log entry outright.
+	 * Removes a log entry outright, under the permission its route states: `INVOICES_EDIT`.
 	 */
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('deleteInvoiceEstimateHistory')
 	async deleteInvoiceEstimateHistory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.invoiceEstimateHistoryService.delete(id));

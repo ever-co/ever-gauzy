@@ -11,6 +11,8 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { InvoiceItemBulkInputDTO } from './dto';
 import { TenantOrganizationBaseDTO } from '../core/dto';
+import { DeepPartial } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @ApiTags('InvoiceItem')
 @UseGuards(TenantPermissionGuard)
@@ -46,6 +48,78 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO
 	): Promise<any> {
 		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list));
+	}
+
+	/**
+	 * Records one line.
+	 *
+	 * Overrides the inherited `CrudController.create()` route only to attach a permission. The base declares the
+	 * route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of
+	 * the tenant could add a line to any invoice or estimate and change what it bills. It now states
+	 * `INVOICES_EDIT`: the grant its bulk-write route states, which is the route the invoice and estimate forms
+	 * save their lines through (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param entity The line to record.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The recorded line.
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record created successfully' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided' })
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Post()
+	async create(@Body() entity: DeepPartial<InvoiceItem>, ...options: any[]): Promise<InvoiceItem> {
+		return await super.create(entity, ...options);
+	}
+
+	/**
+	 * Changes a line that exists.
+	 *
+	 * Overrides the inherited `CrudController.update()` route only to attach a permission, for the reason `create`
+	 * gives: `INVOICES_EDIT` (GHSA-v79w-54p2-wmh5). The base route still strips the members a body never writes.
+	 *
+	 * @param id The line to change.
+	 * @param entity The columns to change.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The store's update result, as the base route answers it.
+	 */
+	@ApiOperation({ summary: 'Update existing record' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record updated successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided for update' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: QueryDeepPartialEntity<InvoiceItem>,
+		...options: any[]
+	): Promise<any> {
+		return await super.update(id, entity, ...options);
+	}
+
+	/**
+	 * Removes a line outright.
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach a permission, for the reason `create`
+	 * gives: `INVOICES_EDIT` (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param id The line to remove.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The store's delete result, as the base route answers it.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.delete(id, ...options);
 	}
 
 	/**
