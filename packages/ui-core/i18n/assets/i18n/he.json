@@ -2219,6 +2219,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "השב",
+			"ONE_MESSAGE": "הודעה אחת",
+			"MESSAGES": "{{ count }} הודעות",
+			"NO_MESSAGES": "אין עדיין הודעות בשרשור זה.",
+			"REPLY_PLACEHOLDER": "השב לתגובה זו…",
+			"UNKNOWN_AUTHOR": "לא ידוע",
+			"DELETE_CONFIRM": "למחוק את התגובה הזו?",
+			"DELETED": "התגובה נמחקה",
+			"LOAD_ERROR": "לא ניתן היה לטעון את התגובות."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2266,6 +2277,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "אין עדיין תגובות.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {

@@ -2251,6 +2251,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "Отговори",
+			"ONE_MESSAGE": "1 съобщение",
+			"MESSAGES": "{{ count }} съобщения",
+			"NO_MESSAGES": "Все още няма съобщения в тази нишка.",
+			"REPLY_PLACEHOLDER": "Отговорете на този коментар…",
+			"UNKNOWN_AUTHOR": "Неизвестен",
+			"DELETE_CONFIRM": "Да се изтрие ли този коментар?",
+			"DELETED": "Коментарът е изтрит",
+			"LOAD_ERROR": "Коментарите не можаха да бъдат заредени."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2298,6 +2309,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "Все още няма коментари.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {

@@ -2177,6 +2177,17 @@
 		"UPDATE": "更新",
 		"ALIGNMENTS": "对齐",
 		"COMMENTS": "评论",
+		"COMMENT_THREAD": {
+			"REPLY": "回复",
+			"ONE_MESSAGE": "1 条消息",
+			"MESSAGES": "{{ count }} 条消息",
+			"NO_MESSAGES": "此讨论串中还没有消息。",
+			"REPLY_PLACEHOLDER": "回复此评论…",
+			"UNKNOWN_AUTHOR": "未知",
+			"DELETE_CONFIRM": "删除此评论？",
+			"DELETED": "评论已删除",
+			"LOAD_ERROR": "无法加载评论。"
+		},
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",
 		"DELETE_OBJECTIVE": "删除目标",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "没有要显示的关键结果。",
 			"NO_UPDATES": "目前尚未有任何更新。",
 			"NO_ALIGNMENT": "尚无对齐。",
+			"NO_COMMENTS": "暂无评论。",
 			"NO_PROGRESS_DATA": "尚无可绘制的进度数据。"
 		},
 		"LEVELS": {

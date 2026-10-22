@@ -2176,6 +2176,17 @@
 		"UPDATE": "Aktualizuj",
 		"ALIGNMENTS": "Wyrównania",
 		"COMMENTS": "Komentarze",
+		"COMMENT_THREAD": {
+			"REPLY": "Odpowiedz",
+			"ONE_MESSAGE": "1 wiadomość",
+			"MESSAGES": "Wiadomości: {{ count }}",
+			"NO_MESSAGES": "W tym wątku nie ma jeszcze wiadomości.",
+			"REPLY_PLACEHOLDER": "Odpowiedz na ten komentarz…",
+			"UNKNOWN_AUTHOR": "Nieznany",
+			"DELETE_CONFIRM": "Usunąć ten komentarz?",
+			"DELETED": "Komentarz usunięty",
+			"LOAD_ERROR": "Nie udało się wczytać komentarzy."
+		},
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",
 		"DELETE_OBJECTIVE": "Usuń cel",
@@ -2223,6 +2234,7 @@
 			"NO_KEY_RESULT": "Brak wyników kluczowych do wyświetlenia",
 			"NO_UPDATES": "Nie ma jeszcze aktualizacji",
 			"NO_ALIGNMENT": "Brak jeszcze wyrównań",
+			"NO_COMMENTS": "Brak komentarzy.",
 			"NO_PROGRESS_DATA": "Brak jeszcze danych postępu do wykresu"
 		},
 		"LEVELS": {

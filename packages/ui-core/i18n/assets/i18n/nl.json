@@ -2177,6 +2177,17 @@
 		"UPDATE": "Bijwerken",
 		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
+		"COMMENT_THREAD": {
+			"REPLY": "Beantwoorden",
+			"ONE_MESSAGE": "1 bericht",
+			"MESSAGES": "{{ count }} berichten",
+			"NO_MESSAGES": "Er zijn nog geen berichten in deze thread.",
+			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
+			"UNKNOWN_AUTHOR": "Onbekend",
+			"DELETE_CONFIRM": "Deze opmerking verwijderen?",
+			"DELETED": "Opmerking verwijderd",
+			"LOAD_ERROR": "De opmerkingen konden niet worden geladen."
+		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
 		"DELETE_OBJECTIVE": "Doel verwijderen",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
 			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_COMMENTS": "Nog geen opmerkingen.",
 			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {

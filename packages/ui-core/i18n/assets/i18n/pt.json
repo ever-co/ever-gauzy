@@ -2177,6 +2177,17 @@
 		"UPDATE": "Atualizar",
 		"ALIGNMENTS": "Alinhamentos",
 		"COMMENTS": "Comentários",
+		"COMMENT_THREAD": {
+			"REPLY": "Responder",
+			"ONE_MESSAGE": "1 mensagem",
+			"MESSAGES": "{{ count }} mensagens",
+			"NO_MESSAGES": "Ainda não há mensagens neste tópico.",
+			"REPLY_PLACEHOLDER": "Responder a este comentário…",
+			"UNKNOWN_AUTHOR": "Desconhecido",
+			"DELETE_CONFIRM": "Excluir este comentário?",
+			"DELETED": "Comentário excluído",
+			"LOAD_ERROR": "Não foi possível carregar os comentários."
+		},
 		"KEY_RESULTS": "Resultados Chave",
 		"GROUP_BY": "Agrupe por",
 		"DELETE_OBJECTIVE": "Excluir Objetivo",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Não há resultados-chave para exibir.",
 			"NO_UPDATES": "Ainda não há atualizações.",
 			"NO_ALIGNMENT": "Ainda não há alinhamentos.",
+			"NO_COMMENTS": "Ainda não há comentários.",
 			"NO_PROGRESS_DATA": "Ainda não há dados de progresso para o gráfico."
 		},
 		"LEVELS": {
