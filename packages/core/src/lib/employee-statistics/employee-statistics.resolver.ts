@@ -17,6 +17,9 @@ import {
 import { FeatureFlag } from '@gauzy/common';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { EmployeeService } from '../employee/employee.service';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { assertStatisticsReadInScope } from './employee-statistics-scope';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import {
 	AggregatedEmployeeStatisticQuery,
@@ -87,7 +90,9 @@ export interface IEmployeeStatisticsHistoryEntry extends Omit<IEmployeeStatistic
 export class EmployeeStatisticsResolver {
 	constructor(
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
-		private readonly queryBus: QueryBus
+		private readonly queryBus: QueryBus,
+		private readonly employeeService: EmployeeService,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
 	) {}
 
 	/**
@@ -144,6 +149,8 @@ export class EmployeeStatisticsResolver {
 		@Args('employeeId', { type: () => ID }) employeeId: Id,
 		@Args('valueDate', { type: () => Date, nullable: true }) valueDate?: Date
 	): Promise<IEmployeeStatistics> {
+		await this.assertInScope(undefined, employeeId);
+
 		return await this.employeeStatisticsService.getStatisticsByEmployeeId(
 			employeeId,
 			valueDate ? ({ valueDate } as IEmployeeStatisticsFindInput) : undefined
@@ -165,6 +172,8 @@ export class EmployeeStatisticsResolver {
 		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<IMonthAggregatedEmployeeStatistics[]> {
+		await this.assertInScope(organizationId, employeeId);
+
 		return await this.queryBus.execute(
 			new MonthAggregatedEmployeeStatisticsQuery({
 				employeeId,
@@ -193,6 +202,8 @@ export class EmployeeStatisticsResolver {
 		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<IEmployeeStatisticsHistoryEntry[]> {
+		await this.assertInScope(organizationId, employeeId);
+
 		const lines: IEmployeeStatisticsHistory[] = await this.queryBus.execute(
 			new EmployeeStatisticsHistoryQuery({
 				employeeId,
@@ -216,5 +227,23 @@ export class EmployeeStatisticsResolver {
 			source: line.source,
 			splitExpense: line.splitExpense
 		}));
+	}
+
+	/**
+	 * The scope check the routes make before an employee's figures are read (`assertStatisticsReadInScope`).
+	 *
+	 * The organization-membership interceptor checks an employee only against an organization stated beside it.
+	 * These fields take the organization as optional, and without one the reads behind them reach the employee in
+	 * whichever organization of the tenant it belongs to, so the employee's own organization has to be the
+	 * caller's.
+	 *
+	 * @param organizationId The organization the field was given, if any.
+	 * @param employeeId The employee whose figures are read.
+	 */
+	private async assertInScope(organizationId: Id | undefined, employeeId: Id): Promise<void> {
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, {
+			organizationId,
+			employeeId
+		});
 	}
 }
