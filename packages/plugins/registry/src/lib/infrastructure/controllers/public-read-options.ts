@@ -1,5 +1,5 @@
 /**
- * What an unauthenticated registry read may ask the store for.
+ * What a registry read may ask the store for.
  *
  * The plugin and category reads are `@Public()`: they run without a caller, through services that do not scope by
  * tenant, and they used to hand the query string's `relations`, `where` and `select` to the store as they came. Any
@@ -25,6 +25,25 @@ export const PUBLIC_PLUGIN_RELATIONS: readonly string[] = [
 
 /** The relations a public plugin category read may load. */
 export const PUBLIC_PLUGIN_CATEGORY_RELATIONS: readonly string[] = ['parent', 'children', 'plugins'];
+
+/*
+ * The signed-in list reads below are scoped to the caller's tenant at their root, but a relation is joined without
+ * that scope: `relations[]=plugin.settings`, `plugin.pluginTenants.allowedUsers`, `plugin.subscriptions.subscriber`
+ * or `version.plugin.subscriptions.billings` on a subscription, version or source list loaded those rows for every
+ * tenant that uses the plugin. Each list now loads only the relations its screen shows.
+ */
+
+/**
+ * The relations a plugin subscription list loads: its plugin, plan and subscriber, and the caller's plugin-tenant
+ * record.
+ */
+export const SUBSCRIPTION_LIST_RELATIONS: readonly string[] = ['plugin', 'pluginTenant', 'subscriber', 'plan'];
+
+/** The relations a plugin version list may load. */
+export const VERSION_LIST_RELATIONS: readonly string[] = ['plugin', 'sources'];
+
+/** The relations a plugin source list may load. */
+export const SOURCE_LIST_RELATIONS: readonly string[] = ['version', 'version.plugin'];
 
 /**
  * The relations a query string asks for, as dotted paths, in every form it can carry them: the legacy array

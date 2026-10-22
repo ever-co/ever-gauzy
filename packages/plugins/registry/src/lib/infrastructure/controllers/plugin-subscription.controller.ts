@@ -32,6 +32,7 @@ import {
 } from '../../application';
 import { PluginSubscription } from '../../domain';
 import { PluginSubscriptionQueryDTO, PurchasePluginSubscriptionDTO, UpdatePluginSubscriptionDTO } from '../../shared';
+import { allowedRelations, SUBSCRIPTION_LIST_RELATIONS } from './public-read-options';
 
 @ApiTags('Plugin Subscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -88,6 +89,8 @@ export class PluginSubscriptionController {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 		const subscriberId = query.subscriberId || RequestContext.currentUserId();
+		// Only the relations this list shows: a joined relation is not tenant-scoped (see public-read-options.ts)
+		const extraRelations = allowedRelations(relations, SUBSCRIPTION_LIST_RELATIONS);
 
 		// Note: Access checks and expiring subscriptions analytics have been moved to
 		// plugin-subscription-analytics.controller.ts for better separation of concerns
@@ -108,7 +111,7 @@ export class PluginSubscriptionController {
 					'pluginTenant',
 					'subscriber',
 					'plan',
-					...relations
+					...extraRelations
 				])
 			);
 		}
@@ -120,7 +123,7 @@ export class PluginSubscriptionController {
 				'pluginTenant',
 				'subscriber',
 				'plan',
-				...relations
+				...extraRelations
 			])
 		);
 	}

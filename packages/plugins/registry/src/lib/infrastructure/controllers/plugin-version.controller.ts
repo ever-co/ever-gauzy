@@ -35,6 +35,7 @@ import {
 import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
 import { PluginVersion } from '../../domain';
 import { FileDTO, IPluginSource, IPluginVersion, PluginVersionDTO, UpdatePluginVersionDTO } from '../../shared';
+import { allowedRelations, ownColumnFilter, VERSION_LIST_RELATIONS } from './public-read-options';
 import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Versions')
@@ -59,6 +60,11 @@ export class PluginVersionController {
 		@Param('pluginId', UUIDValidationPipe) id: ID,
 		@Query() params: BaseQueryDTO<IPluginVersion>
 	): Promise<IPagination<IPluginVersion>> {
+		// Only the relations the version list shows, filters on the version's own columns (see public-read-options.ts)
+		Object.assign(params, {
+			relations: allowedRelations(params.relations, VERSION_LIST_RELATIONS),
+			where: ownColumnFilter(params.where)
+		});
 		return this.queryBus.execute(new ListPluginVersionsQuery(id, params));
 	}
 
