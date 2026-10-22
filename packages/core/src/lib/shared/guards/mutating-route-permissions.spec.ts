@@ -474,6 +474,8 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'GoalTimeFrameController.softRemove',
 	'GoalTimeFrameController.update',
 	'InvoiceEstimateHistoryController.create',
+	'InvoiceEstimateHistoryController.delete',
+	'InvoiceEstimateHistoryController.update',
 	'IssueTypeController.create',
 	'IssueTypeController.delete',
 	'IssueTypeController.markAsDefault',

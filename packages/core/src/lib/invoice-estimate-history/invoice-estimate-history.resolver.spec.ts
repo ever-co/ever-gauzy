@@ -519,7 +519,7 @@ describe('InvoiceEstimateHistoryResolver — the guard stack and the permission 
 		expect(stated).toEqual(expected);
 	});
 
-	it('carries the invoice view permission on the list, and the edit permission on the edit, the removal and the retire-and-restore pair', () => {
+	it('carries the invoice view permission on the list, and the edit permission on the retire-and-restore pair', () => {
 		// The list route states the pair of guards and the permission on itself; the controller's class
 		// states neither, and the CRUD base's own routes state neither either.
 		expect(permissionOfField('invoiceEstimateHistories')).toEqual([PermissionsEnum.INVOICES_VIEW]);
@@ -528,13 +528,10 @@ describe('InvoiceEstimateHistoryResolver — the guard stack and the permission 
 			PermissionGuard
 		]);
 
-		// The edit, the removal and the retire-and-restore pair were inherited with no guard and no permission,
-		// so any authenticated caller could rewrite or erase a history row (GHSA-v79w-54p2-wmh5). The controller
-		// overrides them to state the list's pair of guards and the invoices' edit grant, and the fields state
-		// the same.
+		// The retire-and-restore pair was inherited with no guard and no permission, so any authenticated
+		// caller could retire or restore a history row (GHSA-v79w-54p2-wmh5). The controller overrides both to
+		// state the list's pair of guards and the invoices' edit grant, and the fields state the same.
 		for (const [field, route] of [
-			['updateInvoiceEstimateHistory', 'update'],
-			['deleteInvoiceEstimateHistory', 'delete'],
 			['softDeleteInvoiceEstimateHistory', 'softRemove'],
 			['recoverInvoiceEstimateHistory', 'softRecover']
 		]) {
@@ -548,7 +545,13 @@ describe('InvoiceEstimateHistoryResolver — the guard stack and the permission 
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.INVOICES_EDIT]);
 		}
 
-		for (const field of ['invoiceEstimateHistory', 'invoiceEstimateHistoryCount', 'createInvoiceEstimateHistory']) {
+		for (const field of [
+			'invoiceEstimateHistory',
+			'invoiceEstimateHistoryCount',
+			'createInvoiceEstimateHistory',
+			'updateInvoiceEstimateHistory',
+			'deleteInvoiceEstimateHistory'
+		]) {
 			expect(permissionOfField(field)).toBeUndefined();
 		}
 	});

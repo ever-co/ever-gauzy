@@ -1,16 +1,4 @@
-import {
-	Body,
-	Controller,
-	UseGuards,
-	Query,
-	Get,
-	Delete,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Put,
-	UsePipes
-} from '@nestjs/common';
+import { Controller, UseGuards, Query, Get, Delete, HttpCode, HttpStatus, Param, Put, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum, IInvoiceEstimateHistory, IPagination, ID } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -20,7 +8,6 @@ import { ParseJsonPipe, AbstractValidationPipe, UUIDValidationPipe } from './../
 import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
 import { TenantOrganizationBaseDTO } from '../core/dto';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @ApiTags('InvoiceEstimateHistory')
 @Controller('/invoice-estimate-history')
@@ -38,57 +25,6 @@ export class InvoiceEstimateHistoryController extends CrudController<InvoiceEsti
 			where: findInput,
 			relations
 		});
-	}
-
-	/**
-	 * Changes a history entry.
-	 *
-	 * Overrides the inherited `CrudController.update()` route only to attach a permission. The base declares the
-	 * route with no guard and no permission metadata, so any member of the tenant could rewrite what the log says
-	 * happened to an invoice or estimate. It now states `INVOICES_EDIT`, the grant its retire-and-restore pair
-	 * states (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same. The app never edits an
-	 * entry: it only files them.
-	 *
-	 * @param id The entry to change.
-	 * @param entity The columns to change.
-	 * @param options The inherited options, forwarded to the base route.
-	 * @returns The store's update result, as the base route answers it.
-	 */
-	@ApiOperation({ summary: 'Update existing record' })
-	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record updated successfully' })
-	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided for update' })
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
-	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: QueryDeepPartialEntity<InvoiceEstimateHistory>,
-		...options: any[]
-	): Promise<any> {
-		return await super.update(id, entity, ...options);
-	}
-
-	/**
-	 * Removes a history entry outright.
-	 *
-	 * Overrides the inherited `CrudController.delete()` route only to attach a permission, for the reason `update`
-	 * gives: `INVOICES_EDIT` (GHSA-v79w-54p2-wmh5).
-	 *
-	 * @param id The entry to remove.
-	 * @param options The inherited options, forwarded to the base route.
-	 * @returns The store's delete result, as the base route answers it.
-	 */
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record deleted successfully' })
-	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
-	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
-		return await super.delete(id, ...options);
 	}
 
 	/**
