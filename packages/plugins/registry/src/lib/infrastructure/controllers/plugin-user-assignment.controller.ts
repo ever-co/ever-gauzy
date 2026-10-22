@@ -1,6 +1,17 @@
-import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Query, ValidationPipe } from '@nestjs/common';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpStatus,
+	Param,
+	Post,
+	Query,
+	UseGuards,
+	ValidationPipe
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -19,6 +30,10 @@ import { AssignPluginUsersDTO, IPluginTenant, UnassignPluginUsersDTO } from '../
  */
 @ApiTags('Plugins - User Assignment')
 @Controller('plugins/:pluginId/users')
+// Who may use a plugin is managed like a subscription's users (`plugins/:pluginId/subscription/access`): with
+// PLUGIN_CONFIGURE. These routes had no guard, so any member of the tenant could assign themselves.
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 export class PluginUserAssignmentController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
