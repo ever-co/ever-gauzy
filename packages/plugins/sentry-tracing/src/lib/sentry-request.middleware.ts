@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { NextFunction, Request, Response } from 'express';
-import { redactHeaders, redactQuery, redactUrl } from './sentry-request-redaction';
+import { redactHeaders, redactQuery, redactUrl, sentryUserOf } from './sentry-request-redaction';
 
 @Injectable()
 export class SentryRequestMiddleware implements NestMiddleware {
@@ -29,7 +29,7 @@ export class SentryRequestMiddleware implements NestMiddleware {
 		// V9 Migration: Manual user context setting since requestDataIntegration no longer automatically sets user from request.user
 		// Reference: https://docs.sentry.io/platforms/javascript/guides/node/migration/v8-to-v9/#behavior-changes
 		if ((req as any).user) {
-			Sentry.getCurrentScope().setUser((req as any).user);
+			Sentry.getCurrentScope().setUser(sentryUserOf((req as any).user));
 		}
 
 		next();
