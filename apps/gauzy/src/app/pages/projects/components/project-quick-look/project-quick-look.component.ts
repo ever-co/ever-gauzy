@@ -212,6 +212,44 @@ interface ITaskRow {
 
 export type ProjectTaskFilter = 'open' | 'progress' | 'overdue' | 'done';
 
+/** How the page's Daily activity reads: the period's bars, or a year of days as squares. */
+export type ProjectActivityView = 'chart' | 'grid';
+
+/** One day of the year grid, placed on its month block's week column and weekday row. */
+interface IActivityGridDay {
+	key: string;
+	/** "Wed, Oct 21, 2026", for the square's tooltip. */
+	label: string;
+	tracked: number;
+	manual: number;
+	/** Hours band, 0 (no time) to 4 — see {@link GRID_BANDS}. */
+	level: number;
+	/** 1-based grid column and row. */
+	column: number;
+	row: number;
+}
+
+/** A month block: its name, under the grid columns it spans. */
+interface IActivityGridMonth {
+	key: string;
+	label: string;
+	column: number;
+	span: number;
+}
+
+/**
+ * The last twelve months, each its own block of week columns with a gap between blocks, so a
+ * month reads as a unit. `columns` is the grid's track list: label column, then the blocks.
+ */
+interface IActivityGrid {
+	columns: string;
+	days: IActivityGridDay[];
+	months: IActivityGridMonth[];
+	/** The year's hours, tracked and manual. */
+	total: number;
+	range: string;
+}
+
 const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 
 /** Rows the ranked lists keep. */
@@ -220,6 +258,13 @@ const LIST_LIMIT = 6;
 const TASK_LIMIT = 6;
 /** Tasks due within this many days count as due soon. */
 const ATTENTION_DAYS = 3;
+/** Months the year grid shows, ending with this one. */
+const GRID_MONTHS = 12;
+/**
+ * The year grid's shades, by a day's hours: fixed bands, so a square means the same on every
+ * project. Each is the band's lower bound; a day under the first non-zero bound has no time.
+ */
+const GRID_BANDS = [0, 0.01, 1, 4, 8];
 
 /**
  * A project's quick look, in the right-side drawer of a page's Projects panel: its
@@ -313,6 +358,11 @@ export class ProjectQuickLookComponent implements OnChanges {
 	public previousHours: number | null = null;
 	public timeline: IProjectTimeline | null = null;
 	public modules: Loadable<IModuleRow[]> = loading([]);
+	public activityView: ProjectActivityView = 'chart';
+	/** The last year of the project's days; read the first time the grid is shown. */
+	public activityGrid: Loadable<IActivityGrid | null> = loading(null);
+	/** Whether the grid holds the current project's and scope's year, so showing it again reads nothing. */
+	private _gridRead = false;
 	/** Each person's seconds on the project in the period, from the contributors' read. */
 	private _periodTime = new Map<string, number>();
 
@@ -415,6 +465,56 @@ export class ProjectQuickLookComponent implements OnChanges {
 		return own !== undefined && own !== null ? own : this.hoursTotal * 3600;
 	}
 
+	/** The grid reads the project's year the first time it is shown. */
+	setActivityView(view: ProjectActivityView): void {
+		this.activityView = view;
+		if (view === 'grid' && !this._gridRead && this.project?.id) {
+			const project = this._projectSequence;
+			const period = this._periodSequence;
+			void this.loadActivityGrid(
+				this.project.id,
+				() => project === this._projectSequence && period === this._periodSequence
+			);
+		}
+	}
+
+	/** "1h 30m on Wed, Oct 21, 2026 · 30m manual", or "No time on …". */
+	gridDayTooltip(day: IActivityGridDay): string {
+		const total = day.tracked + day.manual;
+		if (!total) return this._translate.instant('PROJECT_QUICK_LOOK.GRID_DAY_EMPTY', { date: day.label });
+		const text = this._translate.instant('PROJECT_QUICK_LOOK.GRID_DAY', {
+			time: this.formatHours(total),
+			date: day.label
+		});
+		if (!day.manual) return text;
+		return `${text} · ${this.formatHours(day.manual)} ${this._translate.instant('EMPLOYEES_PAGE.VIEW.MANUAL').toLowerCase()}`;
+	}
+
+	/** The legend's bands: "No time", "< 1h", "1–4h", "4–8h", "8h+". */
+	get gridBands(): { level: number; label: string }[] {
+		return GRID_BANDS.map((from, level) => {
+			const to = GRID_BANDS[level + 1];
+			const label = !level
+				? this._translate.instant('PROJECT_QUICK_LOOK.GRID_NONE')
+				: level === 1
+					? `< ${to}h`
+					: to
+						? `${from}–${to}h`
+						: `${from}h+`;
+			return { level, label };
+		});
+	}
+
+	/** Every weekday's short name down the grid's side, in the locale's week order. */
+	get gridWeekdays(): string[] {
+		const first = moment.localeData().firstDayOfWeek();
+		return Array.from({ length: 7 }, (_, row) =>
+			moment()
+				.day((first + row) % 7)
+				.format('dd')
+		);
+	}
+
 	taskCount(filter: ProjectTaskFilter): number {
 		return this.filterTasks(filter).length;
 	}
@@ -466,6 +566,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 		this.lifetime = loading(null);
 		this.previousHours = null;
 		this.modules = loading([]);
+		this.activityGrid = loading(null);
+		this._gridRead = false;
 		this._periodTime = new Map();
 		this.show({ id: card.id, name: card.name, imageUrl: card.imageUrl } as IOrganizationProject);
 		void this.loadProgress(card.id, sequence);
@@ -872,6 +974,8 @@ export class ProjectQuickLookComponent implements OnChanges {
 			this.hours = { loading: false, failed: false, value: [] };
 			this.contributors = { loading: false, failed: false, value: [] };
 			this.topTasks = { loading: false, failed: false, value: [] };
+			this.activityGrid = { loading: false, failed: false, value: null };
+			this._gridRead = true;
 			return;
 		}
 		const request = { ...this.buildRequest(), projectIds: [projectId] };
@@ -879,6 +983,94 @@ export class ProjectQuickLookComponent implements OnChanges {
 		void this.loadContributors(request, isCurrent);
 		void this.loadTopTasks(request, isCurrent);
 		if (this.isPage) void this.loadPreviousHours(projectId, isCurrent);
+		// The grid's year is the scope's, not the period's: a shown grid reads it again, a hidden one on showing.
+		this._gridRead = false;
+		if (this.isPage && this.activityView === 'grid') void this.loadActivityGrid(projectId, isCurrent);
+	}
+
+	/**
+	 * The last {@link GRID_MONTHS} months of the project's days, through today, for the year grid:
+	 * each month a block of week columns, each day shaded by its hours band ({@link GRID_BANDS}).
+	 */
+	private async loadActivityGrid(projectId: string, isCurrent: () => boolean): Promise<void> {
+		this._gridRead = true;
+		this.activityGrid = { ...this.activityGrid, loading: true, failed: false };
+		const today = moment().startOf('day');
+		const start = today
+			.clone()
+			.startOf('month')
+			.subtract(GRID_MONTHS - 1, 'months');
+		const timeZone = this._timeZoneService.currentTimeZone;
+		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
+		try {
+			const rows = await this._timesheetService.getDailyReportChart({
+				...this.buildRequest(),
+				projectIds: [projectId],
+				startDate: format(start),
+				endDate: format(today.clone().endOf('day'))
+			});
+			if (!isCurrent()) return;
+			const byDay = new Map<string, { tracked: number; manual: number }>(
+				(Array.isArray(rows) ? rows : []).map((row: any) => [
+					moment(row.date).format('YYYY-MM-DD'),
+					{
+						tracked:
+							(Number(row.value?.[TimeLogType.TRACKED]) || 0) +
+							(Number(row.value?.[TimeLogType.RESUMED]) || 0),
+						manual: Number(row.value?.[TimeLogType.MANUAL]) || 0
+					}
+				])
+			);
+			const firstWeekday = moment.localeData().firstDayOfWeek();
+			const rowOf = (date: moment.Moment) => ((date.day() - firstWeekday + 7) % 7) + 1;
+			// Column 1 holds the weekday names; each month's weeks follow, a spacer track between months.
+			// `columns` counts grid columns so far: a `repeat(n, …)` track entry is n of them.
+			const tracks: string[] = ['auto'];
+			let columns = 1;
+			const days: IActivityGridDay[] = [];
+			const months: IActivityGridMonth[] = [];
+			let total = 0;
+			for (let month = start.clone(); month.isSameOrBefore(today, 'month'); month.add(1, 'month')) {
+				const first = month.clone().startOf('month');
+				const last = moment.min(month.clone().endOf('month').startOf('day'), today);
+				const weeks = last.clone().startOf('week').diff(first.clone().startOf('week'), 'weeks') + 1;
+				if (months.length) {
+					tracks.push('var(--grid-month-gap)');
+					columns++;
+				}
+				const column = columns + 1;
+				tracks.push(`repeat(${weeks}, minmax(0, 1fr))`);
+				columns += weeks;
+				months.push({ key: first.format('YYYY-MM'), label: first.format('MMM'), column, span: weeks });
+				for (let date = first.clone(); date.isSameOrBefore(last, 'day'); date.add(1, 'day')) {
+					const key = date.format('YYYY-MM-DD');
+					const hours = byDay.get(key) || { tracked: 0, manual: 0 };
+					const sum = hours.tracked + hours.manual;
+					total += sum;
+					days.push({
+						key,
+						label: date.format('ddd, ll'),
+						...hours,
+						level: GRID_BANDS.reduce((level, from, band) => (band && sum >= from ? band : level), 0),
+						column: column + date.clone().startOf('week').diff(first.clone().startOf('week'), 'weeks'),
+						row: rowOf(date)
+					});
+				}
+			}
+			this.activityGrid = {
+				loading: false,
+				failed: false,
+				value: {
+					columns: tracks.join(' '),
+					days,
+					months,
+					total,
+					range: `${start.format('ll')} – ${today.format('ll')}`
+				}
+			};
+		} catch {
+			if (isCurrent()) this.activityGrid = { loading: false, failed: true, value: null };
+		}
 	}
 
 	/**
