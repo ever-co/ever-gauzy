@@ -21,7 +21,7 @@ import {
 	OrderChangeStatus,
 	OrderStatus
 } from '@gauzy/contracts';
-import { Money, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { Money, SequenceService } from '@gauzy/core';
 import { Order } from './order.entity';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
@@ -47,6 +47,7 @@ import { OrderShippingMethodService } from '../order-shipping-method/order-shipp
 import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { ICartToOrderRowMap, OrderCartLedgerCarryover } from '../checkout/order-cart-ledger-carryover.service';
+import { OrderCrudService } from '../order-crud.service';
 
 /** The series every order number is allocated from. */
 const ORDER_SEQUENCE_KEY = 'ORDER';
@@ -91,7 +92,7 @@ export interface IOrderApprovalRequested {
  * context consumes.
  */
 @Injectable()
-export class OrderService extends TenantAwareCrudService<Order> {
+export class OrderService extends OrderCrudService<Order> {
 	private readonly logger = new Logger(OrderService.name);
 
 	constructor(

@@ -1,13 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import {
-	RequestContext,
-	TenantAwareCrudService,
-	addDecimalStrings,
-	compareDecimalStrings,
-	subtractDecimalStrings
-} from '@gauzy/core';
+import { RequestContext, addDecimalStrings, compareDecimalStrings, subtractDecimalStrings } from '@gauzy/core';
 import { ILineInvoicePosition, OrderLineInvoiceDirection, OrderLineInvoiceStatus } from '../order.types';
 import { OrderLine } from '../order-line/order-line.entity';
 import { Order } from '../order/order.entity';
@@ -16,6 +10,7 @@ import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repos
 import { OrderLineInvoice } from './order-line-invoice.entity';
 import { MikroOrmOrderLineInvoiceRepository } from './repository/mikro-orm-order-line-invoice.repository';
 import { TypeOrmOrderLineInvoiceRepository } from './repository/type-orm-order-line-invoice.repository';
+import { OrderCrudService } from '../order-crud.service';
 
 /** One link as the invoice bridge writes it. */
 export interface IRecordInvoiceLinkInput {
@@ -77,7 +72,7 @@ export interface IRecordInvoiceLinkInput {
  * produced.
  */
 @Injectable()
-export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInvoice> {
+export class OrderLineInvoiceService extends OrderCrudService<OrderLineInvoice> {
 	constructor(
 		readonly typeOrmOrderLineInvoiceRepository: TypeOrmOrderLineInvoiceRepository,
 		readonly mikroOrmOrderLineInvoiceRepository: MikroOrmOrderLineInvoiceRepository,

@@ -1,18 +1,19 @@
 ﻿import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID, OrderTransactionType } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { OrderTransaction } from './order-transaction.entity';
 import { Order } from '../order/order.entity';
 import { orderLedgerAppendOnly } from '../order-ledger.append-only';
 import { TypeOrmOrderTransactionRepository } from './repository/type-orm-order-transaction.repository';
 import { MikroOrmOrderTransactionRepository } from './repository/mikro-orm-order-transaction.repository';
+import { OrderCrudService } from '../order-crud.service';
 
 /**
  * the order payment ledger. Append-only: a correction is a new row of the opposite kind, never an edit and never a deletion.
  */
 @Injectable()
-export class OrderTransactionService extends TenantAwareCrudService<OrderTransaction> {
+export class OrderTransactionService extends OrderCrudService<OrderTransaction> {
 	constructor(
 		readonly typeOrmOrderTransactionRepository: TypeOrmOrderTransactionRepository,
 		readonly mikroOrmOrderTransactionRepository: MikroOrmOrderTransactionRepository
