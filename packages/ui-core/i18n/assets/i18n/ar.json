@@ -6909,7 +6909,6 @@
 		"ACTIVITY_CAPTION": "أحدث التغييرات على المشروع ومهامه",
 		"NO_ACTIVITY": "لا يوجد نشاط بعد",
 		"ACTIVITY_PARTIAL": "تعذر تحميل بعض النشاط، لذا قد تكون هذه القائمة غير مكتملة.",
-		"ACTIVITY_RANGE": "{{ from }}–{{ to }} من {{ total }}",
 		"ACTIVITY_CREATED": "أنشأ {{ actor }}",
 		"ACTIVITY_UPDATED": "حدّث {{ actor }}",
 		"ACTIVITY_DELETED": "حذف {{ actor }}",

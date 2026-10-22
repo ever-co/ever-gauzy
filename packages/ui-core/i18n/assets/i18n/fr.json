@@ -6913,7 +6913,6 @@
 		"ACTIVITY_CAPTION": "Changements récents du projet et de ses tâches",
 		"NO_ACTIVITY": "Aucune activité pour l'instant",
 		"ACTIVITY_PARTIAL": "Une partie de l'activité n'a pas pu être chargée ; cette liste peut être incomplète.",
-		"ACTIVITY_RANGE": "{{ from }}–{{ to }} sur {{ total }}",
 		"ACTIVITY_CREATED": "{{ actor }} a créé",
 		"ACTIVITY_UPDATED": "{{ actor }} a modifié",
 		"ACTIVITY_DELETED": "{{ actor }} a supprimé",

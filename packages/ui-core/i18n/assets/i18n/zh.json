@@ -6917,7 +6917,6 @@
 		"ACTIVITY_CAPTION": "项目及其任务的最新变更",
 		"NO_ACTIVITY": "暂无动态",
 		"ACTIVITY_PARTIAL": "部分动态无法加载，此列表可能不完整。",
-		"ACTIVITY_RANGE": "第 {{ from }}–{{ to }} 条，共 {{ total }} 条",
 		"ACTIVITY_CREATED": "{{ actor }} 创建了",
 		"ACTIVITY_UPDATED": "{{ actor }} 更新了",
 		"ACTIVITY_DELETED": "{{ actor }} 删除了",

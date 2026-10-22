@@ -66,46 +66,9 @@
 			}
 		</ol>
 		}
-		@if (pageCount > 1) {
-		<nav class="feed-pager" [attr.aria-label]="'PROJECT_VIEW.ACTIVITY' | translate">
-			<span class="feed-pager-range">{{ 'PROJECT_VIEW.ACTIVITY_RANGE' | translate : range }}</span>
-			<span class="feed-pager-buttons">
-				<button
-					type="button"
-					class="feed-pager-button"
-					[disabled]="page === 0"
-					(click)="setPage(page - 1)"
-					[attr.aria-label]="'BUTTONS.PREVIOUS' | translate"
-					[nbTooltip]="'BUTTONS.PREVIOUS' | translate"
-					nbTooltipPlacement="top"
-				>
-					<nb-icon icon="chevron-left-outline" aria-hidden="true"></nb-icon>
-				</button>
-				@for (index of pages; track index) {
-				<button
-					type="button"
-					class="feed-pager-button"
-					[class.active]="index === page"
-					[attr.aria-current]="index === page ? 'page' : null"
-					(click)="setPage(index)"
-				>
-					{{ index + 1 }}
-				</button>
-				}
-				<button
-					type="button"
-					class="feed-pager-button"
-					[disabled]="page >= pageCount - 1"
-					(click)="setPage(page + 1)"
-					[attr.aria-label]="'BUTTONS.NEXT' | translate"
-					[nbTooltip]="'BUTTONS.NEXT' | translate"
-					nbTooltipPlacement="top"
-				>
-					<nb-icon icon="chevron-right-outline" aria-hidden="true"></nb-icon>
-				</button>
-			</span>
-		</nav>
-		}
+		<div class="pagination-container">
+			<ngx-pagination [source]="source"></ngx-pagination>
+		</div>
 		}
 	</div>
 </section>

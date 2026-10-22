@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, type SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, Input, OnChanges, type SimpleChanges } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -6,8 +7,10 @@ import { firstValueFrom } from 'rxjs';
 import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
+import { LocalDataSource } from 'angular2-smart-table';
 import { ActionTypeEnum, BaseEntityEnum, IActivityLog, IPagination, ITask } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { humanize, IPersonChip, Loadable, loaded, loading, failed, personOf } from '../project-view.utils';
 
 /** One entry of the feed: who did what to which, and when. */
@@ -36,7 +39,7 @@ interface IActivityDay {
 
 /** Entries the feed shows. */
 const FEED_LIMIT = 60;
-/** Entries per page of the feed, so a long feed reads page by page instead of scrolling. */
+/** Entries per page of the feed at first, so a long feed reads page by page instead of scrolling. */
 const FEED_PAGE_SIZE = 10;
 /** The activity log's largest page. */
 const LOG_PAGE_SIZE = 100;
@@ -54,7 +57,15 @@ const TASK_LOG_PAGES = 10;
 @Component({
 	selector: 'ga-project-activity',
 	standalone: true,
-	imports: [CommonModule, RouterModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe],
+	imports: [
+		CommonModule,
+		RouterModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe,
+		SmartDataViewLayoutModule
+	],
 	templateUrl: './project-activity.component.html',
 	styleUrls: [
 		'../../../../employees/view-employee/view-employee.component.scss',
@@ -72,13 +83,24 @@ export class ProjectActivityComponent implements OnChanges {
 	public feed: Loadable<IActivityEntry[]> = loading([]);
 	/** The current page's entries under their day. */
 	public days: IActivityDay[] = [];
-	/** The current page, from 0. */
-	public page = 0;
-	public readonly pageSize = FEED_PAGE_SIZE;
+	/** The feed's entries, paged by the shared pager every list page uses. */
+	public readonly source = new LocalDataSource();
 	/** Some of the feed's reads failed: what is shown may be missing entries. */
 	public partial = false;
 	private readonly _http = inject(HttpClient);
 	private _sequence = 0;
+
+	constructor() {
+		this.source.setPaging(1, FEED_PAGE_SIZE, false);
+		// The pager pages the source: show the entries of whichever page it is on.
+		this.source
+			.onChanged()
+			.pipe(takeUntilDestroyed(inject(DestroyRef)))
+			.subscribe(async () => {
+				const entries = (await this.source.getElements()) as IActivityEntry[];
+				this.days = this.byDay(entries);
+			});
+	}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
@@ -90,36 +112,11 @@ export class ProjectActivityComponent implements OnChanges {
 		return (this.feed.value || []).length;
 	}
 
-	get pageCount(): number {
-		return Math.ceil(this.count / this.pageSize);
-	}
-
-	/** The pages' indexes, for the pager's page buttons. */
-	get pages(): number[] {
-		return Array.from({ length: this.pageCount }, (_, index) => index);
-	}
-
-	/** The current page's first and last entry, from 1: "11–20 of 60". */
-	get range(): { from: number; to: number; total: number } {
-		return {
-			from: this.page * this.pageSize + 1,
-			to: Math.min((this.page + 1) * this.pageSize, this.count),
-			total: this.count
-		};
-	}
-
-	setPage(page: number): void {
-		this.page = Math.max(0, Math.min(page, this.pageCount - 1));
-		const start = this.page * this.pageSize;
-		this.days = this.byDay((this.feed.value || []).slice(start, start + this.pageSize));
-	}
-
 	private async load(): Promise<void> {
 		const sequence = ++this._sequence;
 		const { organizationId, tenantId, projectId } = this;
 		this.feed = loading([]);
 		this.days = [];
-		this.page = 0;
 		this.partial = false;
 		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) =>
 			firstValueFrom(
@@ -178,8 +175,14 @@ export class ProjectActivityComponent implements OnChanges {
 		]
 			.sort((a, b) => b.time.localeCompare(a.time))
 			.slice(0, FEED_LIMIT);
+		this.show(entries);
+	}
+
+	/** Shows the feed from its first page. */
+	private show(entries: IActivityEntry[]): void {
 		this.feed = loaded(entries);
-		this.setPage(0);
+		this.source.setPaging(1, this.source.getPaging().perPage || FEED_PAGE_SIZE, false);
+		void this.source.load(entries);
 	}
 
 	/**
