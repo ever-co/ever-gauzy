@@ -1,5 +1,5 @@
 <!-- A project's own page: the list's back button, a favorite star and the period, then tabs — Overview,
-     Board and Activity — in the manner of Jira's project pages. -->
+     Board, Activity and Comments — in the manner of Jira's project pages. -->
 <ngx-record-view-page
 	heading="SM_TABLE.PROJECT"
 	[backLink]="backLink"
@@ -97,6 +97,24 @@
 				[tenantId]="organization?.tenantId"
 				(taskMoved)="quickLook.reloadTasks()"
 			></ga-project-board>
+		</div>
+		}
+
+		<!-- The Comments load when first opened, then stay loaded, keeping any draft. -->
+		@if (commentsOpened) {
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-comments"
+			aria-labelledby="project-view-tab-comments"
+			[hidden]="tab !== 'comments'"
+		>
+			<ga-project-comments
+				[projectId]="card.id"
+				[projectName]="card.name"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+			></ga-project-comments>
 		</div>
 		}
 
