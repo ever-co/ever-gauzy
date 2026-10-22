@@ -12,6 +12,7 @@ import {
 	RuleService,
 	SequenceService,
 	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	bumpVersion,
 	commitVersionedUpdate,
 	parseEntityVersion
@@ -37,6 +38,7 @@ import { ENTITLEMENT_RULE_OWNER, toRuleInputs } from '../entitlement-conditions'
 import { isDueForExpiry, toWholeQuantity } from '../entitlement-check/entitlement-rules';
 import { recountEntitlementOccupancy } from '../entitlement-counts';
 import { lockEntitlement } from '../entitlement-lock';
+import { ENTITLEMENT_REFERENCES } from '../entitlement.references';
 import {
 	appendEntitlementEvent,
 	entitlementRowsOf,
@@ -207,6 +209,15 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		// fails the whole request rather than leaving a right without the conditions it was granted
 		// under.
 		this.assertConditionsWritable(input.conditions);
+
+		// The customer, order, subscription and catalogue ids are written as given: none of another tenant
+		// (`entitlement.references.ts`). Checked on the TypeORM manager, which reads these tables under either ORM.
+		await assertPlainReferencesNotForeign(
+			this.typeOrmEntitlementRepository.manager,
+			input,
+			ENTITLEMENT_REFERENCES,
+			scope.tenantId ?? RequestContext.currentTenantId()
+		);
 
 		const existing = await this.findExistingGrant(input, kind, scope);
 
