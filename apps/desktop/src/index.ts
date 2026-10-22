@@ -60,6 +60,7 @@ import {
 	createGauzyWindow,
 	createSettingsWindow,
 	createTimeTrackerWindow,
+	installNavigationGuard,
 	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
@@ -964,6 +965,17 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 		appWindowManager?.settingWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
+});
+
+// A window with Node or a preload follows no link out of its own pages (a task description's link loaded the
+// linked page with Node); the configured API stays reachable, where the social sign-in links start.
+installNavigationGuard({
+	trustedUrls: () => {
+		// What getApiBaseUrl answers, without its logging of the whole configs on every navigation
+		const configs: Partial<IConfig> = LocalStore.getStore('configs') || {};
+		const port = configs.port ?? environment.API_DEFAULT_PORT;
+		return [configs.serverUrl, `http://127.0.0.1:${port}`, `http://localhost:${port}`];
+	}
 });
 
 app.on('browser-window-created', (_, window) => {
