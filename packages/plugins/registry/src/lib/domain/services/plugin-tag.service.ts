@@ -148,10 +148,20 @@ export class PluginTagService extends RegistryTenantAwareCrudService<PluginTag> 
 			whereConditions.pluginId = input.pluginId;
 		}
 
-		// Add tenant/organization context
-		if (input.tenantId) {
-			whereConditions.tenantId = input.tenantId;
+		// Nothing to select by: refuse rather than delete every relationship of the tenant
+		if (Object.keys(whereConditions).length === 0) {
+			throw new BadRequestException('A plugin, a tag or relationship IDs are required');
 		}
+
+		// This delete runs on the repository, past the tenant scope of the CRUD base, and its input comes from request
+		// bodies (`DELETE /plugin-tags/batch`, `PUT /plugins/:pluginId/tags`). It took the tenant from the input, so a
+		// body naming another tenant, or none at all, removed that tenant's or every tenant's relationships. It now
+		// deletes in the caller's tenant only.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return 0;
+		}
+		whereConditions.tenantId = tenantId;
 		if (input.organizationId) {
 			whereConditions.organizationId = input.organizationId;
 		}
