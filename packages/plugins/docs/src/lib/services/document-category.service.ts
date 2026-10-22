@@ -1,6 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { BaseQueryDTO, RequestContext, TenantAwareCrudService, prepareSQLQuery as p } from '@gauzy/core';
+import {
+	BaseQueryDTO,
+	LegacyFindOneOptions,
+	RequestContext,
+	TenantAwareCrudService,
+	prepareSQLQuery as p
+} from '@gauzy/core';
 import { DOCS_CATEGORY_EXISTS, DOCS_CATEGORY_SYSTEM } from '../docs.constants';
 import { CreateDocumentCategoryDTO, UpdateDocumentCategoryDTO } from '../dto';
 import { DocumentCategory } from '../entities/document-category.entity';
@@ -16,6 +22,33 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		public readonly mikroOrmDocumentCategoryRepository: MikroOrmDocumentCategoryRepository
 	) {
 		super(typeOrmDocumentCategoryRepository, mikroOrmDocumentCategoryRepository);
+	}
+
+	/**
+	 * Reads a category of the request's organization by its id.
+	 *
+	 * The tenant-aware read narrows to the caller's tenant only, and update, merge and delete all start from it, so a
+	 * caller of one organization renamed, merged (re-pointing its documents' assignments) and deleted another
+	 * organization's categories by naming their ids. A category of another organization is answered as the read's own
+	 * miss; a caller with no organization in context (a job, the seeder) is not narrowed.
+	 *
+	 * @param id The category id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The category.
+	 * @throws NotFoundException when no category of the request's organization carries the id.
+	 */
+	public async findOneByIdString(
+		id: ID,
+		options?: LegacyFindOneOptions<DocumentCategory>
+	): Promise<DocumentCategory> {
+		const category = await super.findOneByIdString(id, options);
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (organizationId && category?.organizationId && String(category.organizationId) !== String(organizationId)) {
+			throw new NotFoundException('The requested record was not found');
+		}
+
+		return category;
 	}
 
 	/**
@@ -145,6 +178,11 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		const target = await this.findOneByIdString(targetId);
 		if (!target) {
 			throw new NotFoundException(`Document category ${targetId} was not found`);
+		}
+		// A category is a catalog entry of one organization: merging across two would hand one organization's document
+		// assignments to the other's catalog.
+		if (String(source.organizationId ?? '') !== String(target.organizationId ?? '')) {
+			throw new BadRequestException('A category can only be merged into a category of the same organization');
 		}
 
 		const manager = this.typeOrmRepository.manager;
