@@ -552,20 +552,98 @@
 					</div>
 				</section>
 
-				<!-- Daily activity: hours on the project per day of the period, over the host's scope. -->
-				<section class="panel project-view-panel project-view-order-4" [nbSpinner]="hours.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<!--
+					Daily activity: hours on the project per day of the period, over the host's scope. On the page,
+					it can instead show the last year as a grid of days, one square per day, shaded by its hours.
+				-->
+				@let showGrid = isPage && activityView === 'grid';
+				<section
+					class="panel project-view-panel project-view-order-4"
+					[nbSpinner]="showGrid ? activityGrid.loading : hours.loading"
+					nbSpinnerSize="small"
+					nbSpinnerStatus="basic"
+				>
 					<header class="panel-header">
 						<div class="panel-heading">
 							<h5 class="panel-title panel-title--icon">
-								<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+								<nb-icon [icon]="showGrid ? 'grid-outline' : 'bar-chart-outline'" aria-hidden="true"></nb-icon>
 								{{ 'PROJECT_QUICK_LOOK.ACTIVITY' | translate }}
 							</h5>
-							<span class="panel-caption">{{ rangeLabel }}</span>
+							<span class="panel-caption">{{ showGrid ? activityGrid.value?.range || '' : rangeLabel }}</span>
 						</div>
-						@if (hoursTotal) {
-						<span class="project-hours-total">{{ formatHours(hoursTotal) }}</span>
-						}
+						<div class="project-activity-actions">
+							@let activityTotal = showGrid ? activityGrid.value?.total || 0 : hoursTotal;
+							@if (activityTotal) {
+							<span class="project-hours-total">{{ formatHours(activityTotal) }}</span>
+							}
+							@if (isPage) {
+							<div class="segmented project-activity-views" role="group" [attr.aria-label]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEWS' | translate">
+								<button
+									type="button"
+									class="segment"
+									[class.is-active]="activityView === 'chart'"
+									[attr.aria-pressed]="activityView === 'chart'"
+									[nbTooltip]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_CHART' | translate"
+									nbTooltipPlacement="top"
+									[attr.aria-label]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_CHART' | translate"
+									(click)="setActivityView('chart')"
+								>
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+								</button>
+								<button
+									type="button"
+									class="segment"
+									[class.is-active]="activityView === 'grid'"
+									[attr.aria-pressed]="activityView === 'grid'"
+									[nbTooltip]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_GRID' | translate"
+									nbTooltipPlacement="top"
+									[attr.aria-label]="'PROJECT_QUICK_LOOK.ACTIVITY_VIEW_GRID' | translate"
+									(click)="setActivityView('grid')"
+								>
+									<nb-icon icon="grid-outline" aria-hidden="true"></nb-icon>
+								</button>
+							</div>
+							}
+						</div>
 					</header>
+					@if (showGrid) {
+					<div class="panel-body project-chart-body project-grid-body">
+						@if (activityGrid.failed) {
+						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+						} @else if (activityGrid.value; as grid) {
+						<div
+							class="activity-grid"
+							role="img"
+							[style.grid-template-columns]="grid.columns"
+							[attr.aria-label]="('PROJECT_QUICK_LOOK.ACTIVITY' | translate) + ' · ' + grid.range"
+						>
+							@for (weekday of gridWeekdays; track $index) {
+							<span class="activity-grid-weekday" aria-hidden="true" [style.grid-row]="$index + 1">{{ weekday }}</span>
+							}
+							@for (day of grid.days; track day.key) {
+							<span
+								class="activity-day"
+								[attr.data-level]="day.level"
+								[style.grid-column]="day.column"
+								[style.grid-row]="day.row"
+								[nbTooltip]="gridDayTooltip(day)"
+								nbTooltipPlacement="top"
+							></span>
+							}
+							@for (month of grid.months; track month.key) {
+							<span class="activity-grid-month" aria-hidden="true" [style.grid-column]="month.column + ' / span ' + month.span">{{
+								month.label
+							}}</span>
+							}
+						</div>
+						<ul class="activity-grid-legend" aria-hidden="true">
+							@for (band of gridBands; track band.level) {
+							<li><span class="activity-day" [attr.data-level]="band.level"></span>{{ band.label }}</li>
+							}
+						</ul>
+						}
+					</div>
+					} @else {
 					<div class="panel-body project-chart-body">
 						@if (hours.failed) {
 						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
@@ -580,6 +658,7 @@
 						></ngx-employee-hours-chart>
 						}
 					</div>
+					}
 				</section>
 
 				<!-- Most worked tasks: the project's tasks with the most time in the period. -->
