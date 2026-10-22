@@ -81,7 +81,7 @@ export class ActivepiecesMcpService {
 		try {
 			const result = await this.request<IActivepiecesMcpServer>(
 				'post',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`,
+				`${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`,
 				updateData
 			);
 
@@ -103,7 +103,7 @@ export class ActivepiecesMcpService {
 		try {
 			const result = await this.request<IActivepiecesMcpServer>(
 				'post',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}/rotate`,
+				`${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}/rotate`,
 				{} // No body required for rotate
 			);
 

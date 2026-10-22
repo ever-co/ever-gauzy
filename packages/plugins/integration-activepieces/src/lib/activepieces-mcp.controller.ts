@@ -16,7 +16,7 @@ import {
 import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { TenantPermissionGuard, Permissions } from '@gauzy/core';
+import { PermissionGuard, TenantPermissionGuard, Permissions } from '@gauzy/core';
 import { UseGuards } from '@nestjs/common';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import {
@@ -26,7 +26,9 @@ import {
 } from '@gauzy/contracts';
 
 @ApiTags('ActivePieces MCP Server Integration')
-@UseGuards(TenantPermissionGuard)
+// `TenantPermissionGuard` asks only whether some role of the tenant holds a permission; `PermissionGuard` is what
+// checks the caller's own role against the `@Permissions` below, as the other integration controllers do.
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @ApiBearerAuth()
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 @Controller('/integration/activepieces/mcp')
