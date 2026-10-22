@@ -5994,6 +5994,13 @@
 		"COMMENTS": "Comments",
 		"COMMENTS_CAPTION": "Discussion about this project",
 		"NO_COMMENTS": "No comments yet. Start the discussion.",
-		"COMMENT_PLACEHOLDER": "Write a comment…"
+		"COMMENT_PLACEHOLDER": "Write a comment…",
+		"COMMENT_IMAGE": "Image",
+		"ATTACH_IMAGES": "Attach images",
+		"REMOVE_IMAGE": "Remove image",
+		"OPEN_IMAGE": "Open original",
+		"COMMENT_IMAGE_TYPES": "Only PNG, JPEG, GIF, WebP and BMP images can be attached.",
+		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
+		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	}
 }

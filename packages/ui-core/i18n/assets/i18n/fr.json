@@ -6950,6 +6950,13 @@
 		"COMMENTS": "Commentaires",
 		"COMMENTS_CAPTION": "Discussion sur ce projet",
 		"NO_COMMENTS": "Aucun commentaire pour le moment. Lancez la discussion.",
-		"COMMENT_PLACEHOLDER": "Écrire un commentaire…"
+		"COMMENT_PLACEHOLDER": "Écrire un commentaire…",
+		"COMMENT_IMAGE": "Image",
+		"ATTACH_IMAGES": "Joindre des images",
+		"REMOVE_IMAGE": "Retirer l’image",
+		"OPEN_IMAGE": "Ouvrir l’original",
+		"COMMENT_IMAGE_TYPES": "Seules les images PNG, JPEG, GIF, WebP et BMP peuvent être jointes.",
+		"COMMENT_IMAGE_LIMIT": "Un commentaire peut contenir jusqu’à {{ count }} images.",
+		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	}
 }

@@ -6964,6 +6964,13 @@
 		"COMMENTS": "תגובות",
 		"COMMENTS_CAPTION": "דיון על הפרויקט הזה",
 		"NO_COMMENTS": "אין עדיין תגובות. התחילו את הדיון.",
-		"COMMENT_PLACEHOLDER": "כתבו תגובה…"
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…",
+		"COMMENT_IMAGE": "תמונה",
+		"ATTACH_IMAGES": "צירוף תמונות",
+		"REMOVE_IMAGE": "הסרת התמונה",
+		"OPEN_IMAGE": "פתיחת המקור",
+		"COMMENT_IMAGE_TYPES": "ניתן לצרף רק תמונות PNG, JPEG, GIF, WebP ו-BMP.",
+		"COMMENT_IMAGE_LIMIT": "תגובה יכולה לכלול עד {{ count }} תמונות.",
+		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	}
 }

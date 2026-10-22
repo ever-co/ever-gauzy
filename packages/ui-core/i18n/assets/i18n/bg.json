@@ -6999,6 +6999,13 @@
 		"COMMENTS": "Коментари",
 		"COMMENTS_CAPTION": "Дискусия за този проект",
 		"NO_COMMENTS": "Все още няма коментари. Започнете дискусията.",
-		"COMMENT_PLACEHOLDER": "Напишете коментар…"
+		"COMMENT_PLACEHOLDER": "Напишете коментар…",
+		"COMMENT_IMAGE": "Изображение",
+		"ATTACH_IMAGES": "Прикачване на изображения",
+		"REMOVE_IMAGE": "Премахване на изображението",
+		"OPEN_IMAGE": "Отваряне на оригинала",
+		"COMMENT_IMAGE_TYPES": "Могат да се прикачват само изображения PNG, JPEG, GIF, WebP и BMP.",
+		"COMMENT_IMAGE_LIMIT": "Един коментар може да съдържа до {{ count }} изображения.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
 	}
 }

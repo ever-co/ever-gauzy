@@ -6946,6 +6946,13 @@
 		"COMMENTS": "التعليقات",
 		"COMMENTS_CAPTION": "النقاش حول هذا المشروع",
 		"NO_COMMENTS": "لا توجد تعليقات بعد. ابدأ النقاش.",
-		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…"
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…",
+		"COMMENT_IMAGE": "صورة",
+		"ATTACH_IMAGES": "إرفاق صور",
+		"REMOVE_IMAGE": "إزالة الصورة",
+		"OPEN_IMAGE": "فتح الأصل",
+		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
+		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
+		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	}
 }

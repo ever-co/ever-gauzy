@@ -6954,6 +6954,13 @@
 		"COMMENTS": "Opmerkingen",
 		"COMMENTS_CAPTION": "Discussie over dit project",
 		"NO_COMMENTS": "Nog geen opmerkingen. Start de discussie.",
-		"COMMENT_PLACEHOLDER": "Schrijf een opmerking…"
+		"COMMENT_PLACEHOLDER": "Schrijf een opmerking…",
+		"COMMENT_IMAGE": "Afbeelding",
+		"ATTACH_IMAGES": "Afbeeldingen bijvoegen",
+		"REMOVE_IMAGE": "Afbeelding verwijderen",
+		"OPEN_IMAGE": "Origineel openen",
+		"COMMENT_IMAGE_TYPES": "Alleen PNG-, JPEG-, GIF-, WebP- en BMP-afbeeldingen kunnen worden bijgevoegd.",
+		"COMMENT_IMAGE_LIMIT": "Een opmerking kan maximaal {{ count }} afbeeldingen bevatten.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	}
 }

@@ -6954,6 +6954,13 @@
 		"COMMENTS": "评论",
 		"COMMENTS_CAPTION": "关于此项目的讨论",
 		"NO_COMMENTS": "暂无评论。开始讨论吧。",
-		"COMMENT_PLACEHOLDER": "写评论…"
+		"COMMENT_PLACEHOLDER": "写评论…",
+		"COMMENT_IMAGE": "图片",
+		"ATTACH_IMAGES": "附加图片",
+		"REMOVE_IMAGE": "移除图片",
+		"OPEN_IMAGE": "打开原图",
+		"COMMENT_IMAGE_TYPES": "只能附加 PNG、JPEG、GIF、WebP 和 BMP 图片。",
+		"COMMENT_IMAGE_LIMIT": "一条评论最多可包含 {{ count }} 张图片。",
+		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	}
 }
