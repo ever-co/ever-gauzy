@@ -27,7 +27,6 @@ import {
 	Money,
 	RequestContext,
 	TaxLineService,
-	TenantAwareCrudService,
 	commitVersionedUpdate,
 	currencyPrecision,
 	normalizeDecimalString,
@@ -71,6 +70,7 @@ import {
 	ICartStockPort,
 	ICartTaxPort
 } from '../cart.types';
+import { CartCrudService } from '../cart-crud.service';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -166,7 +166,7 @@ interface IStockRefusal {
  * ledgers from ever disagreeing.
  */
 @Injectable()
-export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
+export class CommerceCartService extends CartCrudService<CommerceCart> {
 	constructor(
 		readonly typeOrmCommerceCartRepository: TypeOrmCommerceCartRepository,
 		readonly mikroOrmCommerceCartRepository: MikroOrmCommerceCartRepository,
@@ -276,6 +276,22 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		}
 		if (!entity.currency) {
 			throw new BadRequestException('CART_CURRENCY_REQUIRED: a cart is priced in one currency.');
+		}
+
+		// Every read of a cart by its id is a read of the session's organization (`CartCrudService`), the one that
+		// prices it below included, so a cart stated for another organization would be written and then refused to
+		// the caller that created it. It is refused before anything is written; a request with no organization in
+		// context (a job) still states one.
+		const sessionOrganizationId = RequestContext.currentOrganizationId();
+
+		if (
+			sessionOrganizationId &&
+			entity.organizationId &&
+			String(entity.organizationId) !== String(sessionOrganizationId)
+		) {
+			throw new BadRequestException(
+				'CART_ORGANIZATION_NOT_IN_SESSION: a cart is created in the organization the session is scoped to; switch organization to create one in another.'
+			);
 		}
 
 		const now = new Date();
