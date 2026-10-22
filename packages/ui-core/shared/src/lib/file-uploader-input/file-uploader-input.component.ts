@@ -104,6 +104,8 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 			} catch (error) {
 				console.log('Error while retrieving image from URL', error);
 			}
+		} else {
+			this.uploadedImgUrl.emit(fileUrl);
 		}
 	}
 

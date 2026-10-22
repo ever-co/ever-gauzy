@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import {
 	IEmployee,
@@ -67,7 +67,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				end: [null, Validators.required],
 				policy: [null, Validators.required],
 				policyId: [null, Validators.required],
-				documentUrl: [{ value: null, disabled: true }],
+				documentUrl: [null],
 				documentId: [],
 				status: [],
 				description: []
@@ -124,13 +124,9 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	 */
 	uploadDocumentAssetUrl(documentUrl: IDocumentAsset['fullUrl']) {
 		try {
-			const documentUrlControl = <FormControl>this.form.get('documentUrl');
-			if (documentUrl) {
-				documentUrlControl.enable();
-				documentUrlControl.setValue(documentUrl);
-			} else {
-				documentUrlControl.setValue(null);
-				documentUrlControl.disable();
+			this.form.get('documentUrl').setValue(documentUrl || null);
+			if (!documentUrl) {
+				this.form.get('documentId').setValue(null);
 			}
 		} catch (error) {
 			console.log('Error while uploading document asset', error);
