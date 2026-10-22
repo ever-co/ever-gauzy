@@ -10,7 +10,7 @@ import {
 	Optional
 } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { Money, RequestContext, SequenceService, TenantAwareCrudService, readAffectedRows } from '@gauzy/core';
+import { Money, RequestContext, SequenceService, readAffectedRows } from '@gauzy/core';
 import {
 	IOrderClaimLineInput,
 	IOrderTotalsPort,
@@ -28,6 +28,7 @@ import { TypeOrmOrderExchangeRepository } from '../order-exchange/repository/typ
 import { OrderClaim } from './order-claim.entity';
 import { MikroOrmOrderClaimRepository } from './repository/mikro-orm-order-claim.repository';
 import { TypeOrmOrderClaimRepository } from './repository/type-orm-order-claim.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The series key claims are numbered from. */
 const CLAIM_NUMBER_KEY = 'CLAIM';
@@ -57,7 +58,7 @@ const REFUND_DECIDED_FROM = 'refundDecidedFrom';
  * amount is normalised at the currency's scale through the platform money layer first.
  */
 @Injectable()
-export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
+export class OrderClaimService extends ReturnsCrudService<OrderClaim> {
 	private readonly logger = new Logger(OrderClaimService.name);
 
 	constructor(

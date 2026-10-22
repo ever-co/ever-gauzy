@@ -41,7 +41,6 @@ import {
 	MultiORMEnum,
 	RequestContext,
 	SequenceService,
-	TenantAwareCrudService,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
@@ -53,6 +52,7 @@ import {
 import { OrderReturn } from './order-return.entity';
 import { MikroOrmOrderReturnRepository } from './repository/mikro-orm-order-return.repository';
 import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The series key returns are numbered from. */
 const RETURN_NUMBER_KEY = 'RETURN';
@@ -219,7 +219,7 @@ interface IReceiptSteps {
  * this class — it is set by the conditional update, in the same statement that checks it.
  */
 @Injectable()
-export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
+export class OrderReturnService extends ReturnsCrudService<OrderReturn> {
 	/** Where a failure that must not be thrown — a compensation that did not land — is reported. */
 	private readonly logger = new Logger(OrderReturnService.name);
 

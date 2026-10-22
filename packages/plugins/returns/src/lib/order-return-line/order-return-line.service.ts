@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In, Not, SaveOptions } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { LegacyFindOneOptions, MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, MultiORMEnum, RequestContext } from '@gauzy/core';
 import {
 	IOrderFulfillmentPort,
 	IOrderLineFulfillment,
@@ -18,6 +18,7 @@ import { TypeOrmOrderReturnRepository } from '../order-return/repository/type-or
 import { OrderReturnLine } from './order-return-line.entity';
 import { MikroOrmOrderReturnLineRepository } from './repository/mikro-orm-order-return-line.repository';
 import { TypeOrmOrderReturnLineRepository } from './repository/type-orm-order-return-line.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 /** The return statuses in which its line set may still be written. */
 const EDITABLE_STATUSES: OrderReturnStatus[] = [OrderReturnStatus.OPEN, OrderReturnStatus.REQUESTED];
 
@@ -68,7 +69,7 @@ export const LIVE_RETURN_STATUSES: OrderReturnStatus[] = [
  * return on that line plus the request, against the fulfilled quantity — never the request alone.
  */
 @Injectable()
-export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLine> {
+export class OrderReturnLineService extends ReturnsCrudService<OrderReturnLine> {
 	/** Where a compensation that did not land — a failure that must not replace the original — is reported. */
 	private readonly logger = new Logger(OrderReturnLineService.name);
 

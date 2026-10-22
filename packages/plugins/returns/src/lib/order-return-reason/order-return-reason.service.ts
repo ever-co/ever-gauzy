@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { OrderReturn } from '../order-return/order-return.entity';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
 import { OrderReturnReason } from './order-return-reason.entity';
 import { MikroOrmOrderReturnReasonRepository } from './repository/mikro-orm-order-return-reason.repository';
 import { TypeOrmOrderReturnReasonRepository } from './repository/type-orm-order-return-reason.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /**
  * The governed reason codes a return can be filed under.
@@ -17,7 +18,7 @@ import { TypeOrmOrderReturnReasonRepository } from './repository/type-orm-order-
  * code, so removing the row would leave them unexplainable in a report.
  */
 @Injectable()
-export class OrderReturnReasonService extends TenantAwareCrudService<OrderReturnReason> {
+export class OrderReturnReasonService extends ReturnsCrudService<OrderReturnReason> {
 	constructor(
 		readonly typeOrmOrderReturnReasonRepository: TypeOrmOrderReturnReasonRepository,
 		readonly mikroOrmOrderReturnReasonRepository: MikroOrmOrderReturnReasonRepository
