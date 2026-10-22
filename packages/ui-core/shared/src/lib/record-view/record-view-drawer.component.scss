@@ -110,6 +110,11 @@ $drawer-z-index: 1043;
   padding: 0 0.25rem;
 }
 
+.record-drawer-expand.has-label {
+  padding: 0 0.5rem;
+  text-transform: none;
+}
+
 .record-drawer-body {
   flex: 1 1 auto;
   overflow-y: auto;
