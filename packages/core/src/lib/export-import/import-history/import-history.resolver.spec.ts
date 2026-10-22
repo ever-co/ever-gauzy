@@ -360,17 +360,14 @@ describe('ImportHistoryResolver — the guard stack and the permissions are the 
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ImportHistoryResolver)).toEqual(
 			Reflect.getMetadata(PERMISSIONS_METADATA, ImportHistoryController)
 		);
-		expect(permissionOfField('importHistories')).toEqual([
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.IMPORT_ADD
-		]);
+		expect(permissionOfField('importHistories')).toEqual([PermissionsEnum.IMPORT_ADD]);
 	});
 
 	it('states on the field the permission its own route runs under', () => {
 		expect(permissionOfField('importHistories')).toEqual(
 			permissionOfRoute(ImportHistoryController, 'findAll')
 		);
-		// The controller states both on the class and neither on the handler, so the two are one scope.
+		// The controller states its permission on the class and none on the handler, so the two are one scope.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ImportHistoryController)['findAll'])).toBeUndefined();
 	});
 });

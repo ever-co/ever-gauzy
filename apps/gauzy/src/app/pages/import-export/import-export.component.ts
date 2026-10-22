@@ -108,7 +108,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	/**
 	 * Reads the import history for the "Import history" panel. The server already orders it
 	 * newest first (`importDate DESC`), so the first rows are the latest. A refusal (the endpoint
-	 * needs ALL_ORG_VIEW and IMPORT_ADD) or any error just leaves the panel hidden.
+	 * needs IMPORT_ADD) or any error just leaves the panel hidden.
 	 */
 	private loadRecentImports(): void {
 		this.importService

@@ -1055,11 +1055,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				menuCategory: 'workspace',
 				data: {
 					translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
-					permissionKeys: [
-						PermissionsEnum.ALL_ORG_VIEW,
-						PermissionsEnum.IMPORT_ADD,
-						PermissionsEnum.EXPORT_ADD
-					],
+					permissionKeys: [PermissionsEnum.IMPORT_ADD, PermissionsEnum.EXPORT_ADD],
 					featureKey: FeatureEnum.FEATURE_IMPORT_EXPORT
 				}
 			},

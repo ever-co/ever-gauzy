@@ -11,7 +11,7 @@ const routes: Routes = [
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EXPORT_ADD],
+				only: [PermissionsEnum.EXPORT_ADD],
 				redirectTo: '/pages/settings'
 			}
 		}

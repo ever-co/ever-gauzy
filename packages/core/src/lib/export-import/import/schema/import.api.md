@@ -14,7 +14,7 @@ The import domain contributes no root field, and this document states why rather
 than leaving the absence to be read as an oversight.
 
 `ImportController` is mounted at `/api/import` and serves one route,
-`POST /api/import`, under `ALL_ORG_EDIT` and `IMPORT_ADD`. Its body is not a
+`POST /api/import`, under `IMPORT_ADD` alone. Its body is not a
 document: the route is a multipart upload, and the handler receives the stored
 file rather than the request body — `@UploadedFileStorage()` is the file the
 platform's own storage provider wrote, and the handler reads its `key`, its
