@@ -13,6 +13,8 @@ import { IPersonChip, Loadable, loaded, loading, failed, personOf } from '../pro
 interface ICommentEntry {
 	comment: IComment;
 	author: IPersonChip | null;
+	/** The author's employee page; none for a user without an employee record. */
+	authorLink: string[] | null;
 	/** "3 hours ago", for the thread card's latest reply, with the full date in its tooltip. */
 	ago: string;
 	timeLong: string;
@@ -221,7 +223,10 @@ export class ProjectCommentsComponent implements OnChanges {
 		const time = moment(comment.createdAt);
 		return {
 			comment,
-			author: comment.employee ? personOf(comment.employee) : null,
+			// A user without an employee record (an admin, say) posts with no employee: the user who posted it
+			// names them.
+			author: personOf(comment.employee) ?? personOf(comment.createdByUser),
+			authorLink: comment.employee?.id ? ['/pages/employees/view', comment.employee.id] : null,
 			ago: time.fromNow(),
 			timeLong: time.format('LLL'),
 			canDelete: this.canDelete(comment)

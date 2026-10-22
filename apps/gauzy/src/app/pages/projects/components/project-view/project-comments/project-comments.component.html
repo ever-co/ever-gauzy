@@ -160,8 +160,10 @@
 <!-- A message's author line and text. -->
 <ng-template #message let-entry>
 	<div class="comment-head">
-		@if (entry.author; as author) {
-		<a class="comment-author" [routerLink]="['/pages/employees/view', author.id]">{{ author.name }}</a>
+		@if (entry.author && entry.authorLink) {
+		<a class="comment-author" [routerLink]="entry.authorLink">{{ entry.author.name }}</a>
+		} @else if (entry.author) {
+		<span class="comment-author">{{ entry.author.name }}</span>
 		} @else {
 		<span class="comment-author">{{ 'GOALS_PAGE.COMMENT_THREAD.UNKNOWN_AUTHOR' | translate }}</span>
 		}
@@ -201,12 +203,12 @@
 
 <!-- The author's photo, linking to their page when the comment has one. -->
 <ng-template #authorAvatar let-entry let-small="small">
-	@if (entry.author; as author) {
-	<a class="comment-avatar-link" [routerLink]="['/pages/employees/view', author.id]" [attr.aria-label]="author.name">
-		<ng-container *ngTemplateOutlet="avatar; context: { $implicit: author, small: small }"></ng-container>
+	@if (entry.authorLink) {
+	<a class="comment-avatar-link" [routerLink]="entry.authorLink" [attr.aria-label]="entry.author?.name">
+		<ng-container *ngTemplateOutlet="avatar; context: { $implicit: entry.author, small: small }"></ng-container>
 	</a>
 	} @else {
-	<ng-container *ngTemplateOutlet="avatar; context: { $implicit: null, small: small }"></ng-container>
+	<ng-container *ngTemplateOutlet="avatar; context: { $implicit: entry.author, small: small }"></ng-container>
 	}
 </ng-template>
 
