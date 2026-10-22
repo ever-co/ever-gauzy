@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, SequenceService } from '@gauzy/core';
 import { PickListService } from '../pick-list/pick-list.service';
 import { PickListLineService } from '../pick-list-line/pick-list-line.service';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
@@ -18,6 +18,7 @@ import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PackSlip } from './pack-slip.entity';
 import { MikroOrmPackSlipRepository } from './repository/mikro-orm-pack-slip.repository';
 import { TypeOrmPackSlipRepository } from './repository/type-orm-pack-slip.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /**
  * Packing: the record of what went into which package, and the weight a carrier rates.
@@ -42,7 +43,7 @@ import { TypeOrmPackSlipRepository } from './repository/type-orm-pack-slip.repos
 const PACK_SLIP_WRITABLE_MEMBERS = ['carrierKey', 'packageCount', 'totalWeight', 'totalVolume', 'note', 'metadata'] as const;
 
 @Injectable()
-export class PackSlipService extends TenantAwareCrudService<PackSlip> {
+export class PackSlipService extends WarehouseCrudService<PackSlip> {
 	constructor(
 		readonly typeOrmPackSlipRepository: TypeOrmPackSlipRepository,
 		readonly mikroOrmPackSlipRepository: MikroOrmPackSlipRepository,

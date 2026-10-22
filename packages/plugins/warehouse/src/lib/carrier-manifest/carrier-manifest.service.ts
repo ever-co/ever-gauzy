@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException, Optional } 
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, SequenceService } from '@gauzy/core';
 import {
 	CarrierManifestStatus,
 	IWarehouseFulfillmentPort,
@@ -16,6 +16,7 @@ import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { CarrierManifest } from './carrier-manifest.entity';
 import { MikroOrmCarrierManifestRepository } from './repository/mikro-orm-carrier-manifest.repository';
 import { TypeOrmCarrierManifestRepository } from './repository/type-orm-carrier-manifest.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /** A manifest and the shipments it currently covers, as the service answers with them. */
 export type CarrierManifestWithMembers = CarrierManifest & { members: IWarehouseShippedFulfillment[] };
@@ -53,7 +54,7 @@ const MANIFEST_MEMBERS_KEY = 'memberFulfillmentIds';
 const CARRIER_MANIFEST_WRITABLE_MEMBERS = ['manifestDate', 'windowFrom', 'windowTo', 'note'] as const;
 
 @Injectable()
-export class CarrierManifestService extends TenantAwareCrudService<CarrierManifest> {
+export class CarrierManifestService extends WarehouseCrudService<CarrierManifest> {
 	constructor(
 		readonly typeOrmCarrierManifestRepository: TypeOrmCarrierManifestRepository,
 		readonly mikroOrmCarrierManifestRepository: MikroOrmCarrierManifestRepository,

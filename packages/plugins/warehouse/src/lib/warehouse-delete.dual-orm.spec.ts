@@ -28,6 +28,8 @@
  * translation are the kernel's own.
  */
 jest.mock('@gauzy/core', () => {
+	const { NotFoundException } = require('@nestjs/common');
+
 	/** A no-op decorator factory: the entities are declared, and mapped below by fixture schemas. */
 	const decorator = () => () => undefined;
 
@@ -45,6 +47,28 @@ jest.mock('@gauzy/core', () => {
 
 		get ormType(): string {
 			return mockOrm.current;
+		}
+
+		/** The kernel's read of one row by id, which raises on a miss. */
+		async findOneByIdString(id: string, options?: { withDeleted?: boolean }): Promise<any> {
+			// MikroORM reads on a fork of its own, as the services do: the platform runs it on `allowGlobalContext: false`.
+			const row =
+				mockOrm.current === 'mikro-orm'
+					? await this.mikroOrmRepository
+							.getEntityManager()
+							.fork()
+							.findOne(
+								this.mikroOrmRepository.entityName,
+								{ id },
+								options?.withDeleted ? { filters: false } : {}
+							)
+					: await this.typeOrmRepository.findOne({ where: { id }, withDeleted: options?.withDeleted });
+
+			if (!row) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return row;
 		}
 
 		async delete(id: string): Promise<any> {
