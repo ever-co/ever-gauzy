@@ -8131,6 +8131,11 @@
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",
-		"YESTERDAY": "Yesterday"
+		"YESTERDAY": "Yesterday",
+		"TASK_PROGRESS": "Progress",
+		"TASK_PROGRESS_OF": "{{ worked }} of {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% of the project's tracked time (no estimate)",
+		"TASK_TOP_PEOPLE": "Worked most on it",
+		"TASK_NO_ESTIMATE": "No estimate"
 	}
 }

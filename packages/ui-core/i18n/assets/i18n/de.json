@@ -6931,6 +6931,11 @@
 		"ACTIVITY_FIELDS": "Geändert: {{ fields }}",
 		"SOMEONE": "Jemand",
 		"TODAY": "Heute",
-		"YESTERDAY": "Gestern"
+		"YESTERDAY": "Gestern",
+		"TASK_PROGRESS": "Fortschritt",
+		"TASK_PROGRESS_OF": "{{ worked }} von {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % der erfassten Projektzeit (keine Schätzung)",
+		"TASK_TOP_PEOPLE": "Am meisten daran gearbeitet",
+		"TASK_NO_ESTIMATE": "Keine Schätzung"
 	}
 }

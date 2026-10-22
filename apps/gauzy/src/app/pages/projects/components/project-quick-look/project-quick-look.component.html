@@ -319,7 +319,9 @@
 					<ul class="attention-list">
 						@for (task of attention; track task.id) {
 						<li>
-							<a class="attention-task" [routerLink]="taskLink(task.id)">
+							<a class="attention-task" [routerLink]="taskLink(task.id)"
+								[queryParams]="taskQueryParams(task.id)"
+								[queryParamsHandling]="tasksInDrawer ? 'merge' : null">
 								<span class="attention-dot" [class.is-overdue]="task.overdue" aria-hidden="true"></span>
 								<span class="attention-title" [nbTooltip]="task.title" nbTooltipPlacement="top">{{ task.title }}</span>
 								<span class="attention-due" [class.is-overdue]="task.overdue">{{ task.due.key | translate : { count: task.due.count } }}</span>
@@ -493,7 +495,9 @@
 						<ul class="project-task-list">
 							@for (task of visibleTasks; track task.id) {
 							<li>
-								<a class="project-task" [routerLink]="taskLink(task.id)">
+								<a class="project-task" [routerLink]="taskLink(task.id)"
+								[queryParams]="taskQueryParams(task.id)"
+								[queryParamsHandling]="tasksInDrawer ? 'merge' : null">
 									<span
 										class="task-dot"
 										[class]="'group-' + task.statusGroup"
@@ -599,7 +603,9 @@
 						<ol class="contributor-list">
 							@for (task of topTasks.value; track task.id; let index = $index) {
 							<li class="contributor">
-								<a class="contributor-person" [routerLink]="taskLink(task.id)">
+								<a class="contributor-person" [routerLink]="taskLink(task.id)"
+								[queryParams]="taskQueryParams(task.id)"
+								[queryParamsHandling]="tasksInDrawer ? 'merge' : null">
 									<span class="top-task-rank" aria-hidden="true">{{ index + 1 }}</span>
 									<span class="contributor-name" [nbTooltip]="task.name" nbTooltipPlacement="top">{{ task.name }}</span>
 								</a>

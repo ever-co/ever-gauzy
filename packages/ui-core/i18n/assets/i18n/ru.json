@@ -6953,6 +6953,11 @@
 		"ACTIVITY_FIELDS": "Изменено: {{ fields }}",
 		"SOMEONE": "Кто-то",
 		"TODAY": "Сегодня",
-		"YESTERDAY": "Вчера"
+		"YESTERDAY": "Вчера",
+		"TASK_PROGRESS": "Прогресс",
+		"TASK_PROGRESS_OF": "{{ worked }} из {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% учтённого времени проекта (нет оценки)",
+		"TASK_TOP_PEOPLE": "Больше всего работали",
+		"TASK_NO_ESTIMATE": "Нет оценки"
 	}
 }
