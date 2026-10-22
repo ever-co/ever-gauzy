@@ -355,8 +355,18 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'EmployeeNotificationController.softRecover',
 	'EmployeeNotificationController.softRemove',
 	'EmployeeNotificationController.update',
-	// EmployeeSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService scopes every read and write to
-	// the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE (employee-setting.service.ts:30)
+	// EmployeeNotificationSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService
+	// scopes every read and write to the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE; a caller
+	// with neither reaches no row and may not create one (employee-notification-setting.service.ts
+	// findConditionsWithoutOwnEmployee, create)
+	'EmployeeNotificationSettingController.create',
+	'EmployeeNotificationSettingController.delete',
+	'EmployeeNotificationSettingController.softRecover',
+	'EmployeeNotificationSettingController.softRemove',
+	'EmployeeNotificationSettingController.update',
+	// EmployeeSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService scopes every
+	// read and write to the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE; a caller with neither
+	// reaches no row and may not create one (employee-setting.service.ts findConditionsWithoutOwnEmployee, create)
 	'EmployeeSettingController.create',
 	'EmployeeSettingController.delete',
 	// PATCH /employee-settings/:id/data is the same own-settings write, key by key (every employee saves their own
@@ -420,11 +430,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'EmployeeLevelController.create',
 	'EmployeeLevelController.delete',
 	'EmployeeLevelController.update',
-	'EmployeeNotificationSettingController.create',
-	'EmployeeNotificationSettingController.delete',
-	'EmployeeNotificationSettingController.softRecover',
-	'EmployeeNotificationSettingController.softRemove',
-	'EmployeeNotificationSettingController.update',
 	'EmployeePresetController.deleteEmployeeCriterion',
 	'EmployeePresetController.saveEmployeePreset',
 	'EmployeePresetController.saveUpdateEmployeeCriterion',
