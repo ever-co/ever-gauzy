@@ -6925,7 +6925,8 @@
 		"TABS": {
 			"OVERVIEW": "Übersicht",
 			"BOARD": "Board",
-			"ACTIVITY": "Aktivität"
+			"ACTIVITY": "Aktivität",
+			"COMMENTS": "Kommentare"
 		},
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "Keine Aufgaben",
@@ -6945,6 +6946,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} von {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % der erfassten Projektzeit (keine Schätzung)",
 		"TASK_TOP_PEOPLE": "Am meisten daran gearbeitet",
-		"TASK_NO_ESTIMATE": "Keine Schätzung"
+		"TASK_NO_ESTIMATE": "Keine Schätzung",
+		"COMMENTS": "Kommentare",
+		"COMMENTS_CAPTION": "Diskussion zu diesem Projekt",
+		"NO_COMMENTS": "Noch keine Kommentare. Starten Sie die Diskussion.",
+		"COMMENT_PLACEHOLDER": "Kommentar schreiben…"
 	}
 }

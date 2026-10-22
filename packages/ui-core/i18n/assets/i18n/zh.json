@@ -6929,7 +6929,8 @@
 		"TABS": {
 			"OVERVIEW": "概览",
 			"BOARD": "看板",
-			"ACTIVITY": "动态"
+			"ACTIVITY": "动态",
+			"COMMENTS": "评论"
 		},
 		"BOARD": "看板",
 		"COLUMN_EMPTY": "暂无任务",
@@ -6949,6 +6950,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} / {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · 占项目记录时间的 {{ share }}%（无估算）",
 		"TASK_TOP_PEOPLE": "投入最多的成员",
-		"TASK_NO_ESTIMATE": "无估算"
+		"TASK_NO_ESTIMATE": "无估算",
+		"COMMENTS": "评论",
+		"COMMENTS_CAPTION": "关于此项目的讨论",
+		"NO_COMMENTS": "暂无评论。开始讨论吧。",
+		"COMMENT_PLACEHOLDER": "写评论…"
 	}
 }

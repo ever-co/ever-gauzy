@@ -6974,7 +6974,8 @@
 		"TABS": {
 			"OVERVIEW": "Общ преглед",
 			"BOARD": "Табло",
-			"ACTIVITY": "Активност"
+			"ACTIVITY": "Активност",
+			"COMMENTS": "Коментари"
 		},
 		"BOARD": "Табло",
 		"COLUMN_EMPTY": "Няма задачи",
@@ -6994,6 +6995,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} от {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% от отчетеното време по проекта (без оценка)",
 		"TASK_TOP_PEOPLE": "Работили най-много",
-		"TASK_NO_ESTIMATE": "Няма оценка"
+		"TASK_NO_ESTIMATE": "Няма оценка",
+		"COMMENTS": "Коментари",
+		"COMMENTS_CAPTION": "Дискусия за този проект",
+		"NO_COMMENTS": "Все още няма коментари. Започнете дискусията.",
+		"COMMENT_PLACEHOLDER": "Напишете коментар…"
 	}
 }

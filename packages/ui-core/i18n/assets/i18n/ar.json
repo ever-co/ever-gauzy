@@ -6921,7 +6921,8 @@
 		"TABS": {
 			"OVERVIEW": "نظرة عامة",
 			"BOARD": "اللوحة",
-			"ACTIVITY": "النشاط"
+			"ACTIVITY": "النشاط",
+			"COMMENTS": "التعليقات"
 		},
 		"BOARD": "اللوحة",
 		"COLUMN_EMPTY": "لا توجد مهام",
@@ -6941,6 +6942,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} من {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% من الوقت المسجل للمشروع (بدون تقدير)",
 		"TASK_TOP_PEOPLE": "الأكثر عملاً عليها",
-		"TASK_NO_ESTIMATE": "لا يوجد تقدير"
+		"TASK_NO_ESTIMATE": "لا يوجد تقدير",
+		"COMMENTS": "التعليقات",
+		"COMMENTS_CAPTION": "النقاش حول هذا المشروع",
+		"NO_COMMENTS": "لا توجد تعليقات بعد. ابدأ النقاش.",
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…"
 	}
 }

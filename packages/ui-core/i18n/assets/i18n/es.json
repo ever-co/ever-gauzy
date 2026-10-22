@@ -6931,7 +6931,8 @@
 		"TABS": {
 			"OVERVIEW": "Resumen",
 			"BOARD": "Tablero",
-			"ACTIVITY": "Actividad"
+			"ACTIVITY": "Actividad",
+			"COMMENTS": "Comentarios"
 		},
 		"BOARD": "Tablero",
 		"COLUMN_EMPTY": "Sin tareas",
@@ -6951,6 +6952,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} de {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % del tiempo registrado del proyecto (sin estimación)",
 		"TASK_TOP_PEOPLE": "Quién más trabajó",
-		"TASK_NO_ESTIMATE": "Sin estimación"
+		"TASK_NO_ESTIMATE": "Sin estimación",
+		"COMMENTS": "Comentarios",
+		"COMMENTS_CAPTION": "Conversación sobre este proyecto",
+		"NO_COMMENTS": "Aún no hay comentarios. Inicia la conversación.",
+		"COMMENT_PLACEHOLDER": "Escribe un comentario…"
 	}
 }

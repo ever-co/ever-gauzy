@@ -6939,7 +6939,8 @@
 		"TABS": {
 			"OVERVIEW": "סקירה",
 			"BOARD": "לוח",
-			"ACTIVITY": "פעילות"
+			"ACTIVITY": "פעילות",
+			"COMMENTS": "תגובות"
 		},
 		"BOARD": "לוח",
 		"COLUMN_EMPTY": "אין משימות",
@@ -6959,6 +6960,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} מתוך {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% מהזמן שנרשם בפרויקט (ללא הערכה)",
 		"TASK_TOP_PEOPLE": "עבדו עליה הכי הרבה",
-		"TASK_NO_ESTIMATE": "אין הערכה"
+		"TASK_NO_ESTIMATE": "אין הערכה",
+		"COMMENTS": "תגובות",
+		"COMMENTS_CAPTION": "דיון על הפרויקט הזה",
+		"NO_COMMENTS": "אין עדיין תגובות. התחילו את הדיון.",
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…"
 	}
 }

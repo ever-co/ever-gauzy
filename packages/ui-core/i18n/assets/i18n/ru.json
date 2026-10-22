@@ -6947,7 +6947,8 @@
 		"TABS": {
 			"OVERVIEW": "Обзор",
 			"BOARD": "Доска",
-			"ACTIVITY": "Активность"
+			"ACTIVITY": "Активность",
+			"COMMENTS": "Комментарии"
 		},
 		"BOARD": "Доска",
 		"COLUMN_EMPTY": "Нет задач",
@@ -6967,6 +6968,10 @@
 		"TASK_PROGRESS_OF": "{{ worked }} из {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% учтённого времени проекта (нет оценки)",
 		"TASK_TOP_PEOPLE": "Больше всего работали",
-		"TASK_NO_ESTIMATE": "Нет оценки"
+		"TASK_NO_ESTIMATE": "Нет оценки",
+		"COMMENTS": "Комментарии",
+		"COMMENTS_CAPTION": "Обсуждение этого проекта",
+		"NO_COMMENTS": "Комментариев пока нет. Начните обсуждение.",
+		"COMMENT_PLACEHOLDER": "Напишите комментарий…"
 	}
 }
