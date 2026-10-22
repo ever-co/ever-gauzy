@@ -1,5 +1,5 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { ForbiddenException, Injectable, MethodNotAllowedException, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { SellerPayoutLine } from './seller-payout-line.entity';
@@ -8,6 +8,10 @@ import { TypeOrmSellerPayoutLineRepository } from './repository/type-orm-seller-
 import { SellerPayout } from '../seller-payout/seller-payout.entity';
 import { TypeOrmSellerPayoutRepository } from '../seller-payout/repository/type-orm-seller-payout.repository';
 import { ISellerScope } from '../seller-scope/seller-scope';
+
+/** What a deletion, archive or restore of a line answers with, whichever route or mutation asked. */
+const A_LINE_IS_RELEASED_BY_ITS_PAYOUT =
+	'A payout line is released by canceling its payout; it is never deleted or restored by a caller.';
 
 /**
  * Reads the join between a payout and the ledger rows it pays.
@@ -71,6 +75,31 @@ export class SellerPayoutLineService extends TenantAwareCrudService<SellerPayout
 		}
 
 		return line;
+	}
+
+	/**
+	 * Refuses to delete a line.
+	 *
+	 * A live line is what keeps its transaction out of every later payout run, so deleting the line of a
+	 * paid payout left the transaction payable a second time. A line is released by canceling its payout,
+	 * which archives it in the payout's own transaction. Refusing here covers the REST route and the
+	 * GraphQL mutation alike.
+	 */
+	public async delete(..._args: unknown[]): Promise<DeleteResult> {
+		throw new MethodNotAllowedException(A_LINE_IS_RELEASED_BY_ITS_PAYOUT);
+	}
+
+	/** Refuses to archive a line, for the reason `delete` does. */
+	public async softRemove(..._args: unknown[]): Promise<SellerPayoutLine> {
+		throw new MethodNotAllowedException(A_LINE_IS_RELEASED_BY_ITS_PAYOUT);
+	}
+
+	/**
+	 * Refuses to restore an archived line: the lines a cancellation archived belong to a canceled payout,
+	 * and restoring one would tie its transaction back to a payout that will never pay it.
+	 */
+	public async softRecover(..._args: unknown[]): Promise<SellerPayoutLine> {
+		throw new MethodNotAllowedException(A_LINE_IS_RELEASED_BY_ITS_PAYOUT);
 	}
 
 	/** Refuses a payout that belongs to another seller. */
