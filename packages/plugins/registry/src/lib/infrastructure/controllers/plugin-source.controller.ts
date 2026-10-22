@@ -1,9 +1,10 @@
-import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
+import { HttpStatus, ID, IPagination, PermissionsEnum, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe,
@@ -88,6 +89,7 @@ export class PluginSourceController {
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Post()
 	public async create(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
@@ -211,6 +213,7 @@ export class PluginSourceController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':sourceId')
 	public async delete(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
@@ -284,6 +287,7 @@ export class PluginSourceController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Patch(':sourceId/status')
 	public async updateStatus(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,

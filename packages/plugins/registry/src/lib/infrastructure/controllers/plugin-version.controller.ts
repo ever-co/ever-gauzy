@@ -1,9 +1,10 @@
-import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
+import { HttpStatus, ID, IPagination, PermissionsEnum, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe,
@@ -84,6 +85,7 @@ export class PluginVersionController {
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Post()
 	public async createVersion(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
@@ -188,6 +190,7 @@ export class PluginVersionController {
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Put(':versionId')
 	public async update(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -295,6 +298,7 @@ export class PluginVersionController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Patch(':versionId/status')
 	public async updateStatus(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -346,6 +350,7 @@ export class PluginVersionController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':versionId')
 	public async delete(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
