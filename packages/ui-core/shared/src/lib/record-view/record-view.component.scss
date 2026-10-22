@@ -364,6 +364,11 @@ button.record-tag {
   min-width: 12rem;
   max-width: 16rem;
   background-color: var(--gauzy-card-1);
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: -2px;
+  }
 }
 
 .record-team-head {

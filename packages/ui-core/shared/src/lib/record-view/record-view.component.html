@@ -157,7 +157,7 @@
 								nbPopoverTrigger="hover"
 								nbPopoverPlacement="bottom"
 								nbPopoverClass="record-team-popover"
-								(click)="openTeam($event, teamPopover)"
+								(click)="openTeam($event, teamPopover, team.listId)"
 								(blur)="onTeamBlur($event, teamPopover)"
 								(keydown.escape)="teamPopover.hide()"
 								aria-haspopup="true"
@@ -241,7 +241,16 @@
 
 <!-- A team's members, on hover over its chip: photo and name, each opening the employee. -->
 <ng-template #teamMembers let-team>
-	<div class="record-team" (focusout)="onTeamListFocusOut($event)" (keydown.escape)="onTeamListEscape()">
+	<!-- Focusable itself, so the keyboard can enter a list whose members open no profile. -->
+	<div
+		class="record-team"
+		tabindex="-1"
+		role="group"
+		[attr.aria-label]="team.name"
+		[attr.data-team-list]="team.listId"
+		(focusout)="onTeamListFocusOut($event)"
+		(keydown.escape)="onTeamListEscape()"
+	>
 		<div class="record-team-head">
 			<span class="record-team-name">{{ team.name }}</span>
 			<span class="record-tag-count">{{ team.members.length }}</span>

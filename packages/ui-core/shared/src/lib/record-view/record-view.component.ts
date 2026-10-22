@@ -46,6 +46,8 @@ export class RecordViewComponent implements OnChanges {
 	private readonly store = inject(Store);
 	/** The team chip whose member list is open, to close it and give focus back to the chip. */
 	private teamList: { popover: NbPopoverDirective; trigger: HTMLElement } | null = null;
+	/** Numbers each team's member list, so focus goes to the list of the chip that opened it. */
+	private static teamListSequence = 0;
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['record'] || changes['sections']) {
@@ -81,14 +83,16 @@ export class RecordViewComponent implements OnChanges {
 	 * keyboard (Enter / Space, a click with no pointer) focus moves into the list: the list renders in an
 	 * overlay at the end of the page, out of the tab order.
 	 */
-	openTeam(event: MouseEvent, popover: NbPopoverDirective): void {
+	openTeam(event: MouseEvent, popover: NbPopoverDirective, listId: string): void {
 		this.teamList = { popover, trigger: event.currentTarget as HTMLElement };
 		popover.show();
 		if (event.detail === 0) {
-			// The list renders on the next tick, in the overlay.
-			setTimeout(() =>
-				(document.querySelector('.record-team-popover button.record-team-member') as HTMLElement | null)?.focus()
-			);
+			// The list renders on the next tick, in the overlay. Only this team's list: another team's may still
+			// be open. Its first member, or the list itself when no member opens a profile.
+			setTimeout(() => {
+				const list = document.querySelector<HTMLElement>(`[data-team-list="${listId}"]`);
+				(list?.querySelector<HTMLElement>('button.record-team-member') ?? list)?.focus();
+			});
 		}
 	}
 
@@ -166,13 +170,14 @@ export class RecordViewComponent implements OnChanges {
 				// (team-employee rows, each carrying its employee) are listed on hover over its chip.
 				row.teams = (Array.isArray(value) ? value : [])
 					.map((team: any) => {
+						const listId = `record-team-${++RecordViewComponent.teamListSequence}`;
 						if (typeof team === 'string') {
-							return { name: team, count: 0, members: [] };
+							return { name: team, count: 0, members: [], listId };
 						}
 						const members = (team?.members || [])
 							.map((member: any) => RecordViewComponent.toPerson(member?.employee || member))
 							.filter(Boolean);
-						return { name: team?.name, count: team?.members?.length || 0, members };
+						return { name: team?.name, count: team?.members?.length || 0, members, listId };
 					})
 					.filter((team) => !!team.name);
 				row.isEmpty = row.teams.length === 0;
