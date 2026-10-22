@@ -1,9 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { MultiORMEnum, ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import {
+	LegacyFindOneOptions,
+	MultiORMEnum,
+	ProductVariant,
+	RequestContext,
+	TenantAwareCrudService
+} from '@gauzy/core';
 import { TaxWriteInput } from '../tax.types';
-import { assertOrganizationUnchanged, retirementResult } from '../write-rules';
+import { assertOrganizationUnchanged, inCallerOrganization, retirementResult } from '../write-rules';
 import { TaxCategory } from './tax-category.entity';
 import { MikroOrmTaxCategoryRepository } from './repository/mikro-orm-tax-category.repository';
 import { TypeOrmTaxCategoryRepository } from './repository/type-orm-tax-category.repository';
@@ -27,6 +33,20 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 		readonly mikroOrmTaxCategoryRepository: MikroOrmTaxCategoryRepository
 	) {
 		super(typeOrmTaxCategoryRepository, mikroOrmTaxCategoryRepository);
+	}
+
+	/**
+	 * Reads a tax category of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxCategory>): Promise<TaxCategory> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
 	}
 
 	/**
