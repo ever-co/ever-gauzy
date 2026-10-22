@@ -13,7 +13,7 @@ import { IPersonChip, Loadable, loaded, loading, failed, personOf } from '../pro
 interface ICommentEntry {
 	comment: IComment;
 	author: IPersonChip | null;
-	/** The author's employee page; none for a user without an employee record. */
+	/** The author's profile: their employee page, or their user profile; none where it cannot be opened. */
 	authorLink: string[] | null;
 	/** "3 hours ago", for the thread card's latest reply, with the full date in its tooltip. */
 	ago: string;
@@ -226,11 +226,24 @@ export class ProjectCommentsComponent implements OnChanges {
 			// A user without an employee record (an admin, say) posts with no employee: the user who posted it
 			// names them.
 			author: personOf(comment.employee) ?? personOf(comment.createdByUser),
-			authorLink: comment.employee?.id ? ['/pages/employees/view', comment.employee.id] : null,
+			authorLink: this.authorLinkOf(comment),
 			ago: time.fromNow(),
 			timeLong: time.format('LLL'),
 			canDelete: this.canDelete(comment)
 		};
+	}
+
+	/**
+	 * Where the author's name and avatar lead: an employee's page; for a user without an employee record, the
+	 * signed-in user's own profile, or another user's profile for those who may open it (its route asks for
+	 * ORG_USERS_EDIT and sends everyone else to the dashboard).
+	 */
+	private authorLinkOf(comment: IComment): string[] | null {
+		if (comment.employee?.id) return ['/pages/employees/view', comment.employee.id];
+		const userId = comment.createdByUser?.id ?? comment.createdByUserId;
+		if (!userId) return null;
+		if (userId === this._store.user?.id) return ['/pages/auth/profile'];
+		return this._store.hasPermission(PermissionsEnum.ORG_USERS_EDIT) ? ['/pages/users/edit', userId] : null;
 	}
 
 	/**
