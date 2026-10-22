@@ -1,6 +1,6 @@
 import { Controller, HttpStatus, Post, Body, Get, HttpCode, Put, Param, UseGuards, Delete, UsePipes } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult } from 'typeorm';
+import { DeepPartial, DeleteResult } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
@@ -43,6 +43,29 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		return this.productVariantService.findAllVariantsByProductId(productId);
 	}
 
+	/**
+	 * Creates one variant.
+	 *
+	 * Overrides the inherited `CrudController.create()` route only to attach a permission. The base declares the
+	 * route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of
+	 * the tenant could write the inventory. It now states `ORG_INVENTORY_PRODUCT_EDIT`, as every other write of
+	 * this controller does: the inventory edit grant the product routes state (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param entity The variant to create.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The created variant.
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record created successfully' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided' })
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Post()
+	async create(@Body() entity: DeepPartial<ProductVariant>, ...options: any[]): Promise<ProductVariant> {
+		return await super.create(entity, ...options);
+	}
+
 	@ApiOperation({ summary: 'Create product variants' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -52,6 +75,8 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('variants')
 	async createProductVariants(@Body() entity: IVariantCreateInput): Promise<IProductVariant[]> {
 		return await this.commandBus.execute(new ProductVariantCreateCommand(entity));
@@ -105,6 +130,8 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -123,6 +150,8 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<DeleteResult> {
 		return await this.commandBus.execute(new ProductVariantDeleteCommand(id));
@@ -138,6 +167,8 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Delete('/featured-image/:variantId')
 	async deleteFeaturedImage(@Param('variantId', UUIDValidationPipe) variantId: string): Promise<IProductVariant> {
 		return this.productVariantService.deleteFeaturedImage(variantId);
