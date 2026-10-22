@@ -1,5 +1,5 @@
 import { Public } from '@gauzy/common';
-import { Body, Controller, Get, Post, Type } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Type } from '@nestjs/common';
 import { JiraModuleOptions } from './jira.types';
 
 /**
@@ -243,34 +243,41 @@ export function getControllerClass({ path, config }: JiraModuleOptions): Type<an
 			}
 		};
 
+		/**
+		 * The hooks are public and their bodies are not verified, so a body is never written to the log: anyone
+		 * could fill the log with it, and the `installed` lifecycle payload of a real installation carries the
+		 * tenant's `sharedSecret` (and `clientKey`), which a log line would hand to whoever reads the logs.
+		 */
+		readonly logger = new Logger('JiraHook');
+
 		@Post('issue-created')
 		issueCreated(@Body() body: any) {
 			// TODO handle Issue Created
-			console.log(JSON.stringify(body));
+			this.logger.debug('Jira issue-created event received');
 			return;
 		}
 		@Post('issue-deleted')
 		issueDeleted(@Body() body: any) {
 			// TODO handle Issue Deleted
-			console.log(JSON.stringify(body));
+			this.logger.debug('Jira issue-deleted event received');
 			return;
 		}
 		@Post('issue-updated')
 		issueUpdated(@Body() body: any) {
 			// TODO handle Issue Updated
-			console.log(JSON.stringify(body));
+			this.logger.debug('Jira issue-updated event received');
 			return;
 		}
 
 		@Post('installed')
 		installed(@Body() body: any) {
 			// This function is needed to install the App
-			console.log(JSON.stringify(body));
+			this.logger.debug('Jira installed lifecycle event received');
 			return;
 		}
 		@Post('uninstalled')
 		uninstalled(@Body() body: any) {
-			console.log(JSON.stringify(body));
+			this.logger.debug('Jira uninstalled lifecycle event received');
 			return;
 		}
 
