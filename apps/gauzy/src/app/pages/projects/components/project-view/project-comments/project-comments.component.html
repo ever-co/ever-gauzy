@@ -86,11 +86,11 @@
 							<span class="thread-latest-text">{{ 'GOALS_PAGE.COMMENT_THREAD.NO_MESSAGES' | translate }}</span>
 						</div>
 						}
-						<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'reply' }"></ng-container>
-						<div class="reply-row" (dragover)="onDragOver($event)" (drop)="onDrop('reply', $event)">
+						<!-- The reply box: one block — picked images, the text, then the paperclip and Reply. -->
+						<div class="composer composer--reply" (dragover)="onDragOver($event)" (drop)="onDrop('reply', $event)">
+							<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'reply' }"></ng-container>
 							<textarea
-								nbInput
-								fullWidth
+								class="composer-input"
 								rows="1"
 								[id]="'project-comment-reply-' + entry.comment.id"
 								[formControl]="replyControl"
@@ -101,17 +101,20 @@
 								(keydown.meta.enter)="addReply(thread)"
 								(keydown.escape)="toggleThread(thread)"
 							></textarea>
-							<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'reply' }"></ng-container>
-							<button
-								type="button"
-								nbButton
-								status="primary"
-								size="tiny"
-								[disabled]="!canPost('reply') || postingReply"
-								(click)="addReply(thread)"
-							>
-								{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
-							</button>
+							<div class="composer-toolbar">
+								<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'reply' }"></ng-container>
+								<button
+									type="button"
+									class="composer-send"
+									[class.is-busy]="postingReply"
+									[disabled]="!canPost('reply') || postingReply"
+									[nbTooltip]="'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate"
+									[attr.aria-label]="'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate"
+									(click)="addReply(thread)"
+								>
+									<nb-icon icon="paper-plane-outline" aria-hidden="true"></nb-icon>
+								</button>
+							</div>
 						</div>
 						}
 					</div>
@@ -122,33 +125,36 @@
 		</ol>
 		}
 	</div>
-	<!-- The comment box, under the list as in the objective dialog. Ctrl/Cmd+Enter posts too; images can be
-	     attached with the paperclip, pasted or dropped on it. -->
-	<footer class="comment-footer" (dragover)="onDragOver($event)" (drop)="onDrop('comment', $event)">
-		<label for="project-comment" class="comment-label">{{ 'PROJECT_VIEW.COMMENTS' | translate }}</label>
-		<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'comment' }"></ng-container>
-		<div class="comment-row">
+	<!-- The comment box under the list: one block — picked images, the text, then a toolbar with the paperclip
+	     and the send button. Ctrl/Cmd+Enter posts too; images can also be pasted or dropped on it. -->
+	<footer class="comment-footer">
+		<div class="composer" (dragover)="onDragOver($event)" (drop)="onDrop('comment', $event)">
+			<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'comment' }"></ng-container>
 			<textarea
 				id="project-comment"
-				nbInput
-				fullWidth
+				class="composer-input"
+				rows="1"
 				[formControl]="commentControl"
 				[placeholder]="'PROJECT_VIEW.COMMENT_PLACEHOLDER' | translate"
+				[attr.aria-label]="'PROJECT_VIEW.COMMENT_PLACEHOLDER' | translate"
 				(paste)="onPaste('comment', $event)"
 				(keydown.control.enter)="addComment()"
 				(keydown.meta.enter)="addComment()"
 			></textarea>
-			<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'comment' }"></ng-container>
-			<button
-				type="button"
-				nbButton
-				status="primary"
-				size="small"
-				[disabled]="!canPost('comment') || postingComment"
-				(click)="addComment()"
-			>
-				{{ 'BUTTONS.ADD_COMMENT' | translate }}
-			</button>
+			<div class="composer-toolbar">
+				<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'comment' }"></ng-container>
+				<button
+					type="button"
+					class="composer-send"
+					[class.is-busy]="postingComment"
+					[disabled]="!canPost('comment') || postingComment"
+					[nbTooltip]="'BUTTONS.ADD_COMMENT' | translate"
+					[attr.aria-label]="'BUTTONS.ADD_COMMENT' | translate"
+					(click)="addComment()"
+				>
+					<nb-icon icon="paper-plane-outline" aria-hidden="true"></nb-icon>
+				</button>
+			</div>
 		</div>
 	</footer>
 </section>
@@ -193,16 +199,12 @@
 	<input #picker type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" multiple hidden (change)="onPick(box, picker)" />
 	<button
 		type="button"
-		nbButton
-		ghost
-		status="basic"
-		[size]="box === 'reply' ? 'tiny' : 'small'"
-		class="attach-button"
+		class="composer-tool"
 		[nbTooltip]="'PROJECT_VIEW.ATTACH_IMAGES' | translate"
 		[attr.aria-label]="'PROJECT_VIEW.ATTACH_IMAGES' | translate"
 		(click)="picker.click()"
 	>
-		<nb-icon icon="attach-outline"></nb-icon>
+		<nb-icon icon="attach-outline" aria-hidden="true"></nb-icon>
 	</button>
 	}
 </ng-template>

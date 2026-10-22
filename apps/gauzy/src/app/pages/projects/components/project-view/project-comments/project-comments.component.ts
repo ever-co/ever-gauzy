@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, inject,
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NbButtonModule, NbIconModule, NbInputModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { BaseEntityEnum, IComment, ID, PermissionsEnum } from '@gauzy/contracts';
@@ -67,7 +67,6 @@ interface ICommentThread {
 		RouterModule,
 		NbButtonModule,
 		NbIconModule,
-		NbInputModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		TranslatePipe
