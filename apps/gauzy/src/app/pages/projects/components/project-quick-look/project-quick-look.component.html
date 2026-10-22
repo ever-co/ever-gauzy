@@ -610,6 +610,7 @@
 					<div class="panel-body project-chart-body project-grid-body">
 						@let years = gridYears;
 						@let yearIndex = years.indexOf(gridYear);
+						<div class="activity-grid-toolbar">
 						<div class="activity-grid-years">
 							<button
 								type="button"
@@ -637,6 +638,24 @@
 								<nb-icon icon="chevron-right-outline" aria-hidden="true"></nb-icon>
 							</button>
 						</div>
+						<!-- The shown year's split: time from the timer, and time added by hand. -->
+						@let split = activityGrid.value;
+						@if (split && split.total) {
+						<dl class="activity-grid-split">
+							<div>
+								<dt><span class="swatch swatch--tracked" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.TRACKED' | translate }}</dt>
+								<dd>{{ formatHours(split.tracked) }}</dd>
+							</div>
+							<div>
+								<dt><span class="swatch swatch--manual" aria-hidden="true"></span>{{ 'EMPLOYEES_PAGE.VIEW.MANUAL' | translate }}</dt>
+								<dd>
+									{{ formatHours(split.manual) }}
+									<span class="activity-grid-share">{{ formatPercent((split.manual / split.total) * 100) }}</span>
+								</dd>
+							</div>
+						</dl>
+						}
+						</div>
 						@if (activityGrid.failed) {
 						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 						} @else if (activityGrid.value; as grid) {
@@ -653,6 +672,8 @@
 							<span
 								class="activity-day"
 								[attr.data-level]="day.level"
+								[class.has-manual]="day.manualFill > 0"
+								[style.--manual-fill]="day.manualFill + '%'"
 								[style.grid-column]="day.column"
 								[style.grid-row]="day.row"
 								[nbTooltip]="gridDayTooltip(day)"
@@ -669,6 +690,9 @@
 							@for (band of gridBands; track band.level) {
 							<li><span class="activity-day" [attr.data-level]="band.level"></span>{{ band.label }}</li>
 							}
+							<li class="activity-grid-legend-manual">
+								<span class="activity-day has-manual" data-level="3" style="--manual-fill: 40%"></span>{{ 'EMPLOYEES_PAGE.VIEW.MANUAL' | translate }}
+							</li>
 						</ul>
 						}
 					</div>
