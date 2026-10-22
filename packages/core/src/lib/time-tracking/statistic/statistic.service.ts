@@ -1995,12 +1995,18 @@ export class StatisticService {
 			return [];
 		}
 
+		const requestedEmployeeIds = request.employeeIds ?? [];
 		const employeeIds = await this._managedEmployeeService.filterAccessibleEmployeeIds(
-			request.employeeIds ?? [],
+			requestedEmployeeIds,
 			teamIds,
 			projectIds,
 			onlyMe
 		);
+		// A restriction asked for (some employees, or only me) that leaves no one must not read everyone:
+		// an empty list drops the employee predicate.
+		if ((onlyMe || isNotEmpty(requestedEmployeeIds)) && !isNotEmpty(employeeIds)) {
+			return [];
+		}
 
 		let start: string | Date;
 		let end: string | Date;
