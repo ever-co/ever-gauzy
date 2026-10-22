@@ -312,7 +312,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		// organization has to be one of the caller's, and the receipt is filed under the caller's own tenant.
 		await assertCurrentUserBelongsToOrganization(
 			this.typeOrmPaymentRepository.manager,
-			invoice?.fromOrganization?.id
+			invoice.fromOrganization?.id
 		);
 		const fromOrganization = { ...invoice.fromOrganization, tenantId: RequestContext.currentTenantId() };
 
