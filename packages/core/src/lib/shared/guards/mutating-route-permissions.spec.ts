@@ -377,6 +377,10 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// OrganizationVendorController: the shared ga-vendor-select creates a vendor inline from the Expenses dialog, which expense editors
 	// reach without ALL_ORG_EDIT; renaming and deleting a vendor stay behind ALL_ORG_EDIT
 	'OrganizationVendorController.create',
+	// PluginActivationController (registry plugin): own installation: activating and deactivating find the installation
+	// by its id, its plugin and installedById = the employee of the caller, and refuse any other
+	// (activate-plugin-command.handler.ts, deactivate-plugin-command.handler.ts)
+	'PluginActivationController.updateStatus',
 	// ReactionController: user-owned: ReactionService pins the reacting employee to the caller and refuses to update or delete
 	// the reaction of another employee (reaction.service.ts:32, 98, 134)
 	'ReactionController.create',
@@ -530,7 +534,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'OrganizationRecurringExpenseController.create',
 	'OrganizationRecurringExpenseController.delete',
 	'OrganizationRecurringExpenseController.update',
-	'PluginActivationController.updateStatus',
 	'PluginBillingController.create',
 	'PluginBillingController.update',
 	'PluginBillingController.updateStatus',
