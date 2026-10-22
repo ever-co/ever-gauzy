@@ -713,15 +713,28 @@ $weight-medium: 500;
   }
 }
 
+// Holds the grid at the panel's width; past the grid's minimum it scrolls sideways instead of
+// shrinking the squares further. The padding keeps a focused day's outline inside the box.
+.activity-grid-scroll {
+  overflow-x: auto;
+  padding: 2px;
+}
+
 // One grid for the whole year, sized to the panel: the weekday names in the first column, then a
 // block of week columns per month with a wider gap between months, each month named under its
-// block. The track list comes from the component; every week column is an equal share of the width.
+// block. The track list comes from the component; every week column is an equal share of the width,
+// never less than `--grid-min-day`, so a day stays large enough to read and to point at.
 .activity-grid {
   --grid-month-gap: 0.375rem;
+  --grid-gap: 2px;
+  --grid-min-day: 6px;
   display: grid;
   grid-template-rows: repeat(7, auto) auto;
-  gap: 2px;
-  min-width: 0;
+  gap: var(--grid-gap);
+  min-width: calc(
+    var(--grid-weeks, 0) * (var(--grid-min-day) + var(--grid-gap)) + var(--grid-months, 1) *
+      (var(--grid-month-gap) + var(--grid-gap)) + 1.5rem
+  );
 }
 
 .activity-grid-weekday {
@@ -782,6 +795,19 @@ $weight-medium: 500;
       transparent var(--manual-fill, 0%)
     );
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 1px;
+  }
+}
+
+.activity-grid-readout {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+  font-variant-numeric: tabular-nums;
 }
 
 // Each band named beside its swatch, so a square reads as hours rather than "more" or "less".
