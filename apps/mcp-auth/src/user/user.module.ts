@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@gauzy/core';
+import { LoginAttemptModule, User } from '@gauzy/core';
 import { OAuthUserService } from './oauth-user.service';
 
 /**
@@ -11,7 +11,9 @@ import { OAuthUserService } from './oauth-user.service';
 @Module({
 	imports: [
 		// Register User entity with TypeORM only
-		TypeOrmModule.forFeature([User])
+		TypeOrmModule.forFeature([User]),
+		// The per-account login failure counter the Gauzy API's login uses
+		LoginAttemptModule
 	],
 	providers: [
 		OAuthUserService
