@@ -194,6 +194,37 @@ export class PluginTagController {
 	}
 
 	/**
+	 * Batch delete plugin-tag relationships
+	 *
+	 * Declared before `DELETE :id`: Nest registers routes in declaration order, and the parameterised route
+	 * used to answer `/batch` first, where `UUIDValidationPipe` refused it, so this route was unreachable.
+	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
+	@Delete('batch')
+	@ApiOperation({
+		summary: 'Batch delete plugin-tag relationships',
+		description:
+			'Remove multiple plugin-tag relationships based on various criteria such as plugin ID, tag ID, or specific relationship IDs.'
+	})
+	@ApiBody({ type: BulkDeletePluginTagDTO })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully deleted plugin-tag relationships',
+		schema: {
+			type: 'object',
+			properties: {
+				deleted: { type: 'number', description: 'Number of relationships deleted' }
+			}
+		}
+	})
+	async batchDelete(
+		@Body(new ValidationPipe({ transform: true })) bulkDeleteDto: BulkDeletePluginTagDTO
+	): Promise<{ deleted: number }> {
+		const deleted = await this.pluginTagService.bulkDelete(bulkDeleteDto);
+		return { deleted };
+	}
+
+	/**
 	 * Delete a plugin-tag relationship
 	 *
 	 * @param id Plugin-tag relationship ID
@@ -244,34 +275,6 @@ export class PluginTagController {
 		@Body(new ValidationPipe({ transform: true })) bulkCreateDto: BulkCreatePluginTagDTO
 	): Promise<IPluginTagBulkCreateResponse> {
 		return this.pluginTagService.bulkCreate(bulkCreateDto);
-	}
-
-	/**
-	 * Batch delete plugin-tag relationships
-	 */
-	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
-	@Delete('batch')
-	@ApiOperation({
-		summary: 'Batch delete plugin-tag relationships',
-		description:
-			'Remove multiple plugin-tag relationships based on various criteria such as plugin ID, tag ID, or specific relationship IDs.'
-	})
-	@ApiBody({ type: BulkDeletePluginTagDTO })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Successfully deleted plugin-tag relationships',
-		schema: {
-			type: 'object',
-			properties: {
-				deleted: { type: 'number', description: 'Number of relationships deleted' }
-			}
-		}
-	})
-	async batchDelete(
-		@Body(new ValidationPipe({ transform: true })) bulkDeleteDto: BulkDeletePluginTagDTO
-	): Promise<{ deleted: number }> {
-		const deleted = await this.pluginTagService.bulkDelete(bulkDeleteDto);
-		return { deleted };
 	}
 
 	// NOTE: The following endpoints should be moved to their respective controllers for proper REST architecture:
