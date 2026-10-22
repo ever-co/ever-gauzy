@@ -119,13 +119,12 @@ const INVOICE_ITEM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below reaches the same `InvoiceItemService` method or dispatches the same
  * command the `/api/invoice-item` routes reach.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered routes
- * carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would refuse
- * here a caller the REST route serves — two surfaces of one concept with two scopes is exactly what
- * this delivery exists to prevent. The bulk write and the retire-and-restore pair are the exceptions,
- * and they are the controller's rather than this resolver's: those routes state `PermissionGuard` with
- * the invoice edit permission — the pair because the controller overrides the inherited routes only to
- * attach it (GHSA-v79w-54p2-wmh5) — so the fields state the same guard and the same permission.
+ * **The guard is the controller's guard.** The delivered read routes carry `TenantPermissionGuard` and no
+ * `@Permissions`, so the queries state none either: a resolver that demanded one would refuse here a caller the
+ * REST route serves — two surfaces of one concept with two scopes is exactly what this delivery exists to prevent.
+ * Every write states `PermissionGuard` with the invoice edit permission, as its route does: the bulk write
+ * always did, and the controller overrides the inherited create, update, delete, retire and restore routes only
+ * to attach it (GHSA-v79w-54p2-wmh5) — so the fields state the same guard and the same permission.
  *
  * **The whole surface is behind the capability the catalogue declares for GraphQL.** `FeatureFlagGuard`
  * is appended to the controller's guard — after the tenant guard, so a caller with no credential is
@@ -224,6 +223,8 @@ export class InvoiceItemResolver {
 	 * path persists the row's columns and stamps the caller's own tenant onto it, which is why the
 	 * tenant is not a member of the input.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('createInvoiceItem')
 	async createInvoiceItem(@Args('input') input: ICreateInvoiceItemInput): Promise<InvoiceItem> {
 		return await this.invoiceItemService.create(input as unknown as InvoiceItem);
@@ -241,6 +242,8 @@ export class InvoiceItemResolver {
 	 * answers the store's own update result — a statement about the write, `{ affected }` — which is not
 	 * a row and not what a GraphQL field named `updateInvoiceItem` may return.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('updateInvoiceItem')
 	async updateInvoiceItem(@Args('input') input: IUpdateInvoiceItemInput): Promise<InvoiceItem> {
 		const { id, ...values } = input;
@@ -258,6 +261,8 @@ export class InvoiceItemResolver {
 	 * named `deleteInvoiceItem` may return; the field answers the one fact the call establishes, that
 	 * the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('deleteInvoiceItem')
 	async deleteInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.invoiceItemService.delete(id));

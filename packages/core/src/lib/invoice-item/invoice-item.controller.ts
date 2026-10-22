@@ -1,6 +1,8 @@
 import { Controller, UseGuards, Get, Query, HttpStatus, Post, Body, Param, ValidationPipe, Delete, HttpCode, Put, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { DeepPartial } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IInvoiceItem, IPagination, PermissionsEnum, ID } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
@@ -46,6 +48,73 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO
 	): Promise<any> {
 		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list));
+	}
+
+	/**
+	 * Creates one invoice item.
+	 *
+	 * Overrides the inherited `CrudController.create()` route only to attach a permission. The base declares the route
+	 * with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of the tenant
+	 * (a candidate or a viewer included) could add a billed line to any of its invoices. It now states `INVOICES_EDIT`:
+	 * the grant its bulk-write route states (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param entity The invoice item.
+	 * @returns The created invoice item.
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record created successfully' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided' })
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Post()
+	async create(@Body() entity: DeepPartial<InvoiceItem>): Promise<InvoiceItem> {
+		return await super.create(entity);
+	}
+
+	/**
+	 * Changes one invoice item: its quantity, its price, what it bills.
+	 *
+	 * Overrides the inherited `CrudController.update()` route only to attach `INVOICES_EDIT`, for the reason
+	 * {@link create} gives. Method metadata is not inherited by an override, so the base route's `@HttpCode` is
+	 * restated to keep the response status unchanged.
+	 *
+	 * @param id The invoice item.
+	 * @param entity The fields to change.
+	 * @returns The result of the update.
+	 */
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record updated successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: QueryDeepPartialEntity<InvoiceItem>
+	): Promise<any> {
+		return await super.update(id, entity);
+	}
+
+	/**
+	 * Removes one invoice item outright.
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach `INVOICES_EDIT`, for the reason
+	 * {@link create} gives.
+	 *
+	 * @param id The invoice item.
+	 * @returns The result of the deletion.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
+		return await super.delete(id);
 	}
 
 	/**
