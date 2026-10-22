@@ -1,6 +1,7 @@
 import { OidcError } from './errors';
 import { randomTestSecret } from './fixtures/oidc-test-kit';
 import {
+	MAX_CONSUMED_STATES,
 	OIDC_TRANSACTION_TTL_MS,
 	OidcCookieResponse,
 	OidcTransactionService,
@@ -122,6 +123,44 @@ describe('OidcTransactionService', () => {
 		await service.complete(requestCarrying(cookie.value), new FakeResponse(), COOKIE, transaction.state);
 
 		await expectStateMismatch(service.complete(requestCarrying(cookie.value), new FakeResponse(), COOKIE, transaction.state));
+	});
+
+	it('keeps completing new transactions once the replay memory is full of live states', async () => {
+		// The failure scenario: one client started and completed 10,000 transactions of its own (the start route is
+		// public, and a callback without a code still consumes its state), and every real callback for the next ten
+		// minutes was refused as already used.
+		const remember = (state: string) => (service as any).consume(state);
+		for (let index = 0; index < MAX_CONSUMED_STATES; index++) {
+			expect(remember(`flood-${index}`)).toBe(true);
+		}
+
+		const { transaction, cookie } = await begin();
+		const completed = await service.complete(
+			requestCarrying(cookie.value),
+			new FakeResponse(),
+			COOKIE,
+			transaction.state
+		);
+
+		expect(completed.state).toBe(transaction.state);
+		expect((service as any).consumed.size).toBe(MAX_CONSUMED_STATES);
+	});
+
+	it('still refuses a replay of a recent transaction once the memory is full', async () => {
+		const remember = (state: string) => (service as any).consume(state);
+		for (let index = 0; index < MAX_CONSUMED_STATES; index++) {
+			remember(`flood-${index}`);
+		}
+
+		const { transaction, cookie } = await begin();
+		await service.complete(requestCarrying(cookie.value), new FakeResponse(), COOKIE, transaction.state);
+
+		await expectStateMismatch(
+			service.complete(requestCarrying(cookie.value), new FakeResponse(), COOKIE, transaction.state)
+		);
+		// The oldest state was forgotten to make room, the newest are kept.
+		expect(remember('flood-0')).toBe(true);
+		expect(remember(`flood-${MAX_CONSUMED_STATES - 1}`)).toBe(false);
 	});
 
 	it('refuses a callback without the cookie', async () => {
