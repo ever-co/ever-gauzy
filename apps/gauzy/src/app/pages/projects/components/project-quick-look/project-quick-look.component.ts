@@ -490,22 +490,22 @@ export class ProjectQuickLookComponent implements OnChanges {
 
 	/**
 	 * The grid's choices, newest first: the last 12 months (null), then each calendar year from this
-	 * one back to the earlier of the project's start and creation. The start date can be moved later
-	 * than time already logged, so while the oldest year shown has any time, the year before it is
-	 * offered too: logged time is never out of reach.
+	 * one back to the earliest of the project's start, the project's creation and the organization's
+	 * creation. The project's dates alone are no bound — its start can be moved later than time already
+	 * logged, and an empty year can sit between logged ones — but no time is logged before the
+	 * organization existed, so every logged year stays within reach.
 	 */
 	get gridYears(): (number | null)[] {
 		const current = moment().year();
-		const years = [this.viewedProject?.startDate, this.viewedProject?.createdAt]
+		const years = [
+			this.viewedProject?.startDate,
+			this.viewedProject?.createdAt,
+			this._store.selectedOrganization?.createdAt
+		]
 			.map((date) => moment(date))
 			.filter((date) => date.isValid())
 			.map((date) => date.year());
-		let first = Math.min(current, ...years);
-		if (this.gridYear !== null) {
-			first = Math.min(first, this.gridYear);
-			const shown = this.activityGrid;
-			if (this.gridYear === first && !shown.loading && shown.value?.total) first--;
-		}
+		const first = Math.min(current, ...years, this.gridYear ?? current);
 		return [null, ...Array.from({ length: current - first + 1 }, (_, index) => current - index)];
 	}
 
