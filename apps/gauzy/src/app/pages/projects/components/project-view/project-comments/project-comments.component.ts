@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, inject, Input, OnChanges, OnDestroy, type SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, inject, Input, OnChanges, OnDestroy, Output, type SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -87,9 +87,10 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	@Input() projectName: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** The number of comments, replies included, each time the list is read: the page shows it on the tab. */
+	@Output() countChange = new EventEmitter<number>();
 
 	public threads: Loadable<ICommentThread[]> = loading([]);
-	public count = 0;
 
 	readonly commentControl = new FormControl<string>('', { nonNullable: true });
 	public postingComment = false;
@@ -141,12 +142,11 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 			const { items } = await this._commentService.getAll(BaseEntityEnum.OrganizationProject, this.projectId, this.scope());
 			if (sequence !== this._sequence) return;
 			this.threads = loaded(this.buildThreads(items));
-			this.count = items.length;
+			this.countChange.emit(items.length);
 		} catch {
 			if (sequence !== this._sequence) return;
 			// A failed read shows a retry, never "no comments" or a stale list.
 			this.threads = failed([]);
-			this.count = 0;
 		}
 	}
 

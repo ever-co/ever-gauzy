@@ -13,10 +13,6 @@ $avatar-small: 1.25rem;
 $gutter-gap: 0.625rem;
 $thread-line: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.28));
 
-.project-view-panel .panel-header {
-  min-height: 3.5rem;
-}
-
 .empty-state {
   display: flex;
   align-items: center;

@@ -1,18 +1,7 @@
 <!-- The discussion on the project, laid out as the objective dialog's Comments: the comments, oldest first, a
-     comment with replies hanging a thread card off its avatar, and the comment box under them. -->
+     comment with replies hanging a thread card off its avatar, and the comment box under them. The count is on
+     the page's Comments tab. -->
 <section class="panel project-view-panel" [nbSpinner]="threads.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-	<header class="panel-header">
-		<div class="panel-heading">
-			<h5 class="panel-title panel-title--icon">
-				<nb-icon icon="message-square-outline" aria-hidden="true"></nb-icon>
-				{{ 'PROJECT_VIEW.COMMENTS' | translate }}
-				@if (count) {
-				<span class="title-count">{{ count }}</span>
-				}
-			</h5>
-			<span class="panel-caption">{{ 'PROJECT_VIEW.COMMENTS_CAPTION' | translate }}</span>
-		</div>
-	</header>
 	<div class="panel-body">
 		@if (threads.failed) {
 		<!-- A failed read, told apart from an empty list. -->

@@ -5,8 +5,9 @@ import { BehaviorSubject, combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { IOrganization, ITask } from '@gauzy/contracts';
+import { BaseEntityEnum, IOrganization, ITask } from '@gauzy/contracts';
 import {
+	CommentService,
 	OrganizationProjectsService,
 	Store,
 	TasksService,
@@ -100,6 +101,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 
 	/** The Comments load when first opened, then stay mounted, so a draft survives a look at another tab. */
 	commentsOpened = false;
+	/** The project's comments, replies included, on the Comments tab; read with the project, kept by the tab. */
+	commentCount = 0;
 
 	/**
 	 * The task open in the drawer — the quick look the task lists open — named by `?task=<id>`, so it can
@@ -128,7 +131,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		private readonly store: Store,
 		private readonly projectsService: OrganizationProjectsService,
 		private readonly tasksService: TasksService,
-		private readonly statisticsService: TimesheetStatisticsService
+		private readonly statisticsService: TimesheetStatisticsService,
+		private readonly commentService: CommentService
 	) {
 		super(translateService);
 	}
@@ -288,6 +292,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		const sequence = ++this.loadSequence;
 		// Nothing of the previous project (or organization) stays on screen.
 		this.card = null;
+		this.commentCount = 0;
 		this.state = 'loading';
 		try {
 			const project = await firstValueFrom(this.projectsService.getById(id, ['image']));
@@ -302,10 +307,24 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 				initials: initialsOf(project.name)
 			};
 			this.state = 'ready';
+			void this.loadCommentCount(project.id, sequence);
 		} catch (error) {
 			if (sequence !== this.loadSequence) return;
 			this.card = null;
 			this.state = recordViewPageStateOf(error);
+		}
+	}
+
+	/** The Comments tab's count, before the tab is opened; a failed read leaves the tab without one. */
+	private async loadCommentCount(projectId: string, sequence: number): Promise<void> {
+		try {
+			const count = await this.commentService.count(BaseEntityEnum.OrganizationProject, projectId, {
+				organizationId: this.organization?.id,
+				tenantId: this.organization?.tenantId
+			});
+			if (sequence === this.loadSequence) this.commentCount = count;
+		} catch {
+			// The tab shows no count.
 		}
 	}
 

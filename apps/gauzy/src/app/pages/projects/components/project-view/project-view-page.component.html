@@ -53,6 +53,9 @@
 				>
 					<nb-icon [icon]="item.icon" aria-hidden="true"></nb-icon>
 					{{ item.label | translate }}
+					@if (item.id === 'comments' && commentCount) {
+					<span class="title-count tab-count">{{ commentCount }}</span>
+					}
 				</button>
 				}
 			</div>
@@ -114,6 +117,7 @@
 				[projectName]="card.name"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
+				(countChange)="commentCount = $event"
 			></ga-project-comments>
 		</div>
 		}

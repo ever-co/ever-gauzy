@@ -71,6 +71,11 @@
       font-size: 0.875rem;
     }
   }
+
+  // The Comments tab's count: the tab's own gap spaces it.
+  .tab-count {
+    margin-inline-start: 0;
+  }
 }
 
 .project-page-pane {
