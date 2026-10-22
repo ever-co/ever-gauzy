@@ -608,6 +608,35 @@
 					</header>
 					@if (showGrid) {
 					<div class="panel-body project-chart-body project-grid-body">
+						@let years = gridYears;
+						@let yearIndex = years.indexOf(gridYear);
+						<div class="activity-grid-years">
+							<button
+								type="button"
+								class="activity-grid-step"
+								[disabled]="yearIndex >= years.length - 1"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.GRID_OLDER' | translate"
+								[nbTooltip]="'PROJECT_QUICK_LOOK.GRID_OLDER' | translate"
+								nbTooltipPlacement="top"
+								(click)="stepGridYear(1)"
+							>
+								<nb-icon icon="chevron-left-outline" aria-hidden="true"></nb-icon>
+							</button>
+							<span class="activity-grid-year" aria-live="polite">{{
+								gridYear === null ? ('PROJECT_QUICK_LOOK.GRID_LAST_YEAR' | translate) : gridYear
+							}}</span>
+							<button
+								type="button"
+								class="activity-grid-step"
+								[disabled]="yearIndex <= 0"
+								[attr.aria-label]="'PROJECT_QUICK_LOOK.GRID_NEWER' | translate"
+								[nbTooltip]="'PROJECT_QUICK_LOOK.GRID_NEWER' | translate"
+								nbTooltipPlacement="top"
+								(click)="stepGridYear(-1)"
+							>
+								<nb-icon icon="chevron-right-outline" aria-hidden="true"></nb-icon>
+							</button>
+						</div>
 						@if (activityGrid.failed) {
 						<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 						} @else if (activityGrid.value; as grid) {
