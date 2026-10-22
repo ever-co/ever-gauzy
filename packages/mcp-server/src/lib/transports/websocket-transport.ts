@@ -11,6 +11,7 @@ import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { runWithAuthKey } from '../common/auth-context';
 import { authManager } from '../common/auth-manager';
+import { sessionIdForLog } from '../common/error-utils';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -313,7 +314,9 @@ export class WebSocketTransport {
 					if (validation.valid) {
 						connection.sessionId = sessionId;
 						connection.userContext = validation.userContext;
-						logger.debug(`WebSocket connection ${connectionId} associated with session ${sessionId}`);
+						logger.debug(
+							`WebSocket connection ${connectionId} associated with session ${sessionIdForLog(sessionId)}`
+						);
 					} else {
 						logger.warn(`WebSocket connection rejected: ${validation.reason}`);
 						ws.close(1008, `Session validation failed: ${validation.reason}`);
@@ -756,7 +759,7 @@ export class WebSocketTransport {
 			loginSource: 'websocket'
 		});
 
-		logger.debug(`WebSocket session created: ${session.id}`);
+		logger.debug(`WebSocket session created: ${sessionIdForLog(session.id)}`);
 
 		return {
 			sessionId: session.id,
@@ -790,7 +793,7 @@ export class WebSocketTransport {
 
 		const deleted = sessionManager.destroySession(sessionId);
 		if (deleted) {
-			logger.debug(`WebSocket session deleted: ${sessionId}`);
+			logger.debug(`WebSocket session deleted: ${sessionIdForLog(sessionId)}`);
 		}
 
 		return deleted;
