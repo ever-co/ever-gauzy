@@ -145,12 +145,35 @@
 			@case ('teams') {
 				<span class="record-wrap">
 					@for (team of row.teams; track team.name) {
-						<span class="record-tag">
-							{{ team.name }}
-							@if (team.count) {
+						<!-- A team with known members lists them on hover, on a tap, or on Enter / Space, which moves
+						     focus into the list (Tab walks it, Escape closes it and returns to the chip). -->
+						@if (team.members.length) {
+							<button
+								type="button"
+								class="record-tag is-hoverable"
+								#teamPopover="nbPopover"
+								[nbPopover]="teamMembers"
+								[nbPopoverContext]="team"
+								nbPopoverTrigger="hover"
+								nbPopoverPlacement="bottom"
+								nbPopoverClass="record-team-popover"
+								(click)="openTeam($event, teamPopover, team.listId)"
+								(blur)="onTeamBlur($event, teamPopover)"
+								(keydown.escape)="teamPopover.hide()"
+								aria-haspopup="true"
+								[attr.aria-expanded]="teamPopover.isShown"
+							>
+								{{ team.name }}
 								<span class="record-tag-count">{{ team.count }}</span>
-							}
-						</span>
+							</button>
+						} @else {
+							<span class="record-tag">
+								{{ team.name }}
+								@if (team.count) {
+									<span class="record-tag-count">{{ team.count }}</span>
+								}
+							</span>
+						}
 					}
 				</span>
 			}
@@ -214,6 +237,42 @@
 			}
 		}
 	}
+</ng-template>
+
+<!-- A team's members, on hover over its chip: photo and name, each opening the employee. -->
+<ng-template #teamMembers let-team>
+	<!-- Focusable itself, so the keyboard can enter a list whose members open no profile. -->
+	<div
+		class="record-team"
+		tabindex="-1"
+		role="group"
+		[attr.aria-label]="team.name"
+		[attr.data-team-list]="team.listId"
+		(focusout)="onTeamListFocusOut($event)"
+		(keydown.escape)="onTeamListEscape()"
+	>
+		<div class="record-team-head">
+			<span class="record-team-name">{{ team.name }}</span>
+			<span class="record-tag-count">{{ team.members.length }}</span>
+		</div>
+		<ul class="record-team-members">
+			@for (person of team.members; track person.id || person.name) {
+				<li>
+					@if (person.employee) {
+						<button type="button" class="record-team-member is-link" (click)="openEmployee(person)">
+							<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+							<span class="record-team-member-name">{{ person.name }}</span>
+						</button>
+					} @else {
+						<span class="record-team-member">
+							<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+							<span class="record-team-member-name">{{ person.name }}</span>
+						</span>
+					}
+				</li>
+			}
+		</ul>
+	</div>
 </ng-template>
 
 <ng-template #avatar let-person>

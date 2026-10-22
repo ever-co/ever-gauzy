@@ -59,6 +59,19 @@ export interface ITasksStatistics extends ITask {
 	durationPercentage?: number;
 }
 
+export interface IGetTaskEmployeesStatistics extends ITimeLogFilters {
+	onlyMe?: boolean;
+}
+
+/** One employee's tracked time on the requested tasks, with only what is needed to show who they are. */
+export interface ITaskEmployeesStatistics {
+	/** The employee's id. */
+	id: ID;
+	/** Seconds tracked. */
+	duration: number;
+	user: Pick<IUser, 'id' | 'firstName' | 'lastName' | 'imageUrl'> | null;
+}
+
 export interface IGetManualTimesStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];

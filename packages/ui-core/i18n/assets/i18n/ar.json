@@ -2176,6 +2176,17 @@
 		"UPDATE": "تحديث",
 		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
+		"COMMENT_THREAD": {
+			"REPLY": "رد",
+			"ONE_MESSAGE": "رسالة واحدة",
+			"MESSAGES": "{{ count }} رسائل",
+			"NO_MESSAGES": "لا توجد رسائل في هذه السلسلة بعد.",
+			"REPLY_PLACEHOLDER": "الرد على هذا التعليق…",
+			"UNKNOWN_AUTHOR": "غير معروف",
+			"DELETE_CONFIRM": "حذف هذا التعليق؟",
+			"DELETED": "تم حذف التعليق",
+			"LOAD_ERROR": "تعذّر تحميل التعليقات."
+		},
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
 		"DELETE_OBJECTIVE": "حذف الهدف",
@@ -2223,6 +2234,7 @@
 			"NO_KEY_RESULT": "لا توجد نتائج مفتاحية لعرضها.",
 			"NO_UPDATES": "لا توجد تحديثات حتى الآن.",
 			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن.",
+			"NO_COMMENTS": "لا توجد تعليقات حتى الآن.",
 			"NO_PROGRESS_DATA": "لا توجد بيانات تقدّم لرسمها بعد."
 		},
 		"LEVELS": {
@@ -6875,6 +6887,15 @@
 		"NEEDS_ATTENTION": "يحتاج إلى انتباه",
 		"NEEDS_ATTENTION_CAPTION": "المهام المتأخرة والمستحقة خلال 3 أيام",
 		"ACTIVITY": "النشاط اليومي",
+		"ACTIVITY_VIEWS": "عرض النشاط",
+		"ACTIVITY_VIEW_CHART": "مخطط",
+		"ACTIVITY_VIEW_GRID": "شبكة المساهمات",
+		"GRID_NONE": "لا وقت",
+		"GRID_LAST_YEAR": "آخر 12 شهرًا",
+		"GRID_OLDER": "السنة السابقة",
+		"GRID_NEWER": "السنة التالية",
+		"GRID_DAY": "{{ time }} في {{ date }}",
+		"GRID_DAY_EMPTY": "لا وقت في {{ date }}",
 		"TOP_CONTRIBUTORS": "الأكثر عملاً",
 		"CONTRIBUTORS_CAPTION": "وقت الجميع على هذا المشروع · {{ range }}",
 		"YOUR_TIME_CAPTION": "وقتك على هذا المشروع · {{ range }}",
@@ -6915,6 +6936,11 @@
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",
-		"YESTERDAY": "أمس"
+		"YESTERDAY": "أمس",
+		"TASK_PROGRESS": "التقدم",
+		"TASK_PROGRESS_OF": "{{ worked }} من {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% من الوقت المسجل للمشروع (بدون تقدير)",
+		"TASK_TOP_PEOPLE": "الأكثر عملاً عليها",
+		"TASK_NO_ESTIMATE": "لا يوجد تقدير"
 	}
 }
