@@ -34,6 +34,14 @@ export class ImageAssetService extends CrudService<IImageAsset> {
 	}
 
 	/**
+	 * One image asset, with its `fullUrl` and `thumbUrl` worked out afresh by the server — a signed URL on S3-family
+	 * storage, valid for a limited time. Reading asks for ALL_ORG_VIEW or MEDIA_GALLERY_VIEW.
+	 */
+	getById(id: IImageAsset['id']): Promise<IImageAsset> {
+		return firstValueFrom(this.http.get<IImageAsset>(`${API_PREFIX}/image-assets/${id}`));
+	}
+
+	/**
 	 * Uploads an image into `folder` and records it as an image asset; the answer carries its `fullUrl` and
 	 * `thumbUrl`. The server takes raster images only (PNG, JPEG, GIF, WebP, BMP) and refuses any other content.
 	 */

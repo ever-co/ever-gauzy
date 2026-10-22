@@ -1,11 +1,23 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, inject, Input, OnChanges, OnDestroy, Output, type SimpleChanges } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	HostListener,
+	inject,
+	Input,
+	OnChanges,
+	OnDestroy,
+	Output,
+	type SimpleChanges
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
 import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { BaseEntityEnum, IComment, ID, PermissionsEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, IComment, ID, IImageAsset, PermissionsEnum } from '@gauzy/contracts';
 import { CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { IPersonChip, Loadable, loaded, loading, failed, personOf } from '../project-view.utils';
 import { ICommentImage, parseCommentImages, withCommentImages } from './comment-images.util';
@@ -31,9 +43,22 @@ interface IPendingImage {
 	name: string;
 	/** The file itself, as an object URL, until the comment is posted. */
 	preview: string;
-	/** The uploaded image's address; none while uploading. */
-	url: string | null;
+	/** The uploaded image asset; none while uploading. */
+	assetId: ID | null;
 	uploading: boolean;
+}
+
+/** An image asset's addresses, as the server last worked them out, and when. */
+interface IImageUrls {
+	full: string;
+	thumb: string;
+	at: number;
+}
+
+/** An image open full size. */
+interface IViewedImage {
+	name: string;
+	url: string;
 }
 
 /** The comment box under the list, or the open thread's reply box. */
@@ -45,6 +70,11 @@ const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'imag
 const MAX_IMAGES = 10;
 /** The upload folder, under the tenant's own directory. */
 const IMAGE_FOLDER = 'comment_images';
+/**
+ * How long an image's looked-up address is reused. On S3-family storage it is signed for an hour
+ * (PRESIGNED_URL_EXPIRES_IN_SECONDS); half of that leaves an address on screen time to load.
+ */
+const IMAGE_URL_TTL_MS = 30 * 60 * 1000;
 
 /** A top-level comment with the replies posted under it, oldest first. */
 interface ICommentThread {
@@ -57,6 +87,10 @@ interface ICommentThread {
  * comments, oldest first, each with its replies one level deep, a box to post a new one, a reply box per
  * thread, and delete where the server would allow it. Images attach to a comment or reply — picked, pasted or
  * dropped — and show under its text as thumbnails that open full size.
+ *
+ * An image is uploaded as an image asset when it is picked; the comment refers to the asset, and its address is
+ * looked up through the image asset API when comments are read. An upload that is not posted — removed, left in
+ * an unsent box, or finished after its image was removed — is deleted again.
  */
 @Component({
 	selector: 'ga-project-comments',
@@ -65,6 +99,7 @@ interface ICommentThread {
 		CommonModule,
 		ReactiveFormsModule,
 		RouterModule,
+		A11yModule,
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
@@ -87,35 +122,40 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	@Input() organizationId: string;
 	@Input() tenantId: string;
 	/** The number of comments, replies included, each time the list is read: the page shows it on the tab. */
-	@Output() countChange = new EventEmitter<number>();
+	@Output() readonly countChange = new EventEmitter<number>();
 
-	public threads: Loadable<ICommentThread[]> = loading([]);
+	protected threads: Loadable<ICommentThread[]> = loading([]);
 
-	readonly commentControl = new FormControl<string>('', { nonNullable: true });
-	public postingComment = false;
+	protected readonly commentControl = new FormControl<string>('', { nonNullable: true });
+	protected postingComment = false;
 	/** The thread whose replies and reply box are shown; one at a time. */
-	public openThreadId: ID | null = null;
-	readonly replyControl = new FormControl<string>('', { nonNullable: true });
-	public postingReply = false;
+	protected openThreadId: ID | null = null;
+	protected readonly replyControl = new FormControl<string>('', { nonNullable: true });
+	protected postingReply = false;
 	/** The comment showing its inline "Delete this comment?" confirmation; one at a time. */
-	public confirmingDeleteId: ID | null = null;
-	public deleting = false;
+	protected confirmingDeleteId: ID | null = null;
+	protected deleting = false;
 	/** The images picked for each box, in the order picked. */
-	public pending: Record<CommentBox, IPendingImage[]> = { comment: [], reply: [] };
+	protected pending: Record<CommentBox, IPendingImage[]> = { comment: [], reply: [] };
 	/** The image open full size, over the page. */
-	public viewing: ICommentImage | null = null;
+	protected viewing: IViewedImage | null = null;
+	/** Each attached image's addresses by asset; `null` once a lookup failed (deleted, or not readable here). */
+	protected imageUrls = new Map<ID, IImageUrls | null>();
 
 	private readonly _commentService = inject(CommentService);
 	private readonly _store = inject(Store);
 	private readonly _toastr = inject(ToastrService);
 	private readonly _translate = inject(TranslateService);
+	private readonly _imageAssets = inject(ImageAssetService);
 	/** Numbers each read, so only the latest one is applied: a post and a delete can each refresh at once. */
 	private _sequence = 0;
-	private readonly _imageAssets = inject(ImageAssetService);
 	private _imageKey = 0;
 
 	/** The image upload asks for ALL_ORG_EDIT or MEDIA_GALLERY_ADD: without either, no attach button. */
-	public readonly canAttach = this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD);
+	protected readonly canAttach = this._store.hasAnyPermission(
+		PermissionsEnum.ALL_ORG_EDIT,
+		PermissionsEnum.MEDIA_GALLERY_ADD
+	);
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
@@ -129,19 +169,26 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
+		// An unsent box's uploads go with it.
 		this.clearImages('comment');
 		this.clearImages('reply');
 	}
 
 	/** Reads (or re-reads) the project's comments; the list on screen stays while it reloads. */
-	async load(): Promise<void> {
+	protected async load(): Promise<void> {
 		const sequence = ++this._sequence;
 		this.threads = loading(this.threads.value);
 		try {
-			const { items } = await this._commentService.getAll(BaseEntityEnum.OrganizationProject, this.projectId, this.scope());
+			const { items } = await this._commentService.getAll(
+				BaseEntityEnum.OrganizationProject,
+				this.projectId,
+				this.scope()
+			);
 			if (sequence !== this._sequence) return;
-			this.threads = loaded(this.buildThreads(items));
+			const threads = this.buildThreads(items);
+			this.threads = loaded(threads);
 			this.countChange.emit(items.length);
+			void this.lookUpImages(threads);
 		} catch {
 			if (sequence !== this._sequence) return;
 			// A failed read shows a retry, never "no comments" or a stale list.
@@ -150,7 +197,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Posts the comment box's text, with its images, on the project. */
-	async addComment(): Promise<void> {
+	protected async addComment(): Promise<void> {
 		if (!this.canPost('comment') || this.postingComment) return;
 		const text = this.commentControl.value.trim();
 		const images = this.uploaded('comment');
@@ -164,7 +211,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Opens a thread's replies and reply box, or closes them when it is already open. */
-	toggleThread(thread: ICommentThread): void {
+	protected toggleThread(thread: ICommentThread): void {
 		const id = thread.entry.comment.id;
 		this.openThreadId = this.openThreadId === id ? null : id;
 		this.replyControl.reset();
@@ -172,7 +219,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Opens the thread and puts the cursor in its reply box once it renders. */
-	replyTo(thread: ICommentThread): void {
+	protected replyTo(thread: ICommentThread): void {
 		const id = thread.entry.comment.id;
 		if (this.openThreadId !== id) {
 			this.openThreadId = id;
@@ -183,7 +230,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Posts the reply box's text, with its images, under the thread's comment. */
-	async addReply(thread: ICommentThread): Promise<void> {
+	protected async addReply(thread: ICommentThread): Promise<void> {
 		if (!this.canPost('reply') || this.postingReply) return;
 		const text = this.replyControl.value.trim();
 		const images = this.uploaded('reply');
@@ -199,21 +246,26 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Whether the box has something to post — text or an image — and no image still uploading. */
-	canPost(box: CommentBox): boolean {
+	protected canPost(box: CommentBox): boolean {
 		const control = box === 'comment' ? this.commentControl : this.replyControl;
 		const images = this.pending[box];
 		return !images.some((image) => image.uploading) && (!!control.value.trim() || images.length > 0);
 	}
 
+	/** Whether the box is posting: its images are on their way into a comment and cannot be removed. */
+	protected isPosting(box: CommentBox): boolean {
+		return box === 'comment' ? this.postingComment : this.postingReply;
+	}
+
 	/** Attaches the image files picked with the attach button. */
-	onPick(box: CommentBox, input: HTMLInputElement): void {
+	protected onPick(box: CommentBox, input: HTMLInputElement): void {
 		this.attach(box, Array.from(input.files || []));
 		// The same file can be picked again after being removed.
 		input.value = '';
 	}
 
 	/** Attaches the images pasted into the box; pasted text is left to the box. */
-	onPaste(box: CommentBox, event: ClipboardEvent): void {
+	protected onPaste(box: CommentBox, event: ClipboardEvent): void {
 		const files = Array.from(event.clipboardData?.files || []).filter((file) => file.type.startsWith('image/'));
 		if (!files.length || !this.canAttach) return;
 		event.preventDefault();
@@ -221,31 +273,71 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Attaches the images dropped on the box. */
-	onDrop(box: CommentBox, event: DragEvent): void {
+	protected onDrop(box: CommentBox, event: DragEvent): void {
 		if (!this.canAttach || !event.dataTransfer?.files?.length) return;
 		event.preventDefault();
 		this.attach(box, Array.from(event.dataTransfer.files));
 	}
 
 	/** Lets files be dropped on the box. */
-	onDragOver(event: DragEvent): void {
+	protected onDragOver(event: DragEvent): void {
 		if (this.canAttach && event.dataTransfer?.types?.includes('Files')) event.preventDefault();
 	}
 
-	/** Opens an attached image full size, with the focus on its close button. */
-	openImage(image: ICommentImage): void {
-		this.viewing = image;
-		setTimeout(() => document.getElementById('project-comment-image-close')?.focus());
+	/**
+	 * Opens an attached image full size, once its address is known. The viewer traps the focus while open and
+	 * gives it back to the thumbnail when it closes.
+	 */
+	protected openImage(image: ICommentImage): void {
+		const urls = this.imageUrls.get(image.assetId);
+		if (urls) this.viewing = { name: image.name, url: urls.full };
 	}
 
 	/** Esc closes the open image, wherever the focus is. */
 	@HostListener('document:keydown.escape')
-	closeImage(): void {
+	protected closeImage(): void {
 		this.viewing = null;
 	}
 
-	removeImage(box: CommentBox, image: IPendingImage): void {
-		this.dropImages(box, [image]);
+	/** Takes a picked image out of its box, deleting its upload; not while the box is posting it. */
+	protected removeImage(box: CommentBox, image: IPendingImage): void {
+		if (this.isPosting(box)) return;
+		this.discardImages(box, [image]);
+	}
+
+	/**
+	 * Looks up the addresses of the images the comments refer to — those not known yet, or known for too long to
+	 * still be signed — one asset at a time, all at once. A failed lookup shows the image as unavailable.
+	 */
+	private async lookUpImages(threads: ICommentThread[]): Promise<void> {
+		const now = Date.now();
+		let ids = new Set<ID>();
+		for (const thread of threads) {
+			for (const entry of [thread.entry, ...thread.replies]) {
+				for (const image of entry.images) {
+					const urls = this.imageUrls.get(image.assetId);
+					if (urls === undefined || (urls && now - urls.at > IMAGE_URL_TTL_MS)) ids.add(image.assetId);
+				}
+			}
+		}
+		if (!ids.size) return;
+		await Promise.all(
+			[...ids].map(async (id) => {
+				try {
+					this.remember(await this._imageAssets.getById(id));
+				} catch {
+					this.imageUrls.set(id, null);
+				}
+			})
+		);
+		// A new map, so the thumbnails redraw.
+		this.imageUrls = new Map(this.imageUrls);
+	}
+
+	/** Keeps an asset's addresses as the server answered them. */
+	private remember(asset: IImageAsset): void {
+		if (!asset?.id || !asset.fullUrl) throw new Error('The image asset has no address');
+		this.imageUrls.set(asset.id, { full: asset.fullUrl, thumb: asset.thumbUrl || asset.fullUrl, at: Date.now() });
 	}
 
 	/**
@@ -267,7 +359,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 				key: ++this._imageKey,
 				name: file.name || 'image',
 				preview: URL.createObjectURL(file),
-				url: null,
+				assetId: null,
 				uploading: true
 			};
 			this.pending[box] = [...this.pending[box], image];
@@ -275,47 +367,93 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		}
 	}
 
-	/** Uploads one picked image; a failed upload leaves the box with a message. */
+	/**
+	 * Uploads one picked image. One removed while it uploaded is deleted again once stored; a failed upload leaves
+	 * the box with a message.
+	 */
 	private async upload(box: CommentBox, image: IPendingImage, file: File): Promise<void> {
+		let asset: IImageAsset;
 		try {
-			const asset = await this._imageAssets.upload(file, IMAGE_FOLDER, this.scope());
-			if (!asset?.fullUrl) throw new Error();
-			// A new item and array, so the box redraws.
-			this.pending[box] = this.pending[box].map((item) =>
-				item === image ? { ...image, url: asset.fullUrl, uploading: false } : item
-			);
+			asset = await this._imageAssets.upload(file, IMAGE_FOLDER, this.scope());
+			if (!asset?.id) throw new Error('The upload answered no image asset');
 		} catch (error) {
 			// Removed meanwhile, or the box was cleared: nothing to report.
-			if (!this.pending[box].includes(image)) return;
+			if (!this.isPending(box, image)) return;
 			this.dropImages(box, [image]);
 			this._toastr.danger(
-				error?.error?.message || this._translate.instant('PROJECT_VIEW.COMMENT_IMAGE_FAILED', { name: image.name }),
+				error?.error?.message ||
+					this._translate.instant('PROJECT_VIEW.COMMENT_IMAGE_FAILED', { name: image.name }),
 				this._translate.instant('TOASTR.TITLE.ERROR')
 			);
+			return;
 		}
+		if (!this.isPending(box, image)) {
+			// Removed while it uploaded: no comment will refer to it.
+			this.deleteAssets([asset.id]);
+			return;
+		}
+		// Its addresses are known now: showing it once posted needs no lookup.
+		if (asset.fullUrl) this.remember(asset);
+		// A new item and array, so the box redraws.
+		this.pending[box] = this.pending[box].map((item) =>
+			item.key === image.key ? { ...item, assetId: asset.id, uploading: false } : item
+		);
+	}
+
+	private isPending(box: CommentBox, image: IPendingImage): boolean {
+		return this.pending[box].some((item) => item.key === image.key);
 	}
 
 	/** The box's uploaded images, in order. */
-	private uploaded(box: CommentBox): (IPendingImage & ICommentImage)[] {
-		return this.pending[box].filter((image): image is IPendingImage & ICommentImage => !!image.url);
+	private uploaded(box: CommentBox): ICommentImage[] {
+		return this.pending[box]
+			.filter((image) => !!image.assetId)
+			.map((image) => ({ name: image.name, assetId: image.assetId }));
 	}
 
-	/** Takes images out of a box, letting go of their previews. */
-	private dropImages(box: CommentBox, images: IPendingImage[]): void {
-		const keys = new Set(images.map((image) => image.key));
-		this.pending[box].filter((image) => keys.has(image.key)).forEach((image) => URL.revokeObjectURL(image.preview));
-		this.pending[box] = this.pending[box].filter((image) => !keys.has(image.key));
+	/**
+	 * Takes images out of a box — by key, or by asset for the images just posted — letting go of their previews.
+	 * Their uploads stay: a posted comment refers to them.
+	 */
+	private dropImages(box: CommentBox, images: { key?: number; assetId?: ID | null }[]): void {
+		const keys = new Set(images.map((image) => image.key).filter((key) => key !== undefined));
+		const assetIds = new Set(images.map((image) => image.assetId).filter(Boolean));
+		const gone = (image: IPendingImage) => keys.has(image.key) || (!!image.assetId && assetIds.has(image.assetId));
+		this.pending[box].filter(gone).forEach((image) => URL.revokeObjectURL(image.preview));
+		this.pending[box] = this.pending[box].filter((image) => !gone(image));
 	}
 
+	/** Takes images out of a box and deletes their uploads: they will not be posted. */
+	private discardImages(box: CommentBox, images: IPendingImage[]): void {
+		this.deleteAssets(images.map((image) => image.assetId).filter(Boolean));
+		this.dropImages(box, images);
+	}
+
+	/**
+	 * Empties a box, deleting its uploads — unless it is posting them: those are only dropped, as the comment on
+	 * its way refers to them.
+	 */
 	private clearImages(box: CommentBox): void {
-		this.dropImages(box, this.pending[box]);
+		if (this.isPosting(box)) this.dropImages(box, this.pending[box]);
+		else this.discardImages(box, this.pending[box]);
+	}
+
+	/**
+	 * Deletes uploads that no comment refers to. Deleting asks for ALL_ORG_EDIT or MEDIA_GALLERY_DELETE; without
+	 * either, or on a failure, the upload stays — nothing on screen depends on it.
+	 */
+	private deleteAssets(ids: ID[]): void {
+		for (const id of ids) {
+			this.imageUrls.delete(id);
+			this._imageAssets.deleteImageAsset({ id } as IImageAsset).catch(() => undefined);
+		}
 	}
 
 	/**
 	 * Deletes a comment once its inline confirmation is accepted. Its replies are kept: the database unlinks
 	 * them (`SET NULL`), so they show as comments of their own.
 	 */
-	async deleteComment(comment: IComment): Promise<void> {
+	protected async deleteComment(comment: IComment): Promise<void> {
 		if (this.deleting) return;
 		this.deleting = true;
 		try {
@@ -360,7 +498,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	private buildThreads(comments: IComment[]): ICommentThread[] {
 		const byId = new Map(comments.map((comment) => [comment.id, comment]));
 		const rootOf = (comment: IComment): IComment => {
-			const seen = new Set<ID>();
+			let seen = new Set<ID>();
 			let current = comment;
 			while (current.parentId && byId.has(current.parentId) && !seen.has(current.id)) {
 				seen.add(current.id);
@@ -368,7 +506,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 			}
 			return current;
 		};
-		const threads = new Map<ID, ICommentThread>();
+		let threads = new Map<ID, ICommentThread>();
 		for (const comment of comments) {
 			const root = rootOf(comment);
 			if (!threads.has(root.id)) {

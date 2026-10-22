@@ -499,6 +499,21 @@ a.comment-author:hover {
   }
 }
 
+// An image still being looked up (empty), or one that cannot be read here (an image icon).
+.comment-image.is-unavailable {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $muted;
+  cursor: default;
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}
+
 .reply .comment-image {
   width: 6rem;
   height: 4rem;
@@ -557,8 +572,14 @@ a.comment-author:hover {
     font-size: 0.75rem;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: nb-theme(color-danger-default);
+  }
+
+  // While the box posts its images.
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
 
   &:focus-visible {

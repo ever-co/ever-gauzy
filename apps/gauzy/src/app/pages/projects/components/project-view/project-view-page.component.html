@@ -117,7 +117,7 @@
 				[projectName]="card.name"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
-				(countChange)="commentCount = $event"
+				(countChange)="onCommentCount($event)"
 			></ga-project-comments>
 		</div>
 		}

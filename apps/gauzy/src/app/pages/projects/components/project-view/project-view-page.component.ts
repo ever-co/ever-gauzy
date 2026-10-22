@@ -103,6 +103,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	commentsOpened = false;
 	/** The project's comments, replies included, on the Comments tab; read with the project, kept by the tab. */
 	commentCount = 0;
+	/** The Comments tab has counted the comments for this project: its count is newer than the first read. */
+	private commentCountFromTab = false;
 
 	/**
 	 * The task open in the drawer — the quick look the task lists open — named by `?task=<id>`, so it can
@@ -293,6 +295,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		// Nothing of the previous project (or organization) stays on screen.
 		this.card = null;
 		this.commentCount = 0;
+		this.commentCountFromTab = false;
 		this.state = 'loading';
 		try {
 			const project = await firstValueFrom(this.projectsService.getById(id, ['image']));
@@ -315,14 +318,23 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	/** The Comments tab's count, before the tab is opened; a failed read leaves the tab without one. */
+	/** The count the Comments tab reports each time it reads its list, after a post or a delete among others. */
+	onCommentCount(count: number): void {
+		this.commentCountFromTab = true;
+		this.commentCount = count;
+	}
+
+	/**
+	 * The Comments tab's count, before the tab is opened; a failed read leaves the tab without one. An answer that
+	 * comes after the tab has counted for itself is older than the tab's count, and is dropped.
+	 */
 	private async loadCommentCount(projectId: string, sequence: number): Promise<void> {
 		try {
 			const count = await this.commentService.count(BaseEntityEnum.OrganizationProject, projectId, {
 				organizationId: this.organization?.id,
 				tenantId: this.organization?.tenantId
 			});
-			if (sequence === this.loadSequence) this.commentCount = count;
+			if (sequence === this.loadSequence && !this.commentCountFromTab) this.commentCount = count;
 		} catch {
 			// The tab shows no count.
 		}

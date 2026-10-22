@@ -129,7 +129,12 @@ export class ProjectActivityComponent implements OnChanges {
 		const [projectLogs, taskLogs, comments] = await Promise.allSettled([
 			logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
 			this.fetchTaskLogs(logs, taskIds),
-			this._comments.getLatest(BaseEntityEnum.OrganizationProject, projectId, { organizationId, tenantId }, FEED_LIMIT)
+			this._comments.getLatest(
+				BaseEntityEnum.OrganizationProject,
+				projectId,
+				{ organizationId, tenantId },
+				FEED_LIMIT
+			)
 		]);
 		if (sequence !== this._sequence) return;
 
@@ -153,7 +158,9 @@ export class ProjectActivityComponent implements OnChanges {
 			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
 				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', log.entityId)
 			),
-			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) => this.toCommentEntry(comment))
+			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) =>
+				this.toCommentEntry(comment)
+			)
 		]
 			.sort((a, b) => b.time.localeCompare(a.time))
 			.slice(0, FEED_LIMIT);

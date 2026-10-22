@@ -177,16 +177,24 @@
 	<p class="comment-text">{{ entry.text }}</p>
 	}
 	@if (entry.images.length) {
-	<!-- The attached images as thumbnails; each opens full size. -->
+	<!-- The attached images as thumbnails, from the addresses looked up for their assets; each opens full size. One
+	     still being looked up shows empty, one that cannot be read here shows an image icon. -->
 	<div class="comment-images">
 		@for (image of entry.images; track $index) {
+		@let urls = imageUrls.get(image.assetId);
 		<button
 			type="button"
 			class="comment-image"
+			[class.is-unavailable]="!urls"
+			[disabled]="!urls"
 			[attr.aria-label]="image.name || ('PROJECT_VIEW.COMMENT_IMAGE' | translate)"
 			(click)="openImage(image)"
 		>
-			<img [src]="image.url" [alt]="image.name" loading="lazy" />
+			@if (urls) {
+			<img [src]="urls.thumb" [alt]="image.name" loading="lazy" />
+			} @else if (urls === null) {
+			<nb-icon icon="image-outline" aria-hidden="true"></nb-icon>
+			}
 		</button>
 		}
 	</div>
@@ -219,6 +227,7 @@
 			<button
 				type="button"
 				class="pending-remove"
+				[disabled]="isPosting(box)"
 				[nbTooltip]="'PROJECT_VIEW.REMOVE_IMAGE' | translate"
 				[attr.aria-label]="'PROJECT_VIEW.REMOVE_IMAGE' | translate"
 				(click)="removeImage(box, image)"
@@ -283,13 +292,23 @@
 
 <!-- An image open full size over the page; a click outside it, the close button or Esc closes it. -->
 @if (viewing) {
-<div class="image-viewer" role="dialog" aria-modal="true" [attr.aria-label]="viewing.name" (click)="viewing = null">
+<!-- The focus is trapped inside while it is open, starts on the close button, and goes back to the thumbnail
+     however it closes. -->
+<div
+	class="image-viewer"
+	role="dialog"
+	aria-modal="true"
+	[attr.aria-label]="viewing.name"
+	cdkTrapFocus
+	cdkTrapFocusAutoCapture
+	(click)="closeImage()"
+>
 	<button
 		type="button"
-		id="project-comment-image-close"
+		cdkFocusInitial
 		class="image-viewer-close"
 		[attr.aria-label]="'BUTTONS.CLOSE' | translate"
-		(click)="viewing = null"
+		(click)="closeImage()"
 	>
 		<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 	</button>
