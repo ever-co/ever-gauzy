@@ -2,9 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PricePreferenceAttribute } from '../pricing.types';
-import { assertOrganizationUnchanged, organizationForCreate } from '../organization-scope';
+import { assertOrganizationUnchanged, inCallerOrganization, organizationForCreate } from '../organization-scope';
 import { PricePreference } from './price-preference.entity';
 import { TypeOrmPricePreferenceRepository } from './repository/type-orm-price-preference.repository';
 import { MikroOrmPricePreferenceRepository } from './repository/mikro-orm-price-preference.repository';
@@ -49,6 +49,20 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		};
+	}
+
+	/**
+	 * Reads a price preference of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The price preference.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<PricePreference>): Promise<PricePreference> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), this.scope.organizationId);
 	}
 
 	/**
