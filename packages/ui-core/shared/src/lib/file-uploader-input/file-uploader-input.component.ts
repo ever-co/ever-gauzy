@@ -100,7 +100,10 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 		if (fileUrl) {
 			try {
 				await this._setupImage(fileUrl);
-				this.uploadedImgUrl.emit(fileUrl);
+				// The input may have been cleared or changed while the image loaded: report only the current URL
+				if (this.inputControl.value === fileUrl) {
+					this.uploadedImgUrl.emit(fileUrl);
+				}
 			} catch (error) {
 				console.log('Error while retrieving image from URL', error);
 			}
