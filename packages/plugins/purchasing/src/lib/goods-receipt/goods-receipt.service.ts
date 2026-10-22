@@ -11,13 +11,7 @@ import { DeleteResult, EntityManager, FindOptionsWhere, In, IsNull, UpdateResult
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import {
-	readAffectedRows,
-	RequestContext,
-	SequenceService,
-	TenantAwareCrudService,
-	TenantSettingService
-} from '@gauzy/core';
+import { readAffectedRows, RequestContext, SequenceService, TenantSettingService } from '@gauzy/core';
 import {
 	GoodsReceiptStatus,
 	IGoodsReceiptInput,
@@ -51,6 +45,7 @@ import { immutableMembers, movedMembers } from '../purchasing.immutable';
 import { GoodsReceipt } from './goods-receipt.entity';
 import { MikroOrmGoodsReceiptRepository } from './repository/mikro-orm-goods-receipt.repository';
 import { TypeOrmGoodsReceiptRepository } from './repository/type-orm-goods-receipt.repository';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /** The series key goods-receipt numbers are allocated from. */
 const GOODS_RECEIPT_NUMBER_KEY = 'RECEIPT';
@@ -169,7 +164,7 @@ export type GoodsReceiptPosting = GoodsReceipt & {
  * units from the receiving area into that bin, linked to the movement the line produced.
  */
 @Injectable()
-export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
+export class GoodsReceiptService extends PurchasingCrudService<GoodsReceipt> {
 	private readonly logger = new Logger(GoodsReceiptService.name);
 
 	constructor(
