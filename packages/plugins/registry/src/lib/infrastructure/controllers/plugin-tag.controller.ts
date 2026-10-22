@@ -1,6 +1,6 @@
 import { Public } from '@gauzy/common';
-import { ID, IPagination } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -152,6 +152,7 @@ export class PluginTagController {
 		description: 'Invalid input data or relationship already exists'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	async create(@Body(new ValidationPipe({ transform: true })) createDto: CreatePluginTagDTO): Promise<IPluginTag> {
 		return this.pluginTagService.create(createDto);
 	}
@@ -179,6 +180,8 @@ export class PluginTagController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin-tag relationship not found'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body(new ValidationPipe({ transform: true })) updateDto: UpdatePluginTagDTO
@@ -207,6 +210,7 @@ export class PluginTagController {
 		description: 'Plugin-tag relationship not found'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.pluginTagService.delete(id);
 	}
@@ -233,6 +237,7 @@ export class PluginTagController {
 		}
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	async batchCreate(
 		@Body(new ValidationPipe({ transform: true })) bulkCreateDto: BulkCreatePluginTagDTO
 	): Promise<IPluginTagBulkCreateResponse> {
@@ -260,6 +265,7 @@ export class PluginTagController {
 		}
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	async batchDelete(
 		@Body(new ValidationPipe({ transform: true })) bulkDeleteDto: BulkDeletePluginTagDTO
 	): Promise<{ deleted: number }> {

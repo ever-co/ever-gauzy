@@ -1,5 +1,11 @@
-import { IPagination } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -53,6 +59,7 @@ export class PluginCategoryController {
 	@UseValidationPipe({ whitelist: true })
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Post()
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	async create(@Body() input: CreatePluginCategoryDTO): Promise<IPluginCategory> {
 		// Ensure order has a default value if not provided
 		const inputWithDefaults = {
@@ -116,6 +123,8 @@ export class PluginCategoryController {
 	})
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: UpdatePluginCategoryDTO
@@ -134,6 +143,7 @@ export class PluginCategoryController {
 	@Patch(':id')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@UseValidationPipe({ whitelist: true })
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	async partialUpdate(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: Partial<UpdatePluginCategoryDTO>
@@ -152,6 +162,7 @@ export class PluginCategoryController {
 	@HttpCode(HttpStatus.NO_CONTENT)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Delete(':id')
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<void> {
 		await this.commandBus.execute(new DeletePluginCategoryCommand(id));
 	}

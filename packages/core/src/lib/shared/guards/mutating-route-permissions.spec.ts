@@ -377,6 +377,10 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// OrganizationVendorController: the shared ga-vendor-select creates a vendor inline from the Expenses dialog, which expense editors
 	// reach without ALL_ORG_EDIT; renaming and deleting a vendor stay behind ALL_ORG_EDIT
 	'OrganizationVendorController.create',
+	// PluginSecurityController (registry plugin): a check posted as a body: verifies a plugin version's signature
+	// against the installation's public key and answers true or false, writing nothing (plugin-security.service.ts
+	// verifySignature)
+	'PluginSecurityController.createVerification',
 	// ReactionController: user-owned: ReactionService pins the reacting employee to the caller and refuses to update or delete
 	// the reaction of another employee (reaction.service.ts:32, 98, 134)
 	'ReactionController.create',
@@ -534,20 +538,9 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'PluginBillingController.create',
 	'PluginBillingController.update',
 	'PluginBillingController.updateStatus',
-	'PluginCategoryController.create',
-	'PluginCategoryController.delete',
-	'PluginCategoryController.partialUpdate',
-	'PluginCategoryController.update',
-	'PluginSecurityController.createVerification',
 	'PluginSourceController.create',
 	'PluginSourceController.delete',
 	'PluginSourceController.updateStatus',
-	'PluginTagController.batchCreate',
-	'PluginTagController.batchDelete',
-	'PluginTagController.create',
-	'PluginTagController.delete',
-	'PluginTagController.update',
-	'PluginTagsController.replacePluginTags',
 	'PluginTenantController.bulkUpdate',
 	'PluginTenantController.create',
 	'PluginTenantController.disable',

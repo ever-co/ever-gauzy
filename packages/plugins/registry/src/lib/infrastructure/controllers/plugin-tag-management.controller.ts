@@ -1,7 +1,18 @@
 import { Public } from '@gauzy/common';
-import { ID } from '@gauzy/contracts';
-import { UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Get, HttpStatus, Param, ParseIntPipe, Put, Query, ValidationPipe } from '@nestjs/common';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpStatus,
+	Param,
+	ParseIntPipe,
+	Put,
+	Query,
+	UseGuards,
+	ValidationPipe
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginTag, PluginTagService } from '../../domain';
 import { IPluginTag, ReplacePluginTagsDTO } from '../../shared';
@@ -55,6 +66,8 @@ export class PluginTagsController {
 		type: PluginTag,
 		isArray: true
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	async replacePluginTags(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
 		@Body(new ValidationPipe({ transform: true })) replaceDto: ReplacePluginTagsDTO
