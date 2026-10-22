@@ -361,8 +361,12 @@ export class ProjectQuickLookComponent implements OnChanges {
 	public activityView: ProjectActivityView = 'chart';
 	/** The last year of the project's days; read the first time the grid is shown. */
 	public activityGrid: Loadable<IActivityGrid | null> = loading(null);
+	/** The calendar year the grid shows; null for the last {@link GRID_MONTHS} months. */
+	public gridYear: number | null = null;
 	/** Whether the grid holds the current project's and scope's year, so showing it again reads nothing. */
 	private _gridRead = false;
+	/** Bumped on every read of the grid, so a reply for a year left behind never lands. */
+	private _gridSequence = 0;
 	/** Each person's seconds on the project in the period, from the contributors' read. */
 	private _periodTime = new Map<string, number>();
 
@@ -468,14 +472,38 @@ export class ProjectQuickLookComponent implements OnChanges {
 	/** The grid reads the project's year the first time it is shown. */
 	setActivityView(view: ProjectActivityView): void {
 		this.activityView = view;
-		if (view === 'grid' && !this._gridRead && this.project?.id) {
-			const project = this._projectSequence;
-			const period = this._periodSequence;
-			void this.loadActivityGrid(
-				this.project.id,
-				() => project === this._projectSequence && period === this._periodSequence
-			);
-		}
+		if (view === 'grid' && !this._gridRead) this.readGrid();
+	}
+
+	/**
+	 * The grid's choices, newest first: the last 12 months (null), then each calendar year
+	 * from this one back to the year the project started, or was created without a start.
+	 */
+	get gridYears(): (number | null)[] {
+		const current = moment().year();
+		const since = moment(this.viewedProject?.startDate || this.viewedProject?.createdAt);
+		const first = since.isValid() ? Math.min(since.year(), current) : current;
+		return [null, ...Array.from({ length: current - first + 1 }, (_, index) => current - index)];
+	}
+
+	/** Steps the grid to an older (+1) or newer (-1) choice in {@link gridYears}. */
+	stepGridYear(step: 1 | -1): void {
+		const years = this.gridYears;
+		const next = years[years.indexOf(this.gridYear) + step];
+		if (next === undefined) return;
+		this.gridYear = next;
+		this.readGrid();
+	}
+
+	/** Reads the grid for the current project, scope and year. */
+	private readGrid(): void {
+		if (!this.project?.id) return;
+		const project = this._projectSequence;
+		const period = this._periodSequence;
+		void this.loadActivityGrid(
+			this.project.id,
+			() => project === this._projectSequence && period === this._periodSequence
+		);
 	}
 
 	/** "1h 30m on Wed, Oct 21, 2026 · 30m manual", or "No time on …". */
@@ -567,6 +595,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 		this.previousHours = null;
 		this.modules = loading([]);
 		this.activityGrid = loading(null);
+		this.gridYear = null;
 		this._gridRead = false;
 		this._periodTime = new Map();
 		this.show({ id: card.id, name: card.name, imageUrl: card.imageUrl } as IOrganizationProject);
@@ -989,17 +1018,27 @@ export class ProjectQuickLookComponent implements OnChanges {
 	}
 
 	/**
-	 * The last {@link GRID_MONTHS} months of the project's days, through today, for the year grid:
-	 * each month a block of week columns, each day shaded by its hours band ({@link GRID_BANDS}).
+	 * The project's days for the year grid — the last {@link GRID_MONTHS} months through today, or the
+	 * chosen calendar year through its end or today — each month a block of week columns, each day
+	 * shaded by its hours band ({@link GRID_BANDS}).
 	 */
-	private async loadActivityGrid(projectId: string, isCurrent: () => boolean): Promise<void> {
+	private async loadActivityGrid(projectId: string, isLatest: () => boolean): Promise<void> {
 		this._gridRead = true;
+		const sequence = ++this._gridSequence;
+		const isCurrent = () => isLatest() && sequence === this._gridSequence;
 		this.activityGrid = { ...this.activityGrid, loading: true, failed: false };
 		const today = moment().startOf('day');
-		const start = today
-			.clone()
-			.startOf('month')
-			.subtract(GRID_MONTHS - 1, 'months');
+		const year = this.gridYear;
+		const start =
+			year === null
+				? today
+						.clone()
+						.startOf('month')
+						.subtract(GRID_MONTHS - 1, 'months')
+				: moment({ year, month: 0, day: 1 });
+		// A calendar year lays out all twelve months, so its squares match the last 12 months'; days to come stay blank.
+		const layoutEnd = year === null ? today : moment({ year, month: 11, day: 31 });
+		const end = moment.min(layoutEnd, today);
 		const timeZone = this._timeZoneService.currentTimeZone;
 		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
 		try {
@@ -1007,7 +1046,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 				...this.buildRequest(),
 				projectIds: [projectId],
 				startDate: format(start),
-				endDate: format(today.clone().endOf('day'))
+				endDate: format(end.clone().endOf('day'))
 			});
 			if (!isCurrent()) return;
 			const byDay = new Map<string, { tracked: number; manual: number }>(
@@ -1030,9 +1069,9 @@ export class ProjectQuickLookComponent implements OnChanges {
 			const days: IActivityGridDay[] = [];
 			const months: IActivityGridMonth[] = [];
 			let total = 0;
-			for (let month = start.clone(); month.isSameOrBefore(today, 'month'); month.add(1, 'month')) {
+			for (let month = start.clone(); month.isSameOrBefore(layoutEnd, 'month'); month.add(1, 'month')) {
 				const first = month.clone().startOf('month');
-				const last = moment.min(month.clone().endOf('month').startOf('day'), today);
+				const last = moment.min(month.clone().endOf('month').startOf('day'), layoutEnd);
 				const weeks = last.clone().startOf('week').diff(first.clone().startOf('week'), 'weeks') + 1;
 				if (months.length) {
 					tracks.push('var(--grid-month-gap)');
@@ -1042,7 +1081,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 				tracks.push(`repeat(${weeks}, minmax(0, 1fr))`);
 				columns += weeks;
 				months.push({ key: first.format('YYYY-MM'), label: first.format('MMM'), column, span: weeks });
-				for (let date = first.clone(); date.isSameOrBefore(last, 'day'); date.add(1, 'day')) {
+				for (let date = first.clone(); date.isSameOrBefore(moment.min(last, end), 'day'); date.add(1, 'day')) {
 					const key = date.format('YYYY-MM-DD');
 					const hours = byDay.get(key) || { tracked: 0, manual: 0 };
 					const sum = hours.tracked + hours.manual;
@@ -1065,7 +1104,7 @@ export class ProjectQuickLookComponent implements OnChanges {
 					days,
 					months,
 					total,
-					range: `${start.format('ll')} – ${today.format('ll')}`
+					range: `${start.format('ll')} – ${end.format('ll')}`
 				}
 			};
 		} catch {
