@@ -27,6 +27,11 @@ export function safeRedirect(redirect: unknown, clientBaseUrl: string): string |
 	if (typeof redirect !== 'string' || !redirect || redirect.length > MAX_REDIRECT_LENGTH) {
 		return undefined;
 	}
+	// A browser drops tab, CR and LF from a URL before it resolves it, so `/\t/evil.example` passed every check
+	// below and then navigated to `//evil.example`. No path the web app routes to carries a control character.
+	if (/[\u0000-\u001f\u007f]/.test(redirect)) {
+		return undefined;
+	}
 	let candidate = redirect;
 	if (/^https?:\/\//i.test(candidate)) {
 		try {

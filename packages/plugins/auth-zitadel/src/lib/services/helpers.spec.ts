@@ -22,6 +22,10 @@ describe('Ever ID plugin helpers', () => {
 		expect(safeRedirect('/\\evil.example.test', client)).toBeUndefined();
 		expect(safeRedirect('javascript:alert(1)', client)).toBeUndefined();
 		expect(safeRedirect('/' + 'a'.repeat(600), client)).toBeUndefined();
+		// A browser drops these before resolving the URL: `/\t/evil` would navigate to `//evil`
+		for (const control of ['\t', '\r', '\n', '\u0000', '\u007f']) {
+			expect(safeRedirect(`/${control}/evil.example.test`, client)).toBeUndefined();
+		}
 	});
 
 	it('drops the e-mail address from a checkout URL', () => {
