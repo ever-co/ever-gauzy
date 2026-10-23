@@ -13,6 +13,7 @@ jest.mock('./registry-crud.service', () => ({
 	}
 }));
 jest.mock('../entities/plugin-billing.entity', () => ({ PluginBilling: class PluginBilling {} }));
+jest.mock('../entities/plugin-subscription.entity', () => ({ PluginSubscription: class PluginSubscription {} }));
 jest.mock('../repositories', () => ({}));
 
 import { PluginBillingService } from './plugin-billing.service';
