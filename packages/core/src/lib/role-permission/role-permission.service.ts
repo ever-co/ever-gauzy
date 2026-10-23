@@ -181,6 +181,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				) {
 					throw new NotAcceptableException('You can not change/add your permissions for SUPER_ADMIN');
 				}
+				this.assertMayGrant(role, partialEntity.permission, partialEntity.enabled);
 				return await this.create(partialEntity);
 			} else if (role.name === RolesEnum.ADMIN) {
 				/**
@@ -203,6 +204,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 						'You can not change/add your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
 					);
 				}
+				this.assertMayGrant(role, partialEntity.permission, partialEntity.enabled);
 				return await this.create(partialEntity);
 			}
 		} catch (error) {
@@ -255,6 +257,11 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				) {
 					throw new NotAcceptableException('You can not change/add your permissions for SUPER_ADMIN');
 				}
+				this.assertMayGrant(
+					role,
+					partialEntity.permission ?? existing.permission,
+					partialEntity.enabled ?? existing.enabled
+				);
 				return await this.update(id, partialEntity);
 			} else if (role.name === RolesEnum.ADMIN) {
 				/**
@@ -277,6 +284,11 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 						'You can not change/add your permissions to ADMIN, please ask your SUPER_ADMIN to give you more permissions'
 					);
 				}
+				this.assertMayGrant(
+					role,
+					partialEntity.permission ?? existing.permission,
+					partialEntity.enabled ?? existing.enabled
+				);
 				return await this.update(id, partialEntity);
 			}
 		} catch (err /*: WriteError*/) {
@@ -368,7 +380,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 * Restores a withdrawn permission row — under the same role rules as creating it (SEC-A-07 = SEC-E-04).
 	 */
 	public async softRecover(id: ID, options?: IFindOneOptions<RolePermission>, saveOptions?: SaveOptions): Promise<RolePermission> {
-		await this.assertMayChangePermissionRow(id, 'restore', true);
+		const { row, callerRole } = await this.assertMayChangePermissionRow(id, 'restore', true);
+		// Restoring an enabled row grants its permission again.
+		this.assertMayGrant(callerRole, row.permission, row.enabled);
 		return await super.softRecover(id, options, saveOptions);
 	}
 
@@ -378,14 +392,20 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 * @param id The row.
 	 * @param verb What the change is, for the refusal.
 	 * @param withDeleted Whether the row is read among withdrawn rows (a restore).
+	 * @returns The row, and the caller's role.
 	 */
-	private async assertMayChangePermissionRow(id: ID, verb: string, withDeleted: boolean): Promise<void> {
+	private async assertMayChangePermissionRow(
+		id: ID,
+		verb: string,
+		withDeleted: boolean
+	): Promise<{ row: RolePermission; callerRole: IRole | null }> {
 		const row = await this.findOneByOptions({
 			where: { id },
 			relations: { role: true },
 			...(withDeleted ? { withDeleted: true } : {})
 		});
-		await this.assertMayChangePermissionsOf(row?.role, verb);
+		const callerRole = await this.assertMayChangePermissionsOf(row?.role, verb);
+		return { row, callerRole };
 	}
 
 	/**
@@ -395,9 +415,13 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 *
 	 * @param target The role whose permissions would change.
 	 * @param verb What the change is, for the refusal.
+	 * @returns The caller's role.
 	 * @throws ForbiddenException when the caller may not.
 	 */
-	private async assertMayChangePermissionsOf(target: Pick<IRole, 'name'> | null | undefined, verb: string): Promise<void> {
+	private async assertMayChangePermissionsOf(
+		target: Pick<IRole, 'name'> | null | undefined,
+		verb: string
+	): Promise<IRole | null> {
 		const role = await this._roleService.findOneByWhereOptions({
 			id: RequestContext.currentRoleId(),
 			tenantId: RequestContext.currentTenantId()
@@ -415,6 +439,33 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			throw new ForbiddenException(
 				`You can not ${verb} the permissions of ${targetName ?? 'this role'}; please ask your SUPER_ADMIN.`
 			);
+		}
+		return role ?? null;
+	}
+
+	/**
+	 * Refuses to enable a permission the caller does not hold.
+	 *
+	 * The role rules above only say WHOSE permissions a caller may change; nothing bounded WHICH permissions they
+	 * may turn on. An ADMIN could enable on a lower or custom role a permission only SUPER_ADMIN holds
+	 * (`SUPER_ADMIN_EDIT`, `GLOBAL_SETTING`, `PAYMENT_PROVIDERS_EDIT`, ...), give that role to a user they control,
+	 * and act with it. The settings page never offers those toggles to an ADMIN; this holds the API to the same line.
+	 *
+	 * SUPER_ADMIN is not bounded: it is the tenant's top role, no one in the tenant can change its rows, and a bound
+	 * would only keep a permission it was never given out of the tenant altogether. Turning a permission off is
+	 * never refused.
+	 *
+	 * @param callerRole The caller's role.
+	 * @param permission The permission the row will carry.
+	 * @param enabled Whether the row will be enabled.
+	 * @throws ForbiddenException when the row would grant a permission the caller does not hold.
+	 */
+	private assertMayGrant(callerRole: Pick<IRole, 'name'> | null, permission?: string, enabled?: boolean): void {
+		if (!enabled || callerRole?.name === RolesEnum.SUPER_ADMIN) {
+			return;
+		}
+		if (!permission || !RequestContext.hasPermission(permission as PermissionsEnum)) {
+			throw new ForbiddenException(`You can not grant ${permission ?? 'a permission'} you do not hold.`);
 		}
 	}
 

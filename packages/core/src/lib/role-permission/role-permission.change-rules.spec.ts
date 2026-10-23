@@ -30,11 +30,12 @@ const ROWS: Record<string, { id: string; roleId: string; role: { name: RolesEnum
 	'p-employee': { id: 'p-employee', roleId: ROLES.employee.id, role: ROLES.employee }
 };
 
-function actingAs(callerRole: { id: string; name: RolesEnum }, canChangeRoles = true) {
+function actingAs(callerRole: { id: string; name: RolesEnum }, canChangeRoles = true, holds: PermissionsEnum[] = []) {
 	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('t-1');
 	jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(callerRole.id);
 	jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
-		(permission: PermissionsEnum) => canChangeRoles && permission === PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+		(permission: PermissionsEnum) =>
+			(canChangeRoles && permission === PermissionsEnum.CHANGE_ROLES_PERMISSIONS) || holds.includes(permission)
 	);
 
 	const roleService = {
@@ -48,8 +49,9 @@ function actingAs(callerRole: { id: string; name: RolesEnum }, canChangeRoles = 
 	const softRemove = jest.spyOn(CrudService.prototype, 'softRemove').mockImplementation(async (id: any) => ROWS[id] as never);
 	const softRecover = jest.spyOn(CrudService.prototype, 'softRecover').mockImplementation(async (id: any) => ROWS[id] as never);
 	const update = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({ affected: 1 } as never);
+	const create = jest.spyOn(service, 'create').mockImplementation(async (entity: any) => entity);
 
-	return { service, read, softRemove, softRecover, update };
+	return { service, read, softRemove, softRecover, update, create };
 }
 
 afterEach(() => jest.restoreAllMocks());
@@ -123,5 +125,87 @@ describe('any other role', () => {
 
 		await expect(service.softRemove('p-employee')).rejects.toBeInstanceOf(ForbiddenException);
 		expect(softRemove).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * The role rules say WHOSE permissions a caller may change, not WHICH: an ADMIN could enable on a lower role a
+ * permission only SUPER_ADMIN holds, give that role to a user they control, and act with it.
+ */
+describe('granting a permission', () => {
+	const ONLY_SUPER_ADMIN = PermissionsEnum.SUPER_ADMIN_EDIT;
+	const HELD = PermissionsEnum.ORG_TEAM_EDIT;
+
+	afterEach(() => {
+		for (const row of Object.values(ROWS)) {
+			delete (row as any).permission;
+			delete (row as any).enabled;
+		}
+	});
+
+	it('an ADMIN may not create an enabled row for a permission they do not hold', async () => {
+		const { service, create } = actingAs(ROLES.admin, true, [HELD]);
+
+		await expect(
+			service.createPermission({ roleId: ROLES.employee.id, permission: ONLY_SUPER_ADMIN, enabled: true })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(create).not.toHaveBeenCalled();
+	});
+
+	it('an ADMIN creates an enabled row for a permission they hold, and a disabled one for any', async () => {
+		const { service, create } = actingAs(ROLES.admin, true, [HELD]);
+
+		await service.createPermission({ roleId: ROLES.employee.id, permission: HELD, enabled: true });
+		await service.createPermission({ roleId: ROLES.employee.id, permission: ONLY_SUPER_ADMIN, enabled: false });
+
+		expect(create).toHaveBeenCalledTimes(2);
+	});
+
+	it('an ADMIN may not enable an existing row for a permission they do not hold', async () => {
+		Object.assign(ROWS['p-employee'], { permission: ONLY_SUPER_ADMIN, enabled: false });
+		const { service, update } = actingAs(ROLES.admin, true, [HELD]);
+
+		await expect(
+			service.updatePermission('p-employee', { roleId: ROLES.employee.id, enabled: true })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('an ADMIN may not repoint an enabled row at a permission they do not hold', async () => {
+		Object.assign(ROWS['p-employee'], { permission: HELD, enabled: true });
+		const { service, update } = actingAs(ROLES.admin, true, [HELD]);
+
+		await expect(
+			service.updatePermission('p-employee', { roleId: ROLES.employee.id, permission: ONLY_SUPER_ADMIN })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('an ADMIN may turn off a permission they do not hold', async () => {
+		Object.assign(ROWS['p-employee'], { permission: ONLY_SUPER_ADMIN, enabled: true });
+		const { service, update } = actingAs(ROLES.admin, true, [HELD]);
+
+		await service.updatePermission('p-employee', { roleId: ROLES.employee.id, enabled: false });
+
+		expect(update).toHaveBeenCalledTimes(1);
+	});
+
+	it('an ADMIN may not restore an enabled row for a permission they do not hold', async () => {
+		Object.assign(ROWS['p-employee'], { permission: ONLY_SUPER_ADMIN, enabled: true });
+		const { service, softRecover } = actingAs(ROLES.admin, true, [HELD]);
+
+		await expect(service.softRecover('p-employee')).rejects.toBeInstanceOf(ForbiddenException);
+		expect(softRecover).not.toHaveBeenCalled();
+	});
+
+	it('a SUPER_ADMIN is not bounded by the permissions their own role holds', async () => {
+		Object.assign(ROWS['p-admin'], { permission: ONLY_SUPER_ADMIN, enabled: false });
+		const { service, create, update } = actingAs(ROLES.super, true, []);
+
+		await service.createPermission({ roleId: ROLES.employee.id, permission: ONLY_SUPER_ADMIN, enabled: true });
+		await service.updatePermission('p-admin', { roleId: ROLES.admin.id, enabled: true });
+
+		expect(create).toHaveBeenCalledTimes(1);
+		expect(update).toHaveBeenCalledTimes(1);
 	});
 });
