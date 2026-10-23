@@ -218,6 +218,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		return (
 			comment.employee?.fullName ||
 			comment.employee?.user?.name ||
+			// Posted without an employee record (e.g. an administrator): the user who posted it.
+			comment.createdByUser?.name ||
 			this.getTranslation('GOALS_PAGE.COMMENT_THREAD.UNKNOWN_AUTHOR')
 		);
 	}
