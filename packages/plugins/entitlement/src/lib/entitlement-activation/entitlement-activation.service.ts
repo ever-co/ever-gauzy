@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { EntityManager, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { EventBus, EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventBus, EventOutboxService, RequestContext } from '@gauzy/core';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementActivation } from './entitlement-activation.entity';
 import { EntitlementKey } from '../entitlement-key/entitlement-key.entity';
@@ -23,6 +23,7 @@ import { appendEntitlementEvent, entitlementRowsOf, runEntitlementTransaction } 
 import { evaluateEntitlementState, remainingQuantity } from '../entitlement-check/entitlement-rules';
 import { MikroOrmEntitlementActivationRepository } from './repository/mikro-orm-entitlement-activation.repository';
 import { TypeOrmEntitlementActivationRepository } from './repository/type-orm-entitlement-activation.repository';
+import { EntitlementCrudService } from '../entitlement-crud.service';
 
 /**
  * Revocation reasons that bar the device from taking a new slot.
@@ -76,7 +77,7 @@ export const ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS: readonly string[] = [
  * when that is tighter.
  */
 @Injectable()
-export class EntitlementActivationService extends TenantAwareCrudService<EntitlementActivation> {
+export class EntitlementActivationService extends EntitlementCrudService<EntitlementActivation> {
 	private readonly logger = new Logger(EntitlementActivationService.name);
 
 	constructor(

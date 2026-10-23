@@ -11,7 +11,6 @@ import {
 	RequestContext,
 	RuleService,
 	SequenceService,
-	TenantAwareCrudService,
 	assertPlainReferencesNotForeign,
 	bumpVersion,
 	commitVersionedUpdate,
@@ -51,6 +50,7 @@ import { EntitlementConditionDTO } from './dto/entitlement.dto';
 import { MikroOrmEntitlementRepository } from './repository/mikro-orm-entitlement.repository';
 import { TypeOrmEntitlementRepository } from './repository/type-orm-entitlement.repository';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../entitlement.writable';
+import { EntitlementCrudService } from '../entitlement-crud.service';
 
 /** Statuses from which a right may be extended by a renewal. */
 const EXTENDABLE_STATUSES: EntitlementStatus[] = [
@@ -105,7 +105,7 @@ export const ENTITLEMENT_WRITABLE_MEMBERS: readonly string[] = [
  * line, the subscription, the party — is carried as an identifier with a foreign key.
  */
 @Injectable()
-export class EntitlementService extends TenantAwareCrudService<Entitlement> {
+export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	private readonly logger = new Logger(EntitlementService.name);
 
 	constructor(
