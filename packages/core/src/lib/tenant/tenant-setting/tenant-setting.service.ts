@@ -5,6 +5,7 @@ import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
 import { ID, ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
+import { refusalForStorageEndpoint, tenantStorageHttpsAgent } from '../../core/file-storage/storage-endpoint-policy';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
 import { RequestContext } from '../../core/context';
 import { Tenant } from '../../core/entities/internal';
@@ -344,8 +345,12 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			);
 		}
 
-		// Create S3 wasabi endpoint
+		// Create S3 wasabi endpoint: the API connects to it, so it must point at a public host.
 		const endpoint = entity.wasabi_aws_service_url;
+		const refusal = endpoint ? refusalForStorageEndpoint(endpoint) : undefined;
+		if (refusal) {
+			throw new BadRequestException(refusal);
+		}
 
 		// Create S3 wasabi region
 		const region = entity.wasabi_aws_default_region;
@@ -362,7 +367,9 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			 * Whether to force path style URLs for S3 objects
 			 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>
 			 */
-			forcePathStyle: entity.wasabi_aws_force_path_style
+			forcePathStyle: entity.wasabi_aws_force_path_style,
+			// A public name that resolves to a private address is refused when the connection is made.
+			...(endpoint ? { requestHandler: { httpsAgent: tenantStorageHttpsAgent() } } : {})
 		});
 
 		// Create the parameters for calling createBucket

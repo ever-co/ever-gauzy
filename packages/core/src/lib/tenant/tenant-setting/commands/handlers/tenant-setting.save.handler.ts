@@ -1,6 +1,7 @@
-import { forwardRef, Inject } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext } from '../../../../core/context';
+import { refusalForStorageSettings } from '../../../../core/file-storage/storage-endpoint-policy';
 import { TenantSettingService } from './../../tenant-setting.service';
 import { TenantSettingSaveCommand } from '../tenant-setting.save.command';
 
@@ -23,6 +24,12 @@ export class TenantSettingSaveHandler implements ICommandHandler<TenantSettingSa
 
 		if (!tenantId) {
 			throw new Error('Tenant ID is required to save tenant settings.');
+		}
+
+		// The API connects to the storage endpoints a tenant names: they must point at a public host.
+		const refusal = refusalForStorageSettings(command.input as Record<string, unknown>);
+		if (refusal) {
+			throw new BadRequestException(refusal);
 		}
 
 		return this._tenantSettingService.saveSettings(command.input, tenantId);

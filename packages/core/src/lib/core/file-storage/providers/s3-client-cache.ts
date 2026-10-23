@@ -65,7 +65,8 @@ function fingerprint(secret: string | undefined): string {
 }
 
 /**
- * The cache key of a client configuration. The secret is only ever present as a truncated hash.
+ * The cache key of a client configuration. The secret is only ever present as a truncated hash. A client with its own
+ * request handler (a tenant endpoint's guarded agent, see storage-endpoint-policy.ts) is never shared with one without.
  */
 export function s3ClientCacheKey(config: S3ClientConfig): string {
 	const credentials = config.credentials as { accessKeyId?: string; secretAccessKey?: string } | undefined;
@@ -74,7 +75,8 @@ export function s3ClientCacheKey(config: S3ClientConfig): string {
 		String(config.region ?? ''),
 		!!config.forcePathStyle,
 		credentials?.accessKeyId ?? '',
-		fingerprint(credentials?.secretAccessKey)
+		fingerprint(credentials?.secretAccessKey),
+		!!config.requestHandler
 	]);
 }
 
