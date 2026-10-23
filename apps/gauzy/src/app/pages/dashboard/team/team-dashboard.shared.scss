@@ -1,0 +1,172 @@
+@use 'themes' as *;
+
+/*
+ * ── Teams dashboard: shared bits ────────────────────────────────────────────
+ *
+ * Listed after the employee page's sheet in every Teams dashboard component,
+ * as the team page does with its own sheet: the team badge, the live line,
+ * member avatars, activity colours and the progress bars.
+ */
+
+$gap-md: 0.75rem;
+$weight-medium: 500;
+
+/* ── Team badge: logo, the team's colour, or its initials ────────────────── */
+
+.team-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--gauzy-radius-sm);
+  background-color: var(--gauzy-active-tint);
+  font-size: 0.6875rem;
+  font-weight: $weight-medium;
+  color: var(--gauzy-text-color-1);
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--gauzy-radius-sm);
+    object-fit: cover;
+  }
+
+  &.has-color {
+    background-color: var(--team-color);
+    color: #fff;
+
+    .avatar-initials {
+      color: #fff;
+    }
+  }
+
+  &--lg {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+/* Live line: "2 tracking now · 5 online" — green while anyone is tracking. */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: var(--gauzy-text-color-2);
+
+  &.is-live {
+    color: var(--gauzy-chart-revenue);
+  }
+}
+
+.live-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--gauzy-text-color-2) 55%, transparent);
+
+  .is-live & {
+    background-color: var(--gauzy-chart-revenue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--gauzy-chart-revenue) 25%, transparent);
+  }
+}
+
+/* ── Members ─────────────────────────────────────────────────────────────── */
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: $gap-md;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .cell-title {
+    color: nb-theme(color-primary-500);
+  }
+}
+
+.member-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: var(--gauzy-active-tint);
+  font-size: 0.6875rem;
+  font-weight: $weight-medium;
+  color: var(--gauzy-text-color-1);
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .avatar-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    right: -0.0625rem;
+    bottom: -0.0625rem;
+  }
+
+  &--sm {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.5625rem;
+
+    .avatar-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+    }
+  }
+}
+
+.member-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.role-chip.is-manager {
+  color: nb-theme(color-primary-500);
+  background-color: color-mix(in srgb, nb-theme(color-primary-500) 12%, transparent);
+}
+
+.activity {
+  font-weight: $weight-medium;
+  font-variant-numeric: tabular-nums;
+
+  &--high {
+    color: var(--gauzy-chart-revenue);
+  }
+
+  &--mid {
+    color: var(--gauzy-chart-expenses);
+  }
+
+  &--low {
+    color: var(--gauzy-action-danger-text);
+  }
+}
+
+/* ── Progress bars ───────────────────────────────────────────────────────── */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+// Time worked against the organization's working day: green while tracking.
+.bar--live {
+  background-color: var(--gauzy-chart-revenue);
+}
+
+// Time spent against a task's estimate: red once over it.
+.bar--over {
+  background-color: var(--gauzy-chart-negative);
+}
