@@ -5,15 +5,11 @@ import { ID } from '@gauzy/contracts';
 import { FulfillmentLine } from './fulfillment-line.entity';
 import { TypeOrmFulfillmentLineRepository } from './repository/type-orm-fulfillment-line.repository';
 import { MikroOrmFulfillmentLineRepository } from './repository/mikro-orm-fulfillment-line.repository';
-import {
-	RequestContext,
-	TenantAwareCrudService,
-	assertPlainReferencesNotForeign,
-	compareDecimalStrings
-} from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign, compareDecimalStrings } from '@gauzy/core';
 import { Quantity, isPositiveQuantity, toQuantityText } from '../fulfillment.quantity';
 import { FULFILLMENT_LINE_REFERENCES } from '../fulfillment.references';
 import { isCountedShipment, removalCriteria } from '../fulfillment.removal';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * The columns of a line the order line's counters were derived from.
@@ -45,7 +41,7 @@ type CountedLineColumn = (typeof COUNTED_LINE_COLUMNS)[number];
  * two protocols cannot differ about them.
  */
 @Injectable()
-export class FulfillmentLineService extends TenantAwareCrudService<FulfillmentLine> {
+export class FulfillmentLineService extends FulfillmentCrudService<FulfillmentLine> {
 	constructor(
 		readonly typeOrmFulfillmentLineRepository: TypeOrmFulfillmentLineRepository,
 		readonly mikroOrmFulfillmentLineRepository: MikroOrmFulfillmentLineRepository
