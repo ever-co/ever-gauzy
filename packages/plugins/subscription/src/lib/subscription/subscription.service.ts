@@ -20,7 +20,6 @@ import {
 	IdempotencyService,
 	Money,
 	RequestContext,
-	TenantAwareCrudService,
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	matchesExpectation,
@@ -71,6 +70,7 @@ import { SubscriptionBillingService } from '../subscription-billing/subscription
 import { Subscription } from './subscription.entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscription.repository';
+import { SubscriptionCrudService } from '../subscription-crud.service';
 
 /**
  * The version a write that no caller conditioned on is predicated on.
@@ -317,7 +317,7 @@ const UNUSABLE_INSTRUMENT_CODES: ReadonlyArray<string> = [
  *    retried blind, and nothing that failed is ever marked paid.
  */
 @Injectable()
-export class SubscriptionService extends TenantAwareCrudService<Subscription> {
+export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	private readonly logger = new Logger(SubscriptionService.name);
 
 	constructor(
