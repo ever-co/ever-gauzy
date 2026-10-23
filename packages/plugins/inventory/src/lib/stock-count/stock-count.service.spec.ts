@@ -335,6 +335,21 @@ function datastore(tables: Record<string, Row[]>) {
 
 				return found[0] ?? null;
 			},
+			// The bin balance a bin-scoped count reads: the movements matching every bound column, summed.
+			getRawOne: async () => {
+				const params: Row = {};
+				for (const condition of conditions) {
+					Object.assign(params, condition.params);
+				}
+				const bound = (row: Row) => Object.entries(params).every(([field, value]) => same(row[field], value));
+				let total = 0;
+
+				for (const row of rows(target).filter(bound)) {
+					total += Number(row.quantity ?? 0);
+				}
+
+				return { total };
+			},
 			execute: async () => {
 				if (!updateSpec) {
 					throw new Error('the in-memory double only implements an UPDATE');
@@ -541,8 +556,7 @@ function countFixture(options: { quantities?: Record<string, number> } = {}) {
 async function openSession(fixture = countFixture()) {
 	const count = await fixture.service.createCount({
 		warehouseId: WAREHOUSE,
-		mode: StockCountMode.FULL,
-		binId: BIN
+		mode: StockCountMode.FULL
 	} as never);
 
 	return { fixture, count, opened: await fixture.service.open(count.id) };
@@ -567,6 +581,21 @@ describe('StockCountService — opening a session (doc 09 §10.4, §15.3)', () =
 		});
 		// A draft has no lines yet: the scope is generated when the session opens.
 		expect(fixture.lines()).toEqual([]);
+
+		// What the ledger holds in the session's bin, which is what a bin-scoped count expects.
+		const binScope = { tenantId: TENANT, organizationId: ORG, warehouseId: WAREHOUSE, binId: BIN };
+		fixture.tables.stock_movement.push({
+			...binScope,
+			id: 'movement-bin-1',
+			variantId: VARIANT,
+			quantity: 10
+		});
+		fixture.tables.stock_movement.push({
+			...binScope,
+			id: 'movement-bin-2',
+			variantId: OTHER_VARIANT,
+			quantity: 6
+		});
 
 		const opened = await fixture.service.open(draft.id);
 
