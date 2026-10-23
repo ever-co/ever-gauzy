@@ -24,7 +24,7 @@ export class HelpCenterAuthorService extends KnowledgeBaseCrudService<HelpCenter
 	 */
 	public async findByArticleId(articleId: string): Promise<HelpCenterAuthor[]> {
 		return await this.find({
-			where: { articleId, ...this.requestOrganization() } as FindOptionsWhere<HelpCenterAuthor>
+			where: { articleId } as FindOptionsWhere<HelpCenterAuthor>
 		});
 	}
 

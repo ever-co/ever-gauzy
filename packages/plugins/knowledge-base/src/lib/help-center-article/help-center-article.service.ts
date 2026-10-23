@@ -97,7 +97,7 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 	 */
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
 		const articles = await this.find({
-			where: { categoryId, ...this.requestOrganization() } as FindOptionsWhere<HelpCenterArticle>
+			where: { categoryId } as FindOptionsWhere<HelpCenterArticle>
 		});
 		return await this.sanitizeArticlesData(articles);
 	}
@@ -412,10 +412,10 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 			qb.andWhere('article.tenantId = :tenantId', { tenantId });
 		}
 
-		// The organization too: the read by id of every other route of this service is narrowed to it.
-		const organizationId = RequestContext.currentOrganizationId();
-		if (organizationId) {
-			qb.andWhere('article.organizationId = :organizationId', { organizationId });
+		// And to the caller's organization boundary, which every other read of this service keeps to.
+		const boundary = this.organizationBoundaryCondition('article.organizationId');
+		if (boundary) {
+			qb.andWhere(...boundary);
 		}
 
 		const article = await qb.getOne();
@@ -471,13 +471,34 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 			qb.andWhere('"tenantId" = :tenantId', { tenantId });
 		}
 
-		// The organization too, as the read of the description is (see `getDescriptionBinary`).
-		const organizationId = RequestContext.currentOrganizationId();
-		if (organizationId) {
-			qb.andWhere('"organizationId" = :organizationId', { organizationId });
+		// And to the caller's organization boundary, as the read of the description is (see `getDescriptionBinary`).
+		const boundary = this.organizationBoundaryCondition('"organizationId"');
+		if (boundary) {
+			qb.andWhere(...boundary);
 		}
 
 		await qb.execute();
+	}
+
+	/**
+	 * The caller's organization boundary as a condition on a hand-written query, which the base keeps its own reads and
+	 * writes to but a query builder does not reach: a caller confined to their organization reaches its articles and the
+	 * tenant's own (no organization); a tenant admin, and a request with no signed-in caller, every organization's.
+	 *
+	 * @param column The organization column, as the query names it.
+	 * @returns The condition and its parameters, or null when no boundary applies.
+	 */
+	private organizationBoundaryCondition(column: string): [string, Record<string, unknown>] | null {
+		const boundary = this.organizationBoundary();
+		if (!boundary) {
+			return null;
+		}
+		return boundary.organizationId
+			? [
+					`(${column} = :boundaryOrganizationId OR ${column} IS NULL)`,
+					{ boundaryOrganizationId: boundary.organizationId }
+				]
+			: [`${column} IS NULL`, {}];
 	}
 
 	/**

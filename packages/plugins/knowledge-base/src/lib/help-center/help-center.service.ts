@@ -33,11 +33,11 @@ export class HelpCenterService extends KnowledgeBaseCrudService<HelpCenter> {
 
 	async getCategoriesByBaseId(baseId: ID): Promise<HelpCenter[]> {
 		return await this.find({
-			where: { parentId: baseId, ...this.requestOrganization() } as FindOptionsWhere<HelpCenter>
+			where: { parentId: baseId } as FindOptionsWhere<HelpCenter>
 		});
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.find({ where: this.requestOrganization() });
+		return await this.find({});
 	}
 }
