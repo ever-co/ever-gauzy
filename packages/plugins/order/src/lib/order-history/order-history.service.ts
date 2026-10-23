@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { orderLedgerAppendOnly } from '../order-ledger.append-only';
 import { IOrderRowScope, createUnderOrderScope } from './order-row-scope';
 import { OrderHistory } from './order-history.entity';
 import { TypeOrmOrderHistoryRepository } from './repository/type-orm-order-history.repository';
 import { MikroOrmOrderHistoryRepository } from './repository/mikro-orm-order-history.repository';
+import { OrderCrudService } from '../order-crud.service';
 
 /**
  * The order's own timeline.
@@ -16,7 +17,7 @@ import { MikroOrmOrderHistoryRepository } from './repository/mikro-orm-order-his
  * record of what happened to the order, not of what was requested over HTTP.
  */
 @Injectable()
-export class OrderHistoryService extends TenantAwareCrudService<OrderHistory> {
+export class OrderHistoryService extends OrderCrudService<OrderHistory> {
 	constructor(
 		readonly typeOrmOrderHistoryRepository: TypeOrmOrderHistoryRepository,
 		readonly mikroOrmOrderHistoryRepository: MikroOrmOrderHistoryRepository

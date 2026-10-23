@@ -4,7 +4,6 @@ import { ID, IPagination } from '@gauzy/contracts';
 import {
 	PlainReferenceColumns,
 	RequestContext,
-	TenantAwareCrudService,
 	addDecimalStrings,
 	assertPlainReferencesNotForeign,
 	compareDecimalStrings,
@@ -18,6 +17,7 @@ import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repos
 import { OrderLineInvoice } from './order-line-invoice.entity';
 import { MikroOrmOrderLineInvoiceRepository } from './repository/mikro-orm-order-line-invoice.repository';
 import { TypeOrmOrderLineInvoiceRepository } from './repository/type-orm-order-line-invoice.repository';
+import { OrderCrudService } from '../order-crud.service';
 
 /**
  * The invoice item a link names: a row of the kernel's `invoice_item` table, held by a plain column. An item of another
@@ -86,7 +86,7 @@ export interface IRecordInvoiceLinkInput {
  * produced.
  */
 @Injectable()
-export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInvoice> {
+export class OrderLineInvoiceService extends OrderCrudService<OrderLineInvoice> {
 	constructor(
 		readonly typeOrmOrderLineInvoiceRepository: TypeOrmOrderLineInvoiceRepository,
 		readonly mikroOrmOrderLineInvoiceRepository: MikroOrmOrderLineInvoiceRepository,

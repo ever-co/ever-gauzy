@@ -1,12 +1,12 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { DeepPartial, EntityManager } from 'typeorm';
 import { ID, IOrderTotals } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
 import { orderLedgerAppendOnly } from '../order-ledger.append-only';
 import { IOrderRowScope, createUnderOrderScope, orderScopeColumns } from '../order-history/order-row-scope';
 import { OrderSummary } from './order-summary.entity';
 import { TypeOrmOrderSummaryRepository } from './repository/type-orm-order-summary.repository';
 import { MikroOrmOrderSummaryRepository } from './repository/mikro-orm-order-summary.repository';
+import { OrderCrudService } from '../order-crud.service';
 
 /**
  * One version's summary, as the totals writer states it.
@@ -28,7 +28,7 @@ export interface IOrderSummaryEntry {
  * the totals of each committed order version. Append-only: one row per version, never edited, never skipped.
  */
 @Injectable()
-export class OrderSummaryService extends TenantAwareCrudService<OrderSummary> {
+export class OrderSummaryService extends OrderCrudService<OrderSummary> {
 	constructor(
 		readonly typeOrmOrderSummaryRepository: TypeOrmOrderSummaryRepository,
 		readonly mikroOrmOrderSummaryRepository: MikroOrmOrderSummaryRepository

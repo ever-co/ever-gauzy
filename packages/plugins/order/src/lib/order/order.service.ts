@@ -21,13 +21,7 @@ import {
 	OrderChangeStatus,
 	OrderStatus
 } from '@gauzy/contracts';
-import {
-	Money,
-	RequestContext,
-	SequenceService,
-	TenantAwareCrudService,
-	assertPlainReferencesNotForeign
-} from '@gauzy/core';
+import { Money, RequestContext, SequenceService, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { Order } from './order.entity';
 import { ORDER_REFERENCES } from '../order.references';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
@@ -54,6 +48,7 @@ import { OrderShippingMethodService } from '../order-shipping-method/order-shipp
 import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { ICartToOrderRowMap, OrderCartLedgerCarryover } from '../checkout/order-cart-ledger-carryover.service';
+import { OrderCrudService } from '../order-crud.service';
 
 /** The series every order number is allocated from. */
 const ORDER_SEQUENCE_KEY = 'ORDER';
@@ -98,7 +93,7 @@ export interface IOrderApprovalRequested {
  * context consumes.
  */
 @Injectable()
-export class OrderService extends TenantAwareCrudService<Order> {
+export class OrderService extends OrderCrudService<Order> {
 	private readonly logger = new Logger(OrderService.name);
 
 	constructor(
