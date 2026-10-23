@@ -87,7 +87,9 @@ export class McpOAuthService implements OnModuleInit {
 				if (!user) return null;
 
 				return this.mapMcpUserToAuthPayload(user);
-			}
+			},
+			// Revokes the tokens of users deactivated since they signed in, within a minute
+			inactiveUsersProvider: (userIds: string[]) => this.userService.findUsersWhoCannotSignIn(userIds)
 		});
 	}
 
@@ -107,7 +109,9 @@ export class McpOAuthService implements OnModuleInit {
 		// Cast to extended user type for accessing optional fields
 		const extendedUser = user as ExtendedMcpUser;
 
-		const organizationId = user.organizations?.[0]?.organization?.id || extendedUser.defaultOrganizationId;
+		// An organization the user is still active in, never one they were deactivated in
+		const membership = user.organizations?.find((member) => member.isActive && !member.isArchived);
+		const organizationId = membership?.organization?.id || extendedUser.defaultOrganizationId;
 
 		return {
 			userId: user.id,
