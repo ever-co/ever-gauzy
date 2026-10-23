@@ -151,11 +151,17 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	private _sequence = 0;
 	private _imageKey = 0;
 
-	/** The image upload asks for ALL_ORG_EDIT or MEDIA_GALLERY_ADD: without either, no attach button. */
-	protected readonly canAttach = this._store.hasAnyPermission(
-		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.MEDIA_GALLERY_ADD
-	);
+	/** Lookups of image addresses under way, by asset, so an image is looked up once at a time. */
+	private readonly _lookups = new Map<ID, Promise<IImageUrls | null>>();
+
+	/**
+	 * Attaching is offered only to those who can both upload an image and delete it again, so an upload that is
+	 * never posted can always be cleaned up: the upload asks for ALL_ORG_EDIT or MEDIA_GALLERY_ADD, the delete for
+	 * ALL_ORG_EDIT or MEDIA_GALLERY_DELETE.
+	 */
+	protected readonly canAttach =
+		this._store.hasPermission(PermissionsEnum.ALL_ORG_EDIT) ||
+		this._store.hasAllPermissions(PermissionsEnum.MEDIA_GALLERY_ADD, PermissionsEnum.MEDIA_GALLERY_DELETE);
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
@@ -285,11 +291,13 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/**
-	 * Opens an attached image full size, once its address is known. The viewer traps the focus while open and
-	 * gives it back to the thumbnail when it closes.
+	 * Opens an attached image full size. Its address is looked up again first when it is too old to still be
+	 * signed, or when the last lookup failed — the tab can stay open long after the list was read. The viewer traps
+	 * the focus while open and gives it back to the thumbnail when it closes.
 	 */
-	protected openImage(image: ICommentImage): void {
-		const urls = this.imageUrls.get(image.assetId);
+	protected async openImage(image: ICommentImage): Promise<void> {
+		let urls = this.imageUrls.get(image.assetId);
+		if (!this.isFresh(urls)) urls = await this.lookUpImage(image.assetId);
 		if (urls) this.viewing = { name: image.name, url: urls.full };
 	}
 
@@ -306,38 +314,57 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/**
-	 * Looks up the addresses of the images the comments refer to — those not known yet, or known for too long to
-	 * still be signed — one asset at a time, all at once. A failed lookup shows the image as unavailable.
+	 * Looks up the addresses of the images the comments refer to that have none fresh — not known yet, known for
+	 * too long to still be signed, or whose last lookup failed — all at once.
 	 */
 	private async lookUpImages(threads: ICommentThread[]): Promise<void> {
-		const now = Date.now();
 		let ids = new Set<ID>();
 		for (const thread of threads) {
 			for (const entry of [thread.entry, ...thread.replies]) {
 				for (const image of entry.images) {
-					const urls = this.imageUrls.get(image.assetId);
-					if (urls === undefined || (urls && now - urls.at > IMAGE_URL_TTL_MS)) ids.add(image.assetId);
+					if (!this.isFresh(this.imageUrls.get(image.assetId))) ids.add(image.assetId);
 				}
 			}
 		}
-		if (!ids.size) return;
-		await Promise.all(
-			[...ids].map(async (id) => {
-				try {
-					this.remember(await this._imageAssets.getById(id));
-				} catch {
+		await Promise.all([...ids].map((id) => this.lookUpImage(id)));
+	}
+
+	/**
+	 * Looks up one image's addresses through the image asset API, which works them out afresh. A failed lookup
+	 * shows the image as unavailable until it is tried again — on the next read of the list, or when it is clicked.
+	 * A lookup already under way for the image is shared.
+	 */
+	private lookUpImage(id: ID): Promise<IImageUrls | null> {
+		let lookup = this._lookups.get(id);
+		if (!lookup) {
+			lookup = this._imageAssets
+				.getById(id)
+				.then((asset) => this.remember(asset))
+				.catch(() => {
 					this.imageUrls.set(id, null);
-				}
-			})
-		);
-		// A new map, so the thumbnails redraw.
-		this.imageUrls = new Map(this.imageUrls);
+					return null;
+				})
+				.finally(() => {
+					this._lookups.delete(id);
+					// A new map, so the thumbnails redraw.
+					this.imageUrls = new Map(this.imageUrls);
+				});
+			this._lookups.set(id, lookup);
+		}
+		return lookup;
+	}
+
+	/** Whether an image's addresses are known and young enough to still be signed. */
+	private isFresh(urls: IImageUrls | null | undefined): urls is IImageUrls {
+		return !!urls && Date.now() - urls.at <= IMAGE_URL_TTL_MS;
 	}
 
 	/** Keeps an asset's addresses as the server answered them. */
-	private remember(asset: IImageAsset): void {
+	private remember(asset: IImageAsset): IImageUrls {
 		if (!asset?.id || !asset.fullUrl) throw new Error('The image asset has no address');
-		this.imageUrls.set(asset.id, { full: asset.fullUrl, thumb: asset.thumbUrl || asset.fullUrl, at: Date.now() });
+		const urls: IImageUrls = { full: asset.fullUrl, thumb: asset.thumbUrl || asset.fullUrl, at: Date.now() };
+		this.imageUrls.set(asset.id, urls);
+		return urls;
 	}
 
 	/**

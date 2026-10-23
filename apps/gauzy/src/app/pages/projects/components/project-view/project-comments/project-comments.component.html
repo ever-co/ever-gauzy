@@ -178,7 +178,7 @@
 	}
 	@if (entry.images.length) {
 	<!-- The attached images as thumbnails, from the addresses looked up for their assets; each opens full size. One
-	     still being looked up shows empty, one that cannot be read here shows an image icon. -->
+	     first being looked up shows empty; one whose lookup failed shows an image icon, and clicking it tries again. -->
 	<div class="comment-images">
 		@for (image of entry.images; track $index) {
 		@let urls = imageUrls.get(image.assetId);
@@ -186,7 +186,7 @@
 			type="button"
 			class="comment-image"
 			[class.is-unavailable]="!urls"
-			[disabled]="!urls"
+			[disabled]="urls === undefined"
 			[attr.aria-label]="image.name || ('PROJECT_VIEW.COMMENT_IMAGE' | translate)"
 			(click)="openImage(image)"
 		>

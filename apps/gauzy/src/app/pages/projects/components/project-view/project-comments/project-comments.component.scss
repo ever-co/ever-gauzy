@@ -499,13 +499,17 @@ a.comment-author:hover {
   }
 }
 
-// An image still being looked up (empty), or one that cannot be read here (an image icon).
+// An image first being looked up (empty), or one whose lookup failed (an image icon; a click tries again).
 .comment-image.is-unavailable {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: $muted;
   cursor: default;
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
 
   nb-icon {
     width: 1.25rem;
