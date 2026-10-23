@@ -1063,11 +1063,13 @@ describe('OrganizationRecurringExpenseResolver — the guard chain is the contro
 	});
 
 	it.each(PERMISSION_PARITY)('$field states the permission $route does', ({ field, route }) => {
-		// The delivered controller carries the tenant guard and no permission on the class or on any handler
-		// but the retire-and-restore pair, which it overrides only to state the organization-expenses edit
-		// grant behind `PermissionGuard` (GHSA-v79w-54p2-wmh5) — so a field that required more would refuse
-		// a caller the REST route serves, which is the narrowing this delivery exists to prevent.
-		const expected = ['softRemove', 'softRecover'].includes(route) ? [PermissionsEnum.ORG_EXPENSES_EDIT] : undefined;
+		// The delivered controller carries the tenant guard and no permission on the class or on any read, and
+		// states the organization-expenses edit grant behind `PermissionGuard` on every write — the inherited
+		// retire-and-restore pair it overrides only to state it (GHSA-v79w-54p2-wmh5) — so a field that required
+		// more or less would disagree with the REST route it mirrors.
+		const expected = ['create', 'update', 'delete', 'softRemove', 'softRecover'].includes(route)
+			? [PermissionsEnum.ORG_EXPENSES_EDIT]
+			: undefined;
 
 		expect(permissionOfRoute(OrganizationRecurringExpenseController, route)).toEqual(expected);
 		expect(permissionOfField(field)).toEqual(expected);
