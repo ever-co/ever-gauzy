@@ -1,4 +1,4 @@
-import { ID, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
+import { ID, PluginScope, PluginSubscriptionStatus, IPagination } from '@gauzy/contracts';
 import { parseFindOptionsRelations } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
@@ -16,6 +16,21 @@ export class PluginSubscriptionService extends RegistryTenantAwareCrudService<Pl
 		public readonly mikroOrmPluginSubscriptionRepository: MikroOrmPluginSubscriptionRepository
 	) {
 		super(typeOrmPluginSubscriptionRepository, mikroOrmPluginSubscriptionRepository);
+	}
+
+	/**
+	 * Every subscription to a plugin, in every tenant, newest first, with its plan: the publisher's list, past the
+	 * tenant scope of every other read here. Only for the plugin's publisher: the caller must have checked that first.
+	 *
+	 * @param pluginId - The plugin.
+	 */
+	public async findAllOfPluginInAnyTenant(pluginId: ID): Promise<IPagination<PluginSubscription>> {
+		const [items, total] = await this.typeOrmPluginSubscriptionRepository.findAndCount({
+			where: { pluginId },
+			relations: { plan: true },
+			order: { createdAt: 'DESC' }
+		});
+		return { items, total };
 	}
 
 	/**

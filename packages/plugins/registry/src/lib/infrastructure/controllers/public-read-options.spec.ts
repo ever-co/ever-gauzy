@@ -69,7 +69,7 @@ describe('public read options', () => {
 				['versions', 'versions.sources', 'subscriptions', 'subscriptions.plan', ...HIDDEN],
 				PUBLIC_PLUGIN_RELATIONS
 			)
-		).toEqual(['versions', 'versions.sources', 'subscriptions', 'subscriptions.plan']);
+		).toEqual(['versions', 'versions.sources']);
 		expect(
 			allowedRelations(['settings', 'plugins.settings', 'plugins', 'children'], PUBLIC_PLUGIN_CATEGORY_RELATIONS)
 		).toEqual(['plugins', 'children']);

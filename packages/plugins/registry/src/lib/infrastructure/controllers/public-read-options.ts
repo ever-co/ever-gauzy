@@ -16,8 +16,6 @@ export const PUBLIC_PLUGIN_RELATIONS: readonly string[] = [
 	'versions.sources',
 	'category',
 	'uploadedBy',
-	'subscriptions',
-	'subscriptions.plan',
 	'subscriptionPlans',
 	'pluginTags',
 	'pluginTags.tag'

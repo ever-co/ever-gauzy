@@ -8,6 +8,7 @@ import { GetPluginQuery, ListPluginsQuery, SearchPluginsQuery } from '../../appl
 import { Plugin } from '../../domain';
 import { IPlugin, PluginQueryOptions, PluginSearchFilterDTO } from '../../shared';
 import { allowedRelations, ownColumnFilter, PUBLIC_PLUGIN_RELATIONS } from './public-read-options';
+import { withoutSubscriptions } from './public-plugin-subscriptions';
 
 @ApiTags('Plugin Registry')
 @Controller('/plugins')
@@ -53,6 +54,8 @@ export class PluginController {
 			relations: allowedRelations(params.relations, PUBLIC_PLUGIN_RELATIONS),
 			where: ownColumnFilter(params.where)
 		});
+		// …and no subscriptions of any tenant (see public-plugin-subscriptions.ts)
+		withoutSubscriptions(params);
 		// If search parameters are provided, use search query, otherwise use list query
 		if (params.search || params.type || params.status || params.categoryId || params.tags || params.author) {
 			return this.queryBus.execute(new SearchPluginsQuery(params));
@@ -108,13 +111,13 @@ export class PluginController {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: PluginQueryOptions
 	): Promise<IPlugin> {
-		// A public read: only the relations the marketplace shows, and the plugin named by the path (a `where` from the
-		// query string was spread over the id)
+		// A public read: only the relations the marketplace shows, the plugin named by the path (a `where` from the query
+		// string was spread over the id), and no subscriptions of any tenant (see public-plugin-subscriptions.ts)
 		const publicOptions: PluginQueryOptions = {
 			...options,
 			relations: allowedRelations(options?.relations, PUBLIC_PLUGIN_RELATIONS),
 			where: undefined
 		};
-		return this.queryBus.execute(new GetPluginQuery(id, publicOptions));
+		return this.queryBus.execute(new GetPluginQuery(id, withoutSubscriptions(publicOptions)));
 	}
 }
