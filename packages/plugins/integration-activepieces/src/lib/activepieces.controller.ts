@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ActivepiecesService } from './activepieces.service';
 import { CreateActivepiecesIntegrationDto, SetupActivepiecesIntegrationDto, ActivepiecesConnectionsListQueryDto } from './dto';
 import {
@@ -26,7 +26,9 @@ import {
 
 @ApiTags('ActivePieces Integration')
 @ApiBearerAuth()
-@UseGuards(TenantPermissionGuard)
+// `TenantPermissionGuard` asks only whether some role of the tenant holds a permission; `PermissionGuard` is what
+// checks the caller's own role against the `@Permissions` below, as the other integration controllers do.
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/integration/activepieces')
 export class ActivepiecesController {
 	private readonly logger = new Logger(ActivepiecesController.name);

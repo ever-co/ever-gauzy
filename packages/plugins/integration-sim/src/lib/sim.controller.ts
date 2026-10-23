@@ -16,14 +16,16 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { SimService } from './sim.service';
 import { ConfigureSimIntegrationDto, ExecuteWorkflowDto, WorkflowExecutionQueryDto, EventMappingDto } from './dto';
 import { SIM_SUPPORTED_EVENTS, SimEventType } from './dto/event-mapping.dto';
 
 @ApiTags('SIM Integration')
 @ApiBearerAuth()
-@UseGuards(TenantPermissionGuard)
+// `TenantPermissionGuard` asks only whether some role of the tenant holds a permission; `PermissionGuard` is what
+// checks the caller's own role against the `@Permissions` below, as the other integration controllers do.
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/integration/sim')
 export class SimController {
 	private readonly logger = new Logger(SimController.name);
