@@ -19,7 +19,7 @@ const TRANSACTION_TYPE = 'gauzy-oidc-txn+jwt';
 const KEY_DERIVATION_LABEL = 'gauzy-oidc-transaction-v1';
 
 /** Upper bound of remembered (consumed) states per process. */
-const MAX_CONSUMED_STATES = 10_000;
+export const MAX_CONSUMED_STATES = 10_000;
 
 /** The parts of an Express request the service reads. */
 export interface OidcCookieRequest {
@@ -234,11 +234,18 @@ export class OidcTransactionService {
 	 * Records a state as used. Returns `false` when it was used before.
 	 *
 	 * Only a digest is kept, for the transaction lifetime, with a fixed upper bound per process.
+	 *
+	 * **A full memory forgets its oldest state; it never refuses a new one.** Refusing let anyone lock every
+	 * sign-in of the issuer out for the transaction lifetime: the start route is public and hands out a signed
+	 * cookie with its state, and a callback carrying them consumes the state before the code is even looked at,
+	 * so 10,000 transactions started and completed by one client filled the memory and every real callback was
+	 * answered "already used". Forgetting the oldest state instead re-opens a replay only for a client that still
+	 * holds that transaction's cookie (`HttpOnly`, cleared by the first completion) and an authorization code the
+	 * issuer has not redeemed yet, which is single-use and bound to the transaction's own PKCE verifier.
 	 */
 	private consume(state: string): boolean {
 		const now = this.now();
 		// Entries expire in insertion order (one fixed lifetime), so pruning stops at the first live one.
-		// A live entry is never evicted: that would let its transaction be completed a second time.
 		for (const [digest, expiresAt] of this.consumed) {
 			if (expiresAt > now) {
 				break;
@@ -246,8 +253,13 @@ export class OidcTransactionService {
 			this.consumed.delete(digest);
 		}
 		const digest = createHash('sha256').update(state).digest('base64url');
-		if (this.consumed.has(digest) || this.consumed.size >= MAX_CONSUMED_STATES) {
+		if (this.consumed.has(digest)) {
 			return false;
+		}
+		// Still full of live entries: forget the oldest, which is the first in insertion order.
+		while (this.consumed.size >= MAX_CONSUMED_STATES) {
+			const oldest = this.consumed.keys().next().value as string;
+			this.consumed.delete(oldest);
 		}
 		this.consumed.set(digest, now + OIDC_TRANSACTION_TTL_MS);
 		return true;
