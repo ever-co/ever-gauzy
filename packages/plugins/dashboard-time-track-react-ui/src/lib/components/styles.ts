@@ -61,6 +61,9 @@ export const TIME_TRACKING_STYLES = `
 	transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease; }
 .gz-rtt-hdr .gz-rtt-refresh[nbbutton]:hover:not([disabled]), .gz-rtt-hdr .gz-rtt-popover-button[nbbutton]:hover:not([disabled]),
 .gz-rtt-hdr .gz-rtt-manage-widget[nbbutton]:hover:not([disabled]) { background-color: var(--gauzy-hover-tint); color: var(--gauzy-text-color-1); }
+/* Nebular sets outline: none on focused buttons and the chip replaces its focus shadow, so keyboard focus needs its own ring. */
+.gz-rtt-hdr .gz-rtt-refresh[nbbutton]:focus-visible, .gz-rtt-hdr .gz-rtt-popover-button[nbbutton]:focus-visible,
+.gz-rtt-hdr .gz-rtt-manage-widget[nbbutton]:focus-visible { outline: 2px solid var(--color-primary-default); outline-offset: 2px; }
 .gz-rtt-hdr .gz-rtt-refresh[nbbutton][disabled], .gz-rtt-hdr .gz-rtt-popover-button[nbbutton][disabled], .gz-rtt-hdr .gz-rtt-manage-widget[nbbutton][disabled] {
 	background-color: transparent; box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color); color: var(--gauzy-text-color-2); opacity: 0.55; cursor: not-allowed; }
 .gz-rtt-hdr .gz-rtt-refresh[nbbutton] nb-icon, .gz-rtt-hdr .gz-rtt-popover-button[nbbutton] nb-icon, .gz-rtt-hdr .gz-rtt-manage-widget[nbbutton] nb-icon {
