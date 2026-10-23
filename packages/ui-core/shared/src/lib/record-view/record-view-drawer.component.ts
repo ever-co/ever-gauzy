@@ -40,6 +40,11 @@ export class RecordViewDrawerComponent {
 	 * page is the bookmarkable, shareable view (handover §4.P). Omit it for a record with no page.
 	 */
 	@Input() fullViewLink: string | null = null;
+	/**
+	 * i18n key (or literal) spelled out beside the expand icon, for a page where going on to the record's
+	 * own page is a step users look for (e.g. "Open task page"). Omit it for the icon alone.
+	 */
+	@Input() fullViewLabel: string | null = null;
 
 	@Output() closed = new EventEmitter<void>();
 

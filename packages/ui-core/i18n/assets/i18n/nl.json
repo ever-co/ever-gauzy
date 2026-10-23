@@ -2177,6 +2177,17 @@
 		"UPDATE": "Bijwerken",
 		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
+		"COMMENT_THREAD": {
+			"REPLY": "Beantwoorden",
+			"ONE_MESSAGE": "1 bericht",
+			"MESSAGES": "{{ count }} berichten",
+			"NO_MESSAGES": "Er zijn nog geen berichten in deze thread.",
+			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
+			"UNKNOWN_AUTHOR": "Onbekend",
+			"DELETE_CONFIRM": "Deze opmerking verwijderen?",
+			"DELETED": "Opmerking verwijderd",
+			"LOAD_ERROR": "De opmerkingen konden niet worden geladen."
+		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
 		"DELETE_OBJECTIVE": "Doel verwijderen",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
 			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_COMMENTS": "Nog geen opmerkingen.",
 			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {
@@ -6883,6 +6895,15 @@
 		"NEEDS_ATTENTION": "Vraagt aandacht",
 		"NEEDS_ATTENTION_CAPTION": "Achterstallige taken en taken die binnen 3 dagen vervallen",
 		"ACTIVITY": "Dagelijkse activiteit",
+		"ACTIVITY_VIEWS": "Activiteitsweergave",
+		"ACTIVITY_VIEW_CHART": "Grafiek",
+		"ACTIVITY_VIEW_GRID": "Bijdragenraster",
+		"GRID_NONE": "Geen tijd",
+		"GRID_LAST_YEAR": "Afgelopen 12 maanden",
+		"GRID_OLDER": "Vorig jaar",
+		"GRID_NEWER": "Volgend jaar",
+		"GRID_DAY": "{{ time }} op {{ date }}",
+		"GRID_DAY_EMPTY": "Geen tijd op {{ date }}",
 		"TOP_CONTRIBUTORS": "Wie het meest heeft gewerkt",
 		"CONTRIBUTORS_CAPTION": "Ieders tijd aan dit project · {{ range }}",
 		"YOUR_TIME_CAPTION": "Jouw tijd aan dit project · {{ range }}",
@@ -6923,6 +6944,11 @@
 		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
 		"SOMEONE": "Iemand",
 		"TODAY": "Vandaag",
-		"YESTERDAY": "Gisteren"
+		"YESTERDAY": "Gisteren",
+		"TASK_PROGRESS": "Voortgang",
+		"TASK_PROGRESS_OF": "{{ worked }} van {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% van de geregistreerde projecttijd (geen schatting)",
+		"TASK_TOP_PEOPLE": "Meest aan gewerkt",
+		"TASK_NO_ESTIMATE": "Geen schatting"
 	}
 }

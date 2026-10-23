@@ -2226,6 +2226,17 @@
 		"UPDATE": "Обновить",
 		"ALIGNMENTS": "Выравнивания",
 		"COMMENTS": "Комментарии",
+		"COMMENT_THREAD": {
+			"REPLY": "Ответить",
+			"ONE_MESSAGE": "1 сообщение",
+			"MESSAGES": "Сообщений: {{ count }}",
+			"NO_MESSAGES": "В этой ветке пока нет сообщений.",
+			"REPLY_PLACEHOLDER": "Ответить на этот комментарий…",
+			"UNKNOWN_AUTHOR": "Неизвестно",
+			"DELETE_CONFIRM": "Удалить этот комментарий?",
+			"DELETED": "Комментарий удалён",
+			"LOAD_ERROR": "Не удалось загрузить комментарии."
+		},
 		"KEY_RESULTS": "Ключевые результаты",
 		"GROUP_BY": "Группировать по",
 		"DELETE_OBJECTIVE": "Удалить цель",
@@ -2273,6 +2284,7 @@
 			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
 			"NO_UPDATES": "Пока нет обновлений.",
 			"NO_ALIGNMENT": "Пока нет выравниваний.",
+			"NO_COMMENTS": "Пока нет комментариев.",
 			"NO_PROGRESS_DATA": "Пока нет данных о прогрессе для графика."
 		},
 		"LEVELS": {
@@ -6901,6 +6913,15 @@
 		"NEEDS_ATTENTION": "Требует внимания",
 		"NEEDS_ATTENTION_CAPTION": "Просроченные задачи и задачи со сроком в ближайшие 3 дня",
 		"ACTIVITY": "Ежедневная активность",
+		"ACTIVITY_VIEWS": "Вид активности",
+		"ACTIVITY_VIEW_CHART": "График",
+		"ACTIVITY_VIEW_GRID": "Сетка вклада",
+		"GRID_NONE": "Нет времени",
+		"GRID_LAST_YEAR": "Последние 12 месяцев",
+		"GRID_OLDER": "Предыдущий год",
+		"GRID_NEWER": "Следующий год",
+		"GRID_DAY": "{{ time }} — {{ date }}",
+		"GRID_DAY_EMPTY": "Нет времени — {{ date }}",
 		"TOP_CONTRIBUTORS": "Кто работал больше всех",
 		"CONTRIBUTORS_CAPTION": "Время всех участников по этому проекту · {{ range }}",
 		"YOUR_TIME_CAPTION": "Ваше время по этому проекту · {{ range }}",
@@ -6941,6 +6962,11 @@
 		"ACTIVITY_FIELDS": "Изменено: {{ fields }}",
 		"SOMEONE": "Кто-то",
 		"TODAY": "Сегодня",
-		"YESTERDAY": "Вчера"
+		"YESTERDAY": "Вчера",
+		"TASK_PROGRESS": "Прогресс",
+		"TASK_PROGRESS_OF": "{{ worked }} из {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% учтённого времени проекта (нет оценки)",
+		"TASK_TOP_PEOPLE": "Больше всего работали",
+		"TASK_NO_ESTIMATE": "Нет оценки"
 	}
 }
