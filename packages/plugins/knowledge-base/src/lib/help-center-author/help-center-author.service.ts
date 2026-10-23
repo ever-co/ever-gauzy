@@ -1,14 +1,14 @@
 import { In, FindOptionsWhere, DeleteResult } from 'typeorm';
 import { IHelpCenterAuthor } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
-import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import { HelpCenterAuthor } from './help-center-author.entity';
 import { TypeOrmHelpCenterAuthorRepository } from './repository/type-orm-help-center-author.repository';
 import { MikroOrmHelpCenterAuthorRepository } from './repository/mikro-orm-help-center-author.repository';
+import { KnowledgeBaseCrudService } from '../knowledge-base-crud.service';
 
 @Injectable()
-export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAuthor> {
+export class HelpCenterAuthorService extends KnowledgeBaseCrudService<HelpCenterAuthor> {
 	constructor(
 		typeOrmHelpCenterAuthorRepository: TypeOrmHelpCenterAuthorRepository,
 		mikroOrmHelpCenterAuthorRepository: MikroOrmHelpCenterAuthorRepository

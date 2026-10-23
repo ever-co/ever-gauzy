@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { Request } from 'express';
 import { HELP_CENTER_ARTICLE_MAX_BINARY_BYTES } from '@gauzy/constants';
 import {
@@ -15,7 +15,6 @@ import {
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
 	RequestContext,
-	TenantAwareCrudService,
 	BaseQueryDTO,
 	prepareSQLQuery as p,
 	LIKE_OPERATOR,
@@ -36,6 +35,7 @@ import { HelpCenterArticleVersion } from './help-center-article-version.entity';
 import { HelpCenterArticleVersionService } from './help-center-article-version.service';
 import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-center-article.repository';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
+import { KnowledgeBaseCrudService } from '../knowledge-base-crud.service';
 
 /**
  * Columns a caller may sort help-center articles by.
@@ -56,7 +56,7 @@ export const HELP_CENTER_ARTICLE_SORTABLE_FIELDS = [
 ] as const;
 
 @Injectable()
-export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
+export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCenterArticle> {
 	constructor(
 		readonly typeOrmHelpCenterArticleRepository: TypeOrmHelpCenterArticleRepository,
 		readonly mikroOrmHelpCenterArticleRepository: MikroOrmHelpCenterArticleRepository,
@@ -369,6 +369,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 		// 1. Get current article state
 		const { record: currentArticle } = await this.findOneOrFailByIdString(id);
+		if (!currentArticle) {
+			throw new NotFoundException('The requested record was not found');
+		}
 
 		// 2. Create version snapshot of current state (before update) — include binary
 		const versionInput: DeepPartial<HelpCenterArticleVersion> = {
@@ -407,6 +410,12 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 		if (tenantId) {
 			qb.andWhere('article.tenantId = :tenantId', { tenantId });
+		}
+
+		// And to the caller's organization boundary, which every other read of this service keeps to.
+		const boundary = this.organizationBoundaryCondition('article.organizationId');
+		if (boundary) {
+			qb.andWhere(...boundary);
 		}
 
 		const article = await qb.getOne();
@@ -462,7 +471,34 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			qb.andWhere('"tenantId" = :tenantId', { tenantId });
 		}
 
+		// And to the caller's organization boundary, as the read of the description is (see `getDescriptionBinary`).
+		const boundary = this.organizationBoundaryCondition('"organizationId"');
+		if (boundary) {
+			qb.andWhere(...boundary);
+		}
+
 		await qb.execute();
+	}
+
+	/**
+	 * The caller's organization boundary as a condition on a hand-written query, which the base keeps its own reads and
+	 * writes to but a query builder does not reach: a caller confined to their organization reaches its articles and the
+	 * tenant's own (no organization); a tenant admin, and a request with no signed-in caller, every organization's.
+	 *
+	 * @param column The organization column, as the query names it.
+	 * @returns The condition and its parameters, or null when no boundary applies.
+	 */
+	private organizationBoundaryCondition(column: string): [string, Record<string, unknown>] | null {
+		const boundary = this.organizationBoundary();
+		if (!boundary) {
+			return null;
+		}
+		return boundary.organizationId
+			? [
+					`(${column} = :boundaryOrganizationId OR ${column} IS NULL)`,
+					{ boundaryOrganizationId: boundary.organizationId }
+				]
+			: [`${column} IS NULL`, {}];
 	}
 
 	/**
@@ -475,6 +511,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		const { record: source } = await this.findOneOrFailByIdString(id, {
 			relations: { projects: true, tags: true } as any
 		});
+		if (!source) {
+			throw new NotFoundException('The requested record was not found');
+		}
 
 		const copy: DeepPartial<HelpCenterArticle> = {
 			name: `${source.name} (Copy)`,
