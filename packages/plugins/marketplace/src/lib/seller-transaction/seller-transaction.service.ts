@@ -9,13 +9,14 @@ import {
 	SellerTransactionKind,
 	SellerTransactionStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext } from '@gauzy/core';
 import { SellerTransaction } from './seller-transaction.entity';
 import { MikroOrmSellerTransactionRepository } from './repository/mikro-orm-seller-transaction.repository';
 import { TypeOrmSellerTransactionRepository } from './repository/type-orm-seller-transaction.repository';
 import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /**
  * Reads and advances the seller ledger.
@@ -26,7 +27,7 @@ import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
  * statement be replayed and a payout stay reconcilable against the provider that executed it.
  */
 @Injectable()
-export class SellerTransactionService extends TenantAwareCrudService<SellerTransaction> {
+export class SellerTransactionService extends MarketplaceCrudService<SellerTransaction> {
 	constructor(
 		readonly typeOrmSellerTransactionRepository: TypeOrmSellerTransactionRepository,
 		readonly mikroOrmSellerTransactionRepository: MikroOrmSellerTransactionRepository,

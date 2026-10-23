@@ -1,13 +1,14 @@
 import { ForbiddenException, Injectable, MethodNotAllowedException, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { SellerPayoutLine } from './seller-payout-line.entity';
 import { MikroOrmSellerPayoutLineRepository } from './repository/mikro-orm-seller-payout-line.repository';
 import { TypeOrmSellerPayoutLineRepository } from './repository/type-orm-seller-payout-line.repository';
 import { SellerPayout } from '../seller-payout/seller-payout.entity';
 import { TypeOrmSellerPayoutRepository } from '../seller-payout/repository/type-orm-seller-payout.repository';
 import { ISellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /** What a deletion, archive or restore of a line answers with, whichever route or mutation asked. */
 const A_LINE_IS_RELEASED_BY_ITS_PAYOUT =
@@ -26,7 +27,7 @@ const A_LINE_IS_RELEASED_BY_ITS_PAYOUT =
  * one.
  */
 @Injectable()
-export class SellerPayoutLineService extends TenantAwareCrudService<SellerPayoutLine> {
+export class SellerPayoutLineService extends MarketplaceCrudService<SellerPayoutLine> {
 	constructor(
 		readonly typeOrmSellerPayoutLineRepository: TypeOrmSellerPayoutLineRepository,
 		readonly mikroOrmSellerPayoutLineRepository: MikroOrmSellerPayoutLineRepository,
