@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+.status-chip nb-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.profile-actions {
+  margin-top: 0.25rem;
+
+  a[nbButton] nb-icon {
+    margin-inline-start: 0.25rem;
+  }
+}

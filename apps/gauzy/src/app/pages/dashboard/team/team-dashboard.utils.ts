@@ -14,14 +14,26 @@ export interface ITeamRow {
 	prefix: string | null;
 	total: number;
 	worked: number;
+	notWorked: number;
 	tracking: number;
 	online: number;
 	duration: number;
 	activity: number;
 	projects: number;
-	/** Share of the members who worked today, 0..100. */
-	share: number;
 	managers: string[];
+}
+
+/** One task a member worked on during the selected day. */
+export interface ITaskRow {
+	key: string;
+	title: string | null;
+	projectName: string | null;
+	duration: number;
+	/** Estimate in seconds; `0` when the task has none. */
+	estimate: number;
+	/** Time spent against the estimate, 0..100. */
+	estimateShare: number;
+	isOverEstimate: boolean;
 }
 
 /** One member of a team's members table. */
@@ -35,11 +47,14 @@ export interface IMemberRow {
 	presence: Presence;
 	isManager: boolean;
 	isWorking: boolean;
-	taskTitle: string | null;
-	projectName: string | null;
-	moreTasks: number;
+	/** Longest first. */
+	tasks: ITaskRow[];
 	duration: number;
 	activity: number;
+	/** The organization's working day, in seconds. */
+	workPeriod: number;
+	/** Time worked against the working day, 0..100. */
+	workdayShare: number;
 }
 
 /** One line of the "Top members today" ranking. */

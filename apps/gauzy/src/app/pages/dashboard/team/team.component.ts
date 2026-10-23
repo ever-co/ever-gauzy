@@ -77,6 +77,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 
 	public teamRows: ITeamRow[] = [];
 	public memberRows: IMemberRow[] = [];
+	/** Every team's member rows, for the open team and the overview's expandable rows. */
+	public membersByTeam: Record<string, IMemberRow[]> = {};
 	public topMembers: IRankedMember[] = [];
 	public projectCount = 0;
 
@@ -328,6 +330,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				prefix: team.prefix || null,
 				total: members.length,
 				worked: working.length,
+				notWorked: members.length - working.length,
 				tracking: members.filter((member) => presenceOf(member.employee, member.isRunningTimer) === 'tracking')
 					.length,
 				online: members.filter((member) => presenceOf(member.employee, member.isRunningTimer) !== 'offline')
@@ -335,7 +338,6 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				duration: working.reduce((total, member) => total + (member.todayWorkDuration || 0), 0),
 				activity: this._average(working.map((member) => member.activity || 0)),
 				projects: this._uniques(working.flatMap((member) => member.projects ?? [])).length,
-				share: toPercentage(working.length, members.length),
 				managers: members
 					.filter((member) => member.role?.name === RolesEnum.MANAGER)
 					.map((member) => member.employee?.user?.name)
@@ -371,8 +373,13 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			membersTotal: people.size,
 			projectsWorked: this._countsStatistics?.projectsCount || 0,
 			duration: worked.reduce((total, member) => total + (member.todayWorkDuration || 0), 0),
-			activity: this._average(worked.map((member) => member.activity || 0))
+			// The statistics API's figure for the day, as the dashboard has always shown it.
+			activity: Number(this._countsStatistics?.weekActivities) || 0
 		};
+
+		this.membersByTeam = Object.fromEntries(
+			this._todayTeamsWorkers.map((team) => [team.id, this._memberRowsOf(team)])
+		);
 
 		// Keep the open team across a reload when it is still listed.
 		if (this.selectedTeamId && !this.teamRows.some((row) => row.id === this.selectedTeamId)) {
@@ -382,15 +389,15 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	}
 
 	private _buildMemberRows(): void {
-		const team = this._todayTeamsWorkers.find((item) => item.id === this.selectedTeamId);
-		if (!team) {
-			this.memberRows = [];
-			return;
-		}
-		this.memberRows = (team.members as any[])
+		this.memberRows = (this.selectedTeamId && this.membersByTeam[this.selectedTeamId]) || [];
+	}
+
+	private _memberRowsOf(team: any): IMemberRow[] {
+		return (team.members as any[])
 			.map((member) => {
 				const user = member.employee?.user;
-				const [task] = member.tasks ?? [];
+				const workPeriod = member.workPeriod || this._period;
+				const duration = member.todayWorkDuration || 0;
 				return {
 					id: member.id,
 					employeeId: member.employeeId,
@@ -401,11 +408,22 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					presence: presenceOf(member.employee, member.isRunningTimer),
 					isManager: member.role?.name === RolesEnum.MANAGER,
 					isWorking: !!member.isWorkingToday,
-					taskTitle: task ? task.title || null : null,
-					projectName: task?.project?.name || null,
-					moreTasks: Math.max((member.tasks?.length ?? 0) - 1, 0),
-					duration: member.todayWorkDuration || 0,
-					activity: member.activity || 0
+					tasks: (member.tasks ?? []).map((task, index) => {
+						const estimate = Number(task?.estimate) || 0;
+						return {
+							key: task?.id || `no-task-${index}`,
+							title: task?.title || null,
+							projectName: task?.project?.name || null,
+							duration: task?.duration || 0,
+							estimate,
+							estimateShare: toPercentage(task?.duration || 0, estimate),
+							isOverEstimate: estimate > 0 && (task?.duration || 0) > estimate
+						};
+					}),
+					duration,
+					activity: member.activity || 0,
+					workPeriod,
+					workdayShare: toPercentage(duration, workPeriod)
 				} as IMemberRow;
 			})
 			.sort(

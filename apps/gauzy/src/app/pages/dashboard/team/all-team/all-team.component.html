@@ -1,0 +1,177 @@
+<section class="summary">
+	<div class="summary-cell">
+		<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKED_TODAY' | translate }}</span>
+		<span class="summary-value">{{ formatDuration(overview?.duration) }}</span>
+		<span class="summary-meta">
+			{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate: { value: formatPercent(overview?.activity) } }}
+		</span>
+	</div>
+	<div class="summary-cell">
+		<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TEAMS_ACTIVE' | translate }}</span>
+		<span class="summary-value">{{ overview?.teamsWorked || 0 }}</span>
+		<span class="summary-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_TEAMS' | translate: { total: teams.length } }}</span>
+	</div>
+	<div class="summary-cell">
+		<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.MEMBERS_WORKED' | translate }}</span>
+		<span class="summary-value">{{ overview?.membersWorked || 0 }}</span>
+		<span class="summary-meta">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS_META' | translate: { total: overview?.membersTotal || 0 } }}
+		</span>
+	</div>
+	<div class="summary-cell">
+		<span class="summary-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+		<span class="summary-value">{{ overview?.projectsWorked || 0 }}</span>
+		<span class="summary-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_PROJECTS' | translate: { total: projectCount } }}</span>
+	</div>
+</section>
+
+<div class="grid">
+	<!-- ── Every team and its day; a row opens onto its members ── -->
+	<section class="panel">
+		<header class="panel-header">
+			<div class="panel-heading">
+				<h5 class="panel-title">
+					{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}
+					<span class="title-count">{{ teams.length }}</span>
+				</h5>
+				<span class="panel-caption">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TEAMS_CAPTION' | translate }}</span>
+			</div>
+			<button type="button" class="panel-link" (click)="toggleAll()">
+				{{ (allExpanded ? 'DASHBOARD_PAGE.TEAMS_DASHBOARD.COLLAPSE_ALL' : 'DASHBOARD_PAGE.TEAMS_DASHBOARD.EXPAND_ALL') | translate }}
+				<nb-icon [icon]="allExpanded ? 'collapse-outline' : 'expand-outline'" aria-hidden="true"></nb-icon>
+			</button>
+		</header>
+		<div class="panel-body panel-body--flush">
+			<div class="table-scroll">
+				<table class="data-table teams-table">
+					<thead>
+						<tr>
+							<th class="col-toggle"><span class="sr-only">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.SHOW_MEMBERS' | translate }}</span></th>
+							<th>{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.COLUMNS.TEAM' | translate }}</th>
+							<th class="num col-worked">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.COLUMNS.WORKED' | translate }}</th>
+							<th class="num col-count">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.COLUMNS.NOW' | translate }}</th>
+							<th class="num col-count">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.COLUMNS.NOT_WORKED' | translate }}</th>
+							<th class="num">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.TODAY' | translate }}</th>
+							<th class="num col-activity">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.ACTIVITY' | translate }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						@for (row of teams; track row.id) {
+						@let isOpen = expanded.has(row.id);
+						<tr class="team-row" [class.is-open]="isOpen" (click)="onSelectTeam(row.id)">
+							<td class="col-toggle">
+								<button
+									type="button"
+									class="row-toggle"
+									[attr.aria-expanded]="isOpen"
+									[attr.aria-label]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.SHOW_MEMBERS' | translate"
+									(click)="$event.stopPropagation(); toggle(row.id)"
+								>
+									<nb-icon [icon]="isOpen ? 'chevron-down-outline' : 'chevron-right-outline'"></nb-icon>
+								</button>
+							</td>
+							<td class="cell-main">
+								<button type="button" class="team-link" (click)="$event.stopPropagation(); onSelectTeam(row.id)">
+									<span class="team-badge" [class.has-color]="!!row.color && !row.logoUrl" [style.--team-color]="row.color">
+										@if (row.logoUrl) {
+										<img [src]="row.logoUrl" [alt]="row.name" />
+										} @else {
+										<span aria-hidden="true">{{ row.initials }}</span>
+										}
+									</span>
+									<span class="member-text">
+										<span class="cell-title" [title]="row.name">{{ row.name }}</span>
+										<span class="cell-meta">
+											{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.MEMBERS_COUNT' | translate: { count: row.total } }}
+										</span>
+									</span>
+								</button>
+							</td>
+							<td class="num col-worked">
+								<span class="cell-strong">{{ row.worked }}</span>
+								<span class="cell-muted"> / {{ row.total }}</span>
+								@if (row.total > 0) {
+								<gauzy-counter-point class="worked-counter" [total]="row.total" [value]="row.worked"></gauzy-counter-point>
+								}
+							</td>
+							<td class="num col-count">
+								@if (row.tracking > 0) {
+								<span class="presence-label presence-tracking">
+									<span class="presence-dot" aria-hidden="true"></span>{{ row.tracking }}
+								</span>
+								} @else {
+								<span class="cell-muted">0</span>
+								}
+							</td>
+							<td class="num col-count" [class.cell-muted]="!row.notWorked">{{ row.notWorked }}</td>
+							<td class="num" [class.cell-strong]="row.duration > 0" [class.cell-muted]="!row.duration">
+								{{ formatDuration(row.duration) }}
+							</td>
+							<td class="num col-activity">
+								@if (row.worked > 0) {
+								<span class="activity" [class]="'activity activity--' + activityTone(row.activity)">
+									{{ formatPercent(row.activity) }}
+								</span>
+								} @else {
+								<span class="cell-muted">—</span>
+								}
+							</td>
+						</tr>
+						@if (isOpen) {
+						<tr class="members-row">
+							<td colspan="7">
+								<div class="team-members">
+									@for (member of membersByTeam[row.id] || []; track member.id) {
+									<div gauzy-team-member [member]="member" [isClassic]="true"></div>
+									} @empty {
+									<p class="team-members-empty">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_MEMBERS' | translate }}</p>
+									}
+								</div>
+							</td>
+						</tr>
+						}
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Who worked the most today, across teams ── -->
+	<section class="panel">
+		<header class="panel-header">
+			<h5 class="panel-title">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TOP_MEMBERS' | translate }}</h5>
+		</header>
+		<div class="panel-body panel-body--flush">
+			@if (!topMembers.length) {
+			<div class="state">
+				<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+				<p>{{ 'EMPLOYEES_PAGE.VIEW.NO_TIME' | translate }}</p>
+			</div>
+			} @else {
+			<table class="data-table">
+				<thead>
+					<tr>
+						<th>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.COLUMNS.MEMBER' | translate }}</th>
+						<th class="num">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.TIME' | translate }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (row of topMembers; track row.id) {
+					<tr>
+						<td class="cell-main">
+							<a class="cell-title member-link" [routerLink]="['/pages/employees/view', row.employeeId]" [title]="row.name">
+								{{ row.name }}
+							</a>
+							<span class="cell-meta">{{ row.meta }}</span>
+							<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="row.width"></span></span>
+						</td>
+						<td class="num cell-strong">{{ formatDuration(row.duration) }}</td>
+					</tr>
+					}
+				</tbody>
+			</table>
+			}
+		</div>
+	</section>
+</div>
