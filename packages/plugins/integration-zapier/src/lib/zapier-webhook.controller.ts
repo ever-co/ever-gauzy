@@ -10,15 +10,30 @@ import {
 	UnauthorizedException,
 	BadRequestException,
 	InternalServerErrorException,
-	HttpException
+	HttpException,
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions } from '@gauzy/core';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { IZapierCreateWebhookInput } from './zapier.types';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierService } from './zapier.service';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 
+/**
+ * The REST hooks Zapier subscribes and unsubscribes with. A subscription streams the organization's events — every
+ * employee's timer, with its time log — to the URL it names, so subscribing is configuring the integration: it needs
+ * the integration grants the rest of the Zapier routes state. Before, any signed-in member of the tenant (an employee
+ * with no integration permission) could point the organization's events at a URL of their own, or remove the
+ * organization's real subscriptions.
+ *
+ * `PermissionGuard` alone, not `TenantPermissionGuard`: Zapier sends no `Tenant-Id` header and no tenant in the body,
+ * and the tenant is the one of the integration the bearer token resolves to, never one the request names.
+ */
+@UseGuards(PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/zapier')
 export class ZapierWebhookController {
 	private readonly logger = new Logger(ZapierWebhookController.name);
