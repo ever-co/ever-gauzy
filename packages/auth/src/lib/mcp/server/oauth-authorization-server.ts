@@ -1440,6 +1440,21 @@ export class OAuth2AuthorizationServer {
 			return;
 		}
 
+		// RFC 6749 §4.4: only a confidential client, which authenticated with its secret above, may use this grant, and
+		// only one registered for it. `validateClient` lets a public client through with no secret at all, so anyone
+		// could name `chatgpt-mcp-client` and receive a signed token for any of its scopes.
+		if (client.clientType !== 'confidential' || !client.grantTypes.includes('client_credentials')) {
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError(
+					'unauthorized_client',
+					'The client is not authorized to use the client_credentials grant'
+				),
+				400
+			);
+			return;
+		}
+
 		// Parse requested scopes
 		const requestedScopes = params.scope ? params.scope.split(' ') : ['mcp.read'];
 		const allowedScopes = requestedScopes.filter(scope => client.scopes.includes(scope));
@@ -1477,6 +1492,18 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleClientRegistration(req: Request, res: Response) {
 		try {
+			// Registration is open to anyone, and a client_credentials token acts for no user: a client that may use
+			// that grant is one the operator registers, never one that registers itself.
+			const grantTypes: unknown = req.body?.grant_types;
+			if (Array.isArray(grantTypes) && grantTypes.includes('client_credentials')) {
+				this.errorHandler.handleStandardError(res, {
+					code: 'invalid_client_metadata',
+					message: 'The client_credentials grant is not available through dynamic registration',
+					statusCode: 400
+				});
+				return;
+			}
+
 			const registrationResponse = await oAuth2ClientManager.registerClient(req.body);
 			this.responseBuilder.sendClientRegistrationResponse(res, registrationResponse);
 		} catch (error: any) {
