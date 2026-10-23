@@ -68,6 +68,10 @@
   &.tone-danger {
     --tone: var(--gauzy-chart-negative);
   }
+
+  &.tone-comment {
+    --tone: var(--gauzy-text-color-2);
+  }
 }
 
 .feed-main {
@@ -112,6 +116,16 @@ a.feed-target:hover {
   font-size: 0.625rem;
   line-height: 0.875rem;
   color: var(--gauzy-text-color-2);
+}
+
+// A comment's text, on one line under its sentence.
+.feed-excerpt {
+  overflow: hidden;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .feed-time {

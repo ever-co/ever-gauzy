@@ -26,7 +26,8 @@ export class CommentService {
 	constructor(private readonly _http: HttpClient) {}
 
 	/**
-	 * All of a record's comments with their authors, oldest first, read page by page: one page stops at
+	 * All of a record's comments with their authors (the employee, and the user who posted it, for a comment
+	 * posted without an employee), oldest first, read page by page: one page stops at
 	 * `COMMENTS_PAGE_SIZE`, and with the oldest first, a single page would leave out the newest comments.
 	 *
 	 * The scope travels in `where` as well as the entity keys: `BaseQueryDTO.where` is `@IsNotEmpty()`, and
@@ -40,7 +41,7 @@ export class CommentService {
 				this._http.get<IPagination<IComment>>(this.API_URL, {
 					params: toParams({
 						where: { entity, entityId, ...scope },
-						relations: ['employee', 'employee.user'],
+						relations: ['employee', 'employee.user', 'createdByUser'],
 						order: { createdAt: 'ASC' },
 						take: COMMENTS_PAGE_SIZE,
 						// A row offset on `GET /comment` (`findAll`), not a page number.
@@ -56,6 +57,31 @@ export class CommentService {
 			}
 		} while (items.length < total);
 		return { items, total };
+	}
+
+	/** A record's newest comments, replies included, newest first, with their authors: at most `take` (≤ 100). */
+	async getLatest(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope, take: number): Promise<IComment[]> {
+		const page = await firstValueFrom(
+			this._http.get<IPagination<IComment>>(this.API_URL, {
+				params: toParams({
+					where: { entity, entityId, ...scope },
+					relations: ['employee', 'employee.user', 'createdByUser'],
+					order: { createdAt: 'DESC' },
+					take: Math.min(take, COMMENTS_PAGE_SIZE)
+				})
+			})
+		);
+		return page.items;
+	}
+
+	/** How many comments a record has, replies included: one row is read, for the total. */
+	async count(entity: BaseEntityEnum, entityId: ID, scope: ICommentScope): Promise<number> {
+		const page = await firstValueFrom(
+			this._http.get<IPagination<IComment>>(this.API_URL, {
+				params: toParams({ where: { entity, entityId, ...scope }, take: 1 })
+			})
+		);
+		return page.total;
 	}
 
 	/**

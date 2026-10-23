@@ -5,8 +5,9 @@ import { BehaviorSubject, combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { IOrganization, ITask } from '@gauzy/contracts';
+import { BaseEntityEnum, IOrganization, ITask } from '@gauzy/contracts';
 import {
+	CommentService,
 	OrganizationProjectsService,
 	Store,
 	TasksService,
@@ -43,9 +44,9 @@ export enum ProjectViewPeriod {
 }
 
 /** The page's tabs, in the manner of Jira's project pages; the open one is in the URL (`?tab=`). */
-export type ProjectViewTab = 'overview' | 'board' | 'activity';
+export type ProjectViewTab = 'overview' | 'board' | 'activity' | 'comments';
 
-const TABS: ProjectViewTab[] = ['overview', 'board', 'activity'];
+const TABS: ProjectViewTab[] = ['overview', 'board', 'activity', 'comments'];
 
 /** Tabs whose figures read over the period, and so show the period switcher. */
 const PERIOD_TABS = new Set<ProjectViewTab>(['overview']);
@@ -74,7 +75,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	readonly tabs: { id: ProjectViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
-		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
+		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' },
+		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' }
 	];
 	tab: ProjectViewTab = 'overview';
 
@@ -96,6 +98,13 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	 * when the user leaves it must still reach the Overview when it lands.
 	 */
 	boardOpened = false;
+
+	/** The Comments load when first opened, then stay mounted, so a draft survives a look at another tab. */
+	commentsOpened = false;
+	/** The project's comments, replies included, on the Comments tab; read with the project, kept by the tab. */
+	commentCount = 0;
+	/** The Comments tab has counted the comments for this project: its count is newer than the first read. */
+	private commentCountFromTab = false;
 
 	/**
 	 * The task open in the drawer — the quick look the task lists open — named by `?task=<id>`, so it can
@@ -124,7 +133,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		private readonly store: Store,
 		private readonly projectsService: OrganizationProjectsService,
 		private readonly tasksService: TasksService,
-		private readonly statisticsService: TimesheetStatisticsService
+		private readonly statisticsService: TimesheetStatisticsService,
+		private readonly commentService: CommentService
 	) {
 		super(translateService);
 	}
@@ -267,6 +277,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	private openTab(tab: ProjectViewTab): void {
 		this.tab = tab;
 		if (tab === 'board') this.boardOpened = true;
+		if (tab === 'comments') this.commentsOpened = true;
 	}
 
 	/** Whether the open tab reads over the period, and so shows the period switcher. */
@@ -283,6 +294,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		const sequence = ++this.loadSequence;
 		// Nothing of the previous project (or organization) stays on screen.
 		this.card = null;
+		this.commentCount = 0;
+		this.commentCountFromTab = false;
 		this.state = 'loading';
 		try {
 			const project = await firstValueFrom(this.projectsService.getById(id, ['image']));
@@ -297,10 +310,33 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 				initials: initialsOf(project.name)
 			};
 			this.state = 'ready';
+			void this.loadCommentCount(project.id, sequence);
 		} catch (error) {
 			if (sequence !== this.loadSequence) return;
 			this.card = null;
 			this.state = recordViewPageStateOf(error);
+		}
+	}
+
+	/** The count the Comments tab reports each time it reads its list, after a post or a delete among others. */
+	onCommentCount(count: number): void {
+		this.commentCountFromTab = true;
+		this.commentCount = count;
+	}
+
+	/**
+	 * The Comments tab's count, before the tab is opened; a failed read leaves the tab without one. An answer that
+	 * comes after the tab has counted for itself is older than the tab's count, and is dropped.
+	 */
+	private async loadCommentCount(projectId: string, sequence: number): Promise<void> {
+		try {
+			const count = await this.commentService.count(BaseEntityEnum.OrganizationProject, projectId, {
+				organizationId: this.organization?.id,
+				tenantId: this.organization?.tenantId
+			});
+			if (sequence === this.loadSequence && !this.commentCountFromTab) this.commentCount = count;
+		} catch {
+			// The tab shows no count.
 		}
 	}
 

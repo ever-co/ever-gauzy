@@ -6921,7 +6921,8 @@
 		"TABS": {
 			"OVERVIEW": "نظرة عامة",
 			"BOARD": "اللوحة",
-			"ACTIVITY": "النشاط"
+			"ACTIVITY": "النشاط",
+			"COMMENTS": "التعليقات"
 		},
 		"BOARD": "اللوحة",
 		"COLUMN_EMPTY": "لا توجد مهام",
@@ -6933,6 +6934,8 @@
 		"ACTIVITY_CREATED": "أنشأ {{ actor }}",
 		"ACTIVITY_UPDATED": "حدّث {{ actor }}",
 		"ACTIVITY_DELETED": "حذف {{ actor }}",
+		"ACTIVITY_COMMENTED": "علّق {{ actor }} على",
+		"ACTIVITY_REPLIED": "ردّ {{ actor }} على تعليق في",
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",
@@ -6941,6 +6944,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} من {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% من الوقت المسجل للمشروع (بدون تقدير)",
 		"TASK_TOP_PEOPLE": "الأكثر عملاً عليها",
-		"TASK_NO_ESTIMATE": "لا يوجد تقدير"
+		"TASK_NO_ESTIMATE": "لا يوجد تقدير",
+		"COMMENTS": "التعليقات",
+		"NO_COMMENTS": "لا توجد تعليقات بعد. ابدأ النقاش.",
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…",
+		"COMMENT_IMAGE": "صورة",
+		"ATTACH_IMAGES": "إرفاق صور",
+		"REMOVE_IMAGE": "إزالة الصورة",
+		"OPEN_IMAGE": "فتح الأصل",
+		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
+		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
+		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	}
 }

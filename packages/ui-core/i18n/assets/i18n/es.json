@@ -6931,7 +6931,8 @@
 		"TABS": {
 			"OVERVIEW": "Resumen",
 			"BOARD": "Tablero",
-			"ACTIVITY": "Actividad"
+			"ACTIVITY": "Actividad",
+			"COMMENTS": "Comentarios"
 		},
 		"BOARD": "Tablero",
 		"COLUMN_EMPTY": "Sin tareas",
@@ -6943,6 +6944,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} creó",
 		"ACTIVITY_UPDATED": "{{ actor }} actualizó",
 		"ACTIVITY_DELETED": "{{ actor }} eliminó",
+		"ACTIVITY_COMMENTED": "{{ actor }} comentó en",
+		"ACTIVITY_REPLIED": "{{ actor }} respondió a un comentario en",
 		"ACTIVITY_FIELDS": "Cambios: {{ fields }}",
 		"SOMEONE": "Alguien",
 		"TODAY": "Hoy",
@@ -6951,6 +6954,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} de {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % del tiempo registrado del proyecto (sin estimación)",
 		"TASK_TOP_PEOPLE": "Quién más trabajó",
-		"TASK_NO_ESTIMATE": "Sin estimación"
+		"TASK_NO_ESTIMATE": "Sin estimación",
+		"COMMENTS": "Comentarios",
+		"NO_COMMENTS": "Aún no hay comentarios. Inicia la conversación.",
+		"COMMENT_PLACEHOLDER": "Escribe un comentario…",
+		"COMMENT_IMAGE": "Imagen",
+		"ATTACH_IMAGES": "Adjuntar imágenes",
+		"REMOVE_IMAGE": "Quitar imagen",
+		"OPEN_IMAGE": "Abrir original",
+		"COMMENT_IMAGE_TYPES": "Solo se pueden adjuntar imágenes PNG, JPEG, GIF, WebP y BMP.",
+		"COMMENT_IMAGE_LIMIT": "Un comentario puede llevar hasta {{ count }} imágenes.",
+		"COMMENT_IMAGE_FAILED": "No se pudo subir {{ name }}."
 	}
 }

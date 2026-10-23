@@ -6939,7 +6939,8 @@
 		"TABS": {
 			"OVERVIEW": "סקירה",
 			"BOARD": "לוח",
-			"ACTIVITY": "פעילות"
+			"ACTIVITY": "פעילות",
+			"COMMENTS": "תגובות"
 		},
 		"BOARD": "לוח",
 		"COLUMN_EMPTY": "אין משימות",
@@ -6951,6 +6952,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} יצר",
 		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
 		"ACTIVITY_DELETED": "{{ actor }} מחק",
+		"ACTIVITY_COMMENTED": "{{ actor }} הגיב/ה על",
+		"ACTIVITY_REPLIED": "{{ actor }} השיב/ה לתגובה על",
 		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
 		"SOMEONE": "מישהו",
 		"TODAY": "היום",
@@ -6959,6 +6962,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} מתוך {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% מהזמן שנרשם בפרויקט (ללא הערכה)",
 		"TASK_TOP_PEOPLE": "עבדו עליה הכי הרבה",
-		"TASK_NO_ESTIMATE": "אין הערכה"
+		"TASK_NO_ESTIMATE": "אין הערכה",
+		"COMMENTS": "תגובות",
+		"NO_COMMENTS": "אין עדיין תגובות. התחילו את הדיון.",
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…",
+		"COMMENT_IMAGE": "תמונה",
+		"ATTACH_IMAGES": "צירוף תמונות",
+		"REMOVE_IMAGE": "הסרת התמונה",
+		"OPEN_IMAGE": "פתיחת המקור",
+		"COMMENT_IMAGE_TYPES": "ניתן לצרף רק תמונות PNG, JPEG, GIF, WebP ו-BMP.",
+		"COMMENT_IMAGE_LIMIT": "תגובה יכולה לכלול עד {{ count }} תמונות.",
+		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	}
 }

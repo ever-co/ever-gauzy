@@ -6929,7 +6929,8 @@
 		"TABS": {
 			"OVERVIEW": "Visão geral",
 			"BOARD": "Quadro",
-			"ACTIVITY": "Atividade"
+			"ACTIVITY": "Atividade",
+			"COMMENTS": "Comentários"
 		},
 		"BOARD": "Quadro",
 		"COLUMN_EMPTY": "Sem tarefas",
@@ -6941,6 +6942,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} criou",
 		"ACTIVITY_UPDATED": "{{ actor }} atualizou",
 		"ACTIVITY_DELETED": "{{ actor }} excluiu",
+		"ACTIVITY_COMMENTED": "{{ actor }} comentou em",
+		"ACTIVITY_REPLIED": "{{ actor }} respondeu a um comentário em",
 		"ACTIVITY_FIELDS": "Alterado: {{ fields }}",
 		"SOMEONE": "Alguém",
 		"TODAY": "Hoje",
@@ -6949,6 +6952,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} de {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% do tempo registrado do projeto (sem estimativa)",
 		"TASK_TOP_PEOPLE": "Quem mais trabalhou",
-		"TASK_NO_ESTIMATE": "Sem estimativa"
+		"TASK_NO_ESTIMATE": "Sem estimativa",
+		"COMMENTS": "Comentários",
+		"NO_COMMENTS": "Ainda não há comentários. Inicie a discussão.",
+		"COMMENT_PLACEHOLDER": "Escreva um comentário…",
+		"COMMENT_IMAGE": "Imagem",
+		"ATTACH_IMAGES": "Anexar imagens",
+		"REMOVE_IMAGE": "Remover imagem",
+		"OPEN_IMAGE": "Abrir original",
+		"COMMENT_IMAGE_TYPES": "Só é possível anexar imagens PNG, JPEG, GIF, WebP e BMP.",
+		"COMMENT_IMAGE_LIMIT": "Um comentário pode ter até {{ count }} imagens.",
+		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	}
 }

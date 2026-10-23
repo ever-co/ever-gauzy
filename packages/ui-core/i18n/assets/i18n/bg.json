@@ -6974,7 +6974,8 @@
 		"TABS": {
 			"OVERVIEW": "Общ преглед",
 			"BOARD": "Табло",
-			"ACTIVITY": "Активност"
+			"ACTIVITY": "Активност",
+			"COMMENTS": "Коментари"
 		},
 		"BOARD": "Табло",
 		"COLUMN_EMPTY": "Няма задачи",
@@ -6986,6 +6987,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} създаде",
 		"ACTIVITY_UPDATED": "{{ actor }} обнови",
 		"ACTIVITY_DELETED": "{{ actor }} изтри",
+		"ACTIVITY_COMMENTED": "{{ actor }} коментира",
+		"ACTIVITY_REPLIED": "{{ actor }} отговори на коментар в",
 		"ACTIVITY_FIELDS": "Променено: {{ fields }}",
 		"SOMEONE": "Някой",
 		"TODAY": "Днес",
@@ -6994,6 +6997,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} от {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% от отчетеното време по проекта (без оценка)",
 		"TASK_TOP_PEOPLE": "Работили най-много",
-		"TASK_NO_ESTIMATE": "Няма оценка"
+		"TASK_NO_ESTIMATE": "Няма оценка",
+		"COMMENTS": "Коментари",
+		"NO_COMMENTS": "Все още няма коментари. Започнете дискусията.",
+		"COMMENT_PLACEHOLDER": "Напишете коментар…",
+		"COMMENT_IMAGE": "Изображение",
+		"ATTACH_IMAGES": "Прикачване на изображения",
+		"REMOVE_IMAGE": "Премахване на изображението",
+		"OPEN_IMAGE": "Отваряне на оригинала",
+		"COMMENT_IMAGE_TYPES": "Могат да се прикачват само изображения PNG, JPEG, GIF, WebP и BMP.",
+		"COMMENT_IMAGE_LIMIT": "Един коментар може да съдържа до {{ count }} изображения.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
 	}
 }

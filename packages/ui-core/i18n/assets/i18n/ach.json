@@ -5969,7 +5969,8 @@
 		"TABS": {
 			"OVERVIEW": "Overview",
 			"BOARD": "Board",
-			"ACTIVITY": "Activity"
+			"ACTIVITY": "Activity",
+			"COMMENTS": "Comments"
 		},
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "No tasks",
@@ -5981,6 +5982,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} created",
 		"ACTIVITY_UPDATED": "{{ actor }} updated",
 		"ACTIVITY_DELETED": "{{ actor }} deleted",
+		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
+		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",
@@ -5989,6 +5992,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} of {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% of the project's tracked time (no estimate)",
 		"TASK_TOP_PEOPLE": "Worked most on it",
-		"TASK_NO_ESTIMATE": "No estimate"
+		"TASK_NO_ESTIMATE": "No estimate",
+		"COMMENTS": "Comments",
+		"NO_COMMENTS": "No comments yet. Start the discussion.",
+		"COMMENT_PLACEHOLDER": "Write a comment…",
+		"COMMENT_IMAGE": "Image",
+		"ATTACH_IMAGES": "Attach images",
+		"REMOVE_IMAGE": "Remove image",
+		"OPEN_IMAGE": "Open original",
+		"COMMENT_IMAGE_TYPES": "Only PNG, JPEG, GIF, WebP and BMP images can be attached.",
+		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
+		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	}
 }

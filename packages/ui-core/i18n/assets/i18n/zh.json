@@ -6929,7 +6929,8 @@
 		"TABS": {
 			"OVERVIEW": "概览",
 			"BOARD": "看板",
-			"ACTIVITY": "动态"
+			"ACTIVITY": "动态",
+			"COMMENTS": "评论"
 		},
 		"BOARD": "看板",
 		"COLUMN_EMPTY": "暂无任务",
@@ -6941,6 +6942,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} 创建了",
 		"ACTIVITY_UPDATED": "{{ actor }} 更新了",
 		"ACTIVITY_DELETED": "{{ actor }} 删除了",
+		"ACTIVITY_COMMENTED": "{{ actor }} 评论了",
+		"ACTIVITY_REPLIED": "{{ actor }} 回复了评论：",
 		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
 		"SOMEONE": "某人",
 		"TODAY": "今天",
@@ -6949,6 +6952,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} / {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · 占项目记录时间的 {{ share }}%（无估算）",
 		"TASK_TOP_PEOPLE": "投入最多的成员",
-		"TASK_NO_ESTIMATE": "无估算"
+		"TASK_NO_ESTIMATE": "无估算",
+		"COMMENTS": "评论",
+		"NO_COMMENTS": "暂无评论。开始讨论吧。",
+		"COMMENT_PLACEHOLDER": "写评论…",
+		"COMMENT_IMAGE": "图片",
+		"ATTACH_IMAGES": "附加图片",
+		"REMOVE_IMAGE": "移除图片",
+		"OPEN_IMAGE": "打开原图",
+		"COMMENT_IMAGE_TYPES": "只能附加 PNG、JPEG、GIF、WebP 和 BMP 图片。",
+		"COMMENT_IMAGE_LIMIT": "一条评论最多可包含 {{ count }} 张图片。",
+		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	}
 }

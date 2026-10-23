@@ -6925,7 +6925,8 @@
 		"TABS": {
 			"OVERVIEW": "Aperçu",
 			"BOARD": "Tableau",
-			"ACTIVITY": "Activité"
+			"ACTIVITY": "Activité",
+			"COMMENTS": "Commentaires"
 		},
 		"BOARD": "Tableau",
 		"COLUMN_EMPTY": "Aucune tâche",
@@ -6937,6 +6938,8 @@
 		"ACTIVITY_CREATED": "{{ actor }} a créé",
 		"ACTIVITY_UPDATED": "{{ actor }} a modifié",
 		"ACTIVITY_DELETED": "{{ actor }} a supprimé",
+		"ACTIVITY_COMMENTED": "{{ actor }} a commenté",
+		"ACTIVITY_REPLIED": "{{ actor }} a répondu à un commentaire sur",
 		"ACTIVITY_FIELDS": "Modifié : {{ fields }}",
 		"SOMEONE": "Quelqu'un",
 		"TODAY": "Aujourd'hui",
@@ -6945,6 +6948,16 @@
 		"TASK_PROGRESS_OF": "{{ worked }} sur {{ estimate }}",
 		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }} % du temps suivi du projet (aucune estimation)",
 		"TASK_TOP_PEOPLE": "Ont le plus travaillé dessus",
-		"TASK_NO_ESTIMATE": "Aucune estimation"
+		"TASK_NO_ESTIMATE": "Aucune estimation",
+		"COMMENTS": "Commentaires",
+		"NO_COMMENTS": "Aucun commentaire pour le moment. Lancez la discussion.",
+		"COMMENT_PLACEHOLDER": "Écrire un commentaire…",
+		"COMMENT_IMAGE": "Image",
+		"ATTACH_IMAGES": "Joindre des images",
+		"REMOVE_IMAGE": "Retirer l’image",
+		"OPEN_IMAGE": "Ouvrir l’original",
+		"COMMENT_IMAGE_TYPES": "Seules les images PNG, JPEG, GIF, WebP et BMP peuvent être jointes.",
+		"COMMENT_IMAGE_LIMIT": "Un commentaire peut contenir jusqu’à {{ count }} images.",
+		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	}
 }
