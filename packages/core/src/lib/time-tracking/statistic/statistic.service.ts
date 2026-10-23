@@ -1121,13 +1121,21 @@ export class StatisticService {
 				const totalDurationExpr = getTotalDurationQueryString(dbType, 'timeLogs');
 				const durationQueryStr = getDurationQueryString(dbType, 'timeLogs', 'time_slot');
 
+				// A time log counts once when it has a live time slot in the week. Joining its slots instead
+				// repeated the log once per 10-minute slot, so long logs outweighed short ones in the sums.
+				const timeLogSlotsInWeek = () =>
+					knex('time_slot_time_logs')
+						.select(knex.raw('1'))
+						.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
+						.modify(excludeSoftDeleted, 'time_slot')
+						.whereRaw('?? = ??', ['time_slot_time_logs.timeLogId', 'timeLogs.id'])
+						.whereBetween('time_slot.startedAt', [weeklyStart, weeklyEnd]);
+
 				// Query 1: Employee list with aggregated duration
 				let empQb = knex('employee')
 					.innerJoin('user', 'employee.userId', 'user.id')
 					.innerJoin('time_log as timeLogs', 'employee.id', 'timeLogs.employeeId')
-					.innerJoin('time_slot_time_logs', 'timeLogs.id', 'time_slot_time_logs.timeLogId')
-					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
-					.modify(excludeSoftDeleted, 'employee', 'user', 'timeLogs', 'time_slot')
+					.modify(excludeSoftDeleted, 'employee', 'user', 'timeLogs')
 					.select([
 						'employee.id as id',
 						'user.id as user_id',
@@ -1140,7 +1148,7 @@ export class StatisticService {
 					.andWhere('timeLogs.tenantId', tenantId)
 					.andWhere('timeLogs.organizationId', organizationId)
 					.whereBetween('timeLogs.startedAt', [weeklyStart, weeklyEnd])
-					.whereBetween('time_slot.startedAt', [weeklyStart, weeklyEnd]);
+					.whereExists(timeLogSlotsInWeek());
 
 				if (isNotEmpty(employeeIds)) {
 					empQb = empQb.whereIn('employee.id', employeeIds).whereIn('timeLogs.employeeId', employeeIds);
@@ -1312,9 +1320,7 @@ export class StatisticService {
 
 						let weekHoursQb = knex('employee as emp')
 							.innerJoin('time_log as timeLogs', 'emp.id', 'timeLogs.employeeId')
-							.innerJoin('time_slot_time_logs', 'timeLogs.id', 'time_slot_time_logs.timeLogId')
-							.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
-							.modify(excludeSoftDeleted, 'emp', 'timeLogs', 'time_slot')
+							.modify(excludeSoftDeleted, 'emp', 'timeLogs')
 							.select([
 								knex.raw(`${getTotalDurationQueryString(dbType, 'timeLogs')} as duration`),
 								knex.raw(`${dowExpr} as day`)
@@ -1325,7 +1331,7 @@ export class StatisticService {
 							.andWhere('timeLogs.tenantId', tenantId)
 							.andWhere('timeLogs.organizationId', organizationId)
 							.whereBetween('timeLogs.startedAt', [weeklyStart, weeklyEnd])
-							.whereBetween('time_slot.startedAt', [weeklyStart, weeklyEnd]);
+							.whereExists(timeLogSlotsInWeek());
 
 						if (isNotEmpty(employeeIds)) {
 							weekHoursQb = weekHoursQb.whereIn('timeLogs.employeeId', employeeIds);
@@ -1346,6 +1352,20 @@ export class StatisticService {
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
+				// A time log counts once when it has a live time slot in the week (see the MikroORM branch). The
+				// query builder leaves out the deleted slots; the week parameters are set where it is embedded.
+				const timeSlotOfLink = p(`"time_slot_log"."timeSlotId" = "time_slot"."id"`);
+				const linkOfTimeLog = p(`"time_slot_log"."timeLogId" = "timeLogs"."id"`);
+				const timeSlotStartedInWeek = p(`"time_slot"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`);
+				const timeLogSlotsInWeek = this.typeOrmTimeSlotRepository
+					.createQueryBuilder('time_slot')
+					.select('1')
+					.innerJoin('time_slot_time_logs', 'time_slot_log', timeSlotOfLink)
+					.where(linkOfTimeLog)
+					.andWhere(timeSlotStartedInWeek);
+				const timeLogSlotsInWeekQuery = timeLogSlotsInWeek.getQuery();
+				const timeLogHasSlotInWeek = `EXISTS (${timeLogSlotsInWeekQuery})`;
+
 				// Create a query builder for the Employee entity
 				const query = this.typeOrmEmployeeRepository.createQueryBuilder();
 
@@ -1357,7 +1377,6 @@ export class StatisticService {
 					.addSelect(p(`"${query.alias}"."isAway"`), 'isAway')
 					.innerJoin(`${query.alias}.user`, 'user')
 					.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
 					.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -1376,10 +1395,7 @@ export class StatisticService {
 								weeklyStart,
 								weeklyEnd
 							});
-							qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`), {
-								weeklyStart,
-								weeklyEnd
-							});
+							qb.andWhere(timeLogHasSlotInWeek, { weeklyStart, weeklyEnd });
 							/**
 							 * If Employee Selected
 							 */
@@ -1603,7 +1619,6 @@ export class StatisticService {
 						const weekHoursQuery = this.typeOrmEmployeeRepository.createQueryBuilder();
 						weekHoursQuery
 							.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
-							.innerJoin(`timeLogs.timeSlots`, 'time_slot')
 							.select(getTotalDurationQueryString(dbType, 'timeLogs'), `duration`)
 							.addSelect(
 								// -- why we minus 1 if MySQL is selected, Sunday DOW in postgres is 0, in MySQL is 1
@@ -1638,10 +1653,7 @@ export class StatisticService {
 										weeklyStart,
 										weeklyEnd
 									});
-									qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`), {
-										weeklyStart,
-										weeklyEnd
-									});
+									qb.andWhere(timeLogHasSlotInWeek, { weeklyStart, weeklyEnd });
 								})
 							)
 							.andWhere(
