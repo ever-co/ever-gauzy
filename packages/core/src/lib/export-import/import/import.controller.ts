@@ -4,6 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { generateImportArchiveFileName } from './import-archive-file-name';
+import { IMPORT_ARCHIVE_LIMITS } from './import-archive-extract';
 import { RequestContext } from '../../core/context';
 import { archiveUploadFileFilter, FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -38,7 +39,9 @@ export class ImportController {
 			}),
 			// The import format is a ZIP of CSVs; the local provider keeps the client's extension and
 			// the file lands under /public, so anything else is refused before it is stored.
-			fileFilter: archiveUploadFileFilter
+			fileFilter: archiveUploadFileFilter,
+			// One archive, of bounded size: it is read into memory whole before it is unpacked.
+			limits: { fileSize: IMPORT_ARCHIVE_LIMITS.maxArchiveBytes, files: 1 }
 		})
 	)
 	@ApiOperation({ summary: 'Imports templates records.' })
