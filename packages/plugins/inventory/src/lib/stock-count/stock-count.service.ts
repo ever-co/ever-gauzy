@@ -3,7 +3,6 @@ import { EntityManager, FindManyOptions, In, IsNull } from 'typeorm';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	RequestContext,
-	TenantAwareCrudService,
 	WarehouseProductVariant,
 	addDecimalStrings,
 	formatDecimalUnits,
@@ -26,6 +25,7 @@ import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockCount } from './stock-count.entity';
 import { TypeOrmStockCountRepository } from './repository/type-orm-stock-count.repository';
 import { MikroOrmStockCountRepository } from './repository/mikro-orm-stock-count.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** States a session may be counted in. */
 const COUNTABLE: StockCountStatus[] = [StockCountStatus.OPEN, StockCountStatus.COUNTING];
@@ -53,7 +53,7 @@ const NON_TERMINAL: StockCountStatus[] = Object.values(StockCountStatus).filter(
  * off on cannot change afterwards.
  */
 @Injectable()
-export class StockCountService extends TenantAwareCrudService<StockCount> {
+export class StockCountService extends InventoryCrudService<StockCount> {
 	constructor(
 		readonly typeOrmStockCountRepository: TypeOrmStockCountRepository,
 		readonly mikroOrmStockCountRepository: MikroOrmStockCountRepository,
