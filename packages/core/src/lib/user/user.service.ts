@@ -45,6 +45,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { liftEmployeeAgentRestrictions } from '../employee/agent-exit-logout-restriction';
@@ -729,11 +730,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			return;
 		}
 		try {
-			await liftEmployeeAgentRestrictions(
-				this._employeeService,
-				this._activityLogService,
-				{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
-				`the worker's time zone moved into the EEA/UK (${timeZone})`
+			// Every employee record of the worker, in every organization: the right to exit and log out follows the
+			// worker, not the organization of the token the profile was saved with.
+			await runOutsideOrganizationBoundary(() =>
+				liftEmployeeAgentRestrictions(
+					this._employeeService,
+					this._activityLogService,
+					{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
+					`the worker's time zone moved into the EEA/UK (${timeZone})`
+				)
 			);
 		} catch (error) {
 			new Logger(UserService.name).error(

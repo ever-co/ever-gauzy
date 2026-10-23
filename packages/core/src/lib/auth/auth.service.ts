@@ -75,6 +75,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { Employee } from '../employee/employee.entity';
 import { freshTimestamp, getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from './../core/utils';
@@ -2874,8 +2875,12 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('User not found');
 			}
 
-			// Retrieve the employee details for the target organization
-			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
+			// Retrieve the employee details for the target organization. The token still names the organization being
+			// left, so the read is made outside the organization boundary; the membership checked above is what lets
+			// the caller reach the organization switched to.
+			const employee = await runOutsideOrganizationBoundary(() =>
+				this.employeeService.findOneByUserId(user.id, organizationId)
+			);
 
 			// Check if the employee is active and not archived (if employee exists)
 			if (employee && (!employee.isActive || employee.isArchived)) {

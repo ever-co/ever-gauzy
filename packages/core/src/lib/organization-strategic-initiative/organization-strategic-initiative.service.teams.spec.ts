@@ -61,6 +61,8 @@ describe('OrganizationStrategicInitiativeService — teams', () => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
+		// The caller's token names the organization of the initiatives: the only one a non-admin reaches.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
 		jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(null);
 		save = jest
 			.spyOn(TenantAwareCrudService.prototype, 'create')

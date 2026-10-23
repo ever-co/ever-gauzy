@@ -22,15 +22,63 @@ export interface IOrganizationBoundary {
 	readonly organizationId: ID | null;
 }
 
+/** The request-scoped counter of open {@link runOutsideOrganizationBoundary} blocks. */
+const OUTSIDE_ORGANIZATION_BOUNDARY_KEY = 'organizationBoundary:outside';
+
+/** How many {@link runOutsideOrganizationBoundary} blocks are open in the current request. */
+function outsideOrganizationBoundaryDepth(): number {
+	try {
+		return RequestContext['clsService']?.get(OUTSIDE_ORGANIZATION_BOUNDARY_KEY) ?? 0;
+	} catch {
+		return 0;
+	}
+}
+
+/** Stores how many {@link runOutsideOrganizationBoundary} blocks are open in the current request. */
+function setOutsideOrganizationBoundaryDepth(depth: number): void {
+	try {
+		RequestContext['clsService']?.set(OUTSIDE_ORGANIZATION_BOUNDARY_KEY, depth);
+	} catch {
+		// No request context: there is no boundary to lift either.
+	}
+}
+
+/**
+ * Runs a callback with the organization boundary lifted for every service, for the few flows of a signed-in caller
+ * that must cross organizations by design, once they have checked the caller's right to do so by other means:
+ * switching to another organization the caller is a member of, accepting an invitation addressed to them, or seeding
+ * an organization they have just created. A service's own bypass, `withoutOrganizationBoundary`, is narrower and is
+ * preferred wherever the crossing stays inside one service.
+ *
+ * Reference counted and request scoped, like the employee filter's bypass: other requests are never affected. It lifts
+ * the boundary of the CRUD base only; the check on an organization a request names
+ * (`@IsOrganizationBelongsToUser()`) is not affected.
+ *
+ * @param callback The async function to run outside the boundary.
+ * @returns The result of the callback.
+ */
+export async function runOutsideOrganizationBoundary<R>(callback: () => Promise<R>): Promise<R> {
+	setOutsideOrganizationBoundaryDepth(outsideOrganizationBoundaryDepth() + 1);
+	try {
+		return await callback();
+	} finally {
+		setOutsideOrganizationBoundaryDepth(Math.max(0, outsideOrganizationBoundaryDepth() - 1));
+	}
+}
+
 /**
  * The organization boundary of the current request.
  *
  * @returns The boundary, or `null` when the caller is not confined: there is no signed-in caller (a job, a public
- * route — the tenant scoping alone applies to those, as before), or the caller is a tenant admin. The role is the one
- * the user holds now, read from the database for this request, never the claim frozen into the token.
+ * route — the tenant scoping alone applies to those, as before), the caller is a tenant admin, or the call runs
+ * inside {@link runOutsideOrganizationBoundary}. The role is the one the user holds now, read from the database for
+ * this request, never the claim frozen into the token.
  */
 export function currentOrganizationBoundary(): IOrganizationBoundary | null {
 	if (!RequestContext.currentUser()) {
+		return null;
+	}
+	if (outsideOrganizationBoundaryDepth() > 0) {
 		return null;
 	}
 	if (RequestContext.hasRoles([...TENANT_ADMIN_ROLES])) {

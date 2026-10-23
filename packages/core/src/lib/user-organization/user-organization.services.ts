@@ -21,6 +21,20 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	}
 
 	/**
+	 * Off for memberships: a membership is what grants an organization, so it is read across organizations by
+	 * design — the organization switcher lists the caller's memberships of every organization
+	 * (`GET /user-organization`, `userOrganizations`), switching checks the membership of the organization switched to
+	 * while the token still names the previous one, counting a user's memberships decides whether removing one removes
+	 * the user, and creating an organization adds its admins' memberships of it. The organization a request names is
+	 * still checked by `@IsOrganizationBelongsToUser()`.
+	 *
+	 * @returns False.
+	 */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
+
+	/**
 	 * Finds all user organizations based on the provided filter options.
 	 *
 	 * Every loaded `user` relation is handed back as a real `User` instance, whichever ORM loaded it

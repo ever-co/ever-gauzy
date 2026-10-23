@@ -97,6 +97,8 @@ describe('CachedValidatorContainer', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+		// The caller's token names their own organization, the only one the organization boundary lets a non-admin name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OWN_ORGANIZATION_ID);
 		findOneByOrFail.mockClear();
 	});
 

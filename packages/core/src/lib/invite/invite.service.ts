@@ -40,6 +40,7 @@ import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
 	allowedEmailLink,
@@ -1105,16 +1106,21 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				 * Current user is belong to invited tenant
 				 */
 				if (user.tenantId === tenantId) {
-					await this.commandBus.execute(
-						new InviteAcceptCommand(
-							{
-								user,
-								email,
-								token,
-								code,
-								originalUrl: origin
-							},
-							languageCode
+					// The invitation names an organization the caller's token does not (it is the organization they
+					// are joining), so accepting runs outside the organization boundary: the invitation was read above
+					// for the caller's own e-mail, still open and unexpired, which is what grants the crossing.
+					await runOutsideOrganizationBoundary(() =>
+						this.commandBus.execute(
+							new InviteAcceptCommand(
+								{
+									user,
+									email,
+									token,
+									code,
+									originalUrl: origin
+								},
+								languageCode
+							)
 						)
 					);
 				}
