@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { filter, Observable, of as observableOf } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import { RoleService } from '@gauzy/ui-core/core';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RoleFormFieldComponent implements OnInit, OnDestroy {

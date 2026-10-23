@@ -5,7 +5,7 @@ import { StorageService } from './storage.service';
 import * as moment from 'moment';
 import { LinkedList } from '../offline-sync';
 import { Observable } from 'rxjs';
-import hash from 'hash-it';
+import { hash } from 'hash-it';
 
 interface IImageCache<T> {
 	value: Observable<T>;

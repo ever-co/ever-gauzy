@@ -1,4 +1,4 @@
-import { Component, Signal, computed, inject } from '@angular/core';
+import { Component, type Signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { merge, of } from 'rxjs';
@@ -42,6 +42,7 @@ interface IMenuMatch {
 	selector: 'ngx-breadcrumbs',
 	templateUrl: './breadcrumb.component.html',
 	styleUrls: ['./breadcrumb.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class BreadcrumbComponent {
@@ -100,13 +101,13 @@ export class BreadcrumbComponent {
 	 * which regularly happens BEFORE the i18n bundle has finished loading. Every label
 	 * then falls back to the menu item's hard-coded English `title` and, with no further
 	 * language change, stays English for the rest of the session. `onTranslationChange`
-	 * (bundle loaded / extended) and `onDefaultLangChange` close that window.
+	 * (bundle loaded / extended) and `onFallbackLangChange` close that window.
 	 */
 	private readonly _language = toSignal(
 		merge(
 			this._translateService.onLangChange,
 			this._translateService.onTranslationChange,
-			this._translateService.onDefaultLangChange
+			this._translateService.onFallbackLangChange
 		).pipe(startWith(null)),
 		{ initialValue: null }
 	);

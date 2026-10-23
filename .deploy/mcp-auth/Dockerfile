@@ -38,7 +38,7 @@ ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 
 
-FROM node:24.16.0-alpine3.23 AS dependencies
+FROM node:26.12.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -65,6 +65,8 @@ COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
@@ -137,7 +139,7 @@ RUN rm -rf /srv/gauzy-mcp-auth/dist
 RUN yarn build:mcp-auth:prod
 
 # Only prod dependencies
-FROM node:24.16.0-alpine3.23 AS proddependencies
+FROM node:26.12.1-alpine3.24 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
@@ -157,6 +159,8 @@ COPY --chown=node:node --from=build /srv/gauzy-mcp-auth/dist .
 RUN ln -s . dist
 
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them

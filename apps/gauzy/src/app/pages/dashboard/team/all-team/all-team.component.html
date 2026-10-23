@@ -14,8 +14,8 @@
 
         <div class="counter-container">
           <gauzy-counter-point
-            [total]="organization?.statistics?.countTeams"
-            [value]="organization?.statistics?.countWorking"
+            [total]="$safeNavigationMigration(organization?.statistics?.countTeams)"
+            [value]="$safeNavigationMigration(organization?.statistics?.countWorking)"
           ></gauzy-counter-point>
         </div>
       </nb-card-body>
@@ -33,8 +33,8 @@
         </div>
         <div class="counter-container">
           <gauzy-counter-point
-            [total]="organization?.statistics?.counts?.employeesCountTotal"
-            [value]="organization?.statistics?.counts?.employeesCount"
+            [total]="$safeNavigationMigration(organization?.statistics?.counts?.employeesCountTotal)"
+            [value]="$safeNavigationMigration(organization?.statistics?.counts?.employeesCount)"
           ></gauzy-counter-point>
         </div>
       </nb-card-body>
@@ -53,7 +53,7 @@
         <div class="counter-container">
           <gauzy-counter-point
             [total]="projectCount"
-            [value]="organization?.statistics?.counts?.projectsCount"
+            [value]="$safeNavigationMigration(organization?.statistics?.counts?.projectsCount)"
           ></gauzy-counter-point>
         </div>
       </nb-card-body>
@@ -93,7 +93,7 @@
           <div class="legend-container">
             <div class="legend">
               <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate }}:</span>
-              <nb-badge status="success" [text]="'' + team?.statistics?.countOnline"></nb-badge>
+              <nb-badge status="success" [text]="'' + $safeNavigationMigration(team?.statistics?.countOnline)"></nb-badge>
             </div>
             <div class="legend">
               <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate }}:</span>
@@ -104,7 +104,7 @@
             </div>
             <div class="legend">
               <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate }}:</span>
-              <nb-badge status="danger" [text]="'' + team?.statistics?.countNotWorking"></nb-badge>
+              <nb-badge status="danger" [text]="'' + $safeNavigationMigration(team?.statistics?.countNotWorking)"></nb-badge>
             </div>
           </div>
           <div>
@@ -115,7 +115,7 @@
         </nb-card-header>
         <nb-card-body>
           <div class="d-flex flex-column">
-            @for (member of team?.membersWorkingToday.concat(team?.membersNotWorkingToday); track member) {
+            @for (member of team?.membersWorkingToday.concat($safeNavigationMigration(team?.membersNotWorkingToday)); track member) {
               <gauzy-team-member [member]="member" isClassic="true"></gauzy-team-member>
             }
           </div>

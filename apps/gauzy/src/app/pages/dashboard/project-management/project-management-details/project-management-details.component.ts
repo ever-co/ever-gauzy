@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { combineLatest, debounceTime, filter, first, firstValueFrom, Subject } from 'rxjs';
@@ -26,6 +26,7 @@ import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/
     selector: 'gauzy-project-management-details',
     templateUrl: './project-management-details.component.html',
     styleUrls: ['./project-management-details.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProjectManagementDetailsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -38,7 +38,7 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		TagsColorInputModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
 		SmartDataViewLayoutModule

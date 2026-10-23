@@ -27,14 +27,14 @@
 		"lib:watch": "yarn nx build constants --watch"
 	},
 	"dependencies": {
-		"tslib": "^2.6.2"
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
-		"@types/node": "^24.10.0"
+		"@types/node": "^26.6.5"
 	},
 	"keywords": [],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

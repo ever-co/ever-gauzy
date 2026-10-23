@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
 	BaseEntityEnum,
@@ -23,6 +23,7 @@ import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/cor
 	selector: 'ngx-contact-view',
 	templateUrl: './contact-view.component.html',
 	styleUrls: ['./contact-view.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ContactViewComponent extends TranslationBaseComponent implements OnInit {
@@ -99,7 +100,7 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			return '';
 		}
 		try {
-			const locale = this.translateService?.currentLang || 'en';
+			const locale = this.translateService?.getCurrentLang() || 'en';
 			return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
 		} catch {
 			return code;

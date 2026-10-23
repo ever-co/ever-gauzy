@@ -16,7 +16,7 @@
       {{ 'FORM.PLACEHOLDERS.OWNER' | translate }}
     </div>
     <div class="detail-right">
-      {{ rowData?.owner ? (rowData?.owner | titlecase) : '&mdash;' }}
+      {{ rowData?.owner ? ($safeNavigationMigration(rowData?.owner) | titlecase) : '&mdash;' }}
     </div>
   </div>
   <div class="detail-row">
@@ -29,7 +29,7 @@
       }
       @if (rowData?.organizationContact) {
         <ngx-contact-links
-          [value]="rowData?.organizationContact"
+          [value]="$safeNavigationMigration(rowData?.organizationContact)"
         ></ngx-contact-links>
       }
     </div>
@@ -39,7 +39,7 @@
       {{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}
     </div>
     <div class="detail-right">
-      {{ rowData?.endDate ? (rowData?.endDate | dateFormat) : '&mdash;' }}
+      {{ rowData?.endDate ? ($safeNavigationMigration(rowData?.endDate) | dateFormat) : '&mdash;' }}
     </div>
   </div>
   <div class="detail-row">
@@ -57,7 +57,7 @@
     <div class="detail-right">
       {{
       rowData?.startDate
-      ? (rowData?.startDate | dateFormat)
+      ? ($safeNavigationMigration(rowData?.startDate) | dateFormat)
       : '&mdash;'
       }}
     </div>
@@ -69,7 +69,7 @@
     <div class="detail-right">
       @if (rowData?.projectUrl) {
         <gauzy-external-link
-          [rowData]="{ website: rowData?.projectUrl }"
+          [rowData]="{ website: $safeNavigationMigration(rowData?.projectUrl) }"
         ></gauzy-external-link>
       }
       @if (!rowData?.projectUrl) {

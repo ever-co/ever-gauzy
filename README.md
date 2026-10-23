@@ -225,6 +225,7 @@ Note: we recommend using Kubernetes for production workloads instead of Docker C
 Notes:
 
 -   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
+-   `docker-compose.yml` and `docker-compose.build.yml` also run a `worker` container next to the API. With Redis enabled the API only enqueues scheduled jobs, so the worker is what fires them, including the per-minute event outbox dispatch that delivers webhooks.
 -   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up -d` command. We already doing it using `include` in our main docker compose files.
 -   API and Web UI settings live in the service `env_file` (`.env.compose`, or `.env.demo.compose` for the demo): edit that file to change them. Their lines read `KEY=${KEY:-default}`, and Docker Compose resolves `${...}` in an env file from the shell and `--env-file` first, so a shell variable or `--env-file .env.something` on the docker-compose `up` command still overrides a single setting (ports and host names in the compose files themselves are read from there too). `DEMO` and the variables without a `${...}` default are read from the env file only.
 
@@ -245,7 +246,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 
 #### Required
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version or later (e.g. version 22.x or 24.x).
+-   Install [NodeJs](https://nodejs.org/en/download) version 26.x or later (the `engines` field in `package.json` requires `>=26`; the exact version used by the repo is pinned in [`.nvmrc`](https://github.com/ever-co/ever-gauzy/blob/develop/.nvmrc), so `nvm use` picks it up).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) v1.22.x (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and Bootstrap solution using the command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetCompo
     selector: 'ngx-product-gallery',
     templateUrl: './product-gallery.component.html',
     styleUrls: ['./product-gallery.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductGalleryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
@@ -32,6 +32,7 @@ import {
     selector: 'ga-departments',
     templateUrl: './departments.component.html',
     styleUrls: ['./departments.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DepartmentsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {

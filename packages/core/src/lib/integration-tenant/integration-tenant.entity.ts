@@ -18,7 +18,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	@ApiProperty({ type: () => String, enum: IntegrationEnum })
 	@IsNotEmpty()
 	@IsEnum(IntegrationEnum)
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	name: IntegrationEnum;
 
 	// Date when the integration was synced

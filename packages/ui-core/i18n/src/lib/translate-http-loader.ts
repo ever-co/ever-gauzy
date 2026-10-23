@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { type Provider } from '@angular/core';
 import { provideTranslateHttpLoader as ngxProvideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 /**
@@ -29,7 +29,7 @@ export const DEFAULT_HTTP_LOADER_OPTIONS: Required<HttpLoaderOptions> = {
  * Returns a single `Provider` (which Angular DI treats as a flat array of providers
  * containing the HTTP loader config token and the `TranslateLoader` class provider).
  * This aligns with the `TranslateProviders.loader` type expected by
- * `TranslateModule.forRoot()` and `provideTranslateService()` in ngx-translate v17.
+ * `provideTranslateService()` (ngx-translate 18 removed `TranslateModule`).
  *
  * @param options Optional configuration for prefix and suffix.
  * @returns A single Provider compatible with `TranslateProviders.loader`.
@@ -52,12 +52,14 @@ export const DEFAULT_HTTP_LOADER_OPTIONS: Required<HttpLoaderOptions> = {
  *
  * @example
  * ```typescript
- * // For NgModule-based apps (recommended v17 pattern)
- * import { provideTranslateHttpLoader, TranslateModule } from '@gauzy/ui-core/i18n';
+ * // For NgModule-based apps
+ * import { provideTranslateService, TranslatePipe } from '@ngx-translate/core';
+ * import { provideTranslateHttpLoader } from '@gauzy/ui-core/i18n';
  *
  * @NgModule({
- *   imports: [
- *     TranslateModule.forRoot({
+ *   imports: [TranslatePipe],
+ *   providers: [
+ *     provideTranslateService({
  *       fallbackLang: 'en',
  *       loader: provideTranslateHttpLoader()
  *     })

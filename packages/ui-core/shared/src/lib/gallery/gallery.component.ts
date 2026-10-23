@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ElementRef, HostListener, Input, ViewChild, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ElementRef, HostListener, Input, ViewChild, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
@@ -29,6 +29,7 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
     templateUrl: './gallery.component.html',
     styleUrls: ['./gallery.component.scss'],
     animations: [fadeInOutAnimation],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GalleryComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -17,7 +17,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -50,7 +50,7 @@ const NB_MODULES = [
 ];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [NgSelectModule, NgxPermissionsModule.forChild(), TranslateModule.forChild()];
+const THIRD_PARTY_MODULES = [NgSelectModule, NgxPermissionsModule.forChild(), TranslatePipe];
 
 @NgModule({
 	imports: [

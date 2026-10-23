@@ -1,0 +1,179 @@
+# The equipment-sharing domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/equipment-sharing` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other. Nothing here
+# decides anything: each field calls the same `EquipmentSharingService` method, or dispatches the same
+# command, that the route behind it does.
+#
+# **The connection is the list, and the two sub-routes that join more than it does are fields of their
+# own.** The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the
+# same rows under the same filters, so they fold into the one connection `equipmentSharings` rather than
+# claiming two root fields that could disagree. The connection mirrors `GET /`, which is the route that
+# reads the whole filtered set the connection protocol is applied to; `GET /pagination` slices that same
+# set, and the page it performs is the connection's own `limit`/`offset`.
+#
+# The two remaining reads are not narrowings of that connection, and each is a root field of its own for
+# the reason the read itself gives: **both inner-join or join the employee and team pivots the list read
+# does not join**, so their rows carry memberships the connection's rows cannot, and a filter over a
+# membership the row does not carry could only ever select the empty set. `equipmentSharingsByEmployee`
+# is the sharper case of the two: its path segment is named for an employee, but the read narrows on
+# `createdByUserId` — the person who filed the request — which is a different question from any filter on
+# the row's own employee pivot, and one no member of `EquipmentSharingFilter` states.
+#
+# `equipmentSharingCount` takes no filter, and that is a statement rather than an omission: the delivered
+# count route binds its query string to the store's own `where`, which the connection protocol does not
+# speak, so a `filter` argument here would either be handed to a service call that cannot accept it or be
+# evaluated over a second code path that could disagree with the connection's `totalCount`. It is nullable
+# because a count is an aggregate a resource may legitimately have no answer for, and a non-null field
+# would turn "not answered" into a fabricated zero.
+#
+# The lifecycle pair counts as two writes rather than as one with a flag: the delivered routes are two,
+# they dispatch the same command with the two different statuses, and a client that may approve is not
+# thereby given a way to refuse by stating a number. `approveEquipmentSharing` and
+# `refuseEquipmentSharing` answer a row; the status they write is the contracts' own value, carried on
+# the object type as its value rather than declared as an enum.
+
+extend type Query {
+	"""
+	The sharing periods of the caller's tenant.
+	"""
+	equipmentSharings(
+		filter: EquipmentSharingFilter
+		sort: [EquipmentSharingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): EquipmentSharingConnection!
+
+	"""
+	One sharing period of the caller's tenant, or null when there is none.
+	"""
+	equipmentSharing(id: ID!): EquipmentSharing
+
+	"""
+	How many sharing periods the caller's tenant holds.
+	"""
+	equipmentSharingCount: Int
+
+	"""
+	The sharing periods of one organization, with the employees and the teams each one is handed to.
+
+	**A root field of its own rather than a filter on `equipmentSharings`, and the reason is the read
+	rather than a preference.** The delivered route's reader joins the employee and team pivots and
+	inner-joins the asset, none of which the list read joins, so its rows carry memberships the connection
+	cannot answer and leave out the periods whose asset row is gone. Folding it in would mean answering
+	rows without the memberships the route exists to answer.
+
+	The organization is the path segment of the delivered route, and the same connection protocol is
+	applied to the rows it returns, so a caller pages and narrows it exactly as it pages the list above.
+	"""
+	equipmentSharingsByOrganization(
+		organizationId: ID!
+		filter: EquipmentSharingFilter
+		sort: [EquipmentSharingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EquipmentSharingConnection!
+
+	"""
+	The sharing periods one employee filed, with the employees and the teams each one is handed to.
+
+	**A root field of its own for the two reasons above, and one more.** The delivered read joins both
+	pivots, and it narrows on `createdByUserId` — the user who filed the request — rather than on the
+	employee pivot the path segment's name suggests. That is a fact about the period's author, not about
+	who holds the asset, and no member of `EquipmentSharingFilter` states it: a filter on the row's own
+	employee would answer a different set of periods under a name that reads like this one.
+	"""
+	equipmentSharingsByEmployee(
+		employeeId: ID!
+		filter: EquipmentSharingFilter
+		sort: [EquipmentSharingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EquipmentSharingConnection!
+}
+
+extend type Mutation {
+	"""
+	Files a sharing period.
+
+	The organization is stated because the delivered route reads it from its own path segment and the
+	handler stamps the row with it; the caller's tenant is stamped by the same handler and is never
+	stated here. The delivered write records the approval row that stands beside the sharing in the same
+	call, so a period filed over this protocol is one an approver can act on exactly as a REST caller's
+	is.
+	"""
+	createEquipmentSharing(
+		organizationId: ID!
+		input: CreateEquipmentSharingInput!
+	): EquipmentSharing!
+
+	"""
+	Changes a period that exists.
+
+	The delivered edit is the handler's own read-then-replace, and the identifier is what it reads the row
+	by: a period of another organization, or one that is not there, is answered with the miss rather than
+	with a write under an identifier the caller does not own. See `UpdateEquipmentSharingInput` for what a
+	member the caller leaves out does, and for why `status` is stated as required there.
+	"""
+	updateEquipmentSharing(input: UpdateEquipmentSharingInput!): EquipmentSharing!
+
+	"""
+	Approves a filed period.
+
+	The delivered route dispatches the same status command the refusal below dispatches, with the
+	approved value of the contracts' own vocabulary. The command moves the sharing row and the approval
+	row together, so the two agree afterwards — which is why this is one field per decision rather than a
+	single field taking a status number.
+	"""
+	approveEquipmentSharing(id: ID!): EquipmentSharing!
+
+	"""
+	Refuses a filed period.
+
+	The same command as the approval above with the refused value; the answer is the row the command
+	saved, whose `status` says which decision it was.
+	"""
+	refuseEquipmentSharing(id: ID!): EquipmentSharing!
+
+	"""
+	Removes a period outright, with the approval row recorded beside it.
+
+	This is the hard removal, and it is the one to reach for only for a row filed in error: the delivered
+	service removes the approval row in the same call, scoped to the caller's tenant, so a removal over
+	this protocol leaves nothing behind for an approver to act on.
+	"""
+	deleteEquipmentSharing(id: ID!): Boolean!
+
+	"""
+	Withdraws a period without removing the row.
+
+	The delivered list stops answering it and the asset it points at keeps resolving the identifier it
+	holds. The answer is the withdrawn row, whose `deletedAt` says when it happened.
+	"""
+	softDeleteEquipmentSharing(id: ID!): EquipmentSharing!
+
+	"""
+	Puts a withdrawn period back.
+	"""
+	recoverEquipmentSharing(id: ID!): EquipmentSharing!
+}

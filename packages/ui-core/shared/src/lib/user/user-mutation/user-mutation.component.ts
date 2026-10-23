@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RolesEnum, IUser, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
@@ -10,6 +10,7 @@ import { filter, tap } from 'rxjs/operators';
     selector: 'ga-user-mutation',
     templateUrl: './user-mutation.component.html',
     styleUrls: ['./user-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class UserMutationComponent implements OnInit {

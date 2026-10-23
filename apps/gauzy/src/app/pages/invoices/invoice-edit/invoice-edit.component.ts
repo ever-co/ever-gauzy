@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -52,6 +52,7 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
     selector: 'ga-invoice-edit',
     templateUrl: './invoice-edit.component.html',
     styleUrls: ['./invoice-edit.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceEditComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -153,7 +154,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.selectedLanguage = this.translateService.currentLang;
+		this.selectedLanguage = this.translateService.getCurrentLang();
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe((languageEvent) => {
 			this.selectedLanguage = languageEvent.lang;
 		});

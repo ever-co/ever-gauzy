@@ -7,6 +7,7 @@ import { TaskModule } from '../tasks/task.module';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { EmployeeRecurringExpenseController } from './employee-recurring-expense.controller';
+import { EmployeeRecurringExpenseResolver } from './employee-recurring-expense.resolver';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { TypeOrmEmployeeRecurringExpenseRepository } from './repository/type-orm-employee-recurring-expense.repository';
@@ -23,6 +24,9 @@ import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-o
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [
 		EmployeeRecurringExpenseService,
+		// The GraphQL surface is declared beside the service it calls, so the host that scans this
+		// module for resolvers reaches everything the resolver injects.
+		EmployeeRecurringExpenseResolver,
 		TypeOrmEmployeeRecurringExpenseRepository, MikroOrmEmployeeRecurringExpenseRepository,
 		...QueryHandlers,
 		...CommandHandlers

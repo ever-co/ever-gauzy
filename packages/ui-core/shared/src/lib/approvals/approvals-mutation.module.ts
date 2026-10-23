@@ -11,7 +11,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ApprovalPolicyService, RequestApprovalService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/core';
 import { RequestApprovalMutationComponent } from './approvals-mutation.component';
@@ -33,7 +33,7 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 		NgSelectModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	declarations: [RequestApprovalMutationComponent],
 	providers: [RequestApprovalService, ApprovalPolicyService, Store]

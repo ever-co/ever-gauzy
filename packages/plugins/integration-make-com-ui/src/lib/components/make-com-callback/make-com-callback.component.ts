@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ngx-make-com-callback',
 	templateUrl: './make-com-callback.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class MakeComCallbackComponent extends TranslationBaseComponent implements OnInit {

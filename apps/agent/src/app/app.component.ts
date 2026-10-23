@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, NgZone, OnDestroy, OnInit, Renderer2, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
@@ -20,6 +20,7 @@ import { AppService } from './app.service';
 	selector: 'agent-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {

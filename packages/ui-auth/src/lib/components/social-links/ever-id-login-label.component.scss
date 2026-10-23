@@ -1,0 +1,61 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+// The Ever Works logo star: one turn every 9 s, linear, endless; none with a reduced-motion setting.
+.ever-star {
+  width: auto;
+  height: 20px;
+  flex-shrink: 0;
+  animation: ever-star-spin 9s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes ever-star-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Words and wordmark stay on one row in the 40 px button, and wrap (the button grows) only when the text is
+// enlarged or a translation is long, so nothing is pushed out of the button. Not named `.label`: Nebular styles every
+// `.label` (hint colour, 12 px bold) and the login page gives its `.label` descendants a bottom margin, which made
+// the words grey and the button 44 px. The text takes the button's colour and type.
+.ever-id-label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 20px;
+  white-space: normal;
+}
+
+.ever-id-wordmark {
+  display: block;
+  height: 14px;
+  width: auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

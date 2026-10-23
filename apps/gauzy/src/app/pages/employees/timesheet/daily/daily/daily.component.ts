@@ -1,5 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, merge, of, switchMap } from 'rxjs';
@@ -33,6 +33,7 @@ import {
 	selector: 'ngx-daily-timesheet',
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DailyComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {

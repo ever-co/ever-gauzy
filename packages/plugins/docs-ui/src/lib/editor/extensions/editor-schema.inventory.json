@@ -1,0 +1,146 @@
+{
+	"nodes": {
+		"blockMath": [
+			"latex"
+		],
+		"blockquote": [
+			"blockId"
+		],
+		"bulletList": [
+			"blockId"
+		],
+		"callout": [
+			"blockId",
+			"emoji",
+			"type"
+		],
+		"codeBlock": [
+			"blockId",
+			"language"
+		],
+		"details": [
+			"blockId",
+			"open"
+		],
+		"detailsContent": [],
+		"detailsSummary": [],
+		"doc": [],
+		"documentMention": [
+			"id",
+			"label",
+			"mentionSuggestionChar"
+		],
+		"embedCard": [
+			"blockId",
+			"description",
+			"imageUrl",
+			"title",
+			"url"
+		],
+		"emoji": [
+			"name"
+		],
+		"employeeMention": [
+			"id",
+			"label",
+			"mentionSuggestionChar"
+		],
+		"fileAttachment": [
+			"blockId",
+			"documentId",
+			"mimeType",
+			"name",
+			"size",
+			"uploadId"
+		],
+		"hardBreak": [],
+		"heading": [
+			"blockId",
+			"data-toc-id",
+			"id",
+			"level",
+			"textAlign"
+		],
+		"horizontalRule": [],
+		"image": [
+			"align",
+			"alt",
+			"blockId",
+			"documentId",
+			"height",
+			"src",
+			"title",
+			"uploadId",
+			"width"
+		],
+		"inlineMath": [
+			"latex"
+		],
+		"listItem": [],
+		"orderedList": [
+			"blockId",
+			"start",
+			"type"
+		],
+		"paragraph": [
+			"blockId",
+			"textAlign"
+		],
+		"table": [
+			"blockId"
+		],
+		"tableCell": [
+			"align",
+			"colspan",
+			"colwidth",
+			"rowspan"
+		],
+		"tableHeader": [
+			"align",
+			"colspan",
+			"colwidth",
+			"rowspan"
+		],
+		"tableRow": [],
+		"taskItem": [
+			"checked"
+		],
+		"taskList": [
+			"blockId"
+		],
+		"text": [],
+		"youtube": [
+			"blockId",
+			"height",
+			"src",
+			"start",
+			"width"
+		]
+	},
+	"marks": {
+		"bold": [],
+		"code": [],
+		"highlight": [
+			"color"
+		],
+		"italic": [],
+		"link": [
+			"class",
+			"href",
+			"rel",
+			"target",
+			"title"
+		],
+		"strike": [],
+		"subscript": [],
+		"superscript": [],
+		"textStyle": [
+			"backgroundColor",
+			"color",
+			"fontFamily",
+			"fontSize",
+			"lineHeight"
+		],
+		"underline": []
+	}
+}

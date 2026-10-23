@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { IOrganization } from '@gauzy/contracts';
@@ -9,9 +9,10 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-invoice-total-amount',
     template: `
 		<span>
-			{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
+			{{ value | currency : $safeNavigationMigration(rowData?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 		</span>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceTotalValueComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,12 +18,14 @@ import {
 	PaginationFilterBaseComponent
 } from '@gauzy/ui-core/shared';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
+import { buildMerchantViewSections } from '../merchant-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-merchant-table',
     templateUrl: './merchant-table.component.html',
     styleUrls: ['./merchant-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MerchantTableComponent extends PaginationFilterBaseComponent implements OnInit {
@@ -228,49 +230,12 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 			return;
 		}
 
-		this.viewSections = this.buildViewSections(merchant);
+		this.viewSections = buildMerchantViewSections(merchant);
 		this.viewedMerchant = merchant;
 	}
 
 	closeView(): void {
 		this.viewedMerchant = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the grid columns, read vertically,
-	 * followed by the contact/currency/warehouse details the grid has no room for.
-	 */
-	private buildViewSections(merchant: IMerchant): IRecordViewSection[] {
-		// Same reading as the grid's contact cell (ContactRowComponent): country, city, address.
-		const contact = merchant.contact
-			? [merchant.contact.country, merchant.contact.city, merchant.contact.address].filter(Boolean).join(', ')
-			: null;
-		const warehouses = (merchant.warehouses || []).map((warehouse: IWarehouse) => warehouse.name).join(', ');
-
-		return [
-			{
-				fields: [
-					{ label: 'INVENTORY_PAGE.NAME', key: 'name' },
-					{ label: 'INVENTORY_PAGE.CODE', key: 'code' },
-					{ label: 'INVENTORY_PAGE.CONTACT', value: contact },
-					{ label: 'INVENTORY_PAGE.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
-					{ label: 'INVENTORY_PAGE.ACTIVE', key: 'active', type: 'boolean' }
-				]
-			},
-			{
-				fields: [
-					{ label: 'INVENTORY_PAGE.EMAIL', key: 'email', type: 'email' },
-					{ label: 'INVENTORY_PAGE.PHONE', key: 'phone', type: 'phone' },
-					{ label: 'SM_TABLE.CURRENCY', key: 'currency' }
-				]
-			},
-			{
-				fields: [
-					{ label: 'INVENTORY_PAGE.TAGS', key: 'tags', type: 'tags', wide: true },
-					{ label: 'INVENTORY_PAGE.WAREHOUSES', value: warehouses }
-				]
-			}
-		];
 	}
 
 	onEditStore(selectedItem?: IMerchant) {

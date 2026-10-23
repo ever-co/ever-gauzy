@@ -1,0 +1,115 @@
+# The organization strategic initiative domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The guard chain and the permission are the controller's, field by field.** The controller carries
+# both guards on the class and states a permission on the seven routes it declares; the four it
+# inherits from the CRUD base — the count, the paginated list and the two lifecycle moves — carry none.
+# So this resolver carries the same guard chain, states exactly those permissions on exactly those
+# fields, and leaves the four inherited capabilities unpermissioned: a field that demanded a permission
+# the route does not would refuse a caller the REST route serves, and one that demanded less would be a
+# way around the permission model.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection. `withDeleted` is
+# offered because the delivered list route offers it: `BaseQueryDTO` carries it and that route hands
+# its query string straight to the same read, so a REST caller can ask for withdrawn rows and a
+# connection that could not would hide them.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `organizationStrategicInitiatives`, mirroring `GET /`, which is
+# the route that reads the whole filtered set the connection protocol is applied to.
+#
+# **`organizationStrategicInitiativesByProject` is a field of its own rather than a filter on the
+# connection, and the reason is the read behind it.** The alignment between an initiative and a project
+# is a pivot row, not a column of the initiative: the connection is applied to the rows a service
+# method returned, and there is no member of those rows the evaluator could narrow by a project. The
+# delivered route answers a project's aligned initiatives as a bare list with no page, from a read that
+# starts at the project and walks the pivot — so the field mirrors that read, and the alignment stays
+# reachable rather than being folded into a filter that could not be evaluated.
+#
+# `organizationStrategicInitiativeCount` takes no filter, and that is a statement rather than an
+# omission: the delivered count route passes its query string through as the store's own `where`, which
+# the connection protocol does not speak.
+
+extend type Query {
+	"""
+	The strategic initiatives the caller may see, newest first.
+	"""
+	organizationStrategicInitiatives(
+		filter: OrganizationStrategicInitiativeFilter
+		sort: [OrganizationStrategicInitiativeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationStrategicInitiativeConnection!
+
+	"""
+	One strategic initiative, or null when there is none — or when the caller may not see this one. The
+	delivered read refuses an initiative outside the caller's visibility scope with the same miss it
+	answers for a row that is not there, which is what this field reproduces.
+	"""
+	organizationStrategicInitiative(id: ID!): OrganizationStrategicInitiative
+
+	"""
+	The strategic initiatives aligned to one project, as the delivered route answers them: a bare list
+	with no page, narrowed by the same visibility rule as every other read here.
+	"""
+	organizationStrategicInitiativesByProject(projectId: ID!): [OrganizationStrategicInitiative!]!
+
+	"""
+	How many strategic initiatives the caller's tenant holds.
+	"""
+	organizationStrategicInitiativeCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a strategic initiative. The caller's own employee is recorded as its steward when the caller
+	states none.
+	"""
+	createOrganizationStrategicInitiative(
+		input: CreateOrganizationStrategicInitiativeInput!
+	): OrganizationStrategicInitiative!
+
+	"""
+	Changes the stated facts of a strategic initiative.
+	"""
+	updateOrganizationStrategicInitiative(
+		input: UpdateOrganizationStrategicInitiativeInput!
+	): OrganizationStrategicInitiative!
+
+	"""
+	Records an assessment of a strategic initiative. The stated signals are merged over the ones the row
+	already carries and stamped with the assessment's time and the assessing employee, so the signals a
+	previous assessment left behind are kept.
+	"""
+	updateOrganizationStrategicInitiativeSignals(
+		input: UpdateOrganizationStrategicSignalsInput!
+	): OrganizationStrategicInitiative!
+
+	"""
+	Removes a strategic initiative outright. What is aligned to it is the store's own constraint to
+	refuse; this field does not pre-empt it.
+	"""
+	deleteOrganizationStrategicInitiative(id: ID!): Boolean!
+
+	"""
+	Withdraws a strategic initiative without removing it: the row keeps its identifier and everything
+	aligned to it keeps pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteOrganizationStrategicInitiative(id: ID!): OrganizationStrategicInitiative!
+
+	"""
+	Puts a withdrawn strategic initiative back.
+	"""
+	recoverOrganizationStrategicInitiative(id: ID!): OrganizationStrategicInitiative!
+}

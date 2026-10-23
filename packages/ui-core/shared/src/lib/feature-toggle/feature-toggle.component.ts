@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -17,6 +17,7 @@ import { CountdownConfirmationComponent } from '../user/forms/countdown-confirma
 	selector: 'ga-feature-toggle',
 	templateUrl: './feature-toggle.component.html',
 	styleUrls: ['./feature-toggle.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class FeatureToggleComponent extends TranslationBaseComponent implements OnInit, OnChanges {

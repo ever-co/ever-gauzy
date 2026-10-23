@@ -2,11 +2,11 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CandidateCriterionCardComponent } from './candidate-criterion-card.component';
 
 @NgModule({
-	imports: [CommonModule, ReactiveFormsModule, NbButtonModule, NbIconModule, NbInputModule, TranslateModule.forChild()],
+	imports: [CommonModule, ReactiveFormsModule, NbButtonModule, NbIconModule, NbInputModule, TranslatePipe],
 	exports: [CandidateCriterionCardComponent],
 	declarations: [CandidateCriterionCardComponent]
 })

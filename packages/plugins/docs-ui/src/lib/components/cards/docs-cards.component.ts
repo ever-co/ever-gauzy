@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,6 +55,7 @@ type DocsCardRow = IDocument & { childrenCount?: number; isArchived?: boolean };
 	selector: 'gz-docs-cards',
 	templateUrl: './docs-cards.component.html',
 	styleUrls: ['./docs-cards.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsCardsComponent extends TranslationBaseComponent implements OnInit {

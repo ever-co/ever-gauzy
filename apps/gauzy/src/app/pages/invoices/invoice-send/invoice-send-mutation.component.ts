@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -9,6 +9,7 @@ import { InvoiceEstimateHistoryService, InvoicesService, Store, ToastrService } 
     selector: 'ga-invoice-send',
     templateUrl: './invoice-send-mutation.component.html',
     styleUrls: ['./invoice-send-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceSendMutationComponent extends TranslationBaseComponent implements OnInit {

@@ -7,7 +7,12 @@ import { OrganizationProject } from '../organization-project.entity';
 export class UpdateProjectSettingDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		PickType(OrganizationProject, ['isTasksAutoSync', 'isTasksAutoSyncOnLabel', 'syncTag'] as const)
+		PickType(OrganizationProject, [
+			'isTasksAutoSync',
+			'isTasksAutoSyncOnLabel',
+			'syncTag',
+			'isTaskSizeEstimationEnabled'
+		] as const)
 	)
 	implements IOrganizationProjectSetting
 {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, filter } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -14,6 +14,7 @@ import { IntegrationsService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-authorize',
 	templateUrl: './make-com-authorize.component.html',
 	styleUrls: ['./make-com-authorize.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AuthorizationComponent extends TranslationBaseComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, NgZone, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IDesktopSecret } from '@gauzy/contracts';
 import { ElectronService } from '../../electron/services/electron/electron.service';
@@ -10,6 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'gauzy-secret',
     templateUrl: './secret.component.html',
     styleUrls: ['./secret.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, NbToggleModule, FormsModule, NbIconModule, NbTooltipModule, NbInputModule, NbButtonModule, TranslatePipe]
 })
 export class SecretComponent implements OnInit {

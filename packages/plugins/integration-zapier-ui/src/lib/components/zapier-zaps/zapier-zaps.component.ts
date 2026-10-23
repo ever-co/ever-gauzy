@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { tap, catchError, finalize, switchMap, map, distinctUntilChanged } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	selector: 'ngx-zapier-zaps',
 	templateUrl: './zapier-zaps.component.html',
 	styleUrls: ['./zapier-zaps.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierZapsComponent extends TranslationBaseComponent implements OnInit {
@@ -150,7 +151,7 @@ export class ZapierZapsComponent extends TranslationBaseComponent implements OnI
 
 		this.creating = true;
 		this._zapierService
-			.createZap(payload, this._accessToken)
+			.createZap(payload, this._accessToken, this.integrationId)
 			.pipe(
 				tap((zap: IZapierZap) => {
 					this.zaps = [zap, ...this.zaps];
@@ -236,7 +237,7 @@ export class ZapierZapsComponent extends TranslationBaseComponent implements OnI
 			.getAccessToken(this.integrationId)
 			.pipe(
 				tap((accessToken: string) => (this._accessToken = accessToken)),
-				switchMap((accessToken: string) => this._zapierService.getZaps(accessToken)),
+				switchMap((accessToken: string) => this._zapierService.getZaps(accessToken, this.integrationId)),
 				tap((zaps: IZapierZap[]) => {
 					this.zaps = zaps;
 				}),

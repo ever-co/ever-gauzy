@@ -16,7 +16,7 @@ export function InitLogger() {
 
 	log.catchErrors({
 		showDialog: false,
-		onError(error, versions, submitIssue) {
+		onError({ error, versions, createIssue: submitIssue }) {
 			// Set user information, as well as tags and further extras
 			const scope = new Sentry.Scope();
 			scope.setExtra('Version', versions.app);

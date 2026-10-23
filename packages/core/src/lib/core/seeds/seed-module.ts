@@ -2,7 +2,6 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 import { NestFactory } from '@nestjs/core';
-import * as yargs from 'yargs';
 import * as chalk from 'chalk';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { registerPluginConfig } from './../../bootstrap';
@@ -41,7 +40,13 @@ export async function seedModule(devConfig: Partial<ApplicationPluginConfig>): P
 		});
 
 		// Extract the module name from command-line arguments
-		const { name: module } = yargs(process.argv).argv as { name?: string };
+		// yargs 18 is ESM-only. Load it when the seeder runs, not when the module is imported, so importing
+		// @gauzy/core (a Jest suite, the API) never loads it. Node returns its `module.exports` factory to require().
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const yargs: typeof import('yargs') = require('yargs');
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const { hideBin }: typeof import('yargs/helpers') = require('yargs/helpers');
+		const { name: module } = yargs(hideBin(process.argv)).parseSync() as { name?: string };
 		if (!module) {
 			console.log(chalk.red('No module name provided. Please specify a module name.'));
 			await app.close();

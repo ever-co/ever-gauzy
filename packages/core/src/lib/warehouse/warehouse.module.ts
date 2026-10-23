@@ -9,6 +9,7 @@ import { Warehouse } from './warehouse.entity';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
+import { WarehouseResolver } from './warehouse.resolver';
 import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
 import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository';
@@ -27,6 +28,9 @@ import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-or
 	providers: [
 		WarehouseService,
 		WarehouseProductService,
+		// The GraphQL view of the same route set. One controller serves the location and the stock
+		// levels held there, so one resolver injects both services and states both surfaces.
+		WarehouseResolver,
 		TypeOrmWarehouseRepository, MikroOrmWarehouseRepository,
 		TypeOrmWarehouseProductRepository, MikroOrmWarehouseProductRepository,
 		TypeOrmWarehouseProductVariantRepository, MikroOrmWarehouseProductVariantRepository

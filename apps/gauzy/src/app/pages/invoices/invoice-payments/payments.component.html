@@ -41,8 +41,8 @@
 						<div class="col-6 pr-0 pl-0">
 							{{
 								invoice?.totalValue || 0
-									| currency: invoice?.currency
-									| position: organization?.currencyPosition
+									| currency: $safeNavigationMigration(invoice?.currency)
+									| position: $safeNavigationMigration(organization?.currencyPosition)
 							}}
 						</div>
 					</div>
@@ -59,8 +59,8 @@
 						<div class="col-6 pr-0 pl-0">
 							{{
 								leftToPay || 0
-									| currency: invoice?.currency
-									| position: organization?.currencyPosition
+									| currency: $safeNavigationMigration(invoice?.currency)
+									| position: $safeNavigationMigration(organization?.currencyPosition)
 							}}
 						</div>
 					</div>
@@ -98,8 +98,8 @@
 				{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_PAID' | translate }}:
 				{{
 					totalPaid || 0
-						| currency: invoice?.currency
-						| position: organization?.currencyPosition
+						| currency: $safeNavigationMigration(invoice?.currency)
+						| position: $safeNavigationMigration(organization?.currencyPosition)
 				}}
 				<span>
 					<!-- The "n% Paid" caption sits BESIDE the meter, not on top of it.

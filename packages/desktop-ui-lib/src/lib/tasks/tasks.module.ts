@@ -21,7 +21,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TagService } from '../services';
 import { ClientSelectorModule } from '../shared/features/client-selector/client-selector.module';
 import { ProjectSelectorModule } from '../shared/features/project-selector/project-selector.module';
@@ -52,7 +52,7 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 		NgSelectModule,
 		ReactiveFormsModule,
 		NbBadgeModule,
-		TranslateModule,
+		TranslatePipe,
 		TaskRenderModule,
 		ClientSelectorModule,
 		TaskSelectorModule,

@@ -1,0 +1,75 @@
+# The timesheet project change request domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/timesheet-project-change-request` routes already serve,
+# under the same guard and with the same permission, so a client that reaches a capability over one
+# protocol is not given a narrower or a wider one than the client that reaches it over the other. The
+# guard and the permission are read from `TimesheetProjectChangeRequestController`'s own metadata in
+# the resolver, and the resolver's spec compares the two rather than restating a list that could agree
+# with the resolver while disagreeing with the controller.
+#
+# **What this resource is, and why it is not a field of the timesheet.** The tracked time of a period
+# is booked per *log*, and one period routinely holds logs for several projects. Moving that time from
+# one project to another is therefore not an edit of the period: it is a request that records both
+# endpoints of the move — where the time is booked now and where it should go — and an approver's
+# decision on it. Approving one only ever touches the logs currently on the previous project, so
+# correctly-booked time in the same period is left alone, and the row is what makes the move auditable
+# after the fact.
+#
+# **The list is a connection over the one read this resource serves.** The delivered read is a
+# sub-route of the period (`GET /timesheet/:timesheetId`) rather than a collection route, but it is the
+# only read the resource has and both of the values it requires are part of the query the service runs:
+# the period, and the organization the period belongs to. A connection filter is applied to the rows a
+# read has already returned, so a caller that stated the period only in `filter` would be answered the
+# requests of no period at all — which is why both are arguments here, and why `filter` then narrows
+# the answer.
+#
+# **The read's own scope is not a permission.** The service answers a caller that may not approve
+# timesheets only the requests raised against its own periods and refuses the rest. That is the
+# delivered scope rather than a grant this surface could state: turning it into one would refuse the
+# employee the route exists for.
+#
+# **Raising a request needs only the permission every employee already has**, because it changes no
+# data on its own; reading one needs that or the approval grant; reviewing one needs the approval grant
+# alone. Those three statements are the three routes' own, mirrored field for field.
+
+extend type Query {
+	"""
+	The project change requests raised against one period, newest first — which is the order the
+	delivered read states and the connection reproduces.
+
+	A caller that may not approve timesheets is answered only the requests raised against its own
+	periods, or refused, which is the delivered read's own scope.
+	"""
+	timesheetProjectChangeRequests(
+		"The period whose requests are read. The delivered route takes it from its path and refuses an absent value."
+		timesheetId: ID!
+		"The organization the period belongs to. The delivered route takes it from its query string and refuses an absent value."
+		organizationId: ID!
+		filter: TimesheetProjectChangeRequestFilter
+		sort: [TimesheetProjectChangeRequestSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimesheetProjectChangeRequestConnection!
+}
+
+extend type Mutation {
+	"""
+	Raises a request to move the time booked to one project over to another. The request is filed in
+	the pending state; nothing moves until an approver accepts it.
+	"""
+	requestTimesheetProjectChange(input: RequestTimesheetProjectChangeInput!): TimesheetProjectChangeRequest!
+
+	"""
+	Approves or rejects a pending request. Approving is what actually moves the time, inside one
+	transaction that claims the request first so two approvers cannot both act on it.
+	"""
+	reviewTimesheetProjectChange(id: ID!, input: ReviewTimesheetProjectChangeInput!): TimesheetProjectChangeRequest!
+}

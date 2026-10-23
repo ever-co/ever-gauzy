@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -26,6 +26,7 @@ import {
 	selector: 'ga-amounts-owed-report',
 	templateUrl: './amounts-owed-report.component.html',
 	styleUrls: ['./amounts-owed-report.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AmountsOwedReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

@@ -1,4 +1,5 @@
-<nb-card class="docs-preview">
+<!-- Inline, the card takes the focus on a click, which is what lets the arrow keys page a PDF there. -->
+<nb-card class="docs-preview" [attr.tabindex]="inline ? 0 : null">
 	<nb-card-header class="docs-preview-header">
 		<div class="docs-preview-title">
 			<nb-icon icon="eye-outline"></nb-icon>
@@ -32,7 +33,7 @@
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.OPEN_DETAILS' | translate }}
 			</button>
-			<button nbButton ghost size="small" class="docs-preview-close" (click)="close()">
+			<button *ngIf="!inline" nbButton ghost size="small" class="docs-preview-close" (click)="close()">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
@@ -51,7 +52,7 @@
 
 			<!-- Image -->
 			<div *ngSwitchCase="'image'" class="docs-preview-media">
-				<img *ngIf="mediaUrl" [src]="mediaUrl" [alt]="document?.name" (error)="onRenderFailed()" />
+				<img *ngIf="mediaUrl" [src]="mediaUrl" [alt]="$safeNavigationMigration($safeNavigationMigration(document?.name))" (error)="onRenderFailed()" />
 			</div>
 
 			<!-- Video -->
@@ -86,7 +87,7 @@
 				<p>{{ 'DOCS.PREVIEW.FALLBACK_BODY' | translate }}</p>
 				<p class="docs-preview-fallback-meta">
 					{{ document?.originalFilename || document?.name }}
-					<span *ngIf="document?.fileSize"> · {{ humanizeSize(document?.fileSize) }}</span>
+					<span *ngIf="document?.fileSize"> · {{ humanizeSize($safeNavigationMigration(document?.fileSize)) }}</span>
 				</p>
 				<button nbButton status="primary" [disabled]="downloading" (click)="download()">
 					<nb-icon icon="download-outline"></nb-icon>

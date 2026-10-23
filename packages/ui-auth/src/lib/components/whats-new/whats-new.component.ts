@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { IChangelog } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import { ChangelogService } from '@gauzy/ui-core/core';
 	selector: 'ngx-whats-new',
 	templateUrl: './whats-new.component.html',
 	styleUrls: ['./whats-new.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxWhatsNewComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
 	IOrganization,
@@ -36,6 +36,7 @@ import { entitySelectPanelClass } from '../../entity-select-panel-class';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TeamSelectorComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ID, IUser } from '@gauzy/contracts';
 
@@ -6,6 +6,7 @@ import { ID, IUser } from '@gauzy/contracts';
 	selector: 'ngx-created-by-user',
 	templateUrl: './created-by-user.component.html',
 	styleUrls: ['./created-by-user.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CreatedByUserComponent<Entity = any> {

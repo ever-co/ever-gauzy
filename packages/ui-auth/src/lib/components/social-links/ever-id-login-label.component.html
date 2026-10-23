@@ -1,0 +1,47 @@
+<svg
+	class="ever-star"
+	xmlns="http://www.w3.org/2000/svg"
+	viewBox="0 0 40 42"
+	fill="none"
+	aria-hidden="true"
+	focusable="false"
+>
+	<path fill-rule="evenodd" clip-rule="evenodd" fill="#fff" [attr.d]="starPath" />
+	<path fill-rule="evenodd" clip-rule="evenodd" [attr.fill]="'url(#' + gradientId + ')'" [attr.d]="starPath" />
+	<defs>
+		<linearGradient
+			[attr.id]="gradientId"
+			x1="0.807"
+			y1="7.049"
+			x2="40.615"
+			y2="7.783"
+			gradientUnits="userSpaceOnUse"
+		>
+			<stop stop-color="#FF1CF7" />
+			<stop offset="1" stop-color="#00F0FF" />
+		</linearGradient>
+	</defs>
+</svg>
+@if (parts$ | async; as parts) {
+	<!-- The accessible name, read once and in full; the row below is only drawn. -->
+	<span class="visually-hidden">{{ parts.label }}</span>
+	<span class="ever-id-label" aria-hidden="true">
+		@if (parts.before) {
+			<span>{{ parts.before }}</span>
+		}
+		<svg
+			class="ever-id-wordmark"
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 92 17"
+			overflow="visible"
+			fill="none"
+			aria-hidden="true"
+			focusable="false"
+		>
+			<path fill="currentColor" [attr.d]="wordmarkPath" />
+		</svg>
+		@if (parts.after) {
+			<span>{{ parts.after }}</span>
+		}
+	</span>
+}

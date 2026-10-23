@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbContextMenuModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { WorkspacesComponent } from './workspaces.component';
 
 @NgModule({
 	imports: [
 		CommonModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbButtonModule,
 		NbContextMenuModule,
 		NbIconModule,

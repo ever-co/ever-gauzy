@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
-import * as chalk from 'chalk';
 import {
 	TimeLogType,
 	ITimerStatus,
@@ -52,6 +51,8 @@ const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class TimerService {
+	private readonly logger = new Logger(TimerService.name);
+
 	protected ormType: MultiORM = ormType;
 
 	constructor(
@@ -212,10 +213,7 @@ export class TimerService {
 	 * This is intended to be used directly by the command handler
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		console.log(
-			`-------------Start Timer Request (${moment.utc(request.startedAt).toDate()})-------------`,
-			JSON.stringify(request)
-		);
+		this.debug(() => `Start Timer Request (${moment.utc(request.startedAt).toDate()}): ${JSON.stringify(request)}`);
 
 		// Destructure the necessary parameters from the request
 		const {
@@ -235,7 +233,7 @@ export class TimerService {
 
 		// Determine the start date and time in UTC
 		const startedAt = moment.utc(request.startedAt ?? moment.utc()).toDate();
-		console.log(chalk.green('new timer started at:'), startedAt);
+		this.debug(() => `new timer started at: ${startedAt}`);
 
 		// Retrieve the employee information
 		const employee = await this.findEmployee();
@@ -279,7 +277,7 @@ export class TimerService {
 			isTrackingTime: true
 		});
 
-		console.log(chalk.green(`last created time log: ${JSON.stringify(timeLog)}`));
+		this.debug(() => `last created time log: ${JSON.stringify(timeLog)}`);
 
 		// Return the newly created time log entry
 		return timeLog;
@@ -290,10 +288,7 @@ export class TimerService {
 	 * This is intended to be used directly by the command handler
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		console.log(
-			`-------------Stop Timer Request (${moment.utc(request.stoppedAt).toDate()})-------------`,
-			JSON.stringify(request)
-		);
+		this.debug(() => `Stop Timer Request (${moment.utc(request.stoppedAt).toDate()}): ${JSON.stringify(request)}`);
 
 		// Validate the date range and check if the timer is running
 		validateDateRange(request.startedAt, request.stoppedAt);
@@ -316,20 +311,18 @@ export class TimerService {
 
 		// If no running log is found, throw a NotAcceptableException
 		if (!lastLog) {
-			console.log(chalk.yellow(`No running log found. Can't stop timer because it was already stopped.`));
+			this.logger.warn(`No running log found. Can't stop timer because it was already stopped.`);
 			throw new NotAcceptableException(`No running log found. Can't stop timer because it was already stopped.`);
 		}
 
 		// Calculate stoppedAt date or use current date if not provided
 		const stoppedAt = await this.calculateStoppedAt(request, lastLog);
-		console.log(chalk.blue(`last stopped at: ${stoppedAt}`));
+		this.debug(() => `last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
 		if (stoppedAt < lastLog.startedAt) {
-			console.log(
-				chalk.yellow(
-					`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`
-				)
+			this.logger.warn(
+				`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`
 			);
 		}
 
@@ -339,7 +332,7 @@ export class TimerService {
 			...(stoppedAt >= lastLog.startedAt && { stoppedAt }) // Only include stoppedAt if it's valid
 		};
 
-		console.log(chalk.blue(`partial time log: ${JSON.stringify(partialTimeLog)}`));
+		this.debug(() => `partial time log: ${JSON.stringify(partialTimeLog)}`);
 
 		// Execute the command to update the time log entry
 		lastLog = await this._commandBus.execute(
@@ -392,14 +385,18 @@ export class TimerService {
 				})
 			);
 
-			console.log('Conflicting Time Logs:', conflicts, {
-				ignoreId: lastLog.id,
-				startDate: lastLog.startedAt,
-				endDate: lastLog.stoppedAt,
-				employeeId: lastLog.employeeId,
-				organizationId: organizationId || lastLog.organizationId,
-				tenantId
-			});
+			this.debug(
+				() =>
+					`Conflicting Time Logs: ${JSON.stringify({
+						conflicts,
+						ignoreId: lastLog.id,
+						startDate: lastLog.startedAt,
+						endDate: lastLog.stoppedAt,
+						employeeId: lastLog.employeeId,
+						organizationId: organizationId || lastLog.organizationId,
+						tenantId
+					})}`
+			);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
@@ -420,7 +417,7 @@ export class TimerService {
 				}
 			}
 		} catch (error) {
-			console.warn('Error while handling conflicts in time logs:', error?.message);
+			this.logger.warn(`Error while handling conflicts in time logs: ${error?.message}`);
 		}
 	}
 
@@ -489,7 +486,7 @@ export class TimerService {
 			}
 		}
 
-		console.log('Last calculated stoppedAt: %s', stoppedAt);
+		this.debug(() => `Last calculated stoppedAt: ${stoppedAt}`);
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
 	}
@@ -505,7 +502,7 @@ export class TimerService {
 	async calculateStoppedAt2(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
 		// Retrieve stoppedAt date or default to the current date if not provided
 		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
-		console.log('last stop request was at', stoppedAt);
+		this.debug(() => `last stop request was at ${stoppedAt}`);
 
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
@@ -529,7 +526,7 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
 
 				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				console.log(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt}`);
+				this.debug(() => `Last time slot (${duration}) created ${difference} mins ago at ${startedAt}`);
 
 				// Check if the last time slot was created more than 10 minutes ago
 				if (difference > 10) {
@@ -544,7 +541,7 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:00:00", the difference is 30 minutes.
 
 				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				console.log(`last log was created more than ${difference} minutes ago at ${startedAt}`);
+				this.debug(() => `last log was created more than ${difference} minutes ago at ${startedAt}`);
 
 				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
 				if (difference > 10) {
@@ -554,7 +551,7 @@ export class TimerService {
 			}
 		}
 
-		console.log('Final last calculated stoppedAt: %s', stoppedAt);
+		this.debug(() => `Final last calculated stoppedAt: ${stoppedAt}`);
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
 	}
@@ -586,20 +583,20 @@ export class TimerService {
 	 */
 	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
 		try {
-			console.log(chalk.green('Start previous running timers...'));
+			this.debug(() => 'Start previous running timers...');
 			// Retrieve any existing running logs for the employee
 			const logs = await this.getLastRunningLogs();
-			console.log(chalk.blue('Last Running Logs Count:'), logs.length);
+			this.debug(() => `Last Running Logs Count: ${logs.length}`);
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
 				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
 				await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId));
 			}
-			console.log(chalk.green('Stop previous running timers...'));
+			this.debug(() => 'Stop previous running timers...');
 		} catch (error) {
 			// Log the error or handle it appropriately
-			console.log(chalk.red('Failed to stop previous running timers:'), error?.message);
+			this.logger.warn(`Failed to stop previous running timers: ${error?.message}`);
 		}
 	}
 
@@ -846,5 +843,17 @@ export class TimerService {
 		 * @returns An array of ITimerStatus objects.
 		 */
 		return statistics;
+	}
+
+	/**
+	 * Diagnostic trace of a timer request, at debug level. This runs for every start / stop the trackers
+	 * send; the message (with its serialized time log) is built only when debug logging is on.
+	 *
+	 * @param message - Builds the message to be logged.
+	 */
+	private debug(message: () => string): void {
+		if (Logger.isLevelEnabled('debug')) {
+			this.logger.debug(message());
+		}
 	}
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 
@@ -60,6 +60,7 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 		      </nb-card>
 		`,
     styleUrls: ['./recurring-expense-delete-confirmation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RecurringExpenseDeleteConfirmationComponent {

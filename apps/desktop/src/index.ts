@@ -8,7 +8,7 @@ Object.assign(console, log.functions);
 import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
-import * as Store from 'electron-store';
+import Store from 'electron-store';
 import * as path from 'node:path';
 
 import { environment } from './environments/environment';
@@ -68,7 +68,7 @@ import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
-import { IConfig } from '@gauzy/desktop-core';
+import { ElectronStoreOf, IConfig } from '@gauzy/desktop-core';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -120,7 +120,8 @@ const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
 
-const store = new Store();
+// Typed with its inherited API (see IElectronStoreApi in @gauzy/desktop-core).
+const store = new Store() as ElectronStoreOf;
 
 let serve: boolean;
 const args = process.argv.slice(1);
@@ -210,7 +211,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
-	onError(error, versions, submitIssue) {
+	onError({ error, versions, createIssue: submitIssue }) {
 		// Set user information, as well as tags and further extras
 		const scope = new Sentry.Scope();
 		scope.setExtra('Version', versions.app);
@@ -933,14 +934,12 @@ function launchAtStartup(autoLaunch, hidden) {
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		case 'win32':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
 					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
@@ -949,8 +948,7 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		default:

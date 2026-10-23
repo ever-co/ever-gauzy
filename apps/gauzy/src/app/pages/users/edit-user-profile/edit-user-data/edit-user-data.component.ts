@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IUser, RolesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -14,6 +14,7 @@ import { UsersService } from '@gauzy/ui-core/core';
     selector: 'ngx-edit-user-data',
     templateUrl: './edit-user-data.component.html',
     styleUrls: ['./edit-user-data.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditUserDataComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

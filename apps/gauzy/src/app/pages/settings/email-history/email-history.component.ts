@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
 	EmailStatusEnum,
 	IEmailFindInput,
@@ -44,6 +44,7 @@ interface IActiveFilter {
 	selector: 'ngx-email-history',
 	templateUrl: './email-history.component.html',
 	styleUrls: ['./email-history.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmailHistoryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

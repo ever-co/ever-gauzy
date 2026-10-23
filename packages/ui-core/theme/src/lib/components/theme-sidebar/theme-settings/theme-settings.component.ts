@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
@@ -23,6 +23,7 @@ export const QUICK_SETTINGS_SIDEBAR_TAG = 'settings_sidebar';
 	selector: 'ngx-theme-settings',
 	styleUrls: ['./theme-settings.component.scss'],
 	templateUrl: './theme-settings.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ThemeSettingsComponent implements OnInit, OnDestroy {

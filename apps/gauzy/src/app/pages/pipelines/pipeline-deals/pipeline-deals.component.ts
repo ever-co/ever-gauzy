@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Data } from '@angular/router';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
@@ -24,6 +24,7 @@ import { PipelineDealProbabilityComponent } from '../table-components/pipeline-d
 	selector: 'ga-pipeline-deals',
 	templateUrl: './pipeline-deals.component.html',
 	styleUrls: ['./pipeline-deals.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PipelineDealsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

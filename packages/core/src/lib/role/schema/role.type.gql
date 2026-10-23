@@ -1,5 +1,92 @@
+# The role's object type, its connection, its sorts and its filters.
+#
+# A role is the tenant's own vocabulary of responsibilities: `name` is the whole of what a caller
+# states when it files one, and it is the member every read of this resource narrows by. `isSystem` is
+# the column that separates the roles the platform provisions for a tenant from the ones an
+# administrator writes, and it is carried because the delivered removal is defined in terms of it — a
+# system role is not selected by that removal at all.
+#
+# The permission rows a role carries are deliberately absent, and the reason is the one that keeps a
+# member from being half-present: `rolePermissions` is loaded only when a REST caller names it in
+# `relations`, and none of the reads this surface answers asks for it, so a member here would be null
+# on every row this surface returns. The permissions of a role are `RolePermission` rows, read as
+# `rolePermissions` narrowed by `roleId`.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes: the withdrawal marks
+# this column and leaves the row in the table, so without it the answer to the write that withdrew a
+# role could not say that it had.
+
 type Role {
 	id: ID!
 	name: String!
 	tenantId: String!
+	"Whether the platform provisioned the role. The delivered removal does not select a system role."
+	isSystem: Boolean
+	"When the role was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of roles.
+"""
+type RoleEdge {
+	node: Role!
+	cursor: String!
+}
+
+"""
+One page of roles, with the total the filters select and the boundary cursors.
+"""
+type RoleConnection {
+	nodes: [Role!]!
+	edges: [RoleEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a role list may be sorted by.
+"""
+enum RoleSortField {
+	createdAt
+	updatedAt
+	name
+	isSystem
+}
+
+"""
+The order the roles are returned in. At most three keys are accepted.
+"""
+input RoleSort {
+	field: RoleSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a role list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+`name` is the member that matters: a role *is* its name, and the two delivered reads that take a
+narrowing — the list route's own clients and the options look-up — narrow by it. `isSystem` is here
+because that distinction is what an administrator selects between when it decides which roles its own
+removal reaches.
+
+`tenantId` is deliberately absent, although it is a column. The tenant a read runs under comes from
+the credential and never from a filter, and the list read this connection is built over is already
+scoped by it: a member here would state a narrowing the caller may not perform and could not change
+the rows either way.
+"""
+input RoleFilter {
+	id: IDFilter
+	name: StringFilter
+	isSystem: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [RoleFilter!]
+	or: [RoleFilter!]
+	not: RoleFilter
 }

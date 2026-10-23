@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbDialogService, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -27,6 +27,7 @@ import { PaginationComponent } from '../../../../time-tracker/pagination/paginat
     selector: 'ngx-plugin-list',
     templateUrl: './plugin-list.component.html',
     styleUrls: ['./plugin-list.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NoDataMessageComponent, NbButtonModule, NbIconModule, SpinnerButtonDirective, Angular2SmartTableModule, PaginationComponent, AsyncPipe, TranslatePipe]
 })
 export class PluginListComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ILegalDocument } from '../../models/legal-document.model';
@@ -8,6 +8,7 @@ import { LegalService } from '../../providers/legal.service';
 	selector: 'ga-terms-conditions',
 	templateUrl: './terms-and-conditions.component.html',
 	styleUrls: ['./terms-and-conditions.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TermsAndConditionsComponent implements OnInit, OnDestroy {
@@ -35,7 +36,7 @@ export class TermsAndConditionsComponent implements OnInit, OnDestroy {
 	 * that cannot fail because of a network problem or a lapsed third-party subscription.
 	 */
 	private loadTerms(): void {
-		this.terms = this.legalService.getDocument('tos', this.translateService.currentLang);
+		this.terms = this.legalService.getDocument('tos', this.translateService.getCurrentLang());
 		this.term_and_policy = this.terms?.html ?? '';
 	}
 

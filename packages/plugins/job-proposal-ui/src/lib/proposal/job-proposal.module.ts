@@ -1,7 +1,7 @@
 import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import {
 	applyDeclarativeRegistrations,
@@ -24,17 +24,19 @@ import {
 	UserFormsModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	NebularModule
+	NebularModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { getProposalsRoutes, JOB_PROPOSAL_PAGE_LINK } from './job-proposal.routes';
 import { COMPONENTS } from './components';
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		RouterModule.forChild([]),
 		RichTextEditorModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NebularModule,
 		BaseChartDirective,
 		SharedModule,

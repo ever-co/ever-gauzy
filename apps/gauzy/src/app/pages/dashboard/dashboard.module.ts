@@ -20,7 +20,7 @@ import {
 	NbTreeGridModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -98,7 +98,7 @@ const THIRD_PARTY_MODULES = [
 	LineChartModule,
 	NgSelectModule,
 	NgxPermissionsModule.forChild(),
-	TranslateModule.forChild()
+	TranslatePipe
 ];
 
 // Components

@@ -28,7 +28,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EMPTY, Observable, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, map, switchMap, tap } from 'rxjs/operators';
 import {
@@ -146,7 +146,7 @@ export type CapabilityFilter = 'all' | 'chat' | 'speech' | 'local';
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
-		TranslateModule,
+		TranslatePipe,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,

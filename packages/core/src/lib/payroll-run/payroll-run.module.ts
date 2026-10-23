@@ -8,6 +8,7 @@ import { TypeOrmPayrollItemRepository } from './../payroll-item/repository/type-
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { PayrollRun } from './payroll-run.entity';
 import { PayrollRunController } from './payroll-run.controller';
+import { PayrollRunResolver } from './payroll-run.resolver';
 import { PayrollRunService } from './payroll-run.service';
 import { MikroOrmPayrollRunRepository } from './repository/mikro-orm-payroll-run.repository';
 import { TypeOrmPayrollRunRepository } from './repository/type-orm-payroll-run.repository';
@@ -17,7 +18,8 @@ import { TypeOrmPayrollRunRepository } from './repository/type-orm-payroll-run.r
  *
  * `Employee` is registered with `forFeature` here so the service can verify that a line item is
  * paid to somebody in the caller's own organization, without importing `EmployeeModule` and
- * risking a cycle.
+ * risking a cycle. The GraphQL view of the same resource is declared here too: a resolver can only
+ * inject services its own module can reach, and this module is what reaches them.
  */
 @Module({
 	imports: [
@@ -28,6 +30,7 @@ import { TypeOrmPayrollRunRepository } from './repository/type-orm-payroll-run.r
 	controllers: [PayrollRunController],
 	providers: [
 		PayrollRunService,
+		PayrollRunResolver,
 		TypeOrmPayrollRunRepository,
 		MikroOrmPayrollRunRepository,
 		TypeOrmPayrollItemRepository,

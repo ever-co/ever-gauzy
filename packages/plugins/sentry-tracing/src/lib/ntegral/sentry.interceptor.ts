@@ -1,6 +1,19 @@
 // Nestjs imports
-import { CallHandler, ExecutionContext, HttpException, Injectable, NestInterceptor } from '@nestjs/common';
-import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
+import {
+	CallHandler,
+	ExecutionContext,
+	HttpException,
+	Injectable,
+	NestInterceptor,
+	ContextType
+} from '@nestjs/common';
+// Nest 12 exports the per-transport hosts from neither the package root nor an `interfaces` entry; they are
+// types only, so this import is erased and nothing is required at run time.
+import type {
+	HttpArgumentsHost,
+	RpcArgumentsHost,
+	WsArgumentsHost
+} from '@nestjs/common/interfaces/features/arguments-host.interface.js';
 // Rxjs imports
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -121,20 +134,14 @@ export class SentryInterceptor implements NestInterceptor {
 	 * @param exception
 	 * @returns
 	 */
-	private shouldReport(exception: any) {
-		if (this.options && !this.options.filters) return true;
+	private shouldReport(exception: any): boolean {
+		// No options or no filters configured: report everything.
+		const filters: SentryInterceptorOptionsFilter[] = this.options?.filters || [];
 
-		// If any filter passes, then we do not report
-		if (this.options) {
-			const opts: SentryInterceptorOptions = this.options as {};
-			if (opts.filters) {
-				let filters: SentryInterceptorOptionsFilter[] = opts.filters;
-				return filters.some(({ type, filter }) => {
-					return !(exception instanceof type && (!filter || filter(exception)));
-				});
-			}
-		} else {
-			return true;
-		}
+		// Skip the exception only when one of the filters matches it. `some(!match)` used to drop every
+		// exception for an empty list and report matched ones as soon as any other filter did not match.
+		return !filters.some(({ type, filter }) => {
+			return exception instanceof type && (!filter || filter(exception));
+		});
 	}
 }

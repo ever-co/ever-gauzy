@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { tap, catchError, finalize, switchMap, distinctUntilChanged, map } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -14,6 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	selector: 'ngx-zapier-actions',
 	templateUrl: './zapier-actions.component.html',
 	styleUrls: ['./zapier-actions.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ZapierActionsComponent extends TranslationBaseComponent implements OnInit {
@@ -99,7 +100,7 @@ export class ZapierActionsComponent extends TranslationBaseComponent implements 
 		this._zapierService
 			.getAccessToken(this.integrationId)
 			.pipe(
-				switchMap((accessToken: string) => this._zapierService.getActions(accessToken)),
+				switchMap((accessToken: string) => this._zapierService.getActions(accessToken, this.integrationId)),
 
 				// Store the retrieved actions
 				tap((actions: IZapierEndpoint[]) => {

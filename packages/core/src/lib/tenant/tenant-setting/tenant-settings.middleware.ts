@@ -5,9 +5,38 @@ import { Request, Response, NextFunction } from 'express';
 import { Cache } from 'cache-manager';
 import { TenantSettingService } from './tenant-setting.service';
 
+/**
+ * What the middleware attaches to a request: the tenant's own settings and the resolved ones (global rows
+ * overridden by the tenant's). Cached together, under one key per tenant, so a request costs one cache read.
+ */
+export interface TenantSettingsBundle {
+	readonly tenantSettings: Record<string, any>;
+	readonly resolvedSettings: Record<string, any>;
+}
+
+/** How long a tenant's settings are kept once something is set. Settings apply within this window. */
+export const TENANT_SETTINGS_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * How long an EMPTY answer is kept. A tenant with no settings of its own on an installation with no global
+ * ones — the common case — used to pay the queries again on every request; nothing evicts the entry when a
+ * setting is saved, so an empty answer is kept for one minute only: a tenant's first setting still applies
+ * within a minute, and the queries run at most once a minute.
+ */
+export const EMPTY_TENANT_SETTINGS_TTL_MS = 60 * 1000;
+
 @Injectable()
 export class TenantSettingsMiddleware implements NestMiddleware {
 	private logging = false;
+
+	/** Cache key prefix of the per-tenant bundle. */
+	private static readonly CACHE_KEY_PREFIX = 'tenantSettingsBundle_';
+
+	/**
+	 * The loads in flight, by tenant. This middleware runs on every route: when a tenant's entry expires, all
+	 * of its requests that arrive together miss at once and would each run the two queries; they share one.
+	 */
+	private readonly loading = new Map<string, Promise<TenantSettingsBundle>>();
 
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -16,6 +45,11 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 
 	/**
 	 * Middleware to retrieve and cache tenant settings based on the JWT token in the request headers.
+	 *
+	 * Attaches `tenantSettings` (the tenant's own settings; an empty object when the token names no tenant or
+	 * the tenant has none) and, when there are any, `resolvedSettings` (global settings overridden by the
+	 * tenant's). The token is decoded, not verified: the settings are read-only hints, and `JwtStrategy` is
+	 * what authenticates the request.
 	 *
 	 * @param {Request} _request - The incoming HTTP request object.
 	 * @param {Response} _response - The outgoing HTTP response object.
@@ -34,58 +68,28 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 
 				// Decode JWT token
 				const decodedToken: any = jwt.decode(token);
-				let tenantSettings = {};
+				// Unverified token: only a string names a tenant (an object would reach `where` and the cache key as-is).
+				const tenantId: string | undefined =
+					typeof decodedToken?.tenantId === 'string' ? decodedToken.tenantId : undefined;
 
-				if (decodedToken && decodedToken.tenantId) {
-					const tenantId = decodedToken.tenantId;
+				let tenantSettings: Record<string, any> = {};
 
+				if (tenantId) {
 					if (this.logging) {
-						console.log('Getting Tenant settings from Cache for tenantId: %s', tenantId);
+						console.log('Getting Tenant settings for tenantId: %s', tenantId);
 					}
 
-					const cacheKey = `tenantSettings_${tenantId}`;
-
-					// Attempt to fetch from cache
-					tenantSettings = await this.cacheManager.get(cacheKey);
-
-					if (!tenantSettings) {
-						if (this.logging) {
-							console.log('Tenant settings NOT loaded from Cache for tenantId: %s', tenantId);
-						}
-
-						// Fetch tenant settings from DB
-						tenantSettings = await this.tenantSettingService.getSettings({
-							where: { tenantId }
-						});
-
-						if (tenantSettings) {
-							const ttl = 5 * 60 * 1000; // Cache TTL: 5 minutes
-							await this.cacheManager.set(cacheKey, tenantSettings, ttl);
-
-							if (this.logging) {
-								console.log(
-									'Tenant settings loaded from DB and stored in Cache for tenantId: %s',
-									tenantId
-								);
-							}
-						}
-					} else {
-						if (this.logging) {
-							console.log('Tenant settings loaded from Cache for tenantId: %s', tenantId);
-						}
-					}
+					const bundle = await this.settingsOf(tenantId);
+					tenantSettings = bundle.tenantSettings;
 
 					// Load resolved settings (Global DB + Tenant DB cascade)
-					const resolvedSettings = await this.loadResolvedSettings(tenantId);
-					if (resolvedSettings) {
-						_request['resolvedSettings'] = resolvedSettings;
+					if (Object.keys(bundle.resolvedSettings).length > 0) {
+						_request['resolvedSettings'] = bundle.resolvedSettings;
 					}
 				}
 
-				if (tenantSettings) {
-					// Attach tenant settings to request
-					_request['tenantSettings'] = tenantSettings;
-				}
+				// Attach tenant settings to request
+				_request['tenantSettings'] = tenantSettings;
 			}
 		} catch (error) {
 			console.error('Error while getting Tenant settings: %s', error?.message);
@@ -96,22 +100,63 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 	}
 
 	/**
-	 * Loads resolved settings with cascade: Global DB (tenantId=NULL) → Tenant DB.
+	 * The settings bundle of a tenant: from the cache, or loaded once for every request that misses together.
+	 *
+	 * @param tenantId - The tenant named by the token.
 	 */
-	private async loadResolvedSettings(tenantId: string): Promise<Record<string, any> | null> {
-		const cacheKey = `resolvedSettings_${tenantId}`;
-		let settings = await this.cacheManager.get<Record<string, any>>(cacheKey);
+	private async settingsOf(tenantId: string): Promise<TenantSettingsBundle> {
+		const cacheKey = `${TenantSettingsMiddleware.CACHE_KEY_PREFIX}${tenantId}`;
 
-		if (!settings) {
-			const globalSettings = await this.tenantSettingService.getGlobalSettings();
-			const tenantSettings = await this.tenantSettingService.getSettings({ where: { tenantId } });
-			settings = { ...globalSettings, ...tenantSettings };
-
-			if (Object.keys(settings).length > 0) {
-				await this.cacheManager.set(cacheKey, settings, 5 * 60 * 1000);
+		const cached = await this.cacheManager.get<TenantSettingsBundle>(cacheKey);
+		if (cached) {
+			if (this.logging) {
+				console.log('Tenant settings loaded from Cache for tenantId: %s', tenantId);
 			}
+			return cached;
 		}
 
-		return Object.keys(settings).length > 0 ? settings : null;
+		const loading = this.loading.get(tenantId);
+		if (loading) {
+			return loading;
+		}
+
+		const load = this.loadSettings(tenantId, cacheKey).finally(() => {
+			this.loading.delete(tenantId);
+		});
+		this.loading.set(tenantId, load);
+		return load;
+	}
+
+	/**
+	 * Reads the global (tenantId = NULL) and the tenant's own settings — one query each, at the same time —
+	 * and caches them together: for {@link TENANT_SETTINGS_TTL_MS}, or {@link EMPTY_TENANT_SETTINGS_TTL_MS}
+	 * when the tenant ends up with no settings at all.
+	 *
+	 * @param tenantId - The tenant.
+	 * @param cacheKey - Where the bundle is cached.
+	 */
+	private async loadSettings(tenantId: string, cacheKey: string): Promise<TenantSettingsBundle> {
+		if (this.logging) {
+			console.log('Tenant settings NOT loaded from Cache for tenantId: %s', tenantId);
+		}
+
+		const [globalSettings, tenantSettings] = await Promise.all([
+			this.tenantSettingService.getGlobalSettings(),
+			this.tenantSettingService.getSettings({ where: { tenantId } })
+		]);
+
+		const bundle: TenantSettingsBundle = {
+			tenantSettings: tenantSettings ?? {},
+			resolvedSettings: { ...globalSettings, ...tenantSettings }
+		};
+
+		const isEmpty = Object.keys(bundle.resolvedSettings).length === 0;
+		await this.cacheManager.set(cacheKey, bundle, isEmpty ? EMPTY_TENANT_SETTINGS_TTL_MS : TENANT_SETTINGS_TTL_MS);
+
+		if (this.logging) {
+			console.log('Tenant settings loaded from DB and stored in Cache for tenantId: %s', tenantId);
+		}
+
+		return bundle;
 	}
 }

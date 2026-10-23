@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -14,7 +14,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { catchError, filter, firstValueFrom, of, tap } from 'rxjs';
@@ -67,7 +67,7 @@ const BYTES_PER_GIB = 1024 * 1024 * 1024;
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule,
+		TranslatePipe,
 		NgxPermissionsModule,
 		NbBadgeModule,
 		NbButtonModule,
@@ -82,6 +82,7 @@ const BYTES_PER_GIB = 1024 * 1024 * 1024;
 	],
 	providers: [DocumentsService],
 	templateUrl: './docs-settings-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./docs-settings-page.component.scss']
 })
 export class DocsSettingsPageComponent extends TranslationBaseComponent implements OnInit {

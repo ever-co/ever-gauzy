@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, of } from 'rxjs';
@@ -72,6 +72,7 @@ import { DocumentsService } from '../services/documents.service';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class BulkCategoriesDialogComponent extends TranslationBaseComponent implements OnInit {

@@ -9,7 +9,8 @@ import {
 	IGetActivitiesInput,
 	IDailyActivity,
 	IBulkActivitiesInput,
-	IActivity
+	IActivity,
+	ID
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
@@ -20,6 +21,7 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { NO_ACCESSIBLE_EMPLOYEE_ID } from '../../employee/managed-employee.service';
 import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
 
 const config = getConfig();
@@ -44,15 +46,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				const { organizationId, startDate, endDate } = request;
 				const tenantId = RequestContext.currentTenantId();
 
-				let employeeIds: string[];
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					if (request.employeeIds) {
-						employeeIds = request.employeeIds;
-					}
-				} else {
-					const user = RequestContext.currentUser();
-					employeeIds = [user.employeeId];
-				}
+				const employeeIds = this.resolveEmployeeIds(request);
 
 				let qb = knex('activity')
 					.innerJoin('employee', 'activity.employeeId', 'employee.id')
@@ -66,7 +60,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						'activity.title as title'
 					])
 					.where('activity.tenantId', tenantId)
-					.andWhere('activity.organizationId', organizationId);
+					.andWhere('activity.organizationId', organizationId)
+					// Raw knex skips MikroORM's soft-delete filter: leave deleted rows out, as TypeORM does
+					.whereNull('activity.deletedAt')
+					.whereNull('employee.deletedAt')
+					.whereNull('time_slot.deletedAt');
 
 				if (startDate && endDate) {
 					qb = qb.whereBetween('activity.date', [startDate, endDate]);
@@ -147,13 +145,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				const { organizationId, startDate, endDate } = request;
 				const tenantId = RequestContext.currentTenantId();
 
-				let employeeIds: string[];
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					if (request.employeeIds) employeeIds = request.employeeIds;
-				} else {
-					const user = RequestContext.currentUser();
-					employeeIds = [user.employeeId];
-				}
+				const employeeIds = this.resolveEmployeeIds(request);
 
 				let qb = knex('activity')
 					.innerJoin('employee', 'activity.employeeId', 'employee.id')
@@ -168,7 +160,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 						'activity.title as title'
 					])
 					.where('activity.tenantId', tenantId)
-					.andWhere('activity.organizationId', organizationId);
+					.andWhere('activity.organizationId', organizationId)
+					// Raw knex skips MikroORM's soft-delete filter: leave deleted rows out, as TypeORM does
+					.whereNull('activity.deletedAt')
+					.whereNull('employee.deletedAt')
+					.whereNull('time_slot.deletedAt');
 
 				if (startDate && endDate) {
 					qb = qb.whereBetween('activity.date', [startDate, endDate]);
@@ -282,13 +278,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				const { organizationId, startDate, endDate } = request;
 				const tenantId = RequestContext.currentTenantId();
 
-				let employeeIds: string[];
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					if (request.employeeIds) employeeIds = request.employeeIds;
-				} else {
-					const user = RequestContext.currentUser();
-					employeeIds = [user.employeeId];
-				}
+				const employeeIds = this.resolveEmployeeIds(request);
 
 				const where: any = {
 					tenantId,
@@ -307,6 +297,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				if (isNotEmpty(request.projectIds)) {
 					where.projectId = { $in: request.projectIds };
 				}
+				// The requested period, as the TypeORM branch reads it (`recordedAt` between the bounds): the
+				// range was ignored here, so a one-day request listed (and paged) the activities of every day
+				if (startDate && endDate) {
+					where.recordedAt = { $gte: startDate, $lte: endDate };
+				}
 
 				const populate: any[] = [];
 				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
@@ -315,7 +310,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 				const items = await this.mikroOrmRepository.find(where, {
 					populate,
-					orderBy: { duration: 'DESC' } as any,
+					// `id` breaks ties between equal durations, so consecutive pages neither repeat nor skip a row.
+					orderBy: { duration: 'DESC', id: 'ASC' } as any,
 					...(request.limit > 0 ? { limit: request.limit, offset: (request.page || 0) * request.limit } : {})
 				});
 				return items.map((e) => this.serialize(e)) as IActivity[];
@@ -333,6 +329,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				}
 
 				query.orderBy(`${query.alias}.duration`, 'DESC');
+				// Breaks ties between equal durations, so consecutive pages neither repeat nor skip a row.
+				query.addOrderBy(`${query.alias}.id`, 'ASC');
 				return await query.getMany();
 			}
 		}
@@ -342,19 +340,34 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		return await this.commandBus.execute(new BulkActivitiesSaveCommand(input));
 	}
 
+	/**
+	 * The employees whose activity the caller may read, or `undefined` for no employee filter.
+	 *
+	 * The employee predicate of every read is applied only to a non-empty list, so a caller who may not pick
+	 * employees and has no employee record of their own would read the whole organization. They get an id
+	 * that matches nothing instead, unless their role lets them view the whole organization.
+	 */
+	private resolveEmployeeIds(request: IGetActivitiesInput): ID[] | undefined {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return request.employeeIds;
+		}
+
+		const employeeId = RequestContext.currentUser()?.employeeId;
+		if (employeeId) {
+			return [employeeId];
+		}
+
+		if (RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return undefined;
+		}
+		return [NO_ACCESSIBLE_EMPLOYEE_ID];
+	}
+
 	private filterQuery(request: IGetActivitiesInput): SelectQueryBuilder<Activity> {
 		const { organizationId, startDate, endDate } = request;
 		const tenantId = RequestContext.currentTenantId();
 
-		let employeeIds: string[];
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			if (request.employeeIds) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		const employeeIds = this.resolveEmployeeIds(request);
 
 		const query = this.typeOrmRepository.createQueryBuilder();
 		if (request.limit > 0) {

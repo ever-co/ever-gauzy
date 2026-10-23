@@ -3,12 +3,41 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { applyInTurn, containsText, pageOf, validateOrganizationContext } from './utils';
 // Input schema for skill - defined inline to avoid TypeScript compilation overhead
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
 const logger = new Logger('SkillTools');
+
+type DefaultParams = { tenantId?: string; organizationId?: string };
+type Skill = { id: string; name?: string; description?: string; organizationId?: string };
+
+type EmployeeWithSkills = { id: string; organizationId?: string; skills?: Skill[] };
+
+/**
+ * The employee with their skills, checked to belong to the organization. The route answers the caller's
+ * own record to a caller who may not view others, hence the id check.
+ */
+const getOrganizationEmployee = async (employeeId: string, defaultParams: DefaultParams) => {
+	const employee = await apiClient.get<EmployeeWithSkills>(`/api/employee/${employeeId}`, {
+		params: { organizationId: defaultParams.organizationId, relations: ['skills'] }
+	});
+
+	if (!employee || employee.id !== employeeId || employee.organizationId !== defaultParams.organizationId) {
+		throw new Error('Unauthorized: Employee not found or does not belong to your organization');
+	}
+
+	return employee;
+};
+
+/** Sets the employee's skills: they are assigned on the employee record, the skill API has no employee routes. */
+const updateEmployeeSkills = (employeeId: string, defaultParams: DefaultParams, skillIds: string[]) =>
+	apiClient.put(`/api/employee/${employeeId}`, {
+		skills: skillIds.map((id) => ({ id })),
+		organizationId: defaultParams.organizationId,
+		...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
+	});
 
 export const registerSkillTools = (server: McpServer) => {
 	// Get skills tool
@@ -248,20 +277,12 @@ export const registerSkillTools = (server: McpServer) => {
 				}
 
 				// Verify employee belongs to the same organization
-				const employee = await apiClient.get(`/api/employees/${employeeId}`, {
-					params: { organizationId: defaultParams.organizationId }
-				});
+				const employee = await getOrganizationEmployee(employeeId, defaultParams);
+				const skillIds = (employee.skills ?? []).map(({ id }) => id);
 
-				if (
-					!employee ||
-					(employee as { organizationId: string }).organizationId !== defaultParams.organizationId
-				) {
-					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
-				}
-
-				const response = await apiClient.post(`/api/skills/${skillId}/employees`, {
-					employeeId
-				});
+				const response = await updateEmployeeSkills(employeeId, defaultParams, [
+					...new Set([...skillIds, skillId])
+				]);
 
 				return {
 					content: [
@@ -300,18 +321,14 @@ export const registerSkillTools = (server: McpServer) => {
 					throw new Error('Unauthorized: Skill not found or does not belong to your organization');
 				}
 				// Verify employee belongs to the same organization
-				const employee = await apiClient.get(`/api/employees/${employeeId}`, {
-					params: { organizationId: defaultParams.organizationId }
-				});
+				const employee = await getOrganizationEmployee(employeeId, defaultParams);
+				const skillIds = (employee.skills ?? []).map(({ id }) => id);
 
-				if (
-					!employee ||
-					(employee as { organizationId: string }).organizationId !== defaultParams.organizationId
-				) {
-					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
-				}
-
-				await apiClient.delete(`/api/skills/${skillId}/employees/${employeeId}`);
+				await updateEmployeeSkills(
+					employeeId,
+					defaultParams,
+					skillIds.filter((id) => id !== skillId)
+				);
 
 				return {
 					content: [
@@ -352,26 +369,9 @@ export const registerSkillTools = (server: McpServer) => {
 				const defaultParams = validateOrganizationContext();
 
 				// Verify employee belongs to the organization
-				const employee = await apiClient.get(`/api/employees/${employeeId}`, {
-					params: { organizationId: defaultParams.organizationId }
-				});
+				const employee = await getOrganizationEmployee(employeeId, defaultParams);
 
-				if (
-					!employee ||
-					(employee as { organizationId: string }).organizationId !== defaultParams.organizationId
-				) {
-					throw new Error('Unauthorized: Employee not found or does not belong to your organization');
-				}
-
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					employeeId,
-					page,
-					limit
-				};
-
-				const response = await apiClient.get('/api/skills', { params });
+				const response = pageOf(employee.skills ?? [], page, limit);
 
 				return {
 					content: [
@@ -401,14 +401,14 @@ export const registerSkillTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					query,
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					limit
-				};
-
-				const response = await apiClient.get('/api/skills/search', { params });
+				// No search route: match the name and description of the skills the list route answers
+				const { items = [] } = await apiClient.get<{ items?: Skill[] }>('/api/skills');
+				const skills = items.filter(
+					(skill) =>
+						skill.organizationId === defaultParams.organizationId &&
+						[skill.name, skill.description].some((text) => containsText(text, query))
+				);
+				const response = pageOf(skills, 1, limit);
 
 				return {
 					content: [
@@ -452,7 +452,7 @@ export const registerSkillTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				}));
 
-				const response = await apiClient.post('/api/skills/bulk', { skills: skillsWithDefaults });
+				const response = await applyInTurn(skillsWithDefaults, (skill) => apiClient.post('/api/skills', skill));
 
 				return {
 					content: [

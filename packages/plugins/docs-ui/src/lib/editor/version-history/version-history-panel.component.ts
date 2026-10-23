@@ -10,7 +10,7 @@ import {
 	inject
 } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { ID, IDocument, IDocumentVersion } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
@@ -28,7 +28,7 @@ import { DocumentStaticViewComponent } from '../read-only/document-static-view.c
 	standalone: true,
 	imports: [
 		CommonModule,
-		TranslateModule,
+		TranslatePipe,
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,

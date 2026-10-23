@@ -1,0 +1,276 @@
+# The feature gate's object types.
+#
+# The resource has two rows and they answer two different questions, which is why there are two
+# object types here rather than one:
+#
+# - `Feature` is a **catalogue entry**: one row per code, the same row for every tenant, describing
+#   what the capability is and where an administrator is taken. It carries no enablement at all.
+# - `FeatureToggle` is **one tenant's answer for one catalogue entry, at one scope**: the switchboard
+#   row. Everything the platform reads to decide whether a capability is served comes from here, and
+#   from nowhere else.
+#
+# A client that reads the catalogue and expects the answer on it will read `Feature.isEnabled` and be
+# wrong: that member is a virtual column, the delivered list read never loads it, and the delivered
+# toggle write never touches it. The answer is a `FeatureToggle` row, and this file states that in the
+# schema rather than leaving it to be discovered.
+
+"""
+One catalogue entry: a capability the platform can describe and a tenant can switch.
+
+The row is installation-wide — it has no tenant and no organization column — so the same entry is
+answered to every tenant, and the members it carries are descriptive only. Whether the capability is
+*served* is a `FeatureToggle` row, and that row is per tenant and per organization.
+
+Deliberately absent, each for its own reason:
+
+- `isEnabled` is a virtual column. Nothing persists it, the delivered list read does not populate it,
+  and the delivered toggle write does not write it, so a member here would be `null` on every row this
+  surface answers while appearing to be the answer. The enablement is `FeatureToggle.isEnabled`.
+- `imageUrl` is a virtual column too, derived from `image` for the administration UI, and it is
+  likewise not populated by the read this surface mirrors. `image` carries the file name.
+- `parent`, `children` and `featureOrganizations` are relations. A REST caller loads them by naming
+  them in `relations`; the GraphQL reads pass none, so the members would always be absent. The roots
+  of the catalogue are reachable as `features(filter: { parentId: { isNull: true } })` — the delivered
+  parent route stated as the filter it is — and the toggles of an entry as
+  `featureToggles(filter: { featureId: { eq: … } })`.
+- `deletedAt` is absent because no delivered route withdraws a catalogue entry: the reads answer live
+  rows and nothing on this surface writes that column.
+"""
+type Feature {
+	id: ID!
+	"Human readable name, shown wherever features are listed."
+	name: String!
+	"""
+	The feature code. Upper snake case, `FEATURE_` prefixed — the same text `FeatureToggle` rows and
+	`FeatureFlagGuard` compare, and the text `FEATURE_GRAPHQL` gates this surface with.
+	"""
+	code: String!
+	"One line explaining what the flag enables."
+	description: String
+	"""
+	Artwork file name, or null. The delivered catalogue ships no artwork for the commerce codes, so
+	this is null on every entry introduced by the programme and set only on the ones it reuses.
+	"""
+	image: String
+	"Where an administrator is taken when the feature is selected. NOT NULL on the row."
+	link: String!
+	"Presentation only: `info` / `primary` / `success` / `warning`."
+	status: String
+	"Presentation only."
+	icon: String
+	"Whether the capability is a paid one, which the catalogue marks for the administration UI."
+	isPaid: Boolean
+	"The parent entry, for a catalogue that is a tree. Null on a root."
+	parentId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+One tenant's answer for one catalogue entry, at one scope.
+
+**The scope members are the whole point of this type**, so each is stated:
+
+- `tenantId` — the tenant whose answer this is. It is stamped from the credential by the toggle write
+  and is never stated by a caller, so a row cannot be written into another tenant's scope.
+- `organizationId` — **the second, more specific scope**. `null` means the row is the tenant-wide
+  answer, which is the row a toggle written without an organization produces and the row a tenant
+  provisioned from scratch is given. Set, it is that one organization's answer. A resolution layers
+  the two, most specific first, and falls back to the deployment's own configured state when neither
+  exists — which is why a missing row is never an error.
+- `featureId` — which catalogue entry is switched. The entry itself is reachable as
+  `features(filter: { id: { eq: … } })`; the relation is not a member here for the reason the
+  catalogue's own header states.
+
+`isEnabled` is the answer: whether the capability is served for this scope.
+"""
+type FeatureToggle {
+	id: ID!
+	"The catalogue entry this row switches."
+	featureId: ID!
+	"Whether the capability is served for this scope."
+	isEnabled: Boolean!
+	"The tenant whose answer this row is."
+	tenantId: ID
+	"""
+	The organization the row is scoped to, or null for the tenant-wide row. A tenant-wide row is the
+	answer for every organization of the tenant that has no row of its own.
+	"""
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of catalogue entries.
+"""
+type FeatureEdge {
+	node: Feature!
+	cursor: String!
+}
+
+"""
+One page of catalogue entries, with the total the filters select and the boundary cursors.
+"""
+type FeatureConnection {
+	nodes: [Feature!]!
+	edges: [FeatureEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The boundary of one page of toggle rows.
+"""
+type FeatureToggleEdge {
+	node: FeatureToggle!
+	cursor: String!
+}
+
+"""
+One page of toggle rows, with the total the filters select and the boundary cursors.
+"""
+type FeatureToggleConnection {
+	nodes: [FeatureToggle!]!
+	edges: [FeatureToggleEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a catalogue list may be sorted by.
+"""
+enum FeatureSortField {
+	createdAt
+	updatedAt
+	name
+	code
+	status
+}
+
+"""
+The order the catalogue entries are returned in. At most three keys are accepted.
+"""
+input FeatureSort {
+	field: FeatureSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a catalogue list may be narrowed by.
+"""
+input FeatureFilter {
+	id: IDFilter
+	name: StringFilter
+	code: StringFilter
+	description: StringFilter
+	image: StringFilter
+	link: StringFilter
+	status: StringFilter
+	icon: StringFilter
+	isPaid: BooleanFilter
+	parentId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [FeatureFilter!]
+	or: [FeatureFilter!]
+	not: FeatureFilter
+}
+
+"""
+The fields a toggle list may be sorted by.
+"""
+enum FeatureToggleSortField {
+	createdAt
+	updatedAt
+	isEnabled
+}
+
+"""
+The order the toggle rows are returned in. At most three keys are accepted.
+"""
+input FeatureToggleSort {
+	field: FeatureToggleSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a toggle list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`tenantId` is filterable because the delivered list route binds one — the guard has already refused a
+tenant that is not the caller's, so the member narrows what the credential may read and never widens
+it. `organizationId` and `featureId` are the route's own two parameters and they are stated here as
+what they are: filters over the list, not root fields of their own.
+"""
+input FeatureToggleFilter {
+	id: IDFilter
+	featureId: IDFilter
+	isEnabled: BooleanFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [FeatureToggleFilter!]
+	or: [FeatureToggleFilter!]
+	not: FeatureToggleFilter
+}
+
+"""
+What a caller states when it switches a capability on or off for a scope.
+
+The write is an upsert, which is why there is one input and not a create and an update beside each
+other: the route writes the row if the scope has none and rewrites it if it has one, so a caller
+states the answer it wants and not which operation it is performing.
+
+`tenantId` is deliberately **not** a member. The delivered handler reads the tenant from the
+credential and stamps it onto the row, overwriting whatever a body states — so a member here would
+promise a scope the write refuses. `organizationId` is stated because that is the scope the caller
+chooses: omit it for the tenant-wide answer, state it for one organization's.
+"""
+input UpdateFeatureToggleInput {
+	"The catalogue entry to switch."
+	featureId: ID!
+	"Whether the capability is served for this scope."
+	isEnabled: Boolean!
+	"The organization to switch it for. Omit for the tenant-wide answer."
+	organizationId: ID
+}
+
+"""
+One toggle definition, as the deployment's own toggle source declares it.
+
+This is not a stored row: it is what the configured toggle provider answers for the codes this
+platform knows, filtered to them. It therefore has no identifier — an entry is named by its `name`,
+which is the code — and no cursor can be built over it, which is why the root field that answers it
+is a bare list rather than a connection: the connection contract names every row by its identifier,
+and inventing one here would make a cursor mean something the provider never said.
+"""
+type FeatureToggleDefinition {
+	"The toggle name, which is the feature code."
+	name: String!
+	description: String
+	"""
+	The provider's own toggle type — `release`, `experiment`, `kill-switch` and so on. Carried as its
+	value rather than declared as a schema enum: the vocabulary belongs to the toggle provider, not to
+	this domain, and a second domain that reads the same provider would then collide with this file
+	rather than reuse it.
+	"""
+	type: String!
+	"The provider project the toggle belongs to."
+	project: String!
+	"Whether the provider itself considers the toggle on. It is not the tenant's answer — see `FeatureToggle`."
+	enabled: Boolean!
+	"Whether the provider has marked the toggle stale."
+	stale: Boolean!
+	"Whether the provider records impression data for the toggle."
+	impressionData: Boolean!
+	"The provider's strategies, as the document it declares them in."
+	strategies: JSON!
+	"The provider's variants, as the document it declares them in."
+	variants: JSON!
+}

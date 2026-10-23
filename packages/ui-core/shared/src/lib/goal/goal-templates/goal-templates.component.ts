@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	KeyResultDeadlineEnum,
@@ -12,6 +12,7 @@ import { NbDialogRef } from '@nebular/theme';
     selector: 'ga-goal-templates',
     templateUrl: './goal-templates.component.html',
     styleUrls: ['./goal-templates.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalTemplatesComponent implements OnInit {

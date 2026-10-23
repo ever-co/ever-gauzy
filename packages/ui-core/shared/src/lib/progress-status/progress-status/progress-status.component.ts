@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { NbComponentOrCustomStatus } from '@nebular/theme';
 
@@ -6,6 +6,7 @@ import { NbComponentOrCustomStatus } from '@nebular/theme';
 	selector: 'ngx-progress-status',
 	templateUrl: './progress-status.component.html',
 	styleUrls: ['./progress-status.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProgressStatusComponent implements OnInit {

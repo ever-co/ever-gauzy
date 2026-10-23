@@ -1,0 +1,149 @@
+# The time-off request domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/time-off-request` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+#
+# **The two review routes carry a guard and roles of their own, and the two fields carry them too.**
+# `PUT /approval/:id` and `PUT /denied/:id` each add `RoleGuard` and state the two administrative roles
+# over the controller's chain, so a caller that may edit leave but may not decide it is refused the
+# decision on both surfaces. Those two fields are where this resource stops being an edit and becomes a
+# decision, and the schema says so rather than leaving a client to discover it from a refusal.
+#
+# **`updateTimeOffRequest` runs under the delete permission.** The delivered `PUT /:id` handler declares
+# `ALL_ORG_EDIT` with `TIME_OFF_DELETE` — the route's own grant, and the grant on the surface here.
+# Rewriting a filed request is not the same act as editing a policy, and the platform says so; this file
+# repeats what the route says rather than correcting it, because a permission widened on one surface
+# only is a permission that no longer means one thing.
+#
+# **Five fields mirror routes the controller inherits, and their permission is the class's.**
+# `TimeOffRequestController` extends the platform's CRUD base, so the count, the node read and the three
+# lifecycle moves are served without a permission of their own and therefore run under the controller's
+# class-level edit permission. The fields state that same permission rather than inventing a narrower
+# one, which is why the node read here carries the edit grant while its sibling list carries the view
+# grant: that asymmetry is the controller's, and it is resolved in both surfaces at once or in neither.
+#
+# **The list is a connection, and the controller serves its list twice.** `GET /` answers the filtered
+# set and `GET /pagination` answers it sliced by a page; that is one capability stated twice, so it is
+# one root field. The connection mirrors `GET /` — the route that reads the whole filtered set the
+# protocol is applied to — and its own page arguments are the page the paginated spelling performs. A
+# second root field for that spelling would be a second surface that could disagree with this one.
+#
+# **The organization and the two ends of the range are required, and that is the read's own
+# requirement.** The delivered list read scopes its criterion by the organization and bounds the rows by
+# the two instants, defaulting each to *now* when it is given neither — a range no caller could have
+# meant. Stating them as required asks for the range the read needs instead of reproducing a default
+# that silently answers nothing. The employee is optional and narrows the read itself through an inner
+# join, which is why it is an argument rather than a filter: the row carries its employees as a
+# collection, not as an identifier to compare.
+#
+# **The count takes no filter.** The inherited count route passes its query string through as the
+# store's own `where`, which the connection protocol does not speak; a `filter` argument here would
+# either be handed to a call that cannot accept it or evaluated over a second code path that could
+# disagree with the connection's own `totalCount`. It is nullable because a count is an aggregate a
+# resource may legitimately have no answer for, and a non-null field would turn "not answered" into a
+# fabricated zero.
+#
+# **The three lifecycle moves are three fields.** Removal, withdrawal and recovery answer three
+# different questions — a client that could not tell them apart could not tell whether the approval
+# record filed beside a request survived it — and the delivered controller serves all three.
+
+extend type Query {
+	"""
+	The requests filed in one organization over a range, newest filed first.
+
+	The range is inclusive at both ends, which is the comparison the delivered read performs. When the
+	caller states no sort, the order is the platform's own — newest filed first, then the identifier,
+	because the delivered read states no order of its own and a cursor walk needs a total one.
+	"""
+	timeOffRequests(
+		"The organization whose requests are read. The delivered read scopes its criterion by it and has no default for it."
+		organizationId: ID!
+		"The start of the range the requests are read over."
+		startDate: DateTime!
+		"The end of the range."
+		endDate: DateTime!
+		"Narrows the read to one employee's requests. The delivered read applies this to the store through an inner join, so it decides which rows are read rather than which are answered."
+		employeeId: ID
+		filter: TimeOffRequestFilter
+		sort: [TimeOffRequestSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimeOffRequestConnection!
+
+	"""
+	One request of the caller's tenant, or null when there is none.
+
+	This field carries the edit permission, not the view permission its read sibling carries, because the
+	delivered `GET /:id` route it mirrors is inherited without a permission of its own and therefore runs
+	under the controller's class-level edit permission.
+	"""
+	timeOffRequest(id: ID!): TimeOffRequest
+
+	"""
+	How many requests the caller's tenant holds.
+	"""
+	timeOffRequestCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a request, and the approval record that carries it forward, in one call.
+
+	The delivered write stores the request and then files the approval row that says who has to decide it,
+	so a request never exists without one. The status a caller states seeds that record; an absent status
+	is the delivered write's own default, which is "requested".
+	"""
+	createTimeOffRequest(input: CreateTimeOffRequestInput!): TimeOffRequest!
+
+	"""
+	Edits a filed request.
+
+	The permission is the delivered route's own and is the delete grant rather than the edit one — see
+	the module comment above. A request that does not belong to the caller's tenant is refused by the
+	delivered write before anything is stored, and the identifier it verifies is the one it writes.
+	"""
+	updateTimeOffRequest(input: UpdateTimeOffRequestInput!): TimeOffRequest!
+
+	"""
+	Approves a filed request.
+
+	The transition is the delivered handler's: a request that is not awaiting a decision is refused, and
+	the refusal is not restated here. The caller has to hold one of the two administrative roles, which
+	is the route's own guard restated on this field.
+	"""
+	approveTimeOffRequest(id: ID!): TimeOffRequest!
+
+	"""
+	Denies a filed request, under the same guard, the same roles and the same permission as the approval
+	above — the two routes differ in the decision they dispatch and in nothing else.
+	"""
+	denyTimeOffRequest(id: ID!): TimeOffRequest!
+
+	"""
+	Removes a request outright.
+
+	The delivered route answers the store's own delete result rather than a row, so this field answers
+	whether the removal ran — the one fact that call establishes.
+	"""
+	deleteTimeOffRequest(id: ID!): Boolean!
+
+	"""
+	Withdraws a request without removing it: the row keeps its identifier, the approval record filed
+	beside it still points at it, and the delivered list stops answering it.
+	"""
+	softDeleteTimeOffRequest(id: ID!): TimeOffRequest!
+
+	"""
+	Puts a withdrawn request back.
+	"""
+	recoverTimeOffRequest(id: ID!): TimeOffRequest!
+}

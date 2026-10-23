@@ -1,0 +1,128 @@
+# The key result domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/key-results` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. `KeyResultController`
+# carries `TenantPermissionGuard` on the class and states no permission at all — not on the five
+# routes it declares and not on any of the four it inherits from the CRUD base — so every field here
+# runs under the same tenant guard and demands no permission. The resolver's spec reads those two
+# facts off the controller's own metadata and compares them with the resolver's.
+#
+# **The node read is a field of its own, because its reader is not the list reader.** The delivered
+# `GET /key-results/:id` hands the store the row's own identifier *and* four relations the list read
+# does not join — the updates that hang off the row, and the goal, lead and owner it points at — so it
+# is not the list narrowed to one identifier: it is a read of its own, and the path segment names the
+# row rather than somebody else's. The three single-row relations are still carried on the type as the
+# identifiers the row always holds, because the list read joins none of them, and the fourth is
+# answered by its own connection. That is the whole of why the two reads differ here, and it is
+# written down rather than left to be inferred from a route table.
+#
+# **The list is the connection.** The controller serves its list twice — the inherited `GET /` and the
+# inherited `GET /pagination` — and the two answer the same rows under the same filters, one of them
+# sliced by `take`/`skip` and the other not. That is one capability, so it is one field, and the
+# connection's own `limit`/`offset` already are the page the paginated spelling performs.
+#
+# **One fact about the delivered router is stated here rather than left to be discovered.** A router
+# walks a class's own methods before the base class's, so the controller's own `GET /:id` is
+# registered ahead of the inherited `GET /count` and `GET /pagination`, and a single-segment pattern
+# matches both of those paths: on REST they answer the node read with the segment as an identifier.
+# This surface states each capability where the controller declares it — the count as
+# `keyResultCount`, the paginated spelling folded into the connection — because the capability is what
+# the controller declares and a registration order is not a narrowing anybody designed. The resolver's
+# spec asserts the ordering that makes the shadowing real.
+#
+# **The bulk write is a field of its own, and it is not the create repeated.** `POST /key-results/bulk`
+# takes a list and saves it in one write, answering the rows; the single create takes one body. Two
+# different capabilities, so two fields.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate the
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Removals, withdrawals and restorations are all delivered routes, so
+# all three are fields, and the object type carries `deletedAt` because that column is the whole of
+# what the withdrawal writes.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is
+# behind the one capability. The REST routes are not gated by that code — they are the door that stays
+# open — so a tenant that switched the capability off is answered `Cannot query field <name>` here and
+# served as it always was there.
+
+extend type Query {
+	"""
+	The key results of the caller's tenant, newest first. An objective's key results are this
+	connection narrowed by `goalId`; one employee's are the same connection narrowed by `ownerId`.
+	"""
+	keyResults(
+		filter: KeyResultFilter
+		sort: [KeyResultSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): KeyResultConnection!
+
+	"""
+	One key result of the caller's tenant, or null when there is none.
+
+	This read is the controller's own rather than the CRUD base's, and it is a field of its own rather
+	than the connection narrowed: its reader loads the updates that hang off the row and the goal, lead
+	and owner it points at, none of which the list read joins. The members those relations would answer
+	are the identifiers the row always holds, and a key result's updates are read through
+	`keyResultUpdates`.
+	"""
+	keyResult(id: ID!): KeyResult
+
+	"""
+	How many key results the caller's tenant holds.
+	"""
+	keyResultCount: Int
+}
+
+extend type Mutation {
+	"""
+	Authors a key result, and answers the row it wrote.
+	"""
+	createKeyResult(input: CreateKeyResultInput!): KeyResult!
+
+	"""
+	Authors several key results in one write — the delivered bulk route — and answers the rows it
+	wrote. The rows are saved rather than inserted, so an entry that carries an identifier updates the
+	row it names, which is what the delivered service's own save does.
+	"""
+	createKeyResults(input: [CreateKeyResultInput!]!): [KeyResult!]!
+
+	"""
+	Changes a key result. The delivered route is an update-through-create, so a member the caller
+	leaves out is left as it is; see `UpdateKeyResultInput`.
+	"""
+	updateKeyResult(input: UpdateKeyResultInput!): KeyResult!
+
+	"""
+	Removes a key result outright, with the updates the delivered cascade takes with it. The delivered
+	route answers the store's delete result rather than a row, so this field answers whether the
+	removal was performed.
+	"""
+	deleteKeyResult(id: ID!): Boolean!
+
+	"""
+	Withdraws a key result without removing it: the row keeps its identifier, its updates keep pointing
+	at it, and the delivered list stops answering it.
+	"""
+	softDeleteKeyResult(id: ID!): KeyResult!
+
+	"""
+	Puts a withdrawn key result back.
+	"""
+	recoverKeyResult(id: ID!): KeyResult!
+}

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { PermissionsEnum, ICandidate, ICandidateInterview, IFavorite } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
 	selector: 'ga-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: ['../../dashboard/dashboard.component.scss', './edit-candidate.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditCandidateComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

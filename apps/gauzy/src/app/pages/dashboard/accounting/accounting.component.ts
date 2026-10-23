@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -56,6 +56,7 @@ type SortKey = 'name' | StatisticKey;
 	templateUrl: './accounting.component.html',
 	styleUrls: ['./accounting.component.scss'],
 	providers: [CurrencyPipe, CurrencyPositionPipe],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AccountingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -192,6 +192,7 @@
 		"ADD_MORE_SOURCES": "Add More Sources",
 		"REMOVE_FROM_FAVORITES": "Remove from favorites",
 		"ADD_TO_FAVORITES": "Add to favorites",
+		"EXPAND_FULL_WIDTH": "Expand to full width",
 		"DONE": "Done",
 		"SKIP": "Skip",
 		"UNSELECT_ALL": "Deselect All",
@@ -892,6 +893,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"INITIATIVES": "Initiatives",
 		"ADD_ITEM": "Add {{ name }}",
 		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "Pipelines",
@@ -2417,6 +2419,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Kind",
+		"KIND_ALL": "All",
+		"KIND_HUMAN": "People",
+		"KIND_AGENT": "Agents",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Managed by Ever Works: this agent's name and profile are changed in Ever Works and synced to Gauzy.",
+		"MANAGED_EXTERNALLY": "Managed externally: this agent's name and profile are changed in the system it comes from and synced to Gauzy.",
+		"OPEN_MANAGED_AGENT": "Open agent page",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "Add Employee",
 		"ACTIVE": "Active",
@@ -2573,7 +2583,68 @@
 				"IN_DAYS": "In {{ count }} days"
 			},
 			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
-			"NO_TASKS_IN_VIEW": "No tasks in this view"
+			"NO_TASKS_IN_VIEW": "No tasks in this view",
+			"PROJECTS_CAPTION": "Their projects and the time worked on each in this period",
+			"NO_PROJECTS": "Not a member of any project, and no project time in this period",
+			"NOT_A_MEMBER": "Not a member",
+			"NOT_A_MEMBER_HINT": "Time was tracked on this project, but they are not a member of it",
+			"VIEW_PROFILE": "View profile",
+			"MEMBERSHIP_UNKNOWN": "Project membership could not be loaded, so members and non-members are not told apart.",
+			"PROJECT_TIMES_PARTIAL": "Some project times could not be loaded, so a project without a time may still have some."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Strategic Initiatives",
+		"SUBTITLE": "The directions your organization has decided to move in, and the goals, projects and teams aligned to them.",
+		"ADD": "Add initiative",
+		"EDIT": "Edit initiative",
+		"EMPTY": "No strategic initiatives yet.",
+		"TITLE": "Title",
+		"STATE": "State",
+		"VISIBILITY": "Visibility",
+		"TEAMS": "Teams",
+		"TEAMS_HINT": "With \"Team\" visibility, members of these teams (and of the teams of aligned projects) can see the initiative.",
+		"PROJECTS": "Projects",
+		"GOALS": "Goals",
+		"CONFIDENCE": "Confidence",
+		"MOMENTUM": "Momentum",
+		"INTENT": "Intent",
+		"INTENT_HINT": "What are we deliberately trying to move forward, and why?",
+		"STEWARD": "Steward",
+		"SIGNALS": "Signals",
+		"KNOWN_RISKS": "Known risks",
+		"KNOWN_RISKS_HINT": "One risk per line",
+		"NOTES": "Notes",
+		"LAST_ASSESSED": "Last assessed",
+		"NO_TEAMS": "No teams linked.",
+		"NO_GOALS": "No goals aligned.",
+		"NO_PROJECTS": "No projects aligned.",
+		"NOT_FOUND": "The initiative was not found, or you cannot see it.",
+		"DELETE_TITLE": "Delete initiative",
+		"DELETE_CONFIRMATION": "Delete the initiative \"{{ name }}\"?",
+		"DELETED": "Initiative \"{{ name }}\" deleted.",
+		"CREATED": "Initiative \"{{ name }}\" created.",
+		"UPDATED": "Initiative \"{{ name }}\" updated.",
+		"STATES": {
+			"DRAFT": "Draft",
+			"ACTIVE": "Active",
+			"RESOLVED": "Resolved",
+			"RETIRED": "Retired"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Leadership",
+			"ORGANIZATION": "Organization",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Low",
+			"MEDIUM": "Medium",
+			"HIGH": "High"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Stalled",
+			"PROGRESSING": "Progressing",
+			"ACCELERATING": "Accelerating"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2592,6 +2663,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "Reply",
+			"ONE_MESSAGE": "1 Message",
+			"MESSAGES": "{{ count }} Messages",
+			"NO_MESSAGES": "There are no messages in this thread yet.",
+			"REPLY_PLACEHOLDER": "Reply to this comment…",
+			"UNKNOWN_AUTHOR": "Unknown",
+			"DELETE_CONFIRM": "Delete this comment?",
+			"DELETED": "Comment deleted",
+			"LOAD_ERROR": "Couldn't load the comments."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2639,6 +2721,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "No Comments yet.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
@@ -2953,6 +3036,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Delete organization",
+			"WARNING": "{{ name }} will be permanently deleted. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete organization"
+		},
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
 		"POSITIONS": "Positions",
@@ -3165,7 +3254,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Details"
+					},
+					"PUBLIC": "Public",
+					"PRIVATE": "Private",
+					"PREFIX": "Task prefix",
+					"MEMBERS_COUNT": "{{ count }} members",
+					"LIVE": "{{ tracking }} tracking now · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} of {{ total }} members",
+					"CREATED": "Created",
+					"UPDATED": "Last updated",
+					"ACTIVE_MEMBERS": "Active members",
+					"ACTIVE_MEMBERS_META": "of {{ total }} members tracked time",
+					"TIME_BY_MEMBER": "Time by member",
+					"TEAM_TASKS": "Team tasks",
+					"NO_TEAM_TASKS": "No tasks assigned to this team",
+					"NO_MEMBERS": "This team has no members yet",
+					"NO_PROJECTS": "No projects linked to this team",
+					"COLUMNS": {
+						"MEMBER": "Member",
+						"ROLE": "Role",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Current task",
+						"TODAY": "Today",
+						"ACTIVITY": "Activity"
+					},
+					"ROLE": {
+						"MANAGER": "Manager",
+						"MEMBER": "Member"
+					},
+					"GENERAL": "General",
+					"SETTINGS": "Settings",
+					"RECORD": "Record",
+					"TEAM_SIZE": "Team size",
+					"COLOR": "Color",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Profile link",
+					"VISIBILITY": "Visibility",
+					"SHARE_PROFILE_VIEW": "Members can see each other's profiles",
+					"REQUIRE_PLAN": "Require a plan to track time",
+					"NOT_FOUND": "This team could not be found",
+					"LOAD_FAILED": "The team could not be loaded",
+					"RETRY": "Try again",
+					"OPEN_TASK_DETAILS": "Show details of {{ title }}",
+					"OPEN_PROJECT_DETAILS": "Show details of project {{ name }}",
+					"PROJECT_PROGRESS": "Progress",
+					"PROJECT_PROGRESS_META": "{{ done }} of {{ total }} tasks done",
+					"NO_PROJECT_TASKS": "No tasks in this project yet",
+					"TOP_CONTRIBUTORS": "Who worked the most",
+					"TOP_CONTRIBUTORS_CAPTION": "Team members' time on this project · {{ range }}",
+					"PROJECT_ACTIVITY": "Daily activity",
+					"NEEDS_ATTENTION": "Needs attention",
+					"NEEDS_ATTENTION_CAPTION": "Overdue tasks and tasks due in the next 3 days",
+					"BUDGET_USED": "{{ used }} of {{ budget }} used",
+					"OVER_BUDGET": "{{ value }} over budget",
+					"OPEN_TASK_PAGE": "Open the page of {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Open task page",
+					"UNASSIGNED": "Unassigned",
+					"SHOW_ALL": "Show all",
+					"SHOW_LESS": "Show less",
+					"PROJECTS_CAPTION": "The team's projects and the time worked on each in this period",
+					"NOT_LINKED": "Not linked",
+					"NOT_LINKED_HINT": "Members tracked time on this project, but it is not linked to the team"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -3273,6 +3427,48 @@
 				"ADMINISTRATION": "Administration"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
+			"ENABLED_COUNT": "{{ enabled }} of {{ total }} enabled",
+			"SECTIONS": {
+				"DASHBOARDS": "Dashboards",
+				"SELECTION": "Workspace selection",
+				"INTEGRATIONS_AI": "Integrations & AI",
+				"JOBS": "Jobs",
+				"FINANCE": "Finance",
+				"SALES": "Sales & Contacts",
+				"EMPLOYEES_TEAMS": "Employees & Teams",
+				"CANDIDATES": "Candidates",
+				"TIME_OFF_APPROVALS": "Time off & Approvals",
+				"TIME_TRACKING": "Time tracking",
+				"PROJECTS_TASKS": "Projects & Tasks",
+				"INVENTORY_EQUIPMENT": "Inventory & Equipment",
+				"CONTENT_COMMUNICATION": "Content & Communication",
+				"TAGS": "Tags",
+				"ACCOUNT": "Account",
+				"USERS_ORGANIZATIONS": "Users & Organizations",
+				"SETTINGS_INTEGRATIONS": "Settings & Integrations",
+				"DATA_LOGS": "Data & Logs",
+				"DOCUMENTS": "Documents",
+				"COMMERCE_PLATFORM": "Commerce: Platform",
+				"COMMERCE_CATALOG": "Commerce: Catalog & Pricing",
+				"COMMERCE_ORDERS": "Commerce: Orders & Customers",
+				"COMMERCE_FULFILLMENT": "Commerce: Stock & Fulfillment",
+				"COMMERCE_PAYMENTS": "Commerce: Payments",
+				"COMMERCE_MARKETPLACE": "Commerce: Marketplace",
+				"OTHER": "Other"
+			},
+			"ORG_PAYROLL_VIEW": "View Payroll",
+			"ORG_PAYROLL_EDIT": "Create/Edit Payroll Runs",
+			"ORG_PAYROLL_APPROVE": "Approve and Pay Payroll Runs",
+			"DOCS_READ": "View Documents",
+			"DOCS_CREATE": "Create Documents",
+			"DOCS_UPDATE": "Edit Documents",
+			"DOCS_DELETE": "Delete Documents",
+			"DOCS_MANAGE": "Manage Document Categories and Capture Addresses",
+			"DOCS_REVIEW": "Approve/Reject Document Reviews",
+			"DOCS_AI_IMPORT": "Manage Documents AI Knowledge",
+			"INBOX_VIEW": "View Inbox",
+			"INBOX_MAILBOX_MANAGE": "Manage Mailboxes and Provider Accounts",
+			"INBOX_MAILBOX_READ_ALL": "Read All Shared Mailboxes",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
 			"ORG_SPRINT_EDIT": "Edit sprint",
 			"ORG_SPRINT_VIEW": "View sprint",
@@ -3319,6 +3515,7 @@
 			"PAYMENT_GATEWAY_VIEW": "View Payment Gateway",
 			"SMS_GATEWAY_VIEW": "View SMS Gateway",
 			"CUSTOM_SMTP_VIEW": "View Custom SMTP",
+			"CUSTOM_SMTP_EDIT": "Edit Custom SMTP",
 			"IMPORT_EXPORT_VIEW": "View Import/Export",
 			"ORG_JOB_APPLY": "Apply Jobs",
 			"ORG_JOB_EDIT": "Edit Jobs",
@@ -3357,7 +3554,200 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "Create Organization Strategic Initiative",
 			"ORG_STRATEGIC_INITIATIVE_READ": "View Organization Strategic Initiative",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Update Organization Strategic Initiative",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Delete Organization Strategic Initiative"
+			"CHANNELS_VIEW": "View Channels",
+			"CHANNELS_CREATE": "Create Channels",
+			"CHANNELS_EDIT": "Edit Channels",
+			"CHANNELS_DELETE": "Delete Channels",
+			"REGIONS_VIEW": "View Regions",
+			"REGIONS_CREATE": "Create Regions",
+			"REGIONS_EDIT": "Edit Regions",
+			"REGIONS_DELETE": "Delete Regions",
+			"RULES_VIEW": "View Rules",
+			"RULES_EDIT": "Edit Rules",
+			"SEQUENCES_VIEW": "View Numbering Sequences",
+			"SEQUENCES_EDIT": "Edit Numbering Sequences",
+			"UNITS_VIEW": "View Units of Measure",
+			"UNITS_EDIT": "Edit Units of Measure",
+			"PAYMENT_TERMS_VIEW": "View Payment Terms",
+			"PAYMENT_TERMS_EDIT": "Edit Payment Terms",
+			"PROVIDERS_VIEW": "View Providers",
+			"OPERATIONS_VIEW": "View Background Operations",
+			"OPERATIONS_CANCEL": "Cancel Background Operations",
+			"EVENT_OUTBOX_VIEW": "View Event Outbox",
+			"EVENT_OUTBOX_RETRY": "Retry Event Outbox Messages",
+			"IDEMPOTENCY_KEYS_VIEW": "View Idempotency Keys",
+			"IDEMPOTENCY_KEYS_DELETE": "Delete Idempotency Keys",
+			"WEBHOOKS_VIEW": "View Webhooks",
+			"WEBHOOKS_CREATE": "Create Webhooks",
+			"WEBHOOKS_EDIT": "Edit Webhooks",
+			"WEBHOOKS_DELETE": "Delete Webhooks",
+			"WEBHOOK_DELIVERIES_RETRY": "Retry Webhook Deliveries",
+			"SEARCH_VIEW": "Use Global Search",
+			"SEARCH_REINDEX": "Rebuild the Search Index",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "View Search Index Definitions",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "Edit Search Index Definitions",
+			"PRODUCTS_VIEW": "View Products",
+			"PRODUCTS_EDIT": "Edit Products",
+			"PRODUCTS_DELETE": "Delete Products",
+			"PRODUCTS_BULK_IMPORT": "Bulk Import Products",
+			"COLLECTIONS_VIEW": "View Collections",
+			"COLLECTIONS_CREATE": "Create Collections",
+			"COLLECTIONS_EDIT": "Edit Collections",
+			"COLLECTIONS_DELETE": "Delete Collections",
+			"PRICE_LISTS_VIEW": "View Price Lists",
+			"PRICE_LISTS_CREATE": "Create Price Lists",
+			"PRICE_LISTS_EDIT": "Edit Price Lists",
+			"PRICE_LISTS_DELETE": "Delete Price Lists",
+			"PRICE_LISTS_SIMULATE": "Simulate Price Lists",
+			"PRODUCT_PRICES_VIEW": "View Product Prices",
+			"PRODUCT_PRICES_EDIT": "Edit Product Prices",
+			"PRODUCT_PRICES_BULK_EDIT": "Bulk Edit Product Prices",
+			"EXCHANGE_RATES_VIEW": "View Exchange Rates",
+			"EXCHANGE_RATES_EDIT": "Edit Exchange Rates",
+			"TAX_CATEGORIES_VIEW": "View Tax Categories",
+			"TAX_CATEGORIES_EDIT": "Edit Tax Categories",
+			"TAX_RATES_VIEW": "View Tax Rates",
+			"TAX_RATES_EDIT": "Edit Tax Rates",
+			"TAX_REGIMES_VIEW": "View Tax Regimes",
+			"TAX_REGIMES_EDIT": "Edit Tax Regimes",
+			"PROMOTIONS_VIEW": "View Promotions",
+			"PROMOTIONS_CREATE": "Create Promotions",
+			"PROMOTIONS_EDIT": "Edit Promotions",
+			"PROMOTIONS_DELETE": "Delete Promotions",
+			"PROMOTIONS_SIMULATE": "Simulate Promotions",
+			"COUPONS_VIEW": "View Coupons",
+			"COUPONS_CREATE": "Create Coupons",
+			"COUPONS_EDIT": "Edit Coupons",
+			"COUPONS_DELETE": "Delete Coupons",
+			"GIFT_CARDS_VIEW": "View Gift Cards",
+			"GIFT_CARDS_ISSUE": "Issue Gift Cards",
+			"GIFT_CARDS_EDIT": "Edit Gift Cards",
+			"CARTS_VIEW": "View Carts",
+			"CARTS_EDIT": "Edit Carts",
+			"CARTS_DELETE": "Delete Carts",
+			"CARTS_CHECKOUT": "Complete Checkout",
+			"ORDERS_VIEW": "View Orders",
+			"ORDERS_CREATE": "Create Orders",
+			"ORDERS_EDIT": "Edit Orders",
+			"ORDERS_CANCEL": "Cancel Orders",
+			"ORDERS_APPROVE": "Approve Orders",
+			"RETURNS_VIEW": "View Returns",
+			"RETURNS_CREATE": "Create Returns",
+			"RETURNS_APPROVE": "Approve Returns",
+			"RETURNS_REJECT": "Reject Returns",
+			"RETURNS_RECEIVE": "Receive Returns",
+			"CLAIMS_VIEW": "View Claims",
+			"CLAIMS_CREATE": "Create Claims",
+			"CLAIMS_RESOLVE": "Resolve Claims",
+			"EXCHANGES_VIEW": "View Exchanges",
+			"EXCHANGES_CREATE": "Create Exchanges",
+			"EXCHANGES_RESOLVE": "Resolve Exchanges",
+			"SUBSCRIPTIONS_VIEW": "View Subscriptions",
+			"SUBSCRIPTIONS_CREATE": "Create Subscriptions",
+			"SUBSCRIPTIONS_EDIT": "Edit Subscriptions",
+			"SUBSCRIPTIONS_BILL": "Bill Subscriptions",
+			"ENTITLEMENTS_VIEW": "View Entitlements",
+			"ENTITLEMENTS_GRANT": "Grant Entitlements",
+			"ENTITLEMENTS_EDIT": "Edit Entitlements",
+			"CONTACT_GROUPS_VIEW": "View Contact Groups",
+			"CONTACT_GROUPS_CREATE": "Create Contact Groups",
+			"CONTACT_GROUPS_EDIT": "Edit Contact Groups",
+			"CONTACT_GROUPS_DELETE": "Delete Contact Groups",
+			"CONTACT_CREDENTIALS_VIEW": "View Contact Credentials",
+			"CONTACT_CREDENTIALS_MANAGE": "Manage Contact Credentials",
+			"CONTACT_CREDITS_EDIT": "Edit Contact Credit",
+			"CONTACT_TAX_IDENTITY_EDIT": "Edit Contact Tax Identities",
+			"STOCK_VIEW": "View Stock",
+			"STOCK_EDIT": "Edit Stock",
+			"STOCK_RECONCILE": "Reconcile Stock",
+			"STOCK_TRANSFER_VIEW": "View Stock Transfers",
+			"STOCK_TRANSFER_CREATE": "Create Stock Transfers",
+			"STOCK_TRANSFER_APPROVE": "Approve Stock Transfers",
+			"STOCK_TRANSFER_SHIP": "Ship Stock Transfers",
+			"STOCK_TRANSFER_RECEIVE": "Receive Stock Transfers",
+			"STOCK_TRANSFER_CANCEL": "Cancel Stock Transfers",
+			"WAREHOUSE_ZONES_VIEW": "View Warehouse Zones",
+			"WAREHOUSE_ZONES_CREATE": "Create Warehouse Zones",
+			"WAREHOUSE_ZONES_EDIT": "Edit Warehouse Zones",
+			"WAREHOUSE_ZONES_DELETE": "Delete Warehouse Zones",
+			"WAREHOUSE_BINS_VIEW": "View Warehouse Bins",
+			"WAREHOUSE_BINS_CREATE": "Create Warehouse Bins",
+			"WAREHOUSE_BINS_EDIT": "Edit Warehouse Bins",
+			"WAREHOUSE_BINS_DELETE": "Delete Warehouse Bins",
+			"PICK_LISTS_VIEW": "View Pick Lists",
+			"PICK_LISTS_EDIT": "Edit Pick Lists",
+			"PICK_LISTS_PICK": "Pick Items on Pick Lists",
+			"PICK_LISTS_CANCEL": "Cancel Pick Lists",
+			"FULFILLMENTS_VIEW": "View Fulfillments",
+			"FULFILLMENTS_CREATE": "Create Fulfillments",
+			"FULFILLMENTS_EDIT": "Edit Fulfillments",
+			"SHIPPING_OPTIONS_VIEW": "View Shipping Options",
+			"SHIPPING_OPTIONS_CREATE": "Create Shipping Options",
+			"SHIPPING_OPTIONS_EDIT": "Edit Shipping Options",
+			"SHIPPING_OPTIONS_DELETE": "Delete Shipping Options",
+			"PURCHASE_ORDERS_VIEW": "View Purchase Orders",
+			"PURCHASE_ORDERS_CREATE": "Create Purchase Orders",
+			"PURCHASE_ORDERS_EDIT": "Edit Purchase Orders",
+			"PURCHASE_ORDERS_APPROVE": "Approve Purchase Orders",
+			"PURCHASE_ORDERS_SEND": "Send Purchase Orders",
+			"GOODS_RECEIPTS_VIEW": "View Goods Receipts",
+			"GOODS_RECEIPTS_CREATE": "Create Goods Receipts",
+			"VENDOR_TERMS_VIEW": "View Vendor Terms",
+			"VENDOR_TERMS_EDIT": "Edit Vendor Terms",
+			"PAYMENT_PROVIDERS_VIEW": "View Payment Providers",
+			"PAYMENT_PROVIDERS_CREATE": "Create Payment Providers",
+			"PAYMENT_PROVIDERS_EDIT": "Edit Payment Providers",
+			"PAYMENT_PROVIDERS_DELETE": "Delete Payment Providers",
+			"PAYMENT_SESSIONS_VIEW": "View Payment Sessions",
+			"PAYMENT_SESSIONS_AUTHORIZE": "Authorize Payments",
+			"PAYMENT_SESSIONS_CAPTURE": "Capture Payments",
+			"PAYMENT_SESSIONS_CANCEL": "Cancel Payment Sessions",
+			"REFUNDS_VIEW": "View Refunds",
+			"REFUNDS_CREATE": "Create Refunds",
+			"REFUNDS_APPROVE": "Approve Refunds",
+			"PAYMENT_CALLBACKS_VIEW": "View Provider Callbacks",
+			"PAYMENT_CALLBACKS_REPROCESS": "Reprocess Provider Callbacks",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "View Payment Account Holders",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "Edit Payment Account Holders",
+			"PAYMENT_METHOD_TOKENS_VIEW": "View Saved Payment Methods",
+			"PAYMENT_METHOD_TOKENS_EDIT": "Edit Saved Payment Methods",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "Charge Saved Payment Methods",
+			"SELLERS_VIEW": "View Sellers",
+			"SELLERS_CREATE": "Create Sellers",
+			"SELLERS_EDIT": "Edit Sellers",
+			"SELLERS_DELETE": "Delete Sellers",
+			"SELLER_OFFERINGS_VIEW": "View Seller Offerings",
+			"SELLER_OFFERINGS_EDIT": "Edit Seller Offerings",
+			"SELLER_COMMISSIONS_VIEW": "View Seller Commissions",
+			"SELLER_COMMISSIONS_EDIT": "Edit Seller Commissions",
+			"SELLER_TRANSACTIONS_VIEW": "View Seller Transactions",
+			"SELLER_TRANSACTIONS_SETTLE": "Settle Seller Transactions",
+			"SELLER_SETTLEMENTS_VIEW": "View Seller Settlements",
+			"SELLER_SETTLEMENTS_EDIT": "Edit Seller Settlements",
+			"SELLER_PAYOUTS_VIEW": "View Seller Payouts",
+			"SELLER_PAYOUTS_CREATE": "Create Seller Payouts",
+			"SELLER_PAYOUTS_APPROVE": "Approve Seller Payouts",
+			"SELLER_PAYOUTS_CANCEL": "Cancel Seller Payouts",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Delete Organization Strategic Initiative",
+			"PROFILE_EDIT": "Edit Profile",
+			"ORG_MEMBERS_VIEW": "View Organization Members",
+			"SUPER_ADMIN_EDIT": "Edit Super Admin",
+			"MIGRATE_GAUZY_CLOUD": "Migrate to Gauzy Cloud",
+			"INVENTORY_GALLERY_ADD": "Add Inventory Gallery Images",
+			"INVENTORY_GALLERY_DELETE": "Delete Inventory Gallery Images",
+			"PLUGIN_VIEW": "View Plugins",
+			"PLUGIN_DISCOVER": "Discover Plugins",
+			"PLUGIN_INSTALL": "Install Plugins",
+			"PLUGIN_UNINSTALL": "Uninstall Plugins",
+			"PLUGIN_UPDATE": "Update Plugins",
+			"PLUGIN_ENABLE": "Enable Plugins",
+			"PLUGIN_DISABLE": "Disable Plugins",
+			"PLUGIN_CONFIGURE": "Configure Plugins",
+			"PLUGIN_PUBLISH": "Publish Plugins",
+			"PLUGIN_RESTRICT": "Restrict Plugins",
+			"PLUGIN_ASSIGN_ACCESS": "Assign Plugin Access",
+			"PLUGIN_DELETE": "Delete Plugins",
+			"PLUGIN_DELETE_FOREVER": "Delete Plugins Permanently"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3366,7 +3756,62 @@
 		"IMAGE": "Image",
 		"SPRINTS": "Sprints",
 		"INTEGRATIONS": "Integrations",
-		"NO_IMAGE": "Image no available"
+		"NO_IMAGE": "Image no available",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Set up a new organization with its address, bonus and regional settings.",
+			"PROGRESS": "Progress",
+			"STEP_DETAILS": "Details",
+			"STEP_LOCATION": "Location",
+			"STEP_BONUS": "Bonus",
+			"STEP_SETTINGS": "Settings",
+			"STEP_EMPLOYEE": "Employee",
+			"PROFILE": "Profile",
+			"LOGO": "Organization logo",
+			"LOGO_HINT": "Optional. Click the logo to upload a square image of at least 256 × 256 px.",
+			"BUSINESS": "Business details",
+			"ADDRESS_TITLE": "Address",
+			"ADDRESS_HINT": "Optional. Search for an address, fill it in, or click the map to place the organization.",
+			"BONUS_TITLE": "Bonus",
+			"BONUS_HINT": "Choose how employee bonuses are calculated. You can change this later in the organization settings.",
+			"REGIONAL": "Regional",
+			"FISCAL_YEAR": "Fiscal year",
+			"INVITES": "Invites",
+			"EMPLOYEE_TITLE": "Register as employee",
+			"EMPLOYEE_HINT": "Add yourself to the new organization as an employee.",
+			"BACK": "Back",
+			"CONTINUE": "Continue",
+			"SKIP": "Skip",
+			"CREATE": "Create organization"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Project sections",
+			"DETAILS": "Details",
+			"LOGO": "Project logo",
+			"LOGO_HINT": "Optional. Click the logo to upload a square image.",
+			"PEOPLE": "People",
+			"TIMELINE": "Timeline",
+			"APPEARANCE": "Appearance",
+			"OPTIONS": "Options",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Task sync",
+			"CREATE_SUBTITLE": "Set up a new project with its people, timeline and billing.",
+			"OPEN_SOURCE_TITLE": "Open-source project",
+			"OPEN_SOURCE_DESCRIPTION": "Share this project's code publicly. Turn it on to add the link to its public repository.",
+			"OPEN_SOURCE_URL_HINT": "The public address of the code, for example a GitHub or GitLab repository.",
+			"OPEN_REPOSITORY": "Open repository",
+			"DESCRIPTION_CARD_DESC": "Describe the project's goals and scope for everyone working on it.",
+			"TAGS_DESC": "Label the project so it is easier to find and group.",
+			"BILLING_DESC": "How the client is billed for this project, and in which currency.",
+			"BUDGET_DESC": "Set a budget in hours or in cost to keep the project on track.",
+			"APPEARANCE_DESC": "The project's color and how its tasks are shown.",
+			"PUBLIC_TITLE": "Public project",
+			"PUBLIC_DESC": "Everyone can see who works on a public project. On a private one, people see only themselves unless they can access private projects.",
+			"BILLABLE_DESC": "Mark the work on this project as billable to the client.",
+			"REPOSITORY_DESC": "Choose the GitHub repository whose issues this project works with.",
+			"AUTO_SYNC_DESC": "Keep the project's tasks in step with the repository's issues. Changes here are saved right away.",
+			"SYNC_LABEL_TITLE": "Sync by label",
+			"SYNC_LABEL_DESC": "Only sync issues that carry the label you set. Changes here are saved right away."
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
@@ -3427,9 +3872,14 @@
 		"MEMBER_SINCE": "Member since",
 		"NO_DESCRIPTION": "No description has been added yet",
 		"NO_SKILLS": "No skills listed yet",
+		"NO_EMPLOYEES": "No employees to show yet",
+		"NO_CLIENTS": "No clients to show yet",
+		"EMPLOYEES_LOAD_FAILED": "Employees couldn't be loaded.",
+		"CLIENTS_LOAD_FAILED": "Clients couldn't be loaded.",
 		"VIEW_COMPANY_PROFILE": "View company profile",
 		"EDIT": {
 			"NO_AWARDS": "No awards added yet",
+			"NO_LANGUAGES": "No languages added yet",
 			"ADD_AWARD": "Add award",
 			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
 		}
@@ -4067,17 +4517,20 @@
 		"USER": {
 			"MANAGE": "Manage User Invites",
 			"HEADER": "Invite Users",
-			"ACTION": "Invite Users"
+			"ACTION": "Invite Users",
+			"DESCRIPTION": "Invite people to join your organization as users. Each recipient receives an email with a secure link to accept."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Manage Employee Invites",
 			"HEADER": "Invite Employees",
-			"ACTION": "Invite Employees"
+			"ACTION": "Invite Employees",
+			"DESCRIPTION": "Invite people to join your organization as employees. Each recipient receives an email with a secure link to accept."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Manage Candidate Invites",
 			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"ACTION": "Invite Candidates",
+			"DESCRIPTION": "Invite candidates to your hiring pipeline. Each recipient receives an email with a secure link to accept."
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
@@ -4087,6 +4540,23 @@
 			"TWO_WEEK": "14 Days",
 			"MONTH": "30 Days",
 			"NEVER": "Never"
+		},
+		"FORM": {
+			"RECIPIENTS": "Recipients",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "Press Enter after each address to add multiple recipients.",
+			"CLEAR_EMAILS": "Clear all",
+			"ACCESS": "Access",
+			"ACCESS_HINT": "Optional. Choose what new members can access as soon as they join.",
+			"DETAILS": "Invitation details",
+			"RECIPIENT_COUNT": "Recipients: {{count}}",
+			"NO_RECIPIENTS": "No recipients added yet"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Delete invitation",
+			"WARNING": "The invitation for {{ email }} will be permanently deleted and its link will stop working. This action cannot be undone.",
+			"TYPE_TO_CONFIRM": "Type the following to confirm:",
+			"CONFIRM": "Delete invitation"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -4450,6 +4920,12 @@
 		"FOR": "for",
 		"FROM": "from"
 	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Back to the list",
+		"NOT_FOUND": "This record does not exist or has been removed.",
+		"FORBIDDEN": "You do not have permission to view this record.",
+		"ERROR": "The record could not be loaded."
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
@@ -4576,6 +5052,39 @@
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
 		"DASHBOARD": "Dashboard",
+		"ORDERS": "Orders",
+		"CART": "Cart",
+		"CATALOG": "Catalog",
+		"PRICING": "Pricing",
+		"TAX": "Tax",
+		"PROMOTIONS": "Promotions",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "Inventory ledger and reservations",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "Warehouse management",
+		"FULFILLMENT": "Fulfillment",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "Returns, claims and exchanges",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "Subscriptions and recurring billing",
+		"PURCHASING": "Purchasing",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "Entitlements, activations and licence keys",
+		"MARKETPLACE": "Marketplace",
+		"GLOBAL_SEARCH": "Global search",
+		"MULTI-CURRENCY_PRICING": "Multi-currency pricing",
+		"MULTI-REGION_PRICING": "Multi-region pricing",
+		"MULTI-LOCATION_ALLOCATION": "Multi-location allocation",
+		"B2B_CREDIT": "B2B credit",
+		"ORDER_APPROVALS": "Order approvals",
+		"GIFT_CARDS": "Gift cards",
+		"WEBHOOKS": "Webhooks",
+		"EXTERNAL_SEARCH_ENGINE": "External search engine",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "Serve reads from the search index",
+		"BACKORDERS": "Backorders",
+		"PRICE_TIERS": "Price tiers",
+		"BULK_API": "Bulk API",
+		"DATA_EXPORT": "Data export",
+		"TAX_PROVIDER": "Tax provider",
+		"SUBSCRIPTION_BILLING_RUN": "Subscription billing run",
+		"MARKETPLACE_PAYOUTS": "Marketplace payouts",
+		"SCHEDULED_SELLER_PAYOUTS": "Scheduled seller payouts",
 		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
@@ -4674,6 +5183,105 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Orders, order lines, order changes, the order timeline and the invoice bridge."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "The cart family and the checkout session that turns a cart into an order."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Product and collection publication, variant facets, relations and the catalog bulk endpoint."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Price lists, product prices, price preferences, exchange rates and the simulate endpoints."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Tax categories, tax rates and the resolution a document is taxed through."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Promotions, campaigns, coupons and the discount engine that evaluates them."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Movements, reservations, transfers, alerts, adjustments, counts and reconciliation."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "The GraphQL endpoint and its resolvers, under the same guards and permissions as REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Zones, bins, pick waves, pick lists, packing and carrier manifests."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Shipping profiles and options, fulfillments, labels and the packing and manifest flow."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "The post-purchase flows: returns, claims and exchanges, with their reasons and stock effects."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Plans, subscriptions and the billing history; recurring charges are a separate flag."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Purchase orders, vendor terms and goods receipts."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Entitlements, their activations and the keys issued against them."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Sellers, offerings, commission, payouts and settlements."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "The search, suggest and facet endpoints and the index definitions they read."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "More than one currency on a channel: exchange-rate use, currency overrides and FX conversion."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "More than one region per channel, with region-specific tax and shipping."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Allocation split across stock locations, per-location availability and transfers between them."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Credit limits, settlement terms, period spending limits and the credit check at placement."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Routing an order through the approval module before it is placed."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Issuing and redeeming gift cards, and the balance lookup endpoint."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Outbound webhook subscriptions and their deliveries."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Using an external engine instead of the built-in database provider for global search."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Routing reads to the search projection rather than to the source tables."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Allowing an order for more than is on hand, and the backorderable availability response."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Quantity-band prices and per-contact-group prices."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "The batch authoring endpoints."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Streaming exports of the catalog and of the order documents."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Delegating tax calculation to an external engine through configured integration credentials."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "The recurring billing run and the automatic charge path."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Building, approving and executing a payout through a payment provider."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Automatic payout runs on a seller payout schedule."
 		},
 		"DOCUMENTS": {
 			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central hub for company documents: uploads, wiki pages, review, and AI knowledge"
@@ -4801,7 +5409,40 @@
 		"UNTAGGED": "untagged build",
 		"API_UNAVAILABLE": "API version unavailable",
 		"LEARN_MORE": "Learn More",
-		"ABOUT": "About"
+		"ABOUT": "About",
+		"GITHUB": {
+			"TITLE": "On GitHub",
+			"DESCRIPTION": "Ever Gauzy is developed in the open: follow the releases, report an issue or contribute.",
+			"RELEASES": "Releases",
+			"ISSUES": "Issues",
+			"PULL_REQUESTS": "Pull requests",
+			"CONTRIBUTORS": "Contributors",
+			"CONTRIBUTING": "Contributing guide",
+			"CODE_OF_CONDUCT": "Code of conduct",
+			"LICENSE_FILE": "License"
+		},
+		"CARD": {
+			"IN_SYNC": "In sync",
+			"DIFFERENT": "Different builds",
+			"RELEASE_NOTES": "Release notes",
+			"COMMIT": "Commit",
+			"REPOSITORY": "Repository"
+		},
+		"ENV": {
+			"TITLE": "Environment",
+			"BUILD": "Build",
+			"PRODUCTION": "Production",
+			"DEVELOPMENT": "Development",
+			"MODE": "Mode",
+			"DEMO": "Demo",
+			"STANDARD": "Standard",
+			"RUNNING_IN": "Running in",
+			"DESKTOP": "Desktop app",
+			"BROWSER": "Browser",
+			"API_ADDRESS": "API address",
+			"WEB_ADDRESS": "Web address",
+			"COPY": "Copy {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "by",
@@ -5316,6 +5957,9 @@
 			"DETAILED_NOTIF": "Detailed Notification",
 			"SHOW_NOTIF_CAPTURED_IMG": "Show notification with captured image",
 			"SHOW_NATIVE_OS_NOTIF": "Show native OS notification",
+			"NOTIFICATION_DISPLAY": "Notification Display",
+			"SHOW_NOTIF_ON_DISPLAY": "Show the screen capture notification on",
+			"PRIMARY_DISPLAY": "Primary display (default)",
 			"SOUND_NOTIF": "Sound Notifications",
 			"PLAY_SOUND": "Play sound on screen capture",
 			"SOUND_ENABLED": "Sound Enabled",
@@ -5762,7 +6406,40 @@
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
 		"SCREEN_SELECTED": "{{ count }} Screen(s) selected",
 		"NO_TIME_TRACKED": "No time tracked",
-		"MINUTES_TRACKED": "{{ minutes }} min tracked"
+		"MINUTES_TRACKED": "{{ minutes }} min tracked",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Total time",
+			"APPS_USED": "Apps used",
+			"SITES_VISITED": "Sites visited",
+			"TOP_APP": "Most used app",
+			"TOP_SITE": "Most visited site",
+			"VIEW": "View",
+			"BY_APP": "By app",
+			"BY_SITE": "By site",
+			"BY_MEMBERS": "By member",
+			"BY_HOURS": "By hour",
+			"SEARCH_APPS": "Search apps…",
+			"SEARCH_SITES": "Search sites…",
+			"SORT": "Change the sort order",
+			"SORT_TIME": "Most time",
+			"SORT_NAME": "Name A–Z",
+			"LOAD_FAILED": "The activity could not be loaded. Please try again.",
+			"NO_MATCH": "Nothing matches “{{ search }}”.",
+			"APP": "App",
+			"SITE": "Site",
+			"TIME": "Time",
+			"SHOW_PAGES": "Show the pages visited on {{ site }}",
+			"LOADING_PAGES": "Loading pages…",
+			"PAGES_FAILED": "The pages could not be loaded.",
+			"NO_PAGES": "No page details were recorded for this site.",
+			"SHOW_ALL": "Show all {{ count }}",
+			"SHOW_LESS": "Show less",
+			"UNKNOWN_MEMBER": "Unknown member",
+			"APPS_COUNT": "{{ count }} apps",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} of total",
+			"PAGES_TRUNCATED": "This site has more records than can be shown; the breakdown covers only part of its time."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -5891,7 +6568,10 @@
 			"payment-receipt": "Payment Receipt",
 			"reject-candidate": "Reject Candidate"
 		},
-		"HTML_EDITOR": "HTML Editor"
+		"HTML_EDITOR": "HTML Editor",
+		"FULL_PREVIEW": "Full preview",
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",
@@ -5942,16 +6622,83 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "File provider",
+		"SHOW_SECRET": "Show secret",
+		"HIDE_SECRET": "Hide secret",
+		"SUMMARY": {
+			"TITLE": "Current configuration",
+			"DESCRIPTION": "Last saved settings — what new uploads use right now.",
+			"PROVIDER": "Provider",
+			"BUCKET": "Bucket / cloud name",
+			"REGION": "Region",
+			"ENDPOINT": "Endpoint",
+			"CREDENTIALS": "Credentials",
+			"CREDENTIALS_SAVED": "Saved",
+			"CREDENTIALS_INCOMPLETE": "Incomplete",
+			"CREDENTIALS_NONE": "Not set",
+			"CREDENTIALS_NOT_NEEDED": "Not needed",
+			"SERVER_DEFAULT": "Server default"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Where to get the keys",
+			"LOCAL": {
+				"NAME": "Local disk",
+				"DESCRIPTION": "files are saved on the API server's own file system."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "files are saved to an AWS S3 bucket. Use an IAM access key that can read and write the bucket."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-compatible cloud storage. The credentials are verified with Wasabi when you save."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "image and video hosting. The cloud name and API keys are in the Cloudinary console under API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-compatible object storage with an optional CDN. Create a Spaces access key in the DigitalOcean control panel."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Local storage",
+			"WHERE": "Uploaded files are written to the API server's file system.",
+			"NO_CONFIG": "Nothing to configure — local storage works out of the box.",
+			"WARNING": "Files are lost if the server is redeployed without a persistent volume, and they are not shared between several API instances. Use a cloud provider in production."
+		},
+		"CHECK": {
+			"BUTTON": "Check configuration",
+			"OK": "All required fields are filled in and the URLs are valid. The keys themselves are only verified by the provider.",
+			"OK_LOCAL": "Local storage needs no configuration.",
+			"OK_SERVER_DEFAULTS": "Nothing is missing. Left empty, so the server's own configuration is used:",
+			"MISSING": "Missing:",
+			"INVALID_URL": "Not a valid http(s) URL:",
+			"HTTPS_REQUIRED": "Must use https:// — the keys are sent to this address:"
+		},
 		"S3": {
 			"HEADER": "S3 Configuration",
+			"SUBTITLE": "Store uploaded files in an Amazon S3 bucket.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "An IAM access key that can read and write the bucket.",
+				"BUCKET": "Bucket",
+				"BUCKET_HINT": "Where uploaded files are written."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"REGION": "The AWS region the bucket lives in, e.g. us-east-1 or eu-west-1.",
+				"BUCKET": "The bucket name exactly as it appears in the S3 console."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket"
@@ -5959,16 +6706,35 @@
 		},
 		"WASABI": {
 			"HEADER": "Wasabi Configuration",
+			"SUBTITLE": "Store uploaded files in a Wasabi bucket through its S3-compatible API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "An access key pair from the Wasabi console.",
+				"BUCKET": "Bucket & endpoint",
+				"BUCKET_HINT": "Where uploaded files are written.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"REGION": "The region the bucket lives in, e.g. us-east-1 or eu-central-1.",
+				"SERVICE_URL": "The S3 endpoint for that region.",
+				"BUCKET": "Lowercase letters, numbers, dots and hyphens. Names are unique across all of Wasabi.",
+				"FORCE_PATH_STYLE": "Address files as endpoint/bucket/file instead of bucket.endpoint/file. Leave on unless you need virtual-hosted URLs."
+			},
+			"SUGGESTED_ENDPOINT": "Endpoint for this region:",
+			"USE_SUGGESTION": "Use it",
+			"SAVE_NOTE": "When you save, Gauzy uses these credentials to create the bucket in Wasabi. If Wasabi rejects the request, the settings are not saved.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
 				"SERVICE_URL": "Service URL",
-				"FORCE_PATH_STYLE": "Force path style URLs"
+				"FORCE_PATH_STYLE": "Force path-style URLs"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
@@ -5977,34 +6743,65 @@
 		},
 		"CLOUDINARY": {
 			"HEADER": "Cloudinary Configuration",
+			"SUBTITLE": "Store uploaded files in Cloudinary and serve them from its delivery network.",
+			"SECTIONS": {
+				"ACCOUNT": "Account",
+				"ACCOUNT_HINT": "All three values are in the Cloudinary console under API Keys.",
+				"DELIVERY": "Delivery",
+				"DELIVERY_HINT": "How links to uploaded files are built."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "The name shown at the top of your Cloudinary console.",
+				"ACCESS_API_KEY": "Identifies the account; used together with the API secret.",
+				"ACCESS_API_SECRET": "Saved values come back masked.",
+				"DELIVERY_URL": "Base address of file links. Keep https://res.cloudinary.com unless you use a custom domain.",
+				"SECURE": "Build file links with https://. Leave on True."
+			},
 			"LABELS": {
-				"CLOUD_NAME": "Cloudinary name",
-				"ACCESS_API_KEY": "Access key id",
-				"ACCESS_API_SECRET": "Secret access key",
+				"CLOUD_NAME": "Cloud name",
+				"ACCESS_API_KEY": "API key",
+				"ACCESS_API_SECRET": "API secret",
 				"DELIVERY_URL": "Delivery URL",
-				"SECURE": "Secure"
+				"SECURE": "Secure (HTTPS)"
 			},
 			"PLACEHOLDERS": {
-				"CLOUD_NAME": "Cloudinary name",
-				"ACCESS_API_KEY": "Access key id",
-				"ACCESS_API_SECRET": "Secret access key",
+				"CLOUD_NAME": "Cloud name",
+				"ACCESS_API_KEY": "API key",
+				"ACCESS_API_SECRET": "API secret",
 				"DELIVERY_URL": "Delivery URL",
-				"SECURE": "Secure"
+				"SECURE": "Secure (HTTPS)"
 			}
 		},
 		"DIGITALOCEAN": {
 			"HEADER": "DigitalOcean Configuration",
+			"SUBTITLE": "Store uploaded files in a DigitalOcean Space through its S3-compatible API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Credentials",
+				"CREDENTIALS_HINT": "A Spaces access key from the DigitalOcean control panel.",
+				"BUCKET": "Space & endpoint",
+				"BUCKET_HINT": "Where uploaded files are written.",
+				"OPTIONS": "Options"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "The public half of the key pair.",
+				"SECRET_ACCESS_KEY": "Shown only once, when the key is created. Saved values come back masked.",
+				"SERVICE_URL": "The endpoint of your Space's datacenter, e.g. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Fixed to us-east-1, as Spaces expects; the datacenter comes from the endpoint.",
+				"BUCKET": "The name of the Space.",
+				"CDN_URL": "Optional. The Space's CDN endpoint, if the CDN is enabled.",
+				"FORCE_PATH_STYLE": "Address files as endpoint/space/file instead of space.endpoint/file."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
 				"SERVICE_URL": "Service URL",
 				"CDN_URL": "CDN URL",
-				"FORCE_PATH_STYLE": "Force path style URLs"
+				"FORCE_PATH_STYLE": "Force path-style URLs"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Access key id",
+				"ACCESS_KEY_ID": "Access key ID",
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
@@ -6118,6 +6915,16 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Manage SMTP for '{{ name }}'",
+		"DESCRIPTION_TENANT": "Used for emails from every organization that has no SMTP of its own, such as invites, invoices and timesheet notices. Without one, the server's default mail settings apply. Account verification and password reset emails always use the server's settings.",
+		"DESCRIPTION_ORGANIZATION": "Used for this organization's emails instead of the tenant SMTP. Validate the connection, then save.",
+		"HINTS": {
+			"FROM_ADDRESS": "The sender address recipients see in their inbox.",
+			"HOST": "Your SMTP server address, e.g. smtp.gmail.com.",
+			"PORT": "Usually 587 (STARTTLS) or 465 (SSL).",
+			"SECURE": "Only applies to other ports: 465 always uses SSL and 587 always uses STARTTLS.",
+			"USERNAME": "The account used to sign in to the SMTP server. Saved values come back masked; re-enter the username and password to change these settings.",
+			"PASSWORD": "The password or app password for that account."
+		},
 		"FROM_ADDRESS": "From Email Address",
 		"HOST": "Host",
 		"PORT": "Port",
@@ -6129,7 +6936,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Send SMS notifications and invites through Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Documentation"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"
@@ -6179,7 +6988,11 @@
 			"invoice": "Invoice",
 			"estimate": "Estimate",
 			"receipt": "Receipt"
-		}
+		},
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Full preview",
+		"SAVED": "Template '{{ templateName }}' was saved"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Register",
@@ -6225,6 +7038,7 @@
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Or Sign In with",
 		"SIGN_IN_WITH_EVER_ID": "Sign in with Ever ID",
+		"LOGIN_WITH_EVER_ID": "Login with {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Sign in with Keycloak",
 		"FORGOT_EMAIL_TITLE": "Forgot Email?",
 		"LOGIN_MAGIC": {
@@ -7268,5 +8082,82 @@
 		"GO_TO_DASHBOARD": "Go to dashboard",
 		"GO_TO_LOGIN": "Go to login",
 		"CONNECTION_ERROR": "We could not reach the server to verify your email. Check your connection and open the link again."
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Show details of project {{ name }}",
+		"PROGRESS": "Progress",
+		"PROGRESS_META": "{{ done }} of {{ total }} tasks done",
+		"NO_TASKS": "No tasks in this project yet",
+		"NEEDS_ATTENTION": "Needs attention",
+		"NEEDS_ATTENTION_CAPTION": "Overdue tasks and tasks due in the next 3 days",
+		"ACTIVITY": "Daily activity",
+		"ACTIVITY_VIEWS": "Activity view",
+		"ACTIVITY_VIEW_CHART": "Chart",
+		"ACTIVITY_VIEW_GRID": "Contribution grid",
+		"GRID_NONE": "No time",
+		"GRID_LAST_YEAR": "Last 12 months",
+		"GRID_OLDER": "Earlier year",
+		"GRID_NEWER": "Later year",
+		"GRID_DAY": "{{ time }} on {{ date }}",
+		"GRID_DAY_EMPTY": "No time on {{ date }}",
+		"TOP_CONTRIBUTORS": "Who worked the most",
+		"CONTRIBUTORS_CAPTION": "Everyone's time on this project · {{ range }}",
+		"YOUR_TIME_CAPTION": "Your time on this project · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Team members' time on this project · {{ range }}",
+		"BUDGET_USED": "{{ used }} of {{ budget }} used",
+		"OVER_BUDGET": "{{ value }} over budget",
+		"TOTAL_TRACKED": "Total tracked",
+		"TOTAL_TRACKED_HINT": "Since the project started",
+		"THIS_PERIOD": "This period",
+		"VS_PREVIOUS": "{{ value }} vs previous period",
+		"TIMELINE": "Timeline",
+		"NO_DATES": "No dates set",
+		"STARTS_IN": "Starts in {{ count }} days",
+		"STARTS_TOMORROW": "Starts tomorrow",
+		"FINISHED": "Finished",
+		"TEAM": "Team",
+		"NO_MEMBERS": "No members on this project yet",
+		"MODULES": "Modules",
+		"MODULE_TASK": "1 task",
+		"MODULE_TASKS": "{{ count }} tasks"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overview",
+			"BOARD": "Board",
+			"ACTIVITY": "Activity",
+			"COMMENTS": "Comments"
+		},
+		"BOARD": "Board",
+		"COLUMN_EMPTY": "No tasks",
+		"CANNOT_DROP": "Tasks can’t be moved to “{{ column }}” because it isn’t a status of this project.",
+		"ACTIVITY": "Activity",
+		"ACTIVITY_CAPTION": "Recent changes to the project and its tasks",
+		"NO_ACTIVITY": "No activity yet",
+		"ACTIVITY_PARTIAL": "Some activity could not be loaded, so this list may be incomplete.",
+		"ACTIVITY_CREATED": "{{ actor }} created",
+		"ACTIVITY_UPDATED": "{{ actor }} updated",
+		"ACTIVITY_DELETED": "{{ actor }} deleted",
+		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
+		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
+		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"SOMEONE": "Someone",
+		"TODAY": "Today",
+		"YESTERDAY": "Yesterday",
+		"TASK_PROGRESS": "Progress",
+		"TASK_PROGRESS_OF": "{{ worked }} of {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% of the project's tracked time (no estimate)",
+		"TASK_TOP_PEOPLE": "Worked most on it",
+		"TASK_NO_ESTIMATE": "No estimate",
+		"COMMENTS": "Comments",
+		"NO_COMMENTS": "No comments yet. Start the discussion.",
+		"COMMENT_PLACEHOLDER": "Write a comment…",
+		"COMMENT_IMAGE": "Image",
+		"ATTACH_IMAGES": "Attach images",
+		"REMOVE_IMAGE": "Remove image",
+		"OPEN_IMAGE": "Open original",
+		"COMMENT_IMAGE_TYPES": "Only PNG, JPEG, GIF, WebP and BMP images can be attached.",
+		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
+		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	}
 }

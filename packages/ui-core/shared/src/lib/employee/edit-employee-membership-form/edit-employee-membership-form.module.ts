@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-form.component';
 
 @NgModule({
@@ -15,7 +15,7 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 		NgSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	exports: [EditEmployeeMembershipFormComponent],
 	declarations: [EditEmployeeMembershipFormComponent]

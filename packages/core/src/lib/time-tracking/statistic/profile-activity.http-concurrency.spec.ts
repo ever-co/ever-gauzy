@@ -52,7 +52,10 @@ jest.mock('../../role-permission/role-permission.service', () => ({
 	RolePermissionService: class RolePermissionService {}
 }));
 jest.mock('../../shared/guards', () => ({
-	TenantPermissionGuard: jest.requireActual('../../shared/guards/tenant-permission.guard').TenantPermissionGuard
+	TenantPermissionGuard: jest.requireActual('../../shared/guards/tenant-permission.guard').TenantPermissionGuard,
+	// The gate on the GraphQL surface: a resolver carries the feature guard alongside the tenant and
+	// permission guards, and this spec doubles the barrel, so the double has to carry it too.
+	FeatureFlagGuard: class FeatureFlagGuard {}
 }));
 jest.mock('../../shared/pipes', () => jest.requireActual('../../shared/pipes/use-validation.pipe'));
 

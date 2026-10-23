@@ -94,11 +94,14 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			}
 
 			// Retrieve the maximum task number for the specified project, or handle null projectId if no project
-			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
-				tenantId,
-				organizationId,
-				projectId: project?.id ?? null // If no project is provided, this will pass null for projectId
-			});
+			const maxNumber = await this._taskService.getMaxTaskNumberByProject(
+				{
+					tenantId,
+					organizationId,
+					projectId: project?.id ?? null // If no project is provided, this will pass null for projectId
+				},
+				{ withDeleted: true }
+			);
 
 			// Create the task with incremented number, project prefix, and other task details
 			const task = await this._taskService.create({
@@ -178,11 +181,15 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
 									organizationId,
-									tenantId
+									tenantId,
+									// Address the notification to the assignee, as the update path does: without a
+									// receiver it reached no one's notification list
+									receiverEmployeeId: employee.id,
+									sentByEmployeeId: user?.employeeId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								user.name
+								user?.name
 							);
 						})
 					);

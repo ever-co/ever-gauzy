@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, Subject, catchError, first, map, of, tap } from 'rxjs';
 import { debounceTime, filter, switchMap } from 'rxjs/operators';
@@ -30,6 +30,7 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 	selector: 'ga-integration-list',
 	templateUrl: './list.component.html',
 	styleUrls: ['./list.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class IntegrationListComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

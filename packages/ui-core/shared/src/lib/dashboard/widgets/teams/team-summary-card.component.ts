@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NbBadgeModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CounterPointComponent } from '../../../counter-point/counter-point.component';
 import { ITeamDashboardTeam } from './teams-dashboard.types';
 
@@ -20,7 +20,7 @@ import { ITeamDashboardTeam } from './teams-dashboard.types';
 	templateUrl: './team-summary-card.component.html',
 	styleUrls: ['./team-summary-card.component.scss'],
 	standalone: true,
-	imports: [NbBadgeModule, TranslateModule, CounterPointComponent],
+	imports: [NbBadgeModule, TranslatePipe, CounterPointComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamSummaryCardComponent {

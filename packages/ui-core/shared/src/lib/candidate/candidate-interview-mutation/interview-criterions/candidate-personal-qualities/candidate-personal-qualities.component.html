@@ -3,7 +3,7 @@
 	heading="CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES"
 	placeholder="FORM.PLACEHOLDERS.ADD_CANDIDATE_QUALITY"
 	emptyText="CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER"
-	[group]="form ? qualities?.at(0) : null"
+	[group]="form ? $safeNavigationMigration(qualities?.at(0)) : null"
 	[items]="personalQualitiesList"
 	[existedNames]="existedQualNames"
 	(save)="save()"

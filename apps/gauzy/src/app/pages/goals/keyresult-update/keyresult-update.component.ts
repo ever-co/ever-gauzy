@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
@@ -18,6 +18,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-keyresult-update',
     templateUrl: './keyresult-update.component.html',
     styleUrls: ['./keyresult-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class KeyResultUpdateComponent extends TranslationBaseComponent implements OnInit {

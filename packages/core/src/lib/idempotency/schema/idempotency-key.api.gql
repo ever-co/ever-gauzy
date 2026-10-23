@@ -1,0 +1,67 @@
+# The retry-safety domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **Three fields, and the set is the REST surface's.** `06-api-specification.md` §12.1 gives this
+# resource a list, a node read and a removal, and `17-graphql-api-specification.md` §3.1 makes parity
+# capability parity, so the fields below are the three routes' mirrors and nothing more. There is no
+# create and no edit: a key is written by the retry-safety interceptor from a request that carried
+# one, and a caller that could write a row here could answer another caller's retry with a response of
+# its own choosing.
+#
+# **`releaseIdempotencyKey` is the one field on this endpoint that removes a row**, and it is the
+# design's deliberate exception to the platform's habit of withdrawing rather than deleting. The unique
+# tuple `(organizationId, scope, key)` is what makes two concurrent identical requests resolve to one
+# owner, so a key that was merely *marked* released would still occupy it — and the retry the operator
+# is unblocking would be refused as a reused key. The field refuses while a live claim holds the row,
+# because removing a claim whose work is still running would let the retry start a second run of that
+# work, which is the single outcome the mechanism exists to prevent.
+
+extend type Query {
+	"""
+	The stored keys of the caller's tenant and organization, newest first.
+
+	This is the read an operator arrives at when an integration is stuck: it answers what a client is
+	holding, how far the first attempt got, and what that attempt produced. Narrow it by `scope` and
+	`key` rather than by reading the table — a key row is found by the two values the stuck client can
+	state, which is exactly what the table's unique index is built on.
+	"""
+	idempotencyKeys(
+		filter: IdempotencyKeyFilter
+		sort: [IdempotencyKeySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): IdempotencyKeyConnection!
+
+	"""
+	One stored key of the caller's tenant and organization, or null when there is none.
+
+	A key belonging to another tenant or another organization answers `null` rather than a refusal,
+	because the read is scoped from the credential: a caller is never told that a key it may not read
+	exists. That is the REST route's `404` stated in this protocol's vocabulary.
+
+	The stored response is not a member of what this field answers — see `IdempotencyKey` for why.
+	"""
+	idempotencyKey(id: ID!): IdempotencyKey
+}
+
+extend type Mutation {
+	"""
+	Releases a key, so the next attempt under it is a true first attempt.
+
+	The row is removed rather than marked, because a marked row would still occupy the unique tuple and
+	the retry the operator is unblocking would be refused as a reused key. The move is refused while a
+	live claim holds the key: removing a claim whose work is still executing would let the retry start a
+	second run of that work. An operator who genuinely needs that waits for the lease to go stale, which
+	happens on its own — the row's `lockedAt` and the kernel's stale window say how long that is.
+
+	The answer is the row as it stood, without the response it held.
+	"""
+	releaseIdempotencyKey(id: ID!): IdempotencyKey!
+}

@@ -1,0 +1,150 @@
+# The custom-tracking domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/timesheet/custom-tracking` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. Neither of those routes
+# states a permission of its own, so all six fields run under the three the controller states for the whole
+# class.
+#
+# **There is no connection on this surface, and that is a statement about the resource rather than an
+# omission.** A connection is the list of a resource, and the resource this domain writes into — a slot and
+# the mapping row that indexes it — belongs to the slot domain and is served by it. What this domain answers
+# is *computed*: payloads are decoded out of the slot's document column, the sessions they belong to are
+# recovered from the decoded documents, and the answers are folded over what was recovered. Each of the four
+# reads below therefore states its own criterion and its own shape, and none of them is a narrowing of
+# another: the sessions read spans a range and can fold a session's rows together, the slot read is about one
+# row, the session read is about one session identifier over an optional range, and the active read is about
+# what a tracker is reporting *now*.
+#
+# **Nothing here is bigger than REST, and one thing is stated rather than clamped twice.** The active read's
+# threshold is floored at one minute: the delivered route reads a default of thirty minutes and passes the
+# larger of the two, so a caller that states zero — or a negative number — is read as one rather than being
+# answered a window that ends in the past. The field performs the same floor and states it, so a caller
+# never has to guess which of the two values it stated was used.
+
+extend type Query {
+	"""
+	The sessions recovered from the tracking payloads of one organization, over a range.
+
+	A session is not a row: it is the grouping of the payloads that carry the same session identifier, and
+	the delivered read can either fold a session's rows together across the slots it spans or answer one row
+	per slot. Both are this one field, because both are the same decoded rows stated two ways.
+
+	The range defaults to the last forty-eight hours when the caller states neither bound, which is the
+	delivered read's own default: it exists so that a request which states no range cannot ask the platform
+	to decode every payload it has ever stored.
+	"""
+	trackingSessions(
+		"The organization the tracking is read from. The delivered query requires it."
+		organizationId: ID!
+		"The first day of the range, both bounds included."
+		startDate: DateTime
+		"The last day of the range, both bounds included."
+		endDate: DateTime
+		"""
+		Reads the tracking of these engagements. A caller that states none is answered its own — the
+		delivered read resolves the caller's engagement from the credential, and that branch is its own.
+		"""
+		employeeIds: [ID!]
+		"Reads the tracking of the slots attributed to these projects."
+		projectIds: [ID!]
+		"Reads one session identifier rather than every session of the scope."
+		sessionId: String
+		"""
+		Whether to fold the rows of one session together across the slots it spans. Absent means the
+		delivered query's own default, which is to fold: a session that crossed a slot boundary is one
+		session, and answering it twice would be answering a fact about slot boundaries rather than about
+		tracking.
+		"""
+		groupBySession: Boolean
+		"""
+		Whether to carry the decoded form of each payload as well as its encoded form. Absent means the
+		delivered query's own default, which is to carry the encoded form only: the encoded payload is what
+		the client that produced it can re-read, and the decoded document is the larger of the two.
+		"""
+		includeDecodedData: Boolean
+	): CustomTrackingSessions!
+
+	"""
+	One slot's tracking data, when the slot holds any.
+
+	A slot that holds no tracking is answered as a slot with none — `hasTrackingData: false` and the message
+	that says so — because that is what the delivered read answers. A slot that is not there at all is a
+	miss, and a miss is `null` on a field that may have none: the delivered route's `404` is that same fact
+	stated in the other protocol's vocabulary.
+	"""
+	timeSlotTrackingData(
+		"The slot to read."
+		timeSlotId: ID!
+	): CustomTrackingTimeSlotData
+
+	"""
+	The sessions one session identifier belongs to, over an optional range.
+
+	This is the read a client that has just submitted a payload uses to see what it submitted. The
+	identifier is required and the range is not, and the range defaults to the last twenty-four hours when
+	the caller states neither bound — the delivered read's own default, which keeps a read of one identifier
+	from decoding every payload that ever carried it.
+
+	The read never carries decoded payloads: it answers the encoded form only, which is the delivered
+	method's own choice and is not offered as a choice here.
+	"""
+	trackingSessionsBySessionId(
+		"The session identifier to read."
+		sessionId: String!
+		"The first day of the range, both bounds included."
+		startDate: DateTime
+		"The last day of the range, both bounds included."
+		endDate: DateTime
+	): [CustomTrackingSessionResponse!]!
+
+	"""
+	The sessions a tracker is reporting right now.
+
+	A session is active while it reported activity within the threshold, which is why the answer is a
+	window rather than a filter: it is computed from the clock at the moment of the call, and a session
+	leaves it by being idle rather than by being written.
+
+	The threshold is floored at one minute, stated on the argument below and performed by the field, so a
+	caller that states a value the delivered route would clamp is answered exactly what the route answers.
+	"""
+	activeTrackingSessions(
+		"Reads the active sessions of this engagement. Omit it for the caller's own."
+		employeeId: ID
+		"""
+		How many minutes of inactivity still count as active. Absent means the delivered route's own
+		default of thirty minutes, and a value below one is read as **one** — the floor the delivered route
+		applies, applied here too rather than accepted and clamped silently.
+		"""
+		activityThresholdMinutes: Int
+	): [CustomTrackingSessionResponse!]!
+}
+
+extend type Mutation {
+	"""
+	Submits one encoded tracking payload.
+
+	The delivered write decodes the payload to learn which session it belongs to, finds the slot the
+	observation falls into — creating it when the range holds none — and files both forms of the payload
+	inside it. The answer says which session and which slot it landed in, and carries the session as it
+	stands after the write, which is the reading a client that has just submitted wants back.
+
+	The instant the payload belongs to is the caller's to state and is never invented from the payload
+	alone: the delivered write refuses a request that states no readable instant, so the field states the
+	instant as required rather than accepting a body the write would refuse.
+	"""
+	submitTrackingData(input: CustomTrackingSubmissionInput!): CustomTrackingSubmission!
+
+	"""
+	Submits several encoded tracking payloads in one call.
+
+	Each payload is processed on its own and answered on its own, with the position it held in the list, so
+	a call that filed nineteen payloads and refused one says which one was refused rather than failing the
+	whole call. A list that is empty is refused rather than answered empty, which is the delivered
+	validation's own choice.
+	"""
+	submitBulkTrackingData(input: CustomTrackingBulkInput!): CustomTrackingBulkSubmission!
+}

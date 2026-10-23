@@ -12,7 +12,7 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '@gauzy/ui-core/core';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
@@ -49,7 +49,7 @@ const COMPONENTS = [
 		NbInputModule,
 		NbSelectModule,
 		NgSelectModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		FileUploaderModule,
 		ImageUploaderModule,

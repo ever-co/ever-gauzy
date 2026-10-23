@@ -108,6 +108,9 @@
 						}
 					]
 				},
+				"development": {
+					"outputHashing": "all"
+				},
 				"local": {
 					"optimization": false,
 					"buildOptimizer": false,
@@ -154,6 +157,7 @@
 		},
 		"serve": {
 			"executor": "@angular-builders/custom-webpack:dev-server",
+			"defaultConfiguration": "local",
 			"options": {
 				"buildTarget": "gauzy:build",
 				"proxyConfig": "apps/gauzy/proxy.conf.json",
@@ -170,8 +174,7 @@
 					"liveReload": true,
 					"poll": 0
 				}
-			},
-			"defaultConfiguration": "local"
+			}
 		},
 		"extract-i18n": {
 			"executor": "@angular-devkit/build-angular:extract-i18n",

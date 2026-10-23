@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 
@@ -45,6 +45,7 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CountdownConfirmationComponent {

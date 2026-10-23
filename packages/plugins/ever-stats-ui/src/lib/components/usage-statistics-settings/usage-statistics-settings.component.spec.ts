@@ -16,7 +16,7 @@ const STATUS: EverStatsStatus = {
 	next_send_at: '2026-10-03T12:00:00.000Z',
 	last_attempt: null,
 	key_warning: 'encryption_key_unset',
-	schema_url: 'https://github.com/ever-co/ever-connect-sdk/blob/a9844bd44c9fdb4d7f8be404b88331e578d8180c/contracts/schemas/ever.stats.v1.json'
+	schema_url: 'https://github.com/ever-co/ever-connect-sdk/blob/93fbb1ef2b37f60205ab193d973467a176eec8df/contracts/schemas/ever.stats.v1.json'
 };
 const PAYLOAD = '{"schema":"ever.stats.v1","counts":{"tenants":1}}';
 
@@ -63,7 +63,7 @@ describe('UsageStatisticsSettingsComponent', () => {
 		const { component, find, el } = render();
 		expect(component.view).toBe('managed');
 		expect(find('managed')).not.toBeNull();
-		expect(find('managed')?.querySelector('a')?.getAttribute('href')).toBe('https://github.com/ever-co/ever-connect-sdk/blob/a9844bd44c9fdb4d7f8be404b88331e578d8180c/contracts/schemas/ever.stats.v1.json');
+		expect(find('managed')?.querySelector('a')?.getAttribute('href')).toBe('https://github.com/ever-co/ever-connect-sdk/blob/93fbb1ef2b37f60205ab193d973467a176eec8df/contracts/schemas/ever.stats.v1.json');
 		expect(find('managed-operators')).not.toBeNull();
 		expect(find('operator')).toBeNull();
 		expect(el.querySelector('pre')).toBeNull();

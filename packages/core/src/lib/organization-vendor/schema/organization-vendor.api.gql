@@ -1,0 +1,123 @@
+# The organization vendor domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/organization-vendors` routes already serve, under the same
+# guard chain and with the same permission, field by field rather than uniformly. The controller carries
+# the tenant guard on the class and states `PermissionGuard` with `ALL_ORG_EDIT` on the four writing
+# routes it declares — the edit, the removal, the withdrawal and the restoration — so those four fields
+# state the same guard and the same grant. The create is inherited from the CRUD base and states neither,
+# and the three reads state nothing, so a field that demanded a permission its route does not would refuse
+# a caller the REST route serves while a field that dropped a grant its route demands would serve a caller
+# the route refuses. Nothing here decides anything either: each field calls the same
+# `OrganizationVendorService` method the route behind it does, with the same payload and the same request
+# facts.
+#
+# **Why this resource is served beside the expense book.** A vendor is the supplier an expense is recorded
+# against — the row `Expense.vendorId` points at — and the two are read together: the expense form's own
+# supplier selector reads this master, and the master's own removal refuses a supplier an expense already
+# names. So the supplier master is delivered with the expense group rather than left REST-only, and the
+# two surfaces then agree about who was paid and about which suppliers may be removed.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list route
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers with
+# the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
+# surface resumes on the other. `withDeleted` is offered because the delivered list route offers it: the
+# paginated spelling of that list takes `BaseQueryDTO`, which carries the member, and hands its query
+# string straight to the same read — so a REST caller can ask for withdrawn rows and a connection that
+# could not would hide them.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same rows
+# under the same filters, one of them sliced by `take`/`skip` and the other not. That is one capability, so
+# it is one root field: `organizationVendors`, mirroring `GET /`. A second root field for the paginated
+# spelling would be a second surface that could disagree with this one. The `relations` and the `order`
+# that first route reads out of its `data` parameter are not lost by the fold: the row type declares no
+# relation for a relation list to load, and the caller's own order arrives in `sort`.
+#
+# The count takes no filter, and that is a statement rather than an omission: the delivered count route
+# binds its query string to the store's own `where`, which the connection protocol does not speak, so a
+# `filter` argument here would either be handed to a service call that cannot accept it or be evaluated
+# over a second code path that could disagree with the connection's `totalCount`. It is nullable because a
+# count is an aggregate a resource may legitimately have no answer for, and a non-null field would turn
+# "not answered" into a fabricated zero.
+#
+# `deleteOrganizationVendor` is not a plain removal and does not reach the store's delete: the delivered
+# route calls the master's own rule, which counts the expenses that name the supplier and refuses the
+# removal with a bad request while any does. That refusal is what keeps the expense book's identifiers
+# resolvable, and the field calls the same rule rather than going around it.
+
+extend type Query {
+	"""
+	The suppliers of the caller's tenant, in the master's own name order.
+	"""
+	organizationVendors(
+		filter: OrganizationVendorFilter
+		sort: [OrganizationVendorSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationVendorConnection!
+
+	"""
+	One supplier of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such row"
+	on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	organizationVendor(id: ID!): OrganizationVendor
+
+	"""
+	How many suppliers the caller's tenant holds.
+	"""
+	organizationVendorCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records a supplier.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller, so
+	a supplier cannot be written into a tenant the caller is not acting in. The delivered creation binds
+	the row itself as its body, so every member below is one the write stores.
+	"""
+	createOrganizationVendor(input: CreateOrganizationVendorInput!): OrganizationVendor!
+
+	"""
+	Changes a supplier that exists.
+
+	The delivered edit reaches the same write the creation does, carrying the identifier in the path and the
+	body beside it, so a member the caller leaves out is left as it is — see `UpdateOrganizationVendorInput`,
+	which also states what an identifier naming no row does.
+	"""
+	updateOrganizationVendor(input: UpdateOrganizationVendorInput!): OrganizationVendor!
+
+	"""
+	Removes a supplier, unless an expense already names it.
+
+	This is the master's own rule rather than the store's delete: a supplier the expense book points at is
+	not removable, because removing it would leave those rows naming a party that no longer exists. The
+	refusal names the dependency; a supplier nothing points at is removed outright.
+	"""
+	deleteOrganizationVendor(id: ID!): Boolean!
+
+	"""
+	Withdraws a supplier without removing the row.
+
+	The delivered list stops answering it and the expenses that name it keep resolving the identifier they
+	hold — which is the difference between this field and the removal above. The answer is the withdrawn
+	row; it is recoverable until it is removed outright.
+	"""
+	softDeleteOrganizationVendor(id: ID!): OrganizationVendor!
+
+	"""
+	Puts a withdrawn supplier back.
+	"""
+	recoverOrganizationVendor(id: ID!): OrganizationVendor!
+}

@@ -11,7 +11,7 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
@@ -27,7 +27,7 @@ import { WeeklyComponent } from './weekly/weekly.component';
 	declarations: [WeeklyComponent],
 	imports: [
 		WeeklyRoutingModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		NbDatepickerModule,
 		NbIconModule,

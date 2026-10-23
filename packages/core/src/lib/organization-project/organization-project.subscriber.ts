@@ -9,6 +9,7 @@ import {
 	TypeOrmEntityManager
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { prepareSQLQuery as p } from '../database/database.helper';
+import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 @EventSubscriber()
 export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<OrganizationProject> {
@@ -180,23 +181,22 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the imageUrl.
+	 * Sets `imageUrl` from the image's `fullUrl`, falling back to the existing `imageUrl`. Waits only for the
+	 * image's own URL resolution, and not at all when there is no image (see `imageAssetUrlsReady`).
 	 *
 	 * @param entity
 	 * @returns
 	 */
-	private setImageUrl(entity: OrganizationProject): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
-					resolve();
-				});
-			} catch (error) {
-				console.error('OrganizationProjectSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
+	private async setImageUrl(entity: OrganizationProject): Promise<void> {
+		try {
+			const ready = imageAssetUrlsReady(entity.image);
+			if (ready) {
+				await ready;
 			}
-		});
+			entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
+		} catch (error) {
+			console.error('OrganizationProjectSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }

@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NbAlertModule, NbButtonModule, NbCheckboxModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ITermsAcceptanceDocument, IWorkspaceResponse } from '@gauzy/contracts';
 import { AuthService } from '@gauzy/ui-core/core';
 import { EverIdWorkspacesComponent } from '../components/ever-id-workspaces.component';
@@ -37,7 +37,7 @@ function retryDelayMs(failure: { error?: { retryAfter?: unknown } } | null | und
 		NbCheckboxModule,
 		NbInputModule,
 		RouterLink,
-		TranslateModule,
+		TranslatePipe,
 		EverIdWorkspacesComponent
 	],
 	template: `
@@ -208,7 +208,7 @@ export class EverIdSignupComponent implements OnInit {
 	loadTerms(): void {
 		this.termsUnavailable = false;
 		this.authService
-			.getRequiredTermsDocuments(this.translate.currentLang)
+			.getRequiredTermsDocuments(this.translate.getCurrentLang())
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (documents) => {

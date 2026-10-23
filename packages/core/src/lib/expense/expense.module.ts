@@ -2,9 +2,12 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { FieldVisibility } from '../api/field-visibility.service';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { ExpenseController } from './expense.controller';
+import { ExpenseResolver } from './expense.resolver';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { EmployeeStatisticsModule } from './../employee-statistics/employee-statistics.module';
@@ -30,7 +33,21 @@ import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.reposi
 		CqrsModule
 	],
 	controllers: [ExpenseController],
-	providers: [ExpenseService, ExpenseMapService, TypeOrmExpenseRepository, MikroOrmExpenseRepository, ...CommandHandlers, ...QueryHandlers],
-	exports: [ExpenseService, ExpenseMapService]
+	providers: [
+		ExpenseService,
+		ExpenseMapService,
+		// The GraphQL surface is declared beside the service it calls, so the host that scans this
+		// module for resolvers reaches everything the resolver injects.
+		ExpenseResolver,
+		// Both surfaces apply a batch of expenses with the platform's executor, which authorises it through
+		// the platform's field visibility.
+		BulkExecutor,
+		FieldVisibility,
+		TypeOrmExpenseRepository,
+		MikroOrmExpenseRepository,
+		...CommandHandlers,
+		...QueryHandlers
+	],
+	exports: [ExpenseService, ExpenseMapService, BulkExecutor]
 })
 export class ExpenseModule {}

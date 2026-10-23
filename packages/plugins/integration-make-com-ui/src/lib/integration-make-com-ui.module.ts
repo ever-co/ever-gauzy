@@ -18,7 +18,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationMakeComRoutes } from './integration-make-com.routes';
 import { IntegrationMakeComLayoutComponent } from './integration-make-com.layout.component';
@@ -54,7 +54,7 @@ const NB_MODULES = [
 	imports: [
 		CommonModule,
 		...NB_MODULES,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		IntegrationMakeComRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

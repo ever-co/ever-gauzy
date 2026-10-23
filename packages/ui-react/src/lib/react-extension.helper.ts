@@ -9,7 +9,7 @@ import {
 	OnInit,
 	OnDestroy,
 	OnChanges,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild
 } from '@angular/core';
 import { createRoot, type Root } from 'react-dom/client';

@@ -1,6 +1,6 @@
 runtimes:
     - java@17.0.10
-    - node@22.2.0
+    - node@22.23.4
     - python@3.11.11
 tools:
     - eslint@8.57.0

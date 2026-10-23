@@ -11,7 +11,7 @@ import {
 	NbTooltipModule,
 	NbUserModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { InfiniteScrollDirective } from '../../../../../../../directives/infinite-scroll.directive';
 import { PipeModule } from '../../../../../../../time-tracker/pipes/pipe.module';
@@ -20,7 +20,7 @@ import { UserManagementTabComponent } from './user-management-tab.component';
 @NgModule({
     imports: [
     CommonModule,
-    TranslateModule,
+    TranslatePipe,
     NbCardModule,
     NbButtonModule,
     NbIconModule,

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { IInvoice } from '@gauzy/contracts';
@@ -11,6 +11,7 @@ import { InvoicesService } from '@gauzy/ui-core/core';
     selector: 'public-invoice-link',
     templateUrl: './public-link.component.html',
     styleUrls: ['./public-link.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PublicLinkComponent implements OnInit {

@@ -1,0 +1,116 @@
+@use 'gauzy/_gauzy-dialogs' as *;
+
+// Same scale as the shared `ga-delete-confirmation`: a 12px header row with the
+// close button, a 12px body and a quiet Cancel beside the red action. On top of
+// that, a tinted warning and the type-the-name field that unlocks the action.
+//
+// Every custom property carries a fallback: `--gauzy-*` is undefined in
+// material-light / material-dark, where a `var()` without one is dropped.
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+    margin: 0;
+  }
+
+  .dialog {
+    width: min(calc(100vw - 2rem), 26rem);
+  }
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-bottom: $divider;
+  }
+
+  .title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  .cancel {
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    padding: 0.25rem;
+    border: 0;
+    background: none;
+    line-height: 1;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  nb-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    font-size: 12px;
+    line-height: 1.125rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Tinted, not filled — the same treatment as the status pills on the page.
+  .warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid nb-theme(color-danger-transparent-300);
+    border-radius: nb-theme(border-radius);
+    background-color: nb-theme(color-danger-transparent-100);
+
+    nb-icon {
+      flex: 0 0 auto;
+      width: 1rem;
+      height: 1rem;
+      font-size: 1rem;
+    }
+  }
+
+  .confirm-label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--gauzy-text-color-2, nb-theme(text-hint-color));
+  }
+
+  .confirm-name {
+    font-weight: 600;
+    color: var(--gauzy-text-color-1, nb-theme(text-basic-color));
+    word-break: break-word;
+  }
+
+  input {
+    font-size: 12px;
+  }
+
+  nb-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: $divider;
+
+    button {
+      margin: 0;
+    }
+
+    nb-icon {
+      margin-right: 0.25rem;
+    }
+  }
+}

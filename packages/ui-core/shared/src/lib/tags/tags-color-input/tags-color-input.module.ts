@@ -5,10 +5,10 @@ import { NbBadgeModule, NbIconModule, NbSelectModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsService } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @NgModule({
-	imports: [CommonModule, NbSelectModule, NbBadgeModule, NbIconModule, FormsModule, NgSelectModule, TranslateModule.forChild()],
+	imports: [CommonModule, NbSelectModule, NbBadgeModule, NbIconModule, FormsModule, NgSelectModule, TranslatePipe],
 	exports: [TagsColorInputComponent],
 	declarations: [TagsColorInputComponent],
 	providers: [TagsService]

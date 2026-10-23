@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, combineLatest, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
@@ -14,6 +14,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../../selectors/date-range-p
 @UntilDestroy({ checkProperties: true })
 @Component({
     template: '',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class BaseSelectorFilterComponent extends TranslationBaseComponent {

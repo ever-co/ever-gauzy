@@ -1,0 +1,436 @@
+# The payment's object types.
+#
+# A payment is one row per money movement, whichever document it settles: an invoice, a payroll run,
+# an expense and a commerce order all record what they were paid with as a row here, and the commerce
+# packages read this table through their own ports. The domain owns the ledger rather than keeping a
+# copy of it — a second table for the same fact would make "how much has been paid" a question with
+# two answers — so this is the one surface every amount on the platform is eventually read through.
+#
+# **Every amount on this type is `Decimal`, never `Float`.** The columns are `numeric` read through
+# the platform's numeric transformer, and money compared or added as a binary fraction is money that
+# is a cent out: an amount a client reads as a `Float` is an amount that will not add up. The amounts
+# are carried in the exact family the row stores them in, and nothing here rescales, rounds or
+# reformats one — the arithmetic over them is the platform's money layer's, and this surface performs
+# none.
+#
+# **The row states the currency each amount is expressed in, and it states it once per amount that can
+# be in another one.** `currency` is the money movement's own currency; `settlementCurrency` is the
+# code the provider settled in, and it is null on the ordinary row, where settlement is in the
+# payment's own currency. That is the shape the columns have, and it is why `settlementAmount` and
+# `fxRate` exist beside `amount` rather than a code being paired with every amount above.
+#
+# **The four lifecycle amounts and their instants are the row's own derived state.** `status` is
+# derived from them and from the capture and refund rows, never set by a caller, which is why it is
+# carried as a value rather than as a schema enum: the vocabulary is the kernel extension's own and is
+# shared with the commerce side of the platform, so declaring it here would claim a value set this
+# domain does not own — and the next domain that needs the same one would collide with this file
+# rather than reuse it. `paymentMethod` is carried as its value for the same reason: the vocabulary is
+# the contracts' own `PaymentMethodEnum`, shared with every other row that records how money moved.
+#
+# **The document references are carried as the identifiers the columns hold.** `orderId`,
+# `paymentCollectionId`, `paymentSessionId` and `paymentProviderId` are queryable columns without
+# their foreign keys — the tables they name are created by the payment package's own set, which adds
+# the constraints once they exist — and `invoiceId`, `projectId`, `organizationContactId` and
+# `employeeId` are relation columns. No read behind this surface loads a relation: the delivered list
+# read is handed a filter and takes the rows as they come back, and the node read states none either,
+# so a member carrying a related row would be absent from exactly the rows this surface answers while
+# looking like a fact about the payment. The rows themselves are reachable from the resources that own
+# them.
+
+"""
+One money movement: what was paid, in which currency, against which document.
+"""
+type Payment {
+	id: ID!
+	"The date the money moved. Null on a row written without one, which is a row no ledger order can place."
+	paymentDate: DateTime
+	"The amount that moved, in the row's own `currency`."
+	amount: Decimal
+	"The note kept with the movement, for the operator rather than for the payer."
+	note: String
+	"The ISO 4217 code `amount` and the four lifecycle amounts below are expressed in."
+	currency: String!
+	"""
+	How the money moved, as the contracts' own value: `BANK_TRANSFER`, `CASH`, `CHEQUE`,
+	`CREDIT_CARD`, `DEBIT` or `ONLINE`.
+	"""
+	paymentMethod: String
+	"Whether the movement is past its due date."
+	overdue: Boolean
+	"The order this payment settles; null on a payment recorded against an invoice, an expense or a project instead."
+	orderId: ID
+	"The collection this payment belongs to, when it came from a checkout."
+	paymentCollectionId: ID
+	"The session that produced it."
+	paymentSessionId: ID
+	"The provider that processed it; null on a manual or offline payment."
+	paymentProviderId: ID
+	"""
+	Where the movement stands, as the kernel extension's own value — `CAPTURED` on an ordinary
+	recorded payment, and the other states the capture, cancellation and refund rows move it through.
+	It is derived from the amounts below and is never written by a caller, so it is not a member of any
+	write input on this surface.
+	"""
+	status: String!
+	"""
+	The provider's charge id. With `paymentProviderId` it is the key a repeated provider callback
+	collides on, which is what stops a duplicate callback from recording a second payment.
+	"""
+	externalId: String
+	"The human reference printed on the statement or handed to the payer."
+	reference: String
+	"The amount the provider authorised; null on a manual payment, which has no authorisation step."
+	authorizedAmount: Decimal
+	"""
+	The amount actually captured. On a provider-backed payment the delivered service keeps it equal to
+	`amount` once the row reaches `CAPTURED`, so the accounting figure and the provider's cannot
+	disagree.
+	"""
+	capturedAmount: Decimal!
+	"The amount refunded against this payment."
+	refundedAmount: Decimal!
+	"The amount of the authorisation released without capture."
+	canceledAmount: Decimal!
+	"""
+	The currency the provider settles this payment in; null means settlement is in the payment's own
+	currency, which is the ordinary case.
+	"""
+	settlementCurrency: String
+	"The amount settled, in `settlementCurrency`; null while `settlementCurrency` is null."
+	settlementAmount: Decimal
+	"""
+	The rate applied at settlement: one unit of the payment's currency equals `fxRate` units of
+	`settlementCurrency`. It is a rate rather than an amount, and it is carried in the same exact family
+	because the column is `numeric(20,10)`: a binary fraction could not hold the scale it is stored at.
+	It is a snapshot, never re-derived from the exchange-rate table, so a later rate change cannot
+	rewrite what was settled.
+	"""
+	fxRate: Decimal
+	"""
+	The exchange-rate row the rate was read from, when it came from one; null for an identity
+	conversion and for a rate a provider quoted.
+	"""
+	fxRateId: ID
+	"The instant the rate was taken, which is the instant the lookups ran."
+	fxCapturedAt: DateTime
+	"When the authorisation was taken."
+	authorizedAt: DateTime
+	"When the capture settled."
+	capturedAt: DateTime
+	"When the authorisation was released."
+	canceledAt: DateTime
+	"Provider response fragments, card brand and last four, reconciliation notes."
+	metadata: JSON
+	"The employee the movement is recorded against, as the identifier of the employee's own row."
+	employeeId: ID
+	"The invoice the movement is applied against, as the identifier of the document's own row."
+	invoiceId: ID
+	"The project the movement belongs to, as the identifier of the project's own row."
+	projectId: ID
+	"The contact the movement is recorded against, as the identifier of the contact's own row."
+	organizationContactId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of payments.
+"""
+type PaymentEdge {
+	node: Payment!
+	cursor: String!
+}
+
+"""
+One page of payments, with the total the filters select and the boundary cursors.
+"""
+type PaymentConnection {
+	nodes: [Payment!]!
+	edges: [PaymentEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a payment list may be sorted by.
+
+The two timestamps are how a change is found again; `paymentDate` is the ledger's own order, which is
+the order a statement of movements is read in; `amount` is what a movement list is taken by; and
+`status` is offered because a work list is taken in status groups — the values sort as their spelling,
+which groups like with like.
+
+The flags and the identifiers are not sort keys: a boolean or an identifier order is not an order a
+ledger is read in, and the questions those columns answer are filters. The amounts other than `amount`
+are filtered rather than sorted for the same reason — a refund total is a question about one row, not
+an order for a page of them.
+"""
+enum PaymentSortField {
+	createdAt
+	updatedAt
+	paymentDate
+	amount
+	status
+}
+
+"""
+The order the payments are returned in. At most three keys are accepted.
+"""
+input PaymentSort {
+	field: PaymentSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a payment list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is: the delivered list read
+answers those columns, so each one narrows rows the connection was handed. The amounts are stated
+through the decimal family, which is the family money is compared in; **the values are the row's own**,
+so an equality states the amount as the read produces it (`100.5`, not a padded string), while the
+range operators — which are what a ledger is actually searched with — need no such care.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set, and an argument that
+cannot be honoured is worse than an argument that is not offered. The tenant and the organization are
+absent for a different reason — both are applied to the criterion from the credential rather than from
+the caller, so a member here would suggest a scope decision the caller does not have.
+"""
+input PaymentFilter {
+	id: IDFilter
+	paymentDate: DateTimeFilter
+	amount: DecimalFilter
+	note: StringFilter
+	currency: StringFilter
+	paymentMethod: StringFilter
+	overdue: BooleanFilter
+	orderId: IDFilter
+	paymentCollectionId: IDFilter
+	paymentSessionId: IDFilter
+	paymentProviderId: IDFilter
+	status: StringFilter
+	externalId: StringFilter
+	reference: StringFilter
+	authorizedAmount: DecimalFilter
+	capturedAmount: DecimalFilter
+	refundedAmount: DecimalFilter
+	canceledAmount: DecimalFilter
+	settlementCurrency: StringFilter
+	settlementAmount: DecimalFilter
+	fxRate: DecimalFilter
+	fxRateId: IDFilter
+	fxCapturedAt: DateTimeFilter
+	authorizedAt: DateTimeFilter
+	capturedAt: DateTimeFilter
+	canceledAt: DateTimeFilter
+	metadata: JSONFilter
+	employeeId: IDFilter
+	invoiceId: IDFilter
+	projectId: IDFilter
+	organizationContactId: IDFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [PaymentFilter!]
+	or: [PaymentFilter!]
+	not: PaymentFilter
+}
+
+# The write surface.
+#
+# `CreatePaymentInput` and `UpdatePaymentInput` declare what the delivered write paths store, and
+# nothing else. Four consequences are deliberate:
+#
+# - A member that names a related row is stated as that row's identifier. The delivered create and edit
+#   bodies accept the related object beside the identifier, but what a write of this row persists is the
+#   foreign key, and the schema declares no object type for the invoice, the project or the employee —
+#   each belongs to the resource that owns it — so the identifier is what this surface offers.
+# - The facets are stated as identifiers, because the pivot row is a pair of identifiers: the delivered
+#   path writes the membership, never a tag row beside it.
+# - `status` and the four lifecycle amounts are not members of either input. They are derived from the
+#   capture and refund rows by the delivered service, so a body stating them would be accepted and then
+#   overwritten — and a caller that could set its own lifecycle state could write a ledger that
+#   disagrees with the money that actually moved.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant onto
+#   the row and refuses a row that belongs to another one, so a member here would promise a scope the
+#   write refuses. The employee is a member of the create and not of the edit, for the same reason the
+#   delivered edit DTO drops it: the delivered create may stamp the caller's own employee onto the row
+#   when the caller has no permission to choose one, and the edit body carries no employee at all.
+
+"""
+What a caller states when it records a money movement.
+
+`amount` is stated as the exact decimal and is the one member the delivered body validation requires
+beside the organization: the column is `numeric`, and a JSON number — which is what the REST body
+carries the same quantity as — is a binary fraction that cannot hold a cent.
+
+The organization is stated as an identifier and is *not* required, because the delivered validation
+requires an organization only when the body names neither the organization object nor a `sentTo` — and
+the object spelling is a type this schema does not declare, so the identifier is what this surface
+offers and the condition stays the delivered validator's rather than being restated as a non-null
+member that would refuse a body the route serves.
+"""
+input CreatePaymentInput {
+	"The amount that moved, in the currency below."
+	amount: Decimal!
+	"The ISO 4217 code the amount is expressed in."
+	currency: String
+	"The date the money moved."
+	paymentDate: DateTime
+	"How the money moved."
+	paymentMethod: String
+	"Whether the movement is past its due date."
+	overdue: Boolean
+	"The note kept with the movement."
+	note: String
+	"The organization the movement is filed under."
+	organizationId: ID
+	"The employee the movement is recorded against."
+	employeeId: ID
+	"The invoice the movement is applied against."
+	invoiceId: ID
+	"The project the movement belongs to."
+	projectId: ID
+	"The contact the movement is recorded against."
+	organizationContactId: ID
+	"The facets attached to the movement, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes a movement that exists.
+
+**The delivered edit is the platform's own upsert, and it is reached through the same write the create
+is.** The route reads the row's identifier from the path, spreads the body beside it and calls the
+delivered create, so a member the caller leaves out is left as it is — the write touches the members
+the body states and no others — and two consequences follow from that same fact and are worth stating
+plainly:
+
+- An identifier that names a row of another tenant is refused outright, which is the ownership guard
+  the delivered write applies before it persists anything.
+- An identifier that names no row at all is **stored as a new row** rather than refused, because an
+  upsert is what the delivered write is. A client that means "change this movement" reads it first, or
+  reaches for the mutation above only with an identifier it obtained from this surface.
+
+`employeeId` is not a member, because the delivered edit body does not carry it — the delivered DTO
+drops that member on the edit and keeps it on the create.
+"""
+input UpdatePaymentInput {
+	id: ID!
+	"The amount that moved, in the currency below."
+	amount: Decimal!
+	"The ISO 4217 code the amount is expressed in."
+	currency: String
+	"The date the money moved."
+	paymentDate: DateTime
+	"How the money moved."
+	paymentMethod: String
+	"Whether the movement is past its due date."
+	overdue: Boolean
+	"The note kept with the movement."
+	note: String
+	"The organization the movement is filed under."
+	organizationId: ID
+	"The invoice the movement is applied against."
+	invoiceId: ID
+	"The project the movement belongs to."
+	projectId: ID
+	"The contact the movement is recorded against."
+	organizationContactId: ID
+	"The facets attached to the movement, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+# The receipt, and why it is typed rather than taken as free-form rows.
+#
+# The delivered receipt route posts the invoice and the payment it is about as whole objects and hands
+# them, together with the language and the origin the request's own headers carry, to the delivered
+# dispatch. The object type is a composition of facts the dispatch reads one at a time, so the four
+# inputs below state exactly those facts and nothing else: a member the dispatch never reads would be
+# an input member nothing honours, and a member it reads and this surface omits would make a receipt
+# sent over GraphQL a different receipt from the one sent over REST. The nesting is kept because the
+# route's body has it and the two objects are what the delivered method is given — nothing is
+# reshaped on the way in.
+
+"""
+The recipient of a receipt, as the delivered dispatch reads the recipient off the invoice.
+
+Two members, and both are read: the address the message is sent to and the name it is addressed to.
+"""
+input PaymentReceiptContactInput {
+	"The address the receipt is sent to."
+	primaryEmail: String!
+	"The name the receipt addresses."
+	name: String!
+}
+
+"""
+The organization a receipt is issued by, as the delivered dispatch reads it.
+
+The three members are the three the delivered path reads off the posted organization: the two the
+message prints, and the tenant the delivery record the dispatch writes behind the receipt is filed
+under.
+"""
+input PaymentReceiptOrganizationInput {
+	"The organization's own identifier, which the delivery record is filed against."
+	id: ID!
+	"The organization's name, which the receipt prints."
+	name: String!
+	"The tenant the delivery record is filed under."
+	tenantId: ID
+}
+
+"""
+What a receipt states about the document it settles.
+
+The number is carried in the same exact family the document's own numbering member is carried in, so
+the number a client read off the invoice is the number it states here without a conversion in between.
+"""
+input PaymentReceiptInvoiceInput {
+	"The number of the document the receipt is for."
+	invoiceNumber: Decimal!
+	"The recipient the receipt is addressed to."
+	toContact: PaymentReceiptContactInput!
+	"The organization the receipt is issued by."
+	fromOrganization: PaymentReceiptOrganizationInput!
+}
+
+"""
+What a receipt states about the money it acknowledges.
+
+The amount is the exact decimal of the movement: it is the figure the receipt prints, and a receipt
+that prints a rounded figure acknowledges an amount that was never paid.
+"""
+input PaymentReceiptPaymentInput {
+	"The amount the receipt acknowledges."
+	amount: Decimal!
+	"The ISO 4217 code the amount is printed in."
+	currency: String!
+}
+
+"""
+What a caller states when it sends a receipt for one payment.
+
+The delivered route reads two facts from the request's own headers rather than from its body — the
+language the message is written in and the origin the link it carries is built from — and this surface
+reads the same two facts off the same request, so a receipt sent over either protocol is the same
+message. Nothing here states them, because a caller cannot state one origin over one protocol and a
+different one over the other.
+"""
+input SendPaymentReceiptInput {
+	"The document the receipt is for."
+	invoice: PaymentReceiptInvoiceInput!
+	"The movement the receipt acknowledges."
+	payment: PaymentReceiptPaymentInput!
+}

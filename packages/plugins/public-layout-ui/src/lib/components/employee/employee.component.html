@@ -18,7 +18,7 @@
 							(uploadImageAssetError)="handleImageUploadError($event)"
 						></ngx-image-uploader>
 						@if (imageUrl) {
-						<img [src]="imageUrl" [alt]="employee.user?.name" />
+						<img [src]="imageUrl" [alt]="$safeNavigationMigration(employee.user?.name)" />
 						} @else {
 						<span class="avatar-initials">{{ initials(employee) }}</span>
 						}
@@ -40,7 +40,7 @@
 					} @else {
 					<div class="avatar">
 						@if (employee.user?.imageUrl) {
-						<img [src]="employee.user.imageUrl" [alt]="employee.user?.name" />
+						<img [src]="employee.user.imageUrl" [alt]="$safeNavigationMigration(employee.user?.name)" />
 						} @else {
 						<span class="avatar-initials">{{ initials(employee) }}</span>
 						}
@@ -103,7 +103,7 @@
 				<div class="fact">
 					<dt>{{ 'PUBLIC_PAGE.MEMBER_SINCE' | translate }}</dt>
 					<dd>
-						{{ employee.startedWorkOn | dateFormat: organization?.regionCode : organization?.dateFormat }}
+						{{ employee.startedWorkOn | dateFormat: $safeNavigationMigration(organization?.regionCode) : $safeNavigationMigration(organization?.dateFormat) }}
 						<span class="fact-unit">{{ tenure(employee) }}</span>
 					</dd>
 				</div>

@@ -19,7 +19,7 @@ import {
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 // Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
@@ -31,7 +31,7 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		ContactViewRoutingModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbLayoutModule,
 		NbTabsetModule,
 		NbUserModule,

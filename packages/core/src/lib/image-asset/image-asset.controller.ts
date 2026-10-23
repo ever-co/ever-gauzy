@@ -12,21 +12,25 @@ import {
 	HttpStatus,
 	Delete,
 	UseInterceptors,
-	ExecutionContext
+	ExecutionContext,
+	InternalServerErrorException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import * as fs from 'fs';
-import * as Jimp from 'jimp';
+import { createImageThumbnail, fileContentToBuffer, thumbnailFileName } from './../core/file-storage/helpers';
 import { IImageAsset, IPagination, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
-import { assertNotMarkupContent, FileStorage, imageUploadFileFilter, UploadedFileStorage } from './../core/file-storage';
+import {
+	assertNotMarkupContent,
+	FileStorage,
+	imageUploadFileFilter,
+	UploadedFileStorage
+} from './../core/file-storage';
 import { LazyFileInterceptor } from './../core/interceptors';
 import { RequestContext } from './../core/context';
-import { tempFile } from './../core/utils';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -35,6 +39,7 @@ import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
 import { UploadImageAsset } from './dto';
 
+
 @ApiTags('ImageAsset')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
@@ -42,7 +47,10 @@ import { UploadImageAsset } from './dto';
 export class ImageAssetController extends CrudController<ImageAsset> {
 	private readonly logger = new Logger(ImageAssetController.name);
 
-	constructor(private readonly _commandBus: CommandBus, private readonly _imageAssetService: ImageAssetService) {
+	constructor(
+		private readonly _commandBus: CommandBus,
+		private readonly _imageAssetService: ImageAssetService
+	) {
 		super(_imageAssetService);
 	}
 
@@ -91,8 +99,16 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		// (SVG/XML/HTML/XHTML) that would execute as stored XSS when served from `/public/<key>`
 		// (GHSA-p334-cm7f-php5). The file is deleted on rejection because `/public` serves directly from
 		// disk regardless of whether the DB asset record is ever created.
-		const fileContent = await provider.getFile(file.key);
+		// The S3-family providers return a stream; as bytes, for the content check and the thumbnail alike. Read
+		// inside the cleanup: an upload that cannot be read back, is too large to buffer or is markup is deleted
+		// before the request fails, never recorded with `thumb: null`.
+		let fileContent: Buffer;
 		try {
+			fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+			if (!fileContent) {
+				this.logger.error(`Could not read the uploaded file '${file.key}' back from the file storage provider`);
+				throw new InternalServerErrorException('The uploaded file could not be read back from storage');
+			}
 			assertNotMarkupContent(fileContent);
 		} catch (error) {
 			try {
@@ -104,34 +120,19 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		}
 
 		try {
-			const inputFile = await tempFile('media-asset-thumb');
-			const outputFile = await tempFile('media-asset-thumb');
+			// The thumbnail: 250 px wide, the height following the aspect ratio, in the image's own format, oriented
+			// as the image displays — sharp (libvips) on its own thread pool, Jimp only for a format libvips does not
+			// decode (BMP). Jimp did every one in JavaScript on the event loop, inside the upload request.
+			const thumb = await createImageThumbnail(fileContent);
 
-			await fs.promises.writeFile(inputFile, fileContent);
-
-			const image = await Jimp.read(inputFile);
-
-			// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
-			image.resize(250, Jimp.AUTO);
-
-			await image.writeAsync(outputFile);
-
-			const data = await fs.promises.readFile(outputFile);
-
-			try {
-				await fs.promises.unlink(inputFile);
-				await fs.promises.unlink(outputFile);
-			} catch (error) {
-				this.logger.error('Error while unlinking temp files');
-			}
-
-			const thumbName = `thumb-${file.filename}`;
+			// Named for what the bytes are, not for the client-supplied extension of the upload
+			const thumbName = thumbnailFileName(file.filename, thumb.extension);
 			const thumbDir = path.dirname(file.key);
 
 			// Replace double backslashes with single forward slashes
 			const fullPath = path.join(thumbDir, thumbName).replace(/\\/g, '/');
 
-			thumbnail = await provider.putFile(data, fullPath);
+			thumbnail = await provider.putFile(thumb.data, fullPath);
 		} catch (error) {
 			this.logger.error('Error while uploading media asset into file storage provider');
 		}

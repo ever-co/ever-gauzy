@@ -39,6 +39,7 @@
 												[renderComponent]="settings.columns[key].renderComponent"
 												[value]="item[key]"
 												[rowData]="item"
+												[inputs]="componentInputs?.[key]"
 												class="custom"
 												(click)="selectCustomViewComponent(component)"
 											></ga-custom-component>

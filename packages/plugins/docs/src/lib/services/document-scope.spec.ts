@@ -60,8 +60,7 @@ jest.mock(
 		// receives; the real function's full behavior is covered separately in `packages/core`.
 		parseFindOptionsRelations: (relations: string[] = []) =>
 			Object.fromEntries(relations.map((relation) => [relation, true]))
-	}),
-	{ virtual: true }
+	})
 );
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../entities/document-link.entity', () => ({ DocumentLink: class {} }));
@@ -75,7 +74,7 @@ jest.mock('./document-settings.service', () => ({ DocumentSettingsService: class
 jest.mock('../dto', () => ({}));
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { DocumentVisibilityEnum, PermissionsEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentVisibilityEnum, PermissionsEnum } from '@gauzy/contracts';
 import { DOCS_ORGANIZATION_REQUIRED, DOCS_WRITE_FORBIDDEN } from '../docs.constants';
 import { DocumentService } from './document.service';
 
@@ -430,5 +429,120 @@ describe('DocumentService — HTML sanitization', () => {
 
 		expect(sanitizeRichHtmlMock).toHaveBeenCalledWith('<b>x</b>');
 		expect((service as any).save.mock.calls[0][0].contentHtml).toBe('sanitized(<b>x</b>)');
+	});
+});
+
+/**
+ * `updatedAt` is the editor's optimistic-concurrency token (`expectedUpdatedAt`, 409 on a mismatch).
+ * Measured on a running API (SQLite): the first save of every version-snapshot window left it
+ * UNCHANGED — `captureSnapshotIfNeeded` bumps `version` with an `update()`, which stamps the row's
+ * `updatedAt`, and the save that followed spread the row as LOADED, so TypeORM saw a "changed"
+ * `updatedAt` and wrote the stale value back. The response carried the old token too, so a second
+ * editor holding that same token could save over the first one without a conflict.
+ */
+describe('DocumentService — content save concurrency token', () => {
+	it('never writes the loaded updatedAt back: every content save states a newer token', async () => {
+		const loaded = new Date('2026-10-13T22:04:25.000Z');
+		const { service } = buildService([documentRow({ kind: 'PAGE', updatedAt: loaded, version: 3 })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn(async (input: any) => ({ ...input, updatedAt: new Date() }));
+		(service as any).documentVersionService = {
+			// What the real one does when a snapshot is due: bumps the counter (and so the row).
+			captureSnapshotIfNeeded: jest.fn(async (document: any) => {
+				document.version = (document.version ?? 1) + 1;
+				return {};
+			})
+		};
+
+		await service.updateContent('doc-1', {
+			contentJson: emptyDoc(),
+			expectedUpdatedAt: loaded.toISOString(),
+			organizationId: 'org-1'
+		} as any);
+
+		const saved = (service as any).save.mock.calls[0][0];
+		expect(saved.updatedAt).toBeInstanceOf(Date);
+		expect(saved.updatedAt.getTime()).toBeGreaterThan(loaded.getTime());
+		expect(saved.version).toBe(4); // the counter the snapshot moved still travels with the save
+		expect(saved.id).toBe('doc-1');
+	});
+});
+
+/**
+ * Greptile on #10559: leaving `updatedAt` to the ORM is not enough on SQLite, whose
+ * `CURRENT_TIMESTAMP` has one-second precision — two saves inside one second would leave the token
+ * unchanged. The save states its own token, strictly newer than the one it replaces.
+ */
+describe('DocumentService — content save token always advances', () => {
+	const saveWithClock = async (loaded: Date, now: number) => {
+		const { service } = buildService([documentRow({ kind: 'PAGE', updatedAt: loaded })], { canWrite: true });
+		(service as any).save = jest.fn(async (input: any) => input);
+		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
+		const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+		try {
+			await service.updateContent('doc-1', {
+				contentJson: emptyDoc(),
+				expectedUpdatedAt: loaded.toISOString(),
+				organizationId: 'org-1'
+			} as any);
+		} finally {
+			clock.mockRestore();
+		}
+		return (service as any).save.mock.calls[0][0].updatedAt as Date;
+	};
+
+	it('stamps the current time, at millisecond resolution', async () => {
+		const loaded = new Date('2026-10-14T01:00:34.000Z');
+		const token = await saveWithClock(loaded, Date.parse('2026-10-14T01:00:34.250Z'));
+		expect(token).toEqual(new Date('2026-10-14T01:00:34.250Z'));
+	});
+
+	it('moves past the loaded token even when the clock has not (same millisecond, or a clock behind)', async () => {
+		const loaded = new Date('2026-10-14T01:00:34.250Z');
+		expect((await saveWithClock(loaded, loaded.getTime())).getTime()).toBe(loaded.getTime() + 1);
+		expect((await saveWithClock(loaded, loaded.getTime() - 5_000)).getTime()).toBe(loaded.getTime() + 1);
+	});
+});
+
+/**
+ * A mention added in a page is created in the page's organization, as the task and comment edits do since
+ * develop #10531: `updateEntityMentions` published the new mentions without one, so the mention, its
+ * notification and its subscription were not in the organization the page belongs to.
+ */
+describe('DocumentService — mentions carry the document organization', () => {
+	it('on create', async () => {
+		const { service, mentionService } = buildService();
+		(service as any).create = jest.fn(async (input: any) => ({ ...input, id: 'doc-new' }));
+
+		await service.createDocument({ kind: 'PAGE', name: 'p', mentionEmployeeIds: ['employee-2'] } as any);
+
+		expect(mentionService.updateEntityMentions).toHaveBeenCalledWith(
+			BaseEntityEnum.Document,
+			'doc-new',
+			['employee-2'],
+			undefined,
+			undefined,
+			'org-1'
+		);
+	});
+
+	it('on a content save', async () => {
+		const { service, mentionService } = buildService([documentRow({ kind: 'PAGE', updatedAt: new Date(0) })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn(async (input: any) => input);
+		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
+
+		await service.updateContent('doc-1', { contentJson: emptyDoc(), mentionEmployeeIds: ['employee-2'] } as any);
+
+		expect(mentionService.updateEntityMentions).toHaveBeenCalledWith(
+			BaseEntityEnum.Document,
+			'doc-1',
+			['employee-2'],
+			undefined,
+			undefined,
+			'org-1'
+		);
 	});
 });

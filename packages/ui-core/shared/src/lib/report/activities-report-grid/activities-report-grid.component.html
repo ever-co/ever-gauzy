@@ -95,7 +95,7 @@
 	<div class="responsive-table-row duration-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
 		<div class="responsive-table-content day-col">
-			{{ activityRow?.duration | durationFormat }}
+			{{ $safeNavigationMigration(activityRow?.duration) | durationFormat }}
 		</div>
 	</div>
 	<div class="responsive-table-row progress-bar-column">
@@ -103,7 +103,7 @@
 			<ngx-progress-status
 				[defaultStatus]="'success'"
 				class="report-progress"
-				[percentage]="activityRow?.duration_percentage"
+				[percentage]="$safeNavigationMigration(activityRow?.duration_percentage)"
 			>
 			</ngx-progress-status>
 		</div>
@@ -118,7 +118,7 @@
 			@if (activityIndex === 0) {
 				<ng-container
 					[ngTemplateOutlet]="projectEl"
-					[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+					[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(projectRow?.project) }"
 				></ng-container>
 			}
 		</div>
@@ -133,7 +133,7 @@
 			@if (activityIndex === 0) {
 				<ng-container
 					[ngTemplateOutlet]="employeeEl"
-					[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
+					[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeRow?.employee) }"
 				></ng-container>
 			}
 		</div>
@@ -161,7 +161,7 @@
 											<div class="responsive-table-content employee">
 												<ng-container
 													[ngTemplateOutlet]="employeeEl"
-													[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
+													[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeRow?.employee) }"
 												>
 												</ng-container>
 											</div>
@@ -192,7 +192,7 @@
 
 <ng-template let-employee #groupByEmployeeCardEl>
 	<nb-card-header class="card-title">
-		<ng-container [ngTemplateOutlet]="employeeEl" [ngTemplateOutletContext]="{ $implicit: employee?.employee }">
+		<ng-container [ngTemplateOutlet]="employeeEl" [ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employee?.employee) }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -239,7 +239,7 @@
 
 <ng-template let-project #groupByProjectCardEl>
 	<nb-card-header class="card-title">
-		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: project?.project }">
+		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(project?.project) }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -305,9 +305,9 @@
 		<div class="avatar-wrapper-outer">
 			<ngx-avatar
 				class="report-table"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id"
+				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+				[name]="$safeNavigationMigration(employee?.user?.name)"
+				[id]="$safeNavigationMigration(employee?.id)"
 				[employee]="employee"
 			></ngx-avatar>
 		</div>

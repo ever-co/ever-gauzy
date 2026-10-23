@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     template: `<div>{{address}}</div> `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ContactRowComponent {

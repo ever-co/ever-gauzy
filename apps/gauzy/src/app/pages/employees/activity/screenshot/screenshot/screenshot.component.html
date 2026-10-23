@@ -25,8 +25,8 @@
 							@let trackedLabel = 'ACTIVITY.MINUTES_TRACKED' | translate: { minutes: hourSlot.trackedMinutes };
 							<div class="hour-header mb-4">
 								<h6 class="hour-label">
-									{{ hourSlot.startTime | timeFormat: filters?.timeFormat }} -
-									{{ hourSlot.endTime | timeFormat: filters?.timeFormat }}
+									{{ hourSlot.startTime | timeFormat: $safeNavigationMigration(filters?.timeFormat) }} -
+									{{ hourSlot.endTime | timeFormat: $safeNavigationMigration(filters?.timeFormat) }}
 								</h6>
 								<div class="hour-coverage" role="img" [attr.aria-label]="trackedLabel">
 									<span class="coverage-bar" aria-hidden="true">
@@ -42,8 +42,8 @@
 									@if (segment.slot; as timeSlot) {
 										<div>
 											<ngx-screenshots-item
-												[timeFormat]="filters?.timeFormat"
-												[timezone]="filters?.timeZone"
+												[timeFormat]="$safeNavigationMigration(filters?.timeFormat)"
+												[timezone]="$safeNavigationMigration(filters?.timeZone)"
 												[employees]="timeSlot.employees"
 												[timeSlot]="timeSlot"
 												[employeeId]="timeSlot.employeeId"
@@ -59,8 +59,8 @@
 										     across the columns it covers. -->
 										<div class="empty-range" [style.--span]="segment.span">
 											<span class="empty-range-time">
-												{{ segment.startTime | timeFormat: filters?.timeFormat : false }} –
-												{{ segment.endTime | timeFormat: filters?.timeFormat : false }}
+												{{ segment.startTime | timeFormat: $safeNavigationMigration(filters?.timeFormat) : false }} –
+												{{ segment.endTime | timeFormat: $safeNavigationMigration(filters?.timeFormat) : false }}
 											</span>
 											<span class="empty-range-label">
 												{{ 'ACTIVITY.NO_TIME_TRACKED' | translate }} ·

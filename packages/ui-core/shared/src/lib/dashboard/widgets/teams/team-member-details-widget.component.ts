@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { NbBadgeModule, NbComponentStatus, NbProgressBarModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { ComponentsModule } from '../../../components/components.module';
 import { DurationFormatPipe } from '../../../pipes/duration-format.pipe';
@@ -32,7 +32,7 @@ import { toPercentage } from './teams-widget.utils';
 	imports: [
 		NbBadgeModule,
 		NbProgressBarModule,
-		TranslateModule,
+		TranslatePipe,
 		ComponentsModule,
 		DurationFormatPipe,
 		TeamsWidgetStateComponent

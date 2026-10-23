@@ -42,7 +42,7 @@
 						</p>
 					</div>
 					<p class="interview-data">
-						{{ currentInterview?.startTime | date : 'fullDate' }}
+						{{ $safeNavigationMigration(currentInterview?.startTime) | date : 'fullDate' }}
 					</p>
 				</div>
 				<div>
@@ -53,8 +53,8 @@
 						</p>
 					</div>
 					<p class="interview-data">
-						{{ currentInterview?.startTime | date : 'shortTime' }} -
-						{{ currentInterview?.endTime | date : 'shortTime' }}
+						{{ $safeNavigationMigration(currentInterview?.startTime) | date : 'shortTime' }} -
+						{{ $safeNavigationMigration(currentInterview?.endTime) | date : 'shortTime' }}
 					</p>
 				</div>
 				<div>

@@ -14,9 +14,10 @@ import { compileMjml, SAFE_MJML_OPTIONS, toTemplateSource } from './compile-mjml
  * A tenant-editable template (or a preview request) could carry `<mj-include path="/etc/passwd"
  * type="html"/>`; mjml's defaults read that file and inline it into the HTML the API returned. Each
  * case below writes a file holding a unique marker, includes it, and asserts the marker does NOT
- * reach the output of compileMjml(). Each is paired with a CONTROL that runs the pre-fix call shape
- * (`mjml2html(source)`, no options) on the same input and shows the marker DOES leak — proving the
- * test can tell the two apart.
+ * reach the output of compileMjml(). Each is paired with a CONTROL that compiles the same input with
+ * includes allowed and shows the marker DOES leak — proving the test can tell the two apart. (mjml 5
+ * itself defaults to `ignoreIncludes: true` and confines includes to `includePath`, so the CONTROL
+ * states both explicitly: that is the configuration the fix must never fall back to.)
  */
 describe('compileMjml (GHSA-48h9-vwf5-h8m7)', () => {
 	let dir: string;
@@ -43,11 +44,20 @@ describe('compileMjml (GHSA-48h9-vwf5-h8m7)', () => {
 		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
+	/** Includes switched on and allowed from the folder holding the marker files: what must never reach compileMjml(). */
+	const includesAllowed = () => ({ ignoreIncludes: false, includePath: dir });
+
+	/**
+	 * A path to `file` relative to the compiler's base directory (the API cwd). mjml 5 refuses absolute, drive and UNC
+	 * include paths outright (see below), so the leak that remains possible is a relative one.
+	 */
+	const reach = (file: string) => path.relative(process.cwd(), file);
+
 	const includeInColumn = (file: string, type: 'html' | 'css') =>
 		`<mjml><mj-head>${
-			type === 'css' ? `<mj-include path="${file}" type="css" />` : ''
+			type === 'css' ? `<mj-include path="${reach(file)}" type="css" />` : ''
 		}</mj-head><mj-body><mj-section><mj-column><mj-text>Hello</mj-text>${
-			type === 'html' ? `<mj-include path="${file}" type="html" />` : ''
+			type === 'html' ? `<mj-include path="${reach(file)}" type="html" />` : ''
 		}</mj-column></mj-section></mj-body></mjml>`;
 
 	const cases: Array<{ name: string; source: () => string }> = [
@@ -55,61 +65,68 @@ describe('compileMjml (GHSA-48h9-vwf5-h8m7)', () => {
 		{ name: 'type="css"', source: () => includeInColumn(files.css, 'css') },
 		{
 			name: 'default (mjml) type',
-			source: () => `<mjml><mj-body><mj-include path="${files.mjml}" /></mj-body></mjml>`
+			source: () => `<mjml><mj-body><mj-include path="${reach(files.mjml)}" /></mj-body></mjml>`
 		},
 		{
 			name: 'URI-encoded path',
 			source: () =>
 				`<mjml><mj-body><mj-section><mj-column><mj-include path="${encodeURIComponent(
-					files.html
+					reach(files.html)
 				)}" type="html" /></mj-column></mj-section></mj-body></mjml>`
 		}
 	];
 
+	it('mjml 5 itself refuses an absolute include path, even with includes allowed (defence in depth)', async () => {
+		const source = `<mjml><mj-body><mj-section><mj-column><mj-include path="${files.html}" type="html" /></mj-column></mj-section></mj-body></mjml>`;
+
+		expect((await rawMjml2html(source, includesAllowed())).html).not.toContain(MARKER);
+		expect((await compileMjml(source)).html).not.toContain(MARKER);
+	});
+
 	describe.each(cases)('<mj-include> $name', ({ source }) => {
-		it('does not read the included file', () => {
-			const { html } = compileMjml(source());
+		it('does not read the included file', async () => {
+			const { html } = await compileMjml(source());
 			expect(html).not.toContain(MARKER);
 		});
 
-		it('CONTROL: the pre-fix call (mjml defaults) does read it', () => {
-			const { html } = rawMjml2html(source());
+		it('CONTROL: a compile that allows includes does read it', async () => {
+			const { html } = await rawMjml2html(source(), includesAllowed());
 			expect(html).toContain(MARKER);
 		});
 	});
 
-	it('does not read a file named by a relative path either (resolved against the API cwd)', () => {
+	it('does not read a file named by a relative path either (resolved against the API cwd)', async () => {
 		const relative = path.relative(process.cwd(), files.html);
 		const source = `<mjml><mj-body><mj-section><mj-column><mj-include path="${relative}" type="html" /></mj-column></mj-section></mj-body></mjml>`;
 
-		expect(compileMjml(source).html).not.toContain(MARKER);
+		expect((await compileMjml(source)).html).not.toContain(MARKER);
 		// CONTROL
-		expect(rawMjml2html(source).html).toContain(MARKER);
+		expect((await rawMjml2html(source, includesAllowed())).html).toContain(MARKER);
 	});
 
-	it('still compiles ordinary MJML exactly like before', () => {
+	it('still compiles ordinary MJML exactly like before', async () => {
 		const source =
 			'<mjml><mj-body><mj-section><mj-column><mj-text>Hello {{name}}</mj-text></mj-column></mj-section></mj-body></mjml>';
-		const result = compileMjml(source);
+		const result = await compileMjml(source);
 
 		expect(result.errors).toEqual([]);
 		expect(result.html).toContain('Hello {{name}}');
 		// Without includes the output is byte-identical to the pre-fix default compile.
-		expect(result.html).toBe(rawMjml2html(source).html);
+		expect(result.html).toBe((await rawMjml2html(source)).html);
 		expect(Handlebars.compile(result.html)({ name: 'John Doe' })).toContain('Hello John Doe');
 	});
 
-	it('keeps the soft validation level (invalid markup still produces html plus errors)', () => {
+	it('keeps the soft validation level (invalid markup still produces html plus errors)', async () => {
 		expect(SAFE_MJML_OPTIONS.validationLevel).toBe('soft');
 
-		const result = compileMjml(
+		const result = await compileMjml(
 			'<mjml><mj-body><mj-section><mj-column><mj-text unknown-attr="1">x</mj-text></mj-column></mj-section></mj-body></mjml>'
 		);
 		expect(result.errors.length).toBeGreaterThan(0);
 		expect(result.html).toContain('x');
 	});
 
-	it('shipped seed templates compile to the same html as before', () => {
+	it('shipped seed templates compile to the same html as before', async () => {
 		const seedRoot = path.join(__dirname, '..', 'core', 'seeds', 'data');
 		const templates: string[] = [];
 		const walk = (folder: string) => {
@@ -128,7 +145,7 @@ describe('compileMjml (GHSA-48h9-vwf5-h8m7)', () => {
 
 		for (const file of sample) {
 			const source = fs.readFileSync(file, 'utf8');
-			expect(compileMjml(source).html).toBe(rawMjml2html(source).html);
+			expect((await compileMjml(source)).html).toBe((await rawMjml2html(source)).html);
 		}
 	});
 });

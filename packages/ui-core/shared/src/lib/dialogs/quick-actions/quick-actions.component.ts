@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbIconLibraries, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { TimeLogType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -95,6 +95,7 @@ const quickActionsCollection = {
     selector: 'ngx-quick-actions',
     templateUrl: './quick-actions.component.html',
     styleUrls: ['./quick-actions.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class QuickActionsComponent extends TranslationBaseComponent implements OnInit {

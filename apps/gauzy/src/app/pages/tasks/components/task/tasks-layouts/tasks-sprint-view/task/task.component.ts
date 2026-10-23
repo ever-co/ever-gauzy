@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -23,6 +23,7 @@ import { Store, TaskStatusesService } from '@gauzy/ui-core/core';
 	selector: 'ga-sprint-task',
 	templateUrl: './task.component.html',
 	styleUrls: ['./task.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SprintTaskComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {

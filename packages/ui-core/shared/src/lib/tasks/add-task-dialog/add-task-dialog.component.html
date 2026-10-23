@@ -77,7 +77,7 @@
               name="parentId"
               [projectId]="getControlValue('projectId')"
               formControlName="parentId"
-              [required]="organization?.requireTask"
+              [required]="$safeNavigationMigration(organization?.requireTask)"
             ></ga-task-selector>
           </div>
         </div>

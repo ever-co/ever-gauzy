@@ -6,7 +6,7 @@ import { ElectronService } from './electron.service';
 	providedIn: 'root'
 })
 export class LoggerService {
-	private _log: log.ElectronLog;
+	private _log: log.Logger;
 
 	constructor(private readonly _electronService: ElectronService) {
 		if (this._electronService.isElectron) {
@@ -23,7 +23,7 @@ export class LoggerService {
 		}
 	}
 
-	public get log(): log.ElectronLog {
+	public get log(): log.Logger {
 		return this._log;
 	}
 

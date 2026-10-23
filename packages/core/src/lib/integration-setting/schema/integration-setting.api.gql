@@ -1,0 +1,37 @@
+# The integration setting's root fields.
+#
+# `Mutation` is declared by the kernel and extended here: a root operation type exists once for the
+# whole platform, so a domain adds fields to it and never declares its own.
+#
+# **One route, one field, and no query beside it.** `IntegrationSettingController` serves
+# `PUT /api/integration-setting/:id` and nothing else: the credentials of a configured integration are
+# never listed or read back by the delivered API, they are only written. So this domain contributes no
+# read — and the read it does not contribute would be the one a secret must not have, because the value
+# on the row is the cleartext the delivered projection masks.
+#
+# **The permission is the route's own.** The controller carries `INTEGRATION_ADD` and `INTEGRATION_EDIT`
+# on the class and states `INTEGRATION_EDIT` on its one handler, so the route runs under
+# `INTEGRATION_EDIT` alone — the handler's statement is the one the reflector resolves — and the field
+# states the same one. Stating the class's pair here as well would put a permission on this surface
+# that the route does not run under, which is a wider scope than REST has.
+#
+# **The write is the delivered upsert, not an edit.** The route calls the service's `create` with the
+# identifier from the path inside the body, which writes the row under that identifier whether or not
+# it already existed, and then answers the row read back. The field performs the same two steps in the
+# same order, so a credential rotated through either protocol lands the same way.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class. The REST route is not gated
+# by that code — it is the door that stays open, which is what keeps a tenant that switched GraphQL off
+# able to configure its integrations — so a disabled capability is answered
+# `Cannot query field <name>` here while the route answers as it always did.
+
+extend type Mutation {
+	"""
+	Stores one credential of a configured integration under the identifier the caller states.
+
+	The value travels one way: it is written and never answered back, because the row's value is what
+	the delivered projection withholds.
+	"""
+	updateIntegrationSetting(input: UpdateIntegrationSettingInput!): IntegrationSetting!
+}

@@ -17,7 +17,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	AuthService,
 	ElectronService,
@@ -31,6 +31,7 @@ import { ChangelogEntryComponent, NgxFaqModule, PasswordFormFieldModule, SharedM
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
+import { EverIdLoginLabelComponent } from './components/social-links/ever-id-login-label.component';
 import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
 import { NgxLoginMagicComponent } from './components/login-magic/login-magic.component';
 import { NgxMagicSignInWorkspaceComponent } from './components/magic-login-workspace/magic-login-workspace.component';
@@ -97,14 +98,16 @@ const COMPONENTS = [
 	imports: [
 		...NB_MODULES,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ThemeModule,
 		SharedModule,
 		PasswordFormFieldModule,
 		// Standalone card shared with the changelog sidebar
-		ChangelogEntryComponent
+		ChangelogEntryComponent,
+		// The content of the "Login with Ever ID" button
+		EverIdLoginLabelComponent
 	],
 	declarations: [...COMPONENTS],
 	providers: [

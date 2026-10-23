@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, inject, OnInit, ViewChi
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { NbCardModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
 import { ComponentsModule } from '@gauzy/ui-core/shared';
@@ -28,7 +28,7 @@ import { headerTitleKey } from './utils/period.utils';
 @Component({
 	selector: 'gz-dashboard-time-track-react-ui-page',
 	standalone: true,
-	imports: [NbCardModule, TranslateModule, ComponentsModule, PageExtensionSlotComponent, ReactHostDirective],
+	imports: [NbCardModule, TranslatePipe, ComponentsModule, PageExtensionSlotComponent, ReactHostDirective],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<nb-card class="card">

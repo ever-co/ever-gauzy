@@ -18,14 +18,14 @@
               | translate
               : {
               organizationName:
-              invitation?.organization?.name
+              $safeNavigationMigration(invitation?.organization?.name)
             }
             }}
           </h1>
           <span>
             {{
             'ACCEPT_INVITE.SUB_HEADING'
-            | translate: { email: invitation?.email }
+            | translate: { email: $safeNavigationMigration(invitation?.email) }
             }}
           </span>
         </div>

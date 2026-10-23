@@ -1,0 +1,228 @@
+# The employee appointment's object type.
+#
+# An appointment is a booked slot on one employee's calendar: an agenda, a start and an end, the
+# buffers and the break the calendar draws around it, and the addresses an invitation is sent to. The
+# invitees are not this row — they are the `appointment_employee` rows that name it, and they are read
+# back as that resource's own connection.
+#
+# **`status` is carried as its value rather than declared as a schema enum.** The vocabulary is the
+# contracts package's own `EmployeeAppointmentStatus` — `Scheduled`, `Cancelled`, `Completed` — which
+# types the entity's column and is what every writer of this row states. Declaring it here would claim a
+# value set this schema does not own: a second declaration is a copy that has to be edited in step with
+# the package it copies, and the column is text, so a row written before a member was added still reads
+# here instead of failing the whole answer.
+#
+# **`emails` is the text column it is, not a list.** The delivered handlers split it themselves when
+# they send — on `, `, the separator the platform writes — and a `[String!]` member here would be a
+# rendering this schema invented, one that a caller could not tell apart from the delivered column's.
+
+"""
+One booked slot on an employee's calendar.
+"""
+type EmployeeAppointment {
+	id: ID!
+	"What the slot is for. Required: an appointment with no agenda is not a booking."
+	agenda: String!
+	"Free text about the slot, for the people the invitation reaches."
+	description: String
+	"Where the meeting happens, as free text — a room, an address or a link."
+	location: String
+	"When the slot begins."
+	startDateTime: DateTime!
+	"When the slot ends."
+	endDateTime: DateTime!
+	"Whether the calendar reserves a buffer before the slot."
+	bufferTimeStart: Boolean
+	"Whether the calendar reserves a buffer after the slot."
+	bufferTimeEnd: Boolean
+	"The length of each buffer, in minutes."
+	bufferTimeInMins: Int
+	"The length of the break the slot contains, in minutes."
+	breakTimeInMins: Int
+	"When the break begins."
+	breakStartTime: DateTime
+	"""
+	The addresses an invitation is sent to, as one comma-separated text column. The delivered handler
+	splits it on `, ` when it sends, so a caller that writes it states the same text the route's own body
+	states.
+	"""
+	emails: String
+	"""
+	Where the slot stands in its lifecycle, as the contracts package's own value: `Scheduled`,
+	`Cancelled` or `Completed`. The member is text, and the value set deliberately stays in the package
+	that owns it — see the note above.
+	"""
+	status: String
+	"""
+	The employee the slot is filed for. The relation is not joined by either read this surface mirrors —
+	the list read names only the relations its own caller named, and this surface names none — so the
+	member is the identifier that always travels; the row behind it is read from the employees resource.
+	"""
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the appointment was withdrawn, or null while it is live. Withdrawing and restoring are
+	delivered routes — the two lifecycle removals this resource serves — and this column is the whole of
+	what they write, so without it a caller could not tell a live row from a withdrawn one on the answer
+	to the write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+# `employee` and `invitees` are deliberately not members, and neither is a relation this surface may
+# fake with an identifier it does not have.
+#
+# - `employee` is the many-to-one the identifier above points at. It is loaded only when a REST caller
+#   names it in `relations`; both reads this surface mirrors name none, so a member here would be absent
+#   on every row answered.
+# - `invitees` is the one-to-many of `appointment_employee` rows that name this appointment. It is a
+#   relation of the other resource rather than of this one, and its rows are read as that resource's own
+#   connection: `appointmentEmployees(filter: { appointmentId: { eq: … } })`. Stating them here as well
+#   would be a second surface over the same rows, free to disagree with the first about the ordering and
+#   the page.
+
+"""
+The boundary of one page of appointments.
+"""
+type EmployeeAppointmentEdge {
+	node: EmployeeAppointment!
+	cursor: String!
+}
+
+"""
+One page of appointments, with the total the filters select and the boundary cursors.
+"""
+type EmployeeAppointmentConnection {
+	nodes: [EmployeeAppointment!]!
+	edges: [EmployeeAppointmentEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an appointment list may be sorted by.
+"""
+enum EmployeeAppointmentSortField {
+	createdAt
+	updatedAt
+	startDateTime
+	endDateTime
+	status
+	agenda
+}
+
+"""
+The order the appointments are returned in. At most three keys are accepted.
+"""
+input EmployeeAppointmentSort {
+	field: EmployeeAppointmentSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an appointment list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows the
+rows the service returned: a member the read does not select would be a filter that silently selects
+nothing. `startDateTime` and `endDateTime` are the pair a calendar is read by, and `employeeId` is the
+narrowing that turns the tenant's whole calendar into one employee's.
+
+`tenantId` is absent because the tenant a read runs under comes from the credential and never from a
+filter. The four bookkeeping members — `isActive`, `isArchived`, `archivedAt` and `deletedAt` — are
+absent as well: the delivered read already answers live rows through the soft-delete column, so a filter
+on one of the markers would be a second, weaker way to ask the question the read has answered.
+"""
+input EmployeeAppointmentFilter {
+	id: IDFilter
+	employeeId: IDFilter
+	organizationId: IDFilter
+	agenda: StringFilter
+	description: StringFilter
+	location: StringFilter
+	emails: StringFilter
+	status: StringFilter
+	startDateTime: DateTimeFilter
+	endDateTime: DateTimeFilter
+	breakStartTime: DateTimeFilter
+	bufferTimeStart: BooleanFilter
+	bufferTimeEnd: BooleanFilter
+	bufferTimeInMins: NumberFilter
+	breakTimeInMins: NumberFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeAppointmentFilter!]
+	or: [EmployeeAppointmentFilter!]
+	not: EmployeeAppointmentFilter
+}
+
+"""
+What a caller states when it files an appointment.
+
+The organization is required, because the delivered create resolves it by identifier before the write
+and there is nothing to file the row under without it. The tenant is not a member: the handler stamps
+the caller's own tenant from the credential and never reads one from the body.
+
+The invitation list is not a member either. The delivered create does not read it — the handler builds
+the appointment from the named columns and returns, so a body stating invitees would be accepted and
+then dropped — and an invitee is a row of its own resource, filed through `createAppointmentEmployee`
+with the appointment's identifier and read back as `appointmentEmployees`. An input that silently
+discarded a member would be worse than one that does not offer it.
+"""
+input CreateEmployeeAppointmentInput {
+	"The organization the appointment is filed under."
+	organizationId: ID!
+	agenda: String!
+	employeeId: ID
+	description: String
+	location: String
+	startDateTime: DateTime!
+	endDateTime: DateTime!
+	bufferTimeStart: Boolean
+	bufferTimeEnd: Boolean
+	bufferTimeInMins: Int
+	breakTimeInMins: Int
+	breakStartTime: DateTime
+	"The addresses to invite, as the comma-separated text column the delivered handler splits."
+	emails: String
+}
+
+"""
+What a caller states when it changes an appointment that exists.
+
+**A member the caller leaves out is left as it is.** The delivered handler builds the write from the
+members that are present and skips the ones that are not, so an absent member is not a column default —
+which is why every member but the criterion is optional here.
+
+`emails` is deliberately not among them. The delivered handler does read `data['emails']` off the body
+it is handed, but the request type the route publishes for this operation does not declare the member:
+it is part of the filing above, and the update's own vocabulary is the lifecycle `status`. Stating it
+here would publish a member the route's own contract withholds, and the address list of an appointment
+is written where it is sent from.
+
+`invitees` is absent for the reason the filing states: the update does not read it either, and an
+invitation is filed through its own resource's write.
+"""
+input UpdateEmployeeAppointmentInput {
+	id: ID!
+	organizationId: ID
+	agenda: String
+	employeeId: ID
+	description: String
+	location: String
+	startDateTime: DateTime
+	endDateTime: DateTime
+	bufferTimeStart: Boolean
+	bufferTimeEnd: Boolean
+	bufferTimeInMins: Int
+	breakTimeInMins: Int
+	breakStartTime: DateTime
+	status: String
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute, Params, UrlSerializer } from '@angular/router';
 import { EMPTY, Observable, catchError, filter, firstValueFrom, of, switchMap } from 'rxjs';
@@ -17,6 +17,7 @@ import { AlertModalComponent } from '@gauzy/ui-core/shared';
 	selector: 'ga-confirm-appointment',
 	templateUrl: './confirm-appointment.component.html',
 	providers: [EmployeeAppointmentService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ConfirmAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

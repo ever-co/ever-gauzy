@@ -1,0 +1,215 @@
+{
+	"events": [
+		{
+			"id": "evt_01JABZ3K9QW8E5R2T7Y4V6X0ZP",
+			"seq": "102938",
+			"type": "task.updated",
+			"version": 1,
+			"occurredAt": "2026-10-15T18:00:00.000Z",
+			"tenantId": "7c1e9a52-3b0d-4c8e-9f21-5d6a7b8c9d01",
+			"organizationId": "0f4b2c6d-8e1a-4b3c-9d5e-6f7a8b9c0d12",
+			"aggregate": {
+				"type": "task",
+				"id": "e7b9d1f3-5a6c-4da4-8edf-4a5b6c7d8e9a",
+				"version": 17
+			},
+			"actor": {
+				"type": "user",
+				"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56",
+				"label": "ruslan"
+			},
+			"origin": {
+				"tag": null,
+				"integrationKeyId": null
+			},
+			"changedFields": ["title", "labels"],
+			"data": {
+				"id": "e7b9d1f3-5a6c-4da4-8edf-4a5b6c7d8e9a",
+				"organizationId": "0f4b2c6d-8e1a-4b3c-9d5e-6f7a8b9c0d12",
+				"version": 17,
+				"createdAt": "2026-10-14T09:12:03.000Z",
+				"updatedAt": "2026-10-15T18:00:00.000Z",
+				"visibility": "team",
+				"visibilityExplicit": false,
+				"owner": {
+					"type": "user",
+					"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56"
+				},
+				"createdBy": {
+					"type": "user",
+					"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56",
+					"label": "ruslan"
+				},
+				"externalLinks": [
+					{
+						"source": "gauzy",
+						"installationId": "5c04e2b1-7f3a-4d9e-b6a8-2e1f0c9d8b7a",
+						"externalId": "6a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+						"externalUrl": "https://app.gauzy.co/#/pages/tasks/6a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+					}
+				],
+				"teamIds": ["d6a8c0e2-4f5b-4c93-9dce-3f4a5b6c7d89"],
+				"slug": "T-42",
+				"title": "Ship the integration feed",
+				"description": "Serve `GET /events` with keyset paging.",
+				"status": "in_progress",
+				"priority": "p1",
+				"labels": ["integration", "gauzy"],
+				"workId": "2ae2a4c6-8d9f-4ad7-9b02-7d8e9fabbccd",
+				"missionId": null,
+				"ideaId": null,
+				"goalId": null,
+				"agentId": "c5f7b9d1-3e4a-4b82-8cbd-2e3f4a5b6c78",
+				"parentTaskId": null,
+				"assignees": [
+					{
+						"type": "agent",
+						"id": "c5f7b9d1-3e4a-4b82-8cbd-2e3f4a5b6c78"
+					},
+					{
+						"type": "user",
+						"id": "b4e6a8c0-2d3f-4a71-9bac-1d2e3f4a5b67"
+					}
+				],
+				"watchers": ["a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56"],
+				"approvers": [
+					{
+						"type": "user",
+						"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56",
+						"state": "pending"
+					}
+				],
+				"reviewers": [],
+				"blockedBy": [],
+				"relations": [
+					{
+						"taskId": "f8c0e2a4-6b7d-4eb5-9fe0-5b6c7d8e9fab",
+						"kind": "related"
+					}
+				],
+				"startedAt": "2026-10-15T08:00:00.000Z",
+				"completedAt": null,
+				"isRecurringTemplate": false,
+				"hiddenFromBoard": false,
+				"runtime": {
+					"prUrl": "https://github.com/acme/site/pull/12",
+					"prState": "open",
+					"ciState": "pending",
+					"latestRunStatus": "running"
+				},
+				"webUrl": "https://app.ever.works/tasks/e7b9d1f3-5a6c-4da4-8edf-4a5b6c7d8e9a"
+			},
+			"previous": {
+				"title": "Ship the feed",
+				"labels": ["integration"]
+			},
+			"correlationId": "req_8f2c"
+		},
+		{
+			"id": "evt_01JABZ3M2B7C9D1E3F5G7H9J1K",
+			"seq": "102940",
+			"type": "task.transitioned",
+			"version": 1,
+			"occurredAt": "2026-10-15T18:01:00.000Z",
+			"tenantId": "7c1e9a52-3b0d-4c8e-9f21-5d6a7b8c9d01",
+			"organizationId": "0f4b2c6d-8e1a-4b3c-9d5e-6f7a8b9c0d12",
+			"aggregate": {
+				"type": "task",
+				"id": "e7b9d1f3-5a6c-4da4-8edf-4a5b6c7d8e9a",
+				"version": 18
+			},
+			"actor": {
+				"type": "integration",
+				"id": "3bf3b5d7-9eaf-4be8-8c13-8e9fabbccdde",
+				"label": "Ever Gauzy (Acme)"
+			},
+			"origin": {
+				"tag": "gauzy:5c04e2b1-7f3a-4d9e-b6a8-2e1f0c9d8b7a",
+				"integrationKeyId": "3bf3b5d7-9eaf-4be8-8c13-8e9fabbccdde"
+			},
+			"changedFields": ["status"],
+			"data": {
+				"id": "e7b9d1f3-5a6c-4da4-8edf-4a5b6c7d8e9a",
+				"organizationId": "0f4b2c6d-8e1a-4b3c-9d5e-6f7a8b9c0d12",
+				"version": 18,
+				"createdAt": "2026-10-14T09:12:03.000Z",
+				"updatedAt": "2026-10-15T18:01:00.000Z",
+				"visibility": "team",
+				"visibilityExplicit": false,
+				"owner": {
+					"type": "user",
+					"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56"
+				},
+				"createdBy": {
+					"type": "user",
+					"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56",
+					"label": "ruslan"
+				},
+				"externalLinks": [
+					{
+						"source": "gauzy",
+						"installationId": "5c04e2b1-7f3a-4d9e-b6a8-2e1f0c9d8b7a",
+						"externalId": "6a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+						"externalUrl": "https://app.gauzy.co/#/pages/tasks/6a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+					}
+				],
+				"teamIds": ["d6a8c0e2-4f5b-4c93-9dce-3f4a5b6c7d89"],
+				"slug": "T-42",
+				"title": "Ship the integration feed",
+				"description": "Serve `GET /events` with keyset paging.",
+				"status": "in_review",
+				"priority": "p1",
+				"labels": ["integration", "gauzy"],
+				"workId": "2ae2a4c6-8d9f-4ad7-9b02-7d8e9fabbccd",
+				"missionId": null,
+				"ideaId": null,
+				"goalId": null,
+				"agentId": "c5f7b9d1-3e4a-4b82-8cbd-2e3f4a5b6c78",
+				"parentTaskId": null,
+				"assignees": [
+					{
+						"type": "agent",
+						"id": "c5f7b9d1-3e4a-4b82-8cbd-2e3f4a5b6c78"
+					},
+					{
+						"type": "user",
+						"id": "b4e6a8c0-2d3f-4a71-9bac-1d2e3f4a5b67"
+					}
+				],
+				"watchers": ["a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56"],
+				"approvers": [
+					{
+						"type": "user",
+						"id": "a3d5f7b9-1c2e-4f60-8a9b-0c1d2e3f4a56",
+						"state": "pending"
+					}
+				],
+				"reviewers": [],
+				"blockedBy": [],
+				"relations": [
+					{
+						"taskId": "f8c0e2a4-6b7d-4eb5-9fe0-5b6c7d8e9fab",
+						"kind": "related"
+					}
+				],
+				"startedAt": "2026-10-15T08:00:00.000Z",
+				"completedAt": null,
+				"isRecurringTemplate": false,
+				"hiddenFromBoard": false,
+				"runtime": {
+					"prUrl": "https://github.com/acme/site/pull/12",
+					"prState": "open",
+					"ciState": "pending",
+					"latestRunStatus": "running"
+				},
+				"webUrl": "https://app.ever.works/tasks/e7b9d1f3-5a6c-4da4-8edf-4a5b6c7d8e9a"
+			},
+			"previous": {
+				"status": "in_progress"
+			}
+		}
+	],
+	"nextCursor": "102940",
+	"hasMore": true,
+	"head": "102952"
+}

@@ -12,7 +12,7 @@ import {
 	viewChild
 } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 
@@ -38,7 +38,7 @@ import { ChartConfiguration, ChartType } from 'chart.js';
 	templateUrl: './employee-chart-card.component.html',
 	styleUrls: ['./employee-chart-card.component.scss'],
 	standalone: true,
-	imports: [NbButtonModule, NbIconModule, TranslateModule, BaseChartDirective],
+	imports: [NbButtonModule, NbIconModule, TranslatePipe, BaseChartDirective],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeChartCardComponent implements AfterViewInit, OnDestroy {

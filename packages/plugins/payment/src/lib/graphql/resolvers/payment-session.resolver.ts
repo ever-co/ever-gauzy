@@ -1,0 +1,453 @@
+import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { BadRequestException, Optional, UseGuards } from '@nestjs/common';
+import { isUUID } from 'class-validator';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
+import {
+	deliverPayloadAsIs,
+	EventBus,
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	IConnectionPageSelection,
+	resolveConnectionWindow,
+	tenantScopedEventStream
+} from '@gauzy/core';
+import { FeatureFlag } from '@gauzy/common';
+import { PaymentCanceledEvent, PaymentCapturedEvent, PaymentFailedEvent, PaymentAuthorizedEvent } from '../../events';
+import { PaymentCaptureService } from '../../payment-capture/payment-capture.service';
+import { PaymentProviderService } from '../../payment-provider/payment-provider.service';
+import { PaymentSessionService } from '../../payment-session/payment-session.service';
+import { IPaymentCapture, IPaymentSession } from '../../payment.types';
+import { PaymentPermission } from '../../payment.permissions';
+import { rejection, toConnection, toOrder } from '../types/connection';
+import {
+	IAuthorizePaymentSessionGraphInput,
+	IAuthorizePaymentSessionPayload,
+	IOpenPaymentSessionGraphInput,
+	IOpenPaymentSessionPayload,
+	IPaymentSessionConnection,
+	IPaymentSessionFilter,
+	IPaymentSort,
+	IRecoverPaymentSessionPayload,
+	IRefreshPaymentSessionPayload,
+	ISoftDeletePaymentSessionPayload,
+	IUpdatePaymentSessionGraphInput,
+	IUpdatePaymentSessionPayload,
+	IVoidPaymentSessionGraphInput,
+	IVoidPaymentSessionPayload,
+	PAYMENT_SESSION_SORT_FIELDS,
+	withoutRange
+} from '../types/payment.types';
+
+/**
+ * Payment sessions over GraphQL.
+ *
+ * The three mutations are the three acts of an attempt — opening it, recording the provider's approval
+ * of it and voiding it — and each carries the permission its REST route carries, so a role that may
+ * read a session still cannot reserve money with one. The `clientSecret` a session may hold is not part
+ * of any projection this resolver answers with: it is a bearer value for the duration of one payment
+ * and it belongs to the caller's own client-side flow, not to an authenticated read.
+ *
+ * Nothing here decides anything. The one active attempt per `(collection, provider)`, the off-session
+ * shape, the terminal statuses and the collection's amounts are all rules of the service, which is why
+ * the resolver is a transport adapter and the two surfaces cannot drift apart.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
+ */
+@Resolver('PaymentSession')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+export class PaymentSessionResolver {
+	constructor(
+		private readonly paymentSessionService: PaymentSessionService,
+		private readonly paymentCaptureService?: PaymentCaptureService,
+		private readonly eventBus?: EventBus,
+		/**
+		 * The provider registry, read only to check a `providerCode` the caller stated beside the
+		 * `providerId` (see `openPaymentSession`). Optional, because an input that states no code never
+		 * needs it.
+		 */
+		@Optional() private readonly paymentProviderService?: PaymentProviderService
+	) {}
+
+	/**
+	 * Lists the attempts of the caller's organization, superseded ones included.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Query('paymentSessions')
+	async paymentSessions(
+		@Args('filter') filter?: IPaymentSessionFilter,
+		@Args('sort') sort?: IPaymentSort,
+		@Args('limit') limit?: number,
+		@Args('offset') offset?: number,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
+	): Promise<IPaymentSessionConnection> {
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.paymentSessionService.findSessions({
+			where: withoutRange(filter as Record<string, unknown>),
+			order: toOrder(sort, PAYMENT_SESSION_SORT_FIELDS),
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		});
+
+		return toConnection(listing, skip);
+	}
+
+	/**
+	 * Reads one attempt with its status, its expiry and the provider it ran against.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Query('paymentSession')
+	async paymentSession(@Args('id') id: ID): Promise<IPaymentSession> {
+		return this.paymentSessionService.findSessionOrFail(id);
+	}
+
+	/**
+	 * Opens, or switches, the attempt of a `(collection, provider)` pair.
+	 *
+	 * **The provider is named by its identifier, as on the route (R2-G11).** `POST /payment-sessions`
+	 * validates `providerId` with `@IsUUID()` (required) and `collectionId` / `paymentMethodTokenId` with
+	 * `@IsUUID()`; the SDL declares `providerId` optional, and an input without one reached
+	 * `findProviderOrFail(undefined)` — a lookup whose `id: undefined` constrains nothing, so the attempt
+	 * opened against whichever provider of the organization the store returned first. The same checks
+	 * now run here, before the service is reached, and a refusal is a payload `userError`
+	 * (`VALIDATION_FAILED`, `details.field`). The SDL keeps the member optional, so no client query stops
+	 * parsing.
+	 *
+	 * `providerCode` and `paymentMethod` are SDL members the route does not have, and no service reads
+	 * them. They are no longer passed on to the write. A stated `providerCode` must name the provider
+	 * `providerId` resolves to (`PAYMENT_PROVIDER_MISMATCH`), so a client that relied on it is told
+	 * instead of being answered an attempt at another provider. `paymentMethod` stays accepted and unread.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// Opening an attempt reserves nothing and the service switches the pair rather than opening a second
+	// attempt, so the key is optional here exactly as it is on the REST route, under the same scope.
+	@Idempotent({ scope: 'payment.session.create', required: false, resourceType: 'payment_session' })
+	@Mutation('openPaymentSession')
+	async openPaymentSession(@Args('input') input: IOpenPaymentSessionGraphInput): Promise<IOpenPaymentSessionPayload> {
+		try {
+			// The two members the route does not have are taken off the write; see the comment above.
+			const attempt: Record<string, unknown> = { ...(input ?? {}) };
+			const providerCode = input?.providerCode;
+
+			delete attempt.providerCode;
+			delete attempt.paymentMethod;
+
+			assertUuidMember(attempt, 'collectionId', true);
+			assertUuidMember(attempt, 'providerId', true);
+			assertUuidMember(attempt, 'paymentMethodTokenId', false);
+
+			if (typeof providerCode === 'string' && providerCode.trim() && this.paymentProviderService) {
+				const provider = await this.paymentProviderService.findProviderOrFail(input.providerId);
+
+				if (provider.code !== providerCode.trim()) {
+					throw new BadRequestException({
+						message:
+							`PAYMENT_PROVIDER_MISMATCH: providerCode '${providerCode.trim()}' does not name the ` +
+							`provider '${input.providerId}' resolves to.`,
+						details: { field: 'providerCode' }
+					});
+				}
+			}
+
+			return { paymentSession: await this.paymentSessionService.openSession(attempt as never), userErrors: [] };
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Records the provider's approval of an attempt and reserves its amount on the collection.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	// Recording an approval reserves the amount on the collection and the service refuses a session that
+	// is already authorised, so the key is optional here exactly as it is on the REST route.
+	@Idempotent({ scope: 'payment.session.authorize', required: false, resourceType: 'payment_session' })
+	@Mutation('authorizePaymentSession')
+	async authorizePaymentSession(
+		@Args('input') input: IAuthorizePaymentSessionGraphInput
+	): Promise<IAuthorizePaymentSessionPayload> {
+		try {
+			return {
+				paymentSession: await this.paymentSessionService.authorizeSession(input.id, input as never),
+				userErrors: []
+			};
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Voids an attempt: it is cancelled and the authorisation it holds is released.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	// Voiding an attempt cancels it and releases the authorisation it holds. The scope names the
+	// cancellation itself rather than the surface that carries it, so it is the same scope the REST
+	// cancel route declares.
+	@Idempotent({ scope: 'payment.cancel', required: false, resourceType: 'payment_session' })
+	@Mutation('voidPaymentSession')
+	async voidPaymentSession(@Args('input') input: IVoidPaymentSessionGraphInput): Promise<IVoidPaymentSessionPayload> {
+		try {
+			return {
+				paymentSession: await this.paymentSessionService.voidSession(
+					input.id,
+					input.reason ? { reason: input.reason } : {}
+				),
+				userErrors: []
+			};
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Corrects the recorded fields of an attempt, without running any of its four verbs.
+	 *
+	 * The route it mirrors is `PUT /payment-sessions/:id`. Opening, authorising, refreshing and voiding
+	 * are the four routes that run the operations the domain owns; this is the repair surface for a
+	 * row's own fields, which is why it carries the authorising grant rather than the reading one, and
+	 * why the service refuses an attempt that is already terminal with `PAYMENT_SESSION_ALREADY_CLOSED`
+	 * — a closed attempt is a historical fact about what a provider answered rather than a row to edit.
+	 *
+	 * **The input is narrower than the route's body, and the difference is the service's own rule.** The
+	 * service destructures `status`, `amount`, `currency`, `providerId` and `collectionId` out of its
+	 * input and drops them, because those move through the operations that mean something; an input that
+	 * promised them would be a write a caller believed it had made. `clientSecret` is the sixth member
+	 * the route's DTO accepts and this input does not carry, for the reason the session type states: it
+	 * is a bearer value for one caller's client-side flow rather than a fact of the row.
+	 *
+	 * **No retry key is declared, and that mirrors the route rather than the specification.** The route
+	 * declares no `@Idempotent` scope, so a field that declared one would demand of a GraphQL caller
+	 * what REST does not demand of a REST caller. `06-api-specification.md` §12.1 says the key is
+	 * "Optional but honoured on every other unsafe route", so the route and that section disagree about
+	 * this route; the disagreement is recorded here rather than resolved on one surface only.
+	 *
+	 * @param input The attempt to change and the fields to change.
+	 * @returns The payload, carrying the attempt as the write left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@Mutation('updatePaymentSession')
+	async updatePaymentSession(
+		@Args('input') input: IUpdatePaymentSessionGraphInput
+	): Promise<IUpdatePaymentSessionPayload> {
+		// The identifier is separated from the changes before the call, because a path carries it on REST
+		// and a GraphQL input has to state it: what the service receives is one shape from both surfaces
+		// rather than the input's own `id` travelling into the payload it writes.
+		const { id, ...changes } = input;
+
+		try {
+			return {
+				paymentSession: await this.paymentSessionService.updateSession(id, changes as never),
+				userErrors: []
+			};
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Re-reads the state of an attempt, closing one that has outlived its lifetime.
+	 *
+	 * **What the route does is narrower than what the endpoint catalogue says it does.** The route it
+	 * mirrors is `POST /payment-sessions/:id/refresh`, which `06-api-specification.md` §7.12 describes
+	 * as "Re-poll the provider for the session state", and the delivered service does not re-poll:
+	 * `refreshSession` reads the row back and, when the attempt is still open and past its `expiresAt`,
+	 * closes it through the same expiry path the sweep uses. What the provider answered is written by
+	 * the call that reached the provider, never by a read of it — which is why this operation is the
+	 * package's own half of the refresh and why the divergence belongs here, beside the field, rather
+	 * than in a claim about a provider call that is not made.
+	 *
+	 * The permission is the route's own — `PAYMENT_SESSIONS_AUTHORIZE` — and it takes the identifier
+	 * alone, because the route's handler takes the path member and no body. No retry key is declared,
+	 * as on the route: a refresh is a read of the row plus at most one lifecycle close, and the route
+	 * honours no key to mirror.
+	 *
+	 * @param id The attempt to re-read.
+	 * @returns The payload, carrying the attempt as the read left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@Mutation('refreshPaymentSession')
+	async refreshPaymentSession(@Args('id') id: ID): Promise<IRefreshPaymentSessionPayload> {
+		try {
+			return { paymentSession: await this.paymentSessionService.refreshSession(id), userErrors: [] };
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Retires a payment attempt recoverably, keeping the authorisation it recorded.
+	 *
+	 * The route it mirrors is `DELETE /payment-sessions/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. An
+	 * attempt is a historical fact about what a provider answered, so it is withdrawn rather than
+	 * removed, and the captures and refunds that reference it keep resolving.
+	 *
+	 * The permission is the route's own — `PAYMENT_SESSIONS_CANCEL`, the grant the void route carries —
+	 * and not the class's view grant. This class states no `@Permissions` of its own, so a field that
+	 * stated none would carry no metadata at all, and `PermissionGuard` answers `true` to empty
+	 * metadata.
+	 *
+	 * @param id The attempt to retire.
+	 * @returns The payload, carrying the attempt as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	@Mutation('softDeletePaymentSession')
+	async softDeletePaymentSession(@Args('id') id: ID): Promise<ISoftDeletePaymentSessionPayload> {
+		try {
+			return { paymentSession: await this.paymentSessionService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Restores a payment attempt that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-sessions/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for.
+	 * Restoring is the cancel grant exercised backwards, so the field states `PAYMENT_SESSIONS_CANCEL`
+	 * too — a caller that may release a reservation is a caller that may undo the withdrawal of one.
+	 *
+	 * @param id The attempt to restore.
+	 * @returns The payload, carrying the restored attempt.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	@Mutation('recoverPaymentSession')
+	async recoverPaymentSession(@Args('id') id: ID): Promise<IRecoverPaymentSessionPayload> {
+		try {
+			return { paymentSession: await this.paymentSessionService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Streams the attempts of the subscriber's tenant that a provider authorised.
+	 *
+	 * The SDL declared the field and nothing served it. The stream is the kernel's tenant-scoped stream
+	 * over the event the service publishes when an attempt is authorised: the event states its tenant, and
+	 * an event of another tenant — or of none — is dropped against the subscriber captured when the
+	 * subscription opened; the attempt it names is then re-read through `findSessionOrFail`, the read
+	 * `GET /payment-sessions/:id` answers with, as the subscriber, so the row delivered is one the
+	 * subscriber may read and an attempt it may not read is not delivered at all.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The authorised attempts.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentAuthorized', { resolve: deliverPayloadAsIs })
+	paymentAuthorized(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentSession> {
+		return this.sessionStream(PaymentAuthorizedEvent, organizationId);
+	}
+
+	/**
+	 * Streams the attempts of the subscriber's tenant that failed or expired.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The failed attempts.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentFailed', { resolve: deliverPayloadAsIs })
+	paymentFailed(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentSession> {
+		return this.sessionStream(PaymentFailedEvent, organizationId);
+	}
+
+	/**
+	 * Streams the attempts of the subscriber's tenant that were voided.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The voided attempts.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentCanceled', { resolve: deliverPayloadAsIs })
+	paymentCanceled(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentSession> {
+		return this.sessionStream(PaymentCanceledEvent, organizationId);
+	}
+
+	/**
+	 * Streams the captures the subscriber's tenant took.
+	 *
+	 * **Served here rather than by the capture resolver**, whose files another workstream was holding when
+	 * it was written; the field states the grant `GET /payment-captures/:id` states and re-reads through the
+	 * same method.
+	 *
+	 * **Two checks hold it to the tenant**, as for the attempt streams: the event states the tenant the
+	 * capture service wrote it under, and an event of another tenant — or of none — is dropped; each
+	 * capture that remains is re-read through `findCaptureOrFail` — scoped to the caller's tenant and
+	 * organization — inside the subscriber's context, and the row that comes back is checked against the
+	 * subscriber's tenant again. A capture of another tenant is not found and is dropped.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The captures, as the subscriber may read them.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
+	@Subscription('paymentCaptured', { resolve: deliverPayloadAsIs })
+	paymentCaptured(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IPaymentCapture> {
+		const captures = this.eventBus.ofType(PaymentCapturedEvent);
+
+		return tenantScopedEventStream<PaymentCapturedEvent, IPaymentCapture>(captures, {
+			narrow: (event) => !organizationId || event.organizationId === organizationId,
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event) => this.paymentCaptureService.findCaptureOrFail(event.captureId)
+		});
+	}
+
+	/**
+	 * One attempt stream, scoped to the subscriber and narrowed to the organization it named.
+	 *
+	 * @param type The event the stream carries.
+	 * @param organizationId The organization to narrow to, when one is named.
+	 * @returns The attempts the events name, re-read as the subscriber.
+	 */
+	private sessionStream<T extends PaymentAuthorizedEvent | PaymentFailedEvent | PaymentCanceledEvent>(
+		type: new (...args: never[]) => T,
+		organizationId?: ID
+	): AsyncIterableIterator<IPaymentSession> {
+		return tenantScopedEventStream<T, IPaymentSession>(this.eventBus.ofType(type), {
+			narrow: (event) => !organizationId || event.organizationId === organizationId,
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event) => this.paymentSessionService.findSessionOrFail(event.sessionId)
+		});
+	}
+}
+
+/**
+ * Refuses an identifier member that is not a UUID, the check the REST DTO's `@IsUUID()` makes.
+ *
+ * @param input The mutation input.
+ * @param member The member to check.
+ * @param required Whether an absent member is refused too (`@IsUUID()` without `@IsOptional()`).
+ * @throws BadRequestException `VALIDATION_FAILED` naming the member, answered as a payload `userError`.
+ */
+function assertUuidMember(input: object, member: string, required: boolean): void {
+	const value = (input as Record<string, unknown>)[member];
+
+	if (value === undefined || value === null) {
+		if (!required) {
+			return;
+		}
+	} else if (typeof value === 'string' && isUUID(value)) {
+		return;
+	}
+
+	throw new BadRequestException({
+		message: `VALIDATION_FAILED: ${member} must be a UUID`,
+		details: { field: member }
+	});
+}

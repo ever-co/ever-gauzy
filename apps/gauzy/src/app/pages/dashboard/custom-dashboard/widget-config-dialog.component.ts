@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { WidgetConfigField } from '@gauzy/ui-core/core';
@@ -23,6 +23,7 @@ const NO_OPTIONS: NonNullable<WidgetConfigField['options']> = [];
 	selector: 'ga-widget-config-dialog',
 	templateUrl: './widget-config-dialog.component.html',
 	styleUrls: ['./widget-config-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WidgetConfigDialogComponent implements OnInit {

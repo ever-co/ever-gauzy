@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, firstValueFrom, filter, catchError, finalize, switchMap, tap } from 'rxjs';
@@ -16,6 +16,7 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
     templateUrl: './hubstaff.component.html',
     styleUrls: ['./hubstaff.component.scss'],
     providers: [TitleCasePipe],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

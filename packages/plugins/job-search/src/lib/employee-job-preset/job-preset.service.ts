@@ -22,6 +22,7 @@ import {
 } from '@gauzy/core';
 import { prepareSQLQuery as p } from '@gauzy/core';
 import { JobPreset } from './job-preset.entity';
+import { jobPresetListQuery } from './job-preset-list.query';
 import {
 	CreateJobPresetCommand,
 	SaveEmployeeCriterionCommand,
@@ -67,21 +68,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for left join on employees relation
 				const knex = (this.mikroOrmRepository as any).getKnex();
-				let qb = knex('job_preset')
-					.leftJoin('job_preset_employee', 'job_preset.id', 'job_preset_employee.jobPresetId')
-					.where('job_preset.tenantId', tenantId);
-
-				if (isNotEmpty(organizationId)) {
-					qb = qb.andWhere('job_preset.organizationId', organizationId);
-				}
-				if (isNotEmpty(search)) {
-					qb = qb.andWhere('job_preset.name', 'ILIKE', `%${search}%`);
-				}
-				if (isNotEmpty(employeeId)) {
-					qb = qb.andWhere('job_preset_employee.employeeId', employeeId);
-				}
-
-				qb = qb.select('job_preset.*').orderBy('job_preset.name', 'asc').distinct();
+				const qb = jobPresetListQuery(knex, { tenantId, organizationId, search, employeeId });
 
 				const rawItems = await qb;
 				return rawItems.map((row: any) => this.mikroOrmRepository.map(row));

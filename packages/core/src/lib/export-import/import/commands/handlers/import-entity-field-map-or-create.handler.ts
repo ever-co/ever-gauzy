@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CommandBus } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/utils';
-import { RequestContext } from './../../../../core';
+import { RequestContext } from './../../../../core/context';
 import { ImportRecordFindOrFailCommand } from './../../../import-record';
 import { ExportEntityClass, omitExportRedactionPlaceholders } from '../../../export-redact.decorator';
 import { ImportEntityFieldMapOrCreateCommand } from './../import-entity-field-map-or-create.command';

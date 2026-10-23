@@ -1,4 +1,4 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { type ModuleWithProviders, NgModule } from '@angular/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({

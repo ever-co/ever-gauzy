@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NbBadgeModule, NbComponentStatus, NbProgressBarModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { progressStatus } from '@gauzy/ui-core/common';
 import { ComponentsModule } from '../../../components/components.module';
 import { DurationFormatPipe } from '../../../pipes/duration-format.pipe';
@@ -22,7 +22,7 @@ import { toPercentage } from './teams-widget.utils';
 	templateUrl: './team-member-row.component.html',
 	styleUrls: ['./team-member-row.component.scss'],
 	standalone: true,
-	imports: [NbBadgeModule, NbProgressBarModule, TranslateModule, ComponentsModule, DurationFormatPipe],
+	imports: [NbBadgeModule, NbProgressBarModule, TranslatePipe, ComponentsModule, DurationFormatPipe],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamMemberRowComponent {

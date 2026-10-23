@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
@@ -7,6 +7,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
     selector: 'gauzy-visibility',
     templateUrl: './visibility.component.html',
     styleUrls: ['./visibility.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class VisibilityComponent implements OnInit {

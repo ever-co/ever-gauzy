@@ -1,0 +1,255 @@
+# The time-tracking statistic object types.
+#
+# Every type in this file is a **computed answer**, and none of them is a row. The platform stores time
+# logs, time slots and activities; it stores no statistic, so each answer here is calculated on the
+# request out of those rows over a range, an organization and whoever the caller may see. That is why
+# the domain has answer types of its own rather than resources: an answer that is derived has no
+# identifier, no lifecycle and nothing to withdraw. It is also why this file declares one input type
+# and no more — a statistic is not something a client states, it is what the platform answers when
+# asked, and the only input here is the activity band a read narrows its slots by.
+#
+# **Durations are seconds, and they are `Float`.** Every duration below comes out of an expression that
+# converts a timestamp difference to seconds — `extract(epoch …)` on PostgreSQL,
+# `julianday(…) * 86400` on SQLite, `TIMESTAMPDIFF(SECOND, …)` on MySQL — and the profile-activity
+# durations are a millisecond total the delivered answer divides by a thousand. `Float` rather than
+# `Int` because the delivered arithmetic is not all whole numbers, and because a range's tracked
+# seconds across a large organization exceed what a 32-bit `Int` holds: a value that overflows `Int`
+# is an error rather than an answer.
+#
+# **A percentage is `Float` and says what it is a percentage of.** Activity percentages are a share of
+# the recorded slot activity, and duration percentages are a share of the tracked or recorded time of
+# the whole period — never of the five answers beside them, which is why the five shares of a ranked
+# answer are a fraction of the period rather than a distribution that adds up to one. Every such field
+# below states its denominator and the rounding the delivered calculation applies.
+#
+# **A count is `Int`.** How many engagements worked, how many projects were touched, how many sessions
+# an activity was recorded in, how many local days a profile was active on, and the day-of-week number
+# a member's hours are split by.
+#
+# **Money does not appear on this surface.** A statistic here is a duration, a count or a share of one;
+# what a tracked second is worth is a rate the invoicing domain states, and inventing an amount here
+# would be this surface answering a question no delivered read answers.
+#
+# **A relation the delivered read does not fill is carried as its identifier, and one it does fill is
+# carried with the read named.** The account behind a member or a slot is answered as the name and
+# image the batch account read projects onto it — the read that also resolves the stored image into a
+# presigned URL — because a fuller account here would be a row filled by one of the two reads behind
+# an answer and empty on the other. The engagement behind a slot, and the engagement behind a manual
+# log, are carried as identifiers for that same reason. Nothing in this file declares a member that
+# some delivered read leaves empty.
+
+"""
+What one organization's tracked time comes to over a period: how many people and projects it covers,
+how actively it was tracked, and how long it lasted.
+
+The two `week` members are the range's and the two `today` members are today's, which the delivered
+read computes over its own period rather than over the range — the two pairs answer different questions
+and are not two pages of one.
+"""
+type TimeTrackingCounts {
+	"How many distinct engagements tracked time over the range. A count of people, not of logs."
+	employeesCount: Int!
+	"How many distinct projects tracked time over the range. A count of projects, not of logs."
+	projectsCount: Int!
+	"The average activity over the range: a percentage of the recorded slot activity of the slots that were counted, rounded to two places by the delivered calculation."
+	weekActivities: Float!
+	"The time tracked over the range. Seconds."
+	weekDuration: Float!
+	"The average activity over the today period, on the same basis and with the same rounding as `weekActivities`."
+	todayActivities: Float!
+	"The time tracked over the today period. Seconds."
+	todayDuration: Float!
+}
+
+"""
+The name and image of the account behind an engagement.
+"""
+type TimeTrackingUserSummary {
+	"The account's name, as the batch account read answers it. Null when that read found no account for the engagement, which the delivered answer reports as a null name rather than as a missing member."
+	name: String
+	"The account's image, resolved by that same read into a URL a browser can load."
+	imageUrl: String
+}
+
+"""
+One member's tracked total over a period, with the activity behind it.
+"""
+type TimeTrackingMemberTime {
+	"The engagement the total belongs to."
+	employeeId: ID
+	"The time tracked over the period. Seconds."
+	duration: Float
+	"The average activity behind that total: a percentage of the recorded slot activity, rounded to one place by the delivered calculation."
+	overall: Float
+}
+
+"""
+One day of a member's week, as the delivered read splits their tracked time.
+"""
+type TimeTrackingMemberWeekHour {
+	"The day of the week, as the store's own number: `0` is Sunday. A calendar position rather than a quantity, which is why it is carried as the number the store computed instead of a locale's day name."
+	day: Int
+	"The time tracked on that day of the range. Seconds."
+	duration: Float
+}
+
+"""
+One member of an organization who tracked time over a range.
+"""
+type TimeTrackingMemberStatistic {
+	"The engagement's identifier. It is also the identifier the delivered read groups the answer by."
+	id: ID!
+	"Whether the engagement is currently online, as the employee row states it."
+	isOnline: Boolean
+	"Whether the engagement is currently away, as the employee row states it."
+	isAway: Boolean
+	"The account behind the engagement, as the batch account read answers it."
+	user: TimeTrackingUserSummary
+	"The member's total over the range, with the activity behind it. Absent when the range's slots carried nothing for this member."
+	weekTime: TimeTrackingMemberTime
+	"The member's total over the today period, with the activity behind it. Absent on the same basis."
+	todayTime: TimeTrackingMemberTime
+	"The member's tracked time over the range, split by day of the week. Empty when the range carried nothing for this member."
+	weekHours: [TimeTrackingMemberWeekHour!]!
+}
+
+"""
+One project of an organization that was worked on over a range.
+"""
+type TimeTrackingProjectStatistic {
+	"The project's identifier, which is also the identifier the delivered read groups the answer by. The project's own row is read from the project surface by this identifier."
+	id: ID!
+	"The project's name, as the delivered read reads it beside the identifier."
+	name: String!
+	"The time tracked against the project over the range. Seconds."
+	duration: Float!
+	"The share of the range's tracked time this project accounts for: a percentage of the time tracked against every project of the organization over the same range — not of the five answers returned beside it — rounded to two places by the delivered calculation."
+	durationPercentage: Float!
+}
+
+"""
+One task of an organization that was worked on over a range.
+"""
+type TimeTrackingTaskStatistic {
+	"The task's identifier. The task's own row is read from the task surface by this identifier."
+	id: ID!
+	"The task's title, as the delivered read reads it beside the identifier."
+	title: String!
+	"The time tracked against the task over the range. Seconds. Absent when the delivered aggregation produced no number for it, which the answer reports as an absent member rather than as a zero."
+	duration: Float
+	"The time tracked against the task over the today period. Seconds, and absent on the same basis."
+	todayDuration: Float
+	"The share of the range's tracked time this task accounts for: a percentage of the time tracked against every task the range touched, rounded to two places by the delivered calculation. Zero when the range's total is zero."
+	durationPercentage: Float!
+	"When the task's most recent log in the range was last updated."
+	updatedAt: DateTime
+}
+
+"""
+The name and image of a project, as a manual time log carries them.
+"""
+type TimeTrackingProjectSummary {
+	"The project's name, as the delivered read reads it from the project row beside the log."
+	name: String
+	"The project's image, as that row carries it."
+	imageUrl: String
+}
+
+"""
+One manual time log of an organization.
+"""
+type TimeTrackingManualTimeStatistic {
+	"The time log's identifier."
+	id: ID!
+	"When the log was started."
+	startedAt: DateTime
+	"The time the log accounts for. Seconds."
+	duration: Float
+	"The engagement the log belongs to, carried as its identifier: the two reads behind this answer fill the engagement itself on one and its identifier on the other, so the identifier is what both fill."
+	employeeId: ID!
+	"The account behind the engagement, as the batch account read answers it."
+	user: TimeTrackingUserSummary
+	"The project the log was filed against, as the delivered read reads it from the project row. Absent when the log names no project, which the delivered read leaves as an empty projection rather than as a failure."
+	project: TimeTrackingProjectSummary
+}
+
+"""
+One screenshot filed against a time slot.
+"""
+type TimeTrackingScreenshot {
+	"The screenshot's identifier."
+	id: ID!
+	"The stored path of the image."
+	file: String
+	"The stored path of the thumbnail."
+	thumb: String
+	"The thumbnail's URL."
+	thumbUrl: String
+}
+
+"""
+One time slot of one engagement, as the delivered read answers it beside the member it was read for.
+"""
+type TimeTrackingTimeSlot {
+	"The slot's identifier."
+	id: ID!
+	"When the slot began."
+	startedAt: DateTime
+	"When the slot ended. Absent while the slot is still open."
+	stoppedAt: DateTime
+	"The time the slot covers. Seconds."
+	duration: Float
+	"How many keyboard interactions were recorded in the slot."
+	keyboard: Int
+	"How many mouse interactions were recorded in the slot."
+	mouse: Int
+	"The slot's recorded activity, as the store counts it: interaction units accumulated over the slot's minutes rather than a percentage. The activity band a statistics read narrows by is stated against this same scale."
+	overall: Float
+	"The engagement the slot belongs to, carried as its identifier: the delivered reads fill the engagement itself on one and its identifier on the other."
+	employeeId: ID
+	"The screenshots filed against the slot, in the order the read returns them. Empty when none was filed."
+	screenshots: [TimeTrackingScreenshot!]!
+}
+
+"""
+One engagement that tracked time over a range, as the time-slot read answers it: when it was last
+active, whether it is online, and the most recent slots of the range.
+"""
+type TimeTrackingTimeSlotStatistic {
+	"The engagement's identifier."
+	id: ID!
+	"Whether the engagement is currently online, as the employee row states it."
+	isOnline: Boolean
+	"Whether the engagement is currently away, as the employee row states it."
+	isAway: Boolean
+	"When the engagement's most recent log of the range was started, which is the instant the delivered read ranks these answers by."
+	startedAt: DateTime
+	"The account behind the engagement, as the batch account read answers it."
+	user: TimeTrackingUserSummary
+	"The engagement's most recent slots of the range, newest first. The delivered read answers up to nine of them."
+	timeSlots: [TimeTrackingTimeSlot!]!
+}
+
+"""
+One activity title an organization spent time on over a range.
+"""
+type TimeTrackingActivityStatistic {
+	"The activity's title, which is what the delivered read groups these answers by. An activity has a row of its own and is read from the activity surface by its identifier; this answer is the title's total, not one row."
+	title: String!
+	"How many activity rows were recorded under this title over the range. A count of sessions, not of seconds."
+	sessions: Int
+	"The time recorded under the title over the range. Seconds."
+	duration: Float
+	"The share of the range's recorded activity this title accounts for: a percentage of the time recorded against every activity of the organization over the same range — not of the five answers returned beside it."
+	durationPercentage: Float
+}
+
+"""
+The band of activity a statistics read narrows its time slots by.
+"""
+input TimeTrackingActivityLevelInput {
+	"The lower bound of the band, as a percentage of a slot's own activity scale."
+	start: Int!
+	"The upper bound of the band, inclusive."
+	end: Int!
+}

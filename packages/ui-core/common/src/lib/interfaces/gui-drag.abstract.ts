@@ -1,10 +1,11 @@
-import { Component, Input, TemplateRef } from '@angular/core';
+import { Component, Input, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { Collapsable } from './collapsable.interface';
 import { Draggable } from './draggable.interface';
 import { Expandable } from './expandable.interface';
 
 @Component({
     template: '',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export abstract class GuiDrag implements Draggable, Expandable, Collapsable {

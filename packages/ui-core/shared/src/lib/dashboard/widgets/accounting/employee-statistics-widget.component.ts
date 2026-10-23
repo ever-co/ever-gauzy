@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IEmployeeStatisticSum } from '@gauzy/contracts';
 import { ComponentsModule } from '../../../components/components.module';
 import { TeamsWidgetStateComponent } from '../teams/teams-widget-state.component';
@@ -28,7 +28,7 @@ import { BaseAccountingWidgetComponent } from './base-accounting-widget.componen
 	templateUrl: './employee-statistics-widget.component.html',
 	styleUrls: ['./employee-statistics-widget.component.scss'],
 	standalone: true,
-	imports: [TranslateModule, ComponentsModule, TeamsWidgetStateComponent],
+	imports: [TranslatePipe, ComponentsModule, TeamsWidgetStateComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeStatisticsWidgetComponent extends BaseAccountingWidgetComponent {

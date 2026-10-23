@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IEmployee, IUser } from '@gauzy/contracts';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 
@@ -18,6 +18,7 @@ import { Cell, DefaultEditor } from 'angular2-smart-table';
 		}
 		`,
     styleUrls: ['../employee-links/employee-links.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeLinkEditorComponent extends DefaultEditor implements OnInit {

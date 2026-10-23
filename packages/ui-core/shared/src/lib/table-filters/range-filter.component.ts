@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { DefaultFilter } from 'angular2-smart-table';
 import { debounceTime, distinctUntilChanged, filter, Subscription, tap } from 'rxjs';
@@ -25,6 +25,7 @@ import { debounceTime, distinctUntilChanged, filter, Subscription, tap } from 'r
 			/>
 		</div>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RangeFilterComponent extends DefaultFilter implements OnInit, OnDestroy {

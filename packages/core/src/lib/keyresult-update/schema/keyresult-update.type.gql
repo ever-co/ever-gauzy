@@ -1,0 +1,142 @@
+# The key result update's object type.
+#
+# An update is the record of one move a key result made: the reading it moved to, the progress that
+# reading is on the scale of, who recorded it and the state the result was left in. It is a row of a
+# key result rather than a resource of its own in the delivered reads — the controller's own read
+# answers the updates *of one key result* — which is why the key result is carried as the identifier
+# the row holds rather than as an object.
+#
+# A key result's updates are the connection of this resource narrowed by `keyResultId`. That is the
+# same narrowing the delivered route performs, stated in this protocol's vocabulary; `keyResultId` is
+# a column of this row, so a filter is exactly what it is.
+#
+# `update` and `progress` are whole numbers in the column and neither is money: `progress` is a
+# position on the result's own scale and `update` is the reading that produced it, read in whatever
+# unit the key result is measured in. `status` is carried as its value rather than declared here as an
+# enum, for the reason every value set on this surface is: the vocabulary belongs to the domain's own
+# contract.
+
+"""
+One move a key result made, as it was recorded.
+"""
+type KeyResultUpdate {
+	id: ID!
+	"The reading the key result moved to."
+	update: Int!
+	"The progress that reading puts the key result on."
+	progress: Int!
+	"The employee or process that recorded the move, as the row states it."
+	owner: String!
+	"""
+	The state the key result was left in. The value set belongs to the domain's own contract, so it is
+	carried as its value rather than declared here as an enum.
+	"""
+	status: String!
+	"The key result this move was recorded against, by identifier."
+	keyResultId: ID
+	"""
+	When the update was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the update belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the update is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of updates.
+"""
+type KeyResultUpdateEdge {
+	node: KeyResultUpdate!
+	cursor: String!
+}
+
+"""
+One page of updates, with the total the filters select and the boundary cursors.
+"""
+type KeyResultUpdateConnection {
+	nodes: [KeyResultUpdate!]!
+	edges: [KeyResultUpdateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an update list may be sorted by.
+"""
+enum KeyResultUpdateSortField {
+	createdAt
+	updatedAt
+	progress
+	status
+}
+
+"""
+The order the updates are returned in. At most three keys are accepted.
+"""
+input KeyResultUpdateSort {
+	field: KeyResultUpdateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an update list may be narrowed by.
+"""
+input KeyResultUpdateFilter {
+	id: IDFilter
+	update: NumberFilter
+	progress: NumberFilter
+	owner: StringFilter
+	status: StringFilter
+	keyResultId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [KeyResultUpdateFilter!]
+	or: [KeyResultUpdateFilter!]
+	not: KeyResultUpdateFilter
+}
+
+"""
+What a caller states when it records a move.
+
+The delivered body declares the organization as required — the DTO refuses a body that names neither
+an organization, an organization object nor a recipient, and checks the value against the caller's own
+memberships — so the member is required here too rather than optional as it is on the sibling
+resources. The tenant is never a member: the service stamps it from the credential. `keyResultId` is
+the key result the move is recorded against.
+"""
+input CreateKeyResultUpdateInput {
+	owner: String!
+	progress: Int!
+	update: Int!
+	status: String!
+	keyResultId: ID
+	organizationId: ID!
+}
+
+"""
+What a caller states when it corrects a move.
+
+**A member that is absent is left as it is.** The delivered edit is an update-through-create: the
+stated members are merged onto the row the store holds. The delivered route answers nothing at all —
+it catches whatever the write threw and returns an empty body — so this surface answers the write's
+own refusal instead of a silence; see the field's own note.
+"""
+input UpdateKeyResultUpdateInput {
+	id: ID!
+	owner: String
+	progress: Int
+	update: Int
+	status: String
+	keyResultId: ID
+	organizationId: ID
+}

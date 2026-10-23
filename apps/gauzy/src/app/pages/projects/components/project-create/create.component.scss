@@ -1,9 +1,2 @@
 @forward '@shared/_pg-card';
-
-:host {
-  .custom-body-content {
-    background-color: unset;
-    padding-bottom: 0;
-    height: calc(100vh - 15.25rem) !important;
-  }
-}
+@use '@shared/project-form-page' as *;

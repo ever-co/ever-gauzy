@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
@@ -13,6 +13,7 @@ import { EditTimeLogModalComponent } from './../edit-time-log-modal';
     selector: 'ngx-view-time-log-modal',
     templateUrl: './view-time-log-modal.component.html',
     styleUrls: ['view-time-log-modal.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {

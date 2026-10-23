@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ComponentLayoutStyleEnum, IOrganization, ITimeOffPolicy, PermissionsEnum } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
@@ -23,6 +23,7 @@ import { PaidIcon, RequestApprovalIcon } from '../table-components';
 	selector: 'ga-time-off-policy-list',
 	templateUrl: './time-off-settings.component.html',
 	styleUrls: ['./time-off-settings.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeOffSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

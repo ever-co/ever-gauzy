@@ -2,7 +2,7 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { NgModule, ErrorHandler, VERSION, inject, provideAppInitializer } from '@angular/core';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
@@ -54,7 +54,7 @@ import {
 	WorkspaceSyncService
 } from '@gauzy/ui-core/core';
 import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
-import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
+import { SharedModule, TimeTrackerModule, provideNgSelectPanelSizing } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
@@ -181,9 +181,18 @@ const FEATURE_MODULES = [
 			serverConnectionFactory(inject(ServerConnectionService), inject(Store), inject(Router))()
 		),
 
-		// Loads the Google Maps JavaScript API key during bootstrap.
+		// Loads the Google Maps JavaScript API during bootstrap. Maps are optional: when the script cannot
+		// be loaded (no internet access, a blocked host, an install behind a firewall) the app still
+		// starts and only the map widgets stay empty. A rejected initializer would stop the bootstrap and
+		// leave a blank page.
 		GoogleMapsLoaderService,
-		provideAppInitializer(() => inject(GoogleMapsLoaderService).load(environment.GOOGLE_MAPS_API_KEY)),
+		provideAppInitializer(() =>
+			inject(GoogleMapsLoaderService)
+				.load(environment.GOOGLE_MAPS_API_KEY)
+				.catch((error: unknown) => {
+					console.warn('Google Maps could not be loaded; maps stay unavailable:', error);
+				})
+		),
 
 		// Loads feature toggle definitions and stores them for the app.
 		FeatureService,
@@ -203,6 +212,10 @@ const FEATURE_MODULES = [
 		AppInitService,
 		provideAppInitializer(() => inject(AppInitService).init()),
 
+		// Floors every ng-select dropdown panel at its select's width (ng-select 24 renders panels in a
+		// CDK overlay and no longer states that floor itself; see `NgSelectPanelSizingService`).
+		provideNgSelectPanelSizing(),
+
 		// Checks whether cross-tab workspace sync (BroadcastChannel) is supported.
 		WorkspaceSyncService,
 		provideAppInitializer(() => {
@@ -221,7 +234,7 @@ const FEATURE_MODULES = [
 
 		// ─── Framework Providers ──────────────────────────────────────────────────────
 		// Configures HttpClient to pick up class-based HTTP_INTERCEPTORS from DI.
-		provideHttpClient(withInterceptorsFromDi()),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 
 		// Registers all Chart.js defaults so ng2-charts charts render without manual imports.
 		provideCharts(withDefaultRegisterables())

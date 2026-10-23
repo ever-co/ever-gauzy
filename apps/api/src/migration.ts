@@ -1,8 +1,10 @@
 import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { createMigration, generateMigration, revertLastDatabaseMigration, runDatabaseMigrations } from '@gauzy/core';
 import { pluginConfig } from './plugin.config';
 
-yargs
+// yargs 18 removed the global singleton: build the parser from this process's arguments.
+yargs(hideBin(process.argv))
 	.command({
 		command: 'migration:run',
 		describe: 'Runs all pending migrations command.',
@@ -60,4 +62,4 @@ yargs
 			const name = argv['name'] as string;
 			createMigration(pluginConfig, { name });
 		}
-	}).argv; // To set above changes
+	}).parse(); // To set above changes

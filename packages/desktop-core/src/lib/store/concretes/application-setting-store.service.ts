@@ -20,6 +20,7 @@ export class ApplicationSettingStoreService extends StoreService implements ISto
 			SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
 			screenshotNotification: true,
 			simpleScreenshotNotification: false,
+			screenshotNotificationDisplayId: null, // the primary display
 			mutedNotification: false,
 			autoLaunch: true,
 			visibleAwOption: true,
@@ -43,7 +44,8 @@ export class ApplicationSettingStoreService extends StoreService implements ISto
 			zone: 'local',
 			alwaysOn: true,
 			enforced: false,
-			theme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
+			theme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
+			asyncTimerDataSync: false
 		};
 
 		this.store.set(this.storeKey, defaultSettings);

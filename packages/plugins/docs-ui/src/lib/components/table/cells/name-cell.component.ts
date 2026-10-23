@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DocumentKindEnum, DocumentVisibilityEnum, IDocument } from '@gauzy/contracts';
 import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 
@@ -104,6 +104,7 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NameCellComponent {

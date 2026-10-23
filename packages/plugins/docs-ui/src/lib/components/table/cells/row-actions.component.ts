@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbMenuItem } from '@nebular/theme';
 import { IDocument } from '@gauzy/contracts';
 import { DOCS_ACTION_MENU_CLASS } from '../../actions/docs-action-menu';
@@ -42,6 +42,7 @@ import { DOCS_ACTION_MENU_CLASS } from '../../actions/docs-action-menu';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RowActionsComponent {

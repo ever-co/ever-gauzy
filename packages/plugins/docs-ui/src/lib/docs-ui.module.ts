@@ -24,7 +24,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { provideEffects } from '@ngneat/effects-ng';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	applyDeclarativeRegistrations,
@@ -36,6 +36,7 @@ import {
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	FavoriteToggleModule,
+	RecordViewModule,
 	SharedModule,
 	SmartDataViewLayoutModule,
 	TagsColorInputModule,
@@ -86,6 +87,7 @@ import { RequestReviewDialogComponent } from './dialogs/request-review-dialog.co
 import { DocumentShareDialogComponent } from './dialogs/share-dialog.component';
 import { createDocsRoutes } from './docs.routes';
 import { DocsBrowsePageComponent } from './pages/browse/docs-browse-page.component';
+import { DocumentFilePageComponent } from './pages/file-view/document-file-page.component';
 import { ReviewPageComponent } from './pages/review/review-page.component';
 import { DocsExportService } from './services/docs-export.service';
 import { DocsSavedViewsService } from './services/docs-saved-views.service';
@@ -105,6 +107,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		DocsShellComponent,
 		DocsTreeComponent,
 		DocsBrowsePageComponent,
+		DocumentFilePageComponent,
 		ReviewPageComponent,
 		DocsTableComponent,
 		DocsCardsComponent,
@@ -149,7 +152,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		FormsModule,
 		ReactiveFormsModule,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		TreeModule,
 		NbBadgeModule,
@@ -173,6 +176,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		// them their geometry, and the compact filter-bar pin relies on it.
 		NgSelectModule,
 		FavoriteToggleModule,
+		RecordViewModule,
 		SharedModule,
 		SmartDataViewLayoutModule,
 		TagsColorInputModule,

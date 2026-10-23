@@ -16,9 +16,9 @@
         </div>
         <div class="col">
           {{
-          record?.value
-          | currency: record?.currency
-          | position: organization?.currencyPosition
+          $safeNavigationMigration(record?.value)
+          | currency: $safeNavigationMigration(record?.currency)
+          | position: $safeNavigationMigration(organization?.currencyPosition)
           }}
         </div>
         <hr />

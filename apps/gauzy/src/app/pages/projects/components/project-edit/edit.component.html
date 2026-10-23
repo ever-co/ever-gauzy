@@ -1,11 +1,14 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-  <nb-card-header class="main-header pb-0">
-    <div class="d-flex justify-content-between align-items-center mb-5">
-      <div class="d-flex align-items-center">
+  <nb-card-header class="main-header">
+    <div class="page-heading">
+      <div class="page-heading__title">
         <ngx-back-navigation></ngx-back-navigation>
-        <h4 class="mb-0">
-          {{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}
-        </h4>
+        <div class="heading">
+          <h4 class="title">{{ 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT' | translate }}</h4>
+          @if (project$ | async; as project) {
+            <p class="subtitle">{{ project.name }}</p>
+          }
+        </div>
       </div>
       @if (project$ | async; as project) {
         <ngx-favorite-toggle
@@ -22,31 +25,32 @@
     </div>
   </nb-card-header>
   <nb-card-body class="custom-body-content">
-    <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
-      <ga-project-mutation
-        [integration]="integration$ | async"
-        [project]="project$ | async"
-        (onSubmitted)="onSubmit($event)"
-      ></ga-project-mutation>
-    </ng-template>
-    <ng-template [ngxPermissionsExcept]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
-      <div>
-        <!-- Content to display if the user does not have 'canEditComponent' permission -->
+    <!-- The form, with the Documents panel in a column on its right (under it on narrow screens). -->
+    <div class="project-edit-layout">
+      <div class="project-edit-main">
+        <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+          <ga-project-mutation
+            [integration]="integration$ | async"
+            [project]="project$ | async"
+            (onSubmitted)="onSubmit($event)"
+          ></ga-project-mutation>
+        </ng-template>
       </div>
-    </ng-template>
 
-    <!--
-      Record-side Documents panel (spec 00 §6.14 R-LNK-02). Outside the edit-permission
-      templates on purpose: reading a project's attachments is DOCS_READ, not
-      ORG_PROJECT_EDIT. The panel gates itself on DOCS_READ + FEATURE_DOCUMENTS.
-    -->
-    @if (project$ | async; as project) {
-      <gz-document-links-panel
-        class="project-documents"
-        [entity]="documentEntity"
-        [entityId]="project.id"
-        [entityLabel]="project.name"
-      ></gz-document-links-panel>
-    }
+      <!--
+        Record-side Documents panel (spec 00 §6.14 R-LNK-02). Outside the edit-permission
+        templates on purpose: reading a project's attachments is DOCS_READ, not
+        ORG_PROJECT_EDIT. The panel gates itself on DOCS_READ + FEATURE_DOCUMENTS.
+      -->
+      @if (project$ | async; as project) {
+        <aside class="project-edit-aside">
+          <gz-document-links-panel
+            [entity]="documentEntity"
+            [entityId]="project.id"
+            [entityLabel]="project.name"
+          ></gz-document-links-panel>
+        </aside>
+      }
+    </div>
   </nb-card-body>
 </nb-card>

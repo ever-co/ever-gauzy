@@ -10,6 +10,7 @@ import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
+import { EmployeeResolver } from './employee.resolver';
 import { EmployeeService } from './employee.service';
 import { ManagedEmployeeService } from './managed-employee.service';
 import { Employee } from './employee.entity';
@@ -21,7 +22,20 @@ import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/type-orm-organization-project-employee.repository';
 import { MikroOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/mikro-orm-organization-project-employee.repository';
+import { OrganizationBelongsToUserConstraint } from '../shared/validators/constraints/organization-belongs-to-user.constraint';
 
+/**
+ * The employee: the engagement one organization has of one person, and the account it belongs to.
+ *
+ * **The GraphQL view of the same resource is declared here, beside the service it calls**, because a
+ * resolver is an ordinary Nest provider and can only inject what the module hosting it can reach.
+ * `EmployeeService` is already a provider and already exported, so the resolver's first dependency
+ * needed nothing new; the command bus it dispatches five of its writes through did, and it is
+ * re-exported rather than merely imported: a module's imports are not inherited by the module that
+ * imports it, so the module that hosts the resolver has to reach the bus itself.
+ *
+ * The addition is an export and nothing else: no provider, route or dependency changed.
+ */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Employee, OrganizationTeamEmployee, OrganizationProjectEmployee]),
@@ -38,15 +52,22 @@ import { MikroOrmOrganizationProjectEmployeeRepository } from '../organization-p
 	providers: [
 		EmployeeService,
 		ManagedEmployeeService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them.
+		EmployeeResolver,
 		TypeOrmEmployeeRepository,
 		MikroOrmEmployeeRepository,
 		TypeOrmOrganizationTeamEmployeeRepository, MikroOrmOrganizationTeamEmployeeRepository,
 		TypeOrmOrganizationProjectEmployeeRepository, MikroOrmOrganizationProjectEmployeeRepository,
+		// The working routes check organization membership in the controller. ValidatorModule imports
+		// this module, so the stateless constraint is provided here rather than imported from there.
+		OrganizationBelongsToUserConstraint,
 		...CommandHandlers
 	],
 	exports: [
 		EmployeeService,
 		ManagedEmployeeService,
+		CqrsModule,
 		TypeOrmEmployeeRepository,
 		MikroOrmEmployeeRepository,
 		TypeOrmOrganizationTeamEmployeeRepository, MikroOrmOrganizationTeamEmployeeRepository,

@@ -1,5 +1,5 @@
 import { IHelpCenterArticle } from '@gauzy/contracts';
-import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
+import { Component, OnDestroy, Input, ErrorHandler, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { HelpCenterArticleService, HelpCenterAuthorService } from '@gauzy/ui-cor
     selector: 'ga-article-category',
     templateUrl: 'delete-article.component.html',
     styleUrls: ['delete-article.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DeleteArticleComponent extends TranslationBaseComponent implements OnDestroy {

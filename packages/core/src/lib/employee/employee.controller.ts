@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
@@ -19,7 +20,15 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
+import {
+	EmployeeKindEnum,
+	PermissionsEnum,
+	LanguagesEnum,
+	IPagination,
+	IEmployee,
+	IEmployeePresence,
+	ID
+} from '@gauzy/contracts';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
@@ -27,6 +36,7 @@ import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
 import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { OrganizationBelongsToUserConstraint } from './../shared/validators/constraints/organization-belongs-to-user.constraint';
 import {
 	EmployeeCreateCommand,
 	EmployeeBulkCreateCommand,
@@ -36,12 +46,15 @@ import {
 } from './commands';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ManagedEmployeeService } from './managed-employee.service';
 import {
 	EmployeeBulkInputDTO,
 	CreateEmployeeDTO,
 	UpdateEmployeeDTO,
 	UpdateProfileDTO,
-	FindMembersInputDTO
+	FindMembersInputDTO,
+	EmployeePresenceDTO,
+	EmployeeListQueryDTO
 } from './dto';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
@@ -54,7 +67,12 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/employee')
 export class EmployeeController extends CrudController<Employee> {
-	constructor(private readonly _employeeService: EmployeeService, private readonly _commandBus: CommandBus) {
+	constructor(
+		private readonly _employeeService: EmployeeService,
+		private readonly _commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService,
+		private readonly _organizationMembership: OrganizationBelongsToUserConstraint
+	) {
 		super(_employeeService);
 	}
 
@@ -77,10 +95,15 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No working employees found'
 	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The organization is not one the caller belongs to.'
+	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.SELECT_EMPLOYEE)
 	@Get('/working')
 	async findAllWorkingEmployees(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployee>> {
 		const { findInput } = data;
+		await this.assertOrganizationMembership(findInput?.organizationId);
 		return await this._commandBus.execute(new WorkingEmployeeGetCommand(findInput));
 	}
 
@@ -103,11 +126,16 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Working employees count not found'
 	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The organization is not one the caller belongs to.'
+	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.SELECT_EMPLOYEE)
 	@Get('/working/count')
 	async findAllWorkingEmployeesCount(@Query('data', ParseJsonPipe) data: any): Promise<{ total: number }> {
 		const { findInput } = data;
 		const { organizationId, forRange } = findInput;
+		await this.assertOrganizationMembership(organizationId);
 		return await this._employeeService.findWorkingEmployeesCount(organizationId, forRange);
 	}
 
@@ -171,7 +199,8 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/count')
 	@UseValidationPipe()
 	async getCount(@Query() options: CountQueryDTO<Employee>): Promise<number> {
-		return await this._employeeService.countBy(options);
+		// The headcount is people: agent employees (`kind = 'agent'`) are not counted.
+		return await this._employeeService.countBy({ ...options, kind: EmployeeKindEnum.HUMAN });
 	}
 
 	/**
@@ -225,11 +254,56 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid query parameters. Please check your input.'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'Without an organization-wide view, organizationTeamId must be a team the caller belongs to.'
+	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
 	@Get('/members')
 	@UseValidationPipe()
 	async getMembers(@Query() options: FindMembersInputDTO): Promise<IPagination<IEmployee>> {
+		// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, only covers the caller's own teams: findMembers
+		// filters by team only when one is given, so without this check it returns the whole organization.
+		// isMemberOfTeam fails closed on a missing team id or a caller without an employee record.
+		const hasOrganizationWideView = RequestContext.hasAnyPermission([
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		]);
+		if (
+			!hasOrganizationWideView &&
+			!(await this._managedEmployeeService.isMemberOfTeam(
+				RequestContext.currentEmployeeId(),
+				options.organizationTeamId
+			))
+		) {
+			throw new ForbiddenException('You can only list the members of a team you belong to.');
+		}
 		return await this._employeeService.findMembers(options);
+	}
+
+	/**
+	 * Records a presence heartbeat for the signed-in employee.
+	 *
+	 * Open to any authenticated employee, for their own record only: the employee is taken from the
+	 * request context, never from the request. Calling it again only moves `lastSeenAt` forward.
+	 *
+	 * @param input - Whether the client saw no user input for a while.
+	 * @returns The presence as stored.
+	 */
+	@ApiOperation({ summary: 'Record a presence heartbeat for the signed-in employee' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Presence recorded.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'The signed-in user has no employee record.'
+	})
+	@Permissions()
+	@Put('/me/presence')
+	@UseValidationPipe({ whitelist: true })
+	async updatePresence(@Body() input: EmployeePresenceDTO): Promise<IEmployeePresence> {
+		return await this._employeeService.updatePresence(input);
 	}
 
 	/**
@@ -257,14 +331,19 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(@Query() options: BaseQueryDTO<Employee>): Promise<IPagination<IEmployee>> {
+	async findAll(@Query() options: EmployeeListQueryDTO): Promise<IPagination<IEmployee>> {
+		// `kind` narrows the list to people or to agents (`GET /employee?kind=agent`); absent, the list is
+		// unchanged. It is a column condition, not a find option, so it is taken out of the options.
+		const { kind, ...findOptions } = options;
+
 		// Enforce that only active, non-archived users are retrieved
 		const where = {
-			...(options.where || {}),
+			...(findOptions.where || {}),
+			...(kind ? { kind } : {}),
 			user: { isActive: true, isArchived: false }
 		};
 
-		return await this._employeeService.findAll({ ...options, where });
+		return await this._employeeService.findAll({ ...findOptions, where });
 	}
 
 	/**
@@ -480,5 +559,26 @@ export class EmployeeController extends CrudController<Employee> {
 	): Promise<Employee> {
 		// Attempt to recover the soft-removed employee
 		return await this._employeeService.softRecoverById(id, params);
+	}
+
+	/**
+	 * The working routes read `organizationId` from raw `data` JSON with no DTO, so the
+	 * `@IsOrganizationBelongsToUser()` rule the other employee lists get from validation is applied here.
+	 * An absent id passes, as it does there. Any other value must be a string naming one of the caller's
+	 * organizations: an array or an operator object would widen the MikroORM filter.
+	 *
+	 * @param organizationId - The `findInput.organizationId` sent by the client.
+	 * @throws BadRequestException when the value is not one of the caller's organizations.
+	 */
+	private async assertOrganizationMembership(organizationId: unknown): Promise<void> {
+		if (organizationId === undefined || organizationId === null || organizationId === '') {
+			return;
+		}
+		if (
+			typeof organizationId !== 'string' ||
+			!(await this._organizationMembership.checkOrganizationExistence(organizationId))
+		) {
+			throw new BadRequestException(this._organizationMembership.defaultMessage());
+		}
 	}
 }

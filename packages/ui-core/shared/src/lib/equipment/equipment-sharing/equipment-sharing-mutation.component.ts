@@ -1,4 +1,4 @@
-import { OnInit, Component, OnDestroy } from '@angular/core';
+import { OnInit, Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import {
 	IEquipmentSharing,
@@ -33,6 +33,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ngx-equipment-sharing-mutation',
     templateUrl: './equipment-sharing-mutation.component.html',
     styleUrls: ['./equipment-sharing-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentSharingMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

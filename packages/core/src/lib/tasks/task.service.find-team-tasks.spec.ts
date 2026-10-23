@@ -21,9 +21,9 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 	let createQueryBuilder: jest.Mock;
 	let service: TaskService;
 
-	const teamTasks = (members?: { id: string }) =>
+	const teamTasks = (members?: { id: string }, filters?: Record<string, string[]>) =>
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		service.findTeamTasks({ where: { organizationId: employee.organizationId, members } } as any);
+		service.findTeamTasks({ where: { organizationId: employee.organizationId, members }, filters } as any);
 	const where = () => findAndCount.mock.calls[0][0];
 
 	beforeEach(() => {
@@ -40,7 +40,17 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 			{ metadata: { tableName: 'task' }, createQueryBuilder } as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{ findAndCount } as any,
-			...(Array.from({ length: 8 }, () => stub) as [never, never, never, never, never, never, never, never])
+			...(Array.from({ length: 9 }, () => stub) as [
+				never,
+				never,
+				never,
+				never,
+				never,
+				never,
+				never,
+				never,
+				never
+			])
 		);
 	});
 
@@ -90,6 +100,42 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 		});
 	});
 
+	/**
+	 * The advanced `filters` (projects, tags, statuses, ...) were only applied by the TypeORM branch; the
+	 * MikroORM branch read them and dropped them, so a filtered team board listed every team task.
+	 */
+	describe('advanced filters', () => {
+		it('translates the column and relation filters into the MikroORM where', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+
+			await teamTasks(undefined, { projects: ['project-1'], tags: ['tag-1', 'tag-2'], statusIds: ['status-1'] });
+
+			expect(where()).toEqual(
+				expect.objectContaining({
+					projectId: { $in: ['project-1'] },
+					tags: { id: { $in: ['tag-1', 'tag-2'] } },
+					taskStatusId: { $in: ['status-1'] }
+				})
+			);
+		});
+
+		it('keeps the employee team scoping next to a teams filter', async () => {
+			({ restore } = asTenantUser(employee));
+
+			await teamTasks(undefined, { teams: ['team-1'] });
+
+			expect(where().teams).toEqual({ members: { employeeId: 'employee-1' }, id: { $in: ['team-1'] } });
+		});
+
+		it('applies nothing without filters', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+
+			await teamTasks();
+
+			expect(where()).toEqual({ tenantId: employee.tenantId, organizationId: employee.organizationId, isScreeningTask: false });
+		});
+	});
+
 	describe('an ALL_ORG_VIEW holder without an employee record', () => {
 		it('keeps the organization-wide team tasks on MikroORM, without picking an employee', async () => {
 			({ restore } = asTenantUser(noEmployee, { permissions: [PermissionsEnum.ALL_ORG_VIEW] }));
@@ -106,6 +152,68 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 
 			await expect(teamTasks()).rejects.toThrow();
 			expect(createQueryBuilder).toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * #10730 — with both `where[projectId]` and `where[teams]` (every Ever Teams board load), the TypeORM branch lists
+	 * the team's tasks plus the project's tasks (#10437); the MikroORM branch ANDed the project with the team scope,
+	 * so a team task without a project, or in another one, dropped off the board.
+	 */
+	describe('a project and teams together', () => {
+		const board = (where: Record<string, unknown>, filters?: Record<string, string[]>) =>
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			service.findTeamTasks({ where: { organizationId: employee.organizationId, ...where }, filters } as any);
+
+		it("lists the team's tasks plus the project's tasks, with every other condition on both", async () => {
+			({ restore } = asTenantUser(employee));
+
+			await board({ projectId: 'project-1', teams: ['team-1'], status: 'open' });
+
+			expect(where()).toEqual({
+				tenantId: employee.tenantId,
+				organizationId: employee.organizationId,
+				isScreeningTask: false,
+				status: 'open',
+				$or: [
+					{ teams: { id: { $in: ['team-1'] }, members: { employeeId: 'employee-1' } } },
+					{ projectId: 'project-1' }
+				]
+			});
+		});
+
+		it('keeps the advanced filters on both sides of the union', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+
+			await board({ projectId: 'project-1', teams: ['team-1'] }, { statusIds: ['status-1'] });
+
+			expect(where()).toEqual(
+				expect.objectContaining({
+					taskStatusId: { $in: ['status-1'] },
+					$or: [{ teams: { id: { $in: ['team-1'] } } }, { projectId: 'project-1' }]
+				})
+			);
+			expect(where()).not.toHaveProperty('teams');
+			expect(where()).not.toHaveProperty('projectId');
+		});
+
+		it('still narrows to the project when no team is sent', async () => {
+			({ restore } = asTenantUser(employee, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+
+			await board({ projectId: 'project-1' });
+
+			expect(where()).toMatchObject({ projectId: 'project-1' });
+			expect(where()).not.toHaveProperty('$or');
+		});
+
+		it('still lists the team tasks only when no project is sent', async () => {
+			({ restore } = asTenantUser(employee));
+
+			await board({ teams: ['team-1'] });
+
+			expect(where().teams).toEqual({ id: { $in: ['team-1'] }, members: { employeeId: 'employee-1' } });
+			expect(where()).not.toHaveProperty('$or');
+			expect(where()).not.toHaveProperty('projectId');
 		});
 	});
 });

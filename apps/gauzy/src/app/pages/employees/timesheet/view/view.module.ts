@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ROUTES } from '@angular/router';
 import { NbCardModule, NbButtonModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DialogsModule, EditTimeLogModalModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createTimesheetDetailsRoutes } from './view.routes';
@@ -14,7 +14,7 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbCheckboxModule, NbIconModule
 	declarations: [TimesheetViewComponent],
 	imports: [
 		...NB_MODULES,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		DialogsModule,
 		EditTimeLogModalModule,

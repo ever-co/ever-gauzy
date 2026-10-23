@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Observable, catchError, combineLatest, filter, map, of, switchMap } from 'rxjs';
 import { CandidateStatusEnum, ICandidate, IPagination } from '@gauzy/contracts';
@@ -8,6 +8,7 @@ import { CandidatesService, ErrorHandlingService, Store } from '@gauzy/ui-core/c
 @UntilDestroy()
 @Component({
     template: '',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class BaseCandidateSelectorComponent implements OnInit {

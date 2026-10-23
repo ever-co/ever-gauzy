@@ -10,11 +10,13 @@ export class InvoiceSendEmailHandler
 		private readonly invoiceService: InvoiceService
 	) { }
 
-	public async execute(command: InvoiceSendEmailCommand): Promise<any> {
+	public async execute(command: InvoiceSendEmailCommand): Promise<void> {
 		const { languageCode, email, params, origin } = command;
 		const { invoiceNumber, invoiceId, isEstimate, organizationId } = params;
 
-		return await this.invoiceService.sendEmail(
+		// The outcome is for in-process callers (an order quote reports it); the e-mail route answers no body,
+		// as it always has, and the service has logged a failure.
+		await this.invoiceService.sendEmail(
 			languageCode,
 			email,
 			invoiceNumber,

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/core';
 import { CardGridComponent } from './card-grid.component';
 import { CustomViewComponent } from './card-grid-custom.component';
@@ -20,7 +20,7 @@ const STANDALONE_MODULES = [
 		NbButtonModule,
 		NbIconModule,
 		...STANDALONE_MODULES,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NoDataMessageModule
 	],
 	declarations: [CardGridComponent, CustomViewComponent],

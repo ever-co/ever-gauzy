@@ -1,0 +1,60 @@
+# The tied integration entity setting's object type.
+#
+# One row is a second-order decision: *this* kind of row travels with another one. A provider that has
+# no first-class notion of the row type a caller wants synchronised still receives it, tied to a row
+# type it does understand — time logs travelling with tasks, for instance. The row belongs to the
+# decision it hangs off, which is why it carries `integrationEntitySettingId` rather than an
+# integration of its own.
+#
+# The resource serves one route and it is a write, so this file declares no connection: there is no
+# list route and no node route for a tied row in the delivered API. What a reader asks about them is
+# answered where they belong — as `IntegrationEntitySetting.tiedEntities`, which the delivered read of
+# the decisions loads beside each decision.
+#
+# The `entity` member is the domain's own closed vocabulary, declared once by the integration
+# catalogue: the set of row types that can travel together is the platform's, not a caller's.
+
+"""
+One row type that is synchronised because the row type it hangs off is.
+"""
+type IntegrationEntitySettingTied {
+	id: ID!
+	"The kind of row that travels with the decision it belongs to."
+	entity: IntegrationEntity!
+	"Whether rows of that kind travel with the decision."
+	sync: Boolean!
+	"The decision this row hangs off."
+	integrationEntitySettingId: ID
+	"The tenant the row belongs to. Stamped from the credential, never stated by a caller."
+	tenantId: ID
+	"The organization the tied decision applies to."
+	organizationId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are routes every
+	resource on this platform inherits, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+One tied decision as a write states it.
+
+The delivered write accepts one of these or a list of them and stores what it is given, so the surface
+states the list — a GraphQL input is one shape, and the list is the shape the delivered handler folds a
+single object into anyway. The decision the row hangs off is stated by the write's own argument when it
+is not stated here, which is what the delivered body does with the identifier it receives.
+"""
+input IntegrationEntitySettingTiedInput {
+	"The kind of row that travels with the decision it belongs to."
+	entity: IntegrationEntity!
+	"Whether rows of that kind travel with the decision."
+	sync: Boolean!
+	"The decision to hang the row off. The delivered write also takes an integration in its path."
+	integrationEntitySettingId: ID
+	"The organization the tied decision applies to."
+	organizationId: ID
+}

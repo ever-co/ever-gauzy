@@ -8,7 +8,8 @@ import {
 	OnInit,
 	Renderer2,
 	ViewChild,
-	inject
+	inject,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
@@ -75,6 +76,7 @@ import { Store } from '@gauzy/ui-core/core';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {

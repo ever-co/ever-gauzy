@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormBuilder, Validators, FormArray } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,6 +25,7 @@ import { EmployeeSelectorComponent } from '../../selectors/employee';
     selector: 'ga-candidate-interview-feedback',
     templateUrl: './candidate-interview-feedback.component.html',
     styleUrls: ['./candidate-interview-feedback.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateInterviewFeedbackComponent extends TranslationBaseComponent implements OnInit {

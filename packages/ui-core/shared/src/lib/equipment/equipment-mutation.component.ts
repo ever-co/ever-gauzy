@@ -1,4 +1,4 @@
-import { OnInit, Component } from '@angular/core';
+import { OnInit, Component, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipment, ITag, IOrganization, IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
@@ -16,6 +16,7 @@ import { SelectAssetComponent } from '../select-asset-modal/select-asset.compone
     selector: 'ngx-equipment-mutation',
     templateUrl: './equipment-mutation.component.html',
     styleUrls: ['./equipment-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentMutationComponent extends TranslationBaseComponent implements OnInit {

@@ -69,7 +69,9 @@ export class MakeComMiddleware implements NestMiddleware {
 							if (fromDb?.settings?.length) {
 								integrationTenantSettings = fromDb.settings;
 
-								const ttl = 5 * 60; // 5 min expressed in seconds
+								// The cache store takes milliseconds (as in the GitHub and AI middlewares): `5 * 60`
+								// kept the settings for 300 ms, so every request went to the database
+								const ttl = 5 * 60 * 1000; // 5 minutes
 								await this.cacheManager.set(cacheKey, integrationTenantSettings, ttl);
 
 								this.logger.log(

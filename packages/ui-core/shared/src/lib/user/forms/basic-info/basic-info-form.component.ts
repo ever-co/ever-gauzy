@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, Input, OnInit, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, Input, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup, FormControl } from '@angular/forms';
 import { Location } from '@angular/common';
 import {
@@ -37,6 +37,7 @@ import { FormHelpers } from '../../../forms/helpers';
     selector: 'ga-user-basic-info-form',
     templateUrl: 'basic-info-form.component.html',
     styleUrls: ['basic-info-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class BasicInfoFormComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {

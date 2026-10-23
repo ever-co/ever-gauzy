@@ -38,9 +38,12 @@ export class EmployeeAppointmentCreateHandler
 		appointment.agenda = employeeAppointmentInput.agenda;
 		appointment.description = employeeAppointmentInput.description;
 		appointment.bufferTimeEnd = employeeAppointmentInput.bufferTimeEnd;
-		appointment.bufferTimeInMins = +employeeAppointmentInput.bufferTimeInMins;
+		// Both fields are optional: `+undefined` is NaN, which the integer column rejects, so keep null when absent
+		appointment.bufferTimeInMins =
+			employeeAppointmentInput.bufferTimeInMins != null ? +employeeAppointmentInput.bufferTimeInMins : null;
 		appointment.breakStartTime = employeeAppointmentInput.breakStartTime;
-		appointment.breakTimeInMins = +employeeAppointmentInput.breakTimeInMins;
+		appointment.breakTimeInMins =
+			employeeAppointmentInput.breakTimeInMins != null ? +employeeAppointmentInput.breakTimeInMins : null;
 		appointment.bufferTimeStart = employeeAppointmentInput.bufferTimeStart;
 		appointment.emails = employeeAppointmentInput.emails;
 		appointment.startDateTime = employeeAppointmentInput.startDateTime;

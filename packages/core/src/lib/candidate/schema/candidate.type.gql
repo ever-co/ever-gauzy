@@ -1,0 +1,1431 @@
+# The recruiting domain's object types.
+#
+# A candidate is a **person** in a hiring pipeline, and the care the delivered account and contact
+# surfaces take applies here for the same reason: the row the pipeline points at is one person's
+# record, and a member that answered a value the read never produced would be read as "this person has
+# no name" rather than as "this surface did not ask".
+#
+# **Nothing relation-shaped is a member.** Every delivered read of this domain — the list, the one-row
+# read, the count — runs with no `relations` stated, so a member for `user`, `contact`, `source`,
+# `employee`, `organizationPosition`, `tags`, `documents`, `educations`, `experience`, `skills`,
+# `feedbacks`, `interview`, `organizationDepartments` or `organizationEmploymentTypes` would be absent
+# on every row this surface answers. Each relation is carried as the identifier that always travels
+# where the row has one (`userId`, `contactId`, `sourceId`, `employeeId`, `organizationPositionId`,
+# `candidateId`, `interviewId`, `feedbackId`, `technologyId`, `personalQualityId`, `employeeId`), and
+# the row behind an identifier is read from the surface that owns it: the account from `user(id)`, the
+# interview from `candidateInterview(id)`, the employee from `employee(id)`.
+#
+# The two collections that have no identifier column at all are the pivots — the candidate's
+# departments and employment types (`candidate_department`, `candidate_employment_type`) and its tags
+# (`tag_candidate`). A pivot is joined only when a REST caller names the relation in its query string,
+# which this surface's reads do not, so the candidates of a department and the tags of a candidate are
+# read from the surfaces that own those rows rather than as a member here.
+#
+# **The two virtual columns are refused, and each for its own reason.** `ratings` is filled by the
+# delivered subscriber out of the `feedbacks` collection, and this surface's reads join no feedbacks,
+# so it would be absent on every row. `alreadyHired` is filled on every load, but by the TypeORM
+# subscriber alone: an installation running the other ORM answers it as absent, and the value is in any
+# case a function of two columns this type carries — `status` and `hiredDate` — so a member for it
+# would be a second statement of the same fact that is wrong on one of the two stores.
+#
+# **Money is an exact decimal and never a binary fraction.** `rating`, `billRateValue` and
+# `minimumBillingRate` are money or money-per-hour: they are carried as `Decimal` for the reason the
+# kernel gives, because a binary fraction cannot hold a cent. The one rating that is *not* a decimal is
+# the criterion's own — that column is an `integer` and its scale is stated as `Int`.
+#
+# `status` is carried as its value rather than declared as a schema enum: it is the contracts package's
+# fixed value set (`APPLIED`, `HIRED`, `REJECTED`) rather than a vocabulary an operator maintains, and
+# a second domain that needed the same set would collide with an enum declared here instead of reusing
+# it.
+
+# ---------------------------------------------------------------------------------------------
+# The candidate: one person in one organization's pipeline
+# ---------------------------------------------------------------------------------------------
+
+"""
+One person's candidacy with one organization: where they are in the pipeline, what they would be paid,
+and which account, contact and employee row they are tied to.
+"""
+type Candidate {
+	id: ID!
+	"The rating filed on this row. A rating, and therefore an exact decimal."
+	rating: Decimal
+	"The instant the row is dated to, where an administration screen dates it."
+	valueDate: DateTime
+	"When the candidacy was filed with the organization."
+	appliedDate: DateTime
+	"When the candidate was hired. `status` is the pipeline move; this is when it happened."
+	hiredDate: DateTime
+	"When the candidate was declined."
+	rejectDate: DateTime
+	"""
+	The pipeline state, as the contracts package's own value: `APPLIED`, `HIRED` or `REJECTED`. Written
+	by the filing, by the two pipeline moves and by the delivered subscriber when a rejection date is
+	stated.
+	"""
+	status: String
+	"The level's label, as this row stores it. It is the candidate's own column and not the engagement's `employeeLevel`."
+	candidateLevel: String
+	"Recurring weekly limit, in hours. A whole number of hours rather than an amount."
+	reWeeklyLimit: Int
+	"The currency the two rates are stated in, as the contracts package's own `CurrenciesEnum` value."
+	billRateCurrency: String
+	"The billing rate per hour the candidate would be engaged at. Money, and therefore an exact decimal."
+	minimumBillingRate: Decimal
+	"How often the candidate would be paid, as the contracts package's own `PayPeriodEnum` value."
+	payPeriod: String
+	"The billing rate per hour the candidate is filed at. Money, and therefore an exact decimal."
+	billRateValue: Decimal
+	"The URL of the candidate's curriculum vitae, as filed."
+	cvUrl: String
+	"The account this candidacy belongs to. The account's own columns are read from `user(id)`; this surface carries the identifier alone because no delivered read of this domain selects an account column."
+	userId: ID!
+	"""
+	The contact row the candidacy keeps its address and fiscal facts in, where it has one. A contact is
+	shared — an employee and a customer point at the same row — so its columns are read from the contact
+	surface and this member only says which row.
+	"""
+	contactId: ID
+	"The organization position the candidate is being considered for, where one is recorded. The position is read from the position surface."
+	organizationPositionId: ID
+	"""
+	The row describing where the candidate came from. A source is the *vocabulary* of origins — one row
+	per origin, shared by every candidacy that came from it — so its name is read from `candidateSource(id)`
+	and this member says which row.
+	"""
+	sourceId: ID
+	"The engagement this candidacy became, once it was hired. The engagement is read from `employee(id)`."
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"""
+	When the candidacy was withdrawn, or null while it is live. `DELETE /:id/soft` and `PUT /:id/recover`
+	are delivered routes and this column is the whole of what they write, so without it a caller could
+	not tell a live row from a withdrawn one on the answer to the write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of candidates."
+type CandidateEdge {
+	node: Candidate!
+	cursor: String!
+}
+
+"One page of candidates, with the total the filters select and the boundary cursors."
+type CandidateConnection {
+	nodes: [Candidate!]!
+	edges: [CandidateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a candidate list may be sorted by. Every member is a column the row always has.
+"""
+enum CandidateSortField {
+	createdAt
+	updatedAt
+	appliedDate
+	hiredDate
+	rejectDate
+	candidateLevel
+	status
+	rating
+	billRateValue
+}
+
+"The order the candidates are returned in. At most three keys are accepted."
+input CandidateSort {
+	field: CandidateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a candidate list may be narrowed by: exactly the columns the delivered read returns.
+
+The account is deliberately not filterable, although the paginated spelling of the list narrows by the
+account's name and address. That spelling does so with a join predicate the store evaluates, and the
+rows the connection protocol narrows are the rows that came back — which carry no account column. A
+filter here would be advertising a narrowing this surface cannot perform; the way to ask for one
+person's candidacy is `userId`, and the way to narrow by a name is to read the account surface first.
+"""
+input CandidateFilter {
+	id: IDFilter
+	rating: DecimalFilter
+	valueDate: DateTimeFilter
+	appliedDate: DateTimeFilter
+	hiredDate: DateTimeFilter
+	rejectDate: DateTimeFilter
+	status: StringFilter
+	candidateLevel: StringFilter
+	reWeeklyLimit: NumberFilter
+	billRateCurrency: StringFilter
+	billRateValue: DecimalFilter
+	minimumBillingRate: DecimalFilter
+	payPeriod: StringFilter
+	cvUrl: StringFilter
+	userId: IDFilter
+	contactId: IDFilter
+	organizationPositionId: IDFilter
+	sourceId: IDFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateFilter!]
+	or: [CandidateFilter!]
+	not: CandidateFilter
+}
+
+"""
+The account a candidacy signs in as.
+
+**Only the four members the delivered write persists are here.** The delivered body's account also
+carries a role and a preferred language, and the delivered handler overwrites both: it resolves the
+candidate role itself, passes it beside the language of the request, and the handler behind that
+resolves the relation from the database where the relation wins on persist. A stated role would
+therefore be checked and then ignored — the only effect a caller could have with it is to be refused
+for naming a role it may not assign, which is not a capability — and a stated language would be
+overwritten by the language of the request. An argument whose effect is invisible is worse than an
+argument that is absent, so neither is stated.
+
+`password` is a plaintext member on the way in and is hashed before the account row is written; it is
+never a member of an answer, because the answer is the row's projection and the projection carries no
+digest.
+"""
+input CandidateUserInput {
+	"The address the account is created with, and the address it signs in with."
+	email: String!
+	"The given name to file on the account."
+	firstName: String
+	"The family name to file on the account."
+	lastName: String
+	"The image to show for the account."
+	imageUrl: String
+}
+
+"""
+What a caller states when it files a candidacy.
+
+**Only the members the delivered write persists are here.** The delivered create body inherits the
+engagement's employment terms — `startedWorkOn`, `endWork`, `short_description`, `description`,
+`anonymousBonus` and `employeeLevel` — and a candidate row has no column for any of them: the level
+this row carries is `candidateLevel`, which the delivered create body does not accept. An argument
+whose effect is invisible is worse than an argument that is absent, so none of the six is stated; the
+level is written through `updateCandidate`, which is the route that carries it.
+
+The collections the delivered body also accepts — the documents, the employment types and the
+departments — are refused for the same reason at one remove: each is a collection of rows rather than
+of identifiers, the delivered write cascades none of them, and the rows themselves are written through
+the surface that owns them (`createCandidateDocument` for a document). The position and the tags are
+the exception, because both are written from an identifier: `organizationPositionId` and `tagIds`.
+"""
+input CreateCandidateInput {
+	"The organization the candidacy is filed under."
+	organizationId: ID!
+	"The account to file together with the candidacy. The delivered write always files one."
+	user: CandidateUserInput!
+	"The new account's password, hashed before the account row is written."
+	password: String!
+	"The organization position the candidate is being considered for."
+	organizationPositionId: ID
+	"The facets to attach to the candidate, as the identifiers the pivot is written from."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it edits a candidacy.
+
+Every member is optional and a member that is absent is left as it is, because the delivered edit
+persists the stated members over the row it read.
+
+The same discipline as the create applies to the members: `offerDate`, `acceptDate` and `isAway` are
+accepted by the delivered body and are columns of an *engagement*, not of a candidacy, so they are not
+stated here. `status` is not stated either: it is written by the two pipeline moves and by the
+subscriber's own reading of `rejectDate`, and a member for it would be a second way to write the
+pipeline that the delivered routes leave to those two.
+
+The contact is stated as the identifier the relation is written from rather than as the row the
+delivered body accepts. A contact is shared with the employee and customer surfaces, so its own columns
+are written through the contact surface; this member moves the pointer and nothing else.
+"""
+input UpdateCandidateInput {
+	id: ID!
+	"The organization position the candidate is being considered for."
+	organizationPositionId: ID
+	"The facets to attach to the candidate, as the identifiers the pivot is written from."
+	tagIds: [ID!]
+	"The contact row the candidacy keeps its address and fiscal facts in."
+	contactId: ID
+	"When the candidacy was filed with the organization."
+	appliedDate: DateTime
+	"When the candidate was hired."
+	hiredDate: DateTime
+	"When the candidate was declined."
+	rejectDate: DateTime
+	"The label the pipeline shows for this candidate's seniority."
+	candidateLevel: String
+	"The URL of the candidate's curriculum vitae."
+	cvUrl: String
+	"The billing rate per hour the candidate is filed at. Money, and therefore an exact decimal."
+	billRateValue: Decimal
+	"The currency the two rates are stated in."
+	billRateCurrency: String
+	"The floor below which the candidate would not be engaged. A rate, and therefore an exact decimal."
+	minimumBillingRate: Decimal
+	"How often the candidate would be paid."
+	payPeriod: String
+	"Recurring weekly limit, in hours. A whole number of hours rather than an amount."
+	reWeeklyLimit: Int
+	"The candidate's LinkedIn profile."
+	linkedInUrl: String
+	"The candidate's Facebook profile."
+	facebookUrl: String
+	"The candidate's Instagram profile."
+	instagramUrl: String
+	"The candidate's Twitter profile."
+	twitterUrl: String
+	"The candidate's GitHub profile."
+	githubUrl: String
+	"The candidate's GitLab profile."
+	gitlabUrl: String
+	"The candidate's Upwork profile."
+	upworkUrl: String
+	"The candidate's Stack Overflow profile."
+	stackoverflowUrl: String
+	"The candidate's identifier at the external marketplace."
+	upworkId: String
+	"The candidate's identifier at LinkedIn."
+	linkedInId: String
+	"The external marketplace's public profile link."
+	profile_link: String
+}
+
+"""
+The two pipeline moves the delivered route serves.
+
+The vocabulary is the controller's own — it reads the move out of its path — and it is declared as an
+enum here rather than carried as a string because the delivered `switch` has no default branch: a move
+it does not name answers nothing at all, so a schema that accepted any string would advertise a
+capability that does not exist. The values are stated as the route spells them, so the two protocols
+name the same move with the same word.
+"""
+enum CandidatePipelineAction {
+	hired
+	rejected
+}
+
+# ---------------------------------------------------------------------------------------------
+# The candidacy's own facts: the documents, the studies, the work, the skills and the origin
+# ---------------------------------------------------------------------------------------------
+
+# These five are one shape repeated: a row that names one candidacy, that is read back by the same nine
+# routes, and that is guarded by the same chain and the same two permissions. Each type below carries
+# its own columns and nothing else, and each one's list is narrowed by `candidateId` — which is the
+# column that makes the five readable as one person's file rather than as five vocabularies.
+
+"A paper the candidate filed with the candidacy: a curriculum vitae, a certificate, a reference."
+type CandidateDocument {
+	id: ID!
+	"The document's name, as the caller filed it."
+	name: String!
+	"The URL the document is served from."
+	documentUrl: String
+	"The candidacy this document belongs to."
+	candidateId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of documents."
+type CandidateDocumentEdge {
+	node: CandidateDocument!
+	cursor: String!
+}
+
+"One page of documents, with the total the filters select and the boundary cursors."
+type CandidateDocumentConnection {
+	nodes: [CandidateDocument!]!
+	edges: [CandidateDocumentEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a document list may be sorted by."
+enum CandidateDocumentSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"The order the documents are returned in. At most three keys are accepted."
+input CandidateDocumentSort {
+	field: CandidateDocumentSortField!
+	direction: SortDirection!
+}
+
+"The fields a document list may be narrowed by."
+input CandidateDocumentFilter {
+	id: IDFilter
+	name: StringFilter
+	documentUrl: StringFilter
+	candidateId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateDocumentFilter!]
+	or: [CandidateDocumentFilter!]
+	not: CandidateDocumentFilter
+}
+
+"What a caller states when it files a document under a candidacy."
+input CreateCandidateDocumentInput {
+	"The candidacy the document belongs to."
+	candidateId: ID
+	"The document's name."
+	name: String!
+	"The URL the document is served from."
+	documentUrl: String
+	organizationId: ID
+}
+
+"What a caller states when it edits a document."
+input UpdateCandidateDocumentInput {
+	id: ID!
+	"The candidacy the document belongs to."
+	candidateId: ID
+	"The document's name."
+	name: String
+	"The URL the document is served from."
+	documentUrl: String
+	organizationId: ID
+}
+
+"One course of study the candidate completed."
+type CandidateEducation {
+	id: ID!
+	"The school or institution."
+	schoolName: String!
+	"The degree the candidate was awarded."
+	degree: String!
+	"The field the degree is in."
+	field: String!
+	"When the course of study was completed."
+	completionDate: DateTime!
+	"Free-text notes the caller filed with the row."
+	notes: String
+	"The candidacy this row belongs to."
+	candidateId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of courses of study."
+type CandidateEducationEdge {
+	node: CandidateEducation!
+	cursor: String!
+}
+
+"One page of courses of study, with the total the filters select and the boundary cursors."
+type CandidateEducationConnection {
+	nodes: [CandidateEducation!]!
+	edges: [CandidateEducationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a course-of-study list may be sorted by."
+enum CandidateEducationSortField {
+	createdAt
+	updatedAt
+	schoolName
+	completionDate
+}
+
+"The order the courses of study are returned in. At most three keys are accepted."
+input CandidateEducationSort {
+	field: CandidateEducationSortField!
+	direction: SortDirection!
+}
+
+"The fields a course-of-study list may be narrowed by."
+input CandidateEducationFilter {
+	id: IDFilter
+	schoolName: StringFilter
+	degree: StringFilter
+	field: StringFilter
+	completionDate: DateTimeFilter
+	notes: StringFilter
+	candidateId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateEducationFilter!]
+	or: [CandidateEducationFilter!]
+	not: CandidateEducationFilter
+}
+
+"What a caller states when it files a course of study."
+input CreateCandidateEducationInput {
+	"The candidacy the row belongs to."
+	candidateId: ID
+	schoolName: String!
+	degree: String!
+	field: String!
+	completionDate: DateTime!
+	notes: String
+	organizationId: ID!
+}
+
+"What a caller states when it edits a course of study."
+input UpdateCandidateEducationInput {
+	id: ID!
+	schoolName: String
+	degree: String
+	field: String
+	completionDate: DateTime
+	notes: String
+	organizationId: ID
+}
+
+"One engagement the candidate held before applying."
+type CandidateExperience {
+	id: ID!
+	"The role the candidate held."
+	occupation: String!
+	"How long the candidate held it, as the caller stated it."
+	duration: String!
+	"What the candidate did there."
+	description: String
+	"The candidacy this row belongs to."
+	candidateId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of prior engagements."
+type CandidateExperienceEdge {
+	node: CandidateExperience!
+	cursor: String!
+}
+
+"One page of prior engagements, with the total the filters select and the boundary cursors."
+type CandidateExperienceConnection {
+	nodes: [CandidateExperience!]!
+	edges: [CandidateExperienceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a prior-engagement list may be sorted by."
+enum CandidateExperienceSortField {
+	createdAt
+	updatedAt
+	occupation
+}
+
+"The order the prior engagements are returned in. At most three keys are accepted."
+input CandidateExperienceSort {
+	field: CandidateExperienceSortField!
+	direction: SortDirection!
+}
+
+"The fields a prior-engagement list may be narrowed by."
+input CandidateExperienceFilter {
+	id: IDFilter
+	occupation: StringFilter
+	duration: StringFilter
+	description: StringFilter
+	candidateId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateExperienceFilter!]
+	or: [CandidateExperienceFilter!]
+	not: CandidateExperienceFilter
+}
+
+"What a caller states when it files a prior engagement."
+input CreateCandidateExperienceInput {
+	"The candidacy the row belongs to."
+	candidateId: ID
+	occupation: String!
+	duration: String!
+	description: String
+	organizationId: ID!
+}
+
+"What a caller states when it edits a prior engagement."
+input UpdateCandidateExperienceInput {
+	id: ID!
+	occupation: String
+	duration: String
+	description: String
+	organizationId: ID
+}
+
+"One skill the candidate claims. A skill is a name on this row and not a row in a shared vocabulary."
+type CandidateSkill {
+	id: ID!
+	"The skill's name, as the caller filed it."
+	name: String!
+	"The candidacy this row belongs to."
+	candidateId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of skills."
+type CandidateSkillEdge {
+	node: CandidateSkill!
+	cursor: String!
+}
+
+"One page of skills, with the total the filters select and the boundary cursors."
+type CandidateSkillConnection {
+	nodes: [CandidateSkill!]!
+	edges: [CandidateSkillEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a skill list may be sorted by."
+enum CandidateSkillSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"The order the skills are returned in. At most three keys are accepted."
+input CandidateSkillSort {
+	field: CandidateSkillSortField!
+	direction: SortDirection!
+}
+
+"The fields a skill list may be narrowed by."
+input CandidateSkillFilter {
+	id: IDFilter
+	name: StringFilter
+	candidateId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateSkillFilter!]
+	or: [CandidateSkillFilter!]
+	not: CandidateSkillFilter
+}
+
+"What a caller states when it files a skill."
+input CreateCandidateSkillInput {
+	"The candidacy the row belongs to."
+	candidateId: ID
+	"The skill's name."
+	name: String!
+	organizationId: ID!
+}
+
+"What a caller states when it edits a skill."
+input UpdateCandidateSkillInput {
+	id: ID!
+	"The skill's name."
+	name: String
+	organizationId: ID
+}
+
+"""
+Where a candidacy came from: a job board, a referral, an agency.
+
+A source is a **vocabulary** rather than a fact about one person: one row per origin, pointed at by
+every candidacy that came from it. That is why this row carries no `candidateId` — the relation is
+written from the candidate's own `sourceId` column — and why the list is the vocabulary itself rather
+than one person's origins.
+"""
+type CandidateSource {
+	id: ID!
+	"The origin's name."
+	name: String!
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of sources."
+type CandidateSourceEdge {
+	node: CandidateSource!
+	cursor: String!
+}
+
+"One page of sources, with the total the filters select and the boundary cursors."
+type CandidateSourceConnection {
+	nodes: [CandidateSource!]!
+	edges: [CandidateSourceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a source list may be sorted by."
+enum CandidateSourceSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"The order the sources are returned in. At most three keys are accepted."
+input CandidateSourceSort {
+	field: CandidateSourceSortField!
+	direction: SortDirection!
+}
+
+"The fields a source list may be narrowed by."
+input CandidateSourceFilter {
+	id: IDFilter
+	name: StringFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateSourceFilter!]
+	or: [CandidateSourceFilter!]
+	not: CandidateSourceFilter
+}
+
+"What a caller states when it files a source."
+input CreateCandidateSourceInput {
+	"The origin's name."
+	name: String!
+	organizationId: ID!
+}
+
+"What a caller states when it edits a source."
+input UpdateCandidateSourceInput {
+	id: ID!
+	"The origin's name."
+	name: String
+	organizationId: ID
+}
+
+# ---------------------------------------------------------------------------------------------
+# The interview and the vocabulary it carries
+# ---------------------------------------------------------------------------------------------
+
+"""
+One sitting of the pipeline's interview stage.
+
+The row carries the schedule, the place, the note and the average the platform computed from the
+feedbacks of the sitting. Its four collections — the feedbacks, the interviewers, the technologies and
+the personal qualities — are each read back through this domain's own root fields filtered by
+`interviewId`, which is the identifier this row is pointed at by.
+"""
+type CandidateInterview {
+	id: ID!
+	"The interview's title."
+	title: String!
+	"When the sitting begins."
+	startTime: DateTime
+	"When the sitting ends."
+	endTime: DateTime
+	"Where the sitting is held."
+	location: String
+	"The note the caller filed with the sitting."
+	note: String
+	"The average the platform computed from this sitting's feedbacks. A rating, and therefore an exact decimal."
+	rating: Decimal
+	"The candidacy this sitting belongs to."
+	candidateId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of interviews."
+type CandidateInterviewEdge {
+	node: CandidateInterview!
+	cursor: String!
+}
+
+"One page of interviews, with the total the filters select and the boundary cursors."
+type CandidateInterviewConnection {
+	nodes: [CandidateInterview!]!
+	edges: [CandidateInterviewEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields an interview list may be sorted by."
+enum CandidateInterviewSortField {
+	createdAt
+	updatedAt
+	title
+	startTime
+	endTime
+	rating
+}
+
+"The order the interviews are returned in. At most three keys are accepted."
+input CandidateInterviewSort {
+	field: CandidateInterviewSortField!
+	direction: SortDirection!
+}
+
+"The fields an interview list may be narrowed by. `candidateId` is the narrowing the delivered candidate-scoped route performs."
+input CandidateInterviewFilter {
+	id: IDFilter
+	title: StringFilter
+	startTime: DateTimeFilter
+	endTime: DateTimeFilter
+	location: StringFilter
+	note: StringFilter
+	rating: DecimalFilter
+	candidateId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateInterviewFilter!]
+	or: [CandidateInterviewFilter!]
+	not: CandidateInterviewFilter
+}
+
+"What a caller states when it schedules a sitting."
+input CreateCandidateInterviewInput {
+	"The candidacy the sitting belongs to."
+	candidateId: ID
+	title: String!
+	startTime: DateTime!
+	endTime: DateTime!
+	location: String
+	note: String
+	"The average the platform computed, where a caller states one. The delivered write persists what it is given."
+	rating: Decimal
+	organizationId: ID
+}
+
+"What a caller states when it edits a sitting. The delivered edit route takes the create body's shape."
+input UpdateCandidateInterviewInput {
+	id: ID!
+	title: String
+	startTime: DateTime
+	endTime: DateTime
+	location: String
+	note: String
+	rating: Decimal
+	isArchived: Boolean
+	organizationId: ID
+}
+
+"""
+One employee sitting on one interview panel.
+
+The row is the pair itself — an interview and an employee — and it is the pair that the panel reads, so
+the employee's own columns are read from `employee(id)` and this member carries the identifier.
+"""
+type CandidateInterviewer {
+	id: ID!
+	"The sitting this interviewer sits on."
+	interviewId: ID!
+	"The engagement of the person on the panel. The engagement is read from `employee(id)`."
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of interviewers."
+type CandidateInterviewerEdge {
+	node: CandidateInterviewer!
+	cursor: String!
+}
+
+"One page of interviewers, with the total the filters select and the boundary cursors."
+type CandidateInterviewerConnection {
+	nodes: [CandidateInterviewer!]!
+	edges: [CandidateInterviewerEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields an interviewer list may be sorted by."
+enum CandidateInterviewerSortField {
+	createdAt
+	updatedAt
+}
+
+"The order the interviewers are returned in. At most three keys are accepted."
+input CandidateInterviewerSort {
+	field: CandidateInterviewerSortField!
+	direction: SortDirection!
+}
+
+"The fields an interviewer list may be narrowed by. `interviewId` is the narrowing the delivered interview-scoped route performs."
+input CandidateInterviewerFilter {
+	id: IDFilter
+	interviewId: IDFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateInterviewerFilter!]
+	or: [CandidateInterviewerFilter!]
+	not: CandidateInterviewerFilter
+}
+
+"What a caller states when it puts one employee on one panel."
+input CreateCandidateInterviewerInput {
+	"The sitting the interviewer sits on."
+	interviewId: ID!
+	"The engagement of the person on the panel."
+	employeeId: ID
+	organizationId: ID
+}
+
+"What a caller states when it edits one panel seat."
+input UpdateCandidateInterviewerInput {
+	id: ID!
+	interviewId: ID
+	employeeId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it puts several employees on one panel in one call.
+
+The delivered body states the panel as a list of employee identifiers beside the interview, and the
+delivered handler writes one row per identifier; this input states the same thing in the same way.
+"""
+input CreateCandidateInterviewersBulkInput {
+	"The sitting every row of the call belongs to."
+	interviewId: ID!
+	"The engagements to seat on the panel, one row each."
+	employeeIds: [ID!]!
+	organizationId: ID
+}
+
+"""
+One technology the panel assesses.
+
+The row belongs to one sitting and carries the name the panel filed and the average the platform
+computed from the criteria the feedbacks rated. The criteria themselves are `CandidateCriterionsRating`
+rows, read back by `technologyId`.
+"""
+type CandidateTechnology {
+	id: ID!
+	"The technology's name, as the panel filed it."
+	name: String!
+	"The average the platform computed from the criteria rated against this row. A rating, and therefore an exact decimal."
+	rating: Decimal
+	"The sitting this row belongs to."
+	interviewId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of technologies."
+type CandidateTechnologyEdge {
+	node: CandidateTechnology!
+	cursor: String!
+}
+
+"One page of technologies, with the total the filters select and the boundary cursors."
+type CandidateTechnologyConnection {
+	nodes: [CandidateTechnology!]!
+	edges: [CandidateTechnologyEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a technology list may be sorted by."
+enum CandidateTechnologySortField {
+	createdAt
+	updatedAt
+	name
+	rating
+}
+
+"The order the technologies are returned in. At most three keys are accepted."
+input CandidateTechnologySort {
+	field: CandidateTechnologySortField!
+	direction: SortDirection!
+}
+
+"The fields a technology list may be narrowed by. `interviewId` is the narrowing the delivered interview-scoped route performs."
+input CandidateTechnologyFilter {
+	id: IDFilter
+	name: StringFilter
+	rating: DecimalFilter
+	interviewId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateTechnologyFilter!]
+	or: [CandidateTechnologyFilter!]
+	not: CandidateTechnologyFilter
+}
+
+"What a caller states when it files one technology under a sitting."
+input CreateCandidateTechnologyInput {
+	interviewId: ID
+	name: String!
+	rating: Decimal
+	organizationId: ID
+}
+
+"What a caller states when it edits a technology."
+input UpdateCandidateTechnologyInput {
+	id: ID!
+	interviewId: ID
+	name: String
+	rating: Decimal
+	organizationId: ID
+}
+
+"What a caller states when it rates a technology in one call. The delivered handler reads the row's identifier and its rating."
+input CandidateTechnologyRatingInput {
+	"The technology row."
+	id: ID!
+	"The rating to write on it."
+	rating: Decimal
+	organizationId: ID
+}
+
+"""
+One personal quality the panel assesses.
+
+The row is the technology's twin: it belongs to one sitting, it carries the name the panel filed, and
+the criteria rated against it are `CandidateCriterionsRating` rows read back by `personalQualityId`.
+The two are one shape and are served by one resolver for that reason.
+"""
+type CandidatePersonalQuality {
+	id: ID!
+	"The quality's name, as the panel filed it."
+	name: String!
+	"The average the platform computed from the criteria rated against this row. A rating, and therefore an exact decimal."
+	rating: Decimal
+	"The sitting this row belongs to."
+	interviewId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of personal qualities."
+type CandidatePersonalQualityEdge {
+	node: CandidatePersonalQuality!
+	cursor: String!
+}
+
+"One page of personal qualities, with the total the filters select and the boundary cursors."
+type CandidatePersonalQualityConnection {
+	nodes: [CandidatePersonalQuality!]!
+	edges: [CandidatePersonalQualityEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a personal-quality list may be sorted by."
+enum CandidatePersonalQualitySortField {
+	createdAt
+	updatedAt
+	name
+	rating
+}
+
+"The order the personal qualities are returned in. At most three keys are accepted."
+input CandidatePersonalQualitySort {
+	field: CandidatePersonalQualitySortField!
+	direction: SortDirection!
+}
+
+"The fields a personal-quality list may be narrowed by. `interviewId` is the narrowing the delivered interview-scoped route performs."
+input CandidatePersonalQualityFilter {
+	id: IDFilter
+	name: StringFilter
+	rating: DecimalFilter
+	interviewId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidatePersonalQualityFilter!]
+	or: [CandidatePersonalQualityFilter!]
+	not: CandidatePersonalQualityFilter
+}
+
+"What a caller states when it files one personal quality under a sitting."
+input CreateCandidatePersonalQualityInput {
+	interviewId: ID
+	name: String!
+	rating: Decimal
+	organizationId: ID
+}
+
+"What a caller states when it edits a personal quality."
+input UpdateCandidatePersonalQualityInput {
+	id: ID!
+	interviewId: ID
+	name: String
+	rating: Decimal
+	organizationId: ID
+}
+
+# ---------------------------------------------------------------------------------------------
+# The panel's verdicts: the feedbacks and the criteria they rate
+# ---------------------------------------------------------------------------------------------
+
+"""
+One panel member's verdict on one sitting.
+
+The row carries the verdict, its rating and the pipeline state it argues for, and it points at three
+rows: the candidacy, the sitting and the panel seat. Each is carried as its identifier.
+"""
+type CandidateFeedback {
+	id: ID!
+	"The verdict, as the panel member wrote it."
+	description: String
+	"The rating the panel member gave. A rating, and therefore an exact decimal."
+	rating: Decimal
+	"The pipeline state the verdict argues for, as the contracts package's own value."
+	status: String
+	"The candidacy the verdict is about."
+	candidateId: ID
+	"The sitting the verdict belongs to."
+	interviewId: ID
+	"The panel seat that filed the verdict."
+	interviewerId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of feedbacks."
+type CandidateFeedbackEdge {
+	node: CandidateFeedback!
+	cursor: String!
+}
+
+"One page of feedbacks, with the total the filters select and the boundary cursors."
+type CandidateFeedbackConnection {
+	nodes: [CandidateFeedback!]!
+	edges: [CandidateFeedbackEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a feedback list may be sorted by."
+enum CandidateFeedbackSortField {
+	createdAt
+	updatedAt
+	rating
+	status
+}
+
+"The order the feedbacks are returned in. At most three keys are accepted."
+input CandidateFeedbackSort {
+	field: CandidateFeedbackSortField!
+	direction: SortDirection!
+}
+
+"The fields a feedback list may be narrowed by. `interviewId` is the narrowing the delivered interview-scoped route performs."
+input CandidateFeedbackFilter {
+	id: IDFilter
+	description: StringFilter
+	rating: DecimalFilter
+	status: StringFilter
+	candidateId: IDFilter
+	interviewId: IDFilter
+	interviewerId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateFeedbackFilter!]
+	or: [CandidateFeedbackFilter!]
+	not: CandidateFeedbackFilter
+}
+
+"What a caller states when it files a verdict."
+input CreateCandidateFeedbackInput {
+	"The candidacy the verdict is about."
+	candidateId: ID
+	"The sitting the verdict belongs to."
+	interviewId: ID
+	"The panel seat that files the verdict."
+	interviewerId: ID
+	"The verdict."
+	description: String
+	"The rating. The delivered body requires it."
+	rating: Decimal!
+	"The pipeline state the verdict argues for."
+	status: String
+	organizationId: ID
+}
+
+"""
+What a caller states when it edits a verdict.
+
+`interviewId` is stated as well as `interviewerId`, and that is the one place in this domain where an
+identifier is carried beside the relation it addresses. The delivered handler does not read the
+feedback's own interview column when it edits a verdict: it reads the interview out of the nested panel
+seat the REST body carries, and recomputes that sitting's average from the verdicts that remain. This
+input states the same fact as the identifier the seating is written from, and the resolver hands the
+handler the nested shape it reads, so the two protocols leave the sitting in the same state.
+"""
+input UpdateCandidateFeedbackInput {
+	id: ID!
+	candidateId: ID
+	"The panel seat the verdict belongs to."
+	interviewerId: ID
+	"The sitting whose average the edit recomputes."
+	interviewId: ID
+	description: String
+	rating: Decimal
+	status: String
+	organizationId: ID
+}
+
+"""
+One rating the panel gave to one criterion of one verdict.
+
+The row is a join with a number on it: it points at the verdict that carries it and at exactly one of
+the two things the sitting is assessed on — a technology or a personal quality. The rating is a whole
+number on this row rather than a decimal, and the schema says so.
+"""
+type CandidateCriterionsRating {
+	id: ID!
+	"The rating the panel gave this criterion."
+	rating: Int!
+	"The technology the rating is about, where the criterion is a technology."
+	technologyId: ID
+	"The personal quality the rating is about, where the criterion is a quality."
+	personalQualityId: ID
+	"The verdict this rating belongs to."
+	feedbackId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"The boundary of one page of criterion ratings."
+type CandidateCriterionsRatingEdge {
+	node: CandidateCriterionsRating!
+	cursor: String!
+}
+
+"One page of criterion ratings, with the total the filters select and the boundary cursors."
+type CandidateCriterionsRatingConnection {
+	nodes: [CandidateCriterionsRating!]!
+	edges: [CandidateCriterionsRatingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"The fields a criterion-rating list may be sorted by."
+enum CandidateCriterionsRatingSortField {
+	createdAt
+	updatedAt
+	rating
+}
+
+"The order the criterion ratings are returned in. At most three keys are accepted."
+input CandidateCriterionsRatingSort {
+	field: CandidateCriterionsRatingSortField!
+	direction: SortDirection!
+}
+
+"The fields a criterion-rating list may be narrowed by. `feedbackId` is the narrowing the delivered verdict-scoped route performs."
+input CandidateCriterionsRatingFilter {
+	id: IDFilter
+	rating: NumberFilter
+	technologyId: IDFilter
+	personalQualityId: IDFilter
+	feedbackId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [CandidateCriterionsRatingFilter!]
+	or: [CandidateCriterionsRatingFilter!]
+	not: CandidateCriterionsRatingFilter
+}
+
+"What a caller states when it files one criterion rating."
+input CreateCandidateCriterionsRatingInput {
+	rating: Int!
+	technologyId: ID
+	personalQualityId: ID
+	feedbackId: ID
+	organizationId: ID
+}
+
+"What a caller states when it edits one criterion rating."
+input UpdateCandidateCriterionsRatingInput {
+	id: ID!
+	rating: Int
+	technologyId: ID
+	personalQualityId: ID
+	feedbackId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it rates a verdict's technologies in one call.
+
+The delivered body states each criterion as the row it rates plus the number to write on it, and the
+delivered handler reads exactly those two members; this input states the same two.
+"""
+input CandidateTechnologyRatingBulkInput {
+	"The technology row the rating is about."
+	technologyId: ID!
+	"The rating to write on it."
+	rating: Int!
+	organizationId: ID
+}
+
+"What a caller states when it rates a verdict's personal qualities in one call."
+input CandidatePersonalQualityRatingBulkInput {
+	"The personal-quality row the rating is about."
+	personalQualityId: ID!
+	"The rating to write on it."
+	rating: Int!
+	organizationId: ID
+}
+
+"What a caller states when it files a whole verdict's criteria in one call."
+input CreateCandidateCriterionsRatingsBulkInput {
+	"The verdict every rating of the call belongs to."
+	feedbackId: ID!
+	"The technologies the verdict rated, with the number given to each."
+	technologies: [CandidateTechnologyRatingBulkInput!]
+	"The personal qualities the verdict rated, with the number given to each."
+	qualities: [CandidatePersonalQualityRatingBulkInput!]
+}
+
+"What a caller states when it edits a whole verdict's criteria in one call."
+input UpdateCandidateCriterionsRatingsBulkInput {
+	"The rows to write, as the delivered body states them."
+	criterionsRating: [UpdateCandidateCriterionsRatingInput!]!
+	"The numbers to write on the technology rows, in the order the rows are stated."
+	technologies: [Int!]
+	"The numbers to write on the personal-quality rows, in the order the rows are stated."
+	personalQualities: [Int!]
+}

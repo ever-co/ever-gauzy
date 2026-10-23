@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -49,6 +49,7 @@ import { EmployeeWorkStatusComponent } from '../employees/table-components';
 @Component({
     templateUrl: './users.component.html',
     styleUrls: ['./users.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class UsersComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -93,6 +94,14 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	) {
 		super(translateService);
 		this.setView();
+	}
+
+	/**
+	 * The drawer's "expand to full width" icon leads to the user's edit page, which requires ORG_USERS_EDIT;
+	 * a view-only viewer (the drawer needs ORG_USERS_VIEW) would only be redirected away, so they get no icon.
+	 */
+	get canOpenUserPage(): boolean {
+		return this.store.hasPermission(PermissionsEnum.ORG_USERS_EDIT);
 	}
 
 	ngOnInit() {

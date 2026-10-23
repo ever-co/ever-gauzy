@@ -256,7 +256,16 @@ nb-select {
         line-height: var(--gauzy-table-header-line-height);
     }
 
+    // The overlay takes its trigger's width, and a narrow trigger (Source, Log Type)
+    // cramped multi-select options such as "Browser Extension" against their
+    // checkboxes. The list keeps a readable width of its own instead.
     .cdk-overlay-pane nb-option-list.gauzy-filters-options {
+        min-width: 12rem;
+
+        nb-option {
+            white-space: nowrap;
+        }
+
         nb-option,
         nb-option .text,
         nb-option-group {

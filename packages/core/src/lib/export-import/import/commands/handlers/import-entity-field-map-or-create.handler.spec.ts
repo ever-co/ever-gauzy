@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-jest.mock('./../../../../core', () => ({
+jest.mock('./../../../../core/context', () => ({
 	RequestContext: { currentTenantId: () => 'a0000000-0000-4000-8000-00000000000a' }
 }));
 jest.mock('./../../../import-record', () => ({

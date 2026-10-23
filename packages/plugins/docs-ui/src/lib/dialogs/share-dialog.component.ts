@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, firstValueFrom, of } from 'rxjs';
@@ -70,6 +70,7 @@ interface IShareRow {
 	templateUrl: './share-dialog.component.html',
 	styleUrls: ['./share-dialog.component.scss'],
 	providers: [EmployeesService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocumentShareDialogComponent extends TranslationBaseComponent implements OnInit {

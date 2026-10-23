@@ -1,14 +1,13 @@
 import { DataSource } from 'typeorm';
 import * as chalk from 'chalk';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { IFeature, IFeatureOrganization, ITenant } from '@gauzy/contracts';
 import { DEFAULT_FEATURES } from './default-features';
 import { FeatureOrganization } from './feature-organization.entity';
 import { Feature } from './feature.entity';
-import { copyAssets } from '../core/seeds/utils';
+import { copyAssets, removeGeneratedFiles } from '../core/seeds/utils';
 import { getApiPublicPath } from '../core/util';
 
 /**
@@ -16,6 +15,14 @@ import { getApiPublicPath } from '../core/util';
  *
  * This function initializes the default features for a given tenant by cleaning up
  * existing features, creating parent and child features, and saving them in the database.
+ *
+ * The cleanup is a **delete**, not a reconcile: every `feature` and `feature_organization` row is
+ * removed first and only what `DEFAULT_FEATURES` lists is written back. This runs when the database
+ * has no users — a fresh installation — so a catalogue code missing from `DEFAULT_FEATURES` is not
+ * merely left unseeded, it is removed along with the row the seed migration wrote, leaving the guard
+ * to resolve the flag as disabled with no row for an administrator to switch on. `DEFAULT_FEATURES`
+ * therefore carries the whole catalogue: the platform's own codes, and the commerce catalogue it
+ * derives from `commerce-feature-catalogue.ts`.
  *
  * @param {DataSource} dataSource - The database connection or ORM data source.
  * @param {Partial<ApplicationPluginConfig>} config - Application configuration for features.
@@ -106,7 +113,13 @@ async function createFeature(
 		name,
 		code,
 		description,
-		image: copyAssets(image, config, 'features'),
+		/**
+		 * `feature.image` is nullable and a catalogue entry is allowed to ship no artwork: the commerce
+		 * codes in `commerce-feature-catalogue.ts` all leave it empty, exactly as the seed migration
+		 * writes them. `copyAssets` takes a filename and dereferences it, so it is only called when
+		 * there is one — otherwise a null image would throw inside it for every entry that has none.
+		 */
+		image: image ? copyAssets(image, config, 'features') : undefined,
 		link,
 		status,
 		icon,
@@ -152,7 +165,7 @@ async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationP
 
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
 
-	await new Promise((resolve, reject) => {
+	await new Promise((resolve) => {
 		// Determine directories based on environment
 		const isElectron = env.isElectron;
 
@@ -167,15 +180,13 @@ async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationP
 		console.log('Feature Cleaner -> dir: ' + dir);
 
 		// delete old generated report image
-		rimraf(
-			`${dir}/!(rimraf|.gitkeep)`,
-			() => {
-				console.log(chalk.green(`CLEANED UP FEATURE IMAGES`));
-				resolve(null);
-			},
-			() => {
-				reject(null);
-			}
-		);
+		// A failed cleanup never stopped the seed (rimraf 3 called the success handler either way); it still does not.
+		removeGeneratedFiles(dir)
+			.then(
+				() => console.log(chalk.green(`CLEANED UP FEATURE IMAGES`)),
+				(error) =>
+					console.error(chalk.red(`FAILED TO CLEAN FEATURE IMAGES: ${dir}: ${error?.message ?? error}`))
+			)
+			.then(() => resolve(null));
 	});
 }

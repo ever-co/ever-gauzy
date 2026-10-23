@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbPopoverModule, NbSelectModule, NbToggleModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ThemeSelectorContainerComponent } from './container/theme-selector-container.component';
 import { SwitchThemeComponent } from './switch-theme/switch-theme.component';
 import { ThemeSelectorImageComponent } from './theme-selector-image/theme-selector-image.component';
@@ -24,7 +24,7 @@ import { ThemeSelectorComponent } from './theme-selector.component';
 		CommonModule,
 		NbSelectModule,
 		NbToggleModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbButtonModule,
 		NbIconModule,
 		NbPopoverModule

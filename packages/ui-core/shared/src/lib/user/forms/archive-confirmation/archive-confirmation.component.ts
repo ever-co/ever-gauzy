@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
@@ -41,6 +41,7 @@ import { NbDialogRef } from '@nebular/theme';
 		</nb-card>
 	`,
     styleUrl: './archive-confirmation.component.scss',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ArchiveConfirmationComponent {

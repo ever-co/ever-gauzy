@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,15 +7,22 @@ import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { PermissionGroups, IRolePermission, RolesEnum, IUser, IRole, PermissionsEnum } from '@gauzy/contracts';
-import { RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { PermissionsService, RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import {
+	ADMINISTRATION_PERMISSION_SECTIONS,
+	GENERAL_PERMISSION_SECTIONS,
+	IPermissionSection,
+	toPermissionSections
+} from './permission-sections';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-org-roles-permissions',
-    templateUrl: './roles-permissions.component.html',
-    styleUrls: ['./roles-permissions.component.scss'],
-    standalone: false
+	selector: 'ga-org-roles-permissions',
+	templateUrl: './roles-permissions.component.html',
+	styleUrls: ['./roles-permissions.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class RolesPermissionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	rolesEnum = RolesEnum;
@@ -29,6 +36,9 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	permissions: IRolePermission[] = [];
 	filteredGeneralPermissions: PermissionsEnum[] = [];
 	filteredAdminPermissions: PermissionsEnum[] = [];
+	/** The filtered lists split into titled sections; rebuilt with them on each search. */
+	generalSections: IPermissionSection[] = [];
+	adminSections: IPermissionSection[] = [];
 	roles$: Observable<IRole[]> = observableOf([]);
 	permissions$: Subject<any> = new Subject();
 	roleSubject$: Subject<any> = new Subject();
@@ -40,6 +50,7 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
+		private readonly permissionsService: PermissionsService,
 		private readonly rolesService: RoleService,
 		private readonly store: Store
 	) {
@@ -180,11 +191,18 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 			const permissionToEdit = this.permissions.find((p) => p.permission === permission);
 			const payload = { enabled, roleId, tenantId, permission };
 
-			// Update or create the permission based on its existence
-			if (permissionToEdit?.id) {
-				await this.rolePermissionsService.update(permissionToEdit.id, payload);
-			} else {
-				await this.rolePermissionsService.create(payload);
+			// The signed-in user's own permissions (`/role-permissions/me`) are answered from a recent copy for a few
+			// seconds; a change to a role must not be served from one, so the copy is forgotten around the write.
+			this.permissionsService.forgetPermissions();
+			try {
+				// Update or create the permission based on its existence
+				if (permissionToEdit?.id) {
+					await this.rolePermissionsService.update(permissionToEdit.id, payload);
+				} else {
+					await this.rolePermissionsService.create(payload);
+				}
+			} finally {
+				this.permissionsService.forgetPermissions();
 			}
 
 			// Display success message
@@ -240,6 +258,20 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 		return this.permissionGroups.ADMINISTRATION.filter(
 			(permission) => !environment.DEMO || !deniedPermissions.has(permission)
 		);
+	}
+
+	/**
+	 * How many of a group's permissions the selected role has on, over the whole
+	 * group — not the search-filtered list — for the panel header.
+	 */
+	getEnabledCount(group: 'GENERAL' | 'ADMINISTRATION'): { enabled: number; total: number } {
+		// Distinct: `PermissionGroups.GENERAL` lists ORG_TAGS_EDIT twice, and the
+		// sections show it once.
+		const permissions = [
+			...new Set(group === 'GENERAL' ? this.permissionGroups.GENERAL : this.getAdministrationPermissions())
+		];
+		const enabled = permissions.filter((permission) => !!this.enabledPermissions[permission]).length;
+		return { enabled, total: permissions.length };
 	}
 
 	/**
@@ -371,6 +403,14 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 				map((searchTerm) => {
 					this.filteredGeneralPermissions = this._filterPermissions('GENERAL', searchTerm);
 					this.filteredAdminPermissions = this._filterPermissions('ADMINISTRATION', searchTerm);
+					this.generalSections = toPermissionSections(
+						this.filteredGeneralPermissions,
+						GENERAL_PERMISSION_SECTIONS
+					);
+					this.adminSections = toPermissionSections(
+						this.filteredAdminPermissions,
+						ADMINISTRATION_PERMISSION_SECTIONS
+					);
 				})
 			)
 			.subscribe();

@@ -159,6 +159,7 @@ export class ApiService {
 	private isLogout: boolean;
 	private statusProgress: ITaskStatus;
 	private agentLogger: AgentLogger;
+	private refreshPromise: Promise<string | boolean> | null = null;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
@@ -349,7 +350,17 @@ export class ApiService {
 		return employee;
 	}
 
-	async refreshToken(): Promise<string | boolean> {
+	refreshToken(): Promise<string | boolean> {
+		// The server rotates refresh tokens, so concurrent 401s must share one refresh call
+		if (!this.refreshPromise) {
+			this.refreshPromise = this.requestTokenRefresh().finally(() => {
+				this.refreshPromise = null;
+			});
+		}
+		return this.refreshPromise;
+	}
+
+	private async requestTokenRefresh(): Promise<string | boolean> {
 		const authConfig = getAuthConfig();
 		if (!authConfig.refreshToken) {
 			return false;
@@ -363,9 +374,10 @@ export class ApiService {
 			})
 		});
 		if (res.ok) {
-			const resJson: { token: string } = await res.json();
+			// node-fetch 3 types a JSON body as unknown
+			const resJson = (await res.json()) as { token: string; refresh_token?: string };
 			if (resJson?.token) {
-				updateAuthConfig(resJson.token);
+				updateAuthConfig(resJson.token, resJson.refresh_token);
 				return resJson.token;
 			}
 		}
@@ -428,7 +440,8 @@ export class ApiService {
 			body?: string;
 			params?: any
 		} = { method: 'GET' },
-		isFile?: boolean
+		isFile?: boolean,
+		isRetry = false
 	): Promise<Record<string, unknown>> {
 		let url = this.baseURL + path;
 		if (options.method === 'GET' && options.params) {
@@ -454,10 +467,11 @@ export class ApiService {
 				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
 				if (response.status === 401 && !this.isLogout) {
-					const refreshedToken = await this.refreshToken();
+					// Retry only once: a second 401 with a fresh token means the access itself is revoked
+					const refreshedToken = isRetry ? false : await this.refreshToken();
 					if (refreshedToken) {
 						requestOptions.headers.Authorization = `Bearer ${refreshedToken as string}`;
-						return this.request(path, options, isFile);
+						return this.request(path, options, isFile, true);
 					}
 					this.handleUnAuthorize();
 				}
@@ -468,7 +482,8 @@ export class ApiService {
 			if (this.isLogout) {
 				this.isLogout = false;
 			}
-			const respJson = await response.json();
+			// node-fetch 3 types a JSON body as unknown
+			const respJson = (await response.json()) as Record<string, unknown>;
 			return respJson;
 		} catch (err) {
 			this.agentLogger.error(`Error API call, ${err.message}`);

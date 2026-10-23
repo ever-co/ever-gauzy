@@ -9,6 +9,7 @@ import {
 	IDateRangePicker
 } from '@gauzy/contracts';
 import { EmployeeStatisticsHistoryQuery } from '../employee-statistics-history.query';
+import { recurringExpenseMonths, recurringExpenseStart } from '../../recurring-expense-start';
 
 /**
  * Finds income, expense history
@@ -163,16 +164,9 @@ export class EmployeeStatisticsHistoryQueryHandler
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate =
-				expense.startDate > inputStartDate
-					? expense.startDate
-					: inputStartDate;
+			const requiredStartDate = recurringExpenseStart(expense.startDate, inputStartDate);
 
-			for (
-				const date = new Date(requiredStartDate);
-				date <= new Date(endDate);
-				date.setMonth(date.getMonth() + 1)
-			) {
+			for (const date of recurringExpenseMonths(requiredStartDate, endDate)) {
 				// Stop loading expense if the recurring expense has ended before input date
 				if (expense.endDate && date > expense.endDate) break;
 

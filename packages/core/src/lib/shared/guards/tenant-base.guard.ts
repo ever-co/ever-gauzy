@@ -1,19 +1,34 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { isJSON } from 'class-validator';
 import { RequestMethodEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 
+// Per-request trace lines: printed at debug level, i.e. only when LOG_LEVEL is debug/verbose (or unset).
+const logger = new Logger('TenantBaseGuard');
+
 @Injectable()
 export class TenantBaseGuard implements CanActivate {
 	/**
+	 * Authorises a request against the tenant the caller authenticated as.
+	 *
+	 * A REST request states its tenant in a header, a query parameter or the payload, and the guard
+	 * compares that statement with the authenticated tenant. A GraphQL operation states nothing of
+	 * the kind — it carries no query string and its payload is shaped by the operation — and asking
+	 * the execution context for an HTTP request throws, so the two are handled separately.
 	 *
 	 * @param context
 	 * @returns
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		console.log('TenantBaseGuard canActivate called');
-
 		const currentTenantId = RequestContext.currentTenantId();
+
+		if (context.getType<string>() === 'graphql') {
+			return this.canActivateGraphqlOperation(context, currentTenantId);
+		}
+
+		logger.debug('TenantBaseGuard canActivate called');
+
 		const request: any = context.switchToHttp().getRequest();
 		const method: RequestMethodEnum = request.method;
 		const { query, headers, rawHeaders } = request;
@@ -29,7 +44,10 @@ export class TenantBaseGuard implements CanActivate {
 		const headerTenantId = headers['tenant-id'];
 
 		if (headerTenantId && (rawHeaders.includes('tenant-id') || rawHeaders.includes('Tenant-Id'))) {
-			isAuthorized = currentTenantId === headerTenantId;
+			// The header names the caller's tenant — and nothing else in the request may name another one. The
+			// header used to be the whole check, and a `PUT` with header A and body {"tenantId": B} reached an
+			// update that wrote the payload's tenant as given (SEC-A-03, SEC-D-12).
+			isAuthorized = currentTenantId === headerTenantId && !this.statesAnotherTenant(request, currentTenantId);
 		} else {
 			//If request to get/delete data using another tenantId then reject request.
 			const httpMethods = [RequestMethodEnum.GET, RequestMethodEnum.DELETE];
@@ -80,8 +98,79 @@ export class TenantBaseGuard implements CanActivate {
 		if (!isAuthorized) {
 			console.log('Guard TenantBase: Unauthorized access blocked. TenantId:', headerTenantId);
 		} else {
-			console.log('Guard TenantBase: Access Allowed. TenantId:', headerTenantId);
+			logger.debug(`Guard TenantBase: Access Allowed. TenantId: ${headerTenantId}`);
 		}
 		return isAuthorized;
+	}
+
+	/**
+	 * Whether the query string or the payload names a tenant other than the caller's.
+	 *
+	 * Only explicit statements count — a `tenantId` query parameter, a `tenantId` or `tenant.id` member of the
+	 * body or of any object in a body array (bulk routes); a request that names no tenant states nothing.
+	 *
+	 * @param request The HTTP request.
+	 * @param currentTenantId The tenant the caller authenticated as.
+	 * @returns True when another tenant is named anywhere.
+	 */
+	private statesAnotherTenant(request: any, currentTenantId: string): boolean {
+		const named: unknown[] = [];
+		const queryTenantId = request?.query?.['tenantId'];
+		if (queryTenantId !== undefined && queryTenantId !== null && queryTenantId !== '') {
+			named.push(queryTenantId);
+		}
+
+		// The read shape the no-header path checks: `?data={"findInput":{"tenantId":…}}`.
+		const data = request?.query?.['data'];
+		if (typeof data === 'string' && isJSON(data)) {
+			try {
+				const findInput = JSON.parse(data)?.['findInput'];
+				if (findInput && typeof findInput === 'object' && findInput['tenantId'] !== undefined && findInput['tenantId'] !== null) {
+					named.push(findInput['tenantId']);
+				}
+			} catch {
+				// Not parsable after all: it states no tenant.
+			}
+		}
+
+		const body = request?.body;
+		for (const item of Array.isArray(body) ? body : [body]) {
+			if (!item || typeof item !== 'object') continue;
+			if (item['tenantId'] !== undefined && item['tenantId'] !== null) named.push(item['tenantId']);
+			const tenant = item['tenant'];
+			if (tenant && typeof tenant === 'object' && tenant['id'] !== undefined && tenant['id'] !== null) {
+				named.push(tenant['id']);
+			}
+		}
+
+		return named.some((tenantId) => String(tenantId) !== String(currentTenantId));
+	}
+
+	/**
+	 * Authorises a GraphQL operation.
+	 *
+	 * The operation is scoped by the tenant the caller authenticated as. A caller that additionally
+	 * states a tenant, through the same header the REST surface uses, must state its own; a caller
+	 * that states nothing is authorised on the strength of its authentication alone, because the
+	 * only tenant it can reach is the one carried by its own token.
+	 *
+	 * @param context The execution context of the operation.
+	 * @param currentTenantId The tenant carried by the caller's credentials.
+	 * @returns True when the operation may proceed.
+	 */
+	private canActivateGraphqlOperation(context: ExecutionContext, currentTenantId?: string): boolean {
+		if (!currentTenantId) {
+			return false;
+		}
+
+		const gqlContext = GqlExecutionContext.create(context).getContext();
+		const request = gqlContext?.req ?? gqlContext?.request ?? gqlContext;
+		const headerTenantId = request?.headers?.['tenant-id'];
+
+		if (headerTenantId) {
+			return currentTenantId === headerTenantId;
+		}
+
+		return true;
 	}
 }

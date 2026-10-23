@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DocumentKnowledgeStatusEnum, DocumentReviewStatusEnum, IDocument } from '@gauzy/contracts';
 
 /**
@@ -66,6 +66,7 @@ import { DocumentKnowledgeStatusEnum, DocumentReviewStatusEnum, IDocument } from
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class KnowledgeBadgeComponent {

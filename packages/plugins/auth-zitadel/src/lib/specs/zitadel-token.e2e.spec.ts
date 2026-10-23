@@ -36,12 +36,33 @@ describe('Token route for first-party clients (HTTP, against a mock OpenID Provi
 		['an operator client of another instance', { aud: ['teams-web', 'inst-1234'], azp: 'inst-1234' }],
 		['this product\'s own web client', { aud: 'gauzy-web-test', azp: 'gauzy-web-test' }],
 		['an expired token', { aud: 'teams-web', exp: Math.floor(Date.now() / 1000) - 600 }],
-		['an unverified e-mail', { aud: 'teams-web', email_verified: false }],
 		['another issuer', { aud: 'teams-web', iss: 'http://127.0.0.1:1' }]
-	])('refuses %s with 401', async (_name, claims) => {
+	])('refuses %s with a bare 401', async (_name, claims) => {
 		const idToken = await t.issuer.sign(t.issuer.idTokenClaims('teams-user', claims));
 		const response = await post({ id_token: idToken });
 		expect(response.status).toBe(401);
+		expect((await response.json()).code).toBeUndefined();
+	});
+
+	it('refuses a valid ID token whose e-mail is not verified with 401 email_unverified, and signs nothing in', async () => {
+		// The token is valid for the route: an allow-listed audience *and* authorized party. The mock issuer's
+		// default `azp` is this product's own web client, which the route refuses with a bare 401 before it
+		// ever reads `email_verified`, so the case has to state the allow-listed client as `azp` too.
+		const idToken = await t.issuer.sign(
+			t.issuer.idTokenClaims('teams-user', { aud: 'teams-web', azp: 'teams-web', email_verified: false })
+		);
+		const response = await post({ id_token: idToken });
+		expect(response.status).toBe(401);
+		const body = await response.json();
+		expect(body.code).toBe('email_unverified');
+		expect(body.workspaces).toBeUndefined();
+	});
+
+	it('never reveals an unverified e-mail for a token it does not accept', async () => {
+		const idToken = await t.issuer.sign(t.issuer.idTokenClaims('teams-user', { aud: 'someone-else', email_verified: false }));
+		const response = await post({ id_token: idToken });
+		expect(response.status).toBe(401);
+		expect((await response.json()).code).toBeUndefined();
 	});
 
 	it('refuses a tampered signature', async () => {

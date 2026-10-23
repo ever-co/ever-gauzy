@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, ITag, PluginStatus, PluginType } from '@gauzy/contracts';
 import { Actions } from '@ngneat/effects-ng';
@@ -68,6 +68,7 @@ enum PluginPriceCategory {
     selector: 'lib-plugin-marketplace-filter',
     templateUrl: './plugin-marketplace-filter.component.html',
     styleUrls: ['./plugin-marketplace-filter.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbIconModule, NbBadgeModule, NbButtonModule, NbTooltipModule, FormsModule, ReactiveFormsModule, NbFormFieldModule, NbInputModule, NbOptionModule, NbSelectModule, NbButtonGroupModule, NbSpinnerModule, NbCheckboxModule, NbTagModule, NbDatepickerModule, AsyncPipe, TitleCasePipe]
 })
 export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDestroy {

@@ -432,31 +432,34 @@ export class MakeComOAuthService {
 			// Get the tenant and organization IDs from the existing settings
 			const { tenantId, organizationId } = refreshTokenSetting;
 
-			const settingsToUpdate = [
-				{
-					settingsName: MakeSettingName.ACCESS_TOKEN,
-					settingsValue: access_token,
-					tenantId,
-					organizationId,
-					integration: { name: IntegrationEnum.MakeCom }
-				},
-				{
-					settingsName: MakeSettingName.REFRESH_TOKEN,
-					settingsValue: refresh_token,
-					tenantId,
-					organizationId,
-					integration: { name: IntegrationEnum.MakeCom }
-				},
-				{
-					settingsName: MakeSettingName.EXPIRES_AT,
-					settingsValue: expiresAt.toISOString(),
-					tenantId,
-					organizationId,
-					integration: { name: IntegrationEnum.MakeCom }
-				}
-			];
+			// Only the token rows are written: replacing the integration's settings would drop the zone,
+			// the Make.com organization and team, and the webhook settings stored beside them.
+			const tokenValues: Record<string, string> = {
+				[MakeSettingName.ACCESS_TOKEN]: access_token,
+				[MakeSettingName.EXPIRES_AT]: expiresAt.toISOString(),
+				// Keep the stored refresh token when Make.com does not issue a new one
+				...(refresh_token ? { [MakeSettingName.REFRESH_TOKEN]: refresh_token } : {})
+			};
 
-			await this.integrationSettingService.bulkUpdateOrCreate(integrationId, settingsToUpdate);
+			const storedSettings = await this.integrationSettingService.find({
+				where: { integration: { id: integrationId } }
+			});
+
+			const settingsToSave = Object.entries(tokenValues).map(([settingsName, settingsValue]) => {
+				const stored = storedSettings.find((setting) => setting.settingsName === settingsName);
+				return stored
+					? { id: stored.id, settingsValue }
+					: {
+							settingsName,
+							settingsValue,
+							integrationId,
+							integration: { id: integrationId },
+							tenantId,
+							organizationId
+						};
+			});
+
+			await this.integrationSettingService.saveMany(settingsToSave);
 
 			this.logger.log(`Successfully refreshed token for integration: ${integrationId}`);
 		} catch (error) {

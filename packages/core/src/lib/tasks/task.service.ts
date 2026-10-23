@@ -1,6 +1,15 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpStatus,
+	HttpException,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
+import {
+	DeleteResult,
 	IsNull,
 	SelectQueryBuilder,
 	Brackets,
@@ -10,9 +19,11 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
-	Raw
+	Raw,
+	SaveOptions
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -38,7 +49,13 @@ import { isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
-import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect,
+	parseTypeORMFindToMikroOrm
+} from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -47,7 +64,13 @@ import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
+import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { OrganizationProject } from '../core/entities/internal';
+import { EventBus as DomainEventBus } from '../event-bus/event-bus';
+import { TaskEvent } from '../event-bus/events/task.event';
+import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -69,7 +92,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly _mentionService: MentionService,
 		private readonly _activityLogService: ActivityLogService,
 		private readonly _employeeNotificationService: EmployeeNotificationService,
-		private readonly _employeeRecentVisitService: EmployeeRecentVisitService
+		private readonly _employeeRecentVisitService: EmployeeRecentVisitService,
+		private readonly _managedEmployeeService: ManagedEmployeeService,
+		/**
+		 * The in-process domain event bus `TaskEvent` travels on (the one the create and update handlers
+		 * publish to). Optional so that a service built by hand in a test needs no stand-in for it.
+		 */
+		@Optional() private readonly _domainEventBus?: DomainEventBus
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -128,34 +157,67 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			const taskMembers = task.members;
 
-			// Separate members into removed and new members
+			// Separate members into removed and new members. Only an update that carries `members` changes
+			// them: without it (the estimate recalculated after an estimation changes, a module or screening
+			// update, a partial PUT) every assignee used to count as removed and lost their ASSIGNMENT subscription.
+			const membersChanged = Array.isArray(data.members);
 			const memberIdSet = new Set((data.members || []).map(({ id }) => id));
 			const existingMemberIdSet = new Set((taskMembers || []).map(({ id }) => id));
 
-			const removedMembers = (taskMembers || []).filter((member) => !memberIdSet.has(member.id));
+			const removedMembers = membersChanged
+				? (taskMembers || []).filter((member) => !memberIdSet.has(member.id))
+				: [];
 			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
+			// A task that moves to another project is renumbered in the project it moves TO: `number` is unique
+			// per project, so the next number of the old project (what this computed before) could collide in
+			// the new one, or leave the task numbered as if it had never moved. The prefix follows the project
+			// too, by the rule the create path uses (the first three characters of the project's name). The move
+			// is written by the one save below, together with the rest of the update: a save that fails leaves
+			// the task where it was.
+			let moved: Partial<Task> | null = null;
 			if (data.projectId && data.projectId !== task.projectId) {
-				const { organizationId, projectId } = task;
+				// The task's organization after the update: the destination must be a project of it, and the next
+				// number is counted in it (counting in another organization could hand out a taken number).
+				const organizationId = data.organizationId ?? task.organizationId;
+				const projectId = data.projectId;
 
-				// Get the maximum task number for the project
-				const maxNumber = await this.getMaxTaskNumberByProject({
-					tenantId,
-					organizationId,
-					projectId
-				});
+				// Fails closed: a project that is not one of the organization's, or one that cannot be checked, is
+				// refused before anything is written (the tenant guard of the save checks the tenant only).
+				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
+				if (!destination.exists) {
+					throw new BadRequestException(
+						"The task cannot move to a project that is not one of the task's organization."
+					);
+				}
 
-				// Update the task with the new project and task number
-				await super.update(id, {
+				// Get the maximum task number for the project the task moves to, soft-deleted tasks included: they
+				// keep their number in the `taskNumber` unique index, as for a new task
+				const maxNumber = await this.getMaxTaskNumberByProject(
+					{
+						tenantId,
+						organizationId,
+						projectId
+					},
+					{ withDeleted: true }
+				);
+
+				moved = {
 					projectId,
-					number: maxNumber + 1
-				});
+					number: maxNumber + 1,
+					// The destination's prefix, never the input's.
+					prefix: destination.prefix,
+					// A relation object in the input would otherwise point the save back at another project.
+					...('project' in data ? { project: { id: projectId } as Task['project'] } : {})
+				};
 			}
 
-			// Update the task with the provided data
+			// Update the task with the provided data. When the task moved, the project, number and prefix computed
+			// above win over any the input carries: a client that sends the whole task back sends the old number.
 			const updatedTask = await super.create({
 				...data,
-				id
+				id,
+				...(moved ?? {})
 			});
 
 			// Register Task Sprint moving history
@@ -167,17 +229,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					taskId: updatedTask.id,
 					movedById: userId,
 					reason: data.taskSprintMoveReason,
-					organizationId: data.organizationId,
+					// A partial update may not carry the organization: fall back to the stored one
+					organizationId: data.organizationId ?? task.organizationId,
 					tenantId
 				});
 			}
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
-				await this.syncTaskMentions(id, mentionEmployeeIds);
+				// The saved organization: the edit may have moved the task to another one
+				await this.syncTaskMentions(id, mentionEmployeeIds, updatedTask.organizationId ?? task.organizationId);
 			}
 
-			const { organizationId } = updatedTask;
+			// The save returns what was written: a partial update (e.g. only the estimate) carries no organization
+			// or title, so fall back to the stored task for the subscriptions and the activity log.
+			const organizationId = updatedTask.organizationId ?? task.organizationId;
 
 			// Unsubscribe members who were unassigned from task
 			await this.unsubscribeRemovedMembers(removedMembers, updatedTask.id, organizationId, tenantId);
@@ -191,7 +257,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
 				updatedTask.id,
-				updatedTask.title,
+				updatedTask.title ?? task.title,
 				updatedTask,
 				organizationId,
 				tenantId,
@@ -216,9 +282,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param taskId - The ID of the updated task
 	 * @param mentionEmployeeIds - The IDs of the employees mentioned in the description
 	 */
-	private async syncTaskMentions(taskId: ID, mentionEmployeeIds: ID[]): Promise<void> {
+	private async syncTaskMentions(taskId: ID, mentionEmployeeIds: ID[], organizationId: ID): Promise<void> {
 		try {
-			await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, taskId, mentionEmployeeIds);
+			await this._mentionService.updateEntityMentions(
+				BaseEntityEnum.Task,
+				taskId,
+				mentionEmployeeIds,
+				undefined,
+				undefined,
+				organizationId
+			);
 		} catch (error) {
 			console.error('Error synchronizing mentions:', error);
 		}
@@ -379,6 +452,112 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Deletes a task on behalf of the current user.
+	 *
+	 * The route also admits ORG_TASK_EDIT so that a team manager, whose role holds no task-delete
+	 * permission, reaches this check. Without ALL_ORG_EDIT or ORG_TASK_DELETE, the caller must manage one
+	 * of the task's teams that belongs to the task's organization.
+	 *
+	 * @param id - The task to delete
+	 * @returns The result of the deletion
+	 * @throws ForbiddenException when the caller may not delete that task
+	 */
+	async deleteTask(id: ID): Promise<DeleteResult> {
+		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
+			const employeeId = RequestContext.currentEmployeeId();
+			const { organizationId, teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
+
+			// Task writes only check that a linked team is in the same tenant, so a task can reference a team
+			// of another organization. Only teams of the task's own organization count, and a task without
+			// an organization grants nothing.
+			const teamIds = isNotEmpty(organizationId)
+				? teams.filter((team) => team.organizationId === organizationId).map((team) => team.id)
+				: [];
+			const isTeamManager =
+				isNotEmpty(employeeId) &&
+				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
+
+			if (!isTeamManager) {
+				throw new ForbiddenException('You can only delete a task of a team you manage.');
+			}
+		}
+
+		// A hard delete leaves nothing to read afterwards, so the row the event carries is read first. A task that
+		// does not exist is a delete that removes nothing, as before; a read that FAILS stops the delete, so a task
+		// is never removed without its DELETED event.
+		let task: Task | null = null;
+		try {
+			task = await this.findOneByIdString(id);
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
+
+		const result = await this.delete(id);
+
+		if (task && result?.affected) {
+			this.publishTaskDeleted(task);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Soft-deletes a task (`DELETE /tasks/:id/soft`, GraphQL `softDeleteTask`) and publishes
+	 * `TaskEvent` `DELETED` for it, as a hard delete does.
+	 *
+	 * @param id - The task to soft-delete
+	 * @param options - Find options for the lookup
+	 * @param saveOptions - Save options for the write
+	 * @returns The soft-deleted task
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Task>, saveOptions?: SaveOptions): Promise<Task> {
+		const task = await super.softRemove(id, options, saveOptions);
+
+		if (task) {
+			this.publishTaskDeleted(task);
+		}
+
+		return task;
+	}
+
+	/**
+	 * Publishes `TaskEvent` `DELETED` for a task that was removed (hard or soft), so that integrations
+	 * that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows) learn about the removal the way they
+	 * learn about a create or an update.
+	 *
+	 * The event's `input` carries the task's scope (`tenantId`, `organizationId`, `projectId`): existing
+	 * `TaskEvent` subscribers read it before they switch on the event type. Publishing never fails the
+	 * delete: the row is already gone when this runs.
+	 *
+	 * @param task - The removed task
+	 */
+	private publishTaskDeleted(task: Task): void {
+		if (!this._domainEventBus) {
+			return;
+		}
+		const logFailure = (error: unknown) =>
+			console.error(`Failed to publish the deleted event of task ${task?.id}:`, (error as Error)?.message);
+		try {
+			const ctx = RequestContext.currentRequestContext();
+			const { tenantId, organizationId, projectId } = task;
+			// `publish` is async: a rejection is caught here as well, never left unhandled after the delete.
+			Promise.resolve(
+				this._domainEventBus.publish(
+					new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
+						tenantId,
+						organizationId,
+						projectId
+					} as ITaskUpdateInput)
+				)
+			).catch(logFailure);
+		} catch (error) {
+			logFailure(error);
+		}
+	}
+
+	/**
 	 * Recursively searches for the parent epic of a given task (issue) using a SQL recursive query.
 	 *
 	 * @param issueId The ID of the task (issue) to start the search from.
@@ -466,6 +645,33 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Resolves the employee whose tasks a member-filtered list returns, or null for no member filter.
+	 *
+	 * A CHANGE_SELECTED_EMPLOYEE holder gets the `members.id` they asked for. Anyone else keeps their own
+	 * tasks, unless they ask for a member they manage in a team of the requested organization.
+	 *
+	 * @param where - The list query's where clause, as the client sent it
+	 * @returns The employee to filter the tasks by, or null
+	 */
+	private async resolveMemberFilter(where: FindOptionsWhere<Task>): Promise<ID | null> {
+		const { members, organizationId } = where;
+		const requestedId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return requestedId;
+		}
+
+		// A repeated or nested query value is not an id: it is never looked up and the caller keeps their own tasks
+		const canManageRequested =
+			typeof requestedId === 'string' &&
+			isUUID(requestedId) &&
+			typeof organizationId === 'string' &&
+			(await this._managedEmployeeService.canManageEmployee(requestedId, undefined, organizationId));
+
+		return canManageRequested ? requestedId : RequestContext.currentEmployeeId();
+	}
+
+	/**
 	 * Find employee tasks
 	 *
 	 * @param options - Pagination options including limit, page, and sorting.
@@ -489,7 +695,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						isScreeningTask = false,
 						organizationSprintId = null
 					} = where;
-					const { organizationId, projectId, members } = where;
+					const { organizationId, projectId } = where;
 					const tenantId = RequestContext.currentTenantId();
 
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
@@ -501,11 +707,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						mikroWhere.organizationSprintId = null;
 					}
 
-					const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-						? isNotEmpty(members) && isNotEmpty(members['id'])
-							? members['id']
-							: null
-						: RequestContext.currentEmployeeId();
+					const employeeId = await this.resolveMemberFilter(where);
 
 					if (isNotEmpty(employeeId)) {
 						mikroWhere.$or = [{ members: { id: employeeId } }, { teams: { members: { employeeId } } }];
@@ -533,7 +735,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						isScreeningTask = false,
 						organizationSprintId = null
 					} = where;
-					const { organizationId, projectId, members } = where;
+					const { organizationId, projectId } = where;
+					const employeeId = await this.resolveMemberFilter(where);
 
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.innerJoin(`${query.alias}.members`, 'members');
@@ -562,18 +765,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 
-						// If user have permission to change employee
-						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-								const employeeId = members['id'];
-								subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-							}
-						} else {
-							// If employee has login and don't have permission to change employee
-							const employeeId = RequestContext.currentEmployeeId();
-							if (isNotEmpty(employeeId)) {
-								subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-							}
+						if (isNotEmpty(employeeId)) {
+							subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
 						}
 						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
@@ -770,7 +963,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					const tenantId = RequestContext.currentTenantId();
 
 					const mikroWhere: any = { tenantId, organizationId, isScreeningTask };
-					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
+					if (isNotEmpty(projectId) && isEmpty(teams)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
 					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
@@ -800,6 +993,27 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 					if (isNotEmpty(employeeId)) {
 						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
+					}
+
+					// The advanced filters (projects, tags, statuses, members, ...) were only applied by the
+					// TypeORM branch; here they were read and dropped. Build the same TypeORM where and
+					// translate it, merging the `teams` predicate with the team scoping above.
+					if (filters) {
+						const { where: advancedWhere } = parseTypeORMFindToMikroOrm<Task>({
+							where: this.buildAdvancedWhereCondition(filters, where)
+						});
+						const { teams: advancedTeams, ...advancedRest } = advancedWhere as any;
+						Object.assign(mikroWhere, advancedRest);
+						if (advancedTeams) {
+							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
+						}
+					}
+
+					// With a project and teams, the project's tasks are listed alongside the team's, as in the TypeORM
+					// branch. Every other condition stays at the top level, so it applies to both.
+					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+						mikroWhere.$or = [{ teams: mikroWhere.teams }, { projectId }];
+						delete mikroWhere.teams;
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
@@ -1020,12 +1234,46 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * The project a task moves to, read in the caller's tenant and the task's organization: whether it is one
+	 * of that organization's projects, and its task-number prefix by the rule the create path uses (the first
+	 * three characters of its name, or `null` for a project without a name). Without a tenant or an
+	 * organization to read it in, the answer is "not one of them"; a failed read is thrown, so the update fails
+	 * rather than moving the task to a project nobody checked.
+	 *
+	 * @param projectId The project the task moves to.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationId The task's organization (after the update).
+	 */
+	private async findDestinationProject(
+		projectId: ID,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<{ exists: boolean; prefix?: string | null }> {
+		if (!tenantId || !organizationId) {
+			return { exists: false };
+		}
+		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+			where: { id: projectId, tenantId, organizationId },
+			select: { id: true, name: true }
+		});
+		if (!project) {
+			return { exists: false };
+		}
+		return { exists: true, prefix: project.name?.slice(0, 3) || null };
+	}
+
+	/**
 	 * GET maximum task number by project filter
 	 *
 	 * @param options The filtering options including tenant, organization, and project details.
+	 * @param withDeleted Also count soft-deleted tasks: they keep their number in the `taskNumber` unique
+	 * index, so a caller that stores `max + 1` needs it. The max-number read routes leave it off.
 	 * @returns A Promise that resolves to the maximum task number for the given project.
 	 */
-	public async getMaxTaskNumberByProject(options: IGetTaskOptions): Promise<number> {
+	public async getMaxTaskNumberByProject(
+		options: IGetTaskOptions,
+		{ withDeleted = false }: { withDeleted?: boolean } = {}
+	): Promise<number> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
@@ -1039,11 +1287,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} else {
 						mikroWhere.projectId = null;
 					}
+					if (withDeleted) {
+						// Soft-deleted rows may predate task numbers, and PostgreSQL sorts NULL first in DESC
+						mikroWhere.number = { $ne: null };
+					}
 
 					const items = await this.mikroOrmRepository.find(mikroWhere, {
 						orderBy: { number: 'DESC' as any },
 						limit: 1,
-						fields: ['number'] as any[]
+						fields: ['number'] as any[],
+						...(withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 					});
 					const maxTaskNumber = items.length > 0 ? (items[0] as any).number || 0 : 0;
 					console.log('get max task number (MikroORM)', maxTaskNumber);
@@ -1072,6 +1325,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 					}
 
+					if (withDeleted) {
+						query.withDeleted();
+					}
+
 					// Execute the query and parse the result to a number
 					const result = await query.getRawOne();
 					const maxTaskNumber = parseInt(result.maxTaskNumber, 10);
@@ -1085,6 +1342,66 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			console.log(`Error fetching max task number: ${error.message}`, error.stack);
 			throw new HttpException({ message: 'Failed to get the max task number', error }, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * One task of the caller's tenant and organization, by its human key: the project prefix and the number.
+	 *
+	 * The key is what a person reads off a board or types into a link (`FUL-12`), and the create handler is
+	 * what writes it: the prefix is the first three characters of the project's name and the number is one
+	 * above that project's highest. So the number is unique within a project, but the prefix is not unique
+	 * across projects — "Gauzy" and "Gauzy Teams" both file under `Gau`. A caller that states the project
+	 * reads exactly one row; a caller that does not and hits two is refused rather than handed whichever
+	 * row the store returned first, because a node read that silently picks one is a wrong answer with no
+	 * way to tell it is one.
+	 *
+	 * The tenant is the credential's and the organization is the one the caller names (the REST twin
+	 * validates it against the caller's memberships, the GraphQL field reads it from the credential), so the
+	 * read can never reach another organization's board.
+	 *
+	 * @param options The tenant and organization, the prefix and number, and optionally the project.
+	 * @returns The task.
+	 * @throws NotFoundException when no task carries that key in the caller's scope.
+	 * @throws BadRequestException when the prefix and number name more than one task and no project was stated.
+	 */
+	public async findByNumber(options: {
+		tenantId?: ID;
+		organizationId?: ID;
+		prefix: string;
+		number: number;
+		projectId?: ID | null;
+	}): Promise<Task> {
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+		const { organizationId, prefix, number, projectId } = options;
+
+		// Both scope members are required: an absent one would drop out of the criterion and widen the read
+		// to every organization of the tenant, or to every tenant.
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException('TASK_SCOPE_REQUIRED: a task is read by its number within one organization.');
+		}
+
+		const where: FindOptionsWhere<Task> = {
+			tenantId,
+			organizationId,
+			prefix,
+			number,
+			...(isNotEmpty(projectId) ? { projectId } : {})
+		} as FindOptionsWhere<Task>;
+
+		// Two rows are enough to tell "one" from "more than one"; reading the rest would only cost.
+		const rows = await this.find({ where, take: 2 } as never);
+
+		if (rows.length === 0) {
+			throw new NotFoundException(`TASK_NOT_FOUND: no task ${prefix}-${number} in this organization.`);
+		}
+
+		if (rows.length > 1) {
+			throw new BadRequestException(
+				`TASK_NUMBER_AMBIGUOUS: more than one project files tasks under ${prefix}-${number}; state the project.`
+			);
+		}
+
+		return rows[0];
 	}
 
 	/**

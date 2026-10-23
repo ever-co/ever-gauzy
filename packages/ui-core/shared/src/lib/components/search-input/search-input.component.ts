@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ngx-search-input',
@@ -13,6 +13,7 @@ import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular
 			(input)="onInput($event)"
 		/>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SearchInputComponent {
