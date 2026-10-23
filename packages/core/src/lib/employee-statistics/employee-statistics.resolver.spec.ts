@@ -22,6 +22,8 @@ import {
 	EmployeeStatisticsHistoryQuery,
 	MonthAggregatedEmployeeStatisticsQuery
 } from './queries';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard } from '../shared/guards/permission.guard';
 
 /**
  * The employee statistics over GraphQL.
@@ -36,8 +38,8 @@ import {
  *   identifier, nothing to withdraw and nothing for a client to state;
  * - every field reaches the same service method, or dispatches the same query, that the REST route
  *   reaches, and answers the same calculation;
- * - **the guard chain is the controller's and no field states a permission, because the controller
- *   states none**: a resolver that demanded one would refuse a caller the REST route serves;
+ * - **the guard chain and the permissions are the controller's**: each field states the guard and the
+ *   dashboard pair its route states, so neither protocol reads the figures more widely than the other;
  * - **the two projections are the only reshaping**, and each is asserted: an aggregate row's nested
  *   account becomes the identifier the account is read by, and a history line's client row does too;
  * - money is an exact decimal throughout, and never a float.
@@ -491,14 +493,14 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'employeeStatisticsHistory', route: 'findEmployeeStatisticsHistory' }
 ];
 
-describe('EmployeeStatisticsResolver — the guard stack is the route’s and the permission is its absence', () => {
-	it('states the tenant guard on the class and no permission anywhere, as the controller does', () => {
+describe('EmployeeStatisticsResolver — the guard stack and the permissions are the route’s', () => {
+	it('states the tenant guard on the class and no permission on it, as the controller does', () => {
 		const controllerGuards = Reflect.getMetadata('__guards__', EmployeeStatisticsController) ?? [];
 		const resolverGuards = Reflect.getMetadata('__guards__', EmployeeStatisticsResolver) ?? [];
 
-		// The delivered controller scopes these reads to the caller's tenant and states no permission on
-		// the class or on any handler: the tenant is the scope, and the four reads are facts about rows
-		// the caller's own tenant already holds.
+		// The delivered controller scopes these reads to the caller's tenant on the class and states each
+		// route's permissions on its handler, because the aggregate and the employee's figures are shown on
+		// two dashboard tabs with two pairs.
 		expect(controllerGuards).toEqual([TenantPermissionGuard]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeStatisticsController)).toBeUndefined();
 		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
@@ -516,10 +518,19 @@ describe('EmployeeStatisticsResolver — the guard stack is the route’s and th
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(EmployeeStatisticsController, route));
 	});
 
-	it('states no permission on any field, because no route states one', () => {
+	it('states on each field the dashboard pair its route states, behind the permission guard', () => {
+		// Stated explicitly as well as compared above, so a pair that changed on both sides at once is still a
+		// visible change here: the aggregate is the Accounting tab's, the employee's figures the HR tab's.
+		const accounting = [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD];
+		const humanResources = [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD];
+
 		for (const { field } of ROUTE_PARITY) {
-			expect(permissionOfField(field)).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeStatisticsResolver)[field])).toBeUndefined();
+			expect(permissionOfField(field)).toEqual(
+				field === 'employeeStatisticsAggregate' ? accounting : humanResources
+			);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeStatisticsResolver)[field])).toEqual([
+				PermissionGuard
+			]);
 		}
 	});
 });
