@@ -33,7 +33,10 @@ describe('PluginBillingService tenant scope', () => {
 		const queryBuilder: any = {
 			leftJoinAndSelect: () => queryBuilder,
 			where: (clause: string, params?: Record<string, unknown>) => (where.push([clause, params]), queryBuilder),
-			andWhere: (clause: string, params?: Record<string, unknown>) => (where.push([clause, params]), queryBuilder),
+			andWhere: (clause: string, params?: Record<string, unknown>) => (
+				where.push([clause, params]),
+				queryBuilder
+			),
 			orderBy: () => queryBuilder,
 			getMany: async () => []
 		};
@@ -45,7 +48,10 @@ describe('PluginBillingService tenant scope', () => {
 		await service.findBillings({ subscriptionId: 'subscription-b' } as any);
 
 		expect(where).toContainEqual(['billing.tenantId = :tenantId', { tenantId: 'tenant-a' }]);
-		expect(where).toContainEqual(['billing.subscriptionId = :subscriptionId', { subscriptionId: 'subscription-b' }]);
+		expect(where).toContainEqual([
+			'billing.subscriptionId = :subscriptionId',
+			{ subscriptionId: 'subscription-b' }
+		]);
 	});
 
 	it('sums the billings of a subscription in the caller’s tenant only', async () => {

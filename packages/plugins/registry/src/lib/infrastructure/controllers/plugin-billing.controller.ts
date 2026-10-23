@@ -12,6 +12,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	NotFoundException,
 	Param,
 	Patch,
 	Post,
@@ -22,24 +23,46 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PluginBillingService } from '../../domain/services/plugin-billing.service';
+import { PluginService } from '../../domain/services/plugin.service';
 import { CreatePluginBillingDTO } from '../../shared/dto/create-plugin-billing.dto';
 import { UpdatePluginBillingDTO } from '../../shared/dto/update-plugin-billing.dto';
 import { IPluginBilling, IPluginBillingFindInput, IPluginBillingSummary } from '../../shared/models';
+import { resolveBillingWriteAccess } from './plugin-billing-write-access';
 
 /**
  * A plugin subscription's billing records.
  *
  * The routes stated no permission, so `PermissionGuard` let every member of the tenant through: any of them could
  * read the tenant's billing, create billing records, rewrite their amounts and mark bills paid or failed. Reading
- * now needs `PLUGIN_CONFIGURE`, as the subscription's own edits do; writing needs `PLUGIN_RESTRICT`, which only ADMIN
- * and SUPER_ADMIN hold — billing records are written by the purchase and payment flows, and no screen writes them.
+ * now needs `PLUGIN_CONFIGURE`, as the subscription's own edits do.
+ *
+ * Writing (create, `PUT`, `PATCH`) is for the plugin's publisher and the installation's operator only, on a bill of
+ * any tenant, written in the bill's own tenant (`plugin-billing-write-access.ts`); the payment handling writes bills
+ * through the service, not these routes. The subscriber's admins read and pay their bills but may not mark one paid.
+ * The write routes state `PLUGIN_CONFIGURE`, the grant a publisher manages their plugin with.
  */
 @ApiTags('Plugin Billing')
 @ApiBearerAuth()
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/subscriptions/:subscriptionId/billings')
 export class PluginBillingController {
-	constructor(private readonly pluginBillingService: PluginBillingService) {}
+	constructor(
+		private readonly pluginBillingService: PluginBillingService,
+		private readonly pluginService: PluginService
+	) {}
+
+	/**
+	 * The bill a write names, once {@link resolveBillingWriteAccess} let the caller through: it must belong to the
+	 * subscription the route names, or it is not found.
+	 */
+	private async billOfRoute(pluginId: string, subscriptionId: string, id: string): Promise<IPluginBilling> {
+		await resolveBillingWriteAccess(this.pluginBillingService, this.pluginService, pluginId, subscriptionId);
+		const billing = await this.pluginBillingService.findOneInAnyTenant(id);
+		if (!billing || billing.subscriptionId !== subscriptionId) {
+			throw new NotFoundException(`Billing record with ID ${id} not found`);
+		}
+		return billing;
+	}
 
 	/**
 	 * Create a new plugin billing record
@@ -50,12 +73,24 @@ export class PluginBillingController {
 		description: 'Plugin billing record created successfully',
 		type: 'IPluginBilling'
 	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'subscriptionId', description: 'Subscription ID', type: String, format: 'uuid' })
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
-	async create(@Body() input: CreatePluginBillingDTO): Promise<IPluginBilling> {
-		return this.pluginBillingService.create(input);
+	async create(
+		@Param('pluginId', UUIDValidationPipe) pluginId: string,
+		@Param('subscriptionId', UUIDValidationPipe) subscriptionId: string,
+		@Body() input: CreatePluginBillingDTO
+	): Promise<IPluginBilling> {
+		const subscription = await resolveBillingWriteAccess(
+			this.pluginBillingService,
+			this.pluginService,
+			pluginId,
+			subscriptionId
+		);
+		return this.pluginBillingService.createForSubscription(input, subscription);
 	}
 
 	/**
@@ -160,15 +195,21 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Plugin billing record updated successfully'
 	})
-	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'subscriptionId', description: 'Subscription ID', type: String, format: 'uuid' })
+	@ApiParam({ name: 'id', description: 'Billing record ID', type: String, format: 'uuid' })
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
+		@Param('pluginId', UUIDValidationPipe) pluginId: string,
+		@Param('subscriptionId', UUIDValidationPipe) subscriptionId: string,
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: UpdatePluginBillingDTO
 	): Promise<IPluginBilling> {
-		await this.pluginBillingService.update(id, input);
-		return await this.pluginBillingService.findOneByIdString(id);
+		await this.billOfRoute(pluginId, subscriptionId, id);
+		await this.pluginBillingService.updateInAnyTenant(id, input);
+		return await this.pluginBillingService.findOneInAnyTenant(id);
 	}
 
 	/**
@@ -182,7 +223,7 @@ export class PluginBillingController {
 		status: HttpStatus.OK,
 		description: 'Billing record status updated successfully'
 	})
-	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Patch(':id')
 	@UseValidationPipe({ whitelist: true })
 	async updateStatus(
@@ -191,14 +232,15 @@ export class PluginBillingController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() input: { status: 'paid' | 'failed'; paymentReference?: string; reason?: string }
 	): Promise<IPluginBilling> {
+		const billing = await this.billOfRoute(pluginId, subscriptionId, id);
 		if (input.status === 'paid') {
-			await this.pluginBillingService.markAsPaid(id, input.paymentReference);
+			await this.pluginBillingService.markAsPaidInAnyTenant(billing, input.paymentReference);
 		} else if (input.status === 'failed') {
-			await this.pluginBillingService.markAsFailed(id, input.reason);
+			await this.pluginBillingService.markAsFailedInAnyTenant(billing, input.reason);
 		} else {
 			// General status update
-			await this.pluginBillingService.update(id, { status: input.status as any });
+			await this.pluginBillingService.updateInAnyTenant(id, { status: input.status as any });
 		}
-		return await this.pluginBillingService.findOneByIdString(id);
+		return await this.pluginBillingService.findOneInAnyTenant(id);
 	}
 }

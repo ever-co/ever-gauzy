@@ -1,4 +1,4 @@
-import { PluginBillingStatus } from '@gauzy/contracts';
+import { ID, PluginBillingStatus } from '@gauzy/contracts';
 import { MultiORMEnum, parseFindOptionsRelations, RequestContext } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Between, LessThan, UpdateResult } from 'typeorm';
@@ -9,7 +9,9 @@ import {
 	IPluginBillingSummary,
 	IPluginBillingUpdateInput
 } from '../../shared/models/plugin-billing.model';
+import { IPluginSubscription } from '../../shared/models/plugin-subscription.model';
 import { PluginBilling } from '../entities/plugin-billing.entity';
+import { PluginSubscription } from '../entities/plugin-subscription.entity';
 import { MikroOrmPluginBillingRepository, TypeOrmPluginBillingRepository } from '../repositories';
 import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
@@ -232,6 +234,86 @@ export class PluginBillingService extends RegistryTenantAwareCrudService<PluginB
 		};
 
 		return this.update(id, updateData);
+	}
+
+	/*
+	 * Writes of the plugin's publisher and of the installation's operator, who write the bills of every tenant: the
+	 * reads and writes below are not scoped to the caller's tenant. Only for a caller checked by
+	 * `resolveBillingWriteAccess` (`plugin-billing-write-access.ts`).
+	 */
+
+	/**
+	 * The subscription a bill route names, in whichever tenant holds it.
+	 *
+	 * @param subscriptionId - The subscription.
+	 */
+	async findSubscriptionInAnyTenant(subscriptionId: ID): Promise<PluginSubscription | null> {
+		return this.typeOrmPluginBillingRepository.manager.findOne(PluginSubscription, {
+			where: { id: subscriptionId }
+		});
+	}
+
+	/**
+	 * A bill by id, in whichever tenant holds it.
+	 *
+	 * @param id - The bill.
+	 */
+	async findOneInAnyTenant(id: ID): Promise<PluginBilling | null> {
+		return this.typeOrmPluginBillingRepository.findOne({ where: { id } });
+	}
+
+	/**
+	 * Files a bill under a subscription, in the subscription's tenant and organization rather than the caller's.
+	 *
+	 * @param input - The bill.
+	 * @param subscription - The subscription it bills.
+	 */
+	async createForSubscription(
+		input: IPluginBillingCreateInput,
+		subscription: Pick<IPluginSubscription, 'id' | 'tenantId' | 'organizationId'>
+	): Promise<PluginBilling> {
+		return this.saveWithoutEnrichment({
+			...input,
+			subscriptionId: subscription.id,
+			tenantId: subscription.tenantId,
+			organizationId: subscription.organizationId
+		});
+	}
+
+	/**
+	 * Writes to a bill in whichever tenant holds it; its tenant, organization and subscription stay as stored.
+	 *
+	 * @param id - The bill.
+	 * @param input - The fields to write.
+	 */
+	async updateInAnyTenant(id: ID, input: IPluginBillingUpdateInput): Promise<void> {
+		await this.typeOrmPluginBillingRepository.update({ id }, input as Partial<PluginBilling>);
+	}
+
+	/**
+	 * Marks a bill read with {@link findOneInAnyTenant} paid, as {@link markAsPaid} does in the caller's tenant.
+	 *
+	 * @param billing - The bill.
+	 * @param paymentReference - The payment's reference, kept in the bill's metadata.
+	 */
+	async markAsPaidInAnyTenant(billing: IPluginBilling, paymentReference?: string): Promise<void> {
+		await this.updateInAnyTenant(billing.id, {
+			status: PluginBillingStatus.PAID,
+			...(paymentReference && { metadata: { ...billing.metadata, paymentReference } })
+		});
+	}
+
+	/**
+	 * Marks a bill read with {@link findOneInAnyTenant} failed, as {@link markAsFailed} does in the caller's tenant.
+	 *
+	 * @param billing - The bill.
+	 * @param reason - Why the payment failed, kept in the bill's metadata.
+	 */
+	async markAsFailedInAnyTenant(billing: IPluginBilling, reason?: string): Promise<void> {
+		await this.updateInAnyTenant(billing.id, {
+			status: PluginBillingStatus.FAILED,
+			metadata: reason ? { ...billing.metadata, failureReason: reason } : billing.metadata
+		});
 	}
 
 	/**
