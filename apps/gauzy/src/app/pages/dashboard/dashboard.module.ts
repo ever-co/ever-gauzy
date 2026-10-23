@@ -65,7 +65,7 @@ import {
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent
 } from './employee-charts';
-import { AllTeamComponent, ChartComponent, TeamCardComponent, TeamComponent, TeamMemberComponent } from './team';
+import { ChartComponent, TeamCardComponent, TeamComponent, TeamMemberComponent } from './team';
 
 // NB Modules
 const NB_MODULES = [
@@ -124,8 +124,7 @@ const COMPONENTS = [
 	TeamComponent,
 	TeamCardComponent,
 	TeamMemberComponent,
-	ChartComponent,
-	AllTeamComponent
+	ChartComponent
 ];
 
 @NgModule({
