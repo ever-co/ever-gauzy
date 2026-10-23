@@ -51,12 +51,6 @@ import { IDocumentQuotaState } from './quota.calculator';
 const UPLOAD_SOURCE_ALLOWLIST = [DocumentSourceEnum.UPLOAD, DocumentSourceEnum.CHAT, DocumentSourceEnum.EDITOR];
 
 /**
- * Sources that are system-originated captures: over quota they WARN and proceed, so
- * automated intake never silently drops a business record (08 §5.7).
- */
-const QUOTA_WARN_ONLY_SOURCES = [DocumentSourceEnum.CHAT, DocumentSourceEnum.EMAIL];
-
-/**
  * The ONLY stored types a byte response may render in the browser tab (`08 §5.5`). Everything
  * else — Office formats, csv/txt/md, and above all `text/html` — is served as an attachment
  * with a neutral content type, so the API origin can never execute stored markup.
@@ -114,8 +108,6 @@ interface IUploadBatchContext {
 	classifyWithAi: boolean;
 	/** Mutable: the accepted bytes of this batch accumulate into `usedBytes`. */
 	quotaState: IDocumentQuotaState;
-	/** True for system-originated captures — over quota they WARN and proceed. */
-	quotaWarnOnly: boolean;
 }
 
 /**
@@ -299,8 +291,7 @@ export class DocumentUploadService {
 			importToKnowledge: input.importToKnowledge ?? defaults.importToKnowledgeDefault,
 			defaultVisibility: input.visibility ?? defaults.defaultVisibility,
 			classifyWithAi: input.classifyWithAi ?? defaults.autoClassify,
-			quotaState,
-			quotaWarnOnly: QUOTA_WARN_ONLY_SOURCES.includes(seed.source)
+			quotaState
 		};
 	}
 
@@ -335,7 +326,7 @@ export class DocumentUploadService {
 				};
 			}
 
-			// 1b) Organization storage quota. System captures warn and proceed.
+			// 1b) Organization storage quota.
 			const overQuota = this.rejectOverQuota(file, context);
 			if (overQuota) {
 				return overQuota;
@@ -362,26 +353,22 @@ export class DocumentUploadService {
 	}
 
 	/**
-	 * Organization storage quota check (08 §5.7). System-originated captures (`QUOTA_WARN_ONLY_
-	 * SOURCES`) WARN and proceed so automated intake never silently drops a business record;
-	 * every other source is rejected.
+	 * Organization storage quota check (08 §5.7): a file that would exceed the quota is rejected,
+	 * whatever source the upload claims.
+	 *
+	 * The quota's warn-and-proceed rule is for system-originated captures, so automated intake never
+	 * silently drops a business record, and those (the chat and inbound-mail captures) write their
+	 * documents without passing through this endpoint. Applied here, it was decided by the `source` the
+	 * client claims, and `CHAT` is claimable: any uploader bypassed the quota by stating it.
 	 *
 	 * @param file The stored upload.
 	 * @param context The per-batch context (its `quotaState` carries the running batch usage).
 	 * @returns The rejection to record, or `null` when the file may proceed.
 	 */
 	private rejectOverQuota(file: UploadedFile, context: IUploadBatchContext): IUploadFileOutcome | null {
-		const { organizationId, quotaState, source } = context;
+		const { quotaState } = context;
 
 		if (!this.documentQuotaService.exceeds(file.size, quotaState)) {
-			return null;
-		}
-		if (context.quotaWarnOnly) {
-			this.logger.warn(
-				`Organization ${organizationId} is over its documents storage quota ` +
-					`(${quotaState.usedBytes}/${quotaState.quotaBytes} bytes) — accepting the ` +
-					`${source} capture anyway so automated intake never drops a record.`
-			);
 			return null;
 		}
 		return {
