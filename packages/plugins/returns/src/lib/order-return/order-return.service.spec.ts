@@ -236,6 +236,7 @@ const VARIANT = '00000000-0000-4000-8000-000000000030';
 const SECOND_VARIANT = '00000000-0000-4000-8000-000000000031';
 const WAREHOUSE = '00000000-0000-4000-8000-000000000040';
 const OTHER_WAREHOUSE = '00000000-0000-4000-8000-000000000041';
+const THEIR_WAREHOUSE = '00000000-0000-4000-8000-000000000042';
 
 type Row = Record<string, any>;
 
@@ -243,6 +244,7 @@ type Row = Record<string, any>;
 interface ITables {
 	order_return: Row[];
 	order_return_line: Row[];
+	warehouse: Row[];
 }
 
 /**
@@ -301,7 +303,11 @@ function repository(tables: ITables, tableName: keyof ITables) {
 		Object.entries(where ?? {}).every(([field, expected]) => matchesValue(row[field], expected));
 	/** The table an entity class names, for a read through MikroORM's entity manager. */
 	const tableOf = (entity: { name?: string }): keyof ITables =>
-		entity?.name === 'OrderReturnLine' ? 'order_return_line' : 'order_return';
+		entity?.name === 'OrderReturnLine'
+			? 'order_return_line'
+			: entity?.name === 'Warehouse'
+				? 'warehouse'
+				: 'order_return';
 	/**
 	 * MikroORM's entity manager, which reads the table an entity class names, with the soft-delete filter on.
 	 *
@@ -529,7 +535,13 @@ function returnFixture(
 ) {
 	const tables: ITables = {
 		order_return: [...(options.returns ?? [returnRow('return-1')])],
-		order_return_line: [...(options.lines ?? [lineRow('line-1')])]
+		order_return_line: [...(options.lines ?? [lineRow('line-1')])],
+		// The caller's two locations, and one of another organization of the same tenant.
+		warehouse: [
+			{ id: WAREHOUSE, tenantId: TENANT, organizationId: ORG },
+			{ id: OTHER_WAREHOUSE, tenantId: TENANT, organizationId: ORG },
+			{ id: THEIR_WAREHOUSE, tenantId: TENANT, organizationId: OTHER_ORG }
+		]
 	};
 	const typeOrmOrderReturnRepository = repository(tables, 'order_return');
 	const typeOrmOrderReturnLineRepository = repository(tables, 'order_return_line');
@@ -681,7 +693,12 @@ function returnFixture(
 	};
 
 	// The entity manager the conditional update and the event both go through.
-	(typeOrmOrderReturnRepository as Row).manager = { name: 'return-manager' };
+	(typeOrmOrderReturnRepository as Row).manager = {
+		name: 'return-manager',
+		// The receipt reads the locations it writes at through it.
+		find: async (entity: { name?: string }, findOptions: Row = {}) =>
+			await typeOrmOrderReturnRepository.getEntityManager().find(entity, findOptions.where)
+	};
 	const service = new OrderReturnService(
 		typeOrmOrderReturnRepository as never,
 		mikroOrmOrderReturnRepository as never,
@@ -1227,6 +1244,37 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 		expect(outcome.movementIds).toEqual(['movement-1']);
 		expect(fixture.movements[0].warehouseId).toBe(OTHER_WAREHOUSE);
 		expect(fixture.returnRow('return-1')?.warehouseId).toBe(OTHER_WAREHOUSE);
+	});
+
+	it('refuses a receiving location of another organization, wherever the receipt takes it from', async () => {
+		// The stock ledger checks only the tenant of the location it writes at: a return of one organization could
+		// restock units into another organization's warehouse.
+		const cases: Array<{ header?: string; line?: string; requested?: string }> = [
+			{ requested: THEIR_WAREHOUSE },
+			{ line: THEIR_WAREHOUSE },
+			{ header: THEIR_WAREHOUSE },
+			{ requested: 'no-such-warehouse' }
+		];
+
+		for (const at of cases) {
+			const fixture = returnFixture({
+				returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, warehouseId: at.header })],
+				lines: [lineRow('line-1', { quantity: '1.000000', warehouseId: at.line })]
+			});
+			const before = { ...fixture.line('line-1') };
+
+			await expect(
+				fixture.service.receive(
+					'return-1',
+					[{ lineId: 'line-1', receivedQuantity: '1' }],
+					at.requested ? { warehouseId: at.requested } : {}
+				)
+			).rejects.toMatchObject({ response: { code: 'RETURN_WAREHOUSE_NOT_FOUND' } });
+			expect(fixture.movements).toEqual([]);
+			expect(fixture.recordedReceipts).toEqual([]);
+			expect(fixture.line('line-1')).toEqual(before);
+			expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.APPROVED });
+		}
 	});
 
 	it('issues the refund only after the goods are in, and records the amount on the return', async () => {
