@@ -7,6 +7,7 @@ import { UpdateEmployeeTotalWorkedHoursCommand } from '../../commands/update-emp
 import { RequestContext } from '../../../../core/context';
 import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';
+import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
@@ -33,6 +34,9 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 
 		// Retrieve the tenant ID from the current context or the provided one in the input
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+		// The project, task, client and team the log names are rows of its tenant, checked before anything is written
+		await assertTimeLogReferencesOfTenant(this.typeOrmTimeLogRepository, input, tenantId);
 
 		// Create timesheet if it doesn't exist
 		const timesheet = await this._commandBus.execute(
