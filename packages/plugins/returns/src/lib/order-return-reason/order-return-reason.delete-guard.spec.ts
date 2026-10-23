@@ -33,8 +33,6 @@
  */
 
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
-
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -45,17 +43,6 @@ jest.mock('@gauzy/core', () => {
 			protected readonly typeOrmRepository: any,
 			protected readonly mikroOrmRepository?: any
 		) {}
-
-		/** The tenant-scoped read by id, which raises on a miss as `TenantAwareCrudService` does. */
-		async findOneByIdString(id: any): Promise<any> {
-			const record = await this.typeOrmRepository.findOne({ where: { id } });
-
-			if (!record) {
-				throw new NotFoundException('The requested record was not found');
-			}
-
-			return record;
-		}
 
 		async delete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.delete(criteria);
