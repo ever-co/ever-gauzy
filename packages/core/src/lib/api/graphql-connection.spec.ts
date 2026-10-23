@@ -3,6 +3,7 @@ import { CursorCodec } from './cursor';
 import {
 	ConnectionFilter,
 	ConnectionFieldKind,
+	ConnectionSortKey,
 	MAX_CONNECTION_PAGE_SIZE,
 	applyConnectionFilter,
 	buildConnection,
@@ -224,6 +225,99 @@ describe('buildConnection — the shape of a page', () => {
 		const descending = connect({ sort: [{ field: 'placedAt', direction: 'DESC' }] });
 		expect(descending.nodes.map((row) => row.id)).toEqual([UNDATED, LATE, EARLY]);
 	});
+});
+
+describe('buildConnection — a cursor whose row is gone resumes at its position', () => {
+	// #11206: the fallback compared the cursor's RFC 3339 text with the row's Date and ignored the
+	// direction, so `after` restarted at the first row and `before` answered an empty page.
+	const [A, B, C, D] = ['a', 'b', 'c', 'd'].map((suffix) => `00000000-0000-4000-8000-00000000000${suffix}`);
+	const rows = [
+		{ id: A, createdAt: new Date('2026-01-01T00:00:00.000Z') },
+		{ id: B, createdAt: new Date('2026-01-02T00:00:00.000Z') },
+		{ id: C, createdAt: new Date('2026-01-02T00:00:00.000Z') },
+		{ id: D, createdAt: new Date('2026-01-03T00:00:00.000Z') }
+	];
+
+	it.each([
+		[
+			'createdAt DESC, id DESC',
+			[
+				{ field: 'createdAt', direction: 'DESC' },
+				{ field: 'id', direction: 'DESC' }
+			],
+			C,
+			[B, A],
+			[D]
+		],
+		['createdAt ASC', [{ field: 'createdAt', direction: 'ASC' }], B, [C, D], [A]],
+		[
+			'createdAt DESC, id ASC',
+			[
+				{ field: 'createdAt', direction: 'DESC' },
+				{ field: 'id', direction: 'ASC' }
+			],
+			B,
+			[C, A],
+			[D]
+		]
+	] as [string, ConnectionSortKey[], string, string[], string[]][])(
+		'%s: after and before a deleted row answer the rows on either side of it',
+		(_label, defaultSort, gone, after, before) => {
+			const connect = (from: typeof rows, request: Parameters<typeof buildConnection>[0]['request']) =>
+				buildConnection({
+					rows: from,
+					filterable: { id: 'ID', createdAt: 'DATE' },
+					sortable: [],
+					defaultSort,
+					request
+				});
+			const cursor = connect(rows, { first: 10 }).edges.find((edge) => edge.node.id === gone)?.cursor;
+			const remaining = rows.filter((row) => row.id !== gone);
+
+			expect(connect(remaining, { first: 10, after: cursor }).nodes.map((row) => row.id)).toEqual(after);
+			expect(connect(remaining, { last: 10, before: cursor }).nodes.map((row) => row.id)).toEqual(before);
+		}
+	);
+
+	// A null sorts last ascending and first descending, and the id orders the nulls among themselves. The
+	// cursor of a row with no value spells it as empty text, which on a date or a number can only be the
+	// null: on a declared field the kind says so, on a field that is only sortable its other rows do.
+	const [E, F, G] = ['e', 'f', 'g'].map((suffix) => `00000000-0000-4000-8000-00000000000${suffix}`);
+	const valued = [
+		{ id: A, createdAt: new Date('2026-01-01T00:00:00.000Z'), threshold: 5 },
+		{ id: B, createdAt: new Date('2026-01-02T00:00:00.000Z'), threshold: 10 },
+		{ id: E, createdAt: null, threshold: null },
+		{ id: F, createdAt: null, threshold: null },
+		{ id: G, createdAt: null, threshold: null }
+	];
+
+	it.each([
+		['declared createdAt DESC, id DESC', 'createdAt', 'DESC', [E, B, A], [G]],
+		['declared createdAt ASC, id ASC', 'createdAt', 'ASC', [G], [A, B, E]],
+		['sortable-only threshold DESC, id DESC', 'threshold', 'DESC', [E, B, A], [G]],
+		['sortable-only threshold ASC, id ASC', 'threshold', 'ASC', [G], [A, B, E]]
+	] as [string, string, ConnectionSortKey['direction'], string[], string[]][])(
+		'%s: a deleted row with no value resumes among the nulls by the id',
+		(_label, field, direction, after, before) => {
+			const defaultSort: ConnectionSortKey[] = [
+				{ field, direction },
+				{ field: 'id', direction }
+			];
+			const connect = (from: typeof valued, request: Parameters<typeof buildConnection>[0]['request']) =>
+				buildConnection({
+					rows: from,
+					filterable: { id: 'ID', createdAt: 'DATE' },
+					sortable: ['createdAt', 'threshold'],
+					defaultSort,
+					request
+				});
+			const cursor = connect(valued, { first: 10 }).edges.find((edge) => edge.node.id === F)?.cursor;
+			const remaining = valued.filter((row) => row.id !== F);
+
+			expect(connect(remaining, { first: 10, after: cursor }).nodes.map((row) => row.id)).toEqual(after);
+			expect(connect(remaining, { last: 10, before: cursor }).nodes.map((row) => row.id)).toEqual(before);
+		}
+	);
 });
 
 describe('buildConnection — what a caller may state', () => {

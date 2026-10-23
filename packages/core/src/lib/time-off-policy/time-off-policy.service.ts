@@ -1,4 +1,4 @@
-import { ID, ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
+import { ID, IEmployee, ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { RequestContext } from '../core/context';
@@ -9,6 +9,42 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
 import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-policy.repository';
 import { TimeOffPolicy } from './time-off-policy.entity';
+
+/**
+ * An employee named by a policy write. The Angular dialog and MCP send ids, while the contract
+ * (`IEmployee[]`) and the GraphQL resolver send rows.
+ */
+type EmployeeReference = ID | Pick<IEmployee, 'id'>;
+
+/**
+ * The id one employee reference carries, whether it came as an id or as a row.
+ */
+function toEmployeeId(employee: EmployeeReference): ID | undefined {
+	if (typeof employee === 'string') {
+		return employee;
+	}
+	return employee?.id;
+}
+
+/**
+ * The ids the employee lookup takes. `In(...)` only binds ids: a row reaches the database as JSON
+ * and an absent list is not iterable, so both used to fail the whole write. An entry without an id
+ * is refused rather than skipped, so a malformed list cannot silently clear the members.
+ */
+function toEmployeeIds(employees: EmployeeReference[] | null | undefined): ID[] {
+	const ids: ID[] = [];
+	if (!Array.isArray(employees)) {
+		return ids;
+	}
+	for (const employee of employees) {
+		const id = toEmployeeId(employee);
+		if (!id) {
+			throw new HttpException('Each employee must have an id', HttpStatus.BAD_REQUEST);
+		}
+		ids.push(id);
+	}
+	return ids;
+}
 
 @Injectable()
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {
@@ -47,23 +83,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.isDefault = entity.isDefault;
 
 			// Find employees
-			let employees;
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					employees = await this.mikroOrmEmployeeRepository.find(
-						{ id: { $in: entity.employees as unknown as string[] }, tenantId, organizationId } as any,
-						{ populate: ['user'] }
-					);
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					employees = await this.typeOrmEmployeeRepository.find({
-						where: { id: In(entity.employees), tenantId, organizationId },
-						relations: { user: true }
-					});
-					break;
-			}
-			policy.employees = employees;
+			policy.employees = await this.findPolicyEmployees(entity.employees, tenantId, organizationId);
 
 			// Save the policy
 			return await this.save(policy);
@@ -107,23 +127,11 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.accrualFrequency = entity.accrualFrequency;
 			policy.isDefault = entity.isDefault;
 
-			let employees;
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					employees = await this.mikroOrmEmployeeRepository.find(
-						{ id: { $in: entity.employees as unknown as string[] }, tenantId, organizationId } as any,
-						{ populate: ['user'] }
-					);
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					employees = await this.typeOrmEmployeeRepository.find({
-						where: { id: In(entity.employees), tenantId, organizationId },
-						relations: { user: true }
-					});
-					break;
+			// A body without employees keeps the current members: the save skips a relation left unset.
+			const hasEmployeesInBody = Array.isArray(entity.employees);
+			if (hasEmployeesInBody) {
+				policy.employees = await this.findPolicyEmployees(entity.employees, tenantId, organizationId);
 			}
-			policy.employees = employees;
 
 			// Save the policy
 			return await this.save(policy);
@@ -133,6 +141,35 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 				throw error;
 			}
 			throw new HttpException(`Error while updating time-off policy: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * The employees a policy write names, looked up in the caller's own tenant and organization.
+	 *
+	 * @param employees Ids or rows, as the write received them
+	 * @param tenantId
+	 * @param organizationId
+	 * @returns
+	 */
+	private async findPolicyEmployees(
+		employees: EmployeeReference[] | null | undefined,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<IEmployee[]> {
+		const employeeIds = toEmployeeIds(employees);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmEmployeeRepository.find(
+					{ id: { $in: employeeIds }, tenantId, organizationId } as any,
+					{ populate: ['user'] }
+				);
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmEmployeeRepository.find({
+					where: { id: In(employeeIds), tenantId, organizationId },
+					relations: { user: true }
+				});
 		}
 	}
 }

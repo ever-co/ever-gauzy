@@ -15,18 +15,35 @@
 		} @else if (!board.loading && !total) {
 		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
-		<div class="board" role="list">
+		<div class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
-			<section class="board-column" role="listitem" [attr.aria-label]="column.name">
+			<section class="board-column" role="listitem" [attr.aria-label]="column.name" [attr.data-column-id]="column.id" [class.is-refusing]="refusingColumnId === column.id">
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
 					<span class="board-column-count">{{ column.cards.length }}</span>
 				</header>
-				<ul class="board-cards">
+				<ul
+					class="board-cards"
+					cdkDropList
+					[cdkDropListData]="column"
+					[cdkDropListDisabled]="!canMove"
+					[cdkDropListEnterPredicate]="acceptsDrop"
+					[cdkDropListSortingDisabled]="true"
+					(cdkDropListDropped)="drop($event)"
+				>
 					@for (card of column.cards; track card.id) {
-					<li>
-						<a class="board-card" [class.is-done]="card.done" [routerLink]="taskLink(card.id)">
+					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }" (cdkDragMoved)="onDragMoved($event)">
+						<a
+							class="board-card"
+							[class.is-done]="card.done"
+							[class.is-saving]="card.saving"
+							[class.is-draggable]="canMove"
+							[attr.aria-busy]="card.saving || null"
+							[routerLink]="[]"
+							[queryParams]="{ task: card.id }"
+							queryParamsHandling="merge"
+						>
 							<span class="board-card-title">{{ card.title }}</span>
 							<span class="board-card-meta">
 								@if (card.key) {
@@ -42,6 +59,31 @@
 								</span>
 								}
 							</span>
+							<!-- Time worked against the estimate; without one, against the most-worked task. -->
+							@if (card.progress?.hint; as hint) {
+							<span
+								class="board-card-progress"
+								[class.is-over]="card.progress.over"
+								[class.is-relative]="card.progress.relative"
+								role="progressbar"
+								aria-valuemin="0"
+								[attr.aria-valuenow]="card.progress.share"
+								[attr.aria-label]="'PROJECT_VIEW.TASK_PROGRESS' | translate"
+								[attr.aria-valuetext]="hint.key | translate : hint.params"
+								[nbTooltip]="hint.key | translate : hint.params"
+								nbTooltipPlacement="top"
+							>
+								<span class="board-card-progress-bar" aria-hidden="true">
+									<span [style.width.%]="card.progress.fill"></span>
+								</span>
+								<span class="board-card-progress-figures">
+									<span class="board-card-progress-time">{{ card.progress.worked }}</span>
+									@if (card.progress.share !== null) {
+									<span class="board-card-progress-share">{{ card.progress.share }}%</span>
+									}
+								</span>
+							</span>
+							}
 							<span class="board-card-footer">
 								@if (card.due) {
 								<span class="board-card-due" [class.is-overdue]="card.overdue" [class.is-soon]="card.soon">

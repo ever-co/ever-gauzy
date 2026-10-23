@@ -19,7 +19,7 @@
 # (and mirrored in the worker/webapp Dockerfiles): the dependencies stage COPY, the
 # prod-dependencies stage COPY, and the production stage per-package node_modules copy.
 
-FROM node:26.11.1-alpine3.24 AS dependencies
+FROM node:26.12.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -170,7 +170,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     yarn cache clean && \
     rm -f .npmrc .yarnrc
 
-FROM node:26.11.1-alpine3.24 AS prod-dependencies
+FROM node:26.12.1-alpine3.24 AS prod-dependencies
 
 ENV CI=true
 
@@ -318,7 +318,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:26.11.1-alpine3.24 AS development
+FROM node:26.12.1-alpine3.24 AS development
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
@@ -332,7 +332,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:26.11.1-alpine3.24 AS build
+FROM node:26.12.1-alpine3.24 AS build
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
@@ -396,7 +396,7 @@ RUN --mount=type=bind,from=dependencies,source=/srv/gauzy/node_modules,target=/s
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:26.11.1-alpine3.24 AS production
+FROM node:26.12.1-alpine3.24 AS production
 
 WORKDIR /srv/gauzy
 

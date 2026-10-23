@@ -11,8 +11,8 @@ export interface HeaderToolbarProps {
 }
 
 /**
- * The second header row of the Angular tab: the "Auto Refresh" `nb-toggle` (small, basic) and
- * the outline "Refresh" button, which is disabled while auto-refresh is on.
+ * The start of the Angular tab's header action strip: the "Auto Refresh" `nb-toggle` (small,
+ * basic) and the outline "Refresh" button, which is disabled while auto-refresh is on.
  */
 export function HeaderToolbar({ autoRefresh, onAutoRefreshChange, onRefresh }: HeaderToolbarProps) {
 	const { t } = useTranslation();
@@ -34,9 +34,19 @@ export function HeaderToolbar({ autoRefresh, onAutoRefreshChange, onRefresh }: H
 				</span>
 				<span className="gz-rtt-toggle-text">{t('BUTTONS.AUTO_REFRESH')}</span>
 			</label>
-			<NbButton className="gz-rtt-refresh" appearance="outline" status="basic" size="small" disabled={autoRefresh} onClick={onRefresh}>
+			{/* `.gz-rtt-action-label` is hidden at <=36rem, so the button needs an explicit accessible name. */}
+			<NbButton
+				className="gz-rtt-refresh"
+				appearance="outline"
+				status="basic"
+				size="small"
+				disabled={autoRefresh}
+				onClick={onRefresh}
+				title={t('BUTTONS.REFRESH')}
+				aria-label={t('BUTTONS.REFRESH')}
+			>
 				<NbIcon icon="sync-outline" />
-				{t('BUTTONS.REFRESH')}
+				<span className="gz-rtt-action-label">{t('BUTTONS.REFRESH')}</span>
 			</NbButton>
 		</div>
 	);

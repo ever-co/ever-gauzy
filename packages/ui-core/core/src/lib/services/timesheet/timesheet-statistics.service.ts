@@ -14,6 +14,8 @@ import {
 	ITimeSlotStatistics,
 	IProjectsStatistics,
 	ITasksStatistics,
+	IGetTaskEmployeesStatistics,
+	ITaskEmployeesStatistics,
 	IManualTimesStatistics
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -57,6 +59,19 @@ export class TimesheetStatisticsService {
 	getTasksStatistics(input: IGetTasksStatistics): Promise<ITasksStatistics[]> {
 		// Fetch tasks statistics via POST request
 		return firstValueFrom(this.http.post<ITasksStatistics[]>(`${API_PREFIX}/timesheet/statistics/tasks`, input));
+	}
+
+	/**
+	 * Each employee's tracked time on the given tasks (`taskIds`), summed by the server, the most first.
+	 *
+	 * @param request - The tasks and the usual statistics filters
+	 */
+	getTaskEmployees(request: IGetTaskEmployeesStatistics): Promise<ITaskEmployeesStatistics[]> {
+		return firstValueFrom(
+			this.http.get<ITaskEmployeesStatistics[]>(`${API_PREFIX}/timesheet/statistics/task-employees`, {
+				params: toParams(request)
+			})
+		);
 	}
 
 	getManualTimes(request: any) {
