@@ -583,6 +583,265 @@ $weight-medium: 500;
   padding: 0.5rem 0.75rem;
 }
 
+/* ── Daily activity's year grid ── */
+
+.project-activity-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: $gap-md;
+}
+
+.project-activity-views .segment {
+  padding: 0.125rem 0.375rem;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+// The grid sizes its squares to the panel's width and takes the height that gives it.
+.project-view-panel .project-grid-body {
+  height: auto;
+  gap: $gap-sm;
+}
+
+// The year stepper on the left, the year's tracked and manual split on the right.
+.activity-grid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $gap-sm $gap-md;
+}
+
+// The year stepper: older on the left, newer on the right, the shown year between.
+.activity-grid-years {
+  display: inline-flex;
+  align-items: center;
+  gap: $gap-xs;
+}
+
+.activity-grid-split {
+  display: flex;
+  gap: $gap-md;
+  margin: 0;
+
+  > div {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.375rem;
+  }
+
+  dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--gauzy-text-color-2);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // The bar chart's legend dots, in its two series colours.
+  .swatch {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+
+    &--tracked {
+      background-color: var(--gauzy-chart-profit);
+    }
+
+    &--manual {
+      background-color: var(--gauzy-chart-bonus);
+    }
+  }
+}
+
+.activity-grid-share {
+  margin-left: 0.125rem;
+  font-weight: 400;
+  color: var(--gauzy-text-color-2);
+}
+
+.activity-grid-year {
+  min-width: 6.5rem;
+  font-size: 0.75rem;
+  font-weight: $weight-medium;
+  color: var(--gauzy-text-color-1);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-grid-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  border-radius: var(--gauzy-radius-sm);
+  background: transparent;
+  color: var(--gauzy-text-color-2);
+  cursor: pointer;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background-color: var(--gauzy-hover-tint);
+    color: var(--gauzy-text-color-1);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// Holds the grid at the panel's width; past the grid's minimum it scrolls sideways instead of
+// shrinking the squares further. The padding keeps a focused day's outline inside the box.
+.activity-grid-scroll {
+  overflow-x: auto;
+  padding: 2px;
+}
+
+// One grid for the whole year, sized to the panel: the weekday names in the first column, then a
+// block of week columns per month with a wider gap between months, each month named under its
+// block. The track list comes from the component; every week column is an equal share of the width,
+// never less than `--grid-min-day`, so a day stays large enough to read and to point at.
+.activity-grid {
+  --grid-month-gap: 0.375rem;
+  --grid-gap: 2px;
+  --grid-min-day: 6px;
+  display: grid;
+  grid-template-rows: repeat(7, auto) auto;
+  gap: var(--grid-gap);
+  min-width: calc(
+    var(--grid-weeks, 0) * (var(--grid-min-day) + var(--grid-gap)) + var(--grid-months, 1) *
+      (var(--grid-month-gap) + var(--grid-gap)) + 1.5rem
+  );
+}
+
+.activity-grid-weekday {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  padding-right: $gap-xs;
+  font-size: 0.5625rem;
+  line-height: 1;
+  color: var(--gauzy-text-color-2);
+  white-space: nowrap;
+}
+
+.activity-grid-month {
+  grid-row: 8;
+  padding-top: $gap-xs;
+  border-top: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  font-size: 0.625rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+// Shades of the chart's tracked colour; a day with no time is a faint tint of the text.
+// Square corners, as asked: no rounding anywhere on a day.
+.activity-day {
+  display: block;
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 0;
+  background-color: color-mix(in srgb, var(--gauzy-text-color-2) 14%, transparent);
+
+  &[data-level='1'] {
+    background-color: color-mix(in srgb, var(--gauzy-chart-profit) 30%, transparent);
+  }
+
+  &[data-level='2'] {
+    background-color: color-mix(in srgb, var(--gauzy-chart-profit) 55%, transparent);
+  }
+
+  &[data-level='3'] {
+    background-color: color-mix(in srgb, var(--gauzy-chart-profit) 80%, transparent);
+  }
+
+  &[data-level='4'] {
+    background-color: var(--gauzy-chart-profit);
+  }
+
+  // Time added by hand fills the square from the bottom in the chart's manual colour, as much of
+  // it as the day's manual share; the tracked shade stays above.
+  &.has-manual {
+    background-image: linear-gradient(
+      to top,
+      var(--gauzy-chart-bonus) var(--manual-fill, 0%),
+      transparent var(--manual-fill, 0%)
+    );
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 1px;
+  }
+}
+
+.activity-grid-readout {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+  font-variant-numeric: tabular-nums;
+}
+
+// Each band named beside its swatch, so a square reads as hours rather than "more" or "less".
+.activity-grid-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $gap-xs $gap-md;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  // Sized on the item itself: a global rule sets every li to 14px.
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    font-size: 0.625rem;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .activity-day {
+    width: 0.625rem;
+  }
+
+  // Set apart from the hours bands: it says what the fill means, not how much time.
+  .activity-grid-legend-manual {
+    padding-left: $gap-md;
+    border-left: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  }
+}
+
 /* ── Contributors' live dot, and the task rank ── */
 
 .contributor-avatar .avatar-dot {
@@ -896,9 +1155,13 @@ $weight-medium: 500;
     min-height: 3.5rem;
   }
 
-  // The chart keeps one height of its own.
+  // The chart keeps one height of its own; the year grid takes the height its squares give it.
   .project-view-panel .project-chart-body {
     height: 14rem;
+  }
+
+  .project-view-panel .project-grid-body {
+    height: auto;
   }
 }
 
