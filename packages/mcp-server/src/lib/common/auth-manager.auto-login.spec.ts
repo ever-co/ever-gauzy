@@ -76,4 +76,36 @@ describe('AuthManager — the GAUZY_AUTO_LOGIN account over HTTP and WebSocket',
 		);
 		expect(own).toBe(OWN_TOKEN);
 	});
+
+	it('does not log a caller from elsewhere in as the auto-login account when it names no credentials', async () => {
+		// `test_api_connection` calls `login()` with no credentials when the caller is not authenticated: the
+		// configured ones filled in, and the remote caller's own key then held the auto-login account's token.
+		const result = await runWithAuthKey(
+			'session-remote-test-connection',
+			async () => ({
+				withNone: await authManager.login(),
+				withOperatorEmailOnly: await authManager.login('operator@example.com'),
+				token: authManager.getAccessToken()
+			}),
+			{ sharesAutoLogin: false }
+		);
+		expect(result).toEqual({ withNone: false, withOperatorEmailOnly: false, token: null });
+		expect(
+			runWithAuthKey('session-remote-test-connection', () => authManager.getAccessToken(), {
+				sharesAutoLogin: false
+			})
+		).toBeNull();
+	});
+
+	it('CONTROL: a caller on this machine still logs in as the auto-login account without credentials', async () => {
+		const token = await runWithAuthKey(
+			'session-local-test-connection',
+			async () => {
+				expect(await authManager.login()).toBe(true);
+				return authManager.getAccessToken();
+			},
+			{ sharesAutoLogin: true }
+		);
+		expect(token).toBe(AUTO_LOGIN_TOKEN);
+	});
 });
