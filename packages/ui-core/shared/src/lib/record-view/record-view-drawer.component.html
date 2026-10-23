@@ -26,12 +26,16 @@
 					ghost
 					size="small"
 					class="record-drawer-expand"
+					[class.has-label]="!!fullViewLabel"
 					[routerLink]="fullViewLink"
-					[attr.aria-label]="'BUTTONS.EXPAND_FULL_WIDTH' | translate"
+					[attr.aria-label]="(fullViewLabel || 'BUTTONS.EXPAND_FULL_WIDTH') | translate"
 					[nbTooltip]="'BUTTONS.EXPAND_FULL_WIDTH' | translate"
 					nbTooltipPlacement="bottom"
 				>
 					<nb-icon icon="expand-outline"></nb-icon>
+					@if (fullViewLabel) {
+						<span>{{ fullViewLabel | translate }}</span>
+					}
 				</a>
 			}
 			<button

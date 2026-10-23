@@ -192,6 +192,208 @@
 				</ul>
 				}
 			</nb-tab>
+			<nb-tab
+				#commentsTab
+				tabTitle="{{ 'GOALS_PAGE.COMMENTS' | translate }}"
+				[badgeText]="comments.length ? '' + comments.length : ''"
+				badgeStatus="basic"
+			>
+				@if (commentsLoadError) {
+				<!-- A failed read, told apart from an empty list and never showing a stale one. -->
+				<div class="empty-state load-error" role="alert">
+					<span>{{ 'GOALS_PAGE.COMMENT_THREAD.LOAD_ERROR' | translate }}</span>
+					<button
+						type="button"
+						nbButton
+						status="basic"
+						size="tiny"
+						[disabled]="loadingComments"
+						(click)="loadComments()"
+					>
+						{{ 'BUTTONS.RETRY' | translate }}
+					</button>
+				</div>
+				} @else if (comments.length == 0) {
+				<div class="empty-state">
+					{{ 'GOALS_PAGE.MESSAGE.NO_COMMENTS' | translate }}
+				</div>
+				} @else {
+				<!-- Each comment as a message — avatar, author, time, text — with its replies in a thread card
+				     hung off the avatar by an elbow line. Closed, the card sums the thread up (the comment, how
+				     many replies, the latest one); open, it lists the replies over a reply box. -->
+				<ul class="rows comment-list">
+					@for (thread of threads; track thread.comment.id) {
+					@let open = openThreadId === thread.comment.id;
+					@let latest = thread.replies[thread.replies.length - 1];
+					<li class="comment" [class.has-thread]="open || thread.replies.length">
+						<div class="comment-gutter">
+							<ng-container
+								*ngTemplateOutlet="avatar; context: { $implicit: thread.comment, size: 'lg' }"
+							></ng-container>
+							<span class="thread-stem" aria-hidden="true"></span>
+						</div>
+						<div class="comment-main">
+							<div class="comment-head">
+								<span class="comment-author">{{ authorName(thread.comment) }}</span>
+								<span class="comment-date">{{ thread.comment.createdAt | date : 'short' }}</span>
+							</div>
+							<p class="comment-text">{{ thread.comment.comment }}</p>
+							<!-- Reply on every comment, threaded or not: it opens the thread and puts the cursor in
+							     its reply box. Delete only where the server would allow it. -->
+							<div class="comment-actions">
+								<button type="button" class="comment-action" (click)="replyTo(thread)">
+									<nb-icon icon="corner-up-left-outline" aria-hidden="true"></nb-icon>
+									{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
+								</button>
+								<ng-container
+									*ngTemplateOutlet="deleteControl; context: { $implicit: thread.comment }"
+								></ng-container>
+							</div>
+						</div>
+						@if (open || thread.replies.length) {
+						<div class="thread">
+							<div class="thread-card" [class.open]="open">
+								<div class="thread-summary">
+									<span class="thread-title">{{ thread.comment.comment }}</span>
+									<button
+										type="button"
+										class="thread-toggle"
+										[attr.aria-expanded]="open"
+										(click)="toggleThread(thread)"
+									>
+										{{
+											(thread.replies.length == 1
+												? 'GOALS_PAGE.COMMENT_THREAD.ONE_MESSAGE'
+												: 'GOALS_PAGE.COMMENT_THREAD.MESSAGES'
+											) | translate : { count: thread.replies.length }
+										}}
+										<nb-icon
+											[icon]="open ? 'chevron-down-outline' : 'chevron-right-outline'"
+											aria-hidden="true"
+										></nb-icon>
+									</button>
+								</div>
+								@if (!open) {
+								<div class="thread-latest">
+									@if (latest) {
+									<span class="thread-latest-text">
+										<b>{{ authorName(latest) }}</b> {{ latest.comment }}
+									</span>
+									<span class="thread-age">{{ timeAgo(latest.createdAt) }}</span>
+									} @else {
+									<span class="thread-latest-text">
+										{{ 'GOALS_PAGE.COMMENT_THREAD.NO_MESSAGES' | translate }}
+									</span>
+									}
+								</div>
+								} @else {
+								@if (thread.replies.length) {
+								<ul class="replies">
+									@for (reply of thread.replies; track reply.id) {
+									<li class="reply">
+										<ng-container
+											*ngTemplateOutlet="avatar; context: { $implicit: reply, size: 'sm' }"
+										></ng-container>
+										<div class="comment-main">
+											<div class="comment-head">
+												<span class="comment-author">{{ authorName(reply) }}</span>
+												<span class="comment-date">{{ reply.createdAt | date : 'short' }}</span>
+											</div>
+											<p class="comment-text">{{ reply.comment }}</p>
+											@if (canDelete(reply)) {
+											<div class="comment-actions">
+												<ng-container
+													*ngTemplateOutlet="deleteControl; context: { $implicit: reply }"
+												></ng-container>
+											</div>
+											}
+										</div>
+									</li>
+									}
+								</ul>
+								} @else {
+								<div class="thread-latest">
+									<span class="thread-latest-text">
+										{{ 'GOALS_PAGE.COMMENT_THREAD.NO_MESSAGES' | translate }}
+									</span>
+								</div>
+								}
+								<div class="reply-row">
+									<textarea
+										nbInput
+										fullWidth
+										[id]="'reply-' + thread.comment.id"
+										[formControl]="replyControl"
+										[placeholder]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
+										[attr.aria-label]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
+										(keydown.control.enter)="addReply(thread)"
+										(keydown.meta.enter)="addReply(thread)"
+									></textarea>
+									<button
+										type="button"
+										nbButton
+										status="primary"
+										size="tiny"
+										[disabled]="!replyControl.value.trim() || postingReply"
+										(click)="addReply(thread)"
+									>
+										{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
+									</button>
+								</div>
+								}
+							</div>
+						</div>
+						}
+					</li>
+					}
+				</ul>
+				}
+				<!-- Delete as a bare trash icon; clicking it asks inline, in place of the icon, before deleting. -->
+				<ng-template #deleteControl let-comment>
+					@if (canDelete(comment)) {
+					@if (confirmingDeleteId === comment.id) {
+					<span class="delete-confirm" role="group">
+						<span class="delete-question">{{ 'GOALS_PAGE.COMMENT_THREAD.DELETE_CONFIRM' | translate }}</span>
+						<button
+							type="button"
+							class="comment-action"
+							[disabled]="deletingComment"
+							(click)="confirmingDeleteId = null"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+						<button
+							type="button"
+							class="comment-action danger confirm"
+							[disabled]="deletingComment"
+							(click)="deleteComment(comment)"
+						>
+							{{ 'BUTTONS.DELETE' | translate }}
+						</button>
+					</span>
+					} @else {
+					<button
+						type="button"
+						class="comment-action danger icon-only"
+						[nbTooltip]="'BUTTONS.DELETE' | translate"
+						[attr.aria-label]="'BUTTONS.DELETE' | translate"
+						(click)="confirmingDeleteId = comment.id"
+					>
+						<nb-icon icon="trash-2-outline" aria-hidden="true"></nb-icon>
+					</button>
+					}
+					}
+				</ng-template>
+				<ng-template #avatar let-comment let-size="size">
+					<span class="comment-avatar" [class.small]="size === 'sm'" aria-hidden="true">
+						@if (comment.employee?.user?.imageUrl) {
+						<img [src]="comment.employee.user.imageUrl" alt="" />
+						} @else {
+						{{ authorInitials(comment) }}
+						}
+					</span>
+				</ng-template>
+			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
 
@@ -204,9 +406,19 @@
 				id="goal-comment"
 				nbInput
 				fullWidth
+				[formControl]="commentControl"
 				[placeholder]="'BUTTONS.ADD_COMMENT' | translate"
+				(keydown.control.enter)="addComment()"
+				(keydown.meta.enter)="addComment()"
 			></textarea>
-			<button nbButton status="primary" size="small">
+			<button
+				type="button"
+				nbButton
+				status="primary"
+				size="small"
+				[disabled]="!commentControl.value.trim() || postingComment"
+				(click)="addComment()"
+			>
 				{{ 'BUTTONS.ADD_COMMENT' | translate }}
 			</button>
 		</div>

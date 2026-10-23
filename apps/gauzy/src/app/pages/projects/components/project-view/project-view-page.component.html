@@ -76,6 +76,7 @@
 				[rangeEnd]="periodEndIso"
 				[period]="period"
 				[scopeEmployeeIds]="null"
+				[tasksInDrawer]="true"
 			></ngx-project-quick-look>
 		</div>
 
@@ -115,3 +116,94 @@
 	</div>
 	}
 </ngx-record-view-page>
+
+<!-- A task opened from any tab (`?task=<id>`): the quick look the task lists open, with a button on to the
+     task's own page. The projected content is gated here so the record renderer is built fresh per task. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTaskId"
+	[heading]="'TASKS_PAGE.HEADER'"
+	[wide]="true"
+	[fullViewLink]="viewedTaskId ? '/pages/tasks/view/' + viewedTaskId : null"
+	[fullViewLabel]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE_SHORT'"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<div recordViewHeader class="project-task-head">
+			<ga-task-view-header [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+			<!-- Time worked against the estimate, as the "Most worked tasks" rows draw it: label, a thin bar, then
+			     the time worked over its share. Without an estimate, the share is of the project's tracked time.
+			     The bar always fills to the share. -->
+			@if (viewProgress; as progress) {
+			<div class="project-task-progress" [class.is-over]="progress.over" [class.is-relative]="progress.relative">
+				<span class="project-task-progress-label">
+					<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+					{{ 'PROJECT_VIEW.TASK_PROGRESS' | translate }}
+				</span>
+				@if (progress.hint; as hint) {
+				<span
+					class="project-task-progress-bar"
+					role="progressbar"
+					aria-valuemin="0"
+					[attr.aria-valuenow]="progress.share"
+					[attr.aria-label]="'PROJECT_VIEW.TASK_PROGRESS' | translate"
+					[attr.aria-valuetext]="hint.key | translate : hint.params"
+					[nbTooltip]="hint.key | translate : hint.params"
+					nbTooltipPlacement="top"
+					><span [style.width.%]="progress.fill"></span
+				></span>
+				} @else {
+				<span class="project-task-progress-none">{{ 'PROJECT_VIEW.TASK_NO_ESTIMATE' | translate }}</span>
+				}
+				<span class="project-task-progress-figures">
+					<span class="project-task-progress-time">{{ progress.worked }}</span>
+					@if (progress.share !== null) {
+					<span class="project-task-progress-share">{{ progress.share }}%</span>
+					}
+				</span>
+			</div>
+			}
+			<!-- Who worked most on the task: photo and name | bar | time over share, as "Most worked tasks". -->
+			@if (viewWorkers.length) {
+			<div class="project-task-workers">
+				<span class="project-task-workers-title">{{ 'PROJECT_VIEW.TASK_TOP_PEOPLE' | translate }}</span>
+				<ol class="project-task-workers-list">
+					@for (worker of viewWorkers; track worker.person.id) {
+					<li class="project-task-worker">
+						<a class="project-task-worker-person" [routerLink]="['/pages/employees/view', worker.person.id]">
+							<span class="project-task-worker-avatar">
+								@if (worker.person.avatarUrl) {
+								<img [src]="worker.person.avatarUrl" [alt]="worker.person.name" />
+								} @else {
+								<span aria-hidden="true">{{ worker.person.initials }}</span>
+								}
+							</span>
+							<span class="project-task-worker-name" [nbTooltip]="worker.person.name" nbTooltipPlacement="top">{{ worker.person.name }}</span>
+						</a>
+						<span class="project-task-progress-bar" aria-hidden="true"><span [style.width.%]="worker.share"></span></span>
+						<span class="project-task-progress-figures">
+							<span class="project-task-progress-time">{{ worker.worked }}</span>
+							<span class="project-task-progress-share">{{ worker.share }}%</span>
+						</span>
+					</li>
+					}
+				</ol>
+			</div>
+			}
+		</div>
+	</ngx-record-view>
+	} @else if (viewedTaskId) {
+	@if (viewState === 'loading') {
+	<div class="project-task-loading" [nbSpinner]="true" nbSpinnerSize="medium" nbSpinnerStatus="basic"></div>
+	} @else {
+	<div class="project-task-error">
+		<p>{{ (viewState === 'forbidden' ? 'RECORD_VIEW_PAGE.FORBIDDEN' : viewState === 'not-found' ? 'RECORD_VIEW_PAGE.NOT_FOUND' : 'RECORD_VIEW_PAGE.ERROR') | translate }}</p>
+		@if (viewState === 'error') {
+		<button nbButton size="small" status="basic" (click)="loadTask()">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.RETRY' | translate }}
+		</button>
+		}
+	</div>
+	}
+	}
+</ngx-record-view-drawer>
