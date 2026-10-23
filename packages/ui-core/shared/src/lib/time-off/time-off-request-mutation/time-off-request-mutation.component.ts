@@ -124,8 +124,11 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	 */
 	uploadDocumentAssetUrl(documentUrl: IDocumentAsset['fullUrl']) {
 		try {
-			this.form.get('documentUrl').setValue(documentUrl || null);
-			if (!documentUrl) {
+			const previousDocumentUrl = this.form.get('documentUrl').value;
+			const nextDocumentUrl = documentUrl || null;
+			this.form.get('documentUrl').setValue(nextDocumentUrl);
+			// A cleared or different URL no longer names the uploaded asset, so drop its id too
+			if (!nextDocumentUrl || previousDocumentUrl !== nextDocumentUrl) {
 				this.form.get('documentId').setValue(null);
 			}
 		} catch (error) {
