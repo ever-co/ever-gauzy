@@ -62,8 +62,10 @@ const ORGANIZATION_A = 'c7000000-0000-4000-8000-0000000000a1';
 /** A second organization of the same tenant: a tree is one organization's taxonomy. */
 const ORGANIZATION_A2 = 'c7000000-0000-4000-8000-0000000000a2';
 const ORGANIZATION_B = 'c7000000-0000-4000-8000-0000000000b1';
-const USER_A = { id: 'c7000000-0000-4000-8000-0000000000e1', tenantId: TENANT_A };
-const USER_B = { id: 'c7000000-0000-4000-8000-0000000000e2', tenantId: TENANT_B };
+// Tenant admins, who reach every organization of their tenant: the cases below plant categories in two organizations
+// of a tenant and test the service's own parent rule, not the organization boundary of the CRUD base.
+const USER_A = { id: 'c7000000-0000-4000-8000-0000000000e1', tenantId: TENANT_A, role: { name: 'ADMIN' } };
+const USER_B = { id: 'c7000000-0000-4000-8000-0000000000e2', tenantId: TENANT_B, role: { name: 'ADMIN' } };
 
 /**
  * The tables, as the columns the tree reads and writes stand in production. `parentConstraint` adds

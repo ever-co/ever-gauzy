@@ -2,11 +2,23 @@ import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ForbiddenException } from '@nestjs/common';
+import { And, Equal, IsNull, Or } from 'typeorm';
 import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
+
+/**
+ * The organization boundary `TenantAwareCrudService` adds to a statement for a caller who is not a tenant admin: their
+ * token organization or none, beside the organization the statement itself names.
+ */
+const insideBoundary = (tokenOrganizationId: string, statedOrganizationId?: string) => {
+	const allowed = Or(Equal(tokenOrganizationId), IsNull());
+	return {
+		organizationId: statedOrganizationId === undefined ? allowed : And(Equal(statedOrganizationId), allowed)
+	};
+};
 
 /**
  * #9052 — removing a member from a team reported success but kept the member.
@@ -144,7 +156,7 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		// names the member's row together with the tenant rather than the bare id.
 		expect(updated).toEqual([
 			{
-				id: { id: 'row-member', tenantId: manager.tenantId },
+				id: { id: 'row-member', tenantId: manager.tenantId, ...insideBoundary(manager.organizationId) },
 				changes: { role: { id: 'role-manager' }, isManager: true }
 			}
 		]);
@@ -274,7 +286,12 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 
 			expect(updated).toEqual([
 				{
-					id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+					id: {
+						id: 'row-member',
+						tenantId: tenant.tenantId,
+						...inTeam(teamId),
+						...insideBoundary(tenant.organizationId, tenant.organizationId)
+					},
 					changes: { ...inTeam(teamId), order: 2 }
 				}
 			]);
@@ -303,7 +320,12 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 
 				expect(updated).toEqual([
 					{
-						id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+						id: {
+							id: 'row-member',
+							tenantId: tenant.tenantId,
+							...inTeam(teamId),
+							...insideBoundary(tenant.organizationId, tenant.organizationId)
+						},
 						changes: { ...inTeam(teamId), order: 2, isTrackingEnabled: false, activeTaskId: 'task-1' }
 					}
 				]);
@@ -337,7 +359,12 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 
 			expect(updated).toEqual([
 				{
-					id: { id: 'row-member', tenantId: tenant.tenantId, ...inTeam(teamId) },
+					id: {
+						id: 'row-member',
+						tenantId: tenant.tenantId,
+						...inTeam(teamId),
+						...insideBoundary(tenant.organizationId, tenant.organizationId)
+					},
 					changes: { activeTaskId: 'task-1' }
 				}
 			]);

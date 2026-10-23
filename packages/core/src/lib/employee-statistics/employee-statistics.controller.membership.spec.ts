@@ -44,6 +44,8 @@ describe('EmployeeStatisticsController — organization membership', () => {
 		);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		// The user's token names their own organization: the only one the organization boundary lets them name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(MINE);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
