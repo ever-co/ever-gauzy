@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { OAuth2AuthorizationServer, UserInfo, oAuth2ClientManager } from '@gauzy/auth';
 import { OAuthUserService } from '../user/oauth-user.service';
 import { IUser } from '@gauzy/contracts';
@@ -20,6 +20,7 @@ interface ExtendedMcpUser extends Omit<IUser, 'emailVerifiedAt'> {
  */
 @Injectable()
 export class McpOAuthService implements OnModuleInit {
+	private readonly logger = new Logger(McpOAuthService.name);
 	private oauthServer: OAuth2AuthorizationServer;
 
 	constructor(private readonly userService: OAuthUserService) {
@@ -128,6 +129,28 @@ export class McpOAuthService implements OnModuleInit {
 	async onModuleInit() {
 		// Pre-register well-known MCP clients (ChatGPT, Claude) as public clients
 		await oAuth2ClientManager.registerDefaultClients();
+		await this.registerMcpServer();
+	}
+
+	/**
+	 * Registers the MCP server as the resource server that may introspect tokens, with the credentials it is
+	 * configured to present (the same two variables on both services). Without them the MCP server cannot check
+	 * a bearer token, so it refuses every caller that is not on its own machine.
+	 */
+	private async registerMcpServer(): Promise<void> {
+		const clientId = process.env.MCP_AUTH_INTROSPECTION_CLIENT_ID;
+		const clientSecret = process.env.MCP_AUTH_INTROSPECTION_CLIENT_SECRET;
+		if (!clientId && !clientSecret) {
+			this.logger.warn(
+				'MCP_AUTH_INTROSPECTION_CLIENT_ID / MCP_AUTH_INTROSPECTION_CLIENT_SECRET are not set: no resource server may introspect tokens'
+			);
+			return;
+		}
+		try {
+			await oAuth2ClientManager.registerResourceServer(clientId ?? '', clientSecret ?? '');
+		} catch (error) {
+			this.logger.error(`The MCP server was not registered for token introspection: ${(error as Error).message}`);
+		}
 	}
 
 	/**

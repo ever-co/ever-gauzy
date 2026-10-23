@@ -89,6 +89,10 @@ spec:
                         value: '$MCP_AUTH_JWT_ISSUER'
                       - name: MCP_AUTH_JWT_AUDIENCE
                         value: '$MCP_AUTH_JWT_AUDIENCE'
+                      - name: MCP_AUTH_INTROSPECTION_CLIENT_ID
+                        value: '$MCP_AUTH_INTROSPECTION_CLIENT_ID'
+                      - name: MCP_AUTH_INTROSPECTION_CLIENT_SECRET
+                        value: '$MCP_AUTH_INTROSPECTION_CLIENT_SECRET'
                       - name: MCP_TRUSTED_PROXIES
                         value: '$MCP_TRUSTED_PROXIES'
                       - name: REDIS_ENABLED

@@ -11,7 +11,12 @@ import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { validateMCPToolInput, validateRequestSize } from '../common/security-config';
-import { AuthorizationConfig, loadAuthorizationConfig, ResponseBuilder } from '../common/auth-types';
+import {
+	AuthorizationConfig,
+	loadAuthorizationConfig,
+	ResponseBuilder,
+	logAuthorizationSetup
+} from '../common/auth-types';
 import { sanitizeErrorMessage, sessionIdForLog } from '../common/error-utils';
 import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
@@ -81,14 +86,7 @@ export class HttpTransport {
 		this.transportConfig = options.transportConfig;
 		this.authorizationConfig = loadAuthorizationConfig();
 
-		// The image, the k8s manifests and the README name MCP_AUTH_ENABLED, which this server never read: an operator
-		// who set it believed bearer tokens were checked. Say plainly that they are not.
-		if (process.env.MCP_AUTH_ENABLED === 'true' && !this.authorizationConfig.enabled) {
-			this.securityLogger.warn(
-				'⚠️  MCP_AUTH_ENABLED=true, but this server does not validate OAuth bearer tokens: callers authenticate ' +
-					'with the login tool, and only a caller on this machine may use the GAUZY_AUTO_LOGIN account.'
-			);
-		}
+		logAuthorizationSetup(this.authorizationConfig, this.securityLogger);
 
 		// Initialize authorization middleware if enabled
 		if (this.authorizationConfig.enabled) {
@@ -384,7 +382,8 @@ export class HttpTransport {
 		// Apply authorization middleware to protected endpoints
 		const authMiddleware = this.authorizationMiddleware?.createAuthorizationMiddleware({
 			requiredScopes: this.authorizationConfig.requiredScopes,
-			optional: false
+			optional: false,
+			isLocalCaller: (req) => this.callerIsLocal(req)
 		});
 
 		// MCP Protocol endpoint - POST for requests (protected)
