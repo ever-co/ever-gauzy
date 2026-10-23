@@ -28,6 +28,7 @@ import {
 	RequestContext,
 	TaxLineService,
 	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	currencyPrecision,
 	normalizeDecimalString,
@@ -71,6 +72,7 @@ import {
 	ICartStockPort,
 	ICartTaxPort
 } from '../cart.types';
+import { CART_REFERENCES } from '../cart.references';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -230,6 +232,22 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	 * @param reason The reason code the recomputation records, which names what the change was.
 	 * @returns The changed cart, with its recomputed totals.
 	 */
+	/**
+	 * Refuses a cart, or a change to one, that names a channel, region, customer or user of another tenant
+	 * (`CART_REFERENCES`). Checked on the TypeORM manager, which reads these tables under either ORM.
+	 *
+	 * @param payload The cart, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: object): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmCommerceCartRepository.manager,
+			payload,
+			CART_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
 	public async applyChanges(
 		id: ID,
 		changes: DeepPartial<CommerceCart>,
@@ -250,6 +268,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		if (current && this.holdsLiveCheckoutClaim(current)) {
 			throw this.checkoutInProgress(id);
 		}
+
+		await this.assertReferences(changes ?? {});
 
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id,
@@ -277,6 +297,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		if (!entity.currency) {
 			throw new BadRequestException('CART_CURRENCY_REQUIRED: a cart is priced in one currency.');
 		}
+
+		await this.assertReferences(entity);
 
 		const now = new Date();
 

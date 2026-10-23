@@ -11,6 +11,9 @@
  * row before it writes, `findAll` answers with `{ items, total }` — without any tenant merging, which
  * is the part that needs a request context.
  */
+/** The platform's cross-tenant reference check, recorded: every child service and the cart itself run it. */
+const mockAssertReferences = jest.fn(async (..._args: unknown[]) => undefined);
+
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException, SetMetadata } = require('@nestjs/common');
 
@@ -196,7 +199,7 @@ jest.mock('@gauzy/core', () => {
 		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
 		// The child services' cross-tenant reference check reads a real database; it is exercised in
 		// `cart-references.db.spec.ts`, and the order the cart's verbs run it in is asserted below.
-		assertPlainReferencesNotForeign: async () => undefined,
+		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -221,6 +224,7 @@ import { CommerceCartPromotionService } from '../commerce-cart-promotion/commerc
 import { CommerceCartShippingMethodService } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.service';
 import { CommerceCheckoutSessionService } from '../commerce-checkout-session/commerce-checkout-session.service';
 import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
+import { CART_REFERENCES } from '../cart.references';
 
 /**
  * The cart aggregate.
@@ -3117,5 +3121,51 @@ describe('CommerceCartService — the delivery rate and the tax category are the
 		await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
 
 		expect(fixture.tables.commerce_cart_line[0].taxCategoryId).toBe('tc-standard');
+	});
+});
+
+describe('CommerceCartService — the ids a cart names (CART_REFERENCES)', () => {
+	const refuse = async () => {
+		throw new ForbiddenException('A related record belongs to another tenant');
+	};
+	const cartChecks = () => mockAssertReferences.mock.calls.filter((call) => call[2] === CART_REFERENCES);
+
+	beforeEach(() => mockAssertReferences.mockClear());
+
+	it('checks a new cart’s ids, and writes no cart when one is refused', async () => {
+		const { service, tables } = cartFixture();
+		mockAssertReferences.mockImplementationOnce(refuse);
+
+		await expect(
+			service.create({ channelId: 'channel-1', currency: 'USD', customerId: 'contact-of-tenant-b' })
+		).rejects.toThrow(ForbiddenException);
+
+		expect(cartChecks().map((call) => call[1])).toEqual([
+			expect.objectContaining({ customerId: 'contact-of-tenant-b' })
+		]);
+		expect(tables.commerce_cart).toHaveLength(0);
+	});
+
+	it('checks a change before writing it, as `associateCartWithContact` and `PUT /carts/:id` send it', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		mockAssertReferences.mockClear();
+		mockAssertReferences.mockImplementationOnce(refuse);
+
+		await expect(
+			service.applyChanges(cart.id, { customerId: 'contact-of-tenant-b' } as any, undefined, 'CUSTOMER_CHANGED')
+		).rejects.toThrow(ForbiddenException);
+
+		expect(cartChecks().map((call) => call[1])).toEqual([{ customerId: 'contact-of-tenant-b' }]);
+		expect(tables.commerce_cart[0].customerId).toBeUndefined();
+	});
+
+	it('states the channel, region, customer and user', () => {
+		expect(CART_REFERENCES).toEqual({
+			channelId: 'channel',
+			regionId: 'region',
+			customerId: 'organization_contact',
+			userId: 'user'
+		});
 	});
 });
