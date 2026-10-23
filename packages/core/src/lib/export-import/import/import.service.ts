@@ -33,6 +33,22 @@ import {
 	RepositoriesService
 } from '../repositories/repositories.service';
 
+/**
+ * The column a row of a shared table the platform seeds is recognized by in another instance's archive, where its id is
+ * not this instance's (see {@link ImportService.findSharedRow}).
+ */
+const SHARED_TABLE_NATURAL_KEYS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+	country: ['isoCode'],
+	currency: ['isoCode'],
+	feature: ['code'],
+	language: ['code'],
+	report: ['slug'],
+	report_category: ['name']
+});
+
+/** A UUID, the only id a shared table's row can have: anything else is not looked up as an id. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class ImportService {
 	private readonly logger = new Logger(ImportService.name);
@@ -141,7 +157,7 @@ export class ImportService {
 					 * This will first collect all the data and then insert
 					 * If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					 */
-					if (cleanup && isStatic !== true) {
+					if (cleanup && isStatic !== true && !this.isSharedTable(item)) {
 						try {
 							let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
 							await repository.query(sql);
@@ -189,7 +205,8 @@ export class ImportService {
 				await this.rebuildProductCategoryClosure(tenantId);
 			}
 
-			if (isNotEmpty(relations)) {
+			// A shared table's own junctions (the integration catalogue's types, ...) are shared too: never written.
+			if (isNotEmpty(relations) && !this.isSharedTable(item)) {
 				junctionOwners.push(item);
 			}
 		}
@@ -338,14 +355,17 @@ export class ImportService {
 				const source = JSON.parse(JSON.stringify(entity));
 				// The lookup reads the mapped row: the archive's tenant and foreign keys are the source ids.
 				const mapped = await this.mapFields(item, entity);
-				const destination = await this.commandBus.execute(
-					new ImportEntityFieldMapOrCreateCommand(
-						repository,
-						this.uniqueKeyConditions(item, mapped),
-						mapped,
-						source.id
-					)
-				);
+				// A shared table's row is never written: its id is only mapped to the row that already exists.
+				const destination = this.isSharedTable(item)
+					? await this.findSharedRow(item, mapped, source.id)
+					: await this.commandBus.execute(
+							new ImportEntityFieldMapOrCreateCommand(
+								repository,
+								this.uniqueKeyConditions(item, mapped),
+								mapped,
+								source.id
+							)
+						);
 				if (destination) {
 					await this.mappedImportRecord(item, destination, source);
 				}
@@ -355,6 +375,50 @@ export class ImportService {
 				reject(error);
 			}
 		});
+	}
+
+	/**
+	 * Whether the table holds rows every tenant shares: it has no tenant column. These are the tenants themselves, the
+	 * countries, currencies and languages, the features and reports, the integration catalogue and the plugin
+	 * marketplace — rows the platform seeds and every tenant reads.
+	 *
+	 * An archive used to be written into them like into any other table: a row that matched none was created for every
+	 * tenant to see, and a row whose id an earlier import had mapped was saved over, so a tenant administrator could add
+	 * to or rewrite the integration catalogue, the features or the marketplace of the whole installation by importing.
+	 *
+	 * @param item - The table being imported.
+	 */
+	private isSharedTable(item: IRepositoryModel): boolean {
+		return !item.repository.metadata.findColumnWithPropertyName('tenantId');
+	}
+
+	/**
+	 * The existing row a shared table's archive row stands for, or `null`: the row with the same unique key, else the
+	 * row with the same id (an archive of this instance), else the row with the same natural key (another instance's,
+	 * {@link SHARED_TABLE_NATURAL_KEYS}). Nothing is created or changed; a reference to a row that matches none maps to
+	 * nothing, like any other unmapped relation.
+	 *
+	 * @param item - The shared table being imported.
+	 * @param row - The row after {@link mapFields}.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async findSharedRow(item: IRepositoryModel, row: Record<string, unknown>, sourceId: unknown) {
+		const { repository } = item;
+		const naturalKeys = SHARED_TABLE_NATURAL_KEYS[repository.metadata.tableName] ?? [];
+		const candidates: Record<string, unknown>[] = [
+			...this.uniqueKeyConditions(item, row),
+			...(typeof sourceId === 'string' && UUID.test(sourceId) ? [{ id: sourceId }] : []),
+			...(naturalKeys.length > 0 && naturalKeys.every((key) => isNotEmpty(row[key]))
+				? [Object.fromEntries(naturalKeys.map((key) => [key, row[key]]))]
+				: [])
+		];
+		for (const where of candidates) {
+			const existing = await repository.findOne({ where });
+			if (existing) {
+				return existing;
+			}
+		}
+		return null;
 	}
 
 	/**
