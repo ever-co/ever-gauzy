@@ -15,20 +15,23 @@ import { firstValueFrom } from 'rxjs';
 import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { IPagination, ITask, ITaskStatus, PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, ITask, ITasksStatistics, ITaskStatus, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { Store, ToastrService } from '@gauzy/ui-core/core';
+import { Store, TimesheetStatisticsService, ToastrService } from '@gauzy/ui-core/core';
 import { isTaskFinished } from '../../../../tasks/components/task-view/task-view-sections';
 import {
 	dueInWords,
 	humanize,
 	IPersonChip,
+	ITaskProgress,
 	Loadable,
 	loaded,
 	loading,
 	failed,
 	personOf,
-	statusGroupOf
+	projectWorkedTimeOf,
+	statusGroupOf,
+	taskProgressOf
 } from '../project-view.utils';
 
 /** One task as a board card. */
@@ -45,6 +48,10 @@ interface IBoardCard {
 	soon: boolean;
 	people: IPersonChip[];
 	done: boolean;
+	/** The task's estimate in seconds, or 0 without one. */
+	estimate: number;
+	/** Time worked against the estimate, or its share of the project's time without one; once read. */
+	progress?: ITaskProgress | null;
 	/** True while a move to another column is being saved. */
 	saving?: boolean;
 }
@@ -105,7 +112,8 @@ export class ProjectBoardComponent implements OnChanges {
 	constructor(
 		private readonly _http: HttpClient,
 		private readonly _store: Store,
-		private readonly _toastrService: ToastrService
+		private readonly _toastrService: ToastrService,
+		private readonly _statisticsService: TimesheetStatisticsService
 	) {}
 
 	/** Moving a card writes the task, so only a user who may edit tasks can drag. */
@@ -186,10 +194,6 @@ export class ProjectBoardComponent implements OnChanges {
 		return (this.board.value || []).reduce((sum, column) => sum + column.cards.length, 0);
 	}
 
-	taskLink(id: string): string[] {
-		return ['/pages/tasks/view', id];
-	}
-
 	peopleNames(people: IPersonChip[]): string {
 		return (people || []).map((person) => person.name).join(', ');
 	}
@@ -219,8 +223,35 @@ export class ProjectBoardComponent implements OnChanges {
 			]);
 			if (sequence !== this._sequence) return;
 			this.board = loaded(this.toColumns(statuses, tasks?.items || []));
+			void this.loadProgress(sequence);
 		} catch {
 			if (sequence === this._sequence) this.board = failed([]);
+		}
+	}
+
+	/**
+	 * The time worked on each of the project's tasks, all time, against its estimate — or, without one,
+	 * as its share of the project's time: the cards' progress bars. They come after the board, so a slow or
+	 * failed read (most often a 403) never holds it up.
+	 */
+	private async loadProgress(sequence: number): Promise<void> {
+		const { organizationId, tenantId, projectId } = this;
+		try {
+			const rows = await this._statisticsService.getTasksStatistics({
+				organizationId,
+				tenantId,
+				projectIds: [projectId]
+			});
+			if (sequence !== this._sequence) return;
+			const worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
+			const project = projectWorkedTimeOf([...worked.values()]);
+			for (const column of this.board.value || []) {
+				for (const card of column.cards) {
+					card.progress = taskProgressOf(worked.get(card.id) || 0, card.estimate, project);
+				}
+			}
+		} catch {
+			// The cards stay without bars.
 		}
 	}
 
@@ -318,7 +349,8 @@ export class ProjectBoardComponent implements OnChanges {
 			overdue: false,
 			soon: false,
 			people: (task.members || []).map((member) => personOf(member)).filter(Boolean),
-			done: false
+			done: false,
+			estimate: Number(task.estimate) || 0
 		};
 		this.setDone(card, isTaskFinished(task));
 		return card;
