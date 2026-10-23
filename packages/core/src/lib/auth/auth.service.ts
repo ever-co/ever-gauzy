@@ -88,6 +88,7 @@ import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../passwo
 import { TypeOrmPasswordResetRepository } from './../password-reset/repository/type-orm-password-reset.repository';
 import { MikroOrmPasswordResetRepository } from './../password-reset/repository/mikro-orm-password-reset.repository';
 import { RoleService } from './../role/role.service';
+import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 import { SocialAccountService } from './social-account/social-account.service';
@@ -537,6 +538,13 @@ export class AuthService extends SocialAuthService {
 						throw employeeError;
 					}
 				}
+				// `findOneByUserId` reads ACTIVE employee records only, so the check above never sees a
+				// deactivated employee: it reads as "no employee". Judge the account on all of its records,
+				// and skip a deactivated employee here so another account with these credentials can still
+				// be chosen (`getJwtAccessToken` would refuse this one anyway).
+				if (isEmployeeValid && (await this.isDeactivatedEmployeeUser(user.id))) {
+					isEmployeeValid = false;
+				}
 				// Only add to validations if both password and employee status are valid
 				if (isEmployeeValid) {
 					userValidations.push({ user, employee });
@@ -655,6 +663,45 @@ export class AuthService extends SocialAuthService {
 			// `findOneByOptions` throws when no membership exists.
 			return false;
 		}
+	}
+
+	/**
+	 * Whether the user is a deactivated employee, who cannot sign in: they have employee records and none
+	 * of them is active and unarchived (see `isDeactivatedEmployee`). A user with no employee record, and
+	 * an employee still active in another organization, is not one.
+	 *
+	 * Every record counts (inactive and archived ones, in every organization), so the rows are read
+	 * straight from the repository. `EmployeeService.findOneByUserId` cannot answer this: it reads active
+	 * records only, so a deactivated employee reads as "no employee", and it scopes to the request's tenant
+	 * and organization, which the public sign-in routes do not have.
+	 *
+	 * A failed lookup throws: the callers refuse the sign-in rather than let it through unjudged.
+	 *
+	 * @param userId The user to judge.
+	 * @returns True when the user has employee records and all of them are inactive or archived.
+	 */
+	private async isDeactivatedEmployeeUser(userId: ID): Promise<boolean> {
+		const options = {
+			where: { userId },
+			select: { id: true, isActive: true, isArchived: true }
+		};
+
+		let employees: Pick<Employee, 'isActive' | 'isArchived'>[];
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
+				employees = (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+				employees = await this.typeOrmEmployeeRepository.find(options);
+				break;
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		return isDeactivatedEmployee(employees);
 	}
 
 	/**
@@ -1782,6 +1829,16 @@ export class AuthService extends SocialAuthService {
 				}
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
+
+			// A deactivated employee (every employee record inactive or archived) gets no access token,
+			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
+			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
+			// mint through. The active record found above already proves the user is not one, so only a
+			// user without one (an admin, a viewer, or an employee active elsewhere) pays for the lookup.
+			if (!employee && (await this.isDeactivatedEmployeeUser(user.id))) {
+				this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
+				throw new UnauthorizedException();
 			}
 
 			// Create a payload for the JWT token
