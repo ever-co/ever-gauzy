@@ -3,6 +3,7 @@ import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'ty
 import { CurrencyCode, DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	IParsedDecimal,
+	LegacyFindOneOptions,
 	Money,
 	RequestContext,
 	TenantAwareCrudService,
@@ -38,7 +39,13 @@ import {
 	TaxRuleMatcher,
 	TaxWriteInput
 } from '../tax.types';
-import { assertCountryCode, assertOrganizationUnchanged, assertPriority, retirementResult } from '../write-rules';
+import {
+	assertCountryCode,
+	assertOrganizationUnchanged,
+	assertPriority,
+	inCallerOrganization,
+	retirementResult
+} from '../write-rules';
 import { TaxRate } from './tax-rate.entity';
 import { MikroOrmTaxRateRepository } from './repository/mikro-orm-tax-rate.repository';
 import { TypeOrmTaxRateRepository } from './repository/type-orm-tax-rate.repository';
@@ -117,6 +124,20 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 		private readonly taxRegimeService: TaxRegimeService
 	) {
 		super(typeOrmTaxRateRepository, mikroOrmTaxRateRepository);
+	}
+
+	/**
+	 * Reads a tax rate of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRate>): Promise<TaxRate> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
 	}
 
 	/**

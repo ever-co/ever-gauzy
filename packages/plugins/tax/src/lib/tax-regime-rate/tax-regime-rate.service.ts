@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { inCallerOrganization } from '../write-rules';
 import { TaxRegimeRate } from './tax-regime-rate.entity';
 import { MikroOrmTaxRegimeRateRepository } from './repository/mikro-orm-tax-regime-rate.repository';
 import { TypeOrmTaxRegimeRateRepository } from './repository/type-orm-tax-regime-rate.repository';
@@ -28,6 +29,20 @@ export class TaxRegimeRateService extends TenantAwareCrudService<TaxRegimeRate> 
 		readonly mikroOrmTaxRegimeRateRepository: MikroOrmTaxRegimeRateRepository
 	) {
 		super(typeOrmTaxRegimeRateRepository, mikroOrmTaxRegimeRateRepository);
+	}
+
+	/**
+	 * Reads a regime membership of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRegimeRate>): Promise<TaxRegimeRate> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
 	}
 
 	/**
