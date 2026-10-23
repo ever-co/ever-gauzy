@@ -578,9 +578,10 @@ export class OAuth2AuthorizationServer {
 
 		this.app.use(authRateLimit);
 
-		// Body parsing
-		this.app.use(express.json({ limit: '10mb' }));
-		this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+		// Body parsing: an OAuth request (a token request, a login or consent form, a client registration) is a few
+		// hundred bytes; 10 MB let anyone make the server parse, and dynamic registration keep, megabytes per request.
+		this.app.use(express.json({ limit: '64kb' }));
+		this.app.use(express.urlencoded({ extended: true, limit: '64kb' }));
 	}
 
 	/**
