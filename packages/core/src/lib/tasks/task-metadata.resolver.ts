@@ -215,7 +215,7 @@ const ISSUE_TYPE_SORTABLE = ['createdAt', 'updatedAt', 'name', 'value', 'isDefau
  * services extends the same `TaskMetadataService`, and every one of the six answers the same nine
  * routes — the list, the paginated spelling of it, the count, the row, and the five writes. They
  * carry one guard chain (`TenantPermissionGuard` on the class, with no class-level permission, and
- * `ORG_TASK_SETTING` on the soft delete and the recover of every one of the six) and one read: the reader that falls back to the installation's own
+ * `ORG_TASK_SETTING` on every write of every one of the six) and one read: the reader that falls back to the installation's own
  * system rows when the scope a caller named holds none. Splitting them across six resolver classes
  * would state that one declaration six times and would let five of the six drift; keeping them in one
  * class is what makes the shared connection order, the shared filterable vocabulary and — most of all
@@ -227,11 +227,13 @@ const ISSUE_TYPE_SORTABLE = ['createdAt', 'updatedAt', 'name', 'value', 'isDefau
  * form.
  *
  * **The guard chain is the controllers', field for field.** All six controllers carry the tenant
- * guard on the class and no class-level permission, so no field here states one either — a field that
- * demanded a permission its route does not would refuse a caller that route serves. The one exception
- * is the controllers' own: their soft delete and recover state `ORG_TASK_SETTING` behind
- * `PermissionGuard` (GHSA-v79w-54p2-wmh5), so `softDelete<Type>` and `recover<Type>` state the same
- * grant here — otherwise GraphQL would retire or restore a row the REST route refuses to.
+ * guard on the class and no class-level permission, so the class here states none either, and the
+ * reads state none — a field that demanded a permission its route does not would refuse a caller that
+ * route serves. Every write is the controllers' own exception: the create, the edit, the delete, the
+ * soft delete and the recover of all six, the status reorder and the two mark-as-default routes state
+ * `ORG_TASK_SETTING` behind `PermissionGuard` (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22), so
+ * every mutation here states the same grant — otherwise GraphQL would write a row the REST route
+ * refuses to.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -317,12 +319,16 @@ export class TaskMetadataResolver {
 	 * Files a status. The delivered write merges the workflow the caller's `template` names onto the
 	 * row, which is why the template is a member of the write and of no column.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('createTaskStatus')
 	async createTaskStatus(@Args('input') input: ICreateTaskStatusInput): Promise<TaskStatus> {
 		return (await this.taskStatusService.create(input as never)) as TaskStatus;
 	}
 
 	/** Changes a status, answering the row the write produced. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('updateTaskStatus')
 	async updateTaskStatus(@Args('input') input: IUpdateTaskStatusInput): Promise<TaskStatus> {
 		const { id, ...values } = input;
@@ -331,6 +337,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a status outright. A status the platform maintains is the store's to refuse. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('deleteTaskStatus')
 	async deleteTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskStatusService.delete(id));
@@ -359,6 +367,8 @@ export class TaskMetadataResolver {
 	 * answer is the route's own — whether it succeeded, and the list it wrote — because the route
 	 * answers a statement about the write rather than a row.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('reorderTaskStatuses')
 	async reorderTaskStatuses(
 		@Args('reorder') reorder: ITaskStatusOrderInput[]
@@ -370,6 +380,8 @@ export class TaskMetadataResolver {
 	 * Makes one status the default of one scope, and answers every status of that scope back — which
 	 * is what the delivered route answers, because the write clears the mark from the others.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('markTaskStatusAsDefault')
 	async markTaskStatusAsDefault(
 		@Args('id', { type: () => ID }) id: Id,
@@ -427,12 +439,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a size. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('createTaskSize')
 	async createTaskSize(@Args('input') input: ICreateTaskSizeInput): Promise<TaskSize> {
 		return (await this.taskSizeService.create(input as never)) as TaskSize;
 	}
 
 	/** Changes a size, answering the row the write produced. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('updateTaskSize')
 	async updateTaskSize(@Args('input') input: IUpdateTaskSizeInput): Promise<TaskSize> {
 		const { id, ...values } = input;
@@ -441,6 +457,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a size outright. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('deleteTaskSize')
 	async deleteTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskSizeService.delete(id));
@@ -507,12 +525,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a priority. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('createTaskPriority')
 	async createTaskPriority(@Args('input') input: ICreateTaskPriorityInput): Promise<TaskPriority> {
 		return (await this.taskPriorityService.create(input as never)) as TaskPriority;
 	}
 
 	/** Changes a priority, answering the row the write produced. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('updateTaskPriority')
 	async updateTaskPriority(@Args('input') input: IUpdateTaskPriorityInput): Promise<TaskPriority> {
 		const { id, ...values } = input;
@@ -521,6 +543,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a priority outright. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('deleteTaskPriority')
 	async deleteTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskPriorityService.delete(id));
@@ -587,12 +611,16 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a version. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('createTaskVersion')
 	async createTaskVersion(@Args('input') input: ICreateTaskVersionInput): Promise<TaskVersion> {
 		return (await this.taskVersionService.create(input as never)) as TaskVersion;
 	}
 
 	/** Changes a version, answering the row the write produced. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('updateTaskVersion')
 	async updateTaskVersion(@Args('input') input: IUpdateTaskVersionInput): Promise<TaskVersion> {
 		const { id, ...values } = input;
@@ -601,6 +629,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a version outright. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('deleteTaskVersion')
 	async deleteTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskVersionService.delete(id));
@@ -667,6 +697,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a related-issue type. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('createTaskRelatedIssueType')
 	async createTaskRelatedIssueType(
 		@Args('input') input: ICreateTaskRelatedIssueTypeInput
@@ -675,6 +707,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Changes a related-issue type, answering the row the write produced. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('updateTaskRelatedIssueType')
 	async updateTaskRelatedIssueType(
 		@Args('input') input: IUpdateTaskRelatedIssueTypeInput
@@ -685,6 +719,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a related-issue type outright. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('deleteTaskRelatedIssueType')
 	async deleteTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskRelatedIssueTypeService.delete(id));
@@ -760,12 +796,16 @@ export class TaskMetadataResolver {
 	 * The delivered body omits `value`, and the delivered write derives it from `name` — which is why
 	 * the value is a column of the row and no member of the write.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('createIssueType')
 	async createIssueType(@Args('input') input: ICreateIssueTypeInput): Promise<IssueType> {
 		return (await this.issueTypeService.create(input as never)) as IssueType;
 	}
 
 	/** Changes an issue type, answering the row the write produced. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('updateIssueType')
 	async updateIssueType(@Args('input') input: IUpdateIssueTypeInput): Promise<IssueType> {
 		const { id, ...values } = input;
@@ -774,6 +814,8 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes an issue type outright. */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('deleteIssueType')
 	async deleteIssueType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.issueTypeService.delete(id));
@@ -798,6 +840,8 @@ export class TaskMetadataResolver {
 	/**
 	 * Makes one issue type the default of one scope, and answers every issue type of that scope back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
 	@Mutation('markIssueTypeAsDefault')
 	async markIssueTypeAsDefault(
 		@Args('id', { type: () => ID }) id: Id,

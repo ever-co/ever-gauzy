@@ -33,9 +33,9 @@ import { TaskMetadataResolver } from './task-metadata.resolver';
  *   and every list is a connection behind the platform's own cursor codec;
  * - every field reaches the same service method its own route reaches, and every write dispatches
  *   through the same one;
- * - **the guard chain and the (absent) permission are each controller's**, read off that controller's
- *   own metadata rather than restated here — and all six carry the same chain, which is the claim the
- *   grouping rests on;
+ * - **the guard chain and the permission are each controller's**, read off that controller's own
+ *   metadata rather than restated here — and all six carry the same chain, which is the claim the
+ *   grouping rests on: no permission on a read, `ORG_TASK_SETTING` on every write;
  * - the gate is on the class, so every field is behind it.
  */
 
@@ -248,6 +248,13 @@ const RESOURCES = [
 		recover: 'recoverTaskRelatedIssueType'
 	}
 ] as const;
+
+/** The writes that belong to one resource alone, each with the controller and the handler that serve its route. */
+const ONE_RESOURCE_WRITES: ReadonlyArray<readonly [string, unknown, string]> = [
+	['reorderTaskStatuses', TaskStatusController, 'reorder'],
+	['markTaskStatusAsDefault', TaskStatusController, 'markAsDefault'],
+	['markIssueTypeAsDefault', IssueTypeController, 'markAsDefault']
+];
 
 /** The handlers of one controller, inherited ones included. */
 function handlersOf(controller: unknown): Record<string, object> {
@@ -618,22 +625,30 @@ describe('TaskMetadataResolver — the guard stack and the permission are the co
 				);
 			}
 		}
+
+		// The three writes that belong to one resource alone.
+		for (const [field, controller, handler] of ONE_RESOURCE_WRITES) {
+			expect(guardsOfField(field).sort()).toEqual(
+				[...guardsOfRoute(controller, handler), FeatureFlagGuard].sort()
+			);
+		}
 	});
 
 	it('states the permission its own route states, field for field, and none on the class', () => {
 		// The six controllers carry the tenant guard and no class-level permission, so the resolver states
-		// none on the class either. Their one handler-level permission is ORG_TASK_SETTING on the soft
-		// delete and the recover (GHSA-v79w-54p2-wmh5); the matching fields must demand the same grant,
-		// or GraphQL would retire or restore a row the REST route refuses to.
+		// none on the class either. Every write of theirs states ORG_TASK_SETTING on the handler — the
+		// create, the edit and the delete (owner decision 2, 2026-10-22) as well as the soft delete and the
+		// recover (GHSA-v79w-54p2-wmh5); the matching fields must demand the same grant, or GraphQL would
+		// write a row the REST route refuses to.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskMetadataResolver)).toBeUndefined();
 
 		for (const resource of RESOURCES) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, resource.controller)).toBeUndefined();
 
-			for (const handler of ['findAll', 'findById', 'getCount', 'create', 'update', 'delete']) {
+			for (const handler of ['findAll', 'findById', 'getCount']) {
 				expect(permissionOfRoute(resource.controller, handler)).toBeUndefined();
 			}
-			for (const handler of ['softRemove', 'softRecover']) {
+			for (const handler of ['create', 'update', 'delete', 'softRemove', 'softRecover']) {
 				expect(permissionOfRoute(resource.controller, handler)).toEqual([PermissionsEnum.ORG_TASK_SETTING]);
 			}
 
@@ -652,9 +667,13 @@ describe('TaskMetadataResolver — the guard stack and the permission are the co
 			}
 		}
 
-		for (const field of ['reorderTaskStatuses', 'markTaskStatusAsDefault', 'markIssueTypeAsDefault', 'taskMetadata']) {
-			expect(permissionOfField(field)).toBeUndefined();
+		for (const [field, controller, handler] of ONE_RESOURCE_WRITES) {
+			expect(permissionOfRoute(controller, handler)).toEqual([PermissionsEnum.ORG_TASK_SETTING]);
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(controller, handler));
 		}
+
+		// The bootstrap read states none, like every other read.
+		expect(permissionOfField('taskMetadata')).toBeUndefined();
 	});
 });
 

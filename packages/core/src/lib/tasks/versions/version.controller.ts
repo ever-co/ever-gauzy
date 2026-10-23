@@ -1,6 +1,21 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, Delete, Param, Put, UsePipes } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Query,
+	UseGuards,
+	Delete,
+	Param,
+	Put,
+	UsePipes,
+	Body,
+	Post
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { DeepPartial, DeleteResult, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	IPagination,
 	IPaginationParam,
@@ -53,6 +68,85 @@ export class TaskVersionController extends CrudFactory<
 	@UseValidationPipe({ whitelist: true })
 	async findTaskVersions(@Query() params: VersionQueryDTO): Promise<IPagination<ITaskVersion>> {
 		return await this.queryBus.execute(new FindVersionsQuery(params));
+	}
+
+	/**
+	 * Creates a record.
+	 *
+	 * Overrides the inherited `CrudFactory.create()` route only to attach a permission. The base declares the route
+	 * with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of the
+	 * tenant could add a task version in the organization's task settings. It now states `ORG_TASK_SETTING`: the
+	 * task-settings grant (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22).
+	 *
+	 * @param entity The record to create, validated against `CreateVersionDTO`.
+	 * @returns The created record.
+	 */
+	@ApiOperation({ summary: 'Create new record.' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong.'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@Post()
+	@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: CreateVersionDTO }))
+	async create(@Body() entity: DeepPartial<TaskVersion>): Promise<TaskVersion> {
+		return await super.create(entity);
+	}
+
+	/**
+	 * Updates a record by id.
+	 *
+	 * Overrides the inherited `CrudFactory.update()` route only to attach a permission. The base declares the route
+	 * with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of the
+	 * tenant could change a task version in the organization's task settings. It now states `ORG_TASK_SETTING`: the
+	 * task-settings grant (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22).
+	 *
+	 * @param id The record to update.
+	 * @param entity The changes, validated against `UpdatesVersionDTO`.
+	 * @returns The updated record.
+	 */
+	@ApiOperation({ summary: 'Update an existing record.' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully edited.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong.'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@Put(':id')
+	@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: UpdatesVersionDTO }))
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: QueryDeepPartialEntity<TaskVersion>
+	): Promise<TaskVersion | UpdateResult> {
+		return await super.update(id, entity);
+	}
+
+	/**
+	 * Deletes a record by id.
+	 *
+	 * Overrides the inherited `CrudFactory.delete()` route only to attach a permission. The base declares the route
+	 * with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of the
+	 * tenant could remove a task version in the organization's task settings. It now states `ORG_TASK_SETTING`: the
+	 * task-settings grant (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22).
+	 *
+	 * @param id The record to delete.
+	 * @returns The delete result.
+	 */
+	@ApiOperation({ summary: 'Delete record.' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		return await super.delete(id);
 	}
 
 	/**
