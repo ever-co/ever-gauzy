@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Oberfläche",
 			"TITLE": "Benutzeroberfläche",
-			"DESCRIPTION": "Wählen Sie, welche Oberfläche alle Benutzer dieses Mandanten für Seiten verwenden, die in beiden Varianten verfügbar sind.",
+			"DESCRIPTION": "Wählen Sie, welche Oberfläche alle Benutzer dieses Mandanten für Seiten verwenden, die in beiden Varianten verfügbar sind. Beide Oberflächen zeigen dieselben Seiten mit denselben Daten, demselben Layout und denselben Funktionen – nur die zugrunde liegende Technik unterscheidet sich. Ein Wechsel ändert also nicht, was Ihre Benutzer sehen oder tun können.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (Standard)",
 				"REACT": "React (neu)"

@@ -1112,7 +1112,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "User interface",
-			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
+			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours. Both interfaces show the same pages, with the same data, layout and features — only the technology behind them differs, so switching does not change what your users see or can do.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (default)",
 				"REACT": "React (new)"

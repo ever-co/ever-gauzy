@@ -1214,7 +1214,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Interface utilisateur",
-			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
+			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions. Les deux interfaces affichent les mêmes pages, avec les mêmes données, la même mise en page et les mêmes fonctionnalités — seule la technologie utilisée diffère, donc changer ne modifie ni ce que voient vos utilisateurs ni ce qu'ils peuvent faire.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (par défaut)",
 				"REACT": "React (nouveau)"

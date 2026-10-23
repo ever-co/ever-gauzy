@@ -1215,7 +1215,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfaz",
 			"TITLE": "Interfaz de usuario",
-			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes.",
+			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes. Ambas interfaces muestran las mismas páginas, con los mismos datos, diseño y funciones; solo cambia la tecnología que hay detrás, por lo que cambiar no modifica lo que sus usuarios ven o pueden hacer.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (predeterminado)",
 				"REACT": "React (nuevo)"
