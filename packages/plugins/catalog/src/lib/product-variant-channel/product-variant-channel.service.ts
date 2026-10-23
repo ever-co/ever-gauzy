@@ -2,13 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { ProductVariant, RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { PUBLICATION_REFERENCES } from '../catalog.references';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
 import { ProductVariantChannel } from './product-variant-channel.entity';
 import { MikroOrmProductVariantChannelRepository } from './repository/mikro-orm-product-variant-channel.repository';
 import { TypeOrmProductVariantChannelRepository } from './repository/type-orm-product-variant-channel.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Publication of variants on channels.
@@ -18,7 +19,7 @@ import { TypeOrmProductVariantChannelRepository } from './repository/type-orm-pr
  * purchasable on a channel only when its own row **and** its product's row are both `ACTIVE`.
  */
 @Injectable()
-export class ProductVariantChannelService extends TenantAwareCrudService<ProductVariantChannel> {
+export class ProductVariantChannelService extends CatalogCrudService<ProductVariantChannel> {
 	constructor(
 		readonly typeOrmProductVariantChannelRepository: TypeOrmProductVariantChannelRepository,
 		readonly mikroOrmProductVariantChannelRepository: MikroOrmProductVariantChannelRepository

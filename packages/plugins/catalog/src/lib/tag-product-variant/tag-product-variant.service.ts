@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, Tag, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext, Tag } from '@gauzy/core';
 import { assertAllInCallerScope, assertInCallerScope, callerScope } from '../catalog.scope';
 import { TagProductVariant } from './tag-product-variant.entity';
 import { MikroOrmTagProductVariantRepository } from './repository/mikro-orm-tag-product-variant.repository';
 import { TypeOrmTagProductVariantRepository } from './repository/type-orm-tag-product-variant.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Variant-level facets.
@@ -18,7 +19,7 @@ import { TypeOrmTagProductVariantRepository } from './repository/type-orm-tag-pr
  * second one the index refuses (review R2-24 (d)).
  */
 @Injectable()
-export class TagProductVariantService extends TenantAwareCrudService<TagProductVariant> {
+export class TagProductVariantService extends CatalogCrudService<TagProductVariant> {
 	constructor(
 		readonly typeOrmTagProductVariantRepository: TypeOrmTagProductVariantRepository,
 		readonly mikroOrmTagProductVariantRepository: MikroOrmTagProductVariantRepository
