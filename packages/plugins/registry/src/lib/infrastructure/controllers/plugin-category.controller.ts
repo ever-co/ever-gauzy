@@ -34,6 +34,7 @@ import {
 	PluginCategoryQueryDTO,
 	UpdatePluginCategoryDTO
 } from '../../shared';
+import { allowedRelations, PUBLIC_PLUGIN_CATEGORY_RELATIONS } from './public-read-options';
 
 @ApiTags('Plugin Categories')
 @Controller('plugin-categories')
@@ -103,7 +104,10 @@ export class PluginCategoryController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('relations') relations?: string[]
 	): Promise<IPluginCategory> {
-		return this.queryBus.execute(new GetPluginCategoryQuery(id, relations));
+		// A public read: never the category's or its plugins' settings (see public-read-options.ts)
+		return this.queryBus.execute(
+			new GetPluginCategoryQuery(id, allowedRelations(relations, PUBLIC_PLUGIN_CATEGORY_RELATIONS))
+		);
 	}
 
 	/**
