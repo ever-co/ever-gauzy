@@ -2622,6 +2622,30 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Whether the caller may reach the other accounts that share their e-mail address: only once the
+	 * address on their own account is confirmed.
+	 *
+	 * The workspace routes (`GET /auth/workspaces`, `POST /auth/switch-workspace`) find those accounts by
+	 * the caller's CURRENT address, and a user sets their own address through `PUT /user/:id` (an admin,
+	 * any user's of their tenant). The new address is stored unconfirmed — `emailVerifiedAt` is cleared
+	 * with it (UserService.moveToUnconfirmedAddress) — so without this check anyone could type another
+	 * person's address into a profile they control and be handed that person's accounts, in every tenant,
+	 * with their tokens. A confirmation is only recorded for an address its owner received mail at: the
+	 * confirmation link or code, or an accepted invitation.
+	 *
+	 * A magic sign-in code does not record one. It unlocks EVERY account that holds the address, including
+	 * one someone else created with it in a tenant they run (and holds the password of): counting the
+	 * owner's next sign-in as a confirmation of all of them would hand that account the owner's workspaces.
+	 * An unconfirmed caller still reaches them all by signing in with a code, which lists every workspace.
+	 *
+	 * @param user - The authenticated caller, as loaded for this request.
+	 * @returns Whether the caller's address is confirmed.
+	 */
+	private sharesProvenAddress(user: IUser): boolean {
+		return !!user?.emailVerifiedAt;
+	}
+
+	/**
 	 * Get all workspaces (tenants) that the current authenticated user has access to.
 	 *
 	 * @param includeTeams Flag indicating whether to include team information in the response.
@@ -2638,11 +2662,19 @@ export class AuthService extends SocialAuthService {
 
 			const email = currentUser.email;
 
-			// Find all users with the same email across different tenants using Multi-ORM pattern
+			// Find all users with the same email across different tenants using Multi-ORM pattern.
+			// Another account that shares the address is reached only by a caller who has proved they hold
+			// it (see sharesProvenAddress): until then, the caller's own account is the only workspace.
 			let users: User[];
 
 			const options = {
-				where: { email, isActive: true, isArchived: false, tenantId: Not(IsNull()) },
+				where: {
+					email,
+					isActive: true,
+					isArchived: false,
+					tenantId: Not(IsNull()),
+					...(this.sharesProvenAddress(currentUser) ? {} : { id: currentUser.id })
+				},
 				relations: { tenant: true },
 				order: { createdAt: 'DESC' as const }
 			};
@@ -2701,7 +2733,15 @@ export class AuthService extends SocialAuthService {
 			// Find the user in the target tenant using Multi-ORM pattern
 			let user: User;
 
-			const where = { email, tenantId, isActive: true, isArchived: false };
+			// Another account that shares the address is reached only by a caller who has proved they hold
+			// it (see sharesProvenAddress): until then, the caller can only switch to their own account.
+			const where = {
+				email,
+				tenantId,
+				isActive: true,
+				isArchived: false,
+				...(this.sharesProvenAddress(currentUser) ? {} : { id: currentUser.id })
+			};
 			const relations = { role: true, tenant: true };
 
 			switch (this.ormType) {
