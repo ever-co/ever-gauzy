@@ -16,6 +16,9 @@ export interface IPluginSourceOwner {
  * row, in any tenant, and a `versionId` or `tenantId` from the request filed the row under another tenant's plugin
  * version: an author could point another tenant's plugin at their own download, which the desktop app then installs.
  *
+ * The relation objects go too: TypeORM writes a foreign key from its relation when the row carries one, so a
+ * `version: { id }`, `tenant: { id }` or `organization: { id }` from the request would win over the ids set here.
+ *
  * @param source - The source as the request describes it.
  * @param owner - The version, tenant and organization the row belongs to.
  */
@@ -23,8 +26,11 @@ export function ownedSourceRow<T extends object>(source: T, owner: IPluginSource
 	return {
 		...source,
 		id: undefined,
+		version: undefined,
 		versionId: owner.versionId,
+		tenant: undefined,
 		tenantId: owner.tenantId,
+		organization: undefined,
 		organizationId: owner.organizationId
 	};
 }

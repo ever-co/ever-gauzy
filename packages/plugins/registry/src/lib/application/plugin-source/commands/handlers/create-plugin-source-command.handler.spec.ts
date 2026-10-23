@@ -53,6 +53,28 @@ describe('ownedSourceRow', () => {
 			organizationId: undefined
 		});
 	});
+
+	it('drops the version, tenant and organization relations the request names, which TypeORM would write instead', () => {
+		const row = ownedSourceRow(
+			{
+				version: { id: 'version-of-tenant-b' },
+				tenant: { id: 'tenant-b' },
+				organization: { id: 'organization-b' },
+				type: 'CDN'
+			},
+			{ versionId: 'version-a', tenantId: 'tenant-a', organizationId: 'organization-a' }
+		);
+
+		expect(row.version).toBeUndefined();
+		expect(row.tenant).toBeUndefined();
+		expect(row.organization).toBeUndefined();
+		expect(row).toEqual({
+			versionId: 'version-a',
+			tenantId: 'tenant-a',
+			organizationId: 'organization-a',
+			type: 'CDN'
+		});
+	});
 });
 
 describe('CreatePluginSourceCommandHandler', () => {
