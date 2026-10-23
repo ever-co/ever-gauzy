@@ -346,24 +346,25 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * GET user by email using social logins
+	 * The account a sign-in through an identity provider (Google, GitHub, Keycloak…) resolves a verified email to.
 	 *
-	 * @param email
-	 * @returns
+	 * A row nobody has proven is never chosen: one with no tenant and no verified email is a self-registration that
+	 * never got past `POST /auth/register`, which takes any address without proof of owning it. Matching it handed
+	 * the session of the address's real owner, on their first sign-in through the provider, to whoever had
+	 * registered the address first with a password of their own, and with it the workspace the owner then created.
+	 * When several rows carry the email, a verified one is chosen before an unverified one.
+	 *
+	 * @param email The email the identity provider vouches for.
+	 * @returns The account, or null when no proven account carries the email.
 	 */
-	async getOAuthLoginEmail(email: string): Promise<IUser> {
-		try {
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.findOneOrFail({ email } as any);
-				case MultiORMEnum.TypeORM:
-					return await this.typeOrmRepository.findOneByOrFail({ email });
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
-		} catch (error) {
-			throw new NotFoundException(`The requested record was not found`);
-		}
+	async findOAuthLoginUser(email: string): Promise<IUser | null> {
+		const rows: IUser[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.find({ email } as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where: { email } });
+		const proven = rows.filter((row) => !!row.tenantId || !!row.emailVerifiedAt);
+
+		return proven.find((row) => !!row.emailVerifiedAt) ?? proven[0] ?? null;
 	}
 
 	/**
