@@ -145,7 +145,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		try {
-			const { memberIds, managerIds, tasks = [] } = entity;
+			const { memberIds, managerIds, tasks } = entity;
 
 			// Retrieve existing module
 			const existingProjectModule = await this.findOneByIdString(id, {
@@ -182,29 +182,31 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				);
 			}
 
-			// Update tasks logic
+			// Update tasks logic: an update that does not state a task list leaves the module's tasks as they are
 			if (Array.isArray(tasks)) {
 				const existingTasks = await this.getExistingTasks(tasks);
+				const moduleTasks = existingProjectModule.tasks || [];
 
-				// Determine tasks to add
-				const existingTaskIds = new Set(existingTasks.map((task) => task.id));
-				const newTasks = tasks.filter((task) => !existingTaskIds.has(task.id));
+				// Determine tasks to add: stated tasks found in the database that are not yet in the module
+				const moduleTaskIds = new Set(moduleTasks.map((task) => task.id));
+				const newTasks = existingTasks.filter((task) => !moduleTaskIds.has(task.id));
 
 				// Determine tasks to remove
-				const tasksToRemove = existingProjectModule.tasks.filter(
+				const tasksToRemove = moduleTasks.filter(
 					(task) => !tasks.some((updatedTask) => updatedTask.id === task.id)
 				);
 
 				// Add new tasks
 				for (const task of newTasks) {
 					task.modules = [...(task.modules || []), existingProjectModule];
-					await this._taskService.update(task.id, task);
+					await this._taskService.update(task.id, { modules: task.modules });
 				}
 
-				// Remove tasks
-				for (const task of tasksToRemove) {
-					task.modules = task.modules?.filter((module) => module.id !== existingProjectModule.id) || [];
-					await this._taskService.update(task.id, task);
+				// Remove tasks: reload them with their modules so only the pairing with this module is dropped
+				const removedTasks = await this.getExistingTasks(tasksToRemove);
+				for (const task of removedTasks) {
+					task.modules = (task.modules || []).filter((module) => module.id !== existingProjectModule.id);
+					await this._taskService.update(task.id, { modules: task.modules });
 				}
 			}
 
