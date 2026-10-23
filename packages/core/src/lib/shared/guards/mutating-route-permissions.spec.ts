@@ -542,9 +542,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'ResourceLinkController.softRecover',
 	'ResourceLinkController.softRemove',
 	'ResourceLinkController.update',
-	'ScreeningTasksController.create',
-	'ScreeningTasksController.delete',
-	'ScreeningTasksController.update',
 	'SharedEntityController.create',
 	'SharedEntityController.delete',
 	'SharedEntityController.softRecover',
@@ -570,9 +567,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'TaskVersionController.create',
 	'TaskVersionController.delete',
 	'TaskVersionController.update',
-	'TaskViewController.create',
-	'TaskViewController.delete',
-	'TaskViewController.update',
 	'WakatimeController.save',
 	'WakatimeController.saveData'
 ]);

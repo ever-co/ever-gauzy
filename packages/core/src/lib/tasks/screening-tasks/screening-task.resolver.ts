@@ -72,17 +72,14 @@ const SCREENING_TASK_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * that file the task, subscribe the assignees, mentions them and write the activity logs, so neither
  * is re-implemented here.
  *
- * **The guard chain is the controller's, and no field states a permission.** The delivered controller
- * carries both guards on the class and `@Permissions()` — the decorator with no permission in it,
- * which is an empty set rather than an absent statement. Every one of its routes therefore runs under
- * the guards alone. This resolver carries the same chain and the same empty statement, so a field
- * here is neither narrower nor wider than the route it mirrors; the permission guard is in the chain
- * because the controller's chain has it, and it has nothing to check.
- *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_TASK_EDIT` — the CRUD base declares no permission, and `PermissionGuard` answers `true` to empty
- * metadata, so any member of the tenant could retire or restore a row (GHSA-v79w-54p2-wmh5) — so
- * `softDeleteScreeningTask` and `recoverScreeningTask` state the same, neither wider nor narrower than REST.
+ * **The guard chain is the controller's, and each field states the permission its route states.** The
+ * delivered controller carries both guards on the class and `@Permissions()` — the decorator with no
+ * permission in it, which is an empty set rather than an absent statement — so its reads run under the
+ * guards alone. This resolver carries the same chain and the same empty statement. The writes state the
+ * task grants on their own handlers — `ORG_TASK_ADD` on the creation and `ORG_TASK_EDIT` on the edit, the
+ * removal and the retire-and-restore pair — because `PermissionGuard` answers `true` to an empty list, so
+ * any member of the tenant could write a screening (GHSA-v79w-54p2-wmh5). The fields state the same,
+ * neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -157,6 +154,7 @@ export class ScreeningTaskResolver {
 	 * member states before it writes the decision, which is why that member is a whole task body here
 	 * rather than an identifier.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_ADD)
 	@Mutation('createScreeningTask')
 	async createScreeningTask(@Args('input') input: ICreateScreeningTaskInput): Promise<IScreeningTask> {
 		return await this.commandBus.execute(new ScreeningTaskCreateCommand(input as never));
@@ -170,6 +168,7 @@ export class ScreeningTaskResolver {
 	 * — so the field answers the decision the write produced and the task's own state is read back
 	 * through the task resource.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('updateScreeningTask')
 	async updateScreeningTask(@Args('input') input: IUpdateScreeningTaskInput): Promise<IScreeningTask> {
 		const { id, ...values } = input;
@@ -180,6 +179,7 @@ export class ScreeningTaskResolver {
 	/**
 	 * Removes a screening decision outright.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('deleteScreeningTask')
 	async deleteScreeningTask(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.screeningTasksService.delete(id));
