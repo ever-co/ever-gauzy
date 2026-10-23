@@ -25,8 +25,15 @@ const verifiedMember = { id: 'verified', email: EMAIL, tenantId: TENANT, emailVe
 const verifiedSignup = { id: 'verified-signup', email: EMAIL, tenantId: null, emailVerifiedAt: new Date('2026-01-01') };
 
 const buildService = (rows: Array<Record<string, unknown>>) => {
+	// Every condition of the `where` is applied; a row that states no `isActive` / `isArchived` is an active one.
 	const repository = {
-		find: jest.fn(async ({ where }: any) => rows.filter((row) => row['email'] === where.email))
+		find: jest.fn(async ({ where }: any) =>
+			rows.filter((row) =>
+				Object.entries(where).every(
+					([key, value]) => ({ isActive: true, isArchived: false, ...row })[key] === value
+				)
+			)
+		)
 	};
 	const service = new UserService(repository as any, {} as any, {} as any, {} as any, {} as any);
 	Object.defineProperty(service, 'ormType', { value: MultiORMEnum.TypeORM });
@@ -54,6 +61,16 @@ describe('UserService.findOAuthLoginUser — never an unproven self-registration
 		await expect(buildService([verifiedSignup]).findOAuthLoginUser(EMAIL)).resolves.toMatchObject({
 			id: 'verified-signup'
 		});
+	});
+
+	it('passes over a deactivated or archived verified account for an active one', async () => {
+		// The token step refuses an inactive row, so choosing it would fail a sign-in the active account may make.
+		const deactivated = { ...verifiedMember, id: 'deactivated', isActive: false };
+		const archived = { ...verifiedMember, id: 'archived', isArchived: true };
+		await expect(
+			buildService([deactivated, archived, unverifiedMember]).findOAuthLoginUser(EMAIL)
+		).resolves.toMatchObject({ id: 'member' });
+		await expect(buildService([deactivated]).findOAuthLoginUser(EMAIL)).resolves.toBeNull();
 	});
 });
 

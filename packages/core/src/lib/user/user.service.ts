@@ -354,14 +354,18 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * registered the address first with a password of their own, and with it the workspace the owner then created.
 	 * When several rows carry the email, a verified one is chosen before an unverified one.
 	 *
+	 * Only active, non-archived rows are considered: `getJwtAccessToken` refuses any other, so preferring a verified
+	 * but deactivated row over an active one would turn the sign-in into an error instead of signing in the account
+	 * that is still allowed in.
+	 *
 	 * @param email The email the identity provider vouches for.
-	 * @returns The account, or null when no proven account carries the email.
+	 * @returns The account, or null when no proven, active account carries the email.
 	 */
 	async findOAuthLoginUser(email: string): Promise<IUser | null> {
 		const rows: IUser[] =
 			this.ormType === MultiORMEnum.MikroORM
-				? ((await this.mikroOrmRepository.find({ email } as any)) as IUser[])
-				: await this.typeOrmRepository.find({ where: { email } });
+				? ((await this.mikroOrmRepository.find({ email, ...ACTIVE_ACCOUNT } as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where: { email, ...ACTIVE_ACCOUNT } });
 		const proven = rows.filter((row) => !!row.tenantId || !!row.emailVerifiedAt);
 
 		return proven.find((row) => !!row.emailVerifiedAt) ?? proven[0] ?? null;
