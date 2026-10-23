@@ -122,7 +122,7 @@ describe('the task-settings controllers — every write states ORG_TASK_SETTING'
 		'%s still serves create, update and delete on the inherited paths, codes and validation',
 		(_name, controller) => {
 			for (const name of ['create', 'update', 'delete']) {
-				const override = (controller.prototype as Record<string, Function>)[name];
+				const override = (controller.prototype as unknown as Record<string, Function>)[name];
 				const inherited = inheritedHandler(controller, name);
 
 				// The base declares the route with no permission at all — the omission this suite closes.
@@ -154,7 +154,7 @@ describe('the task-settings controllers — every write states ORG_TASK_SETTING'
 		];
 
 		for (const [controller, name, method, path] of served) {
-			const handler = (controller.prototype as Record<string, Function>)[name];
+			const handler = (controller.prototype as unknown as Record<string, Function>)[name];
 
 			expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(method);
 			expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe(path);
