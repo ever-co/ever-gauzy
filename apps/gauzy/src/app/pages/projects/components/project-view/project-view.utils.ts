@@ -92,3 +92,112 @@ export function dueInWords(daysLeft: number | null, isDone: boolean): { key: str
 	if (daysLeft === 1) return { key: prefix + 'TOMORROW' };
 	return { key: prefix + 'IN_DAYS', count: daysLeft };
 }
+
+/**
+ * A task's time worked (all time), as a bar: against its estimate when it has one; without one, its share
+ * of the project's tracked time. Either way the bar fills to the percentage beside it.
+ */
+export interface ITaskProgress {
+	/** "3h 05m": the time worked on the task. */
+	worked: string;
+	/** "8h 00m", or `null` for a task with no estimate. */
+	estimate: string | null;
+	/** In percent: of the estimate (past 100 once over it), else of the project's tracked time. */
+	share: number | null;
+	/** The bar's fill, 0–100; `null` for no bar. */
+	fill: number | null;
+	/** More time worked than the estimate. */
+	over: boolean;
+	/** The bar is the task's share of the project's tracked time, not of an estimate. */
+	relative: boolean;
+	/** The bar's tooltip: an i18n key and its parameters. */
+	hint: { key: string; params: Record<string, string | number> } | null;
+}
+
+/** The time worked on all of a project's tasks. */
+export interface IProjectWorkedTime {
+	total: number;
+}
+
+/** The project's total time worked, from per-task seconds. */
+export function projectWorkedTimeOf(seconds: number[]): IProjectWorkedTime {
+	return { total: seconds.reduce((total, value) => total + value, 0) };
+}
+
+/** A task's progress, or `null` for a task with neither time worked nor an estimate. */
+export function taskProgressOf(
+	workedSeconds: number,
+	estimateSeconds: number | null | undefined,
+	project?: IProjectWorkedTime
+): ITaskProgress | null {
+	const worked = Math.max(0, Number(workedSeconds) || 0);
+	const estimate = Math.max(0, Number(estimateSeconds) || 0);
+	if (!worked && !estimate) return null;
+	if (estimate) {
+		const share = Math.round((worked / estimate) * 100);
+		const params = { worked: formatDuration(worked), estimate: formatDuration(estimate) };
+		return {
+			worked: params.worked,
+			estimate: params.estimate,
+			share,
+			fill: Math.min(100, share),
+			over: worked > estimate,
+			relative: false,
+			hint: { key: 'PROJECT_VIEW.TASK_PROGRESS_OF', params }
+		};
+	}
+	// No estimate: the task's share of the project's tracked time.
+	const relative = !!project?.total;
+	const share = relative ? Math.round((worked / project.total) * 100) : null;
+	return {
+		worked: formatDuration(worked),
+		estimate: null,
+		share,
+		fill: relative ? Math.min(100, share) : null,
+		over: false,
+		relative,
+		hint: relative
+			? { key: 'PROJECT_VIEW.TASK_PROGRESS_SHARE', params: { worked: formatDuration(worked), share: share ?? 0 } }
+			: null
+	};
+}
+
+/** One person's time on a task, as the "Most worked tasks" rows draw it: time, share, and a bar to match. */
+export interface ITaskWorker {
+	person: IPersonChip;
+	/** "3h 05m". */
+	worked: string;
+	/** In percent, of everyone's time on the task. */
+	share: number;
+}
+
+/**
+ * The people who worked most on a task, from each one's time on it (an employee id, seconds and their user):
+ * the most first, at most `limit`. Each share is of everyone's time on the task.
+ */
+export function taskWorkersOf(
+	rows: { id: string; duration?: number; user?: IEmployee['user'] | any }[],
+	limit = 3
+): ITaskWorker[] {
+	const ranked = (rows || [])
+		.map((row) => ({ employee: row, seconds: Math.max(0, Number(row.duration) || 0) }))
+		.filter((entry) => entry.seconds > 0)
+		.sort((a, b) => b.seconds - a.seconds);
+	const total = ranked.reduce((sum, entry) => sum + entry.seconds, 0) || 1;
+	return ranked
+		.map((entry) => ({
+			person: personOf(entry.employee),
+			worked: formatDuration(entry.seconds),
+			share: Math.round((entry.seconds / total) * 100)
+		}))
+		.filter((worker): worker is ITaskWorker => !!worker.person)
+		.slice(0, limit);
+}
+
+/** "3h 05m": seconds as hours and minutes. */
+export function formatDuration(seconds: number): string {
+	const total = Math.max(0, Math.round(Number(seconds) || 0));
+	const hours = Math.floor(total / 3600);
+	const minutes = Math.floor((total % 3600) / 60);
+	return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+}

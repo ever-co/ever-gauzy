@@ -131,7 +131,8 @@ export interface IRecordViewRow {
 	/** Normalized list for the `people` renderer. */
 	people?: IRecordViewPerson[];
 	/** Normalized list for the `teams` renderer. */
-	teams?: { name: string; count: number }[];
+	/** Each team with its members, listed on hover over its chip. */
+	teams?: { name: string; count: number; members: IRecordViewPerson[]; listId: string }[];
 	/** Rendered HTML for the `markdown` renderer. */
 	html?: string;
 }

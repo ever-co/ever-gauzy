@@ -2177,6 +2177,17 @@
 		"UPDATE": "Atualizar",
 		"ALIGNMENTS": "Alinhamentos",
 		"COMMENTS": "Comentários",
+		"COMMENT_THREAD": {
+			"REPLY": "Responder",
+			"ONE_MESSAGE": "1 mensagem",
+			"MESSAGES": "{{ count }} mensagens",
+			"NO_MESSAGES": "Ainda não há mensagens neste tópico.",
+			"REPLY_PLACEHOLDER": "Responder a este comentário…",
+			"UNKNOWN_AUTHOR": "Desconhecido",
+			"DELETE_CONFIRM": "Excluir este comentário?",
+			"DELETED": "Comentário excluído",
+			"LOAD_ERROR": "Não foi possível carregar os comentários."
+		},
 		"KEY_RESULTS": "Resultados Chave",
 		"GROUP_BY": "Agrupe por",
 		"DELETE_OBJECTIVE": "Excluir Objetivo",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Não há resultados-chave para exibir.",
 			"NO_UPDATES": "Ainda não há atualizações.",
 			"NO_ALIGNMENT": "Ainda não há alinhamentos.",
+			"NO_COMMENTS": "Ainda não há comentários.",
 			"NO_PROGRESS_DATA": "Ainda não há dados de progresso para o gráfico."
 		},
 		"LEVELS": {
@@ -6883,6 +6895,15 @@
 		"NEEDS_ATTENTION": "Requer atenção",
 		"NEEDS_ATTENTION_CAPTION": "Tarefas atrasadas e com prazo nos próximos 3 dias",
 		"ACTIVITY": "Atividade diária",
+		"ACTIVITY_VIEWS": "Visualização da atividade",
+		"ACTIVITY_VIEW_CHART": "Gráfico",
+		"ACTIVITY_VIEW_GRID": "Grade de contribuições",
+		"GRID_NONE": "Sem tempo",
+		"GRID_LAST_YEAR": "Últimos 12 meses",
+		"GRID_OLDER": "Ano anterior",
+		"GRID_NEWER": "Ano seguinte",
+		"GRID_DAY": "{{ time }} em {{ date }}",
+		"GRID_DAY_EMPTY": "Sem tempo em {{ date }}",
 		"TOP_CONTRIBUTORS": "Quem trabalhou mais",
 		"CONTRIBUTORS_CAPTION": "Tempo de todos neste projeto · {{ range }}",
 		"YOUR_TIME_CAPTION": "Seu tempo neste projeto · {{ range }}",
@@ -6923,6 +6944,11 @@
 		"ACTIVITY_FIELDS": "Alterado: {{ fields }}",
 		"SOMEONE": "Alguém",
 		"TODAY": "Hoje",
-		"YESTERDAY": "Ontem"
+		"YESTERDAY": "Ontem",
+		"TASK_PROGRESS": "Progresso",
+		"TASK_PROGRESS_OF": "{{ worked }} de {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% do tempo registrado do projeto (sem estimativa)",
+		"TASK_TOP_PEOPLE": "Quem mais trabalhou",
+		"TASK_NO_ESTIMATE": "Sem estimativa"
 	}
 }

@@ -2177,6 +2177,17 @@
 		"UPDATE": "Aggiornamento",
 		"ALIGNMENTS": "Allineamenti",
 		"COMMENTS": "Commenti",
+		"COMMENT_THREAD": {
+			"REPLY": "Rispondi",
+			"ONE_MESSAGE": "1 messaggio",
+			"MESSAGES": "{{ count }} messaggi",
+			"NO_MESSAGES": "Non ci sono ancora messaggi in questa discussione.",
+			"REPLY_PLACEHOLDER": "Rispondi a questo commento…",
+			"UNKNOWN_AUTHOR": "Sconosciuto",
+			"DELETE_CONFIRM": "Eliminare questo commento?",
+			"DELETED": "Commento eliminato",
+			"LOAD_ERROR": "Impossibile caricare i commenti."
+		},
 		"KEY_RESULTS": "Risultati chiave",
 		"GROUP_BY": "Raggruppa per",
 		"DELETE_OBJECTIVE": "Elimina Obbiettivo",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Nessun risultato chiave da visualizzare",
 			"NO_UPDATES": "Ancora nessun aggiornamento",
 			"NO_ALIGNMENT": "Nessun allineamento ancora",
+			"NO_COMMENTS": "Nessun commento ancora.",
 			"NO_PROGRESS_DATA": "Nessun dato di progresso da rappresentare"
 		},
 		"LEVELS": {
@@ -6883,6 +6895,15 @@
 		"NEEDS_ATTENTION": "Richiede attenzione",
 		"NEEDS_ATTENTION_CAPTION": "Attività scadute e in scadenza nei prossimi 3 giorni",
 		"ACTIVITY": "Attività giornaliera",
+		"ACTIVITY_VIEWS": "Vista attività",
+		"ACTIVITY_VIEW_CHART": "Grafico",
+		"ACTIVITY_VIEW_GRID": "Griglia dei contributi",
+		"GRID_NONE": "Nessun tempo",
+		"GRID_LAST_YEAR": "Ultimi 12 mesi",
+		"GRID_OLDER": "Anno precedente",
+		"GRID_NEWER": "Anno successivo",
+		"GRID_DAY": "{{ time }} il {{ date }}",
+		"GRID_DAY_EMPTY": "Nessun tempo il {{ date }}",
 		"TOP_CONTRIBUTORS": "Chi ha lavorato di più",
 		"CONTRIBUTORS_CAPTION": "Tempo di tutti su questo progetto · {{ range }}",
 		"YOUR_TIME_CAPTION": "Il tuo tempo su questo progetto · {{ range }}",
@@ -6923,6 +6944,11 @@
 		"ACTIVITY_FIELDS": "Modificato: {{ fields }}",
 		"SOMEONE": "Qualcuno",
 		"TODAY": "Oggi",
-		"YESTERDAY": "Ieri"
+		"YESTERDAY": "Ieri",
+		"TASK_PROGRESS": "Avanzamento",
+		"TASK_PROGRESS_OF": "{{ worked }} su {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% del tempo registrato del progetto (nessuna stima)",
+		"TASK_TOP_PEOPLE": "Chi ci ha lavorato di più",
+		"TASK_NO_ESTIMATE": "Nessuna stima"
 	}
 }

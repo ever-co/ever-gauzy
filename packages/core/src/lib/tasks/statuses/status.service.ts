@@ -152,7 +152,10 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 						organization,
 						isSystem: false,
 						order: item.order ?? index,
-						isCollapsed: item.isCollapsed
+						isCollapsed: item.isCollapsed,
+						isTodo: item.isTodo,
+						isInProgress: item.isInProgress,
+						isDone: item.isDone
 					})
 			);
 
@@ -185,7 +188,10 @@ export class TaskStatusService extends TaskMetadataService<TaskStatus> {
 				color: item.color,
 				isSystem: false,
 				order: item.order ?? index,
-				isCollapsed: item.isCollapsed
+				isCollapsed: item.isCollapsed,
+				isTodo: item.isTodo,
+				isInProgress: item.isInProgress,
+				isDone: item.isDone
 			}));
 
 			return await this.createMany(entities);

@@ -438,6 +438,35 @@ describe('ChannelRegionService — the whole-set replacement', () => {
 		expect(store.row(CHANNEL, 'region-3')).toBeDefined();
 	});
 
+	it('moves the fallback flag to a member listed before the current holder (#11204)', async () => {
+		const store = world({
+			channels: [channelRow(CHANNEL)],
+			regions: [regionRow(REGION), regionRow(OTHER_REGION)],
+			memberships: [membershipRow(CHANNEL, REGION, { isDefault: true }), membershipRow(CHANNEL, OTHER_REGION)]
+		});
+		// The double states no `UQ_channel_region_default`, so it is stated here: a save that would leave
+		// the channel with two live fallback rows is refused, as the partial unique index refuses it.
+		const manager: any = store.service.typeOrmChannelRegionRepository.manager;
+		const save = manager.save;
+		manager.save = async (entity: unknown, row: Row) => {
+			const otherHolder = store.tables.channel_region.some(
+				(one) => one.id !== row.id && one.channelId === row.channelId && one.isDefault && !one.deletedAt
+			);
+			if (row.isDefault && otherHolder) {
+				throw new Error('UQ_channel_region_default');
+			}
+			return save(entity, row);
+		};
+
+		await store.service.replaceRegions(CHANNEL, [
+			{ regionId: OTHER_REGION, isDefault: true },
+			{ regionId: REGION }
+		]);
+
+		expect(store.row(CHANNEL, OTHER_REGION)?.isDefault).toBe(true);
+		expect(store.row(CHANNEL, REGION)?.isDefault).toBe(false);
+	});
+
 	it('refuses a set that names one region twice, or two fallbacks', async () => {
 		const store = world({
 			channels: [channelRow(CHANNEL)],
