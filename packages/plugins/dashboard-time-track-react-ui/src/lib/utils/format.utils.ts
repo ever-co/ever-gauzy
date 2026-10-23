@@ -1,5 +1,5 @@
 import moment from 'moment-timezone';
-import { TimeFormatEnum } from '@gauzy/contracts';
+import { EmployeeKindEnum, TimeFormatEnum } from '@gauzy/contracts';
 import { toTimezone } from '@gauzy/ui-core/common';
 
 /**
@@ -100,4 +100,14 @@ export function durationMinutesLabel(durationSeconds: number | null | undefined)
  */
 export function reportDateParam(value: Date | string): string {
 	return moment(value).format('MM-DD-YYYY');
+}
+
+/**
+ * `ngx-avatar`'s `isAgent`: whether the employee is an agent employee (`kind = 'agent'`), which
+ * gets the "Agent" badge after its name.
+ *
+ * @param employee Employee-ish record (statistics rows carry `kind` when the API selects it).
+ */
+export function isAgentEmployee(employee: { kind?: string | null } | null | undefined): boolean {
+	return employee?.kind === EmployeeKindEnum.AGENT;
 }
