@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Delete,
+	ForbiddenException,
 	HttpCode,
 	HttpStatus,
 	Optional,
@@ -12,13 +13,14 @@ import {
 	UsePipes
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ID } from '@gauzy/contracts';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
 	AbstractValidationPipe,
 	CrudController,
 	Idempotent,
 	Permissions,
 	PermissionGuard,
+	RequestContext,
 	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UUIDValidationPipe,
@@ -64,10 +66,19 @@ export class OrderTransactionController extends CrudController<OrderTransaction>
 	 * for. An inherited `create` therefore accepts any body at all — an unknown enumeration member, a
 	 * missing required field, a property the resource does not have. Declaring the DTO is what makes
 	 * the request validated, and it is also what gives the route a documented body.
+	 *
+	 * A correction is a payment recorded by hand, so it needs both the order grant `ORDERS_EDIT` and the payment grant
+	 * `ORG_PAYMENT_ADD_EDIT` (owner decision, 2026-10-22). The route states the first; the guard reads a route's grants
+	 * as alternatives, so the second is checked here. `ORDERS_CREATE`, which the route stated before, only creates draft
+	 * orders: with it alone, a caller could mark any order of the tenant paid. A provider's capture or refund is written
+	 * by the server's payment handling, not through this route.
+	 *
+	 * @throws ForbiddenException with `ORDER_TRANSACTION_FORBIDDEN` when the caller lacks `ORG_PAYMENT_ADD_EDIT`.
 	 */
 	@ApiOperation({ summary: 'Record a MANUAL correction on an order payment ledger' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The order transaction was created', type: OrderTransaction })
-	@Permissions(ORDER_PERMISSIONS.ORDERS_CREATE)
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller lacks ORDERS_EDIT or ORG_PAYMENT_ADD_EDIT' })
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
 	// A correction is money recorded: a client that retries after a lost answer - or after the re-derivation below
 	// failed - presents its key and is answered from the first attempt instead of recording the correction twice.
 	@Idempotent({ scope: 'order.transaction.manual', required: false, resourceType: 'order_transaction' })
@@ -75,6 +86,13 @@ export class OrderTransactionController extends CrudController<OrderTransaction>
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateOrderTransactionDTO): Promise<OrderTransaction> {
+		if (!RequestContext.hasPermission(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)) {
+			throw new ForbiddenException({
+				message: `ORDER_TRANSACTION_FORBIDDEN: recording a payment correction needs ${PermissionsEnum.ORG_PAYMENT_ADD_EDIT} as well as the order grant.`,
+				code: 'ORDER_TRANSACTION_FORBIDDEN'
+			});
+		}
+
 		const row = await this.service.recordManual(entity as any);
 
 		// ADR-26: every ledger move re-derives the order, so the correction is counted now, not at the nightly pass.

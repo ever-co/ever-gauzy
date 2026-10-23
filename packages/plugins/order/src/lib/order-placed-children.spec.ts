@@ -95,7 +95,8 @@ jest.mock('@gauzy/core', () => {
 
 import 'reflect-metadata';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { OrderStatus, OrderTransactionType } from '@gauzy/contracts';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { OrderStatus, OrderTransactionType, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { OrderEditGuard } from './order/order-edit.guard';
 import { OrderLineController } from './order-line/order-line.controller';
@@ -360,9 +361,37 @@ describe('the order ledgers are append-only, and the one direct write is a MANUA
 		const create = jest.spyOn(service, 'create').mockImplementation(async (row: any) => ({ id: 'tx-1', ...row }));
 		const totals = { recompute: jest.fn(async () => ({})) };
 		const controller = new OrderTransactionController(service, totals as never);
+		// The caller holds the payment grant the route checks beside its order grant, unless a test says otherwise
+		const hasPermission = jest
+			.spyOn(RequestContext, 'hasPermission')
+			.mockImplementation((permission) => permission === PermissionsEnum.ORG_PAYMENT_ADD_EDIT);
 
-		return { service, create, totals, controller };
+		return { service, create, totals, controller, hasPermission };
 	};
+
+	it('states ORDERS_EDIT on the correction route, not ORDERS_CREATE', () => {
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, OrderTransactionController.prototype.create)).toEqual([
+			'ORDERS_EDIT'
+		]);
+	});
+
+	it('refuses a correction from a caller without ORG_PAYMENT_ADD_EDIT, and writes nothing', async () => {
+		const { create, totals, controller, hasPermission } = transactions();
+		hasPermission.mockReturnValue(false);
+
+		await expect(
+			controller.create({
+				orderId: PLACED,
+				type: OrderTransactionType.MANUAL,
+				amount: 5,
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ status: 403, response: { code: 'ORDER_TRANSACTION_FORBIDDEN' } });
+
+		expect(hasPermission).toHaveBeenCalledWith(PermissionsEnum.ORG_PAYMENT_ADD_EDIT);
+		expect(create).not.toHaveBeenCalled();
+		expect(totals.recompute).not.toHaveBeenCalled();
+	});
 
 	it('records a MANUAL correction in the order currency and re-derives the order', async () => {
 		const { create, totals, controller } = transactions();
