@@ -2,7 +2,7 @@ import '../nebular-jsx';
 import { ID, IMembersStatistics } from '@gauzy/contracts';
 import { useTranslation } from '@gauzy/ui-react';
 import { Avatar, Badge, progressStatus } from '@gauzy/ui-react-components';
-import { durationFormat } from '../../utils/format.utils';
+import { durationFormat, isAgentEmployee } from '../../utils/format.utils';
 import { RangePeriod } from '../../utils/period.utils';
 import { WindowCard } from './WindowCard';
 
@@ -32,16 +32,15 @@ export function MembersWindow({ members, loading, emptyMessage, selectedPeriod, 
 			hasData={rows.length > 0}
 			emptyMessage={emptyMessage}
 			className="gz-rtt-member-list"
-			emptyInBody
 		>
 			<div className="gz-rtt-list">
-				<nb-list>
-					<nb-list-item>
+				<nb-list className="gz-rtt-data-list">
+					<nb-list-item className="gz-rtt-data-list-head">
 						<div className="gz-rtt-w-100">
 							<div className="gz-rtt-row gz-rtt-font-weight-bold">
-								<div className="gz-rtt-col-3">{t('TIMESHEET.MEMBER_INFO')}</div>
-								<div className="gz-rtt-col-3 gz-rtt-text-center">{t('TIMESHEET.TODAY')}</div>
-								<div className="gz-rtt-col gz-rtt-text-left">
+								<div className="gz-rtt-col-3 gz-rtt-cell">{t('TIMESHEET.MEMBER_INFO')}</div>
+								<div className="gz-rtt-col-3 gz-rtt-cell gz-rtt-cell-centered">{t('TIMESHEET.TODAY')}</div>
+								<div className="gz-rtt-col gz-rtt-cell gz-rtt-cell-centered">
 									{t(selectedPeriod === RangePeriod.PERIOD ? 'TIMESHEET.OVER_PERIOD' : 'TIMESHEET.THIS_WEEK')}
 								</div>
 							</div>
@@ -53,17 +52,18 @@ export function MembersWindow({ members, loading, emptyMessage, selectedPeriod, 
 						return (
 							<nb-list-item key={member.id}>
 								<div className="gz-rtt-w-100">
-									<div className="gz-rtt-row">
-										<div className="gz-rtt-col-3">
+									<div className="gz-rtt-row gz-rtt-align-items-center">
+										<div className="gz-rtt-col-3 gz-rtt-cell">
 											<Avatar
 												size="sm"
 												name={member.user?.name}
 												src={member.user?.imageUrl}
 												presence={member as { isOnline?: boolean; isAway?: boolean }}
+												badge={isAgentEmployee(member as { kind?: string }) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
 												onClick={member.id ? () => onOpenEmployee(member.id) : undefined}
 											/>
 										</div>
-										<div className="gz-rtt-col-3 gz-rtt-text-center">
+										<div className="gz-rtt-col-3 gz-rtt-cell gz-rtt-cell-centered">
 											<div className="gz-rtt-activity">
 												<div className="gz-rtt-duration">{durationFormat(member.todayTime?.duration || 0)}</div>
 												<div className="gz-rtt-activity-percentage">
@@ -71,9 +71,9 @@ export function MembersWindow({ members, loading, emptyMessage, selectedPeriod, 
 												</div>
 											</div>
 										</div>
-										<div className="gz-rtt-col gz-rtt-text-center">
-											<div className={moreThanWeek ? undefined : 'gz-rtt-d-flex'}>
-												<div className="gz-rtt-activity gz-rtt-text-center">
+										<div className="gz-rtt-col gz-rtt-cell gz-rtt-cell-centered">
+											<div className={`gz-rtt-period-cell${moreThanWeek ? '' : ' gz-rtt-d-flex'}`}>
+												<div className="gz-rtt-activity">
 													<div className="gz-rtt-duration">{durationFormat(member.weekTime?.duration || 0)}</div>
 													<div className="gz-rtt-activity-percentage">
 														<Badge status={progressStatus(weekOverall)} text={`${weekOverall}%`} />
