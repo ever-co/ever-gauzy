@@ -3,6 +3,7 @@ import { DeepPartial, FindOptionsWhere, IsNull, LessThanOrEqual, MoreThanOrEqual
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { LegacyFindOneOptions, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertOrganizationUnchanged, inCallerOrganization, organizationForCreate } from '../organization-scope';
 import { ExchangeRate } from './exchange-rate.entity';
 import { TypeOrmExchangeRateRepository } from './repository/type-orm-exchange-rate.repository';
@@ -50,7 +51,7 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<ExchangeRate>): Promise<ExchangeRate> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), this.scope.organizationId);
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

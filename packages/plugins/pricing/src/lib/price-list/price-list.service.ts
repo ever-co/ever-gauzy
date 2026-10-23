@@ -5,6 +5,7 @@ import { CurrencyCode, ID } from '@gauzy/contracts';
 import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { IPriceContext, IResolvedPrice, PriceListStatus } from '../pricing.types';
 import { ProductPriceService } from '../product-price/product-price.service';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertOrganizationUnchanged, inCallerOrganization, statedOrganizations } from '../organization-scope';
 import { PriceList } from './price-list.entity';
 import { TypeOrmPriceListRepository } from './repository/type-orm-price-list.repository';
@@ -58,7 +59,7 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<PriceList>): Promise<PriceList> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), this.scope.organizationId);
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

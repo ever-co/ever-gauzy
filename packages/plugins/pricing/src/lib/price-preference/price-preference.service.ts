@@ -4,6 +4,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { CurrencyCode, ID } from '@gauzy/contracts';
 import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PricePreferenceAttribute } from '../pricing.types';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertOrganizationUnchanged, inCallerOrganization, organizationForCreate } from '../organization-scope';
 import { PricePreference } from './price-preference.entity';
 import { TypeOrmPricePreferenceRepository } from './repository/type-orm-price-preference.repository';
@@ -62,7 +63,7 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<PricePreference>): Promise<PricePreference> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), this.scope.organizationId);
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**
