@@ -36,6 +36,12 @@
     width: 6.5rem;
     margin-top: 0.3125rem;
     margin-inline-start: auto;
+
+    // Slimmer than the component's default 6px, to sit with the page's hairline bars.
+    ::ng-deep .counter,
+    ::ng-deep .point {
+      height: 4px;
+    }
   }
 
   // The expanded members sit on the card colour, under their team's row.
