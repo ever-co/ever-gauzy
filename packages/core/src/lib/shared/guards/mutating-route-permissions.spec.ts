@@ -384,6 +384,14 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'ReactionController.softRecover',
 	'ReactionController.softRemove',
 	'ReactionController.update',
+	// SharedEntityController: author-owned: creating a share checks the caller may read what it shares
+	// (shared-entity.access.ts assertCallerMayShare), and the edit, removal, withdrawal and restoration of a share
+	// are refused to anyone but its author or an ALL_ORG_EDIT holder (shared-entity.service.ts assertCallerManages)
+	'SharedEntityController.create',
+	'SharedEntityController.delete',
+	'SharedEntityController.softRecover',
+	'SharedEntityController.softRemove',
+	'SharedEntityController.update',
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
@@ -540,11 +548,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'ResourceLinkController.softRecover',
 	'ResourceLinkController.softRemove',
 	'ResourceLinkController.update',
-	'SharedEntityController.create',
-	'SharedEntityController.delete',
-	'SharedEntityController.softRecover',
-	'SharedEntityController.softRemove',
-	'SharedEntityController.update',
 	'SkillController.create',
 	'SkillController.delete',
 	'SkillController.update',
