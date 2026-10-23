@@ -10,7 +10,8 @@ import {
 	ITimeSlotStatistics,
 	IManualTimesStatistics,
 	PermissionsEnum,
-	ITasksStatistics
+	ITasksStatistics,
+	ITaskEmployeesStatistics
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
 import {
@@ -162,6 +163,34 @@ export class StatisticController {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getTasksStatistics(@Body() request: TimeTrackingStatisticQueryDTO): Promise<ITasksStatistics[]> {
 		return await this.statisticService.getTasks(request);
+	}
+
+	/**
+	 * Retrieve each employee's tracked time on the given tasks, summed by the server.
+	 * @summary Get statistics for the employees of tasks.
+	 * @param {TimeTrackingStatisticQueryDTO} request - The tasks (`taskIds`) and the query parameters.
+	 * @returns {Promise<ITaskEmployeesStatistics[]>} - One row per employee, the most time first.
+	 */
+	@ApiOperation({
+		summary: 'Get Statistics for the Employees of Tasks',
+		description: "Endpoint to retrieve each employee's tracked time on the given tasks, the most first."
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved the employees of the tasks.',
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
+	})
+	@UseGuards(EmployeeTrackedDataGuard)
+	@Get('/task-employees')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getTaskEmployeesStatistics(
+		@Query() request: TimeTrackingStatisticQueryDTO
+	): Promise<ITaskEmployeesStatistics[]> {
+		return await this.statisticService.getTaskEmployees(request);
 	}
 
 	/**

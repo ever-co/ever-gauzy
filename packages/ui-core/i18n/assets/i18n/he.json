@@ -2219,6 +2219,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "השב",
+			"ONE_MESSAGE": "הודעה אחת",
+			"MESSAGES": "{{ count }} הודעות",
+			"NO_MESSAGES": "אין עדיין הודעות בשרשור זה.",
+			"REPLY_PLACEHOLDER": "השב לתגובה זו…",
+			"UNKNOWN_AUTHOR": "לא ידוע",
+			"DELETE_CONFIRM": "למחוק את התגובה הזו?",
+			"DELETED": "התגובה נמחקה",
+			"LOAD_ERROR": "לא ניתן היה לטעון את התגובות."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2266,6 +2277,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "אין עדיין תגובות.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
@@ -6893,6 +6905,15 @@
 		"NEEDS_ATTENTION": "דורש תשומת לב",
 		"NEEDS_ATTENTION_CAPTION": "משימות באיחור ומשימות לביצוע ב-3 הימים הקרובים",
 		"ACTIVITY": "פעילות יומית",
+		"ACTIVITY_VIEWS": "תצוגת פעילות",
+		"ACTIVITY_VIEW_CHART": "תרשים",
+		"ACTIVITY_VIEW_GRID": "רשת תרומות",
+		"GRID_NONE": "אין זמן",
+		"GRID_LAST_YEAR": "12 החודשים האחרונים",
+		"GRID_OLDER": "שנה קודמת",
+		"GRID_NEWER": "שנה הבאה",
+		"GRID_DAY": "{{ time }} ב-{{ date }}",
+		"GRID_DAY_EMPTY": "אין זמן ב-{{ date }}",
 		"TOP_CONTRIBUTORS": "מי עבד הכי הרבה",
 		"CONTRIBUTORS_CAPTION": "הזמן של כולם על פרויקט זה · {{ range }}",
 		"YOUR_TIME_CAPTION": "הזמן שלך על פרויקט זה · {{ range }}",
@@ -6933,6 +6954,11 @@
 		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
 		"SOMEONE": "מישהו",
 		"TODAY": "היום",
-		"YESTERDAY": "אתמול"
+		"YESTERDAY": "אתמול",
+		"TASK_PROGRESS": "התקדמות",
+		"TASK_PROGRESS_OF": "{{ worked }} מתוך {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% מהזמן שנרשם בפרויקט (ללא הערכה)",
+		"TASK_TOP_PEOPLE": "עבדו עליה הכי הרבה",
+		"TASK_NO_ESTIMATE": "אין הערכה"
 	}
 }
