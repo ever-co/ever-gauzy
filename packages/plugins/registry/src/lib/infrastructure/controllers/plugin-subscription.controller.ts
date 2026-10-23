@@ -164,7 +164,11 @@ export class PluginSubscriptionController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Update plugin subscription status' })
+	@ApiOperation({
+		summary: 'Update plugin subscription status',
+		description:
+			"Cancelling is the subscriber's own. Any other status, and a renewal, is set only by the plugin's publisher; for anyone else it is ignored."
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin subscription updated successfully',
@@ -182,7 +186,7 @@ export class PluginSubscriptionController {
 		if (updateDto.status === 'cancelled') {
 			return await this.commandBus.execute(new CancelPluginSubscriptionCommand(id, updateDto.reason));
 		} else if (updateDto.status === 'renewed') {
-			return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id));
+			return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id, pluginId));
 		} else {
 			// For other status updates, use UpdatePluginSubscriptionCommand with minimal data
 			const updateData: Partial<UpdatePluginSubscriptionDTO> = {};
@@ -194,26 +198,32 @@ export class PluginSubscriptionController {
 				updateData.status = PluginSubscriptionStatus.SUSPENDED;
 			}
 			return await this.commandBus.execute(
-				new UpdatePluginSubscriptionCommand(id, updateData as UpdatePluginSubscriptionDTO)
+				new UpdatePluginSubscriptionCommand(id, updateData as UpdatePluginSubscriptionDTO, pluginId)
 			);
 		}
 	}
 
-	@ApiOperation({ summary: 'Update plugin subscription' })
+	@ApiOperation({
+		summary: 'Update plugin subscription',
+		description:
+			"The subscriber's tenant may change autoRenew and metadata; the plugin's publisher the status and the dates. Other fields are ignored."
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin subscription updated successfully',
 		type: PluginSubscription
 	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	async update(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() updateDto: UpdatePluginSubscriptionDTO
 	): Promise<PluginSubscription> {
-		return await this.commandBus.execute(new UpdatePluginSubscriptionCommand(id, updateDto));
+		return await this.commandBus.execute(new UpdatePluginSubscriptionCommand(id, updateDto, pluginId));
 	}
 
 	@ApiOperation({ summary: 'Upgrade plugin subscription to a higher plan' })
