@@ -246,7 +246,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 
 #### Required
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version or later (e.g. version 22.x or 24.x).
+-   Install [NodeJs](https://nodejs.org/en/download) version 26.x or later (the `engines` field in `package.json` requires `>=26`; the exact version used by the repo is pinned in [`.nvmrc`](https://github.com/ever-co/ever-gauzy/blob/develop/.nvmrc), so `nvm use` picks it up).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) v1.22.x (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and Bootstrap solution using the command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
