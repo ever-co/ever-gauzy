@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { FindManyOptions, In, IsNull } from 'typeorm';
 import { FindOptions } from '@mikro-orm/core';
 import { indexBy, keys, object, pluck } from 'underscore';
@@ -6,6 +6,9 @@ import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCo
 import { ID, ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
+import { RequestContext } from '../../core/context';
+import { Tenant } from '../../core/entities/internal';
+import { mayWriteGlobalSettings, OPERATOR_USER_IDS_ENV } from './global-setting-writer';
 import { TenantSetting } from './tenant-setting.entity';
 import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-setting.repository';
 import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
@@ -165,6 +168,36 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 		return object(pluck(saveInput, 'name'), pluck(saveInput, 'value'));
+	}
+
+	/**
+	 * Refuses a write of the installation-wide settings by anyone but the operator of the installation
+	 * (see `global-setting-writer.ts`): `GLOBAL_SETTING` alone is held by every tenant's super admin.
+	 *
+	 * @throws ForbiddenException when the signed-in user does not operate the installation.
+	 */
+	async assertMayWriteGlobalSettings(): Promise<void> {
+		if (!(await mayWriteGlobalSettings(RequestContext.currentUserId(), () => this.countTenants()))) {
+			throw new ForbiddenException(
+				`Only the operator of this installation may change its global settings (${OPERATOR_USER_IDS_ENV}).`
+			);
+		}
+	}
+
+	/**
+	 * How many tenants the installation has, soft-deleted ones aside.
+	 *
+	 * @returns The number of tenants.
+	 */
+	async countTenants(): Promise<number> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.getEntityManager().count(Tenant, {});
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.manager.count(Tenant);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
