@@ -3,6 +3,8 @@ import * as jwt from 'jsonwebtoken';
 // The middleware only uses the service as a DI token plus two methods; loading the real one would pull in
 // the whole entity graph for a unit test.
 jest.mock('./tenant-setting.service', () => ({ TenantSettingService: class {} }));
+// The secret the API signs its access tokens with.
+jest.mock('@gauzy/config', () => ({ environment: { JWT_SECRET: 'test-secret' } }));
 
 import {
 	EMPTY_TENANT_SETTINGS_TTL_MS,
@@ -153,6 +155,25 @@ describe('TenantSettingsMiddleware', () => {
 		expect(anonymous.request.tenantSettings).toBeUndefined();
 		expect(anonymous.next).toHaveBeenCalledTimes(1);
 		expect(tenantSettingService.getSettings).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		['signed with another secret', jwt.sign({ tenantId: TENANT }, 'not-the-api-secret')],
+		['unsigned', jwt.sign({ tenantId: TENANT }, '', { algorithm: 'none' } as jwt.SignOptions)],
+		['expired', jwt.sign({ tenantId: TENANT, exp: Math.floor(Date.now() / 1000) - 60 }, 'test-secret')],
+		['minted for another flow', jwt.sign({ tenantId: TENANT, purpose: 'password-reset' }, 'test-secret')],
+		['not a JWT', 'garbage']
+	])('names no tenant with a token %s, and reads nothing for it', async (_label, token) => {
+		const { run, release, tenantSettingService, cacheManager } = build({ tenant: { aws_bucket: 'theirs' } });
+		release();
+		const { request, next, done } = run(`Bearer ${token}`);
+		await done;
+
+		expect(request.tenantSettings).toEqual({});
+		expect(request.resolvedSettings).toBeUndefined();
+		expect(tenantSettingService.getSettings).not.toHaveBeenCalled();
+		expect(cacheManager.get).not.toHaveBeenCalled();
+		expect(next).toHaveBeenCalledTimes(1);
 	});
 
 	it('still calls next when the settings cannot be read', async () => {
