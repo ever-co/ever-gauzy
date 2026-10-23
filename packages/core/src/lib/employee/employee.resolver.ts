@@ -26,6 +26,7 @@ import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../sha
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ManagedEmployeeService } from './managed-employee.service';
 import {
 	EmployeeBulkCreateCommand,
 	EmployeeCreateCommand,
@@ -346,7 +347,11 @@ const EMPLOYEE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 export class EmployeeResolver {
-	constructor(private readonly employeeService: EmployeeService, private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly employeeService: EmployeeService,
+		private readonly commandBus: CommandBus,
+		private readonly managedEmployeeService: ManagedEmployeeService
+	) {}
 
 	/**
 	 * The engagements of the caller's tenant, newest first.
@@ -515,6 +520,11 @@ export class EmployeeResolver {
 	 * delivered method performs — which is why they are arguments of the field and not members of the
 	 * connection's filter: the rows the read returns carry neither membership, so the connection could
 	 * not narrow by either.
+	 *
+	 * It carries the route's team check too. ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, covers only the
+	 * caller's own teams, and `findMembers` narrows by team only when one is given: without the check this field
+	 * answered an employee the whole organization's roster, or any team's, which the route has refused since
+	 * the check was added there.
 	 */
 	@Query('employeeMembers')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
@@ -532,6 +542,18 @@ export class EmployeeResolver {
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
 		@Args('offset', { type: () => Int, nullable: true }) offset?: number
 	): Promise<GraphqlConnection<Employee>> {
+		const hasOrganizationWideView = RequestContext.hasAnyPermission([
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		]);
+
+		if (
+			!hasOrganizationWideView &&
+			!(await this.managedEmployeeService.isMemberOfTeam(RequestContext.currentEmployeeId(), organizationTeamId))
+		) {
+			throw new ForbiddenException('You can only list the members of a team you belong to.');
+		}
+
 		const { items }: IPagination<IEmployee> = await this.employeeService.findMembers({
 			organizationId,
 			organizationTeamId,
