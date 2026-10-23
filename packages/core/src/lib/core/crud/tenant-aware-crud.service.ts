@@ -805,6 +805,53 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Keeps an upsert through `create()` / `createMany()` to rows the caller could update.
+	 *
+	 * A payload carrying the id of an existing row updates that row (TypeORM's `save()`, MikroORM's `assign()`).
+	 * {@link assertNotForeignRow} keeps it in the caller's tenant; this keeps it in the caller's employee scope, which
+	 * `update()` applies by reading the row through that scope first. Without it, an employee who may not act for other
+	 * employees could post a colleague's row id to any CRUD `POST` route and rewrite the row — which `create()` then
+	 * stamped with the caller's own employee, moving it onto their records.
+	 *
+	 * Ids that name no row create new rows, as before. Writes with no caller in context (seeders, jobs), and inside
+	 * {@link withoutEmployeeFilter}, are not restricted.
+	 *
+	 * @param entities - The payloads about to be persisted.
+	 * @throws ForbiddenException when a payload names an existing row outside the caller's employee scope.
+	 */
+	private async assertUpsertsWithinEmployeeScope(entities: IPartialEntity<T>[]): Promise<void> {
+		const ids = [...new Set((entities ?? []).map((entity) => (entity as any)?.id).filter((id) => !!id))];
+		if (!ids.length || !RequestContext.currentUser()) {
+			return;
+		}
+
+		// The employee scope as a statement on the row's own column: `employeeId = <caller>`, or the never-matching
+		// `employeeId IN ()` of a service whose rows are strictly personal. The relation members are left out.
+		const employeeScope = Object.fromEntries(
+			Object.entries(this.findConditionsWithEmployeeByUser() ?? {}).filter(
+				([, value]) => value === null || typeof value !== 'object' || value instanceof FindOperator
+			)
+		);
+		if (Object.keys(employeeScope).length === 0) {
+			return;
+		}
+
+		// Read through TypeORM whichever ORM serves the write, as the foreign-graph check does: both are initialised
+		// on the same database, and this only reads.
+		const named = { id: In(ids) } as FindOptionsWhere<T>;
+		const [existing, reachable] = await Promise.all([
+			this.typeOrmRepository.count({ where: named, withDeleted: true }),
+			this.typeOrmRepository.count({
+				where: { ...employeeScope, ...named } as FindOptionsWhere<T>,
+				withDeleted: true
+			})
+		]);
+		if (reachable < existing) {
+			throw new ForbiddenException('The record belongs to another employee');
+		}
+	}
+
+	/**
 	 * Extends the root-id check to the nested objects and ids of the payload (cascaded relations,
 	 * re-parented one-to-many children, owner / many-to-many links). See {@link assertGraphNotForeign}.
 	 *
@@ -836,6 +883,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const employeeId = RequestContext.currentEmployeeId();
 		await this.assertNotForeignRow(entity, tenantId);
 		await this.assertNestedGraphNotForeign([entity], tenantId);
+		await this.assertUpsertsWithinEmployeeScope([entity]);
 
 		const hasTenantColumn = this.hasScopeColumn('tenantId');
 		const hasEmployeeColumn = this.hasScopeColumn('employeeId');
@@ -867,6 +915,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRows(entities, tenantId);
 		await this.assertNestedGraphNotForeign(entities, tenantId);
+		await this.assertUpsertsWithinEmployeeScope(entities);
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const hasTenantColumn = this.hasScopeColumn('tenantId');
