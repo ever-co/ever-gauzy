@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SaveOptions } from 'typeorm';
-import { ID } from '@gauzy/contracts';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions, IPartialEntity } from '../core/crud/icrud.service';
 import { LegacyFindOneOptions, MultiORMEnum } from './../core/utils';
@@ -10,15 +11,21 @@ import {
 	isCallerTenantAdmin,
 	withoutAuthorChange
 } from '../shared/ownership';
+import { GoalService } from '../goal/goal.service';
+import { KeyResult } from '../keyresult/keyresult.entity';
+import { KeyResultService } from '../keyresult/keyresult.service';
 import { TypeOrmKeyResultUpdateRepository } from './repository/type-orm-keyresult-update.repository';
 import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
 import { KeyResultUpdate } from './keyresult-update.entity';
+import { goalProgress, keyResultProgress } from './keyresult-progress';
 
 @Injectable()
 export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpdate> {
 	constructor(
 		typeOrmKeyResultUpdateRepository: TypeOrmKeyResultUpdateRepository,
-		mikroOrmKeyResultUpdateRepository: MikroOrmKeyResultUpdateRepository
+		mikroOrmKeyResultUpdateRepository: MikroOrmKeyResultUpdateRepository,
+		private readonly keyResultService: KeyResultService,
+		private readonly goalService: GoalService
 	) {
 		super(typeOrmKeyResultUpdateRepository, mikroOrmKeyResultUpdateRepository);
 	}
@@ -50,10 +57,12 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 	 * names it (`PUT /key-result-updates/:id` and `updateKeyResultUpdate` both write through here, because `save()`
 	 * is what keeps the relations).
 	 *
-	 * A new update is the caller's: its author (`createdByUserId`) is stamped from the request. An existing one is
-	 * changed only by its author or a tenant administrator ({@link assertCallerMayChange}) — before this, any member
-	 * of the tenant could overwrite another member's update by naming its id — and the patch cannot say someone else
-	 * wrote it. An id that names no update of the caller's tenant is a 404 rather than a new row under that id.
+	 * A new update is the caller's: its author (`createdByUserId`) is stamped from the request, and filing it moves the
+	 * key result and the goal it reports on ({@link fileProgressUpdate}). An existing one is changed only by its author
+	 * or a tenant administrator ({@link assertCallerMayChange}) — before this, any member of the tenant could overwrite
+	 * another member's update by naming its id — and the patch cannot say someone else wrote it. Changing a filed
+	 * update corrects the history row only; the goals page never does it. An id that names no update of the caller's
+	 * tenant is a 404 rather than a new row under that id.
 	 *
 	 * @param entity - The update to file, or the id and the columns to change.
 	 * @returns The saved update.
@@ -67,7 +76,104 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 			return super.create(withoutAuthorChange(entity));
 		}
 
-		return super.create(entity);
+		return this.fileProgressUpdate(entity);
+	}
+
+	/**
+	 * Files a progress update and applies it (owner decision 2(a), 2026-10-23): the key result it names moves to the
+	 * reported value, its progress and its status, and the goal the key result belongs to moves to the weighted
+	 * progress of its key results.
+	 *
+	 * The goals page used to compute both and write them back itself with `PUT /key-results/:id` and `PUT /goals/:id`.
+	 * Those routes need `GOALS_EDIT` (ever-co/ever-gauzy#11323), so an employee's report half-failed: the history row
+	 * was filed and the key result and goal stayed where they were. Applying the report here keeps it whole without
+	 * `GOALS_EDIT`, and the progress is computed on the server ({@link keyResultProgress}, {@link goalProgress})
+	 * rather than taken from the request, so a report cannot set a percentage its value does not reach.
+	 *
+	 * Because a report now moves the key result, filing one is limited to the people the page offers it to
+	 * ({@link assertCallerMayReportProgress}). The key result, its goal and the goal's other key results are read
+	 * first, in the caller's tenant and organization boundary — one the caller cannot reach is a 404 — so a refused
+	 * or impossible report writes nothing. The key result is written first, then its goal, then the history row:
+	 * a retry after a failure applies the same values again and files the row once.
+	 *
+	 * @param entity - The update to file.
+	 * @returns The filed update.
+	 */
+	private async fileProgressUpdate(entity: IPartialEntity<KeyResultUpdate>): Promise<KeyResultUpdate> {
+		const report = (entity ?? {}) as Partial<KeyResultUpdate>;
+		const keyResultId = report.keyResultId ?? report.keyResult?.id;
+		if (!keyResultId) {
+			throw new BadRequestException('A progress update names the key result it reports on');
+		}
+
+		const keyResult = await this.keyResultService.findOneByIdString(keyResultId, { relations: { kpi: true } });
+		this.assertCallerMayReportProgress(keyResult);
+
+		const { update, progress } = keyResultProgress(keyResult, report.update);
+		const status = report.status ?? keyResult.status;
+		const goal = keyResult.goalId ? await this.goalProgressAfter(keyResult, progress) : null;
+
+		await this.keyResultService.create({ id: keyResult.id, update, progress, status });
+		if (goal) {
+			await this.goalService.create({ id: goal.id, progress: goal.progress });
+		}
+
+		return super.create({
+			update,
+			progress,
+			status,
+			owner: keyResult.ownerId ?? report.owner,
+			keyResultId: keyResult.id,
+			organizationId: keyResult.organizationId ?? report.organizationId
+		});
+	}
+
+	/**
+	 * The progress the goal of a key result stands at once the key result has moved: the weighted progress of every
+	 * key result of the goal, the moved one at its new progress.
+	 *
+	 * @param keyResult - The key result a report moves.
+	 * @param progress - The progress it moves to.
+	 * @returns The goal and its new progress.
+	 */
+	private async goalProgressAfter(keyResult: KeyResult, progress: number): Promise<{ id: ID; progress: number }> {
+		// The goal's own read, so a goal the caller cannot reach is a 404 before anything is written
+		const goal = await this.goalService.findOneByIdString(keyResult.goalId);
+		const keyResults = await this.keyResultService.find({
+			where: { goalId: goal.id } as FindOptionsWhere<KeyResult>
+		});
+
+		const moved = { id: keyResult.id, progress, weight: keyResult.weight };
+		const current = keyResults.some((row) => row.id === keyResult.id)
+			? keyResults.map((row) => (row.id === keyResult.id ? { ...row, progress } : row))
+			: [...keyResults, moved];
+
+		return { id: goal.id, progress: goalProgress(current) };
+	}
+
+	/**
+	 * Who may report a key result's progress, now that a report moves the key result and its goal: the employee who
+	 * owns the key result or leads it — the people the goals page offers the Update button to — a `GOALS_EDIT`
+	 * holder, who may set the key result through `PUT /key-results/:id` anyway, or a tenant administrator. Anyone
+	 * else in the tenant could file a report on any key result before, but it moved nothing; it is refused now
+	 * rather than moving someone else's key result.
+	 *
+	 * @param keyResult - The key result the report names.
+	 * @throws ForbiddenException when the caller may not report on it.
+	 */
+	private assertCallerMayReportProgress(keyResult: KeyResult): void {
+		if (isCallerTenantAdmin() || RequestContext.hasPermission(PermissionsEnum.GOALS_EDIT)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentUser()?.employeeId;
+		if (employeeId && (employeeId === keyResult.ownerId || employeeId === keyResult.leadId)) {
+			return;
+		}
+
+		throw new ForbiddenException(
+			'Only the owner or lead of a key result, a GOALS_EDIT holder or a tenant admin may report its progress'
+		);
 	}
 
 	/**

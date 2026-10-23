@@ -395,7 +395,8 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// KeyResultUpdateController: user-owned progress updates: the author is stamped from the request; KeyResultUpdateService
 	// refuses to change, withdraw, restore or remove an update somebody else wrote unless the caller is a tenant admin, and
 	// the bulk removal removes the caller's own updates only (keyresult-update.service.ts assertCallerMayChange,
-	// deleteByKeyResultId)
+	// deleteByKeyResultId); filing one moves its key result and goal, so only the key result's owner or lead, a
+	// GOALS_EDIT holder or a tenant admin may file it (assertCallerMayReportProgress)
 	'KeyResultUpdateController.create',
 	'KeyResultUpdateController.delete',
 	'KeyResultUpdateController.deleteBulkByKeyResultId',
