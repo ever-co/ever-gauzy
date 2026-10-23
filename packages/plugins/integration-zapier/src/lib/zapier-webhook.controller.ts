@@ -23,14 +23,14 @@ import { ZapierService } from './zapier.service';
 import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 
 /**
- * Zapier's REST hooks: a subscription sends every timer event of the organization, with its time log, to the
- * URL it names.
+ * The REST hooks Zapier subscribes and unsubscribes with. A subscription streams the organization's events — every
+ * employee's timer, with its time log — to the URL it names, so subscribing is configuring the integration: it needs
+ * the integration grants the rest of the Zapier routes state. Before, any signed-in member of the tenant (an employee
+ * with no integration permission) could point the organization's events at a URL of their own, or remove the
+ * organization's real subscriptions.
  *
- * Subscribing is managing the organization's Zapier integration, so the caller's own role must hold the
- * permissions the integration's settings routes require (`ZapierController`). Without them any signed-in
- * employee could point the organization's timer stream at a URL of their own and read everyone's time logs.
- * `PermissionGuard` checks the role the access token names; `TenantPermissionGuard` is left out because Zapier
- * states no tenant in a header or the payload, and the token's tenant is the one the integration is found in.
+ * `PermissionGuard` alone, not `TenantPermissionGuard`: Zapier sends no `Tenant-Id` header and no tenant in the body,
+ * and the tenant is the one of the integration the bearer token resolves to, never one the request names.
  */
 @UseGuards(PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
