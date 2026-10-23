@@ -518,16 +518,31 @@ const NON_TEXT_KINDS: readonly ConnectionFieldKind[] = ['DATE', 'NUMBER', 'DECIM
 /**
  * Whether a sort key's column may hold empty text, from the kind the resource declares for it.
  *
+ * A field may be sortable without being filterable, and then nothing declares its kind. A column whose
+ * rows carry a date, a number or a boolean is not text, so its empty cursor sort value is a null there
+ * too; a field with no such value on any row is read as text, the side that repeats rows rather than
+ * skipping them.
+ *
  * @param kind The declared kind, when the resource declares the field.
- * @returns False for a declared date, number, decimal or boolean, else true, and an undeclared field is
- * left to the rows' own values.
+ * @param rows The rows the service answered with.
+ * @param sortKey The first sort key's field.
+ * @returns False for a declared date, number, decimal or boolean, or for an undeclared field whose rows
+ * hold one, else true.
  */
-function columnMayHoldEmptyText(kind: ConnectionFieldKind | undefined): boolean {
-	if (kind === undefined) {
-		return true;
+function columnMayHoldEmptyText(
+	kind: ConnectionFieldKind | undefined,
+	rows: readonly unknown[],
+	sortKey: string
+): boolean {
+	if (kind !== undefined) {
+		return !NON_TEXT_KINDS.includes(kind);
 	}
 
-	return !NON_TEXT_KINDS.includes(kind);
+	return !rows.some((row) => {
+		const value = readPath(row, sortKey);
+
+		return value instanceof Date || typeof value === 'number' || typeof value === 'boolean';
+	});
 }
 
 /**
@@ -536,6 +551,7 @@ function columnMayHoldEmptyText(kind: ConnectionFieldKind | undefined): boolean 
  * @param sort The effective sort.
  * @param sortKey The first sort key's field.
  * @param kind The kind the resource declares for that field, if it declares one.
+ * @param rows The rows the service answered with, which say the field's kind when nothing declares it.
  * @param walk The walk that reads the cursor.
  * @returns The placement.
  */
@@ -543,13 +559,14 @@ function goneCursorPlacement(
 	sort: readonly ConnectionSortKey[],
 	sortKey: string,
 	kind: ConnectionFieldKind | undefined,
+	rows: readonly unknown[],
 	walk: CursorWalk
 ): GoneCursorPlacement {
 	const isDescending = sort[0]?.direction === 'DESC';
 	const isAfterWalk = walk === 'after';
 	// The earlier of the two empty-value positions for `after`, the later one for `before`.
 	const textSideKeepsRows = isAfterWalk !== isDescending;
-	const mayHoldEmptyText = columnMayHoldEmptyText(kind);
+	const mayHoldEmptyText = columnMayHoldEmptyText(kind, rows, sortKey);
 	const emptyIsText = textSideKeepsRows && mayHoldEmptyText;
 	const tieRule = cursorTieRule(sort, walk);
 	const idDescending = idTieDirection(sort) === 'DESC';
@@ -981,7 +998,7 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 		// decides where the walk resumes — which is what makes cursor pagination stable under
 		// concurrent deletes rather than merely under inserts.
 		// When a later key orders first-key ties, the walk resumes at the start of the tie group.
-		const placement = goneCursorPlacement(sort, sortKey, filterable[sortKey], 'after');
+		const placement = goneCursorPlacement(sort, sortKey, filterable[sortKey], rows, 'after');
 
 		if (index >= 0) {
 			start = index + 1;
@@ -1010,7 +1027,7 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === cursor.id);
 		// For a gone row, the window ends at the first row that sorts after its position, and after the
 		// whole tie group when a later key orders first-key ties.
-		const placement = goneCursorPlacement(sort, sortKey, filterable[sortKey], 'before');
+		const placement = goneCursorPlacement(sort, sortKey, filterable[sortKey], rows, 'before');
 
 		if (index >= 0) {
 			end = index;

@@ -278,6 +278,46 @@ describe('buildConnection — a cursor whose row is gone resumes at its position
 			expect(connect(remaining, { last: 10, before: cursor }).nodes.map((row) => row.id)).toEqual(before);
 		}
 	);
+
+	// A null sorts last ascending and first descending, and the id orders the nulls among themselves. The
+	// cursor of a row with no value spells it as empty text, which on a date or a number can only be the
+	// null: on a declared field the kind says so, on a field that is only sortable its other rows do.
+	const [E, F, G] = ['e', 'f', 'g'].map((suffix) => `00000000-0000-4000-8000-00000000000${suffix}`);
+	const valued = [
+		{ id: A, createdAt: new Date('2026-01-01T00:00:00.000Z'), threshold: 5 },
+		{ id: B, createdAt: new Date('2026-01-02T00:00:00.000Z'), threshold: 10 },
+		{ id: E, createdAt: null, threshold: null },
+		{ id: F, createdAt: null, threshold: null },
+		{ id: G, createdAt: null, threshold: null }
+	];
+
+	it.each([
+		['declared createdAt DESC, id DESC', 'createdAt', 'DESC', [E, B, A], [G]],
+		['declared createdAt ASC, id ASC', 'createdAt', 'ASC', [G], [A, B, E]],
+		['sortable-only threshold DESC, id DESC', 'threshold', 'DESC', [E, B, A], [G]],
+		['sortable-only threshold ASC, id ASC', 'threshold', 'ASC', [G], [A, B, E]]
+	] as [string, string, ConnectionSortKey['direction'], string[], string[]][])(
+		'%s: a deleted row with no value resumes among the nulls by the id',
+		(_label, field, direction, after, before) => {
+			const defaultSort: ConnectionSortKey[] = [
+				{ field, direction },
+				{ field: 'id', direction }
+			];
+			const connect = (from: typeof valued, request: Parameters<typeof buildConnection>[0]['request']) =>
+				buildConnection({
+					rows: from,
+					filterable: { id: 'ID', createdAt: 'DATE' },
+					sortable: ['createdAt', 'threshold'],
+					defaultSort,
+					request
+				});
+			const cursor = connect(valued, { first: 10 }).edges.find((edge) => edge.node.id === F)?.cursor;
+			const remaining = valued.filter((row) => row.id !== F);
+
+			expect(connect(remaining, { first: 10, after: cursor }).nodes.map((row) => row.id)).toEqual(after);
+			expect(connect(remaining, { last: 10, before: cursor }).nodes.map((row) => row.id)).toEqual(before);
+		}
+	);
 });
 
 describe('buildConnection — what a caller may state', () => {
