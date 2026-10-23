@@ -377,6 +377,14 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'EmployeeSettingController.softRecover',
 	'EmployeeSettingController.softRemove',
 	'EmployeeSettingController.update',
+	// EntitySubscriptionController: own subscriptions: the create DTO and input carry no employee, so the subscriber is the
+	// caller; EntitySubscriptionService refuses to change, withdraw, restore or unsubscribe a subscription of another
+	// employee unless the caller is a tenant admin (entity-subscription.service.ts assertCallerMayChange)
+	'EntitySubscriptionController.create',
+	'EntitySubscriptionController.delete',
+	'EntitySubscriptionController.softRecover',
+	'EntitySubscriptionController.softRemove',
+	'EntitySubscriptionController.update',
 	// FavoriteController: user-owned: FavoriteService pins the favorite to the employee of the caller and refuses to delete
 	// one that belongs to somebody else (favorite.service.ts:58, 117)
 	'FavoriteController.create',
@@ -384,6 +392,24 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'FavoriteController.softRecover',
 	'FavoriteController.softRemove',
 	'FavoriteController.update',
+	// KeyResultUpdateController: user-owned progress updates: the author is stamped from the request; KeyResultUpdateService
+	// refuses to change, withdraw, restore or remove an update somebody else wrote unless the caller is a tenant admin, and
+	// the bulk removal removes the caller's own updates only (keyresult-update.service.ts assertCallerMayChange,
+	// deleteByKeyResultId)
+	'KeyResultUpdateController.create',
+	'KeyResultUpdateController.delete',
+	'KeyResultUpdateController.deleteBulkByKeyResultId',
+	'KeyResultUpdateController.softRecover',
+	'KeyResultUpdateController.softRemove',
+	'KeyResultUpdateController.update',
+	// MentionController: user-owned: MentionService pins the mentioning employee to the caller and refuses to change,
+	// withdraw, restore or remove a mention somebody else wrote unless the caller is a tenant admin
+	// (mention.service.ts assertCallerMayChange)
+	'MentionController.create',
+	'MentionController.delete',
+	'MentionController.softRecover',
+	'MentionController.softRemove',
+	'MentionController.update',
 	// OrganizationVendorController: the shared ga-vendor-select creates a vendor inline from the Expenses dialog, which expense editors
 	// reach without ALL_ORG_EDIT; renaming and deleting a vendor stay behind ALL_ORG_EDIT
 	'OrganizationVendorController.create',
@@ -406,6 +432,17 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'SharedEntityController.softRecover',
 	'SharedEntityController.softRemove',
 	'SharedEntityController.update',
+	// ReportController: an organization's report menu entry is switched only by its author or a tenant admin, and only a
+	// tenant admin adds a missing one (report-organization.service.ts updateReportMenu)
+	'ReportController.updateReportMenu',
+	// ResourceLinkController: user-owned: ResourceLinkService pins the linking employee to the caller and refuses to change,
+	// withdraw, restore or remove a link somebody else wrote unless the caller is a tenant admin
+	// (resource-link.service.ts assertCallerMayChange)
+	'ResourceLinkController.create',
+	'ResourceLinkController.delete',
+	'ResourceLinkController.softRecover',
+	'ResourceLinkController.softRemove',
+	'ResourceLinkController.update',
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
@@ -413,18 +450,18 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// (user.service.ts:569, 583, 607)
 	'UserController.updatePreferredComponentLayout',
 	'UserController.updatePreferredLanguage',
-	'UserController.updateUiPreferences'
+	'UserController.updateUiPreferences',
+	// WakatimeController (integration-wakatime plugin): own heartbeats: WakatimeService files every heartbeat under the
+	// employee of the caller, never one the body names, and refuses a caller with no employee (wakatime.service.ts
+	// parameterSanitize)
+	'WakatimeController.save',
+	'WakatimeController.saveData'
 ]);
 
 const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'EmployeePresetController.deleteEmployeeCriterion',
 	'EmployeePresetController.saveEmployeePreset',
 	'EmployeePresetController.saveUpdateEmployeeCriterion',
-	'EntitySubscriptionController.create',
-	'EntitySubscriptionController.delete',
-	'EntitySubscriptionController.softRecover',
-	'EntitySubscriptionController.softRemove',
-	'EntitySubscriptionController.update',
 	'InvoiceEstimateHistoryController.create',
 	'InvoiceEstimateHistoryController.delete',
 	'InvoiceEstimateHistoryController.update',
@@ -445,17 +482,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'JobSearchPresetController.createJobPreset',
 	'JobSearchPresetController.deleteJobPresetCriterion',
 	'JobSearchPresetController.saveUpdate',
-	'KeyResultUpdateController.create',
-	'KeyResultUpdateController.delete',
-	'KeyResultUpdateController.deleteBulkByKeyResultId',
-	'KeyResultUpdateController.softRecover',
-	'KeyResultUpdateController.softRemove',
-	'KeyResultUpdateController.update',
-	'MentionController.create',
-	'MentionController.delete',
-	'MentionController.softRecover',
-	'MentionController.softRemove',
-	'MentionController.update',
 	'PluginCategoryController.create',
 	'PluginCategoryController.delete',
 	'PluginCategoryController.partialUpdate',
@@ -478,12 +504,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'PluginTenantController.updateConfiguration',
 	'PluginUserAssignmentController.assignUsersToPlugin',
 	'PluginUserAssignmentController.unassignUsersFromPlugin',
-	'ReportController.updateReportMenu',
-	'ResourceLinkController.create',
-	'ResourceLinkController.delete',
-	'ResourceLinkController.softRecover',
-	'ResourceLinkController.softRemove',
-	'ResourceLinkController.update',
 	'TaskPriorityController.create',
 	'TaskPriorityController.delete',
 	'TaskPriorityController.update',
@@ -501,7 +521,6 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'TaskVersionController.create',
 	'TaskVersionController.delete',
 	'TaskVersionController.update',
-	'WakatimeController.save',
 	'WakatimeController.saveData'
 ]);
 
