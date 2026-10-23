@@ -5,6 +5,7 @@ import { RequestApprovalService } from '../../../request-approval/request-approv
 import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingCreateCommand } from '../equipment-sharing.create.command';
 import { EquipmentSharingService } from '../../equipment-sharing.service';
+import { filedSharingStatus, SHARING_DECISION_PERMISSIONS } from '../../filed-status.helper';
 
 @CommandHandler(EquipmentSharingCreateCommand)
 export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentSharingCreateCommand> {
@@ -27,9 +28,28 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 		const { organizationId, input } = command;
 		const { name } = input;
 
+		// The row stores one equipment: the related object's id when the body carries one (the form sends both), so
+		// the status below and the scope check read the equipment the row will point at.
+		const { equipment, ...values } = input;
+		const equipmentId = equipment?.id ?? input.equipmentId;
+		const scope = { tenantId, organizationId };
+
+		// The equipment and the policy the body names must be this organization's (as on the update path).
+		await this._equipmentSharingService.assertReferencesAreInScope({ ...values, equipmentId }, scope);
+
+		// Only a caller who may decide a sharing chooses its status; anyone else's request is approved only when the
+		// equipment itself auto-approves its shares.
+		const status = await filedSharingStatus(
+			input.status,
+			RequestContext.hasAnyPermission([...SHARING_DECISION_PERMISSIONS]),
+			() => this._equipmentSharingService.autoApprovesShare(equipmentId, scope)
+		);
+
 		// Create the equipment sharing record.
 		const equipmentSharing = await this._equipmentSharingService.create({
-			...input,
+			...values,
+			equipmentId,
+			status,
 			organizationId,
 			tenantId
 		});
