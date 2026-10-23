@@ -12,6 +12,9 @@
  * a completed key is replayed, a key held by another worker is in flight, and a key reused with a
  * different request is refused.
  */
+/** The platform's cross-tenant reference check, which reads a real database: recorded, and answered per test. */
+const mockAssertReferences = jest.fn(async (..._args: unknown[]) => undefined);
+
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
@@ -163,6 +166,7 @@ jest.mock('@gauzy/core', () => {
 		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		SequenceService: class SequenceService {},
+		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -203,6 +207,7 @@ import { SubscriptionItem } from '../subscription-item/subscription-item.entity'
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
 import { Subscription } from './subscription.entity';
 import { SubscriptionService } from './subscription.service';
+import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
 
 /**
  * The subscription lifecycle and the recurring billing run.
@@ -4613,5 +4618,61 @@ describe('SubscriptionService — the calendar waits for an invoiced cycle’s p
 		await fixture.service.billCycle(SUBSCRIPTION, { asOf: new Date('2026-05-16T00:00:00.000Z') });
 
 		expect(fixture.orderCalls).toHaveLength(1);
+	});
+});
+
+describe('SubscriptionService — the ids a subscription names (subscription.references.ts)', () => {
+	const refuse = async () => {
+		throw new Error('A related record belongs to another tenant');
+	};
+
+	beforeEach(() => {
+		mockAssertReferences.mockClear();
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('checks a new subscription’s customer, order and payer, and writes nothing when one is refused', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		const input = {
+			planId: PLAN,
+			customerId: CUSTOMER,
+			paymentAccountHolderId: HOLDER,
+			paymentMethodTokenId: TOKEN,
+			items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }]
+		};
+		mockAssertReferences.mockImplementationOnce(refuse);
+
+		await expect(fixture.service.createSubscription(input)).rejects.toThrow('another tenant');
+
+		expect(mockAssertReferences.mock.calls[0].slice(1)).toEqual([input, SUBSCRIPTION_REFERENCES, TENANT]);
+		expect(fixture.tables.subscription).toHaveLength(0);
+	});
+
+	it('checks a payer an edit moves before writing it', async () => {
+		const fixture = subscriptionFixture();
+		const before = { ...fixture.subscription(SUBSCRIPTION) };
+		mockAssertReferences.mockImplementationOnce(refuse);
+
+		await expect(
+			fixture.service.applyChanges(SUBSCRIPTION, { paymentMethodTokenId: 'token-of-tenant-b' } as never)
+		).rejects.toThrow('another tenant');
+
+		expect(mockAssertReferences.mock.calls[0].slice(1, 3)).toEqual([
+			{ paymentMethodTokenId: 'token-of-tenant-b' },
+			SUBSCRIPTION_REFERENCES
+		]);
+		expect(fixture.subscription(SUBSCRIPTION)).toEqual(before);
+	});
+
+	it('states the customer, the order and the payer', () => {
+		expect(SUBSCRIPTION_REFERENCES).toEqual({
+			customerId: 'organization_contact',
+			originOrderId: 'order',
+			paymentAccountHolderId: 'payment_account_holder',
+			paymentMethodTokenId: 'payment_method_token'
+		});
 	});
 });

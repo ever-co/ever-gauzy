@@ -21,6 +21,7 @@ import {
 	Money,
 	RequestContext,
 	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	matchesExpectation,
 	parseEntityVersion
@@ -60,6 +61,7 @@ import {
 } from '../subscription.cycle';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
+import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
 import { currentScope } from '../subscription.scope';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
@@ -351,12 +353,32 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * @param expectation The version the caller read the subscription at.
 	 * @returns The subscription as it stands after the write.
 	 */
+	/**
+	 * Refuses a subscription, or a change to one, that names a customer, order, account holder or payment method of
+	 * another tenant (`subscription.references.ts`). Checked on the TypeORM manager, which reads these tables under
+	 * either ORM.
+	 *
+	 * @param payload The subscription, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: object): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmSubscriptionRepository.manager,
+			payload,
+			SUBSCRIPTION_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
 	public async applyChanges(
 		id: ID,
 		changes: DeepPartial<Subscription>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Subscription> {
 		const writesMetadata = !!changes && (changes as Record<string, unknown>)['metadata'] !== undefined;
+
+		// A payer of another tenant is refused before anything is read (`subscription.references.ts`).
+		await this.assertReferences(changes ?? {});
 
 		for (let attempt = 1; ; attempt += 1) {
 			// The edit moves the payer, the quantity and the metadata only (review R4-07): the lifecycle moves through
@@ -493,6 +515,9 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		if (!input?.customerId) {
 			throw new BadRequestException('A subscription must name the customer it belongs to.');
 		}
+
+		// The customer, the order and the payer are written as given: none of another tenant.
+		await this.assertReferences(input);
 
 		if (input.originOrderId) {
 			const existing = await this.typeOrmSubscriptionRepository.findOne({
