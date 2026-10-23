@@ -210,6 +210,14 @@ GAUZY_AUTH_PASSWORD=<your-password>
 GAUZY_AUTO_LOGIN=true
 ```
 
+The `GAUZY_AUTO_LOGIN` account is the login of whoever runs the server. Over
+HTTP and WebSocket, a caller that has not logged in acts as that account only
+when it connects from the same machine: from a loopback address, with a
+`localhost` (or loopback) `Host`, not through a proxy, and, for a browser page,
+from a `localhost` origin. Every other caller (another host, a Docker port
+mapping, a reverse proxy) logs in with its own credentials through the `login`
+tool.
+
 #### Testing HTTP Transport
 
 ##### Without OAuth 2.0 Authorization
