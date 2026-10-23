@@ -1,3 +1,5 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
 .project-view-panel .panel-header {
   min-height: 3.5rem;
 }
@@ -148,4 +150,14 @@ a.feed-target:hover {
     height: 0.875rem;
     font-size: 0.875rem;
   }
+}
+
+// The shared list-page pager, at the density every list page gives it.
+:host .pagination-container {
+  @include ga-hub.pager-container();
+  margin-top: 0.75rem;
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
 }
