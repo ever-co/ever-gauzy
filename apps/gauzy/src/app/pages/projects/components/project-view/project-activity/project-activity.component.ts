@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, type SimpleChanges } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	DestroyRef,
+	inject,
+	Input,
+	OnChanges,
+	type SimpleChanges
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -6,25 +15,37 @@ import { firstValueFrom } from 'rxjs';
 import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { ActionTypeEnum, BaseEntityEnum, IActivityLog, IPagination, ITask } from '@gauzy/contracts';
+import { LocalDataSource } from 'angular2-smart-table';
+import { ActionTypeEnum, BaseEntityEnum, IActivityLog, IComment, IPagination, ITask } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { CommentService } from '@gauzy/ui-core/core';
+import { SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
+import { parseCommentImages } from '../project-comments/comment-images.util';
 import { humanize, IPersonChip, Loadable, loaded, loading, failed, personOf } from '../project-view.utils';
 
 /** One entry of the feed: who did what to which, and when. */
 interface IActivityEntry {
 	id: string;
 	actor: IPersonChip | null;
+	/** The actor's employee page; none for a user without an employee record. */
+	actorLink: string[] | null;
 	/** i18n key of the sentence's start: "{{ actor }} created", …; the target follows it. */
 	sentence: string;
 	target: string;
-	/** Where the target leads: the task's page, or none for the project itself. */
-	link: string[] | null;
+	/** The task the target opens in the project page's task drawer, or none for the project itself. */
+	taskId: string | null;
 	/** "title, status, members": the fields an update changed. */
 	fields: string;
+	/** A comment's text, on one line, under the sentence; empty for the other entries. */
+	excerpt: string;
+	/** A comment of images only: "Image" stands in for its text. */
+	imageOnly: boolean;
+	/** A comment: the target opens the Comments tab. */
+	isComment: boolean;
 	time: string;
 	timeLong: string;
 	icon: string;
-	tone: 'success' | 'info' | 'danger';
+	tone: 'success' | 'info' | 'danger' | 'comment';
 }
 
 /** The feed's entries under their day: Today, Yesterday, then dates. */
@@ -36,6 +57,8 @@ interface IActivityDay {
 
 /** Entries the feed shows. */
 const FEED_LIMIT = 60;
+/** Entries per page of the feed at first, so a long feed reads page by page instead of scrolling. */
+const FEED_PAGE_SIZE = 10;
 /** The activity log's largest page. */
 const LOG_PAGE_SIZE = 100;
 /**
@@ -46,13 +69,22 @@ const TASK_LOG_PAGES = 10;
 
 /**
  * The project page's Activity tab: a feed of what changed on the project and its tasks — created,
- * updated (and which fields), deleted — by whom and when, newest first, under each day. It reads the
- * project's own log and the organization's task logs, kept to the events that happened in this project.
+ * updated (and which fields), deleted — and of the comments posted on the project, by whom and when, newest
+ * first, under each day. It reads the project's own log, the organization's task logs kept to the events that
+ * happened in this project, and the project's newest comments (comments write no activity log of their own).
  */
 @Component({
 	selector: 'ga-project-activity',
 	standalone: true,
-	imports: [CommonModule, RouterModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe],
+	imports: [
+		CommonModule,
+		RouterModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe,
+		SmartDataViewLayoutModule
+	],
 	templateUrl: './project-activity.component.html',
 	styleUrls: [
 		'../../../../employees/view-employee/view-employee.component.scss',
@@ -67,11 +99,28 @@ export class ProjectActivityComponent implements OnChanges {
 	@Input() organizationId: string;
 	@Input() tenantId: string;
 
-	public feed: Loadable<IActivityDay[]> = loading([]);
+	public feed: Loadable<IActivityEntry[]> = loading([]);
+	/** The current page's entries under their day. */
+	public days: IActivityDay[] = [];
+	/** The feed's entries, paged by the shared pager every list page uses. */
+	public readonly source = new LocalDataSource();
 	/** Some of the feed's reads failed: what is shown may be missing entries. */
 	public partial = false;
 	private readonly _http = inject(HttpClient);
+	private readonly _comments = inject(CommentService);
 	private _sequence = 0;
+
+	constructor() {
+		this.source.setPaging(1, FEED_PAGE_SIZE, false);
+		// The pager pages the source: show the entries of whichever page it is on.
+		this.source
+			.onChanged()
+			.pipe(takeUntilDestroyed(inject(DestroyRef)))
+			.subscribe(async () => {
+				const entries = (await this.source.getElements()) as IActivityEntry[];
+				this.days = this.byDay(entries);
+			});
+	}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
@@ -80,13 +129,15 @@ export class ProjectActivityComponent implements OnChanges {
 	}
 
 	get count(): number {
-		return (this.feed.value || []).reduce((sum, day) => sum + day.entries.length, 0);
+		return (this.feed.value || []).length;
 	}
 
 	private async load(): Promise<void> {
 		const sequence = ++this._sequence;
 		const { organizationId, tenantId, projectId } = this;
 		this.feed = loading([]);
+		this.days = [];
+		void this.source.load([]);
 		this.partial = false;
 		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) =>
 			firstValueFrom(
@@ -114,19 +165,26 @@ export class ProjectActivityComponent implements OnChanges {
 		]);
 		if (sequence !== this._sequence) return;
 		const taskIds = new Set((tasks.status === 'fulfilled' ? tasks.value?.items || [] : []).map((task) => task.id));
-		const [projectLogs, taskLogs] = await Promise.allSettled([
+		const [projectLogs, taskLogs, comments] = await Promise.allSettled([
 			logs(BaseEntityEnum.OrganizationProject, { entityId: projectId, take: FEED_LIMIT }),
-			this.fetchTaskLogs(logs, taskIds)
+			this.fetchTaskLogs(logs, taskIds),
+			this._comments.getLatest(
+				BaseEntityEnum.OrganizationProject,
+				projectId,
+				{ organizationId, tenantId },
+				FEED_LIMIT
+			)
 		]);
 		if (sequence !== this._sequence) return;
 
-		if (projectLogs.status === 'rejected' && taskLogs.status === 'rejected') {
+		if (projectLogs.status === 'rejected' && taskLogs.status === 'rejected' && comments.status === 'rejected') {
 			this.feed = failed([]);
 			return;
 		}
 		this.partial =
 			projectLogs.status === 'rejected' ||
 			taskLogs.status === 'rejected' ||
+			comments.status === 'rejected' ||
 			(taskLogs.status === 'fulfilled' && taskLogs.value.partial);
 
 		const titles = new Map(
@@ -137,15 +195,22 @@ export class ProjectActivityComponent implements OnChanges {
 				this.toEntry(log, this.projectName, null)
 			),
 			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
-				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', [
-					'/pages/tasks/view',
-					log.entityId
-				])
+				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', log.entityId)
+			),
+			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) =>
+				this.toCommentEntry(comment)
 			)
 		]
 			.sort((a, b) => b.time.localeCompare(a.time))
 			.slice(0, FEED_LIMIT);
-		this.feed = loaded(this.byDay(entries));
+		this.show(entries);
+	}
+
+	/** Shows the feed from its first page. */
+	private show(entries: IActivityEntry[]): void {
+		this.feed = loaded(entries);
+		this.source.setPaging(1, this.source.getPaging().perPage || FEED_PAGE_SIZE, false);
+		void this.source.load(entries);
 	}
 
 	/**
@@ -203,7 +268,7 @@ export class ProjectActivityComponent implements OnChanges {
 		return projectIds.has(this.projectId);
 	}
 
-	private toEntry(log: IActivityLog, target: string, link: string[] | null): IActivityEntry {
+	private toEntry(log: IActivityLog, target: string, taskId: string | null): IActivityEntry {
 		const action = log.action;
 		const sentences: Record<string, string> = {
 			[ActionTypeEnum.Created]: 'PROJECT_VIEW.ACTIVITY_CREATED',
@@ -224,14 +289,43 @@ export class ProjectActivityComponent implements OnChanges {
 		return {
 			id: log.id,
 			actor: log.employee ? personOf(log.employee) : null,
+			actorLink: log.employee?.id ? ['/pages/employees/view', log.employee.id] : null,
 			sentence: sentences[action] || 'PROJECT_VIEW.ACTIVITY_UPDATED',
 			target: target || '—',
-			link: action === ActionTypeEnum.Deleted ? null : link,
+			taskId: action === ActionTypeEnum.Deleted ? null : taskId,
 			fields: (log.updatedFields || []).map((field) => humanize(field).toLowerCase()).join(', '),
+			excerpt: '',
+			imageOnly: false,
+			isComment: false,
 			time: time.toISOString(),
 			timeLong: time.format('LLL'),
 			icon: icons[action] || 'edit-2-outline',
 			tone: tones[action] || 'info'
+		};
+	}
+
+	/**
+	 * A comment as an entry: "Ann commented on Project X" (or "replied on"), with its text on one line under it —
+	 * "Image" for a comment of images only. Its author is the employee, or the user who posted it.
+	 */
+	private toCommentEntry(comment: IComment): IActivityEntry {
+		const time = moment(comment.createdAt);
+		const { text, images } = parseCommentImages(comment.comment);
+		return {
+			id: `comment-${comment.id}`,
+			actor: personOf(comment.employee) ?? personOf(comment.createdByUser),
+			actorLink: comment.employee?.id ? ['/pages/employees/view', comment.employee.id] : null,
+			sentence: comment.parentId ? 'PROJECT_VIEW.ACTIVITY_REPLIED' : 'PROJECT_VIEW.ACTIVITY_COMMENTED',
+			target: this.projectName || '—',
+			taskId: null,
+			fields: '',
+			excerpt: text.replace(/\s+/g, ' '),
+			imageOnly: !text && images.length > 0,
+			isComment: true,
+			time: time.toISOString(),
+			timeLong: time.format('LLL'),
+			icon: 'message-square-outline',
+			tone: 'comment'
 		};
 	}
 

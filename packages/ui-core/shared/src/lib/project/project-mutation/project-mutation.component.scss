@@ -1,165 +1,528 @@
-// Import Gauzy dialogs styles
-@use 'gauzy/_gauzy-dialogs' as *;
+@use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as *;
 
-// Define styles for the .project-toggle class
-.project-toggle {
-	margin-top: 20px;
-}
+/*
+ * ── Project form ──────────────────────────────────────────────────────────────
+ *
+ * Shared by the Add and Edit project pages. One hairline panel: the underline
+ * tabs of the project and employee pages, sectioned two-column fields like the
+ * Add Organization dialog, and an action bar that sticks to the bottom of the
+ * page while the panel is in view. Paints only with the shared gauzy-* and
+ * theme tokens, so every registered theme follows.
+ */
 
-// Define styles for the .action-buttons class
-.action-buttons {
-	display: flex;
-	justify-content: flex-start;
-}
+$gap-xl: 1.5rem;
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
 
-:host ::ng-deep {
-	nb-card {
-		// Apply margins based on language direction
-		@include nb-rtl(margin, -16px -18px -16px -8px);
-		@include nb-ltr(margin, -16px -8px -16px -18px);
+// The panel's side inset, shared by the tab bar, the open section and the
+// action bar so the first tab, the fields and the buttons line up.
+$panel-x: 2.5rem;
+$panel-x-narrow: 1rem;
+$narrow: 767.98px;
 
-		nb-card-body {
-			padding: 0;
-			// `--gauzy-card-2` is NOT registered by the material-light /
-			// material-dark themes (themes.scss only gives them
-			// gauzy-primary-background / sidebar / border-table), so a bare
-			// var() there resolves to nothing and the browser drops the whole
-			// declaration — the tab body and the action bar lose their panel
-			// and sit on the raw card. Fallback keeps a neutral panel tint.
-			nb-tab.content-active, .action-buttons {
-				background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
-				margin: 0;
-			}
+$hairline: 1px solid var(--gauzy-border-default-color);
 
-			nb-tab.content-active {
-				height: calc(100vh - 22.5rem);
-			}
-
-			.action-buttons {
-				padding: 1rem 2rem;
-				border-radius: 0 0 var(--border-radius) var(--border-radius);
-			}
-
-			// Override background color for specific elements
-			input, nb-select.appearance-outline.status-basic .select-button, .ng-select .ng-select-container {
-				background-color: var(--background-basic-color-1) !important;
-			}
-
-			.ng-select .ng-select-container {
-				input {
-					background-color: unset !important;
-				}
-			}
-		}
-	}
-
-	nb-toggle {
-		div.checked+span.text {
-			color: var(--text-primary-color);
-		}
-		// Same story as `--gauzy-card-2` above: `--gauzy-text-color-2` is
-		// undefined in the two material themes, so without a fallback the
-		// declaration is dropped and the label keeps the inherited color.
-		div+span.text {
-			color: var(--gauzy-text-color-2, var(--text-hint-color));
-		}
-	}
-
-	label {
-		font-size: 14px;
-		font-weight: 600;
-		line-height: 11px;
-		letter-spacing: 0em;
-		text-align: left;
-		color: var(--gauzy-text-color-2, var(--text-hint-color));
-	}
-}
-
-// Define styles for the .project-tab-container class
-.project-tab-container {
-	display: flex;
-	gap: 1rem;
-
-	.project-form-container {
-		width: 65%;
-	}
-}
-
-// Define styles for the .project-image-container class
-.project-image-container {
-	transition: transform 150ms ease-in-out;
+// Given a bounded height by its page, the tabs and the action bar stay put and
+// only the open section scrolls. Without one (a stacked narrow layout) the
+// panel takes its content's height and the page scrolls instead.
+:host {
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
+
+	// Filled inputs, selects and labels, as in every other Gauzy form
+	@include input-appearance($default-height, var(--gauzy-sidebar-background-4));
+}
+
+.project-form {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+	background-color: var(--gauzy-card-1);
+	border-radius: nb-theme(border-radius);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+
+.tab-row {
+	flex-shrink: 0;
+	padding: 0 $panel-x;
+	border-bottom: $hairline;
+	overflow-x: auto;
+	scrollbar-width: none;
+
+	@media (max-width: $narrow) {
+		padding: 0 $panel-x-narrow;
+	}
+}
+
+.tabs {
+	display: flex;
+	gap: $gap-xl;
+}
+
+.tab {
 	position: relative;
-	margin-right: 3rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.875rem 0.125rem 0.75rem;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	white-space: nowrap;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+	transition: color 0.12s ease-in-out;
 
-	.project-image-photo {
-		width: fit-content;
-		height: 294px;
-		position: relative;
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
 
-		.image-overlay {
-			pointer-events: none;
-			background: black;
-			position: absolute;
-			height: 100%;
-			width: 100%;
-			border-radius: nb-theme(border-radius);
-		}
+	&::after {
+		content: '';
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
+		height: 2px;
+		border-radius: 2px 2px 0 0;
+		background-color: transparent;
+	}
 
-		img,
-		.image {
-			width: 299px;
-			height: 294px;
-			object-fit: cover;
-			border-radius: nb-theme(border-radius);
-		}
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
 
-		.image {
-			background-color: rgba(126, 126, 143, 0.1);
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+	}
 
-			i {
-				margin: 5px;
-			}
+	&.is-active {
+		color: nb-theme(color-primary-500);
 
-			>span {
-				// Was the literal rgba(126, 126, 143, 1), which is exactly the
-				// light-theme value of `gauzy-text-color-2` — so the "Add or
-				// Drop Image" hint stayed dark gray on the dark themes. Token
-				// first, that same literal kept as the fallback.
-				color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
-				z-index: 2;
-				transition: opacity 0.2s ease-in;
-				position: absolute;
-				top: calc(50% - 16px / 2);
-				left: calc(50% - 141px / 2);
-			}
-		}
-
-		svg {
-			z-index: 2;
-			transition: opacity 0.2s ease-in;
-			opacity: 0.3;
-			position: absolute;
-			top: calc(50% - 68px / 2);
-			left: calc(50% - 68px / 2);
-
-			g circle {
-				fill: var(--text-primary-color);
-			}
+		&::after {
+			background-color: nb-theme(color-primary-500);
 		}
 	}
 }
 
-:host {
-	::ng-deep ngx-image-uploader input {
-		height: 100% !important;
+/* ── Panes and sections ───────────────────────────────────────────────────── */
+
+// The scrolling region. `scrollbar-gutter` keeps the fields from shifting
+// sideways when a longer section brings the scrollbar in.
+.panes {
+	flex: 1 1 auto;
+	min-height: 12rem;
+	padding: $gap-xl $panel-x;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+
+	@media (max-width: $narrow) {
+		padding: $gap-lg $panel-x-narrow;
+	}
+}
+
+.pane {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-xl;
+	min-width: 0;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.form-section {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-md;
+	max-width: 56rem;
+
+	// The setting-card tabs use the pane's whole width
+	&.full {
+		max-width: none;
 	}
 
-	// Apply dialog styles. Second argument is the input background — it is
-	// applied with `!important`, so on material-light / material-dark (where
-	// `--gauzy-card-1` is not registered) the declaration is dropped entirely
-	// and the inputs go back to Nebular's own color. Fall back to the card
-	// color those themes DO define.
-	@include dialog(transparent, var(--gauzy-card-1, var(--card-background-color)));
+	& + & {
+		padding-top: $gap-xl;
+		border-top: $hairline;
+	}
+}
+
+.section-title {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 500;
+	line-height: 1rem;
+	color: nb-theme(text-hint-color);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $gap-md $gap-lg;
+
+	@media (max-width: 767.98px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	nb-select {
+		width: 100%;
+		max-width: none;
+	}
+}
+
+// Field wrappers take their spacing from the grid or section gap
+.form-group,
+.grid ::ng-deep .form-group,
+.form-section ::ng-deep .form-group {
+	margin-bottom: 0;
+}
+
+// A field's explanation, under the control
+.hint {
+	margin: 0.25rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: nb-theme(text-hint-color);
+}
+
+.caption {
+	margin: 0.25rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1rem;
+}
+
+// nb-toggle's inner label keeps the global `label { margin-bottom: 0.5rem }`, which
+// makes the host taller than its track; cancelled so the switch sits centred.
+nb-toggle ::ng-deep label {
+	margin: 0;
+}
+
+/* ── Setting cards (every tab but Main) ───────────────────────────────────── */
+
+// The SMS provider cards' pattern (settings/sms-gateway): an icon, a title with a
+// description and an optional link, and either a switch on the right or the
+// card's fields underneath. What a switch turns on opens inside the same card.
+.setting-card {
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.setting-card__row {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	padding: $gap-md $gap-lg;
+}
+
+.setting-card__icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
+	}
+}
+
+.setting-card__text {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+.setting-card__title {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: nb-theme(text-basic-color);
+}
+
+.setting-card__description {
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.setting-card__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-top: 0.125rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: nb-theme(text-primary-color);
+	text-decoration: none;
+
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+// The label margin is already cancelled above, so no offset is needed here.
+.setting-card__row nb-toggle {
+	flex: 0 0 auto;
+
+	// The card's title is projected into the switch so it names the switch's own
+	// checkbox (a name on the host would not reach it). The card already shows the
+	// title, so the copy is hidden visually but kept for assistive technology.
+	::ng-deep .text {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+}
+
+// A connected integration's own logo, in place of the icon.
+.setting-card__logo {
+	flex: 0 0 auto;
+	width: 2rem;
+	height: 2rem;
+	object-fit: contain;
+}
+
+// Lines up with the title, past the icon column.
+.setting-card__body {
+	padding-block: $gap-md $gap-lg;
+	padding-inline: calc(#{$gap-lg} + 2rem + #{$gap-md}) $gap-lg;
+	border-top: $hairline;
+
+	@media (max-width: $narrow) {
+		padding-inline-start: $gap-lg;
+	}
+}
+
+/* ── Main tab: the logo on the left, every field on the right ─────────────── */
+
+$logo-size: 10rem;
+
+// Two columns: the logo alone, and the Details, People and Timeline sections
+// stacked beside it. Below 768px the logo sits above the fields.
+.main-layout {
+	display: grid;
+	grid-template-columns: $logo-size minmax(0, 1fr);
+	align-items: start;
+	gap: $gap-xl 2rem;
+
+	@media (max-width: $narrow) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+// The sections keep their own dividers (`.form-section + .form-section`).
+.main-fields {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-xl;
+	min-width: 0;
+}
+
+// Stays in view while the fields scroll past it.
+.logo-field {
+	position: sticky;
+	top: 0;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+
+	@media (max-width: $narrow) {
+		position: static;
+	}
+
+	// A span, not a label: the control it names is the uploader's own file input.
+	.label {
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+
+	.avatar {
+		width: $logo-size;
+		height: $logo-size;
+
+		@media (max-width: 767.98px) {
+			width: 7.5rem;
+			height: 7.5rem;
+		}
+	}
+
+	// Scaled up with the tile
+	.avatar__image--empty nb-icon {
+		width: 3rem;
+		height: 3rem;
+		font-size: 3rem;
+	}
+
+	.avatar__badge {
+		bottom: 0.5rem;
+		inset-inline-end: 0.5rem;
+		width: 2rem;
+		height: 2rem;
+
+		nb-icon {
+			width: 1.125rem;
+			height: 1.125rem;
+			font-size: 1.125rem;
+		}
+	}
+}
+
+/* ── Project logo: the uploader tile of the Add Organization dialog ──────── */
+
+.avatar {
+	position: relative;
+	flex-shrink: 0;
+	border-radius: nb-theme(border-radius);
+	overflow: hidden;
+	border: $hairline;
+	background-color: var(--gauzy-sidebar-background-3);
+	cursor: pointer;
+}
+
+.avatar__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.avatar__image--empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: nb-theme(text-hint-color);
+
+	nb-icon {
+		width: 2rem;
+		height: 2rem;
+		font-size: 2rem;
+	}
+}
+
+.avatar__scrim {
+	position: absolute;
+	inset: 0;
+	background-color: #000;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease-in-out;
+}
+
+.avatar__badge {
+	position: absolute;
+	bottom: 6px;
+	inset-inline-end: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background-color: nb-theme(color-primary-500);
+	color: nb-theme(text-control-color);
+	opacity: 0.9;
+	pointer-events: none;
+	transition: opacity 0.2s ease-in-out;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+}
+
+.avatar--hover {
+	.avatar__scrim {
+		opacity: 0.25;
+	}
+
+	.avatar__badge {
+		opacity: 1;
+	}
+}
+
+/* ── Color: a swatch inside the field instead of painting the whole input ── */
+
+.color-field {
+	position: relative;
+
+	.color-swatch {
+		position: absolute;
+		top: 50%;
+		inset-inline-start: 0.625rem;
+		width: 1rem;
+		height: 1rem;
+		border-radius: 0.25rem;
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+		transform: translateY(-50%);
+		pointer-events: none;
+	}
+
+	input {
+		padding-inline-start: 2.25rem;
+	}
+}
+
+/* ── Action bar ───────────────────────────────────────────────────────────── */
+
+// Sticky as well, for the stacked layout where the page scrolls rather than the panes.
+.form-footer {
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $gap-sm;
+	padding: $gap-md $panel-x;
+	border-top: $hairline;
+	background-color: var(--gauzy-card-1);
+	border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+
+	@media (max-width: $narrow) {
+		padding: $gap-md $panel-x-narrow;
+	}
+
+	.spacer {
+		flex: 1;
+	}
+
+	[nbButton] {
+		text-transform: none;
+	}
 }

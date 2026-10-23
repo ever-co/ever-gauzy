@@ -27,7 +27,7 @@
 			{{ 'PROJECT_VIEW.ACTIVITY_PARTIAL' | translate }}
 		</p>
 		}
-		@for (day of feed.value; track day.label) {
+		@for (day of days; track day.label) {
 		<h6 class="feed-day">{{ day.labelKey ? (day.labelKey | translate) : day.label }}</h6>
 		<ol class="feed">
 			@for (entry of day.entries; track entry.id) {
@@ -38,20 +38,22 @@
 				<span class="feed-main">
 					<span class="feed-sentence">
 						@if (entry.actor; as actor) {
-						<a class="feed-actor" [routerLink]="['/pages/employees/view', actor.id]" [attr.aria-label]="actor.name">
-							<span class="member-avatar feed-avatar">
-								@if (actor.avatarUrl) {
-								<img [src]="actor.avatarUrl" [alt]="actor.name" />
-								} @else {
-								<span aria-hidden="true">{{ actor.initials }}</span>
-								}
-							</span>
+						@if (entry.actorLink) {
+						<a class="feed-actor" [routerLink]="entry.actorLink" [attr.aria-label]="actor.name">
+							<ng-container *ngTemplateOutlet="actorAvatar; context: { $implicit: actor }"></ng-container>
 						</a>
+						} @else {
+						<span class="feed-actor">
+							<ng-container *ngTemplateOutlet="actorAvatar; context: { $implicit: actor }"></ng-container>
+						</span>
+						}
 						}
 						<span>
 							{{ entry.sentence | translate : { actor: entry.actor?.name || ('PROJECT_VIEW.SOMEONE' | translate) } }}
-							@if (entry.link) {
-							<a class="feed-target" [routerLink]="entry.link">{{ entry.target }}</a>
+							@if (entry.taskId) {
+							<a class="feed-target" [routerLink]="[]" [queryParams]="{ task: entry.taskId }" queryParamsHandling="merge">{{ entry.target }}</a>
+							} @else if (entry.isComment) {
+							<a class="feed-target" [routerLink]="[]" [queryParams]="{ tab: 'comments' }" queryParamsHandling="merge">{{ entry.target }}</a>
 							} @else {
 							<strong class="feed-target">{{ entry.target }}</strong>
 							}
@@ -60,15 +62,33 @@
 					@if (entry.fields) {
 					<span class="feed-fields">{{ 'PROJECT_VIEW.ACTIVITY_FIELDS' | translate : { fields: entry.fields } }}</span>
 					}
+					@if (entry.excerpt) {
+					<span class="feed-excerpt">{{ entry.excerpt }}</span>
+					} @else if (entry.imageOnly) {
+					<span class="feed-excerpt">{{ 'PROJECT_VIEW.COMMENT_IMAGE' | translate }}</span>
+					}
 				</span>
 				<time class="feed-time" [attr.datetime]="entry.time" [nbTooltip]="entry.timeLong" nbTooltipPlacement="top">{{ timeOf(entry) }}</time>
 			</li>
 			}
 		</ol>
 		}
+		<div class="pagination-container">
+			<ngx-pagination [source]="source"></ngx-pagination>
+		</div>
 		}
 	</div>
 </section>
+
+<ng-template #actorAvatar let-actor>
+	<span class="member-avatar feed-avatar">
+		@if (actor.avatarUrl) {
+		<img [src]="actor.avatarUrl" [alt]="actor.name" />
+		} @else {
+		<span aria-hidden="true">{{ actor.initials }}</span>
+		}
+	</span>
+</ng-template>
 
 <ng-template #empty let-key let-icon="icon">
 	<div class="state">

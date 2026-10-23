@@ -11,6 +11,7 @@ export * from './candidate';
 export * from './changelog';
 export * from './chat-sidebar';
 export * from './cloud';
+export * from './comment';
 export * from './country';
 export * from './crud';
 export * from './currency';

@@ -3,14 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
-	NbCardModule,
 	NbDatepickerModule,
 	NbIconModule,
 	NbInputModule,
 	NbListModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -36,14 +34,12 @@ import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.mo
 		FormsModule,
 		ReactiveFormsModule,
 		NbButtonModule,
-		NbCardModule,
-		NbDatepickerModule,
+			NbDatepickerModule,
 		NbInputModule,
 		NbListModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		NbTabsetModule,
-		NbToggleModule,
+			NbToggleModule,
 		NbIconModule,
 		NgSelectModule,
 		RichTextEditorModule,

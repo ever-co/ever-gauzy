@@ -1,24 +1,37 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, type SimpleChanges } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	Input,
+	OnChanges,
+	Output,
+	type SimpleChanges
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { CdkDragDrop, CdkDragMove, DragDropModule, transferArrayItem } from '@angular/cdk/drag-drop';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { IPagination, ITask, ITaskStatus } from '@gauzy/contracts';
+import { IPagination, ITask, ITasksStatistics, ITaskStatus, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { Store, TimesheetStatisticsService, ToastrService } from '@gauzy/ui-core/core';
 import { isTaskFinished } from '../../../../tasks/components/task-view/task-view-sections';
 import {
 	dueInWords,
 	humanize,
 	IPersonChip,
+	ITaskProgress,
 	Loadable,
 	loaded,
 	loading,
 	failed,
 	personOf,
-	statusGroupOf
+	projectWorkedTimeOf,
+	statusGroupOf,
+	taskProgressOf
 } from '../project-view.utils';
 
 /** One task as a board card. */
@@ -26,6 +39,8 @@ interface IBoardCard {
 	id: string;
 	key: string;
 	title: string;
+	/** Days until the due date (negative once past), or `null` without one. */
+	daysLeft: number | null;
 	priority?: string;
 	priorityLevel?: 'urgent' | 'high' | 'medium' | 'low';
 	due: { key: string; count?: number } | null;
@@ -33,6 +48,12 @@ interface IBoardCard {
 	soon: boolean;
 	people: IPersonChip[];
 	done: boolean;
+	/** The task's estimate in seconds, or 0 without one. */
+	estimate: number;
+	/** Time worked against the estimate, or its share of the project's time without one; once read. */
+	progress?: ITaskProgress | null;
+	/** True while a move to another column is being saved. */
+	saving?: boolean;
 }
 
 /** One board column: a status, its colour, and its cards. */
@@ -41,6 +62,10 @@ interface IBoardColumn {
 	name: string;
 	color?: string;
 	group: 'todo' | 'progress' | 'blocked' | 'done';
+	/** The status row behind the column; a column built from a task's bare status value has none and takes no drops. */
+	statusId?: string;
+	/** The status value a task moved here is saved with. */
+	value?: string;
 	cards: IBoardCard[];
 }
 
@@ -49,12 +74,21 @@ const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 /**
  * The project page's Board tab: the project's tasks as a Kanban board, one column per status in the
  * tenant's own order and colours (the project's statuses, else the organization's), each card naming
- * its key, title, priority, due date and assignees, and opening the task's page.
+ * its key, title, priority, due date and assignees, and opening the task's page. A user who may edit
+ * tasks drags a card to another column to change its status; a move that fails to save goes back.
  */
 @Component({
 	selector: 'ga-project-board',
 	standalone: true,
-	imports: [CommonModule, RouterModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe],
+	imports: [
+		CommonModule,
+		RouterModule,
+		DragDropModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe
+	],
 	templateUrl: './project-board.component.html',
 	styleUrls: [
 		'../../../../employees/view-employee/view-employee.component.scss',
@@ -67,11 +101,88 @@ export class ProjectBoardComponent implements OnChanges {
 	@Input() projectId: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** A card's task saved with another status, so the host can bring what else shows the task up to date. */
+	@Output() readonly taskMoved = new EventEmitter<string>();
 
 	public board: Loadable<IBoardColumn[]> = loading([]);
+	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
+	public refusingColumnId: string | null = null;
 	private _sequence = 0;
 
-	constructor(private readonly _http: HttpClient) {}
+	constructor(
+		private readonly _http: HttpClient,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _statisticsService: TimesheetStatisticsService
+	) {}
+
+	/** Moving a card writes the task, so only a user who may edit tasks can drag. */
+	get canMove(): boolean {
+		return this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT);
+	}
+
+	/** Only a column backed by a status row takes a card: its status is what the move saves. */
+	readonly acceptsDrop = (_drag: unknown, drop: { data: IBoardColumn }): boolean => !!drop.data?.statusId;
+
+	/** While a card is dragged, marks the column under the pointer if it will not take the card. */
+	onDragMoved(event: CdkDragMove<IBoardCard>): void {
+		const column = this.columnAt(event.pointerPosition);
+		const id = column && !column.statusId ? column.id : null;
+		if (id !== this.refusingColumnId) this.refusingColumnId = id;
+	}
+
+	/**
+	 * A card dropped on another column: it moves at once and the task is saved with that column's
+	 * status. If the save fails, the card goes back to where it was and an error says so.
+	 */
+	async drop(event: CdkDragDrop<IBoardColumn, IBoardColumn, IBoardCard>): Promise<void> {
+		this.refusingColumnId = null;
+		const from = event.previousContainer.data;
+		const to = event.container.data;
+		// Where the card was let go decides, not the last column that took it on the way: a card carried
+		// through an open column and let go over one that refuses it stays put and says why.
+		const released = this.columnAt(event.dropPoint);
+		if (released && released !== from && !released.statusId) {
+			this._toastrService.danger('PROJECT_VIEW.CANNOT_DROP', 'TOASTR.TITLE.ERROR', { column: released.name });
+			return;
+		}
+		// Let go over its own column, outside the column that took it, or on one without a status: no move.
+		if (from === to || !to.statusId || !event.isPointerOverContainer) return;
+		// The dragged card itself, at the place it has now: a move that failed while this card was dragged
+		// puts its card back and shifts the others, so the index the drag started at may name another card.
+		let card = event.item.data;
+		const index = card ? from.cards.indexOf(card) : -1;
+		if (index < 0 || card.saving) return;
+
+		transferArrayItem(from.cards, to.cards, index, event.currentIndex);
+		const wasDone = card.done;
+		this.setDone(card, to.group === 'done');
+		card.saving = true;
+		const sequence = this._sequence;
+		try {
+			// The status alone: a title or anything else read when the board loaded would undo a newer edit.
+			await firstValueFrom(
+				this._http.put<ITask>(`${API_PREFIX}/tasks/${card.id}/status`, {
+					status: to.value,
+					taskStatusId: to.statusId,
+					organizationId: this.organizationId,
+					tenantId: this.tenantId
+				})
+			);
+			this.taskMoved.emit(card.id);
+		} catch (error) {
+			// A reload since the drop replaced the board: there is no card left to put back.
+			if (sequence !== this._sequence) return;
+			const current = to.cards.indexOf(card);
+			if (current > -1) {
+				transferArrayItem(to.cards, from.cards, current, Math.min(index, from.cards.length));
+			}
+			this.setDone(card, wasDone);
+			this._toastrService.danger(error);
+		} finally {
+			card.saving = false;
+		}
+	}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
@@ -83,12 +194,15 @@ export class ProjectBoardComponent implements OnChanges {
 		return (this.board.value || []).reduce((sum, column) => sum + column.cards.length, 0);
 	}
 
-	taskLink(id: string): string[] {
-		return ['/pages/tasks/view', id];
-	}
-
 	peopleNames(people: IPersonChip[]): string {
 		return (people || []).map((person) => person.name).join(', ');
+	}
+
+	/** The board column at a point on screen, if any. The drag preview takes no pointer events, so it is never the hit. */
+	private columnAt(point: { x: number; y: number }): IBoardColumn | undefined {
+		const element = point ? document.elementFromPoint(point.x, point.y) : null;
+		const id = element?.closest<HTMLElement>('[data-column-id]')?.dataset['columnId'];
+		return id ? (this.board.value || []).find((column) => column.id === id) : undefined;
 	}
 
 	private async load(): Promise<void> {
@@ -109,8 +223,35 @@ export class ProjectBoardComponent implements OnChanges {
 			]);
 			if (sequence !== this._sequence) return;
 			this.board = loaded(this.toColumns(statuses, tasks?.items || []));
+			void this.loadProgress(sequence);
 		} catch {
 			if (sequence === this._sequence) this.board = failed([]);
+		}
+	}
+
+	/**
+	 * The time worked on each of the project's tasks, all time, against its estimate — or, without one,
+	 * as its share of the project's time: the cards' progress bars. They come after the board, so a slow or
+	 * failed read (most often a 403) never holds it up.
+	 */
+	private async loadProgress(sequence: number): Promise<void> {
+		const { organizationId, tenantId, projectId } = this;
+		try {
+			const rows = await this._statisticsService.getTasksStatistics({
+				organizationId,
+				tenantId,
+				projectIds: [projectId]
+			});
+			if (sequence !== this._sequence) return;
+			const worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
+			const project = projectWorkedTimeOf([...worked.values()]);
+			for (const column of this.board.value || []) {
+				for (const card of column.cards) {
+					card.progress = taskProgressOf(worked.get(card.id) || 0, card.estimate, project);
+				}
+			}
+		} catch {
+			// The cards stay without bars.
 		}
 	}
 
@@ -154,6 +295,8 @@ export class ProjectBoardComponent implements OnChanges {
 			name: status.name || humanize(status.value),
 			color: status.color,
 			group: status.isDone ? 'done' : statusGroupOf(status.value || status.name),
+			statusId: status.id,
+			value: status.value || status.name,
 			cards: []
 		}));
 		const byId = new Map(ordered.map((status, index) => [status.id, columns[index]]));
@@ -194,20 +337,31 @@ export class ProjectBoardComponent implements OnChanges {
 	}
 
 	private toCard(task: ITask, today: moment.Moment): IBoardCard {
-		const done = isTaskFinished(task);
-		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
 		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
-		return {
+		let card: IBoardCard = {
 			id: task.id,
 			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 			title: task.title,
+			daysLeft: task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null,
 			priority: task.taskPriority?.name || humanize(task.priority) || undefined,
 			priorityLevel: PRIORITY_LEVELS.has(priority) ? (priority as IBoardCard['priorityLevel']) : undefined,
-			due: daysLeft === null ? null : dueInWords(daysLeft, done),
-			overdue: !done && daysLeft !== null && daysLeft < 0,
-			soon: !done && daysLeft !== null && daysLeft >= 0 && daysLeft <= 1,
+			due: null,
+			overdue: false,
+			soon: false,
 			people: (task.members || []).map((member) => personOf(member)).filter(Boolean),
-			done
+			done: false,
+			estimate: Number(task.estimate) || 0
 		};
+		this.setDone(card, isTaskFinished(task));
+		return card;
+	}
+
+	/** Whether the card's task is finished, and the due-date state that follows from it. */
+	private setDone(card: IBoardCard, done: boolean): void {
+		const { daysLeft } = card;
+		card.done = done;
+		card.due = daysLeft === null ? null : dueInWords(daysLeft, done);
+		card.overdue = !done && daysLeft !== null && daysLeft < 0;
+		card.soon = !done && daysLeft !== null && daysLeft >= 0 && daysLeft <= 1;
 	}
 }
