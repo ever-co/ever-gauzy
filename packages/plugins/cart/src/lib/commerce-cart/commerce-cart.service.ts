@@ -27,7 +27,6 @@ import {
 	Money,
 	RequestContext,
 	TaxLineService,
-	TenantAwareCrudService,
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	currencyPrecision,
@@ -73,6 +72,7 @@ import {
 	ICartTaxPort
 } from '../cart.types';
 import { CART_REFERENCES } from '../cart.references';
+import { CartCrudService } from '../cart-crud.service';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -168,7 +168,7 @@ interface IStockRefusal {
  * ledgers from ever disagreeing.
  */
 @Injectable()
-export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
+export class CommerceCartService extends CartCrudService<CommerceCart> {
 	constructor(
 		readonly typeOrmCommerceCartRepository: TypeOrmCommerceCartRepository,
 		readonly mikroOrmCommerceCartRepository: MikroOrmCommerceCartRepository,
@@ -299,6 +299,18 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		}
 
 		await this.assertReferences(entity);
+
+		// A caller confined to the organization of their token — anyone but a tenant admin — creates a cart in that
+		// organization (`CartCrudService`). The base would refuse another one with a bare 403 when it writes; the
+		// refusal is stated here, before anything is written, with the way out. A tenant admin may state any
+		// organization of the tenant, and a request with no signed-in caller (a job) is not confined.
+		const boundary = this.organizationBoundary();
+
+		if (boundary && entity.organizationId && String(entity.organizationId) !== String(boundary.organizationId)) {
+			throw new BadRequestException(
+				'CART_ORGANIZATION_NOT_IN_SESSION: a cart is created in the organization the session is scoped to; switch organization to create one in another.'
+			);
+		}
 
 		const now = new Date();
 

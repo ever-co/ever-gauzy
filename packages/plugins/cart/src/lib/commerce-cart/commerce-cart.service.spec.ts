@@ -133,6 +133,11 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	class TenantAwareCrudService extends CrudService {
+		/** The organization boundary that applies to the service right now: none, unless a case states one. */
+		organizationBoundary(): any {
+			return null;
+		}
+
 		async update(id: any, partial: any): Promise<any> {
 			if (typeof id === 'string') {
 				await this.findOneByIdString(id);
@@ -2550,6 +2555,27 @@ describe('CommerceCartService — rows are written in the organization (R2-G19)'
 
 		expect(tables.commerce_cart[0].organizationId).toBe('org-2');
 		expect(tables.commerce_cart_line[0].organizationId).toBe('org-2');
+	});
+
+	it('refuses a caller confined to their organization a cart stated for another, writing nothing, and lets a tenant admin create it', async () => {
+		// Anyone but a tenant admin is confined to the organization of their token.
+		const boundary = jest.spyOn(CommerceCartService.prototype as any, 'organizationBoundary').mockReturnValue({
+			organizationId: 'org-1'
+		});
+		const { service, tables } = cartFixture();
+
+		await expect(
+			service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any)
+		).rejects.toThrow(/CART_ORGANIZATION_NOT_IN_SESSION/);
+		expect(tables.commerce_cart).toEqual([]);
+
+		await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-1' } as any);
+		expect(tables.commerce_cart).toHaveLength(1);
+
+		// A tenant admin, whom no boundary confines, may state any organization of the tenant.
+		boundary.mockReturnValue(null);
+		await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any);
+		expect(tables.commerce_cart.map((row: any) => row.organizationId)).toEqual(['org-1', 'org-2']);
 	});
 
 	it('stamps the request’s organization on a child row created directly, and keeps a stated one', async () => {
