@@ -281,6 +281,37 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
+	 * The fields that decide who reaches a document — its visibility and its organization — and its lock are its
+	 * owner's (or a `DOCS_MANAGE` holder's) to change, as its shares are (§3.3: a grantee, even at `EDIT`, can never
+	 * re-share). `assertCanWrite` lets an `EDIT` grantee write the document, so without this a grantee could publish
+	 * the owner's PRIVATE page to the whole organization (`visibility`), lift the owner's view-only lock
+	 * (`isLocked`), or move the document out of the owner's organization while keeping their share (`organizationId`).
+	 * A value equal to the current one is not a change: clients resend the selected organization on every save.
+	 *
+	 * @param document The document about to be updated.
+	 * @param input The metadata update.
+	 */
+	private async assertMayChangeOwnerFields(document: Document, input: UpdateDocumentDTO): Promise<void> {
+		const changesOwnerField =
+			(input.visibility !== undefined && input.visibility !== document.visibility) ||
+			(input.isLocked !== undefined && input.isLocked !== !!document.isLocked) ||
+			(input.organizationId !== undefined && input.organizationId !== document.organizationId);
+		if (!changesOwnerField) {
+			return;
+		}
+		const permitted = await this.documentAccessService.canAdministerShares({
+			createdByUserId: document.createdByUserId,
+			visibility: document.visibility
+		});
+		if (!permitted) {
+			throw new ForbiddenException({
+				message: "Only the document's owner may change its visibility, lock or organization",
+				code: DOCS_WRITE_FORBIDDEN
+			});
+		}
+	}
+
+	/**
 	 * The shared tenant + organization + visibility resolution behind `findOneScoped` and
 	 * `findOneDeletedScoped`.
 	 */
@@ -501,6 +532,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	async updateDocument(id: ID, input: UpdateDocumentDTO): Promise<Document> {
 		const document = await this.findOneScoped(id);
 		await this.assertCanWrite(document);
+		await this.assertMayChangeOwnerFields(document, input);
 
 		const updated = await this.save({
 			...document,
