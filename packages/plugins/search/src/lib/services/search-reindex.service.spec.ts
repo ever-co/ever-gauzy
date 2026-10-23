@@ -1163,3 +1163,78 @@ describe('SearchReindexService — a sweep partitioned by organization (Q16)', (
 		});
 	});
 });
+
+describe('SearchReindexService — another tenant’s rows and documents', () => {
+	const ownTenant = () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	};
+	const withForeignRows = () =>
+		reindexFixture({
+			variants: [
+				variantRow('v1'),
+				variantRow('v2'),
+				variantRow('vx', { tenantId: 'another-tenant', organizationId: 'another-org' })
+			],
+			documents: [{ ...foreignDocument(), entityId: 'vx', organizationId: 'another-org' }]
+		});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('plans over the caller’s tenant’s rows only, and answers nothing about another tenant’s ids', async () => {
+		ownTenant();
+		const fixture = withForeignRows();
+
+		expect(await fixture.service.plan({ scope: SearchReindexScope.ALL } as never)).toMatchObject({
+			estimatedCount: 3
+		});
+		expect(
+			await fixture.service.plan({
+				scope: SearchReindexScope.ENTITY,
+				entity: 'product_variant',
+				ids: ['vx']
+			} as never)
+		).toMatchObject({ estimatedCount: 0 });
+	});
+
+	it('sweeps the caller’s tenant’s rows only, and leaves another tenant’s document as it was', async () => {
+		ownTenant();
+		const fixture = withForeignRows();
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		const own = fixture.documents().filter((document) => document.tenantId === TENANT);
+
+		expect(runs[0].indexed).toBe(2);
+		expect(own.map((document) => document.entityId).sort()).toEqual(['v1', 'v2']);
+		expect(fixture.documents().find((document) => document.id === 'foreign')).toMatchObject({
+			title: 'A document of another tenant'
+		});
+	});
+
+	it('reports the freshness of the caller’s tenant’s index only', async () => {
+		ownTenant();
+		const fixture = withForeignRows();
+
+		const [status] = await fixture.service.status(['product_variant']);
+
+		expect(status).toMatchObject({ entity: 'product_variant', indexedCount: 0, pendingCount: 2 });
+		expect(status.lastIndexedAt).toBeUndefined();
+	});
+
+	it('CONTROL: a run with no caller, a job, still sweeps every tenant', async () => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null as never);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as never);
+		const fixture = withForeignRows();
+
+		const runs = await fixture.service.run({
+			scope: SearchReindexScope.ENTITY,
+			entity: 'product_variant'
+		} as never);
+
+		expect(runs[0].indexed).toBe(3);
+	});
+});
