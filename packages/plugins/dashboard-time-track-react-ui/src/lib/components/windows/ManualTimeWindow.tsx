@@ -61,7 +61,7 @@ export function ManualTimeWindow({ manualTimes, loading, emptyMessage, dateForma
 											name={manualTime.user?.name}
 											src={manualTime.user?.imageUrl}
 											presence={manualTime.employee}
-											badge={isAgentEmployee(manualTime.employee as { kind?: string }) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
+											badge={isAgentEmployee(manualTime.employee) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
 											onClick={manualTime.employeeId ? () => onOpenEmployee(manualTime.employeeId) : undefined}
 										/>
 									</div>

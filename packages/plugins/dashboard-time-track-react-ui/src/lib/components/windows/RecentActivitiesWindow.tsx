@@ -59,7 +59,7 @@ function EmployeeActivityRow({
 							appendCaption={t('TIMESHEET.LAST_WORKED')}
 							caption={lastWorked}
 							presence={employee}
-							badge={isAgentEmployee(employee as { kind?: string }) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
+							badge={isAgentEmployee(employee) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
 							onClick={() => onOpenEmployee(employee.id)}
 						/>
 					) : (

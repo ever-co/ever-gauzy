@@ -59,7 +59,7 @@ export function MembersWindow({ members, loading, emptyMessage, selectedPeriod, 
 												name={member.user?.name}
 												src={member.user?.imageUrl}
 												presence={member as { isOnline?: boolean; isAway?: boolean }}
-												badge={isAgentEmployee(member as { kind?: string }) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
+												badge={isAgentEmployee(member) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
 												onClick={member.id ? () => onOpenEmployee(member.id) : undefined}
 											/>
 										</div>
