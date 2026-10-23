@@ -761,7 +761,15 @@ export class HttpTransport {
 			};
 
 			// Route the request to appropriate MCP server handler
-			await this.routeMcpRequest(method, enrichedParams, id, mockTransport, userContext, tokenInfo);
+			await this.routeMcpRequest(
+				method,
+				enrichedParams,
+				id,
+				mockTransport,
+				userContext,
+				tokenInfo,
+				this.callerIsLocal(req)
+			);
 		} catch (error) {
 			logger.error(`Error processing MCP method ${method}:`, error);
 			res.status(500).json({
@@ -818,7 +826,9 @@ export class HttpTransport {
 		id: string | number | null | undefined,
 		transport: MockTransport,
 		userContext?: UserContext,
-		tokenInfo?: AuthorizedRequest['tokenInfo']
+		tokenInfo?: AuthorizedRequest['tokenInfo'],
+		/** Whether the caller is on this machine, so may act as the GAUZY_AUTO_LOGIN account (see isLocalCaller) */
+		callerIsLocal = false
 	) {
 		try {
 			// Handle MCP protocol methods by delegating to the actual MCP server
@@ -859,11 +869,7 @@ export class HttpTransport {
 					const authKey = callerKey ?? `http:anonymous:${randomUUID()}`;
 					let result: unknown;
 					try {
-						result = await this.callTool(
-							params as Record<string, unknown>,
-							authKey,
-							this.callerIsLocal(req)
-						);
+						result = await this.callTool(params as Record<string, unknown>, authKey, callerIsLocal);
 					} finally {
 						if (callerKey === undefined) {
 							authManager.clearKey(authKey);
