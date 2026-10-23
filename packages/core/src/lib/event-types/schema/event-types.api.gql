@@ -4,12 +4,11 @@
 # for the whole platform, so a domain adds fields to it and never declares its own.
 #
 # Every field below is one the delivered `/api/event-type` routes already serve, under the same guard and
-# with the same permission — and this resource is one of the two in this delivery where "the same
-# permission" means none at all. The controller declares no permission on its class and none on any of its
-# handlers, so no field here states one either: a permission restated here would be a grant the routes do
-# not ask for, and an empty `@Permissions()` would be a second statement of the same absence. What decides
-# who may reach these rows is the guard chain the controller runs under and the service behind it, which
-# both protocols share.
+# with the same permission. The controller declares no permission on its class and none on its reads, so no
+# read field here states one either; every write — the filing, the edit, the removal and the two lifecycle
+# moves — states `EVENT_TYPES_EDIT` behind `PermissionGuard`, on the route and on the field alike
+# (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22). What else decides who may reach these rows is the guard
+# chain the controller runs under and the service behind it, which both protocols share.
 #
 # The list is a connection rather than a bare array. It takes the same query protocol the REST list route
 # takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers with
@@ -36,7 +35,7 @@
 # The controller serves no sub-route of its own beyond the paginated spelling, so this resource has no
 # root field beyond the list, the row, the count and the five writes. The node read is the controller's own
 # rather than the CRUD base's — it is the one read of these five resources that overrides it — and it
-# answers the same row under the same absence of a permission.
+# answers the same row under the same absence of a read permission.
 
 extend type Query {
 	"""
