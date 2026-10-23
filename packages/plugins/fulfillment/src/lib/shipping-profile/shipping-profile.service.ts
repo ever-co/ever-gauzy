@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DeepPartial, FindOptionsWhere } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, IsNull } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { ShippingProfile } from './shipping-profile.entity';
@@ -38,10 +38,14 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 			throw new BadRequestException('SHIPPING_PROFILE_CODE_REQUIRED: a profile needs a code.');
 		}
 
-		await this.assertCodeIsFree(entity.code);
+		// The code and the default are those of the organization the profile is written in (below), which for a tenant
+		// admin need not be the organization of their token; the base refuses it to anyone else.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
+		await this.assertCodeIsFree(entity.code, organizationId);
 
 		if (entity.isDefault) {
-			await this.clearExistingDefault();
+			await this.clearExistingDefault(organizationId);
 		}
 
 		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
@@ -51,7 +55,7 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 		// caller).
 		return super.create({
 			...entity,
-			organizationId: entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+			organizationId
 		});
 	}
 
@@ -63,17 +67,18 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 	 * @returns The update result or the profile.
 	 */
 	public async update(id: any, entity: any): Promise<any> {
-		if (entity?.code) {
-			await this.assertCodeIsFree(entity.code, id as ID);
-		}
+		if (entity?.code || entity?.isDefault) {
+			// The profile is read first: its organization is the one whose code and default are checked, and a profile
+			// the caller cannot reach is the read's 404 before anything is demoted.
+			const organizationId = await this.organizationAfterUpdate(id, entity);
 
-		if (entity?.isDefault) {
-			// The profile is read before anything is demoted, so promoting one that is not the caller's demotes nothing.
-			if (typeof id === 'string') {
-				await this.findOneByIdString(id);
+			if (entity.code) {
+				await this.assertCodeIsFree(entity.code, organizationId, id as ID);
 			}
 
-			await this.clearExistingDefault(id as ID);
+			if (entity.isDefault) {
+				await this.clearExistingDefault(organizationId, id as ID);
+			}
 		}
 
 		return super.update(id, entity);
@@ -94,7 +99,11 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 			return this.findOneByIdString(attachments.items[0].profileId);
 		}
 
-		const profiles = (await this.findAll({ where: this.inRequestOrganization() })) as IPagination<ShippingProfile>;
+		// A fallback needs one organization, and the variant's own is not known here: it is the request's, the
+		// organization of the caller's token (for a tenant admin too), or the tenant's own profiles when there is none.
+		const profiles = (await this.findAll({
+			where: this.inOrganization(RequestContext.currentOrganizationId())
+		})) as IPagination<ShippingProfile>;
 
 		return profiles.items.find((profile: ShippingProfile) => profile.isDefault) ?? null;
 	}
@@ -158,16 +167,17 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 
 	/**
 	 * @param code The code to test.
+	 * @param organizationId The organization the code is claimed in; none for the tenant's own profiles.
 	 * @param exceptId A profile to exclude from the test, when updating.
 	 */
-	private async assertCodeIsFree(code: string, exceptId?: ID): Promise<void> {
+	private async assertCodeIsFree(code: string, organizationId: ID | null | undefined, exceptId?: ID): Promise<void> {
 		// "Is this code still free?" is a question whose answer may be yes, so it is asked of the read
 		// that reports a miss instead of raising one: the platform's reads by id raise
 		// `NotFoundException` on a miss, which is right for reading a resource and wrong for a test
 		// whose whole subject is the absence. `ITryRequest` carries the answer.
 		const { success, record: existing } = await this.findOneOrFailByWhereOptions({
 			code,
-			...this.inRequestOrganization()
+			...this.inOrganization(organizationId)
 		} as FindOptionsWhere<ShippingProfile>);
 
 		if (success && existing.id !== exceptId) {
@@ -182,10 +192,13 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 	/**
 	 * Demotes the organization's current default, so that setting a new one cannot leave two.
 	 *
+	 * @param organizationId The organization whose default is demoted; none for the tenant's own profiles.
 	 * @param exceptId The profile being promoted, which is not demoted.
 	 */
-	private async clearExistingDefault(exceptId?: ID): Promise<void> {
-		const profiles = (await this.findAll({ where: this.inRequestOrganization() })) as IPagination<ShippingProfile>;
+	private async clearExistingDefault(organizationId: ID | null | undefined, exceptId?: ID): Promise<void> {
+		const profiles = (await this.findAll({
+			where: this.inOrganization(organizationId)
+		})) as IPagination<ShippingProfile>;
 
 		for (const profile of profiles.items) {
 			if (profile.isDefault && profile.id !== exceptId) {
@@ -195,16 +208,47 @@ export class ShippingProfileService extends FulfillmentCrudService<ShippingProfi
 	}
 
 	/**
-	 * The request's organization, as a condition.
+	 * The organization a profile is in once an update lands, which is the one its code and its default are checked in.
 	 *
-	 * The default, and the code, are one per organization, but the tenant-aware reads narrow to the tenant only: the
-	 * default a variant fell back to was any organization's, promoting a profile demoted every other organization's
-	 * default, and a code another organization uses was refused, naming that organization's profile. A request that
-	 * states no organization (a job) is not narrowed.
+	 * It is the organization the profile is stored in, unless the update moves the profile: a tenant admin may move it
+	 * to any organization, a caller confined to their organization only into that one (the base drops any other move).
+	 *
+	 * @param id The profile, or the conditions it satisfies.
+	 * @param entity The fields to change.
+	 * @returns The organization, or null for a profile of no organization.
+	 * @throws NotFoundException when no profile the caller can reach matches.
 	 */
-	private inRequestOrganization(): FindOptionsWhere<ShippingProfile> {
-		const organizationId = RequestContext.currentOrganizationId();
+	private async organizationAfterUpdate(
+		id: ID | FindOptionsWhere<ShippingProfile>,
+		entity: { organizationId?: ID | null }
+	): Promise<ID | null> {
+		const stored = typeof id === 'string' ? await this.findOneByIdString(id) : await this.findOneByWhereOptions(id);
+		const moved = entity.organizationId;
 
-		return (organizationId ? { organizationId } : {}) as FindOptionsWhere<ShippingProfile>;
+		if (moved === undefined) {
+			return stored.organizationId ?? null;
+		}
+
+		const boundary = this.organizationBoundary();
+		const moves =
+			!boundary || (!!moved && !!boundary.organizationId && String(moved) === String(boundary.organizationId));
+
+		return moves ? (moved ?? null) : (stored.organizationId ?? null);
+	}
+
+	/**
+	 * An organization, as a condition.
+	 *
+	 * The default, and the code, are one per organization, but the tenant-aware reads narrow to the tenant (and, for a
+	 * caller who is not a tenant admin, to the organization of their token): the default a variant fell back to was any
+	 * organization's, promoting a profile demoted every other organization's default, and a code another organization
+	 * uses was refused, naming that organization's profile. The profiles of no organization are the tenant's own, and
+	 * share one default and one set of codes.
+	 *
+	 * @param organizationId The organization, or none.
+	 * @returns The condition.
+	 */
+	private inOrganization(organizationId: ID | null | undefined): FindOptionsWhere<ShippingProfile> {
+		return { organizationId: organizationId ? organizationId : IsNull() } as FindOptionsWhere<ShippingProfile>;
 	}
 }

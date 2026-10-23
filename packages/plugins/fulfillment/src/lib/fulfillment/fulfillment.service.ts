@@ -441,7 +441,7 @@ export class FulfillmentService extends FulfillmentCrudService<Fulfillment> {
 			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
 		}
 
-		return this.findOneWritten(fulfillment.id, { relations: ['lines'] });
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 	}
 
 	/**
