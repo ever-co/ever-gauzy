@@ -14,26 +14,47 @@ export interface ScreenshotCarouselProps {
 	className?: string;
 }
 
-/** Visible slides, slide pitch and page count of the scroller, measured from the DOM. */
-interface CarouselMetrics {
+/** Sub-pixel slack when counting visible slides, so a rounded width never drops one. */
+const FIT_EPSILON = 0.01;
+
+/** Geometry of the scroller, measured from the DOM, plus the page the scroll position is on. */
+interface CarouselState {
 	perView: number;
 	pitch: number;
 	pageCount: number;
+	page: number;
+	/** Farthest scroll distance from the start edge. */
+	maxPosition: number;
+	rtl: boolean;
 }
 
 /**
- * Measures the scroller: how many slides are visible right now, the distance from one slide to
- * the next, and how many pages of visible slides there are.
+ * Measures the scroller: how many slides are visible right now (from fractional widths — an
+ * integer `offsetWidth` rounds 194.67px up to 195px and loses a slide), the distance from one
+ * slide to the next, how many pages there are (one unless the track really overflows), and which
+ * page the scroll position is on.
+ *
+ * Positions are distances from the START edge: in right-to-left layouts `scrollLeft` runs from
+ * 0 towards negative values, so it is read as an absolute value and written back negated.
  *
  * @param scroller The scrolling element.
  */
-function measure(scroller: HTMLElement): CarouselMetrics {
+function readState(scroller: HTMLElement): CarouselState {
+	const style = getComputedStyle(scroller);
+	const rtl = style.direction === 'rtl';
 	const slides = scroller.querySelectorAll<HTMLElement>('.gz-rtt-carousel-slide');
 	// The gap lives in ONE place — the `--gz-rtt-slide-gap` custom property in styles.ts.
-	const gap = parseFloat(getComputedStyle(scroller).getPropertyValue('--gz-rtt-slide-gap')) || 8;
-	const pitch = slides.length > 0 ? slides[0].offsetWidth + gap : scroller.clientWidth;
-	const perView = Math.max(1, Math.floor((scroller.clientWidth + gap) / Math.max(pitch, 1)));
-	return { perView, pitch, pageCount: Math.max(1, Math.ceil(slides.length / perView)) };
+	const gap = parseFloat(style.getPropertyValue('--gz-rtt-slide-gap')) || 8;
+	const viewport = scroller.getBoundingClientRect().width;
+	const pitch = slides.length > 0 ? slides[0].getBoundingClientRect().width + gap : viewport;
+	const perView = Math.max(1, Math.floor((viewport + gap) / Math.max(pitch, 1) + FIT_EPSILON));
+	const maxPosition = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+	const overflows = maxPosition > 1;
+	const pageCount = overflows ? Math.max(1, Math.ceil(slides.length / perView)) : 1;
+	const position = rtl ? Math.abs(scroller.scrollLeft) : scroller.scrollLeft;
+	const atEnd = overflows && position >= maxPosition - 1;
+	const page = atEnd ? pageCount - 1 : Math.round(position / (pitch * perView));
+	return { perView, pitch, pageCount, page: Math.min(Math.max(page, 0), pageCount - 1), maxPosition, rtl };
 }
 
 /**
@@ -56,11 +77,9 @@ export const ScreenshotCarousel = forwardRef<ScreenshotCarouselHandle, Screensho
 	const sync = useCallback(() => {
 		const scroller = scrollerRef.current;
 		if (!scroller) return;
-		const { perView, pitch, pageCount: pages } = measure(scroller);
-		const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1;
-		const page = atEnd ? pages - 1 : Math.round(scroller.scrollLeft / (pitch * perView));
+		const { pageCount: pages, page } = readState(scroller);
 		setPageCount(pages);
-		setActivePage(Math.min(Math.max(page, 0), pages - 1));
+		setActivePage(page);
 	}, []);
 
 	useEffect(() => {
@@ -79,27 +98,36 @@ export const ScreenshotCarousel = forwardRef<ScreenshotCarouselHandle, Screensho
 	// The slide list changes on every refresh / deletion.
 	useEffect(() => sync(), [children, sync]);
 
+	/** Scrolls to the start of a page (the last page is clamped at the end of the track). */
 	const goToPage = useCallback((page: number) => {
 		const scroller = scrollerRef.current;
 		if (!scroller) return;
-		const { perView, pitch } = measure(scroller);
-		scroller.scrollTo({ left: page * perView * pitch, behavior: 'smooth' });
+		const { perView, pitch, pageCount: pages, maxPosition, rtl } = readState(scroller);
+		const target = Math.min(Math.min(Math.max(page, 0), pages - 1) * perView * pitch, maxPosition);
+		scroller.scrollTo({ left: rtl ? -target : target, behavior: 'smooth' });
 	}, []);
 
-	const scrollByGroup = useCallback((direction: 1 | -1) => {
-		const scroller = scrollerRef.current;
-		if (!scroller) return;
-		const { perView, pitch } = measure(scroller);
-		scroller.scrollBy({ left: perView * pitch * direction, behavior: 'smooth' });
-	}, []);
+	/**
+	 * The arrows step to the neighbouring PAGE, not one group from the current offset: the last
+	 * page is clamped at the end of the track, so subtracting a group from there would skip a page
+	 * and leave the arrows and the bullets disagreeing.
+	 */
+	const stepPage = useCallback(
+		(direction: 1 | -1) => {
+			const scroller = scrollerRef.current;
+			if (!scroller) return;
+			goToPage(readState(scroller).page + direction);
+		},
+		[goToPage]
+	);
 
 	useImperativeHandle(
 		ref,
 		() => ({
-			slideNext: () => scrollByGroup(1),
-			slidePrev: () => scrollByGroup(-1)
+			slideNext: () => stepPage(1),
+			slidePrev: () => stepPage(-1)
 		}),
-		[scrollByGroup]
+		[stepPage]
 	);
 
 	return (
