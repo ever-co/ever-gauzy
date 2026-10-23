@@ -165,8 +165,9 @@ MCP_HTTP_HOST=localhost
 MCP_CORS_ORIGIN=http://localhost:3000,http://localhost:4200
 MCP_CORS_CREDENTIALS=true
 
-# OAuth 2.0 Authorization (on unless MCP_AUTH_ENABLED=false)
-MCP_AUTH_ENABLED=true # Require an OAuth bearer token from every caller not on this machine
+# OAuth 2.0 Authorization (on unless MCP_AUTH_ENABLED=false): every caller
+# that is not on this machine sends a bearer token
+MCP_AUTH_ENABLED=true
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 # JSON-encoded array of authorization servers
@@ -178,13 +179,15 @@ MCP_AUTH_JWT_ALGORITHMS=RS256,ES256 # Supported JWT algorithms
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 # MCP_AUTH_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----...
 
-# Token Introspection (how the server checks every bearer token; set the same id and secret on mcp-auth)
-MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/oauth2/introspect # default: $MCP_AUTH_JWT_ISSUER/oauth2/introspect
+# Token Introspection: how the server checks every bearer token.
+# Set the same client id and secret on mcp-auth. The endpoint defaults to
+# $MCP_AUTH_JWT_ISSUER/oauth2/introspect; the secret is random, 32+ characters.
+MCP_AUTH_INTROSPECTION_ENDPOINT=https://auth.gauzy.co/oauth2/introspect
 MCP_AUTH_INTROSPECTION_CLIENT_ID=mcp-server
-MCP_AUTH_INTROSPECTION_CLIENT_SECRET=<random, at least 32 characters>
+MCP_AUTH_INTROSPECTION_CLIENT_SECRET=<secret>
 
 # OAuth caching and performance
-MCP_AUTH_TOKEN_CACHE_TTL=60 # How long an introspection answer is reused (seconds, at most 60)
+MCP_AUTH_TOKEN_CACHE_TTL=60 # Answer reuse in seconds (at most 60)
 MCP_AUTH_METADATA_CACHE_TTL=3600 # Metadata cache TTL (seconds)
 
 # OAuth server options
@@ -254,11 +257,12 @@ curl -X POST http://localhost:3001/sse \
 
 ##### With OAuth 2.0 Authorization
 
-Unless `MCP_AUTH_ENABLED=false`, a caller that is not on the server's own machine includes a Bearer token
-issued by mcp-auth. The server asks mcp-auth's introspection endpoint whether it is active (its audience,
-expiry, revocation and whether its user can still sign in) and reuses the answer for at most 60 seconds.
-A caller on the same machine (loopback, no proxy) may come without one: the desktop mode, where it acts as the
-`GAUZY_AUTO_LOGIN` account.
+Unless `MCP_AUTH_ENABLED=false`, a caller that is not on the server's own
+machine includes a Bearer token issued by mcp-auth. The server asks mcp-auth's
+introspection endpoint whether it is active (its audience, expiry, revocation
+and whether its user can still sign in) and reuses the answer for at most
+60 seconds. A caller on the same machine (loopback, no proxy) may come without
+one: the desktop mode, where it acts as the `GAUZY_AUTO_LOGIN` account.
 
 ```bash
 # Get OAuth 2.0 Protected Resource Metadata (RFC 9728)
@@ -307,8 +311,9 @@ MCP_WS_COMPRESSION=true
 MCP_WS_PER_MESSAGE_DEFLATE=true
 MCP_WS_MAX_PAYLOAD=16777216 # 16MB
 
-# OAuth 2.0 Authorization (on unless MCP_AUTH_ENABLED=false)
-MCP_AUTH_ENABLED=true # Require an OAuth bearer token from every caller not on this machine
+# OAuth 2.0 Authorization (on unless MCP_AUTH_ENABLED=false): every caller
+# that is not on this machine sends a bearer token
+MCP_AUTH_ENABLED=true
 MCP_AUTH_RESOURCE_URI=https://mcp.gauzy.co
 MCP_AUTH_REQUIRED_SCOPES=mcp.read,mcp.write
 # JSON-encoded array of authorization servers
@@ -318,7 +323,7 @@ MCP_AUTH_JWT_ISSUER=https://auth.gauzy.co
 MCP_AUTH_JWT_ALGORITHMS=RS256,ES256 # Supported JWT algorithms
 MCP_AUTH_JWT_JWKS_URI=https://auth.gauzy.co/.well-known/jwks.json
 # OAuth caching and performance
-MCP_AUTH_TOKEN_CACHE_TTL=60 # How long an introspection answer is reused (seconds, at most 60)
+MCP_AUTH_TOKEN_CACHE_TTL=60 # Answer reuse in seconds (at most 60)
 MCP_AUTH_METADATA_CACHE_TTL=3600 # Metadata cache TTL (seconds)
 
 # Security settings
@@ -943,9 +948,10 @@ The MCP server works with any OAuth 2.0 compliant authorization server:
 
 ### Disabled Authorization
 
-Bearer tokens are required by default. With `MCP_AUTH_ENABLED=false` the server does not check them:
-callers authenticate with the `login` tool, and only a caller on the server's own machine may use the
-`GAUZY_AUTO_LOGIN` account. Suitable for:
+Bearer tokens are required by default. With `MCP_AUTH_ENABLED=false` the
+server does not check them: callers authenticate with the `login` tool, and
+only a caller on the server's own machine may use the `GAUZY_AUTO_LOGIN`
+account. Suitable for:
 
 - Local development and testing
 - Trusted network environments
