@@ -60,7 +60,13 @@ import {
 	TranslateLoader,
 	TranslateService
 } from '@gauzy/desktop-lib';
-import { createAboutWindow, createServerWindow, PluginMarketplaceWindow, SplashScreen } from '@gauzy/desktop-window';
+import {
+	createAboutWindow,
+	createServerWindow,
+	installNavigationGuard,
+	PluginMarketplaceWindow,
+	SplashScreen
+} from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { autoUpdater } from 'electron-updater';
@@ -804,6 +810,9 @@ app.commandLine.appendSwitch('in-process-gpu');
 ipcMain.on('update_app_setting', (event, arg) => {
 	LocalStore.updateApplicationSetting(arg.values);
 });
+
+// A window with Node or a preload follows no link out of its own pages; a link opens in the browser instead.
+installNavigationGuard();
 
 app.on('browser-window-created', (_, window) => {
 	require('@electron/remote/main').enable(window.webContents);

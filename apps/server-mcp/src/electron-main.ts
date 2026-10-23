@@ -342,12 +342,51 @@ async function createMainWindow(): Promise<void> {
 		mainWindow = null;
 	});
 
-	// Handle external links
+	// Handle external links: only a web or mail link opens, in the browser (never a file:, smb: or app: URL)
 	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-		shell.openExternal(url);
+		if (isBrowserLink(url)) {
+			shell.openExternal(url);
+		}
 		return { action: 'deny' };
 	});
 
+	// The window shows its own page only, as the desktop apps' navigation guard keeps theirs: a link it would follow
+	// opens in the browser instead, and nothing else loads into the window that holds the preload.
+	mainWindow.webContents.on('will-navigate', (event, url) => {
+		const current = mainWindow?.webContents.getURL();
+		if (current && isSameDocument(current, url)) {
+			return;
+		}
+		event.preventDefault();
+		if (isBrowserLink(url)) {
+			shell.openExternal(url);
+		}
+	});
+
+}
+
+/**
+ * Whether a link may be handed to the operating system's browser: http(s) and mail links only.
+ */
+function isBrowserLink(url: string): boolean {
+	try {
+		return ['http:', 'https:', 'mailto:'].includes(new URL(url).protocol);
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Whether `target` is the page already shown (the same file, whatever its hash or query).
+ */
+function isSameDocument(current: string, target: string): boolean {
+	try {
+		const from = new URL(current);
+		const to = new URL(target);
+		return from.protocol === to.protocol && from.host === to.host && from.pathname === to.pathname;
+	} catch {
+		return false;
+	}
 }
 
 function setupIpcHandlers(): void {

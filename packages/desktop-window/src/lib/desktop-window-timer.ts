@@ -4,6 +4,7 @@ import * as url from 'node:url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
+import { isOwnFilePage } from './navigation-guard';
 /**
  * Creates and configures the Time Tracker window in the Electron application.
  *
@@ -206,7 +207,9 @@ export function sendToChildWindow(channel: string, ...args: unknown[]): void {
 export function childWindowOpen(window: BrowserWindow, preloadPath?: string) {
 	window.webContents.setWindowOpenHandler(({ url }) => {
 		const targetUrl = new URL(url);
-		if (targetUrl.protocol === 'file:' && targetUrl.hash === '#/log-history') {
+		// Only the app's own page: any other `file:` URL (another file, or an SMB share on Windows) would open with
+		// Node and the preload below
+		if (targetUrl.hash === '#/log-history' && isOwnFilePage(targetUrl, window.webContents.getURL())) {
 			if (_childWindow && !_childWindow.isDestroyed()) {
 				_childWindow.focus();
 				return { action: 'deny' };
