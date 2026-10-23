@@ -75,11 +75,11 @@ const TAG_TYPE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * controller carries `TenantPermissionGuard` and `PermissionGuard` on the class, no class-level
  * permission, and states `ALL_ORG_VIEW` or `ALL_ORG_EDIT` beside the resource's own permission on the
  * four routes it declares of its own. This resolver carries the same two guards on the class and the
- * same permissions on the fields that mirror those four routes; the node query and the removal it
- * inherits from the CRUD base state no permission of their own and therefore run under the guards
- * alone, so the fields mirroring them state none either. A field that demanded a permission the route
- * does not would refuse here a caller REST serves. The retirement and the restoration were inherited the
- * same way until the controller overrode them to state the catalogue's delete grant beside `ALL_ORG_EDIT`
+ * same permissions on the fields that mirror those four routes; the node query it inherits from the
+ * CRUD base states no permission of its own and therefore runs under the guards alone, so the field
+ * mirroring it states none either. A field that demanded a permission the route does not would refuse
+ * here a caller REST serves. The removal, the retirement and the restoration were inherited the same way
+ * until the controller overrode them to state the catalogue's delete grant beside `ALL_ORG_EDIT`
  * (GHSA-v79w-54p2-wmh5); their fields state the same.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
@@ -200,9 +200,11 @@ export class TagTypeResolver {
 
 	/**
 	 * Removes a group outright. The tags filed under it are not removed with it: the relation is
-	 * declared to clear, so their grouping is set aside and the labels themselves stay.
+	 * declared to clear, so their grouping is set aside and the labels themselves stay. Under the permission its
+	 * route states: `ALL_ORG_EDIT` or `ORG_TAG_TYPES_DELETE`.
 	 */
 	@Mutation('deleteTagType')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_DELETE)
 	async deleteTagType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.tagTypeService.delete(id));
 	}

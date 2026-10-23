@@ -543,11 +543,12 @@ describe('CandidateFeedbacksResolver — the guard stack and the permission are 
 	});
 
 	it('states the feedback edit permission on the fields whose routes state it, and nothing elsewhere', () => {
-		// The retire-and-restore pair joined the three writes: the controller overrides the two inherited
-		// routes to state the feedback edit grant (GHSA-v79w-54p2-wmh5), and the fields state the same.
+		// The removal and the retire-and-restore pair joined the three writes: the controller overrides the
+		// inherited routes to state the feedback edit grant (GHSA-v79w-54p2-wmh5), and the fields state the same.
 		for (const field of [
 			'createCandidateFeedback',
 			'updateCandidateFeedback',
+			'deleteCandidateFeedback',
 			'deleteCandidateFeedbackByInterview',
 			'softDeleteCandidateFeedback',
 			'recoverCandidateFeedback'
@@ -564,19 +565,19 @@ describe('CandidateFeedbacksResolver — the guard stack and the permission are 
 		expect(permissionOfField('candidateFeedbacks')).toBeUndefined();
 		expect(permissionOfField('candidateFeedback')).toBeUndefined();
 		expect(permissionOfField('candidateFeedbackCount')).toBeUndefined();
-		expect(permissionOfField('deleteCandidateFeedback')).toBeUndefined();
 	});
 
 	it('restates the permission guard only on the fields whose routes carry it', () => {
 		const withPermissionGuard = [
 			'createCandidateFeedback',
 			'updateCandidateFeedback',
+			'deleteCandidateFeedback',
 			'deleteCandidateFeedbackByInterview',
 			'softDeleteCandidateFeedback',
 			'recoverCandidateFeedback'
 		];
 
-		for (const route of ['softRemove', 'softRecover']) {
+		for (const route of ['delete', 'softRemove', 'softRecover']) {
 			expect(Reflect.getMetadata('__guards__', handlersOf(CandidateFeedbacksController)[route])).toEqual([
 				PermissionGuard
 			]);
@@ -586,12 +587,7 @@ describe('CandidateFeedbacksResolver — the guard stack and the permission are 
 			expect(guardsOfField(field)).toContain(PermissionGuard);
 		}
 
-		for (const field of [
-			'candidateFeedbacks',
-			'candidateFeedback',
-			'candidateFeedbackCount',
-			'deleteCandidateFeedback'
-		]) {
+		for (const field of ['candidateFeedbacks', 'candidateFeedback', 'candidateFeedbackCount']) {
 			expect(guardsOfField(field)).not.toContain(PermissionGuard);
 		}
 	});
