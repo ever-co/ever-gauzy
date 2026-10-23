@@ -1,22 +1,28 @@
 import { RequestContext } from '@gauzy/core';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginSubscriptionService } from '../../../../domain';
+import { PluginService, PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
 import { RenewPluginSubscriptionCommand } from '../renew-plugin-subscription.command';
+import { resolveSubscriptionWriteAccess } from './subscription-write-access';
 
 @CommandHandler(RenewPluginSubscriptionCommand)
 export class RenewPluginSubscriptionCommandHandler implements ICommandHandler<RenewPluginSubscriptionCommand> {
 	private readonly logger = new Logger(RenewPluginSubscriptionCommandHandler.name);
 
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginService: PluginService
+	) {}
 
 	/**
 	 * Execute plugin subscription renewal command.
 	 *
 	 * Business Rules:
-	 * 1. Subscription must exist and be accessible by the requesting user
+	 * 1. Only the plugin's publisher renews through this command, on a subscription of any tenant: a renewal extends
+	 *    the paid period without a payment. For anyone else the request is ignored and the subscription is answered
+	 *    as stored (see `subscription-write-access.ts`).
 	 * 2. Subscription must be in ACTIVE or EXPIRED status to be renewed
 	 * 3. Subscription must have autoRenew enabled
 	 * 4. Renewal extends subscription by calculating the next billing period
@@ -31,22 +37,26 @@ export class RenewPluginSubscriptionCommandHandler implements ICommandHandler<Re
 	 * @throws BadRequestException if renewal conditions are not met
 	 */
 	async execute(command: RenewPluginSubscriptionCommand): Promise<IPluginSubscription> {
-		const { id } = command;
+		const { id, pluginId } = command;
+		const userId = RequestContext.currentUserId();
 
-		// Get current tenant and organization context
-		const tenantId = RequestContext.currentTenantId();
-		const organizationId = RequestContext.currentOrganizationId();
-		const subscriberId = RequestContext.currentUserId();
 		try {
-			// Find the existing subscription with proper tenant/organization filtering
-			const subscription = await this.pluginSubscriptionService.findOneByIdString(id, {
-				where: {
-					tenantId,
-					...(organizationId && { organizationId }),
-					...(subscriberId && { subscriberId })
-				},
-				relations: ['plan', 'plugin', 'pluginTenant', 'children', 'parent']
-			});
+			const access = await resolveSubscriptionWriteAccess(
+				this.pluginSubscriptionService,
+				this.pluginService,
+				id,
+				pluginId
+			);
+
+			// The payment handling renews a paid period, and the publisher may grant one; anyone else is ignored
+			if (!access.publisher) {
+				return access.subscription;
+			}
+
+			const relations = ['plan', 'plugin', 'pluginTenant', 'children', 'parent'];
+			const subscription = access.subscriber
+				? await this.pluginSubscriptionService.findOneByIdString(id, { relations })
+				: await this.pluginSubscriptionService.findOneInAnyTenant(id, relations);
 
 			if (!subscription) {
 				throw new NotFoundException(`Plugin subscription with ID ${id} not found or access denied`);
@@ -90,12 +100,14 @@ export class RenewPluginSubscriptionCommandHandler implements ICommandHandler<Re
 			renewedSubscription.metadata = {
 				...renewedSubscription.metadata,
 				renewedChildCount: renewedChildren.length,
-				renewedBy: subscriberId,
+				renewedBy: userId,
 				renewalType: renewedSubscription.isInherited() ? 'child' : 'parent'
 			};
 
-			// Persist the renewed subscription
-			return this.pluginSubscriptionService.save(renewedSubscription);
+			// Persist the renewed subscription, in its own tenant
+			return access.subscriber
+				? this.pluginSubscriptionService.save(renewedSubscription)
+				: this.pluginSubscriptionService.saveInAnyTenant(renewedSubscription);
 		} catch (error) {
 			throw new BadRequestException(`Failed to renew subscription: ${error.message}`);
 		}

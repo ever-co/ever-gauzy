@@ -1,21 +1,35 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
-import { PluginSubscriptionService } from '../../../../domain';
+import { PluginService, PluginSubscriptionService } from '../../../../domain';
 import { IPluginSubscription } from '../../../../shared';
 import { UpdatePluginSubscriptionCommand } from '../update-plugin-subscription.command';
+import {
+	permittedSubscriptionChanges,
+	resolveSubscriptionWriteAccess,
+	writeSubscriptionChanges
+} from './subscription-write-access';
 
 @CommandHandler(UpdatePluginSubscriptionCommand)
 export class UpdatePluginSubscriptionCommandHandler implements ICommandHandler<UpdatePluginSubscriptionCommand> {
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginService: PluginService
+	) {}
 
-	async execute(command: UpdatePluginSubscriptionCommand): Promise<IPluginSubscription | UpdateResult> {
-		const { id, updateDto } = command;
+	/**
+	 * Writes the fields of the update the caller may change: the subscriber's tenant its own settings (auto-renew,
+	 * metadata), the plugin's publisher the status and the dates. The rest is ignored; see `subscription-write-access.ts`.
+	 */
+	async execute(command: UpdatePluginSubscriptionCommand): Promise<IPluginSubscription> {
+		const { id, updateDto, pluginId } = command;
 
-		try {
-			return this.pluginSubscriptionService.update(id, updateDto);
-		} catch (error) {
-			throw new BadRequestException(`Failed to update plugin subscription: ${error.message}`);
-		}
+		const access = await resolveSubscriptionWriteAccess(
+			this.pluginSubscriptionService,
+			this.pluginService,
+			id,
+			pluginId
+		);
+		const changes = permittedSubscriptionChanges(updateDto, access);
+
+		return writeSubscriptionChanges(this.pluginSubscriptionService, access, changes);
 	}
 }

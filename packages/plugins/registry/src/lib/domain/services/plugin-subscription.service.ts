@@ -141,6 +141,38 @@ export class PluginSubscriptionService extends RegistryTenantAwareCrudService<Pl
 		return revokedSubscriptions;
 	}
 
+	/**
+	 * A subscription by id in whichever tenant holds it, past the tenant scope of every other read here. Only for the
+	 * publisher of its plugin, who sells to every tenant: the caller must have checked that first.
+	 *
+	 * @param id - The subscription.
+	 * @param relations - The relations to load with it.
+	 * @returns The subscription, or `null` when there is none.
+	 */
+	public findOneInAnyTenant(id: ID, relations: string[] = []): Promise<PluginSubscription | null> {
+		return this.typeOrmPluginSubscriptionRepository.findOne({ where: { id }, relations });
+	}
+
+	/**
+	 * Writes to a subscription in whichever tenant holds it. Only for the publisher of its plugin, as
+	 * {@link findOneInAnyTenant}; its tenant, organization and subscriber stay as stored.
+	 *
+	 * @param id - The subscription.
+	 * @param changes - The fields to write.
+	 */
+	public async updateInAnyTenant(id: ID, changes: Partial<IPluginSubscription>): Promise<void> {
+		await this.typeOrmPluginSubscriptionRepository.update({ id }, changes as Partial<PluginSubscription>);
+	}
+
+	/**
+	 * Saves a subscription read with {@link findOneInAnyTenant}, in its own tenant rather than the caller's.
+	 *
+	 * @param subscription - The subscription, as read and changed.
+	 */
+	public saveInAnyTenant(subscription: PluginSubscription): Promise<PluginSubscription> {
+		return this.saveWithoutEnrichment(subscription);
+	}
+
 	public upsert(entity: IPluginSubscription): Promise<IPluginSubscription> {
 		return this.upsert(entity);
 	}
