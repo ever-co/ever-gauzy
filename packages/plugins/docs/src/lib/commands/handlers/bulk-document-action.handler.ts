@@ -144,7 +144,11 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
 				// `assertActionPayload` already rejected an omitted parentId, so this is an
-				// explicit target (a document id, or `null` meaning "the root").
+				// explicit target (a document id, or `null` meaning "the root"). A document id is
+				// read through the scope a create reads its parent through (see `MoveDocumentHandler`).
+				if (parentId) {
+					await this.documentService.findOneScoped(parentId as ID, [], document.organizationId);
+				}
 				await this.documentTreeService.moveDocument(document, parentId as ID | null);
 				return;
 			}
