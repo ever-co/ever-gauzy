@@ -101,6 +101,10 @@ export class PurchasePluginSubscriptionCommandHandler implements ICommandHandler
 			if (!isPlanExists) {
 				throw new BadRequestException(`Plugin subscription plan with ID "${purchaseDto.planId}" not found`);
 			}
+			// A plan only buys its own plugin: another plugin's free plan must not activate this one
+			if (plan.pluginId !== purchaseDto.pluginId) {
+				throw new BadRequestException('The subscription plan does not belong to this plugin');
+			}
 
 			// Ensure plugin tenant relationship exists
 			const pluginTenantId = await this.pluginTenantService.findOrCreate({
