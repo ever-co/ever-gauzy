@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { FindOptionsWhere } from 'typeorm';
 import { ID, IEmployeeAppointment, IEmployeeAppointmentCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
@@ -13,6 +14,17 @@ export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeA
 		mikroOrmEmployeeAppointmentRepository: MikroOrmEmployeeAppointmentRepository
 	) {
 		super(typeOrmEmployeeAppointmentRepository, mikroOrmEmployeeAppointmentRepository);
+	}
+
+	/**
+	 * An appointment is its employee's: their calendar, its agenda, location and the invitees' emails. A caller who may
+	 * not act for other employees and has no employee record (a viewer, a candidate) has none, so the reads, updates
+	 * and deletes the CRUD base scopes match no row for them, instead of the tenant-wide scope it keeps by default,
+	 * through which such a caller listed, rewrote and deleted every employee's appointments. Booking one (`create`) is
+	 * unchanged: the public booking page books on an employee's calendar for its visitor.
+	 */
+	protected override findConditionsWithoutOwnEmployee(): FindOptionsWhere<EmployeeAppointment> {
+		return this.neverMatchingEmployeeCondition();
 	}
 
 	/**
