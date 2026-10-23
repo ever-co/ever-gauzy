@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Goal } from './goal.entity';
 import { GoalService } from './goal.service';
@@ -94,14 +95,15 @@ const GOAL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below calls the same `GoalService` method the `/api/goals` routes call, and
  * nothing here rebuilds a criterion the delivered reader already builds.
  *
- * **The guard chain is the controller's, and no field states a permission.** `GoalController` carries
- * `TenantPermissionGuard` on the class and nothing else: not a class-level permission and not a
- * handler-level one, on any of the four routes it declares or on any of the five it inherits from the
- * CRUD base. The permission guard is not part of its chain at all, so it is not part of this one
- * either — a field that demanded a permission here would refuse a caller every one of those nine
- * routes serves. The spec reads the controller's own `__guards__` and `PERMISSIONS_METADATA` and
- * compares them with this class's rather than restating a list that could agree with the resolver
- * while disagreeing with the controller.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.** `GoalController` carries
+ * `TenantPermissionGuard` on the class; its reads state no permission, and every write route — the filing,
+ * the edit, the removal and the two lifecycle moves, the inherited ones overridden only to attach the grant —
+ * states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2, 2026-10-22: the writes stated none, and the
+ * permission guard answers `true` to empty metadata, so any member of the tenant could write —
+ * GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the gate, the reads state nothing, and
+ * each write field states `PermissionGuard` and `GOALS_EDIT`, neither wider nor narrower than its route. The
+ * spec reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's,
+ * field by field.
  *
  * **The list is the connection and the connection reproduces the route's order**, which is the one
  * place in this tree where the order is the route's rather than the surface's; the node read and the
@@ -193,6 +195,8 @@ export class GoalResolver {
 	 * The same service method the create route calls, with the body that route validates. The tenant is
 	 * stamped onto the row by the service from the credential and is therefore never an argument.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createGoal')
 	async createGoal(@Args('input') input: ICreateGoalInput): Promise<Goal> {
 		return await this.goalService.create(input as never);
@@ -207,6 +211,8 @@ export class GoalResolver {
 	 * not own; the service's own `create` refuses a cross-tenant row as well. The stated members are
 	 * then merged onto the row, so a member the caller leaves out is left as it is.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateGoal')
 	async updateGoal(@Args('input') input: IUpdateGoalInput): Promise<Goal> {
 		const { id, ...values } = input;
@@ -223,6 +229,8 @@ export class GoalResolver {
 	 * statement about the write rather than a row — so this field answers whether the removal ran,
 	 * which is the most that answer carries.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteGoal')
 	async deleteGoal(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.goalService.delete(id));
@@ -234,6 +242,8 @@ export class GoalResolver {
 	 * The inherited `DELETE /goals/:id/soft` route's own call. The answer is the withdrawn row, whose
 	 * `deletedAt` is the whole of what the write changed.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteGoal')
 	async softDeleteGoal(@Args('id', { type: () => ID }) id: Id): Promise<Goal> {
 		return await this.goalService.softRemove(id);
@@ -242,6 +252,8 @@ export class GoalResolver {
 	/**
 	 * Puts a withdrawn objective back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverGoal')
 	async recoverGoal(@Args('id', { type: () => ID }) id: Id): Promise<Goal> {
 		return await this.goalService.softRecover(id);
