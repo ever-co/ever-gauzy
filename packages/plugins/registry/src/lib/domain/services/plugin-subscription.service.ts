@@ -1,4 +1,5 @@
 import { ID, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
+import { parseFindOptionsRelations } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
 import { IPluginSubscription } from '../../shared';
@@ -150,7 +151,10 @@ export class PluginSubscriptionService extends RegistryTenantAwareCrudService<Pl
 	 * @returns The subscription, or `null` when there is none.
 	 */
 	public findOneInAnyTenant(id: ID, relations: string[] = []): Promise<PluginSubscription | null> {
-		return this.typeOrmPluginSubscriptionRepository.findOne({ where: { id }, relations });
+		return this.typeOrmPluginSubscriptionRepository.findOne({
+			where: { id },
+			relations: parseFindOptionsRelations<PluginSubscription>(relations)
+		});
 	}
 
 	/**
