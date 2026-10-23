@@ -7,6 +7,7 @@ import {
 	PayloadTooLargeException
 } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { FindOptionsWhere } from 'typeorm';
 import {
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
@@ -588,11 +589,9 @@ export class DocumentUploadService {
 			throw error;
 		}
 
-		// The swap is committed; the superseded blob is now unreferenced. Best-effort by
+		// The swap is committed; this document no longer uses the superseded blob. Best-effort by
 		// design — an orphaned object costs storage, a thrown cleanup would cost the swap.
-		if (previousStorageKey && previousStorageKey !== file.key) {
-			await this.cleanupOne(new FileStorage().getProvider(previousProvider), { key: previousStorageKey } as any);
-		}
+		await this.releaseReplacedBlob(previousStorageKey, previousProvider, file.key);
 
 		this.documentService.emitDocumentEvent(document, 'updated', {
 			phase: 'crud',
@@ -766,6 +765,36 @@ export class DocumentUploadService {
 		// eslint-disable-next-line no-control-regex
 		const stripped = name.replace(/["'\\;\u0000-\u001F\u007F]/g, '').trim();
 		return stripped.slice(0, 255) || 'document';
+	}
+
+	/**
+	 * Deletes the blob a replaced file no longer uses — unless another document still points at it.
+	 *
+	 * A duplicated FILE re-uses its source's storage key (the bytes are not copied), so after a replace
+	 * the superseded key may still be the original's. Deleting it unconditionally let anyone who could
+	 * duplicate a file (read access) and then replace the file on their own copy delete the original's
+	 * bytes. Trashed rows count too: they can still be recovered.
+	 *
+	 * @param storageKey The key the document used before the replace.
+	 * @param storageProvider The provider that key lives on.
+	 * @param replacementKey The key the document uses now.
+	 */
+	private async releaseReplacedBlob(
+		storageKey: string | null | undefined,
+		storageProvider: Document['storageProvider'],
+		replacementKey: string
+	): Promise<void> {
+		if (!storageKey || storageKey === replacementKey) {
+			return;
+		}
+		const stillReferenced = await this.typeOrmDocumentRepository.count({
+			where: { storageKey } as FindOptionsWhere<Document>,
+			withDeleted: true
+		});
+		if (stillReferenced > 0) {
+			return;
+		}
+		await this.cleanupOne(new FileStorage().getProvider(storageProvider), { key: storageKey } as UploadedFile);
 	}
 
 	/**
