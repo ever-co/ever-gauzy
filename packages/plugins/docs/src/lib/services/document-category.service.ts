@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { SelectQueryBuilder } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { BaseQueryDTO, RequestContext, TenantAwareCrudService, prepareSQLQuery as p } from '@gauzy/core';
 import { DOCS_CATEGORY_EXISTS, DOCS_CATEGORY_SYSTEM } from '../docs.constants';
@@ -19,6 +20,25 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 	}
 
 	/**
+	 * The category service keeps every caller inside the platform's organization boundary.
+	 *
+	 * `TenantAwareCrudService` used to narrow its read by id to the caller's tenant only, and update, merge and delete
+	 * all start from it, so a caller of one organization renamed, merged (re-pointing its documents' assignments) and
+	 * deleted another organization's categories by naming their ids.
+	 *
+	 * The rule is the platform's, applied by the base: a tenant admin reaches every organization of the tenant; anyone
+	 * else only the organization of their token, and the categories stored without one. A category outside the
+	 * boundary is answered as a missing row by every read of the base, and no write reaches it. The hand-written queries
+	 * below keep to the same boundary (`insideOrganizationBoundary`). A request with no signed-in caller (a job, the
+	 * seeder) is not confined.
+	 *
+	 * @returns True: the category service keeps every caller inside the organization boundary.
+	 */
+	protected override appliesOrganizationBoundary(): boolean {
+		return true;
+	}
+
+	/**
 	 * Lists the per-tenant/org category catalog, sorted by name, each item carrying
 	 * `documentCount`.
 	 *
@@ -34,6 +54,7 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		if (organizationId) {
 			qb.andWhere(p(`"category"."organizationId" = :organizationId`), { organizationId });
 		}
+		this.insideOrganizationBoundary(qb);
 		qb.addSelect(
 			p(
 				`(SELECT COUNT(*) FROM "document_category_document" "dcd" WHERE "dcd"."documentCategoryId" = "category"."id")`
@@ -146,6 +167,11 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		if (!target) {
 			throw new NotFoundException(`Document category ${targetId} was not found`);
 		}
+		// A category is a catalog entry of one organization: merging across two would hand one organization's document
+		// assignments to the other's catalog.
+		if (String(source.organizationId ?? '') !== String(target.organizationId ?? '')) {
+			throw new BadRequestException('A category can only be merged into a category of the same organization');
+		}
 
 		const manager = this.typeOrmRepository.manager;
 
@@ -216,6 +242,7 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		const qb = this.typeOrmRepository.createQueryBuilder('category');
 		qb.where(p(`"category"."tenantId" = :tenantId`), { tenantId });
 		qb.andWhere(p(`"category"."organizationId" = :organizationId`), { organizationId });
+		this.insideOrganizationBoundary(qb);
 		if (slug) {
 			qb.andWhere(p(`(LOWER("category"."name") = :name OR "category"."slug" = :slug)`), {
 				name: name.toLowerCase(),
@@ -230,6 +257,29 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 				message: `A category named '${name}' already exists`,
 				code: DOCS_CATEGORY_EXISTS
 			});
+		}
+	}
+
+	/**
+	 * Keeps a hand-written query on the category table inside the caller's organization boundary, which the base keeps
+	 * its own reads to and a query builder does not reach: a caller confined to their organization reads its categories
+	 * and the tenant's own (no organization), whatever organization the query states; a tenant admin, and a request with
+	 * no signed-in caller, read every organization's.
+	 *
+	 * @param qb The query, on the alias `category`.
+	 */
+	private insideOrganizationBoundary(qb: SelectQueryBuilder<DocumentCategory>): void {
+		const boundary = this.organizationBoundary();
+		if (!boundary) {
+			return;
+		}
+		if (boundary.organizationId) {
+			qb.andWhere(
+				p(`("category"."organizationId" = :boundaryOrganizationId OR "category"."organizationId" IS NULL)`),
+				{ boundaryOrganizationId: boundary.organizationId }
+			);
+		} else {
+			qb.andWhere(p(`"category"."organizationId" IS NULL`));
 		}
 	}
 
