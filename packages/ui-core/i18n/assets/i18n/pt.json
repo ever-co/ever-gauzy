@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Interface do usuário",
-			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões.",
+			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões. Ambas as interfaces mostram as mesmas páginas, com os mesmos dados, layout e recursos — apenas a tecnologia por trás delas muda, por isso alternar não altera o que os seus usuários veem ou podem fazer.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (padrão)",
 				"REACT": "React (novo)"

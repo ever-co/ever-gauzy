@@ -1212,7 +1212,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfejs",
 			"TITLE": "Interfejs użytkownika",
-			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
+			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach. Oba interfejsy wyświetlają te same strony, z tymi samymi danymi, układem i funkcjami — różni się tylko technologia, dlatego przełączenie nie zmienia tego, co użytkownicy widzą ani co mogą zrobić.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (domyślny)",
 				"REACT": "React (nowy)"
