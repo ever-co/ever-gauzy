@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	Logger,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import {
@@ -34,7 +41,8 @@ import {
 	InviteActionEnum,
 	IUserRegistrationInput,
 	IPagination,
-	ID
+	ID,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -76,6 +84,7 @@ import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team
 import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
+import { mayIssueInviteRole, withholdTokensNotIssuable } from './invite-role-issuer';
 import { InviteAcceptCommand } from './commands';
 import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
 
@@ -502,6 +511,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
+		// A resend mints a new token for the invitation's role: only a caller who may issue that role resends it.
+		if (!mayIssueInviteRole(RequestContext.currentRoleName(), invite.role?.name)) {
+			throw new ForbiddenException('You cannot resend an invitation for this role.');
+		}
 
 		// Invited organization
 		const organization: IOrganization = invite.organization;
@@ -910,7 +923,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			// so without a valid `take` the list stays unpaginated, as it already was when neither is sent
 			const page = resolveRequestedPage({ take: options?.take, skip: options?.skip });
 
-			return await super.findAll({
+			const invites = await super.findAll({
 				...(page ? { skip: page.offset, take: page.limit } : {}),
 				...(options && options.relations
 					? {
@@ -919,6 +932,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					: {}),
 				where: buildWhereConditions()
 			});
+			// The register is readable with the permissions every employee holds; the accept-invite token is not.
+			await withholdTokensNotIssuable(invites.items, {
+				callerRole: RequestContext.currentRoleName(),
+				mayIssueInvites: RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT),
+				findRoles: (ids: ID[]) => this.roleService.find({ where: { id: In(ids) } })
+			});
+			return invites;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
