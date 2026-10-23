@@ -219,7 +219,7 @@ export class ZapierWebhookController {
 				throw new BadRequestException('Integration tenant ID is required.');
 			}
 
-			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId);
+			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId, integration.organizationId);
 		} catch (error) {
 			// Invalid token (403), missing tenant (400), unknown or foreign subscription (404 / 403): keep them,
 			// as the subscribe route does, instead of answering 500
