@@ -27,6 +27,19 @@ jest.mock('@gauzy/core', () => {
 
 			return { items, total };
 		}
+
+		// What the inherited deletion, archive and restore reach when nothing overrides them.
+		async delete(criteria: any): Promise<any> {
+			return this.typeOrmRepository.delete(criteria);
+		}
+
+		async softRemove(id: any): Promise<any> {
+			return this.typeOrmRepository.softDelete(id);
+		}
+
+		async softRecover(id: any): Promise<any> {
+			return this.typeOrmRepository.restore(id);
+		}
 	}
 
 	return {
@@ -90,7 +103,7 @@ jest.mock('@gauzy/config', () => ({
 	}
 }));
 
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, MethodNotAllowedException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
 import { SellerPayoutLineService } from './seller-payout-line.service';
 
@@ -168,7 +181,14 @@ function lineFixture(seed: { lines?: Row[]; payouts?: Row[] } = {}) {
 			const found = tables.seller_payout_line.filter((row) => matches(row, where));
 
 			return [found, found.length];
-		}
+		},
+		delete: async (id: string) => {
+			tables.seller_payout_line = tables.seller_payout_line.filter((row) => row.id !== id);
+		},
+		softDelete: async (id: string) =>
+			Object.assign(tables.seller_payout_line.find((row) => row.id === id) ?? {}, { deletedAt: new Date() }),
+		restore: async (id: string) =>
+			Object.assign(tables.seller_payout_line.find((row) => row.id === id) ?? {}, { deletedAt: null })
 	};
 	const payoutRepository: any = {
 		findOne: async ({ where }: any = {}) => tables.seller_payout.find((row) => matches(row, where)) ?? null,
@@ -179,6 +199,22 @@ function lineFixture(seed: { lines?: Row[]; payouts?: Row[] } = {}) {
 
 	return { service, tables, store: (id: string) => tables.seller_payout_line.find((row) => row.id === id) };
 }
+
+describe('SellerPayoutLineService — a line is released only by canceling its payout', () => {
+	// A live line is what keeps its transaction out of every later payout run: deleting the line of a paid
+	// payout used to leave the transaction payable a second time. The REST routes and the GraphQL mutations
+	// both reach these methods.
+	it.each([
+		['delete', (service: SellerPayoutLineService) => (service.delete as any)('l1')],
+		['archive', (service: SellerPayoutLineService) => (service.softRemove as any)('l1')],
+		['restore', (service: SellerPayoutLineService) => (service.softRecover as any)('l1')]
+	])('refuses to %s a line, and leaves it as it was', async (_label, call) => {
+		const fixture = lineFixture({ lines: [lineRow('l1', { deletedAt: null })] });
+
+		await expect(call(fixture.service)).rejects.toBeInstanceOf(MethodNotAllowedException);
+		expect(fixture.store('l1')).toMatchObject({ id: 'l1', deletedAt: null });
+	});
+});
 
 describe('SellerPayoutLineService — reading lines in a seller’s scope (doc 20 §9.2, MK-22)', () => {
 	beforeEach(() => {
