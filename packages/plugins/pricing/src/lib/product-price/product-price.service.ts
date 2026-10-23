@@ -2,7 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID, RoundingMode } from '@gauzy/contracts';
-import { Money, MultiORMEnum, ProductVariantPrice, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import {
+	LegacyFindOneOptions,
+	Money,
+	MultiORMEnum,
+	ProductVariantPrice,
+	RequestContext,
+	TenantAwareCrudService
+} from '@gauzy/core';
 import {
 	IPriceComputation,
 	IPriceContext,
@@ -18,7 +25,7 @@ import {
 } from '../pricing.types';
 import { ExchangeRateService } from '../exchange-rate/exchange-rate.service';
 import { PricePreferenceService } from '../price-preference/price-preference.service';
-import { assertOrganizationUnchanged, statedOrganizations } from '../organization-scope';
+import { assertOrganizationUnchanged, inCallerOrganization, statedOrganizations } from '../organization-scope';
 import { PriceList } from '../price-list/price-list.entity';
 import { ProductPrice } from './product-price.entity';
 import { TypeOrmProductPriceRepository } from './repository/type-orm-product-price.repository';
@@ -113,6 +120,20 @@ export class ProductPriceService extends TenantAwareCrudService<ProductPrice> {
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		};
+	}
+
+	/**
+	 * Reads a price of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The price.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<ProductPrice>): Promise<ProductPrice> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), this.scope.organizationId);
 	}
 
 	/*
