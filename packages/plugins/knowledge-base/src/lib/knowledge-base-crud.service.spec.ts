@@ -12,6 +12,8 @@ import { join } from 'node:path';
  * ones.**
  */
 const ORG = '00000000-0000-4000-8000-000000000002';
+const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
+const PROJECT_ID = 'cccccccc-1111-4111-8111-111111111111';
 const ARTICLE_ID = 'aaaaaaaa-1111-4111-8111-111111111111';
 const VERSION_ID = 'bbbbbbbb-1111-4111-8111-111111111111';
 
@@ -39,6 +41,9 @@ jest.mock('@gauzy/core', () => {
 		async findOneOrFailByIdString(): Promise<unknown> {
 			return { success: false, error: new Error('The requested record was not found') };
 		}
+
+		/** The relation check a hand-written list runs first; every relation is permitted here. */
+		assertRelationsPermitted(): void {}
 	}
 
 	return {
@@ -100,9 +105,12 @@ function articleFixture() {
 	const conditions: Array<[string, Record<string, unknown>?]> = [];
 	const writes: unknown[] = [];
 	const queryBuilder: any = {
+		alias: 'knowledge_base_article',
 		select: () => queryBuilder,
 		update: () => queryBuilder,
 		set: () => queryBuilder,
+		leftJoin: () => queryBuilder,
+		setFindOptions: () => queryBuilder,
 		where: (sql: string, params?: Record<string, unknown>) => {
 			conditions.push([sql, params]);
 			return queryBuilder;
@@ -112,6 +120,7 @@ function articleFixture() {
 			return queryBuilder;
 		},
 		getOne: async () => null,
+		getManyAndCount: async () => [[], 0],
 		execute: async () => undefined
 	};
 	const versionService = {
@@ -127,6 +136,53 @@ function articleFixture() {
 	);
 
 	return { service, conditions, writes };
+}
+
+/** An article service on MikroORM over a knex double that records every condition it is given, grouped ones too. */
+function knexFixture() {
+	const conditions: unknown[][] = [];
+	const group: any = {
+		where: (...args: unknown[]) => {
+			conditions.push(['group.where', ...args]);
+			return group;
+		},
+		orWhereNull: (...args: unknown[]) => {
+			conditions.push(['group.orWhereNull', ...args]);
+			return group;
+		}
+	};
+	const builder: any = {
+		whereIn: () => builder,
+		andWhere: (...args: unknown[]) => {
+			if (typeof args[0] === 'function') {
+				(args[0] as (scope: unknown) => unknown)(group);
+			} else {
+				conditions.push(['andWhere', ...args]);
+			}
+			return builder;
+		},
+		whereNull: (...args: unknown[]) => {
+			conditions.push(['whereNull', ...args]);
+			return builder;
+		},
+		orderBy: () => builder,
+		limit: () => builder,
+		offset: () => builder,
+		clone: () => builder,
+		clearSelect: () => builder,
+		clearOrder: () => builder,
+		count: () => builder,
+		first: async () => ({ count: '0' }),
+		select: async () => []
+	};
+	const service = new HelpCenterArticleService(
+		{} as never,
+		{ getKnex: () => () => builder, map: (row: unknown) => row } as never,
+		{} as never
+	);
+	(service as any).ormType = 'mikro-orm';
+
+	return { service, conditions };
 }
 
 describe('KnowledgeBaseCrudService — the knowledge-base services keep every caller inside the organization boundary', () => {
@@ -181,6 +237,49 @@ describe('KnowledgeBaseCrudService — the knowledge-base services keep every ca
 		await service.updateDescriptionFields(ARTICLE_ID, { descriptionJson: '{"root":1}' });
 
 		expect(conditions.filter(([sql]) => sql.includes('organizationId'))).toEqual([]);
+	});
+
+	it('keeps a confined caller’s project articles to their organization and the tenant’s own, whatever organization it states', async () => {
+		confinement.boundary = { organizationId: ORG };
+		const mikroOrm = knexFixture();
+		const typeOrm = articleFixture();
+
+		await mikroOrm.service.getArticlesByProjectId(PROJECT_ID, { where: { organizationId: SIBLING_ORG } } as never);
+		await typeOrm.service.getArticlesByProjectId(PROJECT_ID, { where: { organizationId: SIBLING_ORG } } as never);
+
+		expect(mikroOrm.conditions).toContainEqual(['group.where', 'kba.organizationId', ORG]);
+		expect(mikroOrm.conditions).toContainEqual(['group.orWhereNull', 'kba.organizationId']);
+		expect(typeOrm.conditions).toContainEqual([
+			'("knowledge_base_article"."organizationId" = :boundaryOrganizationId OR "knowledge_base_article"."organizationId" IS NULL)',
+			{ boundaryOrganizationId: ORG }
+		]);
+	});
+
+	it('keeps the project articles of a caller with no organization in their token to the tenant’s own', async () => {
+		confinement.boundary = { organizationId: null };
+		const mikroOrm = knexFixture();
+		const typeOrm = articleFixture();
+
+		await mikroOrm.service.getArticlesByProjectId(PROJECT_ID, { where: { organizationId: SIBLING_ORG } } as never);
+		await typeOrm.service.getArticlesByProjectId(PROJECT_ID, { where: { organizationId: SIBLING_ORG } } as never);
+
+		expect(mikroOrm.conditions).toContainEqual(['whereNull', 'kba.organizationId']);
+		expect(typeOrm.conditions).toContainEqual(['"knowledge_base_article"."organizationId" IS NULL', {}]);
+	});
+
+	it('lists the project articles of the organization a tenant admin states, without narrowing them to their token’s', async () => {
+		const mikroOrm = knexFixture();
+		const typeOrm = articleFixture();
+
+		await mikroOrm.service.getArticlesByProjectId(PROJECT_ID, { where: { organizationId: SIBLING_ORG } } as never);
+		await typeOrm.service.getArticlesByProjectId(PROJECT_ID, { where: { organizationId: SIBLING_ORG } } as never);
+
+		expect(mikroOrm.conditions).toContainEqual(['andWhere', 'kba.organizationId', SIBLING_ORG]);
+		expect(mikroOrm.conditions.filter(([kind]) => String(kind).startsWith('group.'))).toEqual([]);
+		expect(mikroOrm.conditions).not.toContainEqual(['whereNull', 'kba.organizationId']);
+		expect(
+			typeOrm.conditions.filter(([sql]) => typeof sql === 'string' && sql.includes('organizationId'))
+		).toEqual([]);
 	});
 
 	it('answers a versioned update, a duplicate and a version restore whose read misses with 404, and writes nothing', async () => {
