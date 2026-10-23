@@ -17,6 +17,17 @@ export class PluginSourceService extends RegistryTenantAwareCrudService<PluginSo
 		super(typeOrmPluginSourceRepository, mikroOrmPluginSourceRepository);
 	}
 
+	/**
+	 * Off: the sources of a plugin are the plugin store's catalogue, which every organization of the tenant browses,
+	 * installs from and verifies, although each row is stored with the organization of the publisher who uploaded
+	 * it. Writes keep the checks the registry already makes; they are not narrowed here.
+	 *
+	 * @returns False.
+	 */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
+
 	public async saveSources(sources: PluginSource[]): Promise<IPluginSource[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {

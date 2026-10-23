@@ -357,14 +357,15 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * is answered exactly as a row that does not exist. A row stored without an organization belongs to the tenant, so
 	 * it stays inside every boundary of the tenant.
 	 *
-	 * Off here, so a service is confined only once it says so: a subclass that returns `true` applies the boundary to
-	 * an entity with an `organizationId` column. A caller with no user in context (a job, a public route) and a tenant
-	 * admin are never confined.
+	 * On for every service whose entity has an `organizationId` column — one rule, everywhere. A service whose rows
+	 * must be read across organizations by design returns `false`, and says why (`UserOrganizationService`: the
+	 * memberships the organization switcher lists and the switch itself checks). A caller with no user in context (a
+	 * job, a public route) and a tenant admin are never confined, nor is a call inside `runOutsideOrganizationBoundary`.
 	 *
 	 * @returns True when this service applies the boundary.
 	 */
 	protected appliesOrganizationBoundary(): boolean {
-		return false;
+		return true;
 	}
 
 	/**

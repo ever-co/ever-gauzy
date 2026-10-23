@@ -20,6 +20,7 @@ import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../decorators
 import { MikroOrmBaseEntityRepository } from '../repository/mikro-orm-base-entity.repository';
 import { MultiORMEnum } from '../utils';
 import { CrudService } from './crud.service';
+import { runOutsideOrganizationBoundary } from './organization-boundary';
 import { TenantAwareCrudService } from './tenant-aware-crud.service';
 
 /**
@@ -218,15 +219,22 @@ const MEMBER_ROWS = [OWN, OWN_SECOND, TENANT_WIDE].sort();
 /** What a tenant admin reaches: every row of tenant A. */
 const TENANT_A_ROWS = [OWN, OWN_SECOND, SIBLING, TENANT_WIDE].sort();
 
-/** A service that does not apply the boundary: the base's behaviour for every service that does not ask for it. */
-class UnboundedRowService extends TenantAwareCrudService<any> {
+/** A service that states nothing: the base's default, which applies the boundary. */
+class DefaultRowService extends TenantAwareCrudService<any> {
 	constructor(typeOrmRepository: unknown, mikroOrmRepository: unknown) {
 		super(typeOrmRepository as any, mikroOrmRepository as any);
 	}
 }
 
+/** A service that opts out of the boundary, as one whose rows are read across organizations by design. */
+class UnboundedRowService extends DefaultRowService {
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
+}
+
 /** A service that applies the boundary. */
-class BoundedRowService extends UnboundedRowService {
+class BoundedRowService extends DefaultRowService {
 	protected override appliesOrganizationBoundary(): boolean {
 		return true;
 	}
@@ -237,11 +245,11 @@ class BoundedRowService extends UnboundedRowService {
 	}
 }
 
-type ServiceClass = new (typeOrmRepository: unknown, mikroOrmRepository: unknown) => UnboundedRowService;
+type ServiceClass = new (typeOrmRepository: unknown, mikroOrmRepository: unknown) => DefaultRowService;
 
 /** One ORM's store: a service over it, and a reader of the stored rows that bypasses the service. */
 interface IBoundaryHarness {
-	service<S extends UnboundedRowService>(Service: ServiceClass): S;
+	service<S extends DefaultRowService>(Service: ServiceClass): S;
 	stored(id: string): Promise<IBoundaryRow | undefined>;
 	retire(id: string): Promise<void>;
 	reset(): Promise<void>;
@@ -286,7 +294,7 @@ async function typeOrmHarness(): Promise<IBoundaryHarness> {
 	const rows: Repository<any> = dataSource.getRepository(TYPEORM_ENTITIES.Row);
 
 	return {
-		service: <S extends UnboundedRowService>(Service: ServiceClass) => new Service(rows, {}) as S,
+		service: <S extends DefaultRowService>(Service: ServiceClass) => new Service(rows, {}) as S,
 		stored: async (id) => (await dataSource.query(SELECT_ROW, [id]))[0],
 		retire: async (id) => {
 			await dataSource.query(RETIRE_ROW, [new Date().toISOString(), id]);
@@ -343,7 +351,7 @@ async function mikroOrmHarness(): Promise<IBoundaryHarness> {
 
 	return {
 		// A fresh context per service, so an answer is the store's rather than a previous call's identity map.
-		service: <S extends UnboundedRowService>(Service: ServiceClass) =>
+		service: <S extends DefaultRowService>(Service: ServiceClass) =>
 			new Service(
 				skeletonRows,
 				new MikroOrmBaseEntityRepository<IBoundaryRow>(orm.em.fork(), MIKRO_ORM_ENTITIES.Row)
@@ -651,7 +659,28 @@ describe.each([
 			await expect(service.findOneByIdString(SIBLING)).rejects.toThrow(NotFoundException);
 		});
 
-		it('leaves a service that does not apply the boundary as it was', async () => {
+		it('applies the boundary to a service that states nothing: it is the default', async () => {
+			const byDefault = harness.service<DefaultRowService>(DefaultRowService);
+
+			expect(idsOf(await byDefault.find())).toEqual(MEMBER_ROWS);
+			await expect(byDefault.findOneByIdString(SIBLING)).rejects.toThrow(NotFoundException);
+		});
+
+		it('lifts the boundary of every service inside runOutsideOrganizationBoundary, and only there', async () => {
+			const byDefault = harness.service<DefaultRowService>(DefaultRowService);
+
+			await expect(
+				runOutsideOrganizationBoundary(() => byDefault.findOneByIdString(SIBLING))
+			).resolves.toMatchObject({ id: SIBLING });
+			await expect(
+				runOutsideOrganizationBoundary(() => service.findOneByIdString(SIBLING))
+			).resolves.toMatchObject({
+				id: SIBLING
+			});
+			await expect(byDefault.findOneByIdString(SIBLING)).rejects.toThrow(NotFoundException);
+		});
+
+		it('leaves a service that opts out of the boundary as it was', async () => {
 			const unbounded = harness.service<UnboundedRowService>(UnboundedRowService);
 
 			expect(idsOf(await unbounded.find())).toEqual(TENANT_A_ROWS);

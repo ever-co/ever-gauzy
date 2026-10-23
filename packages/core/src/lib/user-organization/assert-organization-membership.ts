@@ -3,10 +3,17 @@ import { isUUID } from 'class-validator';
 import { EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { UserOrganization } from '../core/entities/internal';
+import { TENANT_ADMIN_ROLES } from '../core/crud/organization-boundary';
+import { Organization, UserOrganization } from '../core/entities/internal';
 
 /**
- * Refuse a read scoped to an organization the current user is not a member of.
+ * Refuse a read scoped to an organization the current user may not reach.
+ *
+ * **The organization boundary (owner decision, 2026-10-22).** A tenant admin (`SUPER_ADMIN`, `ADMIN`) reaches every
+ * organization of the tenant, a member of it or not. Anyone else reaches only the organization of their token
+ * (`RequestContext.currentOrganizationId()`), and must still be a member of it: another organization they belong to
+ * is reached by switching to it. This is the rule `@IsOrganizationBelongsToUser()` applies to the organization a
+ * REST DTO or a GraphQL argument names.
  *
  * Services that list through the raw repository cannot lean on the query DTO for this: the
  * `organizationId` membership validator on `TenantOrganizationBaseDTO` is conditional and is
@@ -32,6 +39,18 @@ export async function assertCurrentUserBelongsToOrganization(
 	const userId = RequestContext.currentUserId();
 
 	if (!tenantId || !userId) {
+		throw new ForbiddenException('You are not a member of this organization');
+	}
+
+	if (RequestContext.hasRoles([...TENANT_ADMIN_ROLES])) {
+		const organizations = await manager.count(Organization, { where: { id: organizationId, tenantId } });
+		if (organizations === 0) {
+			throw new ForbiddenException('You are not a member of this organization');
+		}
+		return;
+	}
+
+	if (organizationId !== RequestContext.currentOrganizationId()) {
 		throw new ForbiddenException('You are not a member of this organization');
 	}
 

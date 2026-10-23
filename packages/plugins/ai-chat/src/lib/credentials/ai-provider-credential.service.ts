@@ -45,6 +45,18 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 	}
 
 	/**
+	 * Off: a provider credential is the tenant's (one per tenant and provider, with tenant-wide defaults), which the
+	 * chat and docs engines of every organization use, although each row is stored with the organization it was
+	 * connected from. Scoped to an organization, a member of any other one would find no credential, and an upsert
+	 * from there would add a second row for the same tenant and provider.
+	 *
+	 * @returns False.
+	 */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
+
+	/**
 	 * Resolve a tenant's usable credential for a provider, with the API key decrypted.
 	 * Intended for the server-side chat engine only — never expose the result to clients.
 	 *
