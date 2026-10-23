@@ -1,74 +1,55 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
 /**
  * `@gauzy/core` boots the whole application graph from its barrel, so it is doubled at the module boundary: the base
- * the entitlement services inherit is reduced to the tenant-scoped reads it states, and the request scope is
- * the caller's tenant and organization. **The entitlement base under test is the real one.**
+ * the entitlement services inherit is reduced to the switch it states. The organization boundary itself — who it
+ * confines, and how every read, write and delete of the base keeps to it — is proven against real stores on both ORMs
+ * in core (`tenant-aware-crud.service.organization-boundary.spec.ts`). What is proven here is that the entitlement
+ * services ask for it. **The entitlement base under test is the real one.**
  */
-const ORG = '00000000-0000-4000-8000-000000000002';
-const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
-const rows: Record<string, Record<string, unknown>> = {};
-let callerOrganization: string | null = ORG;
-
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
-
 	class TenantAwareCrudService {
-		/** The tenant-scoped read: every row of the caller's tenant, of any organization. */
-		async findOneByIdString(id: string): Promise<unknown> {
-			if (!rows[id]) {
-				throw new NotFoundException('The requested record was not found');
-			}
-			return rows[id];
-		}
-
-		/** The tenant-scoped read by conditions: the first row of the caller's tenant that matches. */
-		async findOneByWhereOptions(where: Record<string, unknown>): Promise<unknown> {
-			const row = Object.values(rows).find((candidate) =>
-				Object.entries(where).every(([key, value]) => candidate[key] === value)
-			);
-			if (!row) {
-				throw new NotFoundException('The requested record was not found');
-			}
-			return row;
+		/** Off in the platform's base: a service applies the boundary only when it says so. */
+		protected appliesOrganizationBoundary(): boolean {
+			return false;
 		}
 	}
 
-	return {
-		TenantAwareCrudService,
-		RequestContext: {
-			currentTenantId: () => '00000000-0000-4000-8000-000000000001',
-			currentOrganizationId: () => callerOrganization
-		}
-	};
+	return { TenantAwareCrudService };
 });
 
-import { NotFoundException } from '@nestjs/common';
 import { EntitlementCrudService } from './entitlement-crud.service';
 
-class EntitlementActivationService extends EntitlementCrudService<any> {}
+class EntitlementService extends EntitlementCrudService<any> {
+	applies(): boolean {
+		return this.appliesOrganizationBoundary();
+	}
+}
 
-describe('EntitlementCrudService — a row addressed by its identifier is a row of the caller’s organization', () => {
-	const service = new EntitlementActivationService(undefined as never, undefined as never);
+/** Every `*.service.ts` file under a folder. */
+function serviceFiles(folder: string): string[] {
+	return readdirSync(folder).flatMap((name) => {
+		const path = join(folder, name);
+		if (statSync(path).isDirectory()) {
+			return serviceFiles(path);
+		}
+		return name.endsWith('.service.ts') ? [path] : [];
+	});
+}
 
-	beforeEach(() => {
-		callerOrganization = ORG;
-		rows['own'] = { id: 'own', code: 'OWN', organizationId: ORG };
-		rows['sibling'] = { id: 'sibling', code: 'THEIRS', organizationId: SIBLING_ORG };
-		rows['unowned'] = { id: 'unowned', code: 'NONE', organizationId: null };
+describe('EntitlementCrudService — the entitlement services keep every caller inside the organization boundary', () => {
+	const service = new EntitlementService(undefined as never, undefined as never);
+
+	it('applies the platform’s organization boundary', () => {
+		expect(service.applies()).toBe(true);
 	});
 
-	it('reads the caller’s own row, and a row stored without an organization', async () => {
-		await expect(service.findOneByIdString('own')).resolves.toMatchObject({ id: 'own' });
-		await expect(service.findOneByIdString('unowned')).resolves.toMatchObject({ id: 'unowned' });
-	});
+	it('is the base of every entitlement service: none extends the tenant-aware base directly', () => {
+		const direct = serviceFiles(__dirname)
+			.filter((path) => !path.endsWith('entitlement-crud.service.ts'))
+			.filter((path) => /extends\s+TenantAwareCrudService\b/.test(readFileSync(path, 'utf8')));
 
-	it('answers a sibling organization’s row as a miss — the update’s pre-read, withdraw and restore', async () => {
-		await expect(service.findOneByIdString('sibling')).rejects.toBeInstanceOf(NotFoundException);
-		await expect(service.findOneByWhereOptions({ code: 'THEIRS' })).rejects.toBeInstanceOf(NotFoundException);
-	});
-
-	it('does not narrow a caller with no organization in context (a job)', async () => {
-		callerOrganization = null;
-
-		await expect(service.findOneByIdString('sibling')).resolves.toMatchObject({ id: 'sibling' });
+		expect(direct).toEqual([]);
 	});
 });
