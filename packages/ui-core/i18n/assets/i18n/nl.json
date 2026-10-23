@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Gebruikersinterface",
-			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn. Beide interfaces tonen dezelfde pagina's, met dezelfde gegevens, indeling en functies — alleen de onderliggende technologie verschilt, dus overschakelen verandert niets aan wat je gebruikers zien of kunnen doen.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (standaard)",
 				"REACT": "React (nieuw)"

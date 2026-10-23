@@ -1,5 +1,5 @@
 import { IUser } from './user.model';
-import { IEmployee, IEmployeeEntityInput } from './employee.model';
+import { EmployeeKindEnum, IEmployee, IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -94,6 +94,8 @@ export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFil
 export interface IMembersStatistics {
 	id?: string;
 	user_id?: string;
+	/** Human or agent employee — the dashboard shows an "Agent" badge for agents. */
+	kind?: EmployeeKindEnum;
 	weekHours?: Array<{ duration: number; day: number }>;
 	weekTime?: {
 		duration: number;

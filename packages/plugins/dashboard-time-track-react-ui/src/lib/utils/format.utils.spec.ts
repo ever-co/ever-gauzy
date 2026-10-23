@@ -9,7 +9,15 @@ jest.mock('@gauzy/ui-core/common', () => {
 	return { toTimezone: (date: unknown, timezone: string) => m.utc(date as string).tz(timezone) };
 });
 
-import { dateFormat, durationFormat, durationMinutesLabel, reportDateParam, timeFormat, utcToTimezone } from './format.utils';
+import {
+	dateFormat,
+	durationFormat,
+	durationMinutesLabel,
+	isAgentEmployee,
+	reportDateParam,
+	timeFormat,
+	utcToTimezone
+} from './format.utils';
 
 describe('format.utils — pipe parity', () => {
 	it('durationFormat truncates like the `durationFormat` pipe and clamps negatives', () => {
@@ -48,5 +56,12 @@ describe('format.utils — pipe parity', () => {
 
 	it('reportDateParam is MM-DD-YYYY (the reports pages contract)', () => {
 		expect(reportDateParam('2026-08-03T10:00:00')).toBe('08-03-2026');
+	});
+
+	it('isAgentEmployee is true only for kind = agent (ngx-avatar isAgent)', () => {
+		expect(isAgentEmployee({ kind: 'agent' })).toBe(true);
+		expect(isAgentEmployee({ kind: 'human' })).toBe(false);
+		expect(isAgentEmployee({})).toBe(false);
+		expect(isAgentEmployee(null)).toBe(false);
 	});
 });
