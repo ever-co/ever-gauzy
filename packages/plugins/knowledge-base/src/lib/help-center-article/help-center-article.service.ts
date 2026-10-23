@@ -490,7 +490,8 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 		}
 
 		// And to the caller's organization boundary, as the read of the description is (see `getDescriptionBinary`).
-		const boundary = this.organizationBoundaryCondition('"organizationId"');
+		// The column is quoted through `p()`: on MySQL a double-quoted name is a string literal, not a column.
+		const boundary = this.organizationBoundaryCondition(p('"organizationId"'));
 		if (boundary) {
 			qb.andWhere(...boundary);
 		}
