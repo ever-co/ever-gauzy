@@ -12,6 +12,12 @@ import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { runWithAuthKey } from '../common/auth-context';
 import { isLocalCaller } from '../common/local-caller';
 import { authManager } from '../common/auth-manager';
+import {
+	AuthorizationConfig,
+	loadAuthorizationConfig,
+	logAuthorizationSetup,
+	OAuthValidator
+} from '../common/auth-types';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -121,6 +127,8 @@ interface WebSocketConnection {
 	userContext?: UserContext;
 	/** Whether the connection comes from this machine, so may act as the GAUZY_AUTO_LOGIN account (see isLocalCaller) */
 	isLocal: boolean;
+	/** The OAuth bearer token the connection opened with, checked again before each message it sends */
+	bearerToken?: string;
 	created: Date;
 	lastSeen: Date;
 	metadata: Record<string, any>;
@@ -142,10 +150,15 @@ export class WebSocketTransport {
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 	private sessionMiddlewareInstance: WebSocketSessionMiddleware | null = null;
 	private isInitialized = false;
+	private readonly authorizationConfig: AuthorizationConfig;
+	private readonly tokenValidator: OAuthValidator | null;
 
 	constructor(options: WebSocketTransportOptions) {
 		this.mcpServer = options.server;
 		this.transportConfig = options.transportConfig;
+		this.authorizationConfig = loadAuthorizationConfig();
+		this.tokenValidator = this.authorizationConfig.enabled ? new OAuthValidator(this.authorizationConfig) : null;
+		logAuthorizationSetup(this.authorizationConfig, logger);
 	}
 
 	async start(): Promise<void> {
@@ -306,6 +319,27 @@ export class WebSocketTransport {
 			}
 		};
 
+		// OAuth bearer token: required unless the caller is on this machine and sends none (loopback desktop mode)
+		if (this.tokenValidator) {
+			const bearerToken = this.extractBearerToken(request);
+			if (bearerToken) {
+				const validation = await this.tokenValidator.validateToken(
+					bearerToken,
+					this.authorizationConfig.requiredScopes
+				);
+				if (!validation.valid) {
+					logger.warn(`WebSocket connection rejected: ${validation.error}`);
+					ws.close(1008, 'Invalid token');
+					return;
+				}
+				connection.bearerToken = bearerToken;
+			} else if (!connection.isLocal) {
+				logger.warn(`WebSocket connection rejected: no bearer token from ${clientIP}`);
+				ws.close(1008, 'Authorization required');
+				return;
+			}
+		}
+
 		// Handle session validation if sessions are enabled
 		if (this.transportConfig.session?.enabled && this.sessionMiddlewareInstance) {
 			const sessionId = this.extractSessionIdFromRequest(request);
@@ -417,6 +451,20 @@ export class WebSocketTransport {
 
 			// Handle MCP JSON-RPC messages
 			if (message.jsonrpc === '2.0') {
+				// The token is checked again (its answer is reused for at most a minute): a revoked or expired
+				// token, or one whose user was deactivated, ends the connection.
+				if (connection.bearerToken && this.tokenValidator) {
+					const validation = await this.tokenValidator.validateToken(
+						connection.bearerToken,
+						this.authorizationConfig.requiredScopes
+					);
+					if (!validation.valid) {
+						logger.warn(`WebSocket connection ${connection.id} closed: ${validation.error}`);
+						this.sendError(connection, message.id ?? null, -32001, 'Token is no longer valid');
+						connection.socket.close(1008, 'Token is no longer valid');
+						return;
+					}
+				}
 				await this.handleMcpMessage(connection, message);
 			} else {
 				logger.warn(`Received invalid message format from ${connection.id}`);
@@ -577,6 +625,14 @@ export class WebSocketTransport {
 			logger.error(`Failed to get tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			return [];
 		}
+	}
+
+	/**
+	 * The bearer token of the upgrade request's Authorization header, if any
+	 */
+	private extractBearerToken(request: IncomingMessage): string | null {
+		const header = request.headers.authorization;
+		return header && header.startsWith('Bearer ') ? header.substring(7) || null : null;
 	}
 
 	/**

@@ -44,6 +44,9 @@ export interface ClientRegistrationRequest {
 }
 
 
+/** The shortest secret a resource server may authenticate with */
+export const MIN_RESOURCE_SERVER_SECRET_LENGTH = 32;
+
 export class OAuth2ClientManager {
 	private clients = new Map<string, OAuth2Client>();
 	private securityLogger: SecurityLogger;
@@ -121,6 +124,49 @@ export class OAuth2ClientManager {
 		}
 
 		this.securityLogger.log(`Default MCP clients initialized (${this.clients.size} registered)`);
+	}
+
+	/**
+	 * Registers a resource server the operator configured: a confidential client with the given secret that may
+	 * call the introspection endpoint and nothing else (no redirect URIs, no grants). The MCP server is one; it
+	 * asks whether each bearer token it is shown is active.
+	 *
+	 * @param clientId - The client id the resource server authenticates with.
+	 * @param clientSecret - Its secret, at least {@link MIN_RESOURCE_SERVER_SECRET_LENGTH} characters.
+	 * @throws When the secret is too short or the client id is taken.
+	 */
+	async registerResourceServer(clientId: string, clientSecret: string): Promise<void> {
+		if (!clientId || !clientSecret || clientSecret.length < MIN_RESOURCE_SERVER_SECRET_LENGTH) {
+			throw new Error(
+				`A resource server needs a client id and a secret of at least ${MIN_RESOURCE_SERVER_SECRET_LENGTH} characters`
+			);
+		}
+		if (this.clients.has(clientId)) {
+			throw new Error(`client_id already exists: ${clientId}`);
+		}
+		const now = new Date();
+		this.clients.set(clientId, {
+			clientId,
+			clientSecretHash: await bcrypt.hash(clientSecret, 12),
+			clientName: 'Resource server',
+			clientType: 'confidential',
+			redirectUris: [],
+			grantTypes: [],
+			responseTypes: [],
+			scopes: [],
+			createdAt: now,
+			updatedAt: now,
+			isActive: true,
+			metadata: { resource_server: true }
+		});
+		this.securityLogger.log(`Resource server registered: ${clientId}`);
+	}
+
+	/**
+	 * Whether a client is a resource server the operator registered ({@link registerResourceServer}).
+	 */
+	isResourceServer(client: OAuth2Client | null | undefined): boolean {
+		return client?.clientType === 'confidential' && client.metadata?.resource_server === true;
 	}
 
 	/**

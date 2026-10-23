@@ -1610,6 +1610,16 @@ export class OAuth2AuthorizationServer {
 				401
 				);
 			}
+			// RFC 7662 §2.1: the protected resource authenticates. `validateClient` lets a public client through
+			// without a secret, and anyone may register a client, so only a resource server the operator registered
+			// (MCP_AUTH_INTROSPECTION_CLIENT_ID / _SECRET) is answered.
+			if (!oAuth2ClientManager.isResourceServer(client)) {
+				return this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_client', 'The client may not introspect tokens'),
+					401
+				);
+			}
 
 			// Validate the token
 			const validation = await this.oAuthValidator.validateToken(token);
@@ -1619,6 +1629,12 @@ export class OAuth2AuthorizationServer {
 				this.responseBuilder.sendIntrospectionResponse(res, {
 					active: false
 				});
+				return;
+			}
+
+			// Only an access token is a bearer credential for the resource server; a refresh token is not.
+			if (validation.payload?.token_type !== 'access_token') {
+				this.responseBuilder.sendIntrospectionResponse(res, { active: false });
 				return;
 			}
 

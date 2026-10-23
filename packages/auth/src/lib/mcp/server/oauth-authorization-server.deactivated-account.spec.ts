@@ -33,7 +33,12 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 			return handle;
 		});
 		(tokenManager as any).securityLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
-		jest.spyOn(oAuth2ClientManager, 'validateClient').mockResolvedValue({ clientId: CLIENT_ID } as any);
+		// The client is a registered resource server: only one may introspect (decision 7)
+		jest.spyOn(oAuth2ClientManager, 'validateClient').mockResolvedValue({
+			clientId: CLIENT_ID,
+			clientType: 'confidential',
+			metadata: { resource_server: true }
+		} as any);
 	});
 
 	afterEach(() => {
