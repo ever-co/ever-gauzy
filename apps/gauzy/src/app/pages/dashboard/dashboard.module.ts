@@ -65,7 +65,7 @@ import {
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent
 } from './employee-charts';
-import { ChartComponent, TeamComponent, TeamMemberComponent } from './team';
+import { ChartComponent, TeamComponent } from './team';
 
 // NB Modules
 const NB_MODULES = [
@@ -122,7 +122,6 @@ const COMPONENTS = [
 	EmployeeStackedBarChartComponent,
 	EmployeeDoughnutChartComponent,
 	TeamComponent,
-	TeamMemberComponent,
 	ChartComponent
 ];
 
