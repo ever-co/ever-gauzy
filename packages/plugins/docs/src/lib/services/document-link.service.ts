@@ -25,12 +25,20 @@ export class DocumentLinkService extends TenantAwareCrudService<DocumentLink> {
 	 * Idempotent link write on `(documentId, entity, entityId)` — a duplicate returns the
 	 * existing row.
 	 *
+	 * The document is resolved through the read scope first, as the forward lookup resolves it: the
+	 * link used to name any `documentId` at all, so a caller could attach another member's PRIVATE
+	 * document, or a document of another organization, to a record of its own organization, and the
+	 * write answered differently for an id that exists and one that does not.
+	 *
 	 * @param input The link payload.
 	 * @returns The created (or pre-existing) link.
+	 * @throws NotFoundException when the document is not one the caller may read.
 	 */
 	async createLink(input: CreateDocumentLinkDTO): Promise<DocumentLink> {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, documentId, entity, entityId } = input;
+
+		await this.documentService.findOneScoped(documentId, [], organizationId);
 
 		const existing = await this.typeOrmDocumentLinkRepository.findOne({
 			where: { tenantId, organizationId, documentId, entity, entityId }
@@ -105,8 +113,12 @@ export class DocumentLinkService extends TenantAwareCrudService<DocumentLink> {
 	/**
 	 * Soft-deletes a link.
 	 *
+	 * The link's document has to be one the caller may read, as it has to be to list or create the
+	 * link: a link to a PRIVATE document is not the business of a member who cannot see it.
+	 *
 	 * @param id The link id.
 	 * @returns The soft-deleted link.
+	 * @throws NotFoundException when the link, or its document, is not in the caller's scope.
 	 */
 	async deleteLink(id: ID): Promise<DocumentLink> {
 		// Tenant + organization, like every other link path — the inherited `findOneByIdString`
@@ -121,6 +133,7 @@ export class DocumentLinkService extends TenantAwareCrudService<DocumentLink> {
 		if (!link) {
 			throw new NotFoundException(`Document link ${id} was not found`);
 		}
+		await this.documentService.findOneScoped(link.documentId, [], link.organizationId);
 		await this.softDelete(id);
 		return link;
 	}
