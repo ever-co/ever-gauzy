@@ -16,6 +16,7 @@ import { sanitizeErrorMessage } from '../common/error-utils';
 import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 import { runWithAuthKey } from '../common/auth-context';
+import { isLocalCaller } from '../common/local-caller';
 import { authManager } from '../common/auth-manager';
 
 const logger = new Logger('HttpTransport');
@@ -79,6 +80,15 @@ export class HttpTransport {
 		this.securityLogger = new SecurityLogger();
 		this.transportConfig = options.transportConfig;
 		this.authorizationConfig = loadAuthorizationConfig();
+
+		// The image, the k8s manifests and the README name MCP_AUTH_ENABLED, which this server never read: an operator
+		// who set it believed bearer tokens were checked. Say plainly that they are not.
+		if (process.env.MCP_AUTH_ENABLED === 'true' && !this.authorizationConfig.enabled) {
+			this.securityLogger.warn(
+				'⚠️  MCP_AUTH_ENABLED=true, but this server does not validate OAuth bearer tokens: callers authenticate ' +
+					'with the login tool, and only a caller on this machine may use the GAUZY_AUTO_LOGIN account.'
+			);
+		}
 
 		// Initialize authorization middleware if enabled
 		if (this.authorizationConfig.enabled) {
@@ -460,7 +470,8 @@ export class HttpTransport {
 					ipAddress: this.getClientIP(req),
 					userAgent: req.get('User-Agent'),
 					loginSource: 'http',
-					autoAuthenticate,
+					// Only a caller on this machine gets a session for the GAUZY_AUTO_LOGIN account
+					autoAuthenticate: autoAuthenticate && this.callerIsLocal(req),
 					metadata: {
 						createdVia: 'http-endpoint',
 						userAgent: req.get('User-Agent'),
@@ -849,7 +860,11 @@ export class HttpTransport {
 					const authKey = callerKey ?? `http:anonymous:${randomUUID()}`;
 					let result: unknown;
 					try {
-						result = await this.callTool(params as Record<string, unknown>, authKey);
+						result = await this.callTool(
+							params as Record<string, unknown>,
+							authKey,
+							this.callerIsLocal(req)
+						);
 					} finally {
 						if (callerKey === undefined) {
 							authManager.clearKey(authKey);
@@ -898,7 +913,14 @@ export class HttpTransport {
 		}
 	}
 
-	private async callTool(params: Record<string, unknown>, authKey?: string): Promise<unknown> {
+	/**
+	 * @param sharesAutoLogin Whether the caller may act as the GAUZY_AUTO_LOGIN account when it has no login of its own.
+	 */
+	private async callTool(
+		params: Record<string, unknown>,
+		authKey: string | undefined,
+		sharesAutoLogin: boolean
+	): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
 
@@ -926,8 +948,10 @@ export class HttpTransport {
 			}
 
 			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is
-			const result = await runWithAuthKey(authKey, () =>
-				this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {})
+			const result = await runWithAuthKey(
+				authKey,
+				() => this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {}),
+				{ sharesAutoLogin }
 			);
 			logger.debug(`Tool ${name} executed successfully`);
 
@@ -936,6 +960,13 @@ export class HttpTransport {
 			logger.error('Error calling tool:', error);
 			throw error;
 		}
+	}
+
+	/**
+	 * Whether the request comes from this machine (see {@link isLocalCaller}).
+	 */
+	private callerIsLocal(req: express.Request): boolean {
+		return isLocalCaller(req.socket?.remoteAddress, req.headers, this.transportConfig.trustedProxies || []);
 	}
 
 	/**
