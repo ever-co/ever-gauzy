@@ -10,6 +10,7 @@ import {
 	SequenceService,
 	TenantAwareCrudService,
 	User,
+	Warehouse,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import {
@@ -151,6 +152,8 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		}
 
 		const vendor = await this.assertVendorUsable(entity.vendorId);
+
+		await this.assertWarehouseInOrganization(entity.warehouseId);
 
 		if (entity.buyerUserId) {
 			await this.assertBuyerInTenant(entity.buyerUserId);
@@ -1141,6 +1144,34 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		}
 
 		return vendor;
+	}
+
+	/**
+	 * Refuses a receiving location outside the caller's organization.
+	 *
+	 * The order's location is where its goods are received: every receipt against it is posted there
+	 * (`GoodsReceiptService.resolveWarehouse` refuses any other), and the stock ledger checks only the tenant of the
+	 * location it writes at. A location of another organization of the tenant was taken as stated, so an order raised
+	 * in one organization received stock into another's warehouse. It is read in the caller's tenant and
+	 * organization, as the supplier is.
+	 *
+	 * @param warehouseId The location the order names.
+	 * @throws NotFoundException when the location is not one of the caller's organization.
+	 */
+	private async assertWarehouseInOrganization(warehouseId: ID): Promise<void> {
+		const warehouse = await this.typeOrmPurchaseOrderRepository.manager.findOne(Warehouse, {
+			where: {
+				id: warehouseId,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			}
+		});
+
+		if (!warehouse) {
+			throw new NotFoundException(
+				`PURCHASE_ORDER_WAREHOUSE_NOT_FOUND: location '${warehouseId}' could not be found in this organization.`
+			);
+		}
 	}
 
 	/**

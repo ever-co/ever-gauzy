@@ -122,7 +122,8 @@ import {
 	OrganizationVendor,
 	ProductVariant,
 	ProductVariantPrice,
-	RequestContext
+	RequestContext,
+	Warehouse
 } from '@gauzy/core';
 import { PurchaseOrderStatus } from '../purchasing.types';
 import { VendorProductTermService } from '../vendor-product-term/vendor-product-term.service';
@@ -163,6 +164,7 @@ const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
 const BUYER = '00000000-0000-4000-8000-000000000050';
 const VENDOR = 'vendor-1';
 const WAREHOUSE = 'warehouse-1';
+const THEIR_WAREHOUSE = 'warehouse-of-another-organization';
 const VARIANT = 'variant-1';
 const OTHER_VARIANT = 'variant-2';
 const DAY = 24 * 60 * 60 * 1000;
@@ -177,6 +179,7 @@ interface ITables {
 	product_variant: Row[];
 	product_variant_price: Row[];
 	organization: Row[];
+	warehouse: Row[];
 }
 
 /**
@@ -396,7 +399,11 @@ function orderFixture(
 				unitCostCurrency: 'USD'
 			}
 		],
-		organization: [{ id: ORG, tenantId: TENANT, currency: 'USD' }]
+		organization: [{ id: ORG, tenantId: TENANT, currency: 'USD' }],
+		warehouse: [
+			{ id: WAREHOUSE, tenantId: TENANT, organizationId: ORG },
+			{ id: THEIR_WAREHOUSE, tenantId: TENANT, organizationId: OTHER_ORG }
+		]
 	};
 	const managerFor = () => ({
 		connection: { options: { type: 'postgres' } },
@@ -418,6 +425,9 @@ function orderFixture(
 			}
 			if (entity === Organization) {
 				return repository(tables, 'organization').findOne(findOptions);
+			}
+			if (entity === Warehouse) {
+				return repository(tables, 'warehouse').findOne(findOptions);
 			}
 			if (entity === PurchaseOrder) {
 				return repository(tables, 'purchase_order').findOne(findOptions);
@@ -560,6 +570,20 @@ describe('PurchaseOrderService — raising an order (doc 09 §9.2, doc 05 §16.1
 		await expect(
 			fixture.service.create({ vendorId: VENDOR, warehouseId: WAREHOUSE, lines: [] } as never)
 		).rejects.toThrow(/PURCHASE_ORDER_CURRENCY_REQUIRED/);
+		expect(fixture.tables.purchase_order).toEqual([]);
+		expect(fixture.sequenceCalls).toEqual([]);
+	});
+
+	it('refuses a receiving location of another organization, which its receipts would stock', async () => {
+		// The stock ledger checks only the tenant of the location it writes at, and every receipt of the order is
+		// posted at the order's location: an order raised in one organization could stock another's warehouse.
+		const fixture = orderFixture();
+
+		for (const warehouseId of [THEIR_WAREHOUSE, 'no-such-warehouse']) {
+			await expect(
+				fixture.service.create({ vendorId: VENDOR, warehouseId, currency: 'USD', lines: [] } as never)
+			).rejects.toThrow(/PURCHASE_ORDER_WAREHOUSE_NOT_FOUND/);
+		}
 		expect(fixture.tables.purchase_order).toEqual([]);
 		expect(fixture.sequenceCalls).toEqual([]);
 	});
