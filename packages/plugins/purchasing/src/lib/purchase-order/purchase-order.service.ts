@@ -8,7 +8,6 @@ import {
 	RequestContext,
 	readAffectedRows,
 	SequenceService,
-	TenantAwareCrudService,
 	User,
 	Warehouse,
 	commitVersionedUpdate
@@ -28,6 +27,7 @@ import { PurchaseOrderLineService } from '../purchase-order-line/purchase-order-
 import { PurchaseOrder } from './purchase-order.entity';
 import { MikroOrmPurchaseOrderRepository } from './repository/mikro-orm-purchase-order.repository';
 import { TypeOrmPurchaseOrderRepository } from './repository/type-orm-purchase-order.repository';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /** The series key purchase-order numbers are allocated from. */
 const PURCHASE_ORDER_NUMBER_KEY = 'PO';
@@ -95,7 +95,7 @@ const DERIVED_WRITE_ATTEMPTS = 3;
  * for a decision is still a draft, and a refused approval has to leave the order where it was.
  */
 @Injectable()
-export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> {
+export class PurchaseOrderService extends PurchasingCrudService<PurchaseOrder> {
 	constructor(
 		readonly typeOrmPurchaseOrderRepository: TypeOrmPurchaseOrderRepository,
 		readonly mikroOrmPurchaseOrderRepository: MikroOrmPurchaseOrderRepository,
