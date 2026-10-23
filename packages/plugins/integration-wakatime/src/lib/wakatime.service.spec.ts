@@ -90,7 +90,13 @@ describe('WakatimeService under MikroORM', () => {
 			jest.isolateModules(() => {
 				jest.doMock('@gauzy/core', () => ({
 					MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
-					getORMType: () => process.env.DB_ORM
+					getORMType: () => process.env.DB_ORM,
+					// A signed-in employee: `parameterSanitize` files heartbeats under the caller's own
+					// employee once ever-co/ever-gauzy#11328 lands, and reads it from the request context.
+					RequestContext: {
+						currentEmployeeId: () => 'employee-1',
+						currentUser: () => ({ employeeId: 'employee-1' })
+					}
 				}));
 				jest.doMock('./wakatime.entity', () => ({ Wakatime: class {} }));
 				jest.doMock('./repository/type-orm-wakatime.repository', () => ({ TypeOrmWakatimeRepository: class {} }));
