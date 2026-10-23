@@ -20,6 +20,8 @@ describe('TimeOffPolicyService.update', () => {
 		TimeOffPolicyService.prototype.update.call(
 			{
 				ormType: MultiORMEnum.TypeORM,
+				// `update` resolves the employees through this helper, which reads the stubbed repository below
+				findPolicyEmployees: TimeOffPolicyService.prototype['findPolicyEmployees'],
 				typeOrmEmployeeRepository: { find: jest.fn().mockResolvedValue([]) },
 				save: jest.fn(async (entity: any) => entity),
 				...stub
