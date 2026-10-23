@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import {
@@ -16,6 +16,7 @@ import { pick } from 'underscore';
 import { ConfigService } from '@gauzy/config';
 import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
+	canInviteWithRole,
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
@@ -207,38 +208,33 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		// The role the body asks for, read in every form it can carry it (`roleId`, `role` as an id
 		// string or `{ id }`). Validated BEFORE the inviter's own role is looked at, so a malformed or
-		// self-contradicting payload is refused for every caller and not just for the ones that reach
-		// the fallback below — an EMPLOYEE inviter is force-assigned the EMPLOYEE role, but that is an
-		// authorization decision and must not double as permission to ignore bad input.
+		// self-contradicting payload is refused for every caller.
 		// `extractRoleIds` itself throws on a role key that is present but references nothing.
 		const requestedRoleIds = extractRoleIds(input);
 		if (requestedRoleIds.length > 1) {
 			throw new BadRequestException('The role and roleId fields must reference the same role.');
 		}
 
+		// The inviter's role as stored, not as the token last saw it.
+		const inviterRole: IRole | undefined = invitedByUser?.role;
+
 		// Invited Role
 		let role: IRole;
 
-		try {
-			const currentRoleId = RequestContext.currentRoleId();
-
-			// Ensure the current role can only invite others with the 'EMPLOYEE' role
-			role = await this.roleService.findOneByIdString(currentRoleId, {
-				where: { name: RolesEnum.EMPLOYEE }
-			});
-		} catch (error) {
-			// If the current role is not an 'EMPLOYEE' role, fallback to the requested role. Exactly one
-			// role must be named: a second, unchecked identifier must not ride along, and an invitation
-			// cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
-			if (requestedRoleIds.length !== 1) {
-				throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
-			}
+		if (requestedRoleIds.length === 1) {
 			role = await this.roleService.findOneByIdString(requestedRoleIds[0]);
+		} else if (inviterRole?.name === RolesEnum.EMPLOYEE) {
+			// An employee who names no role invites an employee, as before (Ever Teams sends no role for them).
+			role = inviterRole;
+		} else {
+			// An invitation cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
+			throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
+		}
 
-			// Handle unauthorized access if the invitedByUser is not a 'SUPER_ADMIN'
-			if (role.name === RolesEnum.SUPER_ADMIN && invitedByUser.role.name !== RolesEnum.SUPER_ADMIN) {
-				throw new UnauthorizedException();
-			}
+		// An inviter grants only their own level or lower: only an ADMIN or SUPER_ADMIN invites an ADMIN,
+		// and only a SUPER_ADMIN invites a SUPER_ADMIN.
+		if (!canInviteWithRole(inviterRole?.name, role?.name)) {
+			throw new ForbiddenException('You cannot invite a user with a role above your own.');
 		}
 
 		// Invited Organization
