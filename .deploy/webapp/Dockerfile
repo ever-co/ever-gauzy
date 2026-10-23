@@ -17,7 +17,7 @@
 # envsubst + replacements.sed. The ENV literals in the production stage below are the
 # load-bearing defaults for that substitution — keep them in sync with replacements.sed.
 
-FROM node:26.11.1-alpine3.24 AS dependencies
+FROM node:26.12.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -175,7 +175,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	yarn cache clean && \
 	rm -f .npmrc .yarnrc
 
-FROM node:26.11.1-alpine3.24 AS development
+FROM node:26.12.1-alpine3.24 AS development
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
@@ -189,7 +189,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:26.11.1-alpine3.24 AS build
+FROM node:26.12.1-alpine3.24 AS build
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
