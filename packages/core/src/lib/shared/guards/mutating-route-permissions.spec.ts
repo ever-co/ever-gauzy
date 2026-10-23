@@ -499,8 +499,7 @@ const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
 	'PluginTenantController.updateApproval',
 	'PluginTenantController.updateConfiguration',
 	'PluginUserAssignmentController.assignUsersToPlugin',
-	'PluginUserAssignmentController.unassignUsersFromPlugin',
-	'WakatimeController.saveData'
+	'PluginUserAssignmentController.unassignUsersFromPlugin'
 ]);
 
 /** Roots the scan walks. */
