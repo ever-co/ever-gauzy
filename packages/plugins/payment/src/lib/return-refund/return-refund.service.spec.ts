@@ -690,12 +690,30 @@ describe('ReturnRefundService — the money a return or a claim pays back', () =
 			captures: [captureRow('capture-1', { currency: 'EUR' })]
 		});
 
-		// A return refund is still recorded — the return explains it — and the euro payment is not named,
-		// because measuring a dollar amount against a euro figure would compare two unlike things.
-		await service.createRefund({ orderId: ORDER, returnId: RETURN, amount: '25', currency: 'USD' });
+		// The euro payment is never named, because measuring a dollar amount against a euro figure would compare
+		// two unlike things. And a dollar refund on an order paid in euros is refused rather than recorded against
+		// the return or the claim alone: with no payment in its currency there was no ceiling to stop it, so a
+		// return or a claim could state another currency and give back any amount.
+		for (const flow of [{ returnId: RETURN }, { claimId: CLAIM }]) {
+			const refusal = await service
+				.createRefund({ orderId: ORDER, ...flow, amount: '100000', currency: 'USD' })
+				.then(() => undefined)
+				.catch((thrown) => thrown);
 
-		expect(tables.refund[0]).toMatchObject({ currency: 'USD', status: RefundStatus.SUCCEEDED });
-		expect(tables.refund[0].paymentId).toBeUndefined();
+			expect(refusal).toBeInstanceOf(BadRequestException);
+			expect(refusal.getResponse()).toMatchObject({
+				code: 'REFUND_CURRENCY_MISMATCH',
+				details: { orderId: ORDER, currency: 'USD', paymentCurrencies: ['EUR'] }
+			});
+		}
+
+		expect(tables.refund).toEqual([]);
+		expect(tables.payment[0]).toMatchObject({ refundedAmount: '0' });
+
+		// In the currency it was paid in, the same order is refunded from its euro payment.
+		await service.createRefund({ orderId: ORDER, returnId: RETURN, amount: '25', currency: 'EUR' });
+
+		expect(tables.refund[0]).toMatchObject({ currency: 'EUR', paymentId: PAYMENT, status: RefundStatus.SUCCEEDED });
 	});
 
 	it('keeps the exchange reference a refund was caused by', async () => {
