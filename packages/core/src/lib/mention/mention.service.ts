@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { In } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, SaveOptions, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	BaseEntityEnum,
 	ID,
@@ -12,7 +13,10 @@ import {
 	ActorTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
+import { LegacyFindOneOptions } from '../core/utils';
 import { RequestContext } from '../core/context';
+import { assertCallerIsAuthorOrTenantAdmin, isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Mention } from './mention.entity';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
@@ -192,5 +196,99 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			console.log(`Error while updating mention: ${error.message}`, error);
 			throw new BadRequestException('Error while updating mention', error);
 		}
+	}
+
+	/**
+	 * Changes a mention (`PUT /mentions/:id`, `updateMention`), if the caller wrote it or administers the tenant
+	 * ({@link assertCallerMayChange}). The patch cannot say someone else wrote it ({@link withoutAuthorChange}).
+	 *
+	 * @param id - The mention's id, or criteria.
+	 * @param input - The columns to write.
+	 * @returns The update result, or the updated row, whichever the ORM answers.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<Mention>,
+		input: QueryDeepPartialEntity<Mention>
+	): Promise<Mention | UpdateResult> {
+		if (typeof id === 'string') {
+			await this.assertCallerMayChange(id, false);
+		}
+
+		return super.update(id, withoutAuthorChange(input, ['employeeId', 'employee']));
+	}
+
+	/**
+	 * Removes a mention (`DELETE /mentions/:id`, `deleteMention`), if the caller wrote it or administers the tenant.
+	 * A call with object criteria is a service-level call — `updateEntityMentions` removes the mentions an edit
+	 * dropped, whoever wrote them — and keeps the base behaviour.
+	 *
+	 * @param criteria - The mention's id, or criteria.
+	 * @param options - Additional where conditions, passed to the base method unchanged.
+	 * @returns The delete result.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<Mention>,
+		options?: LegacyFindOneOptions<Mention>
+	): Promise<DeleteResult> {
+		if (typeof criteria === 'string') {
+			await this.assertCallerMayChange(criteria, true);
+		}
+
+		return super.delete(criteria, options);
+	}
+
+	/**
+	 * Withdraws a mention (`DELETE /mentions/:id/soft`, `softDeleteMention`), if the caller wrote it or administers
+	 * the tenant.
+	 *
+	 * @param id - The mention to withdraw.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The withdrawn mention.
+	 */
+	public async softRemove(id: ID, options?: IFindOneOptions<Mention>, saveOptions?: SaveOptions): Promise<Mention> {
+		await this.assertCallerMayChange(id, false);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn mention (`PUT /mentions/:id/recover`, `recoverMention`), if the caller wrote it or
+	 * administers the tenant.
+	 *
+	 * @param id - The mention to restore.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored mention.
+	 */
+	public async softRecover(id: ID, options?: IFindOneOptions<Mention>, saveOptions?: SaveOptions): Promise<Mention> {
+		await this.assertCallerMayChange(id, true);
+
+		return super.softRecover(id, options, saveOptions);
+	}
+
+	/**
+	 * Who may change a mention: the one who wrote it — the user who created it, or the employee it names as its
+	 * author (`employeeId`, stamped from the request by `create`) — or a tenant administrator (owner decision 2,
+	 * 2026-10-22). The mention routes state no permission, so before this any member of the tenant could rewrite,
+	 * withdraw or remove another member's mention; a caller without `CHANGE_SELECTED_EMPLOYEE` was held to their
+	 * own employee's rows by the CRUD base, but a holder of it, or a caller with no employee record, was not.
+	 *
+	 * The read is the tenant-scoped one, so a mention of another tenant, or one that is not there, is still a 404.
+	 *
+	 * @param id - The mention's id.
+	 * @param withDeleted - Whether a withdrawn mention counts (a recovery, and a removal, act on one).
+	 * @throws ForbiddenException when the caller neither wrote it nor administers the tenant.
+	 */
+	private async assertCallerMayChange(id: ID, withDeleted: boolean): Promise<void> {
+		if (isCallerTenantAdmin()) {
+			return;
+		}
+
+		const mention = await this.findOneByIdString(id, withDeleted ? { withDeleted: true } : undefined);
+		assertCallerIsAuthorOrTenantAdmin(
+			{ userId: mention.createdByUserId, employeeId: mention.employeeId },
+			'a mention'
+		);
 	}
 }

@@ -1,4 +1,15 @@
-import { Controller, Get, Query, Post, Body, Headers, HttpCode, HttpException, HttpStatus } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Query,
+	Post,
+	Body,
+	Headers,
+	HttpCode,
+	HttpException,
+	HttpStatus,
+	ForbiddenException
+} from '@nestjs/common';
 import { WakatimeService } from './wakatime.service';
 
 @Controller('/v1/users/current/wakatime')
@@ -52,6 +63,10 @@ export class WakatimeController {
 				})
 			};
 		} catch (error) {
+			// A caller with no employee record keeps the service's refusal (403)
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
 		}
 	}
