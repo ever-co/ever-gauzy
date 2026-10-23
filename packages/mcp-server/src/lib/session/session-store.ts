@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import crypto from 'node:crypto';
 import { authManager } from '../common/auth-manager';
+import { sessionIdForLog } from '../common/error-utils';
 
 const logger = new Logger('SessionStore');
 
@@ -159,7 +160,7 @@ export class SessionStore {
 		this.metrics.sessionsCreated++;
 
 		if (this.config.enableLogging) {
-			logger.log(`Session created: ${sessionId} for user ${userId} (${userEmail || 'unknown'})`);
+			logger.log(`Session created: ${sessionIdForLog(sessionId)} for user ${userId} (${userEmail || 'unknown'})`);
 		}
 
 		return session;
@@ -220,7 +221,7 @@ export class SessionStore {
 		session.lastAccessed = new Date();
 
 		if (this.config.enableLogging) {
-			logger.debug(`Session extended: ${sessionId} by ${additionalTime}ms`);
+			logger.debug(`Session extended: ${sessionIdForLog(sessionId)} by ${additionalTime}ms`);
 		}
 
 		return true;
@@ -291,7 +292,7 @@ export class SessionStore {
 		// Check connection limit per session
 		if (session.connectionIds.size >= this.config.maxConnectionsPerSession) {
 			if (this.config.enableLogging) {
-				logger.warn(`Connection limit reached for session ${sessionId}`);
+				logger.warn(`Connection limit reached for session ${sessionIdForLog(sessionId)}`);
 			}
 			return false;
 		}
@@ -313,7 +314,7 @@ export class SessionStore {
 		this.metrics.connectionsCreated++;
 
 		if (this.config.enableLogging) {
-			logger.debug(`Connection added: ${connectionId} to session ${sessionId}`);
+			logger.debug(`Connection added: ${connectionId} to session ${sessionIdForLog(sessionId)}`);
 		}
 
 		return true;
@@ -338,7 +339,7 @@ export class SessionStore {
 		this.metrics.connectionsDestroyed++;
 
 		if (this.config.enableLogging) {
-			logger.debug(`Connection removed: ${connectionId} from session ${connection.sessionId}`);
+			logger.debug(`Connection removed: ${connectionId} from session ${sessionIdForLog(connection.sessionId)}`);
 		}
 
 		return true;
@@ -433,7 +434,7 @@ export class SessionStore {
 		this.metrics.sessionsDestroyed++;
 
 		if (this.config.enableLogging) {
-			logger.log(`Session destroyed: ${sessionId} for user ${session.userId}`);
+			logger.log(`Session destroyed: ${sessionIdForLog(sessionId)} for user ${session.userId}`);
 		}
 
 		return true;

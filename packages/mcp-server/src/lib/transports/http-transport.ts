@@ -12,7 +12,7 @@ import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { AuthorizationConfig, loadAuthorizationConfig, ResponseBuilder } from '../common/auth-types';
-import { sanitizeErrorMessage } from '../common/error-utils';
+import { sanitizeErrorMessage, sessionIdForLog } from '../common/error-utils';
 import { SecurityEvents, SecurityLogger } from '../common/security-logger';
 import { AuthorizationMiddleware, AuthorizedRequest } from '../common/authorization-middleware';
 import { runWithAuthKey } from '../common/auth-context';
@@ -502,7 +502,7 @@ export class HttpTransport {
 				}
 
 				logger.log(
-					`Session created: ${session.id} for user ${session.userId} from ${this.getClientIP(
+					`Session created: ${sessionIdForLog(session.id)} for user ${session.userId} from ${this.getClientIP(
 						req,
 						this.transportConfig.trustedProxies || []
 					)}`
@@ -581,7 +581,7 @@ export class HttpTransport {
 						}
 					}
 					logger.log(
-						`Session deleted: ${sessionId} by user ${requesterUserId} from ${this.getClientIP(
+						`Session deleted: ${sessionIdForLog(sessionId)} by user ${requesterUserId} from ${this.getClientIP(
 							req,
 							this.transportConfig.trustedProxies || []
 						)}`
