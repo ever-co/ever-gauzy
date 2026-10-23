@@ -458,49 +458,7 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'WakatimeController.saveData'
 ]);
 
-const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
-	'EmployeePresetController.deleteEmployeeCriterion',
-	'EmployeePresetController.saveEmployeePreset',
-	'EmployeePresetController.saveUpdateEmployeeCriterion',
-	'InvoiceEstimateHistoryController.create',
-	'InvoiceEstimateHistoryController.delete',
-	'InvoiceEstimateHistoryController.update',
-	'JobSearchCategoryController.create',
-	'JobSearchCategoryController.delete',
-	'JobSearchCategoryController.softRecover',
-	'JobSearchCategoryController.softRemove',
-	'JobSearchCategoryController.update',
-	'JobSearchOccupationController.create',
-	'JobSearchOccupationController.delete',
-	'JobSearchOccupationController.softRecover',
-	'JobSearchOccupationController.softRemove',
-	'JobSearchOccupationController.update',
-	'JobSearchPresetController.createJobPreset',
-	'JobSearchPresetController.deleteJobPresetCriterion',
-	'JobSearchPresetController.saveUpdate',
-	'PluginCategoryController.create',
-	'PluginCategoryController.delete',
-	'PluginCategoryController.partialUpdate',
-	'PluginCategoryController.update',
-	'PluginSecurityController.createVerification',
-	'PluginTagController.batchCreate',
-	'PluginTagController.batchDelete',
-	'PluginTagController.create',
-	'PluginTagController.delete',
-	'PluginTagController.update',
-	'PluginTagsController.replacePluginTags',
-	'PluginTenantController.bulkUpdate',
-	'PluginTenantController.create',
-	'PluginTenantController.disable',
-	'PluginTenantController.enable',
-	'PluginTenantController.managePluginTenantUsers',
-	'PluginTenantController.remove',
-	'PluginTenantController.update',
-	'PluginTenantController.updateApproval',
-	'PluginTenantController.updateConfiguration',
-	'PluginUserAssignmentController.assignUsersToPlugin',
-	'PluginUserAssignmentController.unassignUsersFromPlugin'
-]);
+const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([]);
 
 /** Roots the scan walks. */
 const SCANNED_ROOTS = ['packages/core/src', 'packages/plugins'];

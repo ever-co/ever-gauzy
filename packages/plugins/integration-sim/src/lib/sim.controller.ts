@@ -21,6 +21,12 @@ import { SimService } from './sim.service';
 import { ConfigureSimIntegrationDto, ExecuteWorkflowDto, WorkflowExecutionQueryDto, EventMappingDto } from './dto';
 import { SIM_SUPPORTED_EVENTS, SimEventType } from './dto/event-mapping.dto';
 
+/**
+ * `TenantPermissionGuard` asks only whether ANY role of the tenant holds the permission a route states;
+ * `PermissionGuard` is what asks it of the caller's own role. With the tenant guard alone, every
+ * `@Permissions` below let any authenticated member of the tenant through (VIEWER, EMPLOYEE, CANDIDATE),
+ * while the `INTEGRATION_*` grants belong to ADMIN and SUPER_ADMIN by default.
+ */
 @ApiTags('SIM Integration')
 @ApiBearerAuth()
 // `TenantPermissionGuard` asks only whether some role of the tenant holds a permission; `PermissionGuard` is what

@@ -1,14 +1,32 @@
-import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ID, IGetJobPresetCriterionInput } from '@gauzy/contracts';
+import { ID, IGetJobPresetCriterionInput, PermissionsEnum } from '@gauzy/contracts';
 import { GauzyAIService } from '@gauzy/plugin-integration-ai';
-import { EmployeeService, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
+import {
+	EmployeeService,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe
+} from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { CreateJobPresetDTO, JobPresetQueryDTO, SaveJobPresetCriterionDTO } from './dto';
 
+/**
+ * The job-search presets of the tenant and their criteria.
+ *
+ * The routes are the job-matching page's, which the web app opens to `ORG_JOB_MATCHING_VIEW` alone, so the
+ * class states that grant for every route, the writes included (no edit grant of its own exists). They used
+ * to state no guard and no permission, so any member of the tenant (VIEWER, EMPLOYEE, CANDIDATE) could list
+ * the presets (which also re-syncs every active employee to Gauzy AI), create one, or add and delete its
+ * criteria.
+ */
 @ApiTags('JobSearchPreset')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_JOB_MATCHING_VIEW)
 @Controller('/job-preset')
 export class JobSearchPresetController {
 	constructor(
