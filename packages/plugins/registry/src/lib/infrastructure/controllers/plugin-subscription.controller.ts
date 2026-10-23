@@ -1,4 +1,4 @@
-import { PermissionsEnum, PluginSubscriptionStatus } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
 	Body,
@@ -25,11 +25,13 @@ import {
 	GetPluginSubscriptionByIdQuery,
 	GetPluginSubscriptionsByPluginIdQuery,
 	GetPluginSubscriptionsBySubscriberIdQuery,
+	GetPublisherPluginSubscriptionsQuery,
 	PurchasePluginSubscriptionCommand,
 	RenewPluginSubscriptionCommand,
 	UpdatePluginSubscriptionCommand,
 	UpgradePluginSubscriptionCommand
 } from '../../application';
+import { PluginOwnerGuard } from '../../core';
 import { PluginSubscription } from '../../domain';
 import { PluginSubscriptionQueryDTO, PurchasePluginSubscriptionDTO, UpdatePluginSubscriptionDTO } from '../../shared';
 
@@ -144,6 +146,27 @@ export class PluginSubscriptionController {
 		return this.queryBus.execute(
 			new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, subscriberId)
 		);
+	}
+
+	@ApiOperation({
+		summary: "List every subscription to the plugin, for the plugin's publisher",
+		description:
+			"Every tenant's subscriptions to the plugin, with their plans. Only the user who published the plugin may read them; the public plugin read does not list subscriptions."
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The subscriptions to the plugin, newest first',
+		type: [PluginSubscription]
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller did not publish the plugin' })
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
+	@UseGuards(PluginOwnerGuard)
+	@Get('publisher')
+	async findAllForPublisher(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string
+	): Promise<IPagination<PluginSubscription>> {
+		return this.queryBus.execute(new GetPublisherPluginSubscriptionsQuery(pluginId));
 	}
 
 	@ApiOperation({ summary: 'Get plugin subscription by ID' })

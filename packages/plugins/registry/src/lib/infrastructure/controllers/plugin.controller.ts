@@ -7,6 +7,7 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/
 import { GetPluginQuery, ListPluginsQuery, SearchPluginsQuery } from '../../application';
 import { Plugin } from '../../domain';
 import { IPlugin, PluginQueryOptions, PluginSearchFilterDTO } from '../../shared';
+import { withoutSubscriptions } from './public-plugin-subscriptions';
 
 @ApiTags('Plugin Registry')
 @Controller('/plugins')
@@ -47,6 +48,8 @@ export class PluginController {
 	})
 	@Get()
 	public async findAll(@Query() params: PluginSearchFilterDTO): Promise<IPagination<IPlugin>> {
+		// A public read: no subscriptions of any tenant (see public-plugin-subscriptions.ts)
+		withoutSubscriptions(params);
 		// If search parameters are provided, use search query, otherwise use list query
 		if (params.search || params.type || params.status || params.categoryId || params.tags || params.author) {
 			return this.queryBus.execute(new SearchPluginsQuery(params));
@@ -102,6 +105,7 @@ export class PluginController {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: PluginQueryOptions
 	): Promise<IPlugin> {
-		return this.queryBus.execute(new GetPluginQuery(id, options));
+		// A public read: no subscriptions of any tenant (see public-plugin-subscriptions.ts)
+		return this.queryBus.execute(new GetPluginQuery(id, withoutSubscriptions(options)));
 	}
 }
