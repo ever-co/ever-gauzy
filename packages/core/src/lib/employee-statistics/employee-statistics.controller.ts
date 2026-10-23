@@ -14,13 +14,18 @@ import { assertCurrentUserBelongsToSentOrganization } from './../user-organizati
 import { assertStatisticsReadInScope } from './employee-statistics-scope';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import {
 	AggregatedEmployeeStatisticQuery,
 	EmployeeStatisticsHistoryQuery,
 	MonthAggregatedEmployeeStatisticsQuery
 } from './queries';
 import { EmployeeAggregatedStatisticByMonthQueryDTO } from './dto';
+import { Permissions } from './../shared/decorators';
+import {
+	EMPLOYEE_STATISTICS_AGGREGATE_PERMISSIONS,
+	EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS
+} from './employee-statistics.permissions';
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
@@ -34,6 +39,10 @@ export class EmployeeStatisticsController {
 	) {}
 
 	/**
+	 * The organization's aggregate: every employee's income, expenses, bonus and profit over a range.
+	 *
+	 * Read under the Accounting dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `ACCOUNTING_DASHBOARD`), the page
+	 * and widgets that show it (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param data
 	 * @returns
@@ -46,6 +55,8 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_AGGREGATE_PERMISSIONS)
 	@Get('/aggregate')
 	async findAggregatedByOrganizationId(
 		@Query('data', ParseJsonPipe) data: any
@@ -59,6 +70,10 @@ export class EmployeeStatisticsController {
 	}
 
 	/**
+	 * One employee's twelve-month series.
+	 *
+	 * Read under the Human Resources dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD`),
+	 * like the employee's other figures (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param id
 	 * @param data
@@ -70,6 +85,8 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Get('/months/:id')
 	async findAllByEmployeeId(
 		@Param('id', UUIDValidationPipe) id: ID,
@@ -85,6 +102,10 @@ export class EmployeeStatisticsController {
 	}
 
 	/**
+	 * One employee's statistics, one row per month of a range.
+	 *
+	 * Read under the Human Resources dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD`),
+	 * the page and widgets that show it (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param options
 	 * @returns
@@ -97,6 +118,8 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Get('/months')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async findAggregatedStatisticsByEmployeeId(
@@ -109,6 +132,10 @@ export class EmployeeStatisticsController {
 	}
 
 	/**
+	 * The income and expense lines behind one employee's totals.
+	 *
+	 * Read under the Human Resources dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD`),
+	 * the page dialogs and widgets that show them (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param data
 	 * @returns
@@ -121,6 +148,8 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Get('/history')
 	async findEmployeeStatisticsHistory(
 		@Query('data', ParseJsonPipe) data?: any
