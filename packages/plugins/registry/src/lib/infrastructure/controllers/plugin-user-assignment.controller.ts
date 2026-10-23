@@ -1,15 +1,28 @@
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
-import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpStatus,
+	Param,
+	Post,
+	Query,
+	UseGuards,
+	ValidationPipe
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	AssignUsersToPluginCommand,
 	CheckUserPluginAccessQuery,
 	GetAllPluginUserAssignmentsQuery,
 	GetPluginUserAssignmentsQuery,
-	GetUserPluginAssignmentsQuery
+	GetUserPluginAssignmentsQuery,
+	UnassignUsersFromPluginCommand
 } from '../../application';
-import { IPluginTenant } from '../../shared';
+import { AssignPluginUsersDTO, IPluginTenant, UnassignPluginUsersDTO } from '../../shared';
 
 /**
  * Plugin User Assignment Controller
@@ -20,19 +33,19 @@ import { IPluginTenant } from '../../shared';
  * `PLUGIN_ASSIGN_ACCESS` or `PLUGIN_CONFIGURE` (the grant `subscription/access/assign` and `/revoke` already
  * require); reading one user's assignments or access states `PLUGIN_VIEW`, as `subscription/access/check` does.
  *
- * It used to also serve `POST` and `DELETE` on this path, to assign and unassign users. Both handed the plugin id
- * to a service that expects a plugin-tenant id, so they answered 404 for any real plugin; and that service
- * assigned nobody: it only moved the plugin-tenant's `currentActiveUsers` counter, so handed a plugin-tenant id in
- * the plugin's place they let a caller drift the quota without assigning anyone. Nothing calls them: the apps
+ * It also serves `POST` and `DELETE` on this path, to assign and unassign users. Nothing calls them (the apps
  * assign and revoke through `plugins/:id/subscription/access/*` and manage the plugin-tenant's users through
- * `POST /plugin-tenants/:id/users`, which persists the allowed and denied users and their child subscriptions. The
- * two routes were removed rather than pointed at that flow, which would give them its subscription side effects.
+ * `POST /plugin-tenants/:id/users`), and they are not wired to a working flow: they hand the plugin id to a service
+ * that expects a plugin-tenant id, so they answer 404 for any real plugin, and that service assigns nobody; it only
+ * moves the plugin-tenant's `currentActiveUsers` counter. They are kept, gated: `PLUGIN_CONFIGURE`, the grant
+ * `PUT /plugin-tenants/:id` states, which sets that plugin-tenant's `maxActiveUsers` itself, and the service reads
+ * and updates through the tenant-aware CRUD base, so the only counter they can move is one of the caller's tenant.
  */
 @ApiTags('Plugins - User Assignment')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/users')
 export class PluginUserAssignmentController {
-	constructor(private readonly queryBus: QueryBus) {}
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * Get all users assigned to a specific plugin
@@ -58,6 +71,64 @@ export class PluginUserAssignmentController {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 		return this.queryBus.execute(new GetPluginUserAssignmentsQuery(pluginId, tenantId, organizationId, skip, take));
+	}
+
+	/**
+	 * Assign users to a plugin
+	 */
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Post()
+	@ApiOperation({
+		summary: 'Assign users to a plugin',
+		description: 'Assign one or more users to a specific plugin.'
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
+	@ApiBody({ type: AssignPluginUsersDTO })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Successfully assigned users to plugin'
+	})
+	async assignUsersToPlugin(
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body(new ValidationPipe({ transform: true })) assignDto: AssignPluginUsersDTO
+	): Promise<any> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.commandBus.execute(
+			new AssignUsersToPluginCommand(pluginId, assignDto.userIds, tenantId, organizationId, assignDto.reason)
+		);
+	}
+
+	/**
+	 * Unassign users from a plugin
+	 */
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	@Delete()
+	@ApiOperation({
+		summary: 'Unassign users from a plugin',
+		description: 'Remove one or more users from a specific plugin.'
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: 'string', format: 'uuid' })
+	@ApiBody({ type: UnassignPluginUsersDTO })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully unassigned users from plugin'
+	})
+	async unassignUsersFromPlugin(
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body(new ValidationPipe({ transform: true })) unassignDto: UnassignPluginUsersDTO
+	): Promise<any> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		return this.commandBus.execute(
+			new UnassignUsersFromPluginCommand(
+				pluginId,
+				unassignDto.userIds,
+				tenantId,
+				organizationId,
+				unassignDto.reason
+			)
+		);
 	}
 }
 
