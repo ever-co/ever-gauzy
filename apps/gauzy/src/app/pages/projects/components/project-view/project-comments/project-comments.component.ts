@@ -155,13 +155,15 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	private readonly _lookups = new Map<ID, Promise<IImageUrls | null>>();
 
 	/**
-	 * Attaching is offered only to those who can both upload an image and delete it again, so an upload that is
-	 * never posted can always be cleaned up: the upload asks for ALL_ORG_EDIT or MEDIA_GALLERY_ADD, the delete for
-	 * ALL_ORG_EDIT or MEDIA_GALLERY_DELETE.
+	 * Attaching is offered only to those who can upload an image, delete it again — so an upload that is never
+	 * posted can always be cleaned up — and read it back, so what they post shows for them: the upload asks for
+	 * ALL_ORG_EDIT or MEDIA_GALLERY_ADD, the delete for ALL_ORG_EDIT or MEDIA_GALLERY_DELETE, and the read
+	 * (`GET /image-assets/:id`) for ALL_ORG_VIEW or MEDIA_GALLERY_VIEW.
 	 */
 	protected readonly canAttach =
-		this._store.hasPermission(PermissionsEnum.ALL_ORG_EDIT) ||
-		this._store.hasAllPermissions(PermissionsEnum.MEDIA_GALLERY_ADD, PermissionsEnum.MEDIA_GALLERY_DELETE);
+		(this._store.hasPermission(PermissionsEnum.ALL_ORG_EDIT) ||
+			this._store.hasAllPermissions(PermissionsEnum.MEDIA_GALLERY_ADD, PermissionsEnum.MEDIA_GALLERY_DELETE)) &&
+		this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW);
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
