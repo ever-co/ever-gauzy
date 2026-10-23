@@ -17,8 +17,8 @@ interface IActivityEntry {
 	/** i18n key of the sentence's start: "{{ actor }} created", …; the target follows it. */
 	sentence: string;
 	target: string;
-	/** Where the target leads: the task's page, or none for the project itself. */
-	link: string[] | null;
+	/** The task the target opens in the project page's task drawer, or none for the project itself. */
+	taskId: string | null;
 	/** "title, status, members": the fields an update changed. */
 	fields: string;
 	time: string;
@@ -137,10 +137,7 @@ export class ProjectActivityComponent implements OnChanges {
 				this.toEntry(log, this.projectName, null)
 			),
 			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
-				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', [
-					'/pages/tasks/view',
-					log.entityId
-				])
+				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', log.entityId)
 			)
 		]
 			.sort((a, b) => b.time.localeCompare(a.time))
@@ -203,7 +200,7 @@ export class ProjectActivityComponent implements OnChanges {
 		return projectIds.has(this.projectId);
 	}
 
-	private toEntry(log: IActivityLog, target: string, link: string[] | null): IActivityEntry {
+	private toEntry(log: IActivityLog, target: string, taskId: string | null): IActivityEntry {
 		const action = log.action;
 		const sentences: Record<string, string> = {
 			[ActionTypeEnum.Created]: 'PROJECT_VIEW.ACTIVITY_CREATED',
@@ -226,7 +223,7 @@ export class ProjectActivityComponent implements OnChanges {
 			actor: log.employee ? personOf(log.employee) : null,
 			sentence: sentences[action] || 'PROJECT_VIEW.ACTIVITY_UPDATED',
 			target: target || '—',
-			link: action === ActionTypeEnum.Deleted ? null : link,
+			taskId: action === ActionTypeEnum.Deleted ? null : taskId,
 			fields: (log.updatedFields || []).map((field) => humanize(field).toLowerCase()).join(', '),
 			time: time.toISOString(),
 			timeLong: time.format('LLL'),
