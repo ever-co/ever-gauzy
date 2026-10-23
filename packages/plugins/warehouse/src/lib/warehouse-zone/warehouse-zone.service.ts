@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { TypeOrmWarehouseBinRepository } from '../warehouse-bin/repository/type-orm-warehouse-bin.repository';
 import { WarehouseBin } from '../warehouse-bin/warehouse-bin.entity';
 import { WarehouseZoneType } from '../warehouse.types';
@@ -10,6 +10,7 @@ import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { WarehouseZone } from './warehouse-zone.entity';
 import { MikroOrmWarehouseZoneRepository } from './repository/mikro-orm-warehouse-zone.repository';
 import { TypeOrmWarehouseZoneRepository } from './repository/type-orm-warehouse-zone.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /**
  * The areas of a stock location, and the two rules the rest of the domain asks them for.
@@ -22,7 +23,7 @@ import { TypeOrmWarehouseZoneRepository } from './repository/type-orm-warehouse-
  * the pick path and the capacity plan cannot disagree about which bins are eligible.
  */
 @Injectable()
-export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> {
+export class WarehouseZoneService extends WarehouseCrudService<WarehouseZone> {
 	constructor(
 		readonly typeOrmWarehouseZoneRepository: TypeOrmWarehouseZoneRepository,
 		readonly mikroOrmWarehouseZoneRepository: MikroOrmWarehouseZoneRepository,
