@@ -79,17 +79,14 @@ const SKILL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * REST and GraphQL are two views of the same operations, so this resolver owns no business logic of
  * its own: every field below calls the same `SkillService` the `/api/skills` routes call.
  *
- * **The guard is the controller's guard, and no permission is stated anywhere.** `SkillController`
- * carries `TenantPermissionGuard` and states no `@Permissions` on its class or on any route it
- * inherits, so this class carries that guard and the gate below and nothing else — no permission on
- * the class and none on a field. A permission here would refuse a caller the REST route serves, and
- * tightening the resource is a change to make in both places at once.
- *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
- * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
- * (GHSA-v79w-54p2-wmh5) — so `softDeleteSkill` and `recoverSkill` state the same, neither wider nor narrower
- * than REST.
+ * **The guard is the controller's guard; the reads state no permission and every write states `SKILLS_EDIT`.**
+ * `SkillController` carries `TenantPermissionGuard` on its class and no `@Permissions` there, so this class
+ * carries that guard and the gate below and no permission of its own, and the three reads state none. The
+ * controller overrides every write it inherits — the filing, the edit, the removal and the retire-and-restore
+ * pair — only to state `SKILLS_EDIT` behind `PermissionGuard`: the CRUD base declares no permission, and
+ * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could change the skills
+ * vocabulary (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22). Each write field below states the same,
+ * neither wider nor narrower than REST.
  *
  * **The delivered name route is folded into the connection's filter.** It reads one skill by its
  * name and joins nothing the list read does not, so a `name` filter answers the same row the route
@@ -170,8 +167,11 @@ export class SkillResolver {
 	}
 
 	/**
-	 * Files a skill through the same service method the delivered create route calls.
+	 * Files a skill through the same service method the delivered create route calls, under the permission that
+	 * route states: `SKILLS_EDIT`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.SKILLS_EDIT)
 	@Mutation('createSkill')
 	async createSkill(@Args('input') input: ICreateSkillInput): Promise<Skill> {
 		return await this.skillService.create(input as unknown as Skill);
@@ -183,7 +183,11 @@ export class SkillResolver {
 	 * The answer is the row the write produced, read back through the same service. The delivered
 	 * route answers the store's own update result — a statement about the write, `{ affected }` —
 	 * which is not a row and not what a GraphQL field named `updateSkill` may return.
+	 *
+	 * Under the permission the route states: `SKILLS_EDIT`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.SKILLS_EDIT)
 	@Mutation('updateSkill')
 	async updateSkill(@Args('input') input: IUpdateSkillInput): Promise<Skill> {
 		const { id, ...values } = input;
@@ -194,8 +198,10 @@ export class SkillResolver {
 	}
 
 	/**
-	 * Removes a skill outright.
+	 * Removes a skill outright, under the permission the delivered delete route states: `SKILLS_EDIT`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.SKILLS_EDIT)
 	@Mutation('deleteSkill')
 	async deleteSkill(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.skillService.delete(id));
@@ -203,14 +209,14 @@ export class SkillResolver {
 
 	/**
 	 * Retires a row without removing it, through the service method `DELETE /api/skills/:id/soft` calls, under the
-	 * permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 * permission that route states: `SKILLS_EDIT` (the skills write grant).
 	 *
 	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
 	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
 	 * narrower than REST.
 	 */
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(PermissionsEnum.SKILLS_EDIT)
 	@Mutation('softDeleteSkill')
 	async softDeleteSkill(@Args('id', { type: () => ID }) id: Id): Promise<Skill> {
 		return await this.skillService.softRemove(id);
@@ -218,14 +224,14 @@ export class SkillResolver {
 
 	/**
 	 * Restores a retired row through the service method `PUT /api/skills/:id/recover` calls, under the permission
-	 * that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 * that route states: `SKILLS_EDIT` (the skills write grant).
 	 *
 	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
 	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
 	 * narrower than REST.
 	 */
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(PermissionsEnum.SKILLS_EDIT)
 	@Mutation('recoverSkill')
 	async recoverSkill(@Args('id', { type: () => ID }) id: Id): Promise<Skill> {
 		return await this.skillService.softRecover(id);
