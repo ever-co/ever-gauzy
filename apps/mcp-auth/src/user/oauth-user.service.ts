@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PasswordHashService, User } from '@gauzy/core';
+import { LoginAttemptRequest, LoginAttemptScope, LoginAttemptService, PasswordHashService, User } from '@gauzy/core';
 import { IUser } from '@gauzy/contracts';
 
 /**
@@ -18,7 +18,8 @@ export class OAuthUserService {
 	constructor(
 		@InjectRepository(User)
 		private readonly typeOrmRepository: Repository<User>,
-		private readonly passwordHashService: PasswordHashService
+		private readonly passwordHashService: PasswordHashService,
+		private readonly loginAttemptService: LoginAttemptService
 	) {}
 
 	/**
@@ -45,31 +46,47 @@ export class OAuthUserService {
 	 * Authenticate user with email and password for MCP OAuth
 	 * Validates credentials against Gauzy database
 	 *
+	 * Failures count against the account in the same per-account counter the Gauzy API's own login uses
+	 * (`AUTH_MAX_FAILED_ATTEMPTS` failures from more than one address block it for `AUTH_LOCKOUT_SECONDS`), so this
+	 * form gives a guesser no more attempts than `POST /api/auth/login` does. It used to have no counter at all: only
+	 * the per-address rate limit, which a guesser spreading attempts over many addresses never meets.
+	 *
 	 * @param email User email
 	 * @param password User password (plain text)
+	 * @param request The login form submission, to attribute the attempt to its client
 	 * @returns Authenticated user info or null if authentication fails
+	 * @throws HttpException 429 while the account is blocked: no password is checked then
 	 */
-	async authenticateMcpUser(email: string, password: string): Promise<IUser | null> {
+	async authenticateMcpUser(email: string, password: string, request?: LoginAttemptRequest): Promise<IUser | null> {
+		// Outside the try below, which answers every failure with null: a blocked account must surface as a 429.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email, request);
+
 		try {
 			const user = await this.findUserWithRelations({ email });
 
 			// If no user found, return null
 			if (!user) {
+				await attempt.fail();
 				return null;
 			}
 
 			// Verify password using PasswordHashService
 			if (!user.hash) {
+				await attempt.fail();
 				return null;
 			}
 
 			const isPasswordValid = await this.passwordHashService.verify(password, user.hash);
 			if (!isPasswordValid) {
+				await attempt.fail();
 				return null;
 			}
 
+			await attempt.succeed();
 			return user;
 		} catch (error) {
+			// A database or hashing error says nothing about the password: it does not count against the account.
+			await attempt.release();
 			this.logger.error('Error authenticating MCP user', (error as Error)?.stack || (error as Error)?.message);
 			return null;
 		}

@@ -57,6 +57,11 @@ export interface AuthenticatedUser extends UserInfo {
 export interface LoginCredentials {
 	email: string;
 	password: string;
+	/**
+	 * The login form submission, so the authenticator can attribute the attempt to its client (per-account
+	 * failure counting tells one guesser from many by address) and answer on its response.
+	 */
+	request?: Request;
 }
 
 export interface IntrospectionRequest {
@@ -904,7 +909,21 @@ export class OAuth2AuthorizationServer {
 			let user: AuthenticatedUser | null = null;
 
 			if (this.authenticateUser) {
-				user = await this.authenticateUser({ email, password });
+				try {
+					user = await this.authenticateUser({ email, password, request: req });
+				} catch (error) {
+					// The account has had too many failed attempts: the authenticator checked no password.
+					if (isTooManyAttempts(error)) {
+						this.securityLogger.warn('Login refused: too many failed attempts for this account', {
+							ip: req.ip
+						});
+						const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
+						return res.redirect(
+							`${this.config.loginEndpoint}?error=too_many_attempts&return_url=${encodeURIComponent(normalizedReturnUrl)}`
+						);
+					}
+					throw error;
+				}
 			} else {
 				// No authenticator configured
 				this.securityLogger.error('User authenticator not configured');
@@ -1755,6 +1774,7 @@ export class OAuth2AuthorizationServer {
 		const messages: { [key: string]: string } = {
 			'missing_credentials': 'Please enter both email and password.',
 			'invalid_credentials': 'Invalid email or password. Please try again.',
+			'too_many_attempts': 'Too many failed sign-in attempts for this account. Please try again later.',
 			'server_error': 'An error occurred. Please try again later.'
 		};
 		return messages[error] || 'An error occurred during sign in.';
@@ -2027,4 +2047,14 @@ export class OAuth2AuthorizationServer {
 			});
 		});
 	}
+}
+
+/**
+ * Whether an authenticator refused because the account has had too many failed attempts: an HTTP 429, as the
+ * Gauzy API's per-account login counter raises it (an `HttpException` whose `getStatus()` is 429).
+ */
+function isTooManyAttempts(error: unknown): boolean {
+	const candidate = error as { getStatus?: () => unknown; status?: unknown } | null;
+	const status = typeof candidate?.getStatus === 'function' ? candidate.getStatus() : candidate?.status;
+	return status === 429;
 }

@@ -76,8 +76,8 @@ export class McpOAuthService implements OnModuleInit {
 			sessionSecret: process.env.MCP_AUTH_SESSION_SECRET,
 			redisUrl: redisUrl,
 			// Wire providers up-front to satisfy constructor validation
-			userAuthenticator: async ({ email, password }) => {
-				const user = await this.userService.authenticateMcpUser(email, password);
+			userAuthenticator: async ({ email, password, request }) => {
+				const user = await this.userService.authenticateMcpUser(email, password, request);
 				if (!user) return null;
 
 				return this.mapMcpUserToAuthPayload(user);

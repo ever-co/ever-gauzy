@@ -124,6 +124,40 @@ describe('LoginAttemptService', () => {
 			expect(await begin(service)).toBe(HttpStatus.TOO_MANY_REQUESTS);
 		});
 
+		it('attributes a check outside the request context to the request it is given (MCP OAuth login)', async () => {
+			// The MCP OAuth server checks Gauzy passwords on its own Express app: no request context there.
+			currentRequest = null;
+			const request = (ip: string) => {
+				const headers: Record<string, string> = {};
+				return {
+					headers,
+					request: {
+						ip,
+						headers: {},
+						res: { setHeader: (name: string, value: string) => (headers[name] = value) }
+					}
+				};
+			};
+
+			// One address cannot lock the account, as through the API's own login...
+			for (let i = 0; i < MAX * 2; i++) {
+				const attempt = await service.begin(LoginAttemptScope.PASSWORD, EMAIL, request('198.51.100.1').request);
+				await attempt.fail();
+			}
+			expect(
+				typeof (await service.begin(LoginAttemptScope.PASSWORD, EMAIL, request('203.0.113.7').request))
+			).toBe('object');
+
+			// ...guesses from a second address do, and the 429 carries Retry-After on the given response.
+			const attempt = await service.begin(LoginAttemptScope.PASSWORD, EMAIL, request('198.51.100.2').request);
+			await attempt.fail();
+			const blocked = request('203.0.113.8');
+			await expect(service.begin(LoginAttemptScope.PASSWORD, EMAIL, blocked.request)).rejects.toMatchObject({
+				status: HttpStatus.TOO_MANY_REQUESTS
+			});
+			expect(blocked.headers['Retry-After']).toBe('900');
+		});
+
 		it('sets Retry-After on the 429 and reports the wait in the body', async () => {
 			for (let i = 0; i < MAX; i++) {
 				await failFrom(service, `198.51.100.${i}`);
