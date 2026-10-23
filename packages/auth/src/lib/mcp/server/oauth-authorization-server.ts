@@ -36,7 +36,19 @@ export interface OAuth2ServerConfig {
 	// Optional providers that can be configured during initialization
 	userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	userAuthenticator?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
+	/**
+	 * Names which of these user ids can no longer sign in (deactivated, archived or deleted). When set,
+	 * the holders of live refresh tokens are checked every minute and each one it names has every token
+	 * revoked, so a deactivation ends MCP access even for tokens nobody uses meanwhile. It must reject,
+	 * not answer an empty list, when the lookup could not be performed.
+	 */
+	inactiveUsersProvider?: (userIds: string[]) => Promise<string[]>;
 }
+
+/** How often the holders of live refresh tokens are checked against `inactiveUsersProvider`. */
+const ACCOUNT_SWEEP_INTERVAL_MS = 60 * 1000;
+/** How many user ids one `inactiveUsersProvider` call is asked about. */
+const ACCOUNT_SWEEP_BATCH_SIZE = 500;
 
 export interface UserInfo {
 	userId: string;
@@ -100,6 +112,8 @@ export class OAuth2AuthorizationServer {
 	private configManager: ConfigManager;
 	private userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	private authenticateUser?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
+	private accountSweep?: NodeJS.Timeout;
+	private accountSweepRunning = false;
 
 	// Add CSRF protection properties
 	private csrfProtection: any;
@@ -153,6 +167,71 @@ export class OAuth2AuthorizationServer {
 
 		// Validate configuration during initialization
 		this.validateConfiguration();
+
+		if (config.inactiveUsersProvider) {
+			this.accountSweep = setInterval(
+				() => void this.revokeTokensOfInactiveAccounts(),
+				ACCOUNT_SWEEP_INTERVAL_MS
+			);
+			// Do not keep the process alive just for the sweep
+			this.accountSweep.unref();
+		}
+	}
+
+	/**
+	 * Revokes every token of each refresh token holder whose account can no longer sign in, as
+	 * `inactiveUsersProvider` answers. A failed lookup revokes nothing; the next sweep asks again.
+	 *
+	 * @returns How many users had their tokens revoked.
+	 */
+	async revokeTokensOfInactiveAccounts(): Promise<number> {
+		const provider = this.config.inactiveUsersProvider;
+		if (!provider || this.accountSweepRunning) {
+			return 0;
+		}
+		this.accountSweepRunning = true;
+		let revokedUsers = 0;
+		try {
+			const holders = this.tokenManager.getRefreshTokenHolders();
+			for (let i = 0; i < holders.length; i += ACCOUNT_SWEEP_BATCH_SIZE) {
+				const batch = holders.slice(i, i + ACCOUNT_SWEEP_BATCH_SIZE);
+				const inactive = new Set(await provider(batch));
+				// Only ids that were asked about: an answer naming anyone else is ignored.
+				for (const userId of batch.filter((id) => inactive.has(id))) {
+					this.tokenManager.revokeUserTokens(userId);
+					revokedUsers++;
+				}
+			}
+		} catch (error) {
+			this.securityLogger.error('Account sweep failed; no further tokens revoked this round', error as Error);
+		} finally {
+			this.accountSweepRunning = false;
+		}
+		return revokedUsers;
+	}
+
+	/**
+	 * Re-reads the account a user token belongs to, for every use that would otherwise trust a sign-in
+	 * made earlier. An account that can no longer sign in has every token revoked.
+	 *
+	 * @returns `active`, `inactive`, or `unavailable` when the lookup could not be performed (or no
+	 * provider is configured), which callers answer with a retryable error and never as `active`.
+	 */
+	private async checkAccount(userId: string): Promise<'active' | 'inactive' | 'unavailable'> {
+		if (!this.userInfoProvider) {
+			this.securityLogger.error('User info provider not configured; account status cannot be checked');
+			return 'unavailable';
+		}
+		try {
+			if (await this.userInfoProvider(userId)) {
+				return 'active';
+			}
+		} catch (error) {
+			this.securityLogger.error(`Account lookup failed for user ${userId}`, error as Error);
+			return 'unavailable';
+		}
+		this.tokenManager.revokeUserTokens(userId);
+		return 'inactive';
 	}
 
 	/**
@@ -1309,6 +1388,28 @@ export class OAuth2AuthorizationServer {
 				scopes: authCode.scopes.join(' ')
 			});
 
+			// The sign-in completes here, not at the login form: a code (or a login session) from before a
+			// deactivation must not turn into tokens.
+			const account = await this.checkAccount(authCode.userId);
+			if (account !== 'active') {
+				this.securityLogger.warn('Token exchange: account cannot sign in', {
+					clientId: params.client_id,
+					userId: authCode.userId,
+					account
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					account === 'inactive'
+						? BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active')
+						: BaseErrorHandler.createAuthError(
+								'temporarily_unavailable',
+								'Account status could not be verified, retry later'
+							),
+					account === 'inactive' ? 400 : 503
+				);
+				return;
+			}
+
 			// Generate tokens
 			const tokenPair = await this.tokenManager.generateTokenPair(
 				authCode.userId,
@@ -1568,6 +1669,30 @@ export class OAuth2AuthorizationServer {
 				return;
 			}
 
+			// A revoked token, or a user token whose account can no longer sign in, is not active.
+			if (this.tokenManager.isTokenRevoked(validation.payload ?? {})) {
+				this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+				return;
+			}
+			if (validation.payload?.token_use !== 'client_credentials' && validation.subject) {
+				const account = await this.checkAccount(validation.subject);
+				if (account === 'unavailable') {
+					this.errorHandler.handleOAuthError(
+						res,
+						BaseErrorHandler.createAuthError(
+							'temporarily_unavailable',
+							'Account status could not be verified, retry later'
+						),
+						503
+					);
+					return;
+				}
+				if (account === 'inactive') {
+					this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+					return;
+				}
+			}
+
 			// Token is active, return token information
 			const response: IntrospectionResponse = {
 				active: true,
@@ -1632,6 +1757,12 @@ export class OAuth2AuthorizationServer {
 			if (!validation.valid) {
 				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
 				const authError = BaseErrorHandler.createAuthError('invalid_token', validation.error || 'Token validation failed');
+				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
+			}
+
+			if (this.tokenManager.isTokenRevoked(validation.payload ?? {})) {
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
+				const authError = BaseErrorHandler.createAuthError('invalid_token', 'Token has been revoked');
 				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
 
