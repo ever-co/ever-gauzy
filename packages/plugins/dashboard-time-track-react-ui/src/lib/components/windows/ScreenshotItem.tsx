@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take } from 'rxjs/operators';
 import { ID, IOrganization, IScreenshot, ITimeLog, ITimeSlot, TimeFormatEnum } from '@gauzy/contracts';
@@ -76,6 +76,11 @@ export function ScreenshotItem({ timeSlot, timeZone, timeFormat, employeeId, org
 	const errorHandlingService = useMemo(() => injector.get(ErrorHandlingService), [injector]);
 
 	const { slot, screenshots, lastScreenshot, isShowBorder } = useMemo(() => prepareTimeSlot(timeSlot), [timeSlot]);
+	// A thumbnail that fails to load (expired / missing file) falls back to the same placeholder
+	// as a slot without screenshots, instead of the browser's broken-image glyph.
+	const [failedThumbUrl, setFailedThumbUrl] = useState<string | null>(null);
+	const thumbUrl = lastScreenshot?.thumbUrl ?? null;
+	const showThumb = !!lastScreenshot && !!thumbUrl && failedThumbUrl !== thumbUrl;
 
 	/** `ngxGallery` click: open the shared gallery on the newest screenshot. */
 	const viewScreen = useCallback(
@@ -169,17 +174,17 @@ export function ScreenshotItem({ timeSlot, timeZone, timeFormat, employeeId, org
 									{t('ACTIVITY.VIEW_SCREEN')}
 								</NbButton>
 							) : null}
-							<NbButton size="small" status="basic" onClick={viewInfo}>
+							<NbButton size="small" status="control" onClick={viewInfo}>
 								{t('ACTIVITY.VIEW_INFO')}
 							</NbButton>
 						</div>
 					</div>
-					{lastScreenshot ? (
-						<img draggable={false} src={lastScreenshot.thumbUrl} alt="" />
+					{showThumb ? (
+						<img draggable={false} src={thumbUrl ?? undefined} alt="" onError={() => setFailedThumbUrl(thumbUrl)} />
 					) : (
 						<>
 							<img draggable={false} src={DEFAULT_SVG} className="default-image" alt="" />
-							<span className="gz-rtt-no-image">{t('ACTIVITY.NO_SCREENSHOT')}</span>
+							{lastScreenshot ? null : <span className="gz-rtt-no-image">{t('ACTIVITY.NO_SCREENSHOT')}</span>}
 						</>
 					)}
 				</div>
@@ -190,7 +195,14 @@ export function ScreenshotItem({ timeSlot, timeZone, timeFormat, employeeId, org
 						</div>
 						<div className="gz-rtt-caption">{dateFormat(startedAt, dateFormatOptions)}</div>
 					</div>
-					<ProgressBar className="gz-rtt-shot-progress gz-rtt-mb-1" value={percentage} status={progressStatus(percentage)} height="10px" />
+					{/* 5px on the card-2 track: the dashboard's override of the card's own 10px tiny bar. */}
+					<ProgressBar
+						className="gz-rtt-shot-progress gz-rtt-mb-1"
+						value={percentage}
+						status={progressStatus(percentage)}
+						height="5px"
+						style={{ background: 'var(--gauzy-card-2)' }}
+					/>
 					<div className="gz-rtt-activity-count gz-rtt-hour-label">
 						{percentage}% of {durationMinutesLabel(slot.duration)} {t('ACTIVITY.MINUTES')}
 					</div>
