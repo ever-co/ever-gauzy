@@ -8,7 +8,7 @@
  * doubled at the module boundary, and **the service under test is the real one**.
  */
 
-/** The organization boundary the base reports; none unless a test confines the caller (the base's own suite proves it). */
+/** The organization boundary the base reports: none, unless a test confines the caller. */
 let boundary: { organizationId: string | null } | null = null;
 
 jest.mock('@gauzy/core', () => {
@@ -176,7 +176,7 @@ function repository(tables: Record<string, Row[]>) {
 		return tables[table];
 	};
 	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
-	/** Whether a value satisfies what a `where` states of it: a value, or the operators the organization boundary uses. */
+	/** Whether a value satisfies what a `where` states of it: a value, or an operator the boundary is stated with. */
 	const satisfies = (value: unknown, expected: any): boolean => {
 		if (expected && typeof expected === 'object' && 'type' in expected) {
 			switch (expected.type) {
