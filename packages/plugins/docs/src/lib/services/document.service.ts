@@ -243,6 +243,20 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
+	 * Whether the requester may READ the given row (§3.4: visibility OR ownership OR `DOCS_MANAGE` OR a share grant),
+	 * for rows loaded past `findOneScoped`, such as the descendants a subtree operation walks.
+	 *
+	 * @param document The document row.
+	 * @returns True when the requester may read it.
+	 */
+	public canRead(document: Document): Promise<boolean> {
+		return this.documentAccessService.canRead(
+			{ createdByUserId: document.createdByUserId, visibility: document.visibility },
+			document.id
+		);
+	}
+
+	/**
 	 * Asserts that the requester may MUTATE the given row (§1.6 ownership + the `EDIT` share
 	 * level). The route guard only proves the verb permission — this adds the row-level half,
 	 * so a `VIEW`/`COMMENT` grantee can read a shared document but never write it.

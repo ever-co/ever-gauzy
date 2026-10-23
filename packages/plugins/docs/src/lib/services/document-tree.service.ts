@@ -198,18 +198,24 @@ export class DocumentTreeService {
 	 * Versions, comments, shares, links, and knowledge state are **not** copied — the copy
 	 * starts `knowledgeStatus: NONE`, `reviewStatus: NONE`.
 	 *
+	 * A deep copy takes only the descendants the caller may read, and nothing below one it may not: every copy is
+	 * created by the caller, so a descendant it cannot read (someone's PRIVATE page in an organization folder) would
+	 * otherwise come back as the caller's own document, content, extracted text and stored file included.
+	 *
 	 * @param document The source node.
 	 * @param options `deep` copies the subtree; `parentId`/`name` override the target.
+	 * @param isReadable Whether the caller may read a descendant (the documents' read rule, shares included).
 	 * @returns The new root node of the copy.
 	 */
 	async duplicateDocument(
 		document: Document,
-		options: { deep?: boolean; parentId?: ID; name?: string } = {}
+		options: { deep?: boolean; parentId?: ID; name?: string } = {},
+		isReadable: (descendant: Document) => Promise<boolean> = async () => false
 	): Promise<Document> {
 		const copyRoot = await this.copyNode(document, options.parentId ?? document.parentId ?? null, options.name);
 
 		if (options.deep) {
-			await this.copyChildrenRecursive(document, copyRoot);
+			await this.copyChildrenRecursive(document, copyRoot, isReadable);
 		}
 
 		return copyRoot;
@@ -439,16 +445,24 @@ export class DocumentTreeService {
 	}
 
 	/**
-	 * Breadth-first deep copy of the children of `source` under `target`.
+	 * Depth-first deep copy of the children of `source` under `target`, skipping every child the caller may not read
+	 * together with its subtree.
 	 */
-	private async copyChildrenRecursive(source: Document, target: Document): Promise<void> {
+	private async copyChildrenRecursive(
+		source: Document,
+		target: Document,
+		isReadable: (descendant: Document) => Promise<boolean>
+	): Promise<void> {
 		const children = await this.typeOrmDocumentRepository.find({
 			where: { parentId: source.id, tenantId: source.tenantId, organizationId: source.organizationId },
 			order: { index: 'ASC' }
 		});
 		for (const child of children) {
+			if (!(await isReadable(child))) {
+				continue;
+			}
 			const childCopy = await this.copyNode(child, target.id, child.name);
-			await this.copyChildrenRecursive(child, childCopy);
+			await this.copyChildrenRecursive(child, childCopy, isReadable);
 		}
 	}
 
