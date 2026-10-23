@@ -81,6 +81,21 @@ const sorted = (rows: GrantRow[]) =>
 const allOn = (tenantId: string, roleId: string): GrantRow[] =>
 	GRANTS.map((permission) => ({ tenantId, roleId, permission, enabled: 1 }));
 
+describe('DEFAULT_ROLE_PERMISSIONS — a new tenant gets the same three grants', () => {
+	it('lists the three grants as the defaults of SUPER_ADMIN, ADMIN and MANAGER, so a new tenant gets the same', () => {
+		const holders = (permission: PermissionsEnum) =>
+			DEFAULT_ROLE_PERMISSIONS.filter(({ defaultEnabledPermissions }) =>
+				defaultEnabledPermissions.includes(permission)
+			)
+				.map(({ role }) => role)
+				.sort();
+
+		for (const permission of GRANTS as PermissionsEnum[]) {
+			expect(holders(permission)).toEqual(['ADMIN', 'MANAGER', 'SUPER_ADMIN']);
+		}
+	});
+});
+
 describe('GrantGoalsSkillsEventTypesEditPermissions1791000000821 — the new write grants go to administrators and managers', () => {
 	let dataSource: DataSource;
 	let dbPath: string;
@@ -136,19 +151,6 @@ describe('GrantGoalsSkillsEventTypesEditPermissions1791000000821 — the new wri
 			await dataSource.destroy();
 		}
 		fs.rmSync(dbPath, { force: true });
-	});
-
-	it('lists the three grants as the defaults of SUPER_ADMIN, ADMIN and MANAGER, so a new tenant gets the same', () => {
-		const holders = (permission: PermissionsEnum) =>
-			DEFAULT_ROLE_PERMISSIONS.filter(({ defaultEnabledPermissions }) =>
-				defaultEnabledPermissions.includes(permission)
-			)
-				.map(({ role }) => role)
-				.sort();
-
-		for (const permission of GRANTS as PermissionsEnum[]) {
-			expect(holders(permission)).toEqual(['ADMIN', 'MANAGER', 'SUPER_ADMIN']);
-		}
 	});
 
 	it('grants the three, switched on, to every live SUPER_ADMIN, ADMIN and MANAGER role in its own tenant, and to nobody else', async () => {
