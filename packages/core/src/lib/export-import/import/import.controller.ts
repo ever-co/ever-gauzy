@@ -13,9 +13,13 @@ import { ImportHistoryCreateCommand } from '../import-history';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'node:path';
 
+/**
+ * 🛑 Granted by `IMPORT_ADD` alone. An import writes rows into every table of the tenant, which is the import
+ * capability; `ALL_ORG_EDIT`, which used to grant it too (`@Permissions` is any-of), edits organizations.
+ */
 @ApiTags('Import')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.IMPORT_ADD)
+@Permissions(PermissionsEnum.IMPORT_ADD)
 @Controller('/import')
 export class ImportController {
 	private readonly logger = new Logger(ImportController.name);
