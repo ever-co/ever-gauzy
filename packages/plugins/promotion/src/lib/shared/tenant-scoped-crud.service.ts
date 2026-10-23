@@ -59,15 +59,10 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	}
 
 	/**
-	 * The scope a *statement* can carry.
+	 * The tenant a *statement* is predicated on.
 	 *
-	 * The tenant, and deliberately not the organization. That is the boundary `TenantAwareCrudService`
-	 * predicates every one of its writes on, and it is the boundary that was breached: a caller of one
-	 * tenant could address a row of another. An organization is a narrower scope *inside* a tenant, and
-	 * a caller legitimately works across several of them — each of these services already narrows its
-	 * own reads to `{ tenantId, organizationId }` through `scope`, and the route that reads a row back
-	 * after writing it is where an organization mismatch is answered. Putting it in the statement as
-	 * well would turn an edit of a sibling organization's row into a silent no-op.
+	 * That is the boundary `TenantAwareCrudService` predicates every one of its writes on. The organization is
+	 * added by {@link readScope}, which {@link update}, {@link delete} and {@link softDelete} merge in beside it.
 	 *
 	 * Only the conditions that are present: a write made with no caller in context — a seeder, a job,
 	 * a migration — has no tenant to be scoped by, and predicating its statement on an absent one
@@ -85,11 +80,9 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	 * The scope a *read by identifier* is narrowed to.
 	 *
 	 * The tenant and the organization — the whole of {@link scope}, which is what every hand-written read
-	 * of these services already states. Unlike {@link writeScope}, the organization belongs here: this is
-	 * the read that answers "is this row the caller's", and the reasoning `writeScope` gives for leaving
-	 * the organization out of a statement is that the *read* is where an organization mismatch is
-	 * answered. A read that left it out would let a withdrawal reach a sibling organization's row that no
-	 * other read of these services would show the caller.
+	 * of these services already states. The organization belongs here: this is
+	 * the read that answers "is this row the caller's". A read that left it out would let a withdrawal reach
+	 * a sibling organization's row that no other read of these services would show the caller.
 	 *
 	 * Only the conditions that are present, for the reason `writeScope` states: a read made with no caller
 	 * in context has nothing to be narrowed by, and a condition on an absent value would match nothing on
@@ -173,8 +166,8 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	 * `/pagination?where[code]=…` and `/count` were cross-tenant oracles. Each is narrowed to the caller's tenant and
 	 * organization ({@link readScope}, spread last, so a stated `where` cannot widen it), as the reads by
 	 * identifier above and the GraphQL lists already are. The single-row reads by options are left as they are:
-	 * `update` predicates its pre-read on the tenant alone, on purpose (see {@link writeScope}); `delete` and
-	 * `softDelete` predicate theirs on the tenant and the organization (review R2-G26, see {@link delete}).
+	 * `update`, `delete` and `softDelete` predicate theirs on the tenant and the organization (see {@link update}
+	 * and {@link delete}).
 	 */
 
 	/** `GET ''`: the caller's rows. */
@@ -205,7 +198,15 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	}
 
 	/**
-	 * Writes the fields a caller changed onto a row of the caller's own tenant.
+	 * Writes the fields a caller changed onto a row of the caller's own tenant and organization.
+	 *
+	 * **The organization is part of the scope, as for {@link delete}.** The pre-read and the statement carried the
+	 * tenant alone, so `PUT /coupons/:id`, `/gift-cards/:id`, `/promotion-usages/:id` (and every other update of
+	 * this package) wrote a sibling organization's row of the caller's tenant — a coupon's discount, a gift card's
+	 * PIN or customer — and the scoped read-back that followed answered 404 only after the write had landed. Both
+	 * now carry {@link readScope}: a row outside the caller's organization is the platform's 404 and nothing is
+	 * written. With no organization in context (a job, a tenant-level caller) the write is narrowed by what is
+	 * present, as every read of this package is.
 	 *
 	 * @param id The row's identifier, or the conditions it must satisfy.
 	 * @param partialEntity The columns to write.
@@ -217,7 +218,7 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<UpdateResult | T> {
 		const criteria = this.criteriaOf(id);
-		const scoped = { ...criteria, ...this.writeScope } as FindOptionsWhere<T>;
+		const scoped = { ...criteria, ...this.writeScope, ...this.readScope } as FindOptionsWhere<T>;
 
 		if (!('version' in criteria)) {
 			await this.findOneByWhereOptions(scoped);
@@ -243,8 +244,8 @@ export abstract class TenantScopedCrudService<T extends BaseEntity> extends Crud
 	/**
 	 * Deletes a row of the caller's own tenant and organization.
 	 *
-	 * **The organization is part of the scope here (review R2-G26).** The tenant alone was the boundary, as for
-	 * {@link update}, so `DELETE /promotions/:id`, `/coupons/:id`, `/campaigns/:id` (and every other inherited
+	 * **The organization is part of the scope here (review R2-G26).** The tenant alone was the boundary, so
+	 * `DELETE /promotions/:id`, `/coupons/:id`, `/campaigns/:id` (and every other inherited
 	 * hard delete of this package) destroyed a row of a sibling organization of the caller's tenant — a row no read
 	 * of these services shows the caller, and one the GraphQL `delete<Resource>` fields refuse, because they read the
 	 * row through the scoped finder first. A delete has no read-back that could answer the mismatch, and nothing to

@@ -459,6 +459,47 @@ describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s
 		expect(own.organizationId).toBe(ORG);
 		expect(own.code).toBe('SPRING');
 	});
+
+	it('refuses to update a row of a sibling organization of the caller’s tenant, and writes nothing', async () => {
+		// The failure scenario: `PUT /coupons/:id` with a sibling organization's coupon id wrote the coupon, and the
+		// scoped read-back answered 404 only after the write had landed.
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.update(FOREIGN_ORG, { code: 'SPRING' } as any)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(
+			service.update({ id: FOREIGN_ORG, organizationId: OTHER_ORG } as any, { code: 'SPRING' } as any)
+		).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(find(rows, FOREIGN_ORG).code).toBeUndefined();
+		expect(writes).toEqual([]);
+	});
+
+	it('keeps a conditional write of a sibling organization’s row from matching it', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+		find(rows, FOREIGN_ORG).version = 1;
+
+		// A criterion naming a `version` skips the pre-read, so the statement's own conditions are what refuse it.
+		await service.update({ id: FOREIGN_ORG, version: 1 } as any, { code: 'SPRING' } as any);
+
+		expect(find(rows, FOREIGN_ORG).code).toBeUndefined();
+		expect(writes).toEqual([]);
+	});
+
+	it('still updates the row a job names when no organization is in context', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as any);
+
+		const rows = table();
+		const { typeOrm, mikroOrm } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.update(FOREIGN_ORG, { code: 'SPRING' } as any);
+
+		expect(find(rows, FOREIGN_ORG).code).toBe('SPRING');
+	});
 });
 
 /**
