@@ -5,17 +5,13 @@ import {
 	IEmployeeStatisticsHistory,
 	ID
 } from '@gauzy/contracts';
-import { BadRequestException, Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { isUUID } from 'class-validator';
 import { EmployeeService } from './../employee/employee.service';
 import { TypeOrmEmployeeRepository } from './../employee/repository/type-orm-employee.repository';
-import {
-	assertCurrentUserBelongsToOrganization,
-	assertCurrentUserBelongsToSentOrganization,
-	isSent
-} from './../user-organization/assert-organization-membership';
+import { assertCurrentUserBelongsToSentOrganization } from './../user-organization/assert-organization-membership';
+import { assertStatisticsReadInScope } from './employee-statistics-scope';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -80,6 +76,11 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
 		const { findInput } = data;
+
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, {
+			employeeId: id
+		});
+
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
 	}
 
@@ -101,6 +102,9 @@ export class EmployeeStatisticsController {
 	async findAggregatedStatisticsByEmployeeId(
 		@Query() options: EmployeeAggregatedStatisticByMonthQueryDTO
 	): Promise<IMonthAggregatedEmployeeStatistics> {
+		// The query states no organization, so the reads reach the employee in whichever organization it is.
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, options);
+
 		return await this.queryBus.execute(new MonthAggregatedEmployeeStatisticsQuery(options));
 	}
 
@@ -122,19 +126,9 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = data;
-		const { manager } = this.typeOrmEmployeeRepository;
-		await assertCurrentUserBelongsToSentOrganization(manager, findInput?.organizationId);
 
-		// Without an organization the income and expense reads drop that filter and reach the employee in
-		// whichever organization it belongs to, so that organization is the one checked. An employee is then
-		// required: without one the split expense reads look up the tenant's first employee instead
-		if (!isSent(findInput?.organizationId)) {
-			if (!isUUID(findInput?.employeeId)) {
-				throw new BadRequestException('employeeId must be a UUID');
-			}
-			const employee = await this.employeeService.findOneByIdString(findInput.employeeId);
-			await assertCurrentUserBelongsToOrganization(manager, employee.organizationId);
-		}
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, findInput);
+
 		return this.queryBus.execute(new EmployeeStatisticsHistoryQuery(findInput));
 	}
 }
