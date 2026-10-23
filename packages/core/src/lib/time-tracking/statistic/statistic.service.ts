@@ -141,6 +141,26 @@ function excludeSoftDeleted(qb: { whereNull(column: string): unknown }, ...alias
 	}
 }
 
+/**
+ * Reads the rows of a raw knex query, whose result shape depends on the driver: PostgreSQL returns `{ rows }`,
+ * MySQL returns `[rows, fields]` and SQLite returns the rows themselves.
+ */
+function readKnexRawRows(result: unknown, dbType: DatabaseTypeEnum): unknown[] {
+	const isPostgresResult = dbType === DatabaseTypeEnum.postgres;
+	if (isPostgresResult) {
+		const postgresResult = result as { rows?: unknown[] } | null | undefined;
+		return postgresResult?.rows || [];
+	}
+	if (!Array.isArray(result)) {
+		return [];
+	}
+	const isMysqlResult = dbType === DatabaseTypeEnum.mysql;
+	if (isMysqlResult) {
+		return result[0] || [];
+	}
+	return result;
+}
+
 @Injectable()
 export class StatisticService {
 	private readonly logger = new Logger(StatisticService.name);
@@ -2186,7 +2206,9 @@ export class StatisticService {
 					}
 					debugInDevelopment(this.logger, () => `${sq.toString()} || Get Total Duration Query MikroORM`);
 					// Execute the raw SQL query and get the results
-					[totalDuration] = (await knex.raw(sq.toString())).rows || [];
+					const totalDurationResult = await knex.raw(sq.toString());
+					const totalDurationRows = readKnexRawRows(totalDurationResult, dbType);
+					[totalDuration] = totalDurationRows;
 				}
 
 				break;
@@ -2478,7 +2500,8 @@ export class StatisticService {
 				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
 				debugInDevelopment(this.logger, () => `${sq.toString()} || Get ${durationAlias} Query MikroORM`);
 				// Execute the raw SQL query and get the results
-				return (await knex.raw(sq.toString())).rows || [];
+				const rawResult = await knex.raw(sq.toString());
+				return readKnexRawRows(rawResult, dbType);
 			}
 
 			case MultiORMEnum.TypeORM: {
