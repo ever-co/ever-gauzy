@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@gauzy/core';
+import { Employee, User } from '@gauzy/core';
 import { OAuthUserService } from './oauth-user.service';
 
 /**
@@ -10,8 +10,8 @@ import { OAuthUserService } from './oauth-user.service';
  */
 @Module({
 	imports: [
-		// Register User entity with TypeORM only
-		TypeOrmModule.forFeature([User])
+		// Register the User entity, and the Employee entity whose status also gates sign-in, with TypeORM only
+		TypeOrmModule.forFeature([User, Employee])
 	],
 	providers: [
 		OAuthUserService
