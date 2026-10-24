@@ -254,6 +254,12 @@ function datastore(tables: Record<string, Row[]>, options: { contention?: IConte
 					case 'isNull':
 						return value === null || value === undefined;
 					case 'not':
+						// `Not(In([...]))` is how the expiry sweep leaves out the holds it could not close.
+						// TypeORM unwraps a nested operator's value, so the set arrives here as the array itself.
+						if (Array.isArray(expected.value)) {
+							return !(expected.value as unknown[]).some((candidate) => same(value, candidate));
+						}
+
 						return !same(value, expected.value);
 					default:
 						throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
@@ -1099,10 +1105,11 @@ describe('StockReservationService — releasing, expiring and re-pointing (INV-0
 		}
 	});
 
-	it('stops a sweep that closed nothing rather than re-reading the same batch until its budget is gone', async () => {
+	it('tries a hold it could not close once per sweep, so its budget is not spent re-reading it', async () => {
 		// A hold that fails to close stays `ACTIVE` and expired, so a walk that stopped only on a short batch
 		// would read the same rows again on every pass and spend its whole budget doing so, reporting
-		// `released: 0` with nothing saying why. A batch that closed nothing ends the walk.
+		// `released: 0` with nothing saying why. A hold the walk could not close is set aside for the rest of
+		// the walk instead, so each hold is tried once and the walk ends when nothing untried is left.
 		jest.useFakeTimers({ now: AT });
 
 		try {
@@ -1119,20 +1126,66 @@ describe('StockReservationService — releasing, expiring and re-pointing (INV-0
 				.mockRejectedValue(new Error('the level could not take the release'));
 
 			try {
-				// One row per batch and a budget of five, so a walk without the progress check would read the
+				// One row per batch and a budget of five, so a walk that re-read a failed hold would try the
 				// same row five times over: a full batch is never a short one.
 				const swept = await fixture.service.releaseExpired(1, 5);
 
-				expect(swept).toEqual({ released: 0, batches: 1 });
+				expect(swept).toEqual({ released: 0, batches: 2 });
+				expect(refused).toHaveBeenCalledTimes(2);
 			} finally {
 				refused.mockRestore();
 			}
 
-			// The holds are exactly as they were: a sweep that could close nothing has changed nothing.
+			// The holds are exactly as they were: a sweep that could close nothing has changed nothing, and
+			// both are still expired and `ACTIVE`, so the next sweep tries them again.
 			expect(
 				fixture.store.reservations().filter((row) => row.status === StockReservationStatus.ACTIVE)
 			).toHaveLength(2);
 			expect(fixture.store.level()).toMatchObject({ reservedQuantity: 2 });
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('releases a later expired hold although an earlier one cannot be closed', async () => {
+		// The batch is read oldest expiry first, so a hold that keeps failing is at the head of every read.
+		// Stopping on a batch that closed nothing would leave every expired hold behind it reserved, on every
+		// sweep, for as long as that one hold kept failing. One hold per batch makes that the whole batch.
+		jest.useFakeTimers({ now: AT });
+
+		try {
+			const fixture = reservationFixture({ quantity: 100 });
+			const stuck = await fixture.service.reserve(
+				hold({ quantity: 1, expiresAt: new Date(AT.getTime() - 2 * MINUTE) }) as never
+			);
+			const closable = await fixture.service.reserve(
+				hold({ quantity: 1, referenceId: 'order-2', expiresAt: new Date(AT.getTime() - MINUTE) }) as never
+			);
+
+			const closer = fixture.service as unknown as { close: (...args: unknown[]) => Promise<unknown> };
+			const realClose = closer.close.bind(fixture.service);
+			const refused = jest
+				.spyOn(closer, 'close')
+				.mockImplementation((id: unknown, ...rest: unknown[]) =>
+					id === stuck.id
+						? Promise.reject(new Error('the level could not take the release'))
+						: realClose(id, ...rest)
+				);
+
+			try {
+				const swept = await fixture.service.releaseExpired(1, 5);
+
+				expect(swept).toEqual({ released: 1, batches: 2 });
+			} finally {
+				refused.mockRestore();
+			}
+
+			const statusOf = (id: unknown) => fixture.store.reservations().find((row) => row.id === id)?.status;
+
+			expect(statusOf(stuck.id)).toBe(StockReservationStatus.ACTIVE);
+			expect(statusOf(closable.id)).toBe(StockReservationStatus.EXPIRED);
+			// INV-03: the level still holds exactly what the one `ACTIVE` hold holds.
+			expect(fixture.store.level()).toMatchObject({ reservedQuantity: 1 });
 		} finally {
 			jest.useRealTimers();
 		}
