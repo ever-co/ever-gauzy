@@ -17,14 +17,13 @@ jest.mock('@opentelemetry/sdk-trace-base', () => ({
 	ConsoleSpanExporter: jest.fn(),
 	SimpleSpanProcessor: jest.fn()
 }));
-jest.mock('@honeycombio/opentelemetry-node', () => ({ HoneycombSDK: jest.fn() }));
 jest.mock('@opentelemetry/api', () => ({
 	diag: { setLogger: jest.fn() },
 	DiagConsoleLogger: jest.fn(),
 	DiagLogLevel: { DEBUG: 'DEBUG' }
 }));
 jest.mock('@opentelemetry/exporter-zipkin', () => ({ ZipkinExporter: jest.fn() }));
-jest.mock('opentelemetry-instrumentation-typeorm', () => ({ TypeormInstrumentation: jest.fn() }));
+jest.mock('@opentelemetry/instrumentation-typeorm', () => ({ TypeormInstrumentation: jest.fn() }));
 jest.mock('@opentelemetry/sdk-trace-node', () => ({
 	NodeTracerProvider: jest.fn(() => ({ register: jest.fn(), addSpanProcessor: jest.fn(), shutdown: jest.fn() }))
 }));
@@ -60,13 +59,11 @@ describe('tracer boot logging', () => {
 	/** Imports the tracer in a fresh module registry, so its import-time configuration runs again. */
 	const loadTracer = () => {
 		let otlpHttpExporter: jest.Mock;
-		let honeycombSdk: jest.Mock;
 		jest.isolateModules(() => {
 			require('./tracer');
 			otlpHttpExporter = require('@opentelemetry/exporter-trace-otlp-http').OTLPTraceExporter;
-			honeycombSdk = require('@honeycombio/opentelemetry-node').HoneycombSDK;
 		});
-		return { otlpHttpExporter, honeycombSdk };
+		return { otlpHttpExporter };
 	};
 
 	it('never logs the Honeycomb API key, the OTLP header values or endpoint credentials', () => {
@@ -75,22 +72,19 @@ describe('tracer boot logging', () => {
 		const ENDPOINT_PASSWORD = 'dummy-endpoint-password';
 		process.env.OTEL_ENABLED = 'true';
 		process.env.OTEL_PROVIDER = 'honeycomb';
-		// The end-of-life Honeycomb distro still receives the key when it is explicitly opted into.
-		process.env.OTEL_HONEYCOMB_DISTRO = 'true';
 		process.env.HONEYCOMB_API_KEY = API_KEY;
 		process.env.OTEL_EXPORTER_OTLP_HEADERS = `x-honeycomb-team=${HEADER_KEY}`;
 		process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = `https://collector:${ENDPOINT_PASSWORD}@otel.example.com/v1/traces`;
 
-		const { otlpHttpExporter, honeycombSdk } = loadTracer();
+		const { otlpHttpExporter } = loadTracer();
 
-		// The exporter and SDK still receive the real key and endpoint - only the log output changes.
+		// The exporter still receives the real key and endpoint - only the log output changes.
 		expect(otlpHttpExporter).toHaveBeenCalledWith(
 			expect.objectContaining({
 				url: `https://collector:${ENDPOINT_PASSWORD}@otel.example.com/v1/traces`,
 				headers: { 'x-honeycomb-team': API_KEY }
 			})
 		);
-		expect(honeycombSdk).toHaveBeenCalledWith(expect.objectContaining({ apiKey: API_KEY }));
 
 		// Control: the diagnostic lines are still emitted, so the absence checks below are meaningful.
 		expect(logs.lines).toContain('Using Honeycomb API Key: ***');
@@ -103,22 +97,24 @@ describe('tracer boot logging', () => {
 		expect(output).not.toContain(ENDPOINT_PASSWORD);
 	});
 
-	it('serves Honeycomb through the standard OTLP provider unless the distro is opted into', () => {
+	it('serves Honeycomb through the standard OTLP provider, also when the former distro opt-in is set', () => {
 		process.env.OTEL_ENABLED = 'true';
 		process.env.OTEL_PROVIDER = 'honeycomb';
 		process.env.HONEYCOMB_API_KEY = 'dummy-honeycomb-api-key';
+		// The end-of-life Honeycomb distro is no longer a dependency: its opt-in only logs a warning.
+		process.env.OTEL_HONEYCOMB_DISTRO = 'true';
 
 		let provider: jest.Mock;
-		let honeycombSdk: jest.Mock;
 		jest.isolateModules(() => {
 			require('./tracer');
 			provider = require('@opentelemetry/sdk-trace-node').NodeTracerProvider;
-			honeycombSdk = require('@honeycombio/opentelemetry-node').HoneycombSDK;
 		});
 
 		// OpenTelemetry 2.x: the span processor is handed to the provider at construction.
 		expect(provider).toHaveBeenCalledWith(expect.objectContaining({ spanProcessors: [expect.anything()] }));
-		expect(honeycombSdk).not.toHaveBeenCalled();
+		expect(logs.lines).toContain(
+			'OTEL_HONEYCOMB_DISTRO is no longer supported: the Honeycomb distro was replaced by the standard OTLP exporter.'
+		);
 	});
 
 	it('logs the SigNoz ingestion header by name only and keeps a credential-free URL as-is', () => {

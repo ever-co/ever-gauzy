@@ -16,10 +16,9 @@ import {
 	SimpleSpanProcessor,
 	SpanExporter
 } from '@opentelemetry/sdk-trace-base';
-import { HoneycombOptions, HoneycombSDK } from '@honeycombio/opentelemetry-node';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
-import { TypeormInstrumentation } from 'opentelemetry-instrumentation-typeorm';
+import { TypeormInstrumentation } from '@opentelemetry/instrumentation-typeorm';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
@@ -31,7 +30,6 @@ const isConsole = false; // Set to true to use console exporter only (for debugg
 const isAuto = true; // Set to true to use auto-instrumentations
 
 let provider: NodeTracerProvider;
-let honeycombSDK: HoneycombSDK;
 
 let instrumentations: any[];
 
@@ -241,73 +239,42 @@ if (process.env.OTEL_ENABLED === 'true') {
 	// OpenTelemetry 2.x: a provider takes its span processors and resource at construction (`addSpanProcessor`
 	// and the `Resource` class are gone), so it is built here, once the processor exists.
 	//
-	// `@honeycombio/opentelemetry-node` is end-of-life and bundles its own OpenTelemetry 1.x SDK, which cannot
-	// drive a 2.x span processor. Honeycomb is therefore served like every other provider: the OTLP exporter
-	// configured above already sends to Honeycomb with the `x-honeycomb-team` header. The distro path is kept
-	// behind `OTEL_HONEYCOMB_DISTRO=true` for a deployment that still pins OpenTelemetry 1.x.
-	const useHoneycombDistro = process.env.OTEL_PROVIDER === 'honeycomb' && process.env.OTEL_HONEYCOMB_DISTRO === 'true';
-
-	if (!useHoneycombDistro) {
-		provider = new NodeTracerProvider({
-			resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: serviceName }),
-			spanProcessors: isConsole ? [new SimpleSpanProcessor(new ConsoleSpanExporter())] : [spanProcessor]
-		});
-
-		provider.register();
+	// Honeycomb is served like every other provider: the OTLP exporter configured above sends to Honeycomb with the
+	// `x-honeycomb-team` header. The end-of-life `@honeycombio/opentelemetry-node` distro (it bundled its own
+	// OpenTelemetry 1.x SDK and could not drive a 2.x span processor) is no longer a dependency, so the former
+	// `OTEL_HONEYCOMB_DISTRO=true` opt-in only logs that the standard OTLP path is used.
+	if (process.env.OTEL_PROVIDER === 'honeycomb' && process.env.OTEL_HONEYCOMB_DISTRO === 'true') {
+		console.warn(
+			'OTEL_HONEYCOMB_DISTRO is no longer supported: the Honeycomb distro was replaced by the standard OTLP exporter.'
+		);
 	}
 
-	if (useHoneycombDistro) {
-		if (process.env.HONEYCOMB_API_KEY) {
-			/*
-			const metricReader = new PeriodicExportingMetricReader({
-					exporter: new ConsoleMetricExporter()
-			});
-			*/
+	provider = new NodeTracerProvider({
+		resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: serviceName }),
+		spanProcessors: isConsole ? [new SimpleSpanProcessor(new ConsoleSpanExporter())] : [spanProcessor]
+	});
 
-			const params: HoneycombOptions = {
-				apiKey: process.env.HONEYCOMB_API_KEY,
-				serviceName: serviceName,
-				instrumentations: instrumentations,
-				// metricReader: metricReader,
-				localVisualizations:
-					process.env.NODE_ENV === 'development' ||
-					process.env.HONEYCOMB_ENABLE_LOCAL_VISUALIZATIONS === 'true'
-			};
+	provider.register();
 
-			if (isConsole) {
-				// The distro is typed against its own OpenTelemetry 1.x copy.
-				params.traceExporter = new ConsoleSpanExporter() as unknown as HoneycombOptions['traceExporter'];
-			} else {
-				params.spanProcessor = spanProcessor;
-			}
+	/*
+	const metricReader = new PeriodicExportingMetricReader({
+		exporter: new ConsoleMetricExporter()
+	});
+	*/
 
-			honeycombSDK = new HoneycombSDK(params);
+	const params: Partial<NodeSDKConfiguration> = {
+		serviceName: serviceName,
+		// metricReader: metricReader,
+		instrumentations: instrumentations
+	};
 
-			console.log('Tracing SDK initialized for Honeycomb');
-		} else {
-			console.warn('Honeycomb API Key is not set');
-		}
+	if (isConsole) {
+		params.traceExporter = new ConsoleSpanExporter();
 	} else {
-		/*
-		const metricReader = new PeriodicExportingMetricReader({
-			exporter: new ConsoleMetricExporter()
-		});
-		*/
-
-		const params: Partial<NodeSDKConfiguration> = {
-			serviceName: serviceName,
-			// metricReader: metricReader,
-			instrumentations: instrumentations
-		};
-
-		if (isConsole) {
-			params.traceExporter = new ConsoleSpanExporter();
-		} else {
-			params.spanProcessor = spanProcessor;
-		}
-
-		console.log('Tracing SDK initialized');
+		params.spanProcessor = spanProcessor;
 	}
+
+	console.log('Tracing SDK initialized');
 }
 
 export default {
@@ -318,16 +285,11 @@ export default {
 					instrumentations: instrumentations
 				});
 			}
-
-			if (honeycombSDK) {
-				honeycombSDK.start();
-			}
 		}
 	},
 	shutdown: async () => {
 		if (process.env.OTEL_ENABLED === 'true') {
 			await provider?.shutdown();
-			await honeycombSDK?.shutdown();
 		}
 	}
 };
