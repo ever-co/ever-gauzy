@@ -200,6 +200,21 @@ $weight-medium: 500;
   overflow-wrap: anywhere;
 }
 
+// The tile's share bar: dots for a count out of a total, a bar for a percentage. Pushed to the
+// bottom so the bars line up across the row whatever the caption wraps to.
+.summary-counter {
+  display: block;
+  margin-top: auto;
+  padding-top: 0.375rem;
+
+  // Slimmer than the component's default 6px, to sit with the page's hairline bars.
+  ::ng-deep .counter,
+  ::ng-deep .point,
+  ::ng-deep nb-progress-bar .progress-container {
+    height: 4px;
+  }
+}
+
 /* ── Progress bars ───────────────────────────────────────────────────────── */
 
 .table-scroll {

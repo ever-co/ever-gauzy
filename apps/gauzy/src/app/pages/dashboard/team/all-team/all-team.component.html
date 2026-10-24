@@ -5,11 +5,15 @@
 		<span class="kpi-meta">
 			{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate: { value: formatPercent(overview?.activity) } }}
 		</span>
+		<gauzy-counter-point class="summary-counter" [progress]="true" [value]="overview?.activity || 0"></gauzy-counter-point>
 	</div>
 	<div class="kpi">
 		<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TEAMS_ACTIVE' | translate }}</span>
 		<span class="kpi-value">{{ overview?.teamsWorked || 0 }}</span>
 		<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_TEAMS' | translate: { total: teams.length } }}</span>
+		@if (teams.length > 0) {
+		<gauzy-counter-point class="summary-counter" [total]="teams.length" [value]="overview?.teamsWorked || 0"></gauzy-counter-point>
+		}
 	</div>
 	<div class="kpi">
 		<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.MEMBERS_WORKED' | translate }}</span>
@@ -17,11 +21,21 @@
 		<span class="kpi-meta">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS_META' | translate: { total: overview?.membersTotal || 0 } }}
 		</span>
+		@if (overview?.membersTotal > 0) {
+		<gauzy-counter-point
+			class="summary-counter"
+			[total]="overview.membersTotal"
+			[value]="overview.membersWorked || 0"
+		></gauzy-counter-point>
+		}
 	</div>
 	<div class="kpi">
 		<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
 		<span class="kpi-value">{{ overview?.projectsWorked || 0 }}</span>
 		<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_PROJECTS' | translate: { total: projectCount } }}</span>
+		@if (projectCount > 0) {
+		<gauzy-counter-point class="summary-counter" [total]="projectCount" [value]="overview?.projectsWorked || 0"></gauzy-counter-point>
+		}
 	</div>
 </section>
 
