@@ -1,6 +1,7 @@
-import { Injectable, ConflictException } from '@nestjs/common';
-import type { Collection } from '@mikro-orm/core';
-import { Brackets, FindManyOptions, In } from 'typeorm';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { LockMode, raw } from '@mikro-orm/core';
+import type { Collection, EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
+import { Brackets, EntityManager, FindManyOptions, In } from 'typeorm';
 import { isUUID } from 'class-validator';
 import {
 	IRequestApproval,
@@ -13,12 +14,19 @@ import {
 	IEmployee,
 	IRequestApprovalTeam,
 	ID,
-	RolesEnum
+	RolesEnum,
+	StatusTypesEnum
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { RequestContext } from '../core/context';
-import { RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
+import {
+	EquipmentSharing,
+	OrganizationTeamEmployee,
+	RequestApprovalEmployee,
+	RequestApprovalTeam,
+	TimeOffRequest
+} from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { assertSensitiveRelationsAllowed } from './../core/util/sensitive-relations.helper';
 import { MultiORMEnum, flatten, parseFindOptionsRelations } from './../core/utils';
@@ -33,22 +41,85 @@ import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 import {
 	answerRequestApproval,
+	IEmployeeApproverSlot,
 	IRequestApprovalAnswerOutcome,
 	isDecidedRequestApprovalStatus,
+	ITeamApproverSlot,
 	RequestApprovalVerdict
 } from './request-approval-decision';
 
+/** The two kinds of document a request approval moves when it is decided. */
+export type RequestApprovalLinkedDocumentKind = 'time-off' | 'equipment-sharing';
+
+/** A time-off request or an equipment sharing, as far as moving it goes. */
+export interface IRequestApprovalLinkedDocument {
+	id: ID;
+	organizationId?: ID | null;
+	status?: string | number | null;
+}
+
 /**
- * One caller's answer to a request approval, applied in memory and not yet written: see
- * {@link RequestApprovalService.prepareAnswer} and {@link RequestApprovalService.recordAnswer}.
+ * The reads and writes of one answer to a request approval, all made on one transaction: see
+ * {@link RequestApprovalService.answer}.
+ *
+ * Every member runs on the transaction's own connection, so nothing the answer writes is visible to anybody else
+ * before it commits, and a failure anywhere — a refusal, the linked document's conflict, a lost connection — leaves
+ * the request, its slots and the document as they were. Nothing inside the transaction reads through another
+ * connection either: on PostgreSQL and MySQL that would hold one pooled connection while waiting for a second, and
+ * a burst of answers as large as the pool would wait for each other for good.
  */
-export interface IPreparedRequestApprovalAnswer {
-	/** The request, with the answer applied to it and to the slots it was recorded on. */
+export interface IRequestApprovalAnswerTransaction {
+	/**
+	 * Reads the request again, inside the tenant, holding its row until the transaction ends: `SELECT … FOR UPDATE`
+	 * on PostgreSQL and MySQL. On SQLite there are no row locks and the transaction itself is serialized (see
+	 * {@link RequestApprovalService.answer}).
+	 *
+	 * @returns The request, or null when it is no longer there (or no tenant is known).
+	 */
+	lockRequest(id: ID, tenantId: ID): Promise<RequestApproval | null>;
+	/**
+	 * The request's approver slots, read after the lock, so they carry every answer committed before it was granted
+	 * (on PostgreSQL every statement reads what is committed; on MySQL the snapshot of a transaction's plain reads is
+	 * taken at its first one, which comes after the locking read).
+	 */
+	readSlots(
+		requestApprovalId: ID,
+		tenantId: ID
+	): Promise<{ employeeApprovals: IEmployeeApproverSlot[]; teamApprovals: ITeamApproverSlot[] }>;
+	/** The teams, among `teamIds`, the employee is an active member of, inside the tenant. */
+	readApproverTeams(employeeId: ID, teamIds: ID[], tenantId: ID): Promise<ID[]>;
+	/** Records the answer on the slots named, inside the tenant. */
+	writeSlots(kind: 'employee' | 'team', ids: ID[], tenantId: ID, status: number): Promise<void>;
+	/** Writes the request's own status, inside the tenant. */
+	writeRequestStatus(id: ID, tenantId: ID, status: number): Promise<void>;
+	/** Reads the document a request is about, inside the tenant (withdrawn rows left out), or null. */
+	readLinkedDocument(
+		kind: RequestApprovalLinkedDocumentKind,
+		id: ID,
+		tenantId: ID
+	): Promise<IRequestApprovalLinkedDocument | null>;
+	/**
+	 * Moves a time-off request that is still `REQUESTED` to the status given — a compare-and-set, so a leave its own
+	 * route decided in the meantime is not overwritten.
+	 *
+	 * @returns How many rows moved: 0 when the leave is no longer `REQUESTED` (or not there).
+	 */
+	moveTimeOff(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<number>;
+	/** Writes an equipment sharing's status, inside the tenant. */
+	moveEquipmentSharing(id: ID, tenantId: ID, status: number): Promise<void>;
+}
+
+/**
+ * What a decision that settles a request hands the code that moves the document it is about: see
+ * {@link RequestApprovalService.answer}.
+ */
+export interface IRequestApprovalSettlement {
+	/** The request, as the locked read found it, with the answer applied. */
 	requestApproval: RequestApproval;
-	/** The decision the caller made. */
-	verdict: RequestApprovalVerdict;
-	/** What the answer did. */
+	/** What the answer did; `outcome.status` is the decision the document follows. */
 	outcome: IRequestApprovalAnswerOutcome;
+	/** The answer's transaction: the document is moved on it, in the same commit as the answer. */
+	transaction: IRequestApprovalAnswerTransaction;
 }
 
 @Injectable()
@@ -519,8 +590,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	 * order package's `OrderApprovalAdapter.settle`, which settles the order's open requests).
 	 *
 	 * Not an HTTP path: `PUT /request-approval/{approval,refuse}/:id` used to reach this method for any holder of
-	 * `REQUEST_APPROVAL_EDIT`, with the check below commented out; those routes now go through
-	 * {@link prepareAnswer} / {@link recordAnswer}, which check who is answering.
+	 * `REQUEST_APPROVAL_EDIT`, with the check below commented out; those routes now go through {@link answer}, which
+	 * checks who is answering.
+	 *
+	 * The already-decided check is made on the request read under the answer's row lock, and the status written in
+	 * the same transaction, so an approver's answer committed in the meantime is not overwritten: the settle gets a
+	 * conflict instead, as it would have had it read the request a moment later.
 	 *
 	 * @param id The request.
 	 * @param status The decision.
@@ -532,14 +607,23 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				approvalPolicy: true
 			}
 		});
+		const tenantId = RequestContext.currentTenantId() ?? requestApproval.tenantId;
 
-		if (isDecidedRequestApprovalStatus(requestApproval.status)) {
-			throw new ConflictException('Request Approval is Conflict');
-		}
+		return await this.answerTransaction(async (transaction) => {
+			const locked = await transaction.lockRequest(requestApproval.id, tenantId);
+			if (!locked) {
+				throw new NotFoundException('Request Approval not found');
+			}
 
-		requestApproval.status = status;
+			if (isDecidedRequestApprovalStatus(locked.status)) {
+				throw new ConflictException('Request Approval is Conflict');
+			}
 
-		return this.save(requestApproval);
+			await transaction.writeRequestStatus(requestApproval.id, tenantId, status);
+
+			requestApproval.status = status;
+			return requestApproval;
+		});
 	}
 
 	/**
@@ -551,149 +635,340 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	 * @returns The request, as answered.
 	 */
 	async updateStatusRequestApprovalByEmployeeOrTeam(id: string, status: number): Promise<RequestApproval> {
-		return await this.recordAnswer(await this.prepareAnswer(id, status as RequestApprovalVerdict));
+		return await this.answer(id, status as RequestApprovalVerdict);
 	}
 
 	/**
-	 * Applies the current caller's answer to a request approval in memory, and writes nothing.
+	 * Applies the current caller's answer to a request approval and writes it, in one transaction.
 	 *
-	 * The request is read inside the caller's tenant and organization boundary, with its approver slots. The
-	 * caller answers as a tenant administrator, or as a designated approver — their own employee slot, or an
-	 * approver team they are an active member of — and anybody else is refused; see `request-approval-decision.ts`
-	 * for the rules. Split from {@link recordAnswer} so the caller can check, before anything is written, that a
-	 * decision which settles the request may move the document it is about.
+	 * The request is first read inside the caller's tenant and organization boundary, which is what decides whether
+	 * the caller reaches it at all (404 otherwise). Then, in one transaction:
+	 *
+	 * 1. the request is read again under a row lock (`SELECT … FOR UPDATE` on PostgreSQL and MySQL), and its approver
+	 *    slots after it, so the decision is made on every answer committed before this one;
+	 * 2. the caller answers as a tenant administrator, or as a designated approver — their own employee slot, or an
+	 *    approver team they are an active member of — and anybody else is refused; `min_count` is counted on the
+	 *    locked slots (see `request-approval-decision.ts` for the rules);
+	 * 3. when the answer settles the request, `settle` moves the document it is about on the same transaction;
+	 * 4. the slots the answer was recorded on, and the request's status when it changed, are written.
+	 *
+	 * Two approvers answering at the same time therefore answer one after the other. Without the lock both read the
+	 * request open, and the second write won whatever the first had decided: an approval read before a refusal was
+	 * saved overwrote it, and the linked time-off request or equipment sharing followed whichever document write came
+	 * last — the opposite of the request's own status when the two orders differed. Two approvals of a request that
+	 * needs two each counted one and left it open. Now the second answer sees the first: a request already decided
+	 * is a conflict (or, to a tenant administrator, decided the other way), and the second approval counts both.
+	 *
+	 * On SQLite there are no row locks. TypeORM's transactions there take turns on the database's one connection
+	 * (`embedded-transaction-queue.ts`) and MikroORM's pool has one connection, so the transaction is serialized in
+	 * the process anyway; a second process writing the same file fails on SQLite's own write lock rather than
+	 * overwriting the answer.
 	 *
 	 * @param id The request.
 	 * @param verdict The decision.
-	 * @returns The answer, ready to be written.
+	 * @param settle Moves the document a decision that settles the request is about, on the answer's transaction;
+	 * omitted, no document moves.
+	 * @returns The request, as answered, with its approver slots.
 	 * @throws NotFoundException when the request is not in the caller's scope.
 	 * @throws ForbiddenException when the caller may not answer it.
 	 * @throws ConflictException when it has already been decided.
 	 */
-	async prepareAnswer(id: ID, verdict: RequestApprovalVerdict): Promise<IPreparedRequestApprovalAnswer> {
-		const requestApproval = await this.findOneByIdString(id, {
-			relations: {
-				employeeApprovals: true,
-				teamApprovals: true
-			}
-		});
+	async answer(
+		id: ID,
+		verdict: RequestApprovalVerdict,
+		settle?: (settlement: IRequestApprovalSettlement) => Promise<void>
+	): Promise<RequestApproval> {
+		const scoped = await this.findOneByIdString(id);
+		const tenantId = RequestContext.currentTenantId() ?? scoped.tenantId;
 
 		const user = RequestContext.currentUser();
 		const employeeId = user?.employeeId ?? null;
-		const teamIds = await this.findApproverTeamsOfEmployee(
-			employeeId,
-			(requestApproval.teamApprovals ?? []).map((slot) => slot.teamId)
-		);
+		const isTenantAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
 
-		const outcome = answerRequestApproval(requestApproval, verdict, {
-			userId: user?.id ?? null,
-			employeeId,
-			teamIds,
-			isTenantAdmin: RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
-		});
-
-		return { requestApproval, verdict, outcome };
-	}
-
-	/**
-	 * Writes an answer {@link prepareAnswer} applied: the status of each slot it was recorded on, then the
-	 * request's own status when the answer changed it.
-	 *
-	 * The slots are written by id, inside the caller's tenant, rather than through a cascading save of the request:
-	 * a cascade would write every slot back, and the request's status goes through the tenant-scoped `update()`.
-	 *
-	 * @param answer The prepared answer.
-	 * @returns The request, as answered.
-	 */
-	async recordAnswer(answer: IPreparedRequestApprovalAnswer): Promise<RequestApproval> {
-		const { requestApproval, verdict, outcome } = answer;
-		const tenantId = RequestContext.currentTenantId();
-
-		const employeeSlotIds = outcome.employeeSlots.map((slot) => slot.id).filter((id): id is ID => !!id);
-		const teamSlotIds = outcome.teamSlots.map((slot) => slot.id).filter((id): id is ID => !!id);
-
-		if (tenantId && (employeeSlotIds.length || teamSlotIds.length)) {
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const em = this.mikroOrmRepository.getEntityManager();
-					if (employeeSlotIds.length) {
-						await em.nativeUpdate(
-							RequestApprovalEmployee,
-							{ id: { $in: employeeSlotIds }, tenantId } as any,
-							{ status: verdict } as any
-						);
-					}
-					if (teamSlotIds.length) {
-						await em.nativeUpdate(
-							RequestApprovalTeam,
-							{ id: { $in: teamSlotIds }, tenantId } as any,
-							{ status: verdict } as any
-						);
-					}
-					break;
-				}
-				case MultiORMEnum.TypeORM:
-				default: {
-					const manager = this.typeOrmRepository.manager;
-					if (employeeSlotIds.length) {
-						await manager.update(
-							RequestApprovalEmployee,
-							{ id: In(employeeSlotIds), tenantId },
-							{ status: verdict }
-						);
-					}
-					if (teamSlotIds.length) {
-						await manager.update(
-							RequestApprovalTeam,
-							{ id: In(teamSlotIds), tenantId },
-							{ status: verdict }
-						);
-					}
-					break;
-				}
+		return await this.answerTransaction(async (transaction) => {
+			const requestApproval = await transaction.lockRequest(scoped.id, tenantId);
+			if (!requestApproval) {
+				throw new NotFoundException('Request Approval not found');
 			}
-		}
 
-		if (outcome.status !== outcome.previousStatus) {
-			await this.update(requestApproval.id, { status: outcome.status } as any);
-		}
+			const { employeeApprovals, teamApprovals } = await transaction.readSlots(requestApproval.id, tenantId);
+			requestApproval.employeeApprovals = employeeApprovals as RequestApprovalEmployee[];
+			requestApproval.teamApprovals = teamApprovals as RequestApprovalTeam[];
 
-		return requestApproval;
+			const approverTeamIds = teamApprovals.map((slot) => slot.teamId).filter(Boolean);
+			const teamIds =
+				employeeId && approverTeamIds.length
+					? await transaction.readApproverTeams(employeeId, approverTeamIds, tenantId)
+					: [];
+
+			const outcome = answerRequestApproval(requestApproval, verdict, {
+				userId: user?.id ?? null,
+				employeeId,
+				teamIds,
+				isTenantAdmin
+			});
+
+			// The document first, so its own refusal (403, 409) is raised before the answer is written; the
+			// transaction rolls back whatever was written either way.
+			if (outcome.settles && settle) {
+				await settle({ requestApproval, outcome, transaction });
+			}
+
+			const employeeSlotIds = outcome.employeeSlots
+				.map((slot) => slot.id)
+				.filter((slotId): slotId is ID => !!slotId);
+			const teamSlotIds = outcome.teamSlots.map((slot) => slot.id).filter((slotId): slotId is ID => !!slotId);
+
+			if (tenantId && employeeSlotIds.length) {
+				await transaction.writeSlots('employee', employeeSlotIds, tenantId, verdict);
+			}
+			if (tenantId && teamSlotIds.length) {
+				await transaction.writeSlots('team', teamSlotIds, tenantId, verdict);
+			}
+			if (outcome.status !== outcome.previousStatus) {
+				await transaction.writeRequestStatus(requestApproval.id, tenantId, outcome.status);
+			}
+
+			return requestApproval;
+		});
 	}
 
 	/**
-	 * The teams, among a request's approver teams, the employee is an active member of — inside the caller's tenant.
+	 * Runs one answer in one transaction on the ORM the installation runs, and hands it the reads and writes it makes
+	 * on that transaction's connection.
 	 *
-	 * @param employeeId The employee answering, if the caller has one.
-	 * @param teamIds The request's approver teams.
-	 * @returns The ids of the teams the employee answers for.
+	 * Every statement of the answer has to go through what this hands over. On PostgreSQL and MySQL a statement made
+	 * through the service's own repository runs on another pooled connection: a read there would not see the lock's
+	 * point of view, and a write of the locked request would wait for the lock this transaction holds until the
+	 * database gave up. On MikroORM the repositories resolve to the transaction's fork, but its identity map is a copy
+	 * of the request's context, so every read here goes to the table instead.
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
 	 */
-	private async findApproverTeamsOfEmployee(employeeId: ID | null, teamIds: ID[]): Promise<ID[]> {
-		const tenantId = RequestContext.currentTenantId();
-		const ids = (teamIds ?? []).filter(Boolean);
-		if (!employeeId || !tenantId || !ids.length) {
-			return [];
-		}
+	protected async answerTransaction<R>(
+		work: (transaction: IRequestApprovalAnswerTransaction) => Promise<R>
+	): Promise<R> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
 
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const memberships = await this.mikroOrmOrganizationTeamEmployeeRepository.find({
-					employeeId,
-					organizationTeamId: { $in: ids },
-					tenantId,
-					isActive: true
-				} as any);
-				return memberships.map(
-					(membership: any) => membership.organizationTeam?.id ?? membership.organizationTeamId
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository
+					.getEntityManager()
+					.transactional(async (em) => await work(this.mikroOrmAnswerTransaction(em, rowLock)));
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository.manager.transaction(
+					async (manager) => await work(this.typeOrmAnswerTransaction(manager, rowLock))
+				);
+		}
+	}
+
+	/**
+	 * The TypeORM arm of {@link answerTransaction}: everything on the transaction's manager.
+	 *
+	 * `manager.update` runs TypeORM's update query, which stamps the update date (and increments a `@VersionColumn`
+	 * when the entity has one) as `CrudService.update` does.
+	 *
+	 * @param manager The transaction's manager.
+	 * @param rowLock Whether the dialect has row locks.
+	 */
+	private typeOrmAnswerTransaction(manager: EntityManager, rowLock: boolean): IRequestApprovalAnswerTransaction {
+		return {
+			lockRequest: async (id, tenantId) => {
+				if (!id || !tenantId) {
+					return null;
+				}
+				const query = manager.createQueryBuilder(RequestApproval, 'request_approval').where({ id, tenantId });
+				// `pessimistic_write` maps to FOR UPDATE on both dialects. The request row alone: PostgreSQL
+				// refuses FOR UPDATE on the nullable side of an outer join, so the slots are read after it.
+				return rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+			},
+			readSlots: async (requestApprovalId, tenantId) => ({
+				employeeApprovals: await manager.find(RequestApprovalEmployee, {
+					where: { requestApprovalId, tenantId }
+				}),
+				teamApprovals: await manager.find(RequestApprovalTeam, { where: { requestApprovalId, tenantId } })
+			}),
+			readApproverTeams: async (employeeId, teamIds, tenantId) =>
+				(
+					await manager.find(OrganizationTeamEmployee, {
+						where: { employeeId, organizationTeamId: In(teamIds), tenantId, isActive: true }
+					})
+				).map((membership) => membership.organizationTeamId),
+			writeSlots: async (kind, ids, tenantId, status) => {
+				if (kind === 'employee') {
+					await manager.update(RequestApprovalEmployee, { id: In(ids), tenantId }, { status });
+				} else {
+					await manager.update(RequestApprovalTeam, { id: In(ids), tenantId }, { status });
+				}
+			},
+			writeRequestStatus: async (id, tenantId, status) => {
+				await manager.update(RequestApproval, { id, tenantId }, { status });
+			},
+			readLinkedDocument: async (kind, id, tenantId) => {
+				const row =
+					kind === 'time-off'
+						? await manager.findOne(TimeOffRequest, { where: { id, tenantId } })
+						: await manager.findOne(EquipmentSharing, { where: { id, tenantId } });
+				return row ? { id: row.id, organizationId: row.organizationId, status: row.status } : null;
+			},
+			moveTimeOff: async (id, tenantId, status) => {
+				const result = await manager.update(
+					TimeOffRequest,
+					{ id, tenantId, status: StatusTypesEnum.REQUESTED },
+					{ status }
+				);
+				return result?.affected ?? 0;
+			},
+			moveEquipmentSharing: async (id, tenantId, status) => {
+				await manager.update(EquipmentSharing, { id, tenantId }, { status });
+			}
+		};
+	}
+
+	/**
+	 * The MikroORM arm of {@link answerTransaction}: everything on the transaction's fork, and every read from the
+	 * table rather than from the identity map the fork inherited (`disableIdentityMap`, which keeps the
+	 * transaction, so the lock mode is taken inside it).
+	 *
+	 * @param em The transaction's entity manager.
+	 * @param rowLock Whether the dialect has row locks.
+	 */
+	private mikroOrmAnswerTransaction(em: MikroOrmEntityManager, rowLock: boolean): IRequestApprovalAnswerTransaction {
+		const fromTable = { disableIdentityMap: true };
+		const slotsOf = async (entity: typeof RequestApprovalEmployee | typeof RequestApprovalTeam, where: object) =>
+			(await em.find(entity as any, where as any, fromTable as any)) as any[];
+
+		return {
+			lockRequest: async (id, tenantId) => {
+				if (!id || !tenantId) {
+					return null;
+				}
+				const row = await em.findOne(
+					RequestApproval,
+					{ id, tenantId } as any,
+					{
+						...fromTable,
+						...(rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
+					} as any
+				);
+				return row ? (this.serialize(row as RequestApproval) as RequestApproval) : null;
+			},
+			readSlots: async (requestApprovalId, tenantId) => ({
+				employeeApprovals: (
+					await slotsOf(RequestApprovalEmployee, { requestApproval: requestApprovalId, tenantId })
+				).map((slot) => ({
+					id: slot.id,
+					employeeId: slot.employee?.id ?? slot.employeeId,
+					status: slot.status
+				})),
+				teamApprovals: (
+					await slotsOf(RequestApprovalTeam, { requestApproval: requestApprovalId, tenantId })
+				).map((slot) => ({
+					id: slot.id,
+					teamId: slot.team?.id ?? slot.teamId,
+					status: slot.status
+				}))
+			}),
+			readApproverTeams: async (employeeId, teamIds, tenantId) =>
+				(
+					(await em.find(
+						OrganizationTeamEmployee,
+						{ employeeId, organizationTeamId: { $in: teamIds }, tenantId, isActive: true } as any,
+						fromTable as any
+					)) as any[]
+				).map((membership) => membership.organizationTeam?.id ?? membership.organizationTeamId),
+			writeSlots: async (kind, ids, tenantId, status) => {
+				const entity = kind === 'employee' ? RequestApprovalEmployee : RequestApprovalTeam;
+				await em.nativeUpdate(
+					entity as any,
+					{ id: { $in: ids }, tenantId } as any,
+					this.mikroOrmRowOf(em, entity, { status }) as any
+				);
+			},
+			writeRequestStatus: async (id, tenantId, status) => {
+				await em.nativeUpdate(
+					RequestApproval,
+					{ id, tenantId } as any,
+					this.mikroOrmRowOf(em, RequestApproval, { status }) as any
+				);
+			},
+			readLinkedDocument: async (kind, id, tenantId) => {
+				const entity = kind === 'time-off' ? TimeOffRequest : EquipmentSharing;
+				const row = (await em.findOne(entity as any, { id, tenantId } as any, fromTable as any)) as any;
+				return row
+					? { id: row.id, organizationId: row.organization?.id ?? row.organizationId, status: row.status }
+					: null;
+			},
+			moveTimeOff: async (id, tenantId, status) =>
+				await em.nativeUpdate(
+					TimeOffRequest,
+					{ id, tenantId, status: StatusTypesEnum.REQUESTED } as any,
+					this.mikroOrmRowOf(em, TimeOffRequest, { status }) as any
+				),
+			moveEquipmentSharing: async (id, tenantId, status) => {
+				await em.nativeUpdate(
+					EquipmentSharing,
+					{ id, tenantId } as any,
+					this.mikroOrmRowOf(em, EquipmentSharing, { status }) as any
 				);
 			}
-			case MultiORMEnum.TypeORM:
-			default: {
-				const memberships = await this.typeOrmOrganizationTeamEmployeeRepository.find({
-					where: { employeeId, organizationTeamId: In(ids), tenantId, isActive: true }
-				});
-				return memberships.map((membership) => membership.organizationTeamId);
+		};
+	}
+
+	/**
+	 * The row MikroORM's `nativeUpdate` is handed for one of the answer's writes: what TypeORM's update writes without
+	 * being asked, as `CrudService.update` gives MikroORM for the service's own entity (see `mikroOrmUpdateRow`) —
+	 * each property's `onUpdate` value (the update date), the user who wrote it, and the version column incremented
+	 * in the statement when the entity has one, so a document that opts into optimistic concurrency sees the answer
+	 * move it on.
+	 *
+	 * @param em The transaction's entity manager.
+	 * @param entity The entity written.
+	 * @param patch The columns the answer writes.
+	 * @returns The row to write.
+	 */
+	private mikroOrmRowOf(em: MikroOrmEntityManager, entity: Function, patch: Record<string, unknown>) {
+		const meta = em.getMetadata().find(entity.name);
+		if (!meta) {
+			return patch;
+		}
+
+		const row: Record<string, unknown> = { ...patch };
+		for (const property of meta.props) {
+			if (
+				typeof property.onUpdate === 'function' &&
+				property.persist !== false &&
+				row[property.name] === undefined
+			) {
+				row[property.name] = property.onUpdate(row as never, em);
 			}
 		}
+
+		if (
+			row['updatedByUserId'] === undefined &&
+			meta.props.some((property) => property.name === 'updatedByUserId' && property.persist !== false)
+		) {
+			const userId = RequestContext.currentUserId();
+			if (userId) {
+				row['updatedByUserId'] = userId;
+			}
+		}
+
+		// The version column TypeORM's `@VersionColumn` names (its metadata is complete under either ORM), or
+		// MikroORM's own version property.
+		const connection = this.typeOrmRepository?.manager?.connection;
+		const typeOrmVersion = connection?.hasMetadata?.(entity)
+			? connection.getMetadata(entity).versionColumn?.propertyName
+			: undefined;
+		const versionName = typeOrmVersion ?? meta.versionProperty;
+		const version = versionName ? meta.properties[versionName] : undefined;
+		if (version?.fieldNames?.length && row[version.name] === undefined) {
+			row[version.name] = raw('?? + 1', [version.fieldNames[0]]);
+		}
+
+		return row;
 	}
 }
