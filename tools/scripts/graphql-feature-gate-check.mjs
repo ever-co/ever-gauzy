@@ -49,16 +49,33 @@
  * report said so, and printed which code was actually read.) The classes that state several codes are
  * listed with every code they require, as information: it is the set an operator's switches act on.
  *
+ * **A gate with no guard to read it is the same defect one level down, and it is checked here too.**
+ * `@FeatureFlag(...)` is metadata: it does nothing unless the operation runs behind `FeatureFlagGuard`, the guard
+ * that reads it. A resolver that carries `@FeatureFlag(FEATURE_GRAPHQL)` and has no `FeatureFlagGuard` in its
+ * `@UseGuards(...)` passes the scan above — the decorator is right there — while the capability it names gates
+ * nothing, and it reads exactly like a gated surface to anyone reviewing the source. So every resolver class is
+ * read a second time, operation by operation: each `@Query`, `@Mutation` and `@Subscription` whose effective gate
+ * is non-empty (its own `@FeatureFlag`, or its class's) must run with `FeatureFlagGuard` in its chain — the class's
+ * `@UseGuards(...)` plus its own, which is how Nest assembles it. A class that declares no operation of its own
+ * (they are inherited) is held to the guard on the class. `@ResolveField` handlers are not read: the GraphQL module
+ * sets no `fieldResolverEnhancers`, so Nest runs no guard on them at all.
+ *
+ * The permission half of that question — a `@Permissions(...)` no guard evaluates against the caller — is owned by
+ * `packages/core/src/lib/shared/guards/declared-permissions-enforced.spec.ts`, which reads every REST route and
+ * GraphQL root operation with the TypeScript parser; it is not repeated here.
+ *
  * Usage:
  *   node tools/scripts/graphql-feature-gate-check.mjs [repoRoot]
  *
- * Exits 0 when every resolver carries the gate or is on the frozen allow-list, 1 otherwise.
+ * Exits 0 when every resolver carries the gate or is on the frozen allow-list and every gate it states is read by
+ * `FeatureFlagGuard`, 1 otherwise.
  */
 'use strict';
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { decoratedClasses, guardsOf, states } from './decorator-runs.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '..');
@@ -208,6 +225,53 @@ function resolverClasses(source) {
 	return classes;
 }
 
+/** The GraphQL root operations Nest runs a guard chain for. */
+const ROOT_OPERATION = /^@(?:Query|Mutation|Subscription)\(/;
+
+/** Whether a guard chain holds the guard that reads `@FeatureFlag` metadata, or a subclass named after it. */
+function readsFeatureFlags(chain) {
+	return chain.some((guard) => /FeatureFlagGuard$/.test(guard));
+}
+
+/**
+ * The gates one file states that no guard reads.
+ *
+ * Read class by class with {@link decoratedClasses}, so a resolver's guards are never confused with those of an
+ * input type declared above it, and operation by operation, because Nest assembles each handler's chain from the
+ * class's `@UseGuards(...)` followed by the handler's own: a guard stated on one operation does not reach its
+ * neighbour.
+ *
+ * @param source The file's text.
+ * @returns {Array<{line: number, name: string}>} One entry per resolver class or operation whose gate is unread.
+ */
+function inertGatesOf(source) {
+	const inert = [];
+
+	for (const declared of decoratedClasses(source)) {
+		if (!states(declared.decorators, 'Resolver')) continue;
+
+		const classGuards = guardsOf(declared.decorators);
+		const classGated = states(declared.decorators, 'FeatureFlag');
+		const operations = declared.members.filter((member) => member.decorators.some((d) => ROOT_OPERATION.test(d)));
+
+		if (operations.length === 0) {
+			// Every operation is inherited, and the class's chain is the only one this file can state.
+			if (classGated && !readsFeatureFlags(classGuards)) inert.push({ line: declared.line, name: declared.name });
+			continue;
+		}
+
+		for (const operation of operations) {
+			if (!classGated && !states(operation.decorators, 'FeatureFlag')) continue;
+
+			if (!readsFeatureFlags([...classGuards, ...guardsOf(operation.decorators)])) {
+				inert.push({ line: operation.line, name: `${declared.name}.${operation.name}` });
+			}
+		}
+	}
+
+	return inert;
+}
+
 const resolvers = [];
 const gated = [];
 const ungated = [];
@@ -215,6 +279,7 @@ const allowed = [];
 const gatedWithOtherCode = [];
 const multipleCodes = [];
 const staleAllowList = [];
+const inertGates = [];
 const perTree = new Map(TREES.map((tree) => [tree.label, { checked: 0, gated: 0, allowed: 0, ungated: 0 }]));
 
 for (const tree of TREES) {
@@ -255,10 +320,15 @@ for (const tree of TREES) {
 				found.ungated++;
 			}
 		}
+
+		// The second reading: a gate is only a gate when the guard that reads it is in the operation's chain.
+		for (const { line, name } of inertGatesOf(source)) {
+			inertGates.push({ file: where, line, name });
+		}
 	}
 }
 
-const failed = ungated.length > 0;
+const failed = ungated.length > 0 || inertGates.length > 0;
 const labels = TREES.map((tree) => tree.label);
 
 console.log('');
@@ -276,7 +346,18 @@ console.log(
 );
 console.log(`  ${allowed.length} predate the convention and are on the frozen allow-list`);
 console.log(`  ${ungated.length} carry no gate and no reason, which is the defect this check exists for`);
+console.log(`  ${inertGates.length} state a gate that no FeatureFlagGuard in their chain reads`);
 console.log('');
+
+if (inertGates.length) {
+	console.log('  Gates nothing reads — @FeatureFlag with no FeatureFlagGuard in the operation’s chain:');
+	for (const entry of inertGates) {
+		console.log(
+			`    ${entry.file}:${entry.line}  → ${entry.name}: the code is declared and the capability gates nothing`
+		);
+	}
+	console.log('');
+}
 
 if (ungated.length) {
 	console.log('  Un-gated resolvers — a capability the flag does not reach:');
@@ -325,8 +406,9 @@ if (staleAllowList.length) {
 
 console.log(
 	failed
-		? `graphql feature gate check: FAILED — ${ungated.length} un-gated resolver(s)`
-		: `graphql feature gate check: PASSED — ${gated.length} of ${resolvers.length} resolver(s) gated, ${allowed.length} allow-listed`
+		? `graphql feature gate check: FAILED — ${ungated.length} un-gated resolver(s), ${inertGates.length} gate(s) no guard reads`
+		: `graphql feature gate check: PASSED — ${gated.length} of ${resolvers.length} resolver(s) gated, ${allowed.length} allow-listed, ` +
+				'every gate read by FeatureFlagGuard'
 );
 
 process.exit(failed ? 1 : 0);

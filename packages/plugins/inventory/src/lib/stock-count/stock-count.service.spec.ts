@@ -625,6 +625,88 @@ describe('StockCountService — opening a session (doc 09 §10.4, §15.3)', () =
 		expect(fixture.allocated).toEqual(['STOCK_COUNT']);
 	});
 
+	it('refuses a second session while the first is being counted, and while it is still a draft', async () => {
+		// A session spends almost none of its life `OPEN`: the first sheet recorded moves it to `COUNTING`,
+		// which is where a real count sits for hours. A guard that compared against `OPEN` alone would let
+		// a second session open over the same shelves the moment the first had a reading in it — both
+		// snapshot the expectation at different moments, both close, and the second writes a correction
+		// computed from a stale sheet over the first one's reconciliation. A `DRAFT` session is a session
+		// too, and the refusal names the state so an operator knows which session to close.
+		const { fixture, count } = await openSession();
+
+		await fixture.service.recordLines(count.id, [{ lineId: fixture.lineFor(VARIANT).id, countedQuantity: 9 }]);
+		expect(fixture.count()).toMatchObject({ status: StockCountStatus.COUNTING });
+
+		await expect(
+			fixture.service.createCount({ warehouseId: WAREHOUSE, mode: StockCountMode.SPOT } as never)
+		).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_COUNT_ALREADY_OPEN',
+				details: { stockCountId: count.id, status: StockCountStatus.COUNTING }
+			}
+		});
+
+		// A session that has finished is not in the way of the next one: the location can be counted again
+		// once the sheet is signed off.
+		await fixture.service.close(count.id);
+
+		const draft = await fixture.service.createCount({ warehouseId: WAREHOUSE } as never);
+
+		expect(draft.status).toBe(StockCountStatus.DRAFT);
+
+		// And a second draft over the same shelves is the same collision one step earlier.
+		await expect(fixture.service.createCount({ warehouseId: WAREHOUSE } as never)).rejects.toMatchObject({
+			response: {
+				code: 'STOCK_COUNT_ALREADY_OPEN',
+				details: { stockCountId: draft.id, status: StockCountStatus.DRAFT }
+			}
+		});
+		expect(fixture.tables.stock_count).toHaveLength(2);
+	});
+
+	it('does not see a session of another location, nor one of another organization', async () => {
+		// The rule is one session per location, read in the scope every other read of this package uses: a
+		// session at another location is not in the way, and a session of another organization is not one
+		// this caller can see — it neither blocks the caller nor is named back to it in a refusal.
+		const fixture = countFixture();
+		const ELSEWHERE = '00000000-0000-4000-8000-000000000011';
+		const THIRD_LOCATION = '00000000-0000-4000-8000-000000000012';
+		const OTHER_ORGANIZATION = '00000000-0000-4000-8000-000000000003';
+
+		fixture.tables.warehouse.push(
+			{ id: ELSEWHERE, tenantId: TENANT, organizationId: ORG },
+			{ id: THIRD_LOCATION, tenantId: TENANT, organizationId: ORG }
+		);
+		fixture.tables.stock_count.push(
+			{
+				id: 'count-elsewhere',
+				number: 'CNT-000099',
+				warehouseId: ELSEWHERE,
+				status: StockCountStatus.COUNTING,
+				tenantId: TENANT,
+				organizationId: ORG
+			},
+			{
+				id: 'count-of-another-organization',
+				number: 'CNT-000098',
+				warehouseId: WAREHOUSE,
+				status: StockCountStatus.COUNTING,
+				tenantId: TENANT,
+				organizationId: OTHER_ORGANIZATION
+			}
+		);
+
+		await expect(fixture.service.createCount({ warehouseId: ELSEWHERE } as never)).rejects.toMatchObject({
+			response: { code: 'STOCK_COUNT_ALREADY_OPEN', details: { stockCountId: 'count-elsewhere' } }
+		});
+
+		const here = await fixture.service.createCount({ warehouseId: WAREHOUSE } as never);
+		const third = await fixture.service.createCount({ warehouseId: THIRD_LOCATION } as never);
+
+		expect(here).toMatchObject({ status: StockCountStatus.DRAFT, organizationId: ORG });
+		expect(third.status).toBe(StockCountStatus.DRAFT);
+	});
+
 	it('reports a session that does not exist as missing', async () => {
 		const fixture = countFixture();
 
@@ -660,6 +742,24 @@ describe('StockCountService — recording readings (doc 09 §4, §15.3)', () => 
 			note: 'Recount'
 		});
 		expect(fixture.lineFor(VARIANT).countedAt).toBeInstanceOf(Date);
+	});
+
+	it('takes the variance of a sheet whose decimals do not divide evenly over the exact digits', async () => {
+		// A variance is the difference of two `numeric(20,6)` columns and the header total is the sum of
+		// their magnitudes. As double arithmetic, `9.9 - 10` evaluates to `-0.09999999999999964` and
+		// `0.1 + 0.2` to `0.30000000000000004`: the first is the number the sheet reports and the closing
+		// correction is computed from, the second the one number an operator reads to decide whether the
+		// location needs a recount.
+		const { fixture, count } = await openSession();
+
+		await fixture.service.recordLines(count.id, [
+			{ lineId: fixture.lineFor(VARIANT).id, countedQuantity: 9.9 },
+			{ lineId: fixture.lineFor(OTHER_VARIANT).id, countedQuantity: 5.8 }
+		]);
+
+		expect(fixture.lineFor(VARIANT).variance).toBe(-0.1);
+		expect(fixture.lineFor(OTHER_VARIANT).variance).toBe(-0.2);
+		expect(fixture.count()).toMatchObject({ varianceUnits: 0.3, countedLineCount: 2 });
 	});
 
 	it('reports how many lines are still awaiting a reading', async () => {

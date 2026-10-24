@@ -4882,7 +4882,8 @@
 		"RIGHTS_RESERVED": "Alle Rechte vorbehalten.",
 		"PRESENT": "Gegenwart",
 		"TERMS_OF_SERVICE": "Allgemeine Geschäftsbedingungen",
-		"PRIVACY_POLICY": "Datenschutzrichtlinie"
+		"PRIVACY_POLICY": "Datenschutzrichtlinie",
+		"DPIA_SUPPORT_PACK": "DSFA-Begleitpaket"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6327,7 +6328,8 @@
 		"PRIVACY_POLICY": "Datenschutzerklärung",
 		"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen",
 		"DOCUMENT_VERSION": "Version {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "In Kraft ab {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "In Kraft ab {{ date }}",
+		"DPIA_SUPPORT_PACK": "DSFA-Begleitpaket"
 	},
 	"LOADING": "Laden, bitte warten...",
 	"ACCOUNTING_TEMPLATES_PAGE": {

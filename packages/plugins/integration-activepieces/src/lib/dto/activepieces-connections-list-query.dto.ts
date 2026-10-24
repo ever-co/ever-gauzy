@@ -1,18 +1,21 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsEnum, Min, Max, IsInt } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ActivepiecesConnectionScope, ActivepiecesConnectionStatus } from '@gauzy/contracts';
 
 export class ActivepiecesConnectionsListQueryDto {
-	@ApiProperty({
-		description: 'Activepieces project ID',
+	@ApiPropertyOptional({
+		description:
+			"Activepieces project ID. Required with the tenant's own API key; in the project-token and platform-project " +
+			"modes the server uses the tenant's own project, and another one is refused.",
 		type: String,
 		example: 'project-123'
 	})
+	@IsOptional()
 	@IsString()
 	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
 	@IsNotEmpty()
-	readonly projectId!: string;
+	readonly projectId?: string;
 
 	@ApiPropertyOptional({
 		description: 'Pagination cursor',

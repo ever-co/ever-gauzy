@@ -1,18 +1,25 @@
 import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
-import { IntegrationEnum } from '@gauzy/contracts';
 import { firstValueFrom, catchError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
 	IActivepiecesMcpServer,
 	IActivepiecesMcpServersListResponse,
-	IActivepiecesMcpServersListParams,
-	ActivepiecesSettingName
+	IActivepiecesMcpServersListParams
 } from '@gauzy/contracts';
 import { ActivepiecesMcpUpdateDto } from './dto';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
+import { ActivepiecesCredentialsService, IActivepiecesCredential } from './activepieces-credentials.service';
+
+/**
+ * The query of an MCP server list. `projectId` is optional: in the modes that pin the tenant's own project, the server
+ * names it; with the tenant's own key, the client must.
+ */
+export type ActivepiecesMcpServersListInput = Omit<IActivepiecesMcpServersListParams, 'projectId'> & {
+	projectId?: string;
+};
 
 /**
  * The Activepieces URL of one MCP server. The id is the caller's, from the route, and Express decodes `%2F` in a route
@@ -41,29 +48,45 @@ export class ActivepiecesMcpService {
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly configService: ConfigService,
-		private readonly integrationTenantService: IntegrationTenantService
+		private readonly integrationTenantService: IntegrationTenantService,
+		private readonly credentials: ActivepiecesCredentialsService
 	) {}
 
 	/**
 	 * List MCP servers for a project
+	 *
+	 * In the modes that pin the tenant's own project, that project is listed whatever the client named (another one is
+	 * refused), and only its servers are returned.
 	 */
-	async listMcpServers(params: IActivepiecesMcpServersListParams): Promise<IActivepiecesMcpServersListResponse> {
+	async listMcpServers(params: ActivepiecesMcpServersListInput): Promise<IActivepiecesMcpServersListResponse> {
 		try {
+			const credential = await this.getCredential();
+			const projectId = this.credentials.projectFor(credential, params.projectId);
+
 			// Build query parameters
 			const queryParams: Record<string, unknown> = {
-				projectId: params.projectId
+				projectId
 			};
 
 			if (params.limit) queryParams['limit'] = params.limit.toString();
 			if (params.cursor) queryParams['cursor'] = params.cursor;
 			if (params.name) queryParams['name'] = params.name;
 
-			return await this.request<IActivepiecesMcpServersListResponse>(
+			const result = await this.request<IActivepiecesMcpServersListResponse>(
 				'get',
 				ACTIVEPIECES_MCP_SERVERS_URL,
 				undefined,
-				queryParams
+				queryParams,
+				credential
 			);
+
+			if (credential.enforceProject) {
+				return {
+					...result,
+					data: (result?.data ?? []).filter((server) => this.credentials.isInProject(credential, server?.projectId))
+				};
+			}
+			return result;
 		} catch (error: any) {
 			this.logger.error('Failed to list ActivePieces MCP servers:', error);
 			throw new HttpException(
@@ -75,10 +98,16 @@ export class ActivepiecesMcpService {
 
 	/**
 	 * Get MCP server by ID
+	 *
+	 * In the modes that pin the tenant's own project, a server of another project is answered as missing.
 	 */
 	async getMcpServer(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
-			return await this.request<IActivepiecesMcpServer>('get', mcpServerUrl(serverId));
+			const url = mcpServerUrl(serverId);
+			const credential = await this.getCredential();
+			const server = await this.request<IActivepiecesMcpServer>('get', url, undefined, undefined, credential);
+			this.credentials.assertInProject(credential, server?.projectId, 'MCP server');
+			return server;
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces MCP server:', error);
 			throw new HttpException(
@@ -90,10 +119,16 @@ export class ActivepiecesMcpService {
 
 	/**
 	 * Update MCP server
+	 *
+	 * In the modes that pin the tenant's own project, the server is first checked to be in it.
 	 */
 	async updateMcpServer(serverId: string, updateData: ActivepiecesMcpUpdateDto): Promise<IActivepiecesMcpServer> {
 		try {
-			const result = await this.request<IActivepiecesMcpServer>('post', mcpServerUrl(serverId), updateData);
+			const url = mcpServerUrl(serverId);
+			const credential = await this.getCredential();
+			await this.assertServerInProject(url, credential);
+
+			const result = await this.request<IActivepiecesMcpServer>('post', url, updateData, undefined, credential);
 
 			this.logger.log(`Successfully updated ActivePieces MCP server: ${result.id}`);
 			return result;
@@ -108,13 +143,21 @@ export class ActivepiecesMcpService {
 
 	/**
 	 * Rotate MCP server token
+	 *
+	 * In the modes that pin the tenant's own project, the server is first checked to be in it.
 	 */
 	async rotateMcpServerToken(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
+			const url = mcpServerUrl(serverId);
+			const credential = await this.getCredential();
+			await this.assertServerInProject(url, credential);
+
 			const result = await this.request<IActivepiecesMcpServer>(
 				'post',
-				`${mcpServerUrl(serverId)}/rotate`,
-				{} // No body required for rotate
+				`${url}/rotate`,
+				{}, // No body required for rotate
+				undefined,
+				credential
 			);
 
 			this.logger.log(`Successfully rotated ActivePieces MCP server token: ${result.id}`);
@@ -131,7 +174,7 @@ export class ActivepiecesMcpService {
 	/**
 	 * Get MCP servers for current tenant
 	 */
-	async getTenantMcpServers(projectId: string): Promise<IActivepiecesMcpServer[]> {
+	async getTenantMcpServers(projectId?: string): Promise<IActivepiecesMcpServer[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			if (!tenantId) {
@@ -154,19 +197,32 @@ export class ActivepiecesMcpService {
 	}
 
 	/**
+	 * In the modes that pin the tenant's own project, reads the server first and refuses one of another project, before
+	 * it is changed: under the installation's key, Activepieces would change it in whichever project it is in.
+	 */
+	private async assertServerInProject(url: string, credential: IActivepiecesCredential): Promise<void> {
+		if (!credential.enforceProject) {
+			return;
+		}
+		const server = await this.request<IActivepiecesMcpServer>('get', url, undefined, undefined, credential);
+		this.credentials.assertInProject(credential, server?.projectId, 'MCP server');
+	}
+
+	/**
 	 * Helper method for making HTTP requests with standard headers and error handling
 	 */
 	private async request<T>(
 		method: 'get' | 'post' | 'put' | 'delete',
 		url: string,
 		data?: unknown,
-		params?: Record<string, unknown>
+		params?: Record<string, unknown>,
+		credential?: IActivepiecesCredential
 	): Promise<T> {
-		const apiKey = await this.getApiKey();
+		const { token } = credential ?? (await this.getCredential());
 
 		const config = {
 			headers: {
-				Authorization: `Bearer ${apiKey}`,
+				Authorization: `Bearer ${token}`,
 				'Content-Type': 'application/json'
 			},
 			...(params && { params })
@@ -197,43 +253,14 @@ export class ActivepiecesMcpService {
 	}
 
 	/**
-	 * Get API key for Activepieces API calls.
-	 * Looks for a tenant-specific API key in the database first, then falls back to global config.
+	 * The credential of the current tenant's MCP calls: its own key (from any of its rows holding one, since connection
+	 * calls used to add rows without a key), else its project token, else the installation's key pinned to the tenant's
+	 * own project. It used to fall back to the installation's key unconfined, with the project and the server ids taken
+	 * from the client: any tenant could list, read, change or rotate the MCP servers of any project of the platform.
 	 */
-	private async getApiKey(): Promise<string> {
+	private async getCredential(): Promise<IActivepiecesCredential> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID not found in request context');
-			}
-
-			// 1. Try tenant-specific API key from database, from any of the tenant's rows that holds one,
-			// since connection calls used to add rows without an API key
-			const integrationTenants: any[] = await this.integrationTenantService.find({
-				where: {
-					tenantId,
-					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-				},
-				relations: ['settings']
-			});
-
-			const apiKeySetting = integrationTenants
-				.flatMap((integrationTenant: any) => integrationTenant.settings ?? [])
-				.find(
-					(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY && setting.settingsValue
-				);
-
-			if (apiKeySetting?.settingsValue) {
-				return apiKeySetting.settingsValue;
-			}
-
-			// 2. Fallback to global config
-			const globalApiKey = this.configService.get('activepieces')?.apiKey;
-			if (globalApiKey) {
-				return globalApiKey;
-			}
-
-			throw new BadRequestException('Activepieces API key not configured');
+			return await this.credentials.resolve();
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
