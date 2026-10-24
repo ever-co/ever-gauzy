@@ -32,7 +32,7 @@ jest.mock(
 import { installProviderSignIn, parseProviderSignInRedirect } from './provider-sign-in';
 
 const WEB = 'https://app.example.com';
-const JWT = 'eyJhbGciOiJIUzI1NiJ9.eyJpZCI6InVzZXItMSJ9.c2lnbmF0dXJl';
+const JWT = 'jwt-header.jwt-payload.jwt-signature';
 
 describe('parseProviderSignInRedirect', () => {
 	it("reads the provider's sign-in pages", () => {
