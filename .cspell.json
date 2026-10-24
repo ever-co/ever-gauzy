@@ -1648,6 +1648,11 @@
 		"passwordless",
 		"corepack",
 		"orgx",
+		"xtraverse",
+		"finalhandler",
+		"picomatch",
+		"csecret",
+		"fsecret",
 		"unhydrated",
 		"knownknownknownknownknu"
 	],
