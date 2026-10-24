@@ -40,7 +40,12 @@ import {
 	IEmployeeHoursDay
 } from '../../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 import { isTaskFinished } from '../../../tasks/components/task-view/task-view-sections';
-import { buildProjectViewSections, managesProject, PROJECT_VIEW_RELATIONS, projectStatusOf } from './project-view-sections';
+import {
+	buildProjectViewSections,
+	managesProject,
+	PROJECT_VIEW_RELATIONS,
+	projectStatusOf
+} from './project-view-sections';
 import {
 	dueInWords,
 	humanize,

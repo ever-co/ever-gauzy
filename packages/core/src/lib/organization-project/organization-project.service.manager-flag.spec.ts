@@ -210,7 +210,9 @@ describe('OrganizationProjectService.updateOrganizationProjectMembers — manage
 		});
 
 		it('keeps the flag of a manager an administrator flagged', async () => {
-			const self = harness([{ id: 'row-flagged', employeeId: 'flagged', roleId: managerRole.id, isManager: true }]);
+			const self = harness([
+				{ id: 'row-flagged', employeeId: 'flagged', roleId: managerRole.id, isManager: true }
+			]);
 
 			await run(self, ['flagged'], ['flagged'], []);
 
@@ -218,7 +220,9 @@ describe('OrganizationProjectService.updateOrganizationProjectMembers — manage
 		});
 
 		it('clears the flag together with the MANAGER role when a manager is made a member', async () => {
-			const self = harness([{ id: 'row-flagged', employeeId: 'flagged', roleId: managerRole.id, isManager: true }]);
+			const self = harness([
+				{ id: 'row-flagged', employeeId: 'flagged', roleId: managerRole.id, isManager: true }
+			]);
 
 			await run(self, ['flagged'], [], ['flagged']);
 
