@@ -657,13 +657,16 @@ export class TimerService {
 		// Extract employeeId and organizationId
 		const { id: employeeId, organizationId } = await this.findEmployee();
 
-		// Define common query conditions
+		// Define common query conditions. Nothing on `stoppedAt`, as the status read has nothing on it
+		// (`buildRunningLogQueryParameters`): a running log is written with `stoppedAt = startedAt`, but a row stored
+		// before `TimeLogCreateHandler` gave it that shape may hold a null `stoppedAt`. Filtering those out left the
+		// row running with nothing able to stop it; found here, stop closes it and `stopPreviousRunningTimers` hands
+		// it to `ScheduleTimeLogEntriesCommand`, which already handles a null `stoppedAt`.
 		const whereClause = {
 			employeeId,
 			tenantId,
 			organizationId,
-			isRunning: true,
-			stoppedAt: Not(IsNull()) // Logs should have a non-null `stoppedAt`
+			isRunning: true
 		};
 
 		switch (this.ormType) {
