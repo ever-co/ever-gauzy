@@ -121,8 +121,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? role : null;
 
-				// Only update if the role or (for a caller who sets the flag) the manager flag has changed
-				if (newRole?.id !== member.roleId || (flagsManagers && !!member.isManager !== isManager)) {
+				// Only update if the role or (for a caller who sets the flag) the manager flag has changed. A member
+				// without a role is stored with `roleId` null, and `newRole?.id` is undefined for them: compared as
+				// they were, every plain member was rewritten on each edit of the team.
+				const roleChanged = (newRole?.id ?? null) !== (member.roleId ?? null);
+				if (roleChanged || (flagsManagers && !!member.isManager !== isManager)) {
 					await this.withoutEmployeeFilter(() =>
 						super.update(member.id, {
 							role: newRole,
