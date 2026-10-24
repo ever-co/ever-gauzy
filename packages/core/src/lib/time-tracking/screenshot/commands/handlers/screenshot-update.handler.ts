@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ScreenshotUpdateCommand } from '../screenshot-update.command';
 import { ScreenshotService } from '../../../screenshot/screenshot.service';
 import { Screenshot } from '../../screenshot.entity';
@@ -29,6 +29,10 @@ export class ScreenshotUpdateHandler implements ICommandHandler<ScreenshotUpdate
 			// Fetch and return the updated screenshot entity
 			return await this._screenshotService.findOneByIdString(id);
 		} catch (error) {
+			// A missing screenshot keeps its 404: the integration sync re-creates the screenshot it maps on it
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
 			throw new BadRequestException('Unable to update screenshot for the specified time slot.', error);
 		}
 	}
