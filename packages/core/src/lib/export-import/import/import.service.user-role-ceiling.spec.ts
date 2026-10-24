@@ -41,7 +41,8 @@ import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import type { FindOperator } from 'typeorm';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
@@ -61,11 +62,16 @@ const TENANT_ROLES: Record<string, { name: string; isSystem: boolean }> = {
 	'role-custom': { name: 'Reviewer', isSystem: false }
 };
 
-/** The tenant's users, by id, with their stored role. */
-const TENANT_USERS: Record<string, { id: string; roleId: string }> = {
-	'user-root': { id: 'user-root', roleId: 'role-super' },
-	'user-employee': { id: 'user-employee', roleId: 'role-employee' },
-	[IMPORTER]: { id: IMPORTER, roleId: 'role-admin' }
+/** The tenant's users, by id, with their stored role and e-mail. */
+const TENANT_USERS: Record<string, { id: string; roleId: string; email: string }> = {
+	'user-root': { id: 'user-root', roleId: 'role-super', email: 'root@example.com' },
+	'user-employee': { id: 'user-employee', roleId: 'role-employee', email: 'employee@example.com' },
+	[IMPORTER]: { id: IMPORTER, roleId: 'role-admin', email: 'admin@example.com' }
+};
+
+/** The tenant's invitations, by id: one an earlier import may have mapped an archive id to. */
+const TENANT_INVITES: Record<string, { id: string; roleId: string; email: string }> = {
+	'invite-root': { id: 'invite-root', roleId: 'role-employee', email: 'root@example.com' }
 };
 
 /** A table as the repository graph describes it. */
@@ -149,12 +155,27 @@ function buildService(importRecords: Record<string, string> = {}) {
 	const userTable = table('user', ['email', 'hash', 'roleId'], ROLE_FOREIGN_KEY, async ({ where }) =>
 		where.tenantId === TENANT ? withRole(TENANT_USERS[where.id as string]) : null
 	);
-	const inviteTable = table('invite', ['email', 'token', 'roleId'], ROLE_FOREIGN_KEY);
+	const inviteTable = table('invite', ['email', 'token', 'roleId'], ROLE_FOREIGN_KEY, async ({ where }) =>
+		where.tenantId === TENANT ? withRole(TENANT_INVITES[where.id as string]) : null
+	);
+
+	/** The tenant's users of an e-mail, matched case-insensitively as the `LOWER(…) = LOWER(:email)` it gets. */
+	const typeOrmUserRepository = {
+		find: jest.fn(async ({ where }: { where: { tenantId?: string; email?: FindOperator<string> } }) => {
+			const email = String(where.email?.objectLiteralParameters?.['email'] ?? '').toLowerCase();
+			return where.tenantId === TENANT
+				? Object.values(TENANT_USERS)
+						.filter((user) => user.email.toLowerCase() === email)
+						.map(withRole)
+				: [];
+		})
+	};
 
 	const repositoriesService: any = {
 		baseEntityRelationFields: [],
 		buildRepositoriesRelationsGraph: jest.fn(async () => [roleTable, userTable, inviteTable]),
-		typeOrmRoleRepository
+		typeOrmRoleRepository,
+		typeOrmUserRepository
 	};
 	const service = new ImportService({ execute } as any, repositoriesService);
 
@@ -177,7 +198,7 @@ function buildService(importRecords: Record<string, string> = {}) {
 				.filter((input) => input.entityType === tableName)
 				.map((input) => [input.sourceId, input.destinationId])
 		);
-	return { service, written, mapped, userTable };
+	return { service, written, mapped, roleTable, userTable, inviteTable };
 }
 
 /**
@@ -392,6 +413,69 @@ describe('ImportService — users, roles and invitations are imported under the 
 			await service.parse(extractPath, false);
 
 			expect(written('invite')).toEqual([]);
+		});
+
+		// `POST /invite/accept` signs the invitee into the tenant's user of the invitation's e-mail, and the archive
+		// states the code or token: an allowed role on an invitation to a SUPER_ADMIN's address signed in as them.
+		it("does not write an invitation addressed to the SUPER_ADMIN user's e-mail, whatever role it names", async () => {
+			writeCsv('invite', [
+				'id,email,token,roleId',
+				'src-i-root,Root@Example.com,known-token-3,src-employee',
+				'src-i-employee,employee@example.com,known-token-2,src-employee'
+			]);
+			const { service, written } = buildService();
+
+			await service.parse(extractPath, false);
+
+			// The invitation to an existing user within the ceiling stands, as `POST /invite/emails` issues it.
+			expect(written('invite').map(({ sourceId }) => sourceId)).toEqual(['src-i-employee']);
+		});
+
+		it('does not save an invitation stating no e-mail over a stored one addressed to the SUPER_ADMIN', async () => {
+			writeCsv('invite', ['id,token,roleId', 'src-i-employee,known-token-2,src-employee']);
+			const { service, written } = buildService({ 'invite:src-i-employee': 'invite-root' });
+
+			await service.parse(extractPath, false);
+
+			expect(written('invite')).toEqual([]);
+		});
+	});
+
+	describe('a clean import', () => {
+		it("refuses an ADMIN's clean import of a bare user.csv before any user is deleted", async () => {
+			fs.rmSync(path.join(extractPath, 'role.csv'));
+			const { service, written, userTable } = buildService();
+
+			await expect(service.parse(extractPath, true)).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(userTable.repository.query).not.toHaveBeenCalled();
+			expect(written()).toEqual([]);
+		});
+
+		it('refuses a header-only invite.csv from an importer who may not invite, before anything is deleted', async () => {
+			mockCaller.permissions = [PermissionsEnum.IMPORT_ADD];
+			fs.rmSync(path.join(extractPath, 'role.csv'));
+			fs.rmSync(path.join(extractPath, 'user.csv'));
+			writeCsv('invite', ['id,email,token,roleId']);
+			const { service, inviteTable } = buildService();
+
+			await expect(service.parse(extractPath, true)).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(inviteTable.repository.query).not.toHaveBeenCalled();
+		});
+
+		it("cleans up and writes a SUPER_ADMIN's clean import of users and invitations, as before", async () => {
+			mockCaller.role = RolesEnum.SUPER_ADMIN;
+			mockCaller.permissions = [PermissionsEnum.IMPORT_ADD];
+			writeCsv('invite', ['id,email,token,roleId', 'src-i-super,root@example.com,known-token,src-super']);
+			const { service, written, userTable, inviteTable } = buildService();
+
+			await service.parse(extractPath, true);
+
+			expect(userTable.repository.query).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM "user"'));
+			expect(inviteTable.repository.query).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM "invite"'));
+			expect(written('user')).toHaveLength(5);
+			expect(written('invite').map(({ sourceId }) => sourceId)).toEqual(['src-i-super']);
 		});
 	});
 
