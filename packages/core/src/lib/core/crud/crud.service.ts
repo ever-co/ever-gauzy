@@ -1289,10 +1289,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		// broadcasts the payload to the subscribers). `nativeUpdate` runs no subscriber, so under MikroORM
 		// `updatedByUserId` stayed empty through every `update()`, and an administrator's change read as an untouched
 		// default to the permission backfill migrations that rely on it.
-		if (
-			row['updatedByUserId'] === undefined &&
-			meta.props.some((property) => property.name === 'updatedByUserId' && property.persist !== false)
-		) {
+		// On the platform's entities `updatedByUserId` is the `persist: false` mirror of the `updatedByUser` relation, and
+		// `nativeUpdate` writes a mirror stated alone, so it is looked up whatever its `persist` (ever-co/ever-gauzy#11382).
+		if (row['updatedByUserId'] === undefined && meta.props.some((property) => property.name === 'updatedByUserId')) {
 			const userId = RequestContext.currentUserId();
 			if (userId) {
 				row['updatedByUserId'] = userId;
