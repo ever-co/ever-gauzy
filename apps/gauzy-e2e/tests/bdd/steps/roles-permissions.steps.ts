@@ -556,6 +556,11 @@ const ENABLED_PERMISSIONS: Record<string, readonly PermissionsEnum[]> = {
 	],
 	MANAGER: [
 		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+		/** Task settings and availability writes (owner decision 2(b), 2026-10-23) */
+		PermissionsEnum.ORG_TASK_SETTING,
+		PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+		PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+		PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
 		/** GENERAL card */
 		PermissionsEnum.DOCS_READ,
 		PermissionsEnum.DOCS_CREATE,

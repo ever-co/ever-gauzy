@@ -1102,6 +1102,15 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.SKILLS_EDIT,
 			PermissionsEnum.EVENT_TYPES_EDIT,
 			/** Goals, Skills and Event Types Permissions End */
+			/**
+			 * Task settings and availability writes (owner decision 2(b), 2026-10-23): the organization's task
+			 * settings, and availability slots, appointments and their invitations. Existing tenants get the same from
+			 * `GrantManagerTaskSettingAndAvailabilityPermissions1791000000841`.
+			 */
+			PermissionsEnum.ORG_TASK_SETTING,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
 			/** Inbox Permissions Start */
 			PermissionsEnum.INBOX_VIEW,
 			/** Inbox Permissions End */
