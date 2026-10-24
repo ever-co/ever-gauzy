@@ -28,9 +28,11 @@ import {
 	assertReferencesAreInScope,
 	IReferenceScope,
 	ISharingColumns,
+	ISharingMembers,
 	ISharingReferences,
 	IStoredSharing,
 	sharingAsStored,
+	sharingMemberReferences,
 	sharingReferences,
 	withReferencesAsIds
 } from './reference-scope.helper';
@@ -94,15 +96,20 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * related object (`equipmentSharingPolicy: { id }`), which the ORM persists as the foreign key just the same —
 	 * see `sharingReferences`.
 	 *
+	 * The employees and the teams the sharing is handed to (`employees`, `teams`, each entry a related object or a
+	 * bare id) are held to the same scope: the CRUD base checks the nested rows against the tenant only, so a body
+	 * could list another organization's employees or teams of the same tenant — see `sharingMemberReferences`.
+	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
-	 * @throws ForbiddenException when a referenced row is outside the scope.
+	 * @throws ForbiddenException when a referenced row or a listed member is outside the scope.
 	 */
 	public async assertReferencesAreInScope(
-		input: Partial<IEquipmentSharingUpdateInput> | ISharingReferences,
+		input: Partial<IEquipmentSharingUpdateInput> | (ISharingReferences & ISharingMembers),
 		scope: IReferenceScope
 	): Promise<void> {
-		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
+		const references = [...sharingReferences(input), ...sharingMemberReferences(input)];
+		await assertReferencesAreInScope(references, scope, (table, where) =>
 			this.typeOrmRepository.manager.findOne(table, { where: where as any })
 		);
 	}
@@ -184,11 +191,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		input: ISharingReferences & { id?: unknown; version?: unknown }
 	): Promise<{ payload: ISharingColumns & { id?: unknown }; stored: IStoredSharingRow | null }> {
 		const tenantId = RequestContext.currentTenantId();
-		const { version: _version, ...body } = (input ?? {}) as ISharingReferences & {
-			id?: unknown;
-			version?: unknown;
-		};
-		const values: ISharingColumns & { id?: unknown } = withReferencesAsIds(body);
+		type Body = ISharingReferences & ISharingMembers & { id?: unknown; version?: unknown };
+		const { version: _version, ...body } = (input ?? {}) as Body;
+		const values: ISharingColumns & ISharingMembers & { id?: unknown } = withReferencesAsIds(body);
 		const stored = await this.findStoredSharing(values.id, tenantId);
 		const {
 			values: payload,
@@ -196,7 +201,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			organizationId
 		} = sharingAsStored(values, stored, RequestContext.currentOrganizationId());
 
-		await this.assertReferencesAreInScope(references, { tenantId, organizationId });
+		// The employees and the teams the body lists are stored with the row too, so they are checked in the same
+		// organization as its equipment and its policy.
+		await this.assertReferencesAreInScope(
+			{ ...references, employees: values.employees, teams: values.teams },
+			{ tenantId, organizationId }
+		);
 		return { payload, stored };
 	}
 

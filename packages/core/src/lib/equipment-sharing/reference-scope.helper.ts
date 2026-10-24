@@ -103,6 +103,50 @@ export function sharingReferences(input: ISharingReferences): Array<readonly [st
 }
 
 /**
+ * The employees and the teams a sharing is handed to, as a body can list them: each entry a related object
+ * (`{ id }`, the form sends the whole row) or a bare id string (MikroORM persists both as the pivot row).
+ */
+export interface ISharingMembers {
+	employees?: unknown;
+	teams?: unknown;
+}
+
+/**
+ * The ids a member list names, each once. A value that is not a list is read as a list of one, so that whatever the
+ * ORM could make of it is checked too.
+ *
+ * @param members - The list as the body sent it.
+ * @returns The ids the entries name; an entry that names none is skipped, as an absent column is.
+ */
+function memberIds(members: unknown): ID[] {
+	if (members === undefined || members === null) {
+		return [];
+	}
+	const entries = Array.isArray(members) ? members : [members];
+	return entries
+		.map((entry) => relatedId(entry))
+		.filter((id, index, ids): id is ID => id !== undefined && id !== null && ids.indexOf(id) === index);
+}
+
+/**
+ * Every `[table, id]` the member lists of a sharing payload name (see {@link ISharingMembers}), for
+ * {@link assertReferencesAreInScope}.
+ *
+ * The many-to-many lists were checked against the tenant only (the nested-graph guard of the CRUD base), so a body
+ * could hand a sharing to another organization's employees or teams of the same tenant. Each listed employee and team
+ * must now be a row of the sharing's organization, like its equipment and its policy.
+ *
+ * @param input - The create/update payload.
+ * @returns The members to validate, an id listed twice listed once.
+ */
+export function sharingMemberReferences(input: ISharingMembers): Array<readonly [string, ID | undefined]> {
+	return [
+		...memberIds(input?.employees).map((id) => ['employee', id] as const),
+		...memberIds(input?.teams).map((id) => ['organization_team', id] as const)
+	];
+}
+
+/**
  * A sharing payload with each reference stated once, as its foreign-key column.
  *
  * The related object's id wins over the column when the body carries both (the form sends both, with the same id):
