@@ -1,32 +1,45 @@
+jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
+
 import { Logger } from '@nestjs/common';
 import { getControllerClass } from './jira.controller';
 
+const SHARED_SECRET = 'installation-shared-secret';
+
 /**
- * The Jira hooks are public and their bodies unverified: a body is never written to the log.
- *
- * Every hook printed `JSON.stringify(body)`, so anyone could write what they liked into the server log, and the
- * `installed` lifecycle payload of a real installation — which carries the tenant's `sharedSecret` — landed there too.
+ * The Jira lifecycle and webhook routes are public, and each used to print its whole request body to the API's
+ * logs: the `installed` payload Atlassian sends carries the installation's `sharedSecret`, and any anonymous caller
+ * could write whatever it liked there.
  */
-describe('Jira hooks — the bodies stay out of the log', () => {
-	const SECRET = 'connect-shared-secret-value';
-	const controller = new (getControllerClass({ path: 'jira', config: {} as never }))();
+describe('Jira hook controller', () => {
+	const HookController = getControllerClass({ path: 'integration/jira', config: {} } as never);
+	const controller = new HookController();
+	const body = {
+		key: 'app',
+		clientKey: 'client',
+		sharedSecret: SHARED_SECRET,
+		baseUrl: 'https://site.atlassian.net'
+	};
+
+	let written: unknown[][];
+
+	beforeEach(() => {
+		written = [];
+		const record = (...args: unknown[]) => void written.push(args);
+		jest.spyOn(console, 'log').mockImplementation(record);
+		for (const method of ['log', 'debug', 'verbose', 'warn', 'error'] as const) {
+			jest.spyOn(Logger.prototype, method).mockImplementation(record);
+		}
+	});
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it.each(['issueCreated', 'issueDeleted', 'issueUpdated', 'installed', 'uninstalled'])(
-		'%s writes nothing of the body to the console or the logger',
-		(hook) => {
-			const written: string[] = [];
-			const capture = (...args: unknown[]) => void written.push(args.map((arg) => JSON.stringify(arg)).join(' '));
-			jest.spyOn(console, 'log').mockImplementation(capture);
-			for (const level of ['log', 'debug', 'verbose', 'warn', 'error'] as const) {
-				jest.spyOn(Logger.prototype, level).mockImplementation(capture);
-			}
+	it.each(['installed', 'uninstalled', 'issueCreated', 'issueDeleted', 'issueUpdated'])(
+		'does not write the body %s receives to the logs',
+		(handler) => {
+			expect(controller[handler](body)).toBeUndefined();
 
-			controller[hook]({ clientKey: 'client-key', sharedSecret: SECRET, issue: { key: 'GA-1' } });
-
-			expect(written.join('\n')).not.toContain(SECRET);
-			expect(written.join('\n')).not.toContain('GA-1');
+			expect(JSON.stringify(written)).not.toContain(SHARED_SECRET);
+			expect(JSON.stringify(written)).not.toContain('client');
 		}
 	);
 });

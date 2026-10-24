@@ -11,6 +11,15 @@ export function getControllerClass({ path, config }: JiraModuleOptions): Type<an
 	@Controller(path)
 	class HookController {
 		/**
+		 * Notes that a lifecycle event or webhook arrived, without its body.
+		 *
+		 * The routes are public and nothing verifies Atlassian's signature yet, so a body is whatever an anonymous
+		 * caller sent. And a genuine `installed` payload carries the installation's `sharedSecret`, the key every
+		 * later request of that Jira site is signed with: the handlers used to print each body to the API's logs.
+		 */
+		private readonly logger = new Logger('JiraHookController');
+
+		/**
 		 * General schema can be seen here: https://bitbucket.org/atlassian/connect-schemas/raw/master/jira-global-schema.json
 		 */
 		connectAppDescriptor = {
@@ -243,28 +252,24 @@ export function getControllerClass({ path, config }: JiraModuleOptions): Type<an
 			}
 		};
 
-		/**
-		 * The hooks are public and their bodies are not verified, so a body is never written to the log: anyone
-		 * could fill the log with it, and the `installed` lifecycle payload of a real installation carries the
-		 * tenant's `sharedSecret` (and `clientKey`), which a log line would hand to whoever reads the logs.
-		 */
-		readonly logger = new Logger('JiraHook');
-
 		@Post('issue-created')
 		issueCreated(@Body() body: any) {
 			// TODO handle Issue Created
+			void body;
 			this.logger.debug('Jira issue-created event received');
 			return;
 		}
 		@Post('issue-deleted')
 		issueDeleted(@Body() body: any) {
 			// TODO handle Issue Deleted
+			void body;
 			this.logger.debug('Jira issue-deleted event received');
 			return;
 		}
 		@Post('issue-updated')
 		issueUpdated(@Body() body: any) {
 			// TODO handle Issue Updated
+			void body;
 			this.logger.debug('Jira issue-updated event received');
 			return;
 		}
@@ -272,12 +277,14 @@ export function getControllerClass({ path, config }: JiraModuleOptions): Type<an
 		@Post('installed')
 		installed(@Body() body: any) {
 			// This function is needed to install the App
-			this.logger.debug('Jira installed lifecycle event received');
+			void body;
+			this.logger.debug('Jira installed event received');
 			return;
 		}
 		@Post('uninstalled')
 		uninstalled(@Body() body: any) {
-			this.logger.debug('Jira uninstalled lifecycle event received');
+			void body;
+			this.logger.debug('Jira uninstalled event received');
 			return;
 		}
 
