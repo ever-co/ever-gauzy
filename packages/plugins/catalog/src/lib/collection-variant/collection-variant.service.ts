@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext } from '@gauzy/core';
 import { assertAllInCallerScope } from '../catalog.scope';
 import { Collection } from '../collection/collection.entity';
 import { CollectionVariant } from './collection-variant.entity';
 import { MikroOrmCollectionVariantRepository } from './repository/mikro-orm-collection-variant.repository';
 import { TypeOrmCollectionVariantRepository } from './repository/type-orm-collection-variant.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * The caller's tenant and organization as criteria, each only when the credential states it: a key present with an
@@ -24,7 +25,7 @@ function callerScope(): { tenantId?: ID; organizationId?: ID } {
  * product-level membership: a "last sizes" shelf is reordered and restocked as a whole.
  */
 @Injectable()
-export class CollectionVariantService extends TenantAwareCrudService<CollectionVariant> {
+export class CollectionVariantService extends CatalogCrudService<CollectionVariant> {
 	constructor(
 		readonly typeOrmCollectionVariantRepository: TypeOrmCollectionVariantRepository,
 		readonly mikroOrmCollectionVariantRepository: MikroOrmCollectionVariantRepository

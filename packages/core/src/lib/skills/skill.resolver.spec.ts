@@ -13,7 +13,7 @@ import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { SkillController } from './skill.controller';
 import { SkillResolver } from './skill.resolver';
 
@@ -27,8 +27,9 @@ import { SkillResolver } from './skill.resolver';
  * - every one of those capabilities is a root field or a filter of one, and the list is a connection
  *   with the platform's own cursor codec behind it;
  * - every field reaches the same `SkillService` method the REST route reaches;
- * - **the guard chain is the controller's and no permission is stated anywhere**, because the
- *   controller states none — a permission here would refuse a caller the REST route serves;
+ * - **the guard chain and the permissions are the controller's**: the reads state none, and every write
+ *   states `SKILLS_EDIT` behind `PermissionGuard` on the route and on the field alike (owner decision 2,
+ *   2026-10-22) — a permission stated on one side only would make the other protocol the better surface;
  * - the name route is folded into the connection's `name` filter, and the one difference that folding
  *   leaves is asserted rather than glossed;
  * - a skill that is not there is `null` on the one-row field rather than a refusal.
@@ -359,7 +360,7 @@ describe('SkillResolver — one concept, two protocols, the same operations', ()
 	});
 });
 
-describe('SkillResolver — the guard stack is the controller’s and no permission is stated', () => {
+describe('SkillResolver — the guard stack and the permissions are the controller’s', () => {
 	it('guards the resolver the way the controller is guarded', () => {
 		expect(Reflect.getMetadata('__guards__', SkillController)).toEqual(
 			expect.arrayContaining([TenantPermissionGuard])
@@ -373,8 +374,8 @@ describe('SkillResolver — the guard stack is the controller’s and no permiss
 		const stated = Reflect.getMetadata('__guards__', SkillResolver) ?? [];
 
 		for (const [field, handler] of ROUTES) {
-			// The retire-and-restore pair states `PermissionGuard` on the handler and on the field alike, so the
-			// field's own guards join the class's on the resolver side.
+			// Every write states `PermissionGuard` on the handler and on the field alike, so the field's own guards
+			// join the class's on the resolver side.
 			const fieldGuards = (Reflect.getMetadata('__guards__', (SkillResolver.prototype as any)[field]) ??
 				[]) as unknown[];
 
@@ -389,20 +390,46 @@ describe('SkillResolver — the guard stack is the controller’s and no permiss
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, SkillResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its route states, which is none but the retire-and-restore pair', () => {
+	it('states on every field the permission its route states: none on the reads, SKILLS_EDIT on every write', () => {
 		const stated = Object.fromEntries(ROUTES.map(([field]) => [field, permissionOfField(field)]));
 		const expected = Object.fromEntries(
 			ROUTES.map(([field, handler]) => [field, permissionOfRoute(SkillController, handler)])
 		);
 
-		// Every entry is `undefined`, on both sides: this resource is guarded and otherwise open, and a
-		// permission invented here would refuse a caller the REST route serves.
+		// Held to the controller's own metadata, field by field: a grant stated on one protocol only would make the
+		// other the better surface.
 		expect(stated).toEqual(expected);
-		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
-		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
-		// empty metadata, so any member of the tenant could retire or restore a row.
-		for (const [field, value] of Object.entries(stated)) {
-			expect(value).toEqual(['softDeleteSkill', 'recoverSkill'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
+		// And stated outright, so the parity above cannot pass with both sides bare: the CRUD base declares no
+		// permission and `PermissionGuard` answers `true` to empty metadata, so a bare write let any member of the
+		// tenant change the skills vocabulary (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22).
+		expect(stated).toEqual({
+			skills: undefined,
+			skill: undefined,
+			skillCount: undefined,
+			createSkill: [PermissionsEnum.SKILLS_EDIT],
+			updateSkill: [PermissionsEnum.SKILLS_EDIT],
+			deleteSkill: [PermissionsEnum.SKILLS_EDIT],
+			softDeleteSkill: [PermissionsEnum.SKILLS_EDIT],
+			recoverSkill: [PermissionsEnum.SKILLS_EDIT]
+		});
+	});
+
+	it('puts every write behind PermissionGuard, on the route and on the field, and no read', () => {
+		// `@Permissions` alone is inert: it is `PermissionGuard` that reads it, and the guard is not on either class.
+		const writes = ['createSkill', 'updateSkill', 'deleteSkill', 'softDeleteSkill', 'recoverSkill'];
+
+		for (const [field, handler] of ROUTES) {
+			const fieldGuards = (Reflect.getMetadata('__guards__', (SkillResolver.prototype as any)[field]) ??
+				[]) as unknown[];
+
+			expect({ field, route: guardsOfRoute(SkillController, handler).includes(PermissionGuard) }).toEqual({
+				field,
+				route: writes.includes(field)
+			});
+			expect({ field, resolver: fieldGuards.includes(PermissionGuard) }).toEqual({
+				field,
+				resolver: writes.includes(field)
+			});
 		}
 	});
 });

@@ -42,7 +42,8 @@ export class CommentService {
 					params: toParams({
 						where: { entity, entityId, ...scope },
 						relations: ['employee', 'employee.user', 'createdByUser'],
-						order: { createdAt: 'ASC' },
+						// The id breaks timestamp ties, so page boundaries stay fixed between requests.
+						order: { createdAt: 'ASC', id: 'ASC' },
 						take: COMMENTS_PAGE_SIZE,
 						// A row offset on `GET /comment` (`findAll`), not a page number.
 						skip: items.length
@@ -66,7 +67,7 @@ export class CommentService {
 				params: toParams({
 					where: { entity, entityId, ...scope },
 					relations: ['employee', 'employee.user', 'createdByUser'],
-					order: { createdAt: 'DESC' },
+					order: { createdAt: 'DESC', id: 'DESC' },
 					take: Math.min(take, COMMENTS_PAGE_SIZE)
 				})
 			})

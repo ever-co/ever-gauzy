@@ -15,10 +15,12 @@ import { CreateCandidateExperienceDTO, UpdateCandidateExperienceDTO } from './dt
  *
  * 🛑 The chain below used to read `@UseGuards(TenantPermissionGuard, TenantPermissionGuard)` — the
  * tenant guard twice, with `PermissionGuard` nowhere. `@Permissions` is metadata and does nothing on
- * its own: `PermissionGuard` is the only provider that reads `PERMISSIONS_METADATA`, so the class
- * permission below and the `ORG_CANDIDATES_VIEW` the two reads state were evaluated by nothing at
- * all, and every route of this controller — the list, the row, and the create and edit inherited from
- * the CRUD base — ran for any authenticated member of the tenant. The four sibling controllers of the
+ * its own. `TenantPermissionGuard` does read `PERMISSIONS_METADATA`, but only asks whether ANY role of
+ * the tenant holds the permission (`checkRolePermission` without the role); `PermissionGuard` is the
+ * guard that asks it of the caller's own role. So the class permission below and the
+ * `ORG_CANDIDATES_VIEW` the two reads state were never checked against the caller, and every route of
+ * this controller — the list, the row, and the create and edit inherited from the CRUD base — ran for
+ * any authenticated member of the tenant (VIEWER included). The four sibling controllers of the
  * candidacy file (`candidate-educations`, `candidate-skills`, `candidate-source`,
  * `candidate-documents`) all state `(TenantPermissionGuard, PermissionGuard)` with the same class
  * permission, so the duplicate was a slip rather than a decision, and the declarations below are the

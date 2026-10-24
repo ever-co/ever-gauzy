@@ -7,9 +7,39 @@ import { UpdateEmployeeTotalWorkedHoursCommand } from '../../commands/update-emp
 import { RequestContext } from '../../../../core/context';
 import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';
+import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+
+/**
+ * Whether the time log being created is stored as running: as the input says, or, when it says nothing, a log
+ * from the desktop timer — the default `createTimeLogEntity` applies.
+ *
+ * @param input - The time log about to be created.
+ * @returns `true` when the log is written with `isRunning: true`.
+ */
+export function isRunningTimeLogInput(input: Partial<TimeLog>): boolean {
+	return input.isRunning === undefined ? input.source === TimeLogSourceEnum.DESKTOP : !!input.isRunning;
+}
+
+/**
+ * A running log is written with `stoppedAt = startedAt`, the shape `TimerService.startTimer` gives it (the
+ * time-slot heartbeat then moves `stoppedAt` forward while it runs). Other callers — the integration sync
+ * (`IntegrationMapSyncTimeLogHandler`, which passes its entity as-is), a desktop-source log that names no end —
+ * could store a running log with a null `stoppedAt`, and the timer status and stop / toggle reads never found such
+ * a row: the timer read "stopped" while the row ran, and nothing stopped it. The input is given that shape here, at
+ * the one place every create goes through. A log that names its `stoppedAt`, or is not running, is left as it is.
+ *
+ * @param input - The time log about to be created.
+ * @returns The input, with `stoppedAt` set to `startedAt` when the log runs and names no end.
+ */
+export function withRunningLogStoppedAt<T extends Partial<TimeLog>>(input: T): T {
+	if (!input || input.stoppedAt || !input.startedAt || !isRunningTimeLogInput(input)) {
+		return input;
+	}
+	return { ...input, stoppedAt: input.startedAt };
+}
 
 @CommandHandler(TimeLogCreateCommand)
 export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateCommand> {
@@ -28,11 +58,14 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 	 * @returns Promise<TimeLog>
 	 */
 	public async execute(command: TimeLogCreateCommand): Promise<TimeLog> {
-		const { input } = command;
+		const input = withRunningLogStoppedAt(command.input);
 		const { startedAt, employeeId, organizationId, stoppedAt, timeSlots: inputTimeSlots } = input;
 
 		// Retrieve the tenant ID from the current context or the provided one in the input
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+		// The project, task, client and team the log names are rows of its tenant, checked before anything is written
+		await assertTimeLogReferencesOfTenant(this.typeOrmTimeLogRepository, input, tenantId);
 
 		// Create timesheet if it doesn't exist
 		const timesheet = await this._commandBus.execute(

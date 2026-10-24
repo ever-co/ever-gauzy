@@ -9,7 +9,8 @@ import {
 	Param,
 	UseGuards,
 	Query,
-	Delete
+	Delete,
+	HttpException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
@@ -92,6 +93,11 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 		try {
 			return await this.keyResultUpdateService.create({ ...entity, id });
 		} catch (error) {
+			// A refused change (403) or an update that is not there (404) keeps its status: answering it with 202 and
+			// an empty body would read as a saved change
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			console.log(error);
 			return;
 		}

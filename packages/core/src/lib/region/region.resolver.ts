@@ -247,6 +247,10 @@ export class RegionResolver {
 		filter: (payload: IRegionChangedEnvelope, variables: { regionId?: Id; action?: string }) =>
 			Boolean(payload) &&
 			payload.tenantId === RequestContext.currentTenantId() &&
+			// The organization too, as the region reads are scoped (`RegionService.scope`): the topic is the
+			// tenant's, so a subscriber acting in one organization used to receive another organization's regions
+			(!payload.organizationId ||
+				String(payload.organizationId) === String(RequestContext.currentOrganizationId() ?? '')) &&
 			(!variables?.regionId || String(payload.region?.id) === String(variables.regionId)) &&
 			(!variables?.action || payload.action === variables.action),
 		resolve: (payload: IRegionChangedEnvelope) => payload.region

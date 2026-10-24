@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { EventBus, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventBus, RequestContext } from '@gauzy/core';
 import { CollectionType, PublicationStatus } from '../catalog.types';
 import { CollectionChangedEvent } from '../events';
 import { Collection } from './collection.entity';
 import { MikroOrmCollectionRepository } from './repository/mikro-orm-collection.repository';
 import { TypeOrmCollectionRepository } from './repository/type-orm-collection.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Collections and their tree.
@@ -17,7 +18,7 @@ import { TypeOrmCollectionRepository } from './repository/type-orm-collection.re
  * a label.
  */
 @Injectable()
-export class CollectionService extends TenantAwareCrudService<Collection> {
+export class CollectionService extends CatalogCrudService<Collection> {
 	constructor(
 		readonly typeOrmCollectionRepository: TypeOrmCollectionRepository,
 		readonly mikroOrmCollectionRepository: MikroOrmCollectionRepository,

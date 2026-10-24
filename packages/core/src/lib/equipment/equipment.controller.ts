@@ -68,6 +68,8 @@ export class EquipmentController extends CrudController<Equipment> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Post()
 	@UseValidationPipe({ transform: true })
 	async create(@Body() entity: CreateEquipmentDTO): Promise<IEquipment> {
@@ -89,12 +91,37 @@ export class EquipmentController extends CrudController<Equipment> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateEquipmentDTO): Promise<IEquipment> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		return await this.equipmentService.create({ ...entity, id });
+	}
+
+	/**
+	 * Deletes a record by id.
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach a permission. The base declares the
+	 * route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of
+	 * the tenant could remove an asset. It now states `ORG_EQUIPMENT_EDIT`, like the create, the edit and the
+	 * retire-and-restore pair (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The delete result.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.delete(id, ...options);
 	}
 
 	/**

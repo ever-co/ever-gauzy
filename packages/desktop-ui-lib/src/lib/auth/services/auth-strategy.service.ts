@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { IAuthResponse, IUser } from '@gauzy/contracts';
 import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
-import { EMPTY, Observable, from, of, switchMap, take } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, defer, firstValueFrom, from, of, switchMap, take } from 'rxjs';
+import { catchError, filter, finalize, map, tap } from 'rxjs/operators';
 import { ElectronService } from '../../electron/services';
 import { Store, TimeTrackerDateManager } from '../../services';
 import { AuthService } from './auth.service';
@@ -54,12 +54,49 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 	};
 
+	/**
+	 * Bumped by every `storeAuthenticationData()` (a sign-in, an organization switch): a token refresh that began
+	 * before must neither store its answer then (it would pair the tokens of the organization left with the user,
+	 * employee and Electron account of the one entered) nor report its failure as the end of the session.
+	 */
+	private _credentialsGeneration = 0;
+
+	/** Token refreshes under way (proactive, or after a 401). */
+	private readonly _refreshesInFlight$ = new BehaviorSubject<number>(0);
+
+	/** Held while `replaceCredentials()` runs; a token refresh asked for meanwhile waits for it. */
+	private readonly _replacingCredentials$ = new BehaviorSubject<boolean>(false);
+
 	constructor(
 		private readonly authService: AuthService,
 		private readonly store: Store,
 		private readonly electronService: ElectronService
 	) {
 		super();
+	}
+
+	/**
+	 * Run `operation`, which replaces the credentials (an organization switch: the API call, then storing the tokens it
+	 * issued), with no token refresh overlapping it. It starts once the refreshes under way have landed, so the switch
+	 * request carries the newest access token and no refresh answer for the organization left arrives afterwards;
+	 * refreshes asked for meanwhile start once it is over, with the refresh token it left.
+	 *
+	 * `operation` must not wait for a token refresh itself (its requests skip it, see `SKIP_TOKEN_REFRESH`).
+	 */
+	public async replaceCredentials<T>(operation: () => Promise<T>): Promise<T> {
+		// Taking the lock in the same emission that saw no refresh under way leaves no gap for one to start.
+		await firstValueFrom(
+			this._refreshesInFlight$.pipe(
+				filter((count) => count === 0),
+				take(1),
+				tap(() => this._replacingCredentials$.next(true))
+			)
+		);
+		try {
+			return await operation();
+		} finally {
+			this._replacingCredentials$.next(false);
+		}
 	}
 
 	static setup(options: { name: string }): [NbAuthStrategyClass, any] {
@@ -121,6 +158,15 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	refreshToken(): Observable<NbAuthResult> {
+		// Wait while an organization switch replaces the credentials, then refresh with the refresh token it left.
+		return this._replacingCredentials$.pipe(
+			filter((replacing) => !replacing),
+			take(1),
+			switchMap(() => defer(() => this.refreshStoredToken()))
+		);
+	}
+
+	private refreshStoredToken(): Observable<NbAuthResult> {
 		const refreshToken = this.store.refreshToken;
 
 		if (!refreshToken) {
@@ -129,8 +175,16 @@ export class AuthStrategy extends NbAuthStrategy {
 			);
 		}
 
+		const generation = this._credentialsGeneration;
+		this._refreshesInFlight$.next(this._refreshesInFlight$.getValue() + 1);
+
 		return this.authService.refreshToken(refreshToken).pipe(
 			map((res: { token: string; refresh_token: string }) => {
+				if (generation !== this._credentialsGeneration) {
+					// The credentials were replaced meanwhile: theirs stay.
+					return this.supersededRefreshResult();
+				}
+
 				if (!res || !res.token || !res.refresh_token) {
 					return new NbAuthResult(false, res, false, ['Failed to refresh token']);
 				}
@@ -151,10 +205,25 @@ export class AuthStrategy extends NbAuthStrategy {
 				return new NbAuthResult(true, res, false, [], ['Token refreshed successfully']);
 			}),
 			catchError((error) => {
+				if (generation !== this._credentialsGeneration) {
+					// Refused for the credentials replaced meanwhile (an organization switch replaces the refresh
+					// token held before): the session goes on with the new ones.
+					return of(this.supersededRefreshResult());
+				}
 				console.error('Token refresh failed:', error);
 				return of(new NbAuthResult(false, error, false, ['Token refresh failed'], ['Token refresh failed']));
-			})
+			}),
+			finalize(() => this._refreshesInFlight$.next(this._refreshesInFlight$.getValue() - 1))
 		);
+	}
+
+	/**
+	 * The answer to a refresh that the credentials stored meanwhile have overtaken: nothing is stored, and the caller
+	 * goes on with the token in the store (a retried request carries it).
+	 */
+	private supersededRefreshResult(): NbAuthResult {
+		console.warn('[AuthStrategy] Credentials replaced while refreshing the token; keeping the new ones');
+		return new NbAuthResult(true, null, false, [], ['Credentials replaced while refreshing']);
 	}
 
 	logout(isRestart?: boolean): Observable<NbAuthResult> {
@@ -322,6 +391,9 @@ export class AuthStrategy extends NbAuthStrategy {
 		this.validateEmployeeUser(user);
 
 		const { id, employee, tenantId } = user;
+
+		// A token refresh under way began with the credentials replaced here.
+		this._credentialsGeneration++;
 
 		// Store organization data
 		TimeTrackerDateManager.organization = employee.organization;

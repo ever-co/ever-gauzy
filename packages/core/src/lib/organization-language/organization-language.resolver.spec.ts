@@ -476,15 +476,22 @@ describe('OrganizationLanguageResolver — the guard stack is the controller’s
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = Reflect.getMetadata('__guards__', OrganizationLanguageResolver) ?? [];
 		const routes = ['findAll', 'findById', 'getCount', 'create', 'update', 'delete', 'softRemove', 'softRecover'];
+		const writes = ['create', 'update', 'delete', 'softRemove', 'softRecover'];
 
 		for (const handler of routes) {
 			expect([...guardsOfRoute(OrganizationLanguageController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated, ...(['softRemove', 'softRecover'].includes(handler) ? [PermissionGuard] : [])].sort()
+				[...stated, ...(writes.includes(handler) ? [PermissionGuard] : [])].sort()
 			);
 		}
 
-		// The retire-and-restore pair states `PermissionGuard` on the handler (above) and on the field alike.
-		for (const field of ['softDeleteOrganizationLanguage', 'recoverOrganizationLanguage']) {
+		// Every write states `PermissionGuard` on the handler (above) and on the field alike.
+		for (const field of [
+			'createOrganizationLanguage',
+			'updateOrganizationLanguage',
+			'deleteOrganizationLanguage',
+			'softDeleteOrganizationLanguage',
+			'recoverOrganizationLanguage'
+		]) {
 			expect(Reflect.getMetadata('__guards__', (OrganizationLanguageResolver.prototype as any)[field])).toEqual([PermissionGuard]);
 		}
 	});
@@ -512,11 +519,18 @@ describe('OrganizationLanguageResolver — the guard stack is the controller’s
 		);
 
 		expect(stated).toEqual(expected);
-		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
-		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
-		// empty metadata, so any member of the tenant could retire or restore a row.
+		// The reads are unpermissioned on both surfaces, and every write states `ALL_ORG_EDIT` behind
+		// `PermissionGuard` on both (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers
+		// `true` to empty metadata, so any member of the tenant could write a row.
+		const writeFields = [
+			'createOrganizationLanguage',
+			'updateOrganizationLanguage',
+			'deleteOrganizationLanguage',
+			'softDeleteOrganizationLanguage',
+			'recoverOrganizationLanguage'
+		];
 		for (const [field, permission] of Object.entries(stated)) {
-			expect(permission).toEqual(['softDeleteOrganizationLanguage', 'recoverOrganizationLanguage'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
+			expect(permission).toEqual(writeFields.includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
 		}
 	});
 });

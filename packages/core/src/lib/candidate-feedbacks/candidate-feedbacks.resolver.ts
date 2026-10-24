@@ -78,11 +78,12 @@ const FEEDBACK_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain is the controller's, and it is the shortest chain in this domain.** The controller
  * carries `TenantPermissionGuard` on its class and nothing else: no class-level permission, and none on
- * the count, the paginated spelling, the list, the node, or the plain removal it inherits from the CRUD
- * base. Six of its handlers state `PermissionGuard` of their own — the interview-scoped read, the two
- * writes, the interview-scoped removal, and the retire-and-restore pair it overrides only to attach the
- * grant (GHSA-v79w-54p2-wmh5) — and five of those six also state the feedback edit permission. So the
- * class here carries the tenant guard and the gate alone, those six fields restate the permission guard
+ * the count, the paginated spelling, the list or the node it inherits from the CRUD base. Seven of its
+ * handlers state `PermissionGuard` of their own — the interview-scoped read, the two writes, the
+ * interview-scoped removal, and the plain removal and the retire-and-restore pair it overrides only to
+ * attach the grant (GHSA-v79w-54p2-wmh5) — and six of those seven also state the feedback edit
+ * permission. So the class here carries the tenant guard and the gate alone, those seven fields restate the
+ * permission guard
  * and state the permission their own routes state, and **no field states a
  * permission its route does not** — which for this resource means that most of the surface is guarded
  * by the tenant alone, exactly as the routes are. A class-level permission added for symmetry would
@@ -212,9 +213,12 @@ export class CandidateFeedbacksResolver {
 	 * Removes a verdict outright, through the plain removal the controller inherits.
 	 *
 	 * The delivered handler answers the store's deletion result, and the field answers the fact of the
-	 * removal, which is the one member of that result a caller reads.
+	 * removal, which is the one member of that result a caller reads. Under the permission its route states:
+	 * `ORG_CANDIDATES_FEEDBACK_EDIT`.
 	 */
 	@Mutation('deleteCandidateFeedback')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	async deleteCandidateFeedback(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.candidateFeedbacksService.delete(id));
 	}

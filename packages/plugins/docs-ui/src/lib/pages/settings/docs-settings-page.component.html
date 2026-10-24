@@ -152,8 +152,9 @@
 					{{ 'DOCS.SETTINGS.STORAGE_NEAR_LIMIT' | translate }}
 				</p>
 
-				<!-- The one writable quota field (`DocumentSettingsDTO.quotaBytes`). Edited in
-				     GiB, sent in bytes; 0 = unlimited for this organization. -->
+				<!-- The one writable quota field (`DocumentSettingsDTO.quotaBytes`), offered only to
+				     the installation's operator (`canEditQuota`). Edited in GiB, sent in bytes;
+				     0 = unlimited for this organization. -->
 				<div class="docs-settings-row docs-storage-quota" *ngIf="canEditQuota">
 					<label class="label" for="docs-settings-quota">
 						{{ 'DOCS.SETTINGS.STORAGE_QUOTA' | translate }}

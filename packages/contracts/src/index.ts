@@ -163,6 +163,7 @@ export * from './lib/request-approval-employee.model';
 export * from './lib/request-approval-team.model';
 export * from './lib/request-approval.model';
 export * from './lib/resource-link.model';
+export * from './lib/role-invite-ceiling';
 export * from './lib/role-permission.model';
 export * from './lib/role.model';
 export * from './lib/rule.model';

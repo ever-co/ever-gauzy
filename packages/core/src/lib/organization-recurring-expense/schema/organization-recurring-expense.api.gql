@@ -4,9 +4,9 @@
 # for the whole platform, so a domain adds fields to it and never declares its own.
 #
 # Every field below is one the delivered `/api/organization-recurring-expense` routes already serve, under
-# the same guard chain and with the same permission — which, on this resource, is no permission at all:
-# the controller carries the tenant guard and states no `@Permissions` anywhere, so a field that demanded
-# one here would refuse a caller the REST route serves. Nothing here decides anything either: each field
+# the same guard chain and with the same permission: `ORG_EXPENSES_VIEW` on every read and
+# `ORG_EXPENSES_EDIT` on every write, each behind `PermissionGuard`, as the routes state them. A field that
+# demanded more would refuse a caller the REST route serves. Nothing here decides anything either: each field
 # calls the same `OrganizationRecurringExpenseService` method, dispatches the same command or executes the
 # same query the route behind it does, with the same payload and the same request facts.
 #

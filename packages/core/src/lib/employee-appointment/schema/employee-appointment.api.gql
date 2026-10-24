@@ -8,10 +8,12 @@
 # not given a narrower or a wider one than the client that reaches it over the other. The guard and the
 # permission are read from `EmployeeAppointmentController`'s own metadata in the resolver, and the
 # resolver's spec compares the two rather than restating a list that could agree with the resolver while
-# disagreeing with the controller. That controller carries `TenantPermissionGuard` on the class and
-# states no permission at all — not on its own routes, and not on any of the lifecycle routes it
-# inherits from the CRUD base — so every field here states the same tenant guard and no permission, and a
-# field that demanded a permission would refuse a caller the REST route serves.
+# disagreeing with the controller. That controller carries `TenantPermissionGuard` on the class, which
+# its reads — the signing and decoding routes included — run under alone, and states an availability grant
+# behind `PermissionGuard` on every write: `EMPLOYEE_AVAILABILITY_CREATE` on the booking,
+# `EMPLOYEE_AVAILABILITY_UPDATE` on the edit and on the two lifecycle moves (owner decision 5, 2026-10-13),
+# and `EMPLOYEE_AVAILABILITY_DELETE` on the removal — the removal and the lifecycle moves overridden from the
+# CRUD base (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22). Every field here states what its route states.
 #
 # **The list is a connection rather than a bare array.** It takes the same query protocol the REST list
 # route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and

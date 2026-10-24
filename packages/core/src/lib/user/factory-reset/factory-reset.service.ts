@@ -96,6 +96,7 @@ import {
 	UserOrganization
 } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
+import { keepingOperatorOnlySettings } from '../../tenant/tenant-setting/operator-only-tenant-settings';
 import { TypeOrmActivityRepository } from '../../time-tracking/activity/repository/type-orm-activity.repository';
 import { MikroOrmActivityRepository } from '../../time-tracking/activity/repository/mikro-orm-activity.repository';
 import { MikroOrmAppointmentEmployeeRepository } from '../../appointment-employees/repository/mikro-orm-appointment-employee.repository';
@@ -866,6 +867,12 @@ export class FactoryResetService {
 			conditions = {
 				tenantId: findInput['tenantId']
 			};
+		}
+		// The tenant's settings go, except the ones only the installation operator may write (an organization's
+		// Documents storage limit, `operator-only-tenant-settings.ts`): without the row the deployment default applies
+		// again, so a reset must not lift a limit the tenant may not change itself.
+		if (repository.metadata.tableName === 'tenant_setting' && tenantId) {
+			conditions = await keepingOperatorOnlySettings(repository, conditions);
 		}
 		return repository.delete(conditions);
 	}

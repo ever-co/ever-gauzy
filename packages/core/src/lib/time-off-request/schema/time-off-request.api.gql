@@ -99,8 +99,8 @@ extend type Mutation {
 	Files a request, and the approval record that carries it forward, in one call.
 
 	The delivered write stores the request and then files the approval row that says who has to decide it,
-	so a request never exists without one. The status a caller states seeds that record; an absent status
-	is the delivered write's own default, which is "requested".
+	so a request never exists without one. The status is the write's, not the caller's: a request is filed
+	"requested", or "approved" when the stored policy it names requires no approval.
 	"""
 	createTimeOffRequest(input: CreateTimeOffRequestInput!): TimeOffRequest!
 

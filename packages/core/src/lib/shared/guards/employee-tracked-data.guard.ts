@@ -1,8 +1,11 @@
 import { BadRequestException, CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
+import { GraphQLResolveInfo } from 'graphql';
 import { DataSource, In } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { ID, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
+import { statedOrganizations } from '../../graphql/stated-organizations';
 
 /**
  * Guard to enforce the `allowEmployeeToSeeTrackedData` organization setting on the read routes that
@@ -35,19 +38,53 @@ export class EmployeeTrackedDataGuard implements CanActivate {
 	constructor(private readonly dataSource: DataSource) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const request = context.switchToHttp().getRequest();
-
-		const organizationIds = [
-			request?.query?.organizationId,
-			request?.body?.organizationId,
-			request?.params?.organizationId
-		];
+		const organizationIds =
+			context.getType?.<GqlContextType>() === 'graphql'
+				? graphqlOrganizationIds(context)
+				: httpOrganizationIds(context);
 
 		if (!(await canViewTrackedData(this.dataSource, organizationIds))) {
 			throw new ForbiddenException('Employees are not allowed to view tracked data in this organization');
 		}
 		return true;
 	}
+}
+
+/**
+ * The organizations a REST request names: its query, its body and its path.
+ *
+ * @param context The execution context.
+ * @returns The `organizationId` values the request carries; absent ones as they are.
+ */
+function httpOrganizationIds(context: ExecutionContext): unknown[] {
+	const request = context.switchToHttp().getRequest();
+
+	return [request?.query?.organizationId, request?.body?.organizationId, request?.params?.organizationId];
+}
+
+/**
+ * The organizations a GraphQL field names: every `organizationId` its declared arguments and inputs carry, an
+ * `IDFilter`'s `eq` and `in` included, read with the walk the organization-membership interceptor uses.
+ *
+ * On a GraphQL execution `switchToHttp().getRequest()` is the field's parent value, not the request, so the guard
+ * used to read no organization there and applied only the caller's own: a field naming another organization of
+ * the caller's whose setting is off was answered as if it named none.
+ *
+ * @param context The execution context.
+ * @returns The organizations the field names.
+ * @throws BadRequestException when an organization is named in a shape that is not an id.
+ */
+function graphqlOrganizationIds(context: ExecutionContext): unknown[] {
+	const graphql = GqlExecutionContext.create(context);
+	const info = graphql.getInfo<GraphQLResolveInfo>();
+	const definition = info?.parentType?.getFields?.()[info.fieldName];
+	const { ids, malformed } = statedOrganizations(graphql.getArgs() ?? {}, definition?.args ?? []);
+
+	if (malformed) {
+		throw new BadRequestException('Invalid organizationId');
+	}
+
+	return [...ids];
 }
 
 /**

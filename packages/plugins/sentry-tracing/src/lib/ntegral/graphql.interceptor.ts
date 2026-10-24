@@ -4,6 +4,7 @@ import type { GqlContextType } from '@nestjs/graphql';
 // Sentry imports
 import { Scope } from '@sentry/node';
 import { SentryInterceptor } from '.';
+import { redactedRequestOf, sentryUserOf } from '../sentry-request-redaction';
 
 let GqlExecutionContext: any;
 try {
@@ -48,20 +49,15 @@ export class GraphqlInterceptor extends SentryInterceptor {
 			// V9 Migration: Manual request data extraction since Handlers.parseRequest was removed
 			// The addRequestDataToEvent method has been removed. Manually extract relevant data of request objects instead.
 			const req = context.req;
-			const requestData = {
-				url: req.url,
-				method: req.method,
-				headers: req.headers,
-				query: req.query,
-				data: req.body
-			};
 
-			scope.setExtra('req', requestData);
+			// The request with its credentials redacted and without its body (the operation's variables carry
+			// passwords and tokens as readily as a REST body), and the user by id alone (`sentry-request-redaction.ts`)
+			scope.setExtra('req', redactedRequestOf(req));
 
 			// V9 Migration: Manual user context setting since requestDataIntegration no longer automatically sets user from request.user
 			// Reference: https://docs.sentry.io/platforms/javascript/guides/node/migration/v8-to-v9/#behavior-changes
 			if (req.user) {
-				scope.setUser(req.user);
+				scope.setUser(sentryUserOf(req.user));
 			}
 		}
 

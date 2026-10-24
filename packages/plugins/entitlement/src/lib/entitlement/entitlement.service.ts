@@ -11,7 +11,7 @@ import {
 	RequestContext,
 	RuleService,
 	SequenceService,
-	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	bumpVersion,
 	commitVersionedUpdate,
 	parseEntityVersion
@@ -37,6 +37,7 @@ import { ENTITLEMENT_RULE_OWNER, toRuleInputs } from '../entitlement-conditions'
 import { isDueForExpiry, toWholeQuantity } from '../entitlement-check/entitlement-rules';
 import { recountEntitlementOccupancy } from '../entitlement-counts';
 import { lockEntitlement } from '../entitlement-lock';
+import { ENTITLEMENT_REFERENCES } from '../entitlement.references';
 import {
 	appendEntitlementEvent,
 	entitlementRowsOf,
@@ -49,6 +50,7 @@ import { EntitlementConditionDTO } from './dto/entitlement.dto';
 import { MikroOrmEntitlementRepository } from './repository/mikro-orm-entitlement.repository';
 import { TypeOrmEntitlementRepository } from './repository/type-orm-entitlement.repository';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../entitlement.writable';
+import { EntitlementCrudService } from '../entitlement-crud.service';
 
 /** Statuses from which a right may be extended by a renewal. */
 const EXTENDABLE_STATUSES: EntitlementStatus[] = [
@@ -103,7 +105,7 @@ export const ENTITLEMENT_WRITABLE_MEMBERS: readonly string[] = [
  * line, the subscription, the party — is carried as an identifier with a foreign key.
  */
 @Injectable()
-export class EntitlementService extends TenantAwareCrudService<Entitlement> {
+export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	private readonly logger = new Logger(EntitlementService.name);
 
 	constructor(
@@ -207,6 +209,15 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		// fails the whole request rather than leaving a right without the conditions it was granted
 		// under.
 		this.assertConditionsWritable(input.conditions);
+
+		// The customer, order, subscription and catalogue ids are written as given: none of another tenant
+		// (`entitlement.references.ts`). Checked on the TypeORM manager, which reads these tables under either ORM.
+		await assertPlainReferencesNotForeign(
+			this.typeOrmEntitlementRepository.manager,
+			input,
+			ENTITLEMENT_REFERENCES,
+			scope.tenantId ?? RequestContext.currentTenantId()
+		);
 
 		const existing = await this.findExistingGrant(input, kind, scope);
 

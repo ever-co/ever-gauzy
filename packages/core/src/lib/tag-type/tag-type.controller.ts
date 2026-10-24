@@ -99,6 +99,28 @@ export class TagTypeController extends CrudController<TagType> {
 	}
 
 	/**
+	 * Deletes a tag type outright.
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach a permission. The base declares the
+	 * route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of
+	 * the tenant could delete one, while retiring it already needed `ALL_ORG_EDIT` or `ORG_TAG_TYPES_DELETE`
+	 * (GHSA-v79w-54p2-wmh5). It now states the same, and the GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to delete.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The store's delete result, as the base route answers it.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_DELETE)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.delete(id, ...options);
+	}
+
+	/**
 	 * Soft deletes a record by id.
 	 *
 	 * Overrides the inherited `CrudController.softRemove()` route only to attach a permission. The base declares

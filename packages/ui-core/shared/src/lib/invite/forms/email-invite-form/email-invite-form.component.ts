@@ -1,6 +1,7 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
+	canInviteWithRole,
 	ICreateEmailInvitesOutput,
 	InvitationTypeEnum,
 	IOrganizationProject,
@@ -147,14 +148,14 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Exclude roles
+	 * Exclude roles: EMPLOYEE (employees are invited through their own form) and every role above the
+	 * inviter's own, which the API refuses.
 	 */
-	async excludeRoles() {
-		const hasSuperAdminRole = await firstValueFrom(this._authService.hasRole([RolesEnum.SUPER_ADMIN]));
-		this.excludes = [RolesEnum.EMPLOYEE];
-		if (!hasSuperAdminRole) {
-			this.excludes.push(RolesEnum.SUPER_ADMIN);
-		}
+	excludeRoles() {
+		const inviterRole = this.user?.role?.name;
+		this.excludes = Object.values(RolesEnum).filter(
+			(role) => role === RolesEnum.EMPLOYEE || !canInviteWithRole(inviterRole, role)
+		);
 	}
 
 	isEmployeeInvitation(): boolean {

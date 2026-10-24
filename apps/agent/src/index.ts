@@ -1,9 +1,11 @@
 import { logger as log } from '@gauzy/desktop-core';
 import { InstallPluginHandler, LocalStore, ProtocolRouter, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
+import { installNavigationGuard } from '@gauzy/desktop-window';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import { environment } from './environments/environment';
 import { InitApplication } from './main/init';
+import { getApiBaseUrl } from './main/util';
 Object.assign(process.env, environment);
 
 let popupWin: BrowserWindow | null = null;
@@ -84,6 +86,10 @@ function quit() {
 		app.quit();
 	}
 }
+
+// A window with Node or a preload follows no link out of its own pages (a task description's link loaded the
+// linked page with Node); the configured API stays reachable, where the social sign-in links start.
+installNavigationGuard({ trustedUrls: () => [getApiBaseUrl(LocalStore.getStore('configs') || {})] });
 
 app.on('web-contents-created', (_, contents) => {
 	contents.on('will-redirect', async (event, url) => {

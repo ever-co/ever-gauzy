@@ -1,4 +1,4 @@
-import { MultiORMEnum } from '@gauzy/core';
+import { MultiORMEnum, RequestContext } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { PluginSource } from '../entities/plugin-source.entity';
@@ -6,6 +6,7 @@ import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin
 import { TypeOrmPluginSourceRepository } from '../repositories/type-orm-plugin-source.repository';
 import { ID, PluginSourceType } from '@gauzy/contracts';
 import { RegistryTenantAwareCrudService } from './registry-crud.service';
+import { ownedSourceRow } from './plugin-source-rows';
 
 @Injectable()
 export class PluginSourceService extends RegistryTenantAwareCrudService<PluginSource> {
@@ -14,6 +15,17 @@ export class PluginSourceService extends RegistryTenantAwareCrudService<PluginSo
 		public readonly mikroOrmPluginSourceRepository: MikroOrmPluginSourceRepository
 	) {
 		super(typeOrmPluginSourceRepository, mikroOrmPluginSourceRepository);
+	}
+
+	/**
+	 * Off: the sources of a plugin are the plugin store's catalogue, which every organization of the tenant browses,
+	 * installs from and verifies, although each row is stored with the organization of the publisher who uploaded
+	 * it. Writes keep the checks the registry already makes; they are not narrowed here.
+	 *
+	 * @returns False.
+	 */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
 	}
 
 	public async saveSources(sources: PluginSource[]): Promise<IPluginSource[]> {
@@ -41,7 +53,12 @@ export class PluginSourceService extends RegistryTenantAwareCrudService<PluginSo
 		if (!sources || !Array.isArray(sources) || sources.length === 0) {
 			throw new BadRequestException('Source data array is required and must not be empty.');
 		}
-		const data = sources.map((source) => Object.assign(new PluginSource(), source));
+		// New rows of the caller's tenant; the version that is created next links them (see ownedSourceRow)
+		const owner = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId() ?? undefined
+		};
+		const data = sources.map((source) => Object.assign(new PluginSource(), ownedSourceRow(source, owner)));
 		return this.saveSources(data);
 	}
 

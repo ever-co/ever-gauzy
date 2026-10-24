@@ -3,7 +3,6 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ID, IRole, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { environment } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
@@ -11,7 +10,11 @@ import { Request, Response } from 'express';
 import { CLS_ID, ClsService } from 'nestjs-cls';
 import { ExtractJwt } from 'passport-jwt';
 import { v4 as uuidv4 } from 'uuid';
-import { resolveThrottlerTracker, UNRESOLVED_THROTTLER_TRACKER } from '../../throttler/tracker';
+import {
+	resolveThrottlerTracker,
+	throttlerTrackerOptions,
+	UNRESOLVED_THROTTLER_TRACKER
+} from '../../throttler/tracker';
 import { IAuthenticatedUser, SerializedRequestContext } from './types';
 
 export class RequestContext {
@@ -533,9 +536,10 @@ export class RequestContext {
 	 * 🛑 This used to return the LEFTMOST `X-Forwarded-For` entry — the one the client itself writes —
 	 * so the address recorded in an access token was whatever the caller claimed it was, on every
 	 * deployment shape (GHSA-86mw-2crg-vmhc). It now resolves the client the same way the rate limiter
-	 * does: `CF-Connecting-IP` only where the deployment declares it is behind Cloudflare, otherwise
-	 * Express's `req.ip`, which honours the operator's `TRUST_PROXY` hop count. An address that cannot
-	 * be attributed falls back to the socket peer, which no header can move.
+	 * does: the browser address the Ever Teams server forwards when its HMAC proof verifies
+	 * (`EVER_TEAMS_CLIENT_IP_SECRET`), then `CF-Connecting-IP` only where the deployment declares it is
+	 * behind Cloudflare, otherwise Express's `req.ip`, which honours the operator's `TRUST_PROXY` hop
+	 * count. An address that cannot be attributed falls back to the socket peer, which no header can move.
 	 *
 	 * Note the resolution buckets IPv6 by /64 (see `normalizeTrackerIp`), so an IPv6 client is recorded
 	 * as its prefix rather than its exact address. This value is informational — it is written into the
@@ -547,9 +551,7 @@ export class RequestContext {
 		const requestContext = RequestContext.currentRequestContext();
 		if (requestContext) {
 			const req = requestContext._req;
-			const tracker = resolveThrottlerTracker(req as unknown as Record<string, any>, {
-				trustCloudflareConnectingIp: environment.THROTTLE_TRUST_CF_CONNECTING_IP === true
-			});
+			const tracker = resolveThrottlerTracker(req as unknown as Record<string, any>, throttlerTrackerOptions());
 
 			if (tracker !== UNRESOLVED_THROTTLER_TRACKER) {
 				return tracker;

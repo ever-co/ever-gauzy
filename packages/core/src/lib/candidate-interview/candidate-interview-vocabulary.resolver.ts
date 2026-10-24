@@ -119,9 +119,9 @@ const VOCABULARY_SORTABLE = ['createdAt', 'updatedAt', 'name', 'rating'] as cons
  * and no permission on either class or on any handler — so this resolver carries the tenant guard and
  * the gate alone, and a field that demanded a permission would refuse a caller every one of those routes
  * serves. What the controllers *do* state, per handler, is `RoleGuard` and the same three roles, so the
- * fields whose routes state them restate them — the two lifecycle routes included, which the
- * controllers override only to state the roles — and the fields whose routes are still inherited from
- * the CRUD base — the count, the node and the edit — state nothing, because those routes state nothing. That asymmetry is the controllers' own, and it is the reason the role guard is
+ * fields whose routes state them restate them — the two lifecycle routes and the edit included, which
+ * the controllers override only to state the roles — and the fields whose routes are still inherited
+ * from the CRUD base — the count and the node — state nothing, because those routes state nothing. That asymmetry is the controllers' own, and it is the reason the role guard is
  * on the fields rather than on the class.
  *
  * **The interview-scoped read folds into the list.** It is the same reader with one more predicate over
@@ -194,8 +194,16 @@ export class CandidateInterviewVocabularyResolver {
 		return await this.candidateTechnologiesService.create(input as never);
 	}
 
-	/** Edits a technology, answering the row the write produced. */
+	/**
+	 * Edits a technology, answering the row the write produced.
+	 *
+	 * States the role guard and the three roles its route `PUT /candidate-technologies/:id` has stated since
+	 * ever-co/ever-gauzy#11228. Without them any member of the tenant could rewrite a sitting's technology
+	 * names and ratings over GraphQL while the REST twin refused the same caller.
+	 */
 	@Mutation('updateCandidateTechnology')
+	@UseGuards(RoleGuard)
+	@Roles(...VOCABULARY_ROLES)
 	async updateCandidateTechnology(
 		@Args('input') input: IUpdateCandidateTechnologyInput
 	): Promise<CandidateTechnologies> {
@@ -345,8 +353,15 @@ export class CandidateInterviewVocabularyResolver {
 		return await this.candidatePersonalQualitiesService.create(input as never);
 	}
 
-	/** Edits a personal quality, answering the row the write produced. */
+	/**
+	 * Edits a personal quality, answering the row the write produced.
+	 *
+	 * States the role guard and the three roles its route `PUT /candidate-personal-qualities/:id` has stated
+	 * since ever-co/ever-gauzy#11228, for the same reason the technology edit does.
+	 */
 	@Mutation('updateCandidatePersonalQuality')
+	@UseGuards(RoleGuard)
+	@Roles(...VOCABULARY_ROLES)
 	async updateCandidatePersonalQuality(
 		@Args('input') input: IUpdateCandidatePersonalQualityInput
 	): Promise<CandidatePersonalQualities> {

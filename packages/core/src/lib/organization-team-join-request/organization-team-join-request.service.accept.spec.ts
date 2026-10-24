@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { LanguagesEnum, OrganizationTeamJoinRequestStatusEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
@@ -20,7 +20,9 @@ describe('OrganizationTeamJoinRequestService.acceptRequestToJoin for an existing
 		email: 'member@ever.co',
 		organizationId: 'organization-1',
 		organizationTeamId: 'team-1',
-		tenantId: TENANT
+		tenantId: TENANT,
+		// Confirmed by the requester through the mailed code, so it waits for a manager's decision.
+		status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 	};
 
 	let teams: { findOneByWhereOptions: jest.Mock; findOneOrFailByWhereOptions: jest.Mock };
@@ -98,5 +100,88 @@ describe('OrganizationTeamJoinRequestService.acceptRequestToJoin for an existing
 
 		expect(memberships.save).not.toHaveBeenCalled();
 		expect(update).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * Privilege-escalation audit 2026-10-24, F10: `acceptRequestToJoin` never read the request's status. A request is
+ * stored with `status: null` by the public create and only becomes `REQUESTED` once the requester presents the
+ * mailed code. So a manager could accept an address nobody had confirmed: that added the employee behind it to the
+ * team without their consent, or provisioned a passwordless EMPLOYEE account for it. Only `REQUESTED` is accepted.
+ */
+describe('OrganizationTeamJoinRequestService.acceptRequestToJoin accepts only a confirmed request', () => {
+	const TENANT = 'tenant-1';
+	const { ACCEPTED, REJECTED, REQUESTED } = OrganizationTeamJoinRequestStatusEnum;
+	const base = {
+		id: 'request-1',
+		email: 'someone@example.com',
+		fullName: 'Some One',
+		organizationId: 'organization-1',
+		organizationTeamId: 'team-1',
+		tenantId: TENANT
+	};
+
+	let update: jest.SpyInstance;
+	let findUser: jest.Mock;
+	let createUser: jest.Mock;
+	let saveMembership: jest.Mock;
+
+	const serviceFor = (request: Record<string, unknown>) => {
+		const service = Object.create(OrganizationTeamJoinRequestService.prototype);
+		Object.assign(service, {
+			findOneByWhereOptions: jest.fn(async () => request),
+			typeOrmUserRepository: { findOne: findUser },
+			typeOrmOrganizationTeamEmployeeRepository: { save: saveMembership },
+			_employeeService: { findOneByOptions: jest.fn(async () => ({ id: 'employee-1' })) },
+			_organizationTeamService: {
+				findOneByWhereOptions: jest.fn().mockRejectedValue(new NotFoundException('Not on the team yet'))
+			},
+			_roleService: { findOneByWhereOptions: jest.fn(async () => ({ id: 'role-employee' })) },
+			_inviteService: { createUser }
+		});
+		return service as OrganizationTeamJoinRequestService;
+	};
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('manager-user');
+		update = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({} as never);
+		findUser = jest.fn(async () => null);
+		createUser = jest.fn(async () => ({ id: 'new-user' }));
+		saveMembership = jest.fn(async (row) => row);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const act = (request: Record<string, unknown>, action: OrganizationTeamJoinRequestStatusEnum) =>
+		serviceFor(request).acceptRequestToJoin(request.id as string, action, LanguagesEnum.ENGLISH);
+
+	it('refuses an unconfirmed request, and neither provisions a user nor adds anyone to the team', async () => {
+		await expect(act({ ...base, status: null }, ACCEPTED)).rejects.toBeInstanceOf(ConflictException);
+
+		expect(findUser).not.toHaveBeenCalled();
+		expect(createUser).not.toHaveBeenCalled();
+		expect(saveMembership).not.toHaveBeenCalled();
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it.each([ACCEPTED, REJECTED])('refuses to accept a request that was already %s', async (status) => {
+		await expect(act({ ...base, status }, ACCEPTED)).rejects.toBeInstanceOf(ConflictException);
+
+		expect(createUser).not.toHaveBeenCalled();
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('accepts a confirmed request, provisioning the user as before', async () => {
+		await expect(act({ ...base, status: REQUESTED }, ACCEPTED)).resolves.toBeUndefined();
+
+		expect(createUser).toHaveBeenCalledTimes(1);
+		expect(update).toHaveBeenCalledWith(base.id, { status: ACCEPTED, userId: 'new-user' });
+	});
+
+	it('still lets a manager reject an unconfirmed request', async () => {
+		await expect(act({ ...base, status: null }, REJECTED)).resolves.toBeUndefined();
+
+		expect(update).toHaveBeenCalledWith(base.id, { status: REJECTED });
 	});
 });

@@ -448,7 +448,16 @@
 											(ngModelChange)="validation()"
 										/>
 									</div>
-									} }
+									}
+									<div class="col-12 margin-form">
+										<nb-checkbox status="primary" [(ngModel)]="lanAccess">
+											<span class="integration-label">{{
+												'TIMER_TRACKER.SETTINGS.LAN_ACCESS' | translate
+											}}</span>
+										</nb-checkbox>
+										<p class="caption">{{ 'TIMER_TRACKER.SETTINGS.LAN_ACCESS_HINT' | translate }}</p>
+									</div>
+									}
 								</div>
 							</div>
 							} @if (isServer) {

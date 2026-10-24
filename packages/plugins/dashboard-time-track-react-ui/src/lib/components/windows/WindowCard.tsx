@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { Spinner } from '@gauzy/ui-react-components';
 
 export interface WindowCardProps {
-	/** Translated window title (`<nb-card-header>`). */
+	/** Translated window title (`.window-header__title`). */
 	title: string;
 	/** `[nbSpinner]` flag. */
 	loading: boolean;
@@ -11,23 +11,22 @@ export interface WindowCardProps {
 	hasData: boolean;
 	/** Translated per-period empty message. */
 	emptyMessage: string;
-	/** Class of the `<nb-card-body>` when there is data (`custom-card-body-inner[-list]`). */
+	/** Extra class of the `<nb-card-body>` (`custom-card-body-inner[-list]`). */
 	bodyClassName?: string;
 	/** Extra classes on `<nb-card>` (`member-list`). */
 	className?: string;
-	/** Adds the flex `nb-card-header` variant (`class="nb-card-header"`). */
-	flexHeader?: boolean;
 	/**
-	 * Where the empty message goes: inside the body (Recent activities / Members) or as a
-	 * sibling of the header (Manual time / Tasks / Projects / Apps), like the Angular templates.
+	 * Header button ("View All" / "View Report", `.window-header__action`) — rendered only while
+	 * there is data, like the Angular `@if (… .length > 0)` around it.
 	 */
-	emptyInBody?: boolean;
+	action?: ReactNode;
 	children?: ReactNode;
 }
 
 /**
- * The `<nb-card [nbSpinner]><nb-card-header>…</nb-card-header>…</nb-card>` shell every window
- * template shares, including its loading veil and per-period empty state.
+ * The `<nb-card [nbSpinner]><nb-card-header class="window-header">…</nb-card-header>…</nb-card>`
+ * shell every window template shares: title + optional header action, the `.window-body`, its
+ * loading veil and the per-period `.window-empty` state.
  */
 export function WindowCard({
 	title,
@@ -36,17 +35,22 @@ export function WindowCard({
 	emptyMessage,
 	bodyClassName = 'gz-rtt-custom-card-body-inner-list',
 	className,
-	flexHeader = false,
-	emptyInBody = false,
+	action,
 	children
 }: WindowCardProps) {
-	const empty = !hasData && !loading ? <div className="gz-rtt-empty gz-rtt-p-3">{emptyMessage}</div> : null;
 	return (
 		<nb-card className={className}>
-			<nb-card-header className={flexHeader ? 'gz-rtt-nb-card-header' : undefined}>{title}</nb-card-header>
-			{hasData ? <nb-card-body className={bodyClassName}>{children}</nb-card-body> : null}
-			{!hasData && emptyInBody ? <nb-card-body className={bodyClassName}>{empty}</nb-card-body> : null}
-			{!hasData && !emptyInBody ? empty : null}
+			<nb-card-header className="gz-rtt-window-header">
+				<span className="gz-rtt-window-header-title" title={title}>
+					{title}
+				</span>
+				{hasData && action ? <span className="gz-rtt-window-header-action">{action}</span> : null}
+			</nb-card-header>
+			{hasData || !loading ? (
+				<nb-card-body className={`${bodyClassName} gz-rtt-window-body`}>
+					{hasData ? children : <div className="gz-rtt-window-empty">{emptyMessage}</div>}
+				</nb-card-body>
+			) : null}
 			<Spinner active={loading} status="primary" size="giant" />
 		</nb-card>
 	);

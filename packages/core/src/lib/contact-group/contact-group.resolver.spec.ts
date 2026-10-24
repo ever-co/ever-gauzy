@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { BadRequestException, ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
+import { SUBSCRIPTION_OPTIONS_METADATA } from '@nestjs/graphql/dist/graphql.constants';
 import { ContactGroupSource, ContactGroupType, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
@@ -567,6 +568,44 @@ describe('ContactGroupResolver — subscriptions (§10.2, §10.4)', () => {
 		);
 
 		await tenantStream.return?.(undefined);
+	});
+
+	describe('the organization a fact belongs to', () => {
+		const SIBLING_ORGANIZATION = '00000000-0000-4000-8000-000000000003';
+
+		/** The filter the field was declared with, as the subscription runtime calls it. */
+		const filter = (payload: Record<string, unknown>): boolean =>
+			Reflect.getMetadata(
+				SUBSCRIPTION_OPTIONS_METADATA,
+				ContactGroupResolver.prototype.contactGroupChanged
+			).filter(payload, {});
+		const fact = (organizationId: string | null) => ({
+			tenantId: TENANT,
+			organizationId,
+			action: 'updated',
+			group: ROWS[0]
+		});
+
+		afterEach(() => {
+			mockOrganizationId = ORGANIZATION;
+		});
+
+		it('withholds a group of another organization of the same tenant, which the group reads refuse', () => {
+			// The topic is the tenant's: the filter is the only thing between a sibling organization's
+			// groups (codes, names, discounts) and this subscriber.
+			expect(filter(fact(SIBLING_ORGANIZATION))).toBe(false);
+		});
+
+		it('withholds an organization’s group from a subscriber acting in no organization', () => {
+			mockOrganizationId = null;
+
+			expect(filter(fact(ORGANIZATION))).toBe(false);
+		});
+
+		it('CONTROL: delivers a group of the organization the subscriber acts in, and a tenant-wide one', () => {
+			expect(filter(fact(ORGANIZATION))).toBe(true);
+			expect(filter(fact(null))).toBe(true);
+		});
 	});
 
 	it('declares every fact it carries, so the kernel’s own event selection can resolve them', () => {

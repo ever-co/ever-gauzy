@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'node:path';
-import * as moment from 'moment';
 import {
 	S3Client,
 	DeleteObjectCommand,
@@ -18,6 +17,7 @@ import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 import { RequestContext } from '../../context';
 
 /**
@@ -204,10 +204,7 @@ export class S3Provider extends Provider<S3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = defaultStoredFileName(prefix, extension);
 						}
 
 						// Replace double backslashes with single forward slashes

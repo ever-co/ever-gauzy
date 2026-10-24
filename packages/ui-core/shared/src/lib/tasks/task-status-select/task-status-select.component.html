@@ -1,7 +1,7 @@
 <ng-select
 	(change)="selectStatus($event)"
 	[(ngModel)]="status"
-	[addTag]="addTag ? createNew : null"
+	[addTag]="canCreate ? createNew : null"
 	[items]="statuses$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASKS_STATUS' | translate"
 	appendTo="body"

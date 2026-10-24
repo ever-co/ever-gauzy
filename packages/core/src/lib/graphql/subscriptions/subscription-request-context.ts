@@ -2,6 +2,7 @@ import { AsyncResource } from 'async_hooks';
 import { ExecutionArgs, ExecutionResult, execute, subscribe } from 'graphql';
 import type { Request } from 'express';
 import { RequestContext } from '../../core/context/request-context';
+import { SubscriptionSessionUser, subscriptionSessionOf } from './subscription-session';
 
 /**
  * The request context of an operation on the subscription socket.
@@ -30,6 +31,13 @@ import { RequestContext } from '../../core/context/request-context';
  * and the filter a resolver declares runs inside that pull. The loop runs in the socket's context, not
  * in the operation's, so the stream handed back is bound to the operation's store — each `next`,
  * `return` and `throw` runs inside it, and the filter sees the subscriber that opened the stream.
+ *
+ * **…and is held to its connection's credential for as long.** The user in that store is the one the guards
+ * authenticated when the subscription opened, and nothing re-reads it while events flow. The connection's
+ * `SubscriptionSession` judges the credential again before an event is delivered (at most once per interval),
+ * and closes the socket when the token expired, the account no longer authenticates, or the role, permissions
+ * or scope it resolves to are no longer the ones the stream was authorized with — so neither the filters nor
+ * a scope captured when the stream opened can outlive the authorization they were read under.
  */
 
 /**
@@ -81,9 +89,39 @@ export async function runInOperationRequestContext(
 	return RequestContext.runWithRequest(req, async () => {
 		const result = await operation();
 
+		if (!isAsyncIterable(result)) {
+			return result;
+		}
+
+		// A stream the guards authorized is held to the connection's credential for as long as it runs: the
+		// session judges the credential again before an event is delivered and closes the socket when it no
+		// longer holds (see `subscription-session.ts`). The guards have just judged it, so that judgement is
+		// the session's starting point.
+		const session = subscriptionSessionOf(req);
+		const user = authenticatedUserOf(req);
+		let stream: AsyncIterable<ExecutionResult> = result;
+
+		if (session && user) {
+			session.confirm(user);
+			stream = session.guard(result, () => authenticatedUserOf(req));
+		}
+
 		// Bound here, inside the store, because a binding captures the context it was made in.
-		return isAsyncIterable(result) ? bindToCurrentContext(result) : result;
+		return bindToCurrentContext(stream);
 	});
+}
+
+/**
+ * The user the guards authenticated an operation's request as: the one `JwtStrategy` attached, which always
+ * carries an id. A key pair's tenant-only stand-in is not one.
+ *
+ * @param req The operation's request.
+ * @returns The user, or undefined.
+ */
+function authenticatedUserOf(req: Request): SubscriptionSessionUser | undefined {
+	const user = (req as { user?: SubscriptionSessionUser }).user;
+
+	return user && typeof user === 'object' && user.id ? user : undefined;
 }
 
 /**

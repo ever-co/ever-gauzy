@@ -2,11 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { CART_SHIPPING_METHOD_REFERENCES } from '../cart.references';
 import { CommerceCartShippingMethod } from './commerce-cart-shipping-method.entity';
 import { TypeOrmCommerceCartShippingMethodRepository } from './repository/type-orm-commerce-cart-shipping-method.repository';
 import { MikroOrmCommerceCartShippingMethodRepository } from './repository/mikro-orm-commerce-cart-shipping-method.repository';
+import { CartCrudService } from '../cart-crud.service';
 
 /**
  * The delivery choices held against a cart.
@@ -20,7 +21,7 @@ import { MikroOrmCommerceCartShippingMethodRepository } from './repository/mikro
  * and tax class are held to the caller's tenant (`cart.references.ts`).
  */
 @Injectable()
-export class CommerceCartShippingMethodService extends TenantAwareCrudService<CommerceCartShippingMethod> {
+export class CommerceCartShippingMethodService extends CartCrudService<CommerceCartShippingMethod> {
 	constructor(
 		readonly typeOrmCommerceCartShippingMethodRepository: TypeOrmCommerceCartShippingMethodRepository,
 		readonly mikroOrmCommerceCartShippingMethodRepository: MikroOrmCommerceCartShippingMethodRepository

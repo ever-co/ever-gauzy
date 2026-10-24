@@ -21,11 +21,12 @@ import { GetConflictAvailabilitySlotsCommand } from './commands/get-conflict-ava
  * Who may write whose availability, and what a write that replaces conflicting slots leaves behind when it fails.
  *
  * Availability slots are an employee's bookable hours (Employees → Appointments → Schedules; public booking reads
- * them). The routes and the GraphQL fields carry `TenantPermissionGuard` only — on purpose: the Appointments menu
- * states no permission, so every employee manages their own hours there. What keeps one employee's hours their own
- * is the employee scope `TenantAwareCrudService` applies to a caller WITHOUT `CHANGE_SELECTED_EMPLOYEE`. These cases
- * run the real controller, resolver, command handlers and service against a real SQLite database, so they state what
- * a caller can actually do to rows, not which arguments a mock received:
+ * them). The writes, over REST and GraphQL, require the availability grants (`EMPLOYEE_AVAILABILITY_CREATE`,
+ * `_UPDATE`, `_DELETE`; owner decision 2, 2026-10-22), which every employee holds by default, so every employee still
+ * manages their own hours there; `scheduling-route-permissions.spec.ts` holds that gate. What keeps one employee's
+ * hours their own is the employee scope `TenantAwareCrudService` applies to a caller WITHOUT
+ * `CHANGE_SELECTED_EMPLOYEE`. These cases run the real controller, resolver, command handlers and service against a
+ * real SQLite database, so they state what a caller can actually do to rows, not which arguments a mock received:
  *
  * - an employee filing a slot "for" a colleague must neither touch the colleague's slots nor learn their times
  *   (the merge used to widen the caller's new slot over the colleague's conflicting ones);

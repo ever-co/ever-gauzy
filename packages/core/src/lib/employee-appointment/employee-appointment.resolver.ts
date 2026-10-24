@@ -6,7 +6,8 @@ import {
 	IEmployeeAppointmentCreateInput,
 	IEmployeeAppointmentUpdateInput,
 	IPagination,
-	LanguagesEnum
+	LanguagesEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -17,7 +18,8 @@ import {
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
 import { RequestContext } from '../core/context';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentService } from './employee-appointment.service';
@@ -118,14 +120,15 @@ const EMPLOYEE_APPOINTMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below reaches the same `EmployeeAppointmentService` method the
  * `/api/employee-appointment` routes reach, or dispatches the same command they dispatch.
  *
- * **The guard chain is the controller's, and no permission is stated anywhere.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` — not on its own
- * routes and not on any of the routes it inherits from the CRUD base — so every one of its routes is
- * tenant-guarded and otherwise unpermissioned. The class below states the same guard, and every field
- * states no permission at all, because there is none to mirror: a resolver that demanded one would
- * refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol rule forbids.
- * Tightening the resource is a change to make in both places at once, and it is not this delivery's to
- * make.
+ * **The guard chain and the permissions are the controller's.** The delivered controller carries
+ * `TenantPermissionGuard` on the class, which its reads — the signing and decoding routes included — run under
+ * alone, and states an availability grant behind `PermissionGuard` on every write: `EMPLOYEE_AVAILABILITY_CREATE`
+ * on the booking, `EMPLOYEE_AVAILABILITY_UPDATE` on the edit (a cancellation included) and on the withdraw/restore
+ * pair (owner decision 5, 2026-10-13: the pair requires the edit grant), and `EMPLOYEE_AVAILABILITY_DELETE` on the
+ * removal — the removal and the pair overridden from the CRUD base (GHSA-v79w-54p2-wmh5; owner decision 2,
+ * 2026-10-22). The class below states the same guard, each write field states its route's grant behind the same
+ * guard, and the reads state none, as their routes do — a resolver that demanded more or less would answer a
+ * caller differently from the REST route, which is the asymmetry the two-protocol rule forbids.
  *
  * **Two of the fields below are not resources, and they are root fields anyway.** `GET /sign/:id` and
  * `GET /decode/:token` answer a signed token and the identifier that token carries: neither is a row of
@@ -264,6 +267,8 @@ export class EmployeeAppointmentResolver {
 	 * through that resource's own write, and an appointment's invitees are read back as the rows that
 	 * name its identifier.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE)
 	@Mutation('createEmployeeAppointment')
 	async createEmployeeAppointment(
 		@Args('input') input: ICreateEmployeeAppointmentInput
@@ -289,6 +294,8 @@ export class EmployeeAppointmentResolver {
 	 * — which is not a row and not what a field named `updateEmployeeAppointment` may return, so the row
 	 * the write produced is read back through the same service read the node field uses.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Mutation('updateEmployeeAppointment')
 	async updateEmployeeAppointment(
 		@Args('input') input: IUpdateEmployeeAppointmentInput
@@ -310,6 +317,8 @@ export class EmployeeAppointmentResolver {
 	 * delivered route answers the store's delete result, which is not a row, so the field answers
 	 * whether the removal was performed — the fact a client branches on.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE)
 	@Mutation('deleteEmployeeAppointment')
 	async deleteEmployeeAppointment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.employeeAppointmentService.delete(id));
@@ -322,6 +331,8 @@ export class EmployeeAppointmentResolver {
 	 * The delivered route declares no query parameter of its own and hands the service the empty option
 	 * list its variadic parameter carries, so the field states no options either.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Mutation('softDeleteEmployeeAppointment')
 	async softDeleteEmployeeAppointment(@Args('id', { type: () => ID }) id: Id): Promise<EmployeeAppointment> {
 		return await this.employeeAppointmentService.softRemove(id);
@@ -331,6 +342,8 @@ export class EmployeeAppointmentResolver {
 	 * Puts a withdrawn appointment back. Unoptioned for the same reason the withdrawal above is: the
 	 * delivered route binds no query parameter of its own.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Mutation('recoverEmployeeAppointment')
 	async recoverEmployeeAppointment(@Args('id', { type: () => ID }) id: Id): Promise<EmployeeAppointment> {
 		return await this.employeeAppointmentService.softRecover(id);

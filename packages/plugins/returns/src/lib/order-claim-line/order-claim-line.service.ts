@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import {
 	IOrderClaimLineInput,
 	IOrderFulfillmentPort,
@@ -14,6 +14,7 @@ import { TypeOrmOrderClaimRepository } from '../order-claim/repository/type-orm-
 import { OrderClaimLine } from './order-claim-line.entity';
 import { MikroOrmOrderClaimLineRepository } from './repository/mikro-orm-order-claim-line.repository';
 import { TypeOrmOrderClaimLineRepository } from './repository/type-orm-order-claim-line.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The claim statuses in which its line set may still be written. */
 const EDITABLE_STATUSES: OrderClaimStatus[] = [OrderClaimStatus.OPEN, OrderClaimStatus.REQUESTED];
@@ -31,7 +32,7 @@ const EDITABLE_STATUSES: OrderClaimStatus[] = [OrderClaimStatus.OPEN, OrderClaim
  * a customer cannot claim about an item that never shipped.
  */
 @Injectable()
-export class OrderClaimLineService extends TenantAwareCrudService<OrderClaimLine> {
+export class OrderClaimLineService extends ReturnsCrudService<OrderClaimLine> {
 	constructor(
 		readonly typeOrmOrderClaimLineRepository: TypeOrmOrderClaimLineRepository,
 		readonly mikroOrmOrderClaimLineRepository: MikroOrmOrderClaimLineRepository,

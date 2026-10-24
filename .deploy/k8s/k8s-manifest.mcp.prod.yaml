@@ -87,6 +87,12 @@ spec:
                         value: '$MCP_AUTH_JWT_JWKS_URI'
                       - name: MCP_AUTH_TOKEN_CACHE_TTL
                         value: '$MCP_AUTH_TOKEN_CACHE_TTL'
+                      - name: MCP_AUTH_INTROSPECTION_ENDPOINT
+                        value: '$MCP_AUTH_INTROSPECTION_ENDPOINT'
+                      - name: MCP_AUTH_INTROSPECTION_CLIENT_ID
+                        value: '$MCP_AUTH_INTROSPECTION_CLIENT_ID'
+                      - name: MCP_AUTH_INTROSPECTION_CLIENT_SECRET
+                        value: '$MCP_AUTH_INTROSPECTION_CLIENT_SECRET'
                       - name: MCP_AUTH_METADATA_CACHE_TTL
                         value: '$MCP_AUTH_METADATA_CACHE_TTL'
 

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { BadRequestException, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { buildSchema } from 'graphql';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { canViewTrackedData, EmployeeTrackedDataGuard } from './employee-tracked-data.guard';
@@ -289,6 +290,57 @@ describe('EmployeeTrackedDataGuard', () => {
 			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
 			await expect(guard.canActivate(createContext())).rejects.toThrow(
 				new ForbiddenException('Tenant context is required to access tracked data')
+			);
+			expect(getRepository).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('a GraphQL field is read like a request', () => {
+		// On GraphQL `switchToHttp().getRequest()` is the field's parent value, so the guard used to read no
+		// organization there: a field naming another organization whose setting is off was answered as if it named
+		// none, and only the caller's own organization was checked.
+		const schema = buildSchema(`
+			input IDFilter { eq: ID, in: [ID!] }
+			input TrackedFilter { organizationId: IDFilter }
+			type Query { timeLogs(organizationId: ID, filter: TrackedFilter): Int }
+		`);
+
+		function graphqlContext(args: Record<string, unknown>): ExecutionContext {
+			const info = { fieldName: 'timeLogs', parentType: schema.getQueryType() };
+
+			return {
+				getType: () => 'graphql',
+				getArgs: () => [undefined, args, {}, info],
+				getArgByIndex: (index: number) => [undefined, args, {}, info][index],
+				getClass: () => class Resolver {},
+				getHandler: () => function timeLogs() {},
+				switchToHttp: () => ({ getRequest: () => undefined })
+			} as unknown as ExecutionContext;
+		}
+
+		it('blocks a field naming an organization whose setting is off, as an argument or in a filter', async () => {
+			setOrganizations({ [ORG_A]: true, [ORG_B]: false });
+
+			await expect(guard.canActivate(graphqlContext({ organizationId: ORG_B }))).rejects.toThrow(
+				new ForbiddenException(HIDDEN_MESSAGE)
+			);
+			await expect(
+				guard.canActivate(graphqlContext({ filter: { organizationId: { in: [ORG_A, ORG_B] } } }))
+			).rejects.toThrow(new ForbiddenException(HIDDEN_MESSAGE));
+		});
+
+		it('allows a field naming organizations whose setting is on (control)', async () => {
+			setOrganizations({ [ORG_A]: true, [ORG_B]: false });
+
+			await expect(guard.canActivate(graphqlContext({ organizationId: ORG_A }))).resolves.toBe(true);
+			await expect(
+				guard.canActivate(graphqlContext({ filter: { organizationId: { ne: ORG_B } } }))
+			).resolves.toBe(true);
+		});
+
+		it('returns 400 for an organization named in a shape that is not an id', async () => {
+			await expect(guard.canActivate(graphqlContext({ filter: { organizationId: { eq: 42 } } }))).rejects.toThrow(
+				new BadRequestException('Invalid organizationId')
 			);
 			expect(getRepository).not.toHaveBeenCalled();
 		});

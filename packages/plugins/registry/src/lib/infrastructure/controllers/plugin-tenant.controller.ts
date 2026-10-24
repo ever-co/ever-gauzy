@@ -1,5 +1,5 @@
-import { IPagination } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '@gauzy/core';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { withSecretValueHidden } from './plugin-setting.controller';
 import { GetPluginTenantUsersResult, ManagePluginTenantUsersResult } from '../../application/plugin-tenant';
 import {
 	ApprovePluginTenantCommand,
@@ -55,9 +56,21 @@ import {
 	UpdatePluginTenantDTO
 } from '../../shared/dto';
 
+/**
+ * A plugin's installation in a tenant: its access rules, quota, approval and the users allowed or denied it.
+ *
+ * The class used to state `TenantPermissionGuard` alone and no route a permission, so every route ran for any
+ * member of the tenant: allowing or denying users, approving, enabling, disabling, bulk-editing and deleting
+ * included. `PermissionGuard` now checks each route's grant against the caller's role. Reads state
+ * `PLUGIN_VIEW` and configuration `PLUGIN_CONFIGURE`, as the plugin's settings and subscriptions do; the
+ * user lists the marketplace's "Manage users" screens read and write state `PLUGIN_ASSIGN_ACCESS` or
+ * `PLUGIN_CONFIGURE` (the grant the screen's assign step, `subscription/access/assign`, already requires);
+ * enabling, disabling and deleting state their own grants; and approval and the bulk operation — which can
+ * delete — state `PLUGIN_RESTRICT`, which only ADMIN and SUPER_ADMIN hold.
+ */
 @ApiTags('Plugin Tenant Management')
 @Controller('/plugin-tenants')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 export class PluginTenantController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
@@ -81,6 +94,7 @@ export class PluginTenantController {
 		status: HttpStatus.CONFLICT,
 		description: 'Plugin tenant already exists'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(@Body() createDto: CreatePluginTenantDTO): Promise<IPluginTenant> {
 		return this.commandBus.execute(new CreatePluginTenantCommand(createDto));
@@ -98,6 +112,7 @@ export class PluginTenantController {
 		description: 'Plugin tenants retrieved successfully',
 		type: [Object]
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
 	async findAll(@Query() query: PluginTenantQueryDTO): Promise<IPluginTenant[]> {
 		return this.queryBus.execute(new GetAllPluginTenantsQuery(query));
@@ -117,6 +132,7 @@ export class PluginTenantController {
 		description: 'Statistics retrieved successfully',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('/statistics')
 	async getStatistics(
 		@Query('tenantId') tenantId?: string,
@@ -138,6 +154,7 @@ export class PluginTenantController {
 		description: 'Plugin tenants retrieved successfully',
 		type: [Object]
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('/by-plugin/:pluginId')
 	async findByPlugin(
 		@Param('pluginId') pluginId: string,
@@ -161,6 +178,7 @@ export class PluginTenantController {
 		description: 'Plugin tenants retrieved successfully',
 		type: [Object]
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('/by-tenant/:tenantId')
 	async findByTenant(
 		@Param('tenantId') tenantId: string,
@@ -187,6 +205,7 @@ export class PluginTenantController {
 		description: 'Access check completed',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get('/check-access')
 	async checkAccess(
 		@Query('userId') userId: string,
@@ -217,9 +236,16 @@ export class PluginTenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin tenant not found'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':id')
 	async findOne(@Param('id') id: string): Promise<IPluginTenant> {
-		return this.queryBus.execute(new GetPluginTenantByIdQuery(id));
+		const pluginTenant: IPluginTenant = await this.queryBus.execute(new GetPluginTenantByIdQuery(id));
+
+		// Its `settings` are the rows `GET /plugins/:pluginId/settings` answers, so an encrypted setting's value is
+		// left out here too unless the caller holds PLUGIN_CONFIGURE (`withSecretValueHidden`).
+		pluginTenant?.settings?.forEach((setting) => withSecretValueHidden(setting));
+
+		return pluginTenant;
 	}
 
 	/**
@@ -235,6 +261,7 @@ export class PluginTenantController {
 		description: 'Quota information retrieved successfully',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':id/quota')
 	async getQuotaInfo(@Param('id') id: string): Promise<IPluginTenantQuotaInfo> {
 		return this.queryBus.execute(new GetPluginTenantQuotaInfoQuery(id));
@@ -266,6 +293,7 @@ export class PluginTenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin tenant not found'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS, PermissionsEnum.PLUGIN_CONFIGURE)
 	@Get(':id/users')
 	async getPluginTenantUsers(
 		@Param('id') id: string,
@@ -298,6 +326,7 @@ export class PluginTenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin tenant or users not found'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS, PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post(':id/users')
 	async managePluginTenantUsers(
 		@Param('id') id: string,
@@ -323,6 +352,7 @@ export class PluginTenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Plugin tenant not found'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	async update(@Param('id') id: string, @Body() updateDto: UpdatePluginTenantDTO): Promise<IPluginTenant> {
 		return this.commandBus.execute(new UpdatePluginTenantCommand(id, updateDto));
@@ -340,6 +370,7 @@ export class PluginTenantController {
 		description: 'Configuration updated successfully',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Patch('/configuration')
 	async updateConfiguration(@Body() configDto: PluginTenantConfigurationDTO): Promise<IPluginTenant> {
 		return this.commandBus.execute(new UpdatePluginTenantConfigurationCommand(configDto));
@@ -358,6 +389,7 @@ export class PluginTenantController {
 		description: 'Plugin tenant enabled successfully',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_ENABLE)
 	@Patch(':id/enable')
 	async enable(@Param('id') id: string): Promise<IPluginTenant> {
 		return this.commandBus.execute(new EnablePluginTenantCommand(id));
@@ -376,6 +408,7 @@ export class PluginTenantController {
 		description: 'Plugin tenant disabled successfully',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_DISABLE)
 	@Patch(':id/disable')
 	async disable(@Param('id') id: string): Promise<IPluginTenant> {
 		return this.commandBus.execute(new DisablePluginTenantCommand(id));
@@ -393,6 +426,7 @@ export class PluginTenantController {
 		description: 'Plugin tenant approval status updated successfully',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
 	@Patch('/approval')
 	async updateApproval(@Body() approvalDto: PluginTenantApprovalDTO): Promise<IPluginTenant> {
 		return this.commandBus.execute(new ApprovePluginTenantCommand(approvalDto));
@@ -410,6 +444,7 @@ export class PluginTenantController {
 		description: 'Bulk operation completed',
 		type: Object
 	})
+	@Permissions(PermissionsEnum.PLUGIN_RESTRICT)
 	@Patch('/bulk')
 	async bulkUpdate(@Body() bulkDto: PluginTenantBulkOperationDTO): Promise<{
 		success: IPluginTenant[];
@@ -435,6 +470,7 @@ export class PluginTenantController {
 		description: 'Plugin tenant not found'
 	})
 	@HttpCode(HttpStatus.NO_CONTENT)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':id')
 	async remove(@Param('id') id: string): Promise<void> {
 		return this.commandBus.execute(new DeletePluginTenantCommand(id));

@@ -168,7 +168,11 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 					knowledgeStatus: DocumentKnowledgeStatusEnum.NONE,
 					reviewStatus: DocumentReviewStatusEnum.PENDING,
 					reviewReason: DocumentReviewReasonEnum.MANUAL,
-					visibility: DocumentVisibilityEnum.ORGANIZATION,
+					// The attaching user's own: a chat conversation is private to its user, and an attachment captured
+					// as ORGANIZATION was listed, searchable and downloadable by every DOCS_READ holder of the
+					// organization. As PRIVATE it stays readable by its creator (which the chat's own docs tools act
+					// as), by DOCS_MANAGE holders who review captures, and by whoever the creator shares it with.
+					visibility: DocumentVisibilityEnum.PRIVATE,
 					storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
 					storageKey: payload.file.key,
 					mimeType: sniff.type.mimeType,

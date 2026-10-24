@@ -7,12 +7,12 @@
 # guard chain, so a client that reaches a capability over one protocol is not given a narrower or a wider
 # one than the client that reaches it over the other.
 #
-# **This resource's guard chain is the tenant guard alone, and neither surface states a permission.** The
-# controller carries `TenantPermissionGuard` and no `@Permissions` — at class level or on any handler — so
-# every route it serves, the list, the one slot, the count, the create, the bulk create, the upsert and
-# the two lifecycle moves, runs under that guard alone, and every field below states the same and nothing
-# more. A resolver that demanded a permission would refuse here a caller the REST route serves; tightening
-# this resource is a change to make in both places at once, and it is not this delivery's to make.
+# **The reads run under the tenant guard alone; every write states an availability grant.** The controller
+# carries `TenantPermissionGuard` on the class, which the list, the one slot and the count run under, and
+# states behind `PermissionGuard` `EMPLOYEE_AVAILABILITY_CREATE` on the create and the bulk create,
+# `EMPLOYEE_AVAILABILITY_UPDATE` on the update and on the two lifecycle moves (owner decision 5, 2026-10-13), and
+# `EMPLOYEE_AVAILABILITY_DELETE` on the removal (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22). Every
+# field below states what its route states, neither wider nor narrower.
 #
 # The list is a connection rather than a bare array. It takes the same query protocol every other
 # connection takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and

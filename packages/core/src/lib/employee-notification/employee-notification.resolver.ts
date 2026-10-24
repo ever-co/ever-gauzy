@@ -219,6 +219,12 @@ export class EmployeeNotificationResolver {
 	 * The service is the one the REST route calls, and it is the only writer: it stamps the tenant from
 	 * the credential, consults the receiver's notification settings, and answers the created row.
 	 *
+	 * **The notification is filed as the caller.** `createForCaller` takes the sender from the
+	 * credential, never from the input. The receiver must be the caller's own employee unless the caller
+	 * holds `CHANGE_SELECTED_EMPLOYEE`, and then it must be an employee of the notification's organization.
+	 * A caller with no employee record is refused. The input's `sentByEmployeeId` is still declared, so
+	 * existing clients keep validating, but it is ignored.
+	 *
 	 * **A receiver who has switched this kind of notification off is a write the delivered service
 	 * declines to perform**: the settings lookup decides that the kind is not wanted, and the service
 	 * then answers nothing at all instead of a row. That is the delivered behaviour of the route as
@@ -229,7 +235,7 @@ export class EmployeeNotificationResolver {
 	async createEmployeeNotification(
 		@Args('input') input: IEmployeeNotificationCreateInput
 	): Promise<EmployeeNotification> {
-		return await this.employeeNotificationService.create(input);
+		return await this.employeeNotificationService.createForCaller(input);
 	}
 
 	/**

@@ -99,17 +99,16 @@ const PRODUCT_VARIANT_SETTING_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * row, the creation, the edit, the removal, the soft removal and the restore — and the delivery
  * mirrors all of them rather than the subset a domain handler would have named.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered
+ * **The guard is the controller's guard, and no permission is stated above it.** The delivered read
  * routes carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would
- * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is
- * exactly what this delivery exists to prevent. Tightening the resource is a change to make in both
- * places at once, and it is not this delivery's to make.
+ * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is exactly
+ * what this delivery exists to prevent.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and
- * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or restore a
- * row (GHSA-v79w-54p2-wmh5) — so `softDeleteProductVariantSetting` and `recoverProductVariantSetting` state
- * the same, neither wider nor narrower than REST.
+ * **Except every write.** The controller states `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` on
+ * each of its write routes — overriding the inherited ones only to attach it, because the CRUD base
+ * declares no permission and `PermissionGuard` answers `true` to empty metadata, so any member of the
+ * tenant could write the inventory (GHSA-v79w-54p2-wmh5) — so every mutation below states the same,
+ * neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -192,6 +191,8 @@ export class ProductVariantSettingResolver {
 	 * capabilities, never which tenant, so a row cannot be written into a scope the caller is not
 	 * acting in.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('createProductVariantSetting')
 	async createProductVariantSetting(
 		@Args('input') input: ICreateProductVariantSettingInput
@@ -211,6 +212,8 @@ export class ProductVariantSettingResolver {
 	 * of rows the write reached, and that count is not a GraphQL scalar this schema declares;
 	 * answering with the row is the same operation stated in the shape a client reads next anyway.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('updateProductVariantSetting')
 	async updateProductVariantSetting(
 		@Args('input') input: IUpdateProductVariantSettingInput
@@ -227,6 +230,8 @@ export class ProductVariantSettingResolver {
 	 * removal, which is the one member of that result a caller reads. A setting that was not there
 	 * is a miss the service raises before this line rather than a `false` answered from it.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('deleteProductVariantSetting')
 	async deleteProductVariantSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.productVariantSettingService.delete(id));

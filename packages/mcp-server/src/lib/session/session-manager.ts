@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { SessionStore, SessionData, ConnectionData, SessionStoreConfig } from './session-store';
 import { authManager } from '../common/auth-manager';
 import { getAuthKey, runWithAuthKey } from '../common/auth-context';
+import { sessionIdForLog } from '../common/error-utils';
 
 const logger = new Logger('SessionManager');
 
@@ -255,7 +256,7 @@ export class SessionManager {
 		const success = this.sessionStore.addConnection(sessionId, connectionId, type, enrichedMetadata);
 
 		if (success) {
-			logger.debug(`Connection ${connectionId} (${type}) added to session ${sessionId}`);
+			logger.debug(`Connection ${connectionId} (${type}) added to session ${sessionIdForLog(sessionId)}`);
 		}
 
 		return success;

@@ -157,7 +157,14 @@ jest.mock(
 	})
 );
 
-import { Product, ProductVariant, Warehouse, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
+import {
+	Product,
+	ProductVariant,
+	RequestContext,
+	Warehouse,
+	WarehouseProduct,
+	WarehouseProductVariant
+} from '@gauzy/core';
 import {
 	StockMovementType,
 	StockMovementReferenceType,
@@ -990,6 +997,70 @@ describe('StockTransferController — the version guard on the update route (doc
 			fixture.controller.update(transfer.id, { note: 'Two of them' } as never, '"1", "2"')
 		).rejects.toMatchObject({ response: { statusCode: 400 } });
 		expect(fixture.transfer(transfer.id)).toEqual(before);
+	});
+});
+
+describe('StockTransferService — the route an approver approved', () => {
+	// The edit route takes only the create grant, so an editor who may not approve could re-point an approved
+	// transfer at a location of their choosing, and the ship and receive routes then moved the stock there.
+	const ELSEWHERE = '00000000-0000-4000-8000-000000000012';
+	const withElsewhere = <T extends { tables: Record<string, any[]> }>(fixture: T): T => {
+		fixture.tables.warehouse.push({ id: ELSEWHERE, tenantId: TENANT, organizationId: ORG });
+
+		return fixture;
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to re-point an approved or dispatched transfer for a caller without the approve grant', async () => {
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+		const { fixture, transfer } = await approvedTransfer();
+		withElsewhere(fixture);
+		const before = { ...fixture.transfer(transfer.id) };
+
+		for (const patch of [{ toWarehouseId: ELSEWHERE }, { fromWarehouseId: ELSEWHERE }]) {
+			await expect(fixture.controller.update(transfer.id, patch as never)).rejects.toMatchObject({
+				status: 403,
+				response: {
+					code: 'STOCK_TRANSFER_REROUTE_NEEDS_APPROVAL',
+					details: { transferId: transfer.id, status: StockTransferStatus.APPROVED }
+				}
+			});
+		}
+		expect(fixture.transfer(transfer.id)).toEqual(before);
+
+		const dispatched = withElsewhere(dispatchedFixture());
+
+		await expect(
+			dispatched.service.update(dispatched.transferId, { toWarehouseId: ELSEWHERE } as never)
+		).rejects.toMatchObject({ response: { code: 'STOCK_TRANSFER_REROUTE_NEEDS_APPROVAL' } });
+		expect(dispatched.transfer(dispatched.transferId)).toMatchObject({ toWarehouseId: DESTINATION });
+	});
+
+	it('lets an approver correct the route, and a requester correct a draft or a request (control)', async () => {
+		const permission = jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
+		const { fixture, transfer } = await approvedTransfer();
+		withElsewhere(fixture);
+
+		await expect(
+			fixture.controller.update(transfer.id, { toWarehouseId: ELSEWHERE } as never)
+		).resolves.toMatchObject({ toWarehouseId: ELSEWHERE });
+
+		permission.mockReturnValue(false);
+		const draft = withElsewhere(transferFixture());
+		const created = await draft.service.createTransfer({
+			fromWarehouseId: SOURCE,
+			toWarehouseId: DESTINATION,
+			lines: [{ variantId: VARIANT, requestedQuantity: 1 }]
+		});
+
+		await expect(draft.service.update(created.id, { toWarehouseId: ELSEWHERE } as never)).resolves.toMatchObject({
+			toWarehouseId: ELSEWHERE
+		});
+		await draft.service.request(created.id);
+		await expect(draft.service.update(created.id, { toWarehouseId: DESTINATION } as never)).resolves.toMatchObject({
+			toWarehouseId: DESTINATION
+		});
 	});
 });
 

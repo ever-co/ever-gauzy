@@ -1,8 +1,20 @@
 import { Public } from '@gauzy/common';
-import { ID } from '@gauzy/contracts';
-import { UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Get, HttpStatus, Param, ParseIntPipe, Put, Query, ValidationPipe } from '@nestjs/common';
+import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpStatus,
+	Param,
+	ParseIntPipe,
+	Put,
+	Query,
+	UseGuards,
+	ValidationPipe
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { PluginOwnerGuard } from '../../core';
 import { PluginTag, PluginTagService } from '../../domain';
 import { IPluginTag, ReplacePluginTagsDTO } from '../../shared';
 
@@ -11,6 +23,7 @@ import { IPluginTag, ReplacePluginTagsDTO } from '../../shared';
  * Handles tag-related operations for plugins
  */
 @ApiTags('Plugins - Tag Management')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/tags')
 export class PluginTagsController {
 	constructor(private readonly pluginTagService: PluginTagService) {}
@@ -41,7 +54,13 @@ export class PluginTagsController {
 
 	/**
 	 * Replace all tags for a plugin
+	 *
+	 * Rewriting a plugin's tags edits the plugin, so the route states what editing it does (`PUT /plugins/:id`):
+	 * `PLUGIN_UPDATE`, and `PluginOwnerGuard`, which reads the plugin from `:pluginId` and refuses a caller
+	 * that did not upload it. It used to state no guard at all.
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
+	@UseGuards(PluginOwnerGuard)
 	@Put()
 	@ApiOperation({
 		summary: 'Replace all tags for a plugin',
@@ -138,6 +157,7 @@ export class PluginRecommendationsController {
  * Handles plugin operations for specific tags
  */
 @ApiTags('Tags - Plugin Management')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('tags/:tagId/plugins')
 export class TagPluginsController {
 	constructor(private readonly pluginTagService: PluginTagService) {}
@@ -145,6 +165,7 @@ export class TagPluginsController {
 	/**
 	 * Get all plugins for a specific tag
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
 	@ApiOperation({
 		summary: 'Get plugins for a tag',

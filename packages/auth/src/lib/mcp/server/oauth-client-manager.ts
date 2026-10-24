@@ -44,8 +44,39 @@ export interface ClientRegistrationRequest {
 }
 
 
+/**
+ * Bounds on one registration request. `POST /oauth2/register` is open to anyone and every client is kept in memory,
+ * so a request may hold only what a real client needs.
+ */
+export const CLIENT_REGISTRATION_LIMITS = Object.freeze({
+	clientNameLength: 200,
+	redirectUris: 10,
+	urlLength: 2048,
+	listEntries: 5,
+	listEntryLength: 64,
+	scopeLength: 512,
+	metadataBytes: 4096
+});
+
+/**
+ * Clients registered through `POST /oauth2/register` kept at once (the store is in memory). Past it, a client is
+ * forgotten rather than every new client being refused: first the oldest that never obtained a token, then the least
+ * recently used. Registration is open to anyone, but only a person signing in turns a registration into a client that
+ * obtained a token, so a flood of registrations displaces other unused registrations, never a client in use.
+ */
+export const MAX_DYNAMIC_CLIENTS = 5000;
+
+/** The shortest secret a resource server may authenticate with */
+export const MIN_RESOURCE_SERVER_SECRET_LENGTH = 32;
+
 export class OAuth2ClientManager {
 	private clients = new Map<string, OAuth2Client>();
+	// Clients registered without an id of the operator's (dynamic registration) that never obtained a token, oldest first
+	private readonly unusedDynamicClientIds = new Set<string>();
+	// Dynamically registered clients that obtained a token (see {@link markClientUsed}), least recently used first
+	private readonly usedDynamicClientIds = new Set<string>();
+	/** The clients registered by {@link registerResourceServer}: the only ones the introspection endpoint answers */
+	private readonly resourceServerIds = new Set<string>();
 	private securityLogger: SecurityLogger;
 
 	// Default supported scopes for MCP
@@ -53,7 +84,7 @@ export class OAuth2ClientManager {
 	private readonly DEFAULT_GRANT_TYPES = ['authorization_code', 'refresh_token'];
 	private readonly DEFAULT_RESPONSE_TYPES = ['code'];
 
-	constructor() {
+	constructor(private readonly maxDynamicClients = MAX_DYNAMIC_CLIENTS) {
 		this.securityLogger = new SecurityLogger();
 	}
 
@@ -124,6 +155,54 @@ export class OAuth2ClientManager {
 	}
 
 	/**
+	 * Registers a resource server the operator configured: a confidential client with the given secret that may
+	 * call the introspection endpoint and nothing else (no redirect URIs, no grants). The MCP server is one; it
+	 * asks whether each bearer token it is shown is active.
+	 *
+	 * @param clientId - The client id the resource server authenticates with.
+	 * @param clientSecret - Its secret, at least {@link MIN_RESOURCE_SERVER_SECRET_LENGTH} characters.
+	 * @throws When the secret is too short or the client id is taken.
+	 */
+	async registerResourceServer(clientId: string, clientSecret: string): Promise<void> {
+		if (!clientId || !clientSecret || clientSecret.length < MIN_RESOURCE_SERVER_SECRET_LENGTH) {
+			throw new Error(
+				`A resource server needs a client id and a secret of at least ${MIN_RESOURCE_SERVER_SECRET_LENGTH} characters`
+			);
+		}
+		if (this.clients.has(clientId)) {
+			throw new Error(`client_id already exists: ${clientId}`);
+		}
+		const now = new Date();
+		this.clients.set(clientId, {
+			clientId,
+			clientSecretHash: await bcrypt.hash(clientSecret, 12),
+			clientName: 'Resource server',
+			clientType: 'confidential',
+			redirectUris: [],
+			grantTypes: [],
+			responseTypes: [],
+			scopes: [],
+			createdAt: now,
+			updatedAt: now,
+			isActive: true,
+			metadata: { resource_server: true }
+		});
+		this.resourceServerIds.add(clientId);
+		this.securityLogger.log(`Resource server registered: ${clientId}`);
+	}
+
+	/**
+	 * Whether a client is a resource server the operator registered ({@link registerResourceServer}).
+	 *
+	 * Decided by that registration alone, never by the client's `metadata`: a dynamic registration
+	 * (`POST /oauth2/register`, open to anyone) stores the `metadata` it is sent, so a self-registered confidential
+	 * client could claim `{ "resource_server": true }` and be answered at the introspection endpoint.
+	 */
+	isResourceServer(client: OAuth2Client | null | undefined): boolean {
+		return !!client && client.clientType === 'confidential' && this.resourceServerIds.has(client.clientId);
+	}
+
+	/**
 	 * Register a new OAuth 2.0 client (public or confidential)
 	 *
 	 * - Public clients: No client_secret is generated (e.g., SPAs, native apps)
@@ -181,6 +260,9 @@ export class OAuth2ClientManager {
 
 			// Store client
 			this.clients.set(clientId, client);
+			if (!customClientId) {
+				this.rememberDynamicClient(clientId);
+			}
 
 			this.securityLogger.log(`OAuth 2.0 client registered: ${clientId} (${request.client_name})`);
 
@@ -243,6 +325,22 @@ export class OAuth2ClientManager {
 
 		const isValidSecret = await bcrypt.compare(clientSecret, client.clientSecretHash);
 		return isValidSecret ? client : null;
+	}
+
+	/**
+	 * Records that a client obtained tokens (an authorization code exchanged, or a refresh token used): a dynamically
+	 * registered client is then forgotten only after every client that never obtained one, and after the clients used
+	 * less recently. Call it only once tokens are issued, never on client authentication alone: a public client
+	 * authenticates with no secret, so anyone could otherwise mark the clients they registered as used.
+	 *
+	 * @param clientId - The client the tokens were issued to. A client the operator registered is never forgotten.
+	 */
+	markClientUsed(clientId: string): void {
+		if (!this.unusedDynamicClientIds.delete(clientId) && !this.usedDynamicClientIds.delete(clientId)) {
+			return;
+		}
+		// Re-inserted last: the most recently used
+		this.usedDynamicClientIds.add(clientId);
 	}
 
 	/**
@@ -319,12 +417,63 @@ export class OAuth2ClientManager {
 	 * Validate client registration request
 	 */
 	private validateClientRegistration(request: ClientRegistrationRequest) {
-		if (!request.client_name || request.client_name.trim().length === 0) {
+		const limits = CLIENT_REGISTRATION_LIMITS;
+
+		if (typeof request?.client_name !== 'string' || request.client_name.trim().length === 0) {
 			throw new Error('client_name is required');
 		}
+		if (request.client_name.length > limits.clientNameLength) {
+			throw new Error(`client_name must be at most ${limits.clientNameLength} characters`);
+		}
 
-		if (!request.redirect_uris || request.redirect_uris.length === 0) {
+		if (!Array.isArray(request.redirect_uris) || request.redirect_uris.length === 0) {
 			throw new Error('At least one redirect_uri is required');
+		}
+		if (request.redirect_uris.length > limits.redirectUris) {
+			throw new Error(`At most ${limits.redirectUris} redirect_uris are allowed`);
+		}
+		if (request.redirect_uris.some((uri) => typeof uri !== 'string' || uri.length > limits.urlLength)) {
+			throw new Error(`Each redirect_uri must be a string of at most ${limits.urlLength} characters`);
+		}
+
+		for (const field of ['grant_types', 'response_types'] as const) {
+			const list = request[field];
+			if (list === undefined) {
+				continue;
+			}
+			if (
+				!Array.isArray(list) ||
+				list.length > limits.listEntries ||
+				list.some((entry) => typeof entry !== 'string' || entry.length > limits.listEntryLength)
+			) {
+				throw new Error(`${field} must be a list of at most ${limits.listEntries} short strings`);
+			}
+		}
+
+		if (
+			request.scope !== undefined &&
+			(typeof request.scope !== 'string' || request.scope.length > limits.scopeLength)
+		) {
+			throw new Error(`scope must be a string of at most ${limits.scopeLength} characters`);
+		}
+
+		for (const field of ['logo_uri', 'client_uri', 'policy_uri', 'tos_uri'] as const) {
+			const value = request[field];
+			if (value !== undefined && (typeof value !== 'string' || value.length > limits.urlLength)) {
+				throw new Error(`${field} must be a string of at most ${limits.urlLength} characters`);
+			}
+		}
+
+		if (request.metadata !== undefined) {
+			let size: number;
+			try {
+				size = Buffer.byteLength(JSON.stringify(request.metadata) ?? '', 'utf8');
+			} catch {
+				throw new Error('metadata must be a JSON object');
+			}
+			if (size > limits.metadataBytes) {
+				throw new Error(`metadata must be at most ${limits.metadataBytes} bytes`);
+			}
 		}
 
 		// Validate client type
@@ -351,6 +500,30 @@ export class OAuth2ClientManager {
 				throw new Error(`Invalid redirect URI: ${uri}`);
 			}
 		}
+	}
+
+	/**
+	 * Keeps a dynamically registered client, making room first when {@link MAX_DYNAMIC_CLIENTS} are kept: the oldest
+	 * client that never obtained a token is forgotten, or, when every client did, the least recently used one. An
+	 * anonymous flood of registrations therefore only displaces registrations nobody signed in through.
+	 */
+	private rememberDynamicClient(clientId: string): void {
+		while (this.unusedDynamicClientIds.size + this.usedDynamicClientIds.size >= this.maxDynamicClients) {
+			const neverUsed = this.unusedDynamicClientIds.size > 0;
+			const pool = neverUsed ? this.unusedDynamicClientIds : this.usedDynamicClientIds;
+			const forgotten = pool.values().next();
+			if (forgotten.done) {
+				break;
+			}
+			pool.delete(forgotten.value);
+			this.clients.delete(forgotten.value);
+			this.securityLogger.warn(
+				`Dynamic client registry full: forgot the ${neverUsed ? 'oldest unused' : 'least recently used'} client ${
+					forgotten.value
+				}`
+			);
+		}
+		this.unusedDynamicClientIds.add(clientId);
 	}
 
 	/**

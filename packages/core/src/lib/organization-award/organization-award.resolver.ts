@@ -80,17 +80,16 @@ const ORGANIZATION_AWARD_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * `/api/organization-awards` routes call.
  *
  * **The guard is the controller's guard, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere — not
- * on the four routes it declares and not on the five it inherits from the CRUD base — so every one of
- * its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission
- * here would refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol
- * rule forbids.
+ * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` on its reads, so
+ * those are tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission there
+ * would refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol rule
+ * forbids.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
- * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
- * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationAward` and `recoverOrganizationAward` state the same,
- * neither wider nor narrower than REST.
+ * **Except every write.** The controller states `ALL_ORG_EDIT` behind `PermissionGuard` on its create,
+ * update and delete, and overrides the inherited retire-and-restore pair only to state the same — the
+ * CRUD base declares no permission, and `PermissionGuard` answers `true` to empty metadata, so any member
+ * of the tenant could write the organization's records (GHSA-v79w-54p2-wmh5) — so every mutation below
+ * states the same, neither wider nor narrower than REST.
  *
  * **The list is a connection, and no relation is a member of it.** An award row carries a title, a
  * year and the organization it is filed under; there is no relation column and nothing eager, so the
@@ -175,6 +174,8 @@ export class OrganizationAwardResolver {
 	 * overwrites whatever a body states, so a caller states which organization the row is filed under
 	 * and never which tenant it is written into.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('createOrganizationAward')
 	async createOrganizationAward(
 		@Args('input') input: ICreateOrganizationAwardInput
@@ -195,6 +196,8 @@ export class OrganizationAwardResolver {
 	 * answers the store's own update result — a statement about the write, `{ affected }` — which is not
 	 * a row and not what a GraphQL field named `updateOrganizationAward` may return.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('updateOrganizationAward')
 	async updateOrganizationAward(
 		@Args('input') input: IUpdateOrganizationAwardInput
@@ -209,6 +212,8 @@ export class OrganizationAwardResolver {
 	/**
 	 * Removes an award outright.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('deleteOrganizationAward')
 	async deleteOrganizationAward(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.organizationAwardService.delete(id));

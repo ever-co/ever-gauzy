@@ -81,7 +81,7 @@ describe('StatisticService.getEmployeeTimeSlots on MikroORM', () => {
 
 	const run = (logger = { warn: jest.fn(), debug: jest.fn(), log: jest.fn(), error: jest.fn() }) => {
 		const knex = recordingKnex(
-			[{ id: 'E1', user_id: 'U1', isOnline: true, isAway: false, startedAt: '2026-09-29T10:00:00.000Z' }],
+			[{ id: 'E1', user_id: 'U1', isOnline: true, isAway: false, kind: 'agent', startedAt: '2026-09-29T10:00:00.000Z' }],
 			[
 				slot('S1', { id: 'SS1', file: 'shot.png', thumb: 'shot-thumb.png' }),
 				slot('S1', { id: 'SS2', file: 'broken.png', thumb: 'broken-thumb.png' }),
@@ -144,5 +144,14 @@ describe('StatisticService.getEmployeeTimeSlots on MikroORM', () => {
 		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('screenshot id=SS2'));
 		expect(second.id).toBe('S2');
 		expect(second.screenshots).toEqual([]);
+	});
+
+	it('returns the employee kind, so the dashboard can badge an agent', async () => {
+		const [employee] = await run().result;
+
+		const employeeSql = queries[0];
+		expect(employeeSql).toContain('"employee"."kind" as "kind"');
+		expect(employeeSql).toMatch(/group by .*"employee"\."kind"/);
+		expect(employee.kind).toBe('agent');
 	});
 });

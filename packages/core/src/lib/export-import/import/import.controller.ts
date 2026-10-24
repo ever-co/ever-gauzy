@@ -4,6 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { generateImportArchiveFileName } from './import-archive-file-name';
+import { IMPORT_ARCHIVE_LIMITS } from './import-archive-extract';
 import { RequestContext } from '../../core/context';
 import { archiveUploadFileFilter, FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -12,9 +13,13 @@ import { ImportHistoryCreateCommand } from '../import-history';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'node:path';
 
+/**
+ * 🛑 Granted by `IMPORT_ADD` alone. An import writes rows into every table of the tenant, which is the import
+ * capability; `ALL_ORG_EDIT`, which used to grant it too (`@Permissions` is any-of), edits organizations.
+ */
 @ApiTags('Import')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.IMPORT_ADD)
+@Permissions(PermissionsEnum.IMPORT_ADD)
 @Controller('/import')
 export class ImportController {
 	private readonly logger = new Logger(ImportController.name);
@@ -38,7 +43,9 @@ export class ImportController {
 			}),
 			// The import format is a ZIP of CSVs; the local provider keeps the client's extension and
 			// the file lands under /public, so anything else is refused before it is stored.
-			fileFilter: archiveUploadFileFilter
+			fileFilter: archiveUploadFileFilter,
+			// One archive, of bounded size: it is read into memory whole before it is unpacked.
+			limits: { fileSize: IMPORT_ARCHIVE_LIMITS.maxArchiveBytes, files: 1 }
 		})
 	)
 	@ApiOperation({ summary: 'Imports templates records.' })

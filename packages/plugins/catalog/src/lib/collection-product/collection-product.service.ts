@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { Product, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Product, RequestContext } from '@gauzy/core';
 import { assertAllInCallerScope } from '../catalog.scope';
 import { Collection } from '../collection/collection.entity';
 import { CollectionProduct } from './collection-product.entity';
 import { MikroOrmCollectionProductRepository } from './repository/mikro-orm-collection-product.repository';
 import { TypeOrmCollectionProductRepository } from './repository/type-orm-collection-product.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * The caller's tenant and organization as criteria, each only when the credential states it: a key present with an
@@ -28,7 +29,7 @@ function callerScope(): { tenantId?: ID; organizationId?: ID } {
  * requested set — additions, removals and the new positions — inside one transaction.
  */
 @Injectable()
-export class CollectionProductService extends TenantAwareCrudService<CollectionProduct> {
+export class CollectionProductService extends CatalogCrudService<CollectionProduct> {
 	constructor(
 		readonly typeOrmCollectionProductRepository: TypeOrmCollectionProductRepository,
 		readonly mikroOrmCollectionProductRepository: MikroOrmCollectionProductRepository

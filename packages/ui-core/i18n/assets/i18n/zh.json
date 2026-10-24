@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "界面",
 			"TITLE": "用户界面",
-			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
+			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。两种界面显示相同的页面，数据、布局和功能完全相同——只是底层技术不同，因此切换不会改变用户看到的内容或可执行的操作。",
 			"OPTIONS": {
 				"ANGULAR": "Angular（默认）",
 				"REACT": "React（新）"
@@ -5408,6 +5408,8 @@
 			"API_SERVER_PORT": "API服务器端口",
 			"UI_SERVER_PORT": "UI服务器端口",
 			"SERVER_HOSTNAME": "服务器主机名/IP地址",
+			"LAN_ACCESS": "允许网络中的其他计算机连接",
+			"LAN_ACCESS_HINT": "关闭后，只有这台计算机可以连接到 API 和网页界面。",
 			"AUTO_START_STARTUP": "启动时自动启动",
 			"SERVER_TYPE": "服务器类型",
 			"LOCAL_API_PORT": "本地API端口",
@@ -5534,7 +5536,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "我们无法确定您是否有未同步的离线数据。删除数据库可能会永久清除未保存的工作。如果您不确定，请点击“保留”。",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "您的登录信息",
+			"SEED_CREDENTIALS_MESSAGE": "请立即保存这些密码。它们只显示一次。",
+			"SEED_CREDENTIALS_DETAIL": "此安装使用随机密码创建了账户，而不是公开的默认密码。\n\n{{ accounts }}\n\n之后您可以在 Gauzy 的个人资料页面中更改密码。",
+			"SEED_CREDENTIALS_COPIED": "已复制到剪贴板。",
+			"SEED_CREDENTIALS_SAVED": "我已保存",
+			"SEED_ROLE_SUPER_ADMIN": "超级管理员",
+			"SEED_ROLE_ADMIN": "管理员",
+			"SEED_ROLE_EMPLOYEE": "员工",
+			"SEED_PASSWORD": "密码",
+			"PUBLISHED_PASSWORDS_TITLE": "仍在使用默认密码",
+			"PUBLISHED_PASSWORDS_MESSAGE": "请更改这些账户的默认密码。",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} 仍在使用 Gauzy 文档中公开的默认密码登录。任何能访问此服务器的人都可以用它登录。请登录 Gauzy 并在个人资料页面中更改密码。"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",
@@ -5562,7 +5576,12 @@
 			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
 			"UNEXPECTED_ERROR": "发生未知错误。",
 			"NETWORK_ERROR": "网络错误：{{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。"
+			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。",
+			"ORGANIZATION_SWITCH_REFUSED": "无法切换到 {{ name }}：{{ reason }}。您仍在当前组织中工作。",
+			"ORGANIZATION_NOT_EMPLOYEE": "您不是 {{ name }} 的在职员工，因此计时器无法在那里记录时间。您仍在当前组织中工作。",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "正在切换组织。请在切换完成后再启动计时器。",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "您不是 {{ name }} 的在职员工，且未能切换回您之前的组织。请重新登录。",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "无法在此设备上完成切换到 {{ name }}。请重新登录。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",

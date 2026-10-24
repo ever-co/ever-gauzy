@@ -8,6 +8,7 @@ import {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand
 } from '../../../organization-project/commands';
+import { nullIfNotFound } from './null-if-not-found';
 
 @CommandHandler(IntegrationMapSyncProjectCommand)
 export class IntegrationMapSyncProjectHandler implements ICommandHandler<IntegrationMapSyncProjectCommand> {
@@ -27,20 +28,19 @@ export class IntegrationMapSyncProjectHandler implements ICommandHandler<Integra
 		const { integrationId, sourceId, organizationId, entity } = input;
 		const tenantId = RequestContext.currentTenantId();
 
-		try {
-			// Attempt to find an existing project map
-			const projectMap = await this._integrationMapService.findOneByWhereOptions({
+		// Only a missing map means the project is new. Errors from the update below must reach the caller:
+		// they used to fall into the "no map" branch and create a second project and map for the same source id.
+		const projectMap = await this._integrationMapService
+			.findOneByWhereOptions({
 				entity: IntegrationEntity.PROJECT,
 				sourceId,
 				integrationId,
 				organizationId,
 				tenantId
-			});
+			})
+			.catch(nullIfNotFound);
 
-			// Update the project if it exists
-			await this._commandBus.execute(new OrganizationProjectUpdateCommand(projectMap.gauzyId, entity));
-			return projectMap;
-		} catch (error) {
+		if (!projectMap) {
 			// If project map is not found, create a new project and map it
 			const project = await this._commandBus.execute(new OrganizationProjectCreateCommand(entity));
 
@@ -54,5 +54,26 @@ export class IntegrationMapSyncProjectHandler implements ICommandHandler<Integra
 				})
 			);
 		}
+
+		// Update the mapped project; its update errors reach the caller
+		const updated = await this._commandBus
+			.execute(new OrganizationProjectUpdateCommand(projectMap.gauzyId, entity))
+			.catch(nullIfNotFound);
+		if (updated) {
+			return projectMap;
+		}
+
+		// The mapped project was deleted here: create it again and point the EXISTING map at it
+		const project = await this._commandBus.execute(new OrganizationProjectCreateCommand(entity));
+		return await this._commandBus.execute(
+			new IntegrationMapSyncEntityCommand({
+				id: projectMap.id,
+				gauzyId: project.id,
+				integrationId,
+				sourceId,
+				entity: IntegrationEntity.PROJECT,
+				organizationId
+			})
+		);
 	}
 }

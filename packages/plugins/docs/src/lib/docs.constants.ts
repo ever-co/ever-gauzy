@@ -41,6 +41,8 @@ export const DOCS_SUBTREE_NOT_ARCHIVED = 'DOCS_SUBTREE_NOT_ARCHIVED';
 export const DOCS_BULK_MOVE_PARENT_REQUIRED = 'DOCS_BULK_MOVE_PARENT_REQUIRED';
 /** The organization storage quota would be exceeded by this upload. */
 export const DOCS_QUOTA_EXCEEDED = 'DOCS_QUOTA_EXCEEDED';
+/** Only the installation's operator sets an organization's storage quota (owner decision 14, 2026-10-22). */
+export const DOCS_QUOTA_OPERATOR_ONLY = 'DOCS_QUOTA_OPERATOR_ONLY';
 /** The inbound-email webhook is not enabled in this deployment. */
 export const DOCS_INBOUND_DISABLED = 'DOCS_INBOUND_DISABLED';
 /** The inbound-email webhook signature did not verify. */

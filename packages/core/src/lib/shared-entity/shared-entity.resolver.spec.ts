@@ -82,7 +82,9 @@ function surfaces() {
 		getSharedEntityByToken: jest.fn().mockResolvedValue(SHARED_DOCUMENT),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
-		softRecover: jest.fn().mockResolvedValue(ROWS[0])
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
+		// The caller manages every share here unless a test says otherwise: the rows are answered as stored
+		withTokenForManager: jest.fn((share: unknown) => share)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
 
@@ -235,7 +237,8 @@ describe('SharedEntityResolver — the SDL declares the capabilities the REST ro
 	it('carries the capability, the two rules documents and the polymorphic pair', () => {
 		const share = body('SharedEntity', 'type');
 
-		expect(share).toMatch(/token: String!/);
+		// Nullable: the token is answered only to the share's author or an organization administrator
+		expect(share).toMatch(/token: String$/m);
 		expect(share).toMatch(/entity: String\b/);
 		expect(share).toMatch(/entityId: ID\b/);
 		expect(share).toMatch(/shareRules: JSON\b/);
@@ -329,6 +332,28 @@ describe('SharedEntityResolver — one concept, two protocols, the same operatio
 		sharedEntityService.findOneByIdString.mockRejectedValueOnce(new NotFoundException());
 
 		expect(await resolver.sharedEntity(SECOND)).toBeNull();
+	});
+
+	it('answers a share’s token only as the service lets the caller read it, as the REST routes do', async () => {
+		// A share's token reads its record without signing in; a member who is neither its author nor an
+		// organization administrator reads the share without it, and cannot find it through a token filter either.
+		const { resolver, sharedEntityService } = surfaces();
+		sharedEntityService.withTokenForManager.mockImplementation((share: unknown) => {
+			const { token: _token, ...withoutToken } = share as Record<string, unknown>;
+			void _token;
+			return withoutToken;
+		});
+
+		const list = await resolver.sharedEntities();
+		expect(list.nodes.map((node) => node.id)).toEqual([FIRST, SECOND]);
+		for (const node of list.nodes) {
+			expect(node).not.toHaveProperty('token');
+		}
+		expect((await resolver.sharedEntities({ token: { eq: TOKEN } })).totalCount).toBe(0);
+		expect((await resolver.sharedEntities({ token: { like: 'k%' } })).totalCount).toBe(0);
+
+		expect(await resolver.sharedEntity(FIRST)).not.toHaveProperty('token');
+		expect(sharedEntityService.withTokenForManager).toHaveBeenCalledWith(ROWS[0]);
 	});
 
 	it('counts through the same service method the count route calls, with the route’s own options', async () => {

@@ -87,6 +87,37 @@ describe('ImportEntityFieldMapOrCreateHandler', () => {
 		});
 	});
 
+	it.each([undefined, ''])(
+		'creates a row the archive gives no id (%p), never saving it over a mapping of the table',
+		async (sourceId) => {
+			const repository = buildRepository();
+			// An import record lookup without a source id dropped that condition and answered an arbitrary mapping.
+			const commandBus = {
+				execute: jest.fn(async () => ({ success: true, record: { destinationId: DESTINATION_ID } }))
+			};
+			const handler = new ImportEntityFieldMapOrCreateHandler(commandBus as any);
+
+			await handler.execute(
+				new ImportEntityFieldMapOrCreateCommand(repository as any, [], { name: 'New' }, sourceId as string)
+			);
+
+			expect(commandBus.execute).not.toHaveBeenCalled();
+			expect(repository.create).toHaveBeenCalledWith({ name: 'New' });
+			expect(repository.save).toHaveBeenCalledWith({ name: 'New' });
+		}
+	);
+
+	it('drops a blank id, which mapping turns into null, so the new row gets a generated one', async () => {
+		const repository = buildRepository();
+		const handler = new ImportEntityFieldMapOrCreateHandler({ execute: jest.fn() } as any);
+
+		await handler.execute(
+			new ImportEntityFieldMapOrCreateCommand(repository as any, [], { id: null, name: 'New' }, '')
+		);
+
+		expect(repository.create).toHaveBeenCalledWith({ name: 'New' });
+	});
+
 	describe('user rows', () => {
 		const VERIFIED_AT = new Date('2026-01-15T10:00:00.000Z');
 

@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { ID, IOrganization, ITimeSlotStatistics, TimeFormatEnum } from '@gauzy/contracts';
 import { useTranslation } from '@gauzy/ui-react';
 import { Avatar } from '@gauzy/ui-react-components';
-import { dateFormat, utcToLocal } from '../../utils/format.utils';
+import { dateFormat, isAgentEmployee, utcToLocal } from '../../utils/format.utils';
 import { NbButton } from '../NbButton';
 import { ScreenshotCarousel, type ScreenshotCarouselHandle } from './ScreenshotCarousel';
 import { ScreenshotItem } from './ScreenshotItem';
@@ -49,7 +49,7 @@ function EmployeeActivityRow({
 	return (
 		<div className="gz-rtt-row">
 			<div className="gz-rtt-col">
-				<div className="gz-rtt-hour-label gz-rtt-mb-3 gz-rtt-avatar-row">
+				<div className="gz-rtt-avatar-row">
 					{canChangeSelectedEmployee ? (
 						<Avatar
 							variant="activity"
@@ -59,6 +59,7 @@ function EmployeeActivityRow({
 							appendCaption={t('TIMESHEET.LAST_WORKED')}
 							caption={lastWorked}
 							presence={employee}
+							badge={isAgentEmployee(employee) ? t('EMPLOYEES_PAGE.AGENT_BADGE') : undefined}
 							onClick={() => onOpenEmployee(employee.id)}
 						/>
 					) : (
@@ -119,7 +120,6 @@ export function RecentActivitiesWindow(props: RecentActivitiesWindowProps) {
 			hasData={rows.length > 0}
 			emptyMessage={emptyMessage}
 			bodyClassName="gz-rtt-custom-card-body-inner"
-			emptyInBody
 		>
 			{rows.map((employee) => (
 				<EmployeeActivityRow key={employee.id} employee={employee} {...rowProps} />

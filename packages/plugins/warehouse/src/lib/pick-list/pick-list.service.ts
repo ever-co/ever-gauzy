@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException, Optional } 
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, RequestContext, SequenceService } from '@gauzy/core';
 import { PickListLineService } from '../pick-list-line/pick-list-line.service';
 import { PickListLine } from '../pick-list-line/pick-list-line.entity';
 import { PickWaveService } from '../pick-wave/pick-wave.service';
@@ -30,6 +30,7 @@ import { PickList } from './pick-list.entity';
 import { TWarehouseTransactionRunner, movePickList, pickListFactOf } from './pick-list-moves';
 import { MikroOrmPickListRepository } from './repository/mikro-orm-pick-list.repository';
 import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /**
  * The work, per picker: the lists, their derivation from shipments, and their lifecycle.
@@ -51,7 +52,7 @@ import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repos
 const PICK_LIST_WRITABLE_MEMBERS = ['assignedToUserId', 'priority', 'note', 'metadata'] as const;
 
 @Injectable()
-export class PickListService extends TenantAwareCrudService<PickList> {
+export class PickListService extends WarehouseCrudService<PickList> {
 	constructor(
 		readonly typeOrmPickListRepository: TypeOrmPickListRepository,
 		readonly mikroOrmPickListRepository: MikroOrmPickListRepository,

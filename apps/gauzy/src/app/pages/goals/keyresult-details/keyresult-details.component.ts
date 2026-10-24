@@ -23,7 +23,9 @@ import {
 	TaskStatusEnum,
 	KeyResultUpdateStatusEnum,
 	IKPI,
-	IOrganization
+	IOrganization,
+	IUser,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
@@ -103,14 +105,7 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 			}
 
 			this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
-				if (
-					user.role.name !== RolesEnum.SUPER_ADMIN &&
-					user.role.name !== RolesEnum.ADMIN &&
-					user.employee.id !== this.keyResult.owner.id &&
-					!!this.keyResult.lead.id
-						? user.employee.id !== this.keyResult.lead.id
-						: false
-				) {
+				if (!this.mayReportProgress(user)) {
 					this.isUpdatable = false;
 				}
 			});
@@ -143,6 +138,28 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 		});
 	}
 
+	/**
+	 * Whether the signed-in user may report this key result's progress: the rule the server applies to a filed update
+	 * (`KeyResultUpdateService.assertCallerMayReportProgress`) — a tenant administrator, a `GOALS_EDIT` holder, or the
+	 * employee who owns or leads the key result. The test this replaces read `lead.id` of a key result without a lead,
+	 * which threw and left the Update button on for everyone.
+	 *
+	 * @param user The signed-in user.
+	 * @returns True when the Update button may be offered.
+	 */
+	mayReportProgress(user: IUser): boolean {
+		const role = user?.role?.name;
+		if (role === RolesEnum.SUPER_ADMIN || role === RolesEnum.ADMIN) {
+			return true;
+		}
+		if (this.store.hasPermission(PermissionsEnum.GOALS_EDIT)) {
+			return true;
+		}
+
+		const employeeId = user?.employee?.id ?? user?.employeeId;
+		return !!employeeId && (employeeId === this.keyResult.owner?.id || employeeId === this.keyResult.lead?.id);
+	}
+
 	relativeProgress(currentUpdate, previousUpdate) {
 		let updateDiff: number;
 		let keyResultValDiff: number;
@@ -161,6 +178,13 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 		};
 	}
 
+	/**
+	 * Reports the key result's progress.
+	 *
+	 * Filing the update is the whole report: the server moves the key result and its goal to it (owner decision 2(a),
+	 * 2026-10-23), so the key result is re-read afterwards rather than written back with `PUT /key-results/:id`, which
+	 * needs `GOALS_EDIT` and refused an employee reporting their own key result.
+	 */
 	async keyResultUpdate() {
 		if (this.keyResult.type === KeyResultTypeEnum.TASK) {
 			const taskDialog = this.dialogService.open(AddTaskDialogComponent, {
@@ -188,20 +212,21 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 						taskResponse.status === TaskStatusEnum.COMPLETED
 							? KeyResultUpdateStatusEnum.ON_TRACK
 							: KeyResultUpdateStatusEnum.NONE;
+					// The endpoint validates against `TenantOrganizationBaseDTO`, which requires the organization
+					const { id: organizationId, tenantId } = this.store.selectedOrganization;
 					const update: IKeyResultUpdate = {
 						keyResultId: this.keyResult.id,
 						owner: this.keyResult.owner.id,
 						update: this.keyResult.update,
 						progress: this.keyResult.progress,
-						status: this.keyResult.status
+						status: this.keyResult.status,
+						organizationId,
+						tenantId
 					};
-					await this.keyResultUpdateService.createUpdate(update);
-					delete this.keyResult.updates;
-					await this.keyResultService.update(this.keyResult.id, this.keyResult).then((updateRes) => {
-						if (updateRes) {
-							this.loadModal();
-						}
-					});
+					const filed = await this.keyResultUpdateService.createUpdate(update);
+					if (filed) {
+						await this.loadModal();
+					}
 				} catch (error) {
 					console.log(error);
 				}
@@ -217,11 +242,8 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 			const response = await firstValueFrom(dialog.onClose);
 			if (!!response) {
 				try {
-					await this.keyResultService.update(this.keyResult.id, response).then((updateRes) => {
-						if (updateRes) {
-							this.loadModal();
-						}
-					});
+					// The dialog filed the update, and the server applied it
+					await this.loadModal();
 				} catch (error) {
 					console.log(error);
 				}

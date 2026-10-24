@@ -10,6 +10,7 @@ import {
 	IPagination,
 	ITaskPriority,
 	ITaskPriorityFindInput,
+	PermissionsEnum,
 	TaskPriorityEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/ui-core/common';
@@ -97,6 +98,14 @@ export class TaskPrioritySelectComponent extends TranslationBaseComponent implem
 
 	@Input() set addTag(value: boolean) {
 		this._addTag = value;
+	}
+
+	/**
+	 * Whether the select offers to create a new priority from what the user typed: only when `addTag` allows it and
+	 * the user holds `ORG_TASK_SETTING`, the grant the API requires to create one.
+	 */
+	get canCreate(): boolean {
+		return this.addTag && this.store.hasPermission(PermissionsEnum.ORG_TASK_SETTING);
 	}
 
 	/*

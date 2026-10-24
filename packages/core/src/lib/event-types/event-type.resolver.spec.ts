@@ -12,8 +12,9 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { CursorCodec } from '../api/cursor';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EventTypeController } from './event-type.controller';
 import { EventTypeModule } from './event-type.module';
 import { EventTypeResolver } from './event-type.resolver';
@@ -34,7 +35,7 @@ import { EventTypeCreateCommand } from './commands';
  *   route reaches — including the create, which goes through the command because the handler resolves the
  *   organization and the employee before it writes;
  * - **the guard chain is the controller's and every field states the permission its own route runs
- *   under**, which for this resource is none on either side;
+ *   under**: none on the reads, `EVENT_TYPES_EDIT` behind `PermissionGuard` on every write;
  * - the length is an exact decimal and never a floating-point number, on the object type, on the filter
  *   and on the way into a write;
  * - **the whole surface is behind the capability the catalogue declares for GraphQL**, so a tenant that
@@ -744,9 +745,14 @@ describe('EventTypeResolver — the guard stack and the permission are the contr
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = (Reflect.getMetadata('__guards__', EventTypeResolver) ?? []) as unknown[];
 
-		for (const { route } of PERMISSION_PARITY) {
+		for (const { field, route } of PERMISSION_PARITY) {
+			// The writes state `PermissionGuard` on the handler and on the field alike, so the field's own guards
+			// join the class's on the resolver side.
+			const fieldGuards = (Reflect.getMetadata('__guards__', (EventTypeResolver.prototype as any)[field]) ??
+				[]) as unknown[];
+
 			expect([...guardsOfRoute(EventTypeController, route), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...new Set([...stated, ...fieldGuards])].sort()
 			);
 		}
 	});
@@ -756,16 +762,35 @@ describe('EventTypeResolver — the guard stack and the permission are the contr
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EventTypeResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its own route runs under — none, and never a grant', () => {
+	it('states on every field the permission its own route runs under — none on the reads, EVENT_TYPES_EDIT on the writes', () => {
 		for (const { field, route } of PERMISSION_PARITY) {
-			expect(permissionOfField(field)).toBe(permissionOfRoute(EventTypeController, route));
-			expect(permissionOfField(field)).toBeUndefined();
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(EventTypeController, route));
 		}
+
+		// GHSA-v79w-54p2-wmh5, owner decision 2 (2026-10-22): the writes stated no permission, and `PermissionGuard`
+		// answers `true` to empty metadata, so any member of the tenant could change the vocabulary every booking
+		// page offers. Stated explicitly as well, so a field and its route that lost the grant together are caught.
+		expect(Object.fromEntries(PERMISSION_PARITY.map(({ field }) => [field, permissionOfField(field)]))).toEqual({
+			eventTypes: undefined,
+			eventType: undefined,
+			eventTypeCount: undefined,
+			createEventType: [PermissionsEnum.EVENT_TYPES_EDIT],
+			updateEventType: [PermissionsEnum.EVENT_TYPES_EDIT],
+			deleteEventType: [PermissionsEnum.EVENT_TYPES_EDIT],
+			softDeleteEventType: [PermissionsEnum.EVENT_TYPES_EDIT],
+			recoverEventType: [PermissionsEnum.EVENT_TYPES_EDIT]
+		});
 	});
 
-	it('declares no handler-level guard the resolver does not run under', () => {
+	it('declares no handler-level guard on the reads, and PermissionGuard alone on every write', () => {
 		for (const { route } of PERMISSION_PARITY) {
-			expect(Reflect.getMetadata('__guards__', handlersOf(EventTypeController)[route])).toBeUndefined();
+			const expected = ['findAll', 'findById', 'getCount'].includes(route) ? undefined : [PermissionGuard];
+
+			expect(Reflect.getMetadata('__guards__', handlersOf(EventTypeController)[route])).toEqual(expected);
+		}
+		// The three writes the CRUD base declares bare are the controller's own handlers now.
+		for (const route of ['delete', 'softRemove', 'softRecover']) {
+			expect(Object.prototype.hasOwnProperty.call(EventTypeController.prototype, route)).toBe(true);
 		}
 	});
 });

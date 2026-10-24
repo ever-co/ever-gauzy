@@ -17,7 +17,7 @@
 <!-- Check if the current user is the owner of the plugin -->
 @let editing = marketplaceQuery.updating$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Subscription  -->
-@let subscription = $safeNavigationMigration(plugin?.subscriptions?.[0]);
+@let subscription = subscription$ | async;
 <!-- Main template -->
 @if(plugin) {
 <div

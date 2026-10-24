@@ -243,6 +243,20 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
+	 * Whether the requester may READ the given row (§3.4: visibility OR ownership OR `DOCS_MANAGE` OR a share grant),
+	 * for rows loaded past `findOneScoped`, such as the descendants a subtree operation walks.
+	 *
+	 * @param document The document row.
+	 * @returns True when the requester may read it.
+	 */
+	public canRead(document: Document): Promise<boolean> {
+		return this.documentAccessService.canRead(
+			{ createdByUserId: document.createdByUserId, visibility: document.visibility },
+			document.id
+		);
+	}
+
+	/**
 	 * Asserts that the requester may MUTATE the given row (§1.6 ownership + the `EDIT` share
 	 * level). The route guard only proves the verb permission — this adds the row-level half,
 	 * so a `VIEW`/`COMMENT` grantee can read a shared document but never write it.
@@ -261,6 +275,37 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		if (!permitted) {
 			throw new ForbiddenException({
 				message: 'You do not have write access to this document',
+				code: DOCS_WRITE_FORBIDDEN
+			});
+		}
+	}
+
+	/**
+	 * The fields that decide who reaches a document — its visibility and its organization — and its lock are its
+	 * owner's (or a `DOCS_MANAGE` holder's) to change, as its shares are (§3.3: a grantee, even at `EDIT`, can never
+	 * re-share). `assertCanWrite` lets an `EDIT` grantee write the document, so without this a grantee could publish
+	 * the owner's PRIVATE page to the whole organization (`visibility`), lift the owner's view-only lock
+	 * (`isLocked`), or move the document out of the owner's organization while keeping their share (`organizationId`).
+	 * A value equal to the current one is not a change: clients resend the selected organization on every save.
+	 *
+	 * @param document The document about to be updated.
+	 * @param input The metadata update.
+	 */
+	private async assertMayChangeOwnerFields(document: Document, input: UpdateDocumentDTO): Promise<void> {
+		const changesOwnerField =
+			(input.visibility !== undefined && input.visibility !== document.visibility) ||
+			(input.isLocked !== undefined && input.isLocked !== !!document.isLocked) ||
+			(input.organizationId !== undefined && input.organizationId !== document.organizationId);
+		if (!changesOwnerField) {
+			return;
+		}
+		const permitted = await this.documentAccessService.canAdministerShares({
+			createdByUserId: document.createdByUserId,
+			visibility: document.visibility
+		});
+		if (!permitted) {
+			throw new ForbiddenException({
+				message: "Only the document's owner may change its visibility, lock or organization",
 				code: DOCS_WRITE_FORBIDDEN
 			});
 		}
@@ -487,6 +532,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	async updateDocument(id: ID, input: UpdateDocumentDTO): Promise<Document> {
 		const document = await this.findOneScoped(id);
 		await this.assertCanWrite(document);
+		await this.assertMayChangeOwnerFields(document, input);
 
 		const updated = await this.save({
 			...document,
@@ -741,13 +787,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	/**
 	 * Narrows a set of document ids to those the requester may read, in the caller's
 	 * tenant scope and the GIVEN organization (the same single-query predicate every
-	 * list path uses).
+	 * list path uses). The tree operations hand it to `DocumentTreeService` so a subtree
+	 * archive, unarchive, delete or reorder never reaches a document the caller cannot see.
 	 *
 	 * @param ids The candidate document ids.
 	 * @param organizationId The organization to filter in — the saved document's own scope.
 	 * @returns The subset that resolves inside the read scope.
 	 */
-	private async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
+	public async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
 		const tenantId = RequestContext.currentTenantId();
 
 		const qb = this.typeOrmRepository.createQueryBuilder('document');

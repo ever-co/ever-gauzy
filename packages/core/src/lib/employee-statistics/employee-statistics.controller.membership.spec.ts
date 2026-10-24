@@ -7,7 +7,11 @@ import '../core/entities/internal';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { RequestContext } from '../core/context';
 import { EmployeeStatisticsController } from './employee-statistics.controller';
-import { AggregatedEmployeeStatisticQuery, EmployeeStatisticsHistoryQuery } from './queries';
+import {
+	AggregatedEmployeeStatisticQuery,
+	EmployeeStatisticsHistoryQuery,
+	MonthAggregatedEmployeeStatisticsQuery
+} from './queries';
 
 /**
  * #10746: `/employee-statistics/aggregate` and `/history` took the organization from the `data` JSON,
@@ -24,10 +28,12 @@ describe('EmployeeStatisticsController — organization membership', () => {
 
 	let execute: jest.Mock;
 	let findOneByIdString: jest.Mock;
+	let getStatisticsByEmployeeId: jest.Mock;
 	let controller: EmployeeStatisticsController;
 
 	beforeEach(() => {
 		execute = jest.fn().mockResolvedValue([]);
+		getStatisticsByEmployeeId = jest.fn().mockResolvedValue({});
 		findOneByIdString = jest.fn(async (id: string) => ({
 			id,
 			organizationId: id === MY_EMPLOYEE ? MINE : THEIRS
@@ -37,13 +43,15 @@ describe('EmployeeStatisticsController — organization membership', () => {
 			count: jest.fn(async (_entity, { where }) => (where.organizationId === MINE ? 1 : 0))
 		};
 		controller = new EmployeeStatisticsController(
-			{} as any,
+			{ getStatisticsByEmployeeId } as any,
 			{ execute } as any,
 			{ findOneByIdString } as any,
 			{ manager } as any
 		);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		// The user's token names their own organization: the only one the organization boundary lets them name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(MINE);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -110,6 +118,31 @@ describe('EmployeeStatisticsController — organization membership', () => {
 
 			expect(findOneByIdString).not.toHaveBeenCalled();
 			expect(execute).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('GET /employee-statistics/months and /months/:id', () => {
+		// Neither states an organization, so the reads reach the employee in whichever organization it belongs to;
+		// unlike `/history`, they used to read an employee of another organization of the tenant as asked.
+		it('answers 403 for an employee of another organization, before reading', async () => {
+			await expect(
+				controller.findAggregatedStatisticsByEmployeeId({ employeeId: THEIR_EMPLOYEE } as any)
+			).rejects.toBeInstanceOf(ForbiddenException);
+			await expect(
+				controller.findAllByEmployeeId(THEIR_EMPLOYEE, { findInput: undefined })
+			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(execute).not.toHaveBeenCalled();
+			expect(getStatisticsByEmployeeId).not.toHaveBeenCalled();
+		});
+
+		it("reads an employee of the user's own organization", async () => {
+			await controller.findAggregatedStatisticsByEmployeeId({ employeeId: MY_EMPLOYEE } as any);
+			await controller.findAllByEmployeeId(MY_EMPLOYEE, { findInput: undefined });
+
+			expect(execute).toHaveBeenCalledWith(
+				new MonthAggregatedEmployeeStatisticsQuery({ employeeId: MY_EMPLOYEE } as any)
+			);
+			expect(getStatisticsByEmployeeId).toHaveBeenCalledWith(MY_EMPLOYEE, undefined);
 		});
 	});
 });

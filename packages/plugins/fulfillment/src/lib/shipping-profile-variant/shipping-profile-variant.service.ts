@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { SHIPPING_PROFILE_VARIANT_REFERENCES } from '../fulfillment.references';
 import { ShippingProfileVariant } from './shipping-profile-variant.entity';
 import { TypeOrmShippingProfileVariantRepository } from './repository/type-orm-shipping-profile-variant.repository';
 import { MikroOrmShippingProfileVariantRepository } from './repository/mikro-orm-shipping-profile-variant.repository';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * The variant-to-profile attachments.
@@ -22,7 +23,7 @@ import { MikroOrmShippingProfileVariantRepository } from './repository/mikro-orm
  * from attaching its own.
  */
 @Injectable()
-export class ShippingProfileVariantService extends TenantAwareCrudService<ShippingProfileVariant> {
+export class ShippingProfileVariantService extends FulfillmentCrudService<ShippingProfileVariant> {
 	constructor(
 		readonly typeOrmShippingProfileVariantRepository: TypeOrmShippingProfileVariantRepository,
 		readonly mikroOrmShippingProfileVariantRepository: MikroOrmShippingProfileVariantRepository

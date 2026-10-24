@@ -851,11 +851,11 @@ describe('EquipmentResolver — the guard stack and the permission are the contr
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EquipmentResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its own route runs under — none, except the retire-and-restore pair', () => {
+	it('states on every field the permission its own route runs under — none on the reads', () => {
 		for (const { field, route } of PERMISSION_PARITY) {
 			expect(permissionOfField(field)).toEqual(permissionOfRoute(EquipmentController, route));
 
-			if (!SOFT_ROUTES.includes(route)) {
+			if (!WRITE_ROUTES.includes(route)) {
 				expect(permissionOfField(field)).toBeUndefined();
 			}
 		}
@@ -864,17 +864,21 @@ describe('EquipmentResolver — the guard stack and the permission are the contr
 	it('declares no handler-level guard the resolver does not run under', () => {
 		// A handler that guarded itself more narrowly than its class would be a route GraphQL could not
 		// mirror by class-level parity alone, so the set is compared route by route above and the raw
-		// handler metadata is asserted here: this controller adds none but the retire-and-restore pair's.
-		for (const { route } of PERMISSION_PARITY.filter(({ route }) => !SOFT_ROUTES.includes(route))) {
+		// handler metadata is asserted here: this controller adds none but its writes'.
+		for (const { route } of PERMISSION_PARITY.filter(({ route }) => !WRITE_ROUTES.includes(route))) {
 			expect(Reflect.getMetadata('__guards__', handlersOf(EquipmentController)[route])).toBeUndefined();
 		}
 	});
 
-	it('gates the retire-and-restore pair with ORG_EQUIPMENT_EDIT on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
-		// The CRUD base declares the two routes with no permission and `PermissionGuard` answers `true` to
-		// empty metadata, so any member of the tenant could retire or restore an asset. The controller
-		// overrides both to state the catalogue's edit grant, and the fields state the same.
-		for (const { field, route } of PERMISSION_PARITY.filter(({ route }) => SOFT_ROUTES.includes(route))) {
+	it('gates every write with ORG_EQUIPMENT_EDIT on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
+		// The create and the edit stated no permission, and the CRUD base declares the removal and the
+		// retire-and-restore pair with none; `PermissionGuard` answers `true` to empty metadata, so any
+		// member of the tenant could file, change, remove, retire or restore an asset. Every write route now
+		// states the catalogue's edit grant, and the fields state the same.
+		const writes = PERMISSION_PARITY.filter(({ route }) => WRITE_ROUTES.includes(route));
+		expect(writes.map(({ route }) => route)).toEqual(WRITE_ROUTES);
+
+		for (const { field, route } of writes) {
 			expect(Reflect.getMetadata('__guards__', handlersOf(EquipmentController)[route])).toEqual([PermissionGuard]);
 			expect(permissionOfRoute(EquipmentController, route)).toEqual([PermissionsEnum.ORG_EQUIPMENT_EDIT]);
 			expect(Reflect.getMetadata('__guards__', (EquipmentResolver.prototype as any)[field])).toEqual([PermissionGuard]);
@@ -883,8 +887,8 @@ describe('EquipmentResolver — the guard stack and the permission are the contr
 	});
 });
 
-/** The two inherited lifecycle routes the controller overrides only to attach a permission. */
-const SOFT_ROUTES = ['softRemove', 'softRecover'];
+/** The write routes, every one of which states the catalogue's edit grant. */
+const WRITE_ROUTES = ['create', 'update', 'delete', 'softRemove', 'softRecover'];
 
 describe('EquipmentResolver — a capability that is switched off is not served', () => {
 	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {

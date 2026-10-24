@@ -16,6 +16,7 @@ import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context';
 import { FeatureModule } from '../feature/feature.module';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { InvoiceItemController } from './invoice-item.controller';
@@ -37,9 +38,9 @@ import { InvoiceItemBulkCreateCommand } from './commands';
  * - every field reaches the same service method or dispatches the same command the REST route reaches,
  *   so a client does not choose a better surface by choosing a protocol;
  * - **the guard chain is the controller's and the permissions are the routes'** — this controller
- *   carries the tenant guard and no class-level permission, so no field states one except the bulk
- *   write, whose own route is the one route that states `PermissionGuard` and the invoice edit
- *   permission;
+ *   carries the tenant guard and no class-level permission, and every route states `PermissionGuard`
+ *   with its own grant (`INVOICES_VIEW` on the reads, `INVOICES_EDIT` on the writes), so every field
+ *   states the guard and the grant of the route it mirrors;
  * - every amount and the quantity are exact decimals and never floating-point numbers;
  * - **the whole surface is behind the capability the catalogue declares for GraphQL**, so a tenant
  *   that switched that capability off is refused the way a disabled capability's routes are — and the
@@ -705,7 +706,7 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 		// rather than substituted: the tenant guard still runs first, so a caller with no credential is
 		// refused as a credential problem before a tenant's switches are read.
 		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
-		// The permission guard is stated by the bulk route's handler rather than by the controller, so
+		// The permission guard is stated by each route's handler rather than by the controller, so
 		// neither surface demands a permission the other does not before that route's own guard runs.
 		expect(controllerGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
 		expect(resolverGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
@@ -726,7 +727,7 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 		expect(guardsOfField(field)).toEqual(guardsOfHandler(InvoiceItemController, route));
 	});
 
-	it('carries the edit permission on the bulk write and the retire-and-restore pair, the routes that state it', () => {
+	it('carries the edit permission on every write, the routes that state it', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceItemController.prototype.createBulk)).toEqual([
 			PermissionsEnum.INVOICES_EDIT
 		]);
@@ -736,9 +737,12 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 		expect(permissionOfField('createInvoiceItemsInBulk')).toEqual([PermissionsEnum.INVOICES_EDIT]);
 		expect(guardsOfField('createInvoiceItemsInBulk')).toEqual([PermissionGuard]);
 
-		// The retire-and-restore pair states the same grant: the controller overrides the two inherited
-		// routes only to attach it (GHSA-v79w-54p2-wmh5), and the fields mirror them.
+		// The inherited writes state the same grant: the controller overrides them only to attach it
+		// (GHSA-v79w-54p2-wmh5), and the fields mirror them.
 		for (const [field, route] of [
+			['createInvoiceItem', 'create'],
+			['updateInvoiceItem', 'update'],
+			['deleteInvoiceItem', 'delete'],
 			['softDeleteInvoiceItem', 'softRemove'],
 			['recoverInvoiceItem', 'softRecover']
 		]) {
@@ -752,25 +756,110 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 			expect(guardsOfField(field)).toEqual([PermissionGuard]);
 		}
 
-		// Every other field is as wide as its route and no wider: those routes state no permission, so
-		// neither do they.
-		for (const { field } of PERMISSION_PARITY.filter(
-			(entry) => !['createBulk', 'softRemove', 'softRecover'].includes(entry.route)
+		// Every read is as wide as its route and no wider: those routes state the read grant, so do they.
+		for (const { field } of PERMISSION_PARITY.filter((entry) =>
+			['findAll', 'findById', 'getCount'].includes(entry.route)
 		)) {
-			expect(permissionOfField(field)).toBeUndefined();
-			expect(guardsOfField(field)).toEqual([]);
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.INVOICES_VIEW]);
+			expect(guardsOfField(field)).toEqual([PermissionGuard]);
 		}
 	});
 
-	it('mirrors the inherited routes’ own permissions, which are the controller’s and are none', () => {
-		// The list, the node read and the count are overridden by this controller; the create, the edit and
-		// the removal are inherited from the CRUD base, which states no permission on any of them. Reading
-		// "no metadata" as "no permission" is right here and wrong for a controller that carries a
-		// class-level one — which is why this suite compares metadata rather than assuming either answer.
-		for (const handler of ['findAll', 'findById', 'getCount', 'create', 'update', 'delete']) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceItemController.prototype[handler])).toBeUndefined();
-			expect(permissionOfRoute(InvoiceItemController, handler)).toBeUndefined();
+	it('states the invoice read grant on every read route, the inherited ones included', () => {
+		// The list is overridden by this controller, and the node read, the count and the pagination are
+		// inherited from the CRUD base, which states no permission: the controller overrides them only to
+		// state it. A line is read under the grant of the document it bills, `INVOICES_VIEW`, the one the
+		// invoice reads state.
+		for (const handler of ['findAll', 'findById', 'getCount', 'pagination']) {
+			expect(Object.prototype.hasOwnProperty.call(InvoiceItemController.prototype, handler)).toBe(true);
+			expect(permissionOfRoute(InvoiceItemController, handler)).toEqual([PermissionsEnum.INVOICES_VIEW]);
+			expect(guardsOfHandler(InvoiceItemController, handler)).toEqual([PermissionGuard]);
 		}
+	});
+});
+
+describe('InvoiceItemController and InvoiceItemResolver — a line is read only under the invoice read grant', () => {
+	const TENANT_ROLE = '00000000-0000-4000-8000-0000000000aa';
+
+	/** The real permission guard, over a cache and a role service that must not be consulted. */
+	function permissionGuard() {
+		const cacheManager = { get: jest.fn().mockResolvedValue(null), set: jest.fn() };
+		const rolePermissionService = { checkRolePermission: jest.fn().mockResolvedValue(true) };
+
+		return {
+			guard: new PermissionGuard(cacheManager as never, new Reflector(), rolePermissionService as never),
+			rolePermissionService
+		};
+	}
+
+	/** Signs the request in as a member whose current role holds `permissions`, as `JwtStrategy` attaches it. */
+	function actAs(permissions: PermissionsEnum[]): void {
+		const user = {
+			id: 'user-1',
+			tenantId: TENANT,
+			roleId: TENANT_ROLE,
+			role: { id: TENANT_ROLE, name: 'VIEWER', tenantId: TENANT },
+			permissions
+		};
+
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(user as never);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(TENANT_ROLE);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(user.id);
+		jest.spyOn(RequestContext, 'currentRoleName').mockReturnValue(user.role.name as never);
+	}
+
+	/** The two classes whose reads are under test. */
+	type Target = typeof InvoiceItemController | typeof InvoiceItemResolver;
+
+	/** The context the guard reads for one handler of one class. */
+	function contextOf(target: Target, handler: string): ExecutionContext {
+		return {
+			getHandler: () => (target.prototype as unknown as Record<string, unknown>)[handler],
+			getClass: () => target,
+			getType: () => 'http'
+		} as unknown as ExecutionContext;
+	}
+
+	const READS: ReadonlyArray<[Target, string]> = [
+		[InvoiceItemController, 'getCount'],
+		[InvoiceItemController, 'pagination'],
+		[InvoiceItemController, 'findAll'],
+		[InvoiceItemController, 'findById'],
+		[InvoiceItemResolver, 'invoiceItems'],
+		[InvoiceItemResolver, 'invoiceItem'],
+		[InvoiceItemResolver, 'invoiceItemCount']
+	];
+
+	beforeEach(() => {
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it.each(READS)('%p.%s refuses a member whose role holds no invoice grant', async (target, handler) => {
+		const { guard, rolePermissionService } = permissionGuard();
+		actAs([PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ, PermissionsEnum.DOCS_READ]);
+
+		await expect(guard.canActivate(contextOf(target, handler))).resolves.toBe(false);
+		expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+	});
+
+	it.each(READS)('%p.%s refuses a member with INVOICES_EDIT and ESTIMATES_VIEW only', async (target, handler) => {
+		const { guard } = permissionGuard();
+		actAs([PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ESTIMATES_VIEW]);
+
+		await expect(guard.canActivate(contextOf(target, handler))).resolves.toBe(false);
+	});
+
+	it.each(READS)('%p.%s serves a member whose role holds INVOICES_VIEW', async (target, handler) => {
+		const { guard } = permissionGuard();
+		actAs([PermissionsEnum.INVOICES_VIEW]);
+
+		await expect(guard.canActivate(contextOf(target, handler))).resolves.toBe(true);
 	});
 });
 

@@ -72,6 +72,8 @@ export interface IConfig {
 	};
 	serverConfigConnected?: boolean;
 	hardwareAccelerationDisabled?: boolean;
+	/** Server apps: whether other computers may connect (see `DesktopSetupConfig.lanAccess`). */
+	lanAccess?: boolean | null;
 }
 
 export interface IAuth {

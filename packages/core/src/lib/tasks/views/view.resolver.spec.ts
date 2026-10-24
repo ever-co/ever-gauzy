@@ -329,17 +329,21 @@ describe('TaskViewResolver — the guard stack is the controller’s and no perm
 		}
 	});
 
-	it('states no permission on the class or on any field but the retire-and-restore pair', () => {
+	it('states no permission on the class or on any field but the writes', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskViewResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskViewController)).toBeUndefined();
 
-		// The pair is overridden by the controller only to state the task edit grant (GHSA-v79w-54p2-wmh5):
-		// the CRUD base declares none, and `PermissionGuard` answers `true` to empty metadata, so any member
-		// of the tenant could retire or restore a view. Every other route states none.
-		const pair = ['softDeleteTaskView', 'recoverTaskView'];
+		// The writes state the task grants (GHSA-v79w-54p2-wmh5): `PermissionGuard` answers `true` to empty
+		// metadata, so any member of the tenant could write, retire or restore a view. The reads state none.
+		const edits = ['updateTaskView', 'deleteTaskView', 'softDeleteTaskView', 'recoverTaskView'];
 
 		for (const [field, handler] of ROUTE_OF_FIELD) {
-			const expected = pair.includes(field) ? [PermissionsEnum.ORG_TASK_EDIT] : undefined;
+			const expected =
+				field === 'createTaskView'
+					? [PermissionsEnum.ORG_TASK_ADD]
+					: edits.includes(field)
+						? [PermissionsEnum.ORG_TASK_EDIT]
+						: undefined;
 
 			expect(permissionOfRoute(TaskViewController, handler)).toEqual(expected);
 			expect(permissionOfField(field)).toEqual(expected);

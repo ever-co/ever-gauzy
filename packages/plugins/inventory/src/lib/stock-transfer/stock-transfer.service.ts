@@ -1,10 +1,11 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { restatesStoredValue } from '@gauzy/common';
-import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockTransferStatus } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { InventoryPermission } from './../inventory.permissions';
 import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
@@ -12,6 +13,7 @@ import { StockTransferLine } from './../stock-transfer-line/stock-transfer-line.
 import { StockTransfer } from './stock-transfer.entity';
 import { TypeOrmStockTransferRepository } from './repository/type-orm-stock-transfer.repository';
 import { MikroOrmStockTransferRepository } from './repository/mikro-orm-stock-transfer.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** Which state a transition may start from. */
 const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
@@ -40,6 +42,9 @@ const DISPATCHED = [
 /** States in which inbound movements may have landed at the destination. */
 const ARRIVED = [StockTransferStatus.PARTIALLY_RECEIVED, StockTransferStatus.RECEIVED];
 
+/** The states before an approval, whose route the approver has not yet decided on. */
+const BEFORE_APPROVAL = [StockTransferStatus.DRAFT, StockTransferStatus.REQUESTED];
+
 /**
  * Refusal code of a transition a caller attempted from a version the document has moved past.
  *
@@ -60,7 +65,7 @@ const QUANTITY_UNITS = 1e6;
  * not arrived at the other, which is exactly what the two-movement shape records.
  */
 @Injectable()
-export class StockTransferService extends TenantAwareCrudService<StockTransfer> {
+export class StockTransferService extends InventoryCrudService<StockTransfer> {
 	constructor(
 		readonly typeOrmStockTransferRepository: TypeOrmStockTransferRepository,
 		readonly mikroOrmStockTransferRepository: MikroOrmStockTransferRepository,
@@ -546,6 +551,7 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 	 * own permission and stock movements, so the edit refuses to move them; a body that restates the
 	 * stored values still passes. A location can still be corrected inside the caller's scope until a
 	 * movement was written there: the source once units left it, the destination once units arrived.
+	 * From the approval on, that correction also takes the approve grant.
 	 *
 	 * @param manager The transaction the edit runs in.
 	 * @param transfer The transfer as it was read, inside that transaction.
@@ -591,6 +597,23 @@ export class StockTransferService extends TenantAwareCrudService<StockTransfer> 
 				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
 				`A transfer in ${transfer.status} cannot change ${fixed.join(', ')} once its stock has moved.`,
 				{ details: { transferId: transfer.id, status: transfer.status, members: fixed } }
+			);
+		}
+
+		// The route an approver approved is part of what they approved. This edit takes only the create grant, so
+		// an editor who may not approve could send approved stock to a location of their choosing, and the ship and
+		// receive routes then moved it there. From the approval on, a change of location is a decision of the same
+		// weight and takes the approve grant; a draft or a request is still the requester's to correct.
+		const rerouted = [...(fromMoves ? ['fromWarehouseId'] : []), ...(toMoves ? ['toWarehouseId'] : [])];
+		if (
+			!BEFORE_APPROVAL.includes(transfer.status) &&
+			!RequestContext.hasPermission(InventoryPermission.STOCK_TRANSFER_APPROVE as PermissionsEnum)
+		) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_REROUTE_NEEDS_APPROVAL,
+				`A transfer in ${transfer.status} has an approved route; changing ${rerouted.join(', ')} takes the ` +
+					`${InventoryPermission.STOCK_TRANSFER_APPROVE} permission.`,
+				{ forbidden: true, details: { transferId: transfer.id, status: transfer.status, members: rerouted } }
 			);
 		}
 

@@ -7,11 +7,12 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmployeeStatisticsController } from './employee-statistics.controller';
 import { EmployeeStatisticsModule } from './employee-statistics.module';
@@ -22,6 +23,8 @@ import {
 	EmployeeStatisticsHistoryQuery,
 	MonthAggregatedEmployeeStatisticsQuery
 } from './queries';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard } from '../shared/guards/permission.guard';
 
 /**
  * The employee statistics over GraphQL.
@@ -36,8 +39,8 @@ import {
  *   identifier, nothing to withdraw and nothing for a client to state;
  * - every field reaches the same service method, or dispatches the same query, that the REST route
  *   reaches, and answers the same calculation;
- * - **the guard chain is the controller's and no field states a permission, because the controller
- *   states none**: a resolver that demanded one would refuse a caller the REST route serves;
+ * - **the guard chain and the permissions are the controller's**: each field states the guard and the
+ *   dashboard pair its route states, so neither protocol reads the figures more widely than the other;
  * - **the two projections are the only reshaping**, and each is asserted: an aggregate row's nested
  *   account becomes the identifier the account is read by, and a history line's client row does too;
  * - money is an exact decimal throughout, and never a float.
@@ -46,6 +49,9 @@ import {
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORGANIZATION = '00000000-0000-4000-8000-000000000002';
 const EMPLOYEE = '00000000-0000-4000-8000-000000000063';
+/** An organization of the same tenant the caller is not a member of, and an employee of it. */
+const THEIR_ORGANIZATION = '00000000-0000-4000-8000-000000000003';
+const THEIR_EMPLOYEE = '00000000-0000-4000-8000-000000000073';
 const CLIENT = '00000000-0000-4000-8000-000000000064';
 const START = new Date('2026-03-01T00:00:00.000Z');
 const END = new Date('2026-03-31T23:59:59.000Z');
@@ -106,12 +112,37 @@ function surfaces() {
 		})
 	};
 
+	// The caller is a member of `ORGANIZATION` only, and `EMPLOYEE` works there.
+	const employeeService = {
+		findOneByIdString: jest.fn(async (id: string) => ({
+			id,
+			organizationId: id === EMPLOYEE ? ORGANIZATION : THEIR_ORGANIZATION
+		}))
+	};
+	const manager = {
+		count: jest.fn(async (_entity: unknown, { where }: any) => (where.organizationId === ORGANIZATION ? 1 : 0))
+	};
+
+	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+	// The caller's token names `ORGANIZATION`: under the organization boundary (ever-co/ever-gauzy#11316) the
+	// membership check also requires the organization to be the token's.
+	jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
 	return {
 		employeeStatisticsService,
 		queryBus,
-		resolver: new EmployeeStatisticsResolver(employeeStatisticsService as never, queryBus as never)
+		employeeService,
+		resolver: new EmployeeStatisticsResolver(
+			employeeStatisticsService as never,
+			queryBus as never,
+			employeeService as never,
+			{ manager } as never
+		)
 	};
 }
+
+afterEach(() => jest.restoreAllMocks());
 
 /**
  * The composed schema, as text: the domain's own documents plus every kernel and domain document the
@@ -491,14 +522,61 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'employeeStatisticsHistory', route: 'findEmployeeStatisticsHistory' }
 ];
 
-describe('EmployeeStatisticsResolver — the guard stack is the route’s and the permission is its absence', () => {
-	it('states the tenant guard on the class and no permission anywhere, as the controller does', () => {
+describe('EmployeeStatisticsResolver — an employee’s figures stay inside the caller’s organizations', () => {
+	// The membership interceptor checks an employee only against an organization stated beside it, and without one
+	// the reads behind these fields reach the employee in whichever organization of the tenant it belongs to.
+	it('refuses an employee of another organization when no organization is stated, and reads nothing', async () => {
+		const { resolver, queryBus, employeeStatisticsService } = surfaces();
+
+		await expect(resolver.employeeStatisticsSeries(THEIR_EMPLOYEE)).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(resolver.employeeMonthlyStatistics(THEIR_EMPLOYEE)).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(resolver.employeeStatisticsHistory(THEIR_EMPLOYEE, 'INCOME')).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		expect(queryBus.execute).not.toHaveBeenCalled();
+		expect(employeeStatisticsService.getStatisticsByEmployeeId).not.toHaveBeenCalled();
+	});
+
+	it('refuses an organization the caller does not belong to', async () => {
+		const { resolver, queryBus } = surfaces();
+
+		await expect(
+			resolver.employeeMonthlyStatistics(EMPLOYEE, START, END, THEIR_ORGANIZATION)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(
+			resolver.employeeStatisticsHistory(EMPLOYEE, 'INCOME', START, END, THEIR_ORGANIZATION)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(queryBus.execute).not.toHaveBeenCalled();
+	});
+
+	it('requires an employee it can read when no organization is stated', async () => {
+		const { resolver, queryBus, employeeService } = surfaces();
+
+		await expect(resolver.employeeMonthlyStatistics('not-a-uuid')).rejects.toBeInstanceOf(BadRequestException);
+		expect(employeeService.findOneByIdString).not.toHaveBeenCalled();
+		expect(queryBus.execute).not.toHaveBeenCalled();
+	});
+
+	it('reads an employee of the caller’s own organization, stated or not (control)', async () => {
+		const { resolver, queryBus, employeeService } = surfaces();
+
+		await resolver.employeeMonthlyStatistics(EMPLOYEE);
+		await resolver.employeeStatisticsHistory(EMPLOYEE, 'INCOME', START, END, ORGANIZATION);
+
+		expect(queryBus.execute).toHaveBeenCalledTimes(2);
+		// A stated organization is checked as stated; the employee is looked up only when none is.
+		expect(employeeService.findOneByIdString).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('EmployeeStatisticsResolver — the guard stack and the permissions are the route’s', () => {
+	it('states the tenant guard on the class and no permission on it, as the controller does', () => {
 		const controllerGuards = Reflect.getMetadata('__guards__', EmployeeStatisticsController) ?? [];
 		const resolverGuards = Reflect.getMetadata('__guards__', EmployeeStatisticsResolver) ?? [];
 
-		// The delivered controller scopes these reads to the caller's tenant and states no permission on
-		// the class or on any handler: the tenant is the scope, and the four reads are facts about rows
-		// the caller's own tenant already holds.
+		// The delivered controller scopes these reads to the caller's tenant on the class and states each
+		// route's permissions on its handler, because the aggregate and the employee's figures are shown on
+		// two dashboard tabs with two pairs.
 		expect(controllerGuards).toEqual([TenantPermissionGuard]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeStatisticsController)).toBeUndefined();
 		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
@@ -516,10 +594,19 @@ describe('EmployeeStatisticsResolver — the guard stack is the route’s and th
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(EmployeeStatisticsController, route));
 	});
 
-	it('states no permission on any field, because no route states one', () => {
+	it('states on each field the dashboard pair its route states, behind the permission guard', () => {
+		// Stated explicitly as well as compared above, so a pair that changed on both sides at once is still a
+		// visible change here: the aggregate is the Accounting tab's, the employee's figures the HR tab's.
+		const accounting = [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.ACCOUNTING_DASHBOARD];
+		const humanResources = [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.HUMAN_RESOURCE_DASHBOARD];
+
 		for (const { field } of ROUTE_PARITY) {
-			expect(permissionOfField(field)).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeStatisticsResolver)[field])).toBeUndefined();
+			expect(permissionOfField(field)).toEqual(
+				field === 'employeeStatisticsAggregate' ? accounting : humanResources
+			);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeStatisticsResolver)[field])).toEqual([
+				PermissionGuard
+			]);
 		}
 	});
 });
