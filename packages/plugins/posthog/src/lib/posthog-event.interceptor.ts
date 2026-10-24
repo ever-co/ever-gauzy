@@ -276,7 +276,7 @@ export class PosthogEventInterceptor implements NestInterceptor {
 		}
 
 		// Fallback to the URL, without the credentials its query may carry
-		return SanitizerUtil.sanitizeUrl(request.originalUrl || request.url);
+		return SanitizerUtil.sanitizeUrl(request.originalUrl || request.url) ?? '';
 	}
 
 	/**

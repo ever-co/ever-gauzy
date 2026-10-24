@@ -1642,7 +1642,9 @@
 		"mcpstage",
 		"mcpauthstage",
 		"authdemo",
-		"Nlcjpw"
+		"Nlcjpw",
+		"themself",
+		"favourites"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

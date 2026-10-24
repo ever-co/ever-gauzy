@@ -5576,7 +5576,12 @@
 			"SERVICE_UNAVAILABLE": "Servizio temporaneamente non disponibile.",
 			"UNEXPECTED_ERROR": "Si è verificato un errore imprevisto.",
 			"NETWORK_ERROR": "Errore di rete: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "Impossibile passare a {{ name }}: {{ reason }}. Stai ancora lavorando nella tua organizzazione attuale.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Non sei un dipendente attivo di {{ name }}, quindi il timer non può registrare il tempo lì. Stai ancora lavorando nella tua organizzazione attuale.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "È in corso il cambio di organizzazione. Avvia il timer al termine del cambio.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Non sei un dipendente attivo di {{ name }} e il ritorno alla tua organizzazione precedente non è riuscito. Accedi di nuovo.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",

@@ -138,12 +138,18 @@ export function withReferencesAsIds<T extends ISharingReferences>(
  * A `POST /equipment-sharing` payload read as the row it will store, for the scope check: the organization the row
  * lands in, the equipment and the policy it points at, and the payload to persist.
  *
- * The CRUD base's `create()` is an upsert by id. So the row lands in the organization the payload states (the
+ * The CRUD base's `create()` is an upsert by id. So the row is checked in the organization the payload states (the
  * column; {@link withReferencesAsIds} has folded `organization: { id }` into it); else, when the payload carries the
- * id of a stored row, that row's own, which the write keeps; else the caller's, which the payload is then given so
- * that the new row is stored in the organization it was checked in. The references are the payload's, else the
- * stored row's: a payload that only moves a stored sharing to another organization has the equipment and the policy
- * the row keeps checked there. A row stored without an organization has its references held to the caller's.
+ * id of a stored row, that row's own; else the caller's. The references are the payload's, else the stored row's: a
+ * payload that only moves a stored sharing to another organization has the equipment and the policy the row keeps
+ * checked there. A row stored without an organization has its references held to the caller's.
+ *
+ * The payload to persist states all three exactly as they were checked — the organization, the equipment and the
+ * policy, each as its column, `null` for one checked as absent — so the upsert keeps none of the stored row's. Left
+ * to the upsert, a column the payload omits was read again at the write: an upsert that only changes the equipment,
+ * checked in organization A, could land after a concurrent upsert moved the sharing to organization B with B's
+ * equipment and policy, and store A's equipment in B's sharing (review on ever-co/ever-gauzy#11359). The row a
+ * write stores is now always the triple that write checked; of two concurrent writes, the last one wins whole.
  *
  * @param values - The payload, normalised by {@link withReferencesAsIds}.
  * @param stored - The stored row the payload's id names (tenant-scoped), or `null` when it names none.
@@ -155,20 +161,23 @@ export function sharingAsStored<T extends ISharingColumns>(
 	stored: IStoredSharing | null,
 	callerOrganizationId: ID | null | undefined
 ): { values: T; references: IStoredSharing; organizationId: ID | undefined } {
-	const payload: T =
-		!stored && values.organizationId === undefined && callerOrganizationId
-			? { ...values, organizationId: callerOrganizationId }
-			: values;
 	const asStored = (column: keyof IStoredSharing): ID | null | undefined =>
-		payload[column] !== undefined ? payload[column] : stored?.[column];
+		values[column] !== undefined ? values[column] : stored?.[column];
+	const references: IStoredSharing = {
+		equipmentId: asStored('equipmentId'),
+		equipmentSharingPolicyId: asStored('equipmentSharingPolicyId')
+	};
+	const organizationId = asStored('organizationId') ?? callerOrganizationId ?? undefined;
 
 	return {
-		values: payload,
-		references: {
-			equipmentId: asStored('equipmentId'),
-			equipmentSharingPolicyId: asStored('equipmentSharingPolicyId')
+		values: {
+			...values,
+			organizationId: organizationId ?? null,
+			equipmentId: references.equipmentId ?? null,
+			equipmentSharingPolicyId: references.equipmentSharingPolicyId ?? null
 		},
-		organizationId: asStored('organizationId') ?? callerOrganizationId ?? undefined
+		references,
+		organizationId
 	};
 }
 

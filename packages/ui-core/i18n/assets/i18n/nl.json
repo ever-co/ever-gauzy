@@ -5576,7 +5576,12 @@
 			"SERVICE_UNAVAILABLE": "Dienst tijdelijk niet beschikbaar.",
 			"UNEXPECTED_ERROR": "Er is een onverwachte fout opgetreden.",
 			"NETWORK_ERROR": "Netwerkfout: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen.",
+			"ORGANIZATION_SWITCH_REFUSED": "Overschakelen naar {{ name }} is mislukt: {{ reason }}. Je werkt nog steeds in je huidige organisatie.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Je bent geen actieve medewerker van {{ name }}, dus de timer kan daar geen tijd registreren. Je werkt nog steeds in je huidige organisatie.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "De organisatie wordt gewisseld. Start de timer zodra het wisselen is voltooid.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Je bent geen actieve medewerker van {{ name }} en terugschakelen naar je vorige organisatie is mislukt. Meld je opnieuw aan.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Overschakelen naar {{ name }} kon op dit apparaat niet worden voltooid. Meld je opnieuw aan."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",
