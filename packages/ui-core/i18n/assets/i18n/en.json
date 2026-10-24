@@ -4099,7 +4099,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
-			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before ",
+			"CHANGED_BY_SOMEONE_ELSE": "This request was changed by someone else in the meantime. The list has been reloaded: check the request and try again."
 		},
 		"ACTIONS": "Actions",
 		"APPROVE": "Approve",
