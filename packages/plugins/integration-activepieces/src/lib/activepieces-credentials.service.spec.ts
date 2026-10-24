@@ -136,7 +136,43 @@ describe('ActivepiecesCredentialsService', () => {
 			const creations = http.request.mock.calls.filter(([config]: any[]) => config.method === 'post');
 			expect(creations).toHaveLength(1);
 			expect(creations[0][0].data).toEqual(expect.objectContaining({ externalId: 'gauzy-tenant-tenant-a' }));
-			expect(http.request).toHaveBeenCalledTimes(2);
+			// Found none, created one, listed again to converge with any other API server, then reused from the cache
+			expect(http.request).toHaveBeenCalledTimes(3);
+		});
+
+		it('converges on the oldest project when another API server created one at the same moment', async () => {
+			let lists = 0;
+			const { service, http } = setup({
+				config: { apiKey: 'platform-key' },
+				respond: ({ method, url }) => {
+					if (method === 'get' && url === ACTIVEPIECES_PROJECTS_URL) {
+						lists++;
+						// None at first; once created, the other server's project, created a moment earlier, is listed too
+						return lists === 1
+							? { data: [] }
+							: {
+									data: [
+										{ id: 'proj-mine', externalId: 'gauzy-tenant-tenant-a', created: '2026-10-24T10:00:01Z' },
+										{ id: 'proj-other', externalId: 'gauzy-tenant-tenant-a', created: '2026-10-24T10:00:00Z' }
+									]
+							  };
+					}
+					if (method === 'post' && url === ACTIVEPIECES_PROJECTS_URL) return { id: 'proj-mine' };
+					return {};
+				}
+			});
+
+			const credential = await service.resolve();
+
+			expect(credential.projectId).toBe('proj-other');
+			// The project that lost no longer holds the tenant's external id
+			expect(http.request).toHaveBeenCalledWith(
+				expect.objectContaining({
+					method: 'post',
+					url: `${ACTIVEPIECES_PROJECTS_URL}/proj-mine`,
+					data: { externalId: 'gauzy-tenant-tenant-a-duplicate-proj-mine' }
+				})
+			);
 		});
 
 		it('names its project with the configured prefix', async () => {
@@ -202,6 +238,46 @@ describe('ActivepiecesCredentialsService', () => {
 
 			expect(credential.mode).toBe(ActivepiecesConnectionMode.PLATFORM_PROJECT);
 			expect(credential.projectId).toBe('proj-a');
+		});
+
+		it("is never another organization's choice", async () => {
+			const { service, http } = setup({
+				config: { apiKey: 'platform-key' },
+				rows: [
+					row('it-a', { [ActivepiecesSettingName.CONNECTION_MODE]: ActivepiecesConnectionMode.PLATFORM_PROJECT }, 'org-a'),
+					row('it-b', { [ActivepiecesSettingName.API_KEY]: 'org-b-key' }, 'org-b')
+				],
+				respond: () => ({ data: [{ id: 'proj-a', externalId: 'gauzy-tenant-tenant-a' }] })
+			});
+
+			const organizationB = await service.resolve({ organizationId: 'org-b' });
+			const viaRowB = await service.resolve({ integrationTenantId: 'it-b' });
+			const organizationA = await service.resolve({ organizationId: 'org-a' });
+
+			expect(organizationB).toEqual(expect.objectContaining({ mode: ActivepiecesConnectionMode.TENANT_API_KEY, token: 'org-b-key' }));
+			expect(viaRowB.mode).toBe(ActivepiecesConnectionMode.TENANT_API_KEY);
+			expect(organizationA.mode).toBe(ActivepiecesConnectionMode.PLATFORM_PROJECT);
+			expect(http.request).toHaveBeenCalledTimes(1);
+		});
+
+		it("is saved on the organization's row it is read from, among legacy duplicates", async () => {
+			const keyless = row('it-org-1', {}, 'org-1');
+			const withKey = row('it-org-2', { [ActivepiecesSettingName.API_KEY]: 'org-key' }, 'org-1');
+			const { service, integrationSettingService, integrationTenantService } = setup({
+				config: { apiKey: 'platform-key' },
+				rows: [keyless, withKey, row('it-tenant', { [ActivepiecesSettingName.CONNECTION_MODE]: 'auto' })]
+			});
+
+			await service.setMode(ActivepiecesConnectionMode.PLATFORM_PROJECT, 'org-1');
+
+			expect(integrationSettingService.saveMany).toHaveBeenCalledWith([
+				expect.objectContaining({
+					settingsName: ActivepiecesSettingName.CONNECTION_MODE,
+					settingsValue: ActivepiecesConnectionMode.PLATFORM_PROJECT,
+					integration: { id: 'it-org-2' }
+				})
+			]);
+			expect(integrationTenantService.create).not.toHaveBeenCalled();
 		});
 
 		it('refuses a chosen mode the installation does not offer', async () => {

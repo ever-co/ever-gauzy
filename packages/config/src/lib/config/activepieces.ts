@@ -13,7 +13,9 @@ export default registerAs(
 		signingKeyId: process.env.GAUZY_ACTIVEPIECES_SIGNING_KEY_ID ?? '',
 		signingPrivateKey: process.env.GAUZY_ACTIVEPIECES_SIGNING_PRIVATE_KEY ?? '',
 		// Tenants without a key of their own use the platform key, confined to a project of their own
-		tenantProjectsEnabled: process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS !== 'false',
+		tenantProjectsEnabled: !['false', '0', 'no', 'off'].includes(
+			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
+		),
 		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX ?? ''
 	})
 );

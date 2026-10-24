@@ -95,7 +95,10 @@ interface ICachedProject {
 interface ITenantView {
 	readonly tenantId: string;
 	readonly rows: any[];
+	/** The row the request is about: the row named, else the organization's row (the one holding a key first). */
 	readonly scoped: any | null;
+	/** The tenant-level row (no organization; the one holding a key first): where tenant-wide choices are saved. */
+	readonly tenantRow: any | null;
 	readonly requestedMode: ActivepiecesConnectionMode;
 	readonly ownApiKey: string | undefined;
 	readonly storedProjectId: string | undefined;
@@ -133,6 +136,7 @@ export class ActivepiecesCredentialsService {
 	private readonly pendingProjectTokens = new Map<string, Promise<IActivepiecesProjectToken>>();
 	private readonly tenantProjects = new Map<string, ICachedProject>();
 	private readonly pendingTenantProjects = new Map<string, Promise<string>>();
+	private readonly warnedTenants = new Set<string>();
 
 	constructor(
 		private readonly httpService: HttpService,
@@ -208,6 +212,7 @@ export class ActivepiecesCredentialsService {
 				}
 				const { token, projectId } = await this.projectToken(view.tenantId, settings);
 				await this.rememberProject(view, projectId);
+				this.warnIfConnectionElsewhere(view, projectId);
 				return { mode, token, projectId, enforceProject: true };
 			}
 
@@ -217,6 +222,7 @@ export class ActivepiecesCredentialsService {
 				}
 				const projectId = await this.tenantProject(view.tenantId, settings);
 				await this.rememberProject(view, projectId);
+				this.warnIfConnectionElsewhere(view, projectId);
 				return { mode, token: settings.platformApiKey, projectId, enforceProject: true };
 			}
 
@@ -327,9 +333,8 @@ export class ActivepiecesCredentialsService {
 			throw new BadRequestException(this.unavailable(mode));
 		}
 
-		const target = organizationId
-			? view.rows.find((row) => row.organizationId === organizationId) ?? null
-			: view.rows.find((row) => !row.organizationId) ?? null;
+		// The same rows `tenantView` reads the mode from: the organization's row it selects, or the tenant-level row
+		const target = organizationId ? view.scoped : view.tenantRow;
 		const setting = {
 			settingsName: ActivepiecesSettingName.CONNECTION_MODE,
 			settingsValue: mode,
@@ -386,8 +391,9 @@ export class ActivepiecesCredentialsService {
 	/**
 	 * The id of the tenant's own project on the operator's platform, found by its external id, or created once.
 	 *
-	 * Two servers creating it at the same moment can leave a second, empty project with the same external id: the
-	 * oldest one is always the one used.
+	 * The pending map only joins the callers of this server. Across API servers, the project holding the tenant's
+	 * external id in Activepieces is the one source of truth, and each server converges on it before answering (see
+	 * {@link findOrCreateTenantProject}).
 	 *
 	 * @param tenantId - The tenant.
 	 * @param settings - The operator's settings.
@@ -403,9 +409,7 @@ export class ActivepiecesCredentialsService {
 		}
 		const finding = (async () => {
 			const externalId = this.tenantExternalId(tenantId, settings);
-			const project =
-				(await this.findProjectByExternalId(externalId, settings.platformApiKey)) ??
-				(await this.createTenantProject(tenantId, externalId, settings.platformApiKey));
+			const project = await this.findOrCreateTenantProject(tenantId, externalId, settings.platformApiKey);
 			this.tenantProjects.set(tenantId, { projectId: project.id, expiresAt: Date.now() + TENANT_PROJECT_CACHE_MS });
 			return project.id;
 		})().finally(() => this.pendingTenantProjects.delete(tenantId));
@@ -430,7 +434,9 @@ export class ActivepiecesCredentialsService {
 		const matches = (page?.data ?? []).filter(
 			(project) => typeof project?.id === 'string' && project.externalId === externalId
 		);
-		matches.sort((a, b) => String(a.created ?? '').localeCompare(String(b.created ?? '')));
+		matches.sort(
+			(a, b) => String(a.created ?? '').localeCompare(String(b.created ?? '')) || a.id.localeCompare(b.id)
+		);
 		return matches[0] ?? null;
 	}
 
@@ -553,6 +559,78 @@ export class ActivepiecesCredentialsService {
 		return entry;
 	}
 
+	/**
+	 * The project holding the tenant's external id, or one created for it.
+	 *
+	 * Two API servers can both find none and both create one. Each lists the projects again after creating and takes
+	 * the oldest holding the external id: the oldest was inserted first, so whoever lists after its own insert sees it,
+	 * and every server agrees on it before any caller saves a connection in a project. The server whose project lost
+	 * gives it another external id, so the tenant's external id names one project only, for the project-token
+	 * exchanges too (Activepieces finds the project of a token by that external id). The project that lost stays
+	 * empty: nothing was saved in it.
+	 */
+	private async findOrCreateTenantProject(
+		tenantId: string,
+		externalId: string,
+		platformApiKey: string
+	): Promise<IActivepiecesProject> {
+		const existing = await this.findProjectByExternalId(externalId, platformApiKey);
+		if (existing) {
+			return existing;
+		}
+		const created = await this.createTenantProject(tenantId, externalId, platformApiKey);
+		const oldest = (await this.findProjectByExternalId(externalId, platformApiKey)) ?? created;
+		if (oldest.id !== created.id) {
+			await this.releaseDuplicateProject(tenantId, created.id, externalId, platformApiKey);
+		}
+		return oldest;
+	}
+
+	/** Gives a duplicate tenant project another external id. A failure is logged: the oldest project is used anyway. */
+	private async releaseDuplicateProject(
+		tenantId: string,
+		projectId: string,
+		externalId: string,
+		platformApiKey: string
+	): Promise<void> {
+		try {
+			await this.requestActivepieces<IActivepiecesProject>(
+				'post',
+				`${ACTIVEPIECES_PROJECTS_URL}/${encodeURIComponent(projectId)}`,
+				platformApiKey,
+				'release a duplicate project',
+				{ data: { externalId: `${externalId}-duplicate-${projectId}` } }
+			);
+			this.logger.warn(
+				`Activepieces project ${projectId} was created for tenant ${tenantId} at the same time as another one: it no longer holds the tenant's external id, and stays empty`
+			);
+		} catch {
+			this.logger.warn(
+				`Activepieces project ${projectId}, a duplicate of tenant ${tenantId}'s project, still holds its external id: the oldest project is the one used`
+			);
+		}
+	}
+
+	/**
+	 * Warns once per tenant when a connection it saved before is in another project than the one it is pinned to now
+	 * (a tenant that used the installation's key with a project it named, or its own key, before this mode): that
+	 * connection stays where it is, out of reach of the pinned calls.
+	 */
+	private warnIfConnectionElsewhere(view: ITenantView, projectId: string): void {
+		if (this.warnedTenants.has(view.tenantId)) {
+			return;
+		}
+		const recorded = view.rows.flatMap((row) => projectIdsOf(settingOf(row, ActivepiecesSettingName.PROJECT_ID)));
+		if (recorded.length && !recorded.includes(projectId)) {
+			this.warnedTenants.add(view.tenantId);
+			this.logger.warn(
+				`Tenant ${view.tenantId} has an Activepieces connection saved in another project than its own (${projectId}). ` +
+					`If this tenant alone used that project, the operator gives it to the tenant with ` +
+					`PUT /integration/activepieces/platform/tenants/${view.tenantId}/project; otherwise the connection is created again.`
+			);
+		}
+	}
+
 	private async createTenantProject(tenantId: string, externalId: string, platformApiKey: string): Promise<IActivepiecesProject> {
 		const project = await this.requestActivepieces<IActivepiecesProject>(
 			'post',
@@ -589,21 +667,35 @@ export class ActivepiecesCredentialsService {
 		if (options.integrationTenantId) {
 			scoped = rows.find((row) => row.id === options.integrationTenantId) ?? null;
 		} else if (options.organizationId) {
-			const organizationRows = rows.filter((row) => row.organizationId === options.organizationId);
-			scoped = organizationRows.find((row) => !!settingOf(row, ActivepiecesSettingName.API_KEY)) ?? organizationRows[0] ?? null;
+			scoped = preferredRow(rows.filter((row) => row.organizationId === options.organizationId));
 		}
+		const tenantRow = preferredRow(rows.filter((row) => !row.organizationId));
+		const organizationId = scoped?.organizationId ?? options.organizationId;
+		const organizationRow = organizationId
+			? preferredRow(rows.filter((row) => row.organizationId === organizationId))
+			: null;
 
-		const ordered = [scoped, ...rows.filter((row) => !row.organizationId), ...rows].filter(Boolean);
-		const requested = firstSetting(ordered, ActivepiecesSettingName.CONNECTION_MODE);
+		// The mode is the one chosen for the organization the request is about, else the tenant-wide one: never another
+		// organization's, which would send this organization's calls to another account or project. `setMode` saves on
+		// these same rows (the one holding a key first, among legacy duplicates), so what is saved is what is read.
+		const requested = firstSetting(
+			[organizationRow, tenantRow].filter(Boolean),
+			ActivepiecesSettingName.CONNECTION_MODE
+		);
 
 		return {
 			tenantId,
 			rows,
 			scoped,
+			tenantRow,
 			requestedMode: parseMode(requested),
 			// As before: the key of the row the request is about, else the key of any of the tenant's rows
 			ownApiKey: settingOf(scoped, ActivepiecesSettingName.API_KEY) ?? firstSetting(rows, ActivepiecesSettingName.API_KEY),
-			storedProjectId: firstSetting(ordered, ActivepiecesSettingName.MANAGED_PROJECT_ID)
+			// The project is the tenant's, whichever row recorded it (informational: the project is found by its external id)
+			storedProjectId: firstSetting(
+				[scoped, tenantRow, ...rows].filter(Boolean),
+				ActivepiecesSettingName.MANAGED_PROJECT_ID
+			)
 		};
 	}
 
@@ -640,8 +732,7 @@ export class ActivepiecesCredentialsService {
 		if (!projectId || view.storedProjectId === projectId) {
 			return;
 		}
-		const target =
-			view.rows.find((row) => !row.organizationId) ?? view.scoped ?? view.rows[0] ?? null;
+		const target = view.tenantRow ?? view.scoped ?? view.rows[0] ?? null;
 		if (!target) {
 			return;
 		}
@@ -710,6 +801,27 @@ export class ActivepiecesCredentialsService {
 function settingOf(row: any, name: string): string | undefined {
 	const value = row?.settings?.find((setting: any) => setting?.settingsName === name && setting.settingsValue)?.settingsValue;
 	return typeof value === 'string' && value ? value : undefined;
+}
+
+/** The project ids a `project_id` setting holds: a JSON array (the connection's `projectIds`), or one id. */
+function projectIdsOf(value: string | undefined): string[] {
+	if (!value) {
+		return [];
+	}
+	try {
+		const parsed = JSON.parse(value);
+		if (Array.isArray(parsed)) {
+			return parsed.filter((id): id is string => typeof id === 'string');
+		}
+		return typeof parsed === 'string' ? [parsed] : [];
+	} catch {
+		return [value];
+	}
+}
+
+/** Among rows of one scope (legacy duplicates), the one holding an API key, else the first. */
+function preferredRow(rows: any[]): any | null {
+	return rows.find((row) => !!settingOf(row, ActivepiecesSettingName.API_KEY)) ?? rows[0] ?? null;
 }
 
 function firstSetting(rows: any[], name: string): string | undefined {

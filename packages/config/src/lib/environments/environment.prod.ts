@@ -252,7 +252,9 @@ export const environment: IEnvironment = {
 		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY,
 		signingKeyId: process.env.GAUZY_ACTIVEPIECES_SIGNING_KEY_ID,
 		signingPrivateKey: process.env.GAUZY_ACTIVEPIECES_SIGNING_PRIVATE_KEY,
-		tenantProjectsEnabled: process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS !== 'false',
+		tenantProjectsEnabled: !['false', '0', 'no', 'off'].includes(
+			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
+		),
 		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX
 	},
 
