@@ -140,10 +140,11 @@ jest.mock(
 import { FindOperator } from 'typeorm';
 import { Product, ProductVariant, Warehouse, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockReservationReferenceType, StockReservationStatus } from '../inventory.enums';
+import { InventoryErrorCode, inventoryError } from '../inventory.errors';
 import { StockLevelService } from '../stock-level/stock-level.service';
 import { StockMovement } from '../stock-movement/stock-movement.entity';
 import { StockReservation } from './stock-reservation.entity';
-import { StockReservationService } from './stock-reservation.service';
+import { EXPIRY_SWEEP_SKIP_LIMIT, StockReservationService } from './stock-reservation.service';
 
 /**
  * Holds on stock.
@@ -701,6 +702,40 @@ const hold = (overrides: Row = {}) => ({
 	...overrides
 });
 
+/**
+ * Seeds expired, `ACTIVE` holds straight into the store, without the ledger rows a real hold carries.
+ *
+ * Only for the expiry sweep's loop-control cases, which double `close` and never move a level: taking
+ * hundreds of holds through `reserve` would only make those cases slow.
+ *
+ * @param fixture The fixture whose store receives the holds.
+ * @param count How many holds to seed.
+ * @param prefix The prefix of their ids, so a case can tell its groups apart.
+ * @param expiresAt When they expired; the sweep reads oldest expiry first.
+ */
+function seedExpiredHolds(
+	fixture: ReturnType<typeof reservationFixture>,
+	count: number,
+	prefix: string,
+	expiresAt: Date
+): void {
+	for (let index = 0; index < count; index++) {
+		fixture.tables.stock_reservation.push({
+			id: `${prefix}-${String(index).padStart(4, '0')}`,
+			variantId: VARIANT,
+			warehouseId: WAREHOUSE,
+			warehouseProductVariantId: 'level-1',
+			quantity: 1,
+			status: StockReservationStatus.ACTIVE,
+			referenceType: StockReservationReferenceType.CART,
+			referenceId: CART,
+			expiresAt,
+			tenantId: TENANT,
+			organizationId: ORG
+		});
+	}
+}
+
 describe('StockReservationService — holding stock (doc 09 §5, INV-03)', () => {
 	it('holds a quantity and records the ledger row that explains the level’s reserved quantity', async () => {
 		const fixture = reservationFixture({ quantity: 10 });
@@ -1186,6 +1221,110 @@ describe('StockReservationService — releasing, expiring and re-pointing (INV-0
 			expect(statusOf(closable.id)).toBe(StockReservationStatus.EXPIRED);
 			// INV-03: the level still holds exactly what the one `ACTIVE` hold holds.
 			expect(fixture.store.level()).toMatchObject({ reservedQuantity: 1 });
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('stops a sweep that has set the limit of holds aside, and leaves them to the next sweep', async () => {
+		// The set-aside holds are bound into every later read, and a walk that cannot close this many is
+		// failing systematically rather than on one bad row: it stops instead of walking on. A hundred holds
+		// per batch and a budget of ten, so a walk without the limit would go on to read the rest.
+		jest.useFakeTimers({ now: AT });
+
+		try {
+			const fixture = reservationFixture({ quantity: 100 });
+			const total = EXPIRY_SWEEP_SKIP_LIMIT + 100;
+
+			seedExpiredHolds(fixture, total, 'failing', new Date(AT.getTime() - MINUTE));
+
+			const closer = fixture.service as unknown as { close: (...args: unknown[]) => Promise<unknown> };
+			const refused = jest
+				.spyOn(closer, 'close')
+				.mockRejectedValue(new Error('the level could not take the release'));
+
+			try {
+				const swept = await fixture.service.releaseExpired(100, 10);
+
+				expect(swept).toEqual({ released: 0, batches: EXPIRY_SWEEP_SKIP_LIMIT / 100 });
+				expect(refused).toHaveBeenCalledTimes(EXPIRY_SWEEP_SKIP_LIMIT);
+			} finally {
+				refused.mockRestore();
+			}
+
+			// Every hold is still `ACTIVE` and expired, so the next sweep reads all of them again — the ones
+			// this walk set aside as well as the ones it never reached.
+			const expire = jest.spyOn(closer, 'close').mockImplementation(async (id: unknown) => {
+				const row = fixture.store.reservations().find((candidate) => candidate.id === id);
+
+				row.status = StockReservationStatus.EXPIRED;
+
+				return row;
+			});
+
+			try {
+				const next = await fixture.service.releaseExpired(100, 10);
+
+				expect(next).toEqual({ released: total, batches: total / 100 });
+				expect(
+					fixture.store.reservations().filter((row) => row.status === StockReservationStatus.ACTIVE)
+				).toEqual([]);
+			} finally {
+				expire.mockRestore();
+			}
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('does not count a hold another sweep closed first as set aside, so overlapping sweeps keep going', async () => {
+		// Two sweeps running at once read overlapping batches, and the one that loses a row is refused with
+		// `RESERVATION_ALREADY_CLOSED`. That hold is handled — it is no longer `ACTIVE`, so no later read
+		// returns it — and counting it toward the limit would stop a sweep that is making progress, with
+		// expired holds still behind it. The limit's worth of lost rows comes first here, then a batch this
+		// sweep can close.
+		jest.useFakeTimers({ now: AT });
+
+		try {
+			const fixture = reservationFixture({ quantity: 100 });
+
+			seedExpiredHolds(fixture, EXPIRY_SWEEP_SKIP_LIMIT, 'lost', new Date(AT.getTime() - 2 * MINUTE));
+			seedExpiredHolds(fixture, 100, 'closable', new Date(AT.getTime() - MINUTE));
+
+			const closer = fixture.service as unknown as { close: (...args: unknown[]) => Promise<unknown> };
+			const overlapping = jest.spyOn(closer, 'close').mockImplementation(async (id: unknown) => {
+				const row = fixture.store.reservations().find((candidate) => candidate.id === id);
+
+				row.status = StockReservationStatus.EXPIRED;
+
+				if (String(id).startsWith('lost-')) {
+					// The other sweep closed it between this sweep's read and its write.
+					throw inventoryError(
+						InventoryErrorCode.RESERVATION_ALREADY_CLOSED,
+						'The reservation is already EXPIRED and can only be closed once.',
+						{ details: { reservationId: id, status: StockReservationStatus.EXPIRED } }
+					);
+				}
+
+				return row;
+			});
+			const warn = jest.spyOn((fixture.service as unknown as { logger: { warn: () => void } }).logger, 'warn');
+
+			try {
+				const swept = await fixture.service.releaseExpired(100, 10);
+
+				// Five batches lost to the other sweep and one closed by this one: the walk went on past them.
+				expect(swept).toEqual({ released: 100, batches: EXPIRY_SWEEP_SKIP_LIMIT / 100 + 1 });
+				// Nothing was set aside, so nothing is reported as left for the next sweep.
+				expect(warn).not.toHaveBeenCalled();
+			} finally {
+				overlapping.mockRestore();
+				warn.mockRestore();
+			}
+
+			expect(
+				fixture.store.reservations().filter((row) => row.status === StockReservationStatus.ACTIVE)
+			).toEqual([]);
 		} finally {
 			jest.useRealTimers();
 		}

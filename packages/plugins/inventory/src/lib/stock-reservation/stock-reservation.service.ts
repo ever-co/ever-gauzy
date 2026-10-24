@@ -32,7 +32,19 @@ const DEFAULT_TTL_MINUTES: Record<StockReservationReferenceType, number> = {
  * `NOT IN (...)`, so it is capped well under every supported dialect's bound-parameter limit; a walk
  * that reaches the cap is failing systematically rather than on one bad row, and stops.
  */
-const EXPIRY_SWEEP_SKIP_LIMIT = 500;
+export const EXPIRY_SWEEP_SKIP_LIMIT = 500;
+
+/**
+ * Whether a close was refused because the hold is no longer `ACTIVE`: another writer closed it first.
+ *
+ * @param error What the close threw.
+ * @returns `true` for the `RESERVATION_ALREADY_CLOSED` refusal, `false` for anything else.
+ */
+function isAlreadyClosed(error: unknown): boolean {
+	const response = (error as { getResponse?: () => unknown } | null)?.getResponse?.();
+
+	return (response as { code?: unknown } | null)?.code === InventoryErrorCode.RESERVATION_ALREADY_CLOSED;
+}
 
 /**
  * The members of a hold that only its domain writers may move.
@@ -367,9 +379,15 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 					released += 1;
 				} catch (error) {
 					// A hold another worker closed between the read and the write is not a failure: the
-					// state guard already refused the transition, which is exactly the intent. A hold that
-					// failed for any other reason is not a failure of the sweep either; it is set aside for
-					// the rest of this walk and tried again by the next sweep.
+					// state guard already refused the transition, which is exactly the intent. It is no
+					// longer `ACTIVE`, so no later read returns it, and counting it as set aside would let
+					// two overlapping sweeps push each other into the limit below while both make progress.
+					if (isAlreadyClosed(error)) {
+						continue;
+					}
+
+					// A hold that failed for any other reason is not a failure of the sweep either; it is
+					// set aside for the rest of this walk and tried again by the next sweep.
 					skipped.push(reservation.id);
 					this.logger.debug(
 						`Reservation ${reservation.id} was not expired by this sweep: ${
@@ -393,7 +411,7 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 
 		if (skipped.length) {
 			this.logger.warn(
-				`The reservation expiry sweep did not close ${skipped.length} expired hold(s)${
+				`The reservation expiry sweep could not close ${skipped.length} expired hold(s)${
 					skipped.length >= EXPIRY_SWEEP_SKIP_LIMIT ? ' and stopped at its limit' : ''
 				}; they are left for the next sweep.`
 			);
