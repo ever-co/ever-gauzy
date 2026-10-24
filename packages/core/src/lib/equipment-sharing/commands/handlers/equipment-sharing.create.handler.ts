@@ -32,7 +32,9 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 		// The row stores one equipment and one policy: the related object's id when the body carries one (the form
 		// sends both), so the status below and the scope check read the rows the row will point at. The objects are
 		// dropped: a policy named as `equipmentSharingPolicy: { id }` was persisted without ever being checked.
-		const values = withReferencesAsIds(input);
+		// A filing stores a new row, so a body-supplied id is dropped too: `create()` is an upsert by id, and the id of
+		// a stored sharing would move it into this organization with the equipment and policy it keeps, unchecked.
+		const { id: _storedId, ...values } = withReferencesAsIds(input);
 		const { equipmentId } = values;
 		const scope = { tenantId, organizationId };
 
