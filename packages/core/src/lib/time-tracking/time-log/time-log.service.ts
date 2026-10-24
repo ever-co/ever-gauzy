@@ -131,6 +131,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				query.innerJoin(`${query.alias}.employee`, 'employee');
 				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
+				// A plain `timeSlots` relation is read for its activity figures (the Teams dashboard sums
+				// `overall` over `duration`): load just those columns, as the weekly report does, instead
+				// of whole slots with their raw keyboard / mouse / location / custom activity. A request for
+				// relations below the slots (`timeSlots.screenshots`, …) keeps whole slots.
+				const relations = request.relations ?? [];
+				const slotActivityOnly =
+					relations.includes('timeSlots') && !relations.some((relation) => relation.startsWith('timeSlots.'));
+
 				// Set up the find options for the query
 				query.setFindOptions({
 					select: {
@@ -140,6 +148,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							imageUrl: true,
 							membersCount: true
 						},
+						...(slotActivityOnly ? { timeSlots: { id: true, overall: true, duration: true } } : {}),
 						task: TimeLogService.TASK_SELECT_FIELDS,
 						organizationContact: {
 							id: true,
@@ -158,7 +167,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							}
 						}
 					},
-					relations: parseFindOptionsRelations([...(request.relations ? request.relations : [])]),
+					relations: parseFindOptionsRelations([...relations]),
 					order: {
 						// Order results by the 'startedAt' field in ascending order
 						startedAt: 'ASC',
