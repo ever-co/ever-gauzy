@@ -14,7 +14,7 @@ import {
 	IEquipmentSharingUpdateInput
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEntityVersionConflict, isNotEmpty } from '@gauzy/ui-core/common';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -23,8 +23,10 @@ import {
 	EquipmentService,
 	EquipmentSharingPolicyService,
 	EquipmentSharingService,
+	ErrorHandlingService,
 	OrganizationTeamsService,
-	Store
+	Store,
+	ToastrService
 } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
@@ -46,7 +48,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 		public readonly translationService: TranslateService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService
+		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService,
+		private readonly toastrService: ToastrService,
+		private readonly errorHandlingService: ErrorHandlingService
 	) {
 		super(translationService);
 	}
@@ -190,12 +194,31 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 		this.loading = true;
 		try {
 			if (this.equipmentSharing) {
-				equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
+				// The version of the row this dialog was opened on: the server writes the edit only at that version
+				// (ever-co/ever-gauzy#11384), so a decision or another edit saved while the dialog was open is not
+				// overwritten by this one's columns (its `status` included, read when the dialog opened) — the save
+				// is refused with 409 instead. A row read before the column existed carries none, and the server
+				// then uses the version it reads, as before.
+				const version = this.equipmentSharing.version;
+				equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, {
+					...shareRequest,
+					...(typeof version === 'number' ? { version } : {})
+				});
 			} else {
 				equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
 			}
 
 			this.closeDialog(equipmentSharing);
+		} catch (error) {
+			if (this.equipmentSharing && isEntityVersionConflict(error)) {
+				// Someone else changed the request since the dialog was opened. The dialog closes without a result,
+				// which makes the page read its list again; the user reopens the request on what is stored now.
+				this.toastrService.warning('EQUIPMENT_SHARING_PAGE.MESSAGES.CHANGED_BY_SOMEONE_ELSE');
+				this.closeDialog();
+				return;
+			}
+			// Any other failure is shown, and the dialog stays open with what the user entered, to retry.
+			this.errorHandlingService.handleError(error);
 		} finally {
 			// Re-enable the button whether the request succeeded or failed, so a failed save can be retried.
 			this.loading = false;

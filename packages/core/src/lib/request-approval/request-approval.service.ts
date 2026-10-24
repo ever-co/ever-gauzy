@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { LockMode, raw } from '@mikro-orm/core';
 import type { Collection, EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
 import { Brackets, EntityManager, FindManyOptions, In } from 'typeorm';
@@ -28,6 +28,7 @@ import {
 	TimeOffRequest
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
+import { redactDatabaseError, toClientSafeError } from './../core/errors/database-error';
 import { isWithinOrganizationBoundary } from './../core/crud/organization-boundary';
 import { assertSensitiveRelationsAllowed } from './../core/util/sensitive-relations.helper';
 import { MultiORMEnum, flatten, parseFindOptionsRelations } from './../core/utils';
@@ -118,6 +119,21 @@ export interface IRequestApprovalAnswerTransaction {
 	moveTimeOff(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<number>;
 	/** Writes an equipment sharing's status, inside the tenant. */
 	moveEquipmentSharing(id: ID, tenantId: ID, status: number): Promise<void>;
+}
+
+/**
+ * The statements of one edit of a request approval, all made on one transaction: see
+ * {@link RequestApprovalService.updateRequestApproval}.
+ */
+export interface IRequestApprovalEditTransaction {
+	/** The request again, inside the tenant, under its row lock: the answer's own read (see its contract). */
+	lockRequest: IRequestApprovalAnswerTransaction['lockRequest'];
+	/** Removes the request's approver slots, of both kinds; the edit files them again. */
+	deleteSlots(requestApprovalId: ID): Promise<void>;
+	/** Saves the request, with the slots the edit files, as the CRUD base's `save()` saves it. */
+	saveRequest(requestApproval: RequestApproval): Promise<RequestApproval>;
+	/** Writes the request's own status, inside the tenant: the answer's own write. */
+	writeRequestStatus: IRequestApprovalAnswerTransaction['writeRequestStatus'];
 }
 
 /**
@@ -525,6 +541,29 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		return this.save(requestApproval);
 	}
 
+	/**
+	 * Edits a request approval: its name, policy, `min_count`, tags and organization, and its approver slots, which are
+	 * filed again as `REQUESTED`. The request goes back to `REQUESTED` too: an edit re-opens it, as it always has.
+	 *
+	 * The edit is one transaction that first takes the request's row lock (`SELECT … FOR UPDATE` on PostgreSQL and
+	 * MySQL), the lock an answer ({@link answer}) and the order package's settle
+	 * ({@link updateStatusRequestApprovalByAdmin}) take before they read anything. It used to remove the slots, file
+	 * them again and save the request as separate statements under no lock, so an answer committed in between was lost
+	 * or half kept (ever-co/ever-gauzy#11382, follow-up): its slot write could land on a slot the edit had just
+	 * removed, and its status before or after the edit's save, leaving a request re-opened with its slots answered, or
+	 * decided with fresh `REQUESTED` slots. Now the two take turns. An answer behind the edit answers the re-opened
+	 * request and its new slots; an edit behind an answer re-opens the decided request, as an edit of a decided request
+	 * did before. Who may edit, and what an edit may change, are unchanged.
+	 *
+	 * The checks `save()` makes (the tenant of the stored row and of the graph the save writes, the organization
+	 * boundary) are made before the transaction opens, so none of their reads waits for it; the locked row is held to
+	 * the caller's organization boundary again, as an answer holds it.
+	 *
+	 * @param id The request.
+	 * @param entity The edit.
+	 * @returns The request, as saved.
+	 * @throws NotFoundException when the request is not in the caller's scope, or has moved out of it.
+	 */
 	async updateRequestApproval(id: string, entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		const tenantId = RequestContext.currentTenantId();
 		const requestApproval = await this.findOneByIdString(id);
@@ -536,33 +575,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		requestApproval.organizationId = entity.organizationId;
 		requestApproval.tenantId = tenantId;
 
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				// MikroORM: Use nativeDelete on the entity manager
-				const em = this.mikroOrmRepository.getEntityManager();
-				await em.nativeDelete(RequestApprovalEmployee, { requestApprovalId: id } as any);
-				await em.nativeDelete(RequestApprovalTeam, { requestApprovalId: id } as any);
-				break;
-			}
-			case MultiORMEnum.TypeORM:
-			default: {
-				await this.typeOrmRepository
-					.createQueryBuilder()
-					.delete()
-					.from(RequestApprovalEmployee)
-					.where(p('requestApprovalId = :id'), { id: id })
-					.execute();
-
-				await this.typeOrmRepository
-					.createQueryBuilder()
-					.delete()
-					.from(RequestApprovalTeam)
-					.where(p('requestApprovalId = :id'), { id: id })
-					.execute();
-				break;
-			}
-		}
-
+		// The approver slots the edit files, resolved in the caller's tenant before the transaction opens.
 		if (entity.employeeApprovals) {
 			const employees = await this.findEmployeesInTenant(entity.employeeApprovals as unknown as ID[], tenantId);
 			const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
@@ -593,7 +606,91 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.teamApprovals = requestApprovalTeams;
 		}
 
-		return this.save(requestApproval);
+		// What `save()` checks before it writes, made here, outside the transaction (see above).
+		await this.assertNotForeignRow(requestApproval, tenantId);
+		await this.assertNestedGraphNotForeign([requestApproval], tenantId);
+		await this.assertInsideOrganizationBoundary([requestApproval]);
+
+		const lockTenantId = tenantId ?? requestApproval.tenantId;
+
+		return await this.editTransaction(async (transaction) => {
+			const locked = await transaction.lockRequest(requestApproval.id, lockTenantId);
+			// The scoped read kept the caller inside their organization boundary; the lock reads by id and tenant only.
+			if (!locked || !isWithinOrganizationBoundary(locked.organizationId)) {
+				throw new NotFoundException('Request Approval not found');
+			}
+
+			await transaction.deleteSlots(requestApproval.id);
+			const saved = await transaction.saveRequest(requestApproval);
+			// Re-opened as one statement of its own: a save writes the columns its copy differs in, and the copy was
+			// read before the lock, so an answer committed in between would keep its decision on the request whose
+			// slots were just filed again as `REQUESTED`.
+			await transaction.writeRequestStatus(requestApproval.id, lockTenantId, RequestApprovalStatusTypesEnum.REQUESTED);
+			return saved;
+		});
+	}
+
+	/**
+	 * Runs one edit in one transaction on the ORM the installation runs, and hands it the statements it makes on that
+	 * transaction's connection: see {@link updateRequestApproval} and, for why every statement has to go through it,
+	 * {@link answerTransaction}.
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	protected async editTransaction<R>(work: (transaction: IRequestApprovalEditTransaction) => Promise<R>): Promise<R> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.getEntityManager().transactional(async (em) => {
+					const { lockRequest, writeRequestStatus } = this.mikroOrmAnswerTransaction(em, rowLock);
+					return await work({
+						lockRequest,
+						writeRequestStatus,
+						deleteSlots: async (requestApprovalId) => {
+							// The request's own slots: the request was read in the caller's tenant and is locked.
+							const slots = { requestApproval: requestApprovalId } as any;
+							await em.nativeDelete(RequestApprovalEmployee, slots);
+							await em.nativeDelete(RequestApprovalTeam, slots);
+						},
+						// The CRUD base's save, which runs on this transaction: inside `transactional`, MikroORM
+						// resolves the repository's entity manager to the transaction's fork (its transaction
+						// context).
+						saveRequest: async (requestApproval) => await this.save(requestApproval)
+					});
+				});
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository.manager.transaction(async (manager) => {
+					const { lockRequest, writeRequestStatus } = this.typeOrmAnswerTransaction(manager, rowLock);
+					return await work({
+						lockRequest,
+						writeRequestStatus,
+						deleteSlots: async (requestApprovalId) => {
+							// The request's own slots: the request was read in the caller's tenant and is locked.
+							await manager.delete(RequestApprovalEmployee, { requestApprovalId });
+							await manager.delete(RequestApprovalTeam, { requestApprovalId });
+						},
+						// What the CRUD base's `save()` hands TypeORM (the payload stamped with the caller's tenant,
+						// the slots inserted by the relation's cascade), on the transaction's manager instead of the
+						// repository's, whose write of the locked row would wait for this transaction's own lock.
+						saveRequest: async (requestApproval) => {
+							const tenantId = RequestContext.currentTenantId();
+							try {
+								return await manager.save(RequestApproval, {
+									...requestApproval,
+									...(tenantId ? { tenant: { id: tenantId }, tenantId } : {})
+								} as RequestApproval);
+							} catch (error) {
+								console.error('Error saving a request approval edit:', redactDatabaseError(error));
+								throw new BadRequestException(toClientSafeError(error));
+							}
+						}
+					});
+				});
+		}
 	}
 
 	/**

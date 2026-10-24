@@ -3572,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "La data deve essere successiva al giorno della richiesta",
 			"EXCEED_PERIOD_ERR": "I giorni massimi consentiti per questo articolo sono ",
 			"BEFORE_START_DATE_ERR": "La data di fine non può essere precedente alla data di inizio",
-			"ITEM_RETURNED_BEFORE_ERR": "L'articolo deve essere restituito prima del"
+			"ITEM_RETURNED_BEFORE_ERR": "L'articolo deve essere restituito prima del",
+			"CHANGED_BY_SOMEONE_ELSE": "Nel frattempo questa richiesta è stata modificata da qualcun altro. L'elenco è stato ricaricato: controlla la richiesta e riprova."
 		},
 		"ACTIONS": "Azioni",
 		"APPROVE": "Approvare",

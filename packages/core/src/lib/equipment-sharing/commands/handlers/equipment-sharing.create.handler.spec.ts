@@ -175,6 +175,31 @@ describe('EquipmentSharingCreateHandler — the status a request is filed with',
 		expect(approvalService.create).not.toHaveBeenCalled();
 	});
 
+	it('hands the employees and the teams the body lists to the check of the route’s organization', async () => {
+		const { handler, sharingService } = setUp(false);
+		const employees = [{ id: 'employee-1' }, 'employee-2'];
+		const teams = ['team-1'];
+
+		await handler.execute(file({ equipmentId: 'equipment-1', employees, teams }));
+
+		// The service holds each listed member to that organization (see reference-scope.helper.spec.ts).
+		expect(sharingService.assertReferencesAreInScope).toHaveBeenCalledWith(
+			expect.objectContaining({ employees, teams }),
+			{ tenantId: 'tenant-a', organizationId: 'org-1' }
+		);
+	});
+
+	it('refuses a listed member of another organization before anything is stored', async () => {
+		const { handler, sharingService, approvalService } = setUp(false);
+		sharingService.assertReferencesAreInScope.mockRejectedValueOnce(new Error('not available here'));
+
+		await expect(
+			handler.execute(file({ equipmentId: 'equipment-1', employees: [{ id: 'other-org-employee' }] }))
+		).rejects.toThrow('not available here');
+		expect(sharingService.create).not.toHaveBeenCalled();
+		expect(approvalService.create).not.toHaveBeenCalled();
+	});
+
 	it('files a new sharing at the starting version, whatever version the body carries', async () => {
 		const { handler, sharingService } = setUp(false);
 
