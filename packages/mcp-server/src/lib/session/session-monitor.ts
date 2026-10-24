@@ -431,7 +431,7 @@ class SessionMonitor extends EventEmitter {
 			const timeout = setTimeout(() => {
 				this.logAlert({
 					level: 'info',
-					message: `Long-running session detected: ${event.sessionId} (${this.config.alertThresholds.sessionDurationWarning / 1000 / 60} minutes)`,
+					message: `Long-running session detected: ${sessionIdForLog(event.sessionId)} (${this.config.alertThresholds.sessionDurationWarning / 1000 / 60} minutes)`,
 					timestamp: new Date(),
 					sessionId: event.sessionId,
 					userId: event.userId,
