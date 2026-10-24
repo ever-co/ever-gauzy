@@ -20,6 +20,10 @@ import { ActivepiecesService } from './activepieces.service';
 import { ActivepiecesController } from './activepieces.controller';
 import { ActivepiecesMcpService } from './activepieces-mcp.service';
 import { ActivepiecesMcpController } from './activepieces-mcp.controller';
+import { ActivepiecesCredentialsService } from './activepieces-credentials.service';
+import { ActivepiecesOperatorGuard } from './activepieces-operator.guard';
+import { ActivepiecesPlatformController } from './activepieces-platform.controller';
+import { ActivepiecesPlatformService } from './activepieces-platform.service';
 
 @Module({
 	imports: [
@@ -40,11 +44,15 @@ import { ActivepiecesMcpController } from './activepieces-mcp.controller';
 	],
 	controllers: [
 		ActivepiecesController,
-		ActivepiecesMcpController
+		ActivepiecesMcpController,
+		ActivepiecesPlatformController
 	],
 	providers: [
+		ActivepiecesCredentialsService,
 		ActivepiecesService,
-		ActivepiecesMcpService
+		ActivepiecesMcpService,
+		ActivepiecesPlatformService,
+		ActivepiecesOperatorGuard
 	],
 	exports: [ActivepiecesService, ActivepiecesMcpService]
 })

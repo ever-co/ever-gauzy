@@ -60,6 +60,12 @@ export interface IActivepiecesOperatorSettings {
 /** A project token is obtained again when it has less than this left (Activepieces issues them for 7 days). */
 export const PROJECT_TOKEN_REFRESH_MARGIN_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * A project token is also obtained again once this old, so a project the operator gives the tenant later
+ * (`PUT /integration/activepieces/platform/tenants/:tenantId/project`) reaches every server within hours, not days.
+ */
+export const PROJECT_TOKEN_MAX_REUSE_MS = 6 * 60 * 60 * 1000;
+
 /** The lifetime assumed for a project token that states no expiry (`managed-authn-service.ts`: 7 days). */
 export const PROJECT_TOKEN_DEFAULT_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -75,7 +81,10 @@ const NOT_CONNECTED =
 export interface IActivepiecesProjectToken {
 	readonly token: string;
 	readonly projectId: string;
+	/** When it expires, in milliseconds since the epoch. */
 	readonly expiresAt: number;
+	/** When this server obtained it, in milliseconds since the epoch. */
+	readonly obtainedAt: number;
 }
 
 interface ICachedProject {
@@ -318,22 +327,34 @@ export class ActivepiecesCredentialsService {
 			throw new BadRequestException(this.unavailable(mode));
 		}
 
-		const setting = { settingsName: ActivepiecesSettingName.CONNECTION_MODE, settingsValue: mode, tenantId, organizationId };
 		const target = organizationId
 			? view.rows.find((row) => row.organizationId === organizationId) ?? null
 			: view.rows.find((row) => !row.organizationId) ?? null;
+		const setting = {
+			settingsName: ActivepiecesSettingName.CONNECTION_MODE,
+			settingsValue: mode,
+			tenantId,
+			organizationId: target?.organizationId ?? undefined
+		};
 
 		if (target) {
 			await this.saveMergedSettings(target, [setting]);
+		} else if (organizationId) {
+			// No row is created for an organization the request names: rows of an organization come from the setup and
+			// connection routes, whose DTO checks the caller belongs to it
+			throw new BadRequestException(
+				'Activepieces is not set up for this organization: choose the mode for the tenant, or set it up first.'
+			);
 		} else {
-			await this.createIntegrationTenant(tenantId, organizationId, [setting]);
+			await this.createIntegrationTenant(tenantId, undefined, [setting]);
 		}
 		this.logger.log(`Activepieces connection mode of tenant ${tenantId} set to ${mode}`);
 		return this.describe(organizationId);
 	}
 
 	/**
-	 * A project token of the tenant's own project, obtained again when it has less than a day left.
+	 * A project token of the tenant's own project, obtained again when it has less than a day left (Activepieces issues
+	 * them for 7 days), or when this server obtained it more than six hours ago.
 	 *
 	 * @param tenantId - The tenant.
 	 * @param settings - The operator's settings.
@@ -343,7 +364,12 @@ export class ActivepiecesCredentialsService {
 		settings: IActivepiecesOperatorSettings = this.operatorSettings()
 	): Promise<IActivepiecesProjectToken> {
 		const cached = this.projectTokens.get(tenantId);
-		if (cached && cached.expiresAt - Date.now() > PROJECT_TOKEN_REFRESH_MARGIN_MS) {
+		const now = Date.now();
+		if (
+			cached &&
+			cached.expiresAt - now > PROJECT_TOKEN_REFRESH_MARGIN_MS &&
+			now - cached.obtainedAt < PROJECT_TOKEN_MAX_REUSE_MS
+		) {
 			return cached;
 		}
 		const pending = this.pendingProjectTokens.get(tenantId);
@@ -516,10 +542,12 @@ export class ActivepiecesCredentialsService {
 			throw new BadGatewayException('Activepieces did not issue a project token.');
 		}
 
+		const obtainedAt = Date.now();
 		const entry: IActivepiecesProjectToken = {
 			token: answer.token,
 			projectId: answer.projectId,
-			expiresAt: readJwtExpiry(answer.token) ?? Date.now() + PROJECT_TOKEN_DEFAULT_LIFETIME_MS
+			expiresAt: readJwtExpiry(answer.token) ?? obtainedAt + PROJECT_TOKEN_DEFAULT_LIFETIME_MS,
+			obtainedAt
 		};
 		this.projectTokens.set(tenantId, entry);
 		return entry;
