@@ -106,10 +106,12 @@ export function assertOrganizationUnchanged(
  * rate, regime, category or part of a sibling organization of the tenant by naming its id.
  *
  * A row stored without an organization stays reachable, so an update can still give it the caller's (see
- * {@link assertOrganizationUnchanged}), and a read with no organization in context (a job) is not narrowed.
+ * {@link assertOrganizationUnchanged}), and a read with no organization in context (a job) is not narrowed. Nor is a
+ * tenant admin's: the services pass `confiningOrganizationId()` (organization-boundary.ts), which is `null` for a
+ * `SUPER_ADMIN` or `ADMIN`, who reaches every organization of the tenant.
  *
  * @param row The row the inherited read found.
- * @param caller The caller's organization.
+ * @param caller The organization the caller is confined to, or `null` when the read is not confined.
  * @returns The row.
  * @throws NotFoundException the inherited read's own miss, when the row belongs to another organization.
  */
