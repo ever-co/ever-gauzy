@@ -43,7 +43,7 @@ interface TimeLogRow {
 
 const time = (value: unknown): number => new Date(value as Date).getTime();
 
-/** Applies a TypeORM `where` (plain values, `Between`, `Not(IsNull())`) to a row. */
+/** Applies a TypeORM `where` (plain values, `Between`, `LessThanOrEqual` / `MoreThanOrEqual`, `Not(IsNull())`). */
 function matchesTypeOrmWhere(row: TimeLogRow, where: Record<string, unknown>): boolean {
 	return Object.entries(where).every(([key, condition]) => {
 		const value = row[key as keyof TimeLogRow];
@@ -53,6 +53,11 @@ function matchesTypeOrmWhere(row: TimeLogRow, where: Record<string, unknown>): b
 					const [from, to] = condition.value as unknown as Date[];
 					return time(value) >= time(from) && time(value) <= time(to);
 				}
+				// A null column matches neither, as in SQL (the completed-logs query may use them for its day window).
+				case 'lessThanOrEqual':
+					return value !== null && value !== undefined && time(value) <= time(condition.value);
+				case 'moreThanOrEqual':
+					return value !== null && value !== undefined && time(value) >= time(condition.value);
 				case 'not':
 					if (condition.child?.type === 'isNull') {
 						return value !== null && value !== undefined;
@@ -73,10 +78,11 @@ function matchesMikroOrmWhere(row: TimeLogRow, where: Record<string, unknown>): 
 		if (condition !== null && typeof condition === 'object' && !(condition instanceof Date)) {
 			return Object.entries(condition).every(([operator, operand]) => {
 				switch (operator) {
+					// A null column matches neither, as in SQL.
 					case '$gte':
-						return time(value) >= time(operand);
+						return value !== null && value !== undefined && time(value) >= time(operand);
 					case '$lte':
-						return time(value) <= time(operand);
+						return value !== null && value !== undefined && time(value) <= time(operand);
 					case '$ne':
 						return operand === null ? value !== null && value !== undefined : value !== operand;
 					default:
@@ -239,7 +245,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			expect(logs.map((log: ITimeLog) => log.id)).toEqual(['running-without-stopped-at']);
 		});
 
-		it('keeps reading a running log written by the timer (stoppedAt = startedAt, moved by the heartbeat)', async () => {
+		it('keeps reading a running log written by the timer, with its stoppedAt', async () => {
 			const runningFromTimer = timeLog({
 				id: 'running-from-timer',
 				isRunning: true,

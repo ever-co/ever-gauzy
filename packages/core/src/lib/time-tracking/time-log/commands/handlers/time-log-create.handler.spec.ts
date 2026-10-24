@@ -96,9 +96,8 @@ describe('TimeLogCreateHandler: a running log is written with stoppedAt = starte
 				startedAt: STARTED_AT,
 				stoppedAt: STARTED_AT
 			});
-			expect(withRunningLogStoppedAt(input({ source: TimeLogSourceEnum.DESKTOP, stoppedAt: null }))).toMatchObject(
-				{ stoppedAt: STARTED_AT }
-			);
+			const desktopWithNullEnd = input({ source: TimeLogSourceEnum.DESKTOP, stoppedAt: null });
+			expect(withRunningLogStoppedAt(desktopWithNullEnd)).toMatchObject({ stoppedAt: STARTED_AT });
 		});
 
 		it('keeps a stoppedAt the input names', () => {
