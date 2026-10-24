@@ -46,7 +46,7 @@ export class AllTeamComponent {
 	@Input() public projectCount = 0;
 
 	/** Emits the id of the team to open. */
-	@Output() public selectedTeam = new EventEmitter<string>();
+	@Output() public readonly selectedTeam = new EventEmitter<string>();
 
 	/** Teams whose members are listed under their row. */
 	public expanded = new Set<string>();
