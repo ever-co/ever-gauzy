@@ -256,12 +256,14 @@ describe('who the scheduling writes serve with a new tenant’s default grants',
 		}
 	});
 
-	it('gives a manager the event types, which the new grant carries, and not the availability grants it never held', async () => {
+	it('gives a manager the event types, which the new grant carries, and the availability writes', async () => {
 		for (const [controller, route] of EVENT_TYPES) {
 			expect(await served(controller, route, RolesEnum.MANAGER)).toBe(true);
 		}
+		// MANAGER held none of the availability grants, so the gate first took these writes from managers; owner
+		// decision 2(b) (2026-10-23) gave them back (DEFAULT_ROLE_PERMISSIONS, migration 1791000000841).
 		for (const [controller, route] of AVAILABILITY) {
-			expect(await served(controller, route, RolesEnum.MANAGER)).toBe(false);
+			expect(await served(controller, route, RolesEnum.MANAGER)).toBe(true);
 		}
 	});
 

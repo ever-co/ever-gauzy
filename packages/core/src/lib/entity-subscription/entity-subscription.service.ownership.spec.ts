@@ -37,10 +37,17 @@ describe('EntitySubscriptionService — only the subscriber or a tenant administ
 	let service: EntitySubscriptionService;
 	let writes: Record<'update' | 'unsubscribe' | 'softRemove' | 'softRecover', jest.SpyInstance>;
 
-	/** Signs a user in, the way a request does: tenant, employee, permissions, and the role they hold now. */
+	/**
+	 * Signs a user in, the way a request does: tenant, the organization of their token (`lastOrganizationId`, which the
+	 * CRUD base's organization boundary keeps a non-admin inside), employee, permissions, and the role they hold now.
+	 */
 	const signIn = (user: Partial<IUser>, role: RolesEnum, permissions: PermissionsEnum[] = []) => {
 		asTenantUser(
-			{ tenantId: TENANT, organizationId: ORGANIZATION, user: { ...user, tenantId: TENANT } as IUser },
+			{
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				user: { ...user, tenantId: TENANT, lastOrganizationId: ORGANIZATION } as IUser
+			},
 			{ permissions }
 		);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(user.id);

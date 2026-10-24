@@ -59,7 +59,13 @@ describe('equipment_sharing.version migration on SQLite', () => {
 	it('adds the column as NOT NULL DEFAULT 1, and existing sharings read version 1', async () => {
 		await run('up');
 
-		expect(await column()).toMatchObject({ type: 'integer', notnull: 1, dflt_value: '1' });
+		// SQLite type names are case-insensitive, and the bundled SQLite reports this one as `INTEGER`.
+		const added = await column();
+		expect({ ...added, type: added?.type.toLowerCase() }).toMatchObject({
+			type: 'integer',
+			notnull: 1,
+			dflt_value: '1'
+		});
 		const [existing] = await dataSource.query(`SELECT "version" FROM "equipment_sharing" WHERE "id" = ?`, [
 			SHARING
 		]);
