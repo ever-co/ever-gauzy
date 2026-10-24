@@ -44,11 +44,7 @@
 <td class="col-name">
 	<a class="member" [routerLink]="['/pages/employees/view', member.employeeId]">
 		<span class="member-avatar" [class]="'member-avatar presence-' + member.presence">
-			@if (member.avatarUrl) {
-			<img [src]="member.avatarUrl" [alt]="member.name" (error)="member.avatarUrl = null" />
-			} @else {
-			<span aria-hidden="true">{{ member.initials }}</span>
-			}
+			<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
 			<span class="avatar-dot"></span>
 		</span>
 		<span class="member-text">
