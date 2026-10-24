@@ -33,7 +33,10 @@ function isHttp(url: URL): boolean {
  * reaches. Most of the desktop windows are built this way (the timer, the Gauzy window, setup, settings...).
  */
 export function isPrivilegedContents(contents: WebContents): boolean {
-	const preferences = contents.getLastWebPreferences?.();
+	// Not in Electron's public typings; absent at runtime it reads as privileged (the safe answer).
+	const preferences = (
+		contents as WebContents & { getLastWebPreferences?: () => Electron.WebPreferences | null }
+	).getLastWebPreferences?.();
 	if (!preferences) {
 		return true;
 	}
