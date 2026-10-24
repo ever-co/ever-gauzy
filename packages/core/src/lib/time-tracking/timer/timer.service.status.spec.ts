@@ -7,7 +7,7 @@ import { FindOperator } from 'typeorm';
 import * as moment from 'moment';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
-import { secondsWithinWindow } from './timer.helper';
+import { exclusiveWindowEnd, secondsWithinWindow } from './timer.helper';
 import { TimerService } from './timer.service';
 
 /**
@@ -163,12 +163,18 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 			...overrides
 		}) as TimeLogRow;
 
-	const getTimerStatus = (rows: TimeLogRow[]): Promise<ITimerStatus> =>
+	const getTimerStatus = (
+		rows: TimeLogRow[],
+		{ todayStart, todayEnd }: { todayStart: string; todayEnd: string } = {
+			todayStart: TODAY_START,
+			todayEnd: TODAY_END
+		}
+	): Promise<ITimerStatus> =>
 		createService(ormType, rows).getTimerStatus({
 			tenantId: fixture.tenantId,
 			organizationId: fixture.organizationId,
-			todayStart: TODAY_START,
-			todayEnd: TODAY_END
+			todayStart,
+			todayEnd
 		} as unknown as ITimerStatusInput);
 
 	let restore: () => void;
@@ -311,6 +317,67 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 		expect(status.lastLog).toMatchObject({ id: 'last-today', isRunning: false });
 		expect(status.duration).toBe(HOUR);
 	});
+
+	/**
+	 * `todayEnd` is inclusive, as the clients send it: `endOf('day')` to the millisecond (the server default too), or
+	 * the same formatted to the second (the web time tracker). Clipping at it counted the day's last second short.
+	 */
+	describe.each([
+		['to the millisecond', '2026-10-23T23:59:59.999Z', '2026-10-24T23:59:59.999Z'],
+		['to the second', '2026-10-23 23:59:59', '2026-10-24 23:59:59']
+	])('with todayEnd %s', (_format, yesterdayEnd, todayEnd) => {
+		const yesterday = { todayStart: '2026-10-23T00:00:00.000Z', todayEnd: yesterdayEnd };
+		const today = { todayStart: TODAY_START, todayEnd };
+
+		it('splits a completed log that ran past midnight into a whole hour on each day', async () => {
+			const rows = [
+				timeLog({
+					id: 'past-midnight',
+					startedAt: new Date('2026-10-23T23:00:00.000Z'),
+					stoppedAt: new Date('2026-10-24T01:00:00.000Z')
+				})
+			];
+
+			const onItsFirstDay = await getTimerStatus(rows, yesterday);
+			const onItsSecondDay = await getTimerStatus(rows, today);
+
+			expect(onItsFirstDay.duration).toBe(HOUR);
+			expect(onItsSecondDay.duration).toBe(HOUR);
+			expect(onItsFirstDay.duration + onItsSecondDay.duration).toBe(rows[0].duration);
+		});
+
+		it('counts the hour before midnight of a timer still running past it whole', async () => {
+			const runningSinceYesterday = timeLog({
+				id: 'running-since-yesterday',
+				isRunning: true,
+				startedAt: new Date('2026-10-23T23:00:00.000Z'),
+				stoppedAt: new Date('2026-10-24T01:59:00.000Z')
+			});
+
+			const status = await getTimerStatus([runningSinceYesterday], yesterday);
+
+			expect(status.running).toBe(true);
+			expect(status.duration).toBe(HOUR);
+		});
+
+		it('counts a completed log filling the day as 24 hours, and none started at the next midnight', async () => {
+			const fullDay = timeLog({
+				id: 'full-day',
+				startedAt: new Date('2026-10-23T00:00:00.000Z'),
+				stoppedAt: new Date('2026-10-24T00:00:00.000Z')
+			});
+			const nextDay = timeLog({
+				id: 'next-day',
+				startedAt: new Date('2026-10-24T00:00:00.000Z'),
+				stoppedAt: new Date('2026-10-24T01:00:00.000Z')
+			});
+
+			const status = await getTimerStatus([fullDay, nextDay], yesterday);
+
+			expect(status.duration).toBe(24 * HOUR);
+			expect(status.lastLog).toMatchObject({ id: 'full-day' });
+		});
+	});
 });
 
 describe('secondsWithinWindow', () => {
@@ -339,5 +406,22 @@ describe('secondsWithinWindow', () => {
 		expect(within('2026-10-23T18:00:00.000Z', '2026-10-23T20:00:00.000Z')).toBe(0);
 		expect(within('2026-10-25T01:00:00.000Z', '2026-10-25T02:00:00.000Z')).toBe(0);
 		expect(secondsWithinWindow('2026-10-24T09:00:00.000Z', null, windowStart, windowEnd)).toBe(0);
+	});
+});
+
+describe('exclusiveWindowEnd', () => {
+	it('turns an inclusive day end, to the millisecond or to the second, into the next midnight', () => {
+		const nextMidnight = '2026-10-25T00:00:00.000Z';
+
+		expect(exclusiveWindowEnd(moment.utc('2026-10-24T23:59:59.999Z')).toISOString()).toBe(nextMidnight);
+		expect(exclusiveWindowEnd(moment.utc('2026-10-24 23:59:59')).toISOString()).toBe(nextMidnight);
+	});
+
+	it('does not move the end it is given', () => {
+		const inclusiveEnd = moment.utc('2026-10-24T23:59:59.999Z');
+
+		exclusiveWindowEnd(inclusiveEnd);
+
+		expect(inclusiveEnd.toISOString()).toBe('2026-10-24T23:59:59.999Z');
 	});
 });

@@ -50,6 +50,7 @@ import {
 	buildCommonQueryParameters,
 	buildLogQueryParameters,
 	buildRunningLogQueryParameters,
+	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
 
@@ -124,6 +125,9 @@ export class TimerService {
 		const todayWindowStart = moment.utc(todayStart || moment().startOf('day'));
 		const todayWindowEnd = moment.utc(todayEnd || moment().endOf('day'));
 		const { start, end } = getDateRangeFormat(todayWindowStart, todayWindowEnd);
+		// `todayEnd` is inclusive (`23:59:59.999`, or `23:59:59`); today's seconds are counted up to the exclusive end
+		// after it, so a log running through the day's end counts the last second too. The queries keep `end`.
+		const countedUntil = exclusiveWindowEnd(todayWindowEnd);
 
 		let logs: TimeLog[] = [];
 
@@ -197,7 +201,7 @@ export class TimerService {
 		status.duration += logs
 			.filter((log) => log && log.id !== runningLogId)
 			.reduce(
-				(sum, log) => sum + secondsWithinWindow(log.startedAt, log.stoppedAt, todayWindowStart, todayWindowEnd),
+				(sum, log) => sum + secondsWithinWindow(log.startedAt, log.stoppedAt, todayWindowStart, countedUntil),
 				0
 			);
 
@@ -211,7 +215,7 @@ export class TimerService {
 				// before `todayStart` counts from `todayStart`, its earlier part belongs to the day it started on.
 				// `lastLog` stays the whole log, so a client still reads the full session from its `startedAt`.
 				// The same clipping as the completed logs above, so a log counts the same before and after it stops.
-				status.duration += secondsWithinWindow(lastLog.startedAt, moment(), todayWindowStart, todayWindowEnd);
+				status.duration += secondsWithinWindow(lastLog.startedAt, moment(), todayWindowStart, countedUntil);
 			}
 		}
 

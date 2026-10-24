@@ -149,3 +149,20 @@ export function secondsWithinWindow(
     const countedTo = moment.min(moment.utc(stoppedAt), windowEnd);
     return Math.max(0, countedTo.diff(countedFrom, 'seconds'));
 }
+
+/**
+ * The exclusive end of a window given with an inclusive one, as every client sends `todayEnd`: `23:59:59.999`
+ * (`endOf('day')`) or `23:59:59` (the same, formatted to the second). Both stand for "up to the next midnight", and
+ * clipping a log at the inclusive end itself left the day's last second out (3,599 seconds for the 23:00–24:00 part
+ * of a log), a second lost across the two days. The end's second is included whole: the window ends at the next
+ * whole second.
+ *
+ * Only the duration arithmetic (`secondsWithinWindow`) takes this end; the queries keep the inclusive one, so a log
+ * started at the next midnight stays out of the window.
+ *
+ * @param inclusiveEnd - The window's inclusive end.
+ * @returns The first instant after the window.
+ */
+export function exclusiveWindowEnd(inclusiveEnd: moment.Moment): moment.Moment {
+    return inclusiveEnd.clone().startOf('second').add(1, 'second');
+}
