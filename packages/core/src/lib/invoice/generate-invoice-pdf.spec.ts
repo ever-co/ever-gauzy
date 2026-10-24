@@ -176,6 +176,50 @@ describe('generateInvoicePdfDefinition', () => {
 			expect(all).toContain('Total Value: USD 108');
 		});
 	});
+
+	// A line's employee, project, task, product or expense is set to null when that record is deleted
+	describe('lines whose item record is gone', () => {
+		const line = { description: 'Work', quantity: 1, price: 108, totalValue: 108 };
+
+		it.each([
+			[InvoiceTypeEnum.BY_EMPLOYEE_HOURS, { employee: null }],
+			[InvoiceTypeEnum.BY_EMPLOYEE_HOURS, { employee: { user: null } }],
+			[InvoiceTypeEnum.BY_PROJECT_HOURS, { project: null }],
+			[InvoiceTypeEnum.BY_TASK_HOURS, { task: null }],
+			[InvoiceTypeEnum.BY_PRODUCTS, { product: null }],
+			[InvoiceTypeEnum.BY_EXPENSES, { expense: null }]
+		])('renders a %s invoice whose line has %o, with an empty item', async (invoiceType, relation) => {
+			const doc = await generateInvoicePdfDefinition(
+				invoice({ invoiceType, invoiceItems: [{ ...line, ...(relation as object) }] }),
+				organization(),
+				contact,
+				translatedText,
+				'en'
+			);
+			const [, row] = (doc.content.find((node: any) => node?.table) as any).table.body;
+
+			expect(row).toEqual(['', 'Work', '1', 'USD 108', 'USD 108']);
+		});
+
+		it.each([
+			[InvoiceTypeEnum.BY_EMPLOYEE_HOURS, { employee: { user: { name: 'Jane Doe' } } }, 'Jane Doe'],
+			[InvoiceTypeEnum.BY_PROJECT_HOURS, { project: { name: 'Gauzy' } }, 'Gauzy'],
+			[InvoiceTypeEnum.BY_TASK_HOURS, { task: { title: 'Fix PDF' } }, 'Fix PDF'],
+			[InvoiceTypeEnum.BY_PRODUCTS, { product: { name: 'Widget', translations: [] } }, 'Widget'],
+			[InvoiceTypeEnum.BY_EXPENSES, { expense: { purpose: 'Travel' } }, 'Travel']
+		])('still prints the item of a %s line', async (invoiceType, relation, item) => {
+			const doc = await generateInvoicePdfDefinition(
+				invoice({ invoiceType, invoiceItems: [{ ...line, ...(relation as object) }] }),
+				organization(),
+				contact,
+				translatedText,
+				'en'
+			);
+			const [, row] = (doc.content.find((node: any) => node?.table) as any).table.body;
+
+			expect(row[0]).toBe(item);
+		});
+	});
 });
 
 describe('generateInvoicePaymentPdfDefinition', () => {
@@ -270,5 +314,29 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 		);
 
 		expect(texts(doc)).toContain('2026-10-07');
+	});
+
+	it('renders a payment without a recording user, with that column empty', async () => {
+		const doc = await generateInvoicePaymentPdfDefinition(
+			invoice(),
+			[{ ...payments[0], createdByUser: null }],
+			organization(),
+			contact,
+			3,
+			translatedText
+		);
+		const [, row] = (doc.content.find((node: any) => node?.table) as any).table.body;
+
+		expect(row[2]).toBe('');
+		expect(texts(doc)).toContain('USD 3');
+	});
+
+	it.each([null, undefined])('renders the payments of an invoice whose contact is %s', async (missing) => {
+		const all = texts(
+			await generateInvoicePaymentPdfDefinition(invoice(), payments, organization(), missing, 8, translatedText)
+		);
+
+		expect(all[all.indexOf('Received from:\n') + 1]).toBe('');
+		expect(all).toContain('Jane');
 	});
 });
