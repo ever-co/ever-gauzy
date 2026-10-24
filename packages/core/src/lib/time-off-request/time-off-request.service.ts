@@ -351,8 +351,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					select: { id: true, organizationId: true }
 				})
 			: [];
+		// One lookup per id: the holiday dialog names every employee of the organization at once.
+		const byId = new Map(found.map((row) => [String(row.id).toLowerCase(), row]));
 		const outside = ids.filter((id) => {
-			const employee = found.find((row) => sameId(row.id, id));
+			const employee = byId.get(String(id).toLowerCase());
 			return (
 				!employee || (isNotEmpty(employee.organizationId) && !sameId(employee.organizationId, organizationId))
 			);
