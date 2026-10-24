@@ -50,9 +50,9 @@ describe('CandidateUpdateHandler — the contact is the candidate’s own', () =
 		organizationId: 'organization-1'
 	};
 
-	const run = async (input: Record<string, unknown>) => {
+	const run = async (input: Record<string, unknown>, read: Record<string, unknown> = stored) => {
 		const create = jest.fn(async (entity: any) => entity);
-		const findOneByIdString = jest.fn().mockResolvedValue(stored);
+		const findOneByIdString = jest.fn().mockResolvedValue(read);
 		const handler = new CandidateUpdateHandler({ create, findOneByIdString } as any);
 
 		await handler.execute(new CandidateUpdateCommand({ id: 'candidate-1', ...input } as any));
@@ -65,7 +65,9 @@ describe('CandidateUpdateHandler — the contact is the candidate’s own', () =
 			contact: { id: 'contact-of-a-client', city: 'Sofia', organizationId: 'organization-other' }
 		});
 
-		expect(findOneByIdString).toHaveBeenCalledWith('candidate-1');
+		expect(findOneByIdString).toHaveBeenCalledWith('candidate-1', {
+			relations: { contact: true, organization: true }
+		});
 		expect(persisted.contact).toEqual({ city: 'Sofia', tenantId: 'tenant-1', organizationId: 'organization-1' });
 	});
 
@@ -73,6 +75,25 @@ describe('CandidateUpdateHandler — the contact is the candidate’s own', () =
 		const { persisted } = await run({ contact: { id: 'contact-own', city: 'Sofia' } });
 
 		expect(persisted.contact).toMatchObject({ id: 'contact-own', city: 'Sofia' });
+	});
+
+	it('keeps it when the read answers the links as relations only, as MikroORM does', async () => {
+		const { persisted } = await run(
+			{ contact: { id: 'contact-own', city: 'Sofia' } },
+			{
+				id: 'candidate-1',
+				tenantId: 'tenant-1',
+				contact: { id: 'contact-own' },
+				organization: { id: 'organization-1' }
+			}
+		);
+
+		expect(persisted.contact).toEqual({
+			id: 'contact-own',
+			city: 'Sofia',
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		});
 	});
 
 	it('never re-links the candidate through contactId, and reads nothing when no contact is sent', async () => {

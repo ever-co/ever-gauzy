@@ -77,7 +77,12 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// employee's tenant and organization. The contact link itself is never the edit's to move.
 		delete (changes as { contactId?: unknown }).contactId;
 		if (changes.contact) {
-			changes.contact = ownContactPatch(employee, changes.contact);
+			// The read above loads the contact and the organization, whose ids MikroORM leaves off the columns; the
+			// employee is read inside the caller's tenant, which is the tenant its contact is stamped with.
+			changes.contact = ownContactPatch(
+				{ ...employee, tenantId: employee.tenantId ?? RequestContext.currentTenantId() },
+				changes.contact
+			);
 		}
 
 		// An external id the request leaves out keeps its stored value, and one sent empty is cleared.

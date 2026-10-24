@@ -129,6 +129,26 @@ describe('EmployeeUpdateHandler — the contact is the employee’s own', () => 
 		expect(entity.contact).toMatchObject({ id: OWN_CONTACT, city: 'Sofia' });
 	});
 
+	it('reads the links off the relations MikroORM loads, and the tenant off the request', async () => {
+		// MikroORM's relation-id columns are `persist: false` mirrors, which the read leaves empty.
+		create = jest.fn(async (entity) => entity);
+		const read = { id: ID, contact: { id: OWN_CONTACT }, organization: { id: 'organization-1' } };
+		handler = new EmployeeUpdateHandler(
+			{ findOneByIdString: jest.fn().mockResolvedValue(read), create } as any,
+			{} as any
+		);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+
+		const entity = await saved({ contact: { id: OWN_CONTACT, city: 'Sofia' } } as IEmployeeUpdateInput);
+
+		expect(entity.contact).toEqual({
+			id: OWN_CONTACT,
+			city: 'Sofia',
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		});
+	});
+
 	it('keeps the location form working: no id, and the employee’s own tenant and organization', async () => {
 		build(null);
 
