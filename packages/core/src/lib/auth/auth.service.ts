@@ -602,8 +602,9 @@ export class AuthService extends SocialAuthService {
 			// Select the most recently updated user (already sorted by updatedAt DESC)
 			const { user: selectedUser, employee } = userValidations[0];
 
-			// Determine organization context for tokens
-			let organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+			// Determine organization context for tokens. The stored organization counts only while the user is
+			// still a member of it; a stale one is replaced (see `resolveStoredOrganizationId`).
+			let organizationId = employee?.organizationId || (await this.resolveStoredOrganizationId(selectedUser));
 
 			// A non-employee user whose preference was never persisted (e.g. a freshly seeded
 			// super admin) has neither source, and a token without an organization claim fails
@@ -706,6 +707,56 @@ export class AuthService extends SocialAuthService {
 			// `findOneByOptions` throws when no membership exists.
 			return false;
 		}
+	}
+
+	/**
+	 * The organization stored on the user (`lastOrganizationId`), vetted before a new token is scoped to it.
+	 *
+	 * The stored organization is where the user last worked, not a grant: the membership behind it may since have
+	 * been removed, deactivated or archived. `JwtStrategy` refuses a token that names such an organization on every
+	 * request, and sign-in and token refresh kept reading the same stored value, so that user could not get back in.
+	 * The stored organization therefore scopes a new token only while the user is still an active, non-archived
+	 * member of it (the rule `switchOrganization` and `JwtStrategy` apply). A stale one is replaced by the user's
+	 * first active membership of the tenant, or cleared when there is none, both on `user` and in the database.
+	 *
+	 * A membership lookup that fails keeps the stored organization, as before this check: an outage never clears a
+	 * valid one, and the token it gives is judged by `JwtStrategy` as any other.
+	 *
+	 * @param user The user the token is minted for; its `lastOrganizationId` is replaced when stale.
+	 * @param tenantId The tenant the membership must belong to: the user's own unless given.
+	 * @returns The stored organization while it is an active membership; its replacement when it is stale; null when
+	 * nothing is stored, or it is stale and the user has no active membership left.
+	 */
+	private async resolveStoredOrganizationId(user: IUser, tenantId: ID = user.tenantId): Promise<ID | null> {
+		const storedOrganizationId = user.lastOrganizationId || null;
+		if (!storedOrganizationId) {
+			return null;
+		}
+
+		let organizationId: ID | null;
+		try {
+			if (await this.userService.hasActiveOrganizationMembership(user.id, storedOrganizationId, tenantId)) {
+				return storedOrganizationId;
+			}
+			organizationId = await this.userService.findFirstActiveOrganizationId(user.id, tenantId);
+		} catch (error) {
+			this.logger.warn(`Could not check the stored organization of user ${user.id}: ${error?.message}`);
+			return storedOrganizationId;
+		}
+
+		this.logger.log(
+			`User ${user.id} is no longer a member of stored organization ${storedOrganizationId}; ` +
+				`using ${organizationId ?? 'no organization'} instead`
+		);
+
+		user.lastOrganizationId = organizationId;
+		try {
+			await this.userService.replaceStaleLastOrganization(user.id, storedOrganizationId, organizationId);
+		} catch (error) {
+			// The token is still scoped correctly; the next sign-in finds the stale value again and retries.
+			this.logger.warn(`Could not replace the stale organization of user ${user.id}: ${error?.message}`);
+		}
+		return organizationId;
 	}
 
 	/**
@@ -2096,9 +2147,10 @@ export class AuthService extends SocialAuthService {
 			// If no user is found, return null
 			if (!user) return null;
 
-			// Extract organizationId from the current token (refresh token context)
-			// This ensures the new access token maintains the organization context
-			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+			// The organization the user works in (`RequestContext.currentOrganizationId()` reads the same stored
+			// value), so the new access token keeps the organization context. It counts only while the user is
+			// still a member of it; a stale one is replaced (see `resolveStoredOrganizationId`).
+			const organizationId = await this.resolveStoredOrganizationId(user);
 
 			// Get and return the JWT access token for the user with organization context
 			const [access_token, refresh_token] = await Promise.all([
@@ -2140,9 +2192,10 @@ export class AuthService extends SocialAuthService {
 			// If no user is found, return null
 			if (!user) return null;
 
-			// Extract organizationId from the current token (refresh token context)
-			// This ensures the new access token maintains the organization context
-			const organizationId = RequestContext.currentOrganizationId() || user.lastOrganizationId;
+			// The organization the user works in (`RequestContext.currentOrganizationId()` reads the same stored
+			// value), so the new access token keeps the organization context. It counts only while the user is
+			// still a member of it; a stale one is replaced (see `resolveStoredOrganizationId`).
+			const organizationId = await this.resolveStoredOrganizationId(user);
 
 			// Get and return the JWT access token for the user with organization context
 			// Generate the access token first (non-destructive). Only rotate the refresh token after
@@ -2501,21 +2554,31 @@ export class AuthService extends SocialAuthService {
 			// enforces) before it may scope the token — otherwise any workspace-token holder
 			// could mint a token claiming a sibling organization of the tenant. An unbacked
 			// hint (e.g. a stale client cache after the membership was revoked) falls back to
-			// the persisted values instead of failing the whole signin.
-			let organizationId = user.lastOrganizationId ?? employee?.organizationId;
-			if (
-				lastOrganizationId &&
-				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId))
-			) {
+			// the persisted values instead of failing the whole signin. The persisted organization is held to
+			// the same membership rule: a stale one is replaced (see `resolveStoredOrganizationId`).
+			const storedOrganizationId = user.lastOrganizationId || null;
+			const requested =
+				!!lastOrganizationId &&
+				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId));
+			let organizationId: ID | null;
+			if (requested) {
 				organizationId = lastOrganizationId;
+			} else {
+				organizationId = (await this.resolveStoredOrganizationId(user)) ?? employee?.organizationId;
 			}
 
 			// Same backfill as `login()`: a non-employee user with no persisted preference gets
 			// their first active organization membership so the token carries a usable scope.
-			// `setLastOrganizationAndTeam` below persists whatever is resolved here.
 			if (!organizationId) {
 				organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
 			}
+
+			// The organization `setLastOrganizationAndTeam` below persists: the requested one, or the one resolved for
+			// a user with nothing stored. A stored organization is not written again: a valid one is already there,
+			// and a stale one was already replaced by `resolveStoredOrganizationId` with a write conditional on the
+			// stale value, which a second, unconditional write here would undo when another request switched the
+			// user's organization in the meantime.
+			const organizationToStore = requested || !storedOrganizationId ? organizationId : undefined;
 
 			// Generate access and refresh tokens concurrently
 			const [accessToken, refreshToken] = await Promise.all([
@@ -2530,7 +2593,7 @@ export class AuthService extends SocialAuthService {
 
 				// Persist the resolved organization/team preference so the DB stays
 				// in sync with whatever value was embedded in the tokens above.
-				this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId)
+				this.userService.setLastOrganizationAndTeam(user.id, organizationToStore, lastTeamId)
 			]);
 
 			return {
@@ -2970,8 +3033,10 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
-			// Determine organization context for tokens
-			const organizationId = employee?.organizationId || user.lastOrganizationId;
+			// Determine organization context for tokens. The stored organization counts only while the user is
+			// still a member of it in the target workspace; a stale one is replaced (see
+			// `resolveStoredOrganizationId`).
+			const organizationId = employee?.organizationId || (await this.resolveStoredOrganizationId(user, tenantId));
 
 			// Generate new access and refresh tokens for the target workspace
 			const [access_token, refresh_token] = await Promise.all([

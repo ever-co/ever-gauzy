@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
-import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, In, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IEquipmentSharing,
@@ -25,12 +25,15 @@ import { TypeOrmRequestApprovalRepository } from './../request-approval/reposito
 import { bumpVersion, parseEntityVersion } from '../concurrency/version.util';
 import { ApiException } from '../core/errors/api-exception';
 import {
+	assertMembersAreInScope,
 	assertReferencesAreInScope,
 	IReferenceScope,
 	ISharingColumns,
+	ISharingMembers,
 	ISharingReferences,
 	IStoredSharing,
 	sharingAsStored,
+	sharingMemberReferences,
 	sharingReferences,
 	withReferencesAsIds
 } from './reference-scope.helper';
@@ -94,16 +97,27 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * related object (`equipmentSharingPolicy: { id }`), which the ORM persists as the foreign key just the same —
 	 * see `sharingReferences`.
 	 *
+	 * The employees and the teams the sharing is handed to (`employees`, `teams`, each entry a related object or a
+	 * bare id) are held to the same scope: the CRUD base checks the nested rows against the tenant only, so a body
+	 * could list another organization's employees or teams of the same tenant — see `sharingMemberReferences`. A
+	 * sharing may list many, so each table is read once, with all of its ids (`assertMembersAreInScope`).
+	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
-	 * @throws ForbiddenException when a referenced row is outside the scope.
+	 * @throws ForbiddenException when a referenced row or a listed member is outside the scope.
 	 */
 	public async assertReferencesAreInScope(
-		input: Partial<IEquipmentSharingUpdateInput> | ISharingReferences,
+		input: Partial<IEquipmentSharingUpdateInput> | (ISharingReferences & ISharingMembers),
 		scope: IReferenceScope
 	): Promise<void> {
 		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
 			this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		);
+		await assertMembersAreInScope(sharingMemberReferences(input), scope, (table, ids, criteria) =>
+			this.typeOrmRepository.manager.find(table, {
+				where: { ...criteria, id: In(ids) } as any,
+				select: { id: true } as any
+			})
 		);
 	}
 
@@ -184,11 +198,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		input: ISharingReferences & { id?: unknown; version?: unknown }
 	): Promise<{ payload: ISharingColumns & { id?: unknown }; stored: IStoredSharingRow | null }> {
 		const tenantId = RequestContext.currentTenantId();
-		const { version: _version, ...body } = (input ?? {}) as ISharingReferences & {
-			id?: unknown;
-			version?: unknown;
-		};
-		const values: ISharingColumns & { id?: unknown } = withReferencesAsIds(body);
+		type Body = ISharingReferences & ISharingMembers & { id?: unknown; version?: unknown };
+		const { version: _version, ...body } = (input ?? {}) as Body;
+		const values: ISharingColumns & ISharingMembers & { id?: unknown } = withReferencesAsIds(body);
 		const stored = await this.findStoredSharing(values.id, tenantId);
 		const {
 			values: payload,
@@ -196,7 +208,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			organizationId
 		} = sharingAsStored(values, stored, RequestContext.currentOrganizationId());
 
-		await this.assertReferencesAreInScope(references, { tenantId, organizationId });
+		// The employees and the teams the body lists are stored with the row too, so they are checked in the same
+		// organization as its equipment and its policy.
+		await this.assertReferencesAreInScope(
+			{ ...references, employees: values.employees, teams: values.teams },
+			{ tenantId, organizationId }
+		);
 		return { payload, stored };
 	}
 

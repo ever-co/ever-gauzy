@@ -112,6 +112,20 @@ describe('EquipmentSharingUpdateHandler — the rows an edit points at', () => {
 		expect(row['organizationId']).toBe('org-1');
 	});
 
+	it('hands the employees and the teams the body lists to the scope check, in the stored row’s scope', async () => {
+		const { handler, sharingService } = setUp();
+		const employees = [{ id: 'employee-1' }, 'employee-2'];
+		const teams = [{ id: 'team-1' }];
+
+		await handler.execute(edit({ employees, teams }));
+
+		// The service holds each listed member to that organization (see reference-scope.helper.spec.ts).
+		expect(sharingService.assertReferencesAreInScope).toHaveBeenCalledWith(
+			expect.objectContaining({ employees, teams }),
+			{ tenantId: 'tenant-a', organizationId: 'org-1' }
+		);
+	});
+
 	it('still edits a sharing whose body names its rows by column only', async () => {
 		const { handler, sharingService } = setUp();
 

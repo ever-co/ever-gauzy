@@ -88,7 +88,11 @@ function buildAuthService() {
 		find: jest.fn(async ({ where }) => USERS.filter((row) => row.email === where.email)),
 		setCurrentRefreshToken: jest.fn(async () => undefined),
 		setUserLastLoginTimestamp: jest.fn(async () => undefined),
-		setLastOrganizationAndTeam: jest.fn(async () => undefined)
+		setLastOrganizationAndTeam: jest.fn(async () => undefined),
+		// Every stored organization of these fixtures is still a membership (stale ones have their own spec).
+		hasActiveOrganizationMembership: jest.fn(async () => true),
+		findFirstActiveOrganizationId: jest.fn(async () => null),
+		replaceStaleLastOrganization: jest.fn(async () => undefined)
 	};
 	const rotateRefreshToken = jest.fn(async (_token: string, refreshed: { id: string }) => `rotated-${refreshed.id}`);
 
