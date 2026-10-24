@@ -43,7 +43,10 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 
 	@Output() organizationChange: EventEmitter<IOrganization>;
 
-	/** True while the API is asked to switch organization; the selector is disabled meanwhile. */
+	/**
+	 * True while a pick is being switched to (the API, the Electron main process and the time tracker's reload); the
+	 * selector is disabled meanwhile, and `OrganizationSwitchService.isSwitching` keeps the timer from starting.
+	 */
 	public switching = false;
 
 	constructor(

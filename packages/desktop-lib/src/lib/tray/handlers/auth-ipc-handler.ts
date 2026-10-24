@@ -1,5 +1,5 @@
 import { RegisteredWindow } from '@gauzy/desktop-core';
-import { BrowserWindow, ipcMain, Menu } from 'electron';
+import { BrowserWindow, ipcMain, Menu, WebContents } from 'electron';
 import { AppWindowManager } from '../../app-window-manager';
 import { AuthenticationHandler } from '../auth/authentication-handler';
 import { IConfigStore, IWindowService } from '../interfaces';
@@ -25,7 +25,7 @@ export class AuthIPCHandler {
 	private setupAuthSuccessHandler(): void {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 
-		ipcMain.on('auth_success', async (event, arg) => {
+		const handleAuthSuccess = async (sender: WebContents, arg: any): Promise<void> => {
 			console.log('Auth Success');
 			await this.authHandler.handleAuthSuccess(arg);
 
@@ -40,8 +40,16 @@ export class AuthIPCHandler {
 				timeTrackerWindow.webContents.send('gauzy_auth_success', arg);
 			}
 
-			event.sender.send('refresh_menu');
-		});
+			sender.send('refresh_menu');
+		};
+
+		// Sign-in: fire and forget.
+		ipcMain.on('auth_success', (event, arg) => handleAuthSuccess(event.sender, arg));
+
+		// The same, answered once the user, tokens, organization and employee are saved: an organization switch in the
+		// timer waits for it, so the timer reload that follows reads the account switched to, not the one left.
+		ipcMain.removeHandler('AUTH_SUCCESS_SAVE');
+		ipcMain.handle('AUTH_SUCCESS_SAVE', (event, arg) => handleAuthSuccess(event.sender, arg));
 	}
 
 	private setupLogoutHandlers(): void {
@@ -125,6 +133,7 @@ export class AuthIPCHandler {
 
 	removeHandlers(): void {
 		ipcMain.removeAllListeners('auth_success');
+		ipcMain.removeHandler('AUTH_SUCCESS_SAVE');
 		ipcMain.removeAllListeners('logout');
 		ipcMain.removeHandler('FINAL_LOGOUT');
 	}

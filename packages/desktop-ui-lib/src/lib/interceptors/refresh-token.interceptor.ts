@@ -12,6 +12,7 @@ import { catchError, concatMap } from 'rxjs/operators';
 import { SessionExpiredHandler, TokenRefreshHandler } from '../auth';
 import { AUTH_ENDPOINTS } from '../constants';
 import { Store } from '../services';
+import { SKIP_TOKEN_REFRESH } from './skip-token-refresh.token';
 
 /**
  * HTTP interceptor that reacts to 401 Unauthorized responses.
@@ -19,7 +20,7 @@ import { Store } from '../services';
  * Behavior:
  * - For non-auth endpoints: Attempts token refresh and retries the request
  * - For auth endpoints: Triggers immediate logout (prevents infinite loops)
- * - Skips handling in offline mode or for non-401 errors
+ * - Skips handling in offline mode, for non-401 errors and for requests marked with `SKIP_TOKEN_REFRESH`
  */
 @Injectable()
 export class RefreshTokenInterceptor implements HttpInterceptor {
@@ -33,7 +34,7 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 				// Regular endpoint 401 → attempt token refresh
 				// Note: Token availability check moved to TokenRefreshExecutor
 				// to prevent race conditions with concurrent requests
-				return this.shouldSkipErrorHandling(error).pipe(
+				return this.shouldSkipErrorHandling(request, error).pipe(
 					take(1),
 					switchMap((skip) => {
 						if (skip) {
@@ -55,10 +56,14 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 	 * Guards that short-circuit error handling:
 	 * - Offline mode — no network, nothing to retry.
 	 * - Non-401 status — not an auth problem.
+	 * - `SKIP_TOKEN_REFRESH` on the request — its caller handles the 401 itself (no refresh, retry or logout).
 	 */
-	private shouldSkipErrorHandling(error: HttpErrorResponse): Observable<boolean> {
+	private shouldSkipErrorHandling(request: HttpRequest<any>, error: HttpErrorResponse): Observable<boolean> {
 		return this.store.isOffline$.pipe(
-			map((isOffline) => isOffline || error.status !== HttpStatusCode.Unauthorized)
+			map(
+				(isOffline) =>
+					isOffline || error.status !== HttpStatusCode.Unauthorized || request.context.get(SKIP_TOKEN_REFRESH)
+			)
 		);
 	}
 
