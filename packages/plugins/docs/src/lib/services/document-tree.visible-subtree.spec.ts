@@ -73,6 +73,20 @@ const buildRepository = (rows: any[]) => {
 			return { affected: softDeleted.length };
 		})
 	};
+	// A transaction writes through the same table, and a failed one puts back what it wrote.
+	repository.manager = {
+		transaction: jest.fn(async (work: (manager: any) => Promise<unknown>) => {
+			const before = rows.map((row) => ({ ...row }));
+			const deletedBefore = [...softDeleted];
+			try {
+				return await work({ getRepository: () => repository });
+			} catch (error) {
+				rows.forEach((row, position) => Object.assign(row, before[position]));
+				softDeleted.splice(0, softDeleted.length, ...deletedBefore);
+				throw error;
+			}
+		})
+	};
 	return repository;
 };
 
@@ -167,6 +181,22 @@ describe('DocumentTreeService — subtree operations reach only what the caller 
 		expect(row(repository, 'hidden').parentId).toBe('grandparent');
 		expect(row(repository, 'below-hidden').parentId).toBe('hidden');
 		expect(repository.softDeleted).not.toContain('hidden');
+	});
+
+	it('deletes nothing when moving a hidden descendant out fails, leaving none under a deleted folder', async () => {
+		// The delete and the move are one transaction: a move that failed after the delete left the hidden page live
+		// under a deleted folder, out of reach of every tree read, and a retry could not finish it.
+		const repository = tree();
+		const service = new DocumentTreeService(repository);
+		repository.update.mockRejectedValueOnce(new Error('connection lost'));
+
+		await expect(service.deleteDocument(row(repository, 'folder'), 'subtree', hiding('hidden'))).rejects.toThrow(
+			'connection lost'
+		);
+
+		expect(repository.manager.transaction).toHaveBeenCalledTimes(1);
+		expect(repository.softDeleted).toHaveLength(0);
+		expect(row(repository, 'hidden').parentId).toBe('folder');
 	});
 
 	it('refuses a hidden sibling in a reorder exactly as it refuses an id that is no sibling', async () => {

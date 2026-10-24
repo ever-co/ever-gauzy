@@ -95,6 +95,12 @@ const buildRepository = (rows: any[]) => {
 			return qb;
 		})
 	};
+	// A transaction writes through the same table.
+	repository.manager = {
+		transaction: jest.fn(async (work: (manager: any) => Promise<unknown>) =>
+			work({ getRepository: () => repository })
+		)
+	};
 	return repository;
 };
 
