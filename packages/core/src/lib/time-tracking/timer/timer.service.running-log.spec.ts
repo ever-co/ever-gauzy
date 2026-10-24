@@ -6,6 +6,8 @@ import { ITimeLog, ITimerStatus, ITimerStatusInput, ITimerToggleInput, TimeLogSo
 import { FindOperator } from 'typeorm';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { ScheduleTimeLogEntriesCommand } from '../time-log/commands/schedule-time-log-entries.command';
+import { ScheduleTimeLogEntriesHandler } from '../time-log/commands/handlers/schedule-time-log-entries.handler';
 import { TimerService } from './timer.service';
 
 /**
@@ -149,6 +151,71 @@ function createService(ormType: MultiORMEnum, rows: TimeLogRow[], organizationId
 	return { service, startTimer, stopTimer };
 }
 
+/** A time slot of a log, as the cleanup reads it. */
+interface TimeSlotRow {
+	startedAt: Date;
+	duration: number;
+}
+
+/**
+ * Wires the previous-timers cleanup as it runs: `stopPreviousRunningTimers` dispatches `ScheduleTimeLogEntriesCommand`
+ * to the real `ScheduleTimeLogEntriesHandler`, whose writes (either ORM) land on `rows`. Only its pending-log query
+ * (raw SQL on TypeORM, knex on MikroORM) is replaced, by the same predicate over `rows`: the employee's logs that
+ * run with a `stoppedAt`, or have none — each with the time slots `timeSlots` gives it.
+ *
+ * @returns The service's logger, whose `warn` reports a cleanup failure `stopPreviousRunningTimers` swallowed.
+ */
+function wireCleanup(
+	service: TimerService,
+	ormType: MultiORMEnum,
+	rows: TimeLogRow[],
+	timeSlots: Record<string, TimeSlotRow[]> = {}
+) {
+	const write = (partial: Partial<TimeLogRow> & { id: string }) => {
+		const row = rows.find((candidate) => candidate.id === partial.id);
+		if (!row) {
+			throw new Error(`No time log "${partial.id}"`);
+		}
+		return Object.assign(row, partial);
+	};
+
+	const handler: ScheduleTimeLogEntriesHandler = Object.assign(
+		Object.create(ScheduleTimeLogEntriesHandler.prototype),
+		{
+			ormType,
+			typeOrmTimeLogRepository: {
+				save: async (partial: Partial<TimeLogRow> & { id: string }) => write(partial)
+			},
+			mikroOrmTimeLogRepository: {
+				getEntityManager: () => ({
+					getReference: (_entityName: string, id: string) => ({ id }),
+					assign: (entity: object, partial: object) => Object.assign(entity, partial),
+					persistAndFlush: async (entity: Partial<TimeLogRow> & { id: string }) => {
+						write(entity);
+					}
+				})
+			},
+			getPendingTimeLogs: async (tenantId: string, organizationId: string, employeeId: string) =>
+				rows
+					.filter(
+						(row) =>
+							row.tenantId === tenantId &&
+							row.organizationId === organizationId &&
+							row.employeeId === employeeId &&
+							((row.stoppedAt !== null && row.isRunning) || row.stoppedAt === null)
+					)
+					.map((row) => ({ ...row, timeSlots: timeSlots[row.id] ?? [] }))
+		}
+	);
+
+	const logger = { debug: jest.fn(), warn: jest.fn() };
+	Object.assign(service, {
+		_commandBus: { execute: (command: ScheduleTimeLogEntriesCommand) => handler.execute(command) },
+		logger
+	});
+	return logger;
+}
+
 describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 	'TimerService running log with a null stoppedAt (%s)',
 	(ormType) => {
@@ -243,6 +310,84 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 			const logs = await (service as any).getLastRunningLogs();
 
 			expect(logs.map((log: ITimeLog) => log.id)).toEqual(['running-without-stopped-at']);
+		});
+
+		describe('the previous-timers cleanup, run through ScheduleTimeLogEntriesHandler', () => {
+			/** Runs the cleanup that precedes a new timer, over `rows`. */
+			const cleanUp = async (rows: TimeLogRow[], timeSlots: Record<string, TimeSlotRow[]> = {}) => {
+				const { service } = setup(rows);
+				const logger = wireCleanup(service, ormType, rows, timeSlots);
+				jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+				await service.stopPreviousRunningTimers(EMPLOYEE_ID, fixture.organizationId, fixture.tenantId);
+
+				expect(logger.warn).not.toHaveBeenCalled();
+			};
+
+			it('stops a log started minutes ago with no time slot, ending it where it started', async () => {
+				const recent = timeLog({
+					id: 'recent-without-stopped-at',
+					isRunning: true,
+					startedAt: new Date('2026-10-24T01:55:00.000Z'),
+					stoppedAt: null
+				});
+				const rows = [recent];
+
+				await cleanUp(rows);
+
+				// Not left stopped with a null end, whose loaded duration would run up to now.
+				expect(rows[0]).toMatchObject({
+					isRunning: false,
+					stoppedAt: new Date('2026-10-24T01:55:00.000Z')
+				});
+			});
+
+			it('ends a log with recent time slots where its time slots end', async () => {
+				const recentWithSlot = timeLog({
+					id: 'recent-with-slot',
+					isRunning: true,
+					startedAt: new Date('2026-10-24T01:50:00.000Z'),
+					stoppedAt: null
+				});
+				const rows = [recentWithSlot];
+
+				await cleanUp(rows, {
+					'recent-with-slot': [{ startedAt: new Date('2026-10-24T01:50:00.000Z'), duration: 300 }]
+				});
+
+				expect(rows[0]).toMatchObject({
+					isRunning: false,
+					stoppedAt: new Date('2026-10-24T01:55:00.000Z')
+				});
+			});
+
+			it('keeps the ten-second end it gives a log started over ten minutes ago with no time slot', async () => {
+				const rows = [runningWithoutStoppedAt()];
+
+				await cleanUp(rows);
+
+				expect(rows[0]).toMatchObject({
+					isRunning: false,
+					stoppedAt: new Date('2026-10-24T01:00:10.000Z')
+				});
+			});
+
+			it('keeps the stoppedAt of a running log written by the timer', async () => {
+				const runningFromTimer = timeLog({
+					id: 'running-from-timer',
+					isRunning: true,
+					startedAt: new Date('2026-10-24T01:55:00.000Z'),
+					stoppedAt: new Date('2026-10-24T01:58:00.000Z')
+				});
+				const rows = [runningFromTimer];
+
+				await cleanUp(rows);
+
+				expect(rows[0]).toMatchObject({
+					isRunning: false,
+					stoppedAt: new Date('2026-10-24T01:58:00.000Z')
+				});
+			});
 		});
 
 		it('keeps reading a running log written by the timer, with its stoppedAt', async () => {
