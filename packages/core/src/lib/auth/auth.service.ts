@@ -196,6 +196,7 @@ export class AuthService extends SocialAuthService {
 		redirectUri: string;
 		scope: string;
 		exp: number;
+		organizationId?: string | null;
 	} {
 		const [version, payloadB64, sig] = code.split('.');
 		if (version !== 'v1' || !payloadB64 || !sig) {
@@ -217,6 +218,7 @@ export class AuthService extends SocialAuthService {
 			redirectUri: string;
 			scope: string;
 			exp: number;
+			organizationId?: string | null;
 		};
 		try {
 			const payloadJson = Buffer.from(payloadB64, 'base64url').toString();
@@ -226,6 +228,9 @@ export class AuthService extends SocialAuthService {
 		}
 
 		if (!payload.jti || !payload.userId || !payload.tenantId || !payload.clientId || !payload.redirectUri) {
+			throw new UnauthorizedException('Invalid authorization code payload');
+		}
+		if (payload.organizationId != null && typeof payload.organizationId !== 'string') {
 			throw new UnauthorizedException('Invalid authorization code payload');
 		}
 
@@ -350,6 +355,21 @@ export class AuthService extends SocialAuthService {
 			}
 		}
 
+		// The organization the access token will be scoped to: the one the approving session works in. Without it the
+		// exchange minted the token for whichever employee record of the user the database returned first, so a member
+		// of two organizations got an app (Zapier, Activepieces...) pinned to an arbitrary one of them, and the
+		// organization boundary then confined the app there. It is checked like `switchOrganization` checks a target:
+		// an active, non-archived membership of the user, in the user's tenant.
+		const organizationId = request.organizationId || null;
+		if (
+			organizationId &&
+			!(await this.hasActiveOrganizationMembership(request.userId, organizationId, request.tenantId))
+		) {
+			throw new ForbiddenException(
+				'Not a member of your current organization: switch to one of yours and approve again'
+			);
+		}
+
 		const now = Math.floor(Date.now() / 1000);
 		const jti = randomBytes(32).toString('base64url');
 		const exp = now + AuthService.OAUTH_CODE_TTL_MS / 1000;
@@ -359,6 +379,7 @@ export class AuthService extends SocialAuthService {
 			jti,
 			userId: request.userId,
 			tenantId: request.tenantId,
+			organizationId,
 			clientId: request.clientId,
 			redirectUri: request.redirectUri,
 			scope,
@@ -447,10 +468,25 @@ export class AuthService extends SocialAuthService {
 			throw new UnauthorizedException('Authorization code already used');
 		}
 
-		const accessToken = await this.getJwtAccessToken({
-			id: payload.userId,
-			tenantId: payload.tenantId
-		});
+		// Mint the token for the organization the user approved the app in, with the user's employee record of that
+		// organization (`getJwtAccessToken` looks it up there). A code issued before the organization was recorded
+		// carries none and keeps the old behaviour. The membership is checked again because it may have been revoked
+		// since the approval: a token naming it would be refused by `JwtStrategy` on every request anyway.
+		const organizationId = payload.organizationId || undefined;
+		if (
+			organizationId &&
+			!(await this.hasActiveOrganizationMembership(payload.userId, organizationId, payload.tenantId))
+		) {
+			throw new UnauthorizedException('Authorization code is no longer valid');
+		}
+
+		const accessToken = await this.getJwtAccessToken(
+			{
+				id: payload.userId,
+				tenantId: payload.tenantId
+			},
+			organizationId
+		);
 
 		// Per-client `accessTokenTtl` is configured on the registry row but
 		// `getJwtAccessToken` currently always signs with the global
@@ -460,7 +496,8 @@ export class AuthService extends SocialAuthService {
 		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
 
 		this.logger.log(
-			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`
+			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, ` +
+				`organizationId=${organizationId ?? 'none'}, expiresIn=${expiresIn}s`
 		);
 
 		return {

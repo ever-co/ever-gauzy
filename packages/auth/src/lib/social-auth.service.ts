@@ -39,6 +39,12 @@ export interface OAuthAppPendingRequest {
 export interface OAuthAppAuthorizationRequest {
 	userId: string;
 	tenantId: string;
+	/**
+	 * The organization the approving session works in (the organization of the user's access token, which
+	 * `JwtStrategy` has checked against the user's memberships). The access token the app receives is scoped to it.
+	 * `null` when the session has none: the token is then minted as before, for the user's first employee record.
+	 */
+	organizationId?: string | null;
 	clientId: string;
 	redirectUri: string;
 	scope?: string;
