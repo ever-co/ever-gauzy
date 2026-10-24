@@ -710,15 +710,13 @@
 		"**/verdaccio/compression": "^1.8.2",
 		"**/@verdaccio/hooks/handlebars": "^4.7.10",
 		"**/zapier-platform-core/form-data": "^4.0.6",
-		"**/request/form-data": "^2.5.6",
-		"**/request/qs": "^6.16.0",
 		"**/node-upwork/qs": "^6.16.0",
 		"**/@angular/cli/zod": "^4.6.7",
 		"**/@angular/build/vite": "^8.3.5",
 		"**/@nestjs/graphql/@graphql-tools/utils": "^12.1.0",
-		"**/nedb/underscore": "^1.13.8",
-		"**/binary-search-tree/underscore": "^1.13.8",
-		"**/xtraverse/xmldom": "npm:@xmldom/xmldom@^0.8.15"
+		"**/xtraverse/xmldom": "npm:@xmldom/xmldom@^0.8.15",
+		"**/embedded-queue/nedb": "npm:@seald-io/nedb@^4.1.2",
+		"**/@upwork/node-upwork-oauth2/request": "npm:@cypress/request@^4.0.1"
 	},
 	"dependencies": {
 		"@angular/animations": "22.2.2",
