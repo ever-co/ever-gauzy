@@ -6,6 +6,7 @@
  */
 import '../core/entities/internal';
 
+import * as dnsPromises from 'node:dns/promises';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExecutionContext, NotFoundException } from '@nestjs/common';
@@ -1111,14 +1112,23 @@ describe('WebhookResolver — one resource, two protocols, the same operations',
 
 describe('WebhookResolver — the streamed facts are produced by the services both protocols call', () => {
 	let tenant: jest.SpyInstance;
+	/** The installation's private-network switch, set aside so the endpoint policy runs as it does by default. */
+	let allowPrivateNetwork: string | undefined;
 
 	beforeEach(() => {
 		tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		allowPrivateNetwork = process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK;
+		delete process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK;
 	});
 
 	afterEach(() => {
 		tenant.mockRestore();
 		jest.restoreAllMocks();
+		if (allowPrivateNetwork === undefined) {
+			delete process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK;
+		} else {
+			process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = allowPrivateNetwork;
+		}
 	});
 
 	/**
@@ -1196,8 +1206,18 @@ describe('WebhookResolver — the streamed facts are produced by the services bo
 		jest
 			.spyOn(WebhookTransport.prototype, 'post')
 			.mockResolvedValue({ ok: false, status: 500, body: 'upstream down', truncated: false });
+		// Nothing leaves the process, the endpoint's own lookup included. Before it posts, an attempt resolves the
+		// endpoint's host for the rebinding check (`refusalForResolvedEndpoint`), and `receiver.example.test` is a
+		// name no resolver knows: a real lookup lasts as long as the machine's resolver takes to say so, which on a
+		// runner whose DNS is slow or unreachable is longer than the 5 s a test may take, and the test timed out
+		// there. The lookup answers a public address instead, so the policy still runs and lets the attempt through.
+		const lookup = jest
+			.spyOn(dnsPromises, 'lookup')
+			.mockResolvedValue([{ address: '93.184.215.14', family: 4 }] as never);
 
 		await deliveries.deliver(DELIVERY);
+
+		expect(lookup).toHaveBeenCalledWith('receiver.example.test', expect.objectContaining({ all: true }));
 
 		const message = await first(stream);
 
