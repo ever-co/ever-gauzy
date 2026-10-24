@@ -38,12 +38,31 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	/**
 	 * Creates a new mention entity in the database.
 	 *
+	 * An `id` in the body (`POST /mentions` is the CRUD base's create, which saves with it) makes this a change of that
+	 * mention, so it is held to the rule `update` is held to ({@link assertCallerMayChange}) and keeps its author. The
+	 * CRUD base holds a caller to their own employee's rows only without `CHANGE_SELECTED_EMPLOYEE`: a holder of it, or
+	 * a caller with no employee record, could otherwise rewrite another member's mention and file it as their own.
+	 *
 	 * @param {IMentionCreateInput} input - The data required to create a new mention entity.
 	 * @returns {Promise<IMention>} A promise that resolves to the newly created mention entity.
 	 * @throws {BadRequestException} If an error occurs during the creation process,
 	 *   a `BadRequestException` is thrown with a descriptive message and the original error.
+	 * @throws {NotFoundException} When the body names a mention that is not in the caller's tenant.
+	 * @throws {ForbiddenException} When the body names a mention the caller neither wrote nor administers.
 	 */
 	async create(input: IMentionCreateInput): Promise<IMention> {
+		// Read for everyone, tenant administrators included: an id that names nothing is a 404, and the row's author is
+		// kept below. Outside the try, so the refusal is not answered as a 400.
+		const existingId = (input as IMentionCreateInput & { id?: ID })?.id;
+		const existing = existingId ? await this.findOneByIdString(existingId) : null;
+		if (existing) {
+			assertCallerIsAuthorOrTenantAdmin(
+				{ userId: existing.createdByUserId, employeeId: existing.employeeId },
+				'a mention'
+			);
+			input = withoutAuthorChange(input, ['employeeId', 'employee']);
+		}
+
 		try {
 			// Retrieve currently logged-in user
 			const user = RequestContext.currentUser();
@@ -62,12 +81,13 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			} = input;
 
 			// Create the mention entry using the provided input along with the tenantId and mentionedEmployeeId.
+			// A change of an existing mention keeps the employee who wrote it.
 			const mention = await super.create({
 				...input,
 				mentionedEmployeeId,
 				organizationId,
 				tenantId,
-				employeeId: user.employeeId
+				employeeId: existing ? existing.employeeId : user.employeeId
 			});
 
 			// Subscribe the mentioned employee to the entity they were mentioned in

@@ -33,6 +33,7 @@ describe('MentionService — only the author or a tenant administrator changes a
 
 	let service: MentionService;
 	let writes: Record<'update' | 'delete' | 'softRemove' | 'softRecover', jest.SpyInstance>;
+	let baseCreate: jest.SpyInstance;
 
 	/** Signs a user in, the way a request does: tenant, employee, permissions, and the role they hold now. */
 	const signIn = (user: Partial<IUser>, role: RolesEnum, permissions: PermissionsEnum[] = []) => {
@@ -73,8 +74,16 @@ describe('MentionService — only the author or a tenant administrator changes a
 			createdByUserId: 'foreign-user'
 		} as Mention);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		service = new MentionService(repository as any, {} as any, {} as any, {} as any);
+		service = new MentionService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			repository as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ publish: jest.fn() } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ publishNotificationEvent: jest.fn() } as any
+		);
 
 		writes = {
 			update: jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({ affected: 1 } as never),
@@ -82,6 +91,9 @@ describe('MentionService — only the author or a tenant administrator changes a
 			softRemove: jest.spyOn(TenantAwareCrudService.prototype, 'softRemove').mockResolvedValue({} as never),
 			softRecover: jest.spyOn(TenantAwareCrudService.prototype, 'softRecover').mockResolvedValue({} as never)
 		};
+		baseCreate = jest
+			.spyOn(TenantAwareCrudService.prototype, 'create')
+			.mockImplementation(async (entity) => entity as never);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -127,6 +139,54 @@ describe('MentionService — only the author or a tenant administrator changes a
 
 		await expect(service.softRemove(FOREIGN_MENTION)).rejects.toBeInstanceOf(NotFoundException);
 		expect(writes.softRemove).not.toHaveBeenCalled();
+	});
+
+	/** `POST /mentions` with the id of an existing mention: the CRUD base's create saves over that row. */
+	const createOver = (id: string) =>
+		service.create({ id, entity: 'Comment', entityId: 'comment-1', mentionedEmployeeId: 'mentioned' } as never);
+
+	it.each<[string, Partial<IUser>, RolesEnum, PermissionsEnum[]]>([
+		[
+			'another member who may act for selected employees',
+			OTHER_MEMBER,
+			RolesEnum.MANAGER,
+			[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]
+		],
+		['a member with no employee record', NO_EMPLOYEE, RolesEnum.VIEWER, []]
+	])('refuses a create that names the mention for %s, and writes nothing', async (_who, user, role, permissions) => {
+		// A holder of CHANGE_SELECTED_EMPLOYEE, or a caller with no employee record, is not held to their own
+		// employee's rows by the CRUD base.
+		signIn(user, role, permissions);
+
+		await expect(createOver(MENTION)).rejects.toBeInstanceOf(ForbiddenException);
+		expect(baseCreate).not.toHaveBeenCalled();
+	});
+
+	it('lets the author change their mention through a create, and keeps them as its author', async () => {
+		signIn(AUTHOR, RolesEnum.EMPLOYEE);
+
+		await createOver(MENTION);
+
+		expect(baseCreate).toHaveBeenCalledWith(
+			expect.objectContaining({ id: MENTION, employeeId: AUTHOR.employeeId })
+		);
+	});
+
+	it('lets a tenant administrator change anyone’s mention through a create, keeping its author', async () => {
+		signIn(ADMIN, RolesEnum.ADMIN, [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
+
+		await createOver(MENTION);
+
+		expect(baseCreate).toHaveBeenCalledWith(
+			expect.objectContaining({ id: MENTION, employeeId: AUTHOR.employeeId })
+		);
+	});
+
+	it('answers a create that names a mention of another tenant with 404, and writes nothing', async () => {
+		signIn(ADMIN, RolesEnum.ADMIN, [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
+
+		await expect(createOver(FOREIGN_MENTION)).rejects.toBeInstanceOf(NotFoundException);
+		expect(baseCreate).not.toHaveBeenCalled();
 	});
 
 	it('keeps an author from saying through an edit that someone else wrote the mention', async () => {
