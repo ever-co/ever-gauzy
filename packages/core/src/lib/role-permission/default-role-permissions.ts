@@ -1109,6 +1109,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			 */
 			PermissionsEnum.ORG_TASK_SETTING,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
 			/** Inbox Permissions Start */

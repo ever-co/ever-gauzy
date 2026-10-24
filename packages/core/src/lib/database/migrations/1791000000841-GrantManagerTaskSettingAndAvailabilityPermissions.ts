@@ -10,14 +10,15 @@ import { replacePlaceholders } from '../../core/utils';
 export const MANAGER_TASK_SETTING_AND_AVAILABILITY_GRANTS: readonly PermissionsEnum[] = [
 	PermissionsEnum.ORG_TASK_SETTING,
 	PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+	PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 	PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
 	PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
 ];
 export const MANAGER_TASK_SETTING_AND_AVAILABILITY_ROLES: readonly RolesEnum[] = [RolesEnum.MANAGER];
 
 /**
- * Grants `ORG_TASK_SETTING`, `EMPLOYEE_AVAILABILITY_CREATE`, `EMPLOYEE_AVAILABILITY_UPDATE` and
- * `EMPLOYEE_AVAILABILITY_DELETE` to the `MANAGER` role of every tenant.
+ * Grants `ORG_TASK_SETTING` and `EMPLOYEE_AVAILABILITY_CREATE`, `_READ`, `_UPDATE` and `_DELETE` to the `MANAGER`
+ * role of every tenant (the owner's answer names `EMPLOYEE_AVAILABILITY_*`, so the read comes with the writes).
  *
  * The task-setting writes (ever-co/ever-gauzy#11329) and the availability-slot, appointment and appointment-invitation
  * writes (ever-co/ever-gauzy#11321) wrote with no permission at all (GHSA-v79w-54p2-wmh5) and now state these grants.

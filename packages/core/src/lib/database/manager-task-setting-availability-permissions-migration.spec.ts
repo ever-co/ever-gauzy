@@ -39,6 +39,7 @@ function currentSqliteRolePermissionSchema(): { table: string; indexes: string[]
 const GRANTS = [
 	'ORG_TASK_SETTING',
 	'EMPLOYEE_AVAILABILITY_CREATE',
+	'EMPLOYEE_AVAILABILITY_READ',
 	'EMPLOYEE_AVAILABILITY_UPDATE',
 	'EMPLOYEE_AVAILABILITY_DELETE'
 ];
@@ -89,8 +90,8 @@ const ROWS: Array<[number, string, string, string, number, string | null, string
 ];
 
 const GRANTS_SQL = `SELECT "tenantId", "roleId", "permission", "enabled" FROM "role_permission"
-	WHERE "permission" IN ('ORG_TASK_SETTING', 'EMPLOYEE_AVAILABILITY_CREATE', 'EMPLOYEE_AVAILABILITY_UPDATE',
-		'EMPLOYEE_AVAILABILITY_DELETE') AND "deletedAt" IS NULL`;
+	WHERE "permission" IN ('ORG_TASK_SETTING', 'EMPLOYEE_AVAILABILITY_CREATE', 'EMPLOYEE_AVAILABILITY_READ',
+		'EMPLOYEE_AVAILABILITY_UPDATE', 'EMPLOYEE_AVAILABILITY_DELETE') AND "deletedAt" IS NULL`;
 
 type GrantRow = { tenantId: string; roleId: string; permission: string; enabled: number };
 
@@ -106,10 +107,10 @@ describe('DEFAULT_ROLE_PERMISSIONS — a new tenant’s managers get the same fo
 		expect(manager.defaultEnabledPermissions).toEqual(expect.arrayContaining(GRANTS as PermissionsEnum[]));
 	});
 
-	it('leaves the availability read, which the manager never held, out', () => {
+	it('includes the availability read with the writes (the owner named EMPLOYEE_AVAILABILITY_*)', () => {
 		const manager = DEFAULT_ROLE_PERMISSIONS.find(({ role }) => role === 'MANAGER');
 
-		expect(manager.defaultEnabledPermissions).not.toContain(PermissionsEnum.EMPLOYEE_AVAILABILITY_READ);
+		expect(manager.defaultEnabledPermissions).toContain(PermissionsEnum.EMPLOYEE_AVAILABILITY_READ);
 	});
 
 	it('gives ORG_TASK_SETTING to SUPER_ADMIN, ADMIN and MANAGER, and to no other role', () => {
@@ -189,6 +190,7 @@ describe('GrantManagerTaskSettingAndAvailabilityPermissions1791000000841 — the
 				// row is switched on, the missing one inserted, the deleted one neither restored nor written again.
 				{ tenantId: TENANT_A, roleId: MANAGER_A, permission: 'ORG_TASK_SETTING', enabled: 0 },
 				{ tenantId: TENANT_A, roleId: MANAGER_A, permission: 'EMPLOYEE_AVAILABILITY_CREATE', enabled: 1 },
+				{ tenantId: TENANT_A, roleId: MANAGER_A, permission: 'EMPLOYEE_AVAILABILITY_READ', enabled: 1 },
 				{ tenantId: TENANT_A, roleId: MANAGER_A, permission: 'EMPLOYEE_AVAILABILITY_UPDATE', enabled: 1 },
 				// The other roles' rows, as they were
 				{ tenantId: TENANT_A, roleId: VIEWER_A, permission: 'ORG_TASK_SETTING', enabled: 0 },
@@ -270,12 +272,14 @@ describe('GrantManagerTaskSettingAndAvailabilityPermissions1791000000841 — the
 
 			expect(of(MANAGER_A)).toEqual([
 				['EMPLOYEE_AVAILABILITY_CREATE', 1],
+				['EMPLOYEE_AVAILABILITY_READ', 1],
 				['EMPLOYEE_AVAILABILITY_UPDATE', 1],
 				['ORG_TASK_SETTING', 0]
 			]);
 			expect(of(MANAGER_B)).toEqual([
 				['EMPLOYEE_AVAILABILITY_CREATE', 1],
 				['EMPLOYEE_AVAILABILITY_DELETE', 1],
+				['EMPLOYEE_AVAILABILITY_READ', 1],
 				['EMPLOYEE_AVAILABILITY_UPDATE', 1],
 				['ORG_TASK_SETTING', 1]
 			]);
