@@ -249,7 +249,11 @@ export const environment: IEnvironment = {
 	},
 
 	activepieces: {
-		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
+		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY,
+		signingKeyId: process.env.GAUZY_ACTIVEPIECES_SIGNING_KEY_ID,
+		signingPrivateKey: process.env.GAUZY_ACTIVEPIECES_SIGNING_PRIVATE_KEY,
+		tenantProjectsEnabled: process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS !== 'false',
+		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX
 	},
 
 	sim: {
