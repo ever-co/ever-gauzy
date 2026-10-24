@@ -36,11 +36,11 @@ import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
-import { ImportRecordFindOrFailCommand } from '../import-record';
+import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 
 const TENANT = 'a0000000-0000-4000-8000-00000000000a';
 
@@ -108,9 +108,10 @@ function buildService(importRecords: Record<string, string> = {}, stored: Record
 	const typeOrmRolePermissionRepository = {
 		findOne: jest.fn(async ({ where }: { where: { id: string } }) => stored[where.id] ?? null)
 	};
+	const table = rolePermissionTable();
 	const repositoriesService: any = {
 		baseEntityRelationFields: [],
-		buildRepositoriesRelationsGraph: jest.fn(async () => [rolePermissionTable()]),
+		buildRepositoriesRelationsGraph: jest.fn(async () => [table]),
 		typeOrmRoleRepository,
 		typeOrmRolePermissionRepository
 	};
@@ -125,7 +126,13 @@ function buildService(importRecords: Record<string, string> = {}, stored: Record
 				const [, where, row, sourceId] = (command as unknown as { args: any[] }).args;
 				return { sourceId, where, row };
 			});
-	return { service, written, typeOrmRolePermissionRepository };
+	/** The import records written: the archive id of each row and the row it was mapped to. */
+	const mapped = () =>
+		execute.mock.calls
+			.map(([command]) => command)
+			.filter((command) => command instanceof ImportRecordUpdateOrCreateCommand)
+			.map((command) => (command as unknown as { input: { sourceId?: string; destinationId?: string } }).input);
+	return { service, written, mapped, typeOrmRolePermissionRepository, table };
 }
 
 /**
@@ -245,6 +252,69 @@ describe('ImportService — role permissions are imported under the role-permiss
 		);
 	});
 
+	it('drops the role and tenant relations of a row, so only the judged columns reach the save', async () => {
+		// The relations name the ADMIN role and another tenant; the judged columns name the custom role.
+		writeArchive(
+			[
+				'id,roleId,permission,enabled,role,tenant',
+				`src-held,src-role-custom,${PermissionsEnum.ORG_EMPLOYEES_VIEW},true,role-admin,tenant-other`
+			].join('\n') + '\n'
+		);
+		const { service, written } = buildService();
+
+		await service.parse(extractPath, false);
+
+		expect(written()).toHaveLength(1);
+		expect(written()[0].row).toEqual(
+			expect.objectContaining({ roleId: 'role-custom', permission: PermissionsEnum.ORG_EMPLOYEES_VIEW })
+		);
+		expect(written()[0].row).not.toHaveProperty('role');
+		expect(written()[0].row).not.toHaveProperty('tenant');
+	});
+
+	it('writes a row the archive gives no id, and maps only the rows that have one', async () => {
+		writeArchive(
+			[
+				'id,roleId,permission,enabled',
+				`,src-role-custom,${PermissionsEnum.ORG_EMPLOYEES_VIEW},true`,
+				`src-held,src-role-custom,${PermissionsEnum.ORG_EMPLOYEES_VIEW},false`
+			].join('\n') + '\n'
+		);
+		const { service, written, mapped } = buildService();
+
+		await service.parse(extractPath, false);
+
+		expect(written().map(({ sourceId }) => sourceId)).toEqual(['', 'src-held']);
+		// The mapping's source id is a required column: a mapping without one failed the import after the save.
+		expect(mapped()).toEqual([expect.objectContaining({ sourceId: 'src-held', destinationId: 'created-row' })]);
+	});
+
+	it('skips a mapped row whose role this tenant does not map, instead of judging the stored role', async () => {
+		// The mapped role is null: judged on the stored custom role, the row reached a save that refuses a null role.
+		writeArchive(
+			[
+				'id,roleId,permission,enabled',
+				`src-x,src-role-elsewhere,${PermissionsEnum.ORG_EMPLOYEES_VIEW},false`
+			].join('\n') + '\n'
+		);
+		const { service, written } = buildService(
+			{ 'role_permission:src-x': 'row-of-custom' },
+			{
+				'row-of-custom': {
+					id: 'row-of-custom',
+					roleId: 'role-custom',
+					role: { id: 'role-custom', name: 'CUSTOM' },
+					permission: PermissionsEnum.ORG_EMPLOYEES_VIEW,
+					enabled: false
+				}
+			}
+		);
+
+		await service.parse(extractPath, false);
+
+		expect(written()).toEqual([]);
+	});
+
 	it('writes no role permission for an ADMIN who may not change role permissions', async () => {
 		mockCaller.permissions = [PermissionsEnum.IMPORT_ADD, PermissionsEnum.ORG_EMPLOYEES_VIEW];
 		const { service, written } = buildService();
@@ -283,5 +353,42 @@ describe('ImportService — role permissions are imported under the role-permiss
 			'src-super',
 			'src-unmapped'
 		]);
+	});
+
+	describe('a clean import', () => {
+		// The clean-up deletes the tenant's role permissions, the SUPER_ADMIN and ADMIN roles' included, and the rule
+		// above lets only a SUPER_ADMIN write those back: an ADMIN's clean restore left both roles without any.
+		it("refuses an ADMIN's clean import of role permissions before anything is deleted", async () => {
+			const { service, written, table } = buildService();
+
+			await expect(service.parse(extractPath, true)).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(table.repository.query).not.toHaveBeenCalled();
+			expect(written()).toEqual([]);
+		});
+
+		it('refuses it for a header-only role_permission.csv, and for a role.csv, whose delete cascades', async () => {
+			writeArchive('id,roleId,permission,enabled\n');
+			await expect(buildService().service.parse(extractPath, true)).rejects.toBeInstanceOf(ForbiddenException);
+
+			fs.rmSync(path.join(extractPath, 'role_permission.csv'));
+			fs.writeFileSync(path.join(extractPath, 'role.csv'), 'id,name\nsrc-role-admin,ADMIN\n');
+			const { service, table } = buildService();
+			await expect(service.parse(extractPath, true)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(table.repository.query).not.toHaveBeenCalled();
+		});
+
+		it("cleans up and writes every row of a SUPER_ADMIN's clean import, as before", async () => {
+			mockCaller.role = RolesEnum.SUPER_ADMIN;
+			mockCaller.permissions = [PermissionsEnum.IMPORT_ADD];
+			const { service, written, table } = buildService();
+
+			await service.parse(extractPath, true);
+
+			expect(table.repository.query).toHaveBeenCalledWith(
+				`DELETE FROM "role_permission" WHERE "role_permission"."tenantId" = '${TENANT}'`
+			);
+			expect(written()).toHaveLength(6);
+		});
 	});
 });
