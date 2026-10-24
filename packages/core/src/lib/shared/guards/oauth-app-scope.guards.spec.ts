@@ -64,8 +64,8 @@ function actAs(user: unknown) {
 	store.set(RequestContext.name, new RequestContext({ req: { headers: {}, user } as any }));
 }
 
-/** The context a guard sees for a GET whose `tenant-id` header names the caller's tenant. */
-function contextFor(metadata: Record<string, unknown>): ExecutionContext {
+/** The context a guard sees for a request whose `tenant-id` header names the caller's tenant (a GET by default). */
+function contextFor(metadata: Record<string, unknown>, method = 'GET'): ExecutionContext {
 	const handler = function handler(): void {
 		return undefined;
 	};
@@ -74,7 +74,7 @@ function contextFor(metadata: Record<string, unknown>): ExecutionContext {
 		Reflect.defineMetadata(key, value, handler);
 	}
 	const request = {
-		method: 'GET',
+		method,
 		headers: { 'tenant-id': TENANT_ID },
 		rawHeaders: ['tenant-id', TENANT_ID],
 		query: {},
@@ -164,6 +164,21 @@ describe('OAuth-app tokens at the guards (owner decision Q12)', () => {
 			expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
 		});
 
+		it('refuses a write to a token without a write scope, even on a route that also accepts a read permission', async () => {
+			// POST /timesheet/time-slot admits ALL_ORG_VIEW next to its write permissions.
+			const { permissionGuard, rolePermissionService } = build();
+			const declared = { [PERMISSIONS_METADATA]: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_EDIT] };
+			actAs(superAdmin(['zap']));
+
+			await expect(permissionGuard.canActivate(contextFor(declared, 'POST'))).resolves.toBe(false);
+			expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+
+			// CONTROL: the same token reads through the same declaration, and a write-scoped token writes.
+			await expect(permissionGuard.canActivate(contextFor(declared, 'GET'))).resolves.toBe(true);
+			actAs(superAdmin(['zap', 'zap:write']));
+			await expect(permissionGuard.canActivate(contextFor(declared, 'POST'))).resolves.toBe(true);
+		});
+
 		it('leaves a first-party session (and a legacy token without the claim) as it was', async () => {
 			const { permissionGuard } = build();
 			actAs(superAdmin());
@@ -216,6 +231,18 @@ describe('OAuth-app tokens at the guards (owner decision Q12)', () => {
 			actAs(superAdmin(['zap', 'zap:write']));
 			await expect(tenantPermissionGuard.canActivate(context)).resolves.toBe(false);
 			expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+		});
+
+		it('refuses a write to a token without a write scope, even on a route that declares no permission', async () => {
+			const { tenantPermissionGuard } = build();
+			actAs(superAdmin(['zap']));
+
+			await expect(tenantPermissionGuard.canActivate(contextFor({}, 'PUT'))).resolves.toBe(false);
+			await expect(tenantPermissionGuard.canActivate(contextFor({}, 'GET'))).resolves.toBe(true);
+
+			// A first-party session writes there as before.
+			actAs(superAdmin());
+			await expect(tenantPermissionGuard.canActivate(contextFor({}, 'PUT'))).resolves.toBe(true);
 		});
 
 		it('asks the role query only about the permissions the scopes allow', async () => {

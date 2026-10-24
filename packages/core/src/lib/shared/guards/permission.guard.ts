@@ -6,10 +6,15 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
-import { narrowPermissionsToOAuthAppScopes, oauthAppScopesOf } from '../../auth/oauth-app-scope';
+import {
+	narrowPermissionsToOAuthAppScopes,
+	oauthAppScopesAllowWrites,
+	oauthAppScopesOf
+} from '../../auth/oauth-app-scope';
 import { debugInDevelopment } from '../../logger';
 import { BaseGuard } from './base.guard';
 import { attachedRolePermissionVerdict } from './attached-role-permissions';
+import { isMutatingOperation } from './mutating-operation';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 const logger = new Logger('PermissionGuard');
@@ -46,7 +51,7 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 		// A third-party OAuth-app token reaches only the permissions its approved scopes allow (owner decision Q12).
 		// The role's permissions on the request are already narrowed by JwtStrategy; narrowing what the route asks
 		// for as well keeps the role query below (a request without that state) from granting outside the scopes.
-		const reachable = this.reachableByOAuthAppScopes(permissions);
+		const reachable = this.reachableByOAuthAppScopes(permissions, context);
 		if (isEmpty(reachable)) {
 			logger.warn(
 				`Unauthorized access blocked: OAuth app token scopes do not allow any of the permissions. User ID: ${id}, Role: ${role}, Permissions Checked: ${permissions.join(', ')}`
@@ -127,14 +132,22 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 
 	/**
 	 * The permissions among `permissions` the request may be granted at all: every one of them for a first-party
-	 * caller, only the ones its approved scopes allow for a third-party OAuth-app token (see `auth/oauth-app-scope.ts`).
+	 * caller, only the ones its approved scopes allow for a third-party OAuth-app token (see `auth/oauth-app-scope.ts`),
+	 * and none for a write by a token without a write scope (a write route may also accept a read permission).
 	 *
 	 * @param permissions The permissions a route declares.
+	 * @param context The execution context.
 	 * @returns The reachable ones.
 	 */
-	protected reachableByOAuthAppScopes(permissions: PermissionsEnum[]): PermissionsEnum[] {
+	protected reachableByOAuthAppScopes(permissions: PermissionsEnum[], context: ExecutionContext): PermissionsEnum[] {
 		const scopes = oauthAppScopesOf(RequestContext.currentUser());
-		return scopes === null ? permissions : narrowPermissionsToOAuthAppScopes(permissions, scopes);
+		if (scopes === null) {
+			return permissions;
+		}
+		if (!oauthAppScopesAllowWrites(scopes) && isMutatingOperation(context)) {
+			return [];
+		}
+		return narrowPermissionsToOAuthAppScopes(permissions, scopes);
 	}
 
 	/**
@@ -147,6 +160,6 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 	 */
 	protected oauthAppScopesReachRoute(context: ExecutionContext): boolean {
 		const permissions = this.routePermissions(context);
-		return isEmpty(permissions) || !isEmpty(this.reachableByOAuthAppScopes(permissions));
+		return isEmpty(permissions) || !isEmpty(this.reachableByOAuthAppScopes(permissions, context));
 	}
 }

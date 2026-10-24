@@ -7,6 +7,8 @@ import {
 	narrowRolesToOAuthAppScopes,
 	OAUTH_APP_RESERVED_PERMISSIONS,
 	oauthAppPermissionsForScopes,
+	oauthAppScopesAllowWrites,
+	oauthAppScopesOf,
 	parseOAuthAppScope,
 	readOAuthAppTokenGrant
 } from './oauth-app-scope';
@@ -89,6 +91,17 @@ describe('oauth-app-scope', () => {
 			expect(allowed.has(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)).toBe(false);
 			expect(allowed.has(PermissionsEnum.TENANT_API_KEY_CREATE)).toBe(false);
 			expect(allowed.has(PermissionsEnum.PROFILE_EDIT)).toBe(false);
+			// The outgoing mail: SMTP settings and the templates (whose writes declare VIEW_ALL_EMAIL_TEMPLATES).
+			expect(allowed.has(PermissionsEnum.CUSTOM_SMTP_VIEW)).toBe(false);
+			expect(allowed.has(PermissionsEnum.CUSTOM_SMTP_EDIT)).toBe(false);
+			expect(allowed.has(PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES)).toBe(false);
+		});
+
+		it('lets only a write scope run writes', () => {
+			expect(oauthAppScopesAllowWrites(['zap', 'zap:write'])).toBe(true);
+			expect(oauthAppScopesAllowWrites(['zap', 'authentication'])).toBe(false);
+			expect(oauthAppScopesAllowWrites(['write', 'admin'])).toBe(false);
+			expect(oauthAppScopesAllowWrites([])).toBe(false);
 		});
 
 		it('narrows a permission list to the allowed ones, keeping their order', () => {
@@ -143,6 +156,13 @@ describe('oauth-app-scope', () => {
 				clientId: 'zapier',
 				scopes: ['zap', 'authentication']
 			});
+		});
+
+		it('reads the approved scopes off the request user, null for every other caller', () => {
+			expect(oauthAppScopesOf({ oauthApp: { clientId: 'zapier', scopes: ['zap'] } })).toEqual(['zap']);
+			expect(oauthAppScopesOf({ oauthApp: { clientId: 'zapier', scopes: undefined as any } })).toEqual([]);
+			expect(oauthAppScopesOf({})).toBeNull();
+			expect(oauthAppScopesOf(null)).toBeNull();
 		});
 
 		it('reads no grant from a token without the claim (first-party, or issued before it existed)', () => {

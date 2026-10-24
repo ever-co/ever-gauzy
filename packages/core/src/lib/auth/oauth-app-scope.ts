@@ -41,9 +41,15 @@ import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
  *
  * Neither rule ever grants a permission of {@link OAUTH_APP_RESERVED_PERMISSIONS}: role and permission management,
  * super-admin and tenant/global settings, tenant API keys and OAuth clients, user accounts and invitations (an app
- * that can rewrite a user's address or password owns the account), organization switching, the inbox and the sent-mail
- * history (sign-in codes and password-reset links travel there), account/data deletion, import/export and cloud
- * migration. Those stay with the user's own session.
+ * that can rewrite a user's address or password owns the account), organization switching, the inbox, the sent-mail
+ * history, the SMTP settings and the email templates (sign-in codes and password-reset links travel there),
+ * account/data deletion, import/export and cloud migration. Those stay with the user's own session.
+ *
+ * A token without the `write` rule (`zap:write`) never runs a write — a GraphQL mutation, or an HTTP method other than
+ * GET/HEAD/OPTIONS — whatever the route declares: several write routes also accept a read permission
+ * ({@link oauthAppScopesAllowWrites}, `shared/guards/mutating-operation.ts`). And some actions stay with the user's own
+ * session whatever the scopes, because a permission a write scope reaches also opens them: creating accounts, sending
+ * invitations, deleting users, approving apps and minting first-party tokens (`oauth-app-first-party.ts`).
  */
 
 /** The environment variable that turns the enforcement off (`false`); on by default. */
@@ -134,6 +140,11 @@ export const OAUTH_APP_RESERVED_PERMISSIONS: ReadonlySet<PermissionsEnum> = new 
 	PermissionsEnum.INBOX_MAILBOX_MANAGE,
 	PermissionsEnum.INBOX_MAILBOX_READ_ALL,
 	PermissionsEnum.VIEW_ALL_EMAILS,
+	// The outgoing mail itself: whoever sets the SMTP server, or rewrites the templates (the template writes declare
+	// VIEW_ALL_EMAIL_TEMPLATES), receives or reshapes the messages that carry sign-in codes and reset links.
+	PermissionsEnum.CUSTOM_SMTP_VIEW,
+	PermissionsEnum.CUSTOM_SMTP_EDIT,
+	PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES,
 	// Account and data deletion, bulk import/export, cloud migration.
 	PermissionsEnum.ACCESS_DELETE_ACCOUNT,
 	PermissionsEnum.ACCESS_DELETE_ALL_DATA,
@@ -224,6 +235,17 @@ export function narrowRolesToOAuthAppScopes(roles: readonly RolesEnum[], scopes:
 		}
 	}
 	return (roles ?? []).filter((role) => allowed.has(role));
+}
+
+/**
+ * Whether a set of approved scopes includes the `write` rule. A token without it never runs a write (a GraphQL
+ * mutation, an HTTP method other than GET/HEAD/OPTIONS), whatever permissions the route declares.
+ *
+ * @param scopes The approved scopes.
+ * @returns True when one of the scopes maps to the `write` rule.
+ */
+export function oauthAppScopesAllowWrites(scopes: readonly string[]): boolean {
+	return (scopes ?? []).some((scope) => OAUTH_APP_SCOPE_RULES.get(scope) === OAuthAppScopeRule.WRITE);
 }
 
 /**

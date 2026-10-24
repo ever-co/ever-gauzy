@@ -72,6 +72,7 @@ import {
 	emailVerificationClaimWhereMikroOrm,
 	magicCodeClaimWhere
 } from '../shared/single-use/claim-criteria';
+import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 
 /**
  * The account-status predicate every authentication path applies.
@@ -1490,6 +1491,10 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	public async delete(userId: ID): Promise<DeleteResult> {
+		// Deleting an account stays with the user's own session: DELETE /user/:id also admits ALL_ORG_EDIT, which a
+		// third-party app's write scope reaches (owner decision Q12).
+		assertFirstPartyRequest('Deleting a user account');
+
 		const currentUserId = RequestContext.currentUserId();
 
 		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).

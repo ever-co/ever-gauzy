@@ -119,6 +119,7 @@ import { OAuthClient } from './oauth-client/oauth-client.entity';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
+import { assertFirstPartyRequest } from './oauth-app-first-party';
 import {
 	buildOAuthAppTokenGrant,
 	narrowPermissionsToOAuthAppScopes,
@@ -185,23 +186,6 @@ export class AuthService extends SocialAuthService {
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
-	}
-
-	/**
-	 * Refuses a request authenticated by a third-party OAuth-app token (owner decision Q12, oauth-app-scope.ts).
-	 *
-	 * For the actions that belong to the user's own session whatever the app's scopes: approving an application, and
-	 * the ones that mint first-party tokens (a workspace or organization switch, the workspace list's sign-in tokens).
-	 * A token minted there would carry no scopes, so an app could trade its scoped token for an unrestricted one.
-	 * First-party sessions, and every token while `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT=false`, pass.
-	 *
-	 * @param action What the caller tried, for the refusal message.
-	 * @throws ForbiddenException for an OAuth-app token.
-	 */
-	private assertFirstPartySession(action: string): void {
-		if (RequestContext.currentOAuthAppScopes() !== null) {
-			throw new ForbiddenException(`${action} is not available to a third-party application token`);
-		}
 	}
 
 	private signOAuthAppPayload(payload: string, secret: string): string {
@@ -342,7 +326,7 @@ export class AuthService extends SocialAuthService {
 	public async createOAuthAppAuthorizationCode(request: OAuthAppAuthorizationRequest): Promise<string> {
 		// The consent is the user's, given in their own session. A third-party app's token approving it would let an app
 		// grant itself (or another client) any scope that client may request (owner decision Q12).
-		this.assertFirstPartySession('Approving an application');
+		assertFirstPartyRequest('Approving an application');
 
 		const config = await this.resolveOAuthClient(request.clientId);
 
@@ -2943,7 +2927,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	async getUserWorkspaces(includeTeams = false): Promise<IUserSigninWorkspaceResponse> {
 		// Each workspace carries a sign-in token that `/auth/signin.workspace` exchanges for a first-party session
-		this.assertFirstPartySession('Listing workspaces');
+		assertFirstPartyRequest('Listing workspaces');
 
 		try {
 			// Get the current authenticated user
@@ -3015,7 +2999,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	async switchWorkspace(tenantId: ID): Promise<IAuthResponse | null> {
 		// The switch mints a first-party token pair
-		this.assertFirstPartySession('Switching workspace');
+		assertFirstPartyRequest('Switching workspace');
 
 		try {
 			// Get the current authenticated user
@@ -3157,7 +3141,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	async switchOrganization(organizationId: ID): Promise<IAuthResponse | null> {
 		// The switch mints a first-party token pair, and an app stays in the organization it was approved in
-		this.assertFirstPartySession('Switching organization');
+		assertFirstPartyRequest('Switching organization');
 
 		try {
 			// Get the current authenticated user
