@@ -128,10 +128,13 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 
 		it('positive control: an active account gets its tokens', async () => {
 			const { server, responseBuilder } = build({ userInfoProvider: async (id) => ({ userId: id }) });
+			const markClientUsed = jest.spyOn(oAuth2ClientManager, 'markClientUsed');
 
 			await server.handleAuthorizationCodeGrant({}, {}, params);
 
 			expect(responseBuilder.sendTokenResponse).toHaveBeenCalledTimes(1);
+			// The client is in use: a flood of registrations does not make the registry forget it
+			expect(markClientUsed).toHaveBeenCalledWith(CLIENT_ID);
 		});
 
 		it('refuses a code whose user was deactivated since signing in, and revokes their tokens', async () => {

@@ -1448,6 +1448,7 @@ export class OAuth2AuthorizationServer {
 				authCode.scopes,
 				{ includeRefreshToken: true }
 			);
+			oAuth2ClientManager.markClientUsed(params.client_id);
 
 			this.securityLogger.info('Token exchange: Success', {
 				clientId: params.client_id,
@@ -1549,6 +1550,7 @@ export class OAuth2AuthorizationServer {
 			);
 			return;
 		}
+		oAuth2ClientManager.markClientUsed(params.client_id);
 
 		this.responseBuilder.sendTokenResponse(res, {
 			access_token: newTokenPair.accessToken,
