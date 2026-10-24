@@ -108,6 +108,7 @@ import { SelectorValidator } from '../shared/utils/validation/selector.validator
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { OrganizationSwitchService } from './organization-selector/organization-switch.service';
 import { HumanizePipe } from './pipes/humanize.pipe';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-status.component';
@@ -267,7 +268,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly cdr: ChangeDetectorRef,
 		private readonly router: Router,
 		private readonly _auditLogService: AuditLogService,
-		private readonly _screenCaptureService: ScreenCaptureWebRTCService
+		private readonly _screenCaptureService: ScreenCaptureWebRTCService,
+		private readonly _organizationSwitchService: OrganizationSwitchService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -412,6 +414,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get isRemoteTimer(): boolean {
 		return this._startMode === TimerStartMode.REMOTE;
+	}
+
+	/** `true` while the organization is being switched; the Start button is disabled meanwhile. */
+	public get isSwitchingOrganization$(): Observable<boolean> {
+		return this._organizationSwitchService.isSwitching$;
 	}
 
 	private async resetAtMidnight() {
@@ -1709,6 +1716,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	 */
 	async toggleStart(val: boolean, onClick = true, passed = false) {
 		this._auditLogService.timerAuditLogInfo(`User attempted to ${val ? 'start' : 'stop'} the timer${onClick ? ' by clicking the button' : ''}${passed ? ' with pre-granted permissions' : ''}.`);
+
+		// Every start (Start button, tray, remote timer, always-on window) comes through here. While the organization is
+		// being switched, a timer started now would run with the employee and tokens of the organization being left, and
+		// lose its client, project, team and task when the switch lands; so it waits until the new organization is loaded.
+		if (val && this._organizationSwitchService.isSwitching) {
+			this._auditLogService.timerAuditLogInfo('Timer start refused: the organization is being switched.');
+			this._toastrNotifier.warn(
+				this._translateService.instant('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_IN_PROGRESS')
+			);
+			return;
+		}
+
 		try {
 			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
 			if (val && onClick && !passed && platform?.os === 'darwin') {

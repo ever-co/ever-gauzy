@@ -6177,7 +6177,10 @@
 			"NETWORK_ERROR": "Network error: {{message}}",
 			"SCREEN_ACCESS_REQUIRED_MSG": "Screen access permission is required to enable automatic screen capture. Please grant the permission in your system settings.",
 			"ORGANIZATION_SWITCH_REFUSED": "Could not switch to {{ name }}: {{ reason }}. You are still working in your current organization.",
-			"ORGANIZATION_NOT_EMPLOYEE": "You are not an active employee of {{ name }}, so the timer cannot track time there. You are still working in your current organization."
+			"ORGANIZATION_NOT_EMPLOYEE": "You are not an active employee of {{ name }}, so the timer cannot track time there. You are still working in your current organization.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "The organization is being switched. Start the timer once the switch has finished.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "You are not an active employee of {{ name }}, and switching back to your previous organization failed. Please sign in again.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Switching to {{ name }} could not be completed on this device. Please sign in again."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",

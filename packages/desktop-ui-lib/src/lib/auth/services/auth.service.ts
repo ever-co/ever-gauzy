@@ -18,6 +18,7 @@ import { GAUZY_ENV } from '../../constants';
 import { API_PREFIX } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
 import { SKIP_ERROR_NOTIFICATION } from '../../interceptors/skip-error-notification.token';
+import { SKIP_TOKEN_REFRESH } from '../../interceptors/skip-token-refresh.token';
 
 @Injectable()
 export class AuthService {
@@ -141,7 +142,10 @@ export class AuthService {
 	 * answers with an access and a refresh token for that organization; the refresh token held before is
 	 * replaced by the new one.
 	 *
-	 * The caller reports a refusal itself, so the generic error toast of `ServerErrorInterceptor` is skipped.
+	 * The API refuses with a 401 (not a member of the organization, or not an active employee there) although the
+	 * session is fine, and the caller reports a refusal itself. So the 401 reaches the caller untouched: no token refresh,
+	 * retry or logout by `RefreshTokenInterceptor` (`SKIP_TOKEN_REFRESH`), and no generic error toast by
+	 * `ServerErrorInterceptor` (`SKIP_ERROR_NOTIFICATION`).
 	 *
 	 * @param organizationId The organization to switch to.
 	 */
@@ -149,11 +153,22 @@ export class AuthService {
 		return this.http.post<IAuthResponse | null>(
 			`${API_PREFIX}/auth/switch-organization`,
 			{ organizationId },
-			{ context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true) }
+			{ context: new HttpContext().set(SKIP_TOKEN_REFRESH, true).set(SKIP_ERROR_NOTIFICATION, true) }
 		);
 	}
 
-	public electronAuthentication({ user, token, refresh_token }: IAuthResponse): Observable<void> {
+	/**
+	 * Hand the tokens, user, organization and employee of `IAuthResponse` to the Electron main process.
+	 *
+	 * @param options.waitUntilSaved By default the desktop apps send `auth_success` and do not wait: the returned
+	 * observable emits as soon as the message is sent, while the main process is still saving. With `true` they invoke
+	 * `AUTH_SUCCESS_SAVE` instead, which runs the same handler and answers once the main process has saved everything,
+	 * for a caller that reloads the timer next (an organization switch). The agent always waits (`AUTH_SUCCESS`).
+	 */
+	public electronAuthentication(
+		{ user, token, refresh_token }: IAuthResponse,
+		{ waitUntilSaved = false }: { waitUntilSaved?: boolean } = {}
+	): Observable<void> {
 		try {
 			if (this.electronService.isElectron || this.electronService.isContextBridge) {
 				const authArg = {
@@ -169,6 +184,10 @@ export class AuthService {
 
 				if (this.isAgent) {
 					return this.electronService.invoke$('AUTH_SUCCESS', authArg);
+				}
+
+				if (waitUntilSaved) {
+					return this.electronService.invoke$('AUTH_SUCCESS_SAVE', authArg);
 				}
 
 				return of(this.electronService.ipcRenderer.send('auth_success', authArg));

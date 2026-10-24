@@ -5577,7 +5577,10 @@
 			"NETWORK_ERROR": "Błąd sieci: {{message}}",
 			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu.",
 			"ORGANIZATION_SWITCH_REFUSED": "Nie można przełączyć na {{ name }}: {{ reason }}. Nadal pracujesz w bieżącej organizacji.",
-			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji."
+			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Trwa przełączanie organizacji. Uruchom licznik czasu po zakończeniu przełączania.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Nie jesteś aktywnym pracownikiem {{ name }}, a powrót do poprzedniej organizacji nie powiódł się. Zaloguj się ponownie.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",
