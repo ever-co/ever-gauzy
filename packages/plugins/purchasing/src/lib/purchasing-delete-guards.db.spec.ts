@@ -217,6 +217,9 @@ const schemas = [
 			grandTotal: decimal(),
 			expectedAt: optional('datetime'),
 			receivedAt: optional('datetime'),
+			approvedAt: optional('datetime'),
+			approvedByUserId: optional('varchar'),
+			approvalId: optional('varchar'),
 			version: { type: 'int', default: 1 },
 			note: optional('varchar')
 		},
@@ -549,6 +552,32 @@ describe('removing a purchasing document keeps to its lifecycle (DB-backed)', ()
 			await h.orders.softRemove(ORDER);
 			expect((await h.row('purchase_order', ORDER))?.deletedAt).not.toBeNull();
 			expect((await h.row('purchase_order', ORDER))?.version).toBe(4);
+		});
+
+		it('withdraws the approval of a draft whose line is withdrawn or restored, so it is approved again before it is sent', async () => {
+			// `send` checks only that `approvedAt` is set: a draft approved with one line set and amended afterwards
+			// used to go to the supplier on the approval of the order it no longer was.
+			const approved = {
+				approvedAt: new Date().toISOString(),
+				approvedByUserId: 'approver',
+				approvalId: 'approval-1'
+			};
+
+			await h.set('purchase_order', ORDER, { status: PurchaseOrderStatus.DRAFT, ...approved });
+			await h.orders.softRemoveLine(LINE_B);
+
+			expect(await h.row('purchase_order', ORDER)).toMatchObject({
+				approvedAt: null,
+				approvedByUserId: null,
+				approvalId: null
+			});
+			await expect(h.orders.send(ORDER)).rejects.toMatchObject({ status: 409 });
+			expect((await h.row('purchase_order', ORDER))?.status).toBe(PurchaseOrderStatus.DRAFT);
+
+			await h.set('purchase_order', ORDER, approved);
+			await h.orders.softRecoverLine(LINE_B);
+
+			expect((await h.row('purchase_order', ORDER))?.approvedAt).toBeNull();
 		});
 	});
 });

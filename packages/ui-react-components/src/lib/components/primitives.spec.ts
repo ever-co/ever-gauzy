@@ -18,11 +18,11 @@ describe('CounterPoint — computeCounterPoints (gauzy-counter-point parity)', (
 		expect(points.slice(2).every((p) => p.color === 'basic')).toBe(true);
 	});
 
-	it('paints literal colours verbatim, statuses via theme variables and basic via the danger track', () => {
+	it('paints literal colours verbatim, statuses via theme variables and basic via the hover-tint track', () => {
 		expect(counterPointBackground('#0088FE')).toBe('#0088FE');
 		expect(counterPointBackground('rgb(0, 214, 143)')).toBe('rgb(0, 214, 143)');
 		expect(counterPointBackground('success')).toBe('var(--color-success-default)');
-		expect(counterPointBackground('basic')).toBe('var(--progress-bar-danger-background-color)');
+		expect(counterPointBackground('basic')).toBe('var(--gauzy-hover-tint)');
 	});
 });
 

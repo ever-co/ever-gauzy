@@ -11,6 +11,16 @@ export enum ServerState {
 	RESTARTING = 'restarting'
 }
 
+/** Options of a {@link DesktopServer}. */
+export interface DesktopServerOptions {
+	/**
+	 * Whether the API (and the web UI) may listen on the network, as the stored `lanAccess` setting
+	 * says. Only Gauzy Server and Gauzy API Server set it; without it they listen on the loopback
+	 * address only, as Gauzy Desktop's integrated server always does.
+	 */
+	allowLanAccess?: boolean;
+}
+
 /**
  * Represents a Desktop Server.
  */
@@ -18,7 +28,10 @@ export class DesktopServer extends EventEmitter {
 	private state: ServerState = ServerState.STOPPED;
 	private stateObserver: Observer<ServerState, void>;
 
-	constructor(private readonly isOnlyApiServer = false) {
+	constructor(
+		private readonly isOnlyApiServer = false,
+		private readonly options: DesktopServerOptions = {}
+	) {
 		super();
 
 		this.stateObserver = new Observer((state: ServerState) => {
@@ -42,11 +55,19 @@ export class DesktopServer extends EventEmitter {
 				return; // Server already running or restarting
 			}
 
-			const apiInstance = DesktopServerFactory.getApiInstance(path?.api, env, mainWindow, signal);
+			const allowLanAccess = this.options.allowLanAccess === true;
+			const apiInstance = DesktopServerFactory.getApiInstance(path?.api, env, mainWindow, signal, allowLanAccess);
 			await this.startInstance(apiInstance);
 
 			if (!this.isOnlyApiServer) {
-				const uiInstance = DesktopServerFactory.getUiInstance(path?.ui, env, mainWindow, signal, uiPort);
+				const uiInstance = DesktopServerFactory.getUiInstance(
+					path?.ui,
+					env,
+					mainWindow,
+					signal,
+					uiPort,
+					allowLanAccess
+				);
 				await this.startInstance(uiInstance);
 			}
 

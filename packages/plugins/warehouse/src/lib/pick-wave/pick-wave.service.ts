@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, RequestContext, SequenceService } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
 import { TWarehouseTransactionRunner, movePickList } from '../pick-list/pick-list-moves';
 import { TypeOrmPickListRepository } from '../pick-list/repository/type-orm-pick-list.repository';
@@ -22,6 +22,7 @@ import { TWarehouseRows, runWarehouseTransaction, warehouseRowsOf } from '../war
 import { PickWave } from './pick-wave.entity';
 import { MikroOrmPickWaveRepository } from './repository/mikro-orm-pick-wave.repository';
 import { TypeOrmPickWaveRepository } from './repository/type-orm-pick-wave.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /**
  * The release unit of warehouse work: the waves an operator releases, assigns, watches and closes.
@@ -45,7 +46,7 @@ const PICK_WAVE_WRITABLE_MEMBERS = ['priority', 'pickerUserId', 'plannedAt'] as 
 const PICK_WAVE_DRAFT_WRITABLE_MEMBERS = ['strategy', 'channelId'] as const;
 
 @Injectable()
-export class PickWaveService extends TenantAwareCrudService<PickWave> {
+export class PickWaveService extends WarehouseCrudService<PickWave> {
 	constructor(
 		readonly typeOrmPickWaveRepository: TypeOrmPickWaveRepository,
 		readonly mikroOrmPickWaveRepository: MikroOrmPickWaveRepository,

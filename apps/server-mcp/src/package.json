@@ -147,7 +147,9 @@
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
-		"knex": "3.3.0"
+		"knex": "3.3.0",
+		"**/xtraverse/xmldom": "npm:@xmldom/xmldom@^0.8.15",
+		"**/@nestjs/platform-express/multer": "^2.5.0"
 	},
 	"pkg": {
 		"assets": [],

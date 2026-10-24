@@ -28,8 +28,28 @@ import {
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
 	IOrganizationProjectEmployee,
-	ID
+	ID,
+	RolesEnum
 } from '@gauzy/contracts';
+
+/** The form's sections, in the order the tab bar shows them. */
+export type ProjectFormTab =
+	| 'main'
+	| 'description'
+	| 'billing'
+	| 'budget'
+	| 'openSource'
+	| 'sprints'
+	| 'settings'
+	| 'integrations'
+	| 'automation'
+	| 'modules';
+
+interface IProjectFormTab {
+	id: ProjectFormTab;
+	label: string;
+	icon: string;
+}
 import { environment } from '@gauzy/ui-config';
 import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -71,6 +91,22 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	public organization: IOrganization;
 	public hoverState: boolean;
 	public loading: boolean;
+
+	/** The tab the user picked. `currentTab` falls back to Main when that tab is no longer offered. */
+	public activeTab: ProjectFormTab = 'main';
+
+	private static readonly TABS: IProjectFormTab[] = [
+		{ id: 'main', label: 'ORGANIZATIONS_PAGE.MAIN', icon: 'info-outline' },
+		{ id: 'description', label: 'ORGANIZATIONS_PAGE.DESCRIPTION', icon: 'file-text-outline' },
+		{ id: 'billing', label: 'ORGANIZATIONS_PAGE.BILLING', icon: 'credit-card-outline' },
+		{ id: 'budget', label: 'ORGANIZATIONS_PAGE.BUDGET', icon: 'pie-chart-outline' },
+		{ id: 'openSource', label: 'ORGANIZATIONS_PAGE.OPEN_SOURCE', icon: 'github-outline' },
+		{ id: 'sprints', label: 'ORGANIZATIONS_PAGE.SPRINTS', icon: 'flash-outline' },
+		{ id: 'settings', label: 'ORGANIZATIONS_PAGE.SETTINGS', icon: 'settings-2-outline' },
+		{ id: 'integrations', label: 'ORGANIZATIONS_PAGE.INTEGRATIONS', icon: 'link-2-outline' },
+		{ id: 'automation', label: 'ORGANIZATIONS_PAGE.AUTOMATION', icon: 'sync-outline' },
+		{ id: 'modules', label: 'TASKS_PAGE.MODULE', icon: 'layers-outline' }
+	];
 
 	/*
 	 * Project Mutation Form
@@ -173,6 +209,81 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 	public get openSourceProjectUrl(): AbstractControl {
 		return this.form.get('openSourceProjectUrl');
+	}
+
+	/**
+	 * The open-source repository as a link, once the project is open source and its URL
+	 * passes the field's own validation — `patterns.websiteUrl` requires an `http(s)://`
+	 * address, so nothing else ever reaches the `href`.
+	 */
+	public get openSourceRepositoryHref(): string | null {
+		const control = this.openSourceProjectUrl;
+		const value = (control.value ?? '').trim();
+		if (!this.form.get('openSource').value || !value || control.invalid) {
+			return null;
+		}
+		return value;
+	}
+
+	public get hasImage(): boolean {
+		return !!this.form.get('imageUrl').value;
+	}
+
+	public get isSprintMode(): boolean {
+		return this.form.get('taskListType').value === TaskListTypeEnum.SPRINT;
+	}
+
+	/**
+	 * The tabs on offer: Sprints only for a saved sprint-mode project, Integrations and
+	 * Automation only with a GitHub integration, Modules only for a saved project.
+	 */
+	public get tabs(): IProjectFormTab[] {
+		return ProjectMutationComponent.TABS.filter(({ id }) => {
+			switch (id) {
+				case 'sprints':
+					return this.isSprintMode && !!this.project;
+				case 'integrations':
+				case 'automation':
+					return !!this.integration;
+				case 'modules':
+					return !!this.project?.id;
+				default:
+					return true;
+			}
+		});
+	}
+
+	public get currentTab(): ProjectFormTab {
+		return this.tabs.some(({ id }) => id === this.activeTab) ? this.activeTab : 'main';
+	}
+
+	public selectTab(tab: ProjectFormTab): void {
+		this.activeTab = tab;
+	}
+
+	/**
+	 * Arrow, Home and End keys move between tabs, as the ARIA tab pattern describes.
+	 * Left and right swap on right-to-left pages.
+	 */
+	public onTabKeydown(event: KeyboardEvent, index: number): void {
+		const tabs = this.tabs;
+		const rtl = (event.target as HTMLElement)?.closest('[dir="rtl"]') !== null;
+		const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1 }[event.key];
+
+		let next: number;
+		if (step) {
+			next = (index + step + tabs.length) % tabs.length;
+		} else if (event.key === 'Home') {
+			next = 0;
+		} else if (event.key === 'End') {
+			next = tabs.length - 1;
+		} else {
+			return;
+		}
+
+		event.preventDefault();
+		this.selectTab(tabs[next].id);
+		document.getElementById(`project-form-tab-${tabs[next].id}`)?.focus();
 	}
 
 	constructor(
@@ -307,16 +418,22 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 		const project: IOrganizationProject = this.project;
 
+		// A manager is flagged `isManager` or holds the MANAGER role: the server sets the flag only for a caller
+		// holding CHANGE_SELECTED_EMPLOYEE, so the managers of a project an employee created hold the role alone.
+		// Reading the flag alone listed them as members, and saving the form then took their manager role away.
+		const isManager = (member: IOrganizationProjectEmployee) =>
+			!!member.isManager || member.role?.name === RolesEnum.MANAGER;
+
 		// Selected Members Ids
 		this.selectedEmployeeIds = (project.members || [])
-			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+			.filter((member: IOrganizationProjectEmployee) => !isManager(member))
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
 		this.memberIds = this.selectedEmployeeIds;
 
 		// Selected Managers Ids
 		this.selectedManagerIds = (project.members || [])
-			.filter((member: IOrganizationProjectEmployee) => member.isManager)
+			.filter((member: IOrganizationProjectEmployee) => isManager(member))
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
 		this.managerIds = this.selectedManagerIds;

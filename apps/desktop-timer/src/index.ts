@@ -30,7 +30,6 @@ import * as remoteMain from '@electron/remote/main';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import * as path from 'node:path';
-import * as Url from 'node:url';
 import { initSentry } from './sentry';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
@@ -81,6 +80,8 @@ import {
 	createSettingsWindow,
 	createTimeTrackerWindow,
 	ScreenCaptureNotification,
+	installNavigationGuard,
+	installProviderSignIn,
 	setLaunchPathAndLoad,
 	SplashScreen
 } from '@gauzy/desktop-window';
@@ -99,7 +100,6 @@ let updater: DesktopUpdater;
 let report: ErrorReport;
 
 const exeName = path.basename(process.execPath);
-const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 const args = process.argv.slice(1);
 const serverGauzy = null;
@@ -124,7 +124,6 @@ let onWaitingServer = false;
 let dialogErr = false;
 let willQuit = true;
 let serverDesktop = null;
-let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
 
@@ -820,93 +819,16 @@ function launchAtStartup(autoLaunch, hidden) {
 	}
 }
 
-app.on('web-contents-created', (event, contents) => {
-	contents.on('will-redirect', async (event, url) => {
-		const defaultBrowserConfig = {
-			title: '',
-			width: 1280,
-			height: 600,
-			webPreferences: {
-				allowRunningInsecureContent: false,
-				contextIsolation: true,
-				enableRemoteModule: true,
-				javascript: true,
-				webSecurity: false,
-				webviewTag: false,
-				nodeIntegration: true
-			}
-		};
+// A window with Node or a preload follows no link out of its own pages (a task description's link loaded the
+// linked page with Node); the configured API stays reachable, where the social sign-in links start.
+installNavigationGuard({ trustedUrls: () => [getApiBaseUrl(LocalStore.getStore('configs') || {})] });
 
-		const isLinkedInOAuth = url.includes('https://www.linkedin.com/oauth');
-		const isGoogleOAuth = url.includes('https://accounts.google.com');
-		const isSignInSuccess = url.includes('sign-in/success?jwt');
-		const isAuthRegister = url.includes('/auth/register');
-		const targetUrl = new URL(url);
-
-		if (!ALLOWED_PROTOCOLS.has(targetUrl.protocol)) {
-			return;
-		}
-
-		if (isLinkedInOAuth || isGoogleOAuth) {
-			try {
-				event.preventDefault();
-				await showPopup(url, defaultBrowserConfig);
-			} catch (_) {
-				// Soft fail
-			}
-			return;
-		}
-
-		if (isSignInSuccess) {
-			const urlParse = Url.parse(url, true);
-			const urlParsed = Url.parse(urlFormat(urlParse.hash, urlParse.host), true);
-			const { jwt, userId } = urlParsed.query;
-			if (popupWin) popupWin.destroy();
-			const params = LocalStore.beforeRequestParams();
-			timeTrackerWindow.webContents.send('social_auth_success', {
-				...params,
-				token: jwt,
-				userId
-			});
-		}
-
-		if (isAuthRegister) {
-			try {
-				await shell.openExternal(url);
-			} catch (error) {
-				console.error('Error opening external URL:', error);
-			}
-		}
-	});
+// The social sign-in: the provider's pages open in a popup, and the timer window is told how the sign-in ended
+// (a token, or the workspace picker's one-time code when the address has several workspaces)
+installProviderSignIn({
+	signInWindow: () => timeTrackerWindow,
+	signInDetails: () => LocalStore.beforeRequestParams()
 });
-
-const urlFormat = (hash: string, host: string) => {
-	const uri = hash.substring(1);
-	return `${host}${uri}`;
-};
-
-const showPopup = async (url: string, options: Electron.BrowserWindowConstructorOptions) => {
-	const { width = 1280, height = 768, ...otherOptions } = options;
-
-	// Close existing popup window if it exists
-	if (popupWin) {
-		popupWin.destroy();
-	}
-
-	// Create a new BrowserWindow with specified options
-	popupWin = new BrowserWindow({
-		width,
-		height,
-		...otherOptions
-	});
-
-	// Set a custom user agent to emulate a specific browser version
-	const userAgent = 'Chrome/104.0.0.0';
-	await popupWin.loadURL(url, { userAgent });
-
-	// Show the popup window
-	popupWin.show();
-};
 
 app.on('browser-window-created', (_, window) => {
 	require('@electron/remote/main').enable(window.webContents);

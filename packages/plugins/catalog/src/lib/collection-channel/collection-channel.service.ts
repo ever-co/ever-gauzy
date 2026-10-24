@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { PUBLICATION_REFERENCES } from '../catalog.references';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
@@ -10,6 +10,7 @@ import { Collection } from '../collection/collection.entity';
 import { CollectionChannel } from './collection-channel.entity';
 import { MikroOrmCollectionChannelRepository } from './repository/mikro-orm-collection-channel.repository';
 import { TypeOrmCollectionChannelRepository } from './repository/type-orm-collection-channel.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Where each collection is shown.
@@ -20,7 +21,7 @@ import { TypeOrmCollectionChannelRepository } from './repository/type-orm-collec
  * `ACTIVE` publication row as sufficient on its own.
  */
 @Injectable()
-export class CollectionChannelService extends TenantAwareCrudService<CollectionChannel> {
+export class CollectionChannelService extends CatalogCrudService<CollectionChannel> {
 	constructor(
 		readonly typeOrmCollectionChannelRepository: TypeOrmCollectionChannelRepository,
 		readonly mikroOrmCollectionChannelRepository: MikroOrmCollectionChannelRepository

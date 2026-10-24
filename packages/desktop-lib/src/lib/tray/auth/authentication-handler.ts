@@ -12,10 +12,21 @@ export class AuthenticationHandler {
 		private config: any
 	) { }
 
-	async handleAuthSuccess(arg: any): Promise<void> {
+	/**
+	 * Save the account the renderer signed in with (or switched organization to).
+	 *
+	 * @param options.requireSavedUser By default a user that cannot be saved is only logged, and the sign-in goes on as
+	 * before. With `true` (an organization switch, `AUTH_SUCCESS_SAVE`) it rejects instead, before the auth store
+	 * changes: the offline timer, screenshots and sync read the employee of the saved user, so carrying on would leave
+	 * them in the organization left while the renderer works in the new one.
+	 */
+	async handleAuthSuccess(
+		arg: any,
+		{ requireSavedUser = false }: { requireSavedUser?: boolean } = {}
+	): Promise<void> {
 		console.log('Auth Success');
 		await this.updateGlobalConfig();
-		await this.saveUser(arg);
+		await this.saveUser(arg, requireSavedUser);
 		await this.updateAuthStore(arg);
 	}
 
@@ -27,16 +38,21 @@ export class AuthenticationHandler {
 		};
 	}
 
-	private async saveUser(arg: any): Promise<void> {
+	private async saveUser(arg: any, required: boolean): Promise<void> {
 		try {
 			const user = new User({ ...arg, ...arg.user });
 			user.remoteId = arg.userId;
 			user.organizationId = arg.organizationId;
 			if (user.employee) {
 				await this.userRepository.save(user.toObject());
+			} else if (required) {
+				throw new Error('The account has no employee to save');
 			}
 		} catch (error) {
 			console.log('Error on save user', error);
+			if (required) {
+				throw error;
+			}
 		}
 	}
 

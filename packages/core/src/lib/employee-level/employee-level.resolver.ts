@@ -89,19 +89,17 @@ const EMPLOYEE_LEVEL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below calls the same `EmployeeLevelService` method the `/api/employee-level`
  * routes call.
  *
- * **The guard is the controller's guard, and no permission is stated anywhere — not even on a field.**
- * The delivered controller carries `TenantPermissionGuard` on the class and no `@Permissions` at all:
- * not on the two routes it declares and not on the seven it inherits from the CRUD base. Every one of
- * its routes is therefore tenant-guarded and otherwise unpermissioned, and a field that demanded a
- * permission would refuse a caller the REST route serves — the asymmetry the two-protocol rule
- * forbids. Tightening the resource is a change to make in both places at once, and it is not this
- * delivery's to make.
+ * **The guard is the controller's guard, and no permission is stated above it.** The delivered
+ * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` on its reads, so
+ * those are tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission there
+ * would refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol rule
+ * forbids.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
- * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
- * (GHSA-v79w-54p2-wmh5) — so `softDeleteEmployeeLevel` and `recoverEmployeeLevel` state the same, neither
- * wider nor narrower than REST.
+ * **Except every write.** The controller states `ALL_ORG_EDIT` behind `PermissionGuard` on its create,
+ * update and delete, and overrides the inherited retire-and-restore pair only to state the same — the
+ * CRUD base declares no permission, and `PermissionGuard` answers `true` to empty metadata, so any member
+ * of the tenant could write the organization's records (GHSA-v79w-54p2-wmh5) — so every mutation below
+ * states the same, neither wider nor narrower than REST.
  *
  * **The write routes are not the same shape, and each field keeps its own.** `POST /` files a level,
  * while `PUT /:id` hands the service `create({ ...entity, id })` — an upsert, because the service's
@@ -194,6 +192,8 @@ export class EmployeeLevelResolver {
 	 * overwrites whatever a body states, so a caller states the label and the organization it belongs to
 	 * and never which tenant it is written into.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('createEmployeeLevel')
 	async createEmployeeLevel(@Args('input') input: ICreateEmployeeLevelInput): Promise<EmployeeLevel> {
 		return await this.employeeLevelService.create(input as unknown as EmployeeLevel);
@@ -209,6 +209,8 @@ export class EmployeeLevelResolver {
 	 * answers the row that call answers. A member the caller leaves out is left as it is, which is what
 	 * makes this an upsert rather than a replacement of the row.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('updateEmployeeLevel')
 	async updateEmployeeLevel(@Args('input') input: IUpdateEmployeeLevelInput): Promise<EmployeeLevel> {
 		return await this.employeeLevelService.create({ ...input } as unknown as EmployeeLevel);
@@ -222,6 +224,8 @@ export class EmployeeLevelResolver {
 	 * happened rather than the removed row, because the delivered route answers the store's delete
 	 * result.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('deleteEmployeeLevel')
 	async deleteEmployeeLevel(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.employeeLevelService.delete(id));

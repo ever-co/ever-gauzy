@@ -192,8 +192,19 @@ export class ZitadelAccountService {
 		return activeSocialLinks > 0;
 	}
 
-	/** Marks a freshly registered user's e-mail as verified (the identity provider verified it). */
+	/**
+	 * Marks a freshly registered user's e-mail as verified (the identity provider verified it).
+	 *
+	 * Gauzy's register path leaves a self-registration inactive until its address is confirmed (owner
+	 * decision 4); the provider's verification is that confirmation, so the account it just created is
+	 * activated with it. Only that state matches (inactive, no tenant yet, never confirmed), as in
+	 * `UserService.markEmailAsVerified`.
+	 */
 	async markEmailVerified(userId: ID): Promise<void> {
+		await this.users.update(
+			{ id: userId, isActive: false, tenantId: IsNull(), emailVerifiedAt: IsNull() },
+			{ isActive: true }
+		);
 		await this.users.update({ id: userId, emailVerifiedAt: IsNull() }, { emailVerifiedAt: new Date() });
 	}
 }

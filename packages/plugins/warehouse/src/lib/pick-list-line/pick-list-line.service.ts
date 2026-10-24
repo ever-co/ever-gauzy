@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Opt
 import { EntityManager as TypeOrmEntityManager, FindOptionsWhere, ObjectLiteral, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, RequestContext } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
 import { TypeOrmPickListRepository } from '../pick-list/repository/type-orm-pick-list.repository';
 import {
@@ -29,6 +29,7 @@ import { TWarehouseTransactionRunner, movePickList } from '../pick-list/pick-lis
 import { PickListLine } from './pick-list-line.entity';
 import { MikroOrmPickListLineRepository } from './repository/mikro-orm-pick-list-line.repository';
 import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-line.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /**
  * The lines of a pick list: what was asked for, what was taken, and what the ledger has to be told.
@@ -55,7 +56,7 @@ import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-l
 const PICK_LIST_LINE_WRITABLE_MEMBERS = ['note', 'metadata'] as const;
 
 @Injectable()
-export class PickListLineService extends TenantAwareCrudService<PickListLine> {
+export class PickListLineService extends WarehouseCrudService<PickListLine> {
 	private readonly logger = new Logger(PickListLineService.name);
 
 	constructor(

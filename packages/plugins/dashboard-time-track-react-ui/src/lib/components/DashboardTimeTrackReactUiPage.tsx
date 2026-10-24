@@ -38,14 +38,15 @@ import { PercentageListWindow } from './windows/PercentageListWindow';
 import { RecentActivitiesWindow } from './windows/RecentActivitiesWindow';
 
 /**
- * Props the Angular host passes once (`[props]`): the header slots the controls portal into.
+ * Props the Angular host passes once (`[props]`): the header slot the controls portal into.
  * A type alias (not an interface) so it is assignable to the directive's `Record<string, unknown>`.
  */
 export type DashboardTimeTrackReactUiPageProps = {
-	/** Right side of the title row: timezone filter + "Manage widgets". */
+	/**
+	 * Right side of the single header row (`.page-header__actions`): "Auto Refresh", "Refresh",
+	 * the timezone filter and "Manage widgets", in that order.
+	 */
 	headerActionsHost?: HTMLElement | null;
-	/** Second header row: "Auto Refresh" toggle + "Refresh". */
-	headerToolbarHost?: HTMLElement | null;
 };
 
 /**
@@ -59,7 +60,7 @@ export type DashboardTimeTrackReactUiPageProps = {
  * Angular services obtained from the injector, so both flavours share one data path and one
  * persisted layout.
  */
-export function DashboardTimeTrackReactUiPage({ headerActionsHost, headerToolbarHost }: DashboardTimeTrackReactUiPageProps) {
+export function DashboardTimeTrackReactUiPage({ headerActionsHost }: DashboardTimeTrackReactUiPageProps) {
 	const { t } = useTranslation();
 	const injector = useInjector();
 	const router = useMemo(() => injector.get(Router), [injector]);
@@ -315,6 +316,7 @@ export function DashboardTimeTrackReactUiPage({ headerActionsHost, headerToolbar
 						}))}
 						loading={stats.loading.projects}
 						emptyMessage={empty('TIMESHEET.NO_PROJECT_ACTIVITY')}
+						listClassName="gz-rtt-projects-list"
 					/>
 				);
 			case Windows.APPS_URLS:
@@ -349,8 +351,8 @@ export function DashboardTimeTrackReactUiPage({ headerActionsHost, headerToolbar
 			{headerActionsHost
 				? createPortal(
 						<div className="gz-rtt-hdr">
+							<HeaderToolbar autoRefresh={autoRefresh} onAutoRefreshChange={setAutoRefresh} onRefresh={() => void stats.refresh()} />
 							<TimezoneFilter />
-							<div className="gz-rtt-mr-2" />
 							<ManageWidgetsPopover
 								widgets={widgets}
 								windows={windows}
@@ -361,14 +363,6 @@ export function DashboardTimeTrackReactUiPage({ headerActionsHost, headerToolbar
 							/>
 						</div>,
 						headerActionsHost
-					)
-				: null}
-			{headerToolbarHost
-				? createPortal(
-						<div className="gz-rtt-hdr">
-							<HeaderToolbar autoRefresh={autoRefresh} onAutoRefreshChange={setAutoRefresh} onRefresh={() => void stats.refresh()} />
-						</div>,
-						headerToolbarHost
 					)
 				: null}
 			<div className="gz-rtt">

@@ -540,9 +540,8 @@ describe('ProductVariantPriceResolver — the guard stack is the controller’s'
 			expect(typeof handlersOf(ProductVariantPriceController)[handler]).toBe('function');
 		}
 
-		// Every one of them is `undefined`, which is the answer here and not an empty assertion: this
-		// resource is mounted without a permission, so a field that acquired one would be the
-		// asymmetry the two-protocol rule forbids.
+		// The reads are `undefined` and the writes are the inventory edit grant: a field that stated
+		// anything else than its route would be the asymmetry the two-protocol rule forbids.
 		expect(stated).toEqual(expected);
 	});
 });

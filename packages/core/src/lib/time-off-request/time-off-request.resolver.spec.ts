@@ -687,6 +687,15 @@ describe('TimeOffRequestResolver — one concept, two protocols, the same operat
 		});
 	});
 
+	it('answers the stored request after an edit, whose status the edit leaves as it was', async () => {
+		const { resolver, timeOffRequestService } = surfaces();
+		// The save writes the identifier alone now that the status is ignored, and answers just that.
+		timeOffRequestService.updateTimeOffByAdmin.mockResolvedValueOnce({ id: FIRST });
+
+		expect(await resolver.updateTimeOffRequest({ id: FIRST, status: StatusTypesEnum.DENIED })).toBe(ROWS[0]);
+		expect(timeOffRequestService.findOneByIdString).toHaveBeenCalledWith(FIRST);
+	});
+
 	it('approves through the same command the approval route dispatches', async () => {
 		const { resolver, commandBus } = surfaces();
 

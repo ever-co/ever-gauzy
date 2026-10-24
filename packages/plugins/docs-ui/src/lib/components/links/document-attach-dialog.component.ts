@@ -62,7 +62,12 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 
 	public search = '';
 	public results: IDocument[] = [];
-	public selectedId: ID | null = null;
+	/**
+	 * The picked documents by id, kept across searches so a selection survives a new
+	 * term. The documents themselves are kept, not just their ids: `results` holds only
+	 * the latest search page, so a name looked up there could be gone by confirm time.
+	 */
+	public readonly selected = new Map<string, IDocument>();
 
 	public loading = false;
 	public saving = false;
@@ -124,30 +129,88 @@ export class DocumentAttachDialogComponent extends TranslationBaseComponent impl
 		return this.results.filter((document) => !linked.has(String(document.id)));
 	}
 
-	get canConfirm(): boolean {
-		return !!this.selectedId && !this.saving;
+	get selectedCount(): number {
+		return this.selected.size;
 	}
 
+	get canConfirm(): boolean {
+		return this.selectedCount > 0 && !this.saving;
+	}
+
+	isSelected(document: IDocument): boolean {
+		return this.selected.has(String(document.id));
+	}
+
+	toggle(document: IDocument): void {
+		const id = String(document.id);
+		if (this.selected.has(id)) {
+			this.selected.delete(id);
+		} else {
+			this.selected.set(id, document);
+		}
+	}
+
+	/**
+	 * Links every picked document to the record. Each link is its own write, so one
+	 * failing does not undo the others: the dialog closes with the links that were
+	 * made, and reports the ones that were not.
+	 */
 	async confirm(): Promise<void> {
 		if (!this.canConfirm) return;
 		const organization = this.store.selectedOrganization;
+		const ids = [...this.selected.keys()];
 		this.saving = true;
-		try {
-			const link = await firstValueFrom(
-				this.documentsService.createLink({
-					documentId: this.selectedId as ID,
-					entity: this.entity,
-					entityId: this.entityId,
-					// Display label captured at link time (spec 02 `DocumentLink.metadata`).
-					metadata: { label: this.entityLabel ?? '' },
-					organizationId: organization?.id,
-					tenantId: organization?.tenantId
-				})
+
+		const results = await Promise.allSettled(
+			ids.map((documentId) =>
+				firstValueFrom(
+					this.documentsService.createLink({
+						documentId: documentId as ID,
+						entity: this.entity,
+						entityId: this.entityId,
+						// Display label captured at link time (spec 02 `DocumentLink.metadata`).
+						metadata: { label: this.entityLabel ?? '' },
+						organizationId: organization?.id,
+						tenantId: organization?.tenantId
+					})
+				)
+			)
+		);
+
+		const links = results
+			.filter((result): result is PromiseFulfilledResult<IDocumentLink> => result.status === 'fulfilled')
+			.map((result) => result.value);
+		const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+
+		if (links.length) {
+			this.toastrService.success(
+				links.length === 1
+					? this.getTranslation('DOCS.LINKS.TOAST_ADDED')
+					: this.getTranslation('DOCS.LINKS.TOAST_ADDED_MANY', { count: links.length })
 			);
-			this.toastrService.success(this.getTranslation('DOCS.LINKS.TOAST_ADDED'));
-			this.dialogRef.close(link);
-		} catch (error) {
-			this.toastrService.danger(error);
+		}
+		if (failures.length) {
+			if (ids.length === 1) {
+				// A single document keeps the server's own reason.
+				this.toastrService.danger(failures[0].reason);
+			} else {
+				const names = ids
+					.filter((_, index) => results[index].status === 'rejected')
+					.map((id) => this.selected.get(id)?.name ?? id);
+				this.toastrService.danger(
+					this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', {
+						failed: failures.length,
+						total: ids.length,
+						names: names.join(', ')
+					})
+				);
+			}
+		}
+
+		if (links.length) {
+			this.dialogRef.close(links);
+		} else {
+			// Nothing was attached: stay open so the user can retry or change the selection.
 			this.saving = false;
 		}
 	}

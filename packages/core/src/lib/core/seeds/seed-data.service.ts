@@ -26,6 +26,7 @@ import {
 	createRandomSuperAdminUsers,
 	createRandomUsers
 } from '../../user/user.seed';
+import { DEFAULT_ADMINS, DEFAULT_SUPER_ADMINS } from '../../user/default-users';
 import { createDefaultEmployees, createRandomEmployees } from '../../employee/employee.seed';
 import {
 	createDefaultOrganizations,
@@ -323,6 +324,22 @@ export class SeedDataService {
 		});
 
 		try {
+			// Do not change, and keep it just before the "Started" line: the desktop apps read the emails of
+			// the three default accounts from it, to show each next to the password they generated for it
+			// (DESKTOP_API_SEED_ACCOUNTS_MARKER in @gauzy/desktop-lib). They are the accounts this seed
+			// creates, so the desktop apps keep no copy of the defaults.
+			console.log(
+				`Database Default Seed Accounts: ${JSON.stringify({
+					superAdmin: DEFAULT_SUPER_ADMINS[0]?.email,
+					admin: DEFAULT_ADMINS[0]?.email,
+					employee: DEFAULT_EMPLOYEES[0]?.email
+				})}`
+			);
+			// Do not change: the desktop apps watch for this line to mark the passwords they generated as
+			// in use (DESKTOP_API_SEED_STARTED_MARKER in @gauzy/desktop-lib). From here on the seed may
+			// create the accounts, and a seed that fails after that leaves them with those passwords.
+			console.log('Database Default Seed Started');
+
 			if (this.configService.get('demo') === true && fromAPI === true) {
 				this.seedType = SeederTypeEnum.ALL;
 			} else {
@@ -346,6 +363,8 @@ export class SeedDataService {
 			// Disconnect to database
 			await this.closeConnection();
 
+			// Do not change: the desktop apps watch for this line to show the passwords they generated for
+			// the seeded accounts (DESKTOP_API_SEED_COMPLETED_MARKER in @gauzy/desktop-lib).
 			console.log('Database Default Seed Completed');
 		} catch (error) {
 			this.handleError(error);

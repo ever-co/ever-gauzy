@@ -78,16 +78,15 @@ const PRODUCT_OPTION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below calls the same `ProductOptionService` the `/api/product-options` routes
  * call.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered routes
- * carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would refuse
- * here a caller the REST route serves — two surfaces of one concept with two scopes is exactly what
- * this delivery exists to prevent. Tightening the resource is a change to make in both places at once,
- * and it is not this delivery's to make.
+ * **The guard is the controller's guard, and no permission is stated above it.** The delivered read
+ * routes carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would
+ * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is exactly
+ * what this delivery exists to prevent.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and
- * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or restore a
- * row (GHSA-v79w-54p2-wmh5) — so `softDeleteProductOption` and `recoverProductOption` state the same,
+ * **Except every write.** The controller states `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` on
+ * each of its write routes — overriding the inherited ones only to attach it, because the CRUD base
+ * declares no permission and `PermissionGuard` answers `true` to empty metadata, so any member of the
+ * tenant could write the inventory (GHSA-v79w-54p2-wmh5) — so every mutation below states the same,
  * neither wider nor narrower than REST.
  *
  * **The group is not served here.** No delivered route reads a group as a resource, so there is no
@@ -173,6 +172,8 @@ export class ProductOptionResolver {
 	 * The payload is the input as stated, and the tenant is the credential's: the service stamps it, so
 	 * a caller states which group the option answers for and never which scope it is written into.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('createProductOption')
 	async createProductOption(@Args('input') input: ICreateProductOptionInput): Promise<ProductOption> {
 		return await this.productOptionService.create(input as unknown as ProductOption);
@@ -190,6 +191,8 @@ export class ProductOptionResolver {
 	 * answers the store's own update result — a statement about the write, `{ affected }` — which is not
 	 * a row and not what a GraphQL field named `updateProductOption` may return.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('updateProductOption')
 	async updateProductOption(@Args('input') input: IUpdateProductOptionInput): Promise<ProductOption> {
 		const { id, ...values } = input;
@@ -205,6 +208,8 @@ export class ProductOptionResolver {
 	 * The delivered service refuses a row that is not there with the same `404` the REST route answers
 	 * with, so a caller that names one is told it is missing rather than that the removal succeeded.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('deleteProductOption')
 	async deleteProductOption(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.productOptionService.delete(id));

@@ -10,7 +10,15 @@ import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
 import { getEnhancedTLSOptions, validateMCPToolInput, validateRequestSize } from '../common/security-config';
 import { SecurityLogger, SecurityEvents } from '../common/security-logger';
 import { runWithAuthKey } from '../common/auth-context';
+import { isLocalCaller } from '../common/local-caller';
 import { authManager } from '../common/auth-manager';
+import { sessionIdForLog } from '../common/error-utils';
+import {
+	AuthorizationConfig,
+	loadAuthorizationConfig,
+	logAuthorizationSetup,
+	OAuthValidator
+} from '../common/auth-types';
 
 const logger = new Logger('WebSocketTransport');
 
@@ -23,6 +31,17 @@ const rateLimiter = new Map<string, RateLimitEntry>();
 const MAX_RATE_LIMIT_ENTRIES = 10000;
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT_MAX_ATTEMPTS = 20;
+
+/**
+ * Messages a connection may send while it is being authorized (token introspection, session validation): they wait
+ * until it is accepted. Past this, or past `maxPayload` bytes in all, the connection is refused.
+ */
+const MAX_MESSAGES_BEFORE_ACCEPT = 32;
+
+/** The size in bytes of a message as `ws` hands it over */
+function rawDataByteLength(data: WebSocket.RawData): number {
+	return Array.isArray(data) ? data.reduce((total, chunk) => total + chunk.byteLength, 0) : data.byteLength;
+}
 
 // JSON-RPC 2.0 interfaces
 interface JsonRpcRequest {
@@ -118,6 +137,10 @@ interface WebSocketConnection {
 	isAlive: boolean;
 	sessionId?: string;
 	userContext?: UserContext;
+	/** Whether the connection comes from this machine, so may act as the GAUZY_AUTO_LOGIN account (see isLocalCaller) */
+	isLocal: boolean;
+	/** The OAuth bearer token the connection opened with, checked again before each message it sends */
+	bearerToken?: string;
 	created: Date;
 	lastSeen: Date;
 	metadata: Record<string, any>;
@@ -139,10 +162,15 @@ export class WebSocketTransport {
 	private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 	private sessionMiddlewareInstance: WebSocketSessionMiddleware | null = null;
 	private isInitialized = false;
+	private readonly authorizationConfig: AuthorizationConfig;
+	private readonly tokenValidator: OAuthValidator | null;
 
 	constructor(options: WebSocketTransportOptions) {
 		this.mcpServer = options.server;
 		this.transportConfig = options.transportConfig;
+		this.authorizationConfig = loadAuthorizationConfig();
+		this.tokenValidator = this.authorizationConfig.enabled ? new OAuthValidator(this.authorizationConfig) : null;
+		logAuthorizationSetup(this.authorizationConfig, logger);
 	}
 
 	async start(): Promise<void> {
@@ -288,6 +316,11 @@ export class WebSocketTransport {
 			id: connectionId,
 			socket: ws,
 			isAlive: true,
+			isLocal: isLocalCaller(
+				request.socket.remoteAddress,
+				request.headers,
+				this.transportConfig.trustedProxies || []
+			),
 			created: new Date(),
 			lastSeen: new Date(),
 			metadata: {
@@ -297,6 +330,84 @@ export class WebSocketTransport {
 				url: request.url
 			}
 		};
+
+		// Listen from the start. The checks below wait (token introspection, session validation), and a client may
+		// send `initialize` as soon as the socket opens: with no listener yet, that message was lost and the client
+		// waited for an answer that never came. A message sent during the checks now waits, in order, until the
+		// connection is accepted, and is dropped if it is refused. Nothing is authorized yet, so the wait is bounded.
+		let state: 'checking' | 'accepted' | 'refused' = 'checking';
+		const early: WebSocket.RawData[] = [];
+		let earlyBytes = 0;
+		const maxEarlyBytes = this.transportConfig.maxPayload || 1024 * 1024;
+
+		const refuse = (code: number, reason: string) => {
+			state = 'refused';
+			early.length = 0;
+			ws.close(code, reason);
+		};
+		const release = () => {
+			// Remove connection from session manager
+			if (connection.sessionId) {
+				sessionManager.removeConnection(connectionId);
+			}
+			authManager.clearKey(connectionId);
+			this.connections.delete(connectionId);
+		};
+
+		ws.on('message', (data) => {
+			if (state === 'accepted') {
+				void this.handleMessage(connection, data);
+				return;
+			}
+			if (state === 'refused') {
+				return;
+			}
+			early.push(data);
+			earlyBytes += rawDataByteLength(data);
+			if (early.length > MAX_MESSAGES_BEFORE_ACCEPT || earlyBytes > maxEarlyBytes) {
+				logger.warn(`WebSocket connection ${connectionId} refused: too many messages before it was authorized`);
+				refuse(1008, 'Too many messages before the connection was authorized');
+			}
+		});
+
+		// Set up pong handling for heartbeat
+		ws.on('pong', () => {
+			connection.isAlive = true;
+			connection.lastSeen = new Date();
+		});
+
+		// Set up connection close handling
+		ws.on('close', (code, reason) => {
+			logger.debug(`WebSocket connection closed: ${connectionId} (code: ${code}, reason: ${reason})`);
+			release();
+		});
+
+		// Set up error handling, from the start too: an 'error' with no listener is thrown
+		ws.on('error', (error) => {
+			logger.error(`WebSocket connection error for ${connectionId}:`, error);
+			release();
+		});
+
+		// OAuth bearer token: required unless the caller is on this machine and sends none (loopback desktop mode)
+		if (this.tokenValidator) {
+			const bearerToken = this.extractBearerToken(request);
+			if (bearerToken) {
+				const validation = await this.tokenValidator.validateToken(
+					bearerToken,
+					this.authorizationConfig.requiredScopes
+				);
+				if (!validation.valid) {
+					logger.warn(`WebSocket connection rejected: ${validation.error}`);
+					refuse(1008, 'Invalid token');
+					return;
+				}
+				connection.bearerToken = bearerToken;
+			} else if (!connection.isLocal) {
+				logger.warn(`WebSocket connection rejected: no bearer token from ${clientIP}`);
+				refuse(1008, 'Authorization required');
+				return;
+			}
+		}
 
 		// Handle session validation if sessions are enabled
 		if (this.transportConfig.session?.enabled && this.sessionMiddlewareInstance) {
@@ -313,56 +424,31 @@ export class WebSocketTransport {
 					if (validation.valid) {
 						connection.sessionId = sessionId;
 						connection.userContext = validation.userContext;
-						logger.debug(`WebSocket connection ${connectionId} associated with session ${sessionId}`);
+						logger.debug(
+							`WebSocket connection ${connectionId} associated with session ${sessionIdForLog(sessionId)}`
+						);
 					} else {
 						logger.warn(`WebSocket connection rejected: ${validation.reason}`);
-						ws.close(1008, `Session validation failed: ${validation.reason}`);
+						refuse(1008, `Session validation failed: ${validation.reason}`);
 						return;
 					}
 				} catch (error) {
 					logger.error(`Session validation error for connection ${connectionId}:`, error);
-					ws.close(1011, 'Session validation error');
+					refuse(1011, 'Session validation error');
 					return;
 				}
 			}
 		}
 
+		// The client left during the checks (or was refused for sending too much meanwhile): nothing to keep
+		if (state !== 'checking' || ws.readyState !== WebSocket.OPEN) {
+			release();
+			return;
+		}
+
 		this.connections.set(connectionId, connection);
 
 		logger.debug(`WebSocket connection established: ${connectionId} from ${clientIP}`);
-
-		// Set up message handling
-		ws.on('message', async (data) => {
-			await this.handleMessage(connection, data);
-		});
-
-		// Set up pong handling for heartbeat
-		ws.on('pong', () => {
-			connection.isAlive = true;
-			connection.lastSeen = new Date();
-		});
-
-		// Set up connection close handling
-		ws.on('close', (code, reason) => {
-			logger.debug(`WebSocket connection closed: ${connectionId} (code: ${code}, reason: ${reason})`);
-			// Remove connection from session manager
-			if (connection.sessionId) {
-				sessionManager.removeConnection(connectionId);
-			}
-			authManager.clearKey(connectionId);
-			this.connections.delete(connectionId);
-		});
-
-		// Set up error handling
-		ws.on('error', (error) => {
-			logger.error(`WebSocket connection error for ${connectionId}:`, error);
-			// Remove connection from session manager
-			if (connection.sessionId) {
-				sessionManager.removeConnection(connectionId);
-			}
-			authManager.clearKey(connectionId);
-			this.connections.delete(connectionId);
-		});
 
 		// Send welcome message
 		this.sendToConnection(connection, {
@@ -380,6 +466,12 @@ export class WebSocketTransport {
 				}
 			}
 		});
+
+		// Then what the client sent during the checks, in the order it was sent
+		state = 'accepted';
+		for (const data of early.splice(0)) {
+			void this.handleMessage(connection, data);
+		}
 	}
 
 	private async handleMessage(connection: WebSocketConnection, data: WebSocket.RawData): Promise<void> {
@@ -409,6 +501,20 @@ export class WebSocketTransport {
 
 			// Handle MCP JSON-RPC messages
 			if (message.jsonrpc === '2.0') {
+				// The token is checked again (its answer is reused for at most a minute): a revoked or expired
+				// token, or one whose user was deactivated, ends the connection.
+				if (connection.bearerToken && this.tokenValidator) {
+					const validation = await this.tokenValidator.validateToken(
+						connection.bearerToken,
+						this.authorizationConfig.requiredScopes
+					);
+					if (!validation.valid) {
+						logger.warn(`WebSocket connection ${connection.id} closed: ${validation.error}`);
+						this.sendError(connection, message.id ?? null, -32001, 'Token is no longer valid');
+						connection.socket.close(1008, 'Token is no longer valid');
+						return;
+					}
+				}
 				await this.handleMcpMessage(connection, message);
 			} else {
 				logger.warn(`Received invalid message format from ${connection.id}`);
@@ -516,7 +622,8 @@ export class WebSocketTransport {
 				case 'tools/call': {
 					const result = await this.callTool(
 						params as Record<string, unknown>,
-						this.resolveAuthKey(connection)
+						this.resolveAuthKey(connection),
+						connection.isLocal
 					);
 					transport.send({
 						jsonrpc: '2.0',
@@ -571,6 +678,14 @@ export class WebSocketTransport {
 	}
 
 	/**
+	 * The bearer token of the upgrade request's Authorization header, if any
+	 */
+	private extractBearerToken(request: IncomingMessage): string | null {
+		const header = request.headers.authorization;
+		return header && header.startsWith('Bearer ') ? header.substring(7) || null : null;
+	}
+
+	/**
 	 * Tools run with the Gauzy login of the session bound to this connection while that session exists,
 	 * otherwise with the connection's own login
 	 */
@@ -581,7 +696,14 @@ export class WebSocketTransport {
 		return connection.id;
 	}
 
-	private async callTool(params: Record<string, unknown>, authKey?: string): Promise<unknown> {
+	/**
+	 * @param sharesAutoLogin Whether the caller may act as the GAUZY_AUTO_LOGIN account when it has no login of its own.
+	 */
+	private async callTool(
+		params: Record<string, unknown>,
+		authKey: string | undefined,
+		sharesAutoLogin: boolean
+	): Promise<unknown> {
 		try {
 			const { name, arguments: args } = params;
 
@@ -604,8 +726,10 @@ export class WebSocketTransport {
 			logger.debug(`Calling tool: ${name} with args:`, safeArgsForLog);
 
 			// Pass the original args, as stdio does: the API would store the HTML-escaped copy as is
-			const result = await runWithAuthKey(authKey, () =>
-				this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {})
+			const result = await runWithAuthKey(
+				authKey,
+				() => this.mcpServer.invokeTool(name, (args as Record<string, unknown>) || {}),
+				{ sharesAutoLogin }
 			);
 			logger.debug(`Tool ${name} executed successfully`);
 
@@ -756,7 +880,7 @@ export class WebSocketTransport {
 			loginSource: 'websocket'
 		});
 
-		logger.debug(`WebSocket session created: ${session.id}`);
+		logger.debug(`WebSocket session created: ${sessionIdForLog(session.id)}`);
 
 		return {
 			sessionId: session.id,
@@ -790,7 +914,7 @@ export class WebSocketTransport {
 
 		const deleted = sessionManager.destroySession(sessionId);
 		if (deleted) {
-			logger.debug(`WebSocket session deleted: ${sessionId}`);
+			logger.debug(`WebSocket session deleted: ${sessionIdForLog(sessionId)}`);
 		}
 
 		return deleted;

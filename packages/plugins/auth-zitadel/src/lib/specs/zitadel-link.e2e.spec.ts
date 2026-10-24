@@ -95,6 +95,20 @@ describe('Explicit linking from Settings (HTTP, against a mock OpenID Provider)'
 		expect((await done.json()).linked.sort()).toEqual([me.id, sibling.id].sort());
 	});
 
+	it("offers no same-address account while the signed-in account's own address is unverified", async () => {
+		// An account registered with someone else's address must not list the workspaces that address belongs to.
+		me.emailVerifiedAt = null;
+		const sibling = t.accounts.addUser({ email: 'me@example.test', tenantName: 'Other' });
+		const key = hashParam(await link(), 'linked');
+
+		const preview = await (await browser.post(`${t.baseUrl}/api/auth/zitadel/link/preview`, { key })).json();
+		expect(preview.siblings).toEqual([]);
+
+		const done = await browser.post(`${t.baseUrl}/api/auth/zitadel/link/confirm`, { key, rows: [sibling.id] });
+		expect(await done.json()).toEqual({ linked: [me.id] });
+		expect(t.gauzyAuth.sentCodes).toEqual([]);
+	});
+
 	it('ignores a row id that is not an eligible same-address account', async () => {
 		const stranger = t.accounts.addUser({ email: 'stranger@example.test' });
 		const key = hashParam(await link(), 'linked');

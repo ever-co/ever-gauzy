@@ -179,6 +179,8 @@
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"knex": "3.3.0",
-		"uiohook-napi": "1.5.5"
+		"uiohook-napi": "1.5.5",
+		"**/nedb/underscore": "^1.13.8",
+		"**/binary-search-tree/underscore": "^1.13.8"
 	}
 }

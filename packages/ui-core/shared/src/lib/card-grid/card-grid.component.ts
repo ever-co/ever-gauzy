@@ -29,6 +29,8 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	/** How many placeholder cards to draw while loading. */
 	@Input() skeletonCards: number = 6;
 
+	@Input() componentInputs: Record<string, Record<string, any>>;
+
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };

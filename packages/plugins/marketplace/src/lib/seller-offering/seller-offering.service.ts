@@ -7,7 +7,6 @@ import {
 	EventOutboxService,
 	IBulkTransactionRunner,
 	RequestContext,
-	TenantAwareCrudService,
 	isUniqueViolation,
 	operationOf
 } from '@gauzy/core';
@@ -24,6 +23,7 @@ import { TypeOrmSellerOfferingRepository } from './repository/type-orm-seller-of
 import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /** The members of an offering only its state moves write (review R4-19). */
 const OFFERING_LIFECYCLE_MEMBERS = ['status', 'approvedAt', 'approvedByUserId'] as const;
@@ -55,7 +55,7 @@ function sameValue(stored: unknown, stated: unknown): boolean {
  *   cannot publish a variant the platform has not published.
  */
 @Injectable()
-export class SellerOfferingService extends TenantAwareCrudService<SellerOffering> {
+export class SellerOfferingService extends MarketplaceCrudService<SellerOffering> {
 	constructor(
 		readonly typeOrmSellerOfferingRepository: TypeOrmSellerOfferingRepository,
 		readonly mikroOrmSellerOfferingRepository: MikroOrmSellerOfferingRepository,

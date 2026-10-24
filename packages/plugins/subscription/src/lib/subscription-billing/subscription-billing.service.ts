@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, EntityManager, FindOptionsWhere, In, IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import { Money, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
 import { currentScope } from '../subscription.scope';
 import { normalizeDecimal } from '../subscription.cycle';
@@ -9,6 +9,7 @@ import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription
 import { SubscriptionBilling } from './subscription-billing.entity';
 import { MikroOrmSubscriptionBillingRepository } from './repository/mikro-orm-subscription-billing.repository';
 import { TypeOrmSubscriptionBillingRepository } from './repository/type-orm-subscription-billing.repository';
+import { SubscriptionCrudService } from '../subscription-crud.service';
 
 /**
  * The members of a cycle a correction may move (review R4-08): the members the GraphQL
@@ -102,7 +103,7 @@ function recordsBilledMoney(billing: SubscriptionBilling): boolean {
  * disagree about how many times a customer was charged.
  */
 @Injectable()
-export class SubscriptionBillingService extends TenantAwareCrudService<SubscriptionBilling> {
+export class SubscriptionBillingService extends SubscriptionCrudService<SubscriptionBilling> {
 	constructor(
 		readonly typeOrmSubscriptionBillingRepository: TypeOrmSubscriptionBillingRepository,
 		readonly mikroOrmSubscriptionBillingRepository: MikroOrmSubscriptionBillingRepository

@@ -135,6 +135,27 @@ export class ReturnRefundService {
 		const paymentId = attribution.paymentId;
 
 		/**
+		 * **A currency none of the order's payments is in is not the escape either.** The ceiling below is
+		 * computed only from payments in the refund's own currency, so a return or a claim that stated another
+		 * currency than the order was paid in had no ceiling at all: a dollar order could take a euro refund of
+		 * any size, attributed to the claim alone. An order that has payments is refunded in their currency;
+		 * only an order with no payment at all keeps the escape.
+		 */
+		if (attribution.headroom === undefined && attribution.paymentCurrencies.length) {
+			throw new BadRequestException({
+				message:
+					`REFUND_CURRENCY_MISMATCH: the order was paid in ${attribution.paymentCurrencies.join(', ')}, ` +
+					`so it cannot be refunded in ${request.currency}.`,
+				code: 'REFUND_CURRENCY_MISMATCH',
+				details: {
+					orderId: request.orderId,
+					currency: request.currency,
+					paymentCurrencies: attribution.paymentCurrencies
+				}
+			});
+		}
+
+		/**
 		 * **The escape below is for an order that took money the platform never recorded, not for an
 		 * order that is being over-refunded.** A refund the caller could not attribute to a payment is
 		 * measured against nothing: `RefundService.assertRefundable` runs only inside `if (paymentId)`,
@@ -376,13 +397,14 @@ export class ReturnRefundService {
 	 *
 	 * @param request The refund being recorded.
 	 * @param amount The requested amount, already read as a monetary value.
-	 * @returns The payment to pay the refund back from when one can carry it, and what every payment of
-	 * the order can still give back between them when the order has any.
+	 * @returns The payment to pay the refund back from when one can carry it, what every payment of the
+	 * order can still give back between them when the order has any, and the currencies of the order's
+	 * payments that are not the refund's.
 	 */
 	private async attributedPayment(
 		request: IReturnRefundRequest,
 		amount: Money
-	): Promise<{ paymentId?: ID; headroom?: DecimalString }> {
+	): Promise<{ paymentId?: ID; headroom?: DecimalString; paymentCurrencies: string[] }> {
 		const payments = await this.paymentRepository.find({
 			where: {
 				orderId: request.orderId,
@@ -390,12 +412,14 @@ export class ReturnRefundService {
 			} as FindOptionsWhere<Payment>
 		});
 		const candidates: Array<{ id: ID; headroom: DecimalString }> = [];
+		const paymentCurrencies = new Set<string>();
 		let total: Money | undefined;
 
 		for (const payment of payments ?? []) {
 			const currency = payment.currency ?? request.currency;
 
 			if (String(currency).toUpperCase() !== String(request.currency).toUpperCase()) {
+				paymentCurrencies.add(String(currency).toUpperCase());
 				continue;
 			}
 
@@ -441,7 +465,8 @@ export class ReturnRefundService {
 
 		return {
 			...(candidates.length ? { paymentId: candidates[0].id } : {}),
-			...(total ? { headroom: total.amount } : {})
+			...(total ? { headroom: total.amount } : {}),
+			paymentCurrencies: [...paymentCurrencies].sort()
 		};
 	}
 

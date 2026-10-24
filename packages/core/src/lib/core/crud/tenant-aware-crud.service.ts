@@ -1,5 +1,17 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOperator, FindOptionsWhere, In, Raw, Repository, UpdateResult } from 'typeorm';
+import {
+	And,
+	DeleteResult,
+	Equal,
+	FindOperator,
+	FindOptionsWhere,
+	In,
+	IsNull,
+	Or,
+	Raw,
+	Repository,
+	UpdateResult
+} from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
@@ -16,13 +28,22 @@ import {
 	resolveMikroOrmScopeColumn
 } from './mikro-orm-scope-column.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
+import {
+	currentOrganizationBoundary,
+	IOrganizationBoundary,
+	isWithinOrganizationBoundary
+} from './organization-boundary';
 import { ITryRequest } from './try-request';
 
 /** The columns this service scopes a statement by. */
-type ScopeColumn = 'tenantId' | 'employeeId';
+type ScopeColumn = 'tenantId' | 'employeeId' | 'organizationId';
 
 /** The relation each scope column is the foreign key of, which the scoping names beside the column. */
-const SCOPE_RELATION: Record<ScopeColumn, string> = { tenantId: 'tenant', employeeId: 'employee' };
+const SCOPE_RELATION: Record<ScopeColumn, string> = {
+	tenantId: 'tenant',
+	employeeId: 'employee',
+	organizationId: 'organization'
+};
 
 /** The read a scope condition is built for, as far as the condition depends on it. */
 interface IScopedRead {
@@ -45,6 +66,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 	/** The sequence keeps the key unique even when two services share a runtime class name. */
 	private readonly skipEmployeeFilterKey = `skipEmployeeFilter:${this.constructor.name}:${++TenantAwareCrudService.skipEmployeeFilterSequence}`;
+
+	/** The key of {@link withoutOrganizationBoundary}'s bypass, unique per service for the reason above. */
+	private readonly skipOrganizationBoundaryKey = `skipOrganizationBoundary:${this.constructor.name}:${TenantAwareCrudService.skipEmployeeFilterSequence}`;
 
 	/** How MikroORM maps each scope column of this entity, read once: metadata does not change after discovery. */
 	private readonly mikroOrmScopeColumns = new Map<ScopeColumn, IMikroOrmScopeColumn | null>();
@@ -289,11 +313,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/**
 	 * Reads how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
+	 *
+	 * @param key The bypass: {@link skipEmployeeFilterKey} or {@link skipOrganizationBoundaryKey}.
 	 */
-	private getSkipEmployeeFilterDepth(): number {
+	private getSkipEmployeeFilterDepth(key: string = this.skipEmployeeFilterKey): number {
 		try {
 			const context = RequestContext['clsService'];
-			return context?.get(this.skipEmployeeFilterKey) ?? 0;
+			return context?.get(key) ?? 0;
 		} catch {
 			return 0;
 		}
@@ -302,11 +328,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/**
 	 * Stores how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
+	 *
+	 * @param depth The number of open blocks.
+	 * @param key The bypass, as {@link getSkipEmployeeFilterDepth} reads it.
 	 */
-	private setSkipEmployeeFilterDepth(depth: number): void {
+	private setSkipEmployeeFilterDepth(depth: number, key: string = this.skipEmployeeFilterKey): void {
 		try {
 			const context = RequestContext['clsService'];
-			context?.set(this.skipEmployeeFilterKey, depth);
+			context?.set(key, depth);
 		} catch {
 			// Silently fail if context is not available
 		}
@@ -314,6 +343,210 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 	private getSkipEmployeeFilter(): boolean {
 		return this.getSkipEmployeeFilterDepth() > 0;
+	}
+
+	/**
+	 * Whether this service keeps every caller inside their organization boundary ({@link currentOrganizationBoundary}):
+	 * a tenant admin reaches every organization of the tenant, anyone else only the organization of their token.
+	 *
+	 * **What the boundary covers, once a service applies it.** Every read this base answers — lists, counts, pages
+	 * and every single-row read, by id, by options or by conditions — and so the reads that precede an update, a
+	 * withdrawal and a restore; the statements of `update`, `softDelete` and `delete` themselves; and what `create`,
+	 * `createMany`, `save` and `saveMany` may write: neither a payload that names an organization outside the boundary,
+	 * nor an upsert onto a stored row outside it, nor an update that moves a row out of it. A row outside the boundary
+	 * is answered exactly as a row that does not exist. A row stored without an organization belongs to the tenant, so
+	 * it stays inside every boundary of the tenant.
+	 *
+	 * On for every service whose entity has an `organizationId` column — one rule, everywhere. A service whose rows
+	 * must be read across organizations by design returns `false`, and says why (`UserOrganizationService`: the
+	 * memberships the organization switcher lists and the switch itself checks). A caller with no user in context (a
+	 * job, a public route) and a tenant admin are never confined, nor is a call inside `runOutsideOrganizationBoundary`.
+	 *
+	 * @returns True when this service applies the boundary.
+	 */
+	protected appliesOrganizationBoundary(): boolean {
+		return true;
+	}
+
+	/**
+	 * The boundary this service's statements are kept inside right now.
+	 *
+	 * @returns The boundary, or `null` when none applies: the service does not apply one, the call runs inside
+	 * {@link withoutOrganizationBoundary}, the caller is not confined, or the entity has no organization.
+	 */
+	protected organizationBoundary(): IOrganizationBoundary | null {
+		if (
+			!this.appliesOrganizationBoundary() ||
+			this.getSkipEmployeeFilterDepth(this.skipOrganizationBoundaryKey) > 0
+		) {
+			return null;
+		}
+		const boundary = currentOrganizationBoundary();
+		return boundary && this.hasScopeColumn('organizationId') ? boundary : null;
+	}
+
+	/**
+	 * Executes a callback without the organization boundary, for a service that has checked by other means that the
+	 * caller may reach the rows the callback reads or writes. Reference counted, and per service, as
+	 * {@link withoutEmployeeFilter} is.
+	 *
+	 * @param callback The async function to execute outside the boundary.
+	 * @returns The result of the callback.
+	 */
+	protected async withoutOrganizationBoundary<R>(callback: () => Promise<R>): Promise<R> {
+		const key = this.skipOrganizationBoundaryKey;
+		this.setSkipEmployeeFilterDepth(this.getSkipEmployeeFilterDepth(key) + 1, key);
+		try {
+			return await callback();
+		} finally {
+			this.setSkipEmployeeFilterDepth(Math.max(0, this.getSkipEmployeeFilterDepth(key) - 1), key);
+		}
+	}
+
+	/**
+	 * A `where` — or each `where` of a list — kept inside an organization boundary.
+	 *
+	 * The boundary is stated beside the caller's own condition on the organization, never over it: a statement that
+	 * names an organization is narrowed by the boundary rather than widened to it, and one that names none is
+	 * narrowed to the caller's organization and the rows stored without one.
+	 *
+	 * TypeORM is handed `And(<the caller's condition>, Or(Equal(<organization>), IsNull()))` on the column, which its
+	 * reads, updates, deletes and soft-deletes alike render as one predicate. MikroORM is handed the same question as
+	 * an `$or` in the entity-level `$and`, which the translation of the caller's criteria keeps as it is (TypeORM's
+	 * `Or` has no MikroORM translation), and which it applies to the `persist: false` mirror of the relation as it does
+	 * to the tenant's.
+	 *
+	 * @param where The conditions of the statement.
+	 * @param boundary The boundary.
+	 * @returns The conditions, kept inside the boundary.
+	 */
+	private withinOrganizationBoundary<W>(where: W, boundary: IOrganizationBoundary): W {
+		if (Array.isArray(where)) {
+			return where.map((condition) => this.withinOrganizationBoundary(condition, boundary)) as W;
+		}
+
+		const conditions = { ...((where ?? {}) as Record<string, unknown>) };
+		const organizationId = boundary.organizationId;
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			const allowed = isNotEmpty(organizationId)
+				? [{ organizationId }, { organizationId: null }]
+				: [{ organizationId: null }];
+			const conjunction = conditions['$and'];
+			conditions['$and'] = [
+				...(conjunction === undefined ? [] : Array.isArray(conjunction) ? conjunction : [conjunction]),
+				{ $or: allowed }
+			];
+			return conditions as W;
+		}
+
+		const allowed = isNotEmpty(organizationId) ? Or(Equal(organizationId), IsNull()) : IsNull();
+		const stated = conditions['organizationId'];
+		conditions['organizationId'] =
+			stated === undefined
+				? allowed
+				: And(stated instanceof FindOperator ? stated : stated === null ? IsNull() : Equal(stated), allowed);
+		return conditions as W;
+	}
+
+	/**
+	 * A statement's conditions kept inside the caller's organization boundary, when this service applies one.
+	 *
+	 * @param where The conditions of the statement.
+	 * @returns The conditions, unchanged when no boundary applies.
+	 */
+	private whereInsideOrganizationBoundary<W>(where: W): W {
+		const boundary = this.organizationBoundary();
+		return boundary ? this.withinOrganizationBoundary(where, boundary) : where;
+	}
+
+	/**
+	 * Find options whose `where` is kept inside the caller's organization boundary, when this service applies one.
+	 *
+	 * @param options The find options a read runs with.
+	 * @returns The options, unchanged when no boundary applies.
+	 */
+	private optionsInsideOrganizationBoundary<O extends { where?: unknown }>(options: O): O {
+		const boundary = this.organizationBoundary();
+		if (!boundary) {
+			return options;
+		}
+		return { ...options, where: this.withinOrganizationBoundary(options.where ?? {}, boundary) };
+	}
+
+	/**
+	 * Refuses a write that would put a row outside the caller's organization boundary: a payload that names an
+	 * organization outside it, or one that carries the id of a stored row outside it (create and save are upserts by
+	 * id, as {@link assertNotForeignRow} explains). Runs after the tenant guard, so a stored row it looks up is the
+	 * caller's tenant's.
+	 *
+	 * @param entities The payloads about to be persisted.
+	 * @throws ForbiddenException when one of them lies outside the boundary.
+	 */
+	protected async assertInsideOrganizationBoundary(entities: IPartialEntity<T>[]): Promise<void> {
+		const boundary = this.organizationBoundary();
+		if (!boundary) {
+			return;
+		}
+
+		for (const entity of entities ?? []) {
+			if (!isWithinOrganizationBoundary(this.statedOrganizationId(entity), boundary)) {
+				throw new ForbiddenException('The organization is outside the caller’s reach');
+			}
+		}
+
+		const ids = (entities ?? []).map((entity) => (entity as any)?.id).filter((id) => !!id);
+		if (!ids.length) {
+			return;
+		}
+
+		let stored: Array<ID | null | undefined>;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// Loaded through what hydrates the organization, for the reason assertNotForeignRow gives for the tenant.
+				const column: IMikroOrmScopeColumn = this.readsMikroOrmMapping()
+					? this.mikroOrmScopeColumn('organizationId')
+					: { property: 'organizationId', hydratedBy: 'organizationId' };
+				const rows = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, {
+					fields: ['id', column.hydratedBy] as any,
+					filters: false
+				});
+				stored = rows.map((row) => readMikroOrmScopeColumn(row, column) as ID | null | undefined);
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const rows = await this.typeOrmRepository.find({
+					where: { id: In(ids) } as FindOptionsWhere<T>,
+					select: { id: true, organizationId: true } as any,
+					withDeleted: true
+				});
+				stored = rows.map((row) => (row as any)?.organizationId);
+				break;
+			}
+		}
+
+		if (stored.some((organizationId) => !isWithinOrganizationBoundary(organizationId, boundary))) {
+			throw new ForbiddenException('The record belongs to another organization');
+		}
+	}
+
+	/**
+	 * The organization a payload names: its `organizationId`, or else the id of its `organization`.
+	 *
+	 * @param entity The payload.
+	 * @returns The organization, or `undefined` when the payload names none.
+	 */
+	private statedOrganizationId(entity: unknown): ID | null | undefined {
+		const payload = (entity ?? {}) as Record<string, unknown>;
+		if (payload['organizationId'] !== undefined) {
+			return payload['organizationId'] as ID | null;
+		}
+		const organization = payload['organization'];
+		if (organization !== null && typeof organization === 'object') {
+			return (organization as { id?: ID }).id;
+		}
+		return organization as ID | null | undefined;
 	}
 
 	/**
@@ -427,6 +660,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		where: FindOptionsWhere<T>[] | FindOptionsWhere<T> | undefined,
 		read: IScopedRead
 	): FindOptionsWhere<T>[] | FindOptionsWhere<T> {
+		// An empty list of alternatives is no condition at all: TypeORM drops the WHERE clause, so `[]` returned as it
+		// came read every tenant's rows (e.g. `GET /expense?data={"findInput":[]}`). It is read as no filter instead.
+		if (Array.isArray(where) && where.length === 0) {
+			where = undefined;
+		}
 		if (where && Array.isArray(where)) {
 			const wheres: FindOptionsWhere<T>[] = [];
 			where.forEach((options: FindOptionsWhere<T>) => {
@@ -473,21 +711,21 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}
 		const read = this.scopedReadOf(filter);
 		if (!filter) {
-			return {
+			return this.optionsInsideOrganizationBoundary({
 				where: this.findConditionsWithTenantByUser(user, read)
-			};
+			});
 		}
 		if (!filter.where) {
-			return {
+			return this.optionsInsideOrganizationBoundary({
 				...filter,
 				where: this.findConditionsWithTenantByUser(user, read)
-			};
+			});
 		}
 		if (filter.where instanceof Object) {
-			return {
+			return this.optionsInsideOrganizationBoundary({
 				...filter,
 				where: this.findConditionsWithTenant(user, filter.where, read)
-			};
+			});
 		}
 		return filter;
 	}
@@ -505,21 +743,21 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}
 		const read = this.scopedReadOf(filter);
 		if (!filter) {
-			return {
+			return this.optionsInsideOrganizationBoundary({
 				where: this.findConditionsWithTenantByUser(user, read)
-			};
+			});
 		}
 		if (!filter.where) {
-			return {
+			return this.optionsInsideOrganizationBoundary({
 				...filter,
 				where: this.findConditionsWithTenantByUser(user, read)
-			};
+			});
 		}
 		if (filter.where instanceof Object) {
-			return {
+			return this.optionsInsideOrganizationBoundary({
 				...filter,
 				where: this.findConditionsWithTenant(user, filter.where, read)
-			};
+			});
 		}
 		return filter;
 	}
@@ -539,10 +777,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		if (!user) {
 			return options;
 		}
-		return {
+		return this.whereInsideOrganizationBoundary({
 			...options,
 			...this.findConditionsWithTenantByUser(user, LIVE_READ)
-		};
+		});
 	}
 
 	/**
@@ -805,6 +1043,53 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Keeps an upsert through `create()` / `createMany()` to rows the caller could update.
+	 *
+	 * A payload carrying the id of an existing row updates that row (TypeORM's `save()`, MikroORM's `assign()`).
+	 * {@link assertNotForeignRow} keeps it in the caller's tenant; this keeps it in the caller's employee scope, which
+	 * `update()` applies by reading the row through that scope first. Without it, an employee who may not act for other
+	 * employees could post a colleague's row id to any CRUD `POST` route and rewrite the row — which `create()` then
+	 * stamped with the caller's own employee, moving it onto their records.
+	 *
+	 * Ids that name no row create new rows, as before. Writes with no caller in context (seeders, jobs), and inside
+	 * {@link withoutEmployeeFilter}, are not restricted.
+	 *
+	 * @param entities - The payloads about to be persisted.
+	 * @throws ForbiddenException when a payload names an existing row outside the caller's employee scope.
+	 */
+	private async assertUpsertsWithinEmployeeScope(entities: IPartialEntity<T>[]): Promise<void> {
+		const ids = [...new Set((entities ?? []).map((entity) => (entity as any)?.id).filter((id) => !!id))];
+		if (!ids.length || !RequestContext.currentUser()) {
+			return;
+		}
+
+		// The employee scope as a statement on the row's own column: `employeeId = <caller>`, or the never-matching
+		// `employeeId IN ()` of a service whose rows are strictly personal. The relation members are left out.
+		const employeeScope = Object.fromEntries(
+			Object.entries(this.findConditionsWithEmployeeByUser() ?? {}).filter(
+				([, value]) => value === null || typeof value !== 'object' || value instanceof FindOperator
+			)
+		);
+		if (Object.keys(employeeScope).length === 0) {
+			return;
+		}
+
+		// Read through TypeORM whichever ORM serves the write, as the foreign-graph check does: both are initialised
+		// on the same database, and this only reads.
+		const named = { id: In(ids) } as FindOptionsWhere<T>;
+		const [existing, reachable] = await Promise.all([
+			this.typeOrmRepository.count({ where: named, withDeleted: true }),
+			this.typeOrmRepository.count({
+				where: { ...employeeScope, ...named } as FindOptionsWhere<T>,
+				withDeleted: true
+			})
+		]);
+		if (reachable < existing) {
+			throw new ForbiddenException('The record belongs to another employee');
+		}
+	}
+
+	/**
 	 * Extends the root-id check to the nested objects and ids of the payload (cascaded relations,
 	 * re-parented one-to-many children, owner / many-to-many links). See {@link assertGraphNotForeign}.
 	 *
@@ -836,6 +1121,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const employeeId = RequestContext.currentEmployeeId();
 		await this.assertNotForeignRow(entity, tenantId);
 		await this.assertNestedGraphNotForeign([entity], tenantId);
+		await this.assertUpsertsWithinEmployeeScope([entity]);
+		await this.assertInsideOrganizationBoundary([entity]);
 
 		const hasTenantColumn = this.hasScopeColumn('tenantId');
 		const hasEmployeeColumn = this.hasScopeColumn('employeeId');
@@ -867,6 +1154,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRows(entities, tenantId);
 		await this.assertNestedGraphNotForeign(entities, tenantId);
+		await this.assertUpsertsWithinEmployeeScope(entities);
+		await this.assertInsideOrganizationBoundary(entities);
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const hasTenantColumn = this.hasScopeColumn('tenantId');
@@ -896,6 +1185,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const hasTenantColumn = this.hasScopeColumn('tenantId');
 		await this.assertNotForeignRow(entity, tenantId);
 		await this.assertNestedGraphNotForeign([entity], tenantId);
+		await this.assertInsideOrganizationBoundary([entity]);
 
 		return await super.save(hasTenantColumn ? this.stampedForSave(entity, 'tenantId', tenantId) : { ...entity });
 	}
@@ -930,6 +1220,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRows(entities, tenantId);
 		await this.assertNestedGraphNotForeign(entities, tenantId);
+		await this.assertInsideOrganizationBoundary(entities);
 		const hasTenantColumn = this.hasScopeColumn('tenantId');
 
 		const enriched = entities.map((entity) =>
@@ -998,7 +1289,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			// tenant's row is refused, as create() and save() refuse it (SEC-D-03).
 			if (user) await this.assertNestedGraphNotForeign([patch as IPartialEntity<T>], RequestContext.currentTenantId());
 
-			return await super.update({ ...scoped, id } as FindOptionsWhere<T>, patch);
+			return await super.update(
+				this.whereInsideOrganizationBoundary({ ...scoped, id } as FindOptionsWhere<T>),
+				patch
+			);
 		}
 
 		if (typeof id === 'object' && id !== null) {
@@ -1011,7 +1305,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			if (this.isEmptyPatch(patch)) return this.nothingUpdated();
 			if (user) await this.assertNestedGraphNotForeign([patch as IPartialEntity<T>], RequestContext.currentTenantId());
 
-			return await super.update({ ...criteria, ...scoped }, patch);
+			return await super.update(this.whereInsideOrganizationBoundary({ ...criteria, ...scoped }), patch);
 		}
 
 		return await super.update(id, partialEntity);
@@ -1049,6 +1343,18 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		if (employeeScoped) {
 			delete rest['employeeId'];
 			delete rest['employee'];
+		}
+
+		// Nor is the organization, for a caller confined to theirs, unless the patch names that very organization: the
+		// statement only reaches rows inside the boundary, and the payload must not move one out of it — into another
+		// organization, or out of every organization, which would put it in reach of all of them.
+		const boundary = this.organizationBoundary();
+		if (boundary && ('organizationId' in rest || 'organization' in rest)) {
+			const moved = this.statedOrganizationId(rest);
+			if (!isNotEmpty(boundary.organizationId) || String(moved) !== String(boundary.organizationId)) {
+				delete rest['organizationId'];
+				delete rest['organization'];
+			}
 		}
 
 		return rest as QueryDeepPartialEntity<T>;
@@ -1120,11 +1426,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			const user = RequestContext.currentUser();
 
 			// Proceed with the delete operation using the merged criteria — a write's, without a read passed:
-			// the DELETE is scoped by scopedBy()'s members, never by readScopedBy()'s EXISTS.
-			return await super.delete({
-				...where,
-				...this.findConditionsWithTenantByUser(user)
-			});
+			// the DELETE is scoped by scopedBy()'s members, never by readScopedBy()'s EXISTS. A row outside the caller's
+			// organization boundary is not deleted, and is answered as a row that does not exist.
+			return await super.delete(
+				this.whereInsideOrganizationBoundary({
+					...where,
+					...this.findConditionsWithTenantByUser(user)
+				})
+			);
 		} catch (err) {
 			// A malformed criteria (no predicate) is the caller's error, not a missing record.
 			if (err instanceof BadRequestException) {
@@ -1220,11 +1529,15 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			const scoped = user ? this.scalarConditions(this.findConditionsWithTenantByUser(user)) : {};
 
 			if (typeof criteria === 'object' && criteria !== null) {
-				return await super.softDelete({ ...(criteria as FindOptionsWhere<T>), ...scoped });
+				return await super.softDelete(
+					this.whereInsideOrganizationBoundary({ ...(criteria as FindOptionsWhere<T>), ...scoped })
+				);
 			}
 
 			return await super.softDelete(
-				Object.keys(scoped).length ? ({ ...scoped, id: criteria } as FindOptionsWhere<T>) : criteria
+				Object.keys(scoped).length
+					? this.whereInsideOrganizationBoundary({ ...scoped, id: criteria } as FindOptionsWhere<T>)
+					: criteria
 			);
 		} catch (err) {
 			// If any error occurs, rethrow it as a NotFoundException with additional context.

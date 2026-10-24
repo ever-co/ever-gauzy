@@ -453,3 +453,21 @@ jobs:
         run: |
           node --test tools/scripts/migration-duplicate-column-check.test.mjs
           node tools/scripts/migration-duplicate-column-check.mjs
+
+      # The desktop apps' electron-builder `beforeBuild` hook installs the packaged app's production dependencies and,
+      # when that install fails (one HTTP 500 from the npm cache failed a whole release), retries once against the
+      # public registry. Nothing else runs that path before a release build does, so its cases run here (spawnSync is
+      # stubbed: no install, no network).
+      - name: The packaged app's dependency install retries once, then fails the build
+        if: always()
+        run: node --test tools/electron/before-build.test.js
+
+      # electron-builder 26.15.3's x64 snap target deletes chrome-sandbox from linux-unpacked while the AppImage target
+      # copies that directory, which failed the API Server's Linux x64 release ("failed to build AppImage", ENOENT on
+      # linux-unpacked/chrome-sandbox). postinstall.electron patches the delete out (tools/electron/patches). Only a
+      # release build applies the patch, so these cases keep it made for the app-builder-lib the lockfile installs (and
+      # say when an upgrade makes it obsolete) and out of patches/, which the API and worker images apply without
+      # app-builder-lib installed.
+      - name: The electron-builder snap patch matches the locked app-builder-lib
+        if: always()
+        run: node --test tools/electron/app-builder-lib-patch.test.js

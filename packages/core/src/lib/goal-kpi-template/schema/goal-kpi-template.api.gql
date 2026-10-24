@@ -3,13 +3,14 @@
 # `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
-# Every field below is one the delivered `/api/goal-kpi-template` routes already serve, under the same
-# guard and with the same permission, so a client that reaches a capability over one protocol is not
-# given a narrower or a wider one than the client that reaches it over the other. `GoalKpiTemplateController`
-# carries `TenantPermissionGuard` on the class and states no permission at all — not on the two routes
-# it declares and not on any of the seven it inherits from the CRUD base — so every field here runs
-# under the same tenant guard and demands no permission. The resolver's spec reads those two facts off
-# the controller's own metadata and compares them with the resolver's.
+# Every field below is one the delivered `/api/goal-kpi-template` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. `GoalKpiTemplateController` carries
+# `TenantPermissionGuard` on the class; its reads state no permission, and every write — the filing, the edit,
+# the removal and the two lifecycle moves — states `GOALS_EDIT` behind `PermissionGuard`, on the route and on
+# the field alike (owner decision 2, 2026-10-22: the writes stated none, and the permission guard answers
+# `true` to empty metadata, so any member of the tenant could write). The resolver's spec reads those facts
+# off the controller's own metadata and compares them with the resolver's.
 #
 # **The controller declares two routes and inherits seven, and all nine are served.** The two it
 # declares are the list and the filing; the seven it inherits are the node, the count, the paginated

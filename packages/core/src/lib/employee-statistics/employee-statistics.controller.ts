@@ -5,26 +5,27 @@ import {
 	IEmployeeStatisticsHistory,
 	ID
 } from '@gauzy/contracts';
-import { BadRequestException, Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { isUUID } from 'class-validator';
 import { EmployeeService } from './../employee/employee.service';
 import { TypeOrmEmployeeRepository } from './../employee/repository/type-orm-employee.repository';
-import {
-	assertCurrentUserBelongsToOrganization,
-	assertCurrentUserBelongsToSentOrganization,
-	isSent
-} from './../user-organization/assert-organization-membership';
+import { assertCurrentUserBelongsToSentOrganization } from './../user-organization/assert-organization-membership';
+import { assertStatisticsReadInScope } from './employee-statistics-scope';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import {
 	AggregatedEmployeeStatisticQuery,
 	EmployeeStatisticsHistoryQuery,
 	MonthAggregatedEmployeeStatisticsQuery
 } from './queries';
 import { EmployeeAggregatedStatisticByMonthQueryDTO } from './dto';
+import { Permissions } from './../shared/decorators';
+import {
+	EMPLOYEE_STATISTICS_AGGREGATE_PERMISSIONS,
+	EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS
+} from './employee-statistics.permissions';
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
@@ -38,6 +39,10 @@ export class EmployeeStatisticsController {
 	) {}
 
 	/**
+	 * The organization's aggregate: every employee's income, expenses, bonus and profit over a range.
+	 *
+	 * Read under the Accounting dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `ACCOUNTING_DASHBOARD`), the page
+	 * and widgets that show it (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param data
 	 * @returns
@@ -50,6 +55,8 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_AGGREGATE_PERMISSIONS)
 	@Get('/aggregate')
 	async findAggregatedByOrganizationId(
 		@Query('data', ParseJsonPipe) data: any
@@ -63,6 +70,10 @@ export class EmployeeStatisticsController {
 	}
 
 	/**
+	 * One employee's twelve-month series.
+	 *
+	 * Read under the Human Resources dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD`),
+	 * like the employee's other figures (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param id
 	 * @param data
@@ -74,16 +85,27 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Get('/months/:id')
 	async findAllByEmployeeId(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
 		const { findInput } = data;
+
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, {
+			employeeId: id
+		});
+
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
 	}
 
 	/**
+	 * One employee's statistics, one row per month of a range.
+	 *
+	 * Read under the Human Resources dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD`),
+	 * the page and widgets that show it (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param options
 	 * @returns
@@ -96,15 +118,24 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Get('/months')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async findAggregatedStatisticsByEmployeeId(
 		@Query() options: EmployeeAggregatedStatisticByMonthQueryDTO
 	): Promise<IMonthAggregatedEmployeeStatistics> {
+		// The query states no organization, so the reads reach the employee in whichever organization it is.
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, options);
+
 		return await this.queryBus.execute(new MonthAggregatedEmployeeStatisticsQuery(options));
 	}
 
 	/**
+	 * The income and expense lines behind one employee's totals.
+	 *
+	 * Read under the Human Resources dashboard tab's pair (`ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD`),
+	 * the page dialogs and widgets that show them (see `employee-statistics.permissions.ts`).
 	 *
 	 * @param data
 	 * @returns
@@ -117,24 +148,16 @@ export class EmployeeStatisticsController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Get('/history')
 	async findEmployeeStatisticsHistory(
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = data;
-		const { manager } = this.typeOrmEmployeeRepository;
-		await assertCurrentUserBelongsToSentOrganization(manager, findInput?.organizationId);
 
-		// Without an organization the income and expense reads drop that filter and reach the employee in
-		// whichever organization it belongs to, so that organization is the one checked. An employee is then
-		// required: without one the split expense reads look up the tenant's first employee instead
-		if (!isSent(findInput?.organizationId)) {
-			if (!isUUID(findInput?.employeeId)) {
-				throw new BadRequestException('employeeId must be a UUID');
-			}
-			const employee = await this.employeeService.findOneByIdString(findInput.employeeId);
-			await assertCurrentUserBelongsToOrganization(manager, employee.organizationId);
-		}
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, findInput);
+
 		return this.queryBus.execute(new EmployeeStatisticsHistoryQuery(findInput));
 	}
 }

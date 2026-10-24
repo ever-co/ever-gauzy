@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
+import { RequestContext, WarehouseProductVariant } from '@gauzy/core';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
 import { StockAlert } from './stock-alert.entity';
 import { TypeOrmStockAlertRepository } from './repository/type-orm-stock-alert.repository';
 import { MikroOrmStockAlertRepository } from './repository/mikro-orm-stock-alert.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** What one evaluation pass found. */
 export interface IStockAlertEvaluation {
@@ -25,7 +26,7 @@ export const STOCK_ALERT_UNWRITABLE_MEMBERS: readonly string[] = ['idempotencyKe
  * alert is a notification, and a notification must never be able to change a level.
  */
 @Injectable()
-export class StockAlertService extends TenantAwareCrudService<StockAlert> {
+export class StockAlertService extends InventoryCrudService<StockAlert> {
 	constructor(
 		readonly typeOrmStockAlertRepository: TypeOrmStockAlertRepository,
 		readonly mikroOrmStockAlertRepository: MikroOrmStockAlertRepository

@@ -6,8 +6,7 @@ import {
 	OrganizationVendor,
 	ProductVariant,
 	ProductVariantPrice,
-	RequestContext,
-	TenantAwareCrudService
+	RequestContext
 } from '@gauzy/core';
 import {
 	IVendorProductTerm,
@@ -30,6 +29,7 @@ import { PurchaseOrderLine } from '../purchase-order-line/purchase-order-line.en
 import { VendorProductTerm } from './vendor-product-term.entity';
 import { MikroOrmVendorProductTermRepository } from './repository/mikro-orm-vendor-product-term.repository';
 import { TypeOrmVendorProductTermRepository } from './repository/type-orm-vendor-product-term.repository';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /** The priority a term is written with when the caller states none. */
 const DEFAULT_PRIORITY = 100;
@@ -88,7 +88,7 @@ interface IVendorDefaults {
  * it and reports divergence.
  */
 @Injectable()
-export class VendorProductTermService extends TenantAwareCrudService<VendorProductTerm> {
+export class VendorProductTermService extends PurchasingCrudService<VendorProductTerm> {
 	constructor(
 		readonly typeOrmVendorProductTermRepository: TypeOrmVendorProductTermRepository,
 		readonly mikroOrmVendorProductTermRepository: MikroOrmVendorProductTermRepository

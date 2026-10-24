@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TypeOrmTaxRateRepository } from '../tax-rate/repository/type-orm-tax-rate.repository';
 import {
@@ -12,7 +13,13 @@ import {
 } from '../tax.types';
 import { TaxRegimeRate } from '../tax-regime-rate/tax-regime-rate.entity';
 import { TaxRegimeRateService } from '../tax-regime-rate/tax-regime-rate.service';
-import { assertCountryCode, assertOrganizationUnchanged, assertPriority, retirementResult } from '../write-rules';
+import {
+	assertCountryCode,
+	assertOrganizationUnchanged,
+	assertPriority,
+	inCallerOrganization,
+	retirementResult
+} from '../write-rules';
 import { TaxRegime } from './tax-regime.entity';
 import { MikroOrmTaxRegimeRepository } from './repository/mikro-orm-tax-regime.repository';
 import { TypeOrmTaxRegimeRepository } from './repository/type-orm-tax-regime.repository';
@@ -51,6 +58,20 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 		private readonly typeOrmTaxRateRepository: TypeOrmTaxRateRepository
 	) {
 		super(typeOrmTaxRegimeRepository, mikroOrmTaxRegimeRepository);
+	}
+
+	/**
+	 * Reads a tax regime of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRegime>): Promise<TaxRegime> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

@@ -1,6 +1,17 @@
-import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Query, ValidationPipe } from '@nestjs/common';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpStatus,
+	Param,
+	Post,
+	Query,
+	UseGuards,
+	ValidationPipe
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -16,8 +27,22 @@ import { AssignPluginUsersDTO, IPluginTenant, UnassignPluginUsersDTO } from '../
 /**
  * Plugin User Assignment Controller
  * Handles user assignment operations for specific plugins
+ *
+ * The three controllers of this file used to state no guard at all, so any authenticated member of the tenant
+ * could list, assign and unassign the users of any plugin. Listing who may use a plugin now states
+ * `PLUGIN_ASSIGN_ACCESS` or `PLUGIN_CONFIGURE` (the grant `subscription/access/assign` and `/revoke` already
+ * require); reading one user's assignments or access states `PLUGIN_VIEW`, as `subscription/access/check` does.
+ *
+ * It also serves `POST` and `DELETE` on this path, to assign and unassign users. Nothing calls them (the apps
+ * assign and revoke through `plugins/:id/subscription/access/*` and manage the plugin-tenant's users through
+ * `POST /plugin-tenants/:id/users`), and they are not wired to a working flow: they hand the plugin id to a service
+ * that expects a plugin-tenant id, so they answer 404 for any real plugin, and that service assigns nobody; it only
+ * moves the plugin-tenant's `currentActiveUsers` counter. They are kept, gated: `PLUGIN_CONFIGURE`, the grant
+ * `PUT /plugin-tenants/:id` states, which sets that plugin-tenant's `maxActiveUsers` itself, and the service reads
+ * and updates through the tenant-aware CRUD base, so the only counter they can move is one of the caller's tenant.
  */
 @ApiTags('Plugins - User Assignment')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/users')
 export class PluginUserAssignmentController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -25,6 +50,7 @@ export class PluginUserAssignmentController {
 	/**
 	 * Get all users assigned to a specific plugin
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS, PermissionsEnum.PLUGIN_CONFIGURE)
 	@Get()
 	@ApiOperation({
 		summary: 'Get users assigned to a plugin',
@@ -50,6 +76,7 @@ export class PluginUserAssignmentController {
 	/**
 	 * Assign users to a plugin
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	@ApiOperation({
 		summary: 'Assign users to a plugin',
@@ -75,6 +102,7 @@ export class PluginUserAssignmentController {
 	/**
 	 * Unassign users from a plugin
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Delete()
 	@ApiOperation({
 		summary: 'Unassign users from a plugin',
@@ -109,6 +137,7 @@ export class PluginUserAssignmentController {
  * Handles plugin assignment operations for specific users
  */
 @ApiTags('Users - Plugin Assignment')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('users/:userId/plugins')
 export class UserPluginAssignmentController {
 	constructor(private readonly queryBus: QueryBus) {}
@@ -116,6 +145,7 @@ export class UserPluginAssignmentController {
 	/**
 	 * Get all plugins assigned to a specific user
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
 	@ApiOperation({
 		summary: 'Get plugins assigned to a user',
@@ -141,6 +171,7 @@ export class UserPluginAssignmentController {
 	/**
 	 * Check if a user has access to a specific plugin
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':pluginId/access')
 	@ApiOperation({
 		summary: 'Check user plugin access',
@@ -167,6 +198,7 @@ export class UserPluginAssignmentController {
  * Handles general management operations for plugin user assignments
  */
 @ApiTags('Plugins - User Assignment Management')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-user-assignments')
 export class PluginUserAssignmentManagementController {
 	constructor(private readonly queryBus: QueryBus) {}
@@ -174,6 +206,7 @@ export class PluginUserAssignmentManagementController {
 	/**
 	 * Get all plugin user assignments
 	 */
+	@Permissions(PermissionsEnum.PLUGIN_ASSIGN_ACCESS, PermissionsEnum.PLUGIN_CONFIGURE)
 	@Get()
 	@ApiOperation({
 		summary: 'Get all plugin user assignments',

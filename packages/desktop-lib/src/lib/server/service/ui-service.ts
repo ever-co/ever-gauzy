@@ -1,13 +1,19 @@
 import { BrowserWindow, app } from 'electron';
 import { ServerTask } from './server-task';
+import { resolveDesktopListenHost } from '../../config/desktop-listen-host';
 
 export class UiService extends ServerTask {
+	/**
+	 * @param allowLanAccess - Whether this app may listen on the network (Gauzy Server, as its LAN
+	 *   access setting says); otherwise the web UI listens on the loopback address only.
+	 */
 	constructor(
 		readonly path: string,
 		readonly env: any,
 		readonly window: BrowserWindow,
 		signal: AbortSignal,
-		readonly uiPort: number
+		readonly uiPort: number,
+		readonly allowLanAccess: boolean = false
 	) {
 		const args = { isPackaged: app.isPackaged.toString(), serviceName: 'ui', ...env, UI_PORT: uiPort };
 		const successMessage = `Listening on port`;
@@ -36,7 +42,8 @@ export class UiService extends ServerTask {
 	}
 
 	/**
-	 * Sets the UI server configuration, including the UI port.
+	 * Sets the UI server configuration, including the UI port and the address it listens on (read at
+	 * every start, so a change of the LAN access setting applies on the next restart).
 	 *
 	 * @returns {void}
 	 */
@@ -44,7 +51,8 @@ export class UiService extends ServerTask {
 		console.log('Setting UI config');
 		this.args = {
 			...this.args,
-			UI_PORT: this.config.uiPort
+			UI_PORT: this.config.uiPort,
+			UI_HOST: resolveDesktopListenHost(this.config.setting, this.allowLanAccess)
 		};
 	}
 

@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { CART_PROMOTION_REFERENCES } from '../cart.references';
 import { CommerceCartPromotion } from './commerce-cart-promotion.entity';
 import { TypeOrmCommerceCartPromotionRepository } from './repository/type-orm-commerce-cart-promotion.repository';
 import { MikroOrmCommerceCartPromotionRepository } from './repository/mikro-orm-commerce-cart-promotion.repository';
+import { CartCrudService } from '../cart-crud.service';
 
 /**
  * The promotions applied to a cart, as snapshots.
@@ -21,7 +22,7 @@ import { MikroOrmCommerceCartPromotionRepository } from './repository/mikro-orm-
  * tenant (`cart.references.ts`).
  */
 @Injectable()
-export class CommerceCartPromotionService extends TenantAwareCrudService<CommerceCartPromotion> {
+export class CommerceCartPromotionService extends CartCrudService<CommerceCartPromotion> {
 	constructor(
 		readonly typeOrmCommerceCartPromotionRepository: TypeOrmCommerceCartPromotionRepository,
 		readonly mikroOrmCommerceCartPromotionRepository: MikroOrmCommerceCartPromotionRepository

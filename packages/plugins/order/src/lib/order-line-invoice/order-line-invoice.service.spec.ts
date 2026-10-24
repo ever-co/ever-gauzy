@@ -4,6 +4,9 @@
  * applies the order it is asked for and answers the rows that order leaves tied in a different order on every
  * read — which is what a database is free to do with them.
  */
+/** The platform's cross-tenant reference check, which reads a real database: recorded, and answered per test. */
+const mockAssertReferences = jest.fn(async (..._args: unknown[]) => undefined);
+
 jest.mock('@gauzy/core', () => {
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -38,6 +41,7 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
+		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -124,5 +128,39 @@ describe('OrderLineInvoiceService — the order a line’s links are read in', (
 			order: { createdAt: 'ASC', id: 'ASC' }
 		});
 		expect(repository.reads[1]).toMatchObject({ order: { createdAt: 'ASC', id: 'ASC' }, withDeleted: true });
+	});
+});
+
+describe('OrderLineInvoiceService — the invoice item a link names', () => {
+	const input = {
+		orderLineId: 'line-1',
+		invoiceItemId: 'item-of-tenant-b',
+		quantity: 1,
+		amount: '10',
+		currency: 'USD'
+	};
+
+	it('refuses an item of another tenant before reading or writing anything', async () => {
+		const findOne = jest.fn();
+		const transaction = jest.fn();
+		const manager = { transaction };
+		const service = new OrderLineInvoiceService(
+			{ findOne, manager } as never,
+			{} as never,
+			{} as never,
+			{} as never
+		);
+		mockAssertReferences.mockRejectedValueOnce(new Error('A related record belongs to another tenant'));
+
+		await expect(service.record(input as never)).rejects.toThrow('another tenant');
+
+		expect(mockAssertReferences).toHaveBeenCalledWith(
+			manager,
+			input,
+			{ invoiceItemId: 'invoice_item' },
+			'tenant-1'
+		);
+		expect(findOne).not.toHaveBeenCalled();
+		expect(transaction).not.toHaveBeenCalled();
 	});
 });

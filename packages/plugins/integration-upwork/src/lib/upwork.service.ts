@@ -1646,8 +1646,8 @@ export class UpworkService {
 			where: {
 				id: In(gauzyIds),
 				valueDate: Between<Date>(
-					moment(moment(start).format('YYYY-MM-DD hh:mm:ss')).toDate(),
-					moment(moment(end).format('YYYY-MM-DD hh:mm:ss')).toDate()
+					moment(moment(start).format('YYYY-MM-DD HH:mm:ss')).toDate(),
+					moment(moment(end).format('YYYY-MM-DD HH:mm:ss')).toDate()
 				),
 				organizationId,
 				tenantId
@@ -1658,8 +1658,8 @@ export class UpworkService {
 			where: {
 				id: In(gauzyIds),
 				valueDate: Between<Date>(
-					moment(moment(start).format('YYYY-MM-DD hh:mm:ss')).toDate(),
-					moment(moment(end).format('YYYY-MM-DD hh:mm:ss')).toDate()
+					moment(moment(start).format('YYYY-MM-DD HH:mm:ss')).toDate(),
+					moment(moment(end).format('YYYY-MM-DD HH:mm:ss')).toDate()
 				),
 				organizationId,
 				tenantId

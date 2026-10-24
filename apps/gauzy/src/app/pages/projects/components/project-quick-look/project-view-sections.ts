@@ -1,4 +1,4 @@
-import { IOrganizationProject, ProjectStatusEnum } from '@gauzy/contracts';
+import { IOrganizationProject, IOrganizationProjectEmployee, ProjectStatusEnum, RolesEnum } from '@gauzy/contracts';
 import { IRecordViewField, IRecordViewSection, IRecordViewStatus } from '@gauzy/ui-core/shared';
 
 /**
@@ -10,11 +10,23 @@ import { IRecordViewField, IRecordViewSection, IRecordViewStatus } from '@gauzy/
 export const PROJECT_VIEW_RELATIONS: string[] = [
 	'organizationContact',
 	'members.employee.user',
+	'members.role',
 	'tags',
 	'teams',
 	'teams.members',
+	'teams.members.employee',
+	'teams.members.employee.user',
 	'image'
 ];
+
+/**
+ * Whether a project member manages the project: flagged `isManager`, or holding the MANAGER role. The server sets
+ * the flag only for a caller holding CHANGE_SELECTED_EMPLOYEE; the managers of a project an employee creates hold
+ * the role alone, as team managers do.
+ */
+export function managesProject(member: IOrganizationProjectEmployee): boolean {
+	return !!member?.isManager || member?.role?.name === RolesEnum.MANAGER;
+}
 
 export interface IProjectViewText {
 	/** Translates an i18n key (visibility). */
@@ -71,8 +83,8 @@ export function buildProjectViewSections(
 	options: IProjectViewOptions = {}
 ): IRecordViewSection[] {
 	const members = (project.members || []).filter((member) => !!member?.employee);
-	const managers = members.filter((member) => member.isManager).map((member) => member.employee);
-	const others = members.filter((member) => !member.isManager).map((member) => member.employee);
+	const managers = members.filter((member) => managesProject(member)).map((member) => member.employee);
+	const others = members.filter((member) => !managesProject(member)).map((member) => member.employee);
 	// Rows the project's own page shows elsewhere, by label: each only while something else shows it.
 	const shownElsewhere = new Set<string>([
 		...(options.page

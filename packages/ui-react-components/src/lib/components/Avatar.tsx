@@ -20,8 +20,10 @@ export interface AvatarProps {
 	onClick?: () => void;
 	/** Accessible name of the clickable image when there is no `name` (defaults to "Open profile"). */
 	imageLabel?: string;
+	/** Small pill after the name — the "Agent" badge `ngx-avatar` shows for agent employees. */
+	badge?: ReactNode;
 	/**
-	 * `dashboard` = the `.avatar-dashboard` look (full-width chip, 32px image, 14px/600 name);
+	 * `dashboard` = the `.avatar-dashboard` look (full-width chip, 20px image, 14px/600 name);
 	 * `activity` adds the `.activity` circle variant (28px round image).
 	 */
 	variant?: 'dashboard' | 'activity';
@@ -40,17 +42,26 @@ const AVATAR_CSS = `
 .gzrc-avatar .gzrc-avatar-image.lg img { height: 64px; }
 .gzrc-avatar .gzrc-avatar-image.sm, .gzrc-avatar .gzrc-avatar-image.sm img { width: 32px; }
 .gzrc-avatar .gzrc-avatar-image.sm img { height: 32px; }
+/* In the dashboard chip the Angular avatar's 'common' block (20px) comes after the size rules at
+   the same specificity, so every size renders at 20px there; .activity then wins with a 28px circle. */
+.gzrc-avatar.dashboard .gzrc-avatar-image, .gzrc-avatar.dashboard .gzrc-avatar-image img { width: 20px; }
+.gzrc-avatar.dashboard .gzrc-avatar-image img { height: 20px; }
 .gzrc-avatar.activity .gzrc-avatar-image, .gzrc-avatar.activity .gzrc-avatar-image img { width: 28px; border-radius: 50%; }
 .gzrc-avatar.activity .gzrc-avatar-image img { height: 28px; }
-.gzrc-avatar .gzrc-avatar-status { position: absolute; width: 10px; height: 10px; border-radius: 8px; border: 2px solid ${themeTokens.card1}; right: 0; top: 0; }
+.gzrc-avatar .gzrc-avatar-status { position: absolute; width: 8px; height: 8px; border-radius: 50%; border: 2px solid ${themeTokens.card1};
+	right: -1px; bottom: -1px; top: auto; box-sizing: content-box; }
 .gzrc-avatar .gzrc-avatar-status.online { background-color: ${themeTokens.success}; }
-.gzrc-avatar .gzrc-avatar-status.offline { background-color: ${themeTokens.danger}; }
+.gzrc-avatar .gzrc-avatar-status.offline { background-color: ${themeTokens.text2}; }
 .gzrc-avatar .gzrc-avatar-image[role='button'] { outline: none; }
 .gzrc-avatar .gzrc-avatar-image[role='button']:focus-visible { box-shadow: 0 0 0 2px ${themeTokens.primary}; }
 .gzrc-avatar .gzrc-avatar-names { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; min-width: 0; }
 .gzrc-avatar .gzrc-avatar-name { display: block; cursor: pointer; text-decoration: none; font-style: normal; font-size: 14px; font-weight: 600;
-	line-height: 16px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ${themeTokens.text1}; background: none; border: 0; padding: 0; text-align: start; max-width: 100%; }
-.gzrc-avatar .gzrc-avatar-name.static { cursor: default; }
+	line-height: 15px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ${themeTokens.text1}; background: none; border: 0; padding: 0; text-align: start; max-width: 100%; font-family: inherit; }
+.gzrc-avatar .gzrc-avatar-name-row { display: flex; align-items: center; min-width: 0; }
+.gzrc-avatar .gzrc-avatar-name-row .gzrc-avatar-name { min-width: 0; }
+.gzrc-avatar .gzrc-avatar-badge { display: inline-block; flex: 0 0 auto; margin-inline-start: 4px; padding: 0 6px; border-radius: 9999px; font-size: 10px; font-weight: 600;
+	line-height: 16px; text-transform: uppercase; letter-spacing: 0.02em; vertical-align: middle;
+	color: var(--color-info-default, #0095ff); background-color: var(--color-info-transparent-100, rgba(0, 149, 255, 0.08)); }.gzrc-avatar .gzrc-avatar-name.static { cursor: default; }
 .gzrc-avatar .gzrc-avatar-name:not(.static):hover { text-decoration: underline; }
 .gzrc-avatar .gzrc-avatar-caption { font-size: 11px; font-weight: 400; line-height: 11px; letter-spacing: 0; color: ${themeTokens.text2}; }
 `;
@@ -63,6 +74,7 @@ export function Avatar({
 	name,
 	src,
 	imageLabel = 'Open profile',
+	badge,
 	caption,
 	appendCaption,
 	size = 'md',
@@ -74,7 +86,8 @@ export function Avatar({
 }: AvatarProps) {
 	useInjectedStyles('gzrc-avatar-styles', AVATAR_CSS);
 	const online = !!presence?.isOnline && !presence?.isAway;
-	const classes = ['gzrc-avatar', variant === 'activity' ? 'activity' : '', className ?? ''].filter(Boolean).join(' ');
+	// `activity` is a variant OF the dashboard chip (`class="avatar-dashboard activity"`).
+	const classes = ['gzrc-avatar', 'dashboard', variant === 'activity' ? 'activity' : '', className ?? ''].filter(Boolean).join(' ');
 	return (
 		<div className={classes} style={style}>
 			<div className="gzrc-avatar-inner">
@@ -101,16 +114,25 @@ export function Avatar({
 					</div>
 				) : null}
 				<div className="gzrc-avatar-names">
-					{name ? (
-						onClick ? (
-							<button type="button" className="gzrc-avatar-name" title={name} onClick={onClick}>
-								{name}
-							</button>
-						) : (
-							<span className="gzrc-avatar-name static" title={name}>
-								{name}
-							</span>
-						)
+					{name || badge ? (
+						<div className="gzrc-avatar-name-row">
+							{name ? (
+								onClick ? (
+									<button type="button" className="gzrc-avatar-name" title={name} onClick={onClick}>
+										{name}
+									</button>
+								) : (
+									<span className="gzrc-avatar-name static" title={name}>
+										{name}
+									</span>
+								)
+							) : null}
+							{badge ? (
+								<span className="gzrc-avatar-badge" title={typeof badge === 'string' ? badge : undefined}>
+									{badge}
+								</span>
+							) : null}
+						</div>
 					) : null}
 					{caption ? (
 						<div className="gzrc-avatar-caption">

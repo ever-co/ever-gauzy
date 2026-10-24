@@ -85,16 +85,16 @@ const ORGANIZATION_LANGUAGE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * from the CRUD base rather than declaring.
  *
  * **The guard is the controller's guard, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere, so
- * every one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
- * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
- * two-protocol rule forbids.
+ * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` on its reads, so
+ * those are tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission there
+ * would refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol rule
+ * forbids.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
- * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
- * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationLanguage` and `recoverOrganizationLanguage` state the
- * same, neither wider nor narrower than REST.
+ * **Except every write.** The controller states `ALL_ORG_EDIT` behind `PermissionGuard` on its create,
+ * update and delete, and overrides the inherited retire-and-restore pair only to state the same — the
+ * CRUD base declares no permission, and `PermissionGuard` answers `true` to empty metadata, so any member
+ * of the tenant could write the organization's records (GHSA-v79w-54p2-wmh5) — so every mutation below
+ * states the same, neither wider nor narrower than REST.
  *
  * **The language is an identifier rather than a field.** The reference row is joined only when a REST
  * caller names the relation, and this surface names none, so `languageCode` is what is carried and the
@@ -181,6 +181,8 @@ export class OrganizationLanguageResolver {
 	 * overwrites whatever a body states, so a caller states which organization the row is filed under
 	 * and never which tenant it is written into.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('createOrganizationLanguage')
 	async createOrganizationLanguage(
 		@Args('input') input: ICreateOrganizationLanguageInput
@@ -201,6 +203,8 @@ export class OrganizationLanguageResolver {
 	 * answers the store's own update result — a statement about the write, `{ affected }` — which is not
 	 * a row and not what a GraphQL field named `updateOrganizationLanguage` may return.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('updateOrganizationLanguage')
 	async updateOrganizationLanguage(
 		@Args('input') input: IUpdateOrganizationLanguageInput
@@ -218,6 +222,8 @@ export class OrganizationLanguageResolver {
 	/**
 	 * Removes a language row outright.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('deleteOrganizationLanguage')
 	async deleteOrganizationLanguage(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.organizationLanguageService.delete(id));

@@ -1,6 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { PosthogService } from './posthog.service';
+import { SanitizerUtil } from './utils';
 
 @Injectable()
 export class PosthogRequestMiddleware implements NestMiddleware {
@@ -17,8 +18,8 @@ export class PosthogRequestMiddleware implements NestMiddleware {
 		// Capture essential request properties as user identification
 		try {
 			this.posthog.identify(req.ip || 'anonymous', {
-				$current_url: req.originalUrl,
-				$referrer: req.get('referer'),
+				$current_url: SanitizerUtil.sanitizeUrl(req.originalUrl),
+				$referrer: SanitizerUtil.sanitizeUrl(req.get('referer')),
 				$user_agent: req.get('user-agent'),
 				$host: req.get('host'),
 				$pathname: req.path,

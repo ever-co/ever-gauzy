@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
-import { omit } from 'underscore';
+import { pick } from 'underscore';
 import { ID, ITimeLog, ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
@@ -17,6 +17,28 @@ import { MikroOrmTimeLogRepository } from '../../../time-log/repository/mikro-or
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../repository/mikro-orm-time-slot.repository';
 import { TimeSlot } from './../../time-slot.entity';
+
+/**
+ * The columns a new slot takes from the request: the tracked values the desktop timer and the agents send, and
+ * nothing that names a row.
+ *
+ * `POST /timesheet/time-slot` takes its body unvalidated, and a new slot used to be built from all of it. TypeORM's
+ * `save` updates the row a body `id` names, so a caller could post another employee's slot id, of any tenant, and
+ * have that slot rewritten as their own and returned with its screenshots; and the cascading `screenshots`,
+ * `timeSlotMinutes` and `timeSlotSessions` (or an `employee`/`tenant` relation) would have been written as sent.
+ * The owner, tenant and organization are set from the context below, the time logs and activities by this handler.
+ */
+const NEW_SLOT_COLUMNS: string[] = [
+	'startedAt',
+	'duration',
+	'keyboard',
+	'mouse',
+	'overall',
+	'location',
+	'kbMouseActivity',
+	'locationActivity',
+	'customActivity'
+];
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
@@ -132,9 +154,9 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 				}
 			}
 		} catch (error) {
-			// Create a new TimeSlot instance if not found
+			// Create a new TimeSlot instance if not found, from the slot's own values only (see NEW_SLOT_COLUMNS)
 			timeSlot = new TimeSlot({
-				...omit(input, ['timeLogId']),
+				...pick(input, NEW_SLOT_COLUMNS),
 				tenantId,
 				organizationId,
 				employeeId,

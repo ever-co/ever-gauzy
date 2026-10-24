@@ -9,4 +9,5 @@ export * from './subscription-hub.service';
 export * from './subscription-limits';
 export * from './subscription-request-context';
 export * from './subscription-scope';
+export * from './subscription-session';
 export * from './subscription-transport';

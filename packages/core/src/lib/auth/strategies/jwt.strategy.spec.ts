@@ -274,6 +274,95 @@ describe('JwtStrategy.validate', () => {
 	});
 
 	/**
+	 * A token without an organization claim falls back to the organization stored on the user
+	 * (`RequestContext.currentOrganizationId()` reads `user.lastOrganizationId`). The user's own profile writes
+	 * that column, so it is held to the claim's rule: kept while the user is an active member of it, cleared
+	 * otherwise — never refused, so a stale preference does not lock anyone out.
+	 */
+	describe('stored organization (no organization claim)', () => {
+		const storedOn = (lastOrganizationId: string | null) => ({ ...activeUser, lastOrganizationId });
+
+		it('keeps the stored organization the user is an active member of', async () => {
+			const { strategy, userOrganizationService } = build(storedOn('org-stored'));
+			userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-stored' });
+
+			const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
+
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ id: 'first-user', lastOrganizationId: 'org-stored' });
+			expect(userOrganizationService.findOneByOptions).toHaveBeenCalledWith({
+				where: {
+					userId: 'first-user',
+					organizationId: 'org-stored',
+					tenantId: 'tenant',
+					isActive: true,
+					isArchived: false
+				}
+			});
+		});
+
+		it('clears a stored organization the user is not a member of', async () => {
+			const { strategy, userOrganizationService } = build(storedOn('another-org'));
+			userOrganizationService.findOneByOptions.mockResolvedValue(null);
+
+			const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
+
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ id: 'first-user', lastOrganizationId: null });
+		});
+
+		it('clears it when the lookup answers "not found" the way the CRUD service does (it throws)', async () => {
+			const { strategy, userOrganizationService } = build(storedOn('another-org'));
+			userOrganizationService.findOneByOptions.mockRejectedValue(
+				new NotFoundException('The requested record was not found')
+			);
+
+			const { err, user } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
+
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ id: 'first-user', lastOrganizationId: null });
+		});
+
+		it('still answers an unreachable database with a 503, not with a cleared organization', async () => {
+			const { strategy, userOrganizationService } = build(storedOn('org-stored'));
+			userOrganizationService.findOneByOptions.mockRejectedValue(
+				new Error('timeout exceeded when trying to connect')
+			);
+
+			await expect(strategy.validate({ id: 'first-user', tenantId: 'tenant' })).rejects.toBeInstanceOf(
+				ServiceUnavailableException
+			);
+		});
+
+		it('judges the claim, not the stored organization, when the token carries one', async () => {
+			const { strategy, userOrganizationService } = build(storedOn('another-org'));
+			userOrganizationService.findOneByOptions.mockResolvedValue({ id: 'user-org-1' });
+
+			const { err, user } = await run(strategy, {
+				id: 'first-user',
+				tenantId: 'tenant',
+				organizationId: 'org-1'
+			});
+
+			expect(err).toBeNull();
+			expect(user).toMatchObject({ lastOrganizationId: 'org-1' });
+			expect(userOrganizationService.findOneByOptions).toHaveBeenCalledTimes(1);
+			expect(userOrganizationService.findOneByOptions).toHaveBeenCalledWith({
+				where: expect.objectContaining({ organizationId: 'org-1' })
+			});
+		});
+
+		it('looks nothing up for a user with no stored organization', async () => {
+			const { strategy, userOrganizationService } = build(storedOn(null));
+
+			const { err } = await run(strategy, { id: 'first-user', tenantId: 'tenant' });
+
+			expect(err).toBeNull();
+			expect(userOrganizationService.findOneByOptions).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
 	 * The employee and membership lookups are independent round trips, so they run concurrently — but their
 	 * outcomes are still judged in the original order, so a token that fails several checks is refused with
 	 * the same exception as before, whichever lookup happens to settle first.

@@ -295,6 +295,30 @@ describe('SellerTransactionService — advancing a row (doc 20 §5.1, §7.6)', (
 		expect(fixture.store('t1')?.status).toBe(SellerTransactionStatus.SETTLEABLE);
 	});
 
+	it('refuses to hold a row a payout covers or has paid, so it cannot be settled into a second payout', async () => {
+		// A hold followed by `settle` used to turn a paid row `SETTLEABLE` again, and once its payout line was gone
+		// the next run paid it a second time. A hold on a row inside an unpaid payout did not keep it out either.
+		for (const status of [SellerTransactionStatus.SETTLED, SellerTransactionStatus.PAID]) {
+			const fixture = transactionFixture({ transactions: [row('t1', { status })] });
+
+			await expect(fixture.service.hold('t1', SellerHoldReason.CHARGEBACK)).rejects.toThrow(/cancel that payout/);
+			expect(fixture.store('t1')?.status).toBe(status);
+		}
+	});
+
+	it('refuses to settle or hold a paid row that a refund has since reversed', async () => {
+		const fixture = transactionFixture({
+			transactions: [
+				row('t1', { status: SellerTransactionStatus.REVERSED, paidAt: new Date('2026-02-01T00:00:00.000Z') })
+			]
+		});
+
+		await expect(fixture.service.settle('t1')).rejects.toBeInstanceOf(ConflictException);
+		await expect(fixture.service.hold('t1', SellerHoldReason.CHARGEBACK)).rejects.toBeInstanceOf(ConflictException);
+		expect(fixture.store('t1')?.status).toBe(SellerTransactionStatus.REVERSED);
+		expect(fixture.events()).toEqual([]);
+	});
+
 	it('refuses a row that is not the caller’s, and one that does not exist', async () => {
 		const fixture = transactionFixture({ transactions: [row('t1', { organizationId: 'another-org' })] });
 

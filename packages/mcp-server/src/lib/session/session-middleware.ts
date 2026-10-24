@@ -5,6 +5,7 @@ import { rateLimit } from 'express-rate-limit';
 import { minimatch } from 'minimatch';
 import crypto from 'node:crypto';
 import type { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
+import { sessionIdForLog } from '../common/error-utils';
 
 const logger = new Logger('SessionMiddleware');
 
@@ -267,7 +268,7 @@ class SessionMiddleware {
 				return req.sessionId || this.getClientIP(req, trustedProxies);
 			},
 			handler: (req: Request, res: Response) => {
-				logger.warn(`Rate limit exceeded for session: ${req.sessionId || 'unknown'} from IP: ${this.getClientIP(req, trustedProxies)}`);
+				logger.warn(`Rate limit exceeded for session: ${sessionIdForLog(req.sessionId)} from IP: ${this.getClientIP(req, trustedProxies)}`);
 				res.status(429).json({
 					error: 'Too Many Requests',
 					message: 'Rate limit exceeded. Please try again later.',

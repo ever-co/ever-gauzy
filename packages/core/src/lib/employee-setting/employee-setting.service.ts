@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { IsNull } from 'typeorm';
+import { FindOptionsWhere, IsNull } from 'typeorm';
 import { LockMode } from '@mikro-orm/core';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
@@ -11,6 +11,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { assertHasOwnEmployee } from '../core/crud/own-employee.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum } from '../core/utils';
 import { EmployeeSetting } from './employee-setting.entity';
@@ -35,6 +36,16 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 	}
 
 	/**
+	 * A setting is its employee's. A caller who may not act for other employees and has no employee record (a viewer,
+	 * a candidate) owns none, so the reads and writes the CRUD base scopes match no row for them, instead of the
+	 * tenant-wide scope it keeps by default, through which such a caller read, changed and deleted every employee's
+	 * settings.
+	 */
+	protected override findConditionsWithoutOwnEmployee(): FindOptionsWhere<EmployeeSetting> {
+		return this.neverMatchingEmployeeCondition();
+	}
+
+	/**
 	 * Creates or updates an EmployeeSetting.
 	 * If an existing EmployeeSetting is found with matching criteria, it updates the existing record.
 	 * Otherwise, it creates a new record.
@@ -44,6 +55,10 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 	 * @throws {BadRequestException} If an error occurs during the process.
 	 */
 	async create(input: IEmployeeSettingCreateInput): Promise<IEmployeeSetting> {
+		// A caller who has no employee record and may not act for other employees owns no setting. They used to file
+		// it under whichever employee the body named, and the de-duplication read below (tenant-wide for them) made
+		// that an overwrite of the employee's own row.
+		assertHasOwnEmployee('Only an employee has employee settings.');
 		try {
 			const employeeId = RequestContext.currentEmployeeId() || input.employeeId;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -190,7 +205,9 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 	 * @throws ForbiddenException when the caller may not patch it.
 	 */
 	private assertMayPatch(setting: EmployeeSetting): void {
-		if (setting.employeeId === RequestContext.currentEmployeeId()) {
+		// Compared only for a caller with an employee: a setting without one would otherwise match a caller without one
+		const employeeId = RequestContext.currentEmployeeId();
+		if (employeeId && setting.employeeId === employeeId) {
 			return;
 		}
 		if (RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE])) {

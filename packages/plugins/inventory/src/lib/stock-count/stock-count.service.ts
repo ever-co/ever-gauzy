@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { FindManyOptions, In, IsNull } from 'typeorm';
+import { EntityManager, FindManyOptions, In, IsNull } from 'typeorm';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	RequestContext,
-	TenantAwareCrudService,
 	WarehouseProductVariant,
 	addDecimalStrings,
 	formatDecimalUnits,
@@ -22,9 +21,11 @@ import { assertLocationInScope, narrowLevelReadToTenant, requestScope } from './
 import { InventorySequenceService } from './../inventory-sequence.service';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockCountLine } from './../stock-count-line/stock-count-line.entity';
+import { StockMovement } from './../stock-movement/stock-movement.entity';
 import { StockCount } from './stock-count.entity';
 import { TypeOrmStockCountRepository } from './repository/type-orm-stock-count.repository';
 import { MikroOrmStockCountRepository } from './repository/mikro-orm-stock-count.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** States a session may be counted in. */
 const COUNTABLE: StockCountStatus[] = [StockCountStatus.OPEN, StockCountStatus.COUNTING];
@@ -52,7 +53,7 @@ const NON_TERMINAL: StockCountStatus[] = Object.values(StockCountStatus).filter(
  * off on cannot change afterwards.
  */
 @Injectable()
-export class StockCountService extends TenantAwareCrudService<StockCount> {
+export class StockCountService extends InventoryCrudService<StockCount> {
 	constructor(
 		readonly typeOrmStockCountRepository: TypeOrmStockCountRepository,
 		readonly mikroOrmStockCountRepository: MikroOrmStockCountRepository,
@@ -146,11 +147,12 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 			const levels = await query.getMany();
 
 			for (const level of levels as WarehouseProductVariant[]) {
+				const expectedQuantity = await this.expectedQuantityOf(manager, count, level);
 				const line = manager.create(StockCountLine, {
 					stockCountId: count.id,
 					variantId: level.variantId,
 					warehouseProductVariantId: level.id,
-					expectedQuantity: Number(level.quantity ?? 0),
+					expectedQuantity,
 					status: StockCountLineStatus.PENDING,
 					binId: count.binId,
 					tenantId: count.tenantId,
@@ -254,14 +256,12 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 					continue;
 				}
 
-				const level = await manager.findOne(WarehouseProductVariant, { where: { id: line.warehouseProductVariantId } });
-				// The correction is the difference between what the floor reported and what the level
+				const baseline = await this.closingBaselineOf(manager, count, line);
+				// The correction is the difference between what the floor reported and what the record
 				// holds, taken over the exact digits of the two `numeric(20,6)` columns: a delta computed
 				// as a double difference is a correction that writes a residue into the ledger, and the
 				// ledger is the number every later reconciliation is measured against.
-				const delta = Number(
-					subtractDecimalStrings(this.decimalTextOf(closing), this.decimalTextOf(level?.quantity ?? 0))
-				);
+				const delta = Number(subtractDecimalStrings(this.decimalTextOf(closing), baseline));
 				if (delta === 0) {
 					continue;
 				}
@@ -378,6 +378,70 @@ export class StockCountService extends TenantAwareCrudService<StockCount> {
 		const { units, scale } = parseDecimalString(this.decimalTextOf(value));
 
 		return formatDecimalUnits(units < 0n ? -units : units, scale);
+	}
+
+	/**
+	 * The quantity a line opens expecting. A session scoped to a bin counts that bin, so it expects the
+	 * bin's ledger balance: the level holds the whole location, and units put away in other bins are not
+	 * on the shelf being counted.
+	 */
+	private async expectedQuantityOf(
+		manager: EntityManager,
+		count: StockCount,
+		level: WarehouseProductVariant
+	): Promise<number> {
+		if (!count.binId) {
+			return Number(level.quantity ?? 0);
+		}
+
+		const balance = await this.binBalanceOf(manager, count, level.variantId, count.binId);
+
+		return Number(balance);
+	}
+
+	/**
+	 * What a counted line is corrected against at close: the bin's ledger balance for a bin-scoped
+	 * line, the level's quantity otherwise.
+	 */
+	private async closingBaselineOf(
+		manager: EntityManager,
+		count: StockCount,
+		line: StockCountLine
+	): Promise<DecimalString> {
+		if (line.binId) {
+			return await this.binBalanceOf(manager, count, line.variantId, line.binId);
+		}
+
+		const level = await manager.findOne(WarehouseProductVariant, { where: { id: line.warehouseProductVariantId } });
+
+		return this.decimalTextOf(level?.quantity ?? 0);
+	}
+
+	/**
+	 * Sums the movements of one variant in one bin of the session's location, on the session's own
+	 * transaction and inside its tenant.
+	 */
+	private async binBalanceOf(
+		manager: EntityManager,
+		count: StockCount,
+		variantId: ID,
+		binId: ID
+	): Promise<DecimalString> {
+		const tenantId = count.tenantId ?? RequestContext.currentTenantId();
+		const read = manager
+			.createQueryBuilder(StockMovement, 'movement')
+			.select('COALESCE(SUM(movement.quantity), 0)', 'total')
+			.where('movement.warehouseId = :warehouseId', { warehouseId: count.warehouseId })
+			.andWhere('movement.variantId = :variantId', { variantId })
+			.andWhere('movement.binId = :binId', { binId });
+
+		if (tenantId) {
+			read.andWhere('movement.tenantId = :tenantId', { tenantId });
+		}
+
+		const raw = await read.getRawOne();
+
+		return this.decimalTextOf(raw?.total);
 	}
 
 	/**

@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { ProductRelationType } from '../catalog.types';
 import { ProductRelation } from './product-relation.entity';
 import { MikroOrmProductRelationRepository } from './repository/mikro-orm-product-relation.repository';
 import { TypeOrmProductRelationRepository } from './repository/type-orm-product-relation.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Directed product-to-product links.
@@ -15,7 +16,7 @@ import { TypeOrmProductRelationRepository } from './repository/type-orm-product-
  * when it is noticed.
  */
 @Injectable()
-export class ProductRelationService extends TenantAwareCrudService<ProductRelation> {
+export class ProductRelationService extends CatalogCrudService<ProductRelation> {
 	constructor(
 		readonly typeOrmProductRelationRepository: TypeOrmProductRelationRepository,
 		readonly mikroOrmProductRelationRepository: MikroOrmProductRelationRepository

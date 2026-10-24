@@ -18,7 +18,8 @@ import {
 	IOrganizationProjectEmployee,
 	IEmployee,
 	BaseEntityEnum,
-	IFavorite
+	IFavorite,
+	RolesEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -245,7 +246,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 
 		this.smartTableSource = new ServerDataSource(this._httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
-			relations: ['organizationContact', 'members.employee.user', 'tags', 'teams'],
+			relations: ['organizationContact', 'members.employee.user', 'members.role', 'tags', 'teams'],
 			join: {
 				alias: 'organization_project',
 				leftJoin: {
@@ -285,6 +286,18 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
+	 * Whether a project member manages the project: flagged `isManager`, or holding the MANAGER role. The server sets
+	 * the flag only for a caller holding CHANGE_SELECTED_EMPLOYEE; the managers of a project an employee creates
+	 * hold the role alone, as team managers do, and the server lets them edit the project.
+	 *
+	 * @param member - The project member, loaded with its `role`.
+	 * @returns `true` when the member is a manager of the project.
+	 */
+	private isProjectManagerMember(member: IOrganizationProjectEmployee): boolean {
+		return !!member.isManager || member.role?.name === RolesEnum.MANAGER;
+	}
+
+	/**
 	 * Retrieves the project managers from the list of members.
 	 *
 	 * @param project - The project containing members.
@@ -292,7 +305,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 */
 	getProjectManagers(project: IOrganizationProject): IEmployee[] {
 		return project.members
-			.filter((member: IOrganizationProjectEmployee) => member.isManager)
+			.filter((member: IOrganizationProjectEmployee) => this.isProjectManagerMember(member))
 			.map((member: IOrganizationProjectEmployee) => member.employee);
 	}
 
@@ -303,8 +316,13 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 * @returns `true` if the current user is a manager of the project, `false` otherwise.
 	 */
 	isManagerOfProject(project: IOrganizationProject): boolean {
+		// Only an active, unarchived membership, as the server's own manager check (ProjectManagerOrPermissionGuard)
 		const manager = project.members.find(
-			(member) => member.isManager && member.employee.userId === this._store.user.id
+			(member) =>
+				member.isActive &&
+				!member.isArchived &&
+				this.isProjectManagerMember(member) &&
+				member.employee.userId === this._store.user.id
 		);
 		return !!manager;
 	}
@@ -318,7 +336,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	getNonManagerEmployees(project: IOrganizationProject): IEmployee[][] {
 		return [
 			project.members
-				.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+				.filter((member: IOrganizationProjectEmployee) => !this.isProjectManagerMember(member))
 				.map((member: IOrganizationProjectEmployee) => member.employee)
 		];
 	}

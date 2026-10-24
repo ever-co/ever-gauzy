@@ -273,7 +273,8 @@ export class TimeOffRequestResolver {
 	 * The same service method the `POST /` route calls, with the payload that route passes through from
 	 * its body. The delivered write stores the row and then files the approval record that carries it
 	 * forward, in that order and in one call, so a request never exists without the record that says who
-	 * has to decide it.
+	 * has to decide it. The input's `status` is ignored and its `employeeIds` apply only to a caller who may
+	 * act for other employees — see `time-off-request-input.helper.ts`.
 	 */
 	@Mutation('createTimeOffRequest')
 	@UseGuards(PermissionGuard)
@@ -290,11 +291,20 @@ export class TimeOffRequestResolver {
 	 * route's own, which is the delete grant rather than the edit one. The delivered write verifies the
 	 * row against the caller's own tenant before it writes and makes the verified identifier the one it
 	 * saves, so a body naming somebody else's request cannot re-point the write.
+	 *
+	 * The write no longer stores a body `status` (privilege-escalation audit 2026-10-24, F2): the delete grant
+	 * approved leave this way without the administrative roles the approve route requires. An edit keeps the
+	 * stored status, so this field changes nothing a decision depends on; `approveTimeOffRequest` and
+	 * `denyTimeOffRequest` decide.
+	 *
+	 * The field answers the stored request. The write's own answer is what it saved, which is the identifier
+	 * alone now that the status is not written, and this field's `status` is non-null.
 	 */
 	@Mutation('updateTimeOffRequest')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_DELETE)
 	async updateTimeOffRequest(@Args('input') input: IUpdateTimeOffRequestInput): Promise<TimeOffRequest> {
-		return await this.timeOffRequestService.updateTimeOffByAdmin(input.id, { status: input.status });
+		await this.timeOffRequestService.updateTimeOffByAdmin(input.id, { status: input.status });
+		return await this.timeOffRequestService.findOneByIdString(input.id);
 	}
 
 	/**

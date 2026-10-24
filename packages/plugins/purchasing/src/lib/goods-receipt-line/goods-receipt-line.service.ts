@@ -2,11 +2,12 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { DeleteResult, EntityManager, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { GoodsReceipt } from '../goods-receipt/goods-receipt.entity';
 import { GoodsReceiptStatus } from '../purchasing.types';
 import { immutableMembers, movedMembers } from '../purchasing.immutable';
 import { GoodsReceiptLine } from './goods-receipt-line.entity';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /**
  * The members of a line its posted movement was written for, and that its reversal reads back: the variant, the bin
@@ -49,7 +50,7 @@ export interface IGoodsReceiptLineWrite {
  * writes the compensating movements and puts the received counters back on the order.
  */
 @Injectable()
-export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceiptLine> {
+export class GoodsReceiptLineService extends PurchasingCrudService<GoodsReceiptLine> {
 	constructor(
 		readonly typeOrmGoodsReceiptLineRepository: TypeOrmGoodsReceiptLineRepository,
 		readonly mikroOrmGoodsReceiptLineRepository: MikroOrmGoodsReceiptLineRepository

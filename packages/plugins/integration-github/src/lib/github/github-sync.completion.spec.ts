@@ -1,3 +1,4 @@
+import { GithubRepositoryStatusEnum } from '@gauzy/contracts';
 import { IntegrationMapSyncIssueCommand } from '@gauzy/core';
 import { GithubSyncService } from './github-sync.service';
 
@@ -82,5 +83,59 @@ describe('GithubSyncService.syncingGithubIssues — the end of a run is recorded
 
 		expect(success).not.toHaveBeenCalled();
 		expect(failure).toHaveBeenCalledWith(false);
+	});
+});
+
+/**
+ * `syncingGithubIssues` reports a failed run by resolving to `false` rather than throwing, and the manual sync
+ * ignored that value: the repository was marked as synchronised and the endpoint answered `true`.
+ */
+describe('GithubSyncService.manualSyncGithubIssues — a failed run is not reported as a success', () => {
+	const input = {
+		organizationId: 'org-1',
+		tenantId: 'tenant-1',
+		repository: { id: 'repository-1', repositoryId: 4242, private: false },
+		issues: []
+	};
+	const request = { integration: { settings: { installation_id: 'installation-1' } } };
+
+	const setup = () => {
+		const githubRepositoryService = { update: jest.fn(async () => undefined) };
+		const service = new GithubSyncService(
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			githubRepositoryService as never,
+			{} as never
+		);
+		return { service, githubRepositoryService };
+	};
+
+	it('marks the repository as errored and returns false when the run failed', async () => {
+		const { service, githubRepositoryService } = setup();
+		jest.spyOn(service, 'syncingGithubIssues').mockResolvedValue(false);
+
+		await expect(service.manualSyncGithubIssues('integration-1', input as never, request as never)).resolves.toBe(
+			false
+		);
+
+		expect(githubRepositoryService.update).toHaveBeenCalledTimes(1);
+		expect(githubRepositoryService.update).toHaveBeenCalledWith('repository-1', {
+			status: GithubRepositoryStatusEnum.ERROR
+		});
+	});
+
+	it('marks the repository as synchronised and returns true when the run finished', async () => {
+		const { service, githubRepositoryService } = setup();
+		jest.spyOn(service, 'syncingGithubIssues').mockResolvedValue([]);
+
+		await expect(service.manualSyncGithubIssues('integration-1', input as never, request as never)).resolves.toBe(
+			true
+		);
+
+		expect(githubRepositoryService.update).toHaveBeenCalledWith('repository-1', {
+			status: GithubRepositoryStatusEnum.SUCCESSFULLY
+		});
 	});
 });

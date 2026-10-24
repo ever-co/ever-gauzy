@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfaccia",
 			"TITLE": "Interfaccia utente",
-			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni.",
+			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni. Entrambe le interfacce mostrano le stesse pagine, con gli stessi dati, lo stesso layout e le stesse funzioni: cambia solo la tecnologia sottostante, quindi il passaggio non modifica ciò che i tuoi utenti vedono o possono fare.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (predefinito)",
 				"REACT": "React (nuovo)"
@@ -2177,6 +2177,17 @@
 		"UPDATE": "Aggiornamento",
 		"ALIGNMENTS": "Allineamenti",
 		"COMMENTS": "Commenti",
+		"COMMENT_THREAD": {
+			"REPLY": "Rispondi",
+			"ONE_MESSAGE": "1 messaggio",
+			"MESSAGES": "{{ count }} messaggi",
+			"NO_MESSAGES": "Non ci sono ancora messaggi in questa discussione.",
+			"REPLY_PLACEHOLDER": "Rispondi a questo commento…",
+			"UNKNOWN_AUTHOR": "Sconosciuto",
+			"DELETE_CONFIRM": "Eliminare questo commento?",
+			"DELETED": "Commento eliminato",
+			"LOAD_ERROR": "Impossibile caricare i commenti."
+		},
 		"KEY_RESULTS": "Risultati chiave",
 		"GROUP_BY": "Raggruppa per",
 		"DELETE_OBJECTIVE": "Elimina Obbiettivo",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Nessun risultato chiave da visualizzare",
 			"NO_UPDATES": "Ancora nessun aggiornamento",
 			"NO_ALIGNMENT": "Nessun allineamento ancora",
+			"NO_COMMENTS": "Nessun commento ancora.",
 			"NO_PROGRESS_DATA": "Nessun dato di progresso da rappresentare"
 		},
 		"LEVELS": {
@@ -3247,6 +3259,35 @@
 			"CONTINUE": "Continua",
 			"SKIP": "Salta",
 			"CREATE": "Crea organizzazione"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Sezioni del progetto",
+			"DETAILS": "Dettagli",
+			"LOGO": "Logo del progetto",
+			"LOGO_HINT": "Facoltativo. Fai clic sul logo per caricare un'immagine quadrata.",
+			"PEOPLE": "Persone",
+			"TIMELINE": "Tempistiche",
+			"APPEARANCE": "Aspetto",
+			"OPTIONS": "Opzioni",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Sincronizzazione attività",
+			"CREATE_SUBTITLE": "Configura un nuovo progetto con persone, tempistiche e fatturazione.",
+			"OPEN_SOURCE_TITLE": "Progetto open source",
+			"OPEN_SOURCE_DESCRIPTION": "Condividi pubblicamente il codice di questo progetto. Attivalo per aggiungere il link al suo repository pubblico.",
+			"OPEN_SOURCE_URL_HINT": "L'indirizzo pubblico del codice, ad esempio un repository GitHub o GitLab.",
+			"OPEN_REPOSITORY": "Apri repository",
+			"DESCRIPTION_CARD_DESC": "Descrivi gli obiettivi e il perimetro del progetto per chi ci lavora.",
+			"TAGS_DESC": "Aggiungi tag al progetto per trovarlo e raggrupparlo più facilmente.",
+			"BILLING_DESC": "Come viene fatturato il cliente per questo progetto e in quale valuta.",
+			"BUDGET_DESC": "Imposta un budget in ore o in costi per mantenere il progetto in linea.",
+			"APPEARANCE_DESC": "Il colore del progetto e come vengono mostrate le sue attività.",
+			"PUBLIC_TITLE": "Progetto pubblico",
+			"PUBLIC_DESC": "In un progetto pubblico tutti vedono chi ci lavora. In uno privato ognuno vede solo sé stesso, a meno che non possa accedere ai progetti privati.",
+			"BILLABLE_DESC": "Indica che il lavoro su questo progetto è fatturabile al cliente.",
+			"REPOSITORY_DESC": "Scegli il repository GitHub con le cui issue lavora questo progetto.",
+			"AUTO_SYNC_DESC": "Mantieni le attività del progetto allineate alle issue del repository. Le modifiche qui vengono salvate subito.",
+			"SYNC_LABEL_TITLE": "Sincronizza per etichetta",
+			"SYNC_LABEL_DESC": "Sincronizza solo le issue con l'etichetta che imposti. Le modifiche qui vengono salvate subito."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3531,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "La data deve essere successiva al giorno della richiesta",
 			"EXCEED_PERIOD_ERR": "I giorni massimi consentiti per questo articolo sono ",
 			"BEFORE_START_DATE_ERR": "La data di fine non può essere precedente alla data di inizio",
-			"ITEM_RETURNED_BEFORE_ERR": "L'articolo deve essere restituito prima del"
+			"ITEM_RETURNED_BEFORE_ERR": "L'articolo deve essere restituito prima del",
+			"CHANGED_BY_SOMEONE_ELSE": "Nel frattempo questa richiesta è stata modificata da qualcun altro. L'elenco è stato ricaricato: controlla la richiesta e riprova."
 		},
 		"ACTIONS": "Azioni",
 		"APPROVE": "Approvare",
@@ -5368,6 +5410,8 @@
 			"API_SERVER_PORT": "Porta del server API",
 			"UI_SERVER_PORT": "Porta del server UI",
 			"SERVER_HOSTNAME": "Nome host/indirizzo IP del server",
+			"LAN_ACCESS": "Consenti la connessione da altri computer della rete",
+			"LAN_ACCESS_HINT": "Se disattivato, solo questo computer può connettersi all'API e all'interfaccia web.",
 			"AUTO_START_STARTUP": "Avvio automatico all'avvio",
 			"SERVER_TYPE": "Tipo di server",
 			"LOCAL_API_PORT": "Porta API locale",
@@ -5494,7 +5538,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Non siamo riusciti a determinare se si dispone di dati offline non sincronizzati. La rimozione del database potrebbe cancellare DEFINITIVAMENTE lavoro non salvato. In caso di dubbio, fare clic su 'Mantieni'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} timer/i non sincronizzati",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} intervallo/i non sincronizzato/i",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "I tuoi dati di accesso",
+			"SEED_CREDENTIALS_MESSAGE": "Salva subito queste password. Vengono mostrate una sola volta.",
+			"SEED_CREDENTIALS_DETAIL": "Questa installazione ha creato i suoi account con password casuali invece dei valori predefiniti pubblicati.\n\n{{ accounts }}\n\nPuoi cambiare una password in seguito dalla tua pagina del profilo in Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Copiato negli appunti.",
+			"SEED_CREDENTIALS_SAVED": "Le ho salvate",
+			"SEED_ROLE_SUPER_ADMIN": "Super amministratore",
+			"SEED_ROLE_ADMIN": "Amministratore",
+			"SEED_ROLE_EMPLOYEE": "Dipendente",
+			"SEED_PASSWORD": "Password",
+			"PUBLISHED_PASSWORDS_TITLE": "Password predefinita ancora in uso",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Cambia la password predefinita di questi account.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} accedono ancora con la password predefinita pubblicata nella documentazione di Gauzy. Chiunque possa raggiungere questo server può accedere con essa. Accedi a Gauzy e cambiala dalla pagina del profilo."
 		},
 		"NO_LIMIT": "∞ Senza Limiti",
 		"TASK": "Compito",
@@ -5522,7 +5578,12 @@
 			"SERVICE_UNAVAILABLE": "Servizio temporaneamente non disponibile.",
 			"UNEXPECTED_ERROR": "Si è verificato un errore imprevisto.",
 			"NETWORK_ERROR": "Errore di rete: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "Impossibile passare a {{ name }}: {{ reason }}. Stai ancora lavorando nella tua organizzazione attuale.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Non sei un dipendente attivo di {{ name }}, quindi il timer non può registrare il tempo lì. Stai ancora lavorando nella tua organizzazione attuale.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "È in corso il cambio di organizzazione. Avvia il timer al termine del cambio.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Non sei un dipendente attivo di {{ name }} e il ritorno alla tua organizzazione precedente non è riuscito. Accedi di nuovo.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",
@@ -6856,6 +6917,15 @@
 		"NEEDS_ATTENTION": "Richiede attenzione",
 		"NEEDS_ATTENTION_CAPTION": "Attività scadute e in scadenza nei prossimi 3 giorni",
 		"ACTIVITY": "Attività giornaliera",
+		"ACTIVITY_VIEWS": "Vista attività",
+		"ACTIVITY_VIEW_CHART": "Grafico",
+		"ACTIVITY_VIEW_GRID": "Griglia dei contributi",
+		"GRID_NONE": "Nessun tempo",
+		"GRID_LAST_YEAR": "Ultimi 12 mesi",
+		"GRID_OLDER": "Anno precedente",
+		"GRID_NEWER": "Anno successivo",
+		"GRID_DAY": "{{ time }} il {{ date }}",
+		"GRID_DAY_EMPTY": "Nessun tempo il {{ date }}",
 		"TOP_CONTRIBUTORS": "Chi ha lavorato di più",
 		"CONTRIBUTORS_CAPTION": "Tempo di tutti su questo progetto · {{ range }}",
 		"YOUR_TIME_CAPTION": "Il tuo tempo su questo progetto · {{ range }}",
@@ -6881,7 +6951,8 @@
 		"TABS": {
 			"OVERVIEW": "Panoramica",
 			"BOARD": "Bacheca",
-			"ACTIVITY": "Attività"
+			"ACTIVITY": "Attività",
+			"COMMENTS": "Commenti"
 		},
 		"BOARD": "Bacheca",
 		"COLUMN_EMPTY": "Nessuna attività",
@@ -6893,9 +6964,26 @@
 		"ACTIVITY_CREATED": "{{ actor }} ha creato",
 		"ACTIVITY_UPDATED": "{{ actor }} ha aggiornato",
 		"ACTIVITY_DELETED": "{{ actor }} ha eliminato",
+		"ACTIVITY_COMMENTED": "{{ actor }} ha commentato",
+		"ACTIVITY_REPLIED": "{{ actor }} ha risposto a un commento su",
 		"ACTIVITY_FIELDS": "Modificato: {{ fields }}",
 		"SOMEONE": "Qualcuno",
 		"TODAY": "Oggi",
-		"YESTERDAY": "Ieri"
+		"YESTERDAY": "Ieri",
+		"TASK_PROGRESS": "Avanzamento",
+		"TASK_PROGRESS_OF": "{{ worked }} su {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% del tempo registrato del progetto (nessuna stima)",
+		"TASK_TOP_PEOPLE": "Chi ci ha lavorato di più",
+		"TASK_NO_ESTIMATE": "Nessuna stima",
+		"COMMENTS": "Commenti",
+		"NO_COMMENTS": "Ancora nessun commento. Avvia la discussione.",
+		"COMMENT_PLACEHOLDER": "Scrivi un commento…",
+		"COMMENT_IMAGE": "Immagine",
+		"ATTACH_IMAGES": "Allega immagini",
+		"REMOVE_IMAGE": "Rimuovi immagine",
+		"OPEN_IMAGE": "Apri originale",
+		"COMMENT_IMAGE_TYPES": "Si possono allegare solo immagini PNG, JPEG, GIF, WebP e BMP.",
+		"COMMENT_IMAGE_LIMIT": "Un commento può contenere fino a {{ count }} immagini.",
+		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	}
 }

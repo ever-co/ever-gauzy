@@ -316,6 +316,52 @@ describe('R2-G25 — POST /cart-lines adds the line through the cart', () => {
 	});
 });
 
+describe('PUT /cart-lines/:id changes the line through its cart', () => {
+	const stored = { id: 'line-1', cartId: CART_ID, variantId: 'variant-1', quantity: 1 };
+	const changed = { ...stored, quantity: 3 };
+
+	function fixture() {
+		const lineService = {
+			update: jest.fn(),
+			findOneByIdString: jest.fn().mockResolvedValueOnce(stored).mockResolvedValueOnce(changed)
+		};
+		const cartService = { updateLine: jest.fn().mockResolvedValue({ id: CART_ID, version: 11 }) };
+		const controller = new CommerceCartLineController(lineService as any, cartService as any);
+
+		return { lineService, cartService, controller };
+	}
+
+	it('reaches updateLine on the line’s own cart, as updateCartLine does, and never the bare update', async () => {
+		const { lineService, cartService, controller } = fixture();
+		const body = { quantity: 3, unitPrice: '0.010000', cartId: 'another-cart' } as any;
+		const { request, headers } = requestWithResponse();
+
+		const answer = await controller.update('line-1', body, request);
+
+		// The line's own cart, whatever the body names: `updateLine` keeps only the editable fields
+		expect(cartService.updateLine).toHaveBeenCalledWith(CART_ID, 'line-1', body);
+		expect(lineService.update).not.toHaveBeenCalled();
+		// The answer is the line as changed, and the ETag the cart's new version
+		expect(answer).toBe(changed);
+		expect(headers['ETag']).toBe('"11"');
+	});
+
+	it('changes nothing when the line is not the caller’s to find', async () => {
+		const { lineService, cartService, controller } = fixture();
+		lineService.findOneByIdString.mockReset().mockRejectedValue(new Error('not found'));
+
+		await expect(
+			controller.update('line-9', { quantity: 2 } as any, requestWithResponse().request)
+		).rejects.toThrow('not found');
+		expect(cartService.updateLine).not.toHaveBeenCalled();
+		expect(lineService.update).not.toHaveBeenCalled();
+	});
+
+	it('states the grant updateCartLine states', () => {
+		expect(grantOf(CommerceCartLineController, 'update')).toEqual([CART_PERMISSIONS.CARTS_EDIT]);
+	});
+});
+
 describe('R2-G25 — POST /cart-shipping-methods sets the choice through the cart', () => {
 	const body = { cartId: CART_ID, name: 'Courier', amount: '4.000000' } as any;
 	const previous = { id: 'ship-1', cartId: CART_ID, name: 'Post', createdAt: new Date(1) };

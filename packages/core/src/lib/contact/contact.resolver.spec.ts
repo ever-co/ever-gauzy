@@ -555,9 +555,8 @@ describe('ContactResolver — the guard stack is the controller’s, field by fi
 
 		expect(controllerGuards).toEqual(expect.arrayContaining([TenantPermissionGuard]));
 		expect(resolverGuards).toEqual(expect.arrayContaining([TenantPermissionGuard]));
-		// The controller states no route-level permission on any of its routes, so neither surface
-		// carries the permission guard: two scopes for one concept is what the two-protocol rule
-		// forbids, and a permission here would refuse a caller the REST route serves.
+		// Neither surface carries the permission guard on the class: the writes state it on their own
+		// handlers and fields, and the reads state none, so a class-level one would scope nothing.
 		expect(controllerGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
 		expect(resolverGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
 	});
@@ -566,7 +565,8 @@ describe('ContactResolver — the guard stack is the controller’s, field by fi
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactController)).toBeUndefined();
 
-		for (const { field } of ROUTE_PARITY.filter(({ route }) => !['softRemove', 'softRecover'].includes(route))) {
+		const reads = ROUTE_PARITY.filter(({ route }) => ['findAll', 'findById', 'getCount'].includes(route));
+		for (const { field } of reads) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(ContactResolver)[field])).toBeUndefined();
 			expect(permissionOfField(field)).toBeUndefined();
 		}
@@ -585,12 +585,15 @@ describe('ContactResolver — the guard stack is the controller’s, field by fi
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(ContactController, route));
 	});
 
-	it('holds the two lifecycle fields to the routes they mirror, which state the contacts edit grant', () => {
-		// The soft removal and the recovery were inherited from the CRUD base with the controller's tenant
-		// guard as the whole of their scope, and `PermissionGuard` answers `true` to empty metadata, so any
-		// member of the tenant could retire or restore a contact (GHSA-v79w-54p2-wmh5). The controller now
-		// overrides both only to state `ORG_CONTACT_EDIT` behind `PermissionGuard`; the fields state the same.
+	it('holds every write field to the route it mirrors, which states the contacts edit grant', () => {
+		// The writes were inherited from the CRUD base with the controller's tenant guard as the whole of their
+		// scope, and `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could
+		// write, retire or restore a contact (GHSA-v79w-54p2-wmh5). The controller now overrides them only to
+		// state `ORG_CONTACT_EDIT` behind `PermissionGuard`; the fields state the same.
 		for (const [field, route] of [
+			['createContact', 'create'],
+			['updateContact', 'update'],
+			['deleteContact', 'delete'],
 			['softDeleteContact', 'softRemove'],
 			['recoverContact', 'softRecover']
 		] as ReadonlyArray<[string, string]>) {

@@ -2,10 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, DeleteResult, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { IPriceContext, IResolvedPrice, PriceListStatus } from '../pricing.types';
 import { ProductPriceService } from '../product-price/product-price.service';
-import { assertOrganizationUnchanged, statedOrganizations } from '../organization-scope';
+import { confiningOrganizationId } from '../organization-boundary';
+import { assertOrganizationUnchanged, inCallerOrganization, statedOrganizations } from '../organization-scope';
 import { PriceList } from './price-list.entity';
 import { TypeOrmPriceListRepository } from './repository/type-orm-price-list.repository';
 import { MikroOrmPriceListRepository } from './repository/mikro-orm-price-list.repository';
@@ -45,6 +46,20 @@ export class PriceListService extends TenantAwareCrudService<PriceList> {
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		};
+	}
+
+	/**
+	 * Reads a price list of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The price list.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<PriceList>): Promise<PriceList> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

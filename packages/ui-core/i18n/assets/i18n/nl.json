@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Gebruikersinterface",
-			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn. Beide interfaces tonen dezelfde pagina's, met dezelfde gegevens, indeling en functies — alleen de onderliggende technologie verschilt, dus overschakelen verandert niets aan wat je gebruikers zien of kunnen doen.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (standaard)",
 				"REACT": "React (nieuw)"
@@ -2177,6 +2177,17 @@
 		"UPDATE": "Bijwerken",
 		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
+		"COMMENT_THREAD": {
+			"REPLY": "Beantwoorden",
+			"ONE_MESSAGE": "1 bericht",
+			"MESSAGES": "{{ count }} berichten",
+			"NO_MESSAGES": "Er zijn nog geen berichten in deze thread.",
+			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
+			"UNKNOWN_AUTHOR": "Onbekend",
+			"DELETE_CONFIRM": "Deze opmerking verwijderen?",
+			"DELETED": "Opmerking verwijderd",
+			"LOAD_ERROR": "De opmerkingen konden niet worden geladen."
+		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
 		"DELETE_OBJECTIVE": "Doel verwijderen",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
 			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_COMMENTS": "Nog geen opmerkingen.",
 			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {
@@ -3247,6 +3259,35 @@
 			"CONTINUE": "Doorgaan",
 			"SKIP": "Overslaan",
 			"CREATE": "Organisatie aanmaken"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Projectonderdelen",
+			"DETAILS": "Details",
+			"LOGO": "Projectlogo",
+			"LOGO_HINT": "Optioneel. Klik op het logo om een vierkante afbeelding te uploaden.",
+			"PEOPLE": "Mensen",
+			"TIMELINE": "Tijdlijn",
+			"APPEARANCE": "Weergave",
+			"OPTIONS": "Opties",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Taaksynchronisatie",
+			"CREATE_SUBTITLE": "Stel een nieuw project in met de mensen, tijdlijn en facturering.",
+			"OPEN_SOURCE_TITLE": "Open-sourceproject",
+			"OPEN_SOURCE_DESCRIPTION": "Deel de code van dit project openbaar. Zet dit aan om de link naar de openbare repository toe te voegen.",
+			"OPEN_SOURCE_URL_HINT": "Het openbare adres van de code, bijvoorbeeld een GitHub- of GitLab-repository.",
+			"OPEN_REPOSITORY": "Repository openen",
+			"DESCRIPTION_CARD_DESC": "Beschrijf de doelen en reikwijdte van het project voor iedereen die eraan werkt.",
+			"TAGS_DESC": "Geef het project tags, zodat het makkelijker te vinden en te groeperen is.",
+			"BILLING_DESC": "Hoe de klant voor dit project wordt gefactureerd, en in welke valuta.",
+			"BUDGET_DESC": "Stel een budget in uren of kosten in om het project op koers te houden.",
+			"APPEARANCE_DESC": "De kleur van het project en hoe de taken worden getoond.",
+			"PUBLIC_TITLE": "Openbaar project",
+			"PUBLIC_DESC": "Bij een openbaar project ziet iedereen wie eraan werkt. Bij een privéproject ziet ieder alleen zichzelf, tenzij diegene toegang heeft tot privéprojecten.",
+			"BILLABLE_DESC": "Markeer het werk aan dit project als factureerbaar aan de klant.",
+			"REPOSITORY_DESC": "Kies de GitHub-repository waarvan dit project de issues gebruikt.",
+			"AUTO_SYNC_DESC": "Houd de taken van het project gelijk met de issues van de repository. Wijzigingen hier worden direct opgeslagen.",
+			"SYNC_LABEL_TITLE": "Synchroniseren op label",
+			"SYNC_LABEL_DESC": "Synchroniseer alleen issues met het label dat je instelt. Wijzigingen hier worden direct opgeslagen."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3531,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "De datum moet na de aanvraagdatum liggen.",
 			"EXCEED_PERIOD_ERR": "Het maximale aantal toegestane dagen voor dit item is",
 			"BEFORE_START_DATE_ERR": "Einddatum kan niet vóór de begindatum zijn.",
-			"ITEM_RETURNED_BEFORE_ERR": "Item moet worden teruggebracht voor"
+			"ITEM_RETURNED_BEFORE_ERR": "Item moet worden teruggebracht voor",
+			"CHANGED_BY_SOMEONE_ELSE": "Iemand anders heeft dit verzoek intussen gewijzigd. De lijst is opnieuw geladen: controleer het verzoek en probeer het opnieuw."
 		},
 		"ACTIONS": "Acties",
 		"APPROVE": "Goedkeuren",
@@ -5368,6 +5410,8 @@
 			"API_SERVER_PORT": "API Serverpoort",
 			"UI_SERVER_PORT": "UI Serverpoort",
 			"SERVER_HOSTNAME": "Servernaam/IP-adres",
+			"LAN_ACCESS": "Andere computers in het netwerk toestaan verbinding te maken",
+			"LAN_ACCESS_HINT": "Indien uitgeschakeld, kan alleen deze computer verbinding maken met de API en de webinterface.",
 			"AUTO_START_STARTUP": "Automatisch starten bij opstarten",
 			"SERVER_TYPE": "Servertype",
 			"LOCAL_API_PORT": "Lokale API-poort",
@@ -5494,7 +5538,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "We konden niet bepalen of u niet-gesynchroniseerde offline gegevens heeft. Het verwijderen van de database kan niet-opgeslagen werk PERMANENT wissen. Als u het niet zeker weet, klik dan op 'Behouden'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} niet-gesynchroniseerde timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} niet-gesynchroniseerde interval(len)",
-			"AND_JOIN": "en"
+			"AND_JOIN": "en",
+			"SEED_CREDENTIALS_TITLE": "Uw aanmeldgegevens",
+			"SEED_CREDENTIALS_MESSAGE": "Bewaar deze wachtwoorden nu. Ze worden maar één keer getoond.",
+			"SEED_CREDENTIALS_DETAIL": "Deze installatie heeft haar accounts aangemaakt met willekeurige wachtwoorden in plaats van de gepubliceerde standaardwaarden.\n\n{{ accounts }}\n\nU kunt een wachtwoord later wijzigen op uw profielpagina in Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Gekopieerd naar het klembord.",
+			"SEED_CREDENTIALS_SAVED": "Ik heb ze bewaard",
+			"SEED_ROLE_SUPER_ADMIN": "Superbeheerder",
+			"SEED_ROLE_ADMIN": "Beheerder",
+			"SEED_ROLE_EMPLOYEE": "Medewerker",
+			"SEED_PASSWORD": "Wachtwoord",
+			"PUBLISHED_PASSWORDS_TITLE": "Standaardwachtwoord nog in gebruik",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Wijzig het standaardwachtwoord van deze accounts.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} melden zich nog aan met het standaardwachtwoord dat in de Gauzy-documentatie is gepubliceerd. Iedereen die deze server kan bereiken, kan zich daarmee aanmelden. Meld u aan bij Gauzy en wijzig het op de profielpagina."
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",
@@ -5522,7 +5578,12 @@
 			"SERVICE_UNAVAILABLE": "Dienst tijdelijk niet beschikbaar.",
 			"UNEXPECTED_ERROR": "Er is een onverwachte fout opgetreden.",
 			"NETWORK_ERROR": "Netwerkfout: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen.",
+			"ORGANIZATION_SWITCH_REFUSED": "Overschakelen naar {{ name }} is mislukt: {{ reason }}. Je werkt nog steeds in je huidige organisatie.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Je bent geen actieve medewerker van {{ name }}, dus de timer kan daar geen tijd registreren. Je werkt nog steeds in je huidige organisatie.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "De organisatie wordt gewisseld. Start de timer zodra het wisselen is voltooid.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Je bent geen actieve medewerker van {{ name }} en terugschakelen naar je vorige organisatie is mislukt. Meld je opnieuw aan.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Overschakelen naar {{ name }} kon op dit apparaat niet worden voltooid. Meld je opnieuw aan."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",
@@ -6856,6 +6917,15 @@
 		"NEEDS_ATTENTION": "Vraagt aandacht",
 		"NEEDS_ATTENTION_CAPTION": "Achterstallige taken en taken die binnen 3 dagen vervallen",
 		"ACTIVITY": "Dagelijkse activiteit",
+		"ACTIVITY_VIEWS": "Activiteitsweergave",
+		"ACTIVITY_VIEW_CHART": "Grafiek",
+		"ACTIVITY_VIEW_GRID": "Bijdragenraster",
+		"GRID_NONE": "Geen tijd",
+		"GRID_LAST_YEAR": "Afgelopen 12 maanden",
+		"GRID_OLDER": "Vorig jaar",
+		"GRID_NEWER": "Volgend jaar",
+		"GRID_DAY": "{{ time }} op {{ date }}",
+		"GRID_DAY_EMPTY": "Geen tijd op {{ date }}",
 		"TOP_CONTRIBUTORS": "Wie het meest heeft gewerkt",
 		"CONTRIBUTORS_CAPTION": "Ieders tijd aan dit project · {{ range }}",
 		"YOUR_TIME_CAPTION": "Jouw tijd aan dit project · {{ range }}",
@@ -6881,7 +6951,8 @@
 		"TABS": {
 			"OVERVIEW": "Overzicht",
 			"BOARD": "Bord",
-			"ACTIVITY": "Activiteit"
+			"ACTIVITY": "Activiteit",
+			"COMMENTS": "Opmerkingen"
 		},
 		"BOARD": "Bord",
 		"COLUMN_EMPTY": "Geen taken",
@@ -6893,9 +6964,26 @@
 		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
 		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
 		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",
+		"ACTIVITY_COMMENTED": "{{ actor }} reageerde op",
+		"ACTIVITY_REPLIED": "{{ actor }} beantwoordde een opmerking op",
 		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
 		"SOMEONE": "Iemand",
 		"TODAY": "Vandaag",
-		"YESTERDAY": "Gisteren"
+		"YESTERDAY": "Gisteren",
+		"TASK_PROGRESS": "Voortgang",
+		"TASK_PROGRESS_OF": "{{ worked }} van {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% van de geregistreerde projecttijd (geen schatting)",
+		"TASK_TOP_PEOPLE": "Meest aan gewerkt",
+		"TASK_NO_ESTIMATE": "Geen schatting",
+		"COMMENTS": "Opmerkingen",
+		"NO_COMMENTS": "Nog geen opmerkingen. Start de discussie.",
+		"COMMENT_PLACEHOLDER": "Schrijf een opmerking…",
+		"COMMENT_IMAGE": "Afbeelding",
+		"ATTACH_IMAGES": "Afbeeldingen bijvoegen",
+		"REMOVE_IMAGE": "Afbeelding verwijderen",
+		"OPEN_IMAGE": "Origineel openen",
+		"COMMENT_IMAGE_TYPES": "Alleen PNG-, JPEG-, GIF-, WebP- en BMP-afbeeldingen kunnen worden bijgevoegd.",
+		"COMMENT_IMAGE_LIMIT": "Een opmerking kan maximaal {{ count }} afbeeldingen bevatten.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	}
 }

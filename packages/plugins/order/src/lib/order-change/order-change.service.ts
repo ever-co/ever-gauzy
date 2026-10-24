@@ -15,7 +15,6 @@ import {
 	ApiException,
 	MultiORMEnum,
 	RequestContext,
-	TenantAwareCrudService,
 	addDecimalStrings,
 	compareDecimalStrings,
 	getORMType,
@@ -53,6 +52,7 @@ import { Order } from '../order/order.entity';
 import { MikroOrmOrderRepository } from '../order/repository/mikro-orm-order.repository';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 import { ORDER_CHANGE_ACTION_TYPES, ORDER_CHANGE_TYPES, assertEnumMember } from '../graphql/filters';
+import { OrderCrudService } from '../order-crud.service';
 
 /**
  * How many stale changes one read of the staleness sweep returns, and how many one run examines.
@@ -113,7 +113,7 @@ const DELEGATED_ACTIONS: Partial<Record<OrderChangeActionType, string>> = {
  * version the change produces, which is a different fact, and one lock per fact is the rule.
  */
 @Injectable()
-export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
+export class OrderChangeService extends OrderCrudService<OrderChange> {
 	private readonly logger = new Logger(OrderChangeService.name);
 
 	/**

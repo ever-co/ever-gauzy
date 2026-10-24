@@ -4,10 +4,9 @@
 # for the whole platform, so a domain adds fields to it and never declares its own.
 #
 # The controller is mounted at `/api/import/history` and serves one route, `GET /`, under
-# `ALL_ORG_VIEW` and `IMPORT_ADD` — both stated on the class and neither on the handler — so the field
-# below states both, exactly as the route runs under them. That pair is the delivered scope: reading the
-# ledger is granted to whoever may read the organization and to whoever may import into it, which is why
-# the two are stated together rather than as one.
+# `IMPORT_ADD` — stated on the class and not on the handler — so the field below states it, exactly as
+# the route runs under it. Reading the ledger is granted to whoever may import into the tenant and to
+# nobody on a read-only grant alone, because the archives it lists are dumps of the tenant's tables.
 #
 # **The ledger is a connection, and it is the only field this domain declares.**
 #

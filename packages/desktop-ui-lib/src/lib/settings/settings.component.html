@@ -796,6 +796,18 @@
 																/>
 															</div>
 														}
+														@if (isServer) {
+															<div class="col-12 form-group">
+																<nb-toggle
+																	[ngModel]="config?.lanAccess !== false"
+																	(ngModelChange)="config.lanAccess = $event"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
+																	status="basic"
+																	>{{ 'TIMER_TRACKER.SETTINGS.LAN_ACCESS' | translate }}
+																</nb-toggle>
+																<p class="caption">{{ 'TIMER_TRACKER.SETTINGS.LAN_ACCESS_HINT' | translate }}</p>
+															</div>
+														}
 														@if (!config?.isLocalServer) {
 															<div class="col-5 centered-text">
 																<p>

@@ -1240,7 +1240,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Интерфейс",
 			"TITLE": "Потребителски интерфейс",
-			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта.",
+			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта. И двата интерфейса показват едни и същи страници, със същите данни, оформление и функции — различава се само технологията зад тях, така че превключването не променя какво виждат или могат да правят потребителите.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (по подразбиране)",
 				"REACT": "React (нов)"
@@ -2251,6 +2251,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "Отговори",
+			"ONE_MESSAGE": "1 съобщение",
+			"MESSAGES": "{{ count }} съобщения",
+			"NO_MESSAGES": "Все още няма съобщения в тази нишка.",
+			"REPLY_PLACEHOLDER": "Отговорете на този коментар…",
+			"UNKNOWN_AUTHOR": "Неизвестен",
+			"DELETE_CONFIRM": "Да се изтрие ли този коментар?",
+			"DELETED": "Коментарът е изтрит",
+			"LOAD_ERROR": "Коментарите не можаха да бъдат заредени."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2298,6 +2309,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "Все още няма коментари.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
@@ -3307,6 +3319,35 @@
 			"CONTINUE": "Продължи",
 			"SKIP": "Пропусни",
 			"CREATE": "Създай организация"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Раздели на проекта",
+			"DETAILS": "Подробности",
+			"LOGO": "Лого на проекта",
+			"LOGO_HINT": "По избор. Щракнете върху логото, за да качите квадратно изображение.",
+			"PEOPLE": "Хора",
+			"TIMELINE": "Времева рамка",
+			"APPEARANCE": "Външен вид",
+			"OPTIONS": "Опции",
+			"REPOSITORY": "Хранилище",
+			"TASK_SYNC": "Синхронизиране на задачи",
+			"CREATE_SUBTITLE": "Създайте нов проект с неговите хора, времева рамка и фактуриране.",
+			"OPEN_SOURCE_TITLE": "Проект с отворен код",
+			"OPEN_SOURCE_DESCRIPTION": "Споделете кода на проекта публично. Включете, за да добавите връзка към публичното му хранилище.",
+			"OPEN_SOURCE_URL_HINT": "Публичният адрес на кода, например хранилище в GitHub или GitLab.",
+			"OPEN_REPOSITORY": "Отвори хранилището",
+			"DESCRIPTION_CARD_DESC": "Опишете целите и обхвата на проекта за всички, които работят по него.",
+			"TAGS_DESC": "Добавете етикети, за да се намира и групира проектът по-лесно.",
+			"BILLING_DESC": "Как се фактурира клиентът за този проект и в каква валута.",
+			"BUDGET_DESC": "Задайте бюджет в часове или в разходи, за да остане проектът в график.",
+			"APPEARANCE_DESC": "Цветът на проекта и как се показват задачите му.",
+			"PUBLIC_TITLE": "Публичен проект",
+			"PUBLIC_DESC": "Всички виждат кой работи по публичен проект. При частен проект всеки вижда само себе си, освен ако няма достъп до частни проекти.",
+			"BILLABLE_DESC": "Отбележете работата по този проект като фактурируема на клиента.",
+			"REPOSITORY_DESC": "Изберете GitHub хранилището, с чиито проблеми работи този проект.",
+			"AUTO_SYNC_DESC": "Поддържайте задачите на проекта в синхрон с проблемите на хранилището. Промените тук се запазват веднага.",
+			"SYNC_LABEL_TITLE": "Синхронизиране по етикет",
+			"SYNC_LABEL_DESC": "Синхронизирайте само проблемите с етикета, който зададете. Промените тук се запазват веднага."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3591,7 +3632,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
-			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before ",
+			"CHANGED_BY_SOMEONE_ELSE": "Тази заявка междувременно е променена от някой друг. Списъкът е презареден: проверете заявката и опитайте отново."
 		},
 		"ACTIONS": "Actions",
 		"APPROVE": "Approve",
@@ -5417,6 +5459,8 @@
 			"API_SERVER_PORT": "Порт на сървъра на API",
 			"UI_SERVER_PORT": "Порт на сървъра на потребителски интерфейс",
 			"SERVER_HOSTNAME": "Име на сървъра / IP адрес",
+			"LAN_ACCESS": "Разрешаване на връзки от други компютри в мрежата",
+			"LAN_ACCESS_HINT": "Когато е изключено, само този компютър може да се свързва с API и уеб интерфейса.",
 			"AUTO_START_STARTUP": "Автоматично стартиране при стартиране на системата",
 			"SERVER_TYPE": "Вид на сървъра",
 			"LOCAL_API_PORT": "Локален порт за API",
@@ -5543,7 +5587,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Не можахме да определим дали имате несинхронизирани офлайн данни. Премахването на базата данни може ОКОНЧАТЕЛНО да изтрие незапазена работа. Ако не сте сигурни, кликнете върху 'Запазване'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Вашите данни за вход",
+			"SEED_CREDENTIALS_MESSAGE": "Запазете тези пароли сега. Те се показват само веднъж.",
+			"SEED_CREDENTIALS_DETAIL": "Тази инсталация създаде своите акаунти със случайни пароли вместо публикуваните стойности по подразбиране.\n\n{{ accounts }}\n\nМожете да смените паролата по-късно от страницата на профила си в Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Копирано в клипборда.",
+			"SEED_CREDENTIALS_SAVED": "Запазих ги",
+			"SEED_ROLE_SUPER_ADMIN": "Супер администратор",
+			"SEED_ROLE_ADMIN": "Администратор",
+			"SEED_ROLE_EMPLOYEE": "Служител",
+			"SEED_PASSWORD": "Парола",
+			"PUBLISHED_PASSWORDS_TITLE": "Паролата по подразбиране все още се използва",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Сменете паролата по подразбиране на тези акаунти.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} все още влизат с паролата по подразбиране, публикувана в документацията на Gauzy. Всеки, който има достъп до този сървър, може да влезе с нея. Влезте в Gauzy и я сменете от страницата на профила."
 		},
 		"NO_LIMIT": "∞ Без лимит",
 		"TASK": "Задача",
@@ -5571,7 +5627,12 @@
 			"SERVICE_UNAVAILABLE": "Услугата временно не е достъпна.",
 			"UNEXPECTED_ERROR": "Възникна неочаквана грешка.",
 			"NETWORK_ERROR": "Мрежова грешка: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Разрешението за достъп до екрана е необходимо за активиране на автоматичното заснемане на екран. Моля, дайте разрешение в настройките на системата."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Разрешението за достъп до екрана е необходимо за активиране на автоматичното заснемане на екран. Моля, дайте разрешение в настройките на системата.",
+			"ORGANIZATION_SWITCH_REFUSED": "Неуспешно превключване към {{ name }}: {{ reason }}. Продължавате да работите в текущата си организация.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Не сте активен служител на {{ name }}, затова таймерът не може да отчита време там. Продължавате да работите в текущата си организация.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Организацията се превключва. Стартирайте таймера, след като превключването приключи.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Не сте активен служител на {{ name }}, а връщането към предишната ви организация беше неуспешно. Моля, влезте отново.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Превключването към {{ name }} не можа да бъде завършено на това устройство. Моля, влезте отново."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Тракерът беше спрян поради неактивност!",
@@ -6901,6 +6962,15 @@
 		"NEEDS_ATTENTION": "Изисква внимание",
 		"NEEDS_ATTENTION_CAPTION": "Просрочени задачи и задачи с краен срок до 3 дни",
 		"ACTIVITY": "Дневна активност",
+		"ACTIVITY_VIEWS": "Изглед на активността",
+		"ACTIVITY_VIEW_CHART": "Диаграма",
+		"ACTIVITY_VIEW_GRID": "Решетка на приноса",
+		"GRID_NONE": "Няма време",
+		"GRID_LAST_YEAR": "Последните 12 месеца",
+		"GRID_OLDER": "Предишна година",
+		"GRID_NEWER": "Следваща година",
+		"GRID_DAY": "{{ time }} на {{ date }}",
+		"GRID_DAY_EMPTY": "Няма време на {{ date }}",
 		"TOP_CONTRIBUTORS": "Кой е работил най-много",
 		"CONTRIBUTORS_CAPTION": "Времето на всички по този проект · {{ range }}",
 		"YOUR_TIME_CAPTION": "Вашето време по този проект · {{ range }}",
@@ -6926,7 +6996,8 @@
 		"TABS": {
 			"OVERVIEW": "Общ преглед",
 			"BOARD": "Табло",
-			"ACTIVITY": "Активност"
+			"ACTIVITY": "Активност",
+			"COMMENTS": "Коментари"
 		},
 		"BOARD": "Табло",
 		"COLUMN_EMPTY": "Няма задачи",
@@ -6938,9 +7009,26 @@
 		"ACTIVITY_CREATED": "{{ actor }} създаде",
 		"ACTIVITY_UPDATED": "{{ actor }} обнови",
 		"ACTIVITY_DELETED": "{{ actor }} изтри",
+		"ACTIVITY_COMMENTED": "{{ actor }} коментира",
+		"ACTIVITY_REPLIED": "{{ actor }} отговори на коментар в",
 		"ACTIVITY_FIELDS": "Променено: {{ fields }}",
 		"SOMEONE": "Някой",
 		"TODAY": "Днес",
-		"YESTERDAY": "Вчера"
+		"YESTERDAY": "Вчера",
+		"TASK_PROGRESS": "Напредък",
+		"TASK_PROGRESS_OF": "{{ worked }} от {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% от отчетеното време по проекта (без оценка)",
+		"TASK_TOP_PEOPLE": "Работили най-много",
+		"TASK_NO_ESTIMATE": "Няма оценка",
+		"COMMENTS": "Коментари",
+		"NO_COMMENTS": "Все още няма коментари. Започнете дискусията.",
+		"COMMENT_PLACEHOLDER": "Напишете коментар…",
+		"COMMENT_IMAGE": "Изображение",
+		"ATTACH_IMAGES": "Прикачване на изображения",
+		"REMOVE_IMAGE": "Премахване на изображението",
+		"OPEN_IMAGE": "Отваряне на оригинала",
+		"COMMENT_IMAGE_TYPES": "Могат да се прикачват само изображения PNG, JPEG, GIF, WebP и BMP.",
+		"COMMENT_IMAGE_LIMIT": "Един коментар може да съдържа до {{ count }} изображения.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
 	}
 }

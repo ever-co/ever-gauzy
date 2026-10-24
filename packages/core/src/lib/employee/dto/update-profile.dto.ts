@@ -1,10 +1,12 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { IsObject, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IContact, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { EmploymentDTO } from './employment.dto';
 import { RelationalTagDTO } from './../../tags/dto';
 import { Employee } from './../employee.entity';
+import { ProfileContactDTO } from './profile-contact.dto';
 
 /**
  * EMPLOYEE can updates these fields only
@@ -36,8 +38,14 @@ export class UpdateProfileDTO
 	)
 	implements IEmployeeUpdateInput
 {
-	@ApiPropertyOptional({ type: () => Object })
+	/**
+	 * The profile's own contact: postal, geographic and fiscal facts only (see {@link ProfileContactDTO}). The
+	 * nested whitelist strips an `id` or a scope member, and the handler writes the stored contact row.
+	 */
+	@ApiPropertyOptional({ type: () => ProfileContactDTO })
 	@IsObject()
 	@IsOptional()
+	@ValidateNested()
+	@Type(() => ProfileContactDTO)
 	readonly contact?: IContact;
 }

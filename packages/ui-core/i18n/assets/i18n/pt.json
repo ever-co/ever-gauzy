@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Interface do usuário",
-			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões.",
+			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões. Ambas as interfaces mostram as mesmas páginas, com os mesmos dados, layout e recursos — apenas a tecnologia por trás delas muda, por isso alternar não altera o que os seus usuários veem ou podem fazer.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (padrão)",
 				"REACT": "React (novo)"
@@ -2177,6 +2177,17 @@
 		"UPDATE": "Atualizar",
 		"ALIGNMENTS": "Alinhamentos",
 		"COMMENTS": "Comentários",
+		"COMMENT_THREAD": {
+			"REPLY": "Responder",
+			"ONE_MESSAGE": "1 mensagem",
+			"MESSAGES": "{{ count }} mensagens",
+			"NO_MESSAGES": "Ainda não há mensagens neste tópico.",
+			"REPLY_PLACEHOLDER": "Responder a este comentário…",
+			"UNKNOWN_AUTHOR": "Desconhecido",
+			"DELETE_CONFIRM": "Excluir este comentário?",
+			"DELETED": "Comentário excluído",
+			"LOAD_ERROR": "Não foi possível carregar os comentários."
+		},
 		"KEY_RESULTS": "Resultados Chave",
 		"GROUP_BY": "Agrupe por",
 		"DELETE_OBJECTIVE": "Excluir Objetivo",
@@ -2224,6 +2235,7 @@
 			"NO_KEY_RESULT": "Não há resultados-chave para exibir.",
 			"NO_UPDATES": "Ainda não há atualizações.",
 			"NO_ALIGNMENT": "Ainda não há alinhamentos.",
+			"NO_COMMENTS": "Ainda não há comentários.",
 			"NO_PROGRESS_DATA": "Ainda não há dados de progresso para o gráfico."
 		},
 		"LEVELS": {
@@ -3247,6 +3259,35 @@
 			"CONTINUE": "Continuar",
 			"SKIP": "Pular",
 			"CREATE": "Criar organização"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Seções do projeto",
+			"DETAILS": "Detalhes",
+			"LOGO": "Logotipo do projeto",
+			"LOGO_HINT": "Opcional. Clique no logotipo para enviar uma imagem quadrada.",
+			"PEOPLE": "Pessoas",
+			"TIMELINE": "Cronograma",
+			"APPEARANCE": "Aparência",
+			"OPTIONS": "Opções",
+			"REPOSITORY": "Repositório",
+			"TASK_SYNC": "Sincronização de tarefas",
+			"CREATE_SUBTITLE": "Configure um novo projeto com suas pessoas, cronograma e faturamento.",
+			"OPEN_SOURCE_TITLE": "Projeto de código aberto",
+			"OPEN_SOURCE_DESCRIPTION": "Compartilhe publicamente o código deste projeto. Ative para adicionar o link do repositório público.",
+			"OPEN_SOURCE_URL_HINT": "O endereço público do código, por exemplo um repositório do GitHub ou GitLab.",
+			"OPEN_REPOSITORY": "Abrir repositório",
+			"DESCRIPTION_CARD_DESC": "Descreva os objetivos e o escopo do projeto para todos que trabalham nele.",
+			"TAGS_DESC": "Adicione tags ao projeto para facilitar encontrá-lo e agrupá-lo.",
+			"BILLING_DESC": "Como o cliente é cobrado por este projeto e em qual moeda.",
+			"BUDGET_DESC": "Defina um orçamento em horas ou em custo para manter o projeto nos trilhos.",
+			"APPEARANCE_DESC": "A cor do projeto e como suas tarefas são exibidas.",
+			"PUBLIC_TITLE": "Projeto público",
+			"PUBLIC_DESC": "Todos veem quem trabalha em um projeto público. Em um privado, cada pessoa vê apenas a si mesma, a menos que tenha acesso a projetos privados.",
+			"BILLABLE_DESC": "Marque o trabalho neste projeto como faturável ao cliente.",
+			"REPOSITORY_DESC": "Escolha o repositório do GitHub com cujas issues este projeto trabalha.",
+			"AUTO_SYNC_DESC": "Mantenha as tarefas do projeto em dia com as issues do repositório. As alterações aqui são salvas na hora.",
+			"SYNC_LABEL_TITLE": "Sincronizar por rótulo",
+			"SYNC_LABEL_DESC": "Sincronize apenas as issues com o rótulo que você definir. As alterações aqui são salvas na hora."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3531,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "A data deve ser posterior ao dia do pedido.",
 			"EXCEED_PERIOD_ERR": "O número máximo de dias permitidos para este item é.",
 			"BEFORE_START_DATE_ERR": "A data de término não pode ser anterior à data de início.",
-			"ITEM_RETURNED_BEFORE_ERR": "O item deve ser devolvido antes de"
+			"ITEM_RETURNED_BEFORE_ERR": "O item deve ser devolvido antes de",
+			"CHANGED_BY_SOMEONE_ELSE": "Outra pessoa alterou esta solicitação nesse meio-tempo. A lista foi recarregada: verifique a solicitação e tente novamente."
 		},
 		"ACTIONS": "Ações",
 		"APPROVE": "Aprovar.",
@@ -5368,6 +5410,8 @@
 			"API_SERVER_PORT": "Porta do servidor API",
 			"UI_SERVER_PORT": "Porta do servidor UI",
 			"SERVER_HOSTNAME": "Nome de host/endereço IP do servidor",
+			"LAN_ACCESS": "Permitir que outros computadores da rede se conectem",
+			"LAN_ACCESS_HINT": "Quando desativado, apenas este computador pode se conectar à API e à interface web.",
 			"AUTO_START_STARTUP": "Iniciar automaticamente na inicialização",
 			"SERVER_TYPE": "Tipo de servidor",
 			"LOCAL_API_PORT": "Porta da API local",
@@ -5494,7 +5538,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Não foi possível determinar se você tem dados offline não sincronizados. Remover o banco de dados pode PERMANENTEMENTE apagar trabalho não salvo. Se não tiver certeza, clique em 'Manter'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Seus dados de acesso",
+			"SEED_CREDENTIALS_MESSAGE": "Salve estas senhas agora. Elas são exibidas apenas uma vez.",
+			"SEED_CREDENTIALS_DETAIL": "Esta instalação criou suas contas com senhas aleatórias em vez dos valores padrão publicados.\n\n{{ accounts }}\n\nVocê pode alterar uma senha depois na sua página de perfil no Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Copiado para a área de transferência.",
+			"SEED_CREDENTIALS_SAVED": "Já as salvei",
+			"SEED_ROLE_SUPER_ADMIN": "Superadministrador",
+			"SEED_ROLE_ADMIN": "Administrador",
+			"SEED_ROLE_EMPLOYEE": "Funcionário",
+			"SEED_PASSWORD": "Senha",
+			"PUBLISHED_PASSWORDS_TITLE": "Senha padrão ainda em uso",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Altere a senha padrão destas contas.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} ainda entram com a senha padrão publicada na documentação do Gauzy. Qualquer pessoa que alcance este servidor pode entrar com ela. Entre no Gauzy e altere-a na página de perfil."
 		},
 		"NO_LIMIT": "∞ Sem Limite",
 		"TASK": "Tarefa",
@@ -5522,7 +5578,12 @@
 			"SERVICE_UNAVAILABLE": "Serviço temporariamente indisponível.",
 			"UNEXPECTED_ERROR": "Ocorreu um erro inesperado.",
 			"NETWORK_ERROR": "Erro de rede: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "Não foi possível mudar para {{ name }}: {{ reason }}. Você continua trabalhando na sua organização atual.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Você não é um funcionário ativo de {{ name }}, portanto o cronômetro não pode registrar tempo lá. Você continua trabalhando na sua organização atual.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "A organização está sendo trocada. Inicie o cronômetro quando a troca terminar.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Você não é um funcionário ativo de {{ name }} e não foi possível voltar para sua organização anterior. Faça login novamente.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Não foi possível concluir a troca para {{ name }} neste dispositivo. Faça login novamente."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "O rastreador foi parado devido à inatividade!",
@@ -6856,6 +6917,15 @@
 		"NEEDS_ATTENTION": "Requer atenção",
 		"NEEDS_ATTENTION_CAPTION": "Tarefas atrasadas e com prazo nos próximos 3 dias",
 		"ACTIVITY": "Atividade diária",
+		"ACTIVITY_VIEWS": "Visualização da atividade",
+		"ACTIVITY_VIEW_CHART": "Gráfico",
+		"ACTIVITY_VIEW_GRID": "Grade de contribuições",
+		"GRID_NONE": "Sem tempo",
+		"GRID_LAST_YEAR": "Últimos 12 meses",
+		"GRID_OLDER": "Ano anterior",
+		"GRID_NEWER": "Ano seguinte",
+		"GRID_DAY": "{{ time }} em {{ date }}",
+		"GRID_DAY_EMPTY": "Sem tempo em {{ date }}",
 		"TOP_CONTRIBUTORS": "Quem trabalhou mais",
 		"CONTRIBUTORS_CAPTION": "Tempo de todos neste projeto · {{ range }}",
 		"YOUR_TIME_CAPTION": "Seu tempo neste projeto · {{ range }}",
@@ -6881,7 +6951,8 @@
 		"TABS": {
 			"OVERVIEW": "Visão geral",
 			"BOARD": "Quadro",
-			"ACTIVITY": "Atividade"
+			"ACTIVITY": "Atividade",
+			"COMMENTS": "Comentários"
 		},
 		"BOARD": "Quadro",
 		"COLUMN_EMPTY": "Sem tarefas",
@@ -6893,9 +6964,26 @@
 		"ACTIVITY_CREATED": "{{ actor }} criou",
 		"ACTIVITY_UPDATED": "{{ actor }} atualizou",
 		"ACTIVITY_DELETED": "{{ actor }} excluiu",
+		"ACTIVITY_COMMENTED": "{{ actor }} comentou em",
+		"ACTIVITY_REPLIED": "{{ actor }} respondeu a um comentário em",
 		"ACTIVITY_FIELDS": "Alterado: {{ fields }}",
 		"SOMEONE": "Alguém",
 		"TODAY": "Hoje",
-		"YESTERDAY": "Ontem"
+		"YESTERDAY": "Ontem",
+		"TASK_PROGRESS": "Progresso",
+		"TASK_PROGRESS_OF": "{{ worked }} de {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% do tempo registrado do projeto (sem estimativa)",
+		"TASK_TOP_PEOPLE": "Quem mais trabalhou",
+		"TASK_NO_ESTIMATE": "Sem estimativa",
+		"COMMENTS": "Comentários",
+		"NO_COMMENTS": "Ainda não há comentários. Inicie a discussão.",
+		"COMMENT_PLACEHOLDER": "Escreva um comentário…",
+		"COMMENT_IMAGE": "Imagem",
+		"ATTACH_IMAGES": "Anexar imagens",
+		"REMOVE_IMAGE": "Remover imagem",
+		"OPEN_IMAGE": "Abrir original",
+		"COMMENT_IMAGE_TYPES": "Só é possível anexar imagens PNG, JPEG, GIF, WebP e BMP.",
+		"COMMENT_IMAGE_LIMIT": "Um comentário pode ter até {{ count }} imagens.",
+		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	}
 }

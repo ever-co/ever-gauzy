@@ -84,7 +84,9 @@ const GUARDED: [Function, string, string[]][] = [
 			'getProjectsStatistics',
 			'getManualTimesStatistics',
 			'getEmployeeTimeSlotsStatistics',
-			'getActivitiesStatistics'
+			'getActivitiesStatistics',
+			// GET /timesheet/statistics/task-employees (ever-co/ever-gauzy#11203): each employee's time on tasks
+			'getTaskEmployeesStatistics'
 		]
 	],
 	[

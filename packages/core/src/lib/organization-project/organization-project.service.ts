@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { Brackets, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -15,6 +15,7 @@ import {
 	IOrganizationProjectsFindInput,
 	IOrganizationProjectUpdateInput,
 	IPagination,
+	PermissionsEnum,
 	RolesEnum,
 	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
@@ -109,6 +110,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
+			// `isManager` lets a project manager act for the project's members (ManagedEmployeeService: their
+			// time-tracking statistics and activity; the tracked-data guard). Only a caller who may already act for
+			// every employee hands that on, as for teams (ever-co/ever-gauzy#11197). An employee, who picks the
+			// members of a project they create and is made its manager above, gets the MANAGER role without the
+			// flag; the role alone still lets them edit the project (`isManagerOfProject`).
+			const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 			// Use destructuring to directly extract 'id' from 'employee'
 			const members = employees.map(({ id: employeeId }) => {
 				// If the employee is a manager, assign the existing manager with the latest assignedAt date
@@ -119,7 +127,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					employeeId,
 					organizationId,
 					tenantId,
-					isManager,
+					isManager: flagsManagers && isManager,
 					assignedAt,
 					role: isManager ? managerRole : null
 				});
@@ -190,7 +198,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			input.description = sanitizeRichHtml(input.description);
 		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		const { memberIds, managerIds, organizationId, ...entity } = input;
+		// `members` is never saved from the input: the relation cascades, so a membership row stated in the body
+		// (`{ id, isManager: true }`) was written as given and raised the flag `updateOrganizationProjectMembers`
+		// gates. The members change through `memberIds` / `managerIds` alone.
+		const { memberIds, managerIds, organizationId, members: _members, ...entity } = input;
+		void _members;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
@@ -318,6 +330,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	): Promise<void> {
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
+		// `isManager` lets a project manager act for the project's members (ManagedEmployeeService). Only a caller
+		// who may already act for every employee sets it, on a new manager or on an existing member, and repairs a
+		// manager row that lacks it. Anyone else who edits the members (a project manager, through
+		// ProjectManagerOrPermissionGuard) changes the MANAGER role only: the flag is never raised by them, and is
+		// cleared when the role is taken away, as teams do (ever-co/ever-gauzy#11197).
+		const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		// Find the manager role
 		const managerRole = await this._roleService.findOneByWhereOptions({
 			name: RolesEnum.MANAGER
@@ -368,12 +387,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			updatedMembers.map(async (member) => {
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? managerRole : null;
+				// Without CHANGE_SELECTED_EMPLOYEE a manager keeps the flag they already have, and a member gets none
+				const flag = flagsManagers ? isManager : isManager && !!member.isManager;
 
-				// Only update if the role has changed
-				if (newRole?.id !== member.roleId) {
+				// Only update if the role or the manager flag has changed
+				if ((newRole?.id ?? null) !== (member.roleId ?? null) || !!member.isManager !== flag) {
 					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, {
 						role: newRole,
-						isManager
+						isManager: flag
 					});
 				}
 			})
@@ -388,7 +409,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
-						isManager: managerIds.includes(employee.id),
+						isManager: flagsManagers && managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? managerRole.id : null
 					})
 			);
@@ -824,6 +845,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * Checks if a given employee is a manager of a specific project.
 	 *
+	 * A manager is a member flagged `isManager` or holding the MANAGER role on the project. It is what lets them
+	 * edit the project (ProjectManagerOrPermissionGuard, and the app's project-manager route guard). The flag is
+	 * set only by a caller holding CHANGE_SELECTED_EMPLOYEE, because it also lets the manager act for the
+	 * project's members (ManagedEmployeeService); an employee who creates a project gets the role alone, as a team
+	 * manager does, and still edits the project they created.
+	 *
 	 * @param projectId - The ID of the project.
 	 * @param employeeId - The ID of the employee.
 	 * @returns A boolean indicating whether the employee is a manager of the project.
@@ -837,7 +864,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						employeeId,
 						isActive: true,
 						isArchived: false,
-						isManager: true
+						$or: [{ isManager: true }, { role: { name: RolesEnum.MANAGER } }]
 					}
 				} as any);
 				return !!project;
@@ -847,11 +874,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const project = await this.typeOrmRepository
 					.createQueryBuilder('project')
 					.innerJoin('project.members', 'members')
+					.leftJoin('members.role', 'memberRole')
 					.where('project.id = :projectId', { projectId })
 					.andWhere('members.employeeId = :employeeId', { employeeId })
 					.andWhere('members.isActive = :isActive', { isActive: true })
 					.andWhere('members.isArchived = :isArchived', { isArchived: false })
-					.andWhere('members.isManager = :isManager', { isManager: true })
+					.andWhere(
+						new Brackets((qb) => {
+							qb.where('members.isManager = :isManager', { isManager: true });
+							qb.orWhere('memberRole.name = :managerRoleName', { managerRoleName: RolesEnum.MANAGER });
+						})
+					)
 					.getOne();
 
 				return !!project;

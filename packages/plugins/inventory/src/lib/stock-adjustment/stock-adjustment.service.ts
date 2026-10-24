@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
+import { RequestContext, WarehouseProductVariant } from '@gauzy/core';
 import { StockAdjustmentStatus, StockAdjustmentType, StockMovementType, StockMovementReferenceType } from './../inventory.enums';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
 import { assertLocationInScope, assertVariantInScope, narrowLevelReadToTenant, requestScope } from './../inventory.scope';
@@ -10,6 +10,7 @@ import { StockLevelService } from './../stock-level/stock-level.service';
 import { StockAdjustment } from './stock-adjustment.entity';
 import { TypeOrmStockAdjustmentRepository } from './repository/type-orm-stock-adjustment.repository';
 import { MikroOrmStockAdjustmentRepository } from './repository/mikro-orm-stock-adjustment.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /**
  * Records and applies manual corrections.
@@ -20,7 +21,7 @@ import { MikroOrmStockAdjustmentRepository } from './repository/mikro-orm-stock-
  * a customer is already holding.
  */
 @Injectable()
-export class StockAdjustmentService extends TenantAwareCrudService<StockAdjustment> {
+export class StockAdjustmentService extends InventoryCrudService<StockAdjustment> {
 	constructor(
 		readonly typeOrmStockAdjustmentRepository: TypeOrmStockAdjustmentRepository,
 		readonly mikroOrmStockAdjustmentRepository: MikroOrmStockAdjustmentRepository,

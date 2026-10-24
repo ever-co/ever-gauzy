@@ -1212,7 +1212,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "الواجهة",
 			"TITLE": "واجهة المستخدم",
-			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين.",
+			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين. تعرض الواجهتان الصفحات نفسها بالبيانات والتخطيط والميزات نفسها — تختلف التقنية المستخدمة فقط، لذا لا يغيّر التبديل ما يراه المستخدمون أو ما يمكنهم فعله.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (افتراضي)",
 				"REACT": "React (جديد)"
@@ -2176,6 +2176,17 @@
 		"UPDATE": "تحديث",
 		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
+		"COMMENT_THREAD": {
+			"REPLY": "رد",
+			"ONE_MESSAGE": "رسالة واحدة",
+			"MESSAGES": "{{ count }} رسائل",
+			"NO_MESSAGES": "لا توجد رسائل في هذه السلسلة بعد.",
+			"REPLY_PLACEHOLDER": "الرد على هذا التعليق…",
+			"UNKNOWN_AUTHOR": "غير معروف",
+			"DELETE_CONFIRM": "حذف هذا التعليق؟",
+			"DELETED": "تم حذف التعليق",
+			"LOAD_ERROR": "تعذّر تحميل التعليقات."
+		},
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
 		"DELETE_OBJECTIVE": "حذف الهدف",
@@ -2223,6 +2234,7 @@
 			"NO_KEY_RESULT": "لا توجد نتائج مفتاحية لعرضها.",
 			"NO_UPDATES": "لا توجد تحديثات حتى الآن.",
 			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن.",
+			"NO_COMMENTS": "لا توجد تعليقات حتى الآن.",
 			"NO_PROGRESS_DATA": "لا توجد بيانات تقدّم لرسمها بعد."
 		},
 		"LEVELS": {
@@ -3245,6 +3257,35 @@
 			"CONTINUE": "متابعة",
 			"SKIP": "تخطي",
 			"CREATE": "إنشاء المؤسسة"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "أقسام المشروع",
+			"DETAILS": "التفاصيل",
+			"LOGO": "شعار المشروع",
+			"LOGO_HINT": "اختياري. انقر على الشعار لرفع صورة مربعة.",
+			"PEOPLE": "الأشخاص",
+			"TIMELINE": "الجدول الزمني",
+			"APPEARANCE": "المظهر",
+			"OPTIONS": "الخيارات",
+			"REPOSITORY": "المستودع",
+			"TASK_SYNC": "مزامنة المهام",
+			"CREATE_SUBTITLE": "أنشئ مشروعًا جديدًا مع أشخاصه وجدوله الزمني والفوترة.",
+			"OPEN_SOURCE_TITLE": "مشروع مفتوح المصدر",
+			"OPEN_SOURCE_DESCRIPTION": "شارك شيفرة هذا المشروع علنًا. فعّله لإضافة رابط مستودعه العام.",
+			"OPEN_SOURCE_URL_HINT": "العنوان العام للشيفرة، مثل مستودع على GitHub أو GitLab.",
+			"OPEN_REPOSITORY": "فتح المستودع",
+			"DESCRIPTION_CARD_DESC": "صف أهداف المشروع ونطاقه لكل من يعمل عليه.",
+			"TAGS_DESC": "صنّف المشروع بوسوم ليسهل العثور عليه وتجميعه.",
+			"BILLING_DESC": "كيفية فوترة العميل لهذا المشروع وبأي عملة.",
+			"BUDGET_DESC": "حدد ميزانية بالساعات أو بالتكلفة لإبقاء المشروع على المسار الصحيح.",
+			"APPEARANCE_DESC": "لون المشروع وطريقة عرض مهامه.",
+			"PUBLIC_TITLE": "مشروع عام",
+			"PUBLIC_DESC": "يمكن للجميع رؤية من يعمل على المشروع العام. أما في المشروع الخاص فلا يرى الأشخاص إلا أنفسهم ما لم يكن لديهم حق الوصول إلى المشاريع الخاصة.",
+			"BILLABLE_DESC": "حدد العمل على هذا المشروع كقابل للفوترة للعميل.",
+			"REPOSITORY_DESC": "اختر مستودع GitHub الذي يعمل هذا المشروع على مشكلاته.",
+			"AUTO_SYNC_DESC": "أبقِ مهام المشروع متوافقة مع مشكلات المستودع. تُحفظ التغييرات هنا فورًا.",
+			"SYNC_LABEL_TITLE": "المزامنة حسب التسمية",
+			"SYNC_LABEL_DESC": "زامن فقط المشكلات التي تحمل التسمية التي تحددها. تُحفظ التغييرات هنا فورًا."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3529,7 +3570,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "يجب أن يكون التاريخ بعد يوم الطلب.",
 			"EXCEED_PERIOD_ERR": "الأيام المسموح بها الحد الأقصى لهذا العنصر هي",
 			"BEFORE_START_DATE_ERR": "لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.",
-			"ITEM_RETURNED_BEFORE_ERR": "يجب إرجاع العنصر قبل"
+			"ITEM_RETURNED_BEFORE_ERR": "يجب إرجاع العنصر قبل",
+			"CHANGED_BY_SOMEONE_ELSE": "قام شخص آخر بتغيير هذا الطلب في هذه الأثناء. تمت إعادة تحميل القائمة: تحقق من الطلب وحاول مرة أخرى."
 		},
 		"ACTIONS": "الإجراءات",
 		"APPROVE": "الموافقة",
@@ -5366,6 +5408,8 @@
 			"API_SERVER_PORT": "منفذ خادم واجهة برمجة التطبيقات",
 			"UI_SERVER_PORT": "منفذ خادم واجهة المستخدم",
 			"SERVER_HOSTNAME": "اسم المضيف/عنوان IP للخادم",
+			"LAN_ACCESS": "السماح لأجهزة الكمبيوتر الأخرى على الشبكة بالاتصال",
+			"LAN_ACCESS_HINT": "عند الإيقاف، يمكن لهذا الكمبيوتر فقط الاتصال بواجهة API وواجهة الويب.",
 			"AUTO_START_STARTUP": "تشغيل تلقائي عند بدء التشغيل",
 			"SERVER_TYPE": "نوع الخادم",
 			"LOCAL_API_PORT": "منفذ API المحلي",
@@ -5492,7 +5536,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "تعذّر علينا تحديد ما إذا كانت لديك بيانات غير متزامنة. قد تؤدي إزالة قاعدة البيانات إلى حذف عمل غير محفوظ بشكل دائم. إذا كنت غير متأكد، انقر على 'الاحتفاظ بها'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "بيانات تسجيل الدخول الخاصة بك",
+			"SEED_CREDENTIALS_MESSAGE": "احفظ كلمات المرور هذه الآن. لن تُعرض إلا مرة واحدة.",
+			"SEED_CREDENTIALS_DETAIL": "أنشأ هذا التثبيت حساباته بكلمات مرور عشوائية بدلاً من القيم الافتراضية المنشورة.\n\n{{ accounts }}\n\nيمكنك تغيير كلمة المرور لاحقاً من صفحة ملفك الشخصي في Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "تم النسخ إلى الحافظة.",
+			"SEED_CREDENTIALS_SAVED": "لقد حفظتها",
+			"SEED_ROLE_SUPER_ADMIN": "المسؤول الأعلى",
+			"SEED_ROLE_ADMIN": "المسؤول",
+			"SEED_ROLE_EMPLOYEE": "الموظف",
+			"SEED_PASSWORD": "كلمة المرور",
+			"PUBLISHED_PASSWORDS_TITLE": "كلمة المرور الافتراضية لا تزال مستخدمة",
+			"PUBLISHED_PASSWORDS_MESSAGE": "غيّر كلمة المرور الافتراضية لهذه الحسابات.",
+			"PUBLISHED_PASSWORDS_DETAIL": "لا تزال الحسابات {{ accounts }} تسجّل الدخول بكلمة المرور الافتراضية المنشورة في وثائق Gauzy. يمكن لأي شخص يصل إلى هذا الخادم تسجيل الدخول بها. سجّل الدخول إلى Gauzy وغيّرها من صفحة الملف الشخصي."
 		},
 		"NO_LIMIT": "∞ لا حدود",
 		"TASK": "مهمة",
@@ -5520,7 +5576,12 @@
 			"SERVICE_UNAVAILABLE": "الخدمة غير متاحة مؤقتًا.",
 			"UNEXPECTED_ERROR": "حدث خطأ غير متوقع.",
 			"NETWORK_ERROR": "خطأ في الشبكة: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام."
+			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام.",
+			"ORGANIZATION_SWITCH_REFUSED": "تعذّر التبديل إلى {{ name }}: {{ reason }}. ما زلت تعمل في مؤسستك الحالية.",
+			"ORGANIZATION_NOT_EMPLOYEE": "أنت لست موظفًا نشطًا في {{ name }}، لذلك لا يمكن للمؤقت تتبع الوقت هناك. ما زلت تعمل في مؤسستك الحالية.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "جارٍ تبديل المؤسسة. ابدأ المؤقت بعد اكتمال التبديل.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "أنت لست موظفًا نشطًا في {{ name }}، وفشلت العودة إلى مؤسستك السابقة. يرجى تسجيل الدخول مرة أخرى.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "تعذّر إكمال التبديل إلى {{ name }} على هذا الجهاز. يرجى تسجيل الدخول مرة أخرى."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",
@@ -6848,6 +6909,15 @@
 		"NEEDS_ATTENTION": "يحتاج إلى انتباه",
 		"NEEDS_ATTENTION_CAPTION": "المهام المتأخرة والمستحقة خلال 3 أيام",
 		"ACTIVITY": "النشاط اليومي",
+		"ACTIVITY_VIEWS": "عرض النشاط",
+		"ACTIVITY_VIEW_CHART": "مخطط",
+		"ACTIVITY_VIEW_GRID": "شبكة المساهمات",
+		"GRID_NONE": "لا وقت",
+		"GRID_LAST_YEAR": "آخر 12 شهرًا",
+		"GRID_OLDER": "السنة السابقة",
+		"GRID_NEWER": "السنة التالية",
+		"GRID_DAY": "{{ time }} في {{ date }}",
+		"GRID_DAY_EMPTY": "لا وقت في {{ date }}",
 		"TOP_CONTRIBUTORS": "الأكثر عملاً",
 		"CONTRIBUTORS_CAPTION": "وقت الجميع على هذا المشروع · {{ range }}",
 		"YOUR_TIME_CAPTION": "وقتك على هذا المشروع · {{ range }}",
@@ -6873,7 +6943,8 @@
 		"TABS": {
 			"OVERVIEW": "نظرة عامة",
 			"BOARD": "اللوحة",
-			"ACTIVITY": "النشاط"
+			"ACTIVITY": "النشاط",
+			"COMMENTS": "التعليقات"
 		},
 		"BOARD": "اللوحة",
 		"COLUMN_EMPTY": "لا توجد مهام",
@@ -6885,9 +6956,26 @@
 		"ACTIVITY_CREATED": "أنشأ {{ actor }}",
 		"ACTIVITY_UPDATED": "حدّث {{ actor }}",
 		"ACTIVITY_DELETED": "حذف {{ actor }}",
+		"ACTIVITY_COMMENTED": "علّق {{ actor }} على",
+		"ACTIVITY_REPLIED": "ردّ {{ actor }} على تعليق في",
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",
-		"YESTERDAY": "أمس"
+		"YESTERDAY": "أمس",
+		"TASK_PROGRESS": "التقدم",
+		"TASK_PROGRESS_OF": "{{ worked }} من {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% من الوقت المسجل للمشروع (بدون تقدير)",
+		"TASK_TOP_PEOPLE": "الأكثر عملاً عليها",
+		"TASK_NO_ESTIMATE": "لا يوجد تقدير",
+		"COMMENTS": "التعليقات",
+		"NO_COMMENTS": "لا توجد تعليقات بعد. ابدأ النقاش.",
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…",
+		"COMMENT_IMAGE": "صورة",
+		"ATTACH_IMAGES": "إرفاق صور",
+		"REMOVE_IMAGE": "إزالة الصورة",
+		"OPEN_IMAGE": "فتح الأصل",
+		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
+		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
+		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	}
 }

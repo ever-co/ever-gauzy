@@ -62,14 +62,7 @@ export class InMemoryTenantRepository<T extends FakeRow = FakeRow> {
 		}
 		return Object.entries(where).every(([key, value]) => {
 			if (value instanceof FindOperator) {
-				// `TenantAwareCrudService.deleteMany()` and `assertNotForeignRows()` look rows up by
-				// `{ id: In(ids) }`. Compared as a plain value the operator matches no row: the bulk delete
-				// becomes a silent no-op and the foreign-row guard never sees a foreign id. Any other
-				// operator throws, so a query this fake cannot evaluate fails loudly instead of matching nothing.
-				if (value.type !== 'in') {
-					throw new Error(`InMemoryTenantRepository: unsupported operator "${value.type}" on "${key}"`);
-				}
-				return (value.value as unknown as unknown[]).includes(row[key]);
+				return this.matchesOperator(value, row[key], key);
 			}
 			if (value && typeof value === 'object' && !Array.isArray(value) && 'id' in value) {
 				// Relation shorthand, e.g. `{ tenant: { id } }` -> compare against the flat FK column,
@@ -78,6 +71,40 @@ export class InMemoryTenantRepository<T extends FakeRow = FakeRow> {
 			}
 			return row[key] === value;
 		});
+	}
+
+	/**
+	 * Whether a stored value satisfies a find operator.
+	 *
+	 * `TenantAwareCrudService.deleteMany()` and `assertNotForeignRows()` look rows up by `{ id: In(ids) }`, and the
+	 * organization boundary states `Or(Equal(<organization>), IsNull())` on `organizationId`, wrapped in `And(...)`
+	 * beside an organization the caller states. Compared as a plain value an operator matches no row: the bulk delete
+	 * becomes a silent no-op and the foreign-row guard never sees a foreign id. Any other operator throws, so a query
+	 * this fake cannot evaluate fails loudly instead of matching nothing.
+	 */
+	private matchesOperator(operator: FindOperator<unknown>, stored: unknown, key: string): boolean {
+		const operands = (): unknown[] => {
+			const value = operator.value as unknown;
+			return Array.isArray(value) ? value : [value];
+		};
+		switch (operator.type) {
+			case 'in':
+				return (operator.value as unknown as unknown[]).includes(stored);
+			case 'equal':
+				return stored === operator.value;
+			case 'isNull':
+				return stored === null || stored === undefined;
+			case 'or':
+				return operands().some((part) =>
+					part instanceof FindOperator ? this.matchesOperator(part, stored, key) : stored === part
+				);
+			case 'and':
+				return operands().every((part) =>
+					part instanceof FindOperator ? this.matchesOperator(part, stored, key) : stored === part
+				);
+			default:
+				throw new Error(`InMemoryTenantRepository: unsupported operator "${operator.type}" on "${key}"`);
+		}
 	}
 
 	/**

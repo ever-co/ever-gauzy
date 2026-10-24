@@ -120,7 +120,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 		const data = {
 			request: {
 				method: request.method,
-				url: request.originalUrl || request.url,
+				url: SanitizerUtil.sanitizeUrl(request.originalUrl || request.url),
 				path: request.path,
 				route: route,
 				headers: SanitizerUtil.sanitizeHeaders(request.headers),

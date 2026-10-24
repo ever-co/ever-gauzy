@@ -113,11 +113,11 @@ export class PosthogEventInterceptor implements NestInterceptor {
 
 		const eventProperties = {
 			request_method: request.method,
-			request_url: request.originalUrl || request.url,
+			request_url: SanitizerUtil.sanitizeUrl(request.originalUrl || request.url),
 			request_path: request.path,
 			request_query: SanitizerUtil.sanitizeObject(request.query),
 			user_agent: request.headers['user-agent'],
-			referer: request.headers.referer || request.headers.referrer,
+			referer: SanitizerUtil.sanitizeUrl(request.headers.referer || request.headers.referrer),
 			ip_address: request.ip,
 			user_id: request.user?.id || request.user?.userId,
 			route: this.extractRouteFromRequest(request),
@@ -275,8 +275,8 @@ export class PosthogEventInterceptor implements NestInterceptor {
 			return request.route.path;
 		}
 
-		// Fallback to the raw URL
-		return request.originalUrl || request.url;
+		// Fallback to the URL, without the credentials its query may carry
+		return SanitizerUtil.sanitizeUrl(request.originalUrl || request.url) ?? '';
 	}
 
 	/**

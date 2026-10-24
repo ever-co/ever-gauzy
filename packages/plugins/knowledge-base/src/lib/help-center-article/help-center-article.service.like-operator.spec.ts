@@ -7,6 +7,10 @@ jest.mock('@gauzy/core', () => ({
 		ormType = 'mikro-orm';
 		constructor(public readonly typeOrmRepository: any, public readonly mikroOrmRepository: any) {}
 		assertRelationsPermitted() {}
+		/** The organization boundary that applies to the service right now: none here. */
+		organizationBoundary(): any {
+			return null;
+		}
 	},
 	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 	RequestContext: { currentTenantId: () => 'tenant-1' },

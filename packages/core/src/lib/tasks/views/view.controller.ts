@@ -79,6 +79,7 @@ export class TaskViewController extends CrudController<TaskView> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UseValidationPipe()
 	async create(@Body() entity: CreateViewDTO): Promise<ITaskView> {
@@ -99,6 +100,7 @@ export class TaskViewController extends CrudController<TaskView> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Put(':id')
 	@UseValidationPipe()
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateViewDTO): Promise<ITaskView> {
@@ -115,6 +117,7 @@ export class TaskViewController extends CrudController<TaskView> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Delete('/:id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.taskViewService.delete(id);

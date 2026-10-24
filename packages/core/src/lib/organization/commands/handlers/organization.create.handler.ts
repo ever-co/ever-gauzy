@@ -11,6 +11,7 @@ import { OrganizationCommerceDefaultsCreateCommand } from '../organization-comme
 import { assertNoAgentRestrictionOnCreate } from '../../../employee/agent-exit-logout-restriction';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 import { RequestContext } from '../../../core/context';
+import { runOutsideOrganizationBoundary } from '../../../core/crud/organization-boundary';
 import { Organization } from './../../../core/entities/internal';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
 import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
@@ -105,12 +106,16 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			// 4. Take each super admin user and add him/her to created organization
 			try {
 				const userOrganizations = admins.map(async (user: IUser) => {
-					const userOrganization = await this.userOrganizationService.create({
-						organization: {
-							id: organizationId
-						},
-						user
-					});
+					// The new organization is not the one of the caller's token: adding its admins to it is a crossing
+					// by design, which the membership service otherwise refuses a caller confined to their organization.
+					const userOrganization = await runOutsideOrganizationBoundary(() =>
+						this.userOrganizationService.create({
+							organization: {
+								id: organizationId
+							},
+							user
+						})
+					);
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
@@ -127,12 +132,16 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				console.log('An error occurred while processing user organizations. Details:', e);
 			}
 
+			// Steps 5 to 7 seed the organization this request has just created, which is not the organization of the
+			// caller's token: they run outside the organization boundary, as creating the organization was the check.
 			// 5. Create contact details of created organization
 			try {
-				contact = await this.contactService.create({
-					...contact,
-					organization: { id: organizationId }
-				});
+				contact = await runOutsideOrganizationBoundary(() =>
+					this.contactService.create({
+						...contact,
+						organization: { id: organizationId }
+					})
+				);
 				await this.organizationService.update(organizationId, {
 					contactId: contact.id
 				});
@@ -145,10 +154,10 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			// currency price preference, the measurement families and the search definitions. Awaited, so the
 			// organization the response returns can place its first order; a failure is logged and does not
 			// undo the organization (the step is idempotent and can be re-run).
-			await this.createCommerceDefaults(organization);
+			await runOutsideOrganizationBoundary(() => this.createCommerceDefaults(organization));
 
 			// 7. Execute organization update tasks in the background (fire-and-forget).
-			this.executeOrganizationUpdateTasks(organization).catch((error) =>
+			runOutsideOrganizationBoundary(() => this.executeOrganizationUpdateTasks(organization)).catch((error) =>
 				this.logger.error('Unhandled error in execute organization update tasks:', error?.message)
 			);
 

@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalKPI } from './goal-kpi.entity';
 import { GoalKpiService } from './goal-kpi.service';
@@ -85,11 +86,15 @@ const GOAL_KPI_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * REST and GraphQL are two views of the same operations, so this resolver owns no business logic of
  * its own: every field below calls the same `GoalKpiService` method the `/api/goal-kpi` routes call.
  *
- * **The guard chain is the controller's, and no field states a permission.** `GoalKpiController`
- * carries `TenantPermissionGuard` on the class and nothing else: not a class-level permission and not
- * a handler-level one, on any of the four routes it declares or on any of the five it inherits. The
- * permission guard is not part of its chain, so it is not part of this one either. The spec reads the
- * controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.** `GoalKpiController` carries
+ * `TenantPermissionGuard` on the class; its reads state no permission, and every write route — the filing,
+ * the edit, the removal and the two lifecycle moves, the inherited ones overridden only to attach the grant —
+ * states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2, 2026-10-22: the writes stated none, and the
+ * permission guard answers `true` to empty metadata, so any member of the tenant could write —
+ * GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the gate, the reads state nothing, and
+ * each write field states `PermissionGuard` and `GOALS_EDIT`, neither wider nor narrower than its route. The
+ * spec reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's,
+ * field by field.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -173,6 +178,8 @@ export class GoalKpiResolver {
 	 * The same service method the create route calls, with the row's own shape — that route declares no
 	 * validation pipe, so what it accepts is the entity the store is handed.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createGoalKpi')
 	async createGoalKpi(@Args('input') input: ICreateGoalKPIInput): Promise<GoalKPI> {
 		return await this.goalKpiService.create(input as never);
@@ -186,6 +193,8 @@ export class GoalKpiResolver {
 	 * wrapper is a statement about the HTTP status this surface does not have, so the service's own
 	 * refusal — which is a bad request already — travels instead.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateGoalKpi')
 	async updateGoalKpi(@Args('input') input: IUpdateGoalKPIInput): Promise<GoalKPI> {
 		const { id, ...values } = input;
@@ -199,6 +208,8 @@ export class GoalKpiResolver {
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
 	 * row — so this field answers whether the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteGoalKpi')
 	async deleteGoalKpi(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.goalKpiService.delete(id));
@@ -209,6 +220,8 @@ export class GoalKpiResolver {
 	 *
 	 * The inherited `DELETE /goal-kpi/:id/soft` route's own call. The answer is the withdrawn row.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteGoalKpi')
 	async softDeleteGoalKpi(@Args('id', { type: () => ID }) id: Id): Promise<GoalKPI> {
 		return await this.goalKpiService.softRemove(id);
@@ -217,6 +230,8 @@ export class GoalKpiResolver {
 	/**
 	 * Puts a withdrawn measure back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverGoalKpi')
 	async recoverGoalKpi(@Args('id', { type: () => ID }) id: Id): Promise<GoalKPI> {
 		return await this.goalKpiService.softRecover(id);

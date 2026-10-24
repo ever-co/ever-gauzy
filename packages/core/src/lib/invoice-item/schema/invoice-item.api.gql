@@ -7,14 +7,13 @@
 # guard chain and with the same permission, so a client that reaches a capability over one protocol is
 # not given a narrower or a wider one than the client that reaches it over the other.
 #
-# **This resource's guard chain is the tenant guard alone, and it states no permission.** The
-# controller carries `TenantPermissionGuard` and no `@Permissions`, so every route it serves — the
-# list, the one line, the count, the create, the edit, the removal and the two lifecycle moves — runs
-# under that guard alone. The single exception is the bulk write, whose route states `PermissionGuard`
-# with the invoice edit permission, and whose field below states the same guard and the same
-# permission. A resolver that demanded a permission on the other fields would refuse here a caller the
-# REST route serves; tightening the resource is a change to make in both places at once, and it is not
-# this delivery's to make.
+# **Every route states its permission, and every field below states the same one.** The controller
+# carries `TenantPermissionGuard` on the class, and each route adds `PermissionGuard` with its own grant:
+# the reads (the list, the one line, the count) state `INVOICES_VIEW`, the grant the invoice reads
+# themselves state, and the writes (the create, the edit, the removal, the two lifecycle moves and the
+# bulk write) state `INVOICES_EDIT`. A field that demanded more would refuse here a caller the REST route
+# serves, and one that demanded less would be a way around it; tightening the resource is a change to
+# make in both places at once.
 #
 # The list is a connection rather than a bare array. It takes the same query protocol every other
 # connection takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` —

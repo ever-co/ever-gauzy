@@ -477,6 +477,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		port: 3000,
 		portUi: 4200,
 		host: '0.0.0.0',
+		/* Server apps: whether other computers may connect. Unset (null) means on, as before the setting */
+		lanAccess: null,
 		secureProxy: {
 			ssl: {
 				key: '',

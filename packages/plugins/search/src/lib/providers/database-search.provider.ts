@@ -15,6 +15,7 @@ import {
 	ISearchRequest,
 	ISearchResult,
 	ISearchSuggestion,
+	PermissionsEnum,
 	SearchFieldKind,
 	SearchFilterOperator,
 	SearchMatchMode,
@@ -105,6 +106,11 @@ interface ISearchQueryContext {
 	entities: string[];
 	tenantId: ID | null;
 	organizationId: ID | null;
+	/**
+	 * The caller's employee when the caller may not act for other employees: the rows of an entity that belongs to an
+	 * employee are then the caller's own only. Null for a caller who may, and for one with no employee record.
+	 */
+	ownEmployeeId: ID | null;
 	matchMode: SearchMatchMode;
 	terms: string[];
 	/** False on a dialect whose own full-text capability is unavailable, so the portable path is used. */
@@ -477,6 +483,9 @@ export class DatabaseSearchProvider implements ISearchProvider {
 			entities,
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: request?.organizationId ?? RequestContext.currentOrganizationId(),
+			ownEmployeeId: RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+				? null
+				: (RequestContext.currentEmployeeId() ?? null),
 			matchMode: request?.matchMode ?? SearchMatchMode.ANY,
 			terms: this.tokenise(request?.q),
 			useFullText: !this.isDegraded(`${dialect}:fulltext`),
@@ -588,8 +597,88 @@ export class DatabaseSearchProvider implements ISearchProvider {
 		}
 
 		this.applyRowRules(query, context, params);
+		this.applyEmployeeScope(query, context, params);
 
 		return query;
+	}
+
+	/**
+	 * Restricts each entity whose source rows belong to an employee (`income`, `expense`: their tables carry
+	 * `employeeId`) to the caller's own rows, when the caller may not act for other employees.
+	 *
+	 * That is the rule `TenantAwareCrudService` applies to every read of those rows: a caller without
+	 * CHANGE_SELECTED_EMPLOYEE who has an employee record reads only that employee's rows, and one with no
+	 * employee record keeps the tenant-wide scope. The index did not apply it, so a role holding
+	 * `ORG_INCOMES_VIEW` or `ORG_EXPENSES_VIEW` and `SEARCH_VIEW` but not CHANGE_SELECTED_EMPLOYEE, which REST shows
+	 * its own incomes only, found every employee's — client, amount, notes, bonus flag — in the page, the total, the
+	 * suggestions and the facets. As with the row rule above, the owner is read from the source row as it stands,
+	 * in the document's tenant.
+	 *
+	 * @param query The builder.
+	 * @param context The query context.
+	 * @param params The parameter bag shared by the whole statement.
+	 */
+	private applyEmployeeScope(
+		query: SelectQueryBuilder<SearchDocument>,
+		context: ISearchQueryContext,
+		params: Record<string, unknown>
+	): void {
+		if (!context.ownEmployeeId) {
+			return;
+		}
+
+		for (const entity of context.entities) {
+			const owned = this.employeeOwnedSource(entity);
+
+			if (!owned) {
+				continue;
+			}
+
+			const ownedEntity = this.addParam(params, 'ownedEntity', entity);
+			const ownEmployee = this.addParam(params, 'ownEmployeeId', context.ownEmployeeId);
+			const source = this.typeOrmSearchDocumentRepository.manager
+				.createQueryBuilder(owned.target, 'owned')
+				.select('1')
+				.where(`owned.${owned.id} = doc.entityId`)
+				.andWhere(`owned.${owned.employee} = :${ownEmployee}`);
+
+			if (owned.tenant) {
+				source.andWhere(`owned.${owned.tenant} = doc.tenantId`);
+			}
+
+			query.andWhere(`(doc.entity <> :${ownedEntity} OR EXISTS (${source.getQuery()}))`, params);
+		}
+	}
+
+	/**
+	 * The source table of an entity and its owner column, when its rows belong to an employee: the declaration's
+	 * entity key is the table's name, as the registry and the indexer read it.
+	 *
+	 * @param entity The entity key.
+	 * @returns The source target and the property names the predicate compares, or `null`.
+	 */
+	private employeeOwnedSource(entity: string): {
+		target: Function | string;
+		id: string;
+		employee: string;
+		tenant?: string;
+	} | null {
+		const metadata = (this.typeOrmSearchDocumentRepository.manager?.connection?.entityMetadatas ?? []).find(
+			(candidate) => candidate.tableName === entity
+		);
+		const employee = metadata?.findColumnWithPropertyName('employeeId')?.propertyName;
+		const id = metadata?.primaryColumns?.[0]?.propertyName;
+
+		if (!metadata || !employee || !id) {
+			return null;
+		}
+
+		return {
+			target: metadata.target,
+			id,
+			employee,
+			tenant: metadata.findColumnWithPropertyName('tenantId')?.propertyName
+		};
 	}
 
 	/**

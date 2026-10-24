@@ -90,6 +90,7 @@ const routes: Routes = [
 								'organizationContact',
 								'organization',
 								'members.employee.user',
+								'members.role',
 								'tags',
 								'teams',
 								'customFields.repository'

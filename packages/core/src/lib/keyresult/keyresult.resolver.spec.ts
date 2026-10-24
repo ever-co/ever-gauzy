@@ -11,8 +11,9 @@ import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { MetadataScanner, Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { CursorCodec } from '../api/cursor';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { KeyResultController } from './keyresult.controller';
 import { KeyResultResolver } from './keyresult.resolver';
 
@@ -503,6 +504,13 @@ describe('KeyResultResolver — one concept, two protocols, the same operations'
 });
 
 describe('KeyResultResolver — the guard stack and the permission are the controller’s', () => {
+	/**
+	 * The routes that write. Each states `GOALS_EDIT` behind `PermissionGuard` on its handler — the inherited ones
+	 * through an override that exists only to attach them (owner decision 2, 2026-10-22) — and its field states the
+	 * same; the reads state neither.
+	 */
+	const WRITES = ['create', 'createBulkKeyResults', 'update', 'delete', 'softRemove', 'softRecover'];
+
 	it('guards the resolver the way the controller is guarded, and not more widely', () => {
 		expect(Reflect.getMetadata('__guards__', KeyResultController)).toEqual([TenantPermissionGuard]);
 		expect(Reflect.getMetadata('__guards__', KeyResultResolver)).toEqual([
@@ -511,7 +519,7 @@ describe('KeyResultResolver — the guard stack and the permission are the contr
 		]);
 	});
 
-	it('runs every route under the guard chain the resolver states', () => {
+	it('runs every read under the guard chain the resolver states, and every write under the permission guard as well', () => {
 		const stated = Reflect.getMetadata('__guards__', KeyResultResolver) ?? [];
 		const routes = [
 			'findAll',
@@ -528,9 +536,23 @@ describe('KeyResultResolver — the guard stack and the permission are the contr
 		];
 
 		for (const handler of routes) {
-			expect([...guardsOfRoute(KeyResultController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
-			);
+			// The controller's chain plus the gate on the endpoint itself is the resolver's chain, which is the
+			// parity claim; a write adds the permission guard its handler states, and its field states the same
+			// (asserted below), so neither protocol is narrower or wider than the other.
+			const expected = WRITES.includes(handler) ? [...stated, PermissionGuard] : [...stated];
+
+			expect([...guardsOfRoute(KeyResultController, handler), FeatureFlagGuard].sort()).toEqual(expected.sort());
+		}
+	});
+
+	it('states PermissionGuard on every write field, as its route does, and on no read field', () => {
+		const fields = KeyResultResolver.prototype as unknown as Record<string, object>;
+
+		for (const [field, handler] of ROUTES) {
+			expect({ field, guards: Reflect.getMetadata('__guards__', fields[field]) ?? [] }).toEqual({
+				field,
+				guards: WRITES.includes(handler) ? [PermissionGuard] : []
+			});
 		}
 	});
 
@@ -539,14 +561,19 @@ describe('KeyResultResolver — the guard stack and the permission are the contr
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, KeyResultResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its own route runs under, which is none', () => {
+	it('states on every field the permission its own route runs under: GOALS_EDIT on a write, none on a read', () => {
 		const stated = Object.fromEntries(ROUTES.map(([field]) => [field, permissionOfField(field)]));
 		const expected = Object.fromEntries(
 			ROUTES.map(([field, handler]) => [field, permissionOfRoute(KeyResultController, handler)])
 		);
 
 		expect(stated).toEqual(expected);
-		expect(Object.values(stated).every((value) => value === undefined)).toBe(true);
+		for (const [field, handler] of ROUTES) {
+			expect({ field, permission: stated[field] }).toEqual({
+				field,
+				permission: WRITES.includes(handler) ? [PermissionsEnum.GOALS_EDIT] : undefined
+			});
+		}
 	});
 });
 

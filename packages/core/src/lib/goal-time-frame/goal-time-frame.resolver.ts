@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { GoalTimeFrameService } from './goal-time-frame.service';
@@ -93,10 +94,15 @@ const GOAL_TIME_FRAME_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * what the controller declares and a registration order is not a narrowing anybody designed. The spec
  * asserts that ordering, so the note cannot quietly stop being true.
  *
- * **The guard chain is the controller's, and no field states a permission.** `GoalTimeFrameController`
- * carries `TenantPermissionGuard` on the class and nothing else, on any of the ten routes, so the
- * permission guard is not part of this resolver's chain either. The spec reads the controller's
- * `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.** `GoalTimeFrameController`
+ * carries `TenantPermissionGuard` on the class; its reads state no permission, and every write route — the
+ * filing, the edit, the removal and the two lifecycle moves, the inherited ones overridden only to attach the
+ * grant — states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2, 2026-10-22: the writes stated none,
+ * and the permission guard answers `true` to empty metadata, so any member of the tenant could write —
+ * GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the gate, the reads state nothing, and
+ * each write field states `PermissionGuard` and `GOALS_EDIT`, neither wider nor narrower than its route. The
+ * spec reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's,
+ * field by field.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -179,6 +185,8 @@ export class GoalTimeFrameResolver {
 	 *
 	 * The same service method the create route calls, with the body that route validates.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createGoalTimeFrame')
 	async createGoalTimeFrame(@Args('input') input: ICreateGoalTimeFrameInput): Promise<GoalTimeFrame> {
 		return await this.goalTimeFrameService.create(input as never);
@@ -192,6 +200,8 @@ export class GoalTimeFrameResolver {
 	 * wrapper is a statement about the HTTP status this surface does not have, so the service's own
 	 * refusal — which is a bad request already — travels instead.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateGoalTimeFrame')
 	async updateGoalTimeFrame(@Args('input') input: IUpdateGoalTimeFrameInput): Promise<GoalTimeFrame> {
 		const { id, ...values } = input;
@@ -205,6 +215,8 @@ export class GoalTimeFrameResolver {
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
 	 * row — so this field answers whether the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteGoalTimeFrame')
 	async deleteGoalTimeFrame(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.goalTimeFrameService.delete(id));
@@ -215,6 +227,8 @@ export class GoalTimeFrameResolver {
 	 *
 	 * The inherited `DELETE /goal-time-frame/:id/soft` route's own call.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteGoalTimeFrame')
 	async softDeleteGoalTimeFrame(@Args('id', { type: () => ID }) id: Id): Promise<GoalTimeFrame> {
 		return await this.goalTimeFrameService.softRemove(id);
@@ -223,6 +237,8 @@ export class GoalTimeFrameResolver {
 	/**
 	 * Puts a withdrawn period back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverGoalTimeFrame')
 	async recoverGoalTimeFrame(@Args('id', { type: () => ID }) id: Id): Promise<GoalTimeFrame> {
 		return await this.goalTimeFrameService.softRecover(id);

@@ -1,5 +1,5 @@
 <!--
-	Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole card disappears
+	Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole panel disappears
 	for a user without DOCS_READ or on an organization with FEATURE_DOCUMENTS off —
 	the component decides, not the five host templates.
 
@@ -11,84 +11,180 @@
 	`readonly` hosts (the invoice/estimate VIEW page) additionally drop the
 	attach / upload / unlink affordances — open and download stay.
 -->
-<nb-card *ngIf="shown" class="docs-links-panel">
-	<nb-card-header class="docs-links-panel-header">
-		<span>{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}</span>
+<!-- Files dropped anywhere on the panel are uploaded and attached, like the file picker. -->
+<section
+	*ngIf="shown"
+	class="docs-links-panel"
+	[class.is-drop-target]="dragActive"
+	[attr.aria-labelledby]="'docs-links-panel-title-' + entityId"
+	(dragenter)="onDragEnter($event)"
+	(dragover)="onDragOver($event)"
+	(dragleave)="onDragLeave($event)"
+	(drop)="onDrop($event)"
+>
+	<header class="docs-links-panel-header">
+		<h6 class="docs-links-panel-title" [id]="'docs-links-panel-title-' + entityId">
+			{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}
+		</h6>
 		<span class="docs-links-panel-count" *ngIf="links.length">{{ links.length }}</span>
 
-		<span class="docs-links-panel-actions">
-			<button *ngIf="!readonly && canLink" nbButton ghost size="tiny" (click)="attachExisting()">
+		<!-- Icon buttons with tooltips: the panel often sits in a narrow column. -->
+		<div class="docs-links-panel-actions">
+			<button
+				*ngIf="!readonly && canLink"
+				type="button"
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				class="docs-links-icon-button"
+				[attr.aria-label]="'DOCS.LINKS.ATTACH_EXISTING' | translate"
+				[nbTooltip]="'DOCS.LINKS.ATTACH_EXISTING' | translate"
+				(click)="attachExisting()"
+			>
 				<nb-icon icon="link-2-outline"></nb-icon>
-				{{ 'DOCS.LINKS.ATTACH_EXISTING' | translate }}
 			</button>
 
-			<ng-container *ngIf="!readonly && canUpload">
-				<button nbButton ghost size="tiny" [disabled]="uploading" (click)="fileInput.click()">
-					<nb-icon icon="upload-outline"></nb-icon>
-					{{ 'DOCS.LINKS.UPLOAD_NEW' | translate }}
-				</button>
-				<!--
-					Visually hidden and driven entirely by the button above, so it carries an id and
-					an explicit accessible name, and is taken out of the tab order: a focusable
-					control the user cannot see is a keyboard trap, and the button is the real one.
-				-->
-				<input
-					#fileInput
-					id="docs-links-panel-file-input"
-					type="file"
-					tabindex="-1"
-					class="docs-links-panel-file"
-					[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
-					[accept]="accept"
-					(change)="uploadNew(fileInput)"
-				/>
-			</ng-container>
-		</span>
-	</nb-card-header>
+			<button
+				*ngIf="!readonly && canUpload"
+				type="button"
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				class="docs-links-icon-button"
+				[disabled]="uploading"
+				[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+				[nbTooltip]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+				(click)="fileInput.click()"
+			>
+				<nb-icon icon="upload-outline"></nb-icon>
+			</button>
+		</div>
+	</header>
 
-	<nb-card-body [nbSpinner]="loading || uploading" nbSpinnerStatus="primary">
-		<div class="docs-links-panel-error" *ngIf="loadError">
+	<!--
+		Visually hidden and driven entirely by the upload buttons (header and empty state),
+		so it carries an id and an explicit accessible name, and is taken out of the tab
+		order: a focusable control the user cannot see is a keyboard trap, and the buttons
+		are the real ones. At the section's level, with no structural directive of its
+		own, so both of those views can reach it; nothing triggers it without upload rights.
+	-->
+	<input
+		#fileInput
+		id="docs-links-panel-file-input"
+		type="file"
+		multiple
+		tabindex="-1"
+		class="docs-links-panel-file"
+		[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+		[accept]="accept"
+		(change)="uploadNew(fileInput)"
+	/>
+
+	<!-- A batch upload reports where it is; the list stays readable underneath. -->
+	<div class="docs-links-panel-progress" *ngIf="uploadProgress as progress" role="status">
+		<span class="docs-links-panel-progress-label">
+			{{ 'DOCS.LINKS.UPLOADING' | translate : { current: uploadStep, total: progress.total } }}
+		</span>
+		<span class="docs-links-panel-progress-track" aria-hidden="true">
+			<span class="docs-links-panel-progress-bar" [style.width.%]="(progress.done / progress.total) * 100"></span>
+		</span>
+	</div>
+
+	<!-- Shown while files are dragged over the panel. -->
+	<div class="docs-links-panel-drop" *ngIf="dragActive" aria-hidden="true">
+		<nb-icon icon="cloud-upload-outline"></nb-icon>
+		<span>{{ 'DOCS.LINKS.DROP_HERE' | translate }}</span>
+	</div>
+
+	<div class="docs-links-panel-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+		<div class="docs-links-panel-error" *ngIf="loadError" role="alert">
 			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
 			<span>{{ 'DOCS.LINKS.PANEL_LOAD_ERROR' | translate }}</span>
-			<button nbButton size="tiny" (click)="load()">{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}</button>
-		</div>
-
-		<p class="muted" *ngIf="!loading && !loadError && !links.length">
-			{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}
-		</p>
-
-		<div class="docs-links-row" *ngFor="let link of links; trackBy: trackByLink">
-			<nb-icon [icon]="iconOf(link)" size="tiny"></nb-icon>
-
-			<button type="button" class="docs-links-row-open" [title]="labelOf(link)" (click)="open(link)">
-				{{ labelOf(link) }}
+			<button type="button" nbButton ghost status="basic" size="tiny" (click)="load()">
+				{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
 			</button>
-
-			<span class="docs-links-row-meta" *ngIf="sizeOf(link)">{{ sizeOf(link) }}</span>
-
-			<span class="docs-links-row-actions">
-				<button
-					*ngIf="isFile(link)"
-					nbButton
-					ghost
-					size="tiny"
-					[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
-					(click)="download(link)"
-				>
-					<nb-icon icon="download-outline"></nb-icon>
-				</button>
-				<button
-					*ngIf="!readonly && canLink"
-					nbButton
-					ghost
-					size="tiny"
-					status="danger"
-					[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
-					(click)="unlink(link)"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
-			</span>
 		</div>
-	</nb-card-body>
-</nb-card>
+
+		<ng-container *ngIf="!loading && !loadError && !links.length">
+			<!-- With upload rights the empty state is the upload target itself. -->
+			<button
+				*ngIf="!readonly && canUpload; else emptyNote"
+				type="button"
+				class="docs-links-panel-empty is-action"
+				[disabled]="uploading"
+				(click)="fileInput.click()"
+			>
+				<span class="docs-links-icon" aria-hidden="true"><nb-icon icon="cloud-upload-outline"></nb-icon></span>
+				<span class="docs-links-panel-empty-text">
+					<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
+					<span class="docs-links-panel-empty-hint">{{ 'DOCS.LINKS.UPLOAD_HINT' | translate }}</span>
+				</span>
+			</button>
+			<ng-template #emptyNote>
+				<div class="docs-links-panel-empty">
+					<span class="docs-links-icon" aria-hidden="true"><nb-icon icon="folder-outline"></nb-icon></span>
+					<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
+				</div>
+			</ng-template>
+		</ng-container>
+
+		<ul class="docs-links-list" *ngIf="links.length">
+			<li
+				class="docs-links-row"
+				*ngFor="let link of links; trackBy: trackByLink"
+				[attr.data-family]="familyOf(link)"
+			>
+				<span class="docs-links-icon" aria-hidden="true">
+					<nb-icon [icon]="iconOf(link)"></nb-icon>
+				</span>
+
+				<!-- Its hit area covers the whole row; the row's own buttons sit above it. -->
+				<button
+					type="button"
+					class="docs-links-row-open"
+					[title]="labelOf(link)"
+					(click)="open(link)"
+				>
+					<span class="docs-links-row-name">{{ labelOf(link) }}</span>
+					<span class="docs-links-row-meta" *ngIf="typeOf(link) || sizeOf(link)">
+						<span *ngIf="typeOf(link)">{{ typeOf(link) }}</span>
+						<span *ngIf="typeOf(link) && sizeOf(link)" aria-hidden="true">·</span>
+						<span *ngIf="sizeOf(link)">{{ sizeOf(link) }}</span>
+					</span>
+				</button>
+
+				<span class="docs-links-row-actions">
+					<button
+						*ngIf="isFile(link)"
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="tiny"
+						[attr.aria-label]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+						[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+						(click)="download(link)"
+					>
+						<nb-icon icon="download-outline"></nb-icon>
+					</button>
+					<button
+						*ngIf="!readonly && canLink"
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="tiny"
+						class="docs-links-row-remove"
+						[attr.aria-label]="'DOCS.LINKS.REMOVE' | translate"
+						[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
+						(click)="unlink(link)"
+					>
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+				</span>
+			</li>
+		</ul>
+	</div>
+</section>

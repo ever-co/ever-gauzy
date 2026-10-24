@@ -70,3 +70,114 @@ describe('EmployeeUpdateHandler — Upwork and LinkedIn ids', () => {
 		expect(entity).toMatchObject({ upworkId: null, linkedInId: null });
 	});
 });
+
+/**
+ * Privilege-escalation audit 2026-10-24, F9: `PUT /employee/:id/profile` let an employee name any contact of the
+ * tenant in `contact.id`. `Employee.contact` cascades, so that contact (an organization's, a client's, a
+ * candidate's) was linked to the employee and overwritten. The edit now writes only the employee's own contact.
+ */
+describe('EmployeeUpdateHandler — the contact is the employee’s own', () => {
+	const ID = 'employee-1';
+	const OWN_CONTACT = 'contact-own';
+	const CLIENT_CONTACT = 'contact-of-a-client';
+
+	let create: jest.Mock;
+	let handler: EmployeeUpdateHandler;
+
+	const stored = (contactId: string | null) => ({
+		id: ID,
+		contactId,
+		tenantId: 'tenant-1',
+		organizationId: 'organization-1'
+	});
+
+	const build = (contactId: string | null) => {
+		create = jest.fn(async (entity) => entity);
+		const employeeService = { findOneByIdString: jest.fn().mockResolvedValue(stored(contactId)), create };
+		handler = new EmployeeUpdateHandler(employeeService as any, {} as any);
+	};
+
+	beforeEach(() => {
+		// The employee editing their own profile: PROFILE_EDIT without ORG_EMPLOYEES_EDIT.
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', employeeId: ID } as any);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
+			(permission) => permission === PermissionsEnum.PROFILE_EDIT
+		);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	async function saved(input: IEmployeeUpdateInput) {
+		await handler.execute(new EmployeeUpdateCommand(ID, input));
+		return create.mock.calls[0][0];
+	}
+
+	it('never re-points the employee at another contact', async () => {
+		build(OWN_CONTACT);
+
+		const entity = await saved({ contact: { id: CLIENT_CONTACT, city: 'Sofia' } } as IEmployeeUpdateInput);
+
+		expect(entity.contact).toEqual({ city: 'Sofia', tenantId: 'tenant-1', organizationId: 'organization-1' });
+		expect(entity.contact).not.toHaveProperty('id', CLIENT_CONTACT);
+	});
+
+	it('updates the stored contact in place when the edit names it', async () => {
+		build(OWN_CONTACT);
+
+		const entity = await saved({ contact: { id: OWN_CONTACT, city: 'Sofia' } } as IEmployeeUpdateInput);
+
+		expect(entity.contact).toMatchObject({ id: OWN_CONTACT, city: 'Sofia' });
+	});
+
+	it('reads the links off the relations MikroORM loads, and the tenant off the request', async () => {
+		// MikroORM's relation-id columns are `persist: false` mirrors, which the read leaves empty.
+		create = jest.fn(async (entity) => entity);
+		const read = { id: ID, contact: { id: OWN_CONTACT }, organization: { id: 'organization-1' } };
+		handler = new EmployeeUpdateHandler(
+			{ findOneByIdString: jest.fn().mockResolvedValue(read), create } as any,
+			{} as any
+		);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+
+		const entity = await saved({ contact: { id: OWN_CONTACT, city: 'Sofia' } } as IEmployeeUpdateInput);
+
+		expect(entity.contact).toEqual({
+			id: OWN_CONTACT,
+			city: 'Sofia',
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		});
+	});
+
+	it('keeps the location form working: no id, and the employee’s own tenant and organization', async () => {
+		build(null);
+
+		const entity = await saved({
+			contact: { country: 'BG', city: 'Sofia', tenantId: 'tenant-other', organizationId: 'organization-other' }
+		} as IEmployeeUpdateInput);
+
+		expect(entity.contact).toEqual({
+			country: 'BG',
+			city: 'Sofia',
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		});
+	});
+
+	it('never moves the contact link itself', async () => {
+		build(OWN_CONTACT);
+
+		const entity = await saved({ contactId: CLIENT_CONTACT, isAway: true } as unknown as IEmployeeUpdateInput);
+
+		expect(entity).not.toHaveProperty('contactId');
+		expect(entity.isAway).toBe(true);
+	});
+
+	it('leaves an edit without a contact alone', async () => {
+		build(OWN_CONTACT);
+
+		const entity = await saved({ isAway: true } as IEmployeeUpdateInput);
+
+		expect(entity).toEqual({ id: ID, isAway: true });
+	});
+});

@@ -81,17 +81,13 @@ const TASK_VIEW_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * call, or dispatches the same command its two writes dispatch — both of which run through the
  * service's own `create` and `update`, the two methods that write the activity log beside the row.
  *
- * **The guard chain is the controller's, and no field states a permission, because no route states
- * one.** The delivered controller carries both guards on the class and no `@Permissions` at all —
- * not on the class and not on any of its five own routes — so every route this resolver mirrors runs
- * under the guards alone. A field that demanded a permission here would refuse a caller every one of
- * those routes serves, and tightening the resource is a change to make in both places at once rather
- * than in one.
- *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_TASK_EDIT` — the CRUD base declares no permission, and `PermissionGuard` answers `true` to empty
- * metadata, so any member of the tenant could retire or restore a row (GHSA-v79w-54p2-wmh5) — so
- * `softDeleteTaskView` and `recoverTaskView` state the same, neither wider nor narrower than REST.
+ * **The guard chain is the controller's, and each field states the permission its route states.** The
+ * delivered controller carries both guards on the class and no `@Permissions` on the class or on its
+ * reads, so those run under the guards alone. Its writes state the task grants — `ORG_TASK_ADD` on the
+ * creation and `ORG_TASK_EDIT` on the edit, the removal and the retire-and-restore pair it overrides
+ * only to attach it — because `PermissionGuard` answers `true` to empty metadata, so any member of the
+ * tenant could write a view (GHSA-v79w-54p2-wmh5). The fields state the same, neither wider nor narrower
+ * than REST.
  *
  * **The tasks a view selects are not a field of this resource.** They are the `/api/tasks/view/:id`
  * route's answer, which belongs to the task resource and is served there as `tasksByView`; a second
@@ -161,6 +157,7 @@ export class TaskViewResolver {
 	 * Saves a view: the same command the create route dispatches, through the service method that
 	 * writes the activity log beside the row.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_ADD)
 	@Mutation('createTaskView')
 	async createTaskView(@Args('input') input: ICreateTaskViewInput): Promise<ITaskView> {
 		return await this.commandBus.execute(new TaskViewCreateCommand(input as never));
@@ -171,6 +168,7 @@ export class TaskViewResolver {
 	 * before it writes, so a view that is not there is a miss rather than a write under an identifier
 	 * the caller does not own.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('updateTaskView')
 	async updateTaskView(@Args('input') input: IUpdateTaskViewInput): Promise<ITaskView> {
 		const { id, ...values } = input;
@@ -181,6 +179,7 @@ export class TaskViewResolver {
 	/**
 	 * Removes a saved view outright.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('deleteTaskView')
 	async deleteTaskView(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskViewService.delete(id));

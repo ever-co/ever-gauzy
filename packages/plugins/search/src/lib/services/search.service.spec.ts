@@ -726,6 +726,14 @@ describe('SearchService — which entities a caller may search (doc 05 §3.18)',
 
 		expect((await fixture.service.indexStatus(['product'])).map((status) => status.entity)).toEqual(['product']);
 	});
+
+	it('reports nothing, rather than every entity, when the caller may view none of those asked for', async () => {
+		const fixture = searchFixture();
+
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
+
+		expect(await fixture.service.indexStatus(['secret_ledger'])).toEqual([]);
+	});
 });
 
 describe('SearchService — how a text query’s terms compose (doc 05 §3.18)', () => {

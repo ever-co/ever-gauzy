@@ -1,3 +1,5 @@
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
 .project-view-panel .panel-header {
   min-height: 3.5rem;
 }
@@ -66,6 +68,10 @@
   &.tone-danger {
     --tone: var(--gauzy-chart-negative);
   }
+
+  &.tone-comment {
+    --tone: var(--gauzy-text-color-2);
+  }
 }
 
 .feed-main {
@@ -112,6 +118,16 @@ a.feed-target:hover {
   color: var(--gauzy-text-color-2);
 }
 
+// A comment's text, on one line under its sentence.
+.feed-excerpt {
+  overflow: hidden;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .feed-time {
   font-size: 0.625rem;
   line-height: 1.375rem;
@@ -134,4 +150,14 @@ a.feed-target:hover {
     height: 0.875rem;
     font-size: 0.875rem;
   }
+}
+
+// The shared list-page pager, at the density every list page gives it.
+:host .pagination-container {
+  @include ga-hub.pager-container();
+  margin-top: 0.75rem;
+}
+
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
 }

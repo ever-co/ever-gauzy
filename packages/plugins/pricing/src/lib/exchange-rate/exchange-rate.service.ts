@@ -2,8 +2,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial, FindOptionsWhere, IsNull, LessThanOrEqual, MoreThanOrEqual, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { assertOrganizationUnchanged, organizationForCreate } from '../organization-scope';
+import { LegacyFindOneOptions, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
+import { assertOrganizationUnchanged, inCallerOrganization, organizationForCreate } from '../organization-scope';
 import { ExchangeRate } from './exchange-rate.entity';
 import { TypeOrmExchangeRateRepository } from './repository/type-orm-exchange-rate.repository';
 import { MikroOrmExchangeRateRepository } from './repository/mikro-orm-exchange-rate.repository';
@@ -37,6 +38,20 @@ export class ExchangeRateService extends TenantAwareCrudService<ExchangeRate> {
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		};
+	}
+
+	/**
+	 * Reads an exchange rate of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The exchange rate.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<ExchangeRate>): Promise<ExchangeRate> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

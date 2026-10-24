@@ -617,23 +617,25 @@ describe('EmployeeLevelResolver — the guard stack is the controller’s, and n
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(EmployeeLevelController, route));
 	});
 
-	it('states no permission on the class or on any field but the retire-and-restore pair', () => {
-		// The delivered controller carries `TenantPermissionGuard` and no `@Permissions` on the two routes
-		// it declares or the five it still inherits — so those routes are tenant-guarded and otherwise
-		// unpermissioned, and a field that demanded a permission would refuse a caller the REST route serves.
+	it('states no permission on the class or on any field but the writes', () => {
+		// The delivered controller carries `TenantPermissionGuard` and no `@Permissions` on its reads — so
+		// those routes are tenant-guarded and otherwise unpermissioned, and a field that demanded a permission
+		// would refuse a caller the REST route serves.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeLevelController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeLevelResolver)).toBeUndefined();
 
-		// The retire-and-restore pair is overridden only to state the organization-settings grant behind
-		// `PermissionGuard` (GHSA-v79w-54p2-wmh5), and the fields state the same.
-		for (const { field, route } of ROUTE_PARITY.filter(({ route }) => ['softRemove', 'softRecover'].includes(route))) {
+		const writes = ['create', 'update', 'delete', 'softRemove', 'softRecover'];
+
+		// The writes state the organization-settings grant behind `PermissionGuard` — the inherited ones are
+		// overridden only to state it (GHSA-v79w-54p2-wmh5) — and the fields state the same.
+		for (const { field, route } of ROUTE_PARITY.filter(({ route }) => writes.includes(route))) {
 			expect(permissionOfRoute(EmployeeLevelController, route)).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
 			expect(Reflect.getMetadata('__guards__', handlersOf(EmployeeLevelController)[route])).toEqual([PermissionGuard]);
 			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeLevelResolver)[field])).toEqual([PermissionGuard]);
 		}
 
-		for (const { field, route } of ROUTE_PARITY.filter(({ route }) => !['softRemove', 'softRecover'].includes(route))) {
+		for (const { field, route } of ROUTE_PARITY.filter(({ route }) => !writes.includes(route))) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EmployeeLevelController)[route])).toBeUndefined();
 			expect(permissionOfField(field)).toBeUndefined();
 			expect(permissionOfRoute(EmployeeLevelController, route)).toBeUndefined();

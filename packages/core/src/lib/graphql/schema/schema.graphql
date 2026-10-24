@@ -9513,8 +9513,8 @@ type Mutation {
   Files a request, and the approval record that carries it forward, in one call.
   
   The delivered write stores the request and then files the approval row that says who has to decide it,
-  so a request never exists without one. The status a caller states seeds that record; an absent status
-  is the delivered write's own default, which is "requested".
+  so a request never exists without one. The status is the write's, not the caller's: a request is filed
+  "requested", or "approved" when the stored policy it names requires no approval.
   """
   createTimeOffRequest(input: CreateTimeOffRequestInput!): TimeOffRequest!
 
@@ -12112,14 +12112,14 @@ type Mutation {
   recoverSellerPayout(id: ID!): SellerPayout!
 
   """
-  Removes a payout line, answering the count the deletion reports.
+  Refused: a payout line is released by canceling its payout (`cancelSellerPayout`), never deleted.
   
   Mirrors `DELETE /seller-payout-lines/:id`, which takes `SELLERS_DELETE`: a line is the join row of one payout and one ledger row, and every row under the seller belongs to the seller.
   """
   deleteSellerPayoutLine(id: ID!): SellerDeleteResult!
 
   """
-  Archives a payout line, keeping the row.
+  Refused: a payout line is released by canceling its payout (`cancelSellerPayout`), never archived.
   
   Mirrors `DELETE /seller-payout-lines/:id/soft`, which takes `SELLERS_DELETE`: a line is the join row
   of one payout and one ledger row, and every row under the seller belongs to the seller.
@@ -12127,7 +12127,7 @@ type Mutation {
   softDeleteSellerPayoutLine(id: ID!): SellerPayoutLine!
 
   """
-  Restores a soft-deleted payout line.
+  Refused: a payout line archived by a cancellation belongs to a canceled payout and is never restored.
   
   Mirrors `PUT /seller-payout-lines/:id/recover`: restoring the join row is what makes its ledger row
   payable at most once again, so it takes `SELLERS_DELETE` and not the payout grants.
@@ -16408,9 +16408,9 @@ never from an argument, but the organization is a member the caller names and th
 validates against the caller's own memberships. There is no member for the tenant, for the same reason
 there is none on any other write here.
 
-The author is the credential's employee wherever the credential carries one, so `employeeId` is what a
-caller holding the kernel's change-selected-employee permission states on behalf of somebody else, and
-what the delivered write falls back to when the credential names no employee at all.
+The author is always the caller: the credential's employee when it carries one, and otherwise nobody,
+the comment then being owned by the user who posted it. `employeeId` and `resolvedByEmployeeId` are
+accepted so that existing clients keep validating, and both are ignored.
 
 `parentId` makes the comment a reply. `mentionEmployeeIds` is the one member the delivered write reads
 without storing it on the row: each identifier named there is published a mention against the comment
@@ -16442,12 +16442,10 @@ input CreateCommentInput {
   """When the text was last edited. Omit while it stands as first written."""
   editedAt: DateTime
 
-  """
-  The employee to record as the author. Omit to record the caller's own employee.
-  """
+  """Ignored: the author is always the caller."""
   employeeId: ID
 
-  """The employee to record as the one who resolved the conversation."""
+  """Ignored: a new comment has no resolver."""
   resolvedByEmployeeId: ID
 
   """The comment this one answers. Omit to start a conversation."""
@@ -16507,10 +16505,10 @@ input UpdateCommentInput {
   """When the text was last edited."""
   editedAt: DateTime
 
-  """The employee recorded as the author."""
+  """The author. Only a tenant administrator's edit changes it."""
   employeeId: ID
 
-  """The employee recorded as the one who resolved the conversation."""
+  """The caller, or whom a tenant admin names; null clears it."""
   resolvedByEmployeeId: ID
 
   """The comment this one answers."""
@@ -21845,6 +21843,13 @@ type EquipmentSharing {
   equipmentSharingPolicyId: ID
 
   """
+  The row's optimistic-concurrency version: 1 when the period is filed, moved on by every write. State it
+  in `UpdateEquipmentSharingInput.version` to have an edit refused (409 `ENTITY_VERSION_CONFLICT`) when the
+  period changed since it was read.
+  """
+  version: Int
+
+  """
   The employees the asset is handed to. Joined by the two by-organization and by-employee reads, which
   is why the members are nullable: the list connection's own rows are not joined.
   """
@@ -22018,6 +22023,12 @@ row exists.
 """
 input UpdateEquipmentSharingInput {
   id: ID!
+
+  """
+  The version of the period the edit is based on. The edit is refused (409 `ENTITY_VERSION_CONFLICT`) when
+  the stored period has moved on; omitted, the server uses the version it reads before the edit.
+  """
+  version: Int
   name: String
   shareRequestDay: DateTime
   shareStartDay: DateTime
@@ -28025,7 +28036,9 @@ the key result the move is recorded against.
 """
 input CreateKeyResultUpdateInput {
   owner: String!
-  progress: Int!
+
+  """Ignored: the server computes it from `update` and the key result."""
+  progress: Int
   update: Int!
   status: String!
   keyResultId: ID
@@ -38104,9 +38117,10 @@ type SharedEntity {
 
   """
   The bearer capability itself. Anyone holding it may read the record the share points at through
-  `sharedEntityByToken`, which is why this member travels only to a caller the tenant guard admitted.
+  `sharedEntityByToken`, which is why this member travels only to the share's author or an
+  organization administrator (`ALL_ORG_EDIT`); for any other member of the tenant it is null.
   """
-  token: String!
+  token: String
 
   """
   What the share points at, as the platform's own entity vocabulary names it.
@@ -38176,9 +38190,10 @@ The fields a share list may be narrowed by. `and` is the default; `or` requires 
 `not` excludes the rows that match it.
 
 A share's own token is filterable, and that is deliberate rather than a leak: the list is
-tenant-guarded, its rows are the caller's own, and the token is already a member of every row it
-answers. What it is *not* is a way to resolve the shared record — that is the token read, and its
-answer is the target rather than a `SharedEntity`.
+tenant-guarded, and the filter runs over the rows as the caller reads them, so it only matches a
+token the row already answers — one of a share the caller manages. What it is *not* is a way to
+resolve the shared record — that is the token read, and its answer is the target rather than a
+`SharedEntity`.
 """
 input SharedEntityFilter {
   id: IDFilter
@@ -41596,8 +41611,8 @@ the four columns the row cannot be without: the entity declares all four non-nul
 write assigns them straight onto the row it stores. The tenant is stamped from the credential, as it is
 on every write of this platform, and is therefore not a member.
 
-`status` seeds the approval record the delivered write files beside the request; an absent status is
-that write's own default, which is "requested".
+`status` is accepted and ignored: a request is filed "requested", or "approved" when the stored policy it
+names requires no approval, and a caller who may not act for other employees files for themselves.
 """
 input CreateTimeOffRequestInput {
   """The organization the request is filed in."""
@@ -41612,7 +41627,9 @@ input CreateTimeOffRequestInput {
   """The day the leave was asked for."""
   requestDate: DateTime!
 
-  """The employees the leave is for, by identifier."""
+  """
+  The employees the leave is for, by identifier. A caller who may not act for others files for themselves.
+  """
   employeeIds: [ID!]
 
   """Why the leave is being asked for."""
@@ -41622,7 +41639,7 @@ input CreateTimeOffRequestInput {
   policyId: ID
 
   """
-  Where the decision starts, if the caller states it rather than leaving the delivered default.
+  Ignored. The write files the request as requested, or approved under a policy that needs no approval.
   """
   status: String
 
@@ -41639,16 +41656,19 @@ input CreateTimeOffRequestInput {
 What a caller states when it edits a filed request.
 
 The delivered edit takes the identifier from its own argument and passes the body through to the write,
-and the body's own interface declares one member — where the decision stands. So this body declares one
-member beside the identifier, and stating it is the whole of what an edit can change: a request's dates
-and its employees are what the request *is*, and rewriting them would leave the approval record filed
-beside it describing a leave nobody asked for.
+and the body's own interface declares one member beside the identifier: `status`. A request's dates and
+its employees are what the request *is*, and rewriting them would leave the approval record filed beside
+it describing a leave nobody asked for, so this body does not declare them.
+
+`status` is accepted for client compatibility and ignored: an edit through this field keeps the stored
+status, changes nothing, and answers the stored request. approveTimeOffRequest and denyTimeOffRequest,
+which carry the administrative roles, are where a decision is made.
 """
 input UpdateTimeOffRequestInput {
   id: ID!
 
   """
-  Where the decision stands. The delivered write stores the value it is given.
+  Ignored. An edit keeps the stored status; approveTimeOffRequest and denyTimeOffRequest decide it.
   """
   status: String
 }

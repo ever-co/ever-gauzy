@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import * as multer from 'multer';
-import * as moment from 'moment';
 import { join } from 'node:path';
 import { URL } from 'node:url';
 import * as streamifier from 'streamifier';
@@ -15,6 +14,8 @@ import { Logger } from '@nestjs/common';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
 import { toSafeStorageExtension } from '../helpers/upload-security';
+import { refusalForStorageEndpoint, tenantStorageHttpsAgent } from '../storage-endpoint-policy';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 
 // Retrieve Cloudinary configuration from the environment
 const { cloudinary } = environment;
@@ -25,6 +26,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	private readonly detailedLoggingEnabled = false;
 	public instance: CloudinaryProvider;
 	public config: ICloudinaryConfig & FileSystem;
+	public defaultConfig: ICloudinaryConfig & FileSystem;
 
 	constructor() {
 		super();
@@ -35,7 +37,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	 * Initializes the configuration asynchronously.
 	 */
 	private async initConfig(): Promise<void> {
-		this.config = {
+		this.defaultConfig = {
 			rootPath: '',
 			baseUrl: cloudinary?.delivery_url ?? '',
 			cloud_name: cloudinary?.cloud_name ?? '',
@@ -43,6 +45,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 			api_secret: cloudinary?.api_secret ?? '',
 			secure: cloudinary?.secure ?? true // Default to `true` for secure connections
 		};
+		this.config = { ...this.defaultConfig };
 	}
 
 	/**
@@ -91,10 +94,10 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	 * The function uses default values and trims/validates the obtained settings before updating the configuration.
 	 */
 	setCloudinaryConfiguration(): void {
-		// Use the default configuration as a starting point
+		// Use the default configuration as a starting point. Never the previous request's configuration: the
+		// provider is shared, and a tenant without settings of its own would get the last tenant's account.
 		this.config = {
-			rootPath: '',
-			...this.config
+			...this.defaultConfig
 		};
 
 		try {
@@ -122,8 +125,17 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 						else if (settings.cloudinary_api_secure == 'false') this.config.secure = false;
 					}
 
-					if (isNotEmpty(settings.cloudinary_delivery_url))
-						this.config.baseUrl = new URL(settings.cloudinary_delivery_url).toString();
+					if (isNotEmpty(settings.cloudinary_delivery_url)) {
+						// The API reads files from it: a tenant URL that points at a private network is not used.
+						const refusal = refusalForStorageEndpoint(settings.cloudinary_delivery_url);
+						if (refusal) {
+							this.logger.warn(
+								`setCloudinaryConfiguration: tenant cloudinary_delivery_url ignored. ${refusal}`
+							);
+						} else {
+							this.config.baseUrl = new URL(settings.cloudinary_delivery_url).toString();
+						}
+					}
 				}
 			}
 		} catch (error) {
@@ -161,7 +173,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 					if (filename) {
 						public_id = typeof filename === 'string' ? filename : filename(file, format);
 					} else {
-						public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
+						public_id = defaultStoredFileName(prefix);
 					}
 
 					// Neutralize the DELIVERED format too, not just the object name.
@@ -236,11 +248,25 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	 */
 	async getFile(file: string): Promise<Buffer | any> {
 		try {
-			// Get the complete URL for the file
+			// Get the complete URL for the file, from the current tenant's configuration
+			this.setCloudinaryConfiguration();
 			const URL = await this.url(file);
 
+			// The delivery URL may be the tenant's, and a key that is already a URL is fetched as is: the request
+			// goes only to a public host (checked here, and again for the address the connection resolves to),
+			// and a redirect is not followed.
+			const refusal = refusalForStorageEndpoint(URL);
+			if (refusal) {
+				this.logger.warn(`getFile: Cloudinary file URL refused. ${refusal}`);
+				return null;
+			}
+
 			// Fetch the file content from Cloudinary using axios
-			const response = await axios.get(URL, { responseType: 'arraybuffer' });
+			const httpsAgent = tenantStorageHttpsAgent();
+			const response = await axios.get(URL, {
+				responseType: 'arraybuffer',
+				...(httpsAgent ? { httpsAgent, maxRedirects: 0 } : {})
+			});
 
 			// Convert the response data to a Buffer
 			const fileBuffer = Buffer.from(response.data, 'utf-8');
