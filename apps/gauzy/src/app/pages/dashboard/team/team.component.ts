@@ -26,6 +26,7 @@ import {
 	IMemberRow,
 	IRankedMember,
 	ITeamRow,
+	activityOf,
 	activityTone,
 	avatarOf,
 	formatDuration,
@@ -322,7 +323,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			groupBy: ReportGroupFilterEnum.employee
 		};
 		try {
-			this._logs = await this._timesheetService.getTimeLogs(request, ['project', 'task', 'employee.user']);
+			// `timeSlots` carry the active / tracked seconds that team-scoped activity is computed from.
+			this._logs = await this._timesheetService.getTimeLogs(request, ['project', 'task', 'employee.user', 'timeSlots']);
 			this._dailyLogs = await this._timesheetService.getDailyReport(request);
 			await this.teamMapper();
 		} catch (error) {
@@ -380,6 +382,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 						};
 					});
 					projects.push(...proj);
+					// This team's slots only, like the duration beside it; the daily report is grouped by
+					// employee alone, so its figure spans every team the person worked on.
+					const slots = logs.flatMap((log) => log.timeSlots ?? []);
 					return {
 						...member,
 						isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
@@ -388,7 +393,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 						tasks: tasks,
 						projects: proj,
 						workPeriod: this._period,
-						activity: memberDailyLog ? memberDailyLog.activity : null
+						slots,
+						activity: activityOf(slots),
+						dayActivity: memberDailyLog ? memberDailyLog.activity : null
 					};
 				});
 				const membersOnline = members.filter((member) => member.isRunningTimer);
@@ -462,7 +469,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				online: members.filter((member) => presenceOf(member.employee, member.isRunningTimer) !== 'offline')
 					.length,
 				duration: working.reduce((total, member) => total + (member.todayWorkDuration || 0), 0),
-				activity: this._average(working.map((member) => member.activity || 0)),
+				// From the team's own slots, weighted by time — not an average of members' whole-day figures.
+				activity: activityOf(working.flatMap((member) => member.slots ?? [])) ?? 0,
 				// Logs without a project group under an empty object: not a project worked.
 				projects: this._uniques(working.flatMap((member) => member.projects ?? []).filter((project) => !!project?.id))
 					.length,
@@ -503,7 +511,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			id: member.id,
 			employeeId: member.employeeId,
 			name: member.employee?.user?.name,
-			meta: `${member.teamName} · ${formatPercent(member.activity)}`,
+			// The whole day across teams, matching the summed duration.
+			meta: `${member.teamName} · ${formatPercent(member.dayActivity)}`,
 			duration: member.todayWorkDuration,
 			width: toPercentage(member.todayWorkDuration, top)
 		}));
@@ -581,10 +590,6 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	 */
 	private _isManager(member: any): boolean {
 		return member?.isManager === true || member?.role?.name === RolesEnum.MANAGER;
-	}
-
-	private _average(values: number[]): number {
-		return values.length ? Math.round(values.reduce((total, value) => total + value, 0) / values.length) : 0;
 	}
 
 	private _clearItem() {

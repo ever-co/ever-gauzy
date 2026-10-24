@@ -1,4 +1,4 @@
-import { IEmployee } from '@gauzy/contracts';
+import { IEmployee, ITimeSlot } from '@gauzy/contracts';
 import { AVATAR_DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 /** Live presence of a member, as the team page shows it. */
@@ -117,6 +117,21 @@ export function activityTone(value: number): 'high' | 'mid' | 'low' {
 	if (value >= 50) return 'high';
 	if (value >= 20) return 'mid';
 	return 'low';
+}
+
+/**
+ * Activity of a set of time slots: active seconds over tracked seconds, as a percentage — the
+ * API's `calculateAverageActivity`, so it is weighted by time instead of averaging percentages.
+ * A slot linked to several logs is counted once. `null` when there are no slots to measure.
+ */
+export function activityOf(slots: Pick<ITimeSlot, 'id' | 'overall' | 'duration'>[]): number | null {
+	const unique = [...new Map(slots.filter(Boolean).map((slot) => [slot.id, slot])).values()];
+	const duration = unique.reduce((total, slot) => total + (Number(slot.duration) || 0), 0);
+	if (!duration) {
+		return null;
+	}
+	const overall = unique.reduce((total, slot) => total + (Number(slot.overall) || 0), 0);
+	return Math.round(((overall * 100) / duration) * 100) / 100;
 }
 
 /** Percentage of `value` within `total`, clamped to 0..100. */
