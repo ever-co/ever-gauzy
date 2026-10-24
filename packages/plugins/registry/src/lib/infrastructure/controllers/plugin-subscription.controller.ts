@@ -134,7 +134,8 @@ export class PluginSubscriptionController {
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: "Current user's active plugin subscription retrieved successfully",
+		description:
+			"Current user's active plugin subscription retrieved successfully; an empty body when the user has none",
 		type: PluginSubscription
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
