@@ -229,6 +229,14 @@ jobs:
         if: always()
         run: node tools/scripts/graphql-feature-gate-check.mjs
 
+      # The decorator reader both gates above build on, and the feature gate's second reading: a `@FeatureFlag`
+      # with no `FeatureFlagGuard` in the operation's chain gates nothing and fails the gate.
+      - name: The feature gate and the decorator reader read every shape they must
+        if: always()
+        run: |
+          node --test tools/scripts/decorator-runs.test.mjs
+          node --test tools/scripts/graphql-feature-gate-check.test.mjs
+
       - name: Constraint parity across dialects
         if: always()
         run: node tools/scripts/constraint-parity-check.mjs
