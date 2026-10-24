@@ -211,10 +211,18 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			throw new ForbiddenException('Only an employee can send a notification.');
 		}
 
+		// The body is bound to an interface, so nothing has checked these two ids' types yet. An array of the
+		// caller's own id would stringify to that id and skip the checks below, then reach the insert as given.
+		for (const key of ['receiverEmployeeId', 'organizationId'] as const) {
+			if (input?.[key] != null && typeof input[key] !== 'string') {
+				throw new BadRequestException(`${key} must be a string.`);
+			}
+		}
+
 		const organizationId = input?.organizationId ?? RequestContext.currentOrganizationId();
 		const receiverEmployeeId = input?.receiverEmployeeId ?? senderEmployeeId;
 
-		if (String(receiverEmployeeId) !== String(senderEmployeeId)) {
+		if (receiverEmployeeId !== senderEmployeeId) {
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				throw new ForbiddenException('You can only send a notification to yourself.');
 			}

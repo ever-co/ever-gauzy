@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EmployeeNotificationTypeEnum, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
@@ -109,6 +109,20 @@ describe('EmployeeNotificationService — notifications a caller files are filed
 			await expect(
 				service.createForCaller({ ...forged(), receiverEmployeeId: 'employee-colleague' } as never)
 			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(create).not.toHaveBeenCalled();
+		});
+
+		it.each([
+			{ key: 'receiverEmployeeId', value: ['employee-me'] },
+			{ key: 'organizationId', value: [employee.organizationId] }
+		])('refuses a $key that is not a string, before the self-address check', async ({ key, value }) => {
+			({ restore } = asTenantUser(employee));
+
+			// ['employee-me'] stringifies to the caller's own id, so a coerced comparison let it pass as "myself".
+			await expect(
+				service.createForCaller({ ...forged(), receiverEmployeeId: 'employee-me', [key]: value } as never)
+			).rejects.toBeInstanceOf(BadRequestException);
+			expect(isEmployeeOfOrganization).not.toHaveBeenCalled();
 			expect(create).not.toHaveBeenCalled();
 		});
 
