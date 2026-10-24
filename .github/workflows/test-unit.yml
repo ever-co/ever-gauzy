@@ -49,7 +49,12 @@ jobs:
     # A cold dependency install on this fleet is measured in hours, not minutes (the build workflow
     # documents 88 min / 3h20m / 3h46m for the same work). The ceiling costs nothing on the warm
     # path, which is a cache lookup.
-    timeout-minutes: 360
+    #
+    # 720, not 360: run 40080742318 (2026-10-24) missed the archive, spent 2h09m installing, then
+    # ran tests for 3h48m and was cut by the 6 h limit at 842 passed suites, with no verdict.
+    # Self-hosted runners allow jobs of up to 5 days; GitHub-hosted runners (the fallback when
+    # RUNNER_LINUX_X64_8 is unset) stay capped at 6 h whatever this says.
+    timeout-minutes: 720
     steps:
       # Action versions deliberately match `build.yml` rather than the newer majors used elsewhere in
       # the repository: this job consumes the node_modules cache that workflow writes, so the
