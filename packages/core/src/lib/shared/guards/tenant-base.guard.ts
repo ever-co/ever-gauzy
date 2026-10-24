@@ -40,14 +40,26 @@ export class TenantBaseGuard implements CanActivate {
 			return isAuthorized;
 		}
 
-		// Get tenant-id from request headers
+		// Get tenant-id from request headers. Node lower-cases every incoming header name, so this holds the header
+		// whatever casing the client sent it in.
 		const headerTenantId = headers['tenant-id'];
 
-		if (headerTenantId && (rawHeaders.includes('tenant-id') || rawHeaders.includes('Tenant-Id'))) {
-			// The header names the caller's tenant — and nothing else in the request may name another one. The
-			// header used to be the whole check, and a `PUT` with header A and body {"tenantId": B} reached an
-			// update that wrote the payload's tenant as given (SEC-A-03, SEC-D-12).
-			isAuthorized = currentTenantId === headerTenantId && !this.statesAnotherTenant(request, currentTenantId);
+		if (this.statesAnotherTenant(request, currentTenantId)) {
+			// Whichever path the request takes below, nothing in it may name another tenant: not the header (in any
+			// casing), not the query string, not a `:tenantId` route parameter, not the body. Only the header path
+			// used to look past its one field; without the header a request was judged by a single field and let
+			// through whatever the others said, and a header spelled e.g. `TENANT-ID` was not read at all.
+			isAuthorized = false;
+		} else if (headerTenantId && (rawHeaders.includes('tenant-id') || rawHeaders.includes('Tenant-Id'))) {
+			// The header names the caller's tenant — and, checked above, nothing else in the request names another
+			// one. The header used to be the whole check, and a `PUT` with header A and body {"tenantId": B} reached
+			// an update that wrote the payload's tenant as given (SEC-A-03, SEC-D-12).
+			//
+			// 🛑 Only the two spellings this has always accepted open this path. Every spelling is READ (a header
+			// naming another tenant is refused above, however it is cased), but letting `TENANT-ID: <own tenant>`
+			// open it would allow a read that names no tenant at all, which is refused today. Refused requests stay
+			// refused.
+			isAuthorized = currentTenantId === headerTenantId;
 		} else {
 			//If request to get/delete data using another tenantId then reject request.
 			const httpMethods = [RequestMethodEnum.GET, RequestMethodEnum.DELETE];
@@ -84,14 +96,10 @@ export class TenantBaseGuard implements CanActivate {
 			const payloadMethods = [RequestMethodEnum.POST, RequestMethodEnum.PUT, RequestMethodEnum.PATCH];
 
 			if (payloadMethods.includes(method)) {
-				const body: any = request.body;
-				let bodyTenantId: string;
-				if ('tenantId' in body) {
-					bodyTenantId = body['tenantId'];
-				} else if ('tenant' in body) {
-					bodyTenantId = body['tenant']['id'];
-				}
-				isAuthorized = currentTenantId === bodyTenantId;
+				// A write with no parsed body (Express 5 leaves `req.body` unset), a body that is not an object, or
+				// `tenant: null` names no tenant and is refused. Reading those used to throw a `TypeError` here,
+				// which reached the caller as a 500 instead of a 403.
+				isAuthorized = currentTenantId === this.payloadTenantId(request.body);
 			}
 		}
 
@@ -104,46 +112,137 @@ export class TenantBaseGuard implements CanActivate {
 	}
 
 	/**
-	 * Whether the query string or the payload names a tenant other than the caller's.
+	 * Whether anything in the request names a tenant other than the caller's.
 	 *
-	 * Only explicit statements count — a `tenantId` query parameter, a `tenantId` or `tenant.id` member of the
-	 * body or of any object in a body array (bulk routes); a request that names no tenant states nothing.
+	 * Only explicit statements count, and the same two members — `tenantId` and `tenant.id` — are read wherever a
+	 * tenant can arrive:
+	 * - the `tenant-id` header, read under the lower-case name Node gives it whatever casing the client used;
+	 * - the query string: top level, `where` (the pagination shape, `?where[tenantId]=…`) and the read shape the
+	 *   path without a header checks, `?data={"findInput":{…}}`;
+	 * - the route parameters (`:tenantId`);
+	 * - the body.
+	 *
+	 * Wherever one of those is an array, every element is read the same way: the OR-array `where` that
+	 * `TenantAwareCrudService.findConditionsWithTenant` accepts (`?where[0][tenantId]=…`), an array `findInput`, a
+	 * bulk body — so the shape of a filter cannot carry another tenant past the check.
+	 *
+	 * A request that names no tenant states nothing. An empty header, query value or route parameter states
+	 * nothing either. A tenant id is a string or a number; anything else stated in a tenant field (an object, an
+	 * array, a boolean) counts as naming another tenant, and is never coerced to compare it.
 	 *
 	 * @param request The HTTP request.
 	 * @param currentTenantId The tenant the caller authenticated as.
 	 * @returns True when another tenant is named anywhere.
 	 */
 	private statesAnotherTenant(request: any, currentTenantId: string): boolean {
-		const named: unknown[] = [];
-		const queryTenantId = request?.query?.['tenantId'];
-		if (queryTenantId !== undefined && queryTenantId !== null && queryTenantId !== '') {
-			named.push(queryTenantId);
+		// `concat`, not a spread `push`: a bulk body can name more ids than a call can take arguments.
+		let named: unknown[] = [];
+
+		const headerTenantId = request?.headers?.['tenant-id'];
+		if (headerTenantId) {
+			named.push(headerTenantId);
+		}
+
+		const query = request?.query;
+		for (const source of [query, query?.['where'], request?.params]) {
+			named = named.concat(this.tenantIdsIn(source, { emptyStatesNothing: true }));
 		}
 
 		// The read shape the no-header path checks: `?data={"findInput":{"tenantId":…}}`.
-		const data = request?.query?.['data'];
+		const data = query?.['data'];
 		if (typeof data === 'string' && isJSON(data)) {
 			try {
-				const findInput = JSON.parse(data)?.['findInput'];
-				if (findInput && typeof findInput === 'object' && findInput['tenantId'] !== undefined && findInput['tenantId'] !== null) {
-					named.push(findInput['tenantId']);
-				}
+				named = named.concat(this.tenantIdsIn(JSON.parse(data)?.['findInput']));
 			} catch {
 				// Not parsable after all: it states no tenant.
 			}
 		}
 
-		const body = request?.body;
-		for (const item of Array.isArray(body) ? body : [body]) {
-			if (!item || typeof item !== 'object') continue;
-			if (item['tenantId'] !== undefined && item['tenantId'] !== null) named.push(item['tenantId']);
-			const tenant = item['tenant'];
-			if (tenant && typeof tenant === 'object' && tenant['id'] !== undefined && tenant['id'] !== null) {
+		named = named.concat(this.tenantIdsIn(request?.body));
+
+		return named.some((tenantId) => !this.isCallersTenant(tenantId, currentTenantId));
+	}
+
+	/**
+	 * Whether a stated tenant id is the caller's.
+	 *
+	 * Only a string or a number can be: anything else is refused as it is, never passed to `String()`. Coercing a
+	 * payload value runs whatever the caller put in its place — `{"tenantId":{"toString":null}}` throws
+	 * (`Cannot convert object to primitive value`), which reached the caller as a 500 instead of a 403, and an
+	 * object whose conversion yields the caller's own id would be read as that id.
+	 *
+	 * @param tenantId The tenant id as the request states it.
+	 * @param currentTenantId The tenant the caller authenticated as.
+	 * @returns True only for a string or number equal to the caller's tenant.
+	 */
+	private isCallersTenant(tenantId: unknown, currentTenantId: string): boolean {
+		if (typeof tenantId !== 'string' && typeof tenantId !== 'number') {
+			return false;
+		}
+		return String(tenantId) === String(currentTenantId);
+	}
+
+	/**
+	 * The tenants an object names: its `tenantId`, and the `id` of its `tenant` object. An array is read element by
+	 * element, at any depth (an OR-array filter, an array `findInput`, a bulk body).
+	 *
+	 * The arrays are walked with a work list rather than by recursion, so a deeply nested payload cannot exhaust
+	 * the stack and turn a refusal into a 500.
+	 *
+	 * @param source The object or array to read; anything else names nothing.
+	 * @param options `emptyStatesNothing`: an empty string is not a statement (query strings and route parameters).
+	 * @returns The tenant ids named, as given.
+	 */
+	private tenantIdsIn(source: unknown, options: { emptyStatesNothing?: boolean } = {}): unknown[] {
+		const isStated = (value: unknown): boolean =>
+			value !== undefined && value !== null && !(options.emptyStatesNothing && value === '');
+
+		const named: unknown[] = [];
+		const pending: unknown[] = [source];
+		while (pending.length > 0) {
+			const item = pending.pop();
+			if (Array.isArray(item)) {
+				for (const element of item) {
+					pending.push(element);
+				}
+				continue;
+			}
+			if (!item || typeof item !== 'object') {
+				continue;
+			}
+
+			const record = item as Record<string, any>;
+			if (isStated(record['tenantId'])) {
+				named.push(record['tenantId']);
+			}
+			const tenant = record['tenant'];
+			if (tenant && typeof tenant === 'object' && isStated(tenant['id'])) {
 				named.push(tenant['id']);
 			}
 		}
+		return named;
+	}
 
-		return named.some((tenantId) => String(tenantId) !== String(currentTenantId));
+	/**
+	 * The tenant a write's body names for the path without a header: its `tenantId`, else its `tenant.id`.
+	 *
+	 * @param body The parsed body, if any.
+	 * @returns The tenant id, or `undefined` when the body names none — including when there is no body, the body
+	 * is not an object, or `tenant` is null.
+	 */
+	private payloadTenantId(body: unknown): unknown {
+		if (!body || typeof body !== 'object') {
+			return undefined;
+		}
+
+		const record = body as Record<string, any>;
+		if ('tenantId' in record) {
+			return record['tenantId'];
+		}
+		if ('tenant' in record) {
+			return record['tenant']?.['id'];
+		}
+		return undefined;
 	}
 
 	/**
