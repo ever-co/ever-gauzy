@@ -35,6 +35,11 @@ const PATCH_DIR = path.join('tools', 'electron', 'patches');
 const PATCHED_FILE = 'node_modules/app-builder-lib/out/targets/snap/coreLegacy.js';
 /** The first electron-builder release whose coreLegacy.js filters chrome-sandbox instead of deleting it. */
 const FIXED_UPSTREAM = '26.18.0';
+/** The only lines the patch removes (trimmed): the snap template's delete of chrome-sandbox and its comment. */
+const INTENDED_REMOVAL = [
+	'// Best-effort: remove chrome-sandbox from app dir before mksquashfs scans it.',
+	'await (0, promises_1.rm)(path.join(appOutDir, "chrome-sandbox"), { force: true });'
+];
 
 const read = (relative) => fs.readFileSync(path.join(ROOT, relative), 'utf8');
 
@@ -115,13 +120,12 @@ test('the patch only stops the snap target deleting chrome-sandbox from the shar
 	const { files, removed, added } = parse(thePatch().text);
 
 	assert.deepEqual(files, [PATCHED_FILE]);
-	assert.ok(
-		removed.some((line) => /\.rm\)\(path\.join\(appOutDir, "chrome-sandbox"\)/.test(line)),
-		'the patch does not remove the delete of appOutDir/chrome-sandbox'
-	);
-	assert.ok(
-		removed.every((line) => line.trim().startsWith('//') || line.includes('"chrome-sandbox"')),
-		`the patch removes more than the chrome-sandbox delete: ${removed.join(' | ')}`
+	// Exactly these lines: the mksquashfs filter a few lines below names "chrome-sandbox" too, and removing it would
+	// put the setuid helper into the snap.
+	assert.deepEqual(
+		removed.map((line) => line.trim()),
+		INTENDED_REMOVAL,
+		`the patch must remove the chrome-sandbox delete and its comment, and nothing else: ${removed.join(' | ')}`
 	);
 	assert.ok(
 		added.every((line) => line.trim() === '' || line.trim().startsWith('//')),
@@ -129,11 +133,22 @@ test('the patch only stops the snap target deleting chrome-sandbox from the shar
 	);
 });
 
-test('postinstall.electron applies the electron patch directory before electron-builder runs', () => {
+test('postinstall.electron applies the electron patches, failing if one does not apply, before packaging', () => {
 	const script = JSON.parse(read('package.json')).scripts['postinstall.electron'];
-	const patchStep = `patch-package --patch-dir ${PATCH_DIR.split(path.sep).join('/')}`;
+	const patchStep = script
+		.split('&&')
+		.map((command) => command.trim())
+		.find((command) => command.startsWith('patch-package '));
+	const patchDir = `--patch-dir ${PATCH_DIR.split(path.sep).join('/')}`;
 
-	assert.ok(script.includes(patchStep), `postinstall.electron does not run "${patchStep}": ${script}`);
+	assert.ok(patchStep, `postinstall.electron does not run patch-package: ${script}`);
+	assert.ok(patchStep.includes(patchDir), `postinstall.electron's patch-package lacks "${patchDir}": ${script}`);
+	// Without it patch-package exits 0 on a patch that does not apply (outside CI), and the && chain packages the
+	// Linux targets with the original delete.
+	assert.ok(
+		patchStep.split(/\s+/).includes('--error-on-fail'),
+		`postinstall.electron's patch-package lacks --error-on-fail: ${script}`
+	);
 	assert.ok(
 		script.indexOf(patchStep) < script.indexOf('electron-builder'),
 		`postinstall.electron runs electron-builder before applying the patch: ${script}`
