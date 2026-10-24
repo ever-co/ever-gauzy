@@ -1,17 +1,20 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, Min, IsInt } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ListMcpServersDto {
-	@ApiProperty({
-		description: 'ActivePieces project ID',
+	@ApiPropertyOptional({
+		description:
+			"ActivePieces project ID. Required with the tenant's own API key; in the project-token and platform-project " +
+			"modes the server uses the tenant's own project, and another one is refused.",
 		type: String,
 		example: 'project-123'
 	})
+	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
 	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-	readonly projectId!: string;
+	readonly projectId?: string;
 
 	@ApiPropertyOptional({
 		description: 'Number of results to return',

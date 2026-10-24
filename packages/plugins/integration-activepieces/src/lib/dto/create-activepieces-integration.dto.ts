@@ -18,13 +18,16 @@ export class CreateActivepiecesIntegrationDto
 	@IsString()
 	readonly accessToken!: string;
 
-	@ApiProperty({
-		description: 'ActivePieces project ID where the connection will be created',
+	@ApiPropertyOptional({
+		description:
+			"ActivePieces project ID where the connection will be created. Required with the tenant's own API key; in the " +
+			"project-token and platform-project modes the server uses the tenant's own project, and another one is refused.",
 		example: 'proj_1234567890abcdef'
 	})
+	@IsOptional()
 	@IsNotEmpty()
 	@IsString()
-	readonly projectId!: string;
+	readonly projectId?: string;
 
 	@ApiPropertyOptional({
 		description: 'Display name for the connection (defaults to tenant name)',

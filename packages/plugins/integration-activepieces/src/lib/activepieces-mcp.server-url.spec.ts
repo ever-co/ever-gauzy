@@ -1,3 +1,4 @@
+// cspell:ignore Fplatforms Fplatform
 import { BadRequestException } from '@nestjs/common';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
 import { ActivepiecesMcpService, mcpServerUrl } from './activepieces-mcp.service';
@@ -34,7 +35,14 @@ describe('Activepieces MCP server URLs', () => {
 		],
 		['reads', (service: ActivepiecesMcpService) => service.getMcpServer(TRAVERSAL), '']
 	])('%s the server named, and no other path', async (_label, call, suffix) => {
-		const service = new ActivepiecesMcpService({} as any, {} as any, {} as any);
+		// The tenant's own key: no project pinned, so the call goes straight to the server named
+		const credentials = {
+			resolve: jest
+				.fn()
+				.mockResolvedValue({ mode: 'tenant_api_key', token: 'tenant-key', projectId: null, enforceProject: false }),
+			assertInProject: jest.fn()
+		};
+		const service = new ActivepiecesMcpService({} as any, {} as any, {} as any, credentials as any);
 		Object.assign(service, { logger: { log: jest.fn(), error: jest.fn() } });
 		const request = jest.spyOn(service as any, 'request').mockResolvedValue({ id: 'mcp-1' });
 
