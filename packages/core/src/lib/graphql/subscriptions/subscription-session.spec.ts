@@ -14,11 +14,14 @@ import {
 	DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS,
 	MAX_SUBSCRIPTION_REAUTH_INTERVAL_MS,
 	MIN_SUBSCRIPTION_REAUTH_INTERVAL_MS,
+	SUBSCRIPTION_REAUTH_RETRY_MS,
+	SUBSCRIPTION_REAUTH_TIMEOUT_MS,
 	SUBSCRIPTION_SESSION_CLOSE,
 	SubscriptionCredentialVerdict,
 	SubscriptionSession,
 	SubscriptionSessionUser,
 	bearerTokenExpiry,
+	bearerTokenOf,
 	resolveSubscriptionReauthIntervalMs,
 	sameSubscriptionAuthorization
 } from './subscription-session';
@@ -85,6 +88,22 @@ class ManualClock implements SubscriptionClock {
 /** A bearer header for a token of a user, expiring at `exp` (seconds since the epoch). */
 const bearer = (id: string, exp?: number, secret = 'subscription-session-spec') =>
 	`Bearer ${sign(exp === undefined ? { id } : { id, exp }, secret)}`;
+
+/** A promise the spec settles by hand: a lookup that answers when the spec says so. */
+const deferred = <T>() => {
+	let settle: (value: T) => void = () => undefined;
+	const promise = new Promise<T>((resolve) => {
+		settle = resolve;
+	});
+
+	return { promise, resolve: (value: T) => settle(value) };
+};
+
+/** A lookup that neither answers nor fails. */
+const stalled = () => new Promise<SubscriptionCredentialVerdict>(() => undefined);
+
+/** Lets every pending callback run, without moving the clock. */
+const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
 
 /** A stream the spec pushes values into, recording whether it was ended. */
 const pushStream = <T>() => {
@@ -366,6 +385,133 @@ describe('SubscriptionSession', () => {
 			expect(closes).toHaveLength(1);
 		});
 	});
+
+	describe('a judgement that stalls', () => {
+		it('is given up on after the time limit, releasing every stream under the unavailable grace and no longer', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			subject.confirm(USER_A);
+			authenticate.mockImplementation(stalled);
+			const first = pushStream<string>();
+			const second = pushStream<string>();
+			const streams = [subject.guard(first.iterator, () => USER_A), subject.guard(second.iterator, () => USER_A)];
+
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			first.push('one');
+			second.push('two');
+			const delivered = Promise.all(streams.map((stream) => stream.next()));
+			await flush();
+			expect(authenticate).toHaveBeenCalledTimes(1);
+
+			clock.advance(SUBSCRIPTION_REAUTH_TIMEOUT_MS);
+
+			// Read as a database that could not answer: the last confirmation is honoured, as it is for one that fails.
+			expect(await delivered).toEqual([
+				{ value: 'one', done: false },
+				{ value: 'two', done: false }
+			]);
+			expect(closes).toEqual([]);
+
+			// Past the grace, a judgement that stalls again closes the socket.
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			first.push('three');
+			const refused = streams[0].next();
+			await flush();
+			clock.advance(SUBSCRIPTION_REAUTH_TIMEOUT_MS);
+
+			expect(await refused).toEqual({ value: undefined, done: true });
+			expect(authenticate).toHaveBeenCalledTimes(2);
+			expect(closes).toEqual([SUBSCRIPTION_SESSION_CLOSE.unverified]);
+		});
+
+		it('ignores an answer that arrives after the time limit, which never overwrites a newer verdict', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			subject.confirm(USER_A);
+			const late = deferred<SubscriptionCredentialVerdict>();
+			authenticate.mockImplementationOnce(() => late.promise);
+
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			const admitted = subject.admit(USER_A);
+			await flush();
+			clock.advance(SUBSCRIPTION_REAUTH_TIMEOUT_MS);
+			expect(await admitted).toBe(true);
+
+			// The next judgement answers in time.
+			clock.advance(SUBSCRIPTION_REAUTH_RETRY_MS);
+			expect(await subject.admit(USER_A)).toBe(true);
+			expect(authenticate).toHaveBeenCalledTimes(2);
+
+			// The stalled lookup answers at last.
+			late.resolve({ status: 'refused' });
+			await flush();
+
+			expect(closes).toEqual([]);
+			expect(await subject.admit(USER_A)).toBe(true);
+			expect(authenticate).toHaveBeenCalledTimes(2);
+		});
+
+		it('releases the streams waiting on it when the socket closes', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			subject.confirm(USER_A);
+			authenticate.mockImplementation(stalled);
+
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			const admitted = subject.admit(USER_A);
+			subject.dispose();
+
+			expect(await admitted).toBe(false);
+			// Neither the expiry timer nor the time limit is left armed.
+			expect(clock.armed).toBe(0);
+			expect(closes).toEqual([]);
+		});
+	});
+
+	describe('a judgement overtaken by a confirmation', () => {
+		it('does not restore a permission the guards have since seen removed', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			subject.confirm(USER_A);
+			const older = deferred<SubscriptionCredentialVerdict>();
+			authenticate.mockImplementationOnce(() => older.promise);
+
+			// An event for a stream authorized with both permissions: the credential is judged again.
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			const admitted = subject.admit(USER_A);
+			await flush();
+			expect(authenticate).toHaveBeenCalledTimes(1);
+
+			// Meanwhile the user loses a permission and opens another stream, which the guards authorize with what
+			// they hold now.
+			subject.confirm({ ...USER_A, permissions: ['TIME_TRACKER'] });
+			// The older judgement answers last, with the permissions it read before the change.
+			older.resolve({ status: 'authenticated', user: { ...USER_A } });
+
+			expect(await admitted).toBe(false);
+			expect(closes).toEqual([SUBSCRIPTION_SESSION_CLOSE.changed]);
+			expect(closes[0].code).toBe(4403);
+		});
+
+		it('hands the callers waiting on it the newer confirmation, which stays in force for the interval', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			subject.confirm(USER_A);
+			const older = deferred<SubscriptionCredentialVerdict>();
+			authenticate.mockImplementationOnce(() => older.promise);
+
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			const admitted = subject.admit(USER_A);
+			await flush();
+
+			// Another stream opens; the guards confirm the same authorization.
+			subject.confirm({ ...USER_A });
+			// The older judgement could not reach the database.
+			older.resolve({ status: 'unavailable' });
+
+			expect(await admitted).toBe(true);
+			// The confirmation is in force, not the older `unavailable`, which would be asked again within seconds.
+			clock.advance(SUBSCRIPTION_REAUTH_RETRY_MS);
+			expect(await subject.admit(USER_A)).toBe(true);
+			expect(authenticate).toHaveBeenCalledTimes(1);
+			expect(closes).toEqual([]);
+		});
+	});
 });
 
 describe('resolveSubscriptionReauthIntervalMs', () => {
@@ -396,6 +542,35 @@ describe('bearerTokenExpiry', () => {
 	it.each([undefined, '', 'Bearer token', 'Basic dXNlcjpwYXNz', bearer('user-a')])('reads none from %p', (value) => {
 		expect(bearerTokenExpiry(value)).toBeUndefined();
 	});
+
+	// Passport authenticates these headers (see `authenticateSubscriptionCredential` below), so the session must
+	// hold them to the same token's expiry: a stricter reading here left such a socket with no expiry timer and no
+	// re-judgement at all.
+	it.each<[string, (header: string) => string]>([
+		['a trailing segment', (header: string) => `${header} extra`],
+		['leading whitespace', (header: string) => `   ${header}`],
+		['several spaces after the scheme', (header: string) => header.replace(' ', '   ')]
+	])('reads the expiry of a bearer token with %s, as passport reads the header', (_shape, reshape) => {
+		expect(bearerTokenExpiry(reshape(bearer('user-a', 1_800_000_000)))).toBe(1_800_000_000_000);
+	});
+});
+
+describe('bearerTokenOf', () => {
+	const token = bearer('user-a', 1_800_000_000).slice('Bearer '.length);
+
+	it('reads the token the way `ExtractJwt.fromAuthHeaderAsBearerToken` does', () => {
+		expect(bearerTokenOf(`Bearer ${token}`)).toBe(token);
+		expect(bearerTokenOf(`bearer ${token}`)).toBe(token);
+		expect(bearerTokenOf(`Bearer ${token} extra`)).toBe(token);
+		expect(bearerTokenOf(`\tBearer\t${token}`)).toBe(token);
+	});
+
+	it.each([undefined, '', 'Bearer', token, `Token ${token}`, `Basic ${token}`, `x Bearer ${token}`])(
+		'reads none from %p',
+		(value) => {
+			expect(bearerTokenOf(value)).toBeUndefined();
+		}
+	);
 });
 
 describe('sameSubscriptionAuthorization', () => {
@@ -576,6 +751,42 @@ describe('a subscription socket held to its credential', () => {
 		expect(broker.subscriberCount(TOPIC)).toBe(0);
 	});
 
+	it('holds a token followed by a trailing segment to its expiry, as passport authenticates it', async () => {
+		const socket = connect();
+
+		await socket.send({
+			type: 'connection_init',
+			payload: { Authorization: `${bearer('user-a', clock.expInSeconds(300))} extra` }
+		});
+		const open = socket.send(SUBSCRIBE);
+		await until(() => broker.subscriberCount(TOPIC) === 1);
+
+		clock.advance(300_000);
+		await open;
+
+		expect(socket.closes).toEqual([SUBSCRIPTION_SESSION_CLOSE.expired]);
+		expect(broker.subscriberCount(TOPIC)).toBe(0);
+	});
+
+	it('judges again a token followed by a trailing segment, and closes the socket with 4401 once it is refused', async () => {
+		const socket = connect();
+		const authorization = `${bearer('user-a', clock.expInSeconds(3600))} extra`;
+
+		await socket.send({ type: 'connection_init', payload: { Authorization: authorization } });
+		const open = socket.send(SUBSCRIBE);
+		await until(() => broker.subscriberCount(TOPIC) === 1);
+
+		state['user-a'] = { status: 'refused' };
+		clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+		broker.publish(TOPIC, { id: 'w-1' });
+		await open;
+
+		expect(socket.results('s')).toEqual([]);
+		expect(authenticate).toHaveBeenCalledWith({ authorization });
+		expect(socket.closes).toEqual([SUBSCRIPTION_SESSION_CLOSE.refused]);
+		expect(broker.subscriberCount(TOPIC)).toBe(0);
+	});
+
 	it('withholds the next event from a user deactivated while subscribed, and closes the socket with 4401', async () => {
 		const socket = connect();
 
@@ -671,6 +882,13 @@ describe('authenticateSubscriptionCredential', () => {
 
 	it('answers the user the strategy authenticates', async () => {
 		expect(await authenticateSubscriptionCredential({ authorization: tokenFor('user-a') })).toEqual({
+			status: 'authenticated',
+			user: { id: 'user-a', tenantId: 'tenant-a' }
+		});
+	});
+
+	it('authenticates a bearer header with a trailing segment, which is why the session must hold it to account', async () => {
+		expect(await authenticateSubscriptionCredential({ authorization: `${tokenFor('user-a')} extra` })).toEqual({
 			status: 'authenticated',
 			user: { id: 'user-a', tenantId: 'tenant-a' }
 		});
