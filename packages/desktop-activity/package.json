@@ -39,7 +39,7 @@
 	"devDependencies": {
 		"@types/node": "^26.6.5",
 		"@types/unzipper": "^0.10.11",
-		"electron": "^44.7.0",
+		"electron": "^44.9.3",
 		"@types/underscore": "^1.13.0",
 		"@types/better-queue": "^3.8.6"
 	},

@@ -1,12 +1,53 @@
 import * as http from 'http';
 import { IncomingMessage, ServerResponse } from 'http';
-import { Server as NodeStaticServer } from 'node-static';
+import * as finalhandler from 'finalhandler';
 import * as path from 'node:path';
 import { parse } from 'node:url';
+import * as serveStatic from 'serve-static';
+
+export type StaticFileHandler = (req: IncomingMessage, res: ServerResponse) => void;
+
+/**
+ * The request handler of the UI server: serves the files under `root` with serve-static (send).
+ *
+ * It replaces node-static 0.7.11, which has no fixed release and served this UI on the LAN (`0.0.0.0`): a NUL byte
+ * (`GET /%00`) crashed the process, and its root check compared string prefixes only, so `/../ui<x>/…` read the files
+ * of a sibling `ui*` directory. send answers the first with 400 and any `..` segment with 403, and never leaves `root`.
+ *
+ * What the UI sees is unchanged: `index.html` for a directory, a 301 to the trailing-slash URL for a directory asked
+ * without one, 404 for a missing file (no SPA fallback, as before), `Cache-Control: max-age=3600`. Errors are answered
+ * with their status and no stack trace (`env: 'production'`, whatever NODE_ENV says) and logged as before.
+ */
+export function createStaticFileHandler(root: string): StaticFileHandler {
+	const serve = serveStatic(root, {
+		index: ['index.html'],
+		redirect: true,
+		// Hand every error (400, 403, 404, 405) to finalhandler below, as node-static handed it to our callback.
+		fallthrough: false,
+		maxAge: '1h'
+	});
+
+	return (req: IncomingMessage, res: ServerResponse): void => {
+		res.once('finish', () => {
+			if (res.statusCode < 400) {
+				console.log('UI server started');
+				console.log(JSON.stringify(parse(req.url || '', true).query));
+			}
+		});
+		serve(
+			req,
+			res,
+			finalhandler(req, res, {
+				env: 'production',
+				onerror: (err: { message?: string }) => console.error(`Error serving ${req.url} - ${err.message}`)
+			})
+		);
+	};
+}
 
 export class StaticFileServer {
 	private static instance: StaticFileServer;
-	private fileServer: NodeStaticServer;
+	private handler: StaticFileHandler;
 	private isPackaged: boolean;
 	private dirUi: string;
 
@@ -14,20 +55,11 @@ export class StaticFileServer {
 		this.isPackaged = process.env.isPackaged === 'true';
 		const baseDir = this.isPackaged ? ['..', '..'] : ['..'];
 		this.dirUi = path.join(__dirname, ...baseDir, 'data', 'ui');
-		this.fileServer = new NodeStaticServer(this.dirUi);
+		this.handler = createStaticFileHandler(this.dirUi);
 	}
 
 	public serveFile(req: IncomingMessage, res: ServerResponse): void {
-		this.fileServer.serve(req, res, (err: any | null, result: any) => {
-			if (err) {
-				console.error(`Error serving ${req.url} - ${err.message}`);
-				res.writeHead(err.status || 500, err.headers || {});
-				res.end();
-			} else {
-				console.log('UI server started');
-				console.log(JSON.stringify(parse(req.url || '', true).query));
-			}
-		});
+		this.handler(req, res);
 	}
 
 	/**

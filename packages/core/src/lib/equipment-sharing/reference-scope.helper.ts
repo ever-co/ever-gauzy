@@ -15,6 +15,16 @@ export interface IReferenceScope {
 export type ScopedLookup = (table: string, where: Record<string, unknown>) => Promise<unknown>;
 
 /**
+ * Looks rows up by id within scoped criteria, in one query: the rows of `table` whose id is one of `ids` and that
+ * match `scope` (the tenant, and the organization when there is one). Returns the rows found, with their `id`.
+ */
+export type ScopedBatchLookup = (
+	table: string,
+	ids: ID[],
+	scope: Record<string, unknown>
+) => Promise<ReadonlyArray<{ id?: unknown }>>;
+
+/**
  * The rows a sharing points at, in every form a body can name them: the foreign-key column, or the related object
  * (`equipment: { id }`, `equipmentSharingPolicy: { id }`, `organization: { id }`) — which the ORM persists as the
  * foreign key just the same, MikroORM even when it is a bare id string.
@@ -100,6 +110,50 @@ export function sharingReferences(input: ISharingReferences): Array<readonly [st
 			reference[1] !== null &&
 			references.findIndex(([other, otherId]) => other === reference[0] && otherId === reference[1]) === index
 	);
+}
+
+/**
+ * The employees and the teams a sharing is handed to, as a body can list them: each entry a related object
+ * (`{ id }`, the form sends the whole row) or a bare id string (MikroORM persists both as the pivot row).
+ */
+export interface ISharingMembers {
+	employees?: unknown;
+	teams?: unknown;
+}
+
+/**
+ * The ids a member list names, each once. A value that is not a list is read as a list of one, so that whatever the
+ * ORM could make of it is checked too.
+ *
+ * @param members - The list as the body sent it.
+ * @returns The ids the entries name; an entry that names none is skipped, as an absent column is.
+ */
+function memberIds(members: unknown): ID[] {
+	if (members === undefined || members === null) {
+		return [];
+	}
+	const entries = Array.isArray(members) ? members : [members];
+	return entries
+		.map((entry) => relatedId(entry))
+		.filter((id, index, ids): id is ID => id !== undefined && id !== null && ids.indexOf(id) === index);
+}
+
+/**
+ * Every `[table, id]` the member lists of a sharing payload name (see {@link ISharingMembers}), for
+ * {@link assertMembersAreInScope}.
+ *
+ * The many-to-many lists were checked against the tenant only (the nested-graph guard of the CRUD base), so a body
+ * could hand a sharing to another organization's employees or teams of the same tenant. Each listed employee and team
+ * must now be a row of the sharing's organization, like its equipment and its policy.
+ *
+ * @param input - The create/update payload.
+ * @returns The members to validate, an id listed twice listed once.
+ */
+export function sharingMemberReferences(input: ISharingMembers): Array<readonly [string, ID | undefined]> {
+	return [
+		...memberIds(input?.employees).map((id) => ['employee', id] as const),
+		...memberIds(input?.teams).map((id) => ['organization_team', id] as const)
+	];
 }
 
 /**
@@ -226,6 +280,67 @@ export async function assertReferencesAreInScope(
 		}
 
 		if (!(await lookup(table, where))) {
+			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
+		}
+	}
+}
+
+/**
+ * Refuses a member list naming a row that is not inside the given scope: {@link assertReferencesAreInScope} for the
+ * employees and the teams of a sharing, which may be many.
+ *
+ * The ids are grouped by table and each table is read once, with every id of that table in one scoped query, rather
+ * than one query per member. Every id must be found in the scope. An id that is not a string (an operator object, a
+ * number) is refused before any query, as it would be handed to the lookup as a criterion rather than compared as a
+ * value. Without a tenant to scope by, a non-empty list is refused (fail closed, as for a single reference).
+ *
+ * Ids are compared case-insensitively: a UUID column matches whatever case the body used, and answers its own.
+ *
+ * @param references - `[table, id]` pairs to validate (see {@link sharingMemberReferences}); entries without an id
+ * are skipped.
+ * @param scope - The tenant/organization the referencing record belongs to.
+ * @param lookupMany - Reads the rows of one table by id within the scope.
+ * @throws ForbiddenException when an id is not a string, when a row is not found in the scope, or when there is no
+ * tenant to scope by.
+ */
+export async function assertMembersAreInScope(
+	references: ReadonlyArray<readonly [string, ID | undefined]>,
+	scope: IReferenceScope,
+	lookupMany: ScopedBatchLookup
+): Promise<void> {
+	const idsByTable = new Map<string, ID[]>();
+	for (const [table, referenceId] of references) {
+		if (!referenceId) {
+			continue;
+		}
+		if (typeof referenceId !== 'string') {
+			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
+		}
+		const ids = idsByTable.get(table) ?? [];
+		if (!ids.includes(referenceId)) {
+			ids.push(referenceId);
+		}
+		idsByTable.set(table, ids);
+	}
+
+	if (idsByTable.size === 0) {
+		return;
+	}
+
+	// Fail CLOSED without a tenant, as `assertReferencesAreInScope` does.
+	if (!scope.tenantId) {
+		throw new ForbiddenException('Cannot validate the referenced record without a tenant context');
+	}
+
+	const criteria: Record<string, unknown> = { tenantId: scope.tenantId };
+	if (scope.organizationId) {
+		criteria['organizationId'] = scope.organizationId;
+	}
+
+	for (const [table, ids] of idsByTable) {
+		const rows = await lookupMany(table, ids, criteria);
+		const found = new Set((rows ?? []).map((row) => String(row?.id).toLowerCase()));
+		if (ids.some((id) => !found.has(id.toLowerCase()))) {
 			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
 		}
 	}

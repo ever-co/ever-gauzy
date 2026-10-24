@@ -3572,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "日期必须在请求日期之后。",
 			"EXCEED_PERIOD_ERR": "此项目允许的最长天数是",
 			"BEFORE_START_DATE_ERR": "结束日期不能早于开始日期。",
-			"ITEM_RETURNED_BEFORE_ERR": "物品应该在之前退回。"
+			"ITEM_RETURNED_BEFORE_ERR": "物品应该在之前退回。",
+			"CHANGED_BY_SOMEONE_ELSE": "此请求在此期间已被其他人修改。列表已重新加载：请检查该请求后重试。"
 		},
 		"ACTIONS": "行动",
 		"APPROVE": "批准",

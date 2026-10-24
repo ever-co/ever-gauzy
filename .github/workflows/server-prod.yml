@@ -1017,6 +1017,20 @@ jobs:
         with:
           node-version: 26.12.1
 
+      - name: Install Yarn next to setup-node's Node
+        # Node 26 ships no corepack/yarn, so `yarn` resolved to the runner's own C:\Program Files\nodejs\yarn.cmd,
+        # whose shim runs the node.exe beside it (24.x): yarn then refused the engine (">=26"). A yarn installed
+        # into setup-node's directory, which is ahead on PATH, runs setup-node's node.exe.
+        shell: bash
+        run: |
+          node_dir="$RUNNER_TOOL_CACHE/node/26.12.1/${RUNNER_ARCH,,}"
+          [ -x "$node_dir/node.exe" ] || { echo "::error::no setup-node Node in $node_dir"; exit 1; }
+          npm install --quiet -g --prefix "$node_dir" yarn@1.22.22
+          echo "yarn: $(command -v yarn), $(yarn --version)"
+          yarn_node="$(yarn --silent node --version)"
+          echo "node under yarn: $yarn_node"
+          case "$yarn_node" in v26.*) ;; *) echo "::error::yarn runs Node $yarn_node, not 26"; exit 1 ;; esac
+
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'
 
@@ -1393,6 +1407,20 @@ jobs:
         with:
           node-version: 26.12.1
           architecture: arm64
+
+      - name: Install Yarn next to setup-node's Node
+        # Node 26 ships no corepack/yarn, so `yarn` resolved to the runner's own C:\Program Files\nodejs\yarn.cmd,
+        # whose shim runs the node.exe beside it (24.x): yarn then refused the engine (">=26"). A yarn installed
+        # into setup-node's directory, which is ahead on PATH, runs setup-node's node.exe.
+        shell: bash
+        run: |
+          node_dir="$RUNNER_TOOL_CACHE/node/26.12.1/${RUNNER_ARCH,,}"
+          [ -x "$node_dir/node.exe" ] || { echo "::error::no setup-node Node in $node_dir"; exit 1; }
+          npm install --quiet -g --prefix "$node_dir" yarn@1.22.22
+          echo "yarn: $(command -v yarn), $(yarn --version)"
+          yarn_node="$(yarn --silent node --version)"
+          echo "node under yarn: $yarn_node"
+          case "$yarn_node" in v26.*) ;; *) echo "::error::yarn runs Node $yarn_node, not 26"; exit 1 ;; esac
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'

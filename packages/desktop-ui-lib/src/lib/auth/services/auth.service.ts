@@ -158,6 +158,25 @@ export class AuthService {
 	}
 
 	/**
+	 * Ask for an access and a refresh token for the signed-in user's account in a workspace (tenant): the same call the
+	 * Gauzy web UI makes (`AuthService.switchWorkspace` in `@gauzy/ui-core/core`). For the workspace the current token
+	 * already names, it is the caller's own account, and the answer is the token pair a password sign-in gets. A
+	 * provider (social) sign-in brings an access token only, and a desktop session needs both (`Store.isAuthenticated$`).
+	 *
+	 * A refusal reaches the caller untouched, as for {@link switchOrganization}: no token refresh, retry or logout by
+	 * `RefreshTokenInterceptor` (`SKIP_TOKEN_REFRESH`), and no generic error toast (`SKIP_ERROR_NOTIFICATION`).
+	 *
+	 * @param tenantId The workspace to ask the tokens for.
+	 */
+	switchWorkspace(tenantId: string): Observable<IAuthResponse | null> {
+		return this.http.post<IAuthResponse | null>(
+			`${API_PREFIX}/auth/switch-workspace`,
+			{ tenantId },
+			{ context: new HttpContext().set(SKIP_TOKEN_REFRESH, true).set(SKIP_ERROR_NOTIFICATION, true) }
+		);
+	}
+
+	/**
 	 * Hand the tokens, user, organization and employee of `IAuthResponse` to the Electron main process.
 	 *
 	 * @param options.waitUntilSaved By default the desktop apps send `auth_success` and do not wait: the returned

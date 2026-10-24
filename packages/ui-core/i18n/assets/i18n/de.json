@@ -3568,7 +3568,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Das Datum muss nach dem Tag der Anfrage liegen.",
 			"EXCEED_PERIOD_ERR": "Die maximal erlaubten Tage für diesen Artikel sind",
 			"BEFORE_START_DATE_ERR": "Das Enddatum darf nicht vor dem Startdatum liegen.",
-			"ITEM_RETURNED_BEFORE_ERR": "Gegenstand sollte zurückgebracht werden, bevor"
+			"ITEM_RETURNED_BEFORE_ERR": "Gegenstand sollte zurückgebracht werden, bevor",
+			"CHANGED_BY_SOMEONE_ELSE": "Diese Anfrage wurde inzwischen von jemand anderem geändert. Die Liste wurde neu geladen: Prüfen Sie die Anfrage und versuchen Sie es erneut."
 		},
 		"ACTIONS": "Handlungen",
 		"APPROVE": "Genehmigen",
