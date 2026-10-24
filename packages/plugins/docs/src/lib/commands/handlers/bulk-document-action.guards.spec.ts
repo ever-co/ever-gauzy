@@ -95,7 +95,7 @@ describe('BulkDocumentActionHandler — MOVE payload guard', () => {
 	});
 });
 
-describe('BulkDocumentActionHandler — MOVE target visibility', () => {
+describe('BulkDocumentActionHandler — MOVE target access', () => {
 	it('does not move a document into a folder the caller cannot read', async () => {
 		// The tree's own parent lookup checks only the organization, so a writer could move a document into
 		// another member's PRIVATE folder by its id; the target is now read the way a create reads its parent.
@@ -117,6 +117,34 @@ describe('BulkDocumentActionHandler — MOVE target visibility', () => {
 
 		expect(result).toMatchObject({ requested: 1, succeeded: 0, failed: 1 });
 		expect(documentService.findOneScoped).toHaveBeenCalledWith('private-folder', [], 'org-1');
+		expect(treeService.moveDocument).not.toHaveBeenCalled();
+	});
+
+	it('does not move a document into a folder the caller may only read', async () => {
+		// Reading the target is not enough: the move adds to its children and renumbers them, which a VIEW/COMMENT
+		// grantee may not do. The target needs write access, as a duplicate's does.
+		const { handler, documentService, treeService } = buildHandler();
+		documentService.assertCanWrite.mockImplementation(async (document: { id: string }) => {
+			if (document.id === 'shared-folder') {
+				throw new ForbiddenException({ message: 'no write', code: DOCS_WRITE_FORBIDDEN });
+			}
+		});
+
+		const result = await handler.execute(
+			new BulkDocumentActionCommand({
+				ids: ['doc-1'],
+				action: DocumentBulkActionEnum.MOVE,
+				parentId: 'shared-folder'
+			} as any)
+		);
+
+		expect(result).toMatchObject({
+			requested: 1,
+			succeeded: 0,
+			failed: 1,
+			results: [{ id: 'doc-1', ok: false, code: DOCS_WRITE_FORBIDDEN }]
+		});
+		expect(documentService.assertCanWrite).toHaveBeenCalledWith(expect.objectContaining({ id: 'shared-folder' }));
 		expect(treeService.moveDocument).not.toHaveBeenCalled();
 	});
 });
