@@ -469,7 +469,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					employeeId: member.employeeId,
 					name: user?.name || '',
 					caption: member.employee?.organizationPosition?.name || user?.email || null,
-					avatarUrl: avatarOf(user?.imageUrl),
+					avatarUrl: avatarOf(user?.image?.fullUrl || user?.imageUrl),
 					initials: initialsOf(user?.name),
 					presence: presenceOf(member.employee, member.isRunningTimer),
 					isManager: member.role?.name === RolesEnum.MANAGER,
