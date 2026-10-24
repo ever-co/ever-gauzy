@@ -705,6 +705,7 @@
 		"**/@ever-gauzy/plugin-integration-plane-api/class-validator": "^0.15.1",
 		"**/nx/undici": "^7.29.1",
 		"**/@mikro-orm/mysql/mysql2": "^3.24.5",
+		"**/@nestjs/platform-express/multer": "^2.5.0",
 		"**/email-templates/nodemailer": "^10.1.0",
 		"**/preview-email/nodemailer": "^10.1.0",
 		"**/yeoman-generator/simple-git": "^4.0.2",
