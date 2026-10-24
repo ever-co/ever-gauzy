@@ -912,6 +912,13 @@ jobs:
           # mismatched VS Command Prompt.
           vsversion: 2022
 
+      - name: Put setup-node's Node back ahead of the VS dev env on PATH
+        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
+        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'
 
@@ -1248,6 +1255,14 @@ jobs:
           # on an image whose newest is VS 2026 (windows-11-arm today) node-gyp then refuses the
           # mismatched VS Command Prompt.
           vsversion: 2022
+
+      - name: Put setup-node's Node back ahead of the VS dev env on PATH
+        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
+        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+          architecture: arm64
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'
