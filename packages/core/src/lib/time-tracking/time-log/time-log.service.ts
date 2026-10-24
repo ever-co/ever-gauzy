@@ -104,19 +104,40 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		const page = resolveRequestedPage(request);
 
+		// A plain `timeSlots` relation is read for its activity figures (the Teams dashboard sums
+		// `overall` over `duration`): load just those columns, as the weekly report does, instead
+		// of whole slots with their raw keyboard / mouse / location / custom activity. A request for
+		// relations below the slots (`timeSlots.screenshots`, …) keeps whole slots.
+		const relations = request.relations ?? [];
+		const slotActivityOnly =
+			relations.includes('timeSlots') && !relations.some((relation) => relation.startsWith('timeSlots.'));
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const where = await this.buildMikroOrmTimeLogWhere(request);
+				const populate = [
+					'employee',
+					'employee.user',
+					'timeSlots',
+					'project',
+					'task',
+					'organizationContact',
+					...relations
+				];
+				// `fields` is a whitelist for loading AND serializing, so everything else is named in full:
+				// every time-log column (`*`) and every other populated relation (`<path>.*`).
+				const fields = slotActivityOnly
+					? [
+							'*',
+							...[...new Set(populate)].filter((path) => path !== 'timeSlots').map((path) => `${path}.*`),
+							'timeSlots.id',
+							'timeSlots.overall',
+							'timeSlots.duration'
+					  ]
+					: undefined;
 				const items = await this.mikroOrmRepository.find(where, {
-					populate: [
-						'employee',
-						'employee.user',
-						'timeSlots',
-						'project',
-						'task',
-						'organizationContact',
-						...(request.relations || [])
-					] as any[],
+					populate: populate as any[],
+					...(fields ? { fields: fields as any[] } : {}),
 					orderBy: { startedAt: 'ASC' as any, ...(page ? { id: 'ASC' as const } : {}) },
 					...(page ? { limit: page.limit, offset: page.offset } : {})
 				});
@@ -130,14 +151,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Inner join with related entities (employee, timeSlots)
 				query.innerJoin(`${query.alias}.employee`, 'employee');
 				query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
-				// A plain `timeSlots` relation is read for its activity figures (the Teams dashboard sums
-				// `overall` over `duration`): load just those columns, as the weekly report does, instead
-				// of whole slots with their raw keyboard / mouse / location / custom activity. A request for
-				// relations below the slots (`timeSlots.screenshots`, …) keeps whole slots.
-				const relations = request.relations ?? [];
-				const slotActivityOnly =
-					relations.includes('timeSlots') && !relations.some((relation) => relation.startsWith('timeSlots.'));
 
 				// Set up the find options for the query
 				query.setFindOptions({
