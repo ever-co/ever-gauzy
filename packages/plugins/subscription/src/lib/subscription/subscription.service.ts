@@ -340,20 +340,6 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	}
 
 	/**
-	 * Writes the fields a caller changed onto a subscription, under the version that caller read.
-	 *
-	 * The write is predicated on the version the caller stated rather than on the one the row happens to
-	 * hold, so a second editor's change to the same subscription is refused instead of applied over a
-	 * value it never saw. The check and the increment are the statement's own: a stale version reaches
-	 * `commitVersionedUpdate`'s affected-row count and is answered with the conflict it is, not with the
-	 * "not found" a read-then-write would report for a row that exists and has merely moved on.
-	 *
-	 * @param id The subscription.
-	 * @param changes The fields to change.
-	 * @param expectation The version the caller read the subscription at.
-	 * @returns The subscription as it stands after the write.
-	 */
-	/**
 	 * Refuses a subscription, or a change to one, that names a customer, order, account holder or payment method of
 	 * another tenant (`subscription.references.ts`). Checked on the TypeORM manager, which reads these tables under
 	 * either ORM.
@@ -370,6 +356,20 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		);
 	}
 
+	/**
+	 * Writes the fields a caller changed onto a subscription, under the version that caller read.
+	 *
+	 * The write is predicated on the version the caller stated rather than on the one the row happens to
+	 * hold, so a second editor's change to the same subscription is refused instead of applied over a
+	 * value it never saw. The check and the increment are the statement's own: a stale version reaches
+	 * `commitVersionedUpdate`'s affected-row count and is answered with the conflict it is, not with the
+	 * "not found" a read-then-write would report for a row that exists and has merely moved on.
+	 *
+	 * @param id The subscription.
+	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the subscription at.
+	 * @returns The subscription as it stands after the write.
+	 */
 	public async applyChanges(
 		id: ID,
 		changes: DeepPartial<Subscription>,
