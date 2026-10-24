@@ -13,6 +13,17 @@ import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 
 /**
+ * Narrows document ids to the ones the caller may read (`DocumentService.filterReadableDocumentIds`: visibility,
+ * ownership, `DOCS_MANAGE` or a share). The tree's own reads see every row of the organization, so a request path
+ * hands this in: a subtree operation then neither changes nor names a descendant the caller cannot see, such as
+ * another member's PRIVATE page in an organization folder, and reaches nothing below it.
+ */
+export type ReadableDocumentIds = (ids: ID[]) => Promise<ID[]>;
+
+/** The filter of the tree's callers with no request behind them: every row is in reach. */
+const EVERY_DOCUMENT: ReadableDocumentIds = async (ids: ID[]) => ids;
+
+/**
  * Tree mechanics for the Documents hub: ancestor-chain walks, the move cycle guard, subtree
  * collection (iterative BFS — dialect-portable), sibling `index` maintenance, deep duplicate,
  * archive/unarchive cascade, and the delete strategies (`subtree` vs `promote-children`).
@@ -50,6 +61,43 @@ export class DocumentTreeService {
 		}
 
 		return ids;
+	}
+
+	/**
+	 * Collects a node's subtree as the caller sees it: the root, then every descendant the caller may read whose
+	 * ancestors below the root it may read too (iterative breadth-first walk, one read filter per level).
+	 *
+	 * The children the walk stops at are returned apart: the caller may neither see nor change them, and their own
+	 * descendants are not reached through them.
+	 *
+	 * @param root The subtree root, already resolved through the caller's read scope.
+	 * @param readable Narrows ids to the ones the caller may read.
+	 * @returns The visible subtree ids (root first), and the hidden children the walk stopped at.
+	 */
+	async collectVisibleSubtree(root: Document, readable: ReadableDocumentIds): Promise<{ ids: ID[]; hidden: ID[] }> {
+		const ids: ID[] = [root.id];
+		const hidden: ID[] = [];
+		let frontier: ID[] = [root.id];
+
+		while (frontier.length > 0) {
+			const children = await this.typeOrmDocumentRepository.find({
+				select: { id: true },
+				where: {
+					parentId: In(frontier),
+					tenantId: root.tenantId,
+					organizationId: root.organizationId
+				}
+			});
+			const childIds = children
+				.map((child: Document) => child.id)
+				.filter((id: ID) => !ids.includes(id) && !hidden.includes(id));
+			const visible = new Set<ID>(childIds.length > 0 ? await readable(childIds) : []);
+			frontier = childIds.filter((id: ID) => visible.has(id));
+			hidden.push(...childIds.filter((id: ID) => !visible.has(id)));
+			ids.push(...frontier);
+		}
+
+		return { ids, hidden };
 	}
 
 	/**
@@ -169,19 +217,28 @@ export class DocumentTreeService {
 
 	/**
 	 * Rewrites `index` for the listed siblings of one parent (`null` = root siblings).
-	 * Ids that are not children of `parentId` yield 400 `DOCS_REORDER_MIXED_PARENTS`.
+	 * Ids that are not children of `parentId` yield 400 `DOCS_REORDER_MIXED_PARENTS`, and so does a child the caller
+	 * may not read: the answer is the same for a hidden sibling as for an id that is no sibling at all.
 	 *
-	 * @param parentId The common parent id or null.
+	 * @param parentId The common parent id or null, already resolved through the caller's read scope.
 	 * @param orderedIds The sibling ids in the desired order.
 	 * @param tenantId Tenant scope.
 	 * @param organizationId Optional organization scope.
+	 * @param readable Narrows ids to the ones the caller may read.
 	 */
-	async reorderDocuments(parentId: ID | null, orderedIds: ID[], tenantId: ID, organizationId?: ID): Promise<void> {
+	async reorderDocuments(
+		parentId: ID | null,
+		orderedIds: ID[],
+		tenantId: ID,
+		organizationId?: ID,
+		readable: ReadableDocumentIds = EVERY_DOCUMENT
+	): Promise<void> {
 		const children = await this.typeOrmDocumentRepository.find({
 			select: { id: true },
 			where: { parentId: parentId ?? IsNull(), tenantId, ...(organizationId && { organizationId }) }
 		});
-		const childIds = new Set(children.map((child: Document) => child.id));
+		const allChildIds = children.map((child: Document) => child.id);
+		const childIds = new Set<ID>(allChildIds.length > 0 ? await readable(allChildIds) : []);
 		const stranger = orderedIds.find((id: ID) => !childIds.has(id));
 		if (stranger) {
 			throw new BadRequestException({
@@ -222,13 +279,15 @@ export class DocumentTreeService {
 	}
 
 	/**
-	 * Archives a node and **cascades to the whole subtree**. Idempotent.
+	 * Archives a node and **cascades to the subtree the caller sees** ({@link collectVisibleSubtree}): a descendant
+	 * the caller may not read is not archived, nor anything below it. Idempotent.
 	 *
 	 * @param document The subtree root.
+	 * @param readable Narrows ids to the ones the caller may read.
 	 * @returns The affected row count.
 	 */
-	async archiveSubtree(document: Document): Promise<number> {
-		const ids = await this.collectSubtreeIds(document);
+	async archiveSubtree(document: Document, readable: ReadableDocumentIds = EVERY_DOCUMENT): Promise<number> {
+		const { ids } = await this.collectVisibleSubtree(document, readable);
 		await this.typeOrmDocumentRepository.update(
 			{ id: In(ids), tenantId: document.tenantId },
 			{ isArchived: true, archivedAt: new Date() }
@@ -237,27 +296,33 @@ export class DocumentTreeService {
 	}
 
 	/**
-	 * Clears the archive flags on the subtree, plus any archived ancestors needed to make the
-	 * node reachable through the tree again. Idempotent.
+	 * Clears the archive flags on the subtree the caller sees, plus the archived ancestors needed
+	 * to make the node reachable through the tree again that the caller may read: a document the
+	 * caller cannot see is never changed. Idempotent.
 	 *
 	 * @param document The subtree root.
+	 * @param readable Narrows ids to the ones the caller may read.
 	 * @returns The affected row count.
 	 */
-	async unarchiveSubtree(document: Document): Promise<number> {
-		const ids = await this.collectSubtreeIds(document);
+	async unarchiveSubtree(document: Document, readable: ReadableDocumentIds = EVERY_DOCUMENT): Promise<number> {
+		const { ids } = await this.collectVisibleSubtree(document, readable);
 
 		// Ancestors needed for reachability. `visited` is the defensive stop — a pre-existing
 		// cycle in the ancestor chain must abort the walk, not hang the request forever.
 		const visited = new Set<ID>(ids);
+		const ancestors: ID[] = [];
 		let cursorId: ID | null = document.parentId ?? null;
 		while (cursorId && !visited.has(cursorId)) {
 			visited.add(cursorId);
-			ids.push(cursorId);
+			ancestors.push(cursorId);
 			const cursor = await this.typeOrmDocumentRepository.findOne({
 				select: { id: true, parentId: true },
 				where: { id: cursorId, tenantId: document.tenantId, organizationId: document.organizationId }
 			});
 			cursorId = cursor?.parentId ?? null;
+		}
+		if (ancestors.length > 0) {
+			ids.push(...(await readable(ancestors)));
 		}
 
 		await this.typeOrmDocumentRepository.update(
@@ -273,11 +338,20 @@ export class DocumentTreeService {
 	 * so recovery restores exactly the rows deleted by this operation; `promote-children`
 	 * re-parents children to the deleted node's parent preserving relative `index` order.
 	 *
+	 * A `subtree` delete takes the subtree the caller sees ({@link collectVisibleSubtree}). A descendant the caller
+	 * may not read is neither checked, named, nor deleted: it moves, with its own subtree, to the deleted node's
+	 * parent, so its owner keeps it in reach of the tree.
+	 *
 	 * @param document The node to delete.
 	 * @param strategy The delete strategy.
+	 * @param readable Narrows ids to the ones the caller may read.
 	 * @returns The soft-deleted document.
 	 */
-	async deleteDocument(document: Document, strategy: 'subtree' | 'promote-children' = 'subtree'): Promise<Document> {
+	async deleteDocument(
+		document: Document,
+		strategy: 'subtree' | 'promote-children' = 'subtree',
+		readable: ReadableDocumentIds = EVERY_DOCUMENT
+	): Promise<Document> {
 		if (!document.isArchived) {
 			throw new ConflictException({
 				message: 'Documents can be deleted only from the archive',
@@ -307,10 +381,10 @@ export class DocumentTreeService {
 			// Subtree delete: the archive-first workflow applies to the WHOLE subtree, not just
 			// its root — otherwise deleting an archived folder silently trashes live children
 			// that were never archived (and never appeared in the archive view).
-			await this.assertSubtreeArchived(document);
+			const { ids, hidden } = await this.collectVisibleSubtree(document, readable);
+			await this.assertSubtreeArchived(document, ids);
 
 			// Stamp the batch id, then soft-delete every row
-			const ids = await this.collectSubtreeIds(document);
 			const batchId = `${document.id}:${Date.now()}`;
 			const rows = await this.typeOrmDocumentRepository.find({
 				where: { id: In(ids), tenantId: document.tenantId }
@@ -321,6 +395,19 @@ export class DocumentTreeService {
 			}
 			await this.typeOrmDocumentRepository.save(rows);
 			await this.typeOrmDocumentRepository.softDelete({ id: In(ids), tenantId: document.tenantId });
+
+			// The descendants the caller cannot see stay, and join the deleted node's parent: under a deleted
+			// row no tree read reaches them. Renumbered as promote-children renumbers.
+			if (hidden.length > 0) {
+				await this.typeOrmDocumentRepository.update(
+					{ id: In(hidden), tenantId: document.tenantId },
+					{ parentId: document.parentId ?? null }
+				);
+				const destinationIds = (await this.loadSiblingIds(document.parentId ?? null, document)).filter(
+					(id: ID) => id !== document.id
+				);
+				await this.rewriteSiblingIndexes(destinationIds, document.tenantId);
+			}
 		}
 
 		return this.typeOrmDocumentRepository.findOne({
@@ -330,12 +417,13 @@ export class DocumentTreeService {
 	}
 
 	/**
-	 * Asserts that every node of a subtree is archived before a `subtree` delete.
+	 * Asserts that every node of the subtree a `subtree` delete takes is archived. The refusal
+	 * names those nodes only, never a descendant the caller cannot see.
 	 *
 	 * @param document The subtree root (already known to be archived).
+	 * @param ids The subtree the delete takes ({@link collectVisibleSubtree}).
 	 */
-	private async assertSubtreeArchived(document: Document): Promise<void> {
-		const ids = await this.collectSubtreeIds(document);
+	private async assertSubtreeArchived(document: Document, ids: ID[]): Promise<void> {
 		const live = await this.typeOrmDocumentRepository.find({
 			select: { id: true, name: true },
 			where: { id: In(ids), tenantId: document.tenantId, isArchived: false }

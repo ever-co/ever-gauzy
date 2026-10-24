@@ -13,7 +13,7 @@ export class UnarchiveDocumentHandler implements ICommandHandler<UnarchiveDocume
 
 	/**
 	 * Handles the `UnarchiveDocumentCommand`: clears the archive flags on the subtree (plus any
-	 * archived ancestors needed for reachability). Idempotent.
+	 * archived ancestors needed for reachability), the documents the caller may read only. Idempotent.
 	 *
 	 * @param command - The command carrying the id.
 	 * @returns The unarchived document.
@@ -22,7 +22,9 @@ export class UnarchiveDocumentHandler implements ICommandHandler<UnarchiveDocume
 		const document = await this.documentService.findOneScoped(command.id);
 		await this.documentService.assertCanWrite(document);
 		const wasArchived = document.isArchived === true;
-		await this.documentTreeService.unarchiveSubtree(document);
+		await this.documentTreeService.unarchiveSubtree(document, (ids) =>
+			this.documentService.filterReadableDocumentIds(ids, document.organizationId)
+		);
 		const unarchived = await this.documentService.findOneScoped(command.id);
 		// `field` + before/after so the activity timeline records the unarchive (R-COL-03).
 		this.documentService.emitDocumentEvent(unarchived, 'updated', {

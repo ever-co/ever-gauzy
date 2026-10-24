@@ -107,13 +107,13 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			case DocumentBulkActionEnum.ARCHIVE: {
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
-				await this.documentTreeService.archiveSubtree(document); // idempotent-success
+				await this.documentTreeService.archiveSubtree(document, this.readableIn(document)); // idempotent-success
 				return;
 			}
 			case DocumentBulkActionEnum.UNARCHIVE: {
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
-				await this.documentTreeService.unarchiveSubtree(document); // idempotent-success
+				await this.documentTreeService.unarchiveSubtree(document, this.readableIn(document)); // idempotent-success
 				return;
 			}
 			case DocumentBulkActionEnum.SET_CATEGORIES: {
@@ -155,7 +155,11 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			case DocumentBulkActionEnum.DELETE: {
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
-				const deleted = await this.documentTreeService.deleteDocument(document, 'subtree');
+				const deleted = await this.documentTreeService.deleteDocument(
+					document,
+					'subtree',
+					this.readableIn(document)
+				);
 				this.documentService.emitDocumentEvent(deleted, 'deleted');
 				return;
 			}
@@ -180,6 +184,15 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			default:
 				throw new HttpException({ code: DOCS_BULK_ACTION_UNSUPPORTED }, 400);
 		}
+	}
+
+	/**
+	 * The read filter a subtree action hands the tree service, so it reaches only the documents the caller may read.
+	 * Bulk tree actions need `DOCS_MANAGE`, which reads every document of the organization today; the filter keeps the
+	 * cascade tied to the read rule rather than to that.
+	 */
+	private readableIn(document: { organizationId: ID }): (ids: ID[]) => Promise<ID[]> {
+		return (ids: ID[]) => this.documentService.filterReadableDocumentIds(ids, document.organizationId);
 	}
 
 	/**
