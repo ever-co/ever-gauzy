@@ -58,7 +58,10 @@ import {
 const attachmentsStorage = (ctx: ExecutionContext) => {
 	const request: any = ctx.switchToHttp().getRequest();
 	const tenantId = RequestContext.currentTenantId() || randomUUID();
-	const rawOrganizationId: string = request?.headers?.['organization-id'] || randomUUID();
+	// The organization the service files the attachment in: the token's first, the header only without one (the
+	// service checks the header, and discards the stored bytes when the caller may not reach that organization).
+	const rawOrganizationId: string =
+		RequestContext.currentOrganizationId() || request?.headers?.['organization-id'] || randomUUID();
 	// Path-sanitize: ids are UUIDs, but never trust a header verbatim.
 	const organizationId = String(rawOrganizationId).replace(/[^a-zA-Z0-9-]/g, '') || randomUUID();
 
