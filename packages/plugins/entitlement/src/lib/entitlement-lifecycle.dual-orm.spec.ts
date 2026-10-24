@@ -11,7 +11,8 @@
  * - on **TypeORM** they are the regression net for the path production runs, and every TypeORM
  *   repository is a real one over an in-memory better-sqlite3 database while every MikroORM repository
  *   throws on any member it is asked for — so a TypeORM installation is proven never to reach MikroORM;
- * - on **MikroORM** the roles are swapped: every TypeORM repository throws, the MikroORM repositories are
+ * - on **MikroORM** the roles are swapped: every TypeORM repository throws (but for the manager the grant's
+ *   cross-tenant reference check reads through, as production does), the MikroORM repositories are
  *   real, and MikroORM runs with `allowGlobalContext: false`, as the platform configures it — so each
  *   write is also proven to need no request context, which an event consumer and the expiry pass do not
  *   have.
@@ -495,12 +496,18 @@ interface IHarness {
 	close(): Promise<void>;
 }
 
-/** A repository this half must never reach: any member it is asked for fails the case. */
-function unreachable(name: string): any {
+/**
+ * A repository this half must never reach: any member it is asked for fails the case, but for the members `reachable`
+ * names, which it answers with the value given there.
+ */
+function unreachable(name: string, reachable: Record<string, unknown> = {}): any {
 	return new Proxy(
 		{},
 		{
 			get: (_target, property) => {
+				if (typeof property === 'string' && Object.prototype.hasOwnProperty.call(reachable, property)) {
+					return reachable[property];
+				}
 				throw new Error(`The ${name} was reached (${String(property)}).`);
 			}
 		}
@@ -700,7 +707,13 @@ async function mikroOrmHarness(): Promise<IHarness> {
 	const repository = (entityName: string) => new EntityRepository<any>(orm.em as any, entityName);
 	const services = wire({
 		typeOrm: {
-			entitlement: unreachable('TypeORM entitlement repository'),
+			// The one member this half reaches: the grant's cross-tenant reference check reads through the TypeORM
+			// manager on either ORM (TypeORM is initialised under `DB_ORM=mikro-orm` too). No table is mapped on it
+			// here, so the check has nothing to compare; its refusals are asserted in
+			// `entitlement.service.grant-references.spec.ts`.
+			entitlement: unreachable('TypeORM entitlement repository', {
+				manager: { connection: { hasMetadata: () => false } }
+			}),
 			activation: unreachable('TypeORM activation repository'),
 			key: unreachable('TypeORM key repository')
 		},
