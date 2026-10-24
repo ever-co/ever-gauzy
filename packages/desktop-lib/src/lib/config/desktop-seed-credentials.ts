@@ -47,8 +47,9 @@ export interface DesktopSeededAccount {
 /** What the electron-store keeps under {@link DESKTOP_SEED_CREDENTIALS_STORE_KEY}. */
 export interface StoredDesktopSeedCredentials extends Partial<DesktopSeedCredentials> {
 	/**
-	 * The accounts a seed created with these passwords. They are shown, with their passwords, at every
-	 * start until the user confirms they saved them; then the whole entry is deleted.
+	 * The accounts a seed started with these passwords (recorded when the seed begins, so a seed that
+	 * fails after creating them still counts). They are shown, with their passwords, at every start
+	 * until the user confirms they saved them; then the whole entry is deleted.
 	 */
 	pending?: DesktopSeededAccount[];
 }
@@ -170,6 +171,12 @@ export function findDesktopSeededAccounts(
 }
 
 /**
+ * The line the API prints when its default seed of an empty database begins, before it creates any
+ * account (`SeedDataService.runDefaultSeed`). Do not change one without the other.
+ */
+export const DESKTOP_API_SEED_STARTED_MARKER = 'Database Default Seed Started';
+
+/**
  * The line the API prints when its default seed has finished (`SeedDataService.runDefaultSeed`).
  * Do not change one without the other.
  */
@@ -191,6 +198,16 @@ export function stripAnsiCodes(text: string): string {
 /** Whether the API output reports a finished default seed. */
 export function reportsDesktopSeedCompleted(output: string): boolean {
 	return stripAnsiCodes(output).includes(DESKTOP_API_SEED_COMPLETED_MARKER);
+}
+
+/**
+ * Whether the API output reports a default seed that began, finished or not. The accounts it creates
+ * get the generated passwords as soon as they are inserted, so a seed that fails (or is stopped)
+ * later still leaves them with those passwords, and the next start skips seeding because users exist.
+ */
+export function reportsDesktopSeedStarted(output: string): boolean {
+	const text = stripAnsiCodes(output);
+	return text.includes(DESKTOP_API_SEED_STARTED_MARKER) || text.includes(DESKTOP_API_SEED_COMPLETED_MARKER);
 }
 
 /**

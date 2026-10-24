@@ -323,6 +323,11 @@ export class SeedDataService {
 		});
 
 		try {
+			// Do not change: the desktop apps watch for this line to mark the passwords they generated as
+			// in use (DESKTOP_API_SEED_STARTED_MARKER in @gauzy/desktop-lib). From here on the seed may
+			// create the accounts, and a seed that fails after that leaves them with those passwords.
+			console.log('Database Default Seed Started');
+
 			if (this.configService.get('demo') === true && fromAPI === true) {
 				this.seedType = SeederTypeEnum.ALL;
 			} else {

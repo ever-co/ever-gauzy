@@ -126,6 +126,31 @@ describe('ApiService', () => {
 
 			expect(child.env.API_BASE_URL).toBe('http://127.0.0.1:3000');
 		});
+
+		it('server apps: a LAN host setting gives a loopback base URL once LAN access is off', async () => {
+			const { started, child } = start(true, { host: '192.168.1.20', lanAccess: false, port: 3000 });
+			listening(child);
+			await started;
+
+			expect(child.env.API_HOST).toBe('127.0.0.1');
+			expect(child.env.API_BASE_URL).toBe('http://127.0.0.1:3000');
+		});
+
+		it('CONTROL, server apps: a LAN host setting is kept while LAN access is on', async () => {
+			const { started, child } = start(true, { host: '192.168.1.20', port: 3000 });
+			listening(child);
+			await started;
+
+			expect(child.env.API_BASE_URL).toBe('http://192.168.1.20:3000');
+		});
+
+		it('Gauzy Desktop: a stored LAN host still gives a loopback base URL', async () => {
+			const { started, child } = start(false, { host: '192.168.1.20', port: 3000 });
+			listening(child);
+			await started;
+
+			expect(child.env.API_BASE_URL).toBe('http://127.0.0.1:3000');
+		});
 	});
 
 	describe('what the API reports', () => {
@@ -142,6 +167,31 @@ describe('ApiService', () => {
 				DEMO_SUPER_ADMIN_PASSWORD: 'generated-super-admin-1',
 				API_HOST: '127.0.0.1'
 			});
+		});
+
+		it('records the seed when it starts, so a seed that fails after creating the accounts still shows them', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			// The accounts are inserted early in the seed; a later step then fails, so no "Completed" line
+			// follows, and the next start skips seeding because users exist.
+			child.stdout.emit('data', Buffer.from('Found 0 users in DB\nDatabase Default Seed Started\n'));
+			child.stderr.emit('data', Buffer.from('🛑 ERROR: some later seed step failed\n'));
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+			expect(mockRecordSeed.mock.calls[0][0]).toMatchObject({
+				DEMO_SUPER_ADMIN_PASSWORD: 'generated-super-admin-1'
+			});
+		});
+
+		it('records a seed that starts and completes only once', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			child.stdout.emit('data', Buffer.from('Database Default Seed Started\n'));
+			child.stdout.emit('data', Buffer.from('Database Default Seed Completed\n'));
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
 		});
 
 		it('finds the seed line when it is split across two chunks, and records it once', async () => {

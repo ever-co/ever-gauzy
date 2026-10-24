@@ -5,7 +5,8 @@ import {
 	findDesktopSeededAccounts,
 	generateDesktopSeedPassword,
 	parsePublishedPasswordAccounts,
-	reportsDesktopSeedCompleted
+	reportsDesktopSeedCompleted,
+	reportsDesktopSeedStarted
 } from './desktop-seed-credentials';
 
 /**
@@ -188,6 +189,14 @@ describe('desktop seed credentials', () => {
 			expect(reportsDesktopSeedCompleted('Found 3 users in DB\nListening at http://127.0.0.1:3000/api')).toBe(
 				false
 			);
+		});
+
+		it('recognises the start of the default seed (or its end, if the start was missed)', () => {
+			expect(reportsDesktopSeedStarted('Found 0 users in DB\nDatabase Default Seed Started\n')).toBe(true);
+			expect(reportsDesktopSeedStarted('\u001b[35mDatabase Default Seed Started\u001b[39m\n')).toBe(true);
+			expect(reportsDesktopSeedStarted('...\nDatabase Default Seed Completed\n')).toBe(true);
+			expect(reportsDesktopSeedStarted('Database Demo Seed Started\n')).toBe(false);
+			expect(reportsDesktopSeedStarted('Found 3 users in DB\nListening at http://127.0.0.1:3000/api')).toBe(false);
 		});
 
 		it('reads the accounts the boot check reports as still using a published password', () => {

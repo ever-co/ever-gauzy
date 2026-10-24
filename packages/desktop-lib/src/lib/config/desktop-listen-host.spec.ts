@@ -3,6 +3,7 @@ import {
 	DESKTOP_LOOPBACK_HOST,
 	isDesktopLanAccessEnabled,
 	resolveDesktopListenHost,
+	toDesktopClientUrl,
 	toReachableDesktopUrl
 } from './desktop-listen-host';
 
@@ -66,5 +67,21 @@ describe('toReachableDesktopUrl', () => {
 		expect(toReachableDesktopUrl('http://192.168.1.20:3000')).toBe('http://192.168.1.20:3000');
 		expect(toReachableDesktopUrl('http://gauzy.lan')).toBe('http://gauzy.lan');
 		expect(toReachableDesktopUrl('http://0.0.0.0.example.com')).toBe('http://0.0.0.0.example.com');
+	});
+});
+
+describe('toDesktopClientUrl', () => {
+	it('points any host at the loopback address for a server listening there only', () => {
+		expect(toDesktopClientUrl('http://192.168.1.20:3000', DESKTOP_LOOPBACK_HOST)).toBe('http://127.0.0.1:3000');
+		expect(toDesktopClientUrl('https://gauzy.lan/api', DESKTOP_LOOPBACK_HOST)).toBe('https://127.0.0.1/api');
+		expect(toDesktopClientUrl('http://[fe80::1]:3000', DESKTOP_LOOPBACK_HOST)).toBe('http://127.0.0.1:3000');
+		expect(toDesktopClientUrl('http://0.0.0.0:4200', DESKTOP_LOOPBACK_HOST)).toBe('http://127.0.0.1:4200');
+	});
+
+	it('CONTROL: keeps a LAN host for a server listening on every interface', () => {
+		expect(toDesktopClientUrl('http://192.168.1.20:3000', DESKTOP_ALL_INTERFACES_HOST)).toBe(
+			'http://192.168.1.20:3000'
+		);
+		expect(toDesktopClientUrl('http://0.0.0.0:3000', DESKTOP_ALL_INTERFACES_HOST)).toBe('http://127.0.0.1:3000');
 	});
 });

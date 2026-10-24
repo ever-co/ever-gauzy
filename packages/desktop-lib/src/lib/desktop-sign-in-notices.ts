@@ -40,9 +40,10 @@ function translate(key: string, fallback: string, params?: Record<string, string
  *
  * - Before each start the app takes this install's random seed passwords from
  *   {@link provisionSeedCredentials} and hands them to the API (`DEMO_*_PASSWORD`).
- * - When the API reports that it seeded a new database, {@link recordSeed} marks the accounts that
- *   received them. {@link show} then displays them in a native dialog, at every start until the user
- *   confirms they saved them; the stored copy is deleted at that moment, so they are shown once.
+ * - When the API reports that it began seeding a new database, {@link recordSeed} marks the accounts
+ *   that receive them (at the start, so a seed that fails after creating them still shows them).
+ *   {@link show} then displays them in a native dialog, at every start until the user confirms they
+ *   saved them; the stored copy is deleted at that moment, so they are shown once.
  * - When the API reports, at boot, accounts of an existing database still using a published
  *   password (`admin@ever.co` / `admin` from an install made before these passwords), {@link show}
  *   warns once per run. Those accounts are not changed: the user keeps signing in as before.
@@ -70,7 +71,10 @@ export class DesktopSignInNotices {
 	}
 
 	/**
-	 * The API finished seeding a new database: remembers which accounts got the generated passwords.
+	 * The API began seeding a new database: remembers which accounts get the generated passwords.
+	 * Recorded at the start because the accounts keep these passwords even if a later seed step fails,
+	 * and no later start seeds again once users exist. Their passwords are never replaced from now on,
+	 * so a seed that failed before creating them and runs again uses the same ones.
 	 *
 	 * @param env - The environment the API process ran with (inherited variables included).
 	 */
