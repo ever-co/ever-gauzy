@@ -19,6 +19,12 @@ describe('Activepieces MCP server URLs', () => {
 		expect(() => mcpServerUrl(' ')).toThrow(BadRequestException);
 	});
 
+	it('refuses a dot segment, which the HTTP client would resolve to the server list or the API root', () => {
+		expect(() => mcpServerUrl('.')).toThrow(BadRequestException);
+		expect(() => mcpServerUrl('..')).toThrow(BadRequestException);
+		expect(mcpServerUrl('...')).toBe(`${ACTIVEPIECES_MCP_SERVERS_URL}/...`);
+	});
+
 	it.each([
 		['updates', (service: ActivepiecesMcpService) => service.updateMcpServer(TRAVERSAL, {} as any), ''],
 		[

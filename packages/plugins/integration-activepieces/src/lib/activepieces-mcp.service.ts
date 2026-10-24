@@ -17,14 +17,19 @@ import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
 /**
  * The Activepieces URL of one MCP server. The id is the caller's, from the route, and Express decodes `%2F` in a route
  * parameter: unencoded, `..%2F..%2F<path>` turned the update and the token rotation into POSTs to any other path of the
- * Activepieces API, under the installation's key when the tenant has none of its own.
+ * Activepieces API, under the installation's key when the tenant has none of its own. `encodeURIComponent` leaves dots
+ * alone, so `.` and `..` (`%2E%2E` in the route) are refused: the HTTP client resolves them as path segments, to the
+ * server list or to the API's root.
  *
  * @param serverId - The MCP server id.
- * @throws BadRequestException for an empty id.
+ * @throws BadRequestException for an empty id, or one that is only dots.
  */
 export function mcpServerUrl(serverId: string): string {
 	if (!serverId?.trim()) {
 		throw new BadRequestException('serverId is required');
+	}
+	if (serverId === '.' || serverId === '..') {
+		throw new BadRequestException('serverId is not a valid MCP server id');
 	}
 	return `${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`;
 }
