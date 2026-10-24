@@ -680,7 +680,7 @@ export class TimerService {
 		// (`buildRunningLogQueryParameters`): a running log is written with `stoppedAt = startedAt`, but a row stored
 		// before `TimeLogCreateHandler` gave it that shape may hold a null `stoppedAt`. Filtering those out left the
 		// row running with nothing able to stop it; found here, stop closes it and `stopPreviousRunningTimers` hands
-		// it to `ScheduleTimeLogEntriesCommand`, which already handles a null `stoppedAt`.
+		// it to `ScheduleTimeLogEntriesCommand`, which gives a null `stoppedAt` an end as it stops the log.
 		const whereClause = {
 			employeeId,
 			tenantId,

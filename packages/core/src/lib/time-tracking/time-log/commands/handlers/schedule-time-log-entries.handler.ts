@@ -143,6 +143,9 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	private async processTimeLogEntry(timeLog: ITimeLog): Promise<void> {
 		const { timeSlots } = timeLog;
 
+		// The end worked out for the entry below, if any: `stopTimeLog` writes it on a log stored without one.
+		let stoppedAt: Date | undefined;
+
 		// Handle cases where there are no time slots
 		if (isEmpty(timeSlots)) {
 			// Retrieve the last log's startedAt date
@@ -160,24 +163,25 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			console.log(`This log was created more than ${difference} minutes ago at ${startedAt}`);
 
 			if (difference > 10) {
-				await this.updateStoppedAtUsingStartedAt(timeLog);
+				stoppedAt = await this.updateStoppedAtUsingStartedAt(timeLog);
 			}
 		} else {
 			// Handle cases where there are time slots
-			await this.updateStoppedAtUsingTimeSlots(timeLog, timeSlots);
+			stoppedAt = await this.updateStoppedAtUsingTimeSlots(timeLog, timeSlots);
 			// Example: If timeSlots = [{ startedAt: "2024-09-24 20:05:00", duration: 300 }]
 		}
 
 		// Stop the pending time log entry
-		await this.stopTimeLog(timeLog);
+		await this.stopTimeLog(timeLog, stoppedAt);
 	}
 
 	/**
 	 * Updates the stoppedAt field using the startedAt value for a time log.
 	 *
 	 * @param timeLog - The time log entry to update
+	 * @returns The `stoppedAt` written.
 	 */
-	private async updateStoppedAtUsingStartedAt(timeLog: ITimeLog): Promise<void> {
+	private async updateStoppedAtUsingStartedAt(timeLog: ITimeLog): Promise<Date> {
 		// Calculate the stoppedAt date by adding 10 seconds to the startedAt value
 		const stoppedAt = moment.utc(timeLog.startedAt).add(10, 'seconds').toDate();
 
@@ -190,6 +194,8 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 		console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
 		// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StartedAt 2024-09-24 21:00:00"
+
+		return stoppedAt;
 	}
 
 	/**
@@ -197,8 +203,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 *
 	 * @param timeLog The time log entry to update
 	 * @param timeSlots The time slots associated with the time log
+	 * @returns The `stoppedAt` the time slots give the log, whether or not it was written (it is written only when
+	 * it lies more than ten minutes back).
 	 */
-	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: ITimeSlot[]): Promise<void> {
+	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: ITimeSlot[]): Promise<Date> {
 		// Calculate the total duration in seconds from all time slots
 		const totalDurationInSeconds = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
 
@@ -259,6 +267,8 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StoppedAt 2024-09-24 21:15:00"
 			console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
 		}
+
+		return stoppedAt;
 	}
 
 	/**
@@ -312,9 +322,24 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	/**
 	 * Marks the time log as not running (stopped) in the database.
 	 *
-	 * @param timeLog - The time log entry to stop
+	 * A log stored with a null `stoppedAt` (a running log written before `TimeLogCreateHandler` gave it
+	 * `stoppedAt = startedAt`) is never left stopped without an end: the completed-log reads skip a null
+	 * `stoppedAt`, and its loaded `duration` (up to now when `stoppedAt` is null) would keep growing. It gets the end
+	 * worked out by the caller or, when there is none (no time slot and started within the last ten minutes), its
+	 * `startedAt`: no time, the shape a running log is created in.
+	 *
+	 * @param log - The time log entry to stop
+	 * @param stoppedAt - The end worked out for the entry, if any; written only when the log has no `stoppedAt`.
 	 */
-	private async stopTimeLog(log: ITimeLog): Promise<ITimeLog> {
+	private async stopTimeLog(log: ITimeLog, stoppedAt?: Date): Promise<ITimeLog> {
+		if (!log.stoppedAt) {
+			return await this.saveTimeLog({
+				id: log.id,
+				isRunning: false,
+				stoppedAt: stoppedAt ?? moment.utc(log.startedAt).toDate()
+			});
+		}
+
 		// Update the isRunning field to false in the database for the given time log
 		return await this.saveTimeLog({ id: log.id, isRunning: false });
 	}
