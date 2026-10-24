@@ -5,6 +5,12 @@
 jest.mock('@gauzy/core', () => ({
 	TenantAwareCrudService: class TenantAwareCrudService {
 		constructor(public readonly typeOrmRepository: any, public readonly mikroOrmRepository: any) {}
+
+		// A caller confined to one organization, for a raw query that also keeps to the organization boundary
+		// of the CRUD base (ever-co/ever-gauzy#11314); unused by a query that does not read it.
+		organizationBoundary() {
+			return { organizationId: 'organization-1' };
+		}
 	},
 	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 	RequestContext: { currentTenantId: () => 'tenant-1' },
@@ -53,5 +59,28 @@ describe('HelpCenterArticleService.updateDescriptionFields (MySQL) tenant scope'
 
 		expect(queryBuilder.andWhere).toHaveBeenCalledWith('`tenantId` = :tenantId', { tenantId: 'tenant-1' });
 		expect(queryBuilder.execute).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves no double-quoted identifier in any condition of the update', async () => {
+		const queryBuilder: any = {
+			update: jest.fn(() => queryBuilder),
+			set: jest.fn(() => queryBuilder),
+			where: jest.fn(() => queryBuilder),
+			andWhere: jest.fn(() => queryBuilder),
+			execute: jest.fn(async () => undefined)
+		};
+		const typeOrmRepository = { createQueryBuilder: jest.fn(() => queryBuilder) };
+		const service = new HelpCenterArticleService(typeOrmRepository as any, {} as any, {} as any);
+
+		await service.updateDescriptionFields('article-1' as ID, { descriptionJson: '{}' });
+
+		// On MySQL a double-quoted token is a string literal: such a condition matches no row
+		const conditions = [...queryBuilder.where.mock.calls, ...queryBuilder.andWhere.mock.calls].map(
+			([condition]) => condition
+		);
+		expect(conditions.length).toBeGreaterThan(0);
+		for (const condition of conditions) {
+			expect(condition).not.toContain('"');
+		}
 	});
 });
