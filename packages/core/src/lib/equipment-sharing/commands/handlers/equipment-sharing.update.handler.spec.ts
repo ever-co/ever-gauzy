@@ -96,6 +96,16 @@ describe('EquipmentSharingUpdateHandler — the rows an edit points at', () => {
 		expect(row).not.toHaveProperty('equipmentSharingPolicy');
 	});
 
+	it('pins the stored organization over one the body names as the related object', async () => {
+		const { handler, sharingService } = setUp();
+
+		await handler.execute(edit({ equipmentId: 'equipment-1', organization: { id: 'org-2' } }));
+
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row).not.toHaveProperty('organization');
+		expect(row['organizationId']).toBe('org-1');
+	});
+
 	it('still edits a sharing whose body names its rows by column only', async () => {
 		const { handler, sharingService } = setUp();
 
