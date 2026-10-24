@@ -248,6 +248,22 @@ describe('TenantAwareCrudService scopes a TypeORM read without joining the tenan
 	|--------------------------------------------------------------------------
 	*/
 
+	it('keeps an empty list of alternatives inside the caller’s tenant', async () => {
+		// `where: []` is no condition at all to TypeORM; returned as it came, it read every tenant's rows.
+		expect(idsOf(await service.find({ where: [] } as any))).toEqual(
+			idsOf([{ id: A_EMPLOYEE_1 }, { id: A_RETIRED_EMPLOYEE }])
+		);
+		expect(idsOf((await service.findAll({ where: [] } as any)).items)).toEqual(
+			idsOf([{ id: A_EMPLOYEE_1 }, { id: A_RETIRED_EMPLOYEE }])
+		);
+	});
+
+	it('CONTROL: TypeORM itself answers an empty list of alternatives with every tenant’s rows', async () => {
+		expect(idsOf(await rows.find({ where: [] }))).toEqual(
+			idsOf([{ id: A_EMPLOYEE_1 }, { id: A_RETIRED_EMPLOYEE }, { id: OF_RETIRED_TENANT }, { id: OF_TENANT_B }])
+		);
+	});
+
 	it('finds a row by id in one statement, with no join and no DISTINCT', async () => {
 		let found: ReadScopeRow;
 		const statements = await log.during(async () => {

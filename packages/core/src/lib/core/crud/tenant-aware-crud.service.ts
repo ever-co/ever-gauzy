@@ -660,6 +660,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		where: FindOptionsWhere<T>[] | FindOptionsWhere<T> | undefined,
 		read: IScopedRead
 	): FindOptionsWhere<T>[] | FindOptionsWhere<T> {
+		// An empty list of alternatives is no condition at all: TypeORM drops the WHERE clause, so `[]` returned as it
+		// came read every tenant's rows (e.g. `GET /expense?data={"findInput":[]}`). It is read as no filter instead.
+		if (Array.isArray(where) && where.length === 0) {
+			where = undefined;
+		}
 		if (where && Array.isArray(where)) {
 			const wheres: FindOptionsWhere<T>[] = [];
 			where.forEach((options: FindOptionsWhere<T>) => {
