@@ -1654,6 +1654,7 @@
 		"csecret",
 		"fsecret",
 		"unhydrated",
+		"requesters",
 		"knownknownknownknownknu"
 	],
 	"useGitignore": true,

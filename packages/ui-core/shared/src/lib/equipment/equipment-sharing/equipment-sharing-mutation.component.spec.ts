@@ -9,6 +9,10 @@ import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.
  * the dialog's columns — its `status` among them, read when the dialog opened. The dialog now sends the version of
  * the row it was opened on, and a `409 ENTITY_VERSION_CONFLICT` closes it with a notice so the page reads its list
  * again.
+ *
+ * The edit of a row with a version goes through the in-place, version-checked edit (`PUT /equipment-sharing/:id/
+ * in-place`): the row is updated where it is rather than removed and filed again. A row read without a version keeps
+ * the edit that removes and files it again.
  */
 describe('EquipmentSharingMutationComponent.onSaveRequest', () => {
 	const { REQUESTED } = RequestApprovalStatusTypesEnum;
@@ -51,6 +55,7 @@ describe('EquipmentSharingMutationComponent.onSaveRequest', () => {
 			selectedTeams: [],
 			equipmentSharingService: {
 				update: jest.fn(async (id: string, input: Record<string, unknown>) => ({ ...input, id })),
+				updateInPlace: jest.fn(async (id: string, input: Record<string, unknown>) => ({ ...input, id })),
 				create: jest.fn(async (input: Record<string, unknown>) => ({ ...input, id: 'sharing-new' }))
 			},
 			toastrService: { warning: jest.fn() },
@@ -61,23 +66,26 @@ describe('EquipmentSharingMutationComponent.onSaveRequest', () => {
 		return { component, save };
 	};
 
-	it('sends the version of the row the dialog was opened on', async () => {
+	it('saves the edit in place, at the version of the row the dialog was opened on', async () => {
 		const { component, save } = setup({ id: 'sharing-1', status: REQUESTED, version: 4 });
 
 		await save();
 
-		expect(component.equipmentSharingService.update).toHaveBeenCalledWith(
+		expect(component.equipmentSharingService.updateInPlace).toHaveBeenCalledWith(
 			'sharing-1',
 			expect.objectContaining({ version: 4, status: REQUESTED, name: 'Projector' })
 		);
+		// The edit that removes the row and files it again is not used for a row with a version.
+		expect(component.equipmentSharingService.update).not.toHaveBeenCalled();
 		expect(component.closeDialog).toHaveBeenCalledWith(expect.objectContaining({ id: 'sharing-1', version: 4 }));
 	});
 
-	it('sends no version for a row read without one: the server then uses the version it reads', async () => {
+	it('saves a row read without a version through the delete-and-recreate edit, with no version', async () => {
 		const { component, save } = setup({ id: 'sharing-1', status: REQUESTED });
 
 		await save();
 
+		expect(component.equipmentSharingService.updateInPlace).not.toHaveBeenCalled();
 		const [, input] = component.equipmentSharingService.update.mock.calls[0];
 		expect(input).not.toHaveProperty('version');
 	});
@@ -91,11 +99,12 @@ describe('EquipmentSharingMutationComponent.onSaveRequest', () => {
 		expect(organizationId).toBe(ORG);
 		expect(input).not.toHaveProperty('version');
 		expect(component.equipmentSharingService.update).not.toHaveBeenCalled();
+		expect(component.equipmentSharingService.updateInPlace).not.toHaveBeenCalled();
 	});
 
 	it('on 409 ENTITY_VERSION_CONFLICT says someone else changed it and closes without a result, so the page reloads', async () => {
 		const { component, save } = setup({ id: 'sharing-1', status: REQUESTED, version: 4 });
-		component.equipmentSharingService.update.mockRejectedValue(conflict());
+		component.equipmentSharingService.updateInPlace.mockRejectedValue(conflict());
 
 		await expect(save()).resolves.toBeUndefined();
 
@@ -111,7 +120,7 @@ describe('EquipmentSharingMutationComponent.onSaveRequest', () => {
 	it('shows any other failure and keeps the dialog open, to retry', async () => {
 		const { component, save } = setup({ id: 'sharing-1', status: REQUESTED, version: 4 });
 		const failure = new HttpErrorResponse({ status: 400, error: { statusCode: 400, message: 'Bad Request' } });
-		component.equipmentSharingService.update.mockRejectedValue(failure);
+		component.equipmentSharingService.updateInPlace.mockRejectedValue(failure);
 
 		await save();
 
@@ -128,5 +137,6 @@ describe('EquipmentSharingMutationComponent.onSaveRequest', () => {
 		await save();
 
 		expect(component.equipmentSharingService.update).not.toHaveBeenCalled();
+		expect(component.equipmentSharingService.updateInPlace).not.toHaveBeenCalled();
 	});
 });

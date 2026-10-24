@@ -37,6 +37,30 @@ export function expectedSharingVersion(stated: unknown, stored: unknown): number
 }
 
 /**
+ * The version an in-place edit of an equipment sharing is a compare-and-set on: the one the body states, which is
+ * required. Unlike the edit that removes and files the row again ({@link expectedSharingVersion}), the in-place edit
+ * has no fallback to the version the server reads: the version is how the caller says which state of the row the
+ * edit is based on, and a write predicated on the server's own read would only separate two writers whose reads both
+ * precede both writes.
+ *
+ * @param stated The `version` member of the body, as it arrived.
+ * @returns The version to predicate the write on.
+ * @throws ApiException 400 `VALIDATION_FAILED` when the body states no version, or something that is not one.
+ */
+export function requiredSharingVersion(stated: unknown): number {
+	const version = stated === undefined || stated === null || stated === '' ? null : parseEntityVersion(stated);
+	if (version === null) {
+		throw new ApiException(
+			HttpStatus.BAD_REQUEST,
+			ApiErrorCode.VALIDATION_FAILED,
+			'The in-place edit of an equipment sharing states the version it is based on, a positive integer.',
+			{ field: 'version' }
+		);
+	}
+	return version;
+}
+
+/**
  * The refusal of an edit whose precondition matched no row: the sharing moved on, or was replaced or removed, after
  * the version the edit is based on was read.
  *
