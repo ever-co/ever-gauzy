@@ -29,6 +29,26 @@ export function operatorUserIds(env: Record<string, string | undefined> = proces
 }
 
 /**
+ * Whether the user operates this installation in the strict sense: a super admin listed by user id in
+ * `EVER_OPERATOR_USER_IDS`. With no list, nobody: unlike {@link mayWriteGlobalSettings}, a single-tenant
+ * installation does not make its super admin the operator. It is the rule the plugin bills use
+ * (ever-co/ever-gauzy#11234), for what no tenant's own admins may decide for themselves, such as their
+ * Documents storage limit (`operator-only-tenant-settings.ts`).
+ *
+ * @param userId The signed-in user, if any.
+ * @param isSuperAdmin Whether that user holds the `SUPER_ADMIN` role now.
+ * @param env The environment to read, the process's by default.
+ */
+export function isListedInstallationOperator(
+	userId: string | null | undefined,
+	isSuperAdmin: boolean,
+	env: Record<string, string | undefined> = process.env
+): boolean {
+	const listed = operatorUserIds(env);
+	return isSuperAdmin && !!listed && typeof userId === 'string' && listed.includes(userId.toLowerCase());
+}
+
+/**
  * Whether the user may write the installation-wide settings.
  *
  * @param userId The signed-in user, if any.

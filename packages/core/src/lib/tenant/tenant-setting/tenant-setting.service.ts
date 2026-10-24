@@ -1,15 +1,25 @@
-import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { FindManyOptions, In, IsNull } from 'typeorm';
+import {
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
+import { DeleteResult, FindManyOptions, FindOptionsWhere, In, IsNull, SaveOptions, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { FindOptions } from '@mikro-orm/core';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
 import { ID, ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
+import { IFindOneOptions, IPartialEntity } from '../../core/crud/icrud.service';
 import { refusalForStorageEndpoint, tenantStorageHttpsAgent } from '../../core/file-storage/storage-endpoint-policy';
-import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
 import { RequestContext } from '../../core/context';
 import { Tenant } from '../../core/entities/internal';
 import { mayWriteGlobalSettings, OPERATOR_USER_IDS_ENV } from './global-setting-writer';
+import { assertMayWriteTenantSettings } from './operator-only-tenant-settings';
 import { TenantSetting } from './tenant-setting.entity';
 import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-setting.repository';
 import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
@@ -21,6 +31,98 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 		mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository
 	) {
 		super(typeOrmTenantSettingRepository, mikroOrmTenantSettingRepository);
+	}
+
+	/*
+	 * The row writes the CRUD controller gives `/tenant-setting` (`POST /`, `PUT :id`, `DELETE :id`, `DELETE :id/soft`,
+	 * `PUT :id/recover`) and their GraphQL fields name a row by its id, so they could create, rename, change, remove or
+	 * bring back an operator-only setting (`operator-only-tenant-settings.ts`) that the settings document routes refuse.
+	 * Each checks the names of the rows it touches, and the name it gives one, before it writes.
+	 */
+
+	/**
+	 * Creates a setting row, unless it is an operator-only setting and the caller does not operate the installation.
+	 */
+	public async create(entity: IPartialEntity<TenantSetting>): Promise<TenantSetting> {
+		assertMayWriteTenantSettings([entity?.name]);
+		return await super.create(entity);
+	}
+
+	/**
+	 * Updates setting rows, unless one of them is, or the update renames one to, an operator-only setting and the
+	 * caller does not operate the installation.
+	 */
+	public async update(
+		id: string | FindOptionsWhere<TenantSetting>,
+		partialEntity: QueryDeepPartialEntity<TenantSetting>
+	): Promise<TenantSetting | UpdateResult> {
+		assertMayWriteTenantSettings([
+			(partialEntity as Partial<TenantSetting> | undefined)?.name,
+			...(await this.namesOfRows(id))
+		]);
+		return await super.update(id, partialEntity);
+	}
+
+	/**
+	 * Deletes setting rows, unless one of them is an operator-only setting and the caller does not operate the
+	 * installation: without the row, the deployment default applies again.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<TenantSetting>,
+		options?: LegacyFindOneOptions<TenantSetting>
+	): Promise<DeleteResult> {
+		const where = typeof criteria === 'string' ? { id: criteria } : { ...criteria, ...(options?.where ?? {}) };
+		assertMayWriteTenantSettings(await this.namesOfRows(where as FindOptionsWhere<TenantSetting>));
+		return await super.delete(criteria, options);
+	}
+
+	/**
+	 * Soft-deletes a setting row, unless it is an operator-only setting and the caller does not operate the
+	 * installation. Checked before the base method, which answers any failure as a 404.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<TenantSetting>,
+		saveOptions?: SaveOptions
+	): Promise<TenantSetting> {
+		assertMayWriteTenantSettings(await this.namesOfRows(id));
+		return await super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Brings a soft-deleted setting row back, unless it is an operator-only setting and the caller does not operate the
+	 * installation.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<TenantSetting>,
+		saveOptions?: SaveOptions
+	): Promise<TenantSetting> {
+		assertMayWriteTenantSettings(await this.namesOfRows(id));
+		return await super.softRecover(id, options, saveOptions);
+	}
+
+	/**
+	 * The names of the caller's setting rows that a write names, soft-deleted ones included.
+	 *
+	 * A criteria with no member selects nothing here, and the write itself answers it as it always has. A lookup that
+	 * fails (an id that is not a UUID) is answered as the row writes answer a missing row, never let through unchecked.
+	 *
+	 * @param criteria A row id, or the conditions of the write.
+	 * @returns The names of the rows, in the caller's tenant.
+	 * @throws NotFoundException when the rows cannot be read.
+	 */
+	private async namesOfRows(criteria: string | FindOptionsWhere<TenantSetting>): Promise<string[]> {
+		const where = (typeof criteria === 'string' ? { id: criteria } : criteria) as FindOptionsWhere<TenantSetting>;
+		if (!where || typeof where !== 'object' || Object.keys(where).length === 0) {
+			return [];
+		}
+		try {
+			const rows = await this.find({ where, withDeleted: true });
+			return (rows ?? []).map((row) => row.name);
+		} catch {
+			throw new NotFoundException('The record was not found');
+		}
 	}
 
 	/**
