@@ -1,4 +1,11 @@
-import { Injectable, BadRequestException, HttpStatus, HttpException, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpStatus,
+	HttpException,
+	NotFoundException
+} from '@nestjs/common';
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
 import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, In, WhereExpressionBuilder } from 'typeorm';
@@ -10,7 +17,8 @@ import {
 	IEquipmentSharingUpdateInPlaceInput,
 	IEquipmentSharingUpdateInput,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { ConfigService, DatabaseTypeEnum, isMySQL, isPostgres } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
@@ -24,6 +32,12 @@ import { MultiORMEnum, parseSortOrder } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
+import { requestersOfDocument } from './../request-approval/request-approval.service';
+import {
+	IRequestApprovalRequestedFor,
+	isRequesterOfRequestApproval,
+	REQUESTER_DOES_NOT_ANSWER
+} from './../request-approval/request-approval-decision';
 import { bumpVersion, parseEntityVersion } from '../concurrency/version.util';
 import { ApiException } from '../core/errors/api-exception';
 import { redactDatabaseError, toClientSafeError } from '../core/errors/database-error';
@@ -61,6 +75,8 @@ export interface IDecisionRequestApproval {
 	requestId?: ID | null;
 	/** The approval's organization, as stored. */
 	organizationId?: ID | null;
+	/** The user who raised the approval, as stored. */
+	createdByUserId?: ID | null;
 }
 
 /**
@@ -77,6 +93,13 @@ export interface IEquipmentSharingDecisionTransaction {
 	 * @returns The approval as stored now, or null when it is no longer there.
 	 */
 	lockRequestApproval(requestApprovalId: ID, tenantId: ID): Promise<IDecisionRequestApproval | null>;
+	/**
+	 * Who the sharing was filed by (its `createdByUserId`) and is for (its employees), inside the tenant: none of them
+	 * decides it, unless they are a tenant administrator. Read after {@link lockRequestApproval}, the lock an in-place
+	 * edit of the memberships takes too (`updateInPlace`), so the two take turns and the decision reads the memberships
+	 * as they stand when it is made. Empty when the sharing is not there.
+	 */
+	readRequesters(sharingId: ID, tenantId: ID): Promise<IRequestApprovalRequestedFor>;
 	/**
 	 * `UPDATE equipment_sharing SET status = :status, version = version + 1 WHERE <criteria>`: the decision's
 	 * compare-and-set, which holds the sharing's row until the transaction ends.
@@ -911,6 +934,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * written then.
 	 * @throws NotFoundException when the sharing or its request approval is no longer there (or no longer in the
 	 * caller's reach); nothing is written then.
+	 * @throws ForbiddenException when the caller, not a tenant administrator, raised the sharing's approval, filed the
+	 * sharing, or is an employee it is for; nothing is written then.
 	 * @throws BadRequestException when another error occurs.
 	 */
 	async decideWithRequestApproval(id: ID, status: number, requestApprovalId: ID): Promise<EquipmentSharing> {
@@ -924,9 +949,25 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				tenantId
 			} as FindOptionsWhere<EquipmentSharing>;
 
+			// Who decides: a tenant administrator decides any sharing, as on the request approval's own answer route.
+			const user = RequestContext.currentUser();
+			const decider = { userId: user?.id ?? null, employeeId: user?.employeeId ?? null };
+			const isTenantAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
+
 			const decided = await this.decisionTransaction(async (transaction) => {
 				// The approval's lock first, the order the request approval's own answer route takes its locks in.
 				const approval = await transaction.lockRequestApproval(requestApprovalId, tenantId);
+				// Nobody decides a sharing they raised or that is for them (owner decision Q9): the user who raised its
+				// approval, the user who filed the sharing, and the employees it is for — the rule the request
+				// approval's answer applies to the same request. Read after the lock, before anything is written.
+				if (!isTenantAdmin) {
+					const requestedFor = await transaction.readRequesters(equipmentSharing.id, tenantId);
+					if (
+						isRequesterOfRequestApproval({ createdByUserId: approval?.createdByUserId }, decider, requestedFor)
+					) {
+						throw new ForbiddenException(REQUESTER_DOES_NOT_ANSWER);
+					}
+				}
 				// The compare-and-set before the approval's checks, so a decision based on a read another write has
 				// overtaken is told so (409) whatever that write did to the approval.
 				const written = await transaction.writeSharingStatus(criteria, status);
@@ -1006,8 +1047,24 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					.createQueryBuilder(RequestApproval, 'request_approval')
 					.where({ id: requestApprovalId, tenantId });
 				const row = rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
-				return row ? { id: row.id, requestId: row.requestId, organizationId: row.organizationId } : null;
+				return row
+					? {
+							id: row.id,
+							requestId: row.requestId,
+							organizationId: row.organizationId,
+							createdByUserId: row.createdByUserId
+					  }
+					: null;
 			},
+			readRequesters: async (sharingId, tenantId) =>
+				// The filer and the employees alone, no other eager relation.
+				requestersOfDocument(
+					await manager.findOne(EquipmentSharing, {
+						where: { id: sharingId, tenantId },
+						relations: { employees: true },
+						loadEagerRelations: false
+					})
+				),
 			writeSharingStatus: async (criteria, status) =>
 				affectedRows(await manager.update(EquipmentSharing, criteria, { status })),
 			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
@@ -1044,10 +1101,20 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					? {
 							id: row.id,
 							requestId: row.requestId,
-							organizationId: row.organizationId ?? row.organization?.id ?? null
+							organizationId: row.organizationId ?? row.organization?.id ?? null,
+							// The requester the same way: an unhydrated mirror would let them decide their own sharing.
+							createdByUserId: row.createdByUserId ?? row.createdByUser?.id ?? null
 						}
 					: null;
 			},
+			readRequesters: async (sharingId, tenantId) =>
+				requestersOfDocument(
+					await em.findOne(
+						EquipmentSharing,
+						{ id: sharingId, tenantId } as any,
+						{ disableIdentityMap: true, populate: ['employees'] } as any
+					)
+				),
 			writeSharingStatus: async (criteria, status) =>
 				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ status }) as any),
 			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
