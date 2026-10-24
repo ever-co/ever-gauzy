@@ -28,7 +28,8 @@ import {
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
 	IOrganizationProjectEmployee,
-	ID
+	ID,
+	RolesEnum
 } from '@gauzy/contracts';
 
 /** The form's sections, in the order the tab bar shows them. */
@@ -417,16 +418,22 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 		const project: IOrganizationProject = this.project;
 
+		// A manager is flagged `isManager` or holds the MANAGER role: the server sets the flag only for a caller
+		// holding CHANGE_SELECTED_EMPLOYEE, so the managers of a project an employee created hold the role alone.
+		// Reading the flag alone listed them as members, and saving the form then took their manager role away.
+		const isManager = (member: IOrganizationProjectEmployee) =>
+			!!member.isManager || member.role?.name === RolesEnum.MANAGER;
+
 		// Selected Members Ids
 		this.selectedEmployeeIds = (project.members || [])
-			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+			.filter((member: IOrganizationProjectEmployee) => !isManager(member))
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
 		this.memberIds = this.selectedEmployeeIds;
 
 		// Selected Managers Ids
 		this.selectedManagerIds = (project.members || [])
-			.filter((member: IOrganizationProjectEmployee) => member.isManager)
+			.filter((member: IOrganizationProjectEmployee) => isManager(member))
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
 		this.managerIds = this.selectedManagerIds;
