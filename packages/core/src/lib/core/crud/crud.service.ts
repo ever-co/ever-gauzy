@@ -74,6 +74,7 @@ import {
 	IUpdateCriteria
 } from './icrud.service';
 import { ITryRequest } from './try-request';
+import { RequestContext } from '../context/request-context';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -1281,6 +1282,20 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				row[property.name] === undefined
 			) {
 				row[property.name] = property.onUpdate(row as never, this.mikroOrmRepository.getEntityManager());
+			}
+		}
+
+		// The audit stamp TypeORM's update gets from `BaseEntityEventSubscriber.beforeEntityUpdate` (its update query
+		// broadcasts the payload to the subscribers). `nativeUpdate` runs no subscriber, so under MikroORM
+		// `updatedByUserId` stayed empty through every `update()`, and an administrator's change read as an untouched
+		// default to the permission backfill migrations that rely on it.
+		if (
+			row['updatedByUserId'] === undefined &&
+			meta.props.some((property) => property.name === 'updatedByUserId' && property.persist !== false)
+		) {
+			const userId = RequestContext.currentUserId();
+			if (userId) {
+				row['updatedByUserId'] = userId;
 			}
 		}
 
