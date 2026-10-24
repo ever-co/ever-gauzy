@@ -8,6 +8,7 @@ import * as crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { SecurityLogger } from '../utils/security-logger';
 import { ClientRegistrationResponse } from '../interfaces';
+import { VerifiedClientSecretCache } from './oauth-client-secret-cache';
 
 export interface OAuth2Client {
 	clientId: string;
@@ -84,7 +85,14 @@ export class OAuth2ClientManager {
 	private readonly DEFAULT_GRANT_TYPES = ['authorization_code', 'refresh_token'];
 	private readonly DEFAULT_RESPONSE_TYPES = ['code'];
 
-	constructor(private readonly maxDynamicClients = MAX_DYNAMIC_CLIENTS) {
+	/**
+	 * @param maxDynamicClients - How many dynamically registered clients are kept at most.
+	 * @param verifiedSecrets - The secrets recently verified with bcrypt (see {@link validateClient}).
+	 */
+	constructor(
+		private readonly maxDynamicClients = MAX_DYNAMIC_CLIENTS,
+		private readonly verifiedSecrets = new VerifiedClientSecretCache()
+	) {
 		this.securityLogger = new SecurityLogger();
 	}
 
@@ -304,12 +312,18 @@ export class OAuth2ClientManager {
 	}
 
 	/**
-	 * Validate client credentials
+	 * Validate client credentials.
+	 *
+	 * A confidential client's secret is compared with its stored bcrypt hash (cost 12). The resource server
+	 * authenticates on every introspection request, so a secret verified in the last few minutes against the same
+	 * stored hash is taken as right without bcrypt ({@link VerifiedClientSecretCache}); a wrong secret is always
+	 * compared with bcrypt, and a missing or disabled client is refused before the cache is asked.
 	 */
 	async validateClient(clientId: string, clientSecret?: string): Promise<OAuth2Client | null> {
 		const client = this.clients.get(clientId);
 
 		if (!client || !client.isActive) {
+			this.verifiedSecrets.forget(clientId);
 			return null;
 		}
 
@@ -323,8 +337,23 @@ export class OAuth2ClientManager {
 			return null;
 		}
 
-		const isValidSecret = await bcrypt.compare(clientSecret, client.clientSecretHash);
-		return isValidSecret ? client : null;
+		const clientSecretHash = client.clientSecretHash;
+		const isValidSecret = await this.verifiedSecrets.verify(
+			clientId,
+			clientSecret,
+			clientSecretHash,
+			(secret, secretHash) => bcrypt.compare(secret, secretHash)
+		);
+		if (!isValidSecret) {
+			return null;
+		}
+		// Removed, disabled or given another secret while its secret was compared: the success just remembered is
+		// dropped too, so the client is verified with bcrypt again (against its current hash)
+		if (this.clients.get(clientId) !== client || !client.isActive || client.clientSecretHash !== clientSecretHash) {
+			this.verifiedSecrets.forget(clientId);
+			return null;
+		}
+		return client;
 	}
 
 	/**
@@ -517,6 +546,7 @@ export class OAuth2ClientManager {
 			}
 			pool.delete(forgotten.value);
 			this.clients.delete(forgotten.value);
+			this.verifiedSecrets.forget(forgotten.value);
 			this.securityLogger.warn(
 				`Dynamic client registry full: forgot the ${neverUsed ? 'oldest unused' : 'least recently used'} client ${
 					forgotten.value
