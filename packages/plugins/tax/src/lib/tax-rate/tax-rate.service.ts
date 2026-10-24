@@ -15,6 +15,7 @@ import {
 	normalizeDecimalString,
 	parseDecimalString
 } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TaxCategory } from '../tax-category/tax-category.entity';
 import { TaxCategoryService } from '../tax-category/tax-category.service';
@@ -137,7 +138,7 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRate>): Promise<TaxRate> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

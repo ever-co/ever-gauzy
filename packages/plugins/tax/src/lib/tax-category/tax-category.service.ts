@@ -9,6 +9,7 @@ import {
 	TenantAwareCrudService
 } from '@gauzy/core';
 import { TaxWriteInput } from '../tax.types';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertOrganizationUnchanged, inCallerOrganization, retirementResult } from '../write-rules';
 import { TaxCategory } from './tax-category.entity';
 import { MikroOrmTaxCategoryRepository } from './repository/mikro-orm-tax-category.repository';
@@ -46,7 +47,7 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxCategory>): Promise<TaxCategory> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

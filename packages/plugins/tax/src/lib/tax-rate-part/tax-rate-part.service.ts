@@ -9,6 +9,7 @@ import {
 	compareDecimalStrings
 } from '@gauzy/core';
 import { TaxAmountType, TaxPartType, TaxWriteInput } from '../tax.types';
+import { confiningOrganizationId } from '../organization-boundary';
 import { inCallerOrganization } from '../write-rules';
 import { TaxRatePart } from './tax-rate-part.entity';
 import { MikroOrmTaxRatePartRepository } from './repository/mikro-orm-tax-rate-part.repository';
@@ -53,7 +54,7 @@ export class TaxRatePartService extends TenantAwareCrudService<TaxRatePart> {
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRatePart>): Promise<TaxRatePart> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**

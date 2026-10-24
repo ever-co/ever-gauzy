@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TypeOrmTaxRateRepository } from '../tax-rate/repository/type-orm-tax-rate.repository';
 import {
@@ -70,7 +71,7 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	 * @throws NotFoundException when no row of the caller's organization carries the id.
 	 */
 	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRegime>): Promise<TaxRegime> {
-		return inCallerOrganization(await super.findOneByIdString(id, options), RequestContext.currentOrganizationId());
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**
