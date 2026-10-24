@@ -143,7 +143,7 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 			.createQueryBuilder()
 			.delete()
 			.from('document_category_document')
-			.where('"documentCategoryId" = :id', { id: category.id })
+			.where(p('"documentCategoryId" = :id'), { id: category.id })
 			.execute();
 
 		await this.softDelete(category.id);
@@ -178,15 +178,15 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		// Re-point assignments that do not already exist on the target (deduplicated)
 		const sourceRows: Array<{ documentId: ID }> = await manager
 			.createQueryBuilder()
-			.select('"pivot"."documentId"', 'documentId')
+			.select(p('"pivot"."documentId"'), 'documentId')
 			.from('document_category_document', 'pivot')
-			.where('"pivot"."documentCategoryId" = :sourceId', { sourceId: source.id })
+			.where(p('"pivot"."documentCategoryId" = :sourceId'), { sourceId: source.id })
 			.getRawMany();
 		const targetRows: Array<{ documentId: ID }> = await manager
 			.createQueryBuilder()
-			.select('"pivot"."documentId"', 'documentId')
+			.select(p('"pivot"."documentId"'), 'documentId')
 			.from('document_category_document', 'pivot')
-			.where('"pivot"."documentCategoryId" = :targetId', { targetId: target.id })
+			.where(p('"pivot"."documentCategoryId" = :targetId'), { targetId: target.id })
 			.getRawMany();
 		const alreadyAssigned = new Set(targetRows.map((row) => row.documentId));
 		const toInsert = sourceRows
@@ -205,7 +205,7 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 			.createQueryBuilder()
 			.delete()
 			.from('document_category_document')
-			.where('"documentCategoryId" = :sourceId', { sourceId: source.id })
+			.where(p('"documentCategoryId" = :sourceId'), { sourceId: source.id })
 			.execute();
 
 		await this.softDelete(source.id);
