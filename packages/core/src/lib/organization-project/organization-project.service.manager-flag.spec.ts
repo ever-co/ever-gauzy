@@ -239,6 +239,40 @@ describe('OrganizationProjectService.updateOrganizationProjectMembers — manage
 	});
 });
 
+describe('OrganizationProjectService.update — membership rows are not saved from the body', () => {
+	it('drops a stated membership row, so the flag it carries reaches no save', async () => {
+		// PUT /organization-projects/:id from a role-only manager, stating their own membership with the flag.
+		actAsEmployee('employee-me');
+		let saved: Record<string, any>;
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'project-1'
+		} as never);
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => {
+			saved = entity;
+			return { id: 'project-1', name: 'Project', ...entity } as never;
+		});
+		const updateOrganizationProjectMembers = jest.fn();
+		const service = Object.create(OrganizationProjectService.prototype);
+		Object.assign(service, { _activityLogService: { logActivity: jest.fn() }, updateOrganizationProjectMembers });
+
+		await service.update('project-1', {
+			name: 'Renamed',
+			organizationId: ORGANIZATION,
+			members: [{ id: 'membership-me', employeeId: 'employee-me', isManager: true }]
+		} as never);
+
+		expect(saved).not.toHaveProperty('members');
+		expect(saved).toMatchObject({
+			id: 'project-1',
+			name: 'Renamed',
+			organizationId: ORGANIZATION,
+			tenantId: TENANT
+		});
+		// No memberIds / managerIds: the gated helper does not run, and nothing else writes a membership.
+		expect(updateOrganizationProjectMembers).not.toHaveBeenCalled();
+	});
+});
+
 describe('OrganizationProjectService.isManagerOfProject — the flag or the MANAGER role', () => {
 	it('TypeORM: matches an active member flagged isManager or holding the MANAGER role', async () => {
 		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);

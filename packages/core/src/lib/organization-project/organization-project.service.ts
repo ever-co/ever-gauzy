@@ -198,7 +198,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			input.description = sanitizeRichHtml(input.description);
 		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		const { memberIds, managerIds, organizationId, ...entity } = input;
+		// `members` is never saved from the input: the relation cascades, so a membership row stated in the body
+		// (`{ id, isManager: true }`) was written as given and raised the flag `updateOrganizationProjectMembers`
+		// gates. The members change through `memberIds` / `managerIds` alone.
+		const { memberIds, managerIds, organizationId, members: _members, ...entity } = input;
+		void _members;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
