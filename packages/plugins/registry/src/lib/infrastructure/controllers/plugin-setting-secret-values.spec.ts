@@ -16,9 +16,15 @@ jest.mock('@gauzy/core', () => ({
 jest.mock('../../application', () => new Proxy({}, { get: () => class {} }));
 jest.mock('../../domain', () => new Proxy({}, { get: () => class {} }));
 jest.mock('../../shared', () => new Proxy({}, { get: () => class {} }));
+// The plugin tenant read below loads the same settings (`GET /plugin-tenants/:id`, relation `settings`).
+jest.mock('../../application/plugin-tenant', () => new Proxy({}, { get: () => class {} }));
+jest.mock('../../application/plugin-tenant/commands', () => new Proxy({}, { get: () => class {} }));
+jest.mock('../../application/plugin-tenant/queries', () => new Proxy({}, { get: () => class {} }));
+jest.mock('../../shared/dto', () => new Proxy({}, { get: () => class {} }));
 
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PluginSettingController } from './plugin-setting.controller';
+import { PluginTenantController } from './plugin-tenant.controller';
 
 describe('plugin setting reads', () => {
 	const settings = () => [
@@ -87,5 +93,43 @@ describe('plugin setting reads', () => {
 
 		expect(await controller.findAll('plugin-1', { key: 'nope' } as any)).toEqual([]);
 		expect(await controller.findOne('plugin-1', 'setting-9')).toBeNull();
+	});
+});
+
+describe('plugin tenant read', () => {
+	const pluginTenant = () => ({
+		id: 'plugin-tenant-1',
+		settings: [
+			{ id: 'setting-1', key: 'apiKey', value: 'sk-live-secret', isEncrypted: true },
+			{ id: 'setting-2', key: 'region', value: 'eu-west-1', isEncrypted: false }
+		]
+	});
+	const queryBus = { execute: jest.fn() };
+	const controller = new PluginTenantController({} as any, queryBus as any);
+
+	beforeEach(() => {
+		mockGranted.clear();
+		mockGranted.add(PermissionsEnum.PLUGIN_VIEW);
+		queryBus.execute.mockReset();
+	});
+
+	it('leaves out the secret values of its settings without PLUGIN_CONFIGURE', async () => {
+		queryBus.execute.mockResolvedValue(pluginTenant());
+
+		const read = await controller.findOne('plugin-tenant-1');
+
+		expect(read.settings.map(({ key, value }) => [key, value])).toEqual([
+			['apiKey', null],
+			['region', 'eu-west-1']
+		]);
+	});
+
+	it('returns them with PLUGIN_CONFIGURE', async () => {
+		mockGranted.add(PermissionsEnum.PLUGIN_CONFIGURE);
+		queryBus.execute.mockResolvedValue(pluginTenant());
+
+		const read = await controller.findOne('plugin-tenant-1');
+
+		expect(read.settings.map(({ value }) => value)).toEqual(['sk-live-secret', 'eu-west-1']);
 	});
 });

@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { withSecretValueHidden } from './plugin-setting.controller';
 import { GetPluginTenantUsersResult, ManagePluginTenantUsersResult } from '../../application/plugin-tenant';
 import {
 	ApprovePluginTenantCommand,
@@ -238,7 +239,13 @@ export class PluginTenantController {
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get(':id')
 	async findOne(@Param('id') id: string): Promise<IPluginTenant> {
-		return this.queryBus.execute(new GetPluginTenantByIdQuery(id));
+		const pluginTenant: IPluginTenant = await this.queryBus.execute(new GetPluginTenantByIdQuery(id));
+
+		// Its `settings` are the rows `GET /plugins/:pluginId/settings` answers, so an encrypted setting's value is
+		// left out here too unless the caller holds PLUGIN_CONFIGURE (`withSecretValueHidden`).
+		pluginTenant?.settings?.forEach((setting) => withSecretValueHidden(setting));
+
+		return pluginTenant;
 	}
 
 	/**
