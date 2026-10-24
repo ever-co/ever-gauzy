@@ -844,6 +844,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			)
 			.subscribe();
 
+		// Switched to another organization: the reload that follows must not reuse the screenshots of the one left, nor
+		// the cached server lookup of its latest ones; a lookup still pending for it is dropped as well.
+		this._organizationSwitchService.organizationEntered$
+			.pipe(
+				tap(() => this.clearLastScreenCapture()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this._alwaysOnService.state$
 			.pipe(
 				filter((state: AlwaysOnStateEnum) => {
@@ -1717,17 +1726,35 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	async toggleStart(val: boolean, onClick = true, passed = false) {
 		this._auditLogService.timerAuditLogInfo(`User attempted to ${val ? 'start' : 'stop'} the timer${onClick ? ' by clicking the button' : ''}${passed ? ' with pre-granted permissions' : ''}.`);
 
-		// Every start (Start button, tray, remote timer, always-on window) comes through here. While the organization is
-		// being switched, a timer started now would run with the employee and tokens of the organization being left, and
-		// lose its client, project, team and task when the switch lands; so it waits until the new organization is loaded.
-		if (val && this._organizationSwitchService.isSwitching) {
+		if (!val) {
+			return this.toggleTimer(false, onClick, passed);
+		}
+
+		// Every start (Start button, tray, remote timer, always-on window) comes through here, and a start and an
+		// organization switch never overlap. While the organization is being switched, a timer started now would run with
+		// the employee and tokens of the organization being left, and lose its client, project, team and task when the
+		// switch lands; so it waits until the new organization is loaded. And from here until the main process has started
+		// the timer no switch may begin: the awaits on the way (platform, macOS permission prompt, today's time) would
+		// otherwise leave room for one.
+		const endTimerStart = this._organizationSwitchService.beginTimerStart();
+		if (!endTimerStart) {
 			this._auditLogService.timerAuditLogInfo('Timer start refused: the organization is being switched.');
 			this._toastrNotifier.warn(
 				this._translateService.instant('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_IN_PROGRESS')
 			);
 			return;
 		}
+		try {
+			await this.toggleTimer(true, onClick, passed);
+		} finally {
+			endTimerStart();
+		}
+	}
 
+	/**
+	 * The start or stop itself, once `toggleStart()` has let it go ahead.
+	 */
+	private async toggleTimer(val: boolean, onClick: boolean, passed: boolean): Promise<void> {
 		try {
 			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
 			if (val && onClick && !passed && platform?.os === 'darwin') {

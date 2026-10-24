@@ -25,9 +25,13 @@ export class AuthIPCHandler {
 	private setupAuthSuccessHandler(): void {
 		const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
 
-		const handleAuthSuccess = async (sender: WebContents, arg: any): Promise<void> => {
+		const handleAuthSuccess = async (
+			sender: WebContents,
+			arg: any,
+			options?: { requireSavedUser?: boolean }
+		): Promise<void> => {
 			console.log('Auth Success');
-			await this.authHandler.handleAuthSuccess(arg);
+			await this.authHandler.handleAuthSuccess(arg, options);
 
 			const appConfig = this.store.getStore('configs');
 			this.updateMenuItems(arg.employeeId, appConfig.timeTrackerWindow);
@@ -47,9 +51,12 @@ export class AuthIPCHandler {
 		ipcMain.on('auth_success', (event, arg) => handleAuthSuccess(event.sender, arg));
 
 		// The same, answered once the user, tokens, organization and employee are saved: an organization switch in the
-		// timer waits for it, so the timer reload that follows reads the account switched to, not the one left.
+		// timer waits for it, so the timer reload that follows reads the account switched to, not the one left. A user
+		// that cannot be saved rejects it, so the switch sends the user to sign in again instead of going on.
 		ipcMain.removeHandler('AUTH_SUCCESS_SAVE');
-		ipcMain.handle('AUTH_SUCCESS_SAVE', (event, arg) => handleAuthSuccess(event.sender, arg));
+		ipcMain.handle('AUTH_SUCCESS_SAVE', (event, arg) =>
+			handleAuthSuccess(event.sender, arg, { requireSavedUser: true })
+		);
 	}
 
 	private setupLogoutHandlers(): void {

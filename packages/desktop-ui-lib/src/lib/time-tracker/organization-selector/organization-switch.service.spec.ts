@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { IAuthResponse, IOrganization } from '@gauzy/contracts';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
-import { OrganizationSwitchService } from './organization-switch.service';
+import { OrganizationSwitchService, TIMER_RELOAD_TIMEOUT } from './organization-switch.service';
 
 /**
  * ever-co/ever-gauzy#11316 confines a non-admin to the organization of their access token, so picking another
@@ -27,7 +27,9 @@ describe('OrganizationSwitchService', () => {
 	const selectorStub = (): SelectorStub => ({ resetPage: jest.fn(), selected: { id: 'picked-in-org-a' } });
 
 	let authService: { switchOrganization: jest.Mock; electronAuthentication: jest.Mock };
-	let authStrategy: { storeAuthenticationData: jest.Mock };
+	let authStrategy: { storeAuthenticationData: jest.Mock; replaceCredentials: jest.Mock };
+	/** True while `AuthStrategy.replaceCredentials` runs (no token refresh may overlap it). */
+	let replacingCredentials: boolean;
 	let store: { organizationId: string | null; selectedOrganization: IOrganization | null; user: any };
 	let ipcRenderer: { send: jest.Mock };
 	let userOrganizationCache: { clear: jest.Mock };
@@ -49,10 +51,19 @@ describe('OrganizationSwitchService', () => {
 			electronAuthentication: jest.fn().mockReturnValue(of(undefined))
 		};
 		// Mirror AuthStrategy.storeAuthenticationData: the organization comes from the employee of the response.
+		replacingCredentials = false;
 		authStrategy = {
 			storeAuthenticationData: jest.fn((response: IAuthResponse) => {
 				store.organizationId = response.user.employee.organizationId;
 				store.user = response.user;
+			}),
+			replaceCredentials: jest.fn(async (operation: () => Promise<unknown>) => {
+				replacingCredentials = true;
+				try {
+					return await operation();
+				} finally {
+					replacingCredentials = false;
+				}
 			})
 		};
 		store = { organizationId: organizationA.id, selectedOrganization: organizationA, user: null };
@@ -99,7 +110,10 @@ describe('OrganizationSwitchService', () => {
 		jest.spyOn(console, 'warn').mockImplementation(() => undefined);
 	});
 
-	afterEach(() => jest.restoreAllMocks());
+	afterEach(() => {
+		jest.useRealTimers();
+		jest.restoreAllMocks();
+	});
 
 	it('asks the API to switch, then stores the new tokens and selects the organization', async () => {
 		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
@@ -347,6 +361,137 @@ describe('OrganizationSwitchService', () => {
 
 		expect(authStrategy.storeAuthenticationData).not.toHaveBeenCalled();
 		expect(sessionExpiredHandler.execute).toHaveBeenCalledTimes(1);
+	});
+
+	it('asks the API and stores its tokens with no token refresh overlapping, and reloads only after that', async () => {
+		authService.switchOrganization.mockImplementation((organizationId: string) => {
+			expect(replacingCredentials).toBe(true);
+			return of(authResponse(organizationId));
+		});
+		authStrategy.storeAuthenticationData.mockImplementation((response: IAuthResponse) => {
+			expect(replacingCredentials).toBe(true);
+			store.organizationId = response.user.employee.organizationId;
+			store.user = response.user;
+		});
+		ipcRenderer.send.mockImplementation((channel: string) => {
+			// The reload makes requests that may need a token refresh: it must not wait for the switch to let one go.
+			expect(replacingCredentials).toBe(false);
+			if (channel === 'refresh-timer') {
+				isRefreshing$.next(false);
+			}
+		});
+
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(true);
+
+		expect(authStrategy.replaceCredentials).toHaveBeenCalledTimes(1);
+		expect(sentChannels()).toEqual(['update_project_on', 'refresh-timer']);
+	});
+
+	it('fails the switch, and sends the user to sign in again, when the time tracker does not reload in time', async () => {
+		jest.useFakeTimers();
+		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
+		// The time tracker never answers the refresh.
+		ipcRenderer.send.mockImplementation(() => undefined);
+
+		const switching = service.switchOrganization(organizationB);
+		await jest.advanceTimersByTimeAsync(TIMER_RELOAD_TIMEOUT - 1);
+
+		// Until then no timer may start: the account is in organization B, the time tracker still in A.
+		expect(service.isSwitching).toBe(true);
+		expect(service.beginTimerStart()).toBeNull();
+		expect(sessionExpiredHandler.execute).not.toHaveBeenCalled();
+
+		await jest.advanceTimersByTimeAsync(1);
+
+		await expect(switching).resolves.toBe(false);
+		expect(translate.instant).toHaveBeenCalledWith('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_INCOMPLETE', {
+			name: organizationB.name
+		});
+		expect(toastr.error).toHaveBeenCalledTimes(1);
+		expect(sessionExpiredHandler.execute).toHaveBeenCalledTimes(1);
+		expect(timeTrackerStore.update).toHaveBeenLastCalledWith({ isRefreshing: false });
+	});
+
+	it('treats an account that could not even be handed to the main process as a failed save', async () => {
+		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
+		// `electronAuthentication` returns nothing when the IPC call throws synchronously.
+		authService.electronAuthentication.mockReturnValue(undefined);
+
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(false);
+
+		expect(ipcRenderer.send).not.toHaveBeenCalled();
+		for (const selector of Object.values(selectors)) {
+			expect(selector.resetPage).not.toHaveBeenCalled();
+		}
+		expect(translate.instant).toHaveBeenCalledWith('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_INCOMPLETE', {
+			name: organizationB.name
+		});
+		expect(sessionExpiredHandler.execute).toHaveBeenCalledTimes(1);
+	});
+
+	it('announces the organization entered after storing its tokens and before the time tracker reloads', async () => {
+		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
+		const entered: Array<{ organization: IOrganization; organizationId: string | null; sent: string[] }> = [];
+		service.organizationEntered$.subscribe((organization) =>
+			entered.push({ organization, organizationId: store.organizationId, sent: sentChannels() })
+		);
+
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(true);
+
+		// The time tracker forgets organization A's screenshots then, so the reload cannot show them again.
+		expect(entered).toEqual([
+			{ organization: organizationB, organizationId: organizationB.id, sent: ['update_project_on'] }
+		]);
+	});
+
+	it('announces no organization entered when the switch is refused or switched back', async () => {
+		const entered = jest.fn();
+		service.organizationEntered$.subscribe(entered);
+		authService.switchOrganization.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 401 })));
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(false);
+
+		authService.switchOrganization.mockImplementation((organizationId: string) =>
+			of(authResponse(organizationId, organizationId === organizationA.id))
+		);
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(false);
+
+		expect(entered).not.toHaveBeenCalled();
+	});
+
+	it('begins no switch while a timer start is under way', async () => {
+		const starting: boolean[] = [];
+		service.isStartingTimer$.subscribe((isStarting) => starting.push(isStarting));
+
+		const endTimerStart = service.beginTimerStart();
+		expect(endTimerStart).toEqual(expect.any(Function));
+
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(false);
+		expect(authService.switchOrganization).not.toHaveBeenCalled();
+		expect(service.isSwitching).toBe(false);
+
+		// Ending a start twice releases it once.
+		endTimerStart();
+		endTimerStart();
+		expect(starting).toEqual([false, true, false]);
+
+		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(true);
+	});
+
+	it('lets no timer start while a switch is under way, and lets it once the switch is over', async () => {
+		const response$ = new Subject<IAuthResponse>();
+		authService.switchOrganization.mockReturnValue(response$);
+
+		const switching = service.switchOrganization(organizationB);
+		expect(service.beginTimerStart()).toBeNull();
+
+		response$.next(authResponse(organizationB.id));
+		response$.complete();
+		await expect(switching).resolves.toBe(true);
+
+		const endTimerStart = service.beginTimerStart();
+		expect(endTimerStart).toEqual(expect.any(Function));
+		endTimerStart();
 	});
 
 	it('does nothing for a missing organization', async () => {

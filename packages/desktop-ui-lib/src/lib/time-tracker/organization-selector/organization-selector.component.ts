@@ -9,13 +9,15 @@ import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective 
 import { NbTooltipModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
+import { AsyncPipe } from '@angular/common';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'ngx-desktop-timer-organization-selector',
     templateUrl: './organization-selector.component.html',
     styleUrls: ['./organization-selector.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
-    imports: [NgSelectComponent, NbTooltipModule, FormsModule, NgOptionTemplateDirective, NgLabelTemplateDirective, TranslatePipe]
+    imports: [NgSelectComponent, NbTooltipModule, FormsModule, NgOptionTemplateDirective, NgLabelTemplateDirective, TranslatePipe, AsyncPipe]
 })
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	public organizations: IOrganization[] = [];
@@ -48,6 +50,11 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	 * selector is disabled meanwhile, and `OrganizationSwitchService.isSwitching` keeps the timer from starting.
 	 */
 	public switching = false;
+
+	/** `true` while the timer starts: no switch may begin then (`OrganizationSwitchService.beginTimerStart`). */
+	public get isStartingTimer$(): Observable<boolean> {
+		return this._organizationSwitchService.isStartingTimer$;
+	}
 
 	constructor(
 		private readonly _userOrganizationService: UserOrganizationService,
