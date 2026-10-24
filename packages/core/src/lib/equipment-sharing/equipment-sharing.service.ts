@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
-import { Brackets, DeleteResult, FindOptionsWhere, WhereExpressionBuilder } from 'typeorm';
+import { LockMode } from '@mikro-orm/core';
+import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
+import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IEquipmentSharing,
@@ -8,10 +10,11 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
+import { ConfigService, DatabaseTypeEnum, isMySQL, isPostgres } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
+import { RequestApproval } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { isWithinOrganizationBoundary } from '../core/crud/organization-boundary';
@@ -37,6 +40,28 @@ import { affectedRows, expectedSharingVersion, sharingVersionConflict } from './
 interface IStoredSharingRow extends IStoredSharing {
 	id: ID;
 	version?: number | null;
+}
+
+/**
+ * The statements of one decision of a sharing and of its request approval, all made on one transaction: see
+ * {@link EquipmentSharingService.decideWithRequestApproval}.
+ */
+export interface IEquipmentSharingDecisionTransaction {
+	/**
+	 * Takes the row lock of the sharing's request approval until the transaction ends (`SELECT … FOR UPDATE` on
+	 * PostgreSQL and MySQL; SQLite serializes the transaction instead). An answer through the request approval's own
+	 * route locks that row first as well (ever-co/ever-gauzy#11382), so the two routes take their locks in one order.
+	 */
+	lockRequestApproval(requestId: ID, tenantId: ID): Promise<void>;
+	/**
+	 * `UPDATE equipment_sharing SET status = :status, version = version + 1 WHERE <criteria>`: the decision's
+	 * compare-and-set, which holds the sharing's row until the transaction ends.
+	 *
+	 * @returns How many rows were written: 0 when the sharing moved on from the version in the criteria.
+	 */
+	writeSharingStatus(criteria: FindOptionsWhere<EquipmentSharing>, status: number): Promise<number>;
+	/** Writes the status of the sharing's request approval, inside the tenant. */
+	writeRequestApprovalStatus(requestId: ID, tenantId: ID, status: number): Promise<void>;
 }
 
 /**
@@ -529,6 +554,171 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			}
 			throw new BadRequestException(err);
 		}
+	}
+
+	/**
+	 * Decides an equipment sharing, and the request approval recorded beside it, in one transaction:
+	 * `PUT /equipment-sharing/approval|refuse/:id` and the GraphQL approve / refuse (`EquipmentSharingStatusHandler`).
+	 *
+	 * The sharing is read in the caller's scope, then, on one transaction: the request approval's row is locked, the
+	 * sharing's status is written as a compare-and-set on the version read (which holds the sharing's row), and the
+	 * request approval's status is written. The two writes used to be separate statements, so the sharing's new version
+	 * was visible before the approval was written: a decision that approved the sharing and paused there let a refusal
+	 * read that version, refuse the sharing and its approval, and then wrote its own approval over the refusal — the
+	 * sharing refused, its approval approved. Now a second decision based on a read made before the first committed
+	 * waits for it and gets 409; one that reads after it decides after it, both rows at once.
+	 *
+	 * The compare-and-set also keeps the scoped read's organization boundary: every write moves the version on, so a
+	 * sharing moved out of the caller's reach since it was read is not matched.
+	 *
+	 * @param id - The sharing.
+	 * @param status - The decision.
+	 * @returns The sharing, as decided.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the sharing changed after it was read; nothing is
+	 * written then.
+	 * @throws BadRequestException when the sharing is not found, or another error occurs.
+	 */
+	async decideWithRequestApproval(id: ID, status: number): Promise<EquipmentSharing> {
+		try {
+			const equipmentSharing = await this.findOneByIdString(id);
+			const tenantId = RequestContext.currentTenantId() ?? equipmentSharing.tenantId;
+			const expected = expectedSharingVersion(undefined, equipmentSharing.version);
+
+			const criteria = {
+				...this.atVersion(equipmentSharing.id, expected),
+				tenantId
+			} as FindOptionsWhere<EquipmentSharing>;
+
+			const decided = await this.decisionTransaction(async (transaction) => {
+				await transaction.lockRequestApproval(equipmentSharing.id, tenantId);
+				const written = await transaction.writeSharingStatus(criteria, status);
+				if (!written) {
+					return false;
+				}
+				await transaction.writeRequestApprovalStatus(equipmentSharing.id, tenantId, status);
+				return true;
+			});
+
+			if (!decided) {
+				throw await this.versionConflict(id, expected);
+			}
+			return await this.findOneByIdString(id);
+		} catch (err) {
+			// The conflict stands as the 409 it is; everything else is answered as before.
+			if (err instanceof ApiException) {
+				throw err;
+			}
+			throw new BadRequestException(err);
+		}
+	}
+
+	/**
+	 * Runs one decision in one transaction on the ORM the installation runs, and hands it the statements it makes on
+	 * that transaction's connection. A statement made through a repository instead would run on another pooled
+	 * connection, outside the transaction, and wait for the locks the transaction holds.
+	 *
+	 * @param work - The transaction body.
+	 * @returns What the body answers.
+	 */
+	protected async decisionTransaction<R>(
+		work: (transaction: IEquipmentSharingDecisionTransaction) => Promise<R>
+	): Promise<R> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository
+					.getEntityManager()
+					.transactional(async (em) => await work(this.mikroOrmDecisionTransaction(em, rowLock)));
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository.manager.transaction(
+					async (manager) => await work(this.typeOrmDecisionTransaction(manager, rowLock))
+				);
+		}
+	}
+
+	/**
+	 * The TypeORM arm of {@link decisionTransaction}: everything on the transaction's manager. TypeORM's update query
+	 * increments the sharing's `@VersionColumn` and stamps the update date, as `CrudService.update` does.
+	 */
+	private typeOrmDecisionTransaction(manager: EntityManager, rowLock: boolean): IEquipmentSharingDecisionTransaction {
+		return {
+			lockRequestApproval: async (requestId, tenantId) => {
+				if (rowLock) {
+					await manager
+						.createQueryBuilder(RequestApproval, 'request_approval')
+						.where({ requestId, tenantId })
+						.setLock('pessimistic_write')
+						.getMany();
+				}
+			},
+			writeSharingStatus: async (criteria, status) =>
+				affectedRows(await manager.update(EquipmentSharing, criteria, { status })),
+			writeRequestApprovalStatus: async (requestId, tenantId, status) => {
+				await manager.update(RequestApproval, { requestId, tenantId }, { status });
+			}
+		};
+	}
+
+	/**
+	 * The MikroORM arm of {@link decisionTransaction}: everything on the transaction's fork. The sharing's row is the
+	 * one `CrudService.update` writes (`mikroOrmUpdateRow`: the update date, the version incremented in the statement);
+	 * the request approval's gets its update date and audit stamp the same way.
+	 */
+	private mikroOrmDecisionTransaction(
+		em: MikroOrmEntityManager,
+		rowLock: boolean
+	): IEquipmentSharingDecisionTransaction {
+		return {
+			lockRequestApproval: async (requestId, tenantId) => {
+				if (rowLock) {
+					await em.find(
+						RequestApproval,
+						{ requestId, tenantId } as any,
+						{ disableIdentityMap: true, lockMode: LockMode.PESSIMISTIC_WRITE } as any
+					);
+				}
+			},
+			writeSharingStatus: async (criteria, status) =>
+				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ status }) as any),
+			writeRequestApprovalStatus: async (requestId, tenantId, status) => {
+				await em.nativeUpdate(
+					RequestApproval,
+					{ requestId, tenantId } as any,
+					this.mikroOrmRequestApprovalRow(em, { status }) as any
+				);
+			}
+		};
+	}
+
+	/**
+	 * The row MikroORM's `nativeUpdate` is handed for a request approval's write: each property's `onUpdate` value
+	 * (the update date) and the user who wrote it, which TypeORM's update query writes without being asked. The audit
+	 * stamp is the `updatedByUser` relation's `persist: false` mirror, which `nativeUpdate` writes when it is stated
+	 * alone.
+	 */
+	private mikroOrmRequestApprovalRow(em: MikroOrmEntityManager, patch: Record<string, unknown>) {
+		const meta = em.getMetadata().find(RequestApproval.name);
+		if (!meta) {
+			return patch;
+		}
+		const row: Record<string, unknown> = { ...patch };
+		for (const property of meta.props) {
+			if (
+				typeof property.onUpdate === 'function' &&
+				property.persist !== false &&
+				row[property.name] === undefined
+			) {
+				row[property.name] = property.onUpdate(row as never, em);
+			}
+		}
+		const userId = RequestContext.currentUserId();
+		if (userId && row['updatedByUserId'] === undefined && meta.properties?.['updatedByUserId']) {
+			row['updatedByUserId'] = userId;
+		}
+		return row;
 	}
 
 	/**
