@@ -1,12 +1,12 @@
 // Must stay first: loads the entity graph before the service pulls an entity (see activity.controller.spec.ts).
 import '../core/entities/internal';
 
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PermissionsEnum, RequestApprovalStatusTypesEnum, RolesEnum, StatusTypesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { MultiORMEnum } from '../core/utils';
-import { TimeOffPolicy } from '../core/entities/internal';
+import { Employee, TimeOffPolicy } from '../core/entities/internal';
 import { TimeOffRequestService } from './time-off-request.service';
 
 /**
@@ -28,7 +28,15 @@ const COLLEAGUE = 'employee-colleague';
 const POLICIES = [
 	{ id: 'policy-approval', tenantId: TENANT, organizationId: ORGANIZATION, requiresApproval: true },
 	{ id: 'policy-no-approval', tenantId: TENANT, organizationId: ORGANIZATION, requiresApproval: false },
-	{ id: 'policy-foreign', tenantId: 'tenant-b', organizationId: ORGANIZATION, requiresApproval: false }
+	{ id: 'policy-foreign', tenantId: 'tenant-b', organizationId: ORGANIZATION, requiresApproval: false },
+	{ id: 'policy-elsewhere', tenantId: TENANT, organizationId: 'organization-b', requiresApproval: false }
+];
+
+/** The tenant's employees: two of the caller's organization and one of another organization. */
+const EMPLOYEES = [
+	{ id: OWN, tenantId: TENANT, organizationId: ORGANIZATION },
+	{ id: COLLEAGUE, tenantId: TENANT, organizationId: ORGANIZATION },
+	{ id: 'employee-elsewhere', tenantId: TENANT, organizationId: 'organization-b' }
 ];
 
 function asUser(options: { employeeId: string | null; role: RolesEnum; permissions: PermissionsEnum[] }) {
@@ -73,6 +81,13 @@ function surfaces() {
 							policy.organizationId === where.organizationId
 					) ?? null)
 				: null
+		),
+		find: jest.fn(async (entity: unknown, { where }: any) =>
+			entity === Employee
+				? EMPLOYEES.filter(
+						(employee) => where.id.value.includes(employee.id) && employee.tenantId === where.tenantId
+					)
+				: []
 		)
 	};
 	const approvals = { save: jest.fn(async (row: any) => row) };
@@ -80,7 +95,11 @@ function surfaces() {
 	const save = jest.spyOn(service, 'save').mockImplementation(async (row: any) => ({ id: 'time-off-1', ...row }));
 	const findOneByIdString = jest
 		.spyOn(service, 'findOneByIdString')
-		.mockResolvedValue({ id: 'time-off-1', status: StatusTypesEnum.REQUESTED } as any);
+		.mockResolvedValue({
+			id: 'time-off-1',
+			status: StatusTypesEnum.REQUESTED,
+			organizationId: ORGANIZATION
+		} as any);
 
 	return { service, save, approvals, manager, findOneByIdString };
 }
@@ -140,13 +159,16 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			});
 		});
 
-		it("does not take another tenant's no-approval policy as a reason to approve", async () => {
+		it("refuses another tenant's or another organization's policy instead of linking it", async () => {
 			asGrantedEmployee();
 			const { service, save } = surfaces();
 
-			await service.create(dialogBody({ policy: { id: 'policy-foreign' } }));
-
-			expect(save.mock.calls[0][0]).toEqual(expect.objectContaining({ status: StatusTypesEnum.REQUESTED }));
+			for (const id of ['policy-foreign', 'policy-elsewhere']) {
+				await expect(service.create(dialogBody({ policy: { id } }))).rejects.toBeInstanceOf(
+					BadRequestException
+				);
+			}
+			expect(save).not.toHaveBeenCalled();
 		});
 
 		it('files a caller who may not act for other employees for themselves, not the colleague the body names', async () => {
@@ -176,6 +198,16 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			expect(row.employees).toEqual([{ id: COLLEAGUE }, { id: OWN }]);
 			// An administrator's body status is not the decision either: the approve route is.
 			expect(row.status).toBe(StatusTypesEnum.REQUESTED);
+		});
+
+		it('refuses an employee of another organization of the tenant, whoever names them', async () => {
+			asAdmin();
+			const { service, save } = surfaces();
+
+			await expect(
+				service.create(dialogBody({ employees: [{ id: COLLEAGUE }, { id: 'employee-elsewhere' }] }))
+			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(save).not.toHaveBeenCalled();
 		});
 
 		it('does not write body members outside the whitelist', async () => {
@@ -211,6 +243,26 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			}
 		});
 
+		it("refuses moving a request onto another organization's policy", async () => {
+			asAdmin();
+			const { service, save } = surfaces();
+
+			await expect(
+				service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-elsewhere' } }))
+			).rejects.toBeInstanceOf(BadRequestException);
+			expect(save).not.toHaveBeenCalled();
+		});
+
+		it('refuses re-assigning a request to an employee of another organization', async () => {
+			asAdmin();
+			const { service, save } = surfaces();
+
+			await expect(
+				service.updateTimeOffByAdmin('time-off-1', dialogBody({ employees: [{ id: 'employee-elsewhere' }] }))
+			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(save).not.toHaveBeenCalled();
+		});
+
 		it('keeps the stored employees for a caller who may not act for others', async () => {
 			asGrantedEmployee();
 			const { service, save } = surfaces();
@@ -241,6 +293,57 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			// The row keeps its organization and tenant.
 			expect(save.mock.calls[0][0]).not.toHaveProperty('organizationId');
 			expect(save.mock.calls[0][0]).not.toHaveProperty('tenantId');
+		});
+
+		/** A request filed under the policy that needs no approval, and approved as it was filed. */
+		const approvedWithout = (policyId = 'policy-no-approval') =>
+			({
+				id: 'time-off-1',
+				status: StatusTypesEnum.APPROVED,
+				organizationId: ORGANIZATION,
+				policy: { id: policyId }
+			}) as any;
+
+		it('refuses a non-approver moving an approved request onto a policy that requires approval', async () => {
+			asGrantedEmployee();
+			const { service, save, findOneByIdString } = surfaces();
+			findOneByIdString.mockResolvedValue(approvedWithout());
+
+			await expect(
+				service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-approval' } }))
+			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(findOneByIdString).toHaveBeenCalledWith('time-off-1', {
+				relations: { policy: true, organization: true }
+			});
+			expect(save).not.toHaveBeenCalled();
+		});
+
+		it('lets that caller keep the stored policy, or move onto one that needs no approval', async () => {
+			asGrantedEmployee();
+			const { service, save, findOneByIdString } = surfaces();
+
+			// The request dialog sends the stored policy with every edit.
+			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ description: 'Moved' }));
+
+			// The stored policy in another case is the same UUID to the database, so it is not a change either.
+			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'POLICY-APPROVAL' } }));
+
+			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-no-approval' } }));
+
+			expect(save).toHaveBeenCalledTimes(3);
+		});
+
+		it('lets a caller who may approve time off move an approved request onto any policy', async () => {
+			asAdmin();
+			const { service, save, findOneByIdString } = surfaces();
+			findOneByIdString.mockResolvedValue(approvedWithout());
+
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-approval' } }));
+
+			expect(save.mock.calls[0][0]).toMatchObject({ id: 'time-off-1', policy: { id: 'policy-approval' } });
 		});
 	});
 });

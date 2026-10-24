@@ -296,11 +296,15 @@ export class TimeOffRequestResolver {
 	 * approved leave this way without the administrative roles the approve route requires. An edit keeps the
 	 * stored status, so this field changes nothing a decision depends on; `approveTimeOffRequest` and
 	 * `denyTimeOffRequest` decide.
+	 *
+	 * The field answers the stored request. The write's own answer is what it saved, which is the identifier
+	 * alone now that the status is not written, and this field's `status` is non-null.
 	 */
 	@Mutation('updateTimeOffRequest')
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_DELETE)
 	async updateTimeOffRequest(@Args('input') input: IUpdateTimeOffRequestInput): Promise<TimeOffRequest> {
-		return await this.timeOffRequestService.updateTimeOffByAdmin(input.id, { status: input.status });
+		await this.timeOffRequestService.updateTimeOffByAdmin(input.id, { status: input.status });
+		return await this.timeOffRequestService.findOneByIdString(input.id);
 	}
 
 	/**
