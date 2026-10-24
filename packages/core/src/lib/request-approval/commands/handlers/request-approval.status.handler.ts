@@ -117,6 +117,10 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 	 * answer is written then, instead of being refused. Any other status stands, such as an administrator deciding an
 	 * approved leave the other way.
 	 *
+	 * After a compare-and-set that moved nothing, the leave is read again under a row lock: on MySQL (REPEATABLE READ)
+	 * a plain read answers from the transaction's snapshot, which predates a decision the time-off route committed
+	 * while the answer ran, and would still show the leave `REQUESTED`.
+	 *
 	 * @param transaction The answer's transaction.
 	 * @param id The time-off request.
 	 * @param tenantId The caller's tenant.
@@ -132,7 +136,7 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 		if ((await transaction.moveTimeOff(id, tenantId, status)) > 0) {
 			return;
 		}
-		if ((await transaction.readLinkedDocument('time-off', id, tenantId))?.status === status) {
+		if ((await transaction.readLinkedDocument('time-off', id, tenantId, true))?.status === status) {
 			return;
 		}
 		throw new ConflictException('Request time off is Conflict');

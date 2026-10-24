@@ -2,7 +2,7 @@
 import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { LockMode } from '@mikro-orm/core';
 import { In } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
@@ -14,7 +14,12 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
-import { EquipmentSharing, RequestApprovalEmployee, RequestApprovalTeam } from '../core/entities/internal';
+import {
+	EquipmentSharing,
+	RequestApprovalEmployee,
+	RequestApprovalTeam,
+	TimeOffRequest
+} from '../core/entities/internal';
 import { MultiORMEnum } from '../core/utils';
 import { RequestApprovalStatusCommand } from './commands/request-approval.status.command';
 import { RequestApprovalStatusHandler } from './commands/handlers/request-approval.status.handler';
@@ -135,7 +140,13 @@ class Store {
 
 	constructor(
 		request: Row,
-		private readonly rowLocks = true
+		private readonly rowLocks = true,
+		/**
+		 * MySQL's REPEATABLE READ: a transaction's plain reads answer from the snapshot taken at its first plain read
+		 * (the slots, after the lock), while a locking read — and an UPDATE's compare-and-set — reads what is
+		 * committed. Off, every statement reads what is committed, as on PostgreSQL's READ COMMITTED.
+		 */
+		private readonly repeatableRead = false
 	) {
 		const { employeeApprovals = [], ...rest } = request;
 		this.request = rest;
@@ -146,6 +157,7 @@ class Store {
 		const who = caller.getStore()?.id;
 		const pending: Array<() => string> = [];
 		let release = () => undefined as void;
+		let snapshot: Record<string, Row> | undefined;
 
 		const transaction: IRequestApprovalAnswerTransaction = {
 			lockRequest: async (id, tenantId) => {
@@ -163,6 +175,9 @@ class Store {
 					: null;
 			},
 			readSlots: async () => {
+				if (this.repeatableRead) {
+					snapshot ??= copy(this.documents);
+				}
 				const slots = { employeeApprovals: copy(this.employeeSlots) as any[], teamApprovals: [] };
 				await this.pauses.get(who);
 				return slots;
@@ -182,8 +197,10 @@ class Store {
 					return `request:${status}`;
 				});
 			},
-			readLinkedDocument: async (kind, id) =>
-				this.documents[kind]?.id === id ? (copy(this.documents[kind]) as any) : null,
+			readLinkedDocument: async (kind, id, _tenantId, locked) => {
+				const documents = !locked && snapshot ? snapshot : this.documents;
+				return documents[kind]?.id === id ? (copy(documents[kind]) as any) : null;
+			},
 			moveTimeOff: async (_id, _tenantId, status) => {
 				// The compare-and-set: the leave moves only while it is REQUESTED.
 				if (this.documents['time-off'].status !== 'REQUESTED') {
@@ -251,7 +268,7 @@ function system(store: Store) {
 			)
 		);
 
-	return { answer };
+	return { answer, service };
 }
 
 /**
@@ -437,6 +454,96 @@ describe('answering a request approval is one transaction under a row lock', () 
 		});
 	});
 
+	describe('a request moved to another organization after the scoped read', () => {
+		/** The scoped read finds the request in the caller's organization; an administrator then moves it. */
+		function moveAfterTheScopedRead(store: Store, service: RequestApprovalService) {
+			jest.spyOn(service, 'findOneByIdString').mockImplementationOnce(async () => {
+				const scoped = copy(store.request);
+				store.request.organizationId = 'organization-b';
+				return scoped as any;
+			});
+		}
+
+		it('is not found by an approver confined to their organization, and nothing is written', async () => {
+			const store = new Store(requestRow());
+			const { answer, service } = system(store);
+			moveAfterTheScopedRead(store, service);
+
+			const { error } = await answer(ALICE, APPROVED);
+
+			expect(error).toBeInstanceOf(NotFoundException);
+			expect(store.commits).toEqual([]);
+			expect(store.request.status).toBe(REQUESTED);
+			expect(store.documents['equipment-sharing'].status).toBe(REQUESTED);
+			expect(store.employeeSlots.find((slot) => slot.id === 'slot-alice').status).toBe(REQUESTED);
+		});
+
+		it('is still answered by a tenant administrator, whom no organization confines', async () => {
+			const store = new Store(requestRow());
+			const { answer, service } = system(store);
+			moveAfterTheScopedRead(store, service);
+
+			const { error } = await answer(ADMIN, REFUSED);
+
+			expect(error).toBeUndefined();
+			expect(store.request.status).toBe(REFUSED);
+		});
+	});
+
+	describe('the time-off route deciding the leave while an answer runs, on MySQL (REPEATABLE READ)', () => {
+		const leaveRequest = () =>
+			requestRow({ requestType: ApprovalPolicyTypesStringEnum.TIME_OFF, requestId: 'time-off-1' });
+
+		/** Runs the administrator's answer; the time-off route commits `leaveStatus` after its snapshot is taken. */
+		async function answerWhileTheLeaveIsDecided(status: number, leaveStatus: string) {
+			const store = new Store(leaveRequest(), true, true);
+			const { answer } = system(store);
+			const pause = deferred();
+			store.pauses.set(ADMIN.id, pause.promise);
+
+			const answering = answer(ADMIN, status);
+			await settle();
+			store.documents['time-off'].status = leaveStatus;
+			pause.resolve();
+
+			return { store, result: await answering };
+		}
+
+		it('CONTROL: a plain read there still shows the leave as the snapshot had it, a locking read the decision', async () => {
+			const store = new Store(leaveRequest(), true, true);
+
+			const [plain, locked] = await store.transaction(async (transaction) => {
+				await transaction.readSlots('approval-1', TENANT);
+				store.documents['time-off'].status = 'DENIED';
+				return [
+					await transaction.readLinkedDocument('time-off', 'time-off-1', TENANT),
+					await transaction.readLinkedDocument('time-off', 'time-off-1', TENANT, true)
+				];
+			});
+
+			expect(plain?.status).toBe('REQUESTED');
+			expect(locked?.status).toBe('DENIED');
+		});
+
+		it('the same decision is tolerated: the leave is read again under a row lock after the compare-and-set', async () => {
+			const { store, result } = await answerWhileTheLeaveIsDecided(REFUSED, 'DENIED');
+
+			expect(result.error).toBeUndefined();
+			expect(store.commits).toEqual([[ADMIN.id, `request:${REFUSED}`]]);
+			expect(store.request.status).toBe(REFUSED);
+			expect(store.documents['time-off'].status).toBe('DENIED');
+		});
+
+		it('a decision the other way is still a conflict, and nothing is written', async () => {
+			const { store, result } = await answerWhileTheLeaveIsDecided(REFUSED, 'APPROVED');
+
+			expect(result.error).toBeInstanceOf(ConflictException);
+			expect(store.commits).toEqual([]);
+			expect(store.request.status).toBe(REQUESTED);
+			expect(store.documents['time-off'].status).toBe('APPROVED');
+		});
+	});
+
 	it('a refused answer writes nothing and releases the lock: the next approver answers the untouched request', async () => {
 		const store = new Store(requestRow());
 		const { answer } = system(store);
@@ -468,6 +575,13 @@ describe('the answer transaction on each ORM', () => {
 		requestId: 'sharing-1'
 	});
 	const sharing = () => ({ id: 'sharing-1', tenantId: TENANT, organizationId: ORGANIZATION, status: REQUESTED });
+	/** A request about a leave, which the time-off route has already denied: the compare-and-set moves nothing. */
+	const leaveRequest = () => ({
+		...request(),
+		requestType: ApprovalPolicyTypesStringEnum.TIME_OFF,
+		requestId: 'time-off-1'
+	});
+	const deniedLeave = () => ({ id: 'time-off-1', tenantId: TENANT, organizationId: ORGANIZATION, status: 'DENIED' });
 
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(contextUser(ALICE));
@@ -479,11 +593,12 @@ describe('the answer transaction on each ORM', () => {
 	});
 
 	describe('TypeORM', () => {
-		function typeOrm() {
+		function typeOrm({ leave = false }: { leave?: boolean } = {}) {
+			const answered = () => (leave ? leaveRequest() : request());
 			const query = {
 				where: jest.fn().mockReturnThis(),
 				setLock: jest.fn().mockReturnThis(),
-				getOne: jest.fn(async () => request())
+				getOne: jest.fn(async () => answered())
 			};
 			const manager = {
 				createQueryBuilder: jest.fn(() => query),
@@ -492,8 +607,12 @@ describe('the answer transaction on each ORM', () => {
 						? [{ id: 'slot-alice', employeeId: ALICE.employeeId, status: REQUESTED }]
 						: []
 				),
-				findOne: jest.fn(async (entity: unknown) => (entity === EquipmentSharing ? sharing() : null)),
-				update: jest.fn(async () => ({ affected: 1 }))
+				findOne: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
+					entity === EquipmentSharing ? sharing() : entity === TimeOffRequest ? deniedLeave() : null
+				),
+				update: jest.fn(async (entity: unknown, ..._args: unknown[]) => ({
+					affected: entity === TimeOffRequest ? 0 : 1
+				}))
 			};
 			const repository = { manager: { transaction: jest.fn(async (work: any) => await work(manager)) } };
 			const service = new RequestApprovalService(
@@ -501,7 +620,7 @@ describe('the answer transaction on each ORM', () => {
 				...(Array.from({ length: 7 }, () => ({})) as [any, any, any, any, any, any, any])
 			);
 			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
-			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(request() as any);
+			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(answered() as any);
 			const update = jest.spyOn(service, 'update');
 			const handler = new RequestApprovalStatusHandler(service);
 			return { handler, manager, query, repository, update };
@@ -546,22 +665,56 @@ describe('the answer transaction on each ORM', () => {
 			expect(query.setLock).not.toHaveBeenCalled();
 			expect(query.getOne).toHaveBeenCalledTimes(1);
 		});
+
+		it('on MySQL reads a leave the compare-and-set did not move again under a row lock, not from the snapshot', async () => {
+			(isMySQL as jest.Mock).mockReturnValue(true);
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(contextUser(ADMIN));
+			const { handler, manager } = typeOrm({ leave: true });
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', REFUSED));
+
+			expect(manager.findOne.mock.calls).toEqual([
+				[TimeOffRequest, { where: { id: 'time-off-1', tenantId: TENANT } }],
+				[TimeOffRequest, { where: { id: 'time-off-1', tenantId: TENANT }, lock: { mode: 'pessimistic_write' } }]
+			]);
+		});
 	});
 
 	describe('MikroORM', () => {
 		const NOW = new Date('2026-10-24T00:00:00.000Z');
 
-		function mikroOrm(versionedSharing = false) {
+		/** The audit mirror as the platform's entities map it under MikroORM: `persist: false`, beside its relation. */
+		const auditedMeta = {
+			props: [{ name: 'updatedByUserId', persist: false }],
+			properties: {
+				updatedByUserId: { name: 'updatedByUserId', persist: false, fieldNames: ['updatedByUserId'] }
+			}
+		};
+
+		function mikroOrm({
+			versionedSharing = false,
+			leave = false,
+			audited = false
+		}: { versionedSharing?: boolean; leave?: boolean; audited?: boolean } = {}) {
+			const answered = () => (leave ? leaveRequest() : request());
 			const em = {
-				findOne: jest.fn(async (entity: unknown) =>
-					entity === RequestApproval ? request() : entity === EquipmentSharing ? sharing() : null
+				findOne: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
+					entity === RequestApproval
+						? answered()
+						: entity === EquipmentSharing
+							? sharing()
+							: entity === TimeOffRequest
+								? deniedLeave()
+								: null
 				),
 				find: jest.fn(async (entity: unknown) =>
 					entity === RequestApprovalEmployee
 						? [{ id: 'slot-alice', employee: { id: ALICE.employeeId }, status: REQUESTED }]
 						: []
 				),
-				nativeUpdate: jest.fn(async (..._args: unknown[]) => 1),
+				nativeUpdate: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
+					entity === TimeOffRequest ? 0 : 1
+				),
 				getMetadata: () => ({
 					find: (name: string) =>
 						versionedSharing && name === EquipmentSharing.name
@@ -569,7 +722,9 @@ describe('the answer transaction on each ORM', () => {
 									props: [{ name: 'updatedAt', onUpdate: () => NOW }],
 									properties: { version: { name: 'version', fieldNames: ['version'] } }
 								}
-							: undefined
+							: audited
+								? auditedMeta
+								: undefined
 				})
 			};
 			const typeOrmRepository = {
@@ -589,7 +744,7 @@ describe('the answer transaction on each ORM', () => {
 				...(Array.from({ length: 6 }, () => ({})) as [any, any, any, any, any, any])
 			);
 			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
-			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(request() as any);
+			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(answered() as any);
 			jest.spyOn(service as any, 'serialize').mockImplementation((row: any) => ({ ...row }));
 			const handler = new RequestApprovalStatusHandler(service);
 			return { handler, em };
@@ -634,7 +789,7 @@ describe('the answer transaction on each ORM', () => {
 		});
 
 		it('moves a versioned document on: the update date is stamped and the version incremented in the statement', async () => {
-			const { handler, em } = mikroOrm(true);
+			const { handler, em } = mikroOrm({ versionedSharing: true });
 
 			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
 
@@ -646,6 +801,35 @@ describe('the answer transaction on each ORM', () => {
 			expect(where).toEqual({ id: 'sharing-1', tenantId: TENANT });
 			expect(row).toMatchObject({ status: APPROVED, updatedAt: NOW });
 			expect(row.version).toMatchObject({ sql: '?? + 1', params: ['version'] });
+		});
+
+		it('stamps the answering user on every write, through the `persist: false` audit mirror', async () => {
+			const { handler, em } = mikroOrm({ audited: true });
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
+
+			expect(em.nativeUpdate.mock.calls.map(([entity, , row]) => [entity, row])).toEqual([
+				[EquipmentSharing, { status: APPROVED, updatedByUserId: ALICE.id }],
+				[RequestApprovalEmployee, { status: APPROVED, updatedByUserId: ALICE.id }],
+				[RequestApproval, { status: APPROVED, updatedByUserId: ALICE.id }]
+			]);
+		});
+
+		it('on MySQL reads a leave the compare-and-set did not move again under a row lock, not from the snapshot', async () => {
+			(isMySQL as jest.Mock).mockReturnValue(true);
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(contextUser(ADMIN));
+			const { handler, em } = mikroOrm({ leave: true });
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', REFUSED));
+
+			expect(em.findOne.mock.calls.filter(([entity]) => entity === TimeOffRequest)).toEqual([
+				[TimeOffRequest, { id: 'time-off-1', tenantId: TENANT }, { disableIdentityMap: true }],
+				[
+					TimeOffRequest,
+					{ id: 'time-off-1', tenantId: TENANT },
+					{ disableIdentityMap: true, lockMode: LockMode.PESSIMISTIC_WRITE }
+				]
+			]);
 		});
 	});
 });
