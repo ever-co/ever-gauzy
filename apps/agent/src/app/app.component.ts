@@ -196,9 +196,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 				const user: IUser = await this.appService.getUserDetail();
 				// Finished as the password and e-mail code sign-ins are. The agent's main process listens for
 				// `AUTH_SUCCESS` (never `auth_success`, which only the timer handles): it saves the account, starts
-				// tracking and closes the sign-in window. A provider sign-in brings no refresh token.
-				const response: IAuthResponse = { user, token: arg.token };
-				this.authStrategy.storeAuthenticationData(response);
+				// tracking and closes the sign-in window.
+				const response = await this.providerSession(user, arg.token);
 
 				// Start token refresh timer after social auth
 				if (arg.token && this.store.refreshToken) {
@@ -215,6 +214,33 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 				});
 			}
 		}
+	}
+
+	/**
+	 * The session a provider sign-in starts. The provider's redirect brings an access token only, and a desktop session
+	 * is a token pair: `Store.isAuthenticated$`, which the dashboard's `authGuard` reads, needs the refresh token too, as
+	 * does the token refresh. The pair is asked for the workspace the token names, the caller's own account
+	 * (`POST /auth/switch-workspace`): the pair a password sign-in gets. Should that fail, the sign-in goes on with the
+	 * access token alone.
+	 *
+	 * @param user The signed-in user, with the employee.
+	 * @param token The access token the provider sign-in brought.
+	 */
+	private async providerSession(user: IUser, token: string): Promise<IAuthResponse> {
+		const tokenOnly: IAuthResponse = { user, token };
+		// Stored first: the request below carries this token, workspace and organization
+		this.authStrategy.storeAuthenticationData(tokenOnly);
+		try {
+			const pair = await firstValueFrom(this.authService.switchWorkspace(user.tenantId));
+			if (pair?.token && pair?.refresh_token) {
+				const response: IAuthResponse = { user, token: pair.token, refresh_token: pair.refresh_token };
+				this.authStrategy.storeAuthenticationData(response);
+				return response;
+			}
+		} catch (error) {
+			console.warn('No refresh token for the provider sign-in; going on with the access token alone', error);
+		}
+		return tokenOnly;
 	}
 
 	async jwtDecode(token) {

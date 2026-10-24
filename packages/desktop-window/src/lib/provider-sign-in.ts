@@ -102,23 +102,31 @@ export function parseProviderSignInRedirect(url: string): ProviderSignInRedirect
  *   lists the workspaces and signs in to the one chosen;
  * - the web app's registration page opens in the browser when no account matched.
  *
+ * Only the popup this sign-in opened ends it: its pages are the provider's, which redirect to the API, which redirects
+ * to the result. A result any other page redirects to (a page of someone else's, carrying their own token) is left
+ * alone, so it can neither sign the app in to another account nor hand it a workspace code.
+ *
  * Call it once, from the main process, before the first window is created.
  *
  * @param options The window to tell, and what to send along with the token.
  */
 export function installProviderSignIn(options: IProviderSignInOptions): void {
 	let popup: BrowserWindow | null = null;
+	// Kept apart from `popup`: a destroyed window's contents can no longer be read
+	let popupContentsId: number | null = null;
 
 	const closePopup = () => {
 		if (popup && !popup.isDestroyed()) {
 			popup.destroy();
 		}
 		popup = null;
+		popupContentsId = null;
 	};
 
 	const showPopup = async (url: string) => {
 		closePopup();
 		popup = new BrowserWindow({ ...POPUP_OPTIONS, webPreferences: { ...POPUP_OPTIONS.webPreferences } });
+		popupContentsId = popup.webContents.id;
 		await popup.loadURL(url, { userAgent: POPUP_USER_AGENT });
 		popup.show();
 	};
@@ -134,6 +142,10 @@ export function installProviderSignIn(options: IProviderSignInOptions): void {
 		contents.on('will-redirect', async (event, url) => {
 			const redirect = parseProviderSignInRedirect(url);
 			if (!redirect) {
+				return;
+			}
+			// A sign-in result counts only in the popup this sign-in opened
+			if (redirect.type !== 'provider' && (popupContentsId === null || contents.id !== popupContentsId)) {
 				return;
 			}
 			switch (redirect.type) {

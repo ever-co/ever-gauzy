@@ -21,7 +21,7 @@ jest.mock('@nebular/theme', () => ({ NbToastrService: class NbToastrService {} }
 jest.mock('@ngx-translate/core', () => ({ TranslateService: class TranslateService {} }));
 jest.mock('@ngneat/until-destroy', () => ({ UntilDestroy: () => (target: unknown) => target }));
 
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AppComponent } from './app.component';
 
 describe('AppComponent — provider sign-in', () => {
@@ -31,7 +31,7 @@ describe('AppComponent — provider sign-in', () => {
 	let ipcRenderer: { on: jest.Mock; removeListener: jest.Mock; send: jest.Mock };
 	let appService: { getUserDetail: jest.Mock };
 	let authStrategy: { storeAuthenticationData: jest.Mock };
-	let authService: { electronAuthentication: jest.Mock };
+	let authService: { electronAuthentication: jest.Mock; switchWorkspace: jest.Mock };
 	let router: { navigate: jest.Mock };
 	let toastrService: { show: jest.Mock };
 	let component: AppComponent;
@@ -50,7 +50,10 @@ describe('AppComponent — provider sign-in', () => {
 		};
 		appService = { getUserDetail: jest.fn(async () => user) };
 		authStrategy = { storeAuthenticationData: jest.fn() };
-		authService = { electronAuthentication: jest.fn(() => of(undefined)) };
+		authService = {
+			electronAuthentication: jest.fn(() => of(undefined)),
+			switchWorkspace: jest.fn(() => of({ user, token: 'pair-access', refresh_token: 'pair-refresh' }))
+		};
 		router = { navigate: jest.fn(async () => true) };
 		toastrService = { show: jest.fn() };
 
@@ -72,16 +75,32 @@ describe('AppComponent — provider sign-in', () => {
 		component.ngAfterViewInit();
 	});
 
-	it('finishes a sign-in that matched one employee through AUTH_SUCCESS, as the other sign-ins do', async () => {
+	it('finishes a sign-in that matched one employee through AUTH_SUCCESS, with a token pair, as the other sign-ins do', async () => {
 		jest.spyOn(component, 'jwtDecode').mockResolvedValue({ employeeId: 'employee-1', tenantId: 'tenant-1' });
 
 		handlers['social_auth_success']({}, { token: 'provider-jwt', userId: 'user-1' });
 		await flush();
 
-		expect(authStrategy.storeAuthenticationData).toHaveBeenCalledWith({ user, token: 'provider-jwt' });
-		expect(authService.electronAuthentication).toHaveBeenCalledWith({ user, token: 'provider-jwt' });
+		// The provider's access token first (the pair is asked with it), then the pair of the user's own workspace
+		expect(authService.switchWorkspace).toHaveBeenCalledWith('tenant-1');
+		expect(authStrategy.storeAuthenticationData).toHaveBeenNthCalledWith(1, { user, token: 'provider-jwt' });
+		const session = { user, token: 'pair-access', refresh_token: 'pair-refresh' };
+		expect(authStrategy.storeAuthenticationData).toHaveBeenLastCalledWith(session);
+		expect(authService.electronAuthentication).toHaveBeenCalledWith(session);
 		// `auth_success` is the timer's channel: the agent's main process never hears it
 		expect(ipcRenderer.send).not.toHaveBeenCalledWith('auth_success', expect.anything());
+	});
+
+	it('goes on with the access token alone when no token pair is issued', async () => {
+		jest.spyOn(component, 'jwtDecode').mockResolvedValue({ employeeId: 'employee-1', tenantId: 'tenant-1' });
+		jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		authService.switchWorkspace.mockReturnValue(throwError(() => new Error('refused')));
+
+		handlers['social_auth_success']({}, { token: 'provider-jwt', userId: 'user-1' });
+		await flush();
+
+		expect(authStrategy.storeAuthenticationData).toHaveBeenLastCalledWith({ user, token: 'provider-jwt' });
+		expect(authService.electronAuthentication).toHaveBeenCalledWith({ user, token: 'provider-jwt' });
 	});
 
 	it('refuses an account that is not an employee', async () => {

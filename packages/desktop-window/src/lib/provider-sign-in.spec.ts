@@ -9,6 +9,7 @@
 const mockOpenExternal = jest.fn(async (_url: string) => undefined);
 const mockAppListeners: Record<string, (...args: any[]) => void> = {};
 const mockPopups: any[] = [];
+let mockLastContentsId = 0;
 
 jest.mock(
 	'electron',
@@ -17,6 +18,7 @@ jest.mock(
 		shell: { openExternal: (url: string) => mockOpenExternal(url) },
 		BrowserWindow: class {
 			destroyed = false;
+			webContents: Record<string, unknown> = { id: ++mockLastContentsId };
 			loadURL = jest.fn(async () => undefined);
 			show = jest.fn();
 			destroy = jest.fn(() => (this.destroyed = true));
@@ -82,17 +84,16 @@ describe('parseProviderSignInRedirect', () => {
 describe('installProviderSignIn', () => {
 	let signInWindow: { isDestroyed: () => boolean; webContents: { send: jest.Mock } } | null;
 
-	/** A web contents stand-in that records the `will-redirect` handler the sign-in registers on it */
-	function contents() {
+	/**
+	 * Redirects in a web contents: a stand-in, or the popup's own contents, that records the `will-redirect` handler the
+	 * sign-in registers on it.
+	 */
+	function contents(webContents: Record<string, unknown> = { id: ++mockLastContentsId }) {
 		let willRedirect: (event: { preventDefault: () => void }, url: string) => Promise<void> = async () => undefined;
-		mockAppListeners['web-contents-created'](
-			{},
-			{
-				on: (name: string, listener: typeof willRedirect) => {
-					if (name === 'will-redirect') willRedirect = listener;
-				}
-			}
-		);
+		webContents.on = (name: string, listener: typeof willRedirect) => {
+			if (name === 'will-redirect') willRedirect = listener;
+		};
+		mockAppListeners['web-contents-created']({}, webContents);
 		return async (url: string) => {
 			const event = { preventDefault: jest.fn() };
 			await willRedirect(event, url);
@@ -120,9 +121,14 @@ describe('installProviderSignIn', () => {
 		expect(mockPopups[0].show).toHaveBeenCalled();
 	});
 
+	/** Opens the provider's page in the popup, and returns the redirects in the popup */
+	async function inPopup(providerUrl = 'https://accounts.google.com/o/oauth2/v2/auth') {
+		await contents()(providerUrl);
+		return contents(mockPopups[mockPopups.length - 1].webContents);
+	}
+
 	it('closes the popup and tells the sign-in window the token (social_auth_success)', async () => {
-		await contents()('https://accounts.google.com/o/oauth2/v2/auth');
-		const popupRedirect = contents();
+		const popupRedirect = await inPopup();
 
 		await popupRedirect(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=user-1`);
 
@@ -135,8 +141,7 @@ describe('installProviderSignIn', () => {
 	});
 
 	it("cancels the web app's workspace picker and hands the code to the sign-in window (social_auth_workspaces)", async () => {
-		await contents()('https://www.linkedin.com/oauth/v2/authorization');
-		const popupRedirect = contents();
+		const popupRedirect = await inPopup('https://www.linkedin.com/oauth/v2/authorization');
 
 		expect(await popupRedirect(`${WEB}/#/auth/magic-sign-in?email=a%40example.com&code=123456`)).toBe('cancelled');
 
@@ -148,18 +153,50 @@ describe('installProviderSignIn', () => {
 	});
 
 	it('still cancels a workspace picker redirect without a code, and sends nothing', async () => {
-		expect(await contents()(`${WEB}/#/auth/magic-sign-in?email=a%40example.com`)).toBe('cancelled');
+		const popupRedirect = await inPopup();
+
+		expect(await popupRedirect(`${WEB}/#/auth/magic-sign-in?email=a%40example.com`)).toBe('cancelled');
 		expect(signInWindow!.webContents.send).not.toHaveBeenCalled();
 	});
 
 	it('opens the registration page in the browser when no account matched', async () => {
-		expect(await contents()(`${WEB}/#/auth/register`)).toBe('followed');
+		const popupRedirect = await inPopup();
+
+		expect(await popupRedirect(`${WEB}/#/auth/register`)).toBe('followed');
 		expect(mockOpenExternal).toHaveBeenCalledWith(`${WEB}/#/auth/register`);
 	});
 
 	it('sends nothing when the sign-in window is gone', async () => {
+		const popupRedirect = await inPopup();
 		signInWindow = null;
-		await expect(contents()(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=user-1`)).resolves.toBe('followed');
+
+		await expect(popupRedirect(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=user-1`)).resolves.toBe('followed');
+	});
+
+	it("ignores a sign-in result any page other than the sign-in's popup redirects to", async () => {
+		const elsewhere = contents();
+
+		// No popup yet
+		expect(await elsewhere(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=attacker`)).toBe('followed');
+
+		// A popup open, but the redirect is in another page
+		await inPopup();
+		expect(await elsewhere(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=attacker`)).toBe('followed');
+		expect(await elsewhere(`${WEB}/#/auth/magic-sign-in?email=a%40example.com&code=123456`)).toBe('followed');
+		expect(await elsewhere(`${WEB}/#/auth/register`)).toBe('followed');
+
+		expect(signInWindow!.webContents.send).not.toHaveBeenCalled();
+		expect(mockOpenExternal).not.toHaveBeenCalled();
+		expect(mockPopups[0].destroy).not.toHaveBeenCalled();
+	});
+
+	it('ignores a sign-in result in a popup it has already closed', async () => {
+		const firstPopup = await inPopup();
+		await firstPopup(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=user-1`);
+
+		await firstPopup(`${WEB}/#/sign-in/success?jwt=${JWT}&userId=again`);
+
+		expect(signInWindow!.webContents.send).toHaveBeenCalledTimes(1);
 	});
 
 	it('CONTROL: leaves every other redirect alone', async () => {
