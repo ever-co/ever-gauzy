@@ -542,6 +542,24 @@ describe('answering a request approval is one transaction under a row lock', () 
 			expect(store.request.status).toBe(REQUESTED);
 			expect(store.documents['time-off'].status).toBe('APPROVED');
 		});
+
+		it('a sharing moved to another organization after the snapshot is not found: it is read under a row lock', async () => {
+			const store = new Store(requestRow(), true, true);
+			const { answer } = system(store);
+			const pause = deferred();
+			store.pauses.set(ALICE.id, pause.promise);
+
+			const answering = answer(ALICE, APPROVED);
+			await settle();
+			// An administrator moves the sharing out of Alice's organization once her snapshot is taken.
+			store.documents['equipment-sharing'].organizationId = 'organization-b';
+			pause.resolve();
+			const { error } = await answering;
+
+			expect(error).toBeInstanceOf(NotFoundException);
+			expect(store.commits).toEqual([]);
+			expect(store.documents['equipment-sharing'].status).toBe(REQUESTED);
+		});
 	});
 
 	it('a refused answer writes nothing and releases the lock: the next approver answers the untouched request', async () => {
@@ -666,17 +684,34 @@ describe('the answer transaction on each ORM', () => {
 			expect(query.getOne).toHaveBeenCalledTimes(1);
 		});
 
-		it('on MySQL reads a leave the compare-and-set did not move again under a row lock, not from the snapshot', async () => {
+		it('on MySQL reads the leave under a row lock, without its eager relations, before and after the CAS', async () => {
 			(isMySQL as jest.Mock).mockReturnValue(true);
 			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(contextUser(ADMIN));
 			const { handler, manager } = typeOrm({ leave: true });
 
 			await handler.execute(new RequestApprovalStatusCommand('approval-1', REFUSED));
 
+			// Its read for the scope check, then its reread after a compare-and-set that moved nothing.
+			const read = {
+				where: { id: 'time-off-1', tenantId: TENANT },
+				loadEagerRelations: false,
+				lock: { mode: 'pessimistic_write' }
+			};
 			expect(manager.findOne.mock.calls).toEqual([
-				[TimeOffRequest, { where: { id: 'time-off-1', tenantId: TENANT } }],
-				[TimeOffRequest, { where: { id: 'time-off-1', tenantId: TENANT }, lock: { mode: 'pessimistic_write' } }]
+				[TimeOffRequest, read],
+				[TimeOffRequest, read]
 			]);
+		});
+
+		it('on SQLite reads the linked document with no lock, and without its eager relations', async () => {
+			const { handler, manager } = typeOrm();
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
+
+			expect(manager.findOne).toHaveBeenCalledWith(EquipmentSharing, {
+				where: { id: 'sharing-1', tenantId: TENANT },
+				loadEagerRelations: false
+			});
 		});
 	});
 
@@ -815,21 +850,20 @@ describe('the answer transaction on each ORM', () => {
 			]);
 		});
 
-		it('on MySQL reads a leave the compare-and-set did not move again under a row lock, not from the snapshot', async () => {
+		it('on MySQL reads the leave under a row lock, before and after a compare-and-set that moved nothing', async () => {
 			(isMySQL as jest.Mock).mockReturnValue(true);
 			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(contextUser(ADMIN));
 			const { handler, em } = mikroOrm({ leave: true });
 
 			await handler.execute(new RequestApprovalStatusCommand('approval-1', REFUSED));
 
-			expect(em.findOne.mock.calls.filter(([entity]) => entity === TimeOffRequest)).toEqual([
-				[TimeOffRequest, { id: 'time-off-1', tenantId: TENANT }, { disableIdentityMap: true }],
-				[
-					TimeOffRequest,
-					{ id: 'time-off-1', tenantId: TENANT },
-					{ disableIdentityMap: true, lockMode: LockMode.PESSIMISTIC_WRITE }
-				]
-			]);
+			// MikroORM narrows the lock to the root table (`FOR UPDATE OF`) itself when an eager relation is joined.
+			const read = [
+				TimeOffRequest,
+				{ id: 'time-off-1', tenantId: TENANT },
+				{ disableIdentityMap: true, lockMode: LockMode.PESSIMISTIC_WRITE }
+			];
+			expect(em.findOne.mock.calls.filter(([entity]) => entity === TimeOffRequest)).toEqual([read, read]);
 		});
 	});
 });

@@ -92,6 +92,11 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 	/**
 	 * Reads the document a request is about, in the scope its own service reads it in.
 	 *
+	 * It is read under a row lock, held until the answer commits: the organization checked is the one the row holds
+	 * now, and stays so through the write that moves it. A plain read on MySQL (REPEATABLE READ) answers from the
+	 * transaction's snapshot, taken at the slots' read, so a document an administrator moved to another organization
+	 * since then still read as the former one, and the write (by id and tenant) then moved it in the new one.
+	 *
 	 * @throws NotFoundException when it is not there, or outside the caller's organization boundary.
 	 */
 	private async readLinkedDocument(
@@ -100,7 +105,7 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 		id: ID,
 		tenantId: ID
 	): Promise<IRequestApprovalLinkedDocument> {
-		const document = id && tenantId ? await transaction.readLinkedDocument(kind, id, tenantId) : null;
+		const document = id && tenantId ? await transaction.readLinkedDocument(kind, id, tenantId, true) : null;
 
 		if (!document || !isWithinOrganizationBoundary(document.organizationId)) {
 			throw new NotFoundException(`The ${kind} this request approval is about was not found.`);

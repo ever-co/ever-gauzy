@@ -824,11 +824,17 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				await manager.update(RequestApproval, { id, tenantId }, { status });
 			},
 			readLinkedDocument: async (kind, id, tenantId, locked = false) => {
-				const lock = locked && rowLock ? { lock: { mode: 'pessimistic_write' as const } } : {};
+				// The status and organization alone, no eager relation (a leave's `document`): joined, it would put a
+				// nullable outer join under the lock, and PostgreSQL refuses FOR UPDATE on that side of one.
+				const options = {
+					where: { id, tenantId },
+					loadEagerRelations: false,
+					...(locked && rowLock ? { lock: { mode: 'pessimistic_write' as const } } : {})
+				};
 				const row =
 					kind === 'time-off'
-						? await manager.findOne(TimeOffRequest, { where: { id, tenantId }, ...lock })
-						: await manager.findOne(EquipmentSharing, { where: { id, tenantId }, ...lock });
+						? await manager.findOne(TimeOffRequest, options)
+						: await manager.findOne(EquipmentSharing, options);
 				return row ? { id: row.id, organizationId: row.organizationId, status: row.status } : null;
 			},
 			moveTimeOff: async (id, tenantId, status) => {
