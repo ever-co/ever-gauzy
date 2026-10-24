@@ -64,7 +64,8 @@ describe('OAuth2AuthorizationServer client_credentials grant', () => {
 			{ clientType: 'public', grantTypes: ['authorization_code', 'refresh_token'] }
 		],
 		['a public client that lists the grant', { clientType: 'public', grantTypes: ['client_credentials'] }],
-		['a confidential client not registered for the grant', { grantTypes: ['authorization_code', 'refresh_token'] }]
+		['a confidential client not registered for the grant', { grantTypes: ['authorization_code', 'refresh_token'] }],
+		['a confidential client whose grant types were kept as a bare string', { grantTypes: 'client_credentials' }]
 	])('refuses %s with unauthorized_client', async (_label, overrides) => {
 		jest.spyOn(oAuth2ClientManager, 'validateClient').mockResolvedValue(client(overrides) as any);
 		const { grant, tokenManager, errorHandler } = build();
@@ -79,7 +80,10 @@ describe('OAuth2AuthorizationServer client_credentials grant', () => {
 		);
 	});
 
-	it('is not available through dynamic registration', async () => {
+	it.each([
+		['as a list', ['client_credentials']],
+		['as a bare string, which registerClient would keep as sent', 'client_credentials']
+	])('is not available through dynamic registration, asked for %s', async (_label, grantTypes) => {
 		const registerClient = jest.spyOn(oAuth2ClientManager, 'registerClient');
 		const { register, errorHandler } = build();
 
@@ -87,7 +91,7 @@ describe('OAuth2AuthorizationServer client_credentials grant', () => {
 			client_name: 'anyone',
 			client_type: 'confidential',
 			redirect_uris: ['https://example.com/callback'],
-			grant_types: ['client_credentials']
+			grant_types: grantTypes
 		});
 
 		expect(registerClient).not.toHaveBeenCalled();

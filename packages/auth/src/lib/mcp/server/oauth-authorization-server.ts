@@ -1544,8 +1544,13 @@ export class OAuth2AuthorizationServer {
 
 		// RFC 6749 §4.4: only a confidential client, which authenticated with its secret above, may use this grant, and
 		// only one registered for it. `validateClient` lets a public client through with no secret at all, so anyone
-		// could name `chatgpt-mcp-client` and receive a signed token for any of its scopes.
-		if (client.clientType !== 'confidential' || !client.grantTypes.includes('client_credentials')) {
+		// could name `chatgpt-mcp-client` and receive a signed token for any of its scopes. The grant types must be a
+		// list: a bare string kept from a registration body (`"grant_types": "client_credentials"`) `includes` it too.
+		if (
+			client.clientType !== 'confidential' ||
+			!Array.isArray(client.grantTypes) ||
+			!client.grantTypes.includes('client_credentials')
+		) {
 			this.errorHandler.handleOAuthError(
 				res,
 				BaseErrorHandler.createAuthError(
@@ -1595,9 +1600,13 @@ export class OAuth2AuthorizationServer {
 	private async handleClientRegistration(req: Request, res: Response) {
 		try {
 			// Registration is open to anyone, and a client_credentials token acts for no user: a client that may use
-			// that grant is one the operator registers, never one that registers itself.
+			// that grant is one the operator registers, never one that registers itself. A bare string counts as well
+			// (`"grant_types": "client_credentials"`, or a form field): registerClient keeps it as sent.
 			const grantTypes: unknown = req.body?.grant_types;
-			if (Array.isArray(grantTypes) && grantTypes.includes('client_credentials')) {
+			if (
+				(Array.isArray(grantTypes) || typeof grantTypes === 'string') &&
+				grantTypes.includes('client_credentials')
+			) {
 				this.errorHandler.handleStandardError(res, {
 					code: 'invalid_client_metadata',
 					message: 'The client_credentials grant is not available through dynamic registration',
