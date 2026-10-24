@@ -43,8 +43,8 @@ export interface IMemberRow {
 	employeeId: string;
 	name: string;
 	caption: string | null;
-	avatarUrl: string | null;
-	initials: string;
+	/** The member's photo, or the default avatar when they have none. */
+	avatarUrl: string;
 	presence: Presence;
 	isManager: boolean;
 	isWorking: boolean;
