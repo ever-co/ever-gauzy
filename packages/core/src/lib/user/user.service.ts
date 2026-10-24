@@ -671,6 +671,11 @@ export class UserService extends TenantAwareCrudService<User> {
 				await this.assertCanAssignRoles(entity);
 			}
 
+			// The organization a profile points at must be one the user belongs to. `lastOrganizationId` is
+			// what a token without an organization claim falls back to and what the next sign-in scopes its
+			// token to, so naming another organization of the tenant here put the user inside it.
+			await this.assertOrganizationPreferencesAreMemberships(user, entity);
+
 			// Update password hash if provided
 			if (entity['hash']) {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
@@ -979,6 +984,81 @@ export class UserService extends TenantAwareCrudService<User> {
 				return await this.typeOrmRepository.update({ id }, { lastLoginAt });
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Refuses a profile write that points the user at an organization they are not an active member of.
+	 *
+	 * `lastOrganizationId` is read as the organization the user works in: a token without an organization
+	 * claim falls back to it (`RequestContext.currentOrganizationId()`, which the organization boundary confines
+	 * the request to), and the next sign-in and token refresh scope their token to it. `PUT /user/:id` and the
+	 * `updateUser` field write it from the body, and `PROFILE_EDIT` (every employee holds it) may edit one's
+	 * own profile, so without this check a user could name any organization of the tenant and work inside it.
+	 * `defaultOrganizationId` is the same kind of pointer (the MCP sign-in reads it) and follows the same rule.
+	 *
+	 * Each pointer is checked in both forms the entity accepts, the column and the relation object. Clearing a
+	 * pointer, and restating the value already stored, need no check. The membership is the one
+	 * `POST /auth/switch-organization` and the JWT strategy require: active and not archived, in the user's
+	 * tenant. A tenant admin needs one too: the token minted for an organization they are not a member of is
+	 * refused by the JWT strategy, so pointing an admin at it would only break their next sign-in.
+	 *
+	 * @param stored - The user as stored, before this write.
+	 * @param entity - The profile write.
+	 * @throws ForbiddenException when a pointer names an organization the user is not an active member of.
+	 */
+	private async assertOrganizationPreferencesAreMemberships(stored: IUser, entity: User): Promise<void> {
+		const pointers = [
+			['lastOrganizationId', 'lastOrganization'],
+			['defaultOrganizationId', 'defaultOrganization']
+		] as const;
+
+		for (const [column, relation] of pointers) {
+			const related = entity[relation];
+			const stated = [entity[column], related && typeof related === 'object' ? related.id : undefined];
+
+			for (const organizationId of stated) {
+				if (organizationId === undefined || organizationId === null || organizationId === '') {
+					continue;
+				}
+				if (String(organizationId) === String(stored[column])) {
+					continue;
+				}
+				if (
+					typeof organizationId !== 'string' ||
+					!(await this.hasActiveOrganizationMembership(stored.id, organizationId, stored.tenantId))
+				) {
+					throw new ForbiddenException();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Whether a user holds an active, non-archived membership of an organization of their tenant: the
+	 * criteria `POST /auth/switch-organization` and the JWT strategy apply.
+	 *
+	 * Read by entity name through the repository's manager, as {@link resolveRoleName} reads roles: the user
+	 * module does not depend on the user-organization module.
+	 *
+	 * @param userId - The user.
+	 * @param organizationId - The organization.
+	 * @param tenantId - The user's tenant.
+	 * @returns True when an active membership exists; false when any argument is missing.
+	 */
+	public async hasActiveOrganizationMembership(userId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		if (!userId || !organizationId || !tenantId) {
+			return false;
+		}
+
+		const where = { userId, organizationId, tenantId, isActive: true, isArchived: false };
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmRepository.getEntityManager().count('UserOrganization', where as any)) > 0;
+			case MultiORMEnum.TypeORM:
+			default:
+				return (await this.typeOrmRepository.manager.count('UserOrganization', { where: where as any })) > 0;
 		}
 	}
 
