@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityNotFoundError, FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
@@ -95,6 +95,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param id - The ID of the Pipeline to update.
 	 * @param entity - The partial entity data to update.
 	 * @returns The result of the update operation.
+	 * @throws NotFoundException when the pipeline is not found, BadRequestException when the transaction rolled back.
 	 */
 	public async update(id: ID, partialEntity: QueryDeepPartialEntity<Pipeline>): Promise<UpdateResult | Pipeline> {
 		// Retrieve the current tenant ID from the request context
@@ -170,6 +171,15 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		} catch (error) {
 			console.log('Rollback Pipeline Transaction', error);
 			await queryRunner.rollbackTransaction();
+
+			// Nothing was written: report the failure rather than answer an empty edit as a success
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			if (error instanceof EntityNotFoundError) {
+				throw new NotFoundException('Record not found');
+			}
+			throw new BadRequestException(error?.message);
 		} finally {
 			await queryRunner.release();
 		}
