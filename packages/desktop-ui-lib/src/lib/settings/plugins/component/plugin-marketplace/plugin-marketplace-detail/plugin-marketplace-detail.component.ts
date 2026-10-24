@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, OnInit } from '@angular/core';
+import type { SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, IPluginSubscription, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
 import { NbBadgeModule, NbButtonModule, NbContextMenuModule, NbIconModule, NbMenuItem, NbMenuService, NbToggleModule, NbTooltipModule } from '@nebular/theme';
