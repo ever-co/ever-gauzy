@@ -93,7 +93,9 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity implements IE
 	@IsOptional()
 	@IsInt()
 	@Min(1)
-	@VersionColumn()
+	// Default 1, as the migration declares it (`integer NOT NULL DEFAULT 1`), so a schema built from the entities
+	// accepts a row inserted without a version too
+	@VersionColumn({ default: 1 })
 	@MikroOrmVersionProperty()
 	version?: number;
 

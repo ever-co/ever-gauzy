@@ -1,0 +1,14 @@
+diff --git a/node_modules/app-builder-lib/out/targets/snap/coreLegacy.js b/node_modules/app-builder-lib/out/targets/snap/coreLegacy.js
+index 63dc31f..1467f76 100644
+--- a/node_modules/app-builder-lib/out/targets/snap/coreLegacy.js
++++ b/node_modules/app-builder-lib/out/targets/snap/coreLegacy.js
+@@ -246,8 +246,7 @@ class SnapCoreLegacy extends SnapTarget_1.SnapCore {
+         builder_util_1.log.info({ releaseName }, "downloading snap template");
+         const templateDir = await (0, electronGet_1.downloadBuilderToolset)({ releaseName, filenameWithExt, checksums, githubOrgRepo: "electron-userland/electron-builder-binaries" });
+         await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: true });
+-        // Best-effort: remove chrome-sandbox from app dir before mksquashfs scans it.
+-        await (0, promises_1.rm)(path.join(appOutDir, "chrome-sandbox"), { force: true });
++        // chrome-sandbox is filtered out of mksquashfsArgs below, not deleted: appOutDir is shared with the other Linux targets (AppImage, tar.gz, flatpak, deb, rpm), which pack from it concurrently.
+         // chmod -R g-s to avoid setgid bits in final image
+         for (const dir of [stageDir, appOutDir, templateDir]) {
+             await (0, builder_util_1.exec)("chmod", ["-R", "g-s", dir]).catch(err => builder_util_1.log.warn({ error: err.message }, "chmod g-s failed"));

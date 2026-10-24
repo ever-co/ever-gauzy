@@ -7,6 +7,7 @@ import { Tenant } from '../../core/entities/internal';
 import { MultiORMEnum } from '../../core/utils';
 import { GlobalSettingSaveCommand } from './commands';
 import { GlobalSettingSaveHandler } from './commands/handlers/global-setting.save.handler';
+import { DynamicSettingDTO } from './dto/dynamic-setting.dto';
 import { OPERATOR_USER_IDS_ENV } from './global-setting-writer';
 import { TenantSettingService } from './tenant-setting.service';
 
@@ -30,7 +31,9 @@ describe('GlobalSettingSaveHandler', () => {
 		return { handler: new GlobalSettingSaveHandler(service), save, typeOrmCount, mikroOrmCount };
 	};
 
-	const command = () => new GlobalSettingSaveCommand({ posthogHost: 'https://collector.example.org' });
+	// Typed as the route's body: `ITenantSetting` lists only the file-storage settings, and the route takes any name.
+	const input: DynamicSettingDTO = { posthogHost: 'https://collector.example.org' };
+	const command = () => new GlobalSettingSaveCommand(input);
 
 	beforeEach(() => {
 		delete process.env[OPERATOR_USER_IDS_ENV];
