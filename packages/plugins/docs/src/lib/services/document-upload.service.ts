@@ -762,6 +762,9 @@ export class DocumentUploadService {
 	 * duplicate a file (read access) and then replace the file on their own copy delete the original's
 	 * bytes. Trashed rows count too: they can still be recovered.
 	 *
+	 * Best-effort, as the delete itself is: it runs after the swap committed, so a reference check that fails keeps
+	 * the blob (an orphan costs storage) instead of failing a replace that already succeeded.
+	 *
 	 * @param storageKey The key the document used before the replace.
 	 * @param storageProvider The provider that key lives on.
 	 * @param replacementKey The key the document uses now.
@@ -774,10 +777,16 @@ export class DocumentUploadService {
 		if (!storageKey || storageKey === replacementKey) {
 			return;
 		}
-		const stillReferenced = await this.typeOrmDocumentRepository.count({
-			where: { storageKey } as FindOptionsWhere<Document>,
-			withDeleted: true
-		});
+		let stillReferenced: number;
+		try {
+			stillReferenced = await this.typeOrmDocumentRepository.count({
+				where: { storageKey } as FindOptionsWhere<Document>,
+				withDeleted: true
+			});
+		} catch (error) {
+			this.logger.warn(`Kept a replaced file's blob: its reference check failed: ${(error as Error).message}`);
+			return;
+		}
 		if (stillReferenced > 0) {
 			return;
 		}

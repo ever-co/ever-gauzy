@@ -65,4 +65,14 @@ describe('DocumentUploadService — the blob a replace supersedes', () => {
 		expect(repository.count).not.toHaveBeenCalled();
 		expect(deleteFile).not.toHaveBeenCalled();
 	});
+
+	it('keeps it, without failing the committed replace, when the reference check fails', async () => {
+		const repository = { count: jest.fn(async () => Promise.reject(new Error('connection lost'))) };
+		const service = new DocumentUploadService(repository as any, {} as any, {} as any, {} as any, {} as any);
+
+		await expect(
+			(service as any).releaseReplacedBlob(ORIGINAL_KEY, 'LOCAL', 'docs/tenant-1/bob/new.pdf')
+		).resolves.toBeUndefined();
+		expect(deleteFile).not.toHaveBeenCalled();
+	});
 });
