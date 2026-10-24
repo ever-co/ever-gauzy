@@ -61,6 +61,10 @@ describe('MCP server bearer token validation', () => {
 				'mcp.write'
 			]);
 		});
+
+		it('keeps the default scope when the deploy passes an empty value (an unset secret)', () => {
+			expect(loadAuthorizationConfig({ MCP_AUTH_REQUIRED_SCOPES: '' }).requiredScopes).toEqual(['mcp.read']);
+		});
 	});
 
 	describe('OAuthValidator', () => {
