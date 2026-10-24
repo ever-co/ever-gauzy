@@ -6,12 +6,12 @@ import { ILegalDocument, LegalDocumentSlug } from '../../models/legal-document.m
 import { LegalService } from '../../providers/legal.service';
 
 /**
- * Renders the Privacy Policy and/or the Cookie Policy from the bundled corpus.
+ * Renders the Privacy Policy, the Cookie Policy and/or the DPIA Support Pack from the bundled corpus.
  *
- * Which of the two it shows comes from the route's `data.documents`, so the `privacy` and
- * `cookies` routes reuse this one component instead of duplicating the document markup.
- * With no `data.documents` the component shows both, which is how it behaved when it was
- * only mounted on the `privacy` route.
+ * Which of them it shows comes from the route's `data.documents`, so the `privacy`, `cookies` and
+ * `dpia` routes reuse this one component instead of duplicating the document markup.
+ * With no `data.documents` the component shows the Privacy Policy and the Cookie Policy, which is
+ * how it behaved when it was only mounted on the `privacy` route.
  */
 @Component({
 	templateUrl: './privacy-policy.component.html',
