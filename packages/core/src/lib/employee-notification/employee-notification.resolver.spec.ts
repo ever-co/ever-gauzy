@@ -108,6 +108,7 @@ function surfaces() {
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		markAllAsRead: jest.fn().mockResolvedValue(MARK_ALL_ANSWER),
 		create: jest.fn().mockResolvedValue(ROWS[0]),
+		createForCaller: jest.fn().mockResolvedValue(ROWS[0]),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
@@ -658,7 +659,7 @@ describe('EmployeeNotificationResolver — one concept, two protocols, the same 
 		expect(Object.keys(answer).sort()).toEqual(['count', 'success']);
 	});
 
-	it('files a notification through the same service method the REST route calls', async () => {
+	it('files a notification as the caller, through the same service method the REST route calls', async () => {
 		const { resolver, employeeNotificationService } = surfaces();
 		const input = {
 			title: 'Assigned to you',
@@ -671,12 +672,15 @@ describe('EmployeeNotificationResolver — one concept, two protocols, the same 
 		};
 
 		expect(await resolver.createEmployeeNotification(input)).toBe(ROWS[0]);
-		expect(employeeNotificationService.create).toHaveBeenCalledWith(input);
+		// The caller-facing write pins the sender and checks the receiver; the plain create is the event
+		// handler's and is never reached from this surface with a body-chosen sender.
+		expect(employeeNotificationService.createForCaller).toHaveBeenCalledWith(input);
+		expect(employeeNotificationService.create).not.toHaveBeenCalled();
 	});
 
 	it('answers the delivered service’s own silence when the receiver has switched the kind off', async () => {
 		const { resolver, employeeNotificationService } = surfaces();
-		employeeNotificationService.create.mockResolvedValueOnce(undefined);
+		employeeNotificationService.createForCaller.mockResolvedValueOnce(undefined);
 
 		// The service consults the receiver's settings and declines the write rather than raising: the
 		// field states that plainly, and this pins that nothing is invented to carry it.

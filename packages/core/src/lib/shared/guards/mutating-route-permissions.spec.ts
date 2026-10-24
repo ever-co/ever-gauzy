@@ -347,8 +347,12 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// EmployeeController: own presence: the employee comes from RequestContext.currentUser().employeeId, never from the
 	// request, and the body only carries isIdle (employee.service.ts updatePresence)
 	'EmployeeController.updatePresence',
-	// EmployeeNotificationController: own notifications: EmployeeNotificationService pins the receiver to the employee of the caller and
-	// the rows are employee scoped (employee-notification.service.ts:126)
+	// EmployeeNotificationController: own notifications. create files the notification as the caller: the sender is
+	// always the caller's employee (a caller with none is refused), and the receiver is the caller's own employee
+	// unless they hold CHANGE_SELECTED_EMPLOYEE, in which case it must be an employee of the notification's
+	// organization (employee-notification.service.ts createForCaller). update never re-addresses a row (sender and
+	// receiver are dropped from the patch); update / softRemove / softRecover pre-read through the receiver-scoped
+	// findOneByIdString, and delete adds the receiver to its criteria, so a non-holder only reaches their own rows
 	'EmployeeNotificationController.create',
 	'EmployeeNotificationController.delete',
 	'EmployeeNotificationController.markAllAsRead',

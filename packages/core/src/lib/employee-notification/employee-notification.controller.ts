@@ -1,6 +1,12 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ID, IEmployeeNotification, IMarkAllAsReadResponse, IPagination } from '@gauzy/contracts';
+import {
+	ID,
+	IEmployeeNotification,
+	IEmployeeNotificationCreateInput,
+	IMarkAllAsReadResponse,
+	IPagination
+} from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -61,6 +67,30 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 		@Query() params: BaseQueryDTO<EmployeeNotification>
 	): Promise<IEmployeeNotification> {
 		return this._employeeNotificationService.findOneByIdString(id, params);
+	}
+
+	/**
+	 * Files a notification as the caller.
+	 *
+	 * Overrides the inherited `CrudController.create()` so that the body no longer chooses the sender, the
+	 * receiver or the row id. The service pins the sender to the caller's own employee. It allows another
+	 * receiver only for a `CHANGE_SELECTED_EMPLOYEE` holder, and only inside the notification's
+	 * organization. Notifications the platform raises itself (mentions, assignments, broadcasts) do not use
+	 * this route: they are published as events and filed by the event handler, which is unchanged.
+	 *
+	 * @param entity The notification to file.
+	 * @returns The created notification, or nothing when the receiver has switched this kind off.
+	 */
+	@ApiOperation({ summary: 'Send a notification as the current employee' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Notification created successfully' })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'The caller has no employee record, or may not notify that receiver'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(@Body() entity: IEmployeeNotificationCreateInput): Promise<EmployeeNotification> {
+		return (await this._employeeNotificationService.createForCaller(entity)) as EmployeeNotification;
 	}
 
 	/**
