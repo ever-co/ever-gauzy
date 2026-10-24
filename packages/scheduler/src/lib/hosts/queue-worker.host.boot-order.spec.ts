@@ -5,6 +5,7 @@ import { Injectable, Logger, Module, OnModuleInit, Scope, Type } from '@nestjs/c
 import { CommandBus, CommandHandler, CommandHandlerNotFoundException, CqrsModule, ICommandHandler } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Job, Queue, Worker } from 'bullmq';
+import { QUEUE_WORKER_DEFERRED_START_METADATA } from '../constants/scheduler.constants';
 import { QueueJobHandler } from '../decorators/queue-job-handler.decorator';
 import { QueueWorker } from '../decorators/queue-worker.decorator';
 import { QueueWorkerHost } from './queue-worker.host';
@@ -140,6 +141,20 @@ class EagerTokenCleanupWorker extends QueueWorkerHost {
 	}
 }
 
+/** The same worker declared with an explicit `autorun: false`: held on purpose, for its owner to start. */
+@Injectable()
+@QueueWorker('token-maintenance-held', { autorun: false })
+class HeldTokenCleanupWorker extends QueueWorkerHost {
+	constructor(private readonly commandBus: CommandBus) {
+		super();
+	}
+
+	@QueueJobHandler(JOB_NAME)
+	async handleExpired(): Promise<number> {
+		return this.commandBus.execute(new CleanupExpiredTokensCommand());
+	}
+}
+
 /** Lives in the root module, whose `onModuleInit` is the last one of the module-init phase. */
 @Injectable()
 class EndOfModuleInitProbe implements OnModuleInit {
@@ -245,6 +260,18 @@ describe('QueueWorkerHost — no job is processed before the application has boo
 		expect(worker.runCalls).toBe(1);
 	});
 
+	it('leaves a worker declared with an explicit `autorun: false` stopped, for its owner to start', async () => {
+		moduleRef = await boot(HeldTokenCleanupWorker, 'token-maintenance-held');
+
+		const [worker] = FakeWorker.instances;
+		expect(worker.opts['autorun']).toBe(false);
+		// Bootstrap completed and the bootstrap hook ran, but it does not start a worker held on purpose.
+		expect(timeline).toContain('cqrs:handlers-registered');
+		expect(timeline).not.toContain('run:token-maintenance-held');
+		expect(worker.runCalls).toBe(0);
+		expect(worker.outcomes).toEqual([]);
+	});
+
 	it('still closes the worker on shutdown', async () => {
 		moduleRef = await boot(TokenCleanupWorkerLike, 'token-maintenance');
 		const [worker] = FakeWorker.instances;
@@ -290,6 +317,16 @@ describe('QueueWorkerHost.startConsuming', () => {
 		expect(worker.runCalls).toBe(0);
 	});
 
+	it('never starts a worker declared with an explicit `autorun: false`', () => {
+		const subject = new HeldTokenCleanupWorker({} as CommandBus);
+		const worker = held();
+		attach(subject, worker);
+
+		subject.onApplicationBootstrap();
+		expect(subject.startConsuming()).toBe(false);
+		expect(worker.runCalls).toBe(0);
+	});
+
 	it('does nothing, and does not throw, where no worker was attached (no BullMQ root in the process)', () => {
 		const subject = host();
 
@@ -305,6 +342,8 @@ describe('@QueueWorker — the worker options it registers', () => {
 
 		expect(Reflect.getMetadata(WORKER_METADATA, Subject)).toEqual({ autorun: false });
 		expect(Reflect.getMetadata(PROCESSOR_METADATA, Subject)).toEqual({ name: 'q-default' });
+		// …and records that the hold is its own doing, so `QueueWorkerHost` starts it after bootstrap.
+		expect(Reflect.getMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, Subject)).toBe(true);
 	});
 
 	it('keeps every option the caller passed', () => {
@@ -319,6 +358,18 @@ describe('@QueueWorker — the worker options it registers', () => {
 		class Subject extends QueueWorkerHost {}
 
 		expect(Reflect.getMetadata(WORKER_METADATA, Subject)).toEqual({ autorun });
+		// The caller owns the start: `QueueWorkerHost` leaves it alone either way.
+		expect(Reflect.getMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, Subject)).toBe(false);
+	});
+
+	it('does not let a subclass that holds its worker on purpose inherit its parent’s deferred start', () => {
+		@QueueWorker('q-parent')
+		class Parent extends QueueWorkerHost {}
+		@QueueWorker('q-child', { autorun: false })
+		class Child extends Parent {}
+
+		expect(Reflect.getMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, Parent)).toBe(true);
+		expect(Reflect.getMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, Child)).toBe(false);
 	});
 
 	it('accepts processor options, like `@Processor`', () => {
@@ -334,5 +385,6 @@ describe('@QueueWorker — the worker options it registers', () => {
 		class Subject extends QueueWorkerHost {}
 
 		expect(Reflect.getMetadata(WORKER_METADATA, Subject)).toBeUndefined();
+		expect(Reflect.getMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, Subject)).toBe(false);
 	});
 });

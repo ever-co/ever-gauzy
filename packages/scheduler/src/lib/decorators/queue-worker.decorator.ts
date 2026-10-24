@@ -1,5 +1,6 @@
 import { Processor, ProcessorOptions } from '@nestjs/bullmq';
-import { Scope } from '@nestjs/common';
+import { applyDecorators, Scope, SetMetadata } from '@nestjs/common';
+import { QUEUE_WORKER_DEFERRED_START_METADATA } from '../constants/scheduler.constants';
 
 /**
  * The BullMQ worker options `@QueueWorker()` takes as its second argument (`@nestjs/bullmq` does not export
@@ -21,10 +22,12 @@ export type QueueWorkerOptions = NonNullable<Parameters<typeof Processor>[1]>;
  * So `autorun` defaults to `false` here, and {@link QueueWorkerHost} starts the loop from its own
  * `onApplicationBootstrap` instead — once, centrally, for every host, rather than in each worker.
  *
- * Two cases keep BullMQ's own default (the loop starts at creation), because nothing would start it later:
- * - the caller states `autorun` itself — an explicit choice always wins;
+ * Two cases are left as the caller declared them, and `QueueWorkerHost` never starts them:
+ * - the caller states `autorun` itself — an explicit choice always wins. `autorun: true` starts at creation, as
+ *   in BullMQ; an explicit `autorun: false` stays stopped until its owner calls `this.worker.run()`, as before;
  * - the host is declared request- or transient-scoped (`ProcessorOptions.scope`). Nest calls lifecycle
- *   hooks only on static instances, so such a host never receives `onApplicationBootstrap`.
+ *   hooks only on static instances, so such a host never receives `onApplicationBootstrap`, and it keeps
+ *   BullMQ's default (the loop starts at creation).
  *
  * @param queueNameOrOptions The queue name or processor options passed to `@QueueWorker()`.
  * @param workerOptions The worker options passed to `@QueueWorker()`, if any.
@@ -57,9 +60,20 @@ export const QueueWorker: typeof Processor = (
 ): ClassDecorator => {
 	const resolved = resolveQueueWorkerOptions(queueNameOrOptions, workerOptions);
 
+	// Whether the hold is this decorator's doing, which is the only case `QueueWorkerHost` starts the worker in.
+	// Written on every host (also as `false`), so a subclass never inherits its parent's answer.
+	const startDeferred = resolved?.autorun === false && workerOptions?.autorun === undefined;
+	const deferredStart = SetMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, startDeferred);
+
 	if (typeof queueNameOrOptions === 'string') {
-		return resolved ? Processor(queueNameOrOptions, resolved) : Processor(queueNameOrOptions);
+		return applyDecorators(
+			resolved ? Processor(queueNameOrOptions, resolved) : Processor(queueNameOrOptions),
+			deferredStart
+		);
 	}
 
-	return resolved ? Processor(queueNameOrOptions, resolved) : Processor(queueNameOrOptions);
+	return applyDecorators(
+		resolved ? Processor(queueNameOrOptions, resolved) : Processor(queueNameOrOptions),
+		deferredStart
+	);
 };

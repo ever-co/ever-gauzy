@@ -1,7 +1,7 @@
 import { WorkerHost } from '@nestjs/bullmq';
 import { Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Job, Worker } from 'bullmq';
-import { QUEUE_JOB_HANDLER_METADATA } from '../constants/scheduler.constants';
+import { QUEUE_JOB_HANDLER_METADATA, QUEUE_WORKER_DEFERRED_START_METADATA } from '../constants/scheduler.constants';
 
 type QueueJobHandler = (job: Job, token?: string) => Promise<unknown> | unknown;
 
@@ -28,6 +28,9 @@ export abstract class QueueWorkerHost extends WorkerHost implements OnApplicatio
 	 * Shutdown is unchanged: `@nestjs/bullmq` closes every worker it created in `onApplicationShutdown`,
 	 * whether or not it was started.
 	 *
+	 * Only a worker whose start `@QueueWorker()` deferred is started here. One declared with an explicit
+	 * `autorun: false` stays stopped until its owner calls `this.worker.run()`, as it always did.
+	 *
 	 * 🛑 A subclass that implements `onApplicationBootstrap` itself must call `super.onApplicationBootstrap()`,
 	 * or its worker never consumes.
 	 */
@@ -36,7 +39,8 @@ export abstract class QueueWorkerHost extends WorkerHost implements OnApplicatio
 	}
 
 	/**
-	 * Starts the worker's fetch loop if it is attached, not already running and not closing.
+	 * Starts the worker's fetch loop if `@QueueWorker()` deferred its start, and it is attached, not already
+	 * running and not closing.
 	 *
 	 * Safe to call more than once. Exposed for the one case the bootstrap hook cannot cover: a host whose
 	 * worker is attached after bootstrap (`BullModule.forRoot({ extraOptions: { manualRegistration: true } })`
@@ -45,6 +49,12 @@ export abstract class QueueWorkerHost extends WorkerHost implements OnApplicatio
 	 * @returns True when this call started the loop.
 	 */
 	startConsuming(): boolean {
+		// Declared with an explicit `autorun` (or scoped, or not declared through `@QueueWorker()` at all): the
+		// caller owns the start. An explicit `autorun: false` in particular is held on purpose and stays held.
+		if (Reflect.getMetadata(QUEUE_WORKER_DEFERRED_START_METADATA, this.constructor) !== true) {
+			return false;
+		}
+
 		const worker = this.resolveAttachedWorker();
 
 		// No worker: this process has no BullMQ root, or registers its workers manually. Nothing to start.
