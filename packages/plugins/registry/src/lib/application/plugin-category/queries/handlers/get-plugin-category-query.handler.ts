@@ -22,9 +22,10 @@ export class GetPluginCategoryHandler implements IQueryHandler<GetPluginCategory
 	async execute(query: GetPluginCategoryQuery): Promise<IPluginCategory> {
 		const { id, relations } = query;
 
-		// A single `?relations=x` arrives as a string, several as an array.
+		// A single `?relations=x` arrives as a string, several as an array. An empty list names no relation either:
+		// it is what the controller hands on once it has dropped the relations a public read may not load.
 		const requested =
-			relations === undefined || relations === null
+			relations === undefined || relations === null || (Array.isArray(relations) && relations.length === 0)
 				? [...PLUGIN_CATEGORY_READABLE_RELATIONS]
 				: ([] as string[]).concat(relations);
 		const refused = requested.filter((relation) => !PLUGIN_CATEGORY_READABLE_RELATIONS.includes(relation));

@@ -24,6 +24,16 @@ describe('GetPluginCategoryHandler relations', () => {
 		});
 	});
 
+	it('loads the tree and the plugins for an empty relation list too', async () => {
+		const { instance, service } = handler();
+
+		await instance.execute(new GetPluginCategoryQuery(CATEGORY, []));
+
+		expect(service.findOneByIdString).toHaveBeenCalledWith(CATEGORY, {
+			relations: ['parent', 'children', 'plugins']
+		});
+	});
+
 	it('accepts any of the readable relations, as an array or as the single string a lone query parameter is', async () => {
 		const { instance, service } = handler();
 
