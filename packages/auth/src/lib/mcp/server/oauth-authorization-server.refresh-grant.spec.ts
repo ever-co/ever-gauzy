@@ -44,21 +44,27 @@ describe('OAuth2AuthorizationServer refresh_token grant', () => {
 			return { accessToken: 'new', tokenType: 'Bearer', expiresIn: 900, scope: 'openid' };
 		});
 
+		const markClientUsed = jest.spyOn(oAuth2ClientManager, 'markClientUsed');
+
 		await grant();
 
 		expect(tokenManager.refreshAccessToken).toHaveBeenCalledWith('refresh-1', 'client-1', expect.any(Function));
 		expect(userInfoProvider).toHaveBeenCalledWith('user-1');
 		expect(responseBuilder.sendTokenResponse).toHaveBeenCalled();
+		// The client is in use: a flood of registrations does not make the registry forget it
+		expect(markClientUsed).toHaveBeenCalledWith('client-1');
 	});
 
 	it('answers invalid_grant when the manager refuses (deactivated user)', async () => {
 		const { grant, tokenManager, errorHandler, responseBuilder } = build(async () => null);
 		tokenManager.refreshAccessToken.mockResolvedValue(null);
+		const markClientUsed = jest.spyOn(oAuth2ClientManager, 'markClientUsed');
 
 		await grant();
 
 		expect(responseBuilder.sendTokenResponse).not.toHaveBeenCalled();
 		expect(errorHandler.handleOAuthError.mock.calls[0][1]).toMatchObject({ error: 'invalid_grant' });
+		expect(markClientUsed).not.toHaveBeenCalled();
 	});
 
 	it('answers a RETRYABLE 503 when the account lookup is unavailable, not invalid_grant', async () => {

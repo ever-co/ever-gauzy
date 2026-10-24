@@ -17,13 +17,20 @@ describe('OAuthUserService.authenticateMcpUser — failed attempts', () => {
 	let service: OAuthUserService;
 
 	const from = (ip: string) => ({ ip, headers: {}, res: { setHeader: jest.fn() } });
+	// The user has no employee record (an admin, a viewer), so the deactivated-employee check lets them through
+	const noEmployees = () => ({ find: jest.fn(async () => []) });
 
 	beforeEach(() => {
 		environment.AUTH_MAX_FAILED_ATTEMPTS = MAX;
 		environment.AUTH_LOCKOUT_SECONDS = 900;
 		verify = jest.fn(async (password: string) => password === 'right-password');
 		const users = { findOne: jest.fn(async () => ({ id: 'user-1', email: EMAIL, hash: 'hash' })) };
-		service = new OAuthUserService(users as never, { verify } as never, new LoginAttemptService(null));
+		service = new OAuthUserService(
+			users as never,
+			{ verify } as never,
+			new LoginAttemptService(null),
+			noEmployees() as never
+		);
 	});
 
 	afterEach(() => {
@@ -63,7 +70,12 @@ describe('OAuthUserService.authenticateMcpUser — failed attempts', () => {
 
 	it('does not count a database error against the account', async () => {
 		const users = { findOne: jest.fn().mockRejectedValue(new Error('database down')) };
-		const failing = new OAuthUserService(users as never, { verify } as never, new LoginAttemptService(null));
+		const failing = new OAuthUserService(
+			users as never,
+			{ verify } as never,
+			new LoginAttemptService(null),
+			noEmployees() as never
+		);
 		jest.spyOn((failing as any).logger, 'error').mockImplementation(() => undefined);
 
 		for (let i = 0; i < MAX * 2; i++) {

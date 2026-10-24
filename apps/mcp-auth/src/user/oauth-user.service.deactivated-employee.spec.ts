@@ -1,11 +1,13 @@
 /**
- * The service imports only entity classes and the password hasher from `@gauzy/core`; stand-ins keep the
- * whole core module (and its entity graph) out of this spec.
+ * The service imports only entity classes, the password hasher and the login failure counter from `@gauzy/core`;
+ * stand-ins keep the whole core module (and its entity graph) out of this spec.
  */
 jest.mock('@gauzy/core', () => ({
 	Employee: class Employee {},
 	User: class User {},
-	PasswordHashService: class PasswordHashService {}
+	PasswordHashService: class PasswordHashService {},
+	LoginAttemptService: class LoginAttemptService {},
+	LoginAttemptScope: { PASSWORD: 'password', MAGIC_CODE: 'magic-code', TEAM_JOIN_CODE: 'team-join-code' }
 }));
 
 import { FindOperator } from 'typeorm';
@@ -35,12 +37,20 @@ describe('OAuthUserService — deactivated employees', () => {
 		const employeeRepository = {
 			find: jest.fn(async ({ where }) => employees.filter((row) => matches(row, where)))
 		};
+		// The per-account failure counter (its own spec is `oauth-user.service.spec.ts`): never blocks here
+		const attempt = {
+			fail: jest.fn(async () => undefined),
+			succeed: jest.fn(async () => undefined),
+			release: jest.fn(async () => undefined)
+		};
+		const loginAttemptService = { begin: jest.fn(async () => attempt) };
 		const service: OAuthUserService = Object.create(OAuthUserService.prototype);
 		Object.assign(service, {
 			logger: { error: jest.fn() },
 			typeOrmRepository: userRepository,
 			typeOrmEmployeeRepository: employeeRepository,
-			passwordHashService: { verify: jest.fn(async (password: string) => password === 'right-password') }
+			passwordHashService: { verify: jest.fn(async (password: string) => password === 'right-password') },
+			loginAttemptService
 		});
 		return { service, userRepository, employeeRepository };
 	}

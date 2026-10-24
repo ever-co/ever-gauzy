@@ -59,8 +59,10 @@ export const CLIENT_REGISTRATION_LIMITS = Object.freeze({
 });
 
 /**
- * Clients registered through `POST /oauth2/register` kept at once. Past it, the oldest is forgotten: its client asks
- * again, as after a restart (the store is in memory), rather than every new client being refused.
+ * Clients registered through `POST /oauth2/register` kept at once (the store is in memory). Past it, a client is
+ * forgotten rather than every new client being refused: first the oldest that never obtained a token, then the least
+ * recently used. Registration is open to anyone, but only a person signing in turns a registration into a client that
+ * obtained a token, so a flood of registrations displaces other unused registrations, never a client in use.
  */
 export const MAX_DYNAMIC_CLIENTS = 5000;
 
@@ -69,8 +71,10 @@ export const MIN_RESOURCE_SERVER_SECRET_LENGTH = 32;
 
 export class OAuth2ClientManager {
 	private clients = new Map<string, OAuth2Client>();
-	// Clients registered without an id of the operator's (dynamic registration), oldest first
-	private readonly dynamicClientIds = new Set<string>();
+	// Clients registered without an id of the operator's (dynamic registration) that never obtained a token, oldest first
+	private readonly unusedDynamicClientIds = new Set<string>();
+	// Dynamically registered clients that obtained a token (see {@link markClientUsed}), least recently used first
+	private readonly usedDynamicClientIds = new Set<string>();
 	/** The clients registered by {@link registerResourceServer}: the only ones the introspection endpoint answers */
 	private readonly resourceServerIds = new Set<string>();
 	private securityLogger: SecurityLogger;
@@ -324,6 +328,22 @@ export class OAuth2ClientManager {
 	}
 
 	/**
+	 * Records that a client obtained tokens (an authorization code exchanged, or a refresh token used): a dynamically
+	 * registered client is then forgotten only after every client that never obtained one, and after the clients used
+	 * less recently. Call it only once tokens are issued, never on client authentication alone: a public client
+	 * authenticates with no secret, so anyone could otherwise mark the clients they registered as used.
+	 *
+	 * @param clientId - The client the tokens were issued to. A client the operator registered is never forgotten.
+	 */
+	markClientUsed(clientId: string): void {
+		if (!this.unusedDynamicClientIds.delete(clientId) && !this.usedDynamicClientIds.delete(clientId)) {
+			return;
+		}
+		// Re-inserted last: the most recently used
+		this.usedDynamicClientIds.add(clientId);
+	}
+
+	/**
 	 * Get client by ID
 	 */
 	getClient(clientId: string): OAuth2Client | null {
@@ -483,16 +503,27 @@ export class OAuth2ClientManager {
 	}
 
 	/**
-	 * Keeps a dynamically registered client, forgetting the oldest ones past {@link MAX_DYNAMIC_CLIENTS}.
+	 * Keeps a dynamically registered client, making room first when {@link MAX_DYNAMIC_CLIENTS} are kept: the oldest
+	 * client that never obtained a token is forgotten, or, when every client did, the least recently used one. An
+	 * anonymous flood of registrations therefore only displaces registrations nobody signed in through.
 	 */
 	private rememberDynamicClient(clientId: string): void {
-		this.dynamicClientIds.add(clientId);
-		while (this.dynamicClientIds.size > this.maxDynamicClients) {
-			const oldest = this.dynamicClientIds.values().next().value as string;
-			this.dynamicClientIds.delete(oldest);
-			this.clients.delete(oldest);
-			this.securityLogger.warn(`Dynamic client registry full: forgot the oldest client ${oldest}`);
+		while (this.unusedDynamicClientIds.size + this.usedDynamicClientIds.size >= this.maxDynamicClients) {
+			const neverUsed = this.unusedDynamicClientIds.size > 0;
+			const pool = neverUsed ? this.unusedDynamicClientIds : this.usedDynamicClientIds;
+			const forgotten = pool.values().next();
+			if (forgotten.done) {
+				break;
+			}
+			pool.delete(forgotten.value);
+			this.clients.delete(forgotten.value);
+			this.securityLogger.warn(
+				`Dynamic client registry full: forgot the ${neverUsed ? 'oldest unused' : 'least recently used'} client ${
+					forgotten.value
+				}`
+			);
 		}
+		this.unusedDynamicClientIds.add(clientId);
 	}
 
 	/**
