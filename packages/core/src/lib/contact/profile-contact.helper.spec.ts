@@ -68,6 +68,20 @@ describe('ownContactPatch', () => {
 		});
 	});
 
+	it('copies only the postal, geographic and fiscal facts: never a column the server manages', () => {
+		// `PUT /candidate/:id` does not whitelist its body, so these reached the cascading contact save.
+		const patch = ownContactPatch(owner, {
+			city: 'Sofia',
+			createdAt: new Date('2020-01-01T00:00:00.000Z'),
+			deletedAt: new Date('2020-01-01T00:00:00.000Z'),
+			isActive: false,
+			isArchived: true,
+			createdByUserId: 'user-other'
+		} as unknown as IContact);
+
+		expect(patch).toEqual({ city: 'Sofia', tenantId: 'tenant-1', organizationId: 'organization-1' });
+	});
+
 	it("stamps the profile's tenant and organization over the body's, and drops the contact's other owners", () => {
 		const patch = ownContactPatch(owner, {
 			city: 'Sofia',
