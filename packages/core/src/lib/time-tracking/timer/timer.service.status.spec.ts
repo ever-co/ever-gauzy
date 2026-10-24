@@ -4,14 +4,20 @@ import '../../core/entities/internal';
 import { DatabaseTypeEnum, defineConfig } from '@gauzy/config';
 import { ITimerStatus, ITimerStatusInput, TimeLogSourceEnum } from '@gauzy/contracts';
 import { FindOperator } from 'typeorm';
+import * as moment from 'moment';
 import { MultiORMEnum } from '../../core/utils';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { secondsWithinWindow } from './timer.helper';
 import { TimerService } from './timer.service';
 
 /**
  * `getTimerStatus` looked up the last log (running or completed) with the same `startedAt` window as today's
  * completed logs, so a timer started before `todayStart` (one still running past midnight) was never found: the
  * status read stopped, and its duration was missing, until the timer was stopped (ever-co/ever-teams#4649).
+ *
+ * Once such a timer was stopped, its after-midnight part dropped out of today's duration again: the completed logs
+ * were read with the same `startedAt` window. They are now every completed log overlapping today's window, each
+ * counted for its part inside it, the clipping the running log already had.
  *
  * The repositories here answer from an in-memory table and apply the `where` each ORM path builds (TypeORM find
  * operators, or the MikroORM condition they translate to), so the specs check which logs the queries select.
@@ -41,7 +47,7 @@ interface TimeLogRow {
 
 const time = (value: unknown): number => new Date(value as Date).getTime();
 
-/** Applies a TypeORM `where` (plain values, `Between`, `Not(IsNull())`) to a row. */
+/** Applies a TypeORM `where` (plain values, `Between`, `LessThanOrEqual` / `MoreThanOrEqual`, `Not(IsNull())`). */
 function matchesTypeOrmWhere(row: TimeLogRow, where: Record<string, unknown>): boolean {
 	return Object.entries(where).every(([key, condition]) => {
 		const value = row[key as keyof TimeLogRow];
@@ -51,6 +57,11 @@ function matchesTypeOrmWhere(row: TimeLogRow, where: Record<string, unknown>): b
 					const [from, to] = condition.value as unknown as Date[];
 					return time(value) >= time(from) && time(value) <= time(to);
 				}
+				// A null column matches neither, as in SQL.
+				case 'lessThanOrEqual':
+					return value !== null && value !== undefined && time(value) <= time(condition.value);
+				case 'moreThanOrEqual':
+					return value !== null && value !== undefined && time(value) >= time(condition.value);
 				case 'not':
 					if (condition.child?.type === 'isNull') {
 						return value !== null && value !== undefined;
@@ -71,10 +82,11 @@ function matchesMikroOrmWhere(row: TimeLogRow, where: Record<string, unknown>): 
 		if (condition !== null && typeof condition === 'object' && !(condition instanceof Date)) {
 			return Object.entries(condition).every(([operator, operand]) => {
 				switch (operator) {
+					// A null column matches neither, as in SQL.
 					case '$gte':
-						return time(value) >= time(operand);
+						return value !== null && value !== undefined && time(value) >= time(operand);
 					case '$lte':
-						return time(value) <= time(operand);
+						return value !== null && value !== undefined && time(value) <= time(operand);
 					case '$ne':
 						return operand === null ? value !== null && value !== undefined : value !== operand;
 					default:
@@ -198,7 +210,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 		expect(status.duration).toBe(2 * HOUR);
 	});
 
-	it('does not count a completed log started before todayStart', async () => {
+	it('counts a completed log started before todayStart for its part since todayStart only', async () => {
 		const endedYesterday = timeLog({
 			id: 'ended-yesterday',
 			startedAt: new Date('2026-10-23T18:00:00.000Z'),
@@ -212,7 +224,52 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 
 		const status = await getTimerStatus([endedYesterday, endedAfterMidnight]);
 
-		expect(status).toEqual({ duration: 0, running: false, lastLog: null });
+		// 00:00 to 00:30; the hour before midnight belongs to yesterday, and the log that ended yesterday adds nothing.
+		// The last log stays today's last started one, of which there is none.
+		expect(status).toEqual({ duration: 30 * 60, running: false, lastLog: null });
+	});
+
+	it('counts a timer that ran past midnight the same once it is stopped as while it ran', async () => {
+		const startedAt = new Date('2026-10-23T22:00:00.000Z');
+		const whileRunning = await getTimerStatus([
+			timeLog({
+				id: 'past-midnight',
+				isRunning: true,
+				startedAt,
+				// The heartbeat moves `stoppedAt` while the timer runs
+				stoppedAt: new Date('2026-10-24T01:59:00.000Z')
+			})
+		]);
+		const onceStopped = await getTimerStatus([
+			timeLog({ id: 'past-midnight', isRunning: false, startedAt, stoppedAt: NOW })
+		]);
+
+		expect(whileRunning.running).toBe(true);
+		expect(onceStopped.running).toBe(false);
+		// 00:00 to 02:00 both times; the two hours before midnight belong to yesterday
+		expect(whileRunning.duration).toBe(2 * HOUR);
+		expect(onceStopped.duration).toBe(whileRunning.duration);
+	});
+
+	it('counts each log once: a stopped one that ran past midnight, then the running one', async () => {
+		const stoppedAfterMidnight = timeLog({
+			id: 'stopped-after-midnight',
+			startedAt: new Date('2026-10-23T22:00:00.000Z'),
+			stoppedAt: new Date('2026-10-24T00:15:00.000Z')
+		});
+		const runningToday = timeLog({
+			id: 'running-today',
+			isRunning: true,
+			startedAt: new Date('2026-10-24T00:30:00.000Z'),
+			stoppedAt: new Date('2026-10-24T01:59:00.000Z')
+		});
+
+		const status = await getTimerStatus([stoppedAfterMidnight, runningToday]);
+
+		expect(status.running).toBe(true);
+		expect(status.lastLog).toMatchObject({ id: 'running-today' });
+		// 00:00 to 00:15 of the stopped log, plus 00:30 to 02:00 of the running one
+		expect(status.duration).toBe(15 * 60 + 1.5 * HOUR);
 	});
 
 	it('reads a timer started today as before: running, with today completed logs plus its time so far', async () => {
@@ -253,5 +310,34 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('TimerService.getTi
 		expect(status.running).toBe(false);
 		expect(status.lastLog).toMatchObject({ id: 'last-today', isRunning: false });
 		expect(status.duration).toBe(HOUR);
+	});
+});
+
+describe('secondsWithinWindow', () => {
+	const windowStart = moment.utc('2026-10-24T00:00:00.000Z');
+	const windowEnd = moment.utc('2026-10-25T00:00:00.000Z');
+	const within = (startedAt: string, stoppedAt: string) =>
+		secondsWithinWindow(startedAt, stoppedAt, windowStart, windowEnd);
+
+	it('counts a log inside the window whole', () => {
+		expect(within('2026-10-24T09:00:00.000Z', '2026-10-24T10:30:00.000Z')).toBe(1.5 * HOUR);
+	});
+
+	it('clips a log started before the window to the window start', () => {
+		expect(within('2026-10-23T23:00:00.000Z', '2026-10-24T00:30:00.000Z')).toBe(30 * 60);
+	});
+
+	it('clips a log stopped after the window to the window end', () => {
+		expect(within('2026-10-24T23:30:00.000Z', '2026-10-25T01:00:00.000Z')).toBe(30 * 60);
+	});
+
+	it('counts a log spanning the whole window as the window', () => {
+		expect(within('2026-10-23T12:00:00.000Z', '2026-10-25T12:00:00.000Z')).toBe(24 * HOUR);
+	});
+
+	it('counts nothing for a log outside the window, or one with no end', () => {
+		expect(within('2026-10-23T18:00:00.000Z', '2026-10-23T20:00:00.000Z')).toBe(0);
+		expect(within('2026-10-25T01:00:00.000Z', '2026-10-25T02:00:00.000Z')).toBe(0);
+		expect(secondsWithinWindow('2026-10-24T09:00:00.000Z', null, windowStart, windowEnd)).toBe(0);
 	});
 });

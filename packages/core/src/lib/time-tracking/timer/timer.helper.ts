@@ -1,4 +1,5 @@
 import { FindOperator } from "typeorm";
+import * as moment from "moment";
 import { ITimerStatusInput, TimeLogSourceEnum } from "@gauzy/contracts";
 
 //
@@ -121,4 +122,30 @@ export function addRelationsToQuery(queryParams: TimeLogQueryParams, request: IT
     if (request.relations) {
         queryParams.relations = request.relations;
     }
+}
+
+/**
+ * The seconds of a time log that fall inside a window: the overlap of `[startedAt, stoppedAt]` with
+ * `[windowStart, windowEnd]`, or 0 when they do not overlap. The timer status counts today's duration with it,
+ * for completed logs and the running one alike, so a log that crosses midnight counts its part of the day only,
+ * and the same part whether it is still running or already stopped.
+ *
+ * @param startedAt - When the log started.
+ * @param stoppedAt - When it stopped (for the running log: now).
+ * @param windowStart - The start of the window ("today" for the timer status).
+ * @param windowEnd - The end of the window.
+ * @returns The seconds of the log inside the window, never negative.
+ */
+export function secondsWithinWindow(
+    startedAt: moment.MomentInput,
+    stoppedAt: moment.MomentInput,
+    windowStart: moment.Moment,
+    windowEnd: moment.Moment
+): number {
+    if (!startedAt || !stoppedAt) {
+        return 0;
+    }
+    const countedFrom = moment.max(moment.utc(startedAt), windowStart);
+    const countedTo = moment.min(moment.utc(stoppedAt), windowEnd);
+    return Math.max(0, countedTo.diff(countedFrom, 'seconds'));
 }
