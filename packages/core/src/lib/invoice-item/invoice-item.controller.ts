@@ -2,7 +2,7 @@ import { Controller, UseGuards, Get, Query, HttpStatus, Post, Body, Param, Valid
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IInvoiceItem, IPagination, PermissionsEnum, ID } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { BaseQueryDTO, CrudController } from './../core/crud';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
 import { InvoiceItemBulkCreateCommand } from './commands';
@@ -11,9 +11,22 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { InvoiceItemBulkInputDTO } from './dto';
 import { TenantOrganizationBaseDTO } from '../core/dto';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
+/**
+ * The lines of an invoice or an estimate.
+ *
+ * Every write states `INVOICES_EDIT` (GHSA-v79w-54p2-wmh5) and every read states `INVOICES_VIEW`: the grant the
+ * invoice reads themselves state (`InvoiceController`), and the one the invoice history reads state. A line is
+ * part of the document it bills, so it is read under the document's own grant and never wider; the estimates
+ * are invoices on the API side and go through the same `INVOICES_*` grants. The reads used to state no
+ * permission at all behind `TenantPermissionGuard` alone, so any member of the tenant (a VIEWER, a CANDIDATE)
+ * could list every line of every invoice and estimate: what was billed, to whom, for how much. The web app
+ * never reads this resource on its own — its invoice and estimate pages read the lines as a relation of
+ * `/invoices`, which already required `INVOICES_VIEW` — so no page loses anything; every default role that
+ * holds `ESTIMATES_VIEW` holds `INVOICES_VIEW` too. The GraphQL fields that mirror these reads state the same.
+ */
 @ApiTags('InvoiceItem')
 @UseGuards(TenantPermissionGuard)
 @Controller('/invoice-item')
@@ -22,6 +35,52 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		super(invoiceItemService);
 	}
 
+	/**
+	 * Counts the lines.
+	 *
+	 * Overrides the inherited `CrudController.getCount()` route only to state the read grant, `INVOICES_VIEW`.
+	 *
+	 * @param options The criterion, forwarded to the base route.
+	 * @returns How many lines match.
+	 */
+	@ApiOperation({ summary: 'Get total record count' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Total record count retrieved successfully' })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get('count')
+	async getCount(@Query() options?: FindOptionsWhere<InvoiceItem>): Promise<number | void> {
+		return await super.getCount(options);
+	}
+
+	/**
+	 * Pages through the lines.
+	 *
+	 * Overrides the inherited `CrudController.pagination()` route only to state the read grant, `INVOICES_VIEW`.
+	 *
+	 * @param filter The page and the criterion, forwarded to the base route.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns One page of lines.
+	 */
+	@ApiOperation({ summary: 'Get paginated records' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Records retrieved successfully' })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get('pagination')
+	async pagination(
+		@Query() filter?: BaseQueryDTO<InvoiceItem>,
+		...options: any[]
+	): Promise<IPagination<InvoiceItem> | undefined> {
+		return await super.pagination(filter, ...options);
+	}
+
+	/**
+	 * Lists the lines, under the read grant `INVOICES_VIEW`.
+	 *
+	 * @param data The `findInput` and the `relations` to read.
+	 * @returns The lines that match.
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IInvoiceItem>> {
 		const { relations = [], findInput = null } = data;
@@ -29,6 +88,26 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 			where: findInput,
 			relations
 		});
+	}
+
+	/**
+	 * Reads one line.
+	 *
+	 * Overrides the inherited `CrudController.findById()` route only to state the read grant, `INVOICES_VIEW`.
+	 * It is declared after `count` and `pagination` so that `:id` does not shadow them.
+	 *
+	 * @param id The line to read.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The line.
+	 */
+	@ApiOperation({ summary: 'Find record by ID' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Record retrieved successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get(':id')
+	async findById(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<InvoiceItem> {
+		return await super.findById(id, ...options);
 	}
 
 	@ApiOperation({ summary: 'Create invoice item in Bulk' })
