@@ -4940,7 +4940,7 @@
 		"PRESENT": "Present",
 		"TERMS_OF_SERVICE": "Terms Of Service",
 		"PRIVACY_POLICY": "Privacy Policy",
-		"DPIA_SUPPORT_PACK": "Пакет за поддръжка на ОЗД"
+		"DPIA_SUPPORT_PACK": "Пакет в подкрепа на ОВЗД"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6379,7 +6379,7 @@
 		"TERMS_AND_CONDITIONS": "Общи условия",
 		"DOCUMENT_VERSION": "Версия {{ version }}",
 		"DOCUMENT_EFFECTIVE_DATE": "В сила от {{ date }}",
-		"DPIA_SUPPORT_PACK": "Пакет за поддръжка на ОЗД"
+		"DPIA_SUPPORT_PACK": "Пакет в подкрепа на ОВЗД"
 	},
 	"LOADING": "Зарежда се, моля изчакайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
