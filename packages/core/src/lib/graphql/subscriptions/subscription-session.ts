@@ -1,4 +1,5 @@
 import { decode } from 'jsonwebtoken';
+import { ExtractJwt } from 'passport-jwt';
 import { SubscriptionClock, systemSubscriptionClock } from './subscription-delivery';
 
 /**
@@ -27,6 +28,11 @@ import { SubscriptionClock, systemSubscriptionClock } from './subscription-deliv
  *   `graphql-ws` client does not retry; when it still does but the role, permissions, tenant, organization
  *   or employee it resolves to differ from what the stream was authorized with, the socket is closed with
  *   `4403 Forbidden`, so the client reconnects and every guard decides again with what the user holds now.
+ * - **a judgement is bounded and never outlived by a newer one.** A lookup that has not answered within
+ *   `SUBSCRIPTION_REAUTH_TIMEOUT_MS` is read as one that could not be made (the database unreachable), so the
+ *   streams waiting on it are released under the same grace and no longer, and an answer that arrives later is
+ *   ignored. A judgement that was still running when the guards confirmed the credential for another operation
+ *   does not overwrite that newer confirmation (review on ever-co/ever-gauzy#11360).
  *
  * The session decides nothing the guards do not: it reuses their verdict and only refuses to let a stream
  * outlive it. A stream that opened without authenticating (a public field) is not held to the credential.
@@ -78,6 +84,12 @@ export const MAX_SUBSCRIPTION_REAUTH_INTERVAL_MS = 5 * 60_000;
 
 /** How soon a judgement that could not be made (the database unreachable) is attempted again. */
 export const SUBSCRIPTION_REAUTH_RETRY_MS = 5_000;
+
+/**
+ * How long (ms) a judgement may run before it is read as one that could not be made. A lookup that stalls
+ * instead of failing would otherwise hold back every stream the socket carries, for as long as it stalls.
+ */
+export const SUBSCRIPTION_REAUTH_TIMEOUT_MS = 5_000;
 
 /** The longest delay a Node timer takes; a longer one fires at once, so a later expiry is re-armed. */
 const MAX_TIMER_DELAY_MS = 2 ** 31 - 1;
@@ -162,15 +174,29 @@ export interface SubscriptionSessionOptions {
 	readonly clock?: SubscriptionClock;
 }
 
+/** Reads the token exactly where `JwtStrategy` reads it: the `Authorization: Bearer <token>` header. */
+const extractBearerToken = ExtractJwt.fromAuthHeaderAsBearerToken();
+
 /**
- * The bearer token in an `Authorization` header, as `ExtractJwt.fromAuthHeaderAsBearerToken` reads it.
+ * The bearer token in an `Authorization` header, read by the extractor `JwtStrategy` itself is configured with
+ * (`ExtractJwt.fromAuthHeaderAsBearerToken`).
+ *
+ * 🛑 **This used to be an anchored pattern of its own, stricter than passport's.** Passport reads the first two
+ * whitespace-separated words of the header and takes the second when the first is `Bearer`, so
+ * `Bearer <token> extra` authenticates: the guards accepted every operation on such a socket, while the pattern
+ * here found no token in it — no expiry timer was armed and the credential was never judged again, so the
+ * socket outlived its token's expiry and its user's deactivation (review on ever-co/ever-gauzy#11360). Whatever
+ * the guards authenticate with is now what the session holds to account.
  *
  * @param authorization The header's value.
  * @returns The token, or undefined.
  */
 export function bearerTokenOf(authorization: string | undefined): string | undefined {
-	const match = /^\s*bearer\s+(\S+)\s*$/i.exec(authorization ?? '');
-	return match ? match[1] : undefined;
+	if (typeof authorization !== 'string' || authorization === '') {
+		return undefined;
+	}
+
+	return extractBearerToken({ headers: { authorization } }) || undefined;
 }
 
 /**
@@ -254,7 +280,11 @@ export class SubscriptionSession {
 	private verdict?: SubscriptionCredentialVerdict;
 	private verdictAt = Number.NEGATIVE_INFINITY;
 	private confirmedAt?: number;
+	/** How many times the guards have confirmed the credential: a judgement started before the last one is older. */
+	private confirmations = 0;
 	private pending?: Promise<SubscriptionCredentialVerdict>;
+	/** Settles the judgement in progress at once, as one that could not be made. */
+	private abandonJudgement?: () => void;
 	private cancelExpiry?: () => void;
 	private closedWith?: SubscriptionSessionCloseReason;
 	private disposed = false;
@@ -305,6 +335,9 @@ export class SubscriptionSession {
 	 * Records that the guards have just authenticated the credential: an operation on the socket opened with
 	 * it. The next judgement is due an interval from now, so a stream that has just opened is not judged twice.
 	 *
+	 * A judgement still running read the database before this confirmation did: when it answers, it does not
+	 * overwrite this one (see {@link settle}).
+	 *
 	 * @param user The user the guards authenticated.
 	 */
 	confirm(user: SubscriptionSessionUser): void {
@@ -313,6 +346,7 @@ export class SubscriptionSession {
 		}
 
 		const now = this.clock.now();
+		this.confirmations++;
 		this.verdict = { status: 'authenticated', user };
 		this.verdictAt = now;
 		this.confirmedAt = now;
@@ -440,12 +474,15 @@ export class SubscriptionSession {
 	}
 
 	/**
-	 * Ends the session without closing anything: its socket closed. Cancels the expiry timer.
+	 * Ends the session without closing anything: its socket closed. Cancels the expiry timer, and gives up on a
+	 * judgement still running, so the streams waiting on it end now rather than when (or if) it answers.
 	 */
 	dispose(): void {
 		this.disposed = true;
 		this.cancelExpiry?.();
 		this.cancelExpiry = undefined;
+		this.abandonJudgement?.();
+		this.abandonJudgement = undefined;
 	}
 
 	/**
@@ -460,31 +497,107 @@ export class SubscriptionSession {
 		}
 
 		if (!this.pending) {
-			const authenticate = this.options.authenticate as SubscriptionCredentialAuthenticator;
-			const pending = Promise.resolve()
-				.then(() => authenticate(this.options.headers))
-				.catch((): SubscriptionCredentialVerdict => ({ status: 'unavailable' }))
-				.then((verdict) => {
-					const settled: SubscriptionCredentialVerdict = verdict ?? { status: 'unavailable' };
-					this.verdict = settled;
-					this.verdictAt = this.clock.now();
-
-					if (settled.status === 'authenticated') {
-						this.confirmedAt = this.verdictAt;
-					}
-
-					return settled;
-				})
-				.finally(() => {
-					if (this.pending === pending) {
-						this.pending = undefined;
-					}
-				});
+			const pending = this.judge().finally(() => {
+				if (this.pending === pending) {
+					this.pending = undefined;
+				}
+			});
 
 			this.pending = pending;
 		}
 
 		return this.pending;
+	}
+
+	/**
+	 * Judges the credential once, within {@link SUBSCRIPTION_REAUTH_TIMEOUT_MS}.
+	 *
+	 * Whichever comes first settles it: the answer; the time limit, read as `unavailable`, so the grace a database
+	 * that cannot be reached has applies, and no longer; or the socket closing. Whatever comes after is ignored.
+	 *
+	 * 🛑 **A judgement used to have no time limit.** One promise is shared by every stream the socket carries, so
+	 * a lookup that stalled instead of failing held back every one of them for as long as it stalled, and the
+	 * `unavailable` grace — the policy for a database that does not answer — was never reached (review on
+	 * ever-co/ever-gauzy#11360).
+	 *
+	 * @returns The verdict in force once it settled.
+	 */
+	private judge(): Promise<SubscriptionCredentialVerdict> {
+		const authenticate = this.options.authenticate as SubscriptionCredentialAuthenticator;
+		// A confirmation made after this point is a reading of the database newer than the one this judgement makes.
+		const confirmations = this.confirmations;
+
+		return new Promise<SubscriptionCredentialVerdict>((resolve) => {
+			let settled = false;
+
+			const finish = (verdict: SubscriptionCredentialVerdict | undefined): void => {
+				if (settled) {
+					// An answer after the time limit, or after the socket closed: the verdict was already given.
+					return;
+				}
+
+				settled = true;
+				cancelTimeout();
+				resolve(this.settle(verdict ?? { status: 'unavailable' }, confirmations));
+			};
+
+			const cancelTimeout = this.clock.schedule(
+				() => finish({ status: 'unavailable' }),
+				SUBSCRIPTION_REAUTH_TIMEOUT_MS
+			);
+			this.abandonJudgement = () => finish({ status: 'unavailable' });
+
+			Promise.resolve()
+				.then(() => authenticate(this.options.headers))
+				.then(finish, () => finish({ status: 'unavailable' }));
+		});
+	}
+
+	/**
+	 * Records what a judgement answered — unless the guards confirmed the credential while it ran.
+	 *
+	 * 🛑 **An older judgement used to overwrite a newer confirmation.** A judgement reads the user's permissions,
+	 * then waits for the employee and membership lookups; if meanwhile the user lost a permission and opened
+	 * another stream, the guards confirmed what the user holds now — and the older judgement, answering last,
+	 * replaced that with what it had read before the change. A stream authorized with the removed permission was
+	 * then admitted, and kept being admitted for another interval (review on ever-co/ever-gauzy#11360). The
+	 * confirmation now stays in force, and it is what every caller waiting on the judgement receives.
+	 *
+	 * When the two readings disagree, the authorization changed within the window they share, and which of them
+	 * read the database last cannot be told — the guards' lookup may have started before the judgement's. Neither
+	 * is believed: the socket is closed with `4403`, and every guard decides again on reconnect.
+	 *
+	 * @param verdict What the judgement answered.
+	 * @param confirmations How many confirmations had been made when it started.
+	 * @returns The verdict in force.
+	 */
+	private settle(verdict: SubscriptionCredentialVerdict, confirmations: number): SubscriptionCredentialVerdict {
+		if (this.closed) {
+			return verdict;
+		}
+
+		const current = this.verdict;
+
+		if (this.confirmations !== confirmations && current?.status === 'authenticated') {
+			const disagrees =
+				verdict.status !== 'unavailable' &&
+				!(verdict.status === 'authenticated' && sameSubscriptionAuthorization(current.user, verdict.user));
+
+			if (disagrees) {
+				this.close(SUBSCRIPTION_SESSION_CLOSE.changed);
+			}
+
+			return current;
+		}
+
+		this.verdict = verdict;
+		this.verdictAt = this.clock.now();
+
+		if (verdict.status === 'authenticated') {
+			this.confirmedAt = this.verdictAt;
+		}
+
+		return verdict;
 	}
 
 	/**
