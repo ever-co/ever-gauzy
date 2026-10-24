@@ -7,7 +7,7 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/
 import { GetPluginQuery, ListPluginsQuery, SearchPluginsQuery } from '../../application';
 import { Plugin } from '../../domain';
 import { IPlugin, PluginQueryOptions, PluginSearchFilterDTO } from '../../shared';
-import { allowedRelations, ownColumnFilter, PUBLIC_PLUGIN_RELATIONS } from './public-read-options';
+import { allowedRelations, ownColumnFilter, PUBLIC_PLUGIN_RELATIONS, allowedOrder } from './public-read-options';
 import { withoutSubscriptions } from './public-plugin-subscriptions';
 
 @ApiTags('Plugin Registry')
@@ -49,10 +49,12 @@ export class PluginController {
 	})
 	@Get()
 	public async findAll(@Query() params: PluginSearchFilterDTO): Promise<IPagination<IPlugin>> {
-		// A public read: only the relations the marketplace shows, filters on the plugin's own columns only
+		// A public read: only the relations the marketplace shows, filters on the plugin's own columns only, and a sort
+		// order on what the read may load
 		Object.assign(params, {
 			relations: allowedRelations(params.relations, PUBLIC_PLUGIN_RELATIONS),
-			where: ownColumnFilter(params.where)
+			where: ownColumnFilter(params.where),
+			order: allowedOrder(params.order, PUBLIC_PLUGIN_RELATIONS)
 		});
 		// …and no subscriptions of any tenant (see public-plugin-subscriptions.ts)
 		withoutSubscriptions(params);
@@ -112,11 +114,13 @@ export class PluginController {
 		@Query() options: PluginQueryOptions
 	): Promise<IPlugin> {
 		// A public read: only the relations the marketplace shows, the plugin named by the path (a `where` from the query
-		// string was spread over the id), and no subscriptions of any tenant (see public-plugin-subscriptions.ts)
+		// string was spread over the id), a sort order on what the read may load (an order joins its relation), and no
+		// subscriptions of any tenant (see public-plugin-subscriptions.ts)
 		const publicOptions: PluginQueryOptions = {
 			...options,
 			relations: allowedRelations(options?.relations, PUBLIC_PLUGIN_RELATIONS),
-			where: undefined
+			where: undefined,
+			order: allowedOrder(options?.order, PUBLIC_PLUGIN_RELATIONS) as PluginQueryOptions['order']
 		};
 		return this.queryBus.execute(new GetPluginQuery(id, withoutSubscriptions(publicOptions)));
 	}
