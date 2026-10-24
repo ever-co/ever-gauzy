@@ -7,7 +7,7 @@ import { environment as env } from '@gauzy/config';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty, deduplicate } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
-import { narrowPermissionsToOAuthAppScopes } from '../../auth/oauth-app-scope';
+import { narrowPermissionsToOAuthAppScopes, oauthAppScopesOf } from '../../auth/oauth-app-scope';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 
@@ -72,7 +72,7 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 
 		// A third-party OAuth-app token reaches only the permissions its approved scopes allow (owner decision Q12): the
 		// role query below is asked about those alone, so it cannot grant one outside the scopes.
-		const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+		const oauthAppScopes = oauthAppScopesOf(RequestContext.currentUser());
 		if (oauthAppScopes !== null && isNotEmpty(permissions)) {
 			const reachable = narrowPermissionsToOAuthAppScopes(permissions, oauthAppScopes);
 			if (isEmpty(reachable)) {

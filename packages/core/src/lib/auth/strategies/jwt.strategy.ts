@@ -153,6 +153,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 		const grant = readOAuthAppTokenGrant(payload);
 		if (!grant || !isOAuthAppTokenScopeEnforcementEnabled()) {
+			// Never inherited: a user object handed out again must not keep the grant of an earlier request.
+			if (outcome.oauthApp !== undefined) {
+				delete outcome.oauthApp;
+			}
 			return outcome;
 		}
 

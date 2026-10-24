@@ -227,6 +227,20 @@ export function narrowRolesToOAuthAppScopes(roles: readonly RolesEnum[], scopes:
 }
 
 /**
+ * The approved scopes recorded on a request user (`request.user.oauthApp`, set by `JwtStrategy`).
+ *
+ * @param user The request user.
+ * @returns The approved scopes (possibly none), or `null` when the user is not authenticated by an OAuth-app token.
+ */
+export function oauthAppScopesOf(user: { oauthApp?: IOAuthAppTokenGrant | null } | null | undefined): string[] | null {
+	const grant = user?.oauthApp;
+	if (!grant) {
+		return null;
+	}
+	return Array.isArray(grant.scopes) ? grant.scopes : [];
+}
+
+/**
  * Splits an OAuth `scope` parameter (space-delimited, RFC 6749 §3.3) into its scopes.
  *
  * @param scope The parameter.

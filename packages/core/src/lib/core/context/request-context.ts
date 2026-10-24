@@ -10,7 +10,7 @@ import { Request, Response } from 'express';
 import { CLS_ID, ClsService } from 'nestjs-cls';
 import { ExtractJwt } from 'passport-jwt';
 import { v4 as uuidv4 } from 'uuid';
-import { narrowRolesToOAuthAppScopes } from '../../auth/oauth-app-scope';
+import { narrowRolesToOAuthAppScopes, oauthAppScopesOf } from '../../auth/oauth-app-scope';
 import {
 	resolveThrottlerTracker,
 	throttlerTrackerOptions,
@@ -343,13 +343,7 @@ export class RequestContext {
 	 * issued before scopes were recorded, an API key, no caller at all.
 	 */
 	static currentOAuthAppScopes(): string[] | null {
-		const grant = RequestContext.currentUser()?.oauthApp;
-
-		if (!grant) {
-			return null;
-		}
-
-		return Array.isArray(grant.scopes) ? grant.scopes : [];
+		return oauthAppScopesOf(RequestContext.currentUser());
 	}
 
 	/**

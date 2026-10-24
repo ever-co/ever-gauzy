@@ -6,7 +6,7 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
-import { narrowPermissionsToOAuthAppScopes } from '../../auth/oauth-app-scope';
+import { narrowPermissionsToOAuthAppScopes, oauthAppScopesOf } from '../../auth/oauth-app-scope';
 import { debugInDevelopment } from '../../logger';
 import { BaseGuard } from './base.guard';
 import { attachedRolePermissionVerdict } from './attached-role-permissions';
@@ -133,7 +133,7 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 	 * @returns The reachable ones.
 	 */
 	protected reachableByOAuthAppScopes(permissions: PermissionsEnum[]): PermissionsEnum[] {
-		const scopes = RequestContext.currentOAuthAppScopes();
+		const scopes = oauthAppScopesOf(RequestContext.currentUser());
 		return scopes === null ? permissions : narrowPermissionsToOAuthAppScopes(permissions, scopes);
 	}
 
