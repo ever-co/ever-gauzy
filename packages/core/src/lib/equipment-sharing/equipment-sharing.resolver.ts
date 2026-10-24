@@ -47,6 +47,8 @@ export interface ICreateEquipmentSharingInput {
 /** The members `UpdateEquipmentSharingInput` declares in the schema. */
 export interface IUpdateEquipmentSharingInput extends ICreateEquipmentSharingInput {
 	id: Id;
+	/** The version the edit is based on: a compare-and-set, refused with 409 when the period moved on. */
+	version?: number;
 }
 
 /**

@@ -24,6 +24,8 @@ export interface IEquipmentSharing extends IBaseEquipmentSharing, IEquipmentShar
 	equipmentId: ID;
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	equipmentSharingPolicyId: ID;
+	/** The row's optimistic-concurrency version: 1 when filed, moved on by every write. */
+	version?: number;
 }
 
 // Input interface for creating a new Equipment Sharing record.
@@ -36,7 +38,13 @@ export interface IEquipmentSharingCreateInput extends IBaseEquipmentSharing {
 }
 
 // Update input can simply extend the create input.
-export interface IEquipmentSharingUpdateInput extends Partial<IEquipmentSharingCreateInput> {}
+export interface IEquipmentSharingUpdateInput extends Partial<IEquipmentSharingCreateInput> {
+	/**
+	 * The version of the sharing the edit is based on. The edit is refused (409) when the stored row has moved on;
+	 * omitted, the server uses the version it reads.
+	 */
+	version?: number;
+}
 
 export enum EquipmentSharingStatusEnum {
 	REQUESTED = 'REQUESTED',

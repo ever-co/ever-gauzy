@@ -174,4 +174,13 @@ describe('EquipmentSharingCreateHandler — the status a request is filed with',
 		expect(sharingService.create).not.toHaveBeenCalled();
 		expect(approvalService.create).not.toHaveBeenCalled();
 	});
+
+	it('files a new sharing at the starting version, whatever version the body carries', async () => {
+		const { handler, sharingService } = setUp(false);
+
+		await handler.execute(file({ equipmentId: 'equipment-1', version: 9 }));
+
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row).not.toHaveProperty('version');
+	});
 });

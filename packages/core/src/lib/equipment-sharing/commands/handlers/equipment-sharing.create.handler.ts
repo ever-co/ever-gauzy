@@ -34,7 +34,12 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 		// dropped: a policy named as `equipmentSharingPolicy: { id }` was persisted without ever being checked.
 		// A filing stores a new row, so a body-supplied id is dropped too: `create()` is an upsert by id, and the id of
 		// a stored sharing would move it into this organization with the equipment and policy it keeps, unchecked.
-		const { id: _storedId, ...values } = withReferencesAsIds(input);
+		// A filing starts at version 1, so a body-supplied version is dropped as well.
+		const {
+			id: _storedId,
+			version: _filedVersion,
+			...values
+		} = withReferencesAsIds(input as typeof input & { version?: unknown });
 		const { equipmentId } = values;
 		const scope = { tenantId, organizationId };
 

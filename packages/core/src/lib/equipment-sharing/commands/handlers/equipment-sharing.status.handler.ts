@@ -36,12 +36,16 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 			throw new NotFoundException('Request Approval not found');
 		}
 
+		// Persist the updated equipment sharing record first. NOT update(): that one deletes the row
+		// and re-inserts the payload, so approving/refusing (a { status }-only body) replaced the record
+		// with a stub. updateStatusEquipmentSharingByAdmin writes the status as a compare-and-set on the
+		// version it reads, and answers 409 when the record changed in between — before the request
+		// approval below is touched, so a refused decision leaves the two rows agreeing.
+		const updated = await this._equipmentSharingService.updateStatusEquipmentSharingByAdmin(id, status);
+
 		// If a corresponding request approval exists, update its status as well.
 		await this._requestApprovalService.update({ requestId: id }, { status });
 
-		// Persist and return the updated equipment sharing record. NOT update(): that one deletes the row
-		// and re-inserts the payload, so approving/refusing (a { status }-only body) replaced the record
-		// with a stub. updateStatusEquipmentSharingByAdmin loads the tenant-scoped row and saves it back.
-		return await this._equipmentSharingService.updateStatusEquipmentSharingByAdmin(id, status);
+		return updated;
 	}
 }
