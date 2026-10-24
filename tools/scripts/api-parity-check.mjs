@@ -23,16 +23,44 @@
  * The list is the point: it is the short, explicit record of what is deliberately served over one
  * protocol only, so a new one-sided concept has to be argued for rather than added quietly.
  *
+ * **The second pass is about scope rather than existence.** A concept served over both protocols is
+ * only one concept if both protocols ask the caller for the same thing. This pass reads every REST
+ * route's effective `@Permissions(...)` — the handler's own, or the controller's class-level metadata
+ * when the handler states none, which is how `getAllAndOverride` resolves it — classifies it into the
+ * canonical shape it has (`list`, `byId`, `count`, `create`, `update`, `delete`, `softDelete`,
+ * `recover`), does the same for every `@Query`/`@Mutation` field, and refuses a field that states
+ * **no** permission where the REST route of the same concept and the same shape states one. That is
+ * not hypothetical: seven kernel resolvers once shipped thirty-two write fields that way —
+ * `createOrganizationDepartment`, `deleteTag`, `softDeleteUser` and the rest — each the exact
+ * operation its REST twin refuses without `ALL_ORG_EDIT`, `ORG_TAGS_DELETE` or `ORG_USERS_EDIT`, and
+ * each reachable by any authenticated member of the tenant over the one GraphQL endpoint, while the
+ * docstrings above them asserted the routes they mirrored stated no permission. They were fixed by
+ * hand; this keeps the shape from coming back. It reads the kernel as well as the plugins, because the
+ * endpoint is one schema assembled from both.
+ *
+ * Two deliberate limits keep the pass honest rather than merely loud:
+ *
+ *   - **An inherited route counts as the base declares it.** A controller that `extends
+ *     CrudController` serves a list, a row, a count and five writes that carry only its class-level
+ *     metadata, so those shapes are seeded from the class and then overwritten by any handler the
+ *     subclass declares. Without that, every field mirroring an inherited route would be reported.
+ *   - **Only "the field asks for nothing" fails.** A field that states a *different* permission from
+ *     its route is reported as information: two permissions cannot be ordered by this script, and the
+ *     field is not the weaker surface. Whether a stated permission is actually evaluated against the
+ *     caller is `declared-permissions-enforced.spec.ts`'s question, not this one.
+ *
  * Usage:
  *   node tools/scripts/api-parity-check.mjs [repoRoot]
  *
- * Exits 0 when every concept is served over both protocols or acknowledged, 1 otherwise.
+ * Exits 0 when every concept is served over both protocols or acknowledged, and no GraphQL root field
+ * asks for nothing where its REST twin asks for a permission; 1 otherwise.
  */
 'use strict';
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { decoratedClasses, states } from './decorator-runs.mjs';
 import { stripComments } from './subscription-parity-check.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -461,6 +489,302 @@ function definesField(schema, field) {
 	return new RegExp(`\\b${field}\\s*[(:]`).test(schema);
 }
 
+// ---------------------------------------------------------------------------------------------
+// The permission-parity pass: the readers.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The trees the permission-parity pass reads.
+ *
+ * Both, and not only the programme's packages: the endpoint is one schema assembled from the kernel
+ * and every configured plugin, so a kernel resolver that asks for less than its own controller is
+ * exactly as open as a plugin one.
+ */
+const PERMISSION_TREES = [join(ROOT, 'packages', 'core', 'src', 'lib'), join(ROOT, 'packages', 'plugins')];
+
+/** The shapes `CrudController` and `CrudFactory` serve on a subclass's behalf, with its class-level metadata. */
+const CRUD_BASE_SHAPES = ['list', 'byId', 'count', 'create', 'update', 'delete', 'softDelete', 'recover'];
+
+/** A REST route decorator, with its verb and its argument. */
+const HTTP_ROUTE = /^@(Get|Post|Put|Patch|Delete)\(([\s\S]*)\)$/;
+
+/** A GraphQL root field decorator, with its kind. */
+const GRAPHQL_ROOT_FIELD = /^@(Query|Mutation)\(/;
+
+/** A path relative to the root, with forward slashes on every platform. */
+function shown(file) {
+	return relative(ROOT, file).split(sep).join('/');
+}
+
+/**
+ * The permissions a decorator run states.
+ *
+ * The identifiers are read rather than resolved: a permission may be written `PermissionsEnum.X`, or
+ * as a member of a package's own frozen tuple, and the comparison this pass makes is between two
+ * spellings of the same constant on two surfaces of one concept.
+ *
+ * @param {string[]} decorators The decorator run.
+ * @returns {Set<string>} The permission identifiers.
+ */
+function permissionsStated(decorators) {
+	const stated = new Set();
+
+	for (const decorator of decorators) {
+		if (!decorator.startsWith('@Permissions(')) continue;
+
+		for (const match of decorator.matchAll(/\b([A-Z][A-Z0-9_]{2,})\b/g)) stated.add(match[1]);
+	}
+
+	return stated;
+}
+
+/**
+ * The paths one route decorator's argument names: none for `@Get()`, one for `@Get(':id')`, every one
+ * of `@Get(['/pagination', '/'])` — a route that answers at two addresses answers at both.
+ *
+ * @param {string} argument The decorator's argument, as written.
+ * @returns {string[]} The paths, without quotes; `['']` when the decorator names none.
+ */
+function routePaths(argument) {
+	const paths = [...argument.matchAll(/(['"`])([^'"`]*)\1/g)].map((match) => match[2]);
+
+	return paths.length > 0 ? paths : [''];
+}
+
+/**
+ * The canonical shape of one REST route, or null when it has none.
+ *
+ * Only the eight shapes a GraphQL root field can be matched to are classified. A route with a path of
+ * its own — `/employee/:employeeId`, `/approval/:id` — answers a question this pass cannot pair with
+ * a field name, and is left to the concept pass.
+ *
+ * @param {string} verb The HTTP verb.
+ * @param {string} path The route's path below the controller's prefix.
+ * @returns {string | null} The shape.
+ */
+function restRouteShape(verb, path) {
+	const route = path.replace(/^\/|\/$/g, '');
+	const byId = /^:[A-Za-z_]\w*$/;
+
+	if (verb === 'Get') {
+		if (route === '') return 'list';
+		if (route === 'count') return 'count';
+		return byId.test(route) ? 'byId' : null;
+	}
+
+	if (verb === 'Post') return route === '' ? 'create' : null;
+
+	if (verb === 'Put' || verb === 'Patch') {
+		if (byId.test(route)) return 'update';
+		return /^:[A-Za-z_]\w*\/recover$/.test(route) ? 'recover' : null;
+	}
+
+	if (verb === 'Delete') {
+		if (byId.test(route)) return 'delete';
+		return /^:[A-Za-z_]\w*\/soft$/.test(route) ? 'softDelete' : null;
+	}
+
+	return null;
+}
+
+/**
+ * The canonical shape of one GraphQL root field, and the concept it names.
+ *
+ * A query is either a count (`tagTypeCount`) or a read of the resource itself, which is matched
+ * against both REST reads, because the plural and the singular spelling of a field mirror the list and
+ * the row route respectively and a name alone does not say which. A mutation is named by its verb.
+ *
+ * @param {string} kind `Query` or `Mutation`.
+ * @param {string} name The field name.
+ * @returns {{ shape: string, concept: string } | null} Null when the field is not one of the eight.
+ */
+function graphqlFieldShape(kind, name) {
+	if (kind === 'Query') {
+		if (/Count$/.test(name)) return { shape: 'count', concept: name.slice(0, -'Count'.length) };
+		return { shape: 'read', concept: name };
+	}
+
+	const verb =
+		/^(createMany|create|updateMany|update|deleteMany|delete|removeMany|remove|softDelete|softRemove|recover|restore)([A-Z]\w*)$/.exec(
+			name
+		);
+
+	if (!verb) return null;
+
+	let shape = 'delete';
+
+	if (verb[1] === 'softDelete' || verb[1] === 'softRemove') shape = 'softDelete';
+	else if (verb[1] === 'recover' || verb[1] === 'restore') shape = 'recover';
+	else if (verb[1].startsWith('create')) shape = 'create';
+	else if (verb[1].startsWith('update')) shape = 'update';
+
+	return { shape, concept: verb[2].charAt(0).toLowerCase() + verb[2].slice(1) };
+}
+
+/**
+ * The field name a `@Query`/`@Mutation` decorator declares: `{ name: 'x' }`, a leading string, or the
+ * method's own name when the decorator names none.
+ *
+ * @param {string} decorator The decorator text.
+ * @param {string} member The method name.
+ * @returns {string} The field name.
+ */
+function fieldNameOfDecorator(decorator, member) {
+	const named = /name:\s*['"`]([A-Za-z_]\w*)['"`]/.exec(decorator);
+
+	if (named) return named[1];
+
+	const literal = /^@\w+\(\s*['"`]([A-Za-z_]\w*)['"`]/.exec(decorator);
+
+	return literal ? literal[1] : member;
+}
+
+/**
+ * Every REST resource's routes, by shape, with the permission each one effectively requires.
+ *
+ * @returns {Map<string, Map<string, Set<string>>>} Resource name (the prefix's segments, parameters left out) to shape
+ *   to the permissions the route resolves to.
+ */
+function restRoutesByShape() {
+	const resources = new Map();
+
+	for (const tree of PERMISSION_TREES) {
+		for (const file of walk(tree, (name) => name.endsWith('.controller.ts'))) {
+			for (const declared of decoratedClasses(read(file))) {
+				const controller = declared.decorators.find((decorator) => decorator.startsWith('@Controller('));
+				const prefix = controller ? /^@Controller\(\s*['"`]([^'"`]*)['"`]\s*\)$/.exec(controller) : null;
+				// The whole prefix minus its parameters: `users/:userId/plugins` serves a user's plugins, and
+				// reading only its first segment would file that controller's list under `/users`.
+				const resource = prefix
+					? prefix[1]
+							.split('/')
+							.filter((segment) => segment && !segment.startsWith(':'))
+							.join('-')
+					: null;
+
+				if (!resource) continue;
+
+				const classPermissions = permissionsStated(declared.decorators);
+				const shapes = resources.get(resource) ?? new Map();
+
+				// The base's own routes first, so a handler the subclass declares overwrites them below.
+				if (/\bextends\s+(?:CrudController|CrudFactory)\b/.test(declared.declaration)) {
+					for (const shape of CRUD_BASE_SHAPES) {
+						if (!shapes.has(shape)) shapes.set(shape, new Set(classPermissions));
+					}
+				}
+
+				for (const member of declared.members) {
+					const route = member.decorators.map((decorator) => HTTP_ROUTE.exec(decorator)).find(Boolean);
+
+					if (!route) continue;
+
+					const own = permissionsStated(member.decorators);
+
+					for (const path of routePaths(route[2])) {
+						const shape = restRouteShape(route[1], path);
+
+						if (shape) shapes.set(shape, own.size > 0 ? own : new Set(classPermissions));
+					}
+				}
+
+				resources.set(resource, shapes);
+			}
+		}
+	}
+
+	return resources;
+}
+
+/**
+ * Compares every GraphQL root field's permission with the REST route of the same concept and shape.
+ *
+ * @param {Map<string, Map<string, Set<string>>>} resources The REST side, as {@link restRoutesByShape} read it.
+ * @returns {{ failures: object[], differences: object[], compared: number }}
+ */
+function permissionParity(resources) {
+	const failures = [];
+	const differences = [];
+	let compared = 0;
+
+	for (const tree of PERMISSION_TREES) {
+		for (const file of walk(tree, (name) => name.endsWith('.resolver.ts'))) {
+			for (const declared of decoratedClasses(read(file))) {
+				if (!states(declared.decorators, 'Resolver')) continue;
+
+				const classPermissions = permissionsStated(declared.decorators);
+
+				for (const member of declared.members) {
+					const field = member.decorators.find((decorator) => GRAPHQL_ROOT_FIELD.test(decorator));
+
+					if (!field) continue;
+
+					const kind = GRAPHQL_ROOT_FIELD.exec(field)[1];
+					const name = fieldNameOfDecorator(field, member.name);
+					const own = permissionsStated(member.decorators);
+					const effective = own.size > 0 ? own : classPermissions;
+					const shaped = graphqlFieldShape(kind, name);
+
+					if (!shaped) continue;
+
+					const kebab = kebabCase(shaped.concept);
+					const single = kebabCase(singular(shaped.concept));
+					const candidates = new Set([kebab, ...plurals(kebab), single, ...plurals(single)]);
+					const matched = [...candidates].find((candidate) => resources.has(candidate));
+
+					if (!matched) continue;
+
+					const shapes = resources.get(matched);
+					const restShapes =
+						shaped.shape === 'read'
+							? ['list', 'byId'].filter((shape) => shapes.has(shape))
+							: shapes.has(shaped.shape)
+								? [shaped.shape]
+								: [];
+
+					if (restShapes.length === 0) continue;
+
+					// A plural field may mirror the list and a singular one the row, and nothing in the name
+					// says which, so the field is held to the route that asks for the least: when either REST
+					// read states no permission, a field that states none is not the weaker surface.
+					if (restShapes.some((shape) => shapes.get(shape).size === 0)) continue;
+
+					const floor = shapes.get(restShapes[0]);
+
+					compared++;
+
+					if (effective.size === 0) {
+						failures.push({
+							file: shown(file),
+							line: member.line,
+							kind,
+							name,
+							shape: shaped.shape,
+							resource: matched,
+							required: [...floor]
+						});
+						continue;
+					}
+
+					if (restShapes.every((shape) => [...shapes.get(shape)].every((p) => !effective.has(p)))) {
+						differences.push({
+							file: shown(file),
+							line: member.line,
+							kind,
+							name,
+							resource: matched,
+							required: [...floor],
+							stated: [...effective]
+						});
+					}
+				}
+			}
+		}
+	}
+
+	return { failures, differences, compared };
+}
+
 const problems = [];
 const acknowledged = [];
 const restOnlyRoutes = [];
@@ -740,8 +1064,52 @@ if (problems.length === 0) {
 	}
 }
 
+// ---------------------------------------------------------------------------------------------
+// Permission parity: what each protocol asks the caller for.
+// ---------------------------------------------------------------------------------------------
+
+const restResources = restRoutesByShape();
+const { failures: underGuarded, differences, compared } = permissionParity(restResources);
+
 console.log('');
-const failed = problems.length > 0 || stale.length > 0;
+console.log('Permission parity — the same scope over both protocols');
+console.log('=====================================================');
+console.log('');
+console.log(
+	`  ${restResources.size} REST resource(s) read, ${compared} GraphQL root field(s) matched to a permissioned route`
+);
+console.log('');
+
+if (underGuarded.length === 0) {
+	console.log('  OK — no GraphQL root field asks for nothing where the REST route it mirrors asks for a permission');
+} else {
+	console.log(
+		`  ${underGuarded.length} GraphQL root field(s) ask the caller for nothing where their REST route asks for a permission:`
+	);
+	for (const entry of underGuarded) {
+		console.log(
+			`    ${entry.file}:${entry.line}  ${entry.kind} ${entry.name} [${entry.shape}]` +
+				` → /${entry.resource} requires ${entry.required.join(', ')}`
+		);
+	}
+}
+
+if (differences.length) {
+	console.log('');
+	console.log(
+		`  ${differences.length} field(s) state a permission their route does not (information, not a failure —` +
+			' two permissions cannot be ordered here, and the field is not the weaker surface):'
+	);
+	for (const entry of differences) {
+		console.log(
+			`    ${entry.file}:${entry.line}  ${entry.kind} ${entry.name} → /${entry.resource}` +
+				` requires ${entry.required.join(', ')}; the field requires ${entry.stated.join(', ')}`
+		);
+	}
+}
+
+console.log('');
+const failed = problems.length > 0 || stale.length > 0 || underGuarded.length > 0;
 console.log(failed ? 'api parity check: FAILED' : 'api parity check: PASSED');
 
 process.exit(failed ? 1 : 0);

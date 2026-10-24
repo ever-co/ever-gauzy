@@ -93,3 +93,103 @@ test('a ledger write field declared without arguments fails the ledger rule', ()
 
 	assert.match(out, /\[ledger-write\] order: \/order-summaries .* declares createOrderSummary/);
 });
+
+// ---------------------------------------------------------------------------------------------
+// Permission parity: a GraphQL root field must not ask for nothing where its REST twin asks for a permission.
+// ---------------------------------------------------------------------------------------------
+
+const tagController = (body, classDecorators = '@Permissions(PermissionsEnum.ORG_TAGS_VIEW)\n') =>
+	`@Controller('/tags')\n@UseGuards(TenantPermissionGuard, PermissionGuard)\n${classDecorators}export class TagController extends CrudController<Tag> {\n${body}\n}\n`;
+
+const tagResolver = (body, classDecorators = '') =>
+	`@Resolver()\n@UseGuards(TenantPermissionGuard, PermissionGuard)\n${classDecorators}export class TagResolver {\n${body}\n}\n`;
+
+const DELETE_ROUTE = "\t@Permissions(PermissionsEnum.ORG_TAGS_DELETE)\n\t@Delete(':id')\n\tasync delete() {}";
+
+test('a mutation that states no permission where its REST route states one fails', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController(DELETE_ROUTE),
+		'tags/src/tag.resolver.ts': tagResolver('\t@Mutation(() => Boolean)\n\tasync deleteTag() {}')
+	});
+
+	assert.match(out, /1 GraphQL root field\(s\) ask the caller for nothing/);
+	assert.match(out, /tag\.resolver\.ts:\d+ {2}Mutation deleteTag \[delete\] → \/tags requires ORG_TAGS_DELETE/);
+	assert.match(out, /api parity check: FAILED/);
+});
+
+test('a mutation that states the permission, or inherits it from its class, passes', () => {
+	for (const resolver of [
+		tagResolver(
+			'\t@Permissions(PermissionsEnum.ORG_TAGS_DELETE)\n\t@Mutation(() => Boolean)\n\tasync deleteTag() {}'
+		),
+		tagResolver(
+			'\t@Mutation(() => Boolean)\n\tasync deleteTag() {}',
+			'@Permissions(PermissionsEnum.ORG_TAGS_DELETE)\n'
+		)
+	]) {
+		const out = report({
+			'tags/src/tag.controller.ts': tagController(DELETE_ROUTE),
+			'tags/src/tag.resolver.ts': resolver
+		});
+
+		assert.match(out, /OK — no GraphQL root field asks for nothing/);
+	}
+});
+
+test('a route the controller inherits from CrudController carries the class-level permission', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController('\t// every route is inherited'),
+		'tags/src/tag.resolver.ts': tagResolver('\t@Mutation(() => Boolean)\n\tasync softDeleteTag() {}')
+	});
+
+	assert.match(out, /Mutation softDeleteTag \[softDelete\] → \/tags requires ORG_TAGS_VIEW/);
+});
+
+test('a permission that was commented out is not read as stated', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController(DELETE_ROUTE),
+		'tags/src/tag.resolver.ts': tagResolver(
+			'\t// @Permissions(PermissionsEnum.ORG_TAGS_DELETE)\n\t@Mutation(() => Boolean)\n\tasync deleteTag() {}'
+		)
+	});
+
+	assert.match(out, /Mutation deleteTag \[delete\] → \/tags requires ORG_TAGS_DELETE/);
+});
+
+test('a resolver keeps its own class-level permission when an input type is declared above it', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController(DELETE_ROUTE),
+		'tags/src/tag.resolver.ts':
+			'@InputType()\nexport class TagInput {\n\t@Field()\n\tname: string;\n}\n\n' +
+			tagResolver(
+				'\t@Mutation(() => Boolean)\n\tasync deleteTag() {}',
+				'@Permissions(PermissionsEnum.ORG_TAGS_DELETE)\n'
+			)
+	});
+
+	assert.match(out, /OK — no GraphQL root field asks for nothing/);
+});
+
+test('a nested controller is not filed under the resource its prefix starts with', () => {
+	const out = report({
+		'registry/src/plugin-user.controller.ts':
+			"@Controller('users/:userId/plugins')\n@UseGuards(TenantPermissionGuard, PermissionGuard)\n" +
+			'@Permissions(PermissionsEnum.PLUGIN_VIEW)\nexport class PluginUserController {\n\t@Get()\n\tasync list() {}\n}\n',
+		'users/src/user.resolver.ts': tagResolver('\t@Query(() => [User])\n\tasync users() {}')
+	});
+
+	assert.doesNotMatch(out, /Query users \[read\]/);
+	assert.match(out, /OK — no GraphQL root field asks for nothing/);
+});
+
+test('a field is held to the REST read that asks for the least', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController(
+			"\t@Get()\n\tasync findAll() {}\n\n\t@Permissions(PermissionsEnum.ORG_TAGS_EDIT)\n\t@Get(':id')\n\tasync findById() {}",
+			''
+		),
+		'tags/src/tag.resolver.ts': tagResolver('\t@Query(() => Tag)\n\tasync tag() {}')
+	});
+
+	assert.match(out, /OK — no GraphQL root field asks for nothing/);
+});
