@@ -21,6 +21,9 @@ const ORG_FIRST = '7a000000-0000-4000-8000-0000000000a1';
 const ORG_MEMBER = '7a000000-0000-4000-8000-0000000000a2';
 const ORG_EMPLOYEE = '7a000000-0000-4000-8000-0000000000a3';
 const ORG_TARGET = '7a000000-0000-4000-8000-0000000000b1';
+/** The organization another request switches the user to while a sign-in replaces their stale one. */
+const ORG_SWITCHED = '7a000000-0000-4000-8000-0000000000c1';
+const TEAM = '7a000000-0000-4000-8000-0000000000d1';
 
 interface Membership {
 	organizationId: string;
@@ -54,6 +57,12 @@ function buildAuthService({
 }) {
 	const service: AuthService = Object.create(AuthService.prototype);
 
+	/** The user's row as the database holds it: the writes below apply to it as the real ones would. */
+	const stored: { lastOrganizationId: string | null; lastTeamId: string | null } = {
+		lastOrganizationId: user.lastOrganizationId,
+		lastTeamId: null
+	};
+
 	const isMember = (userId: string, organizationId: string, tenantId: string) =>
 		userId === user.id && memberships.some((m) => m.organizationId === organizationId && m.tenantId === tenantId);
 	const firstMembership = (userId: string, tenantId: string) =>
@@ -81,12 +90,23 @@ function buildAuthService({
 		findFirstActiveOrganizationId: jest.fn(async (userId: string, tenantId: string) =>
 			firstMembership(userId, tenantId)
 		),
+		// Conditional, as the real write: only while the row still holds the stale organization.
 		replaceStaleLastOrganization: jest.fn(
-			async (_userId: string, _staleOrganizationId: string, _organizationId: string | null) => undefined
+			async (_userId: string, staleOrganizationId: string, organizationId: string | null) => {
+				if (stored.lastOrganizationId === staleOrganizationId) {
+					stored.lastOrganizationId = organizationId;
+				}
+			}
 		),
-		setLastOrganizationAndTeam: jest.fn(
-			async (_userId: string, _organizationId?: string, _teamId?: string) => undefined
-		),
+		// Unconditional, as the real write: each value it is given that is set.
+		setLastOrganizationAndTeam: jest.fn(async (_userId: string, organizationId?: string, teamId?: string) => {
+			if (organizationId) {
+				stored.lastOrganizationId = organizationId;
+			}
+			if (teamId) {
+				stored.lastTeamId = teamId;
+			}
+		}),
 		setCurrentRefreshToken: jest.fn(async () => undefined),
 		setUserLastLoginTimestamp: jest.fn(async () => undefined)
 	};
@@ -121,7 +141,7 @@ function buildAuthService({
 		rotateRefreshToken
 	});
 
-	return { service, userService, getJwtAccessToken, getJwtRefreshToken };
+	return { service, userService, stored, getJwtAccessToken, getJwtRefreshToken };
 }
 
 /** The workspace token the sign-in flows hand out for a user. */
@@ -238,12 +258,33 @@ describe('AuthService.login (POST /auth/login) â€” stored organization', () => {
 
 		expect(result.token).toBe(`access:${ORG_FIRST}`);
 	});
+
+	it('keeps an organization another request switched to while the stale one was being replaced', async () => {
+		const user = userWith(ORG_STALE);
+		const { service, userService, stored } = buildAuthService({
+			user,
+			memberships: [
+				{ organizationId: ORG_FIRST, tenantId: TENANT },
+				{ organizationId: ORG_SWITCHED, tenantId: TENANT }
+			]
+		});
+		userService.findFirstActiveOrganizationId.mockImplementationOnce(async () => {
+			stored.lastOrganizationId = ORG_SWITCHED;
+			return ORG_FIRST;
+		});
+
+		const result = await service.login({ email: user.email, password: 'right' });
+
+		expect(result.token).toBe(`access:${ORG_FIRST}`);
+		expect(userService.setLastOrganizationAndTeam).not.toHaveBeenCalled();
+		expect(stored.lastOrganizationId).toBe(ORG_SWITCHED);
+	});
 });
 
 describe('AuthService.workspaceSigninVerifyToken (POST /auth/signin.workspace) â€” stored organization', () => {
-	it('replaces a stale stored organization with the first active membership and persists it', async () => {
+	it('replaces a stale stored organization with the first active membership, written once', async () => {
 		const user = userWith(ORG_STALE);
-		const { service, userService } = buildAuthService({
+		const { service, userService, stored } = buildAuthService({
 			user,
 			memberships: [{ organizationId: ORG_FIRST, tenantId: TENANT }]
 		});
@@ -253,12 +294,40 @@ describe('AuthService.workspaceSigninVerifyToken (POST /auth/signin.workspace) â
 
 		expect(result.token).toBe(`access:${ORG_FIRST}`);
 		expect(userService.replaceStaleLastOrganization).toHaveBeenCalledWith(user.id, ORG_STALE, ORG_FIRST);
-		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, ORG_FIRST, undefined);
+		// The replacement is the conditional write above; it is not written a second time.
+		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, undefined, undefined);
+		expect(stored.lastOrganizationId).toBe(ORG_FIRST);
 	});
 
-	it('keeps a stored organization the user is still a member of', async () => {
+	it('keeps an organization another request switched to while the stale one was being replaced', async () => {
+		const user = userWith(ORG_STALE);
+		const { service, userService, stored } = buildAuthService({
+			user,
+			memberships: [
+				{ organizationId: ORG_FIRST, tenantId: TENANT },
+				{ organizationId: ORG_SWITCHED, tenantId: TENANT }
+			]
+		});
+		// `POST /auth/switch-organization` stores ORG_SWITCHED between the stale check and the replacement.
+		userService.findFirstActiveOrganizationId.mockImplementationOnce(async () => {
+			stored.lastOrganizationId = ORG_SWITCHED;
+			return ORG_FIRST;
+		});
+		const token = workspaceTokenFor(service, user);
+
+		const result = await service.workspaceSigninVerifyToken({ email: user.email, token, lastTeamId: TEAM } as any);
+
+		// This sign-in's token is scoped to the replacement it resolved; the switch survives in the database.
+		expect(result.token).toBe(`access:${ORG_FIRST}`);
+		expect(stored.lastOrganizationId).toBe(ORG_SWITCHED);
+		// The team preference is still written.
+		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, undefined, TEAM);
+		expect(stored.lastTeamId).toBe(TEAM);
+	});
+
+	it('keeps a stored organization the user is still a member of, without writing it again', async () => {
 		const user = userWith(ORG_MEMBER);
-		const { service, userService } = buildAuthService({
+		const { service, userService, stored } = buildAuthService({
 			user,
 			memberships: [
 				{ organizationId: ORG_FIRST, tenantId: TENANT },
@@ -271,11 +340,29 @@ describe('AuthService.workspaceSigninVerifyToken (POST /auth/signin.workspace) â
 
 		expect(result.token).toBe(`access:${ORG_MEMBER}`);
 		expect(userService.replaceStaleLastOrganization).not.toHaveBeenCalled();
+		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, undefined, undefined);
+		expect(stored.lastOrganizationId).toBe(ORG_MEMBER);
+	});
+
+	it('persists the first membership of a user with nothing stored, as before', async () => {
+		const user = userWith(null);
+		const { service, userService, stored } = buildAuthService({
+			user,
+			memberships: [{ organizationId: ORG_FIRST, tenantId: TENANT }]
+		});
+		const token = workspaceTokenFor(service, user);
+
+		const result = await service.workspaceSigninVerifyToken({ email: user.email, token } as any);
+
+		expect(result.token).toBe(`access:${ORG_FIRST}`);
+		expect(userService.replaceStaleLastOrganization).not.toHaveBeenCalled();
+		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, ORG_FIRST, undefined);
+		expect(stored.lastOrganizationId).toBe(ORG_FIRST);
 	});
 
 	it('scopes the token to a requested membership without reading the stored organization', async () => {
 		const user = userWith(ORG_STALE);
-		const { service, userService } = buildAuthService({
+		const { service, userService, stored } = buildAuthService({
 			user,
 			memberships: [
 				{ organizationId: ORG_FIRST, tenantId: TENANT },
@@ -287,12 +374,16 @@ describe('AuthService.workspaceSigninVerifyToken (POST /auth/signin.workspace) â
 		const result = await service.workspaceSigninVerifyToken({
 			email: user.email,
 			token,
-			lastOrganizationId: ORG_MEMBER
+			lastOrganizationId: ORG_MEMBER,
+			lastTeamId: TEAM
 		} as any);
 
 		expect(result.token).toBe(`access:${ORG_MEMBER}`);
 		expect(userService.hasActiveOrganizationMembership).not.toHaveBeenCalled();
-		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, ORG_MEMBER, undefined);
+		// An explicit selection is persisted with the team, as before.
+		expect(userService.setLastOrganizationAndTeam).toHaveBeenCalledWith(user.id, ORG_MEMBER, TEAM);
+		expect(stored.lastOrganizationId).toBe(ORG_MEMBER);
+		expect(stored.lastTeamId).toBe(TEAM);
 	});
 });
 

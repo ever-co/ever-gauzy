@@ -1,5 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import {
+	assertMembersAreInScope,
 	assertReferencesAreInScope,
 	sharingAsStored,
 	sharingMemberReferences,
@@ -346,42 +347,117 @@ describe('sharingMemberReferences', () => {
 		]);
 	});
 
-	it('hands a non-string id on, so the scope check refuses it without a lookup', async () => {
-		const lookup = jest.fn(async () => ({ id: 'found' }));
-		const references = sharingMemberReferences({ employees: [{ id: { $ne: null } }] });
-
-		await expect(
-			assertReferencesAreInScope(references, { tenantId: 'tenant-A', organizationId: 'org-1' }, lookup)
-		).rejects.toBeInstanceOf(ForbiddenException);
-		expect(lookup).not.toHaveBeenCalled();
+	it('hands a non-string id on, so the scope check refuses it', () => {
+		expect(sharingMemberReferences({ employees: [{ id: { $ne: null } }] })).toEqual([['employee', { $ne: null }]]);
 	});
+});
 
-	it("checks each member in the sharing's organization and refuses one of another organization", async () => {
-		const MEMBERS_OF_ORG_1 = new Set(['employee:employee-1', 'organization_team:team-1']);
-		const calls: Array<{ table: string; where: Record<string, unknown> }> = [];
-		const lookup = async (table: string, where: Record<string, unknown>) => {
-			calls.push({ table, where });
-			return where['organizationId'] === 'org-1' && MEMBERS_OF_ORG_1.has(`${table}:${where['id']}`) ? {} : null;
-		};
-		const scope = { tenantId: 'tenant-A', organizationId: 'org-1' };
+/**
+ * A sharing may list many employees and teams, so their scope check reads each table once, with all of its ids,
+ * instead of one query per member (review on ever-co/ever-gauzy#11397).
+ */
+describe('assertMembersAreInScope', () => {
+	const SCOPE = { tenantId: 'tenant-A', organizationId: 'org-1' };
+	const ROWS: Record<string, Array<{ id: string; tenantId: string; organizationId: string }>> = {
+		employee: [
+			{ id: 'employee-1', tenantId: 'tenant-A', organizationId: 'org-1' },
+			{ id: 'employee-2', tenantId: 'tenant-A', organizationId: 'org-1' },
+			{ id: 'employee-of-org-2', tenantId: 'tenant-A', organizationId: 'org-2' }
+		],
+		organization_team: [
+			{ id: 'team-1', tenantId: 'tenant-A', organizationId: 'org-1' },
+			{ id: 'team-of-org-2', tenantId: 'tenant-A', organizationId: 'org-2' }
+		]
+	};
+
+	/** Answers the rows of a table whose id is listed and that match the scope; records every query. */
+	const store = () => {
+		const queries: Array<{ table: string; ids: string[]; scope: Record<string, unknown> }> = [];
+		const lookupMany = jest.fn(async (table: string, ids: string[], scope: Record<string, unknown>) => {
+			queries.push({ table, ids, scope });
+			return (ROWS[table] ?? []).filter(
+				(row) =>
+					ids.includes(row.id) &&
+					row.tenantId === scope['tenantId'] &&
+					(scope['organizationId'] === undefined || row.organizationId === scope['organizationId'])
+			);
+		});
+		return { lookupMany, queries };
+	};
+
+	it('reads each table once, with all of its ids, in the scope', async () => {
+		const { lookupMany, queries } = store();
 
 		await expect(
-			assertReferencesAreInScope(
-				sharingMemberReferences({ employees: ['employee-1'], teams: [{ id: 'team-1' }] }),
-				scope,
-				lookup
+			assertMembersAreInScope(
+				sharingMemberReferences({
+					employees: [{ id: 'employee-1' }, 'employee-2', 'employee-1'],
+					teams: [{ id: 'team-1' }]
+				}),
+				SCOPE,
+				lookupMany
 			)
 		).resolves.toBeUndefined();
-		expect(calls).toEqual([
-			{ table: 'employee', where: { id: 'employee-1', tenantId: 'tenant-A', organizationId: 'org-1' } },
-			{ table: 'organization_team', where: { id: 'team-1', tenantId: 'tenant-A', organizationId: 'org-1' } }
+
+		expect(queries).toEqual([
+			{ table: 'employee', ids: ['employee-1', 'employee-2'], scope: SCOPE },
+			{ table: 'organization_team', ids: ['team-1'], scope: SCOPE }
 		]);
+	});
+
+	it('refuses the list when one member is not found in the scope', async () => {
+		for (const input of [
+			{ employees: ['employee-1', 'employee-of-org-2'] },
+			{ teams: [{ id: 'team-1' }, { id: 'team-of-org-2' }] },
+			{ employees: ['no-such-employee'] }
+		]) {
+			const { lookupMany } = store();
+
+			await expect(
+				assertMembersAreInScope(sharingMemberReferences(input), SCOPE, lookupMany)
+			).rejects.toBeInstanceOf(ForbiddenException);
+		}
+	});
+
+	it('refuses a non-string id before any query, wherever it is listed', async () => {
+		const { lookupMany } = store();
 
 		await expect(
-			assertReferencesAreInScope(sharingMemberReferences({ employees: ['employee-of-org-2'] }), scope, lookup)
+			assertMembersAreInScope(
+				sharingMemberReferences({
+					employees: ['employee-1'],
+					teams: [{ id: 'team-1' }, { id: { $ne: null } }]
+				}),
+				SCOPE,
+				lookupMany
+			)
 		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(lookupMany).not.toHaveBeenCalled();
+	});
+
+	it('runs no query for an empty list, and refuses a list without a tenant to scope by', async () => {
+		const { lookupMany } = store();
+
+		await expect(assertMembersAreInScope([], SCOPE, lookupMany)).resolves.toBeUndefined();
 		await expect(
-			assertReferencesAreInScope(sharingMemberReferences({ teams: [{ id: 'team-of-org-2' }] }), scope, lookup)
+			assertMembersAreInScope([['employee', 'employee-1']], { organizationId: 'org-1' }, lookupMany)
 		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(lookupMany).not.toHaveBeenCalled();
+	});
+
+	it('scopes by the tenant alone when the sharing has no organization', async () => {
+		const { lookupMany, queries } = store();
+
+		await assertMembersAreInScope([['employee', 'employee-of-org-2']], { tenantId: 'tenant-A' }, lookupMany);
+
+		expect(queries).toEqual([{ table: 'employee', ids: ['employee-of-org-2'], scope: { tenantId: 'tenant-A' } }]);
+	});
+
+	it('matches ids whatever their case', async () => {
+		const lookupMany = jest.fn(async () => [{ id: 'employee-1' }]);
+
+		await expect(
+			assertMembersAreInScope([['employee', 'EMPLOYEE-1']], SCOPE, lookupMany)
+		).resolves.toBeUndefined();
 	});
 });

@@ -31,6 +31,7 @@ const REFERENCED = [
 	{ table: 'equipment_sharing_policy', id: 'policy-of-b', tenantId: tenantA.tenantId, organizationId: orgB },
 	// The employees and the teams a sharing can be handed to.
 	{ table: 'employee', id: 'employee-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
+	{ table: 'employee', id: 'employee-of-a2', tenantId: tenantA.tenantId, organizationId: orgA },
 	{ table: 'employee', id: 'employee-of-b', tenantId: tenantA.tenantId, organizationId: orgB },
 	{ table: 'organization_team', id: 'team-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
 	{ table: 'organization_team', id: 'team-of-b', tenantId: tenantA.tenantId, organizationId: orgB }
@@ -100,9 +101,26 @@ function setUp() {
 					(where['organizationId'] === undefined || row.organizationId === where['organizationId'])
 			) ?? null
 	);
+	// The member lists are read one table at a time, every id of the table in one `In(...)` query.
+	const lookupMany = jest.fn(
+		async (table: string, { where }: { where: Record<string, unknown>; select?: unknown }) => {
+			const ids = (where['id'] as { value: string[] }).value;
+			return REFERENCED.filter(
+				(row) =>
+					row.table === table &&
+					ids.includes(row.id) &&
+					row.tenantId === where['tenantId'] &&
+					(where['organizationId'] === undefined || row.organizationId === where['organizationId'])
+			).map(({ id }) => ({ id }));
+		}
+	);
 	const service = new EquipmentSharingService(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		{ metadata: { tableName: 'equipment_sharing' }, findOne, manager: { findOne: lookup } } as any,
+		{
+			metadata: { tableName: 'equipment_sharing' },
+			findOne,
+			manager: { findOne: lookup, find: lookupMany }
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		{} as any,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,7 +130,7 @@ function setUp() {
 	);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const storing = (body: Record<string, unknown>) => service.assertCreateIsInScope(body as any);
-	return { service, findOne, lookup, storing };
+	return { service, findOne, lookup, lookupMany, storing };
 }
 
 /** The lookup `assertReferencesAreInScope` runs for one reference. */
@@ -289,18 +307,27 @@ describe('EquipmentSharingService.assertCreateIsInScope — a create is checked 
 	});
 
 	it('checks the employees and the teams a new row lists, in both forms, in the row’s organization', async () => {
-		const { lookup, storing } = setUp();
+		const { lookup, lookupMany, storing } = setUp();
 
 		await storing({
 			equipmentId: 'equipment-of-a',
-			employees: [{ id: 'employee-of-a' }, 'employee-of-a'],
+			employees: [{ id: 'employee-of-a' }, 'employee-of-a', 'employee-of-a2'],
 			teams: ['team-of-a']
 		});
 
-		expect(lookup.mock.calls).toEqual([
-			checked('equipment', 'equipment-of-a', orgA),
-			checked('employee', 'employee-of-a', orgA),
-			checked('organization_team', 'team-of-a', orgA)
+		expect(lookup.mock.calls).toEqual([checked('equipment', 'equipment-of-a', orgA)]);
+		// One query per table, every id of the table in it, in the row's tenant and organization.
+		expect(
+			lookupMany.mock.calls.map(([table, { where, select }]) => [
+				table,
+				(where['id'] as { value: string[] }).value,
+				where['tenantId'],
+				where['organizationId'],
+				select
+			])
+		).toEqual([
+			['employee', ['employee-of-a', 'employee-of-a2'], tenantA.tenantId, orgA, { id: true }],
+			['organization_team', ['team-of-a'], tenantA.tenantId, orgA, { id: true }]
 		]);
 	});
 

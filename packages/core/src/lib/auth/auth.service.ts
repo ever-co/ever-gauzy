@@ -2556,11 +2556,12 @@ export class AuthService extends SocialAuthService {
 			// hint (e.g. a stale client cache after the membership was revoked) falls back to
 			// the persisted values instead of failing the whole signin. The persisted organization is held to
 			// the same membership rule: a stale one is replaced (see `resolveStoredOrganizationId`).
+			const storedOrganizationId = user.lastOrganizationId || null;
+			const requested =
+				!!lastOrganizationId &&
+				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId));
 			let organizationId: ID | null;
-			if (
-				lastOrganizationId &&
-				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId))
-			) {
+			if (requested) {
 				organizationId = lastOrganizationId;
 			} else {
 				organizationId = (await this.resolveStoredOrganizationId(user)) ?? employee?.organizationId;
@@ -2568,10 +2569,16 @@ export class AuthService extends SocialAuthService {
 
 			// Same backfill as `login()`: a non-employee user with no persisted preference gets
 			// their first active organization membership so the token carries a usable scope.
-			// `setLastOrganizationAndTeam` below persists whatever is resolved here.
 			if (!organizationId) {
 				organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
 			}
+
+			// The organization `setLastOrganizationAndTeam` below persists: the requested one, or the one resolved for
+			// a user with nothing stored. A stored organization is not written again: a valid one is already there,
+			// and a stale one was already replaced by `resolveStoredOrganizationId` with a write conditional on the
+			// stale value, which a second, unconditional write here would undo when another request switched the
+			// user's organization in the meantime.
+			const organizationToStore = requested || !storedOrganizationId ? organizationId : undefined;
 
 			// Generate access and refresh tokens concurrently
 			const [accessToken, refreshToken] = await Promise.all([
@@ -2586,7 +2593,7 @@ export class AuthService extends SocialAuthService {
 
 				// Persist the resolved organization/team preference so the DB stays
 				// in sync with whatever value was embedded in the tokens above.
-				this.userService.setLastOrganizationAndTeam(user.id, organizationId, lastTeamId)
+				this.userService.setLastOrganizationAndTeam(user.id, organizationToStore, lastTeamId)
 			]);
 
 			return {

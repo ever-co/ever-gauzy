@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
-import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, In, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IEquipmentSharing,
@@ -25,6 +25,7 @@ import { TypeOrmRequestApprovalRepository } from './../request-approval/reposito
 import { bumpVersion, parseEntityVersion } from '../concurrency/version.util';
 import { ApiException } from '../core/errors/api-exception';
 import {
+	assertMembersAreInScope,
 	assertReferencesAreInScope,
 	IReferenceScope,
 	ISharingColumns,
@@ -98,7 +99,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *
 	 * The employees and the teams the sharing is handed to (`employees`, `teams`, each entry a related object or a
 	 * bare id) are held to the same scope: the CRUD base checks the nested rows against the tenant only, so a body
-	 * could list another organization's employees or teams of the same tenant — see `sharingMemberReferences`.
+	 * could list another organization's employees or teams of the same tenant — see `sharingMemberReferences`. A
+	 * sharing may list many, so each table is read once, with all of its ids (`assertMembersAreInScope`).
 	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
@@ -108,9 +110,14 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		input: Partial<IEquipmentSharingUpdateInput> | (ISharingReferences & ISharingMembers),
 		scope: IReferenceScope
 	): Promise<void> {
-		const references = [...sharingReferences(input), ...sharingMemberReferences(input)];
-		await assertReferencesAreInScope(references, scope, (table, where) =>
+		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
 			this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		);
+		await assertMembersAreInScope(sharingMemberReferences(input), scope, (table, ids, criteria) =>
+			this.typeOrmRepository.manager.find(table, {
+				where: { ...criteria, id: In(ids) } as any,
+				select: { id: true } as any
+			})
 		);
 	}
 
