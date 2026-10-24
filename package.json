@@ -851,7 +851,7 @@
 		"cypress-file-upload": "^5.0.8",
 		"cz-conventional-changelog": "^3.3.0",
 		"electron": "^44.9.3",
-		"electron-builder": "26.15.3",
+		"electron-builder": "26.18.0",
 		"envalid": "^8.2.0",
 		"esbuild": "0.28.2",
 		"eslint": "^10.12.0",

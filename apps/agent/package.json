@@ -28,7 +28,7 @@
 		"@types/node-fetch": "^2.6.13",
 		"electron": "^44.9.3",
 		"@electron/notarize": "^3.1.2",
-		"electron-builder": "26.15.3",
+		"electron-builder": "26.18.0",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^4.1.0",
 		"terser-webpack-plugin": "^5.6.1",

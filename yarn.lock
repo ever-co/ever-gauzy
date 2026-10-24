@@ -4360,7 +4360,7 @@
     minimist "^1.2.6"
     plist "^3.0.5"
 
-"@electron/rebuild@^4.0.4", "@electron/rebuild@^4.2.1":
+"@electron/rebuild@^4.2.1":
   version "4.2.1"
   resolved "https://registry.npmjs.org/@electron/rebuild/-/rebuild-4.2.1.tgz#89f22183fcb26b8661382097fa38531505310728"
   integrity sha512-IS4pG3BysRrCLJ8xTAfvg+IQDbiUoAzdJy2SfjcYKnLDy5DpCdjnPdhS5Zf5UMfrkB24xu0KC+TqcOxg+eG+6w==
@@ -7308,15 +7308,10 @@
   resolved "https://registry.npmjs.org/@noble/ciphers/-/ciphers-1.3.0.tgz#f64b8ff886c240e644e5573c097f86e5b43676dc"
   integrity sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==
 
-"@noble/hashes@1.8.0", "@noble/hashes@^1.1.5", "@noble/hashes@^1.6.0":
+"@noble/hashes@1.8.0", "@noble/hashes@^1.1.5", "@noble/hashes@^1.6.0", "@noble/hashes@^1.8.0":
   version "1.8.0"
   resolved "https://registry.npmjs.org/@noble/hashes/-/hashes-1.8.0.tgz#cee43d801fcef9644b11b8194857695acd5f815a"
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==
-
-"@noble/hashes@^2.2.0":
-  version "2.4.0"
-  resolved "https://registry.npmjs.org/@noble/hashes/-/hashes-2.4.0.tgz#e6a3e98edbed3c8659b28bb8f9b18ca02ec8ea4b"
-  integrity sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==
 
 "@node-rs/xxhash-android-arm-eabi@1.7.8":
   version "1.7.8"
@@ -13340,26 +13335,26 @@ apache-md5@1.1.8:
   resolved "https://registry.yarnpkg.com/apache-md5/-/apache-md5-1.1.8.tgz#ea79c6feb03abfed42b2830dde06f75df5e3bbd9"
   integrity sha512-FCAJojipPn0bXjuEpjOOOMN8FZDkxfWWp4JGN9mifU2IhxvKyXZYqpzPHdnTSUpmPDy+tsslB6Z1g+Vg6nVbYA==
 
-app-builder-lib@26.15.3:
-  version "26.15.3"
-  resolved "https://registry.npmjs.org/app-builder-lib/-/app-builder-lib-26.15.3.tgz#0fa6c965e307bb6d86226407c750a45b3fd6b1bf"
-  integrity sha512-2VnyWkqsP5v5XbBhL3tD5Syx8iNPBYsoU7kY4S2fz7wg8Rj/nztWKCUzGKaFRTv0Xwf3/H058CR1Kvtd/3lRow==
+app-builder-lib@26.18.0:
+  version "26.18.0"
+  resolved "https://registry.yarnpkg.com/app-builder-lib/-/app-builder-lib-26.18.0.tgz#83e1ac45d8d60b446278f8cab2d2d45bc8710761"
+  integrity sha512-lx+KkuCSZHcbECf4R3IAcC9VOFk0+cMUwljO63s5y8yqS1Lw0sRGmjPaWsPwP3zv3ohZYbMhUvjXeiQXXZhJXA==
   dependencies:
     "@electron/asar" "3.4.1"
     "@electron/fuses" "^1.8.0"
     "@electron/get" "^3.0.0"
     "@electron/notarize" "2.5.0"
     "@electron/osx-sign" "1.3.3"
-    "@electron/rebuild" "^4.0.4"
+    "@electron/rebuild" "^4.2.1"
     "@electron/universal" "2.0.3"
     "@malept/flatpak-bundler" "^0.4.0"
-    "@noble/hashes" "^2.2.0"
+    "@noble/hashes" "^1.8.0"
     "@peculiar/webcrypto" "^1.7.1"
     "@types/fs-extra" "9.0.13"
     ajv "^8.18.0"
     asn1js "^3.0.10"
     async-exit-hook "^2.0.1"
-    builder-util "26.15.3"
+    builder-util "26.16.0"
     builder-util-runtime "9.7.0"
     chromium-pickle-js "^0.2.0"
     ci-info "4.3.1"
@@ -13367,7 +13362,7 @@ app-builder-lib@26.15.3:
     dotenv "^16.4.5"
     dotenv-expand "^11.0.6"
     ejs "^3.1.8"
-    electron-publish "26.15.3"
+    electron-publish "26.18.0"
     fs-extra "^10.1.0"
     hosted-git-info "^4.1.0"
     isbinaryfile "^5.0.0"
@@ -14657,10 +14652,10 @@ builder-util-runtime@9.7.0:
     debug "^4.3.4"
     sax "^1.2.4"
 
-builder-util@26.15.3:
-  version "26.15.3"
-  resolved "https://registry.npmjs.org/builder-util/-/builder-util-26.15.3.tgz#1eeab37f0d4a6421fe18ce9db38ced58881d9519"
-  integrity sha512-q2hn7Mbo2nFNkVekPiHFx6Nfo3hURmES3tfBn+k5Pqxl2RkmP3QGqZUhH/q9Pch/4G05NRhPjDlVj1O8q4Txvw==
+builder-util@26.16.0:
+  version "26.16.0"
+  resolved "https://registry.yarnpkg.com/builder-util/-/builder-util-26.16.0.tgz#fa6f0a9af739d47d1adcabf089d3450b7e95c8df"
+  integrity sha512-RLyJhB7Si3YkzKR9ubQslWuXW3Vhs3CGe1i+SeixBZ0qTd1mk3XBmssvY22TlB6CS5blyko8Gu1JzpYk8UkYAg==
   dependencies:
     "@types/debug" "^4.1.6"
     builder-util-runtime "9.7.0"
@@ -17844,13 +17839,13 @@ dlv@^1.1.3:
   resolved "https://registry.yarnpkg.com/dlv/-/dlv-1.1.3.tgz#5c198a8a11453596e751494d49874bc7732f2e79"
   integrity sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==
 
-dmg-builder@26.15.3:
-  version "26.15.3"
-  resolved "https://registry.npmjs.org/dmg-builder/-/dmg-builder-26.15.3.tgz#d884362e223551ee0dbc96bbb7187b42905378f8"
-  integrity sha512-O3zJUFUYHJKgzPqioHxfxzBzlSC1eXCSr79gMSBKBP5AgjjpmrydMsMLotEg9fAJF36vdUncb+4ndRNxoPdlSQ==
+dmg-builder@26.18.0:
+  version "26.18.0"
+  resolved "https://registry.yarnpkg.com/dmg-builder/-/dmg-builder-26.18.0.tgz#061dc211149e3f55657a50ea5abdbd5750081f02"
+  integrity sha512-ozCGC54wi2C1RkS2v69y9lQxvoQ1Coh+iT8CmWiyY8y1ZuOKVvuNson2Hd+HEOs9+EZNNsOBbzKgQZ4SNqWd0w==
   dependencies:
-    app-builder-lib "26.15.3"
-    builder-util "26.15.3"
+    app-builder-lib "26.18.0"
+    builder-util "26.16.0"
     fs-extra "^10.1.0"
     js-yaml "^4.1.0"
 
@@ -18167,17 +18162,17 @@ ejs@^3.1.8:
   dependencies:
     jake "^10.8.5"
 
-electron-builder@26.15.3:
-  version "26.15.3"
-  resolved "https://registry.npmjs.org/electron-builder/-/electron-builder-26.15.3.tgz#0e82828f6829c0b2596338365209170ac0acbcd5"
-  integrity sha512-a1KM5heqS3gQCZzizXEI8RjJy3QVogULPdeSknt76uLDpBIW/HDGsMg/XgP0riP6PI9COsRvFITKKGDqA8fJxA==
+electron-builder@26.18.0:
+  version "26.18.0"
+  resolved "https://registry.yarnpkg.com/electron-builder/-/electron-builder-26.18.0.tgz#27d87cd51da618bb2d9e4c5321fc55e4556c028f"
+  integrity sha512-ASgIuQnOq4RuD8jMhS9hI0LS3EMRT1I/M5R6utqifB/BHN80IcCjBdt+DED+NmNPvmBgEtrlExXZitNdA7kXOg==
   dependencies:
-    app-builder-lib "26.15.3"
-    builder-util "26.15.3"
+    app-builder-lib "26.18.0"
+    builder-util "26.16.0"
     builder-util-runtime "9.7.0"
     chalk "^4.1.2"
     ci-info "^4.2.0"
-    dmg-builder "26.15.3"
+    dmg-builder "26.18.0"
     fs-extra "^10.1.0"
     lazy-val "^1.0.5"
     simple-update-notifier "2.0.0"
@@ -18193,14 +18188,14 @@ electron-log@^5.4.4:
   resolved "https://registry.npmjs.org/electron-log/-/electron-log-5.4.4.tgz#957cb6fc43a73759bad32fadd4927f870eed0254"
   integrity sha512-istWgaXjBfURBSS8LWVW9C3jsc6+ac+tY1lXrQEOTp0lVj+a4OlO1Tmqb36GgnEUDv92DGC9VI1HNXwJinWpgA==
 
-electron-publish@26.15.3:
-  version "26.15.3"
-  resolved "https://registry.npmjs.org/electron-publish/-/electron-publish-26.15.3.tgz#db65642070bf60c7bd26d607441506891d3ad054"
-  integrity sha512-g/2bn8YTavY4cuS5F+jOS7zmZbXXBV8KZ8yHKfJjFPoKtzBqrpCdNPxBd3tqdBwP7BVd0lGzf7Bk2s0KesWZ4Q==
+electron-publish@26.18.0:
+  version "26.18.0"
+  resolved "https://registry.yarnpkg.com/electron-publish/-/electron-publish-26.18.0.tgz#fce508669730d9dbc7d99a54498fbd536e38eb06"
+  integrity sha512-MagnqaZSALSWjcdKu5HEVhYUZD/2BDL3q7XzrqWwub6gf/UfD3ItMgmthVDv9w5y9E0gH1C3JWqKaXwf6f4ROg==
   dependencies:
     "@types/fs-extra" "^9.0.11"
     aws4 "^1.13.2"
-    builder-util "26.15.3"
+    builder-util "26.16.0"
     builder-util-runtime "9.7.0"
     chalk "^4.1.2"
     form-data "^4.0.5"
