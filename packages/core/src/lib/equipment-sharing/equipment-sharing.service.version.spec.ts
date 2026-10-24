@@ -357,11 +357,12 @@ describe('POST /equipment-sharing — an upsert of a stored sharing', () => {
 	it('claims nothing for a stored sharing outside the caller’s organization, which the upsert refuses as before', async () => {
 		asUser(RolesEnum.MANAGER, OTHER_ORG);
 		const { service, store } = setUp({ name: 'Laptop', status: 1, version: 7 });
+		// The upsert itself is the CRUD base's, whose boundary refusal its own specs cover: here it is reached.
+		const upsert = jest.fn(async () => undefined);
 
-		await service
-			.storeCreate({ id: ID, name: 'Projector', organizationId: ORG } as any, async () => undefined)
-			.catch(() => undefined);
+		await service.storeCreate({ id: ID, name: 'Projector', organizationId: ORG } as any, upsert);
 
 		expect(store.statements.filter((statement) => statement.startsWith('update'))).toEqual([]);
+		expect(upsert).toHaveBeenCalledTimes(1);
 	});
 });
