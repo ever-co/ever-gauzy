@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before the service pulls an entity (see activity.controller.spec.ts).
 import '../core/entities/internal';
 
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PermissionsEnum, RequestApprovalStatusTypesEnum, RolesEnum, StatusTypesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
@@ -28,7 +28,8 @@ const COLLEAGUE = 'employee-colleague';
 const POLICIES = [
 	{ id: 'policy-approval', tenantId: TENANT, organizationId: ORGANIZATION, requiresApproval: true },
 	{ id: 'policy-no-approval', tenantId: TENANT, organizationId: ORGANIZATION, requiresApproval: false },
-	{ id: 'policy-foreign', tenantId: 'tenant-b', organizationId: ORGANIZATION, requiresApproval: false }
+	{ id: 'policy-foreign', tenantId: 'tenant-b', organizationId: ORGANIZATION, requiresApproval: false },
+	{ id: 'policy-elsewhere', tenantId: TENANT, organizationId: 'organization-b', requiresApproval: false }
 ];
 
 /** The tenant's employees: two of the caller's organization and one of another organization. */
@@ -158,13 +159,16 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			});
 		});
 
-		it("does not take another tenant's no-approval policy as a reason to approve", async () => {
+		it("refuses another tenant's or another organization's policy instead of linking it", async () => {
 			asGrantedEmployee();
 			const { service, save } = surfaces();
 
-			await service.create(dialogBody({ policy: { id: 'policy-foreign' } }));
-
-			expect(save.mock.calls[0][0]).toEqual(expect.objectContaining({ status: StatusTypesEnum.REQUESTED }));
+			for (const id of ['policy-foreign', 'policy-elsewhere']) {
+				await expect(service.create(dialogBody({ policy: { id } }))).rejects.toBeInstanceOf(
+					BadRequestException
+				);
+			}
+			expect(save).not.toHaveBeenCalled();
 		});
 
 		it('files a caller who may not act for other employees for themselves, not the colleague the body names', async () => {
@@ -237,6 +241,16 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 				expect(row).not.toHaveProperty('status');
 				expect(row.id).toBe('time-off-1');
 			}
+		});
+
+		it("refuses moving a request onto another organization's policy", async () => {
+			asAdmin();
+			const { service, save } = surfaces();
+
+			await expect(
+				service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-elsewhere' } }))
+			).rejects.toBeInstanceOf(BadRequestException);
+			expect(save).not.toHaveBeenCalled();
 		});
 
 		it('refuses re-assigning a request to an employee of another organization', async () => {

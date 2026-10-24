@@ -53,6 +53,12 @@ import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-
  */
 const SORTABLE_COLUMNS = ['start', 'end', 'requestDate'] as const;
 
+/** Whether two ids name the same row: the database compares UUIDs without regard to case. */
+const sameId = (a: unknown, b: unknown): boolean => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
+
+/** A write naming a policy that is not one of the request's organization, in the caller's tenant. */
+const POLICY_OUT_OF_SCOPE = 'The time-off policy is not a policy of this organization.';
+
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
@@ -88,11 +94,16 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			tenantId,
 			members.organizationId ?? RequestContext.currentOrganizationId()
 		);
+		const policyId = requestedPolicyId(body);
 		const requiresApproval = await this.policyRequiresApproval(
-			requestedPolicyId(body),
+			policyId,
 			tenantId,
 			members.organizationId ?? RequestContext.currentOrganizationId()
 		);
+		// The save checks a relation's tenant only: a policy of another organization would be linked as given.
+		if (policyId && requiresApproval === undefined) {
+			throw new BadRequestException(POLICY_OUT_OF_SCOPE);
+		}
 
 		const request = new TimeOffRequest();
 		Object.assign(request, members, { employees, status: filedTimeOffStatus(requiresApproval) });
@@ -222,12 +233,19 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const members = writableTimeOffMembers(body, { create: false });
 			const employees = timeOffEmployees(body?.employees, this.timeOffCaller(), { create: false });
 
-			await this.assertEmployeesOfOrganization(
-				employees,
-				RequestContext.currentTenantId(),
-				stored.organizationId ?? stored.organization?.id
-			);
-			await this.assertPolicyChangeKeepsDecision(stored, members.policy?.id);
+			const organizationId = stored.organizationId ?? stored.organization?.id;
+			await this.assertEmployeesOfOrganization(employees, RequestContext.currentTenantId(), organizationId);
+
+			// A policy the edit moves the request onto must be one of its organization, as on create.
+			const policyId = members.policy?.id;
+			const storedPolicyId = stored.policy?.id ?? stored.policyId;
+			if (policyId && !(storedPolicyId && sameId(policyId, storedPolicyId))) {
+				const tenantId = RequestContext.currentTenantId();
+				if ((await this.policyRequiresApproval(policyId, tenantId, organizationId)) === undefined) {
+					throw new BadRequestException(POLICY_OUT_OF_SCOPE);
+				}
+			}
+			await this.assertPolicyChangeKeepsDecision(stored, policyId);
 
 			return await this.save({
 				...members,
@@ -281,9 +299,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		if (!policyId || stored?.status !== StatusTypesEnum.APPROVED) {
 			return;
 		}
-		// The database compares UUIDs without regard to case, so the stored policy in another case is not a change
+		// The stored policy in another case is the same UUID to the database, so it is not a change
 		const storedPolicyId = stored.policy?.id ?? stored.policyId;
-		if (storedPolicyId && policyId.toLowerCase() === String(storedPolicyId).toLowerCase()) {
+		if (storedPolicyId && sameId(policyId, storedPolicyId)) {
 			return;
 		}
 		if (
@@ -295,7 +313,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		const requiresApproval = await this.policyRequiresApproval(
 			policyId,
 			RequestContext.currentTenantId(),
-			stored.organizationId
+			stored.organizationId ?? stored.organization?.id
 		);
 		if (requiresApproval === false) {
 			return;
@@ -333,10 +351,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					select: { id: true, organizationId: true }
 				})
 			: [];
-		const same = (a: unknown, b: unknown) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 		const outside = ids.filter((id) => {
-			const employee = found.find((row) => same(row.id, id));
-			return !employee || (isNotEmpty(employee.organizationId) && !same(employee.organizationId, organizationId));
+			const employee = found.find((row) => sameId(row.id, id));
+			return (
+				!employee || (isNotEmpty(employee.organizationId) && !sameId(employee.organizationId, organizationId))
+			);
 		});
 		if (outside.length > 0) {
 			throw new ForbiddenException('The employees of a time-off request must be employees of its organization.');
