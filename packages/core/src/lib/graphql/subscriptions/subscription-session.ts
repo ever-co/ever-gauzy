@@ -32,7 +32,9 @@ import { SubscriptionClock, systemSubscriptionClock } from './subscription-deliv
  *   `SUBSCRIPTION_REAUTH_TIMEOUT_MS` is read as one that could not be made (the database unreachable), so the
  *   streams waiting on it are released under the same grace and no longer, and an answer that arrives later is
  *   ignored. A judgement that was still running when the guards confirmed the credential for another operation
- *   does not overwrite that newer confirmation (review on ever-co/ever-gauzy#11360).
+ *   does not overwrite that newer confirmation, and the grace honours only the authorization the credential was
+ *   last authenticated with: a stream authorized otherwise is closed with `4403` (reviews on
+ *   ever-co/ever-gauzy#11360).
  *
  * The session decides nothing the guards do not: it reuses their verdict and only refuses to let a stream
  * outlive it. A stream that opened without authenticating (a public field) is not held to the credential.
@@ -280,6 +282,12 @@ export class SubscriptionSession {
 	private verdict?: SubscriptionCredentialVerdict;
 	private verdictAt = Number.NEGATIVE_INFINITY;
 	private confirmedAt?: number;
+	/**
+	 * The user the credential was last authenticated as — by the guards, or by a judgement in force. Kept apart
+	 * from {@link verdict}, which a judgement that could not be made replaces: the `unavailable` grace honours the
+	 * authorization this user holds, and only that one.
+	 */
+	private lastAuthenticated?: SubscriptionSessionUser;
 	/** How many times the guards have confirmed the credential: a judgement started before the last one is older. */
 	private confirmations = 0;
 	private pending?: Promise<SubscriptionCredentialVerdict>;
@@ -350,6 +358,7 @@ export class SubscriptionSession {
 		this.verdict = { status: 'authenticated', user };
 		this.verdictAt = now;
 		this.confirmedAt = now;
+		this.lastAuthenticated = user;
 	}
 
 	/**
@@ -393,11 +402,21 @@ export class SubscriptionSession {
 				// A database that cannot be reached is not a verdict against the user, and closing every socket
 				// at once would multiply the load that caused it — so the last confirmation is honoured for one
 				// more interval, and no longer.
-				if (this.confirmedAt !== undefined && this.clock.now() - this.confirmedAt < 2 * this.intervalMs) {
-					return true;
+				if (this.confirmedAt === undefined || this.clock.now() - this.confirmedAt >= 2 * this.intervalMs) {
+					this.close(SUBSCRIPTION_SESSION_CLOSE.unverified);
+					return false;
 				}
-				this.close(SUBSCRIPTION_SESSION_CLOSE.unverified);
-				return false;
+				// 🛑 **The grace used to be granted on the confirmation's time alone.** A stream authorized with more
+				// than the user holds now — opened before a role or a permission was removed, and idle since — was
+				// then delivered its next event when the database could not be reached, though a newer stream on
+				// the same socket had confirmed the reduced authorization (review on ever-co/ever-gauzy#11360). The
+				// last confirmation is honoured for the authorization it confirmed: a stream authorized otherwise
+				// is closed with `4403`, as a fresh verdict would close it, and the guards decide on reconnect.
+				if (baseline && !sameSubscriptionAuthorization(baseline, this.lastAuthenticated)) {
+					this.close(SUBSCRIPTION_SESSION_CLOSE.changed);
+					return false;
+				}
+				return true;
 			default:
 				this.close(SUBSCRIPTION_SESSION_CLOSE.refused);
 				return false;
@@ -595,6 +614,7 @@ export class SubscriptionSession {
 
 		if (verdict.status === 'authenticated') {
 			this.confirmedAt = this.verdictAt;
+			this.lastAuthenticated = verdict.user;
 		}
 
 		return verdict;

@@ -512,6 +512,65 @@ describe('SubscriptionSession', () => {
 			expect(closes).toEqual([]);
 		});
 	});
+
+	describe('a stream authorized before a newer confirmation', () => {
+		it('is not given the unavailable grace for more than the last confirmation authorized', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			// The first stream opens with both permissions, and stays idle.
+			subject.confirm(USER_A);
+			const privileged = pushStream<string>();
+			const privilegedStream = subject.guard(privileged.iterator, () => USER_A);
+
+			// The user loses a permission and opens a second stream, which the guards authorize with what they hold now.
+			const demoted = { ...USER_A, permissions: ['TIME_TRACKER'] };
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS / 2);
+			subject.confirm(demoted);
+			const reduced = pushStream<string>();
+			const reducedStream = subject.guard(reduced.iterator, () => demoted);
+
+			// When the next judgement falls due, the database cannot be reached.
+			verdict = { status: 'unavailable' };
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+
+			// The newer stream is authorized as the last confirmation read: the grace applies to it.
+			reduced.push('within the reduced permissions');
+			expect(await reducedStream.next()).toEqual({ value: 'within the reduced permissions', done: false });
+			expect(closes).toEqual([]);
+
+			// The idle stream was authorized with the removed permission: its next event is withheld and the socket
+			// is closed with 4403, so every guard decides again on reconnect.
+			privileged.push('for the removed permission');
+			expect(await privilegedStream.next()).toEqual({ value: undefined, done: true });
+			expect(authenticate).toHaveBeenCalledTimes(1);
+			expect(closes).toEqual([SUBSCRIPTION_SESSION_CLOSE.changed]);
+			expect(closes[0].code).toBe(4403);
+			expect(privileged.ended).toBe(true);
+
+			// The socket is closed for the newer stream too.
+			reduced.push('after the close');
+			expect(await reducedStream.next()).toEqual({ value: undefined, done: true });
+		});
+
+		it('keeps the grace for a stream authorized as the credential was last authenticated', async () => {
+			const subject = session({ authorization: bearer('user-a', clock.expInSeconds(3600)) });
+			subject.confirm(USER_A);
+			const source = pushStream<string>();
+			const stream = subject.guard(source.iterator, () => USER_A);
+
+			// A judgement reads the same authorization.
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			source.push('judged');
+			expect(await stream.next()).toEqual({ value: 'judged', done: false });
+
+			// The next one cannot reach the database: the authorization the last judgement read is honoured.
+			verdict = { status: 'unavailable' };
+			clock.advance(DEFAULT_SUBSCRIPTION_REAUTH_INTERVAL_MS);
+			source.push('under the grace');
+			expect(await stream.next()).toEqual({ value: 'under the grace', done: false });
+			expect(authenticate).toHaveBeenCalledTimes(2);
+			expect(closes).toEqual([]);
+		});
+	});
 });
 
 describe('resolveSubscriptionReauthIntervalMs', () => {
