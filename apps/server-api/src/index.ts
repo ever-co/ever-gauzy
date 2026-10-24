@@ -143,7 +143,9 @@ const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER,
 const controller = new AbortController();
 const { signal } = controller;
 
-const desktopServer = new DesktopServer();
+// The server apps serve remote timers (and browsers), so they may listen on the network: the LAN access
+// setting (on unless the user turned it off) decides between every interface and the loopback address.
+const desktopServer = new DesktopServer(false, { allowLanAccess: true });
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');

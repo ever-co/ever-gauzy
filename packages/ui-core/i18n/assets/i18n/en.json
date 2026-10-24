@@ -5999,6 +5999,8 @@
 			"API_SERVER_PORT": "API Server Port",
 			"UI_SERVER_PORT": "UI Server Port",
 			"SERVER_HOSTNAME": "Server Hostname/ IP Address",
+			"LAN_ACCESS": "Allow other computers on the network to connect",
+			"LAN_ACCESS_HINT": "When off, only this computer can connect to the API and the web UI.",
 			"AUTO_START_STARTUP": "Auto Start On Startup",
 			"SERVER_TYPE": "Server Type",
 			"LOCAL_API_PORT": "Local API Port",

@@ -5423,6 +5423,8 @@
 			"API_SERVER_PORT": "יציאת שרת API",
 			"UI_SERVER_PORT": "יציאת שרת ממשק משתמש",
 			"SERVER_HOSTNAME": "שם מארח/כתובת IP של השרת",
+			"LAN_ACCESS": "לאפשר למחשבים אחרים ברשת להתחבר",
+			"LAN_ACCESS_HINT": "כשהאפשרות כבויה, רק המחשב הזה יכול להתחבר ל-API ולממשק האינטרנט.",
 			"AUTO_START_STARTUP": "הפעלה אוטומטית בהתחלה",
 			"SERVER_TYPE": "סוג שרת",
 			"LOCAL_API_PORT": "יציאת API מקומית",

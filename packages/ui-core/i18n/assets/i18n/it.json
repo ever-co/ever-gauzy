@@ -5408,6 +5408,8 @@
 			"API_SERVER_PORT": "Porta del server API",
 			"UI_SERVER_PORT": "Porta del server UI",
 			"SERVER_HOSTNAME": "Nome host/indirizzo IP del server",
+			"LAN_ACCESS": "Consenti la connessione da altri computer della rete",
+			"LAN_ACCESS_HINT": "Se disattivato, solo questo computer può connettersi all'API e all'interfaccia web.",
 			"AUTO_START_STARTUP": "Avvio automatico all'avvio",
 			"SERVER_TYPE": "Tipo di server",
 			"LOCAL_API_PORT": "Porta API locale",

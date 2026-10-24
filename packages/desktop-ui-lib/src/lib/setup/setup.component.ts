@@ -94,6 +94,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 			this.databaseDriver.sqlite = arg.db === 'sqlite';
 			this.databaseDriver.postgre = arg.db === 'postgres';
 			this.serverConfig.integrated.port = arg.port;
+			this.lanAccess = arg.lanAccess !== false;
 			if (!arg.isLocalServer) {
 				this.serverConfig.custom.apiHost = arg.serverUrl.split(':')[1].slice(2);
 				this.serverConfig.custom.port = arg.serverUrl.split(':')[2];
@@ -171,6 +172,13 @@ export class SetupComponent implements OnInit, OnDestroy {
 		sqlite: true,
 		postgre: false
 	};
+
+	/**
+	 * Gauzy Server and Gauzy API Server only: whether other computers on the network (remote timers,
+	 * browsers) may connect. On by default, as these servers always were; Gauzy Desktop's integrated
+	 * server accepts connections from this computer only and has no such choice.
+	 */
+	lanAccess = true;
 
 	serverConfig: any = {
 		integrated: {
@@ -329,7 +337,8 @@ export class SetupComponent implements OnInit, OnDestroy {
 		if (this.connectivity.integrated) {
 			return {
 				...this.serverConfig.integrated,
-				isLocalServer: true
+				isLocalServer: true,
+				...(this.isServer && { lanAccess: this.lanAccess })
 			};
 		}
 

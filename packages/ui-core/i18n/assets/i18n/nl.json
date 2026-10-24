@@ -5408,6 +5408,8 @@
 			"API_SERVER_PORT": "API Serverpoort",
 			"UI_SERVER_PORT": "UI Serverpoort",
 			"SERVER_HOSTNAME": "Servernaam/IP-adres",
+			"LAN_ACCESS": "Andere computers in het netwerk toestaan verbinding te maken",
+			"LAN_ACCESS_HINT": "Indien uitgeschakeld, kan alleen deze computer verbinding maken met de API en de webinterface.",
 			"AUTO_START_STARTUP": "Automatisch starten bij opstarten",
 			"SERVER_TYPE": "Servertype",
 			"LOCAL_API_PORT": "Lokale API-poort",

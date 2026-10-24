@@ -30,6 +30,7 @@ import {
 	DesktopThemeListener,
 	DesktopUpdater,
 	DialogErrorHandler,
+	DESKTOP_LOOPBACK_HOST,
 	desktopSecretsToEnv,
 	applyDesktopStatsEnv,
 	ensureDesktopSecrets,
@@ -164,6 +165,8 @@ const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER,
 
 const eventErrorManager = ErrorEventManager.instance;
 
+// API only, and on the loopback address only: the integrated server is for this computer. Remote timers
+// connect to Gauzy Server, which can listen on the network.
 const server = new DesktopServer(true);
 const controller = new AbortController();
 const { signal } = controller;
@@ -396,7 +399,7 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 	if (setupConfig.isLocalServer) {
 		console.log(`Starting local server on port ${setupConfig.port || environment.API_DEFAULT_PORT}`);
 		process.env.API_PORT = setupConfig.port ? String(setupConfig.port) : String(environment.API_DEFAULT_PORT);
-		process.env.API_HOST = '0.0.0.0';
+		process.env.API_HOST = DESKTOP_LOOPBACK_HOST;
 		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
 
 		// All four are already provisioned above, so this returns them unchanged.

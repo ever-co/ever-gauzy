@@ -1,5 +1,5 @@
 import { fork, ChildProcessWithoutNullStreams } from 'child_process';
-import { LocalStore } from '@gauzy/desktop-lib';
+import { LocalStore, resolveDesktopListenHost } from '@gauzy/desktop-lib';
 
 interface IEnvApi {
 	IS_ELECTRON: string;
@@ -69,7 +69,8 @@ class ApiServerProcessFactory {
 		apiBaseUrl: string;
 		apiHost: string;
 	} {
-		const { port, db, apiPath, dbPath, postgres, apiBaseUrl } = LocalStore.getStore('configs');
+		const configs = LocalStore.getStore('configs');
+		const { port, db, apiPath, dbPath, postgres, apiBaseUrl } = configs;
 
 		return {
 			apiPath,
@@ -82,7 +83,8 @@ class ApiServerProcessFactory {
 			port,
 			dbPath,
 			apiBaseUrl,
-			apiHost: '0.0.0.0'
+			// Every interface unless the user turned LAN access off in the settings.
+			apiHost: resolveDesktopListenHost(configs, true)
 		};
 	}
 }

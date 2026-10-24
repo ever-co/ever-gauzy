@@ -5408,6 +5408,8 @@
 			"API_SERVER_PORT": "API服务器端口",
 			"UI_SERVER_PORT": "UI服务器端口",
 			"SERVER_HOSTNAME": "服务器主机名/IP地址",
+			"LAN_ACCESS": "允许网络中的其他计算机连接",
+			"LAN_ACCESS_HINT": "关闭后，只有这台计算机可以连接到 API 和网页界面。",
 			"AUTO_START_STARTUP": "启动时自动启动",
 			"SERVER_TYPE": "服务器类型",
 			"LOCAL_API_PORT": "本地API端口",
