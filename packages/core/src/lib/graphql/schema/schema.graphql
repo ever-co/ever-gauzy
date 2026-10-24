@@ -21843,13 +21843,6 @@ type EquipmentSharing {
   equipmentSharingPolicyId: ID
 
   """
-  The row's optimistic-concurrency version: 1 when the period is filed, moved on by every write. State it
-  in `UpdateEquipmentSharingInput.version` to have an edit refused (409 `ENTITY_VERSION_CONFLICT`) when the
-  period changed since it was read.
-  """
-  version: Int
-
-  """
   The employees the asset is handed to. Joined by the two by-organization and by-employee reads, which
   is why the members are nullable: the list connection's own rows are not joined.
   """
@@ -22023,12 +22016,6 @@ row exists.
 """
 input UpdateEquipmentSharingInput {
   id: ID!
-
-  """
-  The version of the period the edit is based on. The edit is refused (409 `ENTITY_VERSION_CONFLICT`) when
-  the stored period has moved on; omitted, the server uses the version it reads before the edit.
-  """
-  version: Int
   name: String
   shareRequestDay: DateTime
   shareStartDay: DateTime
