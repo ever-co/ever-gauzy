@@ -86,6 +86,61 @@ describe('EquipmentSharingCreateHandler — the status a request is filed with',
 		expect(row).not.toHaveProperty('equipment');
 	});
 
+	it('checks and stores the policy the related object names, not only the policy column', async () => {
+		const { handler, sharingService } = setUp(false);
+
+		await handler.execute(
+			file({
+				equipmentId: 'equipment-1',
+				equipmentSharingPolicyId: 'policy-1',
+				equipmentSharingPolicy: { id: 'other-orgs-policy' }
+			})
+		);
+
+		expect(sharingService.assertReferencesAreInScope).toHaveBeenCalledWith(
+			expect.objectContaining({ equipmentSharingPolicyId: 'other-orgs-policy' }),
+			{ tenantId: 'tenant-a', organizationId: 'org-1' }
+		);
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row['equipmentSharingPolicyId']).toBe('other-orgs-policy');
+		expect(row).not.toHaveProperty('equipmentSharingPolicy');
+	});
+
+	it('refuses a policy of another organization named as the related object, before anything is stored', async () => {
+		const { handler, sharingService, approvalService } = setUp(false);
+		sharingService.assertReferencesAreInScope.mockRejectedValueOnce(new Error('not available here'));
+
+		await expect(
+			handler.execute(file({ equipmentId: 'equipment-1', equipmentSharingPolicy: { id: 'other-orgs-policy' } }))
+		).rejects.toThrow('not available here');
+		expect(sharingService.assertReferencesAreInScope).toHaveBeenCalledWith(
+			expect.objectContaining({ equipmentSharingPolicyId: 'other-orgs-policy' }),
+			expect.anything()
+		);
+		expect(sharingService.create).not.toHaveBeenCalled();
+		expect(approvalService.create).not.toHaveBeenCalled();
+	});
+
+	it('files a new row: a body-supplied id, which create() would upsert, is not stored', async () => {
+		const { handler, sharingService } = setUp(false);
+
+		await handler.execute(file({ id: 'stored-sharing-of-org-2', equipmentId: 'equipment-1' }));
+
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row).not.toHaveProperty('id');
+		expect(row).toMatchObject({ equipmentId: 'equipment-1', organizationId: 'org-1' });
+	});
+
+	it('pins the route’s organization over one the body names as the related object', async () => {
+		const { handler, sharingService } = setUp(false);
+
+		await handler.execute(file({ equipmentId: 'equipment-1', organization: { id: 'org-2' } }));
+
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row).not.toHaveProperty('organization');
+		expect(row['organizationId']).toBe('org-1');
+	});
+
 	it('keeps the status a caller who may decide a sharing chose', async () => {
 		for (const permission of [
 			PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,
