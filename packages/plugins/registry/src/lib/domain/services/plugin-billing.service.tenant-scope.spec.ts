@@ -79,3 +79,21 @@ describe('PluginBillingService tenant scope', () => {
 		expect(find).not.toHaveBeenCalled();
 	});
 });
+
+/**
+ * The publisher's and operator's `PUT` writes through `updateInAnyTenant`. A body with nothing left to write used to be
+ * a no-op (the tenant-scoped `update` answers it so); TypeORM refuses an `UPDATE` without values, which would be a 500.
+ */
+describe('PluginBillingService.updateInAnyTenant', () => {
+	it('writes nothing for a change that names no field, and the named fields otherwise', async () => {
+		const update = jest.fn(async () => ({ affected: 1 }));
+		const service = new PluginBillingService({ update } as any, {} as any);
+
+		await service.updateInAnyTenant('bill-1', {} as any);
+		await service.updateInAnyTenant('bill-1', { status: undefined } as any);
+		expect(update).not.toHaveBeenCalled();
+
+		await service.updateInAnyTenant('bill-1', { amount: 5 } as any);
+		expect(update).toHaveBeenCalledWith({ id: 'bill-1' }, { amount: 5 });
+	});
+});
