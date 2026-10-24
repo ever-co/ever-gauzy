@@ -71,7 +71,8 @@ export function assertCallerIsAuthorOrTenantAdmin(author: IRowAuthor, what: stri
 /**
  * A patch without the columns that say who wrote the row, so a change cannot hand the row to someone else.
  *
- * `createdByUserId` is never written from a patch. The row's own author columns (`employeeColumns`: a mention's
+ * `createdByUserId` is never written from a patch, nor its `createdByUser` relation, which a save would write the
+ * column from. The row's own author columns (`employeeColumns`: a mention's
  * `employeeId` and `employee`, say) are dropped for everyone but a tenant administrator: an author may change what
  * they wrote, not say that someone else wrote it.
  *
@@ -86,6 +87,7 @@ export function withoutAuthorChange<P>(patch: P, employeeColumns: ReadonlyArray<
 
 	const rest = { ...(patch as Record<string, unknown>) };
 	delete rest['createdByUserId'];
+	delete rest['createdByUser'];
 	delete rest['createdBy'];
 
 	if (!isCallerTenantAdmin()) {

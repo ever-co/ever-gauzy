@@ -73,4 +73,10 @@ describe('author or tenant admin', () => {
 			withoutAuthorChange({ title: 'x', createdByUserId: 'user-b', employeeId: 'employee-b' }, ['employeeId'])
 		).toEqual({ title: 'x', employeeId: 'employee-b' });
 	});
+
+	it('takes the posting-user relation out of a patch as well, for every caller', () => {
+		// A save writes `createdByUserId` from the relation, so dropping only the column left the author changeable.
+		signIn({ id: 'admin' }, RolesEnum.ADMIN);
+		expect(withoutAuthorChange({ title: 'x', createdByUser: { id: 'user-b' } })).toEqual({ title: 'x' });
+	});
 });

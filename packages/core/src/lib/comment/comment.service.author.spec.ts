@@ -184,9 +184,14 @@ describe('CommentService — the author and the resolver are the caller', () => 
 		it('never writes the posting user from an edit, whoever edits', async () => {
 			as('employee-admin', true, true);
 
-			await service.update('comment-1', { comment: 'Edited', createdByUserId: 'user-other' } as never);
+			await service.update('comment-1', {
+				comment: 'Edited',
+				createdByUserId: 'user-other',
+				createdByUser: { id: 'user-other' }
+			} as never);
 
 			expect(written()).not.toHaveProperty('createdByUserId');
+			expect(written()).not.toHaveProperty('createdByUser');
 		});
 
 		it('clears the resolver on an explicit null (a reopen)', async () => {
