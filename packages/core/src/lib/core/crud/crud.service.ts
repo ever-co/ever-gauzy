@@ -1291,7 +1291,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		// default to the permission backfill migrations that rely on it.
 		// On the platform's entities `updatedByUserId` is the `persist: false` mirror of the `updatedByUser` relation, and
 		// `nativeUpdate` writes a mirror stated alone, so it is looked up whatever its `persist` (ever-co/ever-gauzy#11382).
-		if (row['updatedByUserId'] === undefined && meta.props.some((property) => property.name === 'updatedByUserId')) {
+		if (
+			row['updatedByUserId'] === undefined &&
+			meta.props.some((property) => property.name === 'updatedByUserId')
+		) {
 			const userId = RequestContext.currentUserId();
 			if (userId) {
 				row['updatedByUserId'] = userId;
