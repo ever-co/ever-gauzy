@@ -398,6 +398,8 @@ export class UserService extends TenantAwareCrudService<User> {
 	 *
 	 * @param email The email the identity provider vouches for.
 	 * @returns The account, or null when no proven, active account carries the email.
+	 * @deprecated The provider sign-in uses {@link findOAuthLoginUsers} (owner decision 5): it matches only accounts
+	 * whose own address is confirmed, and offers the workspace picker when there are several.
 	 */
 	async findOAuthLoginUser(email: string): Promise<IUser | null> {
 		const rows: IUser[] =
@@ -407,6 +409,36 @@ export class UserService extends TenantAwareCrudService<User> {
 		const proven = rows.filter((row) => !!row.tenantId || !!row.emailVerifiedAt);
 
 		return proven.find((row) => !!row.emailVerifiedAt) ?? proven[0] ?? null;
+	}
+
+	/**
+	 * The accounts a sign-in through an identity provider (Google, GitHub, Keycloak…) may resolve a provider-verified
+	 * email to: the active accounts with that address that have confirmed it themselves (owner decision 5).
+	 *
+	 * An unconfirmed account carrying the address may have been registered by anyone, since `POST /auth/register`
+	 * takes any address without proof, or set by an admin of another tenant. Matching it signed the address's owner
+	 * in to a workspace whose password someone else holds. Every match is returned: when there are several, the
+	 * caller offers the workspace picker rather than choosing one.
+	 *
+	 * @param email The email the identity provider vouches for, as the provider wrote it.
+	 * @param options.requireVerifiedAccount `false` (the `SOCIAL_SIGNIN_REQUIRE_VERIFIED_ACCOUNT=false` switch) also
+	 * accepts an unconfirmed account that belongs to a tenant, as {@link findOAuthLoginUser} did.
+	 * @returns The matching accounts; empty when none.
+	 */
+	async findOAuthLoginUsers(email: string, { requireVerifiedAccount = true } = {}): Promise<IUser[]> {
+		// An absent email would be dropped from the `where` and match every user.
+		if (!email) {
+			return [];
+		}
+		const where = { email, isActive: true, isArchived: false };
+		const rows: IUser[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.find(where as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where });
+
+		return rows.filter((row) =>
+			requireVerifiedAccount ? !!row.emailVerifiedAt : !!row.emailVerifiedAt || !!row.tenantId
+		);
 	}
 
 	/**
