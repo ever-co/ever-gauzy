@@ -212,4 +212,17 @@ describe.each([
 			'global-retired'
 		]);
 	});
+
+	it('answers a read that names no where, as the REST list route sends without filters', async () => {
+		// The failure scenario: `GET /accounting-template` without a `where` destructured `undefined` and failed.
+		for (const options of [{}, { withDeleted: 'false' }]) {
+			const { items, total } = await harness.service().findAll(options as any);
+
+			expect(total).toBe(items.length);
+			expect(items.map((item: any) => item.name).sort()).toEqual(['global-live', 'tenant-live']);
+		}
+		expect(
+			(await harness.service().findAll({ withDeleted: true } as any)).items.map((item: any) => item.name).sort()
+		).toEqual(['global-live', 'global-retired', 'tenant-live', 'tenant-retired']);
+	});
 });
