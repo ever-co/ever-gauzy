@@ -418,6 +418,30 @@ describe('TenantBaseGuard', () => {
 					).resolves.toBe(true);
 				}
 			});
+
+			it('refuses a tenant field that is neither a string nor a number, without coercing it (403, not 500)', async () => {
+				// The ids were compared through `String()`, which runs whatever the caller put in their place:
+				// `{"tenantId":{"toString":null}}` threw `Cannot convert object to primitive value` (a 500), and an
+				// object converting to the caller's own id would have been read as that id.
+				actAs();
+				const toString = jest.fn(() => TENANT_ID);
+				const requests: RequestShape[] = [
+					{ method: 'POST', body: { tenantId: { toString: null } } },
+					{ method: 'PUT', body: { tenant: { id: { toString: null, valueOf: null } } } },
+					{ method: 'PATCH', body: { tenantId: { toString } } },
+					{ method: 'POST', body: [{ tenantId: TENANT_ID }, { tenantId: { toString } }] },
+					{ method: 'GET', query: { tenantId: [TENANT_ID] } },
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: { tenantId: { toString } } } },
+					{ method: 'POST', body: { tenantId: TENANT_ID, tenant: { id: true } } }
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(false);
+				}
+				expect(toString).not.toHaveBeenCalled();
+			});
 		});
 
 		describe('a write that names no tenant is refused, not crashed on', () => {

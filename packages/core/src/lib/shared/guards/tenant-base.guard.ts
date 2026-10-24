@@ -123,7 +123,8 @@ export class TenantBaseGuard implements CanActivate {
 	 * - the body, and every object of a body array (bulk routes).
 	 *
 	 * A request that names no tenant states nothing. An empty header, query value or route parameter states
-	 * nothing either.
+	 * nothing either. A tenant id is a string or a number; anything else stated in a tenant field (an object, an
+	 * array, a boolean) counts as naming another tenant, and is never coerced to compare it.
 	 *
 	 * @param request The HTTP request.
 	 * @param currentTenantId The tenant the caller authenticated as.
@@ -157,7 +158,26 @@ export class TenantBaseGuard implements CanActivate {
 			named.push(...this.tenantIdsIn(item));
 		}
 
-		return named.some((tenantId) => String(tenantId) !== String(currentTenantId));
+		return named.some((tenantId) => !this.isCallersTenant(tenantId, currentTenantId));
+	}
+
+	/**
+	 * Whether a stated tenant id is the caller's.
+	 *
+	 * Only a string or a number can be: anything else is refused as it is, never passed to `String()`. Coercing a
+	 * payload value runs whatever the caller put in its place — `{"tenantId":{"toString":null}}` throws
+	 * (`Cannot convert object to primitive value`), which reached the caller as a 500 instead of a 403, and an
+	 * object whose conversion yields the caller's own id would be read as that id.
+	 *
+	 * @param tenantId The tenant id as the request states it.
+	 * @param currentTenantId The tenant the caller authenticated as.
+	 * @returns True only for a string or number equal to the caller's tenant.
+	 */
+	private isCallersTenant(tenantId: unknown, currentTenantId: string): boolean {
+		if (typeof tenantId !== 'string' && typeof tenantId !== 'number') {
+			return false;
+		}
+		return String(tenantId) === String(currentTenantId);
 	}
 
 	/**
