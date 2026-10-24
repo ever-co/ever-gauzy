@@ -49,6 +49,28 @@ const PUBLIC_TASK_MEMBER_FIELDS: string[] = [
 ];
 
 /**
+ * Fields kept on the team a task is filed under. `tasks.teams` has no `select` key either, so each task came with the
+ * whole row of every team it is shared with: the organization's other teams too, private ones included, with their
+ * share link (`profile_link`), settings and image. The link shows one team. Ever Teams files a task under it by id
+ * (`task.teams.some((team) => team.id === activeTeam.id)`) and its task schema needs the team's `name`, so a task keeps
+ * that one team, with fields the link already answers for it at its root.
+ */
+const PUBLIC_TASK_TEAM_FIELDS: string[] = ['id', 'name', 'prefix', 'color', 'emoji', 'logo'];
+
+/**
+ * The teams of a task the anonymous team link may show: the team the link was shared for, with
+ * {@link PUBLIC_TASK_TEAM_FIELDS} only. The task's other teams are left out, whether public or not.
+ *
+ * @param teams - The task's teams, as `tasks.teams` loads them.
+ * @param teamId - The team the link was shared for.
+ */
+export function publicTaskTeams(teams: IOrganizationTeam[], teamId: IOrganizationTeam['id']): IOrganizationTeam[] {
+	return teams
+		.filter((taskTeam) => !!taskTeam && !!teamId && taskTeam.id === teamId)
+		.map((taskTeam) => pick(taskTeam, PUBLIC_TASK_TEAM_FIELDS) as IOrganizationTeam);
+}
+
+/**
  * Whether the anonymous team link may show a task: one its team did not mark private (`public: false`, "This task is
  * Private" in Ever Teams) and that is not a draft. The link used to answer every task of the team in full, so anyone
  * holding it read the private tasks and the drafts, and their titles through the members' last worked task and task
@@ -123,6 +145,9 @@ export class PublicTeamService {
 					task.members = task.members.map(
 						(member) => applyEmployeeVisibility(pick(member, PUBLIC_TASK_MEMBER_FIELDS)) as IEmployee
 					);
+				}
+				if (task.teams) {
+					task.teams = publicTaskTeams(task.teams, team.id);
 				}
 			});
 
