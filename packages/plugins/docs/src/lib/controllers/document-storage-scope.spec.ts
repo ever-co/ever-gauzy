@@ -39,6 +39,20 @@ describe('documentStorageOrganizationSegment', () => {
 		);
 	});
 
+	it.each([
+		['a valid value first and a malformed one after it', [HEADER_ORG, 'junk']],
+		['an empty value first and a malformed one after it', ['', 'junk']],
+		['two valid values', [HEADER_ORG, TOKEN_ORG]]
+	])('refuses a header sent with several values (%s) with a 400, before reading any of them', (_label, header) => {
+		expect(() => documentStorageOrganizationSegment(TOKEN_ORG, header, fallback)).toThrow(BadRequestException);
+		expect(() => documentStorageOrganizationSegment(null, header, fallback)).toThrow(BadRequestException);
+	});
+
+	it('reads a header sent once as a list of one like the value itself', () => {
+		expect(documentStorageOrganizationSegment(TOKEN_ORG, [HEADER_ORG], fallback)).toBe(TOKEN_ORG);
+		expect(() => documentStorageOrganizationSegment(TOKEN_ORG, ['junk'], fallback)).toThrow(BadRequestException);
+	});
+
 	it('treats an empty header as no header', () => {
 		expect(documentStorageOrganizationSegment(TOKEN_ORG, '', fallback)).toBe(TOKEN_ORG);
 	});
