@@ -283,10 +283,16 @@ export class PluginBillingService extends RegistryTenantAwareCrudService<PluginB
 	/**
 	 * Writes to a bill in whichever tenant holds it; its tenant, organization and subscription stay as stored.
 	 *
+	 * A body with nothing to write (`{}`, or only members the validation pipe stripped) changes nothing, as the
+	 * tenant-scoped `update` answers it: TypeORM refuses an `UPDATE` without values (`UpdateValuesMissingError`).
+	 *
 	 * @param id - The bill.
 	 * @param input - The fields to write.
 	 */
 	async updateInAnyTenant(id: ID, input: IPluginBillingUpdateInput): Promise<void> {
+		if (!Object.values(input ?? {}).some((value) => value !== undefined)) {
+			return;
+		}
 		await this.typeOrmPluginBillingRepository.update({ id }, input as Partial<PluginBilling>);
 	}
 
