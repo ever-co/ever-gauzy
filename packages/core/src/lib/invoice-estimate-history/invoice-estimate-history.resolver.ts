@@ -81,15 +81,12 @@ const INVOICE_ESTIMATE_HISTORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * `/api/invoice-estimate-history` routes call — including the five lifecycle moves whose routes the
  * controller inherits from the CRUD base rather than declaring.
  *
- * **The guard chain and the permission are the controller's, field by field.** The controller declares
- * nothing on its class: its list route states `TenantPermissionGuard`, `PermissionGuard` and
- * `INVOICES_VIEW` on itself; the withdrawal and the restoration, which it overrides only to attach them
- * (GHSA-v79w-54p2-wmh5), state the same pair of guards and `INVOICES_EDIT`; and every other route — the
- * count, the node, the creation, the edit and the removal — is the CRUD base's own and states none of
- * them. So the list field and the two lifecycle fields here carry their routes' own pair of guards and
- * permission, the class carries the gate, and no other field narrows anything: a permission stated where
- * the route states none would give REST a wider scope than GraphQL for the same route, and this delivery
- * may not narrow REST to match.
+ * **The guard chain and the permission are the controller's, field by field.** The controller states
+ * `TenantPermissionGuard` and `PermissionGuard` on its class, with `INVOICES_EDIT` as the permission every
+ * route runs under unless it states its own: the count, the list and the node state `INVOICES_VIEW`, and
+ * the creation states the three grants the actions that file an entry run under. So the class here carries
+ * the same pair of guards, and every field states the permission its own route runs under, the edit and
+ * the two removals included, which run under the class's `INVOICES_EDIT`.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
  * GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -98,7 +95,7 @@ const INVOICE_ESTIMATE_HISTORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('InvoiceEstimateHistory')
-@UseGuards(FeatureFlagGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class InvoiceEstimateHistoryResolver {
 	constructor(private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService) {}
@@ -107,7 +104,6 @@ export class InvoiceEstimateHistoryResolver {
 	 * The log entries of the caller's tenant.
 	 */
 	@Query('invoiceEstimateHistories')
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	async invoiceEstimateHistories(
 		@Args('filter') filter?: ConnectionFilter,
@@ -143,6 +139,7 @@ export class InvoiceEstimateHistoryResolver {
 	 * One log entry, or null when there is none.
 	 */
 	@Query('invoiceEstimateHistory')
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	async invoiceEstimateHistory(
 		@Args('id', { type: () => ID }) id: Id
 	): Promise<InvoiceEstimateHistory | null> {
@@ -164,6 +161,7 @@ export class InvoiceEstimateHistoryResolver {
 	 * the service is handed an empty criterion and applies the caller's tenant to it.
 	 */
 	@Query('invoiceEstimateHistoryCount')
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	async invoiceEstimateHistoryCount(): Promise<number> {
 		return await this.invoiceEstimateHistoryService.countBy({});
 	}
@@ -172,9 +170,11 @@ export class InvoiceEstimateHistoryResolver {
 	 * Files a log entry.
 	 *
 	 * The same service method the route inherited from the CRUD base calls. The tenant is the
-	 * credential's and never an argument, which is the statement every write on this platform makes.
+	 * credential's and never an argument, which is the statement every write on this platform makes. It
+	 * admits the grants the route admits: the actions that file an entry run under any of them.
 	 */
 	@Mutation('createInvoiceEstimateHistory')
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	async createInvoiceEstimateHistory(
 		@Args('input') input: ICreateInvoiceEstimateHistoryInput
 	): Promise<InvoiceEstimateHistory> {
@@ -190,6 +190,7 @@ export class InvoiceEstimateHistoryResolver {
 	 * about the write rather than a row.
 	 */
 	@Mutation('updateInvoiceEstimateHistory')
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	async updateInvoiceEstimateHistory(
 		@Args('input') input: IUpdateInvoiceEstimateHistoryInput
 	): Promise<InvoiceEstimateHistory> {
@@ -204,6 +205,7 @@ export class InvoiceEstimateHistoryResolver {
 	 * Removes a log entry outright.
 	 */
 	@Mutation('deleteInvoiceEstimateHistory')
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	async deleteInvoiceEstimateHistory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.invoiceEstimateHistoryService.delete(id));
 	}
@@ -217,7 +219,6 @@ export class InvoiceEstimateHistoryResolver {
 	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
 	 * narrower than REST.
 	 */
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('softDeleteInvoiceEstimateHistory')
 	async softDeleteInvoiceEstimateHistory(
@@ -235,7 +236,6 @@ export class InvoiceEstimateHistoryResolver {
 	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
 	 * narrower than REST.
 	 */
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('recoverInvoiceEstimateHistory')
 	async recoverInvoiceEstimateHistory(

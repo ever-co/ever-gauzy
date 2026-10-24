@@ -36,7 +36,19 @@ export interface OAuth2ServerConfig {
 	// Optional providers that can be configured during initialization
 	userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	userAuthenticator?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
+	/**
+	 * Names which of these user ids can no longer sign in (deactivated, archived or deleted). When set,
+	 * the holders of live refresh tokens are checked every minute and each one it names has every token
+	 * revoked, so a deactivation ends MCP access even for tokens nobody uses meanwhile. It must reject,
+	 * not answer an empty list, when the lookup could not be performed.
+	 */
+	inactiveUsersProvider?: (userIds: string[]) => Promise<string[]>;
 }
+
+/** How often the holders of live refresh tokens are checked against `inactiveUsersProvider`. */
+const ACCOUNT_SWEEP_INTERVAL_MS = 60 * 1000;
+/** How many user ids one `inactiveUsersProvider` call is asked about. */
+const ACCOUNT_SWEEP_BATCH_SIZE = 500;
 
 export interface UserInfo {
 	userId: string;
@@ -57,6 +69,11 @@ export interface AuthenticatedUser extends UserInfo {
 export interface LoginCredentials {
 	email: string;
 	password: string;
+	/**
+	 * The login form submission, so the authenticator can attribute the attempt to its client (per-account
+	 * failure counting tells one guesser from many by address) and answer on its response.
+	 */
+	request?: Request;
 }
 
 export interface IntrospectionRequest {
@@ -95,6 +112,8 @@ export class OAuth2AuthorizationServer {
 	private configManager: ConfigManager;
 	private userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	private authenticateUser?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
+	private accountSweep?: NodeJS.Timeout;
+	private accountSweepRunning = false;
 
 	// Add CSRF protection properties
 	private csrfProtection: any;
@@ -148,6 +167,71 @@ export class OAuth2AuthorizationServer {
 
 		// Validate configuration during initialization
 		this.validateConfiguration();
+
+		if (config.inactiveUsersProvider) {
+			this.accountSweep = setInterval(
+				() => void this.revokeTokensOfInactiveAccounts(),
+				ACCOUNT_SWEEP_INTERVAL_MS
+			);
+			// Do not keep the process alive just for the sweep
+			this.accountSweep.unref();
+		}
+	}
+
+	/**
+	 * Revokes every token of each refresh token holder whose account can no longer sign in, as
+	 * `inactiveUsersProvider` answers. A failed lookup revokes nothing; the next sweep asks again.
+	 *
+	 * @returns How many users had their tokens revoked.
+	 */
+	async revokeTokensOfInactiveAccounts(): Promise<number> {
+		const provider = this.config.inactiveUsersProvider;
+		if (!provider || this.accountSweepRunning) {
+			return 0;
+		}
+		this.accountSweepRunning = true;
+		let revokedUsers = 0;
+		try {
+			const holders = this.tokenManager.getRefreshTokenHolders();
+			for (let i = 0; i < holders.length; i += ACCOUNT_SWEEP_BATCH_SIZE) {
+				const batch = holders.slice(i, i + ACCOUNT_SWEEP_BATCH_SIZE);
+				const inactive = new Set(await provider(batch));
+				// Only ids that were asked about: an answer naming anyone else is ignored.
+				for (const userId of batch.filter((id) => inactive.has(id))) {
+					this.tokenManager.revokeUserTokens(userId);
+					revokedUsers++;
+				}
+			}
+		} catch (error) {
+			this.securityLogger.error('Account sweep failed; no further tokens revoked this round', error as Error);
+		} finally {
+			this.accountSweepRunning = false;
+		}
+		return revokedUsers;
+	}
+
+	/**
+	 * Re-reads the account a user token belongs to, for every use that would otherwise trust a sign-in
+	 * made earlier. An account that can no longer sign in has every token revoked.
+	 *
+	 * @returns `active`, `inactive`, or `unavailable` when the lookup could not be performed (or no
+	 * provider is configured), which callers answer with a retryable error and never as `active`.
+	 */
+	private async checkAccount(userId: string): Promise<'active' | 'inactive' | 'unavailable'> {
+		if (!this.userInfoProvider) {
+			this.securityLogger.error('User info provider not configured; account status cannot be checked');
+			return 'unavailable';
+		}
+		try {
+			if (await this.userInfoProvider(userId)) {
+				return 'active';
+			}
+		} catch (error) {
+			this.securityLogger.error(`Account lookup failed for user ${userId}`, error as Error);
+			return 'unavailable';
+		}
+		this.tokenManager.revokeUserTokens(userId);
+		return 'inactive';
 	}
 
 	/**
@@ -573,9 +657,10 @@ export class OAuth2AuthorizationServer {
 
 		this.app.use(authRateLimit);
 
-		// Body parsing
-		this.app.use(express.json({ limit: '10mb' }));
-		this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+		// Body parsing: an OAuth request (a token request, a login or consent form, a client registration) is a few
+		// hundred bytes; 10 MB let anyone make the server parse, and dynamic registration keep, megabytes per request.
+		this.app.use(express.json({ limit: '64kb' }));
+		this.app.use(express.urlencoded({ extended: true, limit: '64kb' }));
 	}
 
 	/**
@@ -904,7 +989,21 @@ export class OAuth2AuthorizationServer {
 			let user: AuthenticatedUser | null = null;
 
 			if (this.authenticateUser) {
-				user = await this.authenticateUser({ email, password });
+				try {
+					user = await this.authenticateUser({ email, password, request: req });
+				} catch (error) {
+					// The account has had too many failed attempts: the authenticator checked no password.
+					if (isTooManyAttempts(error)) {
+						this.securityLogger.warn('Login refused: too many failed attempts for this account', {
+							ip: req.ip
+						});
+						const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
+						return res.redirect(
+							`${this.config.loginEndpoint}?error=too_many_attempts&return_url=${encodeURIComponent(normalizedReturnUrl)}`
+						);
+					}
+					throw error;
+				}
 			} else {
 				// No authenticator configured
 				this.securityLogger.error('User authenticator not configured');
@@ -1289,6 +1388,28 @@ export class OAuth2AuthorizationServer {
 				scopes: authCode.scopes.join(' ')
 			});
 
+			// The sign-in completes here, not at the login form: a code (or a login session) from before a
+			// deactivation must not turn into tokens.
+			const account = await this.checkAccount(authCode.userId);
+			if (account !== 'active') {
+				this.securityLogger.warn('Token exchange: account cannot sign in', {
+					clientId: params.client_id,
+					userId: authCode.userId,
+					account
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					account === 'inactive'
+						? BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active')
+						: BaseErrorHandler.createAuthError(
+								'temporarily_unavailable',
+								'Account status could not be verified, retry later'
+							),
+					account === 'inactive' ? 400 : 503
+				);
+				return;
+			}
+
 			// Generate tokens
 			const tokenPair = await this.tokenManager.generateTokenPair(
 				authCode.userId,
@@ -1421,6 +1542,26 @@ export class OAuth2AuthorizationServer {
 			return;
 		}
 
+		// RFC 6749 §4.4: only a confidential client, which authenticated with its secret above, may use this grant, and
+		// only one registered for it. `validateClient` lets a public client through with no secret at all, so anyone
+		// could name `chatgpt-mcp-client` and receive a signed token for any of its scopes. The grant types must be a
+		// list: a bare string kept from a registration body (`"grant_types": "client_credentials"`) `includes` it too.
+		if (
+			client.clientType !== 'confidential' ||
+			!Array.isArray(client.grantTypes) ||
+			!client.grantTypes.includes('client_credentials')
+		) {
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError(
+					'unauthorized_client',
+					'The client is not authorized to use the client_credentials grant'
+				),
+				400
+			);
+			return;
+		}
+
 		// Parse requested scopes
 		const requestedScopes = params.scope ? params.scope.split(' ') : ['mcp.read'];
 		const allowedScopes = requestedScopes.filter(scope => client.scopes.includes(scope));
@@ -1458,6 +1599,22 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleClientRegistration(req: Request, res: Response) {
 		try {
+			// Registration is open to anyone, and a client_credentials token acts for no user: a client that may use
+			// that grant is one the operator registers, never one that registers itself. A bare string counts as well
+			// (`"grant_types": "client_credentials"`, or a form field): registerClient keeps it as sent.
+			const grantTypes: unknown = req.body?.grant_types;
+			if (
+				(Array.isArray(grantTypes) || typeof grantTypes === 'string') &&
+				grantTypes.includes('client_credentials')
+			) {
+				this.errorHandler.handleStandardError(res, {
+					code: 'invalid_client_metadata',
+					message: 'The client_credentials grant is not available through dynamic registration',
+					statusCode: 400
+				});
+				return;
+			}
+
 			const registrationResponse = await oAuth2ClientManager.registerClient(req.body);
 			this.responseBuilder.sendClientRegistrationResponse(res, registrationResponse);
 		} catch (error: any) {
@@ -1509,6 +1666,16 @@ export class OAuth2AuthorizationServer {
 				401
 				);
 			}
+			// RFC 7662 §2.1: the protected resource authenticates. `validateClient` lets a public client through
+			// without a secret, and anyone may register a client, so only a resource server the operator registered
+			// (MCP_AUTH_INTROSPECTION_CLIENT_ID / _SECRET) is answered.
+			if (!oAuth2ClientManager.isResourceServer(client)) {
+				return this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_client', 'The client may not introspect tokens'),
+					401
+				);
+			}
 
 			// Validate the token
 			const validation = await this.oAuthValidator.validateToken(token);
@@ -1519,6 +1686,36 @@ export class OAuth2AuthorizationServer {
 					active: false
 				});
 				return;
+			}
+
+			// Only an access token is a bearer credential for the resource server; a refresh token is not.
+			if (validation.payload?.token_type !== 'access_token') {
+				this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+				return;
+			}
+
+			// A revoked token, or a user token whose account can no longer sign in, is not active.
+			if (this.tokenManager.isTokenRevoked(validation.payload ?? {})) {
+				this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+				return;
+			}
+			if (validation.payload?.token_use !== 'client_credentials' && validation.subject) {
+				const account = await this.checkAccount(validation.subject);
+				if (account === 'unavailable') {
+					this.errorHandler.handleOAuthError(
+						res,
+						BaseErrorHandler.createAuthError(
+							'temporarily_unavailable',
+							'Account status could not be verified, retry later'
+						),
+						503
+					);
+					return;
+				}
+				if (account === 'inactive') {
+					this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+					return;
+				}
 			}
 
 			// Token is active, return token information
@@ -1585,6 +1782,12 @@ export class OAuth2AuthorizationServer {
 			if (!validation.valid) {
 				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
 				const authError = BaseErrorHandler.createAuthError('invalid_token', validation.error || 'Token validation failed');
+				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
+			}
+
+			if (this.tokenManager.isTokenRevoked(validation.payload ?? {})) {
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
+				const authError = BaseErrorHandler.createAuthError('invalid_token', 'Token has been revoked');
 				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
 
@@ -1755,6 +1958,7 @@ export class OAuth2AuthorizationServer {
 		const messages: { [key: string]: string } = {
 			'missing_credentials': 'Please enter both email and password.',
 			'invalid_credentials': 'Invalid email or password. Please try again.',
+			'too_many_attempts': 'Too many failed sign-in attempts for this account. Please try again later.',
 			'server_error': 'An error occurred. Please try again later.'
 		};
 		return messages[error] || 'An error occurred during sign in.';
@@ -2027,4 +2231,14 @@ export class OAuth2AuthorizationServer {
 			});
 		});
 	}
+}
+
+/**
+ * Whether an authenticator refused because the account has had too many failed attempts: an HTTP 429, as the
+ * Gauzy API's per-account login counter raises it (an `HttpException` whose `getStatus()` is 429).
+ */
+function isTooManyAttempts(error: unknown): boolean {
+	const candidate = error as { getStatus?: () => unknown; status?: unknown } | null;
+	const status = typeof candidate?.getStatus === 'function' ? candidate.getStatus() : candidate?.status;
+	return status === 429;
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Money, RequestContext } from '@gauzy/core';
 import {
 	ISubscriptionCatalogPort,
 	ISubscriptionItemInput,
@@ -15,6 +15,7 @@ import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription
 import { SubscriptionItem } from './subscription-item.entity';
 import { MikroOrmSubscriptionItemRepository } from './repository/mikro-orm-subscription-item.repository';
 import { TypeOrmSubscriptionItemRepository } from './repository/type-orm-subscription-item.repository';
+import { SubscriptionCrudService } from '../subscription-crud.service';
 
 /**
  * The members a correction of a recurring line may move: `PUT /subscription-items/:id` and
@@ -40,7 +41,7 @@ export const SUBSCRIPTION_ITEM_WRITABLE_MEMBERS: readonly string[] = ['quantity'
  * recurring line that costs nothing is indistinguishable from a free plan.
  */
 @Injectable()
-export class SubscriptionItemService extends TenantAwareCrudService<SubscriptionItem> {
+export class SubscriptionItemService extends SubscriptionCrudService<SubscriptionItem> {
 	constructor(
 		readonly typeOrmSubscriptionItemRepository: TypeOrmSubscriptionItemRepository,
 		readonly mikroOrmSubscriptionItemRepository: MikroOrmSubscriptionItemRepository,

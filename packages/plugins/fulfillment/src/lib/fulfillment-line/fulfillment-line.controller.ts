@@ -12,6 +12,7 @@ import {
 } from '@gauzy/core';
 import { FulfillmentLine } from './fulfillment-line.entity';
 import { FulfillmentLineService } from './fulfillment-line.service';
+import { FulfillmentService } from '../fulfillment/fulfillment.service';
 import { CreateFulfillmentLineDTO, UpdateFulfillmentLineDTO } from './dto';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
 
@@ -33,12 +34,23 @@ import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
 @Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_VIEW)
 @Controller('/fulfillment-lines')
 export class FulfillmentLineController extends CrudController<FulfillmentLine> {
-	constructor(private readonly service: FulfillmentLineService) {
+	constructor(
+		private readonly service: FulfillmentLineService,
+		private readonly fulfillmentService: FulfillmentService
+	) {
 		super(service);
 	}
 
 	/**
-	 * Writes one line against a fulfilment.
+	 * Writes one line against a fulfilment, by the shipment's own rules.
+	 *
+	 * The route used to write the row straight through the line service, which moves no order-line counter and
+	 * reads neither the shipment's status, nor its order, nor what the order line still has to ship. A line could
+	 * join a shipment that had already left, name an order line of another order, or exceed what was ordered, and
+	 * the shipment's later `ship` and `cancel` then moved that order line's counters by a line they had never
+	 * counted: a cancel gave back units that were never taken, so another order's line read as unfulfilled and
+	 * could be shipped again. It now appends through `FulfillmentService.addLine`, the operation behind
+	 * `POST /fulfillments/:id/lines` and `addFulfillmentLine`, and answers the line it wrote.
 	 *
 	 * @param entity The line to write.
 	 * @returns The created line.
@@ -50,7 +62,10 @@ export class FulfillmentLineController extends CrudController<FulfillmentLine> {
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateFulfillmentLineDTO): Promise<FulfillmentLine> {
-		return this.service.create(entity as any);
+		const fulfillment = await this.fulfillmentService.addLine(entity.fulfillmentId, entity as any);
+
+		// One line per order line in a shipment (`FULFILLMENT_LINE_DUPLICATE`), so the order line names the one written.
+		return (fulfillment.lines ?? []).find((line) => line.orderLineId === entity.orderLineId) as FulfillmentLine;
 	}
 
 	/**

@@ -239,15 +239,17 @@ export class DocsSettingsPageComponent extends TranslationBaseComponent implemen
 	public savingQuota = false;
 
 	/**
-	 * Whether this deployment reports a writable org quota at all.
+	 * Whether this caller may change the org quota.
 	 *
-	 * Keyed on `defaults.quotaBytes` — the field the PUT accepts — NOT on the
-	 * computed usage block: a deployment can report usage without accepting a
-	 * per-organization override, and an input bound to a field the server would
-	 * strip is a control that silently does nothing.
+	 * The server says so (`canEditQuota`): only the installation's operator sets the
+	 * limit, and every other `DOCS_MANAGE` holder sees the usage and the limit without
+	 * an editor the `PUT` would refuse. Also keyed on `defaults.quotaBytes` — the field
+	 * the PUT accepts — NOT on the computed usage block: a deployment can report usage
+	 * without accepting a per-organization override, and an input bound to a field the
+	 * server would strip is a control that silently does nothing.
 	 */
 	get canEditQuota(): boolean {
-		return typeof this.settings?.defaults?.quotaBytes === 'number';
+		return this.settings?.canEditQuota === true && typeof this.settings?.defaults?.quotaBytes === 'number';
 	}
 
 	/** True once the field differs from what the server currently holds. */

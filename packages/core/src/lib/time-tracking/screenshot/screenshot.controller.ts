@@ -41,6 +41,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
+import { TimeSlotService } from '../time-slot/time-slot.service';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -52,7 +53,8 @@ export class ScreenshotController {
 
 	constructor(
 		private readonly _screenshotService: ScreenshotService,
-		private readonly _eventBus: EventBus
+		private readonly _eventBus: EventBus,
+		private readonly _timeSlotService: TimeSlotService
 	) {}
 
 	/**
@@ -188,7 +190,7 @@ export class ScreenshotController {
 				file: file.key,
 				thumb: thumb.key,
 				storageProvider: provider.name.toUpperCase(),
-				timeSlotId: isUUID(input.timeSlotId) ? input.timeSlotId : null,
+				timeSlotId: await this.ownTimeSlotId(input.timeSlotId),
 				recordedAt: input.recordedAt ? input.recordedAt : new Date()
 			});
 
@@ -239,5 +241,28 @@ export class ScreenshotController {
 	@UseValidationPipe()
 	async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteScreenshotDTO): Promise<IScreenshot> {
 		return await this._screenshotService.deleteScreenshot(id, options);
+	}
+
+	/**
+	 * The time slot an uploaded screenshot is filed under, when the caller may record time in it.
+	 *
+	 * The body's `timeSlotId` was stored as sent, so an employee could file their own image under a colleague's
+	 * slot, where it shows in that colleague's timesheet and activity as their screenshot. The slot is read through
+	 * the time-slot service, which limits a caller without CHANGE_SELECTED_EMPLOYEE to their own slots; any other id
+	 * — like one that is not a UUID — leaves the screenshot without a slot.
+	 *
+	 * @param timeSlotId - The `timeSlotId` of the request body.
+	 * @returns The slot id, or null.
+	 */
+	private async ownTimeSlotId(timeSlotId: unknown): Promise<ID | null> {
+		if (!isUUID(timeSlotId)) {
+			return null;
+		}
+		try {
+			const slot = await this._timeSlotService.findOneByIdString(timeSlotId as ID);
+			return slot?.id ?? null;
+		} catch {
+			return null;
+		}
 	}
 }

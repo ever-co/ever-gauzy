@@ -8,6 +8,9 @@
  * specs do, and **the service under test is the real one**, including the totals writer every
  * lifecycle move ends in.
  */
+/** The platform's cross-tenant reference check, which reads a real database: recorded, and answered per test. */
+const mockAssertReferences = jest.fn(async (..._args: unknown[]) => undefined);
+
 jest.mock('@gauzy/plugin-cart', () => ({
 	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
 }));
@@ -134,6 +137,7 @@ jest.mock('@gauzy/core', () => {
 				return value;
 			}
 		},
+		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		RequestContext: {
 			currentUser: () => null,
@@ -169,6 +173,7 @@ import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderService } from './order.service';
+import { ORDER_REFERENCES } from '../order.references';
 import { OrderCartLedgerCarryover } from '../checkout/order-cart-ledger-carryover.service';
 
 /**
@@ -1265,5 +1270,53 @@ describe('OrderService — a failed checkout gives its promotion uses back (Grep
 
 		expect(calls).toEqual(['reserve', 'release:cart-1']);
 		expect(promotionUsage.registerForOrder).not.toHaveBeenCalled();
+	});
+});
+
+describe('OrderService — the ids an order names (order.references.ts)', () => {
+	const refused = () => Object.assign(new Error('A related record belongs to another tenant'), { status: 403 });
+
+	beforeEach(() => mockAssertReferences.mockClear());
+
+	it('checks a new order’s ids before allocating its number, and writes nothing when one is refused', async () => {
+		const fixture = orderFixture();
+		const entity = { channelId: 'channel-1', currency: 'USD', customerId: 'contact-of-tenant-b' };
+		mockAssertReferences.mockRejectedValueOnce(refused());
+
+		await expect(fixture.service.create({ ...entity } as never)).rejects.toThrow('another tenant');
+
+		expect(mockAssertReferences.mock.calls[0].slice(1)).toEqual([
+			expect.objectContaining(entity),
+			ORDER_REFERENCES,
+			null
+		]);
+		expect(fixture.allocate).not.toHaveBeenCalled();
+	});
+
+	it('checks a draft edit before writing it', async () => {
+		const fixture = orderFixture({ order: { status: OrderStatus.DRAFT, isDraft: true } });
+		mockAssertReferences.mockRejectedValueOnce(refused());
+
+		await expect(
+			fixture.service.updateMutable('order-1', { customerId: 'contact-of-tenant-b' } as never)
+		).rejects.toThrow('another tenant');
+
+		expect(mockAssertReferences.mock.calls[0].slice(1, 3)).toEqual([
+			{ customerId: 'contact-of-tenant-b' },
+			ORDER_REFERENCES
+		]);
+		expect(fixture.order.customerId).toBeUndefined();
+	});
+
+	it('states the customer, channel, region, user, cart, parent order and payment term', () => {
+		expect(ORDER_REFERENCES).toEqual({
+			channelId: 'channel',
+			regionId: 'region',
+			customerId: 'organization_contact',
+			userId: 'user',
+			cartId: 'commerce_cart',
+			parentOrderId: 'order',
+			paymentTermId: 'payment_term'
+		});
 	});
 });

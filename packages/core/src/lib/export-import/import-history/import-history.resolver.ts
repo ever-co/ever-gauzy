@@ -64,11 +64,11 @@ const IMPORT_HISTORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * own: the field below calls the same `ImportHistoryService.findAll` method the `GET /api/import/history`
  * route calls, and the ledger it answers is the same ledger.
  *
- * **The guard chain and the permissions are the controller's.** The class carries what the controller
- * class carries — both guards and both class-level permissions — and the field states the same pair,
- * because the controller states nothing on its handler. That pair is the delivered scope rather than one
- * grant stated twice: reading the ledger is granted to whoever may read the organization and to whoever
- * may import into it.
+ * **The guard chain and the permission are the controller's.** The class carries what the controller
+ * class carries — both guards and the class-level permission — and the field states the same one,
+ * because the controller states nothing on its handler. Reading the ledger is granted to whoever may
+ * import into the tenant, and to nobody on a read-only grant alone: the archives it lists are dumps of
+ * the tenant's tables.
  *
  * **The ledger is written by the import and never by a caller.** No creation, edit or removal is
  * declared, because the controller serves none: an entry is recorded by the import path itself, through
@@ -85,7 +85,7 @@ const IMPORT_HISTORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 @Resolver('ImportHistory')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
-@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_ADD)
+@Permissions(PermissionsEnum.IMPORT_ADD)
 export class ImportHistoryResolver {
 	constructor(private readonly importHistoryService: ImportHistoryService) {}
 
@@ -93,7 +93,7 @@ export class ImportHistoryResolver {
 	 * The import ledger of the caller's tenant, in the ledger's own order.
 	 */
 	@Query('importHistories')
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_ADD)
+	@Permissions(PermissionsEnum.IMPORT_ADD)
 	async importHistories(
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],

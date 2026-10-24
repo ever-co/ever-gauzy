@@ -300,6 +300,11 @@ class ScopeRowService extends TenantAwareCrudService<any> {
 	constructor(typeOrmRepository: unknown, mikroOrmRepository: unknown) {
 		super(typeOrmRepository as any, mikroOrmRepository as any);
 	}
+
+	/** The tenant and employee scoping alone: the organization boundary has its own spec. */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
 }
 
 /** One ORM's store: a service over it, and a reader of the stored rows that bypasses the service. */

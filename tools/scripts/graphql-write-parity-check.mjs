@@ -55,7 +55,11 @@ const OUTSTANDING = {
  * being found under it, so a wrong one fails like a missing pair.
  */
 const TYPE_NAMES = {
-	CustomSmtp: 'SmtpSetting'
+	CustomSmtp: 'SmtpSetting',
+	// `KeyresultTemplateController` spells the resource with a lower-case `r`; its GraphQL type is `KeyResultTemplate`,
+	// whose fields are `softDeleteKeyResultTemplate` and `recoverKeyResultTemplate`. It overrides the pair only since
+	// the pair started stating `GOALS_EDIT`, which is what brought it into this check.
+	KeyresultTemplate: 'KeyResultTemplate'
 };
 
 /** Every file under a directory whose name ends with a suffix, skipping build output. */

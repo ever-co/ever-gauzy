@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EntityManager, Not, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { EventOutboxService, MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, MultiORMEnum, RequestContext } from '@gauzy/core';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementKey } from './entitlement-key.entity';
 import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
@@ -36,6 +36,7 @@ import {
 import { TypeOrmEntitlementRepository } from '../entitlement/repository/type-orm-entitlement.repository';
 import { MikroOrmEntitlementKeyRepository } from './repository/mikro-orm-entitlement-key.repository';
 import { TypeOrmEntitlementKeyRepository } from './repository/type-orm-entitlement-key.repository';
+import { EntitlementCrudService } from '../entitlement-crud.service';
 
 /** Statuses a right may be in when a credential is issued against it. */
 const ISSUABLE_STATUSES: EntitlementStatus[] = [EntitlementStatus.PENDING, EntitlementStatus.ACTIVE];
@@ -55,7 +56,7 @@ const ISSUABLE_STATUSES: EntitlementStatus[] = [EntitlementStatus.PENDING, Entit
  *   right, because the right and the credential are different things.
  */
 @Injectable()
-export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey> {
+export class EntitlementKeyService extends EntitlementCrudService<EntitlementKey> {
 	private readonly logger = new Logger(EntitlementKeyService.name);
 
 	constructor(

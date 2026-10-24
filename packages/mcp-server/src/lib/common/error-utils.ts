@@ -6,6 +6,25 @@
  * dependency chain in the monorepo.
  */
 
+import { createHash } from 'node:crypto';
+
+/**
+ * A session id as it may appear in a log: a short hash of it, which tells sessions apart and gives nothing back.
+ *
+ * A session id is a bearer credential: whoever presents it (as a header, a cookie or `?sessionId=`) acts with that
+ * session's Gauzy login. Logs are read and shipped by more people and systems than the sessions themselves, so they
+ * must not carry it.
+ *
+ * @param sessionId The session id.
+ * @returns `#` and the first 12 hex digits of its SHA-256, or `none`.
+ */
+export function sessionIdForLog(sessionId: string | null | undefined): string {
+	if (!sessionId) {
+		return 'none';
+	}
+	return `#${createHash('sha256').update(String(sessionId)).digest('hex').slice(0, 12)}`;
+}
+
 /**
  * Sanitize an error message for safe logging/display
  * Removes sensitive information and normalizes error format

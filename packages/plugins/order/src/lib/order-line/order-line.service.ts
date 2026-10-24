@@ -1,13 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import {
-	Money,
-	RequestContext,
-	TenantAwareCrudService,
-	addDecimalStrings,
-	compareDecimalStrings
-} from '@gauzy/core';
+import { Money, RequestContext, addDecimalStrings, compareDecimalStrings } from '@gauzy/core';
 import { Order } from '../order/order.entity';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 import { OrderLine } from './order-line.entity';
@@ -20,6 +14,7 @@ import {
 	ORDER_LINE_ENTITLEMENT_POLICY,
 	placedLinesOf
 } from './order-line-entitlement';
+import { OrderCrudService } from '../order-crud.service';
 
 /** One refund as the payment side records it against a line. */
 export interface IRecordLineRefundInput {
@@ -48,7 +43,7 @@ export interface IRecordLineRefundInput {
  * totals the payment side reports.
  */
 @Injectable()
-export class OrderLineService extends TenantAwareCrudService<OrderLine> {
+export class OrderLineService extends OrderCrudService<OrderLine> {
 	constructor(
 		readonly typeOrmOrderLineRepository: TypeOrmOrderLineRepository,
 		readonly mikroOrmOrderLineRepository: MikroOrmOrderLineRepository,

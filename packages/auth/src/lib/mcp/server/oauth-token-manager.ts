@@ -95,6 +95,8 @@ interface KeyPair {
 export class OAuth2TokenManager {
 	private securityLogger: SecurityLogger;
 	private refreshTokens = new Map<string, RefreshToken>();
+	/** When each user's tokens were last revoked (seconds since the epoch): tokens issued until then are revoked. */
+	private userRevocations = new Map<string, number>();
 	private keyPair: KeyPair;
 	private cleanupInterval: NodeJS.Timeout;
 	private josePromise: Promise<JoseModule> | null = null;
@@ -233,9 +235,10 @@ export class OAuth2TokenManager {
 	 * refresh token kept minting access tokens for a deactivated user for its whole 30-day lifetime
 	 * (GHSA-3cgp-wmrg-4fqg). Required, so a caller cannot silently opt out of the check.
 	 * @returns A new token pair, or `null` when the refresh token is invalid, expired, revoked, bound
-	 * to another client, or belongs to an account that can no longer sign in. The refresh token is
-	 * NOT revoked in the last case — refusing already blocks every use of it, and revoking on a
-	 * lookup result would make the decision permanent.
+	 * to another client, or belongs to an account that can no longer sign in. In the last case every
+	 * token of that user is revoked ({@link revokeUserTokens}): the owner decided (2026-10-22) that a
+	 * deactivation ends the user's MCP access for good, so re-activating the account does not bring
+	 * the old tokens back.
 	 * @throws {UserLookupUnavailableError} When `resolveUser` rejects, so the caller can answer with a
 	 * retryable error instead of `invalid_grant`.
 	 */
@@ -297,11 +300,11 @@ export class OAuth2TokenManager {
 				);
 				throw new UserLookupUnavailableError(refreshTokenMeta.userId, lookupError);
 			}
-			// The refresh is refused but the token is NOT revoked: refusing already blocks every use
-			// of it, and a revocation taken on one lookup could not be undone if the account is
-			// re-activated.
+			// `null` means the account can no longer sign in (a failed lookup rejected above instead), so
+			// the refresh is refused and every token of the user is revoked.
 			if (!user) {
 				this.securityLogger.warn(`Refresh denied, user is not active: ${refreshTokenMeta.userId}`);
+				this.revokeUserTokens(refreshTokenMeta.userId);
 				return null;
 			}
 
@@ -338,6 +341,66 @@ export class OAuth2TokenManager {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Revokes every token of a user: their refresh tokens, and the access tokens issued until now, which
+	 * {@link isTokenRevoked} reports until they expire.
+	 *
+	 * Called when the account can no longer sign in (deactivated, archived or deleted user, or an employee
+	 * deactivated in every organization). The tokens stay revoked if the account is re-activated; the
+	 * user signs in again.
+	 *
+	 * @param userId - The user whose tokens are revoked.
+	 * @returns How many refresh tokens were revoked.
+	 */
+	revokeUserTokens(userId: string): number {
+		let revoked = 0;
+		for (const refreshToken of this.refreshTokens.values()) {
+			if (refreshToken.userId === userId && !refreshToken.isRevoked) {
+				refreshToken.isRevoked = true;
+				revoked++;
+			}
+		}
+		this.userRevocations.set(userId, Math.floor(Date.now() / 1000));
+		this.securityLogger.log(`Tokens of user ${userId} revoked (${revoked} refresh tokens)`);
+		return revoked;
+	}
+
+	/**
+	 * Whether a token whose signature, issuer, audience and lifetime were already verified has been revoked:
+	 * a refresh token that was revoked or is no longer on record, or any token of a user issued before
+	 * their tokens were revoked. A token with no issue time counts as issued before.
+	 *
+	 * @param payload - The verified token's claims.
+	 */
+	isTokenRevoked(payload: Partial<Pick<TokenPayload, 'jti' | 'sub' | 'iat' | 'token_type'>>): boolean {
+		if (payload.token_type === 'refresh_token') {
+			const refreshToken = payload.jti ? this.refreshTokens.get(payload.jti) : undefined;
+			if (!refreshToken || refreshToken.isRevoked) {
+				return true;
+			}
+		}
+		const revokedAt = payload.sub ? this.userRevocations.get(payload.sub) : undefined;
+		if (revokedAt === undefined) {
+			return false;
+		}
+		return !(typeof payload.iat === 'number' && payload.iat > revokedAt);
+	}
+
+	/**
+	 * The users holding a refresh token that is neither revoked nor expired: the accounts whose status
+	 * still decides whether tokens can be minted for them.
+	 */
+	getRefreshTokenHolders(): string[] {
+		const now = new Date();
+		const holders = new Set<string>();
+		for (const refreshToken of this.refreshTokens.values()) {
+			if (!refreshToken.isRevoked && now <= refreshToken.expiresAt) {
+				holders.add(refreshToken.userId);
+			}
+		}
+		return [...holders];
 	}
 
 	/**
@@ -531,6 +594,16 @@ export class OAuth2TokenManager {
 			}
 		}
 
+		// A user's revocation matters until every access token issued before it has expired; their refresh
+		// tokens were revoked at the same time.
+		const revocationHorizon =
+			Math.floor(now.getTime() / 1000) - this.ACCESS_TOKEN_EXPIRATION - 2 * this.CLOCK_SKEW_SECONDS;
+		for (const [userId, revokedAt] of this.userRevocations.entries()) {
+			if (revokedAt < revocationHorizon) {
+				this.userRevocations.delete(userId);
+			}
+		}
+
 		// Evict oldest if above cap
 		while (this.refreshTokens.size > this.MAX_REFRESH_TOKENS) {
 			const oldest = this.refreshTokens.keys().next().value;
@@ -583,5 +656,6 @@ export class OAuth2TokenManager {
 			clearInterval(this.cleanupInterval);
 		}
 		this.refreshTokens.clear();
+		this.userRevocations.clear();
 	}
 }

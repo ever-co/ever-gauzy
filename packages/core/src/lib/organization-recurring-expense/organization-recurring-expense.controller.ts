@@ -169,6 +169,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Post()
 	async create(@Body() entity: OrganizationRecurringExpense): Promise<OrganizationRecurringExpense> {
 		return this.commandBus.execute(new OrganizationRecurringExpenseCreateCommand(entity));
@@ -195,6 +197,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -220,6 +224,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string, @Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput } = data;

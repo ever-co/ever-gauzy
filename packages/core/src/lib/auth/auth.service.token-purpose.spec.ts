@@ -33,7 +33,9 @@ const UserSchema = new EntitySchema({
 		email: { type: 'varchar' },
 		tenantId: { type: 'varchar', nullable: true },
 		isActive: { type: 'boolean' },
-		isArchived: { type: 'boolean' }
+		isArchived: { type: 'boolean' },
+		// A provider sign-in matches only an account that confirmed its address (owner decision 5).
+		emailVerifiedAt: { type: 'datetime', nullable: true }
 	}
 });
 
@@ -55,7 +57,14 @@ const TENANT_A = '11111111-1111-4111-8111-111111111111';
 const TENANT_B = '22222222-2222-4222-8222-222222222222';
 
 const ATTACKER = { id: 'attacker', email: 'attacker@evil.co', tenantId: TENANT_A, isActive: true, isArchived: false };
-const VICTIM = { id: 'victim', email: 'victim@ever.co', tenantId: TENANT_B, isActive: true, isArchived: false };
+const VICTIM = {
+	id: 'victim',
+	email: 'victim@ever.co',
+	tenantId: TENANT_B,
+	isActive: true,
+	isArchived: false,
+	emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z')
+};
 const TENANTLESS = { id: 'fresh', email: 'fresh@ever.co', tenantId: null, isActive: true, isArchived: false };
 const INACTIVE = { id: 'gone', email: 'gone@ever.co', tenantId: TENANT_A, isActive: false, isArchived: false };
 

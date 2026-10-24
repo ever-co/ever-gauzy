@@ -432,9 +432,11 @@ export class EquipmentSharingResolver {
 	 * call, scoped to the caller's tenant and only once the sharing row was really the caller's. The
 	 * delivered store answers its own delete result, which is not a row and not what a field named
 	 * `deleteEquipmentSharing` may return; the field answers the one fact the removal establishes, that
-	 * it ran.
+	 * it ran. Under the permission that route states: `EQUIPMENT_APPROVE_REQUEST` or
+	 * `ORG_EQUIPMENT_SHARING_EDIT` (the grants its update, approve and refuse routes state).
 	 */
 	@Mutation('deleteEquipmentSharing')
+	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	async deleteEquipmentSharing(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.equipmentSharingService.delete(id));
 	}

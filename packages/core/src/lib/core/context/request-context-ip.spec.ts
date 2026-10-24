@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { environment } from '@gauzy/config';
 import { RequestContext } from './request-context';
 
@@ -9,6 +10,7 @@ import { RequestContext } from './request-context';
  */
 describe('RequestContext.currentIp (GHSA-86mw-2crg-vmhc)', () => {
 	const originalTrustCf = environment.THROTTLE_TRUST_CF_CONNECTING_IP;
+	const originalClientIpSecret = environment.EVER_TEAMS_CLIENT_IP_SECRET;
 
 	/** The pre-fix implementation, kept verbatim as the control arm. */
 	function legacyCurrentIp(req: any): string {
@@ -44,10 +46,12 @@ describe('RequestContext.currentIp (GHSA-86mw-2crg-vmhc)', () => {
 
 	beforeEach(() => {
 		environment.THROTTLE_TRUST_CF_CONNECTING_IP = false;
+		environment.EVER_TEAMS_CLIENT_IP_SECRET = undefined;
 	});
 
 	afterEach(() => {
 		environment.THROTTLE_TRUST_CF_CONNECTING_IP = originalTrustCf;
+		environment.EVER_TEAMS_CLIENT_IP_SECRET = originalClientIpSecret;
 		RequestContext.setClsService(undefined as any);
 	});
 
@@ -85,6 +89,30 @@ describe('RequestContext.currentIp (GHSA-86mw-2crg-vmhc)', () => {
 		environment.THROTTLE_TRUST_CF_CONNECTING_IP = true;
 		setContext(req);
 		expect(RequestContext.currentIp()).toBe('198.51.100.7');
+	});
+
+	it('records the browser address the Ever Teams server forwards, only with a valid proof', () => {
+		const secret = 'request-context-spec-secret-0123456789abc';
+		const forwarded = (ip: string, key = secret) => {
+			const timestamp = String(Math.floor(Date.now() / 1000));
+			return {
+				'x-ever-client-ip': ip,
+				'x-ever-client-ip-timestamp': timestamp,
+				'x-ever-client-ip-signature': createHmac('sha256', key).update(`${timestamp}.${ip}`).digest('hex')
+			};
+		};
+
+		// Feature off: the headers mean nothing.
+		setContext(request('203.0.113.10', forwarded('198.51.100.7')));
+		expect(RequestContext.currentIp()).toBe('203.0.113.10');
+
+		environment.EVER_TEAMS_CLIENT_IP_SECRET = secret;
+		setContext(request('203.0.113.10', forwarded('198.51.100.7')));
+		expect(RequestContext.currentIp()).toBe('198.51.100.7');
+
+		// A proof made with another secret is ignored.
+		setContext(request('203.0.113.10', forwarded('198.51.100.7', 'another-secret-0123456789abcdef-0123')));
+		expect(RequestContext.currentIp()).toBe('203.0.113.10');
 	});
 
 	it('falls back to the socket peer when no address can be attributed', () => {

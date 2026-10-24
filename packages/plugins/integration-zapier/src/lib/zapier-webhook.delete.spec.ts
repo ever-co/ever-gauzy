@@ -24,7 +24,8 @@ import { ZapierWebhookService } from './zapier-webhook.service';
  * or an invalid token were all rethrown as InternalServerErrorException by the service and the controller.
  */
 describe('Zapier webhook deletion keeps its client errors', () => {
-	const subscriptionOf = (tenantId: string | null) => (tenantId ? { id: 'subscription-1', tenantId } : null);
+	const subscriptionOf = (tenantId: string | null, organizationId = 'organization-1') =>
+		tenantId ? { id: 'subscription-1', tenantId, organizationId } : null;
 
 	// `resolveIntegration` stands for the token check: it answers the integration, or rejects the token
 	const build = (
@@ -38,6 +39,7 @@ describe('Zapier webhook deletion keeps its client errors', () => {
 		const service = new ZapierWebhookService(repository as any, {} as any);
 		const zapierService = { resolveIntegrationFromBearerToken: jest.fn(resolveIntegration) };
 		const controller = new ZapierWebhookController(service, zapierService as any);
+		jest.spyOn((service as any).logger, 'log').mockImplementation(() => undefined);
 		jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
 		jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
 		jest.spyOn((controller as any).logger, 'error').mockImplementation(() => undefined);
@@ -62,6 +64,26 @@ describe('Zapier webhook deletion keeps its client errors', () => {
 			ForbiddenException
 		);
 		expect(repository.delete).not.toHaveBeenCalled();
+	});
+
+	it("answers 403 for another organization's subscription of the same tenant", async () => {
+		const { controller, repository } = build(subscriptionOf('tenant-1', 'organization-2'), async () => ({
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		}));
+		await expect(controller.deleteWebhook('subscription-1', 'Bearer token')).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		expect(repository.delete).not.toHaveBeenCalled();
+	});
+
+	it("deletes a subscription of the caller's own organization", async () => {
+		const { controller, repository } = build(subscriptionOf('tenant-1'), async () => ({
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		}));
+		await expect(controller.deleteWebhook('subscription-1', 'Bearer token')).resolves.toBeUndefined();
+		expect(repository.delete).toHaveBeenCalledWith('subscription-1');
 	});
 
 	it('answers 401 for an invalid or expired token, as the token check rejects it', async () => {

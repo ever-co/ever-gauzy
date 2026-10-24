@@ -8,7 +8,7 @@ import {
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, IsNull, SaveOptions } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, IsNull, SaveOptions } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
 	IOrderLineReceiptMove,
@@ -41,7 +41,7 @@ import {
 	MultiORMEnum,
 	RequestContext,
 	SequenceService,
-	TenantAwareCrudService,
+	Warehouse,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
@@ -53,6 +53,7 @@ import {
 import { OrderReturn } from './order-return.entity';
 import { MikroOrmOrderReturnRepository } from './repository/mikro-orm-order-return.repository';
 import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The series key returns are numbered from. */
 const RETURN_NUMBER_KEY = 'RETURN';
@@ -219,7 +220,7 @@ interface IReceiptSteps {
  * this class — it is set by the conditional update, in the same statement that checks it.
  */
 @Injectable()
-export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
+export class OrderReturnService extends ReturnsCrudService<OrderReturn> {
 	/** Where a failure that must not be thrown — a compensation that did not land — is reported. */
 	private readonly logger = new Logger(OrderReturnService.name);
 
@@ -721,6 +722,11 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			plan = await this.lineService.planReceipt(id, lines);
 
 			const movements = this.planMovements(orderReturn, plan, fulfilled, options.warehouseId);
+
+			await this.assertWarehousesInOrganization([
+				options.warehouseId,
+				...movements.map((movement) => movement.warehouseId)
+			]);
 
 			settlement = this.summarize(plan);
 
@@ -1607,6 +1613,48 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		}
 
 		return movements;
+	}
+
+	/**
+	 * Refuses a receiving location outside the caller's organization, before anything of the receipt is written.
+	 *
+	 * The location comes from the receipt request, the return line or the return itself, and every one of them was
+	 * taken as stated: the stock ledger checks only the tenant of the location it writes at, so a return of one
+	 * organization could restock units into another organization's warehouse of the same tenant. Each location the
+	 * receipt would write at is read in the caller's tenant and organization.
+	 *
+	 * @param warehouseIds The locations the receipt names or would write at.
+	 * @throws NotFoundException with `RETURN_WAREHOUSE_NOT_FOUND` when one is not the caller's organization's.
+	 */
+	private async assertWarehousesInOrganization(warehouseIds: Array<ID | null | undefined>): Promise<void> {
+		const ids = [...new Set(warehouseIds.filter((id): id is ID => !!id).map(String))] as ID[];
+
+		if (!ids.length) {
+			return;
+		}
+
+		const scope = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+		const found: Warehouse[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? await this.mikroOrmOrderReturnRepository
+						.getEntityManager()
+						.find(Warehouse, { id: { $in: ids }, ...scope } as never)
+				: await this.typeOrmOrderReturnRepository.manager.find(Warehouse, {
+						where: { id: In(ids), ...scope }
+					});
+		const known = new Set(found.map((warehouse) => String(warehouse.id)));
+		const foreign = ids.filter((id) => !known.has(String(id)));
+
+		if (foreign.length) {
+			throw new NotFoundException({
+				message: `RETURN_WAREHOUSE_NOT_FOUND: location ${foreign.join(', ')} could not be found in this organization.`,
+				code: 'RETURN_WAREHOUSE_NOT_FOUND',
+				details: { warehouseIds: foreign }
+			});
+		}
 	}
 
 	/**

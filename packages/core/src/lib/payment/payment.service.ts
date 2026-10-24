@@ -20,6 +20,7 @@ import { RequestContext } from '../core/context';
 import { LIKE_OPERATOR } from '../core/util';
 import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum, resolveTimeZone } from '../core/utils';
 import { EmailService } from './../email-send/email.service';
+import { assertCurrentUserBelongsToOrganization } from './../user-organization/assert-organization-membership';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
@@ -305,6 +306,16 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		payment: IPayment,
 		origin: string
 	): Promise<boolean> {
+		// The receipt is sent through the organization's mail settings and filed in the email history under the
+		// organization the caller states, with that organization's `tenantId` as stated: a caller could file a
+		// rendered receipt into another tenant's email history, under an organization it does not belong to. The
+		// organization has to be one of the caller's, and the receipt is filed under the caller's own tenant.
+		await assertCurrentUserBelongsToOrganization(
+			this.typeOrmPaymentRepository.manager,
+			invoice.fromOrganization?.id
+		);
+		const fromOrganization = { ...invoice.fromOrganization, tenantId: RequestContext.currentTenantId() };
+
 		try {
 			const { primaryEmail: recipientEmail, name: recipientName } = invoice.toContact;
 
@@ -315,7 +326,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				invoice.invoiceNumber,
 				payment.amount,
 				payment.currency,
-				invoice.fromOrganization,
+				fromOrganization,
 				origin
 			);
 

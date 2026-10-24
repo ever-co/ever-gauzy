@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOneOptions, FindOptionsWhere } from 'typeorm';
+import { FindOneOptions, FindOptionsWhere, In } from 'typeorm';
 import { pick } from 'underscore';
 import {
 	IDateRangePicker,
@@ -7,11 +7,12 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
+	ITask,
 	ITimerStatus
 } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
 import { parseFindOptionsRelations } from '../../core/utils';
-import { OrganizationTeam } from './../../core/entities/internal';
+import { OrganizationTeam, Task } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
 import { TimerService } from './../../time-tracking/timer/timer.service';
 import { TypeOrmOrganizationTeamRepository } from '../../organization-team/repository/type-orm-organization-team.repository';
@@ -46,6 +47,18 @@ const PUBLIC_TASK_MEMBER_FIELDS: string[] = [
 	'show_average_expenses',
 	'show_average_bonus'
 ];
+
+/**
+ * Whether the anonymous team link may show a task: one its team did not mark private (`public: false`, "This task is
+ * Private" in Ever Teams) and that is not a draft. The link used to answer every task of the team in full, so anyone
+ * holding it read the private tasks and the drafts, and their titles through the members' last worked task and task
+ * statistics.
+ *
+ * @param task - The task, with its `public` and `isDraft` columns.
+ */
+export function isPubliclyVisibleTask(task: Pick<ITask, 'public' | 'isDraft'> | null | undefined): boolean {
+	return !!task && task.public !== false && task.isDraft !== true;
+}
 
 @Injectable()
 export class PublicTeamService {
@@ -102,6 +115,9 @@ export class PublicTeamService {
 		try {
 			const team = await this.typeOrmOrganizationTeamRepository.findOneOrFail(findOptions);
 
+			if (team.tasks) {
+				team.tasks = team.tasks.filter(isPubliclyVisibleTask);
+			}
 			team.tasks?.forEach((task) => {
 				if (task.members) {
 					task.members = task.members.map(
@@ -192,10 +208,43 @@ export class PublicTeamService {
 				};
 			});
 
-			// Execute all promises and return the result
-			return await Promise.all(memberPromises);
+			// Execute all promises, then leave out what the link may not show: the last worked task when it is private or
+			// a draft, and the private and draft tasks of the statistics (which carry their titles)
+			const synced = await Promise.all(memberPromises);
+			const hidden = await this.hiddenTaskIds(
+				synced.flatMap((member) => [...(member.totalWorkedTasks ?? []), ...(member.totalTodayTasks ?? [])]),
+				tenantId
+			);
+			return synced.map((member) => ({
+				...member,
+				lastWorkedTask: isPubliclyVisibleTask(member.lastWorkedTask) ? member.lastWorkedTask : null,
+				totalWorkedTasks: member.totalWorkedTasks?.filter((task) => !hidden.has(task.id)),
+				totalTodayTasks: member.totalTodayTasks?.filter((task) => !hidden.has(task.id))
+			}));
 		} catch (error) {
 			console.error('Error while retrieving team members worked tasks', error);
 		}
+	}
+
+	/**
+	 * The ids, among the given statistics rows, of the tasks the link may not show (see {@link isPubliclyVisibleTask}).
+	 * The statistics rows carry a task's id and title only, so its `public` and `isDraft` columns are read here.
+	 *
+	 * @param tasks - The statistics rows of the members.
+	 * @param tenantId - The team's tenant.
+	 */
+	private async hiddenTaskIds(tasks: Pick<ITask, 'id'>[], tenantId: string): Promise<Set<string>> {
+		const ids = [...new Set(tasks.map((task) => task?.id).filter(Boolean))] as string[];
+		if (ids.length === 0) {
+			return new Set();
+		}
+		const rows = await this.typeOrmOrganizationTeamRepository.manager.find(Task, {
+			select: { id: true },
+			where: [
+				{ id: In(ids), tenantId, public: false },
+				{ id: In(ids), tenantId, isDraft: true }
+			]
+		});
+		return new Set(rows.map((row) => row.id));
 	}
 }

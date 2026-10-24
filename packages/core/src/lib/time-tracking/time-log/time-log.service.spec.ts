@@ -1004,4 +1004,61 @@ describe('TimeLogService', () => {
 			});
 		});
 	});
+
+	/**
+	 * The GraphQL report resolvers pass every optional argument by name, so a query that omits
+	 * `isEdited` reaches the service with the key present and its value `undefined`. The guard only
+	 * checked `'isEdited' in request`, so that request was read as `isEdited: false` and every edited
+	 * log was dropped from the report (`editedAt IS NULL`).
+	 */
+	describe('isEdited filter', () => {
+		const request: IGetTimeLogReportInput = {
+			organizationId: ORGANIZATION_ID,
+			employeeIds: [TARGET_EMPLOYEE_ID],
+			startDate: '2026-01-05T00:00:00.000Z',
+			endDate: '2026-01-12T00:00:00.000Z',
+			timeZone: 'UTC'
+		};
+		const editedFilters = (conditions: string[]) => conditions.filter((condition) => condition.includes('editedAt'));
+		const buildMikroOrmWhere = (input: IGetTimeLogReportInput) =>
+			(service as unknown as { buildMikroOrmTimeLogWhere(i: IGetTimeLogReportInput): Promise<any> })
+				.buildMikroOrmTimeLogWhere(input);
+
+		beforeEach(() => {
+			mockRequestContext({
+				tenantId: TENANT_ID,
+				user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+				canChangeSelectedEmployee: true
+			});
+		});
+
+		it.each([undefined, null])('TypeORM: an isEdited key set to %p applies no editedAt filter', async (value) => {
+			await service.getTimeLogs({ ...request, isEdited: value } as IGetTimeLogReportInput);
+
+			expect(editedFilters(executedFilters(builder).conditions)).toEqual([]);
+		});
+
+		it('TypeORM: isEdited false still keeps only unedited logs', async () => {
+			await service.getTimeLogs({ ...request, isEdited: false });
+
+			expect(editedFilters(executedFilters(builder).conditions)).toEqual(['"time_log"."editedAt" IS NULL']);
+		});
+
+		it('TypeORM: isEdited true still keeps only edited logs', async () => {
+			await service.getTimeLogs({ ...request, isEdited: true });
+
+			expect(editedFilters(executedFilters(builder).conditions)).toEqual(['"time_log"."editedAt" IS NOT NULL']);
+		});
+
+		it.each([undefined, null])('MikroORM: an isEdited key set to %p applies no editedAt filter', async (value) => {
+			const where = await buildMikroOrmWhere({ ...request, isEdited: value } as IGetTimeLogReportInput);
+
+			expect(where).not.toHaveProperty('editedAt');
+		});
+
+		it('MikroORM: isEdited false and true still filter on editedAt', async () => {
+			expect(await buildMikroOrmWhere({ ...request, isEdited: false })).toHaveProperty('editedAt', null);
+			expect(await buildMikroOrmWhere({ ...request, isEdited: true })).toHaveProperty('editedAt', { $ne: null });
+		});
+	});
 });

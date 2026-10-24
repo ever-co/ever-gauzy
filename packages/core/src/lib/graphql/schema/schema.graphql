@@ -28025,7 +28025,9 @@ the key result the move is recorded against.
 """
 input CreateKeyResultUpdateInput {
   owner: String!
-  progress: Int!
+
+  """Ignored: the server computes it from `update` and the key result."""
+  progress: Int
   update: Int!
   status: String!
   keyResultId: ID
@@ -38104,9 +38106,10 @@ type SharedEntity {
 
   """
   The bearer capability itself. Anyone holding it may read the record the share points at through
-  `sharedEntityByToken`, which is why this member travels only to a caller the tenant guard admitted.
+  `sharedEntityByToken`, which is why this member travels only to the share's author or an
+  organization administrator (`ALL_ORG_EDIT`); for any other member of the tenant it is null.
   """
-  token: String!
+  token: String
 
   """
   What the share points at, as the platform's own entity vocabulary names it.
@@ -38176,9 +38179,10 @@ The fields a share list may be narrowed by. `and` is the default; `or` requires 
 `not` excludes the rows that match it.
 
 A share's own token is filterable, and that is deliberate rather than a leak: the list is
-tenant-guarded, its rows are the caller's own, and the token is already a member of every row it
-answers. What it is *not* is a way to resolve the shared record — that is the token read, and its
-answer is the target rather than a `SharedEntity`.
+tenant-guarded, and the filter runs over the rows as the caller reads them, so it only matches a
+token the row already answers — one of a share the caller manages. What it is *not* is a way to
+resolve the shared record — that is the token read, and its answer is the target rather than a
+`SharedEntity`.
 """
 input SharedEntityFilter {
   id: IDFilter

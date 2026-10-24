@@ -13,8 +13,8 @@
 The export domain contributes no root field, and this document states why rather
 than leaving the absence to be read as an oversight.
 
-`ExportController` is mounted at `/api/export` under `ALL_ORG_VIEW` and
-`EXPORT_ADD`, and the three routes it serves are all the same kind of answer:
+`ExportController` is mounted at `/api/export` under `EXPORT_ADD` alone, and
+the three routes it serves are all the same kind of answer:
 
 - GET / — every table of the caller's tenant, written out as CSV, archived and
   downloaded

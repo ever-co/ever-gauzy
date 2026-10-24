@@ -116,15 +116,15 @@ const EQUIPMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * method, which is the platform's own upsert.
  *
  * **The guard chain and the permission are the controller's.** The controller guards its class with
- * `TenantPermissionGuard` alone and states no permission on the class or on any handler, so this
- * resolver carries that one guard and no field states a permission. That is not an omission: a field
- * that stated a grant the route does not ask for would narrow REST below GraphQL, and an empty
+ * `TenantPermissionGuard` alone and states no permission on the class or on its reads, so this
+ * resolver carries that one guard and no read field states a permission. That is not an omission: a
+ * field that stated a grant the route does not ask for would narrow REST below GraphQL, and an empty
  * `@Permissions()` would restate the same absence as though it were a decision this surface had made.
  * What decides who reaches these rows is the same on both protocols — the guard chain above and the
- * tenant the service applies from the credential. **The one exception is the retire-and-restore pair**:
- * the controller overrides the two inherited routes to state `ORG_EQUIPMENT_EDIT` behind `PermissionGuard`
- * (the CRUD base states no permission, which `PermissionGuard` answered with `true` for any member of the
- * tenant — GHSA-v79w-54p2-wmh5), so `softDeleteEquipment` and `recoverEquipment` state the same.
+ * tenant the service applies from the credential. **The writes are the exception**: every write route
+ * states `ORG_EQUIPMENT_EDIT` behind `PermissionGuard` (the create and the edit stated none, and the CRUD
+ * base states none on the removal and the retire-and-restore pair, which `PermissionGuard` answered with
+ * `true` for any member of the tenant — GHSA-v79w-54p2-wmh5), so every write field states the same.
  *
  * **The gate is the catalogue's, and it is declared once for every field.** `FeatureFlagGuard` is
  * appended to the chain above — after the controller's own, so a caller with no credential is refused
@@ -228,8 +228,10 @@ export class EquipmentResolver {
 	 * The same service call the REST create route makes, with the same payload: the members the caller
 	 * states, the facets as the identifiers the pivot row is written from, and the asset as the
 	 * identifier the foreign key holds. The tenant is stamped by the service from the credential and is
-	 * never a member the caller can choose.
+	 * never a member the caller can choose. Under the permission that route states: `ORG_EQUIPMENT_EDIT`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Mutation('createEquipment')
 	async createEquipment(@Args('input') input: ICreateEquipmentInput): Promise<Equipment> {
 		return await this.equipmentService.create(this.writePayload(input) as unknown as Equipment);
@@ -241,8 +243,11 @@ export class EquipmentResolver {
 	 * The delivered edit spreads the body beside the identifier the route reads from the path and hands
 	 * the result to the same save the create uses, so the field states one identifier and leaves neither
 	 * reading undefined. Its answer is that save's answer — the row — and because the save merges what it
-	 * is given onto the row the store holds, a member the caller omits is left as it is.
+	 * is given onto the row the store holds, a member the caller omits is left as it is. Under the
+	 * permission that route states: `ORG_EQUIPMENT_EDIT`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Mutation('updateEquipment')
 	async updateEquipment(@Args('input') input: IUpdateEquipmentInput): Promise<Equipment> {
 		const { id, ...values } = input;
@@ -257,7 +262,10 @@ export class EquipmentResolver {
 	 * delete result — a statement about the write, `{ affected }` — which is not a row and not what a
 	 * field named `deleteEquipment` may return; the field answers whether the removal reached a row
 	 * — `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
+	 * Under the permission that route states: `ORG_EQUIPMENT_EDIT`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Mutation('deleteEquipment')
 	async deleteEquipment(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.equipmentService.delete(id));

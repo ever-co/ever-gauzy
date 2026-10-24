@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import {
@@ -16,6 +16,7 @@ import { pick } from 'underscore';
 import { ConfigService } from '@gauzy/config';
 import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
+	canInviteWithRole,
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
@@ -34,12 +35,14 @@ import {
 	InviteActionEnum,
 	IUserRegistrationInput,
 	IPagination,
-	ID
+	ID,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
 	allowedEmailLink,
@@ -76,6 +79,7 @@ import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team
 import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
+import { mayIssueInviteRole, withholdTokensNotIssuable } from './invite-role-issuer';
 import { InviteAcceptCommand } from './commands';
 import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
 
@@ -207,38 +211,33 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		// The role the body asks for, read in every form it can carry it (`roleId`, `role` as an id
 		// string or `{ id }`). Validated BEFORE the inviter's own role is looked at, so a malformed or
-		// self-contradicting payload is refused for every caller and not just for the ones that reach
-		// the fallback below — an EMPLOYEE inviter is force-assigned the EMPLOYEE role, but that is an
-		// authorization decision and must not double as permission to ignore bad input.
+		// self-contradicting payload is refused for every caller.
 		// `extractRoleIds` itself throws on a role key that is present but references nothing.
 		const requestedRoleIds = extractRoleIds(input);
 		if (requestedRoleIds.length > 1) {
 			throw new BadRequestException('The role and roleId fields must reference the same role.');
 		}
 
+		// The inviter's role as stored, not as the token last saw it.
+		const inviterRole: IRole | undefined = invitedByUser?.role;
+
 		// Invited Role
 		let role: IRole;
 
-		try {
-			const currentRoleId = RequestContext.currentRoleId();
-
-			// Ensure the current role can only invite others with the 'EMPLOYEE' role
-			role = await this.roleService.findOneByIdString(currentRoleId, {
-				where: { name: RolesEnum.EMPLOYEE }
-			});
-		} catch (error) {
-			// If the current role is not an 'EMPLOYEE' role, fallback to the requested role. Exactly one
-			// role must be named: a second, unchecked identifier must not ride along, and an invitation
-			// cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
-			if (requestedRoleIds.length !== 1) {
-				throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
-			}
+		if (requestedRoleIds.length === 1) {
 			role = await this.roleService.findOneByIdString(requestedRoleIds[0]);
+		} else if (inviterRole?.name === RolesEnum.EMPLOYEE) {
+			// An employee who names no role invites an employee, as before (Ever Teams sends no role for them).
+			role = inviterRole;
+		} else {
+			// An invitation cannot be issued for no role at all (GHSA-x4mv-fhwj-g3rp).
+			throw new BadRequestException('Exactly one valid role must be specified for the invitation.');
+		}
 
-			// Handle unauthorized access if the invitedByUser is not a 'SUPER_ADMIN'
-			if (role.name === RolesEnum.SUPER_ADMIN && invitedByUser.role.name !== RolesEnum.SUPER_ADMIN) {
-				throw new UnauthorizedException();
-			}
+		// An inviter grants only their own level or lower: only an ADMIN or SUPER_ADMIN invites an ADMIN,
+		// and only a SUPER_ADMIN invites a SUPER_ADMIN.
+		if (!canInviteWithRole(inviterRole?.name, role?.name)) {
+			throw new ForbiddenException('You cannot invite a user with a role above your own.');
 		}
 
 		// Invited Organization
@@ -501,6 +500,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		});
 		if (!invite) {
 			throw Error('Invite does not exist');
+		}
+		// A resend mints a new token for the invitation's role: only a caller who may issue that role resends it.
+		if (!mayIssueInviteRole(RequestContext.currentRoleName(), invite.role?.name)) {
+			throw new ForbiddenException('You cannot resend an invitation for this role.');
 		}
 
 		// Invited organization
@@ -910,7 +913,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			// so without a valid `take` the list stays unpaginated, as it already was when neither is sent
 			const page = resolveRequestedPage({ take: options?.take, skip: options?.skip });
 
-			return await super.findAll({
+			const invites = await super.findAll({
 				...(page ? { skip: page.offset, take: page.limit } : {}),
 				...(options && options.relations
 					? {
@@ -919,6 +922,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					: {}),
 				where: buildWhereConditions()
 			});
+			// The register is readable with the permissions every employee holds; the accept-invite token is not.
+			await withholdTokensNotIssuable(invites.items, {
+				callerRole: RequestContext.currentRoleName(),
+				mayIssueInvites: RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT),
+				findRoles: (ids: ID[]) => this.roleService.find({ where: { id: In(ids) } })
+			});
+			return invites;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -1105,16 +1115,21 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				 * Current user is belong to invited tenant
 				 */
 				if (user.tenantId === tenantId) {
-					await this.commandBus.execute(
-						new InviteAcceptCommand(
-							{
-								user,
-								email,
-								token,
-								code,
-								originalUrl: origin
-							},
-							languageCode
+					// The invitation names an organization the caller's token does not (it is the organization they
+					// are joining), so accepting runs outside the organization boundary: the invitation was read above
+					// for the caller's own e-mail, still open and unexpired, which is what grants the crossing.
+					await runOutsideOrganizationBoundary(() =>
+						this.commandBus.execute(
+							new InviteAcceptCommand(
+								{
+									user,
+									email,
+									token,
+									code,
+									originalUrl: origin
+								},
+								languageCode
+							)
 						)
 					);
 				}

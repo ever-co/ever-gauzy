@@ -9,6 +9,7 @@ export * from './get-plugin-subscription-plans-by-plugin-id.query';
 export * from './get-plugin-subscriptions-by-plugin-id.query';
 export * from './get-plugin-subscriptions-by-subscriber-id.query';
 export * from './get-plugin-subscriptions.query';
+export * from './get-publisher-plugin-subscriptions.query';
 export * from './get-subscription-access.query';
 export * from './get-user-subscribed-plugins.query';
 export * from './handlers';

@@ -31,6 +31,8 @@ describe('TimeOffBalanceService.findAllByFilter organization scope', () => {
 		service = new TimeOffBalanceService(repository as any, {} as any);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+		// The caller's token names their organization: the only one the organization boundary lets a non-admin name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION_ID);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE_ID);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
 			(permission) => permission !== PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -55,6 +57,8 @@ describe('TimeOffBalanceService.findAllByFilter organization scope', () => {
 		// A holder of CHANGE_SELECTED_EMPLOYEE is not pinned to their own balances, so without the membership
 		// check they would read every balance of a sibling organization.
 		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
+		// The token names the sibling organization, so the refusal is the membership lookup's.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(SIBLING_ORGANIZATION_ID);
 
 		await expect(
 			service.findAllByFilter({ organizationId: SIBLING_ORGANIZATION_ID } as any)
@@ -174,6 +178,8 @@ describe('TimeOffBalanceService writes organization scope', () => {
 		service = new TimeOffBalanceService(repository as any, {} as any);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+		// The caller's token names their organization: the only one the organization boundary lets a non-admin name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION_ID);
 	});
 
 	afterEach(() => {
@@ -191,6 +197,8 @@ describe('TimeOffBalanceService writes organization scope', () => {
 	});
 
 	it.each(writes)('%s refuses an organization the caller is not a member of', async (_name, write) => {
+		// The token names the sibling organization, so the refusal is the membership lookup's.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(SIBLING_ORGANIZATION_ID);
 		await expect(write(SIBLING_ORGANIZATION_ID)).rejects.toBeInstanceOf(ForbiddenException);
 
 		expect(manager.count).toHaveBeenCalledTimes(1);

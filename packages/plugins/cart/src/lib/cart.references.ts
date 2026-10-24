@@ -12,6 +12,18 @@
  */
 import { PlainReferenceColumns } from '@gauzy/core';
 
+/**
+ * The plain id columns of a cart itself: its sales channel, region, customer and user. `POST /carts`, `PUT /carts/:id`,
+ * `updateCart` and `associateCartWithContact` stored another tenant's as given, and the order a checkout builds copies
+ * them.
+ */
+export const CART_REFERENCES: PlainReferenceColumns = {
+	channelId: 'channel',
+	regionId: 'region',
+	customerId: 'organization_contact',
+	userId: 'user'
+};
+
 /** The plain id columns of a cart line. */
 export const CART_LINE_REFERENCES: PlainReferenceColumns = {
 	productId: 'product',

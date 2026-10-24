@@ -21,6 +21,16 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 	}
 
 	/**
+	 * A recent visit is its employee's: what they opened, and when. A caller who may not act for other employees and
+	 * has no employee record (a viewer, a candidate) has none, so the reads the CRUD base scopes match no row for
+	 * them, instead of the tenant-wide scope it keeps by default, through which such a caller listed any employee's
+	 * visits (`employeeId` from the query) or the whole tenant's (no `employeeId`).
+	 */
+	protected override findConditionsWithoutOwnEmployee(): FindOptionsWhere<EmployeeRecentVisit> {
+		return this.neverMatchingEmployeeCondition();
+	}
+
+	/**
 	 * Creates a new employee recent visit entry with the provided input, while associating it with the current employee and tenant.
 	 *
 	 * @param input - The data required to create an employee recent visit entry.
@@ -52,6 +62,10 @@ export class EmployeeRecentVisitService extends TenantAwareCrudService<EmployeeR
 			if (existingEntry) {
 				// Update the visitedAt date and return the existing entry
 				existingEntry.visitedAt = now;
+				// Refresh the stored snapshot, so the recent list shows the entity as it is now
+				if (input.data !== undefined) {
+					existingEntry.data = input.data;
+				}
 				return await this.save(existingEntry);
 			}
 

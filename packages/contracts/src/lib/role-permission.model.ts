@@ -156,6 +156,11 @@ export enum PermissionsEnum {
 	ORG_TASK_SETTING = 'ORG_TASK_SETTING',
 	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
 	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW',
+	EVENT_TYPES_EDIT = 'EVENT_TYPES_EDIT',
+	/** Goals, their KPIs, key results, time frames, templates and settings */
+	GOALS_EDIT = 'GOALS_EDIT',
+	/** The skills vocabulary */
+	SKILLS_EDIT = 'SKILLS_EDIT',
 	TIME_TRACKER = 'TIME_TRACKER',
 	TENANT_ADD_EXISTING_USER = 'TENANT_ADD_EXISTING_USER',
 	/** Integration CRUD Permissions Start */
@@ -638,6 +643,9 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
+		PermissionsEnum.EVENT_TYPES_EDIT,
+		PermissionsEnum.GOALS_EDIT,
+		PermissionsEnum.SKILLS_EDIT,
 		PermissionsEnum.TIME_TRACKER,
 		PermissionsEnum.INVENTORY_GALLERY_VIEW,
 		PermissionsEnum.INVENTORY_GALLERY_EDIT,

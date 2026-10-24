@@ -323,6 +323,11 @@ export class SeedDataService {
 		});
 
 		try {
+			// Do not change: the desktop apps watch for this line to mark the passwords they generated as
+			// in use (DESKTOP_API_SEED_STARTED_MARKER in @gauzy/desktop-lib). From here on the seed may
+			// create the accounts, and a seed that fails after that leaves them with those passwords.
+			console.log('Database Default Seed Started');
+
 			if (this.configService.get('demo') === true && fromAPI === true) {
 				this.seedType = SeederTypeEnum.ALL;
 			} else {
@@ -346,6 +351,8 @@ export class SeedDataService {
 			// Disconnect to database
 			await this.closeConnection();
 
+			// Do not change: the desktop apps watch for this line to show the passwords they generated for
+			// the seeded accounts (DESKTOP_API_SEED_COMPLETED_MARKER in @gauzy/desktop-lib).
 			console.log('Database Default Seed Completed');
 		} catch (error) {
 			this.handleError(error);

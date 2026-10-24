@@ -217,6 +217,18 @@ describe('the inventory subscriptions, scoped to the subscriber', () => {
 
 			expect(await delivered(stream)).toEqual([]);
 		});
+
+		it('states the grant the transfer reads state, not the stock view EMPLOYEE holds', () => {
+			const handler = StockTransferResolver.prototype.stockTransferChanged;
+			const permissions =
+				Reflect.getMetadata(PERMISSIONS_METADATA, handler) ??
+				Reflect.getMetadata(PERMISSIONS_METADATA, StockTransferResolver);
+
+			expect(permissions).toEqual([InventoryPermission.STOCK_TRANSFER_VIEW]);
+			expect(permissions).toEqual(
+				Reflect.getMetadata(PERMISSIONS_METADATA, StockTransferResolver.prototype.stockTransfers)
+			);
+		});
 	});
 
 	it('refuses to open a stream for an operation with no tenant', () => {

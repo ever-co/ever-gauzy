@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
-import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as path from 'node:path';
 import * as chalk from 'chalk';
@@ -16,9 +15,15 @@ import { convertToDatetime, getORMType, MultiORMEnum } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
+import {
+	isInstallationOperator,
+	isOperatorOnlyTenantSetting,
+	keepingOperatorOnlySettings
+} from '../../tenant/tenant-setting/operator-only-tenant-settings';
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
+import { extractImportArchive } from './import-archive-extract';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
 	mikroOrmClosureRebuildRunner,
@@ -32,6 +37,25 @@ import {
 	IRepositoryModel,
 	RepositoriesService
 } from '../repositories/repositories.service';
+
+/**
+ * The column a row of a shared table the platform seeds is recognized by in another instance's archive, where its id is
+ * not this instance's (see {@link ImportService.findSharedRow}).
+ */
+const SHARED_TABLE_NATURAL_KEYS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+	country: ['isoCode'],
+	currency: ['isoCode'],
+	feature: ['code'],
+	language: ['code'],
+	report: ['slug'],
+	report_category: ['name']
+});
+
+/** The table of the tenant's settings, some of whose rows only the installation operator may write. */
+const TENANT_SETTING_TABLE = 'tenant_setting';
+
+/** A UUID, the only id a shared table's row can have: anything else is not looked up as an id. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class ImportService {
@@ -107,7 +131,7 @@ export class ImportService {
 	 */
 	public async unzipAndParse(extractPath: string, filePath: string, cleanup: boolean = false) {
 		const file = await new FileStorage().getProvider().getFile(filePath);
-		await unzipper.Open.buffer(file).then((d) => d.extract({ path: extractPath }));
+		await extractImportArchive(file, extractPath);
 		await this.parse(extractPath, cleanup);
 	}
 
@@ -141,10 +165,14 @@ export class ImportService {
 					 * This will first collect all the data and then insert
 					 * If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					 */
-					if (cleanup && isStatic !== true) {
+					if (cleanup && isStatic !== true && !this.isSharedTable(item)) {
 						try {
-							let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
-							await repository.query(sql);
+							if (masterTable === TENANT_SETTING_TABLE) {
+								await this.cleanUpTenantSettings(repository, tenantId);
+							} else {
+								let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
+								await repository.query(sql);
+							}
 							console.log(chalk.yellow(`Clean up processing for table: ${masterTable}`));
 						} catch (error) {
 							console.log(chalk.red(`Failed to clean up process for table: ${masterTable}`), error);
@@ -166,7 +194,7 @@ export class ImportService {
 						results = results.filter(isNotEmpty);
 						try {
 							for await (const data of results) {
-								if (isNotEmpty(data)) {
+								if (isNotEmpty(data) && (await this.mayImportRow(item, data))) {
 									await this.migrateImportEntityRecord(item, data);
 								}
 							}
@@ -189,7 +217,8 @@ export class ImportService {
 				await this.rebuildProductCategoryClosure(tenantId);
 			}
 
-			if (isNotEmpty(relations)) {
+			// A shared table's own junctions (the integration catalogue's types, ...) are shared too: never written.
+			if (isNotEmpty(relations) && !this.isSharedTable(item)) {
 				junctionOwners.push(item);
 			}
 		}
@@ -338,14 +367,17 @@ export class ImportService {
 				const source = JSON.parse(JSON.stringify(entity));
 				// The lookup reads the mapped row: the archive's tenant and foreign keys are the source ids.
 				const mapped = await this.mapFields(item, entity);
-				const destination = await this.commandBus.execute(
-					new ImportEntityFieldMapOrCreateCommand(
-						repository,
-						this.uniqueKeyConditions(item, mapped),
-						mapped,
-						source.id
-					)
-				);
+				// A shared table's row is never written: its id is only mapped to the row that already exists.
+				const destination = this.isSharedTable(item)
+					? await this.findSharedRow(item, mapped, source.id)
+					: await this.commandBus.execute(
+							new ImportEntityFieldMapOrCreateCommand(
+								repository,
+								this.uniqueKeyConditions(item, mapped),
+								mapped,
+								source.id
+							)
+						);
 				if (destination) {
 					await this.mappedImportRecord(item, destination, source);
 				}
@@ -355,6 +387,137 @@ export class ImportService {
 				reject(error);
 			}
 		});
+	}
+
+	/**
+	 * Whether an archive row may be written. A `tenant_setting` row only the installation operator may write
+	 * (`operator-only-tenant-settings.ts`: an organization's Documents storage limit) is skipped for anyone else, as
+	 * `POST /tenant-setting/dynamic` refuses it: an archive must not set or lift the limit.
+	 *
+	 * The row it would be written over counts too. An archive row whose id an earlier import mapped is saved over that
+	 * row ({@link ImportEntityFieldMapOrCreateCommand}), name included, so an ordinary name on the source id of an
+	 * imported limit row renamed the limit away, and Documents fell back to the deployment default, which may be no
+	 * limit at all.
+	 *
+	 * @param item - The table being imported.
+	 * @param row - The archive row, as read (its `id` is still the archive's).
+	 */
+	private async mayImportRow(item: IRepositoryModel, row: Record<string, unknown>): Promise<boolean> {
+		if (item.repository.metadata.tableName !== TENANT_SETTING_TABLE || isInstallationOperator()) {
+			return true;
+		}
+		if (isOperatorOnlyTenantSetting(row?.['name'])) {
+			this.logger.warn(
+				`Skipped the tenant setting ${String(row['name'])}: only the installation's operator sets it.`
+			);
+			return false;
+		}
+		const overwritten = await this.importedDestinationName(item.repository, row?.['id']);
+		if (isOperatorOnlyTenantSetting(overwritten)) {
+			this.logger.warn(
+				`Skipped the tenant setting ${String(row['name'])}: an earlier import mapped it to ${String(
+					overwritten
+				)}, which only the installation's operator sets.`
+			);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * The name of the `tenant_setting` row an earlier import of this tenant mapped an archive id to, which is the row
+	 * that archive row would be saved over, or `undefined` when the id was never imported.
+	 *
+	 * @param repository - The `tenant_setting` repository.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async importedDestinationName(repository: Repository<any>, sourceId: unknown): Promise<unknown> {
+		if (!isNotEmpty(sourceId)) {
+			return undefined;
+		}
+		let destinationId: ID | undefined;
+		try {
+			const found = await this.commandBus.execute(
+				new ImportRecordFindOrFailCommand({
+					tenantId: RequestContext.currentTenantId(),
+					sourceId: sourceId as ID,
+					entityType: TENANT_SETTING_TABLE
+				})
+			);
+			destinationId = found?.success ? found.record?.destinationId : undefined;
+		} catch {
+			// No import record: the import creates a new row rather than saving over one.
+			return undefined;
+		}
+		if (!destinationId) {
+			return undefined;
+		}
+		// Trashed rows too: the save reaches the row by its id whether or not it is soft-deleted.
+		const destination = await repository.findOne({
+			where: { id: destinationId },
+			select: { id: true, name: true },
+			withDeleted: true
+		});
+		return destination?.name;
+	}
+
+	/**
+	 * A clean import's wipe of `tenant_setting`: every row of the tenant, soft-deleted ones included, except the rows
+	 * only the installation operator may write when someone else imports. Removing such a row would put the deployment
+	 * default back, which may be no limit at all.
+	 *
+	 * @param repository - The `tenant_setting` repository.
+	 * @param tenantId - The importing tenant.
+	 */
+	private async cleanUpTenantSettings(repository: Repository<any>, tenantId: ID | null): Promise<void> {
+		if (!tenantId) {
+			return;
+		}
+		await repository.delete(await keepingOperatorOnlySettings(repository, { tenantId }));
+	}
+
+	/**
+	 * Whether the table holds rows every tenant shares: it has no tenant column. These are the tenants themselves, the
+	 * countries, currencies and languages, the features and reports, the integration catalogue and the plugin
+	 * marketplace — rows the platform seeds and every tenant reads.
+	 *
+	 * An archive used to be written into them like into any other table: a row that matched none was created for every
+	 * tenant to see, and a row whose id an earlier import had mapped was saved over, so a tenant administrator could add
+	 * to or rewrite the integration catalogue, the features or the marketplace of the whole installation by importing.
+	 *
+	 * @param item - The table being imported.
+	 */
+	private isSharedTable(item: IRepositoryModel): boolean {
+		return !item.repository.metadata.findColumnWithPropertyName('tenantId');
+	}
+
+	/**
+	 * The existing row a shared table's archive row stands for, or `null`: the row with the same unique key, else the
+	 * row with the same id (an archive of this instance), else the row with the same natural key (another instance's,
+	 * {@link SHARED_TABLE_NATURAL_KEYS}). Nothing is created or changed; a reference to a row that matches none maps to
+	 * nothing, like any other unmapped relation.
+	 *
+	 * @param item - The shared table being imported.
+	 * @param row - The row after {@link mapFields}.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async findSharedRow(item: IRepositoryModel, row: Record<string, unknown>, sourceId: unknown) {
+		const { repository } = item;
+		const naturalKeys = SHARED_TABLE_NATURAL_KEYS[repository.metadata.tableName] ?? [];
+		const candidates: Record<string, unknown>[] = [
+			...this.uniqueKeyConditions(item, row),
+			...(typeof sourceId === 'string' && UUID.test(sourceId) ? [{ id: sourceId }] : []),
+			...(naturalKeys.length > 0 && naturalKeys.every((key) => isNotEmpty(row[key]))
+				? [Object.fromEntries(naturalKeys.map((key) => [key, row[key]]))]
+				: [])
+		];
+		for (const where of candidates) {
+			const existing = await repository.findOne({ where });
+			if (existing) {
+				return existing;
+			}
+		}
+		return null;
 	}
 
 	/**

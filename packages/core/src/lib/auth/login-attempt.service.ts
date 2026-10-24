@@ -4,7 +4,7 @@ import { createClient } from 'redis';
 import { environment } from '@gauzy/config';
 import { RequestContext } from '../core/context/request-context';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
-import { resolveThrottlerTracker, UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
+import { resolveThrottlerTracker, throttlerTrackerOptions, UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
 
 type RedisClient = ReturnType<typeof createClient>;
 
@@ -65,6 +65,16 @@ export interface LoginAttempt {
 	/** The check ended without a verdict on the credential (e.g. an infrastructure error). */
 	release(): Promise<void>;
 }
+
+/**
+ * The parts of an HTTP request a credential check reads: the client address the route throttler would
+ * attribute it to (`ip`, and `CF-Connecting-IP` when trusted) and the response for `Retry-After`.
+ */
+export type LoginAttemptRequest = {
+	readonly ip?: string;
+	readonly headers?: Record<string, unknown>;
+	readonly res?: { setHeader?(name: string, value: string): unknown };
+};
 
 /**
  * The attempt handed out when the mechanism is disabled or there is no identifier to count against.
@@ -385,17 +395,19 @@ export class LoginAttemptService {
 
 	/**
 	 * Identifies the client behind the current request with the same spoof-resistant resolution the
-	 * route throttler uses (trusted `CF-Connecting-IP`, otherwise Express's `req.ip`).
+	 * route throttler uses (the browser address the Ever Teams server forwards with a valid proof, then
+	 * trusted `CF-Connecting-IP`, otherwise Express's `req.ip`). Without the forwarded address every sign-in
+	 * made through Ever Teams came from the Ever Teams server's one address, so the "at least two different
+	 * client addresses" rule could not tell its users apart.
 	 *
+	 * @param request - The request to attribute, when the check does not run in the API's request context.
 	 * @returns The hashed source, and whether no address could be attributed at all.
 	 */
-	private currentSource(): { source: string; unresolvedSource: boolean } {
+	private currentSource(request?: LoginAttemptRequest): { source: string; unresolvedSource: boolean } {
 		let tracker = UNRESOLVED_THROTTLER_TRACKER;
 
 		try {
-			tracker = resolveThrottlerTracker(RequestContext.currentRequest(), {
-				trustCloudflareConnectingIp: environment.THROTTLE_TRUST_CF_CONNECTING_IP === true
-			});
+			tracker = resolveThrottlerTracker(request ?? RequestContext.currentRequest(), throttlerTrackerOptions());
 		} catch {
 			// No request context: stays unresolved, which the blocking rule treats strictly.
 		}
@@ -415,11 +427,14 @@ export class LoginAttemptService {
 	 *
 	 * @param scope - The credential family being attempted.
 	 * @param identifier - The account identifier being attempted.
+	 * @param request - The HTTP request carrying the credential, for a check that runs outside the API's
+	 * request context (the MCP OAuth server's login form); the client is attributed from it, and the
+	 * `Retry-After` header set on its response. Defaults to the current request context.
 	 * @returns The attempt to settle once the credential has been checked.
 	 * @throws HttpException 429 (with a `Retry-After` header) while the identifier is blocked, or
 	 * while it already has the maximum number of checks in flight.
 	 */
-	async begin(scope: LoginAttemptScope, identifier: string): Promise<LoginAttempt> {
+	async begin(scope: LoginAttemptScope, identifier: string, request?: LoginAttemptRequest): Promise<LoginAttempt> {
 		const maxFailures = this.maxFailures;
 
 		if (maxFailures <= 0 || !identifier) {
@@ -429,12 +444,12 @@ export class LoginAttemptService {
 		const key = this.buildKey(scope, identifier);
 		const token = randomUUID();
 		// Attributed now, while this request's context is certainly the current one.
-		const source = this.currentSource();
+		const source = this.currentSource(request);
 		const { blockedMs, inFlight } = await this.run('reserve', (store) => store.reserve(key, token, Date.now()));
 
 		if (blockedMs > 0 || inFlight > maxFailures) {
 			await this.run('release', (store) => store.release(key, token));
-			this.reject(blockedMs > 0 ? Math.ceil(blockedMs / 1000) : 1);
+			this.reject(blockedMs > 0 ? Math.ceil(blockedMs / 1000) : 1, request);
 		}
 
 		let settled = false;
@@ -464,11 +479,12 @@ export class LoginAttemptService {
 	 * 429, so a client that honours the standard header backs off for the right time.
 	 *
 	 * @param retryAfter - Seconds until the caller may try again.
+	 * @param request - The request {@link begin} was given, if any.
 	 * @throws HttpException always.
 	 */
-	private reject(retryAfter: number): never {
+	private reject(retryAfter: number, request?: LoginAttemptRequest): never {
 		try {
-			RequestContext.currentRequest()?.res?.setHeader?.('Retry-After', String(retryAfter));
+			(request ?? RequestContext.currentRequest())?.res?.setHeader?.('Retry-After', String(retryAfter));
 		} catch {
 			// Headers already sent or no HTTP response (e.g. a non-HTTP transport): the body still says it.
 		}

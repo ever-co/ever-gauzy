@@ -31,6 +31,13 @@ describe('s3-client-cache', () => {
 		expect(getCachedS3Client(config('secret-a', 'eu-west-1'))).not.toBe(a);
 	});
 
+	it('never shares a client built with its own request handler with one built without', () => {
+		const plain = getCachedS3Client(config());
+		const guarded = getCachedS3Client({ ...config(), requestHandler: { requestTimeout: 1000 } });
+		expect(guarded).not.toBe(plain);
+		expect(getCachedS3Client(config())).toBe(plain);
+	});
+
 	it('does not destroy an evicted client while a caller may still be using it', () => {
 		jest.useFakeTimers();
 		try {

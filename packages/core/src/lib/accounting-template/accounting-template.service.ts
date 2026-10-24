@@ -296,9 +296,12 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		// string arrives as 'true' / 'false', and a truthiness test would read 'false' as true.
 		const withDeleted = parseToBoolean(params?.withDeleted);
 
+		// The REST list route needs no `where`: a read without one answers every template the caller may see.
+		const where: FindOptionsWhere<AccountingTemplate> = params?.where ?? {};
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const { organizationId: mOrgId, languageCode: mLangCode } = params.where;
+				const { organizationId: mOrgId, languageCode: mLangCode } = where;
 				const mTenantId = RequestContext.currentTenantId();
 
 				// Build OR conditions for MikroORM
@@ -351,7 +354,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 				query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
 					qb.andWhere(
 						new Brackets((bck: WhereExpressionBuilder) => {
-							const { organizationId, languageCode } = params.where;
+							const { organizationId, languageCode } = where;
 							if (isNotEmpty(organizationId)) {
 								bck.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 									organizationId
@@ -369,7 +372,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 					);
 					qb.orWhere(
 						new Brackets((bck: WhereExpressionBuilder) => {
-							const { languageCode } = params.where;
+							const { languageCode } = where;
 							if (isNotEmpty(languageCode)) {
 								bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), { languageCode });
 							}

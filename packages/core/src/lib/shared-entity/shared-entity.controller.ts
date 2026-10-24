@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CommandBus } from "@nestjs/cqrs";
-import { DeleteResult } from "typeorm";
+import { DeleteResult, FindOptionsWhere } from "typeorm";
 import { Public } from "@gauzy/common";
 import { ID, IPagination } from "@gauzy/contracts";
 import { UseValidationPipe, UUIDValidationPipe } from "../shared/pipes";
@@ -38,7 +38,50 @@ export class SharedEntityController extends CrudController<SharedEntity> {
     @Get()
     @UseValidationPipe()
     async findAll(@Query() params: BaseQueryDTO<SharedEntity>): Promise<IPagination<SharedEntity>> {
-        return await this.sharedEntityService.findAll(params);
+        return this.withTokensForManager(await this.sharedEntityService.findAll(params));
+    }
+
+    /**
+     * The number of the tenant's shares.
+     *
+     * Restated from the CRUD base only so it is registered before `GET /:id` below: Nest registers this class's
+     * own routes before the inherited ones, so an inherited `GET /count` would be answered by `GET /:id`.
+     */
+    @ApiOperation({ summary: 'Get total record count' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Total record count retrieved successfully' })
+    @Get('count')
+    async getCount(@Query() options?: FindOptionsWhere<SharedEntity>): Promise<number> {
+        return await this.sharedEntityService.countBy(options);
+    }
+
+    /**
+     * The tenant's shares, a page at a time, each without its token unless the caller manages it.
+     *
+     * Overrides the inherited route only to drop the tokens: a share's token reads its record without signing
+     * in, so a member who is neither its author nor an organization administrator must not learn it.
+     */
+    @ApiOperation({ summary: 'Find shared entities by page' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Found shared entities', type: SharedEntity })
+    @Get('pagination')
+    @UseValidationPipe()
+    async pagination(@Query() params?: BaseQueryDTO<SharedEntity>): Promise<IPagination<SharedEntity>> {
+        return this.withTokensForManager(await this.sharedEntityService.paginate(params));
+    }
+
+    /**
+     * One share, without its token unless the caller manages it (see `pagination`).
+     */
+    @ApiOperation({ summary: 'Find a shared entity by id' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Found shared entity', type: SharedEntity })
+    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+    @Get(':id')
+    async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<SharedEntity> {
+        return this.sharedEntityService.withTokenForManager(await this.sharedEntityService.findOneByIdString(id));
+    }
+
+    /** A page of shares, each without its token unless the caller manages it. */
+    private withTokensForManager(page: IPagination<SharedEntity>): IPagination<SharedEntity> {
+        return { ...page, items: (page?.items ?? []).map((share) => this.sharedEntityService.withTokenForManager(share)) };
     }
 
     @ApiOperation({

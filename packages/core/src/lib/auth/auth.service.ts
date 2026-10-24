@@ -5,7 +5,8 @@ import {
 	OAuthAppTokenRequest,
 	OAuthAppTokenResponse,
 	OAuthAppConfig,
-	OAuthAppPendingRequest
+	OAuthAppPendingRequest,
+	SocialSignInAuthData
 } from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
@@ -75,6 +76,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { Employee } from '../employee/employee.entity';
 import { freshTimestamp, getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from './../core/utils';
@@ -87,8 +89,14 @@ import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../passwo
 import { TypeOrmPasswordResetRepository } from './../password-reset/repository/type-orm-password-reset.repository';
 import { MikroOrmPasswordResetRepository } from './../password-reset/repository/mikro-orm-password-reset.repository';
 import { RoleService } from './../role/role.service';
+import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
+import { signupRequiresEmailVerification } from './signup-email-verification';
+import {
+	SOCIAL_SIGNIN_UNCONFIRMED_ACCOUNT_MESSAGE,
+	socialSigninRequiresVerifiedAccount
+} from './social-signin-verified-account';
 import { SocialAccountService } from './social-account/social-account.service';
 import {
 	IVerifiedSocialIdentity,
@@ -536,6 +544,13 @@ export class AuthService extends SocialAuthService {
 						throw employeeError;
 					}
 				}
+				// `findOneByUserId` reads ACTIVE employee records only, so the check above never sees a
+				// deactivated employee: it reads as "no employee". Judge the account on all of its records,
+				// and skip a deactivated employee here so another account with these credentials can still
+				// be chosen (`getJwtAccessToken` would refuse this one anyway).
+				if (isEmployeeValid && (await this.isDeactivatedEmployeeUser(user.id))) {
+					isEmployeeValid = false;
+				}
 				// Only add to validations if both password and employee status are valid
 				if (isEmployeeValid) {
 					userValidations.push({ user, employee });
@@ -654,6 +669,45 @@ export class AuthService extends SocialAuthService {
 			// `findOneByOptions` throws when no membership exists.
 			return false;
 		}
+	}
+
+	/**
+	 * Whether the user is a deactivated employee, who cannot sign in: they have employee records and none
+	 * of them is active and unarchived (see `isDeactivatedEmployee`). A user with no employee record, and
+	 * an employee still active in another organization, is not one.
+	 *
+	 * Every record counts (inactive and archived ones, in every organization), so the rows are read
+	 * straight from the repository. `EmployeeService.findOneByUserId` cannot answer this: it reads active
+	 * records only, so a deactivated employee reads as "no employee", and it scopes to the request's tenant
+	 * and organization, which the public sign-in routes do not have.
+	 *
+	 * A failed lookup throws: the callers refuse the sign-in rather than let it through unjudged.
+	 *
+	 * @param userId The user to judge.
+	 * @returns True when the user has employee records and all of them are inactive or archived.
+	 */
+	private async isDeactivatedEmployeeUser(userId: ID): Promise<boolean> {
+		const options = {
+			where: { userId },
+			select: { id: true, isActive: true, isArchived: true }
+		};
+
+		let employees: Pick<Employee, 'isActive' | 'isArchived'>[];
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
+				employees = (await this.mikroOrmEmployeeRepository.find(where, mikroOptions)) as Employee[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+				employees = await this.typeOrmEmployeeRepository.find(options);
+				break;
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		return isDeactivatedEmployee(employees);
 	}
 
 	/**
@@ -867,10 +921,22 @@ export class AuthService extends SocialAuthService {
 		const socialAccount = await this.socialAccountService.findAccountByProvider({ provider, providerAccountId });
 
 		/** Fetching users matching the query */
-		const users = await this.findActiveUsersBySocialEmail(identity);
+		const activeUsers = await this.findActiveUsersBySocialEmail(identity);
+
+		// Owner decision 5: only an account that has confirmed the address itself matches. An unconfirmed one may
+		// have been registered by anyone (`POST /auth/register` takes any address), and signing the address's owner in
+		// to it put them in a workspace whose password someone else holds. Every match is listed: the caller shows
+		// the workspace picker, as after a password sign-in.
+		const users = socialSigninRequiresVerifiedAccount()
+			? activeUsers.filter((user: IUser) => !!user.emailVerifiedAt)
+			: activeUsers;
 
 		if (users.length === 0) {
-			throw new UnauthorizedException();
+			// Holding a provider token for the address, the caller owns it: telling them their account still has to
+			// confirm it reveals nothing they could not learn by signing in with the e-mail code.
+			throw new UnauthorizedException(
+				activeUsers.length > 0 ? SOCIAL_SIGNIN_UNCONFIRMED_ACCOUNT_MESSAGE : undefined
+			);
 		}
 
 		// First social sign-in: link the provider account to the users that own the verified email.
@@ -1406,6 +1472,23 @@ export class AuthService extends SocialAuthService {
 		// `isTrackingEnabled`.
 		const featureAsEmployee = !!input.featureAsEmployee && !input.inviteId;
 
+		// 1.2 A self-registration stays inactive until its e-mail link is clicked (owner decision 4).
+		//
+		// Self-registration = no invitation and no tenant: an admin creating a user always names the tenant
+		// (step 1), and every invite path names both the tenant and the invitation, which itself confirms the
+		// address (step 4). Nothing proves that whoever registers an address owns it, so the account cannot
+		// sign in (every sign-in path reads active users only) until `UserService.markEmailAsVerified`
+		// activates it from the confirmation link. Otherwise an account registered on somebody else's address
+		// became a working workspace under that address. This holds for a second account on an address that
+		// already has one, too. Only while the deployment verifies addresses at all: with
+		// FEATURE_EMAIL_VERIFICATION off nothing could ever activate the account (see
+		// signup-email-verification.ts for the operator switch).
+		const awaitsEmailConfirmation =
+			!input.inviteId &&
+			!tenant?.id &&
+			signupRequiresEmailVerification() &&
+			(await this.emailConfirmationService.isEmailVerificationEnabled());
+
 		// 2. Register new user
 		let user: User;
 
@@ -1414,7 +1497,8 @@ export class AuthService extends SocialAuthService {
 				const userEntity = this.mikroOrmUserRepository.create({
 					...input.user,
 					tenant,
-					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {})
+					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {}),
+					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				await this.mikroOrmUserRepository.persistAndFlush(userEntity);
 				user = this.serialize(userEntity);
@@ -1447,7 +1531,8 @@ export class AuthService extends SocialAuthService {
 				const entity = this.typeOrmUserRepository.create({
 					...input.user,
 					tenant,
-					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {})
+					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {}),
+					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				user = await this.typeOrmUserRepository.save(entity);
 
@@ -1647,41 +1732,86 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Resolves a sign-in through an identity provider (Google, GitHub, Microsoft, Twitter, Keycloak...) to Gauzy.
 	 *
-	 * @param emails
-	 * @returns
+	 * Owner decision 5: an account matches only when the provider reports the email verified AND the account has
+	 * confirmed that address itself (`UserService.findOAuthLoginUsers`). One match is signed in. Several are never
+	 * chosen between: the answer carries a one-time sign-in code instead, and `routeRedirect` takes the person to the
+	 * workspace picker the password sign-in shows. No match goes to the register page, as before.
+	 *
+	 * @param emails The addresses the provider returned, each with whether the provider verified it.
+	 * @returns Whether an account matched, with its token, or the workspace picker's sign-in code.
 	 */
 	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
 		success: boolean;
-		authData: { jwt: string; userId: string };
+		authData: SocialSignInAuthData;
 	}> {
-		let response = {
+		const response = {
 			success: false,
 			authData: { jwt: null, userId: null }
 		};
 		try {
+			const requireVerifiedAccount = socialSigninRequiresVerifiedAccount();
+
 			for (const { value, verified } of emails) {
 				// Skip unverified emails to prevent account takeover via unverified OAuth addresses
 				if (!verified) continue;
 
-				const userExist = await this.userService.checkIfExistsEmail(value);
-				if (userExist) {
-					const user = await this.userService.getOAuthLoginEmail(value);
+				const users = await this.userService.findOAuthLoginUsers(value, { requireVerifiedAccount });
+				if (users.length === 0) continue;
+
+				if (users.length === 1) {
+					const [user] = users;
 					const token = await this.getJwtAccessToken(user);
-
-					response = {
-						success: true,
-						authData: { jwt: token, userId: user.id }
-					};
-
-					// Break the loop and return the response
-					return response;
+					return { success: true, authData: { jwt: token, userId: user.id } };
 				}
+
+				// Several workspaces: the person picks one, exactly as after a password sign-in.
+				const code = await this.issueWorkspaceSigninCode(users);
+				return { success: true, authData: { jwt: null, userId: null, workspaces: { email: value, code } } };
 			}
 			return response;
 		} catch (err) {
+			// A refused account (a deactivated employee, say) is a 401, not a server error.
+			if (err instanceof UnauthorizedException) {
+				throw err;
+			}
 			throw new InternalServerErrorException('validateOAuthLoginEmail', err.message);
 		}
+	}
+
+	/**
+	 * Stores a new one-time workspace sign-in code on exactly these accounts, the code `POST /auth/signin.email/confirm`
+	 * (`signinWorkspacesByMagicCode`) exchanges for their workspace picker. It expires like the e-mailed code
+	 * (`MAGIC_CODE_EXPIRATION_TIME`), is claimed on first use, and its guesses count against the address there.
+	 *
+	 * @param users The accounts the picker offers; any other account with the address is left as it is.
+	 * @returns The code.
+	 */
+	private async issueWorkspaceSigninCode(users: IUser[]): Promise<string> {
+		const code = generateAlphaNumericCode();
+		const codeExpireAt = moment()
+			.add(environment.MAGIC_CODE_EXPIRATION_TIME || 600, 'seconds')
+			.toDate();
+		const ids = users.map((user: IUser) => user.id);
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmUserRepository.nativeUpdate(
+					{ id: { $in: ids }, isActive: true, isArchived: false },
+					{ code, codeExpireAt }
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmUserRepository.update(
+					{ id: In(ids), isActive: true, isArchived: false },
+					{ code, codeExpireAt }
+				);
+				break;
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+		return code;
 	}
 
 	/**
@@ -1781,6 +1911,16 @@ export class AuthService extends SocialAuthService {
 				}
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
+
+			// A deactivated employee (every employee record inactive or archived) gets no access token,
+			// whichever path asks for one: password login, workspace sign-in, token refresh, workspace or
+			// organization switch, provider sign-in, OAuth app code exchange. This is the one place they all
+			// mint through. The active record found above already proves the user is not one, so only a
+			// user without one (an admin, a viewer, or an employee active elsewhere) pays for the lookup.
+			if (!employee && (await this.isDeactivatedEmployeeUser(user.id))) {
+				this.logger.warn(`Access token refused: user ${user.id} is a deactivated employee`);
+				throw new UnauthorizedException();
 			}
 
 			// Create a payload for the JWT token
@@ -2622,6 +2762,30 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Whether the caller may reach the other accounts that share their e-mail address: only once the
+	 * address on their own account is confirmed.
+	 *
+	 * The workspace routes (`GET /auth/workspaces`, `POST /auth/switch-workspace`) find those accounts by
+	 * the caller's CURRENT address, and a user sets their own address through `PUT /user/:id` (an admin,
+	 * any user's of their tenant). The new address is stored unconfirmed — `emailVerifiedAt` is cleared
+	 * with it (UserService.moveToUnconfirmedAddress) — so without this check anyone could type another
+	 * person's address into a profile they control and be handed that person's accounts, in every tenant,
+	 * with their tokens. A confirmation is only recorded for an address its owner received mail at: the
+	 * confirmation link or code, or an accepted invitation.
+	 *
+	 * A magic sign-in code does not record one. It unlocks EVERY account that holds the address, including
+	 * one someone else created with it in a tenant they run (and holds the password of): counting the
+	 * owner's next sign-in as a confirmation of all of them would hand that account the owner's workspaces.
+	 * An unconfirmed caller still reaches them all by signing in with a code, which lists every workspace.
+	 *
+	 * @param user - The authenticated caller, as loaded for this request.
+	 * @returns Whether the caller's address is confirmed.
+	 */
+	private sharesProvenAddress(user: IUser): boolean {
+		return !!user?.emailVerifiedAt;
+	}
+
+	/**
 	 * Get all workspaces (tenants) that the current authenticated user has access to.
 	 *
 	 * @param includeTeams Flag indicating whether to include team information in the response.
@@ -2638,11 +2802,19 @@ export class AuthService extends SocialAuthService {
 
 			const email = currentUser.email;
 
-			// Find all users with the same email across different tenants using Multi-ORM pattern
+			// Find all users with the same email across different tenants using Multi-ORM pattern.
+			// Another account that shares the address is reached only by a caller who has proved they hold
+			// it (see sharesProvenAddress): until then, the caller's own account is the only workspace.
 			let users: User[];
 
 			const options = {
-				where: { email, isActive: true, isArchived: false, tenantId: Not(IsNull()) },
+				where: {
+					email,
+					isActive: true,
+					isArchived: false,
+					tenantId: Not(IsNull()),
+					...(this.sharesProvenAddress(currentUser) ? {} : { id: currentUser.id })
+				},
 				relations: { tenant: true },
 				order: { createdAt: 'DESC' as const }
 			};
@@ -2701,7 +2873,15 @@ export class AuthService extends SocialAuthService {
 			// Find the user in the target tenant using Multi-ORM pattern
 			let user: User;
 
-			const where = { email, tenantId, isActive: true, isArchived: false };
+			// Another account that shares the address is reached only by a caller who has proved they hold
+			// it (see sharesProvenAddress): until then, the caller can only switch to their own account.
+			const where = {
+				email,
+				tenantId,
+				isActive: true,
+				isArchived: false,
+				...(this.sharesProvenAddress(currentUser) ? {} : { id: currentUser.id })
+			};
 			const relations = { role: true, tenant: true };
 
 			switch (this.ormType) {
@@ -2874,8 +3054,12 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('User not found');
 			}
 
-			// Retrieve the employee details for the target organization
-			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
+			// Retrieve the employee details for the target organization. The token still names the organization being
+			// left, so the read is made outside the organization boundary; the membership checked above is what lets
+			// the caller reach the organization switched to.
+			const employee = await runOutsideOrganizationBoundary(() =>
+				this.employeeService.findOneByUserId(user.id, organizationId)
+			);
 
 			// Check if the employee is active and not archived (if employee exists)
 			if (employee && (!employee.isActive || employee.isArchived)) {

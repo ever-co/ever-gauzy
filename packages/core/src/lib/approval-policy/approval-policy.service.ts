@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { Like, Not, In } from 'typeorm';
 import {
 	IApprovalPolicy,
@@ -120,6 +120,10 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			approvalPolicy.approvalType = entity.name ? entity.name.replace(/\s+/g, '_').toUpperCase() : null;
 			return await this.save(approvalPolicy);
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (the 404 for an unknown policy) instead of flattening them to 400
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

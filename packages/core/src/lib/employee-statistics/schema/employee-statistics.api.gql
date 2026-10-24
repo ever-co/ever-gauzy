@@ -11,11 +11,13 @@
 # mirror. Where a client needs one figure it reads the field that answers it; where it needs the rows a
 # figure was computed from, those belong to the domains that store them.
 #
-# **Every field is under the tenant guard and no permission**, which is exactly what the controller
-# carries: `EmployeeStatisticsController` declares `TenantPermissionGuard` on the class and no
-# `@Permissions` anywhere, on the class or on a handler. The fields below therefore state no permission
-# at all — a resolver that demanded one would refuse a caller the REST route serves, and the four
-# routes are the same four capabilities.
+# **Every field is under the tenant guard and its route's permissions**, which is exactly what the
+# controller carries: `EmployeeStatisticsController` declares `TenantPermissionGuard` on the class, and
+# each route states `PermissionGuard` beside the pair of the dashboard tab that shows its figures —
+# `ADMIN_DASHBOARD_VIEW` or `ACCOUNTING_DASHBOARD` for the aggregate, `ADMIN_DASHBOARD_VIEW` or
+# `HUMAN_RESOURCE_DASHBOARD` for one employee's series, months and history (owner decision 2,
+# 2026-10-22). Each field states the same as its route, neither wider nor narrower, and the four routes
+# are the same four capabilities.
 #
 # **What each field mirrors, route for route:**
 #

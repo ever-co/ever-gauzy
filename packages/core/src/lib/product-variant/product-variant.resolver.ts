@@ -82,16 +82,15 @@ const PRODUCT_VARIANT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below reaches the same `ProductVariantService` and the same commands the
  * `/api/product-variants` routes reach.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered
+ * **The guard is the controller's guard, and no permission is stated above it.** The delivered read
  * routes carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would
- * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is
- * exactly what this delivery exists to prevent. Tightening the resource is a change to make in both
- * places at once, and it is not this delivery's to make.
+ * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is exactly
+ * what this delivery exists to prevent.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and
- * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or restore a
- * row (GHSA-v79w-54p2-wmh5) — so `softDeleteProductVariant` and `recoverProductVariant` state the same,
+ * **Except every write.** The controller states `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` on
+ * each of its write routes — overriding the inherited ones only to attach it, because the CRUD base
+ * declares no permission and `PermissionGuard` answers `true` to empty metadata, so any member of the
+ * tenant could write the inventory (GHSA-v79w-54p2-wmh5) — so every mutation below states the same,
  * neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
@@ -177,6 +176,8 @@ export class ProductVariantResolver {
 	 * own: a caller states which product, never which tenant or organization, so a variant cannot be
 	 * written into a scope the product it belongs to does not have.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('createProductVariants')
 	async createProductVariants(@Args('input') input: ICreateProductVariantsInput): Promise<IProductVariant[]> {
 		const product = await this.productService.findOneByIdString(input.productId);
@@ -196,6 +197,8 @@ export class ProductVariantResolver {
 	/**
 	 * Changes the descriptive facts of a variant.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('updateProductVariant')
 	async updateProductVariant(@Args('input') input: IUpdateProductVariantInput): Promise<IProductVariant> {
 		// The row is read before it is written, so a caller naming a variant that is not there is
@@ -211,6 +214,8 @@ export class ProductVariantResolver {
 	 * The same command the REST route dispatches, so the two surfaces remove the same three rows —
 	 * a variant is never left without the rows that make it priceable and sellable.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('deleteProductVariant')
 	async deleteProductVariant(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.commandBus.execute(new ProductVariantDeleteCommand(id));
@@ -253,6 +258,8 @@ export class ProductVariantResolver {
 	/**
 	 * Withdraws the variant's featured image.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('deleteProductVariantFeaturedImage')
 	async deleteProductVariantFeaturedImage(
 		@Args('variantId', { type: () => ID }) variantId: Id

@@ -15,6 +15,7 @@ import {
 } from '@gauzy/core';
 import { CouponRedeemedEvent } from '../events';
 import { Coupon } from './coupon.entity';
+import { Promotion } from '../promotion/promotion.entity';
 import { TypeOrmCouponRepository } from './repository/type-orm-coupon.repository';
 import { MikroOrmCouponRepository } from './repository/mikro-orm-coupon.repository';
 import {
@@ -103,6 +104,31 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 	}
 
 	/**
+	 * Refuses a promotion that is not the caller's. A coupon grants the promotion it names, and the id comes from the
+	 * request: the create, batch and update paths stored it as given, so a coupon could be filed against another
+	 * tenant's promotion — the platform's relation check (`TenantAwareCrudService`) does not run on this package's
+	 * `CrudService` base, and promotion actions already check their promotion this way. No promotion is fine: the code
+	 * is then not attached yet (`COUPON_NOT_LINKED`).
+	 *
+	 * @param promotionId The promotion the coupon names, if any.
+	 * @throws NotFoundException when it is not a promotion of the caller's tenant and organization.
+	 */
+	private async assertPromotionOwned(promotionId: ID | null | undefined): Promise<void> {
+		if (!promotionId) {
+			return;
+		}
+
+		const promotion = await this.typeOrmCouponRepository.manager.findOneBy(Promotion, {
+			id: promotionId,
+			...this.scope
+		} as never);
+
+		if (!promotion) {
+			throw new NotFoundException('PROMOTION_NOT_FOUND: no promotion with that identifier.');
+		}
+	}
+
+	/**
 	 * Creates one coupon.
 	 *
 	 * @param input The coupon to create.
@@ -131,6 +157,7 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 			tenantId?: ID;
 			organizationId?: ID;
 		};
+		await this.assertPromotionOwned(fields.promotionId);
 
 		return this.create({ ...fields, code, usageCount: 0, ...this.scope } as never);
 	}
@@ -174,6 +201,7 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 			tenantId?: ID;
 			organizationId?: ID;
 		};
+		await this.assertPromotionOwned(template.promotionId);
 
 		for (let index = 0; index < rows.length; index += BATCH_CHUNK) {
 			const chunk = rows.slice(index, index + BATCH_CHUNK).map((code) => ({
@@ -447,6 +475,7 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 		partialEntity: QueryDeepPartialEntity<Coupon>
 	): Promise<UpdateResult | Coupon> {
 		let patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+		await this.assertPromotionOwned(patch.promotionId as ID | undefined);
 
 		if (patch.usageCount !== undefined || patch.code !== undefined) {
 			const stored = typeof id === 'string' ? await this.findCouponOrFail(id) : null;

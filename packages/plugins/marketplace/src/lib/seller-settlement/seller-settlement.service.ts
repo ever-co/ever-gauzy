@@ -7,7 +7,7 @@ import {
 	IPagination,
 	SellerSettlementStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, compareDecimalStrings } from '@gauzy/core';
 import { SellerSettlement } from './seller-settlement.entity';
 import { MikroOrmSellerSettlementRepository } from './repository/mikro-orm-seller-settlement.repository';
 import { TypeOrmSellerSettlementRepository } from './repository/type-orm-seller-settlement.repository';
@@ -15,6 +15,7 @@ import { SellerTransaction } from '../seller-transaction/seller-transaction.enti
 import { TypeOrmSellerTransactionRepository } from '../seller-transaction/repository/type-orm-seller-transaction.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
 import { assertNoLifecycleMembers } from '../lifecycle-members';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /**
  * The members of a settlement only its own operations write, which an edit therefore refuses.
@@ -101,7 +102,7 @@ export function assertRecordedOpen(input: Partial<SellerSettlement>): void {
  * function reads, not a repair.
  */
 @Injectable()
-export class SellerSettlementService extends TenantAwareCrudService<SellerSettlement> {
+export class SellerSettlementService extends MarketplaceCrudService<SellerSettlement> {
 	constructor(
 		readonly typeOrmSellerSettlementRepository: TypeOrmSellerSettlementRepository,
 		readonly mikroOrmSellerSettlementRepository: MikroOrmSellerSettlementRepository,

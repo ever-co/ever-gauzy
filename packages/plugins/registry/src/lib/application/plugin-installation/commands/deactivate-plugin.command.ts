@@ -3,5 +3,8 @@ import { ICommand } from '@nestjs/cqrs';
 
 export class DeactivatePluginCommand implements ICommand {
 	public static readonly type = '[Plugin] Deactivate';
-	constructor(public readonly installationId: ID) {}
+	constructor(
+		public readonly pluginId: ID,
+		public readonly installationId: ID
+	) {}
 }

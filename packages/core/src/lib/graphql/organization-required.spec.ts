@@ -25,7 +25,7 @@ describe('GraphQL writes that require the organization their REST twin requires'
 			softRemovedById: jest.fn(async () => ({ id: 'e1' })),
 			softRecoverById: jest.fn(async () => ({ id: 'e1' }))
 		};
-		return { service, resolver: new EmployeeResolver(service as any, {} as any) };
+		return { service, resolver: new EmployeeResolver(service as any, {} as any, {} as any) };
 	};
 
 	it.each(['deleteEmployee', 'softDeleteEmployee', 'recoverEmployee'] as const)(

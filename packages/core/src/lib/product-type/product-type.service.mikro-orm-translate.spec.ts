@@ -165,7 +165,11 @@ async function readThroughBothOrms(): Promise<{ typeorm: IReads; mikroorm: IRead
 				]);
 
 				// The caller: a user of the tenant, as the tenant guard leaves the request context.
-				jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ tenantId: TENANT });
+				// The token names the organization of the rows read, as `JwtStrategy` attaches it.
+				jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+					tenantId: TENANT,
+					lastOrganizationId: ORGANIZATION
+				});
 				jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 				jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(null);
 				jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);

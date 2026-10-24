@@ -107,13 +107,13 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			case DocumentBulkActionEnum.ARCHIVE: {
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
-				await this.documentTreeService.archiveSubtree(document); // idempotent-success
+				await this.documentTreeService.archiveSubtree(document, this.readableIn(document)); // idempotent-success
 				return;
 			}
 			case DocumentBulkActionEnum.UNARCHIVE: {
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
-				await this.documentTreeService.unarchiveSubtree(document); // idempotent-success
+				await this.documentTreeService.unarchiveSubtree(document, this.readableIn(document)); // idempotent-success
 				return;
 			}
 			case DocumentBulkActionEnum.SET_CATEGORIES: {
@@ -144,14 +144,28 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
 				// `assertActionPayload` already rejected an omitted parentId, so this is an
-				// explicit target (a document id, or `null` meaning "the root").
+				// explicit target (a document id, or `null` meaning "the root"). A document id is
+				// read through the scope a create reads its parent through, and must be writable
+				// (see `MoveDocumentHandler`).
+				if (parentId) {
+					const parent = await this.documentService.findOneScoped(
+						parentId as ID,
+						[],
+						document.organizationId
+					);
+					await this.documentService.assertCanWrite(parent);
+				}
 				await this.documentTreeService.moveDocument(document, parentId as ID | null);
 				return;
 			}
 			case DocumentBulkActionEnum.DELETE: {
 				const document = await this.documentService.findOneScoped(id);
 				await this.documentService.assertCanWrite(document);
-				const deleted = await this.documentTreeService.deleteDocument(document, 'subtree');
+				const deleted = await this.documentTreeService.deleteDocument(
+					document,
+					'subtree',
+					this.readableIn(document)
+				);
 				this.documentService.emitDocumentEvent(deleted, 'deleted');
 				return;
 			}
@@ -176,6 +190,15 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			default:
 				throw new HttpException({ code: DOCS_BULK_ACTION_UNSUPPORTED }, 400);
 		}
+	}
+
+	/**
+	 * The read filter a subtree action hands the tree service, so it reaches only the documents the caller may read.
+	 * Bulk tree actions need `DOCS_MANAGE`, which reads every document of the organization today; the filter keeps the
+	 * cascade tied to the read rule rather than to that.
+	 */
+	private readableIn(document: { organizationId: ID }): (ids: ID[]) => Promise<ID[]> {
+		return (ids: ID[]) => this.documentService.filterReadableDocumentIds(ids, document.organizationId);
 	}
 
 	/**

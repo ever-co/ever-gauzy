@@ -1,6 +1,6 @@
 import { environment } from '../environments/environment';
 import { sanitizeForLogging } from './error-utils';
-import { getAuthKey } from './auth-context';
+import { getAuthKey, mayShareAutoLogin } from './auth-context';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('AuthManager');
@@ -162,9 +162,13 @@ export class AuthManager {
 		}
 
 		try {
+			// The configured credentials are the GAUZY_AUTO_LOGIN account of whoever runs the server. A keyed caller that
+			// may not share that account (one from another machine, see `isLocalCaller`) does not get it by logging in
+			// without credentials of its own either: `test_api_connection` logs in that way.
+			const useConfigured = authKey === undefined || mayShareAutoLogin();
 			const credentials = {
-				email: email || environment.auth.email,
-				password: password || environment.auth.password
+				email: email || (useConfigured ? environment.auth.email : undefined),
+				password: password || (useConfigured ? environment.auth.password : undefined)
 			};
 
 			if (!credentials.email || !credentials.password) {
@@ -484,14 +488,19 @@ export class AuthManager {
 
 	/**
 	 * Login state of the current caller. Without an auth key this is the process-wide login, as before.
-	 * A keyed caller with no login of its own falls back to the process-wide login only when it is the auto-login account.
+	 * A keyed caller with no login of its own falls back to the process-wide login only when it is the auto-login account,
+	 * and only when the transport found the caller on this machine (see `isLocalCaller`): anyone else who reaches the
+	 * port would otherwise act as that account without credentials.
 	 */
 	private resolveState(): IAuthState | null {
 		const authKey = getAuthKey();
 		if (authKey === undefined) {
 			return this.processState;
 		}
-		return this.keyedStates.get(authKey) ?? (this.isSharedAutoLoginIdentity() ? this.processState : null);
+		return (
+			this.keyedStates.get(authKey) ??
+			(this.isSharedAutoLoginIdentity() && mayShareAutoLogin() ? this.processState : null)
+		);
 	}
 
 	private currentTokenData(): ITokenData | null {

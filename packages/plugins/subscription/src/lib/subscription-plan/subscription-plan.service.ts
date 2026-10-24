@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import { Money, RequestContext, isUniqueViolation } from '@gauzy/core';
 import {
 	ISubscriptionCatalogPort,
 	ISubscriptionPlan,
@@ -15,6 +15,7 @@ import { SubscriptionPlan } from './subscription-plan.entity';
 import { MikroOrmSubscriptionPlanRepository } from './repository/mikro-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionPlanRepository } from './repository/type-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionRepository } from '../subscription/repository/type-orm-subscription.repository';
+import { SubscriptionCrudService } from '../subscription-crud.service';
 
 /** The statuses that count as a plan being in use. */
 const LIVE_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
@@ -40,7 +41,7 @@ const LIVE_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
  *   variant must not stop an agreement already paid for.
  */
 @Injectable()
-export class SubscriptionPlanService extends TenantAwareCrudService<SubscriptionPlan> {
+export class SubscriptionPlanService extends SubscriptionCrudService<SubscriptionPlan> {
 	constructor(
 		readonly typeOrmSubscriptionPlanRepository: TypeOrmSubscriptionPlanRepository,
 		readonly mikroOrmSubscriptionPlanRepository: MikroOrmSubscriptionPlanRepository,

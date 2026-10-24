@@ -17,12 +17,13 @@ import {
 } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { TENANT_ADMIN_ROLES } from '../core/crud/organization-boundary';
 import { EmployeeService } from '../employee/employee.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { RoleService } from '../role/role.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from '../organization-project/repository/type-orm-organization-project.repository';
-import { OrganizationTeam, UserOrganization } from '../core/entities/internal';
+import { Organization, OrganizationTeam, UserOrganization } from '../core/entities/internal';
 import { OrganizationStrategicInitiative } from './organization-strategic-initiative.entity';
 import { TypeOrmOrganizationStrategicInitiativeRepository } from './repository/type-orm-organization-strategic-initiative.repository';
 import { MikroOrmOrganizationStrategicInitiativeRepository } from './repository/mikro-orm-organization-strategic-initiative.repository';
@@ -548,8 +549,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	/**
 	 * Who reads, for the visibility rule.
 	 *
-	 * - `memberOf`: the organizations of the tenant the caller is a current member of (see
-	 *   `memberOrganizationIds`). Every read answers only initiatives of these organizations, whatever their scope:
+	 * - `memberOf`: the organizations of the tenant the caller reaches (see `memberOrganizationIds`): every one for a
+	 *   tenant admin, otherwise the organization of their token when they are a current member of it. Every read
+	 *   answers only initiatives of these organizations, whatever their scope:
 	 *   the CRUD base adds the tenant, not the organization, and the routes and GraphQL fields check permissions,
 	 *   not membership of the record's organization (#11050 review, CWE-863).
 	 * - `employeeId`: the caller's own employee. `RequestContext.currentEmployeeId()` is empty for a user who may
@@ -557,9 +559,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 *   own steward when the steward was an admin not on the team, and never counted an admin's team membership.
 	 * - `seesAllIn`: the organizations in which every initiative is visible to the caller. An organization admin
 	 *   who may edit initiatives (may act for every employee and holds `ORG_STRATEGIC_INITIATIVE_UPDATE`, as the
-	 *   default super admin and admin roles do) sees every initiative of the organizations they are a member of
-	 *   (a `user_organization` row, as `assertCurrentUserBelongsToOrganization` checks): they already edit them,
-	 *   and could not read what they edit. Never another organization of the tenant; empty for everybody else.
+	 *   default super admin and admin roles do) sees every initiative of the organizations in `memberOf`: they
+	 *   already edit them, and could not read what they edit. Never another organization of the tenant; empty for
+	 *   everybody else.
 	 *
 	 * @returns The caller's employee (or `null`), their organizations and those whose every initiative they see.
 	 */
@@ -588,6 +590,10 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	 * (`isActive = false`) or archived (`isArchived = true`); a row that states neither, as the column defaults
 	 * leave it, counts. None without a tenant or user in the request (fails closed).
 	 *
+	 * Within the organization boundary (owner decision, 2026-10-22): a tenant admin (`SUPER_ADMIN`, `ADMIN`) is
+	 * answered every organization of the tenant; anyone else only the organization of their token, when they are a
+	 * current member of it.
+	 *
 	 * @returns Their organization ids.
 	 */
 	private async memberOrganizationIds(): Promise<Set<ID>> {
@@ -597,8 +603,19 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 			return new Set();
 		}
 		try {
+			if (RequestContext.hasRoles([...TENANT_ADMIN_ROLES])) {
+				const organizations = await this.typeOrmRepository.manager.find(Organization, {
+					where: { tenantId },
+					select: { id: true }
+				});
+				return new Set(organizations.map((organization) => organization.id as ID).filter(Boolean));
+			}
+			const tokenOrganizationId = RequestContext.currentOrganizationId();
+			if (!tokenOrganizationId) {
+				return new Set();
+			}
 			const memberships = await this.typeOrmRepository.manager.find(UserOrganization, {
-				where: { tenantId, userId },
+				where: { tenantId, userId, organizationId: tokenOrganizationId },
 				select: { organizationId: true, isActive: true, isArchived: true }
 			});
 			return new Set(

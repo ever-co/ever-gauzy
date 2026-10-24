@@ -68,6 +68,11 @@ export class SearchService {
 	async indexStatus(entities?: string[]): Promise<ISearchIndexStatus[]> {
 		const scope = entities?.length ? entities.filter((entity) => this.permittedEntities({ entities: [entity] }).length > 0) : this.permittedEntities();
 
+		// Nothing the caller may view is nothing to report: `status` reads an empty list as "every registered entity".
+		if (scope.length === 0) {
+			return [];
+		}
+
 		return await this.reindexService.status(scope);
 	}
 

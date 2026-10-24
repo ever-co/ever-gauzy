@@ -97,6 +97,8 @@ describe('CachedValidatorContainer', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+		// The caller's token names their own organization, the only one the organization boundary lets a non-admin name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OWN_ORGANIZATION_ID);
 		findOneByOrFail.mockClear();
 	});
 
@@ -113,8 +115,9 @@ describe('CachedValidatorContainer', () => {
 		await expect(validate(payload(OWN_ORGANIZATION_ID))).resolves.toEqual([]);
 		const errors = await validate(payload(FOREIGN_ORGANIZATION_ID));
 		expect(errors.map((error) => error.property)).toEqual(['organizationId']);
-		// The verdicts came from the injected repository, i.e. from the Nest instance.
-		expect(findOneByOrFail).toHaveBeenCalledTimes(2);
+		// The own organization's verdict came from the injected repository, i.e. from the Nest instance. The foreign one
+		// is refused before any lookup: it is not the organization of the caller's token.
+		expect(findOneByOrFail).toHaveBeenCalledTimes(1);
 	});
 
 	it('asks Nest about each class once: no lookup, and so no thrown exception, after the first validation', async () => {

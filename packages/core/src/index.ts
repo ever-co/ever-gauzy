@@ -394,6 +394,11 @@ export * from './lib/auth/purpose-token';
 // plugin's sign-up requires exactly the documents the register form requires.
 export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
+// The per-account login failure counter, for the MCP OAuth server (apps/mcp-auth), which checks Gauzy
+// passwords against the same database and must give a guesser no more attempts than the API's login does.
+export { LoginAttemptModule } from './lib/auth/login-attempt.module';
+export { LoginAttemptService, LoginAttemptScope } from './lib/auth/login-attempt.service';
+export type { LoginAttempt, LoginAttemptRequest } from './lib/auth/login-attempt.service';
 export { TermsAcceptanceModule } from './lib/terms-acceptance/terms-acceptance.module';
 export { TermsAcceptanceService } from './lib/terms-acceptance/terms-acceptance.service';
 // The instance-wide counters of `GET /api/stats/global`, for the anonymous usage statistics plugin,

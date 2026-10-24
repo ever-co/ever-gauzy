@@ -21,6 +21,20 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	}
 
 	/**
+	 * Off for memberships: a membership is what grants an organization, so it is read across organizations by
+	 * design — the organization switcher lists the caller's memberships of every organization
+	 * (`GET /user-organization`, `userOrganizations`), switching checks the membership of the organization switched to
+	 * while the token still names the previous one, counting a user's memberships decides whether removing one removes
+	 * the user, and creating an organization adds its admins' memberships of it. The organization a request names is
+	 * still checked by `@IsOrganizationBelongsToUser()`.
+	 *
+	 * @returns False.
+	 */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
+
+	/**
 	 * Finds all user organizations based on the provided filter options.
 	 *
 	 * Every loaded `user` relation is handed back as a real `User` instance, whichever ORM loaded it
@@ -123,6 +137,14 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			return await this._addUserToAllOrganizations(user.id, user.tenantId);
 		}
 
+		/** An active membership already links the user to the organization: reuse it instead of adding a duplicate row */
+		const existing = await this.typeOrmUserOrganizationRepository.findOne({
+			where: { userId: user.id, organizationId, tenantId: user.tenantId, isActive: true }
+		});
+		if (existing) {
+			return existing;
+		}
+
 		const entity = new UserOrganization({
 			organizationId,
 			tenantId: user.tenantId,
@@ -137,7 +159,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	 *
 	 * @param userId The unique identifier of the user to be added to the organizations.
 	 * @param tenantId The unique identifier of the tenant whose organizations the user will be added to.
-	 * @returns A promise that resolves to an array of IUserOrganization, representing the user-organization relationships created.
+	 * @returns A promise that resolves to an array of IUserOrganization, representing the user's existing and newly created user-organization relationships.
 	 */
 	private async _addUserToAllOrganizations(userId: ID, tenantId: ID): Promise<IUserOrganization[]> {
 		/** Add user to all organizations in the tenant */
@@ -145,14 +167,23 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			where: { tenantId }
 		});
 
-		const entities = organizations.map(({ id: organizationId }: IOrganization) => {
-			const entity = new UserOrganization();
-			entity.organizationId = organizationId;
-			entity.tenantId = tenantId;
-			entity.userId = userId;
-			return entity;
+		/** Organizations the user is already an active member of are left as they are, so no duplicate row is added */
+		const memberships = await this.typeOrmUserOrganizationRepository.find({
+			where: { userId, tenantId, isActive: true }
 		});
+		const joined = new Set(memberships.map(({ organizationId }: IUserOrganization) => organizationId));
 
-		return await this.typeOrmUserOrganizationRepository.save(entities);
+		const entities = organizations
+			.filter(({ id }: IOrganization) => !joined.has(id))
+			.map(({ id: organizationId }: IOrganization) => {
+				const entity = new UserOrganization();
+				entity.organizationId = organizationId;
+				entity.tenantId = tenantId;
+				entity.userId = userId;
+				return entity;
+			});
+
+		const created = entities.length > 0 ? await this.typeOrmUserOrganizationRepository.save(entities) : [];
+		return [...memberships, ...created];
 	}
 }

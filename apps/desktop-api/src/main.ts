@@ -44,8 +44,9 @@ async function bootstrap(): Promise<void> {
     const port = environment.DESKTOP_API_DEFAULT_PORT;
 	console.log('Desktop API port: ' + port);
 
-    // Start the application and listen on the specified port.
-    await app.listen(port, () => {
+    // Start the application and listen on the specified port, on the loopback address only: its
+    // clients (the WakaTime plugin, the desktop app itself) run on this computer.
+    await app.listen(port, '127.0.0.1', () => {
         const successMessagePrefix = 'Listening at http';
         const message = `${successMessagePrefix}://localhost:${port}/${globalPrefix}`;
         Logger.log(message);

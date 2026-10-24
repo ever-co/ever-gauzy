@@ -217,10 +217,14 @@ export class StockTransferResolver {
 	 * transfers reached every subscriber and the `id` argument was read by nothing. It is now the
 	 * kernel's tenant-scoped stream, narrowed to the transfer the subscriber named.
 	 *
+	 * It states the grant the transfer reads state (`STOCK_TRANSFER_VIEW`). It used to inherit the class's
+	 * `STOCK_VIEW`, which EMPLOYEE holds, so a role refused `stockTransfers` received every transfer here.
+	 *
 	 * @param id The transfer the subscriber asked about, when it named one.
 	 * @returns The transfers that moved.
 	 */
 	@Subscription('stockTransferChanged', { resolve: deliverPayloadAsIs })
+	@Permissions(InventoryPermission.STOCK_TRANSFER_VIEW as PermissionsEnum)
 	stockTransferChanged(@Args('id') id: string): AsyncIterableIterator<StockTransfer> {
 		return tenantScopedEventStream<StockTransferChangedEvent, StockTransfer>(
 			this.eventBus.ofType(StockTransferChangedEvent),

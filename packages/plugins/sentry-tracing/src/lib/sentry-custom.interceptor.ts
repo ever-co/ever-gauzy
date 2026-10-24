@@ -2,7 +2,7 @@ import { CallHandler, ExecutionContext, HttpException } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { Observable, catchError, throwError } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
-import { SentryInterceptor } from './ntegral';
+import { SentryInterceptor, SentryInterceptorOptions } from './ntegral';
 
 /**
  * Whether the current tenant turned Sentry reporting off (`sentryEnabled` in its resolved settings), read the
@@ -18,24 +18,28 @@ export function isSentryReportingDisabledForRequest(): boolean {
 	}
 }
 
+/**
+ * The exceptions the interceptors do not report. Client errors (4xx: validation, not found, forbidden, a failed
+ * sign-in) are expected traffic, not defects, and would spend the Sentry quota (see `SentryService.captures`). Server
+ * errors (5xx) and non-HTTP errors are reported. This is also what the original `Handlers.errorHandler()` reported.
+ */
+export const SENTRY_INTERCEPTOR_OPTIONS: SentryInterceptorOptions = {
+	filters: [
+		{
+			type: HttpException,
+			filter: (e: HttpException) => e.getStatus() < 500
+		}
+		/* Later, if needed:
+		{
+			type: EntityNotFoundError
+		}
+		*/
+	]
+};
+
 export class SentryCustomInterceptor extends SentryInterceptor {
 	constructor() {
-		super({
-			filters: [
-				// Client errors (4xx: validation, not found, forbidden, a failed sign-in) are expected traffic, not
-				// defects, and would spend the Sentry quota (see `SentryService.captures`). Server errors (5xx) and
-				// non-HTTP errors are reported. This is also what the original `Handlers.errorHandler()` reported.
-				{
-					type: HttpException,
-					filter: (e: HttpException) => e.getStatus() < 500
-				}
-				/* Later, if needed:
-				{
-					type: EntityNotFoundError
-				}
-				*/
-			]
-		});
+		super(SENTRY_INTERCEPTOR_OPTIONS);
 	}
 
 	/**

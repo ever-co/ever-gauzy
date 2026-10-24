@@ -92,7 +92,7 @@
     </section>
 
     <!-- The newest imports, from the Import page's own history request. -->
-    <ng-container *ngxPermissionsOnly="[permissionsEnum.ALL_ORG_VIEW, permissionsEnum.IMPORT_ADD]">
+    <ng-container *ngxPermissionsOnly="[permissionsEnum.IMPORT_ADD]">
       @if (historyAvailable) {
         <section class="history-panel" aria-labelledby="import-history-title">
           <header class="history-header">

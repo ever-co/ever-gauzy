@@ -81,6 +81,7 @@ import {
 	createSettingsWindow,
 	createTimeTrackerWindow,
 	ScreenCaptureNotification,
+	installNavigationGuard,
 	setLaunchPathAndLoad,
 	SplashScreen
 } from '@gauzy/desktop-window';
@@ -819,6 +820,10 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 	}
 }
+
+// A window with Node or a preload follows no link out of its own pages (a task description's link loaded the
+// linked page with Node); the configured API stays reachable, where the social sign-in links start.
+installNavigationGuard({ trustedUrls: () => [getApiBaseUrl(LocalStore.getStore('configs') || {})] });
 
 app.on('web-contents-created', (event, contents) => {
 	contents.on('will-redirect', async (event, url) => {

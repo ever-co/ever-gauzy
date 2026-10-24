@@ -958,16 +958,36 @@ describe('EquipmentSharingResolver — the guard stack and the permission are th
 	});
 
 	it('states no permission on the fields whose routes state none, because that absence is the parity', () => {
-		// The node read and the count are inherited from the CRUD base, and the hard removal is declared on
-		// the controller without a permission. Widening any of them here — or restating the same absence as
-		// an empty `@Permissions()` — would be a second statement of a scope the controller already decided.
-		for (const handler of ['findById', 'getCount', 'delete']) {
+		// The node read and the count are inherited from the CRUD base without a permission. Widening
+		// either of them here — or restating the same absence as an empty `@Permissions()` — would be a
+		// second statement of a scope the controller already decided.
+		for (const handler of ['findById', 'getCount']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EquipmentSharingController)[handler])).toBeUndefined();
 		}
 
-		for (const field of ['equipmentSharing', 'equipmentSharingCount', 'deleteEquipmentSharing']) {
+		for (const field of ['equipmentSharing', 'equipmentSharingCount']) {
 			expect(permissionOfField(field)).toBeUndefined();
 		}
+	});
+
+	it('gates the hard removal with the update grants on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
+		// The removal was inherited from the CRUD base with no permission, and `PermissionGuard` answers
+		// `true` to empty metadata, so any member of the tenant could remove anyone's sharing. The controller
+		// overrides it to state the grants its update, approve and refuse routes state, and the field states
+		// the same.
+		const grants = [PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT];
+
+		expect(permissionOfRoute(EquipmentSharingController, 'delete')).toEqual(grants);
+		expect(permissionOfField('deleteEquipmentSharing')).toEqual(grants);
+	});
+
+	it('gates the raw create the CRUD base maps with the update grants, beside the request route (GHSA-v79w-54p2-wmh5)', () => {
+		// `POST /equipment-sharing` stores the body as it is — any status, and no approval row beside it —
+		// so it is no request route: only a caller who may decide a sharing reaches it. It has no field.
+		expect(permissionOfRoute(EquipmentSharingController, 'create')).toEqual([
+			PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT
+		]);
 	});
 
 	it('gates the retire-and-restore pair with the update grants on both surfaces (GHSA-v79w-54p2-wmh5)', () => {

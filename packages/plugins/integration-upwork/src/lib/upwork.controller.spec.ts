@@ -916,3 +916,43 @@ describe('UpworkController — GHSA-3rqg-gpm9-gx84 credential exposure', () => {
 		});
 	});
 });
+
+/**
+ * The report range was re-parsed from `format('YYYY-MM-DD hh:mm:ss')`, a 12-hour clock without a meridiem:
+ * midnight became noon and 23:59:59 became 11:59:59, so the first half of the first day and the second half of
+ * the last day fell out of the synced incomes and expenses.
+ */
+describe('UpworkService.getReportListByIntegration — date range', () => {
+	const start = new Date(2024, 2, 1, 0, 0, 0);
+	const end = new Date(2024, 2, 31, 23, 59, 59);
+
+	const setup = () => {
+		const findAll = () => jest.fn(async () => ({ items: [], total: 0 }));
+		const stub: any = {
+			_resolveScope: jest.fn(async () => ({ organizationId: ORGANIZATION_ID, tenantId: CURRENT_TENANT_ID })),
+			_integrationMapService: {
+				findAll: jest.fn(async () => ({ items: [{ gauzyId: 'income-1' }], total: 1 }))
+			},
+			_incomeService: { findAll: findAll() },
+			_expenseService: { findAll: findAll() }
+		};
+		return stub;
+	};
+
+	it('keeps the whole first and last day, on a 24-hour clock', async () => {
+		const stub = setup();
+
+		await UpworkService.prototype.getReportListByIntegration.call(
+			stub,
+			INTEGRATION_ID,
+			{ organizationId: ORGANIZATION_ID, dateRange: { start, end } },
+			{ income: [], expense: [] }
+		);
+
+		for (const service of [stub._incomeService, stub._expenseService]) {
+			const [from, to] = service.findAll.mock.calls[0][0].where.valueDate.value;
+			expect(from).toEqual(start);
+			expect(to).toEqual(end);
+		}
+	});
+});

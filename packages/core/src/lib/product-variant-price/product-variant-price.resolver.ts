@@ -80,17 +80,16 @@ const PRODUCT_VARIANT_PRICE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below calls the same `ProductVariantPriceService` the
  * `/api/product-variant-price` routes call.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered routes
- * carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would refuse
- * here a caller the REST route serves — two surfaces of one concept with two scopes is exactly what
- * this delivery exists to prevent. Tightening the resource is a change to make in both places at once,
- * and it is not this delivery's to make.
+ * **The guard is the controller's guard, and no permission is stated above it.** The delivered read
+ * routes carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would
+ * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is exactly
+ * what this delivery exists to prevent.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and
- * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or restore a
- * row (GHSA-v79w-54p2-wmh5) — so `softDeleteProductVariantPrice` and `recoverProductVariantPrice` state the
- * same, neither wider nor narrower than REST.
+ * **Except every write.** The controller states `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` on
+ * each of its write routes — overriding the inherited ones only to attach it, because the CRUD base
+ * declares no permission and `PermissionGuard` answers `true` to empty metadata, so any member of the
+ * tenant could write the inventory (GHSA-v79w-54p2-wmh5) — so every mutation below states the same,
+ * neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -172,6 +171,8 @@ export class ProductVariantPriceResolver {
 	 * a caller states the amount and the currency it is expressed in and never the scope it is written
 	 * into.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('createProductVariantPrice')
 	async createProductVariantPrice(
 		@Args('input') input: ICreateProductVariantPriceInput
@@ -191,6 +192,8 @@ export class ProductVariantPriceResolver {
 	 * answers the store's own update result — a statement about the write, `{ affected }` — which is not
 	 * a row and not what a GraphQL field named `updateProductVariantPrice` may return.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('updateProductVariantPrice')
 	async updateProductVariantPrice(
 		@Args('input') input: IUpdateProductVariantPriceInput
@@ -211,6 +214,8 @@ export class ProductVariantPriceResolver {
 	 * The delivered service refuses a row that is not there with the same `404` the REST route answers
 	 * with, so a caller that names one is told it is missing rather than that the removal succeeded.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('deleteProductVariantPrice')
 	async deleteProductVariantPrice(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.productVariantPriceService.delete(id));

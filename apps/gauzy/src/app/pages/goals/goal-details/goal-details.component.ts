@@ -3,7 +3,7 @@ import { FormControl } from '@angular/forms';
 import { BaseEntityEnum, IComment, ID, IGoal, IKeyResult, IKeyResultUpdate, PermissionsEnum } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
-import { CommentService, EmployeesService, GoalService, KeyResultService, Store } from '@gauzy/ui-core/core';
+import { CommentService, EmployeesService, GoalService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-core/core';
@@ -56,7 +56,6 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		private readonly dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private readonly employeeService: EmployeesService,
 		private readonly dialogService: NbDialogService,
-		private readonly keyResultService: KeyResultService,
 		private readonly goalService: GoalService,
 		private readonly commentService: CommentService,
 		private readonly store: Store,
@@ -393,10 +392,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent implements On
 		});
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
-			const keyResultData = response;
-			delete keyResultData.goal;
-			delete keyResultData.updates;
-			await this.keyResultService.update(selectedKeyResult.id, keyResultData);
+			// The dialog filed the update and the server applied it to the key result and this goal; only the
+			// progress shown here is brought up to date (`PUT /key-results/:id` needs `GOALS_EDIT`).
 			this.goal.progress = this.calculateGoalProgress(this.goal.keyResults);
 		}
 	}

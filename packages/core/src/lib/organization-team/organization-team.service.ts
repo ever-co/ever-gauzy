@@ -239,6 +239,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
+			// `isManager` lets a manager act for the team's members (their daily plans and time logs, through
+			// ManagedEmployeeService). Only a caller who may already act for every employee hands that on. An
+			// employee, who picks the members of a team they create and is made its manager above, keeps the
+			// MANAGER role without the flag, as before.
+			const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 			// Use destructuring to directly extract 'id' from 'employee'
 			const members = employees.map(
 				({ id: employeeId }) =>
@@ -246,6 +252,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						employee: { id: employeeId },
 						organization: { id: organizationId },
 						tenant: { id: tenantId },
+						isManager: flagsManagers && managerIdsSet.has(employeeId),
 						role: managerIdsSet.has(employeeId) ? managerRole : null
 					})
 			);
@@ -317,25 +324,28 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			where: { organizationId, tenantId }
 		});
 
-		// Check permission for CHANGE_SELECTED_EMPLOYEE
+		// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team, which needs an
+		// employee identity. A caller without one is refused, as deleteTeam refuses it: skipping the check
+		// let any user holding ORG_TEAM_EDIT (the default EMPLOYEE role does) with no employee record
+		// rewrite any team of the tenant, its members and managers included.
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				const employeeId = RequestContext.currentEmployeeId();
-				// If employee ID is present, restrict update to manager role
-				if (employeeId) {
-					organizationTeam = await super.findOneByIdString(id, {
-						where: {
-							organizationId,
-							tenantId,
-							members: {
-								employeeId,
-								tenantId,
-								organizationId,
-								role: { name: RolesEnum.MANAGER }
-							}
-						}
-					});
+				if (!employeeId) {
+					throw new ForbiddenException();
 				}
+				organizationTeam = await super.findOneByIdString(id, {
+					where: {
+						organizationId,
+						tenantId,
+						members: {
+							employeeId,
+							tenantId,
+							organizationId,
+							role: { name: RolesEnum.MANAGER }
+						}
+					}
+				});
 			} catch (error) {
 				throw new ForbiddenException();
 			}

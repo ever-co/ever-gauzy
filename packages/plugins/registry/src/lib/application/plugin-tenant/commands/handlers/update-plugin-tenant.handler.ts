@@ -3,6 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginTenantService } from '../../../../domain';
 import { IPluginTenant } from '../../../../shared';
 import { UpdatePluginTenantCommand } from '../update-plugin-tenant.command';
+import { assertMayChangeAccessFlags } from '../../plugin-tenant-access-flags';
 
 @CommandHandler(UpdatePluginTenantCommand)
 export class UpdatePluginTenantCommandHandler implements ICommandHandler<UpdatePluginTenantCommand> {
@@ -29,6 +30,9 @@ export class UpdatePluginTenantCommandHandler implements ICommandHandler<UpdateP
 		if (!existing) {
 			throw new NotFoundException(`Plugin tenant with ID "${id}" not found`);
 		}
+
+		// Turning it on or off, or changing who must approve it, needs the grant of the flag's own route
+		assertMayChangeAccessFlags(input, existing);
 
 		// Update the plugin tenant
 		await this.pluginTenantService.update(id, {

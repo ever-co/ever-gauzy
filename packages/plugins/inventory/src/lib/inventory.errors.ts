@@ -4,7 +4,7 @@
  * Every refusal names a machine code, so a caller can branch on it without parsing a message and a
  * test can assert the exact refusal instead of a substring.
  */
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 
 /** Machine-readable refusal codes of the inventory domain. */
 export const InventoryErrorCode = {
@@ -25,6 +25,7 @@ export const InventoryErrorCode = {
 	TRANSFER_SAME_LOCATION: 'STOCK_TRANSFER_SAME_LOCATION',
 	TRANSFER_ILLEGAL_TRANSITION: 'STOCK_TRANSFER_ILLEGAL_TRANSITION',
 	TRANSFER_OVER_RECEIPT: 'STOCK_TRANSFER_OVER_RECEIPT',
+	TRANSFER_REROUTE_NEEDS_APPROVAL: 'STOCK_TRANSFER_REROUTE_NEEDS_APPROVAL',
 	ADJUSTMENT_ALREADY_APPLIED: 'STOCK_ADJUSTMENT_ALREADY_APPLIED',
 	ADJUSTMENT_BELOW_RESERVED: 'STOCK_ADJUSTMENT_BELOW_RESERVED',
 	ADJUSTMENT_REASON_REQUIRED: 'STOCK_ADJUSTMENT_REASON_REQUIRED',
@@ -58,11 +59,14 @@ export interface IInventoryErrorDetails {
 export function inventoryError(
 	code: InventoryErrorCode,
 	message: string,
-	options: { details?: IInventoryErrorDetails; badRequest?: boolean; notFound?: boolean } = {}
-): BadRequestException | ConflictException | NotFoundException {
+	options: { details?: IInventoryErrorDetails; badRequest?: boolean; notFound?: boolean; forbidden?: boolean } = {}
+): BadRequestException | ConflictException | NotFoundException | ForbiddenException {
 	const payload = { code, message, ...(options.details ? { details: options.details } : {}) };
 	if (options.notFound) {
 		return new NotFoundException(payload);
+	}
+	if (options.forbidden) {
+		return new ForbiddenException(payload);
 	}
 	if (options.badRequest) {
 		return new BadRequestException(payload);

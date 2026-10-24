@@ -20,7 +20,8 @@ import {
 	In,
 	UpdateResult,
 	DeleteResult,
-	MoreThan
+	MoreThan,
+	IsNull
 } from 'typeorm';
 import { EventBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
@@ -45,6 +46,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { liftEmployeeAgentRestrictions } from '../employee/agent-exit-logout-restriction';
@@ -264,6 +266,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async markEmailAsVerified(id: ID, email?: string): Promise<boolean> {
 		const where = email === undefined ? { id } : { id, email };
+
+		// A self-registration waits inactive for exactly this confirmation (owner decision 4, see
+		// `AuthService.register`): the confirmed address activates it. Only that state matches: inactive, no
+		// tenant yet and never confirmed. An account an admin deactivated belongs to a tenant, so confirming
+		// an address never re-activates it. Done before the confirmation is recorded, so a failure here
+		// leaves the link usable for another try instead of a confirmed account that can never sign in.
+		await this.activatePendingSignup(where);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return (
@@ -283,6 +293,34 @@ export class UserService extends TenantAwareCrudService<User> {
 				});
 				// Same reading as storeEmailVerificationCode: only a reported 0 means nothing was written.
 				return affected !== 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Activates a self-registration that is waiting for its e-mail confirmation: an account that is
+	 * inactive, has no tenant yet and has never confirmed its address. Any other account is left as it is.
+	 *
+	 * @param where The account (`id`, and the confirmed `email` when known).
+	 * @returns Whether an account was activated.
+	 */
+	private async activatePendingSignup(where: { id: ID; email?: string }): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (
+					(await this.mikroOrmRepository.nativeUpdate(
+						{ ...where, isActive: false, tenantId: null, emailVerifiedAt: null } as any,
+						{ isActive: true }
+					)) > 0
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmRepository.update(
+					{ ...where, isActive: false, tenantId: IsNull(), emailVerifiedAt: IsNull() },
+					{ isActive: true }
+				);
+				return !!affected;
 			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -346,24 +384,61 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * GET user by email using social logins
+	 * The account a sign-in through an identity provider (Google, GitHub, Keycloak…) resolves a verified email to.
 	 *
-	 * @param email
-	 * @returns
+	 * A row nobody has proven is never chosen: one with no tenant and no verified email is a self-registration that
+	 * never got past `POST /auth/register`, which takes any address without proof of owning it. Matching it handed
+	 * the session of the address's real owner, on their first sign-in through the provider, to whoever had
+	 * registered the address first with a password of their own, and with it the workspace the owner then created.
+	 * When several rows carry the email, a verified one is chosen before an unverified one.
+	 *
+	 * Only active, non-archived rows are considered: `getJwtAccessToken` refuses any other, so preferring a verified
+	 * but deactivated row over an active one would turn the sign-in into an error instead of signing in the account
+	 * that is still allowed in.
+	 *
+	 * @param email The email the identity provider vouches for.
+	 * @returns The account, or null when no proven, active account carries the email.
+	 * @deprecated The provider sign-in uses {@link findOAuthLoginUsers} (owner decision 5): it matches only accounts
+	 * whose own address is confirmed, and offers the workspace picker when there are several.
 	 */
-	async getOAuthLoginEmail(email: string): Promise<IUser> {
-		try {
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.findOneOrFail({ email } as any);
-				case MultiORMEnum.TypeORM:
-					return await this.typeOrmRepository.findOneByOrFail({ email });
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
-		} catch (error) {
-			throw new NotFoundException(`The requested record was not found`);
+	async findOAuthLoginUser(email: string): Promise<IUser | null> {
+		const rows: IUser[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.find({ email, ...ACTIVE_ACCOUNT } as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where: { email, ...ACTIVE_ACCOUNT } });
+		const proven = rows.filter((row) => !!row.tenantId || !!row.emailVerifiedAt);
+
+		return proven.find((row) => !!row.emailVerifiedAt) ?? proven[0] ?? null;
+	}
+
+	/**
+	 * The accounts a sign-in through an identity provider (Google, GitHub, Keycloak…) may resolve a provider-verified
+	 * email to: the active accounts with that address that have confirmed it themselves (owner decision 5).
+	 *
+	 * An unconfirmed account carrying the address may have been registered by anyone, since `POST /auth/register`
+	 * takes any address without proof, or set by an admin of another tenant. Matching it signed the address's owner
+	 * in to a workspace whose password someone else holds. Every match is returned: when there are several, the
+	 * caller offers the workspace picker rather than choosing one.
+	 *
+	 * @param email The email the identity provider vouches for, as the provider wrote it.
+	 * @param options.requireVerifiedAccount `false` (the `SOCIAL_SIGNIN_REQUIRE_VERIFIED_ACCOUNT=false` switch) also
+	 * accepts an unconfirmed account that belongs to a tenant, as {@link findOAuthLoginUser} did.
+	 * @returns The matching accounts; empty when none.
+	 */
+	async findOAuthLoginUsers(email: string, { requireVerifiedAccount = true } = {}): Promise<IUser[]> {
+		// An absent email would be dropped from the `where` and match every user.
+		if (!email) {
+			return [];
 		}
+		const where = { email, isActive: true, isArchived: false };
+		const rows: IUser[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.find(where as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where });
+
+		return rows.filter((row) =>
+			requireVerifiedAccount ? !!row.emailVerifiedAt : !!row.emailVerifiedAt || !!row.tenantId
+		);
 	}
 
 	/**
@@ -729,11 +804,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			return;
 		}
 		try {
-			await liftEmployeeAgentRestrictions(
-				this._employeeService,
-				this._activityLogService,
-				{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
-				`the worker's time zone moved into the EEA/UK (${timeZone})`
+			// Every employee record of the worker, in every organization: the right to exit and log out follows the
+			// worker, not the organization of the token the profile was saved with.
+			await runOutsideOrganizationBoundary(() =>
+				liftEmployeeAgentRestrictions(
+					this._employeeService,
+					this._activityLogService,
+					{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
+					`the worker's time zone moved into the EEA/UK (${timeZone})`
+				)
 			);
 		} catch (error) {
 			new Logger(UserService.name).error(

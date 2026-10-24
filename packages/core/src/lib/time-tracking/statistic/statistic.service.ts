@@ -2717,7 +2717,10 @@ export class StatisticService {
 					.leftJoin('user', function () {
 						this.on('employee.userId', 'user.id').andOnNull('user.deletedAt');
 					})
-					.select([
+					// DISTINCT: the slot joins give one row per time slot, so without it a log with several
+					// slots filled the top 5 with copies of itself. Every selected column is per log, and the
+					// ORDER BY column (`time_log.startedAt`) is in the list, as DISTINCT requires.
+					.distinct([
 						'time_log.id as id',
 						'time_log.startedAt as startedAt',
 						'time_log.duration as duration',
