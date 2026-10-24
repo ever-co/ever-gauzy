@@ -268,7 +268,7 @@ describe('UserOrganizationService writes keep a confined caller inside their org
 			expect(created).toHaveBeenCalledWith({ userId: USER, organizationId: SIBLING });
 		});
 
-		it('lets a flow that crosses organizations by design add the membership (creating an organization)', async () => {
+		it('lets a flow that crosses organizations by design add it (creating an organization)', async () => {
 			// What OrganizationCreateHandler does for the admins of the organization it has just created.
 			await runOutsideOrganizationBoundary(() =>
 				service.create({ organization: { id: SIBLING }, user: { id: USER } } as any)

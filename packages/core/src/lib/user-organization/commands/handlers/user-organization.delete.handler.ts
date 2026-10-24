@@ -40,8 +40,8 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 		});
 
 		// Owner decision 1: a caller confined to the organization of their token removes only a membership of that
-		// organization. Removing someone's membership elsewhere — or, when it is their last one, their account — is a
-		// tenant admin's. A membership outside the boundary is answered as one that does not exist.
+		// organization. Removing someone's membership elsewhere (or, when it is their last one, their account) is
+		// a tenant admin's. A membership outside the boundary is answered as one that does not exist.
 		if (!this._userOrganizationService.isMembershipWithinBoundary(membership)) {
 			throw new NotFoundException('The requested record was not found');
 		}
