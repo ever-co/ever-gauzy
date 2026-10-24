@@ -501,8 +501,17 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
+
+		/**
+		 * Invited by the user, read with the role as stored: the role `createBulk` ranks an inviter by.
+		 */
+		const invitedByUserId = RequestContext.currentUserId();
+		const invitedByUser: IUser = await this.userService.findOneByIdString(invitedByUserId, {
+			relations: { role: true }
+		});
+
 		// A resend mints a new token for the invitation's role: only a caller who may issue that role resends it.
-		if (!mayIssueInviteRole(RequestContext.currentRoleName(), invite.role?.name)) {
+		if (!mayIssueInviteRole(invitedByUser?.role?.name, invite.role?.name)) {
 			throw new ForbiddenException('You cannot resend an invitation for this role.');
 		}
 
@@ -512,12 +521,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const role: IRole = invite.role;
 		const email: IInvite['email'] = invite.email;
 		const teams: IOrganizationTeam[] = invite.teams;
-
-		/**
-		 * Invited by the user.
-		 */
-		const invitedByUserId = RequestContext.currentUserId();
-		const invitedByUser: IUser = await this.userService.findOneByIdString(invitedByUserId);
 
 		try {
 			const { code, token } = this.generateInviteCodeAndToken(email);
@@ -923,8 +926,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				where: buildWhereConditions()
 			});
 			// The register is readable with the permissions every employee holds; the accept-invite token is not.
+			// The caller is ranked by the role stored for them, as `createBulk` ranks an inviter.
 			await withholdTokensNotIssuable(invites.items, {
-				callerRole: RequestContext.currentRoleName(),
+				findCallerRole: () => this.findCurrentUserRoleName(),
 				mayIssueInvites: RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT),
 				findRoles: (ids: ID[]) => this.roleService.find({ where: { id: In(ids) } })
 			});
@@ -932,6 +936,21 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * The role the signed-in user holds as stored, which is what `createBulk` ranks an inviter by: the role cached with
+	 * the session can lag behind a role change.
+	 *
+	 * @returns The role name, or undefined when there is no signed-in user or they hold no role.
+	 */
+	private async findCurrentUserRoleName(): Promise<string | undefined> {
+		const userId = RequestContext.currentUserId();
+		if (!userId) {
+			return undefined;
+		}
+		const user: IUser = await this.userService.findOneByIdString(userId, { relations: { role: true } });
+		return user?.role?.name;
 	}
 
 	/**
