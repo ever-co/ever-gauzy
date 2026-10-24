@@ -2,7 +2,11 @@ import { BrowserWindow } from 'electron';
 import { ServerTask } from './server-task';
 import { redactSecretsForLog } from '../../config/desktop-secrets';
 import { resolveDesktopListenHost, toDesktopClientUrl } from '../../config/desktop-listen-host';
-import { parsePublishedPasswordAccounts, reportsDesktopSeedStarted } from '../../config/desktop-seed-credentials';
+import {
+	parseDesktopSeedAccountEmails,
+	parsePublishedPasswordAccounts,
+	reportsDesktopSeedStarted
+} from '../../config/desktop-seed-credentials';
 import { DesktopSignInNotices } from '../../desktop-sign-in-notices';
 
 /** How much recent output is searched for the API's reports, so a line split across chunks is still found. */
@@ -113,8 +117,13 @@ export class ApiService extends ServerTask {
 
 		if (!this.seedReported && reportsDesktopSeedStarted(this.outputTail)) {
 			this.seedReported = true;
-			// The child process's environment: the app's own, overridden by what was passed to it.
-			DesktopSignInNotices.recordSeed({ ...process.env, ...this.args });
+			// The child process's environment: the app's own, overridden by what was passed to it. The
+			// accounts' emails come from the line the API prints just before the seed starts, so that line
+			// is already in the tail.
+			DesktopSignInNotices.recordSeed(
+				{ ...process.env, ...this.args },
+				parseDesktopSeedAccountEmails(this.outputTail)
+			);
 		}
 
 		if (!this.publishedPasswordsReported) {
