@@ -33,14 +33,31 @@ ENV NODE_ENV=development
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python
 
-RUN apk --update add bash && npm i -g npm@9 \
+# Global npm installs (here and in every later stage that has one) go through the internal
+# Verdaccio cache when VERDACCIO_REGISTRY is set and its /-/ping answers - the same probe as the
+# yarn install further down - and through the public npm registry otherwise, exactly as before
+# (forks, external runners, builds without the build-arg). These are public packages Verdaccio
+# proxies, so no token is involved and nothing secret reaches a layer. The fetch-retry flags make
+# a transient ETIMEDOUT on a saturated WAN retry instead of failing the image. In each such RUN,
+# "$@" holds those flags plus `--registry <cache>` when the probe succeeded.
+ARG VERDACCIO_REGISTRY=""
+
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    apk --update add bash && npm i -g npm@9 "$@" \
     && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
     snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install --quiet node-gyp@10.2.0 -g "$@" && npm install yarn -g --force "$@" && npm install --quiet ts-node@10.9.2 -g "$@"
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -180,14 +197,26 @@ ARG NODE_ENV
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python
 
-RUN apk --update add bash && npm i -g npm@9 \
+# Global npm installs: internal Verdaccio cache when reachable + fetch retries (see the
+# dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    apk --update add bash && npm i -g npm@9 "$@" \
     && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
     snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install --quiet node-gyp@10.2.0 -g "$@" && npm install yarn -g --force "$@" && npm install --quiet ts-node@10.9.2 -g "$@"
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
@@ -322,7 +351,13 @@ FROM node:26.12.1-alpine3.24 AS development
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
-RUN npm install -g yarn@1.22.22
+# Internal Verdaccio cache when reachable + fetch retries (see the dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install -g yarn@1.22.22 "$@"
 
 USER node:node
 
@@ -336,7 +371,13 @@ FROM node:26.12.1-alpine3.24 AS build
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
-RUN npm install -g yarn@1.22.22
+# Internal Verdaccio cache when reachable + fetch retries (see the dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install -g yarn@1.22.22 "$@"
 
 WORKDIR /srv/gauzy
 
