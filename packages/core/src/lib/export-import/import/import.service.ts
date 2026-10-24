@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Raw, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
@@ -100,6 +100,15 @@ const ROLE_HOLDER_PERMISSIONS: Readonly<Record<string, readonly PermissionsEnum[
  * (TypeORM writes a bare id given for a many-to-one relation as its foreign key).
  */
 const ROLE_HOLDER_RELATIONS: readonly string[] = Object.freeze(['role', 'tenant']);
+
+/**
+ * The tables of {@link ROLE_HOLDER_PERMISSIONS} a clean import may wipe only for a SUPER_ADMIN. The clean-up deletes
+ * every row of the tenant, a SUPER_ADMIN's user and invitations included, and the import writes back only the rows
+ * within the importer's role ceiling, by an importer holding the table's permission: an ADMIN's clean import of a bare
+ * `user.csv` deleted every user of the tenant and restored none above ADMIN, and a header-only `invite.csv` deleted
+ * every invitation for an importer holding no invite permission at all.
+ */
+const ROLE_HOLDER_CLEANUP_TABLES: readonly string[] = Object.freeze([USER_TABLE, INVITE_TABLE]);
 
 /**
  * Unique keys a table declares as a unique INDEX (`@ColumnIndex(..., { unique: true })`) rather than a `@Unique`
@@ -214,7 +223,7 @@ export class ImportService {
 		const tenantId = RequestContext.currentTenantId();
 		// Before anything is removed: a refused clean import must leave the tenant as it was.
 		if (cleanup) {
-			this.assertMayCleanUpRolePermissions(extractPath);
+			this.assertMayCleanUp(extractPath);
 		}
 		const repositories = await this.getRepositories();
 		// Only an archive this server wrote carries the escape, so only such an archive is decoded: a
@@ -772,7 +781,12 @@ export class ImportService {
 	 * - a SUPER_ADMIN is unbounded, as before: restoring their own archive must keep working;
 	 * - anyone else writes the row only holding {@link ROLE_HOLDER_PERMISSIONS}, only with a role of this tenant they
 	 *   could grant ({@link mayGrantRole}), and never over a row whose stored role they could not grant. They do not
-	 *   change their own role either, as `PUT /user/:id` refuses.
+	 *   change their own role either, as `PUT /user/:id` refuses;
+	 * - an invitation is held to the account its e-mail already has, too: `POST /invite/accept` signs the invitee into
+	 *   the tenant's user of that address, tokens and all, instead of registering one. The archive states both the
+	 *   e-mail and the code or token, so an allowed role on an invitation addressed to a SUPER_ADMIN's e-mail signed
+	 *   the importer in as that SUPER_ADMIN. The e-mail the row will hold (the stored one when the row states none)
+	 *   must not be the address of a user whose role the importer could not grant.
 	 *
 	 * A refused row is skipped with a warning, password hash and all; the rest of the archive is imported. A row within
 	 * the ceiling keeps the hash it states: the importer could have set that user's password through the API.
@@ -807,7 +821,7 @@ export class ImportService {
 
 		// The row an earlier import mapped this archive id to is saved over: its stored role is held to the rule too.
 		const destinationId = await this.importedDestinationId(table, sourceId);
-		const overwritten: { id?: ID; roleId?: ID; role?: Pick<IRole, 'name'> } | null = destinationId
+		const overwritten: { id?: ID; roleId?: ID; email?: string; role?: Pick<IRole, 'name'> } | null = destinationId
 			? await repository.findOne({
 					where: { id: destinationId, tenantId },
 					relations: { role: true },
@@ -836,30 +850,82 @@ export class ImportService {
 		if (!this.mayGrantRole(role.name)) {
 			return skip(`the ${role.name} role is above the importer's own`);
 		}
+
+		if (table === INVITE_TABLE) {
+			const email = 'email' in (row ?? {}) ? row['email'] : overwritten?.email;
+			const account = await this.accountAboveCeiling(email, tenantId);
+			if (account) {
+				return skip(`accepting it signs in the user of its e-mail, who holds the ${account} role`);
+			}
+		}
 		return true;
 	}
 
 	/**
-	 * Refuses a clean import that would wipe the tenant's role permissions, unless the caller is a SUPER_ADMIN.
+	 * The role of a user of this tenant with the given e-mail that the importer could not grant: the account an
+	 * invitation to that address would sign its invitee into.
 	 *
-	 * A clean import deletes the tenant's rows of every table the archive carries before it writes the archive's rows.
-	 * For `role_permission`, and for `role`, whose delete cascades to it, that removes the permissions of the
-	 * SUPER_ADMIN and ADMIN roles as well. {@link mayImportRolePermission} lets only a SUPER_ADMIN write those back, so
-	 * an ADMIN restoring even an unchanged archive left both roles, their own included, without a permission; a
-	 * header-only `role_permission.csv` was enough to erase them. A merge import, or a clean import whose archive
-	 * carries neither table, is not refused.
+	 * The address is compared case-insensitively, as MySQL's collation compares it on the accept path, and soft-deleted
+	 * users count, as a restore brings them back.
+	 *
+	 * @param email - The e-mail an invitation will hold.
+	 * @param tenantId - The importing tenant.
+	 * @returns The role's name (`'no'` for a user holding none), or `null` when no such user has the address.
+	 */
+	private async accountAboveCeiling(email: unknown, tenantId: ID): Promise<string | null> {
+		if (typeof email !== 'string' || !email.trim()) {
+			return null;
+		}
+		const { typeOrmUserRepository } = this.repositoriesService;
+		const users: { role?: Pick<IRole, 'name'> | null }[] = await typeOrmUserRepository.find({
+			where: { tenantId, email: Raw((alias) => `LOWER(${alias}) = LOWER(:email)`, { email: email.trim() }) },
+			relations: { role: true },
+			withDeleted: true
+		});
+		const above = users.find((user) => !this.mayGrantRole(user.role?.name));
+		return above ? (above.role?.name ?? 'no') : null;
+	}
+
+	/**
+	 * Refuses a clean import that would wipe rows the importer cannot write back, unless the caller is a SUPER_ADMIN.
+	 *
+	 * A clean import deletes the tenant's rows of every table the archive carries before it writes the archive's rows;
+	 * a header-only CSV is enough. Two groups of tables are refused to anyone else:
+	 *
+	 * - `role_permission`, and `role`, whose delete cascades to it: that removes the permissions of the SUPER_ADMIN and
+	 *   ADMIN roles as well, and {@link mayImportRolePermission} lets only a SUPER_ADMIN write those back, so an ADMIN
+	 *   restoring even an unchanged archive left both roles, their own included, without a permission;
+	 * - `user` and `invite` ({@link ROLE_HOLDER_CLEANUP_TABLES}): that removes every user and invitation of the
+	 *   tenant, a SUPER_ADMIN's included, and {@link mayImportRoleHolder} writes back only those within the importer's
+	 *   ceiling, and none for an importer without the table's permission.
+	 *
+	 * A merge import, or a clean import whose archive carries none of these tables, is not refused.
 	 *
 	 * @param extractPath - This request's extraction directory.
-	 * @throws ForbiddenException when a caller other than a SUPER_ADMIN would clean up either table.
+	 * @throws ForbiddenException when a caller other than a SUPER_ADMIN would clean up one of these tables.
 	 */
-	private assertMayCleanUpRolePermissions(extractPath: string): void {
-		const wiped = ROLE_PERMISSION_CLEANUP_TABLES.filter((table) =>
-			fs.existsSync(path.join(extractPath, `${table}.csv`))
-		);
-		if (wiped.length > 0 && !RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+	private assertMayCleanUp(extractPath: string): void {
+		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+			return;
+		}
+		const carried = (tables: readonly string[]) =>
+			tables.filter((table) => fs.existsSync(path.join(extractPath, `${table}.csv`)));
+
+		const rolePermissions = carried(ROLE_PERMISSION_CLEANUP_TABLES);
+		if (rolePermissions.length > 0) {
 			throw new ForbiddenException(
-				`Only a SUPER_ADMIN may clean-import ${wiped.join(' and ')}: the clean-up removes the permissions of ` +
-					'the SUPER_ADMIN and ADMIN roles, and only a SUPER_ADMIN imports them back. Use a merge import.'
+				`Only a SUPER_ADMIN may clean-import ${rolePermissions.join(' and ')}: the clean-up removes the ` +
+					'permissions of the SUPER_ADMIN and ADMIN roles, and only a SUPER_ADMIN imports them back. Use a ' +
+					'merge import.'
+			);
+		}
+
+		const roleHolders = carried(ROLE_HOLDER_CLEANUP_TABLES);
+		if (roleHolders.length > 0) {
+			throw new ForbiddenException(
+				`Only a SUPER_ADMIN may clean-import ${roleHolders.join(' and ')}: the clean-up removes every row of ` +
+					"the tenant, a SUPER_ADMIN's included, and the import writes back only those within the " +
+					"importer's role ceiling. Use a merge import."
 			);
 		}
 	}
