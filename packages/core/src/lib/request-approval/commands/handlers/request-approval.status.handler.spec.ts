@@ -168,6 +168,7 @@ function surfaces(row: Record<string, any>, stored: { request?: Record<string, a
 						membership.isActive &&
 						teamIds.includes(membership.organizationTeamId)
 				).map((membership) => membership.organizationTeamId),
+			readLinkedDocumentRequesters: async () => ({ userIds: [], employeeIds: [] }),
 			writeSlots: async (kind, ids, tenantId, status) => {
 				slotWrites.push({ kind, ids, tenantId });
 				pending.push(`slot:${kind}:${status}`);

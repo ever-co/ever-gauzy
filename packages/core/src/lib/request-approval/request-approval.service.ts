@@ -109,12 +109,17 @@ export interface IRequestApprovalAnswerTransaction {
 	): Promise<void>;
 	/**
 	 * Who the document a request is about was filed by (its `createdByUserId`) and is for (its employees), inside the
-	 * tenant (withdrawn rows left out): none of them answers the request as an approver. A plain read; nothing is
-	 * locked. Empty when the document is not there.
+	 * tenant (withdrawn rows left out): none of them answers the request as an approver. Empty when the document is
+	 * not there.
 	 *
-	 * Optional so a transaction that cannot read the document still answers on the request's own requester.
+	 * Read after the request's row lock: the in-place edit of an equipment sharing, which can change the employees it
+	 * is for, takes that same lock before it writes (`EquipmentSharingService.updateInPlace`), so the edit and the
+	 * answer run one after the other and the answer reads the memberships as they stand when it decides.
+	 *
+	 * Required, so a transaction cannot leave the check out by omission: it would answer as if the document named
+	 * nobody, and re-open self-approval through a team slot.
 	 */
-	readLinkedDocumentRequesters?(
+	readLinkedDocumentRequesters(
 		kind: RequestApprovalLinkedDocumentKind,
 		id: ID,
 		tenantId: ID
@@ -938,9 +943,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const requestId = requestApproval.requestId;
 
 		if (!kind || !tenantId || typeof requestId !== 'string' || !isUUID(requestId)) {
-			return null;
-		}
-		if (!transaction.readLinkedDocumentRequesters) {
 			return null;
 		}
 		return await transaction.readLinkedDocumentRequesters(kind, requestId, tenantId);

@@ -34,6 +34,20 @@ const convertEquipmentDateFields = (equipmentData: EquipmentDateFields) => {
  */
 const EQUIPMENT_SHARING_REQUESTED = 1;
 
+/**
+ * The label a request is filed under when the caller states neither a name nor a reason: the request approval filed
+ * beside the sharing requires a name, and the route saves the sharing before it files the approval, so a request
+ * without one would leave a sharing without its approval.
+ */
+export const EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME = 'Equipment sharing request';
+
+/**
+ * An ISO 8601 date (`2026-11-02`) or date-time (`2026-11-02T09:00`, `2026-11-02T09:00:00.000Z`,
+ * `2026-11-02T09:00:00+02:00`), and nothing else: `new Date()` alone also reads `Nov 2 2026`, and rolls an impossible
+ * day such as `2026-02-30` over into March.
+ */
+const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(Z|[+-](\d{2}):(\d{2}))?)?$/;
+
 /** The arguments of the `request_equipment_sharing` tool. */
 export interface EquipmentSharingRequestArgs {
 	equipmentId: string;
@@ -45,16 +59,36 @@ export interface EquipmentSharingRequestArgs {
 }
 
 /**
- * Reads an ISO date argument of the `request_equipment_sharing` tool.
+ * Reads an ISO date argument of the `request_equipment_sharing` tool: the grammar of {@link ISO_DATE_PATTERN}, a day
+ * the calendar has, a time of day and an offset in range.
  *
  * @param value The argument.
  * @param field The argument's name, for the error.
- * @throws Error when the value is not a date.
+ * @throws Error when the value is not an ISO date, or names a day, time or offset that does not exist.
  */
 const toShareDate = (value: string, field: string): Date => {
-	const date = new Date(value);
+	const invalid = () => new Error(`${field} is not a valid date (ISO 8601 expected, e.g. 2026-11-02T09:00:00Z)`);
+	const match = typeof value === 'string' ? ISO_DATE_PATTERN.exec(value.trim()) : null;
+	if (!match) {
+		throw invalid();
+	}
+	const [, year, month, day, hour = '0', minute = '0', second = '0', , offsetHour = '0', offsetMinute = '0'] = match;
+	const calendar = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+	if (
+		calendar.getUTCFullYear() !== Number(year) ||
+		calendar.getUTCMonth() !== Number(month) - 1 ||
+		calendar.getUTCDate() !== Number(day) ||
+		Number(hour) > 23 ||
+		Number(minute) > 59 ||
+		Number(second) > 59 ||
+		Number(offsetHour) > 23 ||
+		Number(offsetMinute) > 59
+	) {
+		throw invalid();
+	}
+	const date = new Date(value.trim());
 	if (Number.isNaN(date.getTime())) {
-		throw new Error(`${field} is not a valid date (ISO format expected)`);
+		throw invalid();
 	}
 	return date;
 };
@@ -71,22 +105,27 @@ const toShareDate = (value: string, field: string): Date => {
  * row in the organization of its path and records the request approval an approver acts on.
  *
  * An equipment sharing has no reason column: the reason is filed as the request's `name` (its label) when no name is
- * given.
+ * given, and {@link EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME} when neither is (the request approval requires a name).
  *
  * @param args The tool's arguments.
  * @param now When the request is filed.
  * @returns The body to post.
- * @throws Error when a date argument is not a date.
+ * @throws Error when a date argument is not an ISO date, or the period ends before it starts.
  */
 export const equipmentSharingRequestBody = (args: EquipmentSharingRequestArgs, now: Date = new Date()) => {
-	const name = args.name ?? args.reason;
+	const name = [args.name, args.reason].find((label) => typeof label === 'string' && label.trim() !== '');
+	const shareStartDay = toShareDate(args.shareStartDate, 'shareStartDate');
+	const shareEndDay = toShareDate(args.shareEndDate, 'shareEndDate');
+	if (shareEndDay.getTime() < shareStartDay.getTime()) {
+		throw new Error('shareEndDate is before shareStartDate: a sharing period ends after it starts');
+	}
 	return {
-		...(name && { name }),
+		name: name?.trim() ?? EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME,
 		equipmentId: args.equipmentId,
 		employees: [{ id: args.shareWithEmployeeId }],
 		shareRequestDay: now,
-		shareStartDay: toShareDate(args.shareStartDate, 'shareStartDate'),
-		shareEndDay: toShareDate(args.shareEndDate, 'shareEndDate'),
+		shareStartDay,
+		shareEndDay,
 		status: EQUIPMENT_SHARING_REQUESTED
 	};
 };
@@ -606,9 +645,12 @@ export const registerEquipmentTools = (server: McpServer) => {
 		{
 			equipmentId: z.string().uuid().describe('The equipment ID'),
 			shareWithEmployeeId: z.string().uuid().describe('The employee ID to share with'),
-			shareStartDate: z.string().describe('The start date for sharing (ISO format)'),
-			shareEndDate: z.string().describe('The end date for sharing (ISO format)'),
-			name: z.string().optional().describe('A label for the sharing request'),
+			shareStartDate: z.string().describe('The start date for sharing (ISO 8601, e.g. 2026-11-02T09:00:00Z)'),
+			shareEndDate: z.string().describe('The end date for sharing (ISO 8601, not before the start date)'),
+			name: z
+				.string()
+				.optional()
+				.describe('A label for the sharing request (defaults to the reason, else "Equipment sharing request")'),
 			reason: z
 				.string()
 				.optional()

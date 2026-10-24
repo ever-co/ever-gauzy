@@ -6481,9 +6481,11 @@ type Mutation {
   Changes a period that exists, in place and at the version the edit is based on.
   
   Unlike `updateEquipmentSharing`, the row is not removed and filed again: the members stated are written where
-  the row is, in one statement predicated on `version`, and the edit is refused (409 `ENTITY_VERSION_CONFLICT`)
-  when the stored period has moved on. A member the caller leaves out keeps its stored value, and the approval
-  row beside the period stays. See `UpdateEquipmentSharingInPlaceInput`.
+  the row is, in one statement predicated on `version`. When the stored period has moved on, the edit is refused
+  with an error whose `extensions.code` is `ENTITY_VERSION_CONFLICT` and whose `extensions.status` is 409 (the
+  HTTP response itself is 200, as for every GraphQL error). A member the caller leaves out keeps its stored value,
+  and the approval row beside the period stays, its status and its name following the period's.
+  See `UpdateEquipmentSharingInPlaceInput`.
   """
   updateEquipmentSharingInPlace(input: UpdateEquipmentSharingInPlaceInput!): EquipmentSharing!
 
@@ -22056,12 +22058,13 @@ input UpdateEquipmentSharingInput {
 What a caller states when it changes a period in place (`updateEquipmentSharingInPlace`).
 
 The row is updated where it is, not removed and filed again, and only at the version the edit is based on:
-the edit is refused (409 `ENTITY_VERSION_CONFLICT`) when the stored period has moved on. So:
+when the stored period has moved on, the edit is refused with an `ENTITY_VERSION_CONFLICT` error
+(`extensions.code`; `extensions.status` 409). So:
 
 - `version` is required: it is how the caller says which state of the period the edit is based on.
 - A member the caller leaves out keeps its stored value, `status` included.
 - `employeeIds` / `teamIds`, when stated, replace the period's memberships; an empty list clears them.
-- The approval row beside the period stays; its status follows a change of the period's status.
+- The approval row beside the period stays; its status and its name follow a change of the period's.
 """
 input UpdateEquipmentSharingInPlaceInput {
   id: ID!

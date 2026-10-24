@@ -94,6 +94,18 @@ export interface IEquipmentSharingDecisionTransaction {
  */
 export interface IEquipmentSharingInPlaceTransaction {
 	/**
+	 * Locks the sharing's request approval — the approval of this sharing (`requestType` `EQUIPMENT_SHARING`,
+	 * `requestId` the sharing's id) in the sharing's organization, inside the tenant — until the transaction ends:
+	 * `SELECT … FOR UPDATE` on PostgreSQL and MySQL; a plain read on SQLite, whose transactions are serialized.
+	 *
+	 * The edit's first statement, so it takes its locks in the order every other writer of the pair takes them: the
+	 * approval, then the sharing (`decideWithRequestApproval`, and the request approval's own answer, which moves the
+	 * sharing it decides). Taking the sharing's row first would let an edit and a decision each hold one row while
+	 * waiting for the other. It also makes an answer and an edit of the memberships take turns, so the answer's
+	 * requester check reads the employees the sharing is for as they stand when it decides.
+	 */
+	lockApprovals(sharingId: ID, tenantId: ID, organizationId: ID | null): Promise<void>;
+	/**
 	 * `UPDATE equipment_sharing SET <columns>, version = version + 1 WHERE <criteria>`: the edit's compare-and-set,
 	 * which holds the sharing's row until the transaction ends. The version is moved on even when no column is
 	 * stated (an edit of the memberships alone).
@@ -104,12 +116,30 @@ export interface IEquipmentSharingInPlaceTransaction {
 	/** Replaces the employees and / or the teams the sharing is handed to (its pivot rows), as the members state. */
 	replaceMembers(id: ID, tenantId: ID, members: IInPlaceSharingMembers): Promise<void>;
 	/**
-	 * Writes the status of the sharing's request approval — the approval of this sharing (`requestType`
-	 * `EQUIPMENT_SHARING`, `requestId` the sharing's id) in the sharing's organization, inside the tenant — so the
-	 * two keep agreeing when the edit changes the sharing's status.
+	 * Writes the sharing's request approval (the one {@link lockApprovals} locked): its status and / or its name, so
+	 * the two keep agreeing when the edit changes the sharing's status or renames it. The approval keeps its id and
+	 * its approver slots.
 	 */
-	writeApprovalStatus(sharingId: ID, tenantId: ID, organizationId: ID | null, status: number): Promise<void>;
+	writeApproval(sharingId: ID, tenantId: ID, organizationId: ID | null, patch: ISharingApprovalPatch): Promise<void>;
 }
+
+/** What an in-place edit of a sharing writes on its request approval. */
+export interface ISharingApprovalPatch {
+	status?: number;
+	name?: string;
+}
+
+/**
+ * The request approval of a sharing: the approval filed beside it (`requestType` `EQUIPMENT_SHARING`, `requestId` the
+ * sharing's id), in the sharing's organization and the caller's tenant. Approvals of other organizations can carry the
+ * same `requestId` (`POST /request-approval` stores the one it is given), so the organization is part of it.
+ */
+const sharingApprovalCriteria = (sharingId: ID, tenantId: ID, organizationId: ID | null) => ({
+	requestId: sharingId,
+	requestType: ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
+	tenantId,
+	...(organizationId ? { organizationId } : {})
+});
 
 /**
  * Columns the equipment sharing table can be sorted by. Any other `order` key from the query string is ignored.
@@ -571,11 +601,13 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * - the row is read in the caller's scope (tenant and organization boundary; 404 otherwise), and the equipment,
 	 *   the policy, the employees and the teams the body names are held to the row's own organization, as the other
 	 *   edit holds them;
-	 * - then, in one transaction, the stated columns are written in one statement predicated on the version the body
-	 *   states (`UPDATE … SET …, version = version + 1 WHERE id = :id AND version = :expected`), the memberships the
-	 *   body states are replaced, and — when the edit changes the status — the status of the sharing's request
-	 *   approval follows it, so the two agree. A row that moved on matches nothing, and the edit is refused with 409
-	 *   `ENTITY_VERSION_CONFLICT` before anything is written; the transaction rolls everything back on any failure.
+	 * - then, in one transaction: the sharing's request approval is locked first (the lock order of the decision and
+	 *   of the request approval's answer: approval, then sharing); the stated columns are written in one statement
+	 *   predicated on the version the body states (`UPDATE … SET …, version = version + 1 WHERE id = :id AND version =
+	 *   :expected`); the memberships the body states are replaced; and — when the edit changes the status or the
+	 *   name — the approval follows, so the two agree. A row that moved on matches nothing, and the edit is refused
+	 *   with 409 `ENTITY_VERSION_CONFLICT` before anything is written; the transaction rolls everything back on any
+	 *   failure.
 	 *
 	 * A member the body leaves out keeps its stored value (the other edit resets it to its default); the organization
 	 * stays the row's own; the request approval keeps its id and its approver slots (the other edit files a new one).
@@ -612,23 +644,30 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		);
 
 		const criteria = { ...this.atVersion(existing.id, expected), tenantId } as FindOptionsWhere<EquipmentSharing>;
-		const statusChanged = columns.status !== undefined && columns.status !== existing.status;
+		const organizationId = existing.organizationId ?? null;
+		// What the approval follows: a changed status, and a changed name (the approval's name is required, so a name
+		// cleared on the sharing leaves the approval's as it is).
+		const approvalPatch: ISharingApprovalPatch = {
+			...(columns.status !== undefined && columns.status !== existing.status
+				? { status: columns.status as number }
+				: {}),
+			...(typeof columns.name === 'string' && columns.name.trim() !== '' && columns.name !== existing.name
+				? { name: columns.name }
+				: {})
+		};
 
 		try {
 			const written = await this.inPlaceTransaction(async (transaction) => {
+				// The approval's lock first: the order the decision and the answer take their locks in.
+				await transaction.lockApprovals(existing.id, tenantId, organizationId);
 				if (!(await transaction.writeAtVersion(criteria, columns as Partial<EquipmentSharing>))) {
 					return false;
 				}
 				if (members.employees || members.teams) {
 					await transaction.replaceMembers(existing.id, tenantId, members);
 				}
-				if (statusChanged) {
-					await transaction.writeApprovalStatus(
-						existing.id,
-						tenantId,
-						existing.organizationId ?? null,
-						columns.status as number
-					);
+				if (Object.keys(approvalPatch).length) {
+					await transaction.writeApproval(existing.id, tenantId, organizationId, approvalPatch);
 				}
 				return true;
 			});
@@ -650,8 +689,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	/**
 	 * Runs one in-place edit in one transaction on the ORM the installation runs, and hands it the statements it makes
-	 * on that transaction's connection (see {@link decisionTransaction}). The compare-and-set's `UPDATE` holds the
-	 * sharing's row until the transaction ends on PostgreSQL and MySQL; SQLite serializes the transaction.
+	 * on that transaction's connection (see {@link decisionTransaction}). On PostgreSQL and MySQL the approval's lock
+	 * and the compare-and-set's `UPDATE` hold their rows until the transaction ends; SQLite serializes the transaction.
 	 *
 	 * @param work - The transaction body.
 	 * @returns What the body answers.
@@ -659,15 +698,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	protected async inPlaceTransaction<R>(
 		work: (transaction: IEquipmentSharingInPlaceTransaction) => Promise<R>
 	): Promise<R> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmRepository
 					.getEntityManager()
-					.transactional(async (em) => await work(this.mikroOrmInPlaceTransaction(em)));
+					.transactional(async (em) => await work(this.mikroOrmInPlaceTransaction(em, rowLock)));
 			case MultiORMEnum.TypeORM:
 			default:
 				return await this.typeOrmRepository.manager.transaction(
-					async (manager) => await work(this.typeOrmInPlaceTransaction(manager))
+					async (manager) => await work(this.typeOrmInPlaceTransaction(manager, rowLock))
 				);
 		}
 	}
@@ -677,8 +719,15 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * increments the `@VersionColumn` and stamps the update date, even when no column is stated; the memberships go
 	 * through the relation's own pivot (`relation(EquipmentSharing, 'employees').of(id)`), only the difference.
 	 */
-	private typeOrmInPlaceTransaction(manager: EntityManager): IEquipmentSharingInPlaceTransaction {
+	private typeOrmInPlaceTransaction(manager: EntityManager, rowLock: boolean): IEquipmentSharingInPlaceTransaction {
 		return {
+			lockApprovals: async (sharingId, tenantId, organizationId) => {
+				// The approval rows alone (a query builder joins no eager relation), so the lock is on those rows.
+				const query = manager
+					.createQueryBuilder(RequestApproval, 'request_approval')
+					.where(sharingApprovalCriteria(sharingId, tenantId, organizationId));
+				await (rowLock ? query.setLock('pessimistic_write').getMany() : query.getMany());
+			},
 			writeAtVersion: async (criteria, columns) =>
 				affectedRows(await manager.update(EquipmentSharing, criteria, { ...columns } as any)),
 			replaceMembers: async (id, _tenantId, members) => {
@@ -702,17 +751,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					}
 				}
 			},
-			writeApprovalStatus: async (sharingId, tenantId, organizationId, status) => {
-				await manager.update(
-					RequestApproval,
-					{
-						requestId: sharingId,
-						requestType: ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
-						tenantId,
-						...(organizationId ? { organizationId } : {})
-					},
-					{ status }
-				);
+			writeApproval: async (sharingId, tenantId, organizationId, patch) => {
+				await manager.update(RequestApproval, sharingApprovalCriteria(sharingId, tenantId, organizationId), {
+					...patch
+				});
 			}
 		};
 	}
@@ -723,8 +765,19 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * the memberships are set on the sharing's collections, read again from the table (`refresh`, so the version the
 	 * compare-and-set wrote is the one the flush sees), and flushed on the transaction.
 	 */
-	private mikroOrmInPlaceTransaction(em: MikroOrmEntityManager): IEquipmentSharingInPlaceTransaction {
+	private mikroOrmInPlaceTransaction(
+		em: MikroOrmEntityManager,
+		rowLock: boolean
+	): IEquipmentSharingInPlaceTransaction {
 		return {
+			lockApprovals: async (sharingId, tenantId, organizationId) => {
+				// From the table, not the identity map the fork inherited from the request's context.
+				await em.find(
+					RequestApproval,
+					sharingApprovalCriteria(sharingId, tenantId, organizationId) as any,
+					{ disableIdentityMap: true, ...(rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {}) } as any
+				);
+			},
 			writeAtVersion: async (criteria, columns) =>
 				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ ...columns }) as any),
 			replaceMembers: async (id, tenantId, members) => {
@@ -748,16 +801,11 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				}
 				await em.flush();
 			},
-			writeApprovalStatus: async (sharingId, tenantId, organizationId, status) => {
+			writeApproval: async (sharingId, tenantId, organizationId, patch) => {
 				await em.nativeUpdate(
 					RequestApproval,
-					{
-						requestId: sharingId,
-						requestType: ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
-						tenantId,
-						...(organizationId ? { organizationId } : {})
-					} as any,
-					this.mikroOrmRequestApprovalRow(em, { status }) as any
+					sharingApprovalCriteria(sharingId, tenantId, organizationId) as any,
+					this.mikroOrmRequestApprovalRow(em, { ...patch }) as any
 				);
 			}
 		};

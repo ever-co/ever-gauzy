@@ -2,12 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import { ID, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
-import {
-	ISharingMembers,
-	ISharingReferences,
-	sharingMemberReferences,
-	withReferencesAsIds
-} from './reference-scope.helper';
+import { ISharingMembers, ISharingReferences, withReferencesAsIds } from './reference-scope.helper';
 
 /**
  * The columns the in-place edit of a sharing writes (`PUT /equipment-sharing/:id/in-place`, GraphQL
@@ -55,19 +50,45 @@ const SHARING_STATUSES: ReadonlyArray<number> = [
 ];
 
 /**
- * The ids a membership list names, or `undefined` when the body does not state the list.
+ * The id one entry of a membership list names: a bare id, or a related object's `id`. `null` when it names none.
+ *
+ * @param entry One entry of the list, as the body sent it.
+ */
+function memberId(entry: unknown): ID | null {
+	const id =
+		typeof entry === 'string' ? entry : entry && typeof entry === 'object' ? (entry as { id?: unknown }).id : undefined;
+	return typeof id === 'string' && id.trim() !== '' ? id : null;
+}
+
+/**
+ * The ids a membership list names, each once, or `undefined` when the body does not state the list. `null` states an
+ * empty list, which clears the membership.
+ *
+ * Unlike the membership check of the other writes (`sharingMemberReferences`, which skips an entry that names no id),
+ * a list with such an entry is refused as a whole: this edit *replaces* the membership with the list, so skipping
+ * the entry would write a shorter list than the caller meant — `{ employees: [{}] }` would clear every employee.
  *
  * @param members The list as the body sent it (related objects or bare ids).
- * @param table The table the ids are rows of, as {@link sharingMemberReferences} names it.
+ * @param field The member of the body the list is.
+ * @throws ApiException 400 `VALIDATION_FAILED` for a value that is not a list, or a list with an entry naming no id.
  */
-function statedMembers(members: unknown, table: 'employee' | 'organization_team'): ID[] | undefined {
+function statedMembers(members: unknown, field: 'employees' | 'teams'): ID[] | undefined {
 	if (members === undefined) {
 		return undefined;
 	}
-	const list = table === 'employee' ? { employees: members } : { teams: members };
-	return sharingMemberReferences(list)
-		.filter(([named, id]) => named === table && !!id)
-		.map(([, id]) => id as ID);
+	if (members === null) {
+		return [];
+	}
+	const ids = Array.isArray(members) ? members.map(memberId) : null;
+	if (!ids || ids.some((id) => id === null)) {
+		throw new ApiException(
+			HttpStatus.BAD_REQUEST,
+			ApiErrorCode.VALIDATION_FAILED,
+			`The ${field} of an equipment sharing are a list, each entry an id or an object with its id.`,
+			{ field }
+		);
+	}
+	return ids.filter((id, index) => ids.indexOf(id) === index) as ID[];
 }
 
 /**
@@ -80,7 +101,8 @@ function statedMembers(members: unknown, table: 'employee' | 'organization_team'
  * @param input The raw body.
  * @returns The columns and the memberships to write.
  * @throws ApiException 400 `VALIDATION_FAILED` for a stated `status` that is not one of the request approval's
- * statuses (the column is `NOT NULL`, so a stated `null` is refused too).
+ * statuses (the column is `NOT NULL`, so a stated `null` is refused too), or a membership list that is not a list of
+ * ids (see {@link statedMembers}).
  */
 export function inPlaceSharingChange(
 	input: (ISharingReferences & ISharingMembers & Record<string, unknown>) | null | undefined
@@ -105,8 +127,8 @@ export function inPlaceSharingChange(
 	}
 
 	const members: IInPlaceSharingMembers = {};
-	const employees = statedMembers(body.employees, 'employee');
-	const teams = statedMembers(body.teams, 'organization_team');
+	const employees = statedMembers(body.employees, 'employees');
+	const teams = statedMembers(body.teams, 'teams');
 	if (employees) {
 		members.employees = employees;
 	}

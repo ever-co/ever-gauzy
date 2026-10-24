@@ -183,6 +183,8 @@ class Store {
 				return slots;
 			},
 			readApproverTeams: async () => [],
+			// The document's filer and subjects: nobody here, so only the request's own requester is refused.
+			readLinkedDocumentRequesters: async () => ({ userIds: [], employeeIds: [] }),
 			writeSlots: async (_kind, ids, _tenantId, status) => {
 				pending.push(() => {
 					this.employeeSlots
