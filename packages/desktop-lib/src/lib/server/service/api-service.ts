@@ -3,18 +3,24 @@ import { ServerTask } from './server-task';
 import { redactSecretsForLog } from '../../config/desktop-secrets';
 import { resolveDesktopListenHost, toDesktopClientUrl } from '../../config/desktop-listen-host';
 import {
+	DesktopSeedAccountEmails,
 	parseDesktopSeedAccountEmails,
 	parsePublishedPasswordAccounts,
 	reportsDesktopSeedStarted
 } from '../../config/desktop-seed-credentials';
 import { DesktopSignInNotices } from '../../desktop-sign-in-notices';
 
-/** How much recent output is searched for the API's reports, so a line split across chunks is still found. */
+/**
+ * How much earlier output is kept and searched with each new chunk, so a line split across chunks is
+ * still found. A new chunk is searched whole, whatever its length.
+ */
 const OUTPUT_TAIL_LENGTH = 4_000;
 
 export class ApiService extends ServerTask {
 	private outputTail = '';
 	private seedReported = false;
+	/** The emails this start's API reported for its seed's accounts, kept from the moment they are seen. */
+	private seedAccountEmails: DesktopSeedAccountEmails = {};
 	private publishedPasswordsReported = false;
 
 	/**
@@ -95,6 +101,7 @@ export class ApiService extends ServerTask {
 		};
 		this.outputTail = '';
 		this.seedReported = false;
+		this.seedAccountEmails = {};
 		this.publishedPasswordsReported = false;
 		// The args carry the per-install signing/session secrets and DB password: never log their values.
 		console.log('API configuration set:', redactSecretsForLog(this.args));
@@ -113,21 +120,27 @@ export class ApiService extends ServerTask {
 	 * @returns {void}
 	 */
 	protected override onOutput(output: string): void {
-		this.outputTail = (this.outputTail + output).slice(-OUTPUT_TAIL_LENGTH);
+		// Searched before it is cut to the tail: one chunk can carry a report followed by more than the
+		// tail's length of later output, and a report cut away unread is lost.
+		const recent = this.outputTail + output;
+		this.outputTail = recent.slice(-OUTPUT_TAIL_LENGTH);
 
-		if (!this.seedReported && reportsDesktopSeedStarted(this.outputTail)) {
-			this.seedReported = true;
-			// The child process's environment: the app's own, overridden by what was passed to it. The
-			// accounts' emails come from the line the API prints just before the seed starts, so that line
-			// is already in the tail.
-			DesktopSignInNotices.recordSeed(
-				{ ...process.env, ...this.args },
-				parseDesktopSeedAccountEmails(this.outputTail)
-			);
+		if (!this.seedReported) {
+			// The accounts' emails are printed just before the seed starts, possibly in an earlier chunk
+			// with other output (stderr too) in between: they are kept from the chunk they are seen in.
+			const emails = parseDesktopSeedAccountEmails(recent);
+			if (Object.keys(emails).length > 0) {
+				this.seedAccountEmails = emails;
+			}
+			if (reportsDesktopSeedStarted(recent)) {
+				this.seedReported = true;
+				// The child process's environment: the app's own, overridden by what was passed to it.
+				DesktopSignInNotices.recordSeed({ ...process.env, ...this.args }, this.seedAccountEmails);
+			}
 		}
 
 		if (!this.publishedPasswordsReported) {
-			const accounts = parsePublishedPasswordAccounts(this.outputTail);
+			const accounts = parsePublishedPasswordAccounts(recent);
 			if (accounts.length > 0) {
 				this.publishedPasswordsReported = true;
 				DesktopSignInNotices.recordPublishedPasswords(accounts);
