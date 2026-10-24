@@ -178,6 +178,18 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 						// Raw knex bypasses MikroORM's soft-delete filter; TypeORM's query builder excludes these
 						.whereNull('kba.deletedAt');
 
+					// And to the caller's organization boundary, which this hand-written query states itself: the
+					// organization the request names is narrowed by it, never widened to it.
+					const boundary = this.organizationBoundary();
+					if (boundary?.organizationId) {
+						const boundaryOrganizationId = boundary.organizationId;
+						qb = qb.andWhere((scope: any) =>
+							scope.where('kba.organizationId', boundaryOrganizationId).orWhereNull('kba.organizationId')
+						);
+					} else if (boundary) {
+						qb = qb.whereNull('kba.organizationId');
+					}
+
 					// Apply additional where filters
 					if (isNotEmpty(where)) {
 						const { name, draft, privacy, isLocked, categoryId } = where;
@@ -285,6 +297,12 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						})
 					);
+
+					// And to the caller's organization boundary, as the MikroORM arm above is.
+					const boundary = this.organizationBoundaryCondition(p(`"${query.alias}"."organizationId"`));
+					if (boundary) {
+						query.andWhere(...boundary);
+					}
 
 					// Add additional filters (draft, privacy, names, etc.)
 					query.andWhere(
@@ -472,7 +490,8 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 		}
 
 		// And to the caller's organization boundary, as the read of the description is (see `getDescriptionBinary`).
-		const boundary = this.organizationBoundaryCondition('"organizationId"');
+		// The column is quoted through `p()`: on MySQL a double-quoted name is a string literal, not a column.
+		const boundary = this.organizationBoundaryCondition(p('"organizationId"'));
 		if (boundary) {
 			qb.andWhere(...boundary);
 		}

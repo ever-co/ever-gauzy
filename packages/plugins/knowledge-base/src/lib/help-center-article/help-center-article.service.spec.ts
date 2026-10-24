@@ -16,6 +16,10 @@ jest.mock('@gauzy/core', () => ({
 			return [];
 		}
 		assertRelationsPermitted() {}
+		/** The organization boundary that applies to the service right now: none here. */
+		organizationBoundary(): any {
+			return null;
+		}
 	},
 	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 	RequestContext: { currentTenantId: () => 'tenant-1', currentEmployeeId: () => 'employee-1' },
