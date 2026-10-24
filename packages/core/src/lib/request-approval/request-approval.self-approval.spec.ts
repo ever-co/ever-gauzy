@@ -10,7 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
-import { EquipmentSharing, RequestApprovalEmployee, RequestApprovalTeam } from '../core/entities/internal';
+import { EquipmentSharing, RequestApprovalEmployee } from '../core/entities/internal';
 import { MultiORMEnum } from '../core/utils';
 import { RequestApproval } from './request-approval.entity';
 import { IRequestApprovalRequestedFor } from './request-approval-decision';
