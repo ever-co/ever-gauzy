@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { createHmac } from 'node:crypto';
 import { environment } from '@gauzy/config';
 import { RequestContext } from '../core/context/request-context';
 import {
@@ -23,6 +24,7 @@ describe('LoginAttemptService', () => {
 	const originalMax = environment.AUTH_MAX_FAILED_ATTEMPTS;
 	const originalLockout = environment.AUTH_LOCKOUT_SECONDS;
 	const originalTrustCf = environment.THROTTLE_TRUST_CF_CONNECTING_IP;
+	const originalClientIpSecret = environment.EVER_TEAMS_CLIENT_IP_SECRET;
 
 	/** The request the service sees as "current"; `null` means no request context at all. */
 	let currentRequest: Record<string, any> | null;
@@ -44,6 +46,7 @@ describe('LoginAttemptService', () => {
 		environment.AUTH_MAX_FAILED_ATTEMPTS = originalMax;
 		environment.AUTH_LOCKOUT_SECONDS = originalLockout;
 		environment.THROTTLE_TRUST_CF_CONNECTING_IP = originalTrustCf;
+		environment.EVER_TEAMS_CLIENT_IP_SECRET = originalClientIpSecret;
 		jest.restoreAllMocks();
 	});
 
@@ -111,6 +114,42 @@ describe('LoginAttemptService', () => {
 			from('203.0.113.7');
 			const attempt = await begin(service);
 			expect(typeof attempt).toBe('object');
+		});
+
+		it('tells Ever Teams users apart by the browser address forwarded with a valid proof', async () => {
+			// Every sign-in made through Ever Teams reaches the API from the Ever Teams server's one address.
+			const TEAMS_SECRET = 'login-attempt-spec-teams-secret-0123456789';
+			environment.EVER_TEAMS_CLIENT_IP_SECRET = TEAMS_SECRET;
+			const throughTeams = (browserIp: string, secret: string) => {
+				const timestamp = String(Math.floor(now / 1000));
+				const signature = createHmac('sha256', secret).update(`${timestamp}.${browserIp}`).digest('hex');
+				currentRequest = {
+					ip: '203.0.113.50',
+					headers: {
+						'x-ever-client-ip': browserIp,
+						'x-ever-client-ip-timestamp': timestamp,
+						'x-ever-client-ip-signature': signature
+					},
+					res: { setHeader: () => undefined }
+				};
+			};
+			const failThroughTeams = async (browserIp: string, secret: string) => {
+				throughTeams(browserIp, secret);
+				const attempt = await begin(service);
+				expect(typeof attempt).toBe('object');
+				await (attempt as LoginAttempt).fail();
+			};
+
+			// CONTROL: with a proof that does not verify, every guess counts as the Ever Teams server's one
+			// address, which can never block the account however many browsers are guessing.
+			for (let i = 0; i < MAX * 2; i++) {
+				await failThroughTeams(`198.51.100.${i}`, 'not-the-teams-secret-0123456789abcdef');
+			}
+
+			// With a valid proof the browser is a second address, so the streak now blocks the account.
+			await failThroughTeams('192.0.2.1', TEAMS_SECRET);
+			throughTeams('192.0.2.2', TEAMS_SECRET);
+			expect(await begin(service)).toBe(HttpStatus.TOO_MANY_REQUESTS);
 		});
 
 		it('fails closed when failures cannot be attributed to any address', async () => {

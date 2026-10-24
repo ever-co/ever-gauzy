@@ -125,6 +125,13 @@ export const environment: IEnvironment = {
 	THROTTLE_TRUST_CF_CONNECTING_IP: isEnvFlagEnabled('THROTTLE_TRUST_CF_CONNECTING_IP', 'CLOUDFLARE_PROXY_ENABLED'),
 
 	/**
+	 * Secret shared with the Ever Teams server so its forwarded browser address (`X-Ever-Client-IP`, HMAC
+	 * signed) is trusted for per-client rate limits. At least 32 characters, same value on both sides;
+	 * unset (the default) ignores the headers entirely.
+	 */
+	EVER_TEAMS_CLIENT_IP_SECRET: process.env.EVER_TEAMS_CLIENT_IP_SECRET,
+
+	/**
 	 * Identifier-scoped brute-force control (0 disables it).
 	 */
 	AUTH_MAX_FAILED_ATTEMPTS: parseNonNegativeInt(process.env.AUTH_MAX_FAILED_ATTEMPTS, 10),

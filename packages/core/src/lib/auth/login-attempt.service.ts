@@ -4,7 +4,7 @@ import { createClient } from 'redis';
 import { environment } from '@gauzy/config';
 import { RequestContext } from '../core/context/request-context';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
-import { resolveThrottlerTracker, UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
+import { resolveThrottlerTracker, throttlerTrackerOptions, UNRESOLVED_THROTTLER_TRACKER } from '../throttler/tracker';
 
 type RedisClient = ReturnType<typeof createClient>;
 
@@ -395,7 +395,10 @@ export class LoginAttemptService {
 
 	/**
 	 * Identifies the client behind the current request with the same spoof-resistant resolution the
-	 * route throttler uses (trusted `CF-Connecting-IP`, otherwise Express's `req.ip`).
+	 * route throttler uses (the browser address the Ever Teams server forwards with a valid proof, then
+	 * trusted `CF-Connecting-IP`, otherwise Express's `req.ip`). Without the forwarded address every sign-in
+	 * made through Ever Teams came from the Ever Teams server's one address, so the "at least two different
+	 * client addresses" rule could not tell its users apart.
 	 *
 	 * @param request - The request to attribute, when the check does not run in the API's request context.
 	 * @returns The hashed source, and whether no address could be attributed at all.
@@ -404,9 +407,7 @@ export class LoginAttemptService {
 		let tracker = UNRESOLVED_THROTTLER_TRACKER;
 
 		try {
-			tracker = resolveThrottlerTracker(request ?? RequestContext.currentRequest(), {
-				trustCloudflareConnectingIp: environment.THROTTLE_TRUST_CF_CONNECTING_IP === true
-			});
+			tracker = resolveThrottlerTracker(request ?? RequestContext.currentRequest(), throttlerTrackerOptions());
 		} catch {
 			// No request context: stays unresolved, which the blocking rule treats strictly.
 		}

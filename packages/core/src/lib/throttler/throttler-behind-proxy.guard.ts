@@ -1,8 +1,9 @@
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
-import { environment } from '@gauzy/config';
-import { resolveThrottlerTracker } from './tracker';
+import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
+import { resolveThrottlerTracker, throttlerTrackerOptions } from './tracker';
+import { resolveUserThrottlerTracker } from './user-tracker';
 
 /**
  * The metadata key `@Throttle` writes a limit under, followed by the throttler's name.
@@ -27,7 +28,16 @@ const SOCKET_OPERATION = '__graphqlSocketOperation';
 /**
  * Rate-limit guard for deployments that sit behind a reverse proxy.
  *
- * The bucket key comes from {@link resolveThrottlerTracker}, which only believes
+ * **Signed-in requests are counted per user.** On a route that requires authentication (no `@Public()`),
+ * a request whose access token verifies is counted in its user's bucket (`user:<id>`, see
+ * {@link resolveUserThrottlerTracker}) instead of its address's. Everyone behind one address — an office
+ * NAT, or the Ever Teams server that makes every call for its users — no longer shares one budget, and
+ * one user does not get a fresh budget per address. A token that does not verify is counted by address.
+ * **Anonymous routes (`@Public()`: sign-in, invite accept, password reset, ...) are always counted per
+ * client address**, even when a token is sent, so registering more accounts never buys more guesses.
+ *
+ * The address comes from {@link resolveThrottlerTracker}: the browser address the Ever Teams server
+ * forwards when its HMAC proof verifies (`EVER_TEAMS_CLIENT_IP_SECRET`), otherwise it only believes
  * `CF-Connecting-IP` when `THROTTLE_TRUST_CF_CONNECTING_IP` (alias `CLOUDFLARE_PROXY_ENABLED`)
  * says the deployment is actually fronted by Cloudflare, and otherwise uses Express's `req.ip` —
  * which honours the configured `TRUST_PROXY` hop count or proxy CIDRs instead of the client-supplied
@@ -53,13 +63,37 @@ const SOCKET_OPERATION = '__graphqlSocketOperation';
  */
 @Injectable()
 export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
-	protected async getTracker(req: Record<string, any>): Promise<string> {
+	/**
+	 * The bucket a request is counted in (see the class documentation).
+	 *
+	 * @param req - The request, as {@link getRequestResponse} resolved it.
+	 * @param context - The execution context; `ThrottlerGuard` passes it as the second argument.
+	 * @returns The bucket key.
+	 */
+	protected async getTracker(req: Record<string, any>, context?: ExecutionContext): Promise<string> {
 		if (req?.[SOCKET_OPERATION]) {
 			return SOCKET_THROTTLER_TRACKER;
 		}
-		return resolveThrottlerTracker(req, {
-			trustCloudflareConnectingIp: environment.THROTTLE_TRUST_CF_CONNECTING_IP === true
-		});
+		if (context && !this.isPublicRoute(context)) {
+			const user = resolveUserThrottlerTracker(req);
+
+			if (user) {
+				return user;
+			}
+		}
+		return resolveThrottlerTracker(req, throttlerTrackerOptions());
+	}
+
+	/**
+	 * Whether the handler or its class is `@Public()`, i.e. answers anonymous callers.
+	 *
+	 * @param context - The execution context.
+	 * @returns True for an anonymous route.
+	 */
+	private isPublicRoute(context: ExecutionContext): boolean {
+		const targets = [context.getHandler(), context.getClass()];
+
+		return this.reflector.getAllAndOverride<boolean>(PUBLIC_METHOD_METADATA, targets) === true;
 	}
 
 	protected getRequestResponse(context: ExecutionContext): { req: Record<string, any>; res: Record<string, any> } {
