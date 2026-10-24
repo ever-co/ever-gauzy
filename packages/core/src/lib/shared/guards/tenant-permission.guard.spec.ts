@@ -442,6 +442,82 @@ describe('TenantBaseGuard', () => {
 				}
 				expect(toString).not.toHaveBeenCalled();
 			});
+
+			it('reads every element of an array-valued filter or body: the OR-array `where`, an array `findInput`, nested bulk items', async () => {
+				// `TenantAwareCrudService.findConditionsWithTenant` accepts `where` as an OR-array
+				// (`?where[0][tenantId]=…`). The object form naming another tenant was refused while the array form
+				// passed with a matching header, and so did an array `findInput`.
+				actAs();
+				const toString = jest.fn(() => TENANT_ID);
+				const requests: RequestShape[] = [
+					{ method: 'GET', query: { where: [{ tenantId: OTHER_TENANT_ID }] } },
+					{
+						method: 'GET',
+						query: { tenantId: TENANT_ID, where: [{ name: 'x' }, { tenant: { id: OTHER_TENANT_ID } }] }
+					},
+					{
+						method: 'GET',
+						query: {
+							tenantId: TENANT_ID,
+							where: [{ tenantId: TENANT_ID }, [{ tenantId: OTHER_TENANT_ID }]]
+						}
+					},
+					{ method: 'GET', query: { data: JSON.stringify({ findInput: [{ tenantId: OTHER_TENANT_ID }] }) } },
+					{
+						method: 'GET',
+						query: {
+							data: JSON.stringify({
+								findInput: [{ tenantId: TENANT_ID }, { tenantId: OTHER_TENANT_ID }]
+							})
+						}
+					},
+					{ method: 'POST', body: [[{ tenantId: TENANT_ID }], [{ tenant: { id: OTHER_TENANT_ID } }]] },
+					// The string/number-only rule applies inside arrays too.
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: [{ tenantId: { toString } }] } }
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(false);
+				}
+				expect(toString).not.toHaveBeenCalled();
+			});
+
+			it('allows an array-valued filter whose every element names the caller’s tenant, or none', async () => {
+				actAs();
+				const withHeader: RequestShape[] = [
+					{ method: 'GET', query: { where: [{ tenantId: TENANT_ID }, { tenantId: TENANT_ID, name: 'x' }] } },
+					{ method: 'GET', query: { where: [{ name: 'x' }, { tenant: { id: TENANT_ID } }] } },
+					{
+						method: 'GET',
+						query: { data: JSON.stringify({ findInput: [{ tenantId: TENANT_ID }, { name: 'x' }] }) }
+					},
+					{ method: 'POST', body: [[{ tenantId: TENANT_ID }], [{ name: 'y' }]] }
+				];
+				for (const request of withHeader) {
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(true);
+				}
+				// Without the header the read is judged by its `tenantId` query parameter, as before.
+				await expect(
+					guard.canActivate(
+						contextFor({ method: 'GET', query: { tenantId: TENANT_ID, where: [{ tenantId: TENANT_ID }] } })
+					)
+				).resolves.toBe(true);
+			});
+
+			it('refuses, without exhausting the stack, a deeply nested array that names another tenant', async () => {
+				actAs();
+				let body: unknown = [{ tenantId: OTHER_TENANT_ID }];
+				for (let depth = 0; depth < 100_000; depth++) {
+					body = [body];
+				}
+				await expect(
+					guard.canActivate(contextFor({ method: 'POST', body, headerTenantId: TENANT_ID }))
+				).resolves.toBe(false);
+			});
 		});
 
 		describe('a write that names no tenant is refused, not crashed on', () => {

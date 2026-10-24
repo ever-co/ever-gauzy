@@ -120,7 +120,11 @@ export class TenantBaseGuard implements CanActivate {
 	 * - the query string: top level, `where` (the pagination shape, `?where[tenantId]=…`) and the read shape the
 	 *   path without a header checks, `?data={"findInput":{…}}`;
 	 * - the route parameters (`:tenantId`);
-	 * - the body, and every object of a body array (bulk routes).
+	 * - the body.
+	 *
+	 * Wherever one of those is an array, every element is read the same way: the OR-array `where` that
+	 * `TenantAwareCrudService.findConditionsWithTenant` accepts (`?where[0][tenantId]=…`), an array `findInput`, a
+	 * bulk body — so the shape of a filter cannot carry another tenant past the check.
 	 *
 	 * A request that names no tenant states nothing. An empty header, query value or route parameter states
 	 * nothing either. A tenant id is a string or a number; anything else stated in a tenant field (an object, an
@@ -131,7 +135,8 @@ export class TenantBaseGuard implements CanActivate {
 	 * @returns True when another tenant is named anywhere.
 	 */
 	private statesAnotherTenant(request: any, currentTenantId: string): boolean {
-		const named: unknown[] = [];
+		// `concat`, not a spread `push`: a bulk body can name more ids than a call can take arguments.
+		let named: unknown[] = [];
 
 		const headerTenantId = request?.headers?.['tenant-id'];
 		if (headerTenantId) {
@@ -140,23 +145,20 @@ export class TenantBaseGuard implements CanActivate {
 
 		const query = request?.query;
 		for (const source of [query, query?.['where'], request?.params]) {
-			named.push(...this.tenantIdsIn(source, { emptyStatesNothing: true }));
+			named = named.concat(this.tenantIdsIn(source, { emptyStatesNothing: true }));
 		}
 
 		// The read shape the no-header path checks: `?data={"findInput":{"tenantId":…}}`.
 		const data = query?.['data'];
 		if (typeof data === 'string' && isJSON(data)) {
 			try {
-				named.push(...this.tenantIdsIn(JSON.parse(data)?.['findInput']));
+				named = named.concat(this.tenantIdsIn(JSON.parse(data)?.['findInput']));
 			} catch {
 				// Not parsable after all: it states no tenant.
 			}
 		}
 
-		const body = request?.body;
-		for (const item of Array.isArray(body) ? body : [body]) {
-			named.push(...this.tenantIdsIn(item));
-		}
+		named = named.concat(this.tenantIdsIn(request?.body));
 
 		return named.some((tenantId) => !this.isCallersTenant(tenantId, currentTenantId));
 	}
@@ -181,28 +183,42 @@ export class TenantBaseGuard implements CanActivate {
 	}
 
 	/**
-	 * The tenants an object names: its `tenantId`, and the `id` of its `tenant` object.
+	 * The tenants an object names: its `tenantId`, and the `id` of its `tenant` object. An array is read element by
+	 * element, at any depth (an OR-array filter, an array `findInput`, a bulk body).
 	 *
-	 * @param source The object to read; anything that is not an object names nothing.
+	 * The arrays are walked with a work list rather than by recursion, so a deeply nested payload cannot exhaust
+	 * the stack and turn a refusal into a 500.
+	 *
+	 * @param source The object or array to read; anything else names nothing.
 	 * @param options `emptyStatesNothing`: an empty string is not a statement (query strings and route parameters).
 	 * @returns The tenant ids named, as given.
 	 */
 	private tenantIdsIn(source: unknown, options: { emptyStatesNothing?: boolean } = {}): unknown[] {
-		if (!source || typeof source !== 'object') {
-			return [];
-		}
-
 		const isStated = (value: unknown): boolean =>
 			value !== undefined && value !== null && !(options.emptyStatesNothing && value === '');
 
-		const record = source as Record<string, any>;
 		const named: unknown[] = [];
-		if (isStated(record['tenantId'])) {
-			named.push(record['tenantId']);
-		}
-		const tenant = record['tenant'];
-		if (tenant && typeof tenant === 'object' && isStated(tenant['id'])) {
-			named.push(tenant['id']);
+		const pending: unknown[] = [source];
+		while (pending.length > 0) {
+			const item = pending.pop();
+			if (Array.isArray(item)) {
+				for (const element of item) {
+					pending.push(element);
+				}
+				continue;
+			}
+			if (!item || typeof item !== 'object') {
+				continue;
+			}
+
+			const record = item as Record<string, any>;
+			if (isStated(record['tenantId'])) {
+				named.push(record['tenantId']);
+			}
+			const tenant = record['tenant'];
+			if (tenant && typeof tenant === 'object' && isStated(tenant['id'])) {
+				named.push(tenant['id']);
+			}
 		}
 		return named;
 	}
