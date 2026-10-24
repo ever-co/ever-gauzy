@@ -4,6 +4,7 @@ import type { Collection, EntityManager as MikroOrmEntityManager } from '@mikro-
 import { Brackets, EntityManager, FindManyOptions, In } from 'typeorm';
 import { isUUID } from 'class-validator';
 import {
+	ApprovalPolicyTypesStringEnum,
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
 	IRequestApprovalCreateInput,
@@ -45,6 +46,7 @@ import {
 	answerRequestApproval,
 	IEmployeeApproverSlot,
 	IRequestApprovalAnswerOutcome,
+	IRequestApprovalRequestedFor,
 	isDecidedRequestApprovalStatus,
 	ITeamApproverSlot,
 	RequestApprovalVerdict
@@ -91,8 +93,32 @@ export interface IRequestApprovalAnswerTransaction {
 	): Promise<{ employeeApprovals: IEmployeeApproverSlot[]; teamApprovals: ITeamApproverSlot[] }>;
 	/** The teams, among `teamIds`, the employee is an active member of, inside the tenant. */
 	readApproverTeams(employeeId: ID, teamIds: ID[], tenantId: ID): Promise<ID[]>;
-	/** Records the answer on the slots named, inside the tenant. */
-	writeSlots(kind: 'employee' | 'team', ids: ID[], tenantId: ID, status: number): Promise<void>;
+	/**
+	 * Records the answer on the slots named, inside the tenant, with the user who answered as the slot's
+	 * `updatedByUserId`: who an approval recorded there counts for when `min_count` is counted (one person counts
+	 * once, see `request-approval-decision.ts`).
+	 *
+	 * @param answeredByUserId The answering user; omitted, the slot's audit stamp is left to the ORM.
+	 */
+	writeSlots(
+		kind: 'employee' | 'team',
+		ids: ID[],
+		tenantId: ID,
+		status: number,
+		answeredByUserId?: ID | null
+	): Promise<void>;
+	/**
+	 * Who the document a request is about was filed by (its `createdByUserId`) and is for (its employees), inside the
+	 * tenant (withdrawn rows left out): none of them answers the request as an approver. A plain read; nothing is
+	 * locked. Empty when the document is not there.
+	 *
+	 * Optional so a transaction that cannot read the document still answers on the request's own requester.
+	 */
+	readLinkedDocumentRequesters?(
+		kind: RequestApprovalLinkedDocumentKind,
+		id: ID,
+		tenantId: ID
+	): Promise<IRequestApprovalRequestedFor>;
 	/** Writes the request's own status, inside the tenant. */
 	writeRequestStatus(id: ID, tenantId: ID, status: number): Promise<void>;
 	/**
@@ -147,6 +173,34 @@ export interface IRequestApprovalSettlement {
 	outcome: IRequestApprovalAnswerOutcome;
 	/** The answer's transaction: the document is moved on it, in the same commit as the answer. */
 	transaction: IRequestApprovalAnswerTransaction;
+}
+
+/**
+ * Who a time-off request or an equipment sharing was filed by and is for, as either ORM reads it: its
+ * `createdByUserId` (under MikroORM the mirror is `persist: false` and may be left unhydrated, so the key of the
+ * `createdByUser` relation is read too) and the ids of its employees (an array under TypeORM, a collection under
+ * MikroORM, read only once it is loaded).
+ *
+ * @param row The document, or null when it is not there.
+ */
+export function requestersOfDocument(row: unknown): IRequestApprovalRequestedFor {
+	if (!row || typeof row !== 'object') {
+		return { userIds: [], employeeIds: [] };
+	}
+	const document = row as Record<string, any>;
+	const employees = document.employees;
+	const members: any[] = Array.isArray(employees)
+		? employees
+		: typeof employees?.getItems === 'function' &&
+		  (typeof employees.isInitialized !== 'function' || employees.isInitialized())
+		? employees.getItems()
+		: [];
+	const filer: ID | null = document.createdByUserId ?? document.createdByUser?.id ?? null;
+
+	return {
+		userIds: filer ? [filer] : [],
+		employeeIds: members.map((employee) => employee?.id).filter((id): id is ID => !!id)
+	};
 }
 
 @Injectable()
@@ -814,12 +868,23 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					? await transaction.readApproverTeams(employeeId, approverTeamIds, tenantId)
 					: [];
 
-			const outcome = answerRequestApproval(requestApproval, verdict, {
-				userId: user?.id ?? null,
-				employeeId,
-				teamIds,
-				isTenantAdmin
-			});
+			// Who the document the request is about was filed by and is for: not its approvers either. A tenant
+			// administrator decides any request, so their answer reads nothing more.
+			const requestedFor = isTenantAdmin
+				? null
+				: await this.readLinkedDocumentRequesters(transaction, requestApproval, tenantId);
+
+			const outcome = answerRequestApproval(
+				requestApproval,
+				verdict,
+				{
+					userId: user?.id ?? null,
+					employeeId,
+					teamIds,
+					isTenantAdmin
+				},
+				requestedFor
+			);
 
 			// The document first, so its own refusal (403, 409) is raised before the answer is written; the
 			// transaction rolls back whatever was written either way.
@@ -832,11 +897,13 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				.filter((slotId): slotId is ID => !!slotId);
 			const teamSlotIds = outcome.teamSlots.map((slot) => slot.id).filter((slotId): slotId is ID => !!slotId);
 
+			// Each slot remembers who answered it: one person counts once toward `min_count`.
+			const answeredByUserId = user?.id ?? null;
 			if (tenantId && employeeSlotIds.length) {
-				await transaction.writeSlots('employee', employeeSlotIds, tenantId, verdict);
+				await transaction.writeSlots('employee', employeeSlotIds, tenantId, verdict, answeredByUserId);
 			}
 			if (tenantId && teamSlotIds.length) {
-				await transaction.writeSlots('team', teamSlotIds, tenantId, verdict);
+				await transaction.writeSlots('team', teamSlotIds, tenantId, verdict, answeredByUserId);
 			}
 			if (outcome.status !== outcome.previousStatus) {
 				await transaction.writeRequestStatus(requestApproval.id, tenantId, outcome.status);
@@ -844,6 +911,39 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 			return requestApproval;
 		});
+	}
+
+	/**
+	 * Who the document a request is about was filed by and is for, read on the answer's transaction: a time-off
+	 * request's or an equipment sharing's `createdByUserId` and employees. A request about no such document (a
+	 * business trip, an order), or naming no row (a `requestId` that is not an identifier, which PostgreSQL would
+	 * refuse to compare with a uuid column, aborting the transaction), answers null: its own requester is the one
+	 * the request names.
+	 *
+	 * @param transaction The answer's transaction.
+	 * @param requestApproval The request, as the locked read found it.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async readLinkedDocumentRequesters(
+		transaction: IRequestApprovalAnswerTransaction,
+		requestApproval: RequestApproval,
+		tenantId: ID
+	): Promise<IRequestApprovalRequestedFor | null> {
+		const kind: RequestApprovalLinkedDocumentKind | null =
+			requestApproval.requestType === ApprovalPolicyTypesStringEnum.TIME_OFF
+				? 'time-off'
+				: requestApproval.requestType === ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING
+				? 'equipment-sharing'
+				: null;
+		const requestId = requestApproval.requestId;
+
+		if (!kind || !tenantId || typeof requestId !== 'string' || !isUUID(requestId)) {
+			return null;
+		}
+		if (!transaction.readLinkedDocumentRequesters) {
+			return null;
+		}
+		return await transaction.readLinkedDocumentRequesters(kind, requestId, tenantId);
 	}
 
 	/**
@@ -910,11 +1010,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 						where: { employeeId, organizationTeamId: In(teamIds), tenantId, isActive: true }
 					})
 				).map((membership) => membership.organizationTeamId),
-			writeSlots: async (kind, ids, tenantId, status) => {
+			writeSlots: async (kind, ids, tenantId, status, answeredByUserId) => {
+				const values = { status, ...(answeredByUserId ? { updatedByUserId: answeredByUserId } : {}) };
 				if (kind === 'employee') {
-					await manager.update(RequestApprovalEmployee, { id: In(ids), tenantId }, { status });
+					await manager.update(RequestApprovalEmployee, { id: In(ids), tenantId }, values);
 				} else {
-					await manager.update(RequestApprovalTeam, { id: In(ids), tenantId }, { status });
+					await manager.update(RequestApprovalTeam, { id: In(ids), tenantId }, values);
 				}
 			},
 			writeRequestStatus: async (id, tenantId, status) => {
@@ -933,6 +1034,19 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 						? await manager.findOne(TimeOffRequest, options)
 						: await manager.findOne(EquipmentSharing, options);
 				return row ? { id: row.id, organizationId: row.organizationId, status: row.status } : null;
+			},
+			readLinkedDocumentRequesters: async (kind, id, tenantId) => {
+				// The filer and the employees alone, no other eager relation.
+				const options = {
+					where: { id, tenantId },
+					relations: { employees: true },
+					loadEagerRelations: false
+				};
+				const row =
+					kind === 'time-off'
+						? await manager.findOne(TimeOffRequest, options)
+						: await manager.findOne(EquipmentSharing, options);
+				return requestersOfDocument(row);
 			},
 			moveTimeOff: async (id, tenantId, status) => {
 				const result = await manager.update(
@@ -981,6 +1095,10 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				// As stored: the `persist: false` organization mirror may be left unhydrated; the relation has its key.
 				locked.organizationId =
 					(row as any).organizationId ?? (row as any).organization?.id ?? locked.organizationId;
+				// The requester the same way: an unhydrated mirror would make the person who raised the request
+				// an approver of it.
+				locked.createdByUserId =
+					(row as any).createdByUserId ?? (row as any).createdByUser?.id ?? locked.createdByUserId;
 				return locked;
 			},
 			readSlots: async (requestApprovalId, tenantId) => ({
@@ -989,14 +1107,16 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				).map((slot) => ({
 					id: slot.id,
 					employeeId: slot.employee?.id ?? slot.employeeId,
-					status: slot.status
+					status: slot.status,
+					updatedByUserId: slot.updatedByUser?.id ?? slot.updatedByUserId ?? null
 				})),
 				teamApprovals: (
 					await slotsOf(RequestApprovalTeam, { requestApproval: requestApprovalId, tenantId })
 				).map((slot) => ({
 					id: slot.id,
 					teamId: slot.team?.id ?? slot.teamId,
-					status: slot.status
+					status: slot.status,
+					updatedByUserId: slot.updatedByUser?.id ?? slot.updatedByUserId ?? null
 				}))
 			}),
 			readApproverTeams: async (employeeId, teamIds, tenantId) =>
@@ -1007,12 +1127,13 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 						fromTable as any
 					)) as any[]
 				).map((membership) => membership.organizationTeam?.id ?? membership.organizationTeamId),
-			writeSlots: async (kind, ids, tenantId, status) => {
+			writeSlots: async (kind, ids, tenantId, status, answeredByUserId) => {
 				const entity = kind === 'employee' ? RequestApprovalEmployee : RequestApprovalTeam;
+				const patch = { status, ...(answeredByUserId ? { updatedByUserId: answeredByUserId } : {}) };
 				await em.nativeUpdate(
 					entity as any,
 					{ id: { $in: ids }, tenantId } as any,
-					this.mikroOrmRowOf(em, entity, { status }) as any
+					this.mikroOrmRowOf(em, entity, patch) as any
 				);
 			},
 			writeRequestStatus: async (id, tenantId, status) => {
@@ -1029,6 +1150,15 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				return row
 					? { id: row.id, organizationId: row.organization?.id ?? row.organizationId, status: row.status }
 					: null;
+			},
+			readLinkedDocumentRequesters: async (kind, id, tenantId) => {
+				const entity = kind === 'time-off' ? TimeOffRequest : EquipmentSharing;
+				const row = await em.findOne(
+					entity as any,
+					{ id, tenantId } as any,
+					{ ...fromTable, populate: ['employees'] } as any
+				);
+				return requestersOfDocument(row);
 			},
 			moveTimeOff: async (id, tenantId, status) =>
 				await em.nativeUpdate(
