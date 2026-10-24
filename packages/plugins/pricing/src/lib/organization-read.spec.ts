@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { RolesEnum } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { ExchangeRateService } from './exchange-rate/exchange-rate.service';
 import { inCallerOrganization } from './organization-scope';
@@ -63,6 +64,20 @@ describe('pricing — a row of another organization of the tenant', () => {
 
 			await expect(service.findOneByIdString('row')).resolves.toMatchObject({ id: 'row', organizationId: ORG });
 		});
+
+		it.each(Object.keys(services()))('%s still reads it for a tenant admin', async (name) => {
+			// Owner decision (2026-10-22): a tenant admin reaches every organization of the tenant.
+			jest.spyOn(RequestContext, 'hasRoles').mockImplementation((roles: RolesEnum[]) =>
+				roles.includes(RolesEnum.ADMIN)
+			);
+			storedIn(OTHER_ORG);
+			const service = (services() as Record<string, TenantAwareCrudService<any>>)[name];
+
+			await expect(service.findOneByIdString('row')).resolves.toMatchObject({
+				id: 'row',
+				organizationId: OTHER_ORG
+			});
+		});
 	});
 
 	describe('the writes that resolve the row first', () => {
@@ -98,6 +113,17 @@ describe('pricing — a row of another organization of the tenant', () => {
 				services().PricePreferenceService.updateOne('pref', { isTaxInclusive: true } as never)
 			).rejects.toBeInstanceOf(NotFoundException);
 			expect(updated).not.toHaveBeenCalled();
+		});
+
+		it('lets a tenant admin update another organization’s exchange rate', async () => {
+			jest.spyOn(RequestContext, 'hasRoles').mockImplementation((roles: RolesEnum[]) =>
+				roles.includes(RolesEnum.SUPER_ADMIN)
+			);
+			storedIn(OTHER_ORG, { fromCurrency: 'USD', toCurrency: 'EUR' });
+			const updated = stubWrites();
+
+			await services().ExchangeRateService.updateOne('rate', { rate: '2' } as never);
+			expect(updated).toHaveBeenCalledWith('rate', { rate: '2' });
 		});
 	});
 
