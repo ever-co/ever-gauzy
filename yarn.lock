@@ -29578,7 +29578,7 @@ magic-string@1.4.1:
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.6.0"
 
-mailparser@^3.12.4:
+mailparser@^3.12.4, mailparser@^3.9.1:
   version "3.12.4"
   resolved "https://registry.yarnpkg.com/mailparser/-/mailparser-3.12.4.tgz#2b430b6b64f557d400cf59d6c9b2462bcec1dc9e"
   integrity sha512-FdoMF+S89/AQaJHY7StwTfABPHZ8Vey+CDyUno5j+TO0jF0UxM+la4Pe9MeqKqBO4Y9ZMB2eomdyg5i+jzpfZw==
