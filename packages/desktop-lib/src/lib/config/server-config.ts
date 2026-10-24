@@ -1,6 +1,6 @@
 import { LocalStore } from '../desktop-store';
 import { IServerConfig, IReadWriteFile, IServerSetting } from '../interfaces';
-import { toReachableDesktopUrl } from './desktop-listen-host';
+import { resolveDesktopListenHost, toDesktopClientUrl } from './desktop-listen-host';
 
 export class ServerConfig implements IServerConfig {
 	private _readWriteFile: IReadWriteFile;
@@ -85,7 +85,10 @@ export class ServerConfig implements IServerConfig {
 		// The default host is a listen address, not one a client can open. It used to become the
 		// loopback address on Windows only; the API may now listen on the loopback address alone, so
 		// every platform's URLs (API_BASE_URL, the web UI's API URL, "open in browser") point there.
-		return toReachableDesktopUrl(host);
+		// With LAN access off the server apps listen on the loopback address only, so a LAN host typed
+		// in the setting points there too (the setting is kept for when LAN access is turned back on).
+		// Gauzy Desktop's integrated API, never on the network, gets the same in ApiService.
+		return toDesktopClientUrl(host, resolveDesktopListenHost(this.setting, true));
 	}
 
 	public get apiUrl(): string {

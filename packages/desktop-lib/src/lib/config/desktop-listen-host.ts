@@ -55,3 +55,23 @@ export function resolveDesktopListenHost(
 export function toReachableDesktopUrl(url: string): string {
 	return url.replace(/^(https?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, `$1${DESKTOP_LOOPBACK_HOST}`);
 }
+
+/**
+ * The URL this computer's clients (the app's windows, the web UI's API URL, the browser "open in
+ * browser" starts, the API's own `API_BASE_URL`) use for a server listening on `listenHost`.
+ *
+ * A server listening on the loopback address only cannot be reached at a LAN address or a name, so
+ * the URL's host becomes the loopback address (scheme, port and path kept). The host setting itself
+ * is not changed: turning LAN access back on uses it again. A server listening on every interface
+ * keeps the URL, made reachable by {@link toReachableDesktopUrl}.
+ *
+ * @param url - A base URL built from the host setting, such as `http://192.168.1.20:3000`.
+ * @param listenHost - The address the server listens on ({@link resolveDesktopListenHost}).
+ */
+export function toDesktopClientUrl(url: string, listenHost: string): string {
+	const reachable = toReachableDesktopUrl(url);
+	if (listenHost !== DESKTOP_LOOPBACK_HOST) {
+		return reachable;
+	}
+	return reachable.replace(/^(https?:\/\/)(\[[^\]]*\]|[^/:?#]*)/i, `$1${DESKTOP_LOOPBACK_HOST}`);
+}

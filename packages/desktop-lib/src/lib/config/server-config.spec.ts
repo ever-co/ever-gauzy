@@ -48,4 +48,15 @@ describe('ServerConfig URLs', () => {
 
 		expect(new ServerConfig().apiUrl).toBe('http://192.168.1.20:3000');
 	});
+
+	it('points a typed LAN host at the loopback address once LAN access is off, keeping the setting', () => {
+		mockConfigs.current = { host: '192.168.1.20', port: 3000, portUi: 4200, lanAccess: false };
+
+		const config = new ServerConfig();
+
+		// The API and the web UI listen on 127.0.0.1 only: the LAN address would not reach them.
+		expect(config.apiUrl).toBe('http://127.0.0.1:3000');
+		expect(config.uiUrl).toBe('http://127.0.0.1:4200');
+		expect(config.setting.host).toBe('192.168.1.20');
+	});
 });

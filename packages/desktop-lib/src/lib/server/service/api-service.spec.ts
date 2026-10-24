@@ -126,6 +126,31 @@ describe('ApiService', () => {
 
 			expect(child.env.API_BASE_URL).toBe('http://127.0.0.1:3000');
 		});
+
+		it('server apps: a LAN host setting gives a loopback base URL once LAN access is off', async () => {
+			const { started, child } = start(true, { host: '192.168.1.20', lanAccess: false, port: 3000 });
+			listening(child);
+			await started;
+
+			expect(child.env.API_HOST).toBe('127.0.0.1');
+			expect(child.env.API_BASE_URL).toBe('http://127.0.0.1:3000');
+		});
+
+		it('CONTROL, server apps: a LAN host setting is kept while LAN access is on', async () => {
+			const { started, child } = start(true, { host: '192.168.1.20', port: 3000 });
+			listening(child);
+			await started;
+
+			expect(child.env.API_BASE_URL).toBe('http://192.168.1.20:3000');
+		});
+
+		it('Gauzy Desktop: a stored LAN host still gives a loopback base URL', async () => {
+			const { started, child } = start(false, { host: '192.168.1.20', port: 3000 });
+			listening(child);
+			await started;
+
+			expect(child.env.API_BASE_URL).toBe('http://127.0.0.1:3000');
+		});
 	});
 
 	describe('what the API reports', () => {

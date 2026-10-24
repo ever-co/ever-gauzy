@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron';
 import { ServerTask } from './server-task';
 import { redactSecretsForLog } from '../../config/desktop-secrets';
-import { resolveDesktopListenHost } from '../../config/desktop-listen-host';
+import { resolveDesktopListenHost, toDesktopClientUrl } from '../../config/desktop-listen-host';
 import { parsePublishedPasswordAccounts, reportsDesktopSeedCompleted } from '../../config/desktop-seed-credentials';
 import { DesktopSignInNotices } from '../../desktop-sign-in-notices';
 
@@ -81,11 +81,13 @@ export class ApiService extends ServerTask {
 	 */
 	private setApiConfig(): void {
 		console.log('Setting API configuration...');
+		const listenHost = resolveDesktopListenHost(this.config.setting, this.allowLanAccess);
 		this.args = {
 			...this.args,
-			API_HOST: resolveDesktopListenHost(this.config.setting, this.allowLanAccess),
+			API_HOST: listenHost,
 			API_PORT: this.config.apiPort,
-			API_BASE_URL: this.config.apiUrl
+			// An API listening on the loopback address only is not reachable at a LAN host setting.
+			API_BASE_URL: toDesktopClientUrl(this.config.apiUrl, listenHost)
 		};
 		this.outputTail = '';
 		this.seedReported = false;
