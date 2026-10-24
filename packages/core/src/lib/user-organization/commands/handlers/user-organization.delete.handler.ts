@@ -1,4 +1,4 @@
-import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { RolesEnum, ID, IRole } from '@gauzy/contracts';
@@ -35,15 +35,24 @@ export class UserOrganizationDeleteHandler implements ICommandHandler<UserOrgani
 		const { userOrganizationId } = command;
 
 		// 1. Find user and their role to determine deletion handling
+		const membership = await this._userOrganizationService.findOneByIdString(userOrganizationId, {
+			relations: { user: { role: true } }
+		});
+
+		// Owner decision 1: a caller confined to the organization of their token removes only a membership of that
+		// organization. Removing someone's membership elsewhere — or, when it is their last one, their account — is a
+		// tenant admin's. A membership outside the boundary is answered as one that does not exist.
+		if (!this._userOrganizationService.isMembershipWithinBoundary(membership)) {
+			throw new NotFoundException('The requested record was not found');
+		}
+
 		const {
 			user: {
 				role: { name: roleName },
 				email
 			},
 			userId
-		} = await this._userOrganizationService.findOneByIdString(userOrganizationId, {
-			relations: { user: { role: true } }
-		});
+		} = membership;
 
 		// 2. In demo environment, prevent deletion of default users
 		if (email) {

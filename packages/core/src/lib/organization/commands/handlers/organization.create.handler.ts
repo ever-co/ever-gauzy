@@ -106,12 +106,16 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			// 4. Take each super admin user and add him/her to created organization
 			try {
 				const userOrganizations = admins.map(async (user: IUser) => {
-					const userOrganization = await this.userOrganizationService.create({
-						organization: {
-							id: organizationId
-						},
-						user
-					});
+					// The new organization is not the one of the caller's token: adding its admins to it is a crossing by
+					// design, which the membership service otherwise refuses a caller confined to their organization.
+					const userOrganization = await runOutsideOrganizationBoundary(() =>
+						this.userOrganizationService.create({
+							organization: {
+								id: organizationId
+							},
+							user
+						})
+					);
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
