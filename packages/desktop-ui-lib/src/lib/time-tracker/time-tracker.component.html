@@ -77,7 +77,7 @@
 										(click)="toggleStart(true)"
 										[class.pulse-border]="isProcessingEnabled"
 										[class.start-button]="isProcessingEnabled"
-										[disabled]="loading || !isTrackingEnabled"
+										[disabled]="loading || !isTrackingEnabled || (isSwitchingOrganization$ | async)"
 										class="button-ghost"
 										nbButton
 										status="success"

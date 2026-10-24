@@ -5572,7 +5572,12 @@
 			"SERVICE_UNAVAILABLE": "Dienst vorübergehend nicht verfügbar.",
 			"UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten.",
 			"NETWORK_ERROR": "Netzwerkfehler: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Bildschirmzugriff ist erforderlich, um die automatische Bildschirmaufnahme zu aktivieren. Bitte erteilen Sie die Berechtigung in den Systemeinstellungen."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Bildschirmzugriff ist erforderlich, um die automatische Bildschirmaufnahme zu aktivieren. Bitte erteilen Sie die Berechtigung in den Systemeinstellungen.",
+			"ORGANIZATION_SWITCH_REFUSED": "Wechsel zu {{ name }} nicht möglich: {{ reason }}. Sie arbeiten weiterhin in Ihrer aktuellen Organisation.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Sie sind kein aktiver Mitarbeiter von {{ name }}, daher kann der Timer dort keine Zeit erfassen. Sie arbeiten weiterhin in Ihrer aktuellen Organisation.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Die Organisation wird gewechselt. Starten Sie den Timer, sobald der Wechsel abgeschlossen ist.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Sie sind kein aktiver Mitarbeiter von {{ name }}, und der Wechsel zurück zu Ihrer vorherigen Organisation ist fehlgeschlagen. Bitte melden Sie sich erneut an.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Der Wechsel zu {{ name }} konnte auf diesem Gerät nicht abgeschlossen werden. Bitte melden Sie sich erneut an."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Der Tracker wurde aufgrund von Inaktivität gestoppt!",
