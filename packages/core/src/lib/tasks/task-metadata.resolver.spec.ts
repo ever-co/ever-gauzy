@@ -22,6 +22,7 @@ import { TaskSizeController } from './sizes/size.controller';
 import { TaskStatusController } from './statuses/status.controller';
 import { TaskVersionController } from './versions/version.controller';
 import { TaskMetadataResolver } from './task-metadata.resolver';
+import { TASK_SETTING_WRITE_METADATA } from './task-setting-access';
 
 /**
  * The vocabulary a task points at, over GraphQL.
@@ -674,6 +675,36 @@ describe('TaskMetadataResolver — the guard stack and the permission are the co
 
 		// The bootstrap read states none, like every other read.
 		expect(permissionOfField('taskMetadata')).toBeUndefined();
+	});
+
+	it('names the rows every write touches the way its own route names them', () => {
+		// `TaskSettingPermissionGuard` lets a team's managers write the team's own rows without the grant (owner
+		// decision 2(b), 2026-10-23), reading which rows a write touches from this metadata: a field that named them
+		// differently from its route would let GraphQL through where REST refuses, or the reverse.
+		const writeOf = (handler: object) => Reflect.getMetadata(TASK_SETTING_WRITE_METADATA, handler);
+		const fields = TaskMetadataResolver.prototype as unknown as Record<string, object>;
+
+		for (const resource of RESOURCES) {
+			const pairs: ReadonlyArray<readonly [string, string]> = [
+				[resource.create, 'create'],
+				[resource.update, 'update'],
+				[resource.remove, 'delete'],
+				[resource.softRemove, 'softRemove'],
+				[resource.recover, 'softRecover']
+			];
+			for (const [field, handler] of pairs) {
+				expect({ field, write: writeOf(fields[field]) }).toEqual({
+					field,
+					write: writeOf(handlersOf(resource.controller)[handler])
+				});
+				expect(writeOf(fields[field])).toBeDefined();
+			}
+		}
+
+		for (const [field, controller, handler] of ONE_RESOURCE_WRITES) {
+			expect(writeOf(fields[field])).toEqual(writeOf(handlersOf(controller)[handler]));
+			expect(writeOf(fields[field])).toBeDefined();
+		}
 	});
 });
 

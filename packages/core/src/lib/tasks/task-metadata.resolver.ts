@@ -19,7 +19,7 @@ import {
 } from '../api/graphql-connection';
 import { API_QUERY_LIMITS } from '../api/query-ast';
 import { RequestContext } from '../core/context';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TagService } from '../tags/tag.service';
@@ -38,6 +38,7 @@ import { TaskVersion } from './versions/version.entity';
 import { TaskVersionService } from './versions/version.service';
 import { TaskMetadataBootstrapService } from './task-metadata-bootstrap/task-metadata-bootstrap.service';
 import { deleteRemovedRows } from '../graphql/delete-answer';
+import { TaskSettingPermissionGuard, TaskSettingWrite } from './task-setting-access';
 
 /** The scope one vocabulary row is read in, and the scope a default is marked in. */
 export interface ITaskMetadataScope {
@@ -231,9 +232,11 @@ const ISSUE_TYPE_SORTABLE = ['createdAt', 'updatedAt', 'name', 'value', 'isDefau
  * reads state none — a field that demanded a permission its route does not would refuse a caller that
  * route serves. Every write is the controllers' own exception: the create, the edit, the delete, the
  * soft delete and the recover of all six, the status reorder and the two mark-as-default routes state
- * `ORG_TASK_SETTING` behind `PermissionGuard` (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22), so
- * every mutation here states the same grant — otherwise GraphQL would write a row the REST route
- * refuses to.
+ * `ORG_TASK_SETTING` behind `TaskSettingPermissionGuard` (GHSA-v79w-54p2-wmh5; owner decision 2,
+ * 2026-10-22), so every mutation here states the same grant behind the same guard, with the same
+ * `@TaskSettingWrite` naming its rows — otherwise GraphQL would write a row the REST route refuses
+ * to. The guard is `PermissionGuard` plus one way in (owner decision 2(b), 2026-10-23): a manager of
+ * a team writes the rows of that team without the grant; the organization's own rows still need it.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -319,16 +322,18 @@ export class TaskMetadataResolver {
 	 * Files a status. The delivered write merges the workflow the caller's `template` names onto the
 	 * row, which is why the template is a member of the write and of no column.
 	 */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'create')
 	@Mutation('createTaskStatus')
 	async createTaskStatus(@Args('input') input: ICreateTaskStatusInput): Promise<TaskStatus> {
 		return (await this.taskStatusService.create(input as never)) as TaskStatus;
 	}
 
 	/** Changes a status, answering the row the write produced. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'update')
 	@Mutation('updateTaskStatus')
 	async updateTaskStatus(@Args('input') input: IUpdateTaskStatusInput): Promise<TaskStatus> {
 		const { id, ...values } = input;
@@ -337,24 +342,27 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a status outright. A status the platform maintains is the store's to refuse. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'stored')
 	@Mutation('deleteTaskStatus')
 	async deleteTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskStatusService.delete(id));
 	}
 
 	/** Withdraws a status without removing it. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'stored')
 	@Mutation('softDeleteTaskStatus')
 	async softDeleteTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<TaskStatus> {
 		return (await this.taskStatusService.softRemove(id)) as TaskStatus;
 	}
 
 	/** Puts a withdrawn status back. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'stored')
 	@Mutation('recoverTaskStatus')
 	async recoverTaskStatus(@Args('id', { type: () => ID }) id: Id): Promise<TaskStatus> {
 		return (await this.taskStatusService.softRecover(id)) as TaskStatus;
@@ -367,8 +375,9 @@ export class TaskMetadataResolver {
 	 * answer is the route's own — whether it succeeded, and the list it wrote — because the route
 	 * answers a statement about the write rather than a row.
 	 */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'reorder')
 	@Mutation('reorderTaskStatuses')
 	async reorderTaskStatuses(
 		@Args('reorder') reorder: ITaskStatusOrderInput[]
@@ -380,8 +389,9 @@ export class TaskMetadataResolver {
 	 * Makes one status the default of one scope, and answers every status of that scope back — which
 	 * is what the delivered route answers, because the write clears the mark from the others.
 	 */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'markAsDefault')
 	@Mutation('markTaskStatusAsDefault')
 	async markTaskStatusAsDefault(
 		@Args('id', { type: () => ID }) id: Id,
@@ -439,16 +449,18 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a size. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskSizeService, 'create')
 	@Mutation('createTaskSize')
 	async createTaskSize(@Args('input') input: ICreateTaskSizeInput): Promise<TaskSize> {
 		return (await this.taskSizeService.create(input as never)) as TaskSize;
 	}
 
 	/** Changes a size, answering the row the write produced. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskSizeService, 'update')
 	@Mutation('updateTaskSize')
 	async updateTaskSize(@Args('input') input: IUpdateTaskSizeInput): Promise<TaskSize> {
 		const { id, ...values } = input;
@@ -457,24 +469,27 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a size outright. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskSizeService, 'stored')
 	@Mutation('deleteTaskSize')
 	async deleteTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskSizeService.delete(id));
 	}
 
 	/** Withdraws a size without removing it. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskSizeService, 'stored')
 	@Mutation('softDeleteTaskSize')
 	async softDeleteTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<TaskSize> {
 		return (await this.taskSizeService.softRemove(id)) as TaskSize;
 	}
 
 	/** Puts a withdrawn size back. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskSizeService, 'stored')
 	@Mutation('recoverTaskSize')
 	async recoverTaskSize(@Args('id', { type: () => ID }) id: Id): Promise<TaskSize> {
 		return (await this.taskSizeService.softRecover(id)) as TaskSize;
@@ -525,16 +540,18 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a priority. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskPriorityService, 'create')
 	@Mutation('createTaskPriority')
 	async createTaskPriority(@Args('input') input: ICreateTaskPriorityInput): Promise<TaskPriority> {
 		return (await this.taskPriorityService.create(input as never)) as TaskPriority;
 	}
 
 	/** Changes a priority, answering the row the write produced. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskPriorityService, 'update')
 	@Mutation('updateTaskPriority')
 	async updateTaskPriority(@Args('input') input: IUpdateTaskPriorityInput): Promise<TaskPriority> {
 		const { id, ...values } = input;
@@ -543,24 +560,27 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a priority outright. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskPriorityService, 'stored')
 	@Mutation('deleteTaskPriority')
 	async deleteTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskPriorityService.delete(id));
 	}
 
 	/** Withdraws a priority without removing it. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskPriorityService, 'stored')
 	@Mutation('softDeleteTaskPriority')
 	async softDeleteTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<TaskPriority> {
 		return (await this.taskPriorityService.softRemove(id)) as TaskPriority;
 	}
 
 	/** Puts a withdrawn priority back. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskPriorityService, 'stored')
 	@Mutation('recoverTaskPriority')
 	async recoverTaskPriority(@Args('id', { type: () => ID }) id: Id): Promise<TaskPriority> {
 		return (await this.taskPriorityService.softRecover(id)) as TaskPriority;
@@ -611,16 +631,18 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a version. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskVersionService, 'create')
 	@Mutation('createTaskVersion')
 	async createTaskVersion(@Args('input') input: ICreateTaskVersionInput): Promise<TaskVersion> {
 		return (await this.taskVersionService.create(input as never)) as TaskVersion;
 	}
 
 	/** Changes a version, answering the row the write produced. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskVersionService, 'update')
 	@Mutation('updateTaskVersion')
 	async updateTaskVersion(@Args('input') input: IUpdateTaskVersionInput): Promise<TaskVersion> {
 		const { id, ...values } = input;
@@ -629,24 +651,27 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a version outright. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskVersionService, 'stored')
 	@Mutation('deleteTaskVersion')
 	async deleteTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskVersionService.delete(id));
 	}
 
 	/** Withdraws a version without removing it. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskVersionService, 'stored')
 	@Mutation('softDeleteTaskVersion')
 	async softDeleteTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<TaskVersion> {
 		return (await this.taskVersionService.softRemove(id)) as TaskVersion;
 	}
 
 	/** Puts a withdrawn version back. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskVersionService, 'stored')
 	@Mutation('recoverTaskVersion')
 	async recoverTaskVersion(@Args('id', { type: () => ID }) id: Id): Promise<TaskVersion> {
 		return (await this.taskVersionService.softRecover(id)) as TaskVersion;
@@ -697,8 +722,9 @@ export class TaskMetadataResolver {
 	}
 
 	/** Files a related-issue type. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskRelatedIssueTypeService, 'create')
 	@Mutation('createTaskRelatedIssueType')
 	async createTaskRelatedIssueType(
 		@Args('input') input: ICreateTaskRelatedIssueTypeInput
@@ -707,8 +733,9 @@ export class TaskMetadataResolver {
 	}
 
 	/** Changes a related-issue type, answering the row the write produced. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskRelatedIssueTypeService, 'update')
 	@Mutation('updateTaskRelatedIssueType')
 	async updateTaskRelatedIssueType(
 		@Args('input') input: IUpdateTaskRelatedIssueTypeInput
@@ -719,24 +746,27 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes a related-issue type outright. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskRelatedIssueTypeService, 'stored')
 	@Mutation('deleteTaskRelatedIssueType')
 	async deleteTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.taskRelatedIssueTypeService.delete(id));
 	}
 
 	/** Withdraws a related-issue type without removing it. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskRelatedIssueTypeService, 'stored')
 	@Mutation('softDeleteTaskRelatedIssueType')
 	async softDeleteTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<TaskRelatedIssueType> {
 		return (await this.taskRelatedIssueTypeService.softRemove(id)) as TaskRelatedIssueType;
 	}
 
 	/** Puts a withdrawn related-issue type back. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskRelatedIssueTypeService, 'stored')
 	@Mutation('recoverTaskRelatedIssueType')
 	async recoverTaskRelatedIssueType(@Args('id', { type: () => ID }) id: Id): Promise<TaskRelatedIssueType> {
 		return (await this.taskRelatedIssueTypeService.softRecover(id)) as TaskRelatedIssueType;
@@ -796,16 +826,18 @@ export class TaskMetadataResolver {
 	 * The delivered body omits `value`, and the delivered write derives it from `name` — which is why
 	 * the value is a column of the row and no member of the write.
 	 */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(IssueTypeService, 'create')
 	@Mutation('createIssueType')
 	async createIssueType(@Args('input') input: ICreateIssueTypeInput): Promise<IssueType> {
 		return (await this.issueTypeService.create(input as never)) as IssueType;
 	}
 
 	/** Changes an issue type, answering the row the write produced. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(IssueTypeService, 'update')
 	@Mutation('updateIssueType')
 	async updateIssueType(@Args('input') input: IUpdateIssueTypeInput): Promise<IssueType> {
 		const { id, ...values } = input;
@@ -814,24 +846,27 @@ export class TaskMetadataResolver {
 	}
 
 	/** Removes an issue type outright. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(IssueTypeService, 'stored')
 	@Mutation('deleteIssueType')
 	async deleteIssueType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.issueTypeService.delete(id));
 	}
 
 	/** Withdraws an issue type without removing it. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(IssueTypeService, 'stored')
 	@Mutation('softDeleteIssueType')
 	async softDeleteIssueType(@Args('id', { type: () => ID }) id: Id): Promise<IssueType> {
 		return (await this.issueTypeService.softRemove(id)) as IssueType;
 	}
 
 	/** Puts a withdrawn issue type back. */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(IssueTypeService, 'stored')
 	@Mutation('recoverIssueType')
 	async recoverIssueType(@Args('id', { type: () => ID }) id: Id): Promise<IssueType> {
 		return (await this.issueTypeService.softRecover(id)) as IssueType;
@@ -840,8 +875,9 @@ export class TaskMetadataResolver {
 	/**
 	 * Makes one issue type the default of one scope, and answers every issue type of that scope back.
 	 */
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(IssueTypeService, 'markAsDefault')
 	@Mutation('markIssueTypeAsDefault')
 	async markIssueTypeAsDefault(
 		@Args('id', { type: () => ID }) id: Id,
