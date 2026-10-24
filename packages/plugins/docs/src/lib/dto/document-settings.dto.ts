@@ -17,7 +17,8 @@ export class DocumentSettingsQueryDTO extends PartialType(TenantOrganizationBase
 /**
  * Org-defaults block accepted by `PUT /api/plugins/docs/settings` (partial update).
  * The read-only `capabilities` and `quota` blocks of the GET response are never writable
- * (`quotaBytes` below is the ONE writable quota field — the usage numbers are computed).
+ * (`quotaBytes` below is the ONE writable quota field — the usage numbers are computed — and only the
+ * installation's operator may send it).
  */
 export class DocumentSettingsDTO {
 	/** Default for the upload form's "Import to AI knowledge" toggle. */
@@ -40,7 +41,8 @@ export class DocumentSettingsDTO {
 
 	/**
 	 * Per-organization storage quota in bytes; `0` = unlimited (08 §5.7). Overrides the
-	 * deployment default `GAUZY_DOCS_ORG_QUOTA_BYTES`.
+	 * deployment default `GAUZY_DOCS_ORG_QUOTA_BYTES`. Only the installation's operator (a super admin
+	 * listed in `EVER_OPERATOR_USER_IDS`) may send it; anyone else is answered `403 DOCS_QUOTA_OPERATOR_ONLY`.
 	 */
 	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
@@ -81,4 +83,6 @@ export interface IDocumentSettings {
 	capabilities: IDocumentSettingsCapabilities;
 	/** Live storage-quota state (quota, usage, remaining) — read-only, never writable. */
 	quota: IDocumentQuotaState;
+	/** Whether the caller may change `defaults.quotaBytes`: only the installation's operator. */
+	canEditQuota: boolean;
 }

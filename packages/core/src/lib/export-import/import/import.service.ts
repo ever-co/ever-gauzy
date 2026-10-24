@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
@@ -15,6 +15,11 @@ import { convertToDatetime, getORMType, MultiORMEnum } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
+import {
+	isInstallationOperator,
+	isOperatorOnlyTenantSetting,
+	keepingOperatorOnlySettings
+} from '../../tenant/tenant-setting/operator-only-tenant-settings';
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
@@ -45,6 +50,9 @@ const SHARED_TABLE_NATURAL_KEYS: Readonly<Record<string, readonly string[]>> = O
 	report: ['slug'],
 	report_category: ['name']
 });
+
+/** The table of the tenant's settings, some of whose rows only the installation operator may write. */
+const TENANT_SETTING_TABLE = 'tenant_setting';
 
 /** A UUID, the only id a shared table's row can have: anything else is not looked up as an id. */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -159,8 +167,12 @@ export class ImportService {
 					 */
 					if (cleanup && isStatic !== true && !this.isSharedTable(item)) {
 						try {
-							let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
-							await repository.query(sql);
+							if (masterTable === TENANT_SETTING_TABLE) {
+								await this.cleanUpTenantSettings(repository, tenantId);
+							} else {
+								let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
+								await repository.query(sql);
+							}
 							console.log(chalk.yellow(`Clean up processing for table: ${masterTable}`));
 						} catch (error) {
 							console.log(chalk.red(`Failed to clean up process for table: ${masterTable}`), error);
@@ -182,7 +194,7 @@ export class ImportService {
 						results = results.filter(isNotEmpty);
 						try {
 							for await (const data of results) {
-								if (isNotEmpty(data)) {
+								if (isNotEmpty(data) && this.mayImportRow(masterTable, data)) {
 									await this.migrateImportEntityRecord(item, data);
 								}
 							}
@@ -375,6 +387,42 @@ export class ImportService {
 				reject(error);
 			}
 		});
+	}
+
+	/**
+	 * Whether an archive row may be written. A `tenant_setting` row only the installation operator may write
+	 * (`operator-only-tenant-settings.ts`: an organization's Documents storage limit) is skipped for anyone else, as
+	 * `POST /tenant-setting/dynamic` refuses it: an archive must not set or lift the limit.
+	 *
+	 * @param masterTable - The table being imported.
+	 * @param row - The archive row, as read.
+	 */
+	private mayImportRow(masterTable: string, row: Record<string, unknown>): boolean {
+		if (masterTable !== TENANT_SETTING_TABLE || !isOperatorOnlyTenantSetting(row?.['name'])) {
+			return true;
+		}
+		if (isInstallationOperator()) {
+			return true;
+		}
+		this.logger.warn(
+			`Skipped the tenant setting ${String(row['name'])}: only the installation's operator sets it.`
+		);
+		return false;
+	}
+
+	/**
+	 * A clean import's wipe of `tenant_setting`: every row of the tenant, soft-deleted ones included, except the rows
+	 * only the installation operator may write when someone else imports. Removing such a row would put the deployment
+	 * default back, which may be no limit at all.
+	 *
+	 * @param repository - The `tenant_setting` repository.
+	 * @param tenantId - The importing tenant.
+	 */
+	private async cleanUpTenantSettings(repository: Repository<any>, tenantId: ID | null): Promise<void> {
+		if (!tenantId) {
+			return;
+		}
+		await repository.delete(await keepingOperatorOnlySettings(repository, { tenantId }));
 	}
 
 	/**

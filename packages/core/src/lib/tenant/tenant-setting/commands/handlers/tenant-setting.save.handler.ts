@@ -2,6 +2,7 @@ import { BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext } from '../../../../core/context';
 import { refusalForStorageSettings } from '../../../../core/file-storage/storage-endpoint-policy';
+import { assertMayWriteTenantSettings } from '../../operator-only-tenant-settings';
 import { TenantSettingService } from './../../tenant-setting.service';
 import { TenantSettingSaveCommand } from '../tenant-setting.save.command';
 
@@ -25,6 +26,10 @@ export class TenantSettingSaveHandler implements ICommandHandler<TenantSettingSa
 		if (!tenantId) {
 			throw new Error('Tenant ID is required to save tenant settings.');
 		}
+
+		// An organization's Documents storage limit is the installation operator's to set, not the tenant's: every
+		// tenant admin holds `TENANT_SETTING`, so `POST /tenant-setting/dynamic` and its GraphQL fields could lift it.
+		assertMayWriteTenantSettings(Object.keys(command.input ?? {}));
 
 		// The API connects to the storage endpoints a tenant names: they must point at a public host.
 		const refusal = refusalForStorageSettings(command.input as Record<string, unknown>);
