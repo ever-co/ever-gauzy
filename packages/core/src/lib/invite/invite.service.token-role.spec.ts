@@ -13,8 +13,8 @@ import { InviteService } from './invite.service';
 /**
  * Listing (`GET /invite`) and resending (`POST /invite/resend`) an invitation hand out its accept-invite token, so both
  * apply the role ceiling `createBulk` applies when it mints one (ever-co/ever-gauzy#11318), and both rank the caller by
- * the same role: the one stored for them, not the one cached with their session (`RequestContext.currentRoleName()`),
- * which can lag behind a role change.
+ * the same role: the one stored for them, not the request context's (`RequestContext.currentRoleName()`), which with
+ * `JWT_AUTHENTICATED_USER_TTL_MS` set may come from a reused authenticated-user context, from before a role change.
  */
 describe('InviteService - invitation tokens follow the role ceiling, by the stored role', () => {
 	const ROLES = {
@@ -36,7 +36,7 @@ describe('InviteService - invitation tokens follow the role ceiling, by the stor
 
 	/**
 	 * @param storedRole The role stored for the caller.
-	 * @param sessionRole The role cached with the caller's session.
+	 * @param sessionRole The role in the request context.
 	 * @param inviteRole The role of the invitation resent.
 	 */
 	function build(storedRole: { name: string } | null, sessionRole: RolesEnum, inviteRole = ROLES.admin) {
@@ -71,7 +71,7 @@ describe('InviteService - invitation tokens follow the role ceiling, by the stor
 			jest.spyOn(TenantAwareCrudService.prototype as any, 'update').mockResolvedValue({} as never);
 		});
 
-		it('refuses a manager resending an admin invitation, even with ADMIN still cached in the session', async () => {
+		it('refuses a manager resending an admin invitation, even with ADMIN still in the request context', async () => {
 			const { service, userService } = build(ROLES.manager, RolesEnum.ADMIN);
 
 			await expect(resend(service)).rejects.toBeInstanceOf(ForbiddenException);
@@ -80,7 +80,7 @@ describe('InviteService - invitation tokens follow the role ceiling, by the stor
 			expect(emailService.inviteUser).not.toHaveBeenCalled();
 		});
 
-		it('lets an admin resend an admin invitation, even with a lower role cached in the session', async () => {
+		it('lets an admin resend an admin invitation, even with a lower role in the request context', async () => {
 			const { service } = build(ROLES.admin, RolesEnum.MANAGER);
 
 			await resend(service);
@@ -124,7 +124,7 @@ describe('InviteService - invitation tokens follow the role ceiling, by the stor
 		}
 		const tokens = (items: { token?: string }[]) => items.map((invite) => invite.token);
 
-		it('ranks the caller by the stored role: a manager with ADMIN cached keeps no admin token', async () => {
+		it('ranks the caller by the stored role: a manager with ADMIN in the context keeps no admin token', async () => {
 			const { service, items } = list(ROLES.manager, RolesEnum.ADMIN);
 
 			await service.findAllInvites({} as any);

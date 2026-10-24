@@ -939,8 +939,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	/**
-	 * The role the signed-in user holds as stored, which is what `createBulk` ranks an inviter by: the role cached with
-	 * the session can lag behind a role change.
+	 * The role stored for the signed-in user, which is what `createBulk` ranks an inviter by. The request context's
+	 * role (`RequestContext.currentRoleName()`) is the same row by default, but with `JWT_AUTHENTICATED_USER_TTL_MS` set
+	 * it may come from a validated context reused for up to five minutes, i.e. from before a role change.
 	 *
 	 * @returns The role name, or undefined when there is no signed-in user or they hold no role.
 	 */

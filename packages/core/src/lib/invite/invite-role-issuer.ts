@@ -31,8 +31,9 @@ export function mayIssueInviteRole(
 /** What deciding on an invitation's token needs to know about the caller. */
 export interface IInviteTokenReader {
 	/**
-	 * Reads the role the caller holds as stored (not as cached with their session). Called at most once, and only when
-	 * the caller may issue invitations and there is an invitation to decide on.
+	 * Reads the role stored for the caller, the one `createBulk` ranks an inviter by (not the request context's, which
+	 * may come from a reused authenticated-user context). Called at most once, and only when the caller may issue
+	 * invitations and there is an invitation to decide on.
 	 */
 	findCallerRole: () => Promise<string | null | undefined>;
 	/** Whether the caller may issue invitations at all (ORG_INVITE_EDIT). */
