@@ -21,7 +21,7 @@ export const LEGAL_DPIA_EN: ILegalDocument = {
 	locale: 'en',
 	version: '1.0.0',
 	effectiveDate: '2026-10-24',
-	sha256: '70e2a309080f12e4bb8dbc9e3b3fde7ae1a1676ff8f1e806ea7fe584e01e7c5d',
+	sha256: '20b37e6a3140a5c11cf3c82230930f0ece5b42f422b3771fda3a787558a01abf',
 	title: 'Data Protection Impact Assessment (DPIA) Support Pack',
 	html: `<p>This support pack describes the processing that Ever Gauzy Cloud carries out when a customer uses it
 to record working time and to monitor work. It is published by <strong>Ever Technologies LTD</strong> for the customers who
@@ -131,7 +131,7 @@ connects ActivityWatch or WakaTime, their events are added to the activity recor
 </tr>
 <tr>
 <td>Keystroke sequence and mouse movement, background agent</td>
-<td><strong>When keyboard and mouse tracking is on, the agent also records the code of every key pressed, in the order pressed, and the start and end screen coordinates of each mouse movement</strong>, and sends them to the Service with the activity record</td>
+<td><strong>When keyboard and mouse tracking is on, the agent also records the code of every key pressed, in the order pressed, and the start and end screen coordinates of each mouse movement</strong>, and sends them to the Service, which stores them with the activity record. The API request log may keep a further copy (see retention)</td>
 <td>Off, as above</td>
 <td>Key codes identify physical keys, not the characters a keyboard layout produces. A sequence of them can nevertheless reveal what was typed, including passwords, so treat this as a record of keystrokes</td>
 </tr>
@@ -333,7 +333,7 @@ workspace of the person asking.</li>
 <td>Randomised capture</td>
 <td>Off</td>
 <td>Predictable capture that people work around</td>
-<td>Increases volume: in the agent, to about 100 screenshots in 8 hours regardless of the interval</td>
+<td>Changes volume, in a direction that depends on the application and the interval. In the desktop timer it always increases it — about 80 screenshots in 8 hours at a 10-minute interval instead of 48. In the agent it gives about 100 in 8 hours whatever the interval: more than a fixed 5 or 10 minutes (96 or 48), fewer than a fixed 1 or 3 minutes (480 or 160)</td>
 </tr>
 <tr>
 <td>Keyboard and mouse tracking, background agent</td>
