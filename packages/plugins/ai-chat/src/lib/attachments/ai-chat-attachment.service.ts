@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { isUUID } from 'class-validator';
+import { DataSource } from 'typeorm';
 import { ID, UploadedFile } from '@gauzy/contracts';
-import { EventBus, FileStorage, RequestContext } from '@gauzy/core';
+import { assertCurrentUserBelongsToOrganization, EventBus, FileStorage, RequestContext } from '@gauzy/core';
 import { AiChatAttachmentSavedEvent } from './ai-chat-attachment.event';
 
 /**
@@ -43,7 +45,10 @@ export interface IAiChatAttachmentResult {
 export class AiChatAttachmentService {
 	private readonly logger = new Logger(AiChatAttachmentService.name);
 
-	constructor(private readonly eventBus: EventBus) {}
+	constructor(
+		private readonly eventBus: EventBus,
+		private readonly dataSource: DataSource
+	) {}
 
 	/**
 	 * Records one saved attachment.
@@ -58,7 +63,15 @@ export class AiChatAttachmentService {
 		}
 
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = this.resolveOrganizationId();
+		let organizationId: ID | undefined;
+		try {
+			organizationId = tenantId ? await this.resolveOrganizationId() : undefined;
+		} catch (error) {
+			// The `Organization-Id` header named an organization the caller may not reach (or no organization
+			// at all). The bytes are already in storage (multer ran first): remove them, then refuse.
+			await this.discardStoredFile(file.key);
+			throw error;
+		}
 		if (!tenantId || !organizationId) {
 			// Without a scope the attachment cannot be attributed to anything, and a consumer
 			// would have to guess — which is how a file ends up in the wrong organization. The bytes
@@ -120,15 +133,37 @@ export class AiChatAttachmentService {
 
 	/**
 	 * The requesting organization: the request context first, then the `Organization-Id` header
-	 * the web client sends on every call (the JWT itself carries no organization).
+	 * the web client sends on every call.
+	 *
+	 * The context's organization is the token's, which the JWT strategy attaches only after checking the
+	 * caller is an active member of it. The header is only the client's word, so it is held to the rule
+	 * `@IsOrganizationBelongsToUser()` applies to an organization a request names
+	 * (`assertCurrentUserBelongsToOrganization`): a tenant admin reaches any organization of the tenant,
+	 * anyone else only the organization of their token. The header is consulted only when the token names
+	 * none, so in practice it is honoured for a tenant admin and refused for everyone else — without the
+	 * check, a member of one organization could file an attachment (and, through the Documents plugin's
+	 * capture, a document) into any other organization of the tenant.
+	 *
+	 * @returns The organization the attachment is filed in, or `undefined` when the request names none.
+	 * @throws BadRequestException when the header is not a UUID.
+	 * @throws ForbiddenException when the caller may not reach the organization the header names.
 	 */
-	private resolveOrganizationId(): ID | undefined {
+	private async resolveOrganizationId(): Promise<ID | undefined> {
 		const fromContext = RequestContext.currentOrganizationId();
 		if (fromContext) {
 			return fromContext;
 		}
 		const header = RequestContext.currentRequest()?.headers?.['organization-id'];
 		const value = Array.isArray(header) ? header[0] : header;
-		return value ? (String(value) as ID) : undefined;
+		if (!value) {
+			return undefined;
+		}
+
+		const organizationId = String(value);
+		if (!isUUID(organizationId)) {
+			throw new BadRequestException('The `Organization-Id` header must be a UUID.');
+		}
+		await assertCurrentUserBelongsToOrganization(this.dataSource.manager, organizationId as ID);
+		return organizationId as ID;
 	}
 }

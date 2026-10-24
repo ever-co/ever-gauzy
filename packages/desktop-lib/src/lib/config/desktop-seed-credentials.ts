@@ -3,14 +3,18 @@ import { randomBytes } from 'node:crypto';
 /** The accounts the API creates when it seeds an empty database (its first start), as stored. */
 export type DesktopSeedAccountKey = 'superAdmin' | 'admin' | 'employee';
 
-/** One seeded account and the variables the API reads its email and password from. */
+/**
+ * One seeded account and the variables the API reads its email and password from.
+ *
+ * Its default email is not kept here: the API reports the emails its seed uses
+ * ({@link DESKTOP_API_SEED_ACCOUNTS_MARKER}), so this copy cannot drift from the API's defaults.
+ */
 export interface DesktopSeedAccount {
 	readonly key: DesktopSeedAccountKey;
 	/** Read by `environment.demoCredentialConfig` in `@gauzy/config`, then hashed by the seed. */
 	readonly passwordEnv: string;
+	/** Read the same way; when it is unset the API uses its default email. */
 	readonly emailEnv: string;
-	/** The email the API uses when `emailEnv` is unset. */
-	readonly defaultEmail: string;
 }
 
 /** The three default accounts, in the order the user is shown them. */
@@ -18,29 +22,30 @@ export const DESKTOP_SEED_ACCOUNTS: ReadonlyArray<DesktopSeedAccount> = Object.f
 	Object.freeze({
 		key: 'superAdmin',
 		passwordEnv: 'DEMO_SUPER_ADMIN_PASSWORD',
-		emailEnv: 'DEMO_SUPER_ADMIN_EMAIL',
-		defaultEmail: 'admin@ever.co'
+		emailEnv: 'DEMO_SUPER_ADMIN_EMAIL'
 	} as const),
 	Object.freeze({
 		key: 'admin',
 		passwordEnv: 'DEMO_ADMIN_PASSWORD',
-		emailEnv: 'DEMO_ADMIN_EMAIL',
-		defaultEmail: 'local.admin@ever.co'
+		emailEnv: 'DEMO_ADMIN_EMAIL'
 	} as const),
 	Object.freeze({
 		key: 'employee',
 		passwordEnv: 'DEMO_EMPLOYEE_PASSWORD',
-		emailEnv: 'DEMO_EMPLOYEE_EMAIL',
-		defaultEmail: 'employee@ever.co'
+		emailEnv: 'DEMO_EMPLOYEE_EMAIL'
 	} as const)
 ]);
 
 /** This install's generated password for each default account. */
 export type DesktopSeedCredentials = Record<DesktopSeedAccountKey, string>;
 
+/** The emails the API reported for its default accounts ({@link parseDesktopSeedAccountEmails}). */
+export type DesktopSeedAccountEmails = Partial<Record<DesktopSeedAccountKey, string>>;
+
 /** An account a seed created with its generated password. */
 export interface DesktopSeededAccount {
 	key: DesktopSeedAccountKey;
+	/** The email the API created it with (empty only when the API reported none and no variable named one). */
 	email: string;
 }
 
@@ -103,9 +108,10 @@ export function ensureDesktopSeedCredentials(
 	let changed = false;
 
 	// A pending account whose password went missing cannot be shown any more: forget it rather than
-	// show a new password the database never received.
+	// show a new password the database never received. Its email may be empty (an API that reported
+	// none, with no variable naming one): the password is still the account's, so it is kept.
 	const pending = Array.isArray(stored?.pending)
-		? stored.pending.filter((account) => isPresent(account?.email) && isPresent(stored[account.key]))
+		? stored.pending.filter((account) => typeof account?.email === 'string' && isPresent(stored[account.key]))
 		: undefined;
 	if (pending && pending.length !== stored.pending.length) {
 		changed = true;
@@ -153,22 +159,35 @@ export function desktopSeedCredentialsToEnv(
 
 /**
  * The accounts that a seed run with `env` created with a generated password: those whose password
- * variable holds this install's generated value. Each comes with the email the API used.
+ * variable holds this install's generated value. Each comes with the email the API used: the one it
+ * reported for the seed, else the one its variable in `env` names. An API of this version always
+ * reports them (they are printed just before the seed starts); the email stays empty only for an
+ * API that does not, with no variable set.
  *
  * @param credentials - The stored passwords.
  * @param env - The environment the API process ran with.
+ * @param reportedEmails - The emails the API reported for its seed ({@link parseDesktopSeedAccountEmails}).
  */
 export function findDesktopSeededAccounts(
 	credentials: Partial<DesktopSeedCredentials> | null | undefined,
-	env: Record<string, string | undefined>
+	env: Record<string, string | undefined>,
+	reportedEmails: DesktopSeedAccountEmails = {}
 ): DesktopSeededAccount[] {
 	return DESKTOP_SEED_ACCOUNTS.filter(
 		({ key, passwordEnv }) => isPresent(credentials?.[key]) && env[passwordEnv] === credentials[key]
-	).map(({ key, emailEnv, defaultEmail }) => ({
+	).map(({ key, emailEnv }) => ({
 		key,
-		email: isPresent(env[emailEnv]) ? env[emailEnv].trim() : defaultEmail
+		email: [reportedEmails[key], env[emailEnv]].find(isPresent)?.trim() ?? ''
 	}));
 }
+
+/**
+ * The start of the line the API prints just before {@link DESKTOP_API_SEED_STARTED_MARKER}: the emails
+ * its default seed creates the three accounts with, as JSON keyed by {@link DesktopSeedAccountKey}
+ * (`SeedDataService.runDefaultSeed`, from the same `DEFAULT_*` lists the seed inserts). Do not change
+ * one without the other.
+ */
+export const DESKTOP_API_SEED_ACCOUNTS_MARKER = 'Database Default Seed Accounts:';
 
 /**
  * The line the API prints when its default seed of an empty database begins, before it creates any
@@ -225,4 +244,33 @@ export function parsePublishedPasswordAccounts(output: string): string[] {
 		.split(',')
 		.map((email) => email.trim())
 		.filter((email) => email.length > 0);
+}
+
+/**
+ * The emails the API output reports for the accounts of its default seed, by account, or an empty
+ * object. Only a complete line counts, so a line cut between two output chunks is not read short; a
+ * line that is not JSON reports nothing, and an account whose value is not a non-blank string is left
+ * out.
+ */
+export function parseDesktopSeedAccountEmails(output: string): DesktopSeedAccountEmails {
+	const line = new RegExp(`${DESKTOP_API_SEED_ACCOUNTS_MARKER}([^\\r\\n]*)\\r?\\n`).exec(stripAnsiCodes(output));
+	if (!line) {
+		return {};
+	}
+	let reported: unknown;
+	try {
+		reported = JSON.parse(line[1]);
+	} catch {
+		return {};
+	}
+	const emails: DesktopSeedAccountEmails = {};
+	if (reported && typeof reported === 'object') {
+		for (const { key } of DESKTOP_SEED_ACCOUNTS) {
+			const email = (reported as Record<string, unknown>)[key];
+			if (isPresent(email)) {
+				emails[key] = email.trim();
+			}
+		}
+	}
+	return emails;
 }

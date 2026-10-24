@@ -241,6 +241,13 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	 * the request the UI makes). It now states `EQUIPMENT_APPROVE_REQUEST` or `ORG_EQUIPMENT_SHARING_EDIT`: the grants
 	 * that may decide a sharing (GHSA-v79w-54p2-wmh5).
 	 *
+	 * The equipment and the policy the body names are held to the rule the filing and the edit apply: they must be
+	 * rows of the organization the record is stored in, in either form the body names them — the column or the
+	 * related object. Nothing checked them here, so this route could point a sharing at another organization's
+	 * equipment or policy. That organization is the body's (`organizationId` or `organization: { id }`), else that of
+	 * the stored row a body-supplied id names (the base's create is an upsert by id), else the caller's, and the row
+	 * is stored in the organization it was checked in (`EquipmentSharingService.assertCreateIsInScope`).
+	 *
 	 * @param entity The record to store.
 	 * @param options The inherited options, forwarded to the service.
 	 * @returns The created record.
@@ -252,7 +259,8 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Post()
 	async create(@Body() entity: EquipmentSharing, ...options: any[]): Promise<EquipmentSharing> {
-		return await super.create(entity, ...options);
+		const values = await this.equipmentSharingService.assertCreateIsInScope(entity ?? ({} as EquipmentSharing));
+		return await super.create(values as EquipmentSharing, ...options);
 	}
 
 	/**

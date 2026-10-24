@@ -50,6 +50,21 @@ const ACCOUNT_SWEEP_INTERVAL_MS = 60 * 1000;
 /** How many user ids one `inactiveUsersProvider` call is asked about. */
 const ACCOUNT_SWEEP_BATCH_SIZE = 500;
 
+/**
+ * Per-address budgets of the token introspection endpoint, kept apart from the 100 requests per 15 minutes the other
+ * endpoints share. Its caller is the operator's resource server (the MCP server), asking from one address about each
+ * bearer token it is shown, at most once a minute per token (its cache). Under the shared budget seven continuously
+ * active users used it up, and the MCP server then refused every request as if its token were invalid.
+ *
+ * - `requests`: every introspection request; this many tokens in use at once per MCP server address.
+ * - `failedAuthentications`: only the requests refused for their client credentials (401), with the budget the
+ *   endpoint had before, so guessing the resource server's secret (a bcrypt comparison each) is no cheaper.
+ */
+const INTROSPECTION_RATE_LIMITS = Object.freeze({
+	requests: Object.freeze({ windowMs: 60 * 1000, limit: 600 }),
+	failedAuthentications: Object.freeze({ windowMs: 15 * 60 * 1000, limit: 100 })
+});
+
 export interface UserInfo {
 	userId: string;
 	email: string;
@@ -643,10 +658,11 @@ export class OAuth2AuthorizationServer {
 			next();
 		});
 
-		// Rate limiting
+		// Rate limiting. Token introspection has budgets of its own (see setupRoutes), so it is left out of this one.
 		const authRateLimit = rateLimit({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: 100, // requests per windowMs
+			skip: (req) => this.isIntrospectionRequest(req),
 			message: {
 				error: 'too_many_requests',
 				error_description: 'Rate limit exceeded'
@@ -661,6 +677,42 @@ export class OAuth2AuthorizationServer {
 		// hundred bytes; 10 MB let anyone make the server parse, and dynamic registration keep, megabytes per request.
 		this.app.use(express.json({ limit: '64kb' }));
 		this.app.use(express.urlencoded({ extended: true, limit: '64kb' }));
+	}
+
+	/**
+	 * Whether a request is a token introspection request, which has budgets of its own ({@link INTROSPECTION_RATE_LIMITS})
+	 * instead of the one the other endpoints share. Any other spelling of the path stays under the shared budget too.
+	 */
+	private isIntrospectionRequest(req: Request): boolean {
+		return (
+			!!this.config.introspectionEndpoint &&
+			req.method === 'POST' &&
+			req.path === this.config.introspectionEndpoint
+		);
+	}
+
+	/**
+	 * The rate limits in front of the introspection endpoint ({@link INTROSPECTION_RATE_LIMITS}).
+	 */
+	private createIntrospectionRateLimits() {
+		const message = { error: 'too_many_requests', error_description: 'Rate limit exceeded' };
+		return {
+			requests: rateLimit({
+				...INTROSPECTION_RATE_LIMITS.requests,
+				message,
+				standardHeaders: true,
+				legacyHeaders: false
+			}),
+			failedAuthentications: rateLimit({
+				...INTROSPECTION_RATE_LIMITS.failedAuthentications,
+				// Only the requests refused for their client credentials count
+				skipSuccessfulRequests: true,
+				requestWasSuccessful: (_req, res) => res.statusCode !== 401,
+				message,
+				standardHeaders: false,
+				legacyHeaders: false
+			})
+		};
 	}
 
 	/**
@@ -713,7 +765,8 @@ export class OAuth2AuthorizationServer {
 
 		// Token introspection endpoint (RFC 7662)
 		if (this.config.introspectionEndpoint) {
-			this.app.post(this.config.introspectionEndpoint, (req, res) => {
+			const { requests, failedAuthentications } = this.createIntrospectionRateLimits();
+			this.app.post(this.config.introspectionEndpoint, requests, failedAuthentications, (req, res) => {
 				this.handleTokenIntrospection(req, res);
 			});
 		}
@@ -1360,15 +1413,16 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.debug('Token exchange: Client validated', { clientId: params.client_id });
 
-			// Exchange authorization code
-			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+			// Check the code without using it up: the account lookup below can fail for a while, and its 503 asks the
+			// client to retry with this same code.
+			const pendingCode = oAuth2AuthorizationCodeManager.checkAuthorizationCode(
 				params.code,
 				params.client_id,
 				params.redirect_uri,
 				params.code_verifier
 			);
 
-			if (!authCode) {
+			if (!pendingCode) {
 				this.securityLogger.error('Token exchange: Invalid authorization code', {
 					clientId: params.client_id,
 					redirectUri: params.redirect_uri,
@@ -1384,13 +1438,48 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.debug('Token exchange: Authorization code validated', {
 				clientId: params.client_id,
-				userId: authCode.userId,
-				scopes: authCode.scopes.join(' ')
+				userId: pendingCode.userId,
+				scopes: pendingCode.scopes.join(' ')
 			});
 
 			// The sign-in completes here, not at the login form: a code (or a login session) from before a
 			// deactivation must not turn into tokens.
-			const account = await this.checkAccount(authCode.userId);
+			const account = await this.checkAccount(pendingCode.userId);
+			if (account === 'unavailable') {
+				// The code stays unused, so the retry this answer asks for can still exchange it.
+				this.securityLogger.warn('Token exchange: account status unavailable; code kept for a retry', {
+					clientId: params.client_id,
+					userId: pendingCode.userId
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError(
+						'temporarily_unavailable',
+						'Account status could not be verified, retry later'
+					),
+					503
+				);
+				return;
+			}
+
+			// Use the code up now, once and for all. It may have been exchanged meanwhile by a concurrent request with
+			// the same code: that request won, and this one is refused.
+			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+				params.code,
+				params.client_id,
+				params.redirect_uri,
+				params.code_verifier
+			);
+			if (!authCode) {
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
+					400
+				);
+				return;
+			}
+
+			// An inactive account's code is used up with the rest: it can never turn into tokens.
 			if (account !== 'active') {
 				this.securityLogger.warn('Token exchange: account cannot sign in', {
 					clientId: params.client_id,
@@ -1399,13 +1488,8 @@ export class OAuth2AuthorizationServer {
 				});
 				this.errorHandler.handleOAuthError(
 					res,
-					account === 'inactive'
-						? BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active')
-						: BaseErrorHandler.createAuthError(
-								'temporarily_unavailable',
-								'Account status could not be verified, retry later'
-							),
-					account === 'inactive' ? 400 : 503
+					BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active'),
+					400
 				);
 				return;
 			}
@@ -1417,6 +1501,7 @@ export class OAuth2AuthorizationServer {
 				authCode.scopes,
 				{ includeRefreshToken: true }
 			);
+			oAuth2ClientManager.markClientUsed(params.client_id);
 
 			this.securityLogger.info('Token exchange: Success', {
 				clientId: params.client_id,
@@ -1518,6 +1603,7 @@ export class OAuth2AuthorizationServer {
 			);
 			return;
 		}
+		oAuth2ClientManager.markClientUsed(params.client_id);
 
 		this.responseBuilder.sendTokenResponse(res, {
 			access_token: newTokenPair.accessToken,

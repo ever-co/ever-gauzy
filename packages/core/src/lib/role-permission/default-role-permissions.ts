@@ -1112,6 +1112,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			/**
+			 * Switching among the organizations the user belongs to (`POST /auth/switch-organization`, which checks the
+			 * membership): since ever-co/ever-gauzy#11316 a non-admin works only in the organization of their token, so a
+			 * manager of two organizations needs it to reach the second. Existing tenants get the same from
+			 * `GrantChangeSelectedOrganizationPermission1791000000861`.
+			 */
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			/** Inbox Permissions Start */
 			PermissionsEnum.INBOX_VIEW,
 			/** Inbox Permissions End */
@@ -1139,6 +1146,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.VIEWER,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			/**
+			 * Switching among the organizations the user belongs to; see the note on `MANAGER`. Existing tenants get it
+			 * from `GrantChangeSelectedOrganizationPermission1791000000861`.
+			 */
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
 			/** Documents Permissions End */

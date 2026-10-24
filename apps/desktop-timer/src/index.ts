@@ -845,6 +845,8 @@ app.on('web-contents-created', (event, contents) => {
 		const isLinkedInOAuth = url.includes('https://www.linkedin.com/oauth');
 		const isGoogleOAuth = url.includes('https://accounts.google.com');
 		const isSignInSuccess = url.includes('sign-in/success?jwt');
+		// The address has several workspaces: the API sends the picker a one-time sign-in code instead of a token
+		const isWorkspaceSelection = url.includes('#/auth/magic-sign-in?');
 		const isAuthRegister = url.includes('/auth/register');
 		const targetUrl = new URL(url);
 
@@ -858,6 +860,19 @@ app.on('web-contents-created', (event, contents) => {
 				await showPopup(url, defaultBrowserConfig);
 			} catch (_) {
 				// Soft fail
+			}
+			return;
+		}
+
+		if (isWorkspaceSelection) {
+			// The timer shows its own workspace picker, which signs in to the workspace chosen. The web app's page must
+			// not load: it would claim the one-time code (it works once) and sign in there, never in the timer.
+			event.preventDefault();
+			const urlParse = Url.parse(url, true);
+			const { email, code } = Url.parse(urlFormat(urlParse.hash, urlParse.host), true).query;
+			if (popupWin) popupWin.destroy();
+			if (typeof email === 'string' && typeof code === 'string') {
+				timeTrackerWindow.webContents.send('social_auth_workspaces', { email, code });
 			}
 			return;
 		}

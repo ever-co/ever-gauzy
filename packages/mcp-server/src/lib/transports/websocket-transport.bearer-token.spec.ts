@@ -97,4 +97,95 @@ describe('WebSocketTransport — bearer tokens', () => {
 		expect(transport.handleMcpMessage).toHaveBeenCalledTimes(1);
 		expect(ws.close).toHaveBeenCalledWith(1008, 'Token is no longer valid');
 	});
+
+	/**
+	 * The `message` listener was attached only after the token check (an introspection call) and the session check
+	 * finished. A client that sent `initialize` as soon as the socket opened sent it to no listener, and waited for an
+	 * answer that never came.
+	 */
+	describe('messages sent while the connection is being authorized', () => {
+		/** A socket whose listeners can be called, as `ws` calls them on a frame or a close */
+		const listeningSocket = () => {
+			const listeners = new Map<string, (...args: any[]) => void>();
+			return {
+				...socket(),
+				on: jest.fn((event: string, listener: (...args: any[]) => void) => listeners.set(event, listener)),
+				emit: (event: string, ...args: any[]) => listeners.get(event)?.(...args)
+			};
+		};
+
+		/** A transport whose token check finishes when `finish` is called, and whose message handling is recorded */
+		function buildChecking() {
+			const { transport, validateToken } = build(() => ({ valid: true }));
+			let finish: (validation: Record<string, unknown>) => void = () => undefined;
+			validateToken.mockImplementationOnce(
+				() => new Promise<Record<string, unknown>>((resolve) => (finish = resolve))
+			);
+			const handled: string[] = [];
+			transport.handleMessage = jest.fn(async (_connection: unknown, data: Buffer) => {
+				handled.push(data.toString());
+			});
+			const ws = listeningSocket();
+			// Runs up to the token check, which is then pending
+			const connecting = transport.handleConnection(ws, request('203.0.113.7', 'good'));
+			return { transport, ws, handled, connecting, finish };
+		}
+
+		it('answers them once the connection is accepted, in the order they were sent', async () => {
+			const { transport, ws, handled, connecting, finish } = buildChecking();
+
+			ws.emit('message', Buffer.from('initialize'));
+			ws.emit('message', Buffer.from('tools/list'));
+			expect(handled).toEqual([]);
+
+			finish({ valid: true, subject: 'user-1' });
+			await connecting;
+
+			expect(handled).toEqual(['initialize', 'tools/list']);
+			expect(transport.connections.size).toBe(1);
+
+			ws.emit('message', Buffer.from('tools/call'));
+			expect(handled).toEqual(['initialize', 'tools/list', 'tools/call']);
+		});
+
+		it('drops them when the token is refused', async () => {
+			const { transport, ws, handled, connecting, finish } = buildChecking();
+
+			ws.emit('message', Buffer.from('initialize'));
+			finish({ valid: false, error: 'Token is not active' });
+			await connecting;
+
+			expect(ws.close).toHaveBeenCalledWith(1008, 'Invalid token');
+			expect(handled).toEqual([]);
+			expect(transport.connections.size).toBe(0);
+		});
+
+		it('refuses a connection that sends too many of them', async () => {
+			const { transport, ws, handled, connecting, finish } = buildChecking();
+
+			for (let i = 0; i < 40; i++) {
+				ws.emit('message', Buffer.from(`message ${i}`));
+			}
+			expect(ws.close).toHaveBeenCalledWith(1008, 'Too many messages before the connection was authorized');
+
+			finish({ valid: true, subject: 'user-1' });
+			await connecting;
+
+			expect(handled).toEqual([]);
+			expect(transport.connections.size).toBe(0);
+		});
+
+		it('keeps nothing of a client that left during the check', async () => {
+			const { transport, ws, handled, connecting, finish } = buildChecking();
+
+			ws.emit('message', Buffer.from('initialize'));
+			ws.readyState = 3; // CLOSED
+			ws.emit('close', 1006, Buffer.from(''));
+			finish({ valid: true, subject: 'user-1' });
+			await connecting;
+
+			expect(handled).toEqual([]);
+			expect(transport.connections.size).toBe(0);
+		});
+	});
 });

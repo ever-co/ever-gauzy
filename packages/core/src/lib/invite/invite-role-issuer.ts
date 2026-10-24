@@ -1,18 +1,19 @@
-import { ID, IInvite, IRole, RolesEnum } from '@gauzy/contracts';
-
-/**
- * The roles an EMPLOYEE issues invitations for: `createBulk` forces the EMPLOYEE role on every invitation an employee
- * sends, and inviting an organization contact (also open to employees) issues a VIEWER invitation.
- */
-const ROLES_AN_EMPLOYEE_ISSUES: ReadonlySet<string> = new Set([RolesEnum.EMPLOYEE, RolesEnum.VIEWER]);
+import { canInviteWithRole, ID, IInvite, IRole, RolesEnum } from '@gauzy/contracts';
 
 /**
  * Whether a caller holding `callerRole` may issue an invitation that grants `invitedRole`, and so may hold its
  * accept-invite token (whoever holds the token can accept the invitation and register with its role).
  *
- * The rule the invitation routes apply when they mint one: an EMPLOYEE invites employees (and organization contacts,
- * as viewers), only a super admin invites a super admin, and every other role invites any other role. An unknown role
- * on either side is refused.
+ * The rule `createBulk` applies when it mints an invitation (owner decision, ever-co/ever-gauzy#11318): an inviter
+ * grants only their own level or lower (`canInviteWithRole`), so only an ADMIN or SUPER_ADMIN issues an ADMIN
+ * invitation, only a SUPER_ADMIN a SUPER_ADMIN one, and a role the tenant created takes a tenant admin.
+ *
+ * Inviting an organization contact, a route open to employees, issues a VIEWER invitation; an employee keeps that
+ * invitation's token. The ceiling already lets an employee grant VIEWER, the case is stated here so it does not hang on
+ * the scale. An unknown role on either side is refused.
+ *
+ * @param callerRole The role the caller holds as stored (the one `createBulk` ranks an inviter by).
+ * @param invitedRole The role the invitation grants.
  */
 export function mayIssueInviteRole(
 	callerRole: string | null | undefined,
@@ -21,19 +22,20 @@ export function mayIssueInviteRole(
 	if (!callerRole || !invitedRole) {
 		return false;
 	}
-	if (callerRole === RolesEnum.SUPER_ADMIN) {
+	if (callerRole === RolesEnum.EMPLOYEE && invitedRole === RolesEnum.VIEWER) {
 		return true;
 	}
-	if (callerRole === RolesEnum.EMPLOYEE) {
-		return ROLES_AN_EMPLOYEE_ISSUES.has(invitedRole);
-	}
-	return invitedRole !== RolesEnum.SUPER_ADMIN;
+	return canInviteWithRole(callerRole, invitedRole);
 }
 
 /** What deciding on an invitation's token needs to know about the caller. */
 export interface IInviteTokenReader {
-	/** The role the caller holds. */
-	callerRole: string | null | undefined;
+	/**
+	 * Reads the role stored for the caller, the one `createBulk` ranks an inviter by (not the request context's, which
+	 * may come from a reused authenticated-user context). Called at most once, and only when the caller may issue
+	 * invitations and there is an invitation to decide on.
+	 */
+	findCallerRole: () => Promise<string | null | undefined>;
 	/** Whether the caller may issue invitations at all (ORG_INVITE_EDIT). */
 	mayIssueInvites: boolean;
 	/** Reads roles by id in the caller's tenant, for invitations listed without their role joined. */
@@ -50,20 +52,32 @@ export interface IInviteTokenReader {
  */
 export async function withholdTokensNotIssuable(
 	invites: Pick<IInvite, 'token' | 'roleId' | 'role'>[] = [],
-	{ callerRole, mayIssueInvites, findRoles }: IInviteTokenReader
+	{ findCallerRole, mayIssueInvites, findRoles }: IInviteTokenReader
 ): Promise<void> {
+	if (!mayIssueInvites) {
+		for (const invite of invites) {
+			delete invite.token;
+		}
+		return;
+	}
+	if (invites.length === 0) {
+		return;
+	}
+
+	const callerRole = await findCallerRole();
+
 	// The role is joined only when the listing asks for it; otherwise it is read here.
 	const roleNames = new Map<ID, string>();
 	const unresolved = [
 		...new Set(invites.filter((invite) => !invite.role?.name && invite.roleId).map((invite) => invite.roleId))
 	];
-	if (mayIssueInvites && unresolved.length > 0) {
+	if (callerRole && unresolved.length > 0) {
 		(await findRoles(unresolved)).forEach((role) => roleNames.set(role.id, role.name));
 	}
 
 	for (const invite of invites) {
 		const invitedRole = invite.role?.name ?? roleNames.get(invite.roleId);
-		if (!mayIssueInvites || !mayIssueInviteRole(callerRole, invitedRole)) {
+		if (!mayIssueInviteRole(callerRole, invitedRole)) {
 			delete invite.token;
 		}
 	}

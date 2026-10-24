@@ -2,6 +2,7 @@ import { EntityCaseNamingStrategy, EntitySchema, MikroORM } from '@mikro-orm/cor
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { In, IsNull, LessThan, Not } from 'typeorm';
 import { MikroOrmBaseEntityRepository } from '../repository/mikro-orm-base-entity.repository';
+import { RequestContext } from '../context/request-context';
 import { MultiORMEnum } from '../utils';
 import { CrudService } from './crud.service';
 
@@ -19,6 +20,7 @@ class VersionedRow {
 	id!: string;
 	label?: string;
 	updatedAt?: Date;
+	updatedByUserId?: string;
 	version!: number;
 }
 
@@ -29,6 +31,7 @@ const VersionedRowSchema = new EntitySchema<VersionedRow>({
 		id: { type: 'string', primary: true },
 		label: { type: 'string', nullable: true },
 		updatedAt: { type: 'Date', nullable: true, onCreate: () => new Date(), onUpdate: () => new Date() },
+		updatedByUserId: { type: 'string', nullable: true },
 		// As `Token.version` is mapped for MikroORM: a plain integer, since `version: true` expects a default.
 		version: { type: 'integer', onCreate: (row: VersionedRow) => row.version ?? 1 }
 	}
@@ -72,7 +75,7 @@ describe('CrudService.update under MikroORM', () => {
 		await orm.em
 			.getConnection()
 			.execute(
-				'CREATE TABLE versioned_row (id varchar PRIMARY KEY NOT NULL, label varchar NULL, updatedAt datetime NULL, version integer NOT NULL)'
+				'CREATE TABLE versioned_row (id varchar PRIMARY KEY NOT NULL, label varchar NULL, updatedAt datetime NULL, updatedByUserId varchar NULL, version integer NOT NULL)'
 			);
 	});
 
@@ -111,6 +114,29 @@ describe('CrudService.update under MikroORM', () => {
 		expect(first).toEqual({ affected: 1 });
 		expect(second).toEqual({ affected: 0 });
 		expect(await stored()).toMatchObject({ label: 'first writer', version: 2 });
+	});
+
+	it('stamps the signed-in user as the updater, as the TypeORM update subscriber does', async () => {
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+
+		await service().update('r1', { label: 'by a user' });
+
+		const [row] = await orm.em
+			.getConnection()
+			.execute('SELECT updatedByUserId FROM versioned_row WHERE id = ?', ['r1']);
+		expect(row.updatedByUserId).toBe('user-1');
+	});
+
+	it('leaves the updater empty with no signed-in user, and keeps one the payload states', async () => {
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(null);
+		await service().update('r1', { label: 'by a job' });
+		const select = () =>
+			orm.em.getConnection().execute('SELECT updatedByUserId FROM versioned_row WHERE id = ?', ['r1']);
+		expect((await select())[0].updatedByUserId).toBeNull();
+
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		await service().update('r1', { label: 'stated', updatedByUserId: 'user-2' } as any);
+		expect((await select())[0].updatedByUserId).toBe('user-2');
 	});
 
 	it('keeps an update date or version the payload states', async () => {

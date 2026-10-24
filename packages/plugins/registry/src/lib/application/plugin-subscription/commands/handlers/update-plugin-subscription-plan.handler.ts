@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { ID } from '@gauzy/contracts';
 import { PluginService, PluginSubscriptionPlanService } from '../../../../domain';
 import { IPluginSubscriptionPlan } from '../../../../shared';
 import { UpdatePluginSubscriptionPlanCommand } from '../update-plugin-subscription-plan.command';
@@ -19,8 +20,10 @@ export class UpdatePluginSubscriptionPlanCommandHandler
 
 		// Only the owner of the plan's plugin may change it, and only move it to another plugin they own
 		await assertOwnsPlans(this.pluginService, this.pluginSubscriptionPlanService, [id]);
-		if (updateDto?.pluginId) {
-			await assertOwnsPlugin(this.pluginService, updateDto.pluginId);
+		// The update DTO names no plugin today; a body that carries one anyway (another client, a later DTO) is checked
+		const movedTo = (updateDto as { pluginId?: ID } | undefined)?.pluginId;
+		if (movedTo) {
+			await assertOwnsPlugin(this.pluginService, movedTo);
 		}
 
 		try {

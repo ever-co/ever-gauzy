@@ -3,8 +3,8 @@ import { CLIENT_REGISTRATION_LIMITS, OAuth2ClientManager } from './oauth-client-
 /**
  * `POST /oauth2/register` is open to anyone, the server parsed up to 10 MB per request, and every registration was
  * kept in an in-memory map with no bound on its fields or on the number of clients: about a gigabyte per address per
- * rate-limit window. A registration now holds only what a real client needs, and the oldest self-registered client
- * is forgotten past a cap.
+ * rate-limit window. A registration now holds only what a real client needs, and past a cap a self-registered
+ * client is forgotten: the oldest that never obtained a token, else the least recently used.
  */
 describe('OAuth2ClientManager — dynamic registration bounds', () => {
 	const valid = (overrides: Record<string, unknown> = {}) =>
@@ -56,6 +56,53 @@ describe('OAuth2ClientManager — dynamic registration bounds', () => {
 
 		expect(manager.listClients().map((client) => client.clientId)).toEqual(ids.slice(2));
 		expect(manager.getClient(ids[0])).toBeFalsy();
+	});
+
+	/**
+	 * Registration is public, and past the cap the oldest client was forgotten whatever it was doing: anyone could
+	 * register clients until active ones were evicted, and their next refresh failed with `invalid_client`. A client
+	 * that obtained a token is now forgotten only after every client that never did.
+	 */
+	describe('a client that obtained a token', () => {
+		const register = async (manager: OAuth2ClientManager, name: string) =>
+			(await manager.registerClient(valid({ client_name: name }))).client_id;
+
+		it('is kept through a flood of registrations', async () => {
+			const manager = new OAuth2ClientManager(3);
+			const inUse = await register(manager, 'in use');
+			manager.markClientUsed(inUse);
+
+			for (let i = 0; i < 20; i++) {
+				await register(manager, `flood ${i}`);
+			}
+
+			expect(manager.getClient(inUse)).toBeTruthy();
+			expect(manager.listClients()).toHaveLength(3);
+		});
+
+		it('is forgotten, least recently used first, only once every kept client obtained one', async () => {
+			const manager = new OAuth2ClientManager(2);
+			const first = await register(manager, 'first');
+			const second = await register(manager, 'second');
+			manager.markClientUsed(first);
+			manager.markClientUsed(second);
+			manager.markClientUsed(first);
+
+			const third = await register(manager, 'third');
+
+			expect(manager.getClient(second)).toBeFalsy();
+			expect(manager.getClient(first)).toBeTruthy();
+			expect(manager.getClient(third)).toBeTruthy();
+		});
+
+		it('ignores a client it does not keep as dynamically registered', async () => {
+			const manager = new OAuth2ClientManager(2);
+			await manager.registerDefaultClients();
+			manager.markClientUsed('chatgpt-mcp-client');
+			manager.markClientUsed('never-registered');
+
+			expect((manager as any).usedDynamicClientIds.size).toBe(0);
+		});
 	});
 
 	it('never forgets a client the operator registered under its own id', async () => {

@@ -6,6 +6,7 @@ import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingCreateCommand } from '../equipment-sharing.create.command';
 import { EquipmentSharingService } from '../../equipment-sharing.service';
 import { filedSharingStatus, SHARING_DECISION_PERMISSIONS } from '../../filed-status.helper';
+import { withReferencesAsIds } from '../../reference-scope.helper';
 
 @CommandHandler(EquipmentSharingCreateCommand)
 export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentSharingCreateCommand> {
@@ -28,14 +29,17 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 		const { organizationId, input } = command;
 		const { name } = input;
 
-		// The row stores one equipment: the related object's id when the body carries one (the form sends both), so
-		// the status below and the scope check read the equipment the row will point at.
-		const { equipment, ...values } = input;
-		const equipmentId = equipment?.id ?? input.equipmentId;
+		// The row stores one equipment and one policy: the related object's id when the body carries one (the form
+		// sends both), so the status below and the scope check read the rows the row will point at. The objects are
+		// dropped: a policy named as `equipmentSharingPolicy: { id }` was persisted without ever being checked.
+		// A filing stores a new row, so a body-supplied id is dropped too: `create()` is an upsert by id, and the id of
+		// a stored sharing would move it into this organization with the equipment and policy it keeps, unchecked.
+		const { id: _storedId, ...values } = withReferencesAsIds(input);
+		const { equipmentId } = values;
 		const scope = { tenantId, organizationId };
 
 		// The equipment and the policy the body names must be this organization's (as on the update path).
-		await this._equipmentSharingService.assertReferencesAreInScope({ ...values, equipmentId }, scope);
+		await this._equipmentSharingService.assertReferencesAreInScope(values, scope);
 
 		// Only a caller who may decide a sharing chooses its status; anyone else's request is approved only when the
 		// equipment itself auto-approves its shares.

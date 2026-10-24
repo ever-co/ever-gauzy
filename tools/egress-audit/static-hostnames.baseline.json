@@ -229,13 +229,6 @@
 			"gauzy.co": 5,
 			"packages.ever.co": 5
 		},
-		".github/workflows/external-uptime-monitor.yml": {
-			"api.gauzy.co": 2,
-			"apistage.gauzy.co": 1,
-			"app.gauzy.co": 2,
-			"gauzy.co": 2,
-			"stage.gauzy.co": 1
-		},
 		".github/workflows/mirror-releases-to-r2.yml": {
 			"cdn.ever.co": 1,
 			"downloads.ever.co": 2,

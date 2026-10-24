@@ -18,7 +18,16 @@ import { MultiORMEnum, parseSortOrder } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
-import { assertReferencesAreInScope, IReferenceScope } from './reference-scope.helper';
+import {
+	assertReferencesAreInScope,
+	IReferenceScope,
+	ISharingColumns,
+	ISharingReferences,
+	IStoredSharing,
+	sharingAsStored,
+	sharingReferences,
+	withReferencesAsIds
+} from './reference-scope.helper';
 
 /**
  * Columns the equipment sharing table can be sorted by. Any other `order` key from the query string is ignored.
@@ -46,22 +55,79 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *
 	 * Both targets extend TenantOrganizationBaseEntity, so both are scopeable.
 	 *
+	 * Each target is checked in both forms the body can name it, the column (`equipmentSharingPolicyId`) and the
+	 * related object (`equipmentSharingPolicy: { id }`), which the ORM persists as the foreign key just the same —
+	 * see `sharingReferences`.
+	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
 	 * @throws ForbiddenException when a referenced row is outside the scope.
 	 */
 	public async assertReferencesAreInScope(
-		input: Partial<IEquipmentSharingUpdateInput>,
+		input: Partial<IEquipmentSharingUpdateInput> | ISharingReferences,
 		scope: IReferenceScope
 	): Promise<void> {
-		await assertReferencesAreInScope(
-			[
-				['equipment', input?.equipmentId as ID],
-				['equipment_sharing_policy', input?.equipmentSharingPolicyId as ID]
-			],
-			scope,
-			(table, where) => this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
+			this.typeOrmRepository.manager.findOne(table, { where: where as any })
 		);
+	}
+
+	/**
+	 * Refuses a `POST /equipment-sharing` payload whose equipment or policy is not a row of the organization the
+	 * sharing is stored in, and answers the payload to store.
+	 *
+	 * The payload is read as the row it will store ({@link sharingAsStored}): the organization in either form the body
+	 * names it, and — the CRUD base's `create()` being an upsert by id — the organization and the references of the
+	 * stored row a body-supplied id names, where the body states none. The payload answered carries each reference
+	 * once, as its column, and the organization it was checked in, so the row is stored where it was checked.
+	 *
+	 * @param input - The raw request body.
+	 * @returns The payload to hand to `create()`.
+	 * @throws BadRequestException when the body's id is not a string.
+	 * @throws ForbiddenException when a referenced row is outside the organization the sharing is stored in.
+	 */
+	public async assertCreateIsInScope(
+		input: ISharingReferences & { id?: unknown }
+	): Promise<ISharingColumns & { id?: unknown }> {
+		const tenantId = RequestContext.currentTenantId();
+		const values: ISharingColumns & { id?: unknown } = withReferencesAsIds(input);
+		const stored = await this.findStoredSharing(values.id, tenantId);
+		const {
+			values: payload,
+			references,
+			organizationId
+		} = sharingAsStored(values, stored, RequestContext.currentOrganizationId());
+
+		await this.assertReferencesAreInScope(references, { tenantId, organizationId });
+		return payload;
+	}
+
+	/**
+	 * The organization and the references of the stored sharing a body-supplied id names, read in the caller's
+	 * tenant (a row of another tenant is refused by the CRUD base's `create()`), soft-deleted rows included as the
+	 * upsert reads them.
+	 *
+	 * @param id - The body's id.
+	 * @param tenantId - The caller's tenant.
+	 * @returns The stored row's columns, or `null` when the body names no stored row of the tenant.
+	 * @throws BadRequestException when the id is not a string: an object would be handed to the lookup (and to the
+	 * upsert's) as a criterion rather than compared as a value.
+	 */
+	private async findStoredSharing(id: unknown, tenantId: ID | null): Promise<IStoredSharing | null> {
+		if (id === undefined || id === null || id === '') {
+			return null;
+		}
+		if (typeof id !== 'string') {
+			throw new BadRequestException('The id of an equipment sharing must be a string');
+		}
+		if (!tenantId) {
+			return null;
+		}
+		return await this.typeOrmRepository.findOne({
+			where: { id, tenantId },
+			select: { id: true, organizationId: true, equipmentId: true, equipmentSharingPolicyId: true },
+			withDeleted: true
+		} as any);
 	}
 
 	/**
