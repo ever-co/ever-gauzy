@@ -23,8 +23,16 @@ export class SanitizerUtil {
 	/** Keys redacted wherever they appear in a name, `confirmPassword`, `refresh_token` and `clientSecret` alike. */
 	private static readonly sensitiveFragments = ['password', 'passwd', 'secret', 'token', 'apikey', 'privatekey'];
 
-	/** Keys redacted when they are the whole name: a one-time code, a hash, a card number. */
+	/**
+	 * Keys redacted when they are the whole name: a one-time code, a hash, a card number, and the credential headers
+	 * when a header object is reached through `sanitizeObject` (a WebSocket handshake's `headers`) rather than through
+	 * `sanitizeHeaders`.
+	 */
 	private static readonly sensitiveNames = new Set([
+		'authorization',
+		'proxyauthorization',
+		'cookie',
+		'setcookie',
 		'code',
 		'otp',
 		'pin',

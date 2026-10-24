@@ -60,6 +60,26 @@ describe('SanitizerUtil', () => {
 		});
 	});
 
+	it('redacts the credential headers of a header object it reaches, such as a WebSocket handshake', () => {
+		expect(
+			SanitizerUtil.sanitizeObject({
+				headers: {
+					authorization: 'Bearer jwt-1',
+					Cookie: 's=1',
+					'Proxy-Authorization': 'Basic b-1',
+					host: 'api.example.com'
+				}
+			})
+		).toEqual({
+			headers: {
+				authorization: '[REDACTED]',
+				Cookie: '[REDACTED]',
+				'Proxy-Authorization': '[REDACTED]',
+				host: 'api.example.com'
+			}
+		});
+	});
+
 	it('redacts the query values of a URL that carry a credential, and keeps the rest', () => {
 		expect(SanitizerUtil.sanitizeUrl('/api/integration/hubstaff/organizations?token=hub-1&page=2')).toBe(
 			'/api/integration/hubstaff/organizations?token=%5BREDACTED%5D&page=2'
