@@ -15,7 +15,7 @@ jest.mock('@gauzy/core', () => ({
 }));
 jest.mock('@gauzy/config', () => ({ ConfigService: class {} }));
 
-import { BadRequestException, ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
 import { createVerify, generateKeyPairSync } from 'crypto';
 import { of } from 'rxjs';
 import { ActivepiecesConnectionMode, ActivepiecesSettingName } from '@gauzy/contracts';
@@ -136,43 +136,51 @@ describe('ActivepiecesCredentialsService', () => {
 			const creations = http.request.mock.calls.filter(([config]: any[]) => config.method === 'post');
 			expect(creations).toHaveLength(1);
 			expect(creations[0][0].data).toEqual(expect.objectContaining({ externalId: 'gauzy-tenant-tenant-a' }));
-			// Found none, created one, listed again to converge with any other API server, then reused from the cache
-			expect(http.request).toHaveBeenCalledTimes(3);
+			// Found none, created one, then reused from the cache
+			expect(http.request).toHaveBeenCalledTimes(2);
 		});
 
-		it('converges on the oldest project when another API server created one at the same moment', async () => {
-			let lists = 0;
-			const { service, http } = setup({
-				config: { apiKey: 'platform-key' },
-				respond: ({ method, url }) => {
-					if (method === 'get' && url === ACTIVEPIECES_PROJECTS_URL) {
+		it.each([
+			['a server error (the unique index on the insert)', 500],
+			['409 PROJECT_EXTERNAL_ID_ALREADY_EXISTS', 409]
+		])(
+			'uses the project another API server created at the same moment, when its own create fails with %s',
+			async (_label, status) => {
+				let lists = 0;
+				const { service, http } = setup({ config: { apiKey: 'platform-key' } });
+				http.request.mockImplementation((config: any) => {
+					if (config.method === 'get' && config.url === ACTIVEPIECES_PROJECTS_URL) {
 						lists++;
-						// None at first; once created, the other server's project, created a moment earlier, is listed too
-						return lists === 1
-							? { data: [] }
-							: {
-									data: [
-										{ id: 'proj-mine', externalId: 'gauzy-tenant-tenant-a', created: '2026-10-24T10:00:01Z' },
-										{ id: 'proj-other', externalId: 'gauzy-tenant-tenant-a', created: '2026-10-24T10:00:00Z' }
-									]
-							  };
+						// None at first; after the failed create, the other server's project holds the external id
+						return of({
+							data: { data: lists === 1 ? [] : [{ id: 'proj-other', externalId: 'gauzy-tenant-tenant-a' }] }
+						}) as any;
 					}
-					if (method === 'post' && url === ACTIVEPIECES_PROJECTS_URL) return { id: 'proj-mine' };
-					return {};
+					if (config.method === 'post' && config.url === ACTIVEPIECES_PROJECTS_URL) {
+						throw Object.assign(new Error('Request failed'), { response: { status } });
+					}
+					return of({ data: undefined }) as any;
+				});
+
+				const credential = await service.resolve();
+
+				expect(credential.projectId).toBe('proj-other');
+				expect(lists).toBe(2);
+				// Activepieces keeps one live project per external id: there is no duplicate to rename
+				expect(http.request.mock.calls.filter(([config]: any[]) => config.method === 'post')).toHaveLength(1);
+			}
+		);
+
+		it('answers the failure when the create fails and no project holds the external id', async () => {
+			const { service, http } = setup({ config: { apiKey: 'platform-key' } });
+			http.request.mockImplementation((config: any) => {
+				if (config.method === 'post') {
+					throw Object.assign(new Error('Request failed'), { response: { status: 500 } });
 				}
+				return of({ data: { data: [] } }) as any;
 			});
 
-			const credential = await service.resolve();
-
-			expect(credential.projectId).toBe('proj-other');
-			// The project that lost no longer holds the tenant's external id
-			expect(http.request).toHaveBeenCalledWith(
-				expect.objectContaining({
-					method: 'post',
-					url: `${ACTIVEPIECES_PROJECTS_URL}/proj-mine`,
-					data: { externalId: 'gauzy-tenant-tenant-a-duplicate-proj-mine' }
-				})
-			);
+			await expect(service.resolve()).rejects.toBeInstanceOf(BadGatewayException);
 		});
 
 		it('names its project with the configured prefix', async () => {

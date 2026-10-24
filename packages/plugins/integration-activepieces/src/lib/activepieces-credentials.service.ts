@@ -392,8 +392,8 @@ export class ActivepiecesCredentialsService {
 	 * The id of the tenant's own project on the operator's platform, found by its external id, or created once.
 	 *
 	 * The pending map only joins the callers of this server. Across API servers, the project holding the tenant's
-	 * external id in Activepieces is the one source of truth, and each server converges on it before answering (see
-	 * {@link findOrCreateTenantProject}).
+	 * external id in Activepieces is the one source of truth: Activepieces keeps one live project per external id, and
+	 * a server whose create loses the race uses the other server's project (see {@link findOrCreateTenantProject}).
 	 *
 	 * @param tenantId - The tenant.
 	 * @param settings - The operator's settings.
@@ -418,7 +418,7 @@ export class ActivepiecesCredentialsService {
 	}
 
 	/**
-	 * The oldest project of the operator's platform holding an external id.
+	 * The project of the operator's platform holding an external id (the oldest, should Activepieces ever list several).
 	 *
 	 * @param externalId - The external id.
 	 * @param platformApiKey - The operator's platform key.
@@ -562,12 +562,13 @@ export class ActivepiecesCredentialsService {
 	/**
 	 * The project holding the tenant's external id, or one created for it.
 	 *
-	 * Two API servers can both find none and both create one. Each lists the projects again after creating and takes
-	 * the oldest holding the external id: the oldest was inserted first, so whoever lists after its own insert sees it,
-	 * and every server agrees on it before any caller saves a connection in a project. The server whose project lost
-	 * gives it another external id, so the tenant's external id names one project only, for the project-token
-	 * exchanges too (Activepieces finds the project of a token by that external id). The project that lost stays
-	 * empty: nothing was saved in it.
+	 * Activepieces keeps one live project per external id on a platform (`project-entity.ts`: a unique index on
+	 * `(platformId, externalId)` where `deleted IS NULL`). When two API servers both find none, the second create fails
+	 * on that index. Activepieces answers it as a server error (the insert has no conflict check of its own), or as
+	 * `409 PROJECT_EXTERNAL_ID_ALREADY_EXISTS` where it checks first. So, whatever the failure, the server lists again
+	 * and uses the project now holding the external id, the one the other server created. Only when there is still none
+	 * is the failure answered. No duplicate can exist, so every server, and the project-token exchange (which finds the
+	 * project by that external id), uses the same project.
 	 */
 	private async findOrCreateTenantProject(
 		tenantId: string,
@@ -578,36 +579,17 @@ export class ActivepiecesCredentialsService {
 		if (existing) {
 			return existing;
 		}
-		const created = await this.createTenantProject(tenantId, externalId, platformApiKey);
-		const oldest = (await this.findProjectByExternalId(externalId, platformApiKey)) ?? created;
-		if (oldest.id !== created.id) {
-			await this.releaseDuplicateProject(tenantId, created.id, externalId, platformApiKey);
-		}
-		return oldest;
-	}
-
-	/** Gives a duplicate tenant project another external id. A failure is logged: the oldest project is used anyway. */
-	private async releaseDuplicateProject(
-		tenantId: string,
-		projectId: string,
-		externalId: string,
-		platformApiKey: string
-	): Promise<void> {
 		try {
-			await this.requestActivepieces<IActivepiecesProject>(
-				'post',
-				`${ACTIVEPIECES_PROJECTS_URL}/${encodeURIComponent(projectId)}`,
-				platformApiKey,
-				'release a duplicate project',
-				{ data: { externalId: `${externalId}-duplicate-${projectId}` } }
-			);
-			this.logger.warn(
-				`Activepieces project ${projectId} was created for tenant ${tenantId} at the same time as another one: it no longer holds the tenant's external id, and stays empty`
-			);
-		} catch {
-			this.logger.warn(
-				`Activepieces project ${projectId}, a duplicate of tenant ${tenantId}'s project, still holds its external id: the oldest project is the one used`
-			);
+			return await this.createTenantProject(tenantId, externalId, platformApiKey);
+		} catch (error) {
+			const createdMeanwhile = await this.findProjectByExternalId(externalId, platformApiKey).catch(() => null);
+			if (createdMeanwhile) {
+				this.logger.log(
+					`Activepieces project ${createdMeanwhile.id} of tenant ${tenantId} was created by another server at the same moment: using it`
+				);
+				return createdMeanwhile;
+			}
+			throw error;
 		}
 	}
 
