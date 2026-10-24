@@ -169,6 +169,31 @@ describe('ApiService', () => {
 			});
 		});
 
+		it('records the seed when it starts, so a seed that fails after creating the accounts still shows them', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			// The accounts are inserted early in the seed; a later step then fails, so no "Completed" line
+			// follows, and the next start skips seeding because users exist.
+			child.stdout.emit('data', Buffer.from('Found 0 users in DB\nDatabase Default Seed Started\n'));
+			child.stderr.emit('data', Buffer.from('🛑 ERROR: some later seed step failed\n'));
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+			expect(mockRecordSeed.mock.calls[0][0]).toMatchObject({
+				DEMO_SUPER_ADMIN_PASSWORD: 'generated-super-admin-1'
+			});
+		});
+
+		it('records a seed that starts and completes only once', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			child.stdout.emit('data', Buffer.from('Database Default Seed Started\n'));
+			child.stdout.emit('data', Buffer.from('Database Default Seed Completed\n'));
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+		});
+
 		it('finds the seed line when it is split across two chunks, and records it once', async () => {
 			const { started, child } = start(false, { port: 3000 });
 			child.stdout.emit('data', Buffer.from('Database Default Se'));

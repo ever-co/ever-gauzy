@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 import { ServerTask } from './server-task';
 import { redactSecretsForLog } from '../../config/desktop-secrets';
 import { resolveDesktopListenHost, toDesktopClientUrl } from '../../config/desktop-listen-host';
-import { parsePublishedPasswordAccounts, reportsDesktopSeedCompleted } from '../../config/desktop-seed-credentials';
+import { parsePublishedPasswordAccounts, reportsDesktopSeedStarted } from '../../config/desktop-seed-credentials';
 import { DesktopSignInNotices } from '../../desktop-sign-in-notices';
 
 /** How much recent output is searched for the API's reports, so a line split across chunks is still found. */
@@ -97,9 +97,13 @@ export class ApiService extends ServerTask {
 	}
 
 	/**
-	 * Watches the API's output for the two reports the sign-in notices act on: a finished seed of a
-	 * new database (its accounts got this install's generated passwords) and, at boot, accounts of an
+	 * Watches the API's output for the two reports the sign-in notices act on: a seed of a new
+	 * database (its accounts get this install's generated passwords) and, at boot, accounts of an
 	 * existing database still using a published password. Each is recorded once per start.
+	 *
+	 * The seed is recorded when it begins, not when it ends: a seed that fails or is stopped after
+	 * creating the accounts leaves them with the generated passwords, and no later start seeds again
+	 * (users exist), so waiting for the end would leave nobody able to see them.
 	 *
 	 * @param {string} output - A chunk of the API's stdout or stderr.
 	 * @returns {void}
@@ -107,7 +111,7 @@ export class ApiService extends ServerTask {
 	protected override onOutput(output: string): void {
 		this.outputTail = (this.outputTail + output).slice(-OUTPUT_TAIL_LENGTH);
 
-		if (!this.seedReported && reportsDesktopSeedCompleted(this.outputTail)) {
+		if (!this.seedReported && reportsDesktopSeedStarted(this.outputTail)) {
 			this.seedReported = true;
 			// The child process's environment: the app's own, overridden by what was passed to it.
 			DesktopSignInNotices.recordSeed({ ...process.env, ...this.args });
