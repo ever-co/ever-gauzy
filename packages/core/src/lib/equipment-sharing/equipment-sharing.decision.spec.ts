@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before the service pulls an entity.
 import '../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { LockMode } from '@mikro-orm/core';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { RequestApprovalStatusTypesEnum, RolesEnum } from '@gauzy/contracts';
@@ -28,7 +29,8 @@ import { EquipmentSharingService, IEquipmentSharingDecisionTransaction } from '.
  * the control that shows the race is real. The interleaving is forced: the first decision pauses after its sharing
  * write.
  *
- * The last blocks pin the statements each ORM arm sends.
+ * The approval the transaction locks and writes is the sharing's own, by its id (second block); the last blocks pin
+ * the statements each ORM arm sends.
  */
 
 jest.mock('@gauzy/config', () => ({
@@ -41,7 +43,9 @@ const { REQUESTED, APPROVED, REFUSED } = RequestApprovalStatusTypesEnum;
 
 const TENANT = 'tenant-a';
 const ORG = 'org-a';
+const OTHER_ORG = 'org-b';
 const ID = 'sharing-1';
+const APPROVAL_ID = 'approval-1';
 
 type Row = Record<string, any>;
 
@@ -56,26 +60,38 @@ function deferred() {
 	return { promise, resolve };
 }
 
-function asAdmin() {
+function asUser(role: RolesEnum = RolesEnum.ADMIN, organizationId = ORG) {
 	jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
 		id: 'user-1',
 		tenantId: TENANT,
-		lastOrganizationId: ORG,
-		role: { name: RolesEnum.ADMIN },
+		lastOrganizationId: organizationId,
+		role: { name: role },
 		permissions: []
 	} as any);
 }
 
-/** One sharing, its request approval, and the decision's transaction over them. */
+const asAdmin = () => asUser(RolesEnum.ADMIN);
+
+/** One sharing, the request approvals of the tenant, and the decision's transaction over them. */
 class Store {
 	sharing: Row = { id: ID, tenantId: TENANT, organizationId: ORG, status: REQUESTED, version: 1 };
-	approval: Row = { requestId: ID, tenantId: TENANT, status: REQUESTED };
+	/** The request approvals, by id: the sharing's own, and any other the test adds. */
+	approvals: Record<string, Row> = {
+		[APPROVAL_ID]: { id: APPROVAL_ID, requestId: ID, tenantId: TENANT, organizationId: ORG, status: REQUESTED }
+	};
 	/** The first decision's pause after its sharing write, when set. */
 	pauseAfterFirstWrite: Promise<void> | null = null;
+	/** Whether the last transaction committed (`false` when it rolled back). */
+	committed: boolean | null = null;
 
 	private lock: Promise<void> = Promise.resolve();
 
 	constructor(private readonly atomic = true) {}
+
+	/** The sharing's own request approval. */
+	get approval(): Row {
+		return this.approvals[APPROVAL_ID];
+	}
 
 	async transaction<R>(work: (transaction: IEquipmentSharingDecisionTransaction) => Promise<R>): Promise<R> {
 		const pending: Array<() => void> = [];
@@ -84,16 +100,18 @@ class Store {
 		const write = (apply: () => void) => (this.atomic ? pending.push(apply) : apply());
 
 		const transaction: IEquipmentSharingDecisionTransaction = {
-			lockRequestApproval: async () => {
-				if (!this.atomic) {
-					return;
+			lockRequestApproval: async (requestApprovalId) => {
+				if (this.atomic) {
+					// FOR UPDATE: wait for the transaction holding the row, then hold it until this one ends.
+					const held = this.lock;
+					const next = deferred();
+					this.lock = next.promise;
+					release = next.resolve;
+					await held;
 				}
-				// FOR UPDATE: wait for the transaction holding the row, then hold it until this one ends.
-				const held = this.lock;
-				const next = deferred();
-				this.lock = next.promise;
-				release = next.resolve;
-				await held;
+				// A locking read answers what is committed.
+				const row = this.approvals[requestApprovalId];
+				return row ? copy({ id: row.id, requestId: row.requestId, organizationId: row.organizationId }) : null;
 			},
 			writeSharingStatus: async (criteria: Row, status) => {
 				// An UPDATE's compare-and-set reads what is committed.
@@ -107,8 +125,12 @@ class Store {
 				await pause;
 				return 1;
 			},
-			writeRequestApprovalStatus: async (_requestId, _tenantId, status) => {
-				write(() => (this.approval = { ...this.approval, status }));
+			writeRequestApprovalStatus: async (requestApprovalId, _tenantId, status) => {
+				write(() => {
+					if (this.approvals[requestApprovalId]) {
+						this.approvals[requestApprovalId] = { ...this.approvals[requestApprovalId], status };
+					}
+				});
 			}
 		};
 
@@ -116,7 +138,12 @@ class Store {
 			const result = await work(transaction);
 			// The commit: every write at once.
 			pending.forEach((apply) => apply());
+			this.committed = true;
 			return result;
+		} catch (error) {
+			// The rollback: nothing the transaction wrote is kept.
+			this.committed = false;
+			throw error;
 		} finally {
 			release();
 		}
@@ -140,7 +167,16 @@ function system(store: Store) {
 	jest.spyOn(service as any, 'decisionTransaction').mockImplementation((work: any) => store.transaction(work));
 
 	const approvals = {
-		findOneByWhereOptions: jest.fn(async () => copy(store.approval)),
+		// The scoped read of the sharing's approval, as committed when it is made.
+		findOneByWhereOptions: jest.fn(async (where: Row) => {
+			const row = Object.values(store.approvals).find((approval) =>
+				Object.entries(where).every(([key, value]) => approval[key] === value)
+			);
+			if (!row) {
+				throw new NotFoundException('The requested record was not found');
+			}
+			return copy(row);
+		}),
 		update: jest.fn()
 	};
 	const handler = new EquipmentSharingStatusHandler(service, approvals as any);
@@ -219,6 +255,144 @@ describe('deciding an equipment sharing writes it and its request approval in on
 	});
 });
 
+/**
+ * The request approval the decision writes. The transaction used to lock and write every approval whose `requestId`
+ * named the sharing, inside the tenant, and to ignore whether any was there:
+ *
+ * - approvals of other organizations of the tenant can carry the same `requestId` (`POST /request-approval` stores
+ *   the one it is given), and were decided with the sharing;
+ * - the edit (`EquipmentSharingUpdateHandler`) removes the sharing and its approval, recreates the sharing at the next
+ *   version and only then files its approval again, under a new id. A decision that read the recreated sharing and the
+ *   approval the edit had removed passed the compare-and-set, wrote no approval (none matched) and committed a decided
+ *   sharing, beside which the edit then filed a REQUESTED approval.
+ *
+ * The approval is now the one the handler read in the sharing's organization, locked and written by its own id, and
+ * it must still be there, still be the sharing's and still be in the caller's reach under the lock.
+ */
+describe('the decision writes the sharing’s own request approval, and only while it is there', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The handler's approval read, followed at once by another write (`change`) landing before the transaction. */
+	function changedAfterTheApprovalRead(approvals: { findOneByWhereOptions: jest.Mock }, change: () => void) {
+		const read = approvals.findOneByWhereOptions.getMockImplementation() as (where: Row) => Promise<Row>;
+		approvals.findOneByWhereOptions.mockImplementationOnce(async (where: Row) => {
+			const row = await read(where);
+			change();
+			return row;
+		});
+	}
+
+	it('reads the approval in the sharing’s organization, and leaves another organization’s approval of the same request as it is', async () => {
+		asAdmin();
+		const store = new Store();
+		// Another organization's approval naming the same sharing, stored first so a read by `requestId` alone finds it.
+		store.approvals = {
+			'approval-foreign': {
+				id: 'approval-foreign',
+				requestId: ID,
+				tenantId: TENANT,
+				organizationId: OTHER_ORG,
+				status: REQUESTED
+			},
+			[APPROVAL_ID]: store.approval
+		};
+		const { decide, approvals } = system(store);
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeUndefined();
+		expect(approvals.findOneByWhereOptions).toHaveBeenCalledWith({ requestId: ID, organizationId: ORG });
+		expect(store.sharing.status).toBe(APPROVED);
+		expect(store.approval.status).toBe(APPROVED);
+		expect(store.approvals['approval-foreign'].status).toBe(REQUESTED);
+	});
+
+	it('CONTROL: an edit caught half way let the pre-fix statements commit a decided sharing with no approval written', async () => {
+		asAdmin();
+		const store = new Store();
+		// The edit recreated the sharing at the next version and has not filed its approval again yet.
+		store.sharing = { ...store.sharing, version: 2 };
+		delete store.approvals[APPROVAL_ID];
+
+		// The pre-fix transaction: the lock and the approval's write by `requestId`, which match nothing now.
+		await store.transaction(async (transaction) => {
+			await transaction.lockRequestApproval(APPROVAL_ID, TENANT);
+			return await transaction.writeSharingStatus({ id: ID, version: 2, tenantId: TENANT } as Row, APPROVED);
+		});
+
+		expect(store.committed).toBe(true);
+		expect(store.sharing).toMatchObject({ status: APPROVED, version: 3 });
+		expect(Object.values(store.approvals)).toEqual([]);
+	});
+
+	it('an edit caught half way: the approval it removed is not there under the lock, and the decision writes nothing (404)', async () => {
+		asAdmin();
+		const store = new Store();
+		// The edit recreated the sharing at the next version; the decision reads it, and the approval the edit is
+		// about to remove.
+		store.sharing = { ...store.sharing, version: 2 };
+		const { decide, approvals } = system(store);
+		changedAfterTheApprovalRead(approvals, () => delete store.approvals[APPROVAL_ID]);
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeInstanceOf(NotFoundException);
+		expect(store.committed).toBe(false);
+		expect(store.sharing).toMatchObject({ status: REQUESTED, version: 2 });
+	});
+
+	it('a decision based on a read another edit overtook is still told so (409) when that edit also replaced the approval', async () => {
+		asAdmin();
+		const store = new Store();
+		const { decide, approvals } = system(store);
+		// The whole edit lands after the decision's reads: the sharing moves on, its approval is filed again.
+		changedAfterTheApprovalRead(approvals, () => {
+			store.sharing = { ...store.sharing, version: 2 };
+			delete store.approvals[APPROVAL_ID];
+			store.approvals['approval-2'] = {
+				id: 'approval-2',
+				requestId: ID,
+				tenantId: TENANT,
+				organizationId: ORG,
+				status: REQUESTED
+			};
+		});
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeInstanceOf(ApiException);
+		expect((error as ApiException).getStatus()).toBe(409);
+		expect(store.sharing).toMatchObject({ status: REQUESTED, version: 2 });
+		expect(store.approvals['approval-2'].status).toBe(REQUESTED);
+	});
+
+	it('refuses a confined caller (404) when the approval moved out of their organization under the lock', async () => {
+		asUser(RolesEnum.MANAGER, ORG);
+		const store = new Store();
+		const { decide, approvals } = system(store);
+		changedAfterTheApprovalRead(approvals, () => (store.approval.organizationId = OTHER_ORG));
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeInstanceOf(NotFoundException);
+		expect(store.committed).toBe(false);
+		expect(store.sharing.status).toBe(REQUESTED);
+		expect(store.approval.status).toBe(REQUESTED);
+	});
+
+	it('refuses (404) when the approval was moved onto another request under the lock', async () => {
+		asAdmin();
+		const store = new Store();
+		const { decide, approvals } = system(store);
+		changedAfterTheApprovalRead(approvals, () => (store.approval.requestId = 'sharing-2'));
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeInstanceOf(NotFoundException);
+		expect(store.sharing.status).toBe(REQUESTED);
+	});
+});
+
 describe('the decision transaction on each ORM', () => {
 	beforeEach(() => asAdmin());
 	afterEach(() => {
@@ -230,11 +404,11 @@ describe('the decision transaction on each ORM', () => {
 	const sharing = () => ({ id: ID, tenantId: TENANT, organizationId: ORG, status: REQUESTED, version: 2 });
 
 	describe('TypeORM', () => {
-		function typeOrm(affected = 1) {
+		function typeOrm(affected = 1, approval: Row | null = { id: APPROVAL_ID, requestId: ID, organizationId: ORG }) {
 			const query = {
 				where: jest.fn().mockReturnThis(),
 				setLock: jest.fn().mockReturnThis(),
-				getMany: jest.fn(async () => [])
+				getOne: jest.fn(async () => approval)
 			};
 			const manager = {
 				createQueryBuilder: jest.fn(() => query),
@@ -261,38 +435,58 @@ describe('the decision transaction on each ORM', () => {
 		it.each([
 			['PostgreSQL', isPostgres],
 			['MySQL', isMySQL]
-		])('on %s locks the request approval, then writes both rows on the transaction', async (_, dialect) => {
+		])('on %s locks the approval by its id, then writes both rows on the transaction', async (_, dialect) => {
 			(dialect as jest.Mock).mockReturnValue(true);
 			const { service, manager, query, typeOrmRepository } = typeOrm();
 
-			await service.decideWithRequestApproval(ID, APPROVED);
+			await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID);
 
 			expect(typeOrmRepository.manager.transaction).toHaveBeenCalledTimes(1);
 			expect(manager.createQueryBuilder).toHaveBeenCalledWith(RequestApproval, 'request_approval');
-			expect(query.where).toHaveBeenCalledWith({ requestId: ID, tenantId: TENANT });
+			expect(query.where).toHaveBeenCalledWith({ id: APPROVAL_ID, tenantId: TENANT });
 			expect(query.setLock).toHaveBeenCalledWith('pessimistic_write');
 			expect(manager.update.mock.calls).toEqual([
 				[EquipmentSharing, { id: ID, version: 2, tenantId: TENANT }, { status: APPROVED }],
-				[RequestApproval, { requestId: ID, tenantId: TENANT }, { status: APPROVED }]
+				[RequestApproval, { id: APPROVAL_ID, tenantId: TENANT }, { status: APPROVED }]
 			]);
 		});
 
-		it('on SQLite takes no row lock: the transaction is serialized there', async () => {
+		it('on SQLite takes no row lock, and still reads the approval: the transaction is serialized there', async () => {
 			const { service, query } = typeOrm();
 
-			await service.decideWithRequestApproval(ID, APPROVED);
+			await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID);
 
 			expect(query.setLock).not.toHaveBeenCalled();
+			expect(query.getOne).toHaveBeenCalledTimes(1);
 		});
 
 		it('writes no approval when the compare-and-set matched nothing, and answers 409 with both versions', async () => {
 			const { service, manager } = typeOrm(0);
 
-			const error = await service.decideWithRequestApproval(ID, APPROVED).catch((reason) => reason);
+			const error = await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID).catch((reason) => reason);
 
 			expect(error).toBeInstanceOf(ApiException);
 			expect(error.getStatus()).toBe(409);
 			expect(error.details).toEqual({ id: ID, expectedVersion: 2, actualVersion: 3 });
+			expect(manager.update.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing]);
+		});
+
+		it.each([
+			['PostgreSQL', isPostgres],
+			['SQLite', null]
+		])('on %s refuses (404) and fails the transaction when the approval is gone', async (_, dialect) => {
+			if (dialect) {
+				(dialect as jest.Mock).mockReturnValue(true);
+			}
+			const { service, manager, typeOrmRepository } = typeOrm(1, null);
+
+			const error = await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID).catch((reason) => reason);
+
+			expect(error).toBeInstanceOf(NotFoundException);
+			// Thrown out of the transaction's callback, which rolls the sharing's write back.
+			await expect(typeOrmRepository.manager.transaction.mock.results[0].value).rejects.toBeInstanceOf(
+				NotFoundException
+			);
 			expect(manager.update.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing]);
 		});
 	});
@@ -300,9 +494,12 @@ describe('the decision transaction on each ORM', () => {
 	describe('MikroORM', () => {
 		const NOW = new Date('2026-10-24T00:00:00.000Z');
 
-		function mikroOrm(audited = false) {
+		function mikroOrm(
+			audited = false,
+			approval: Row | null = { id: APPROVAL_ID, requestId: ID, organizationId: ORG }
+		) {
 			const em = {
-				find: jest.fn(async (..._args: unknown[]) => []),
+				findOne: jest.fn(async (..._args: unknown[]) => approval),
 				nativeUpdate: jest.fn(async (..._args: unknown[]) => 1),
 				getMetadata: () => ({
 					find: (name: string) =>
@@ -334,16 +531,16 @@ describe('the decision transaction on each ORM', () => {
 		it.each([
 			['PostgreSQL', isPostgres],
 			['MySQL', isMySQL]
-		])('on %s locks the request approval with PESSIMISTIC_WRITE, then writes both rows', async (_, dialect) => {
+		])('on %s locks the approval by its id with PESSIMISTIC_WRITE, then writes both rows', async (_, dialect) => {
 			(dialect as jest.Mock).mockReturnValue(true);
 			const { service, em, transactional } = mikroOrm();
 
-			await service.decideWithRequestApproval(ID, APPROVED);
+			await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID);
 
 			expect(transactional).toHaveBeenCalledTimes(1);
-			expect(em.find).toHaveBeenCalledWith(
+			expect(em.findOne).toHaveBeenCalledWith(
 				RequestApproval,
-				{ requestId: ID, tenantId: TENANT },
+				{ id: APPROVAL_ID, tenantId: TENANT },
 				{ disableIdentityMap: true, lockMode: LockMode.PESSIMISTIC_WRITE }
 			);
 			expect(em.nativeUpdate.mock.calls).toEqual([
@@ -352,22 +549,50 @@ describe('the decision transaction on each ORM', () => {
 					{ id: ID, version: 2, tenantId: TENANT },
 					{ status: APPROVED, version: 'version + 1' }
 				],
-				[RequestApproval, { requestId: ID, tenantId: TENANT }, { status: APPROVED }]
+				[RequestApproval, { id: APPROVAL_ID, tenantId: TENANT }, { status: APPROVED }]
 			]);
 		});
 
-		it('on SQLite takes no lock: the transaction is serialized there', async () => {
+		it('on SQLite takes no lock, and still reads the approval from the table: the transaction is serialized there', async () => {
 			const { service, em } = mikroOrm();
 
-			await service.decideWithRequestApproval(ID, APPROVED);
+			await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID);
 
-			expect(em.find).not.toHaveBeenCalled();
+			expect(em.findOne).toHaveBeenCalledWith(
+				RequestApproval,
+				{ id: APPROVAL_ID, tenantId: TENANT },
+				{ disableIdentityMap: true }
+			);
+		});
+
+		it('refuses (404) and writes no approval when the approval is gone', async () => {
+			const { service, em } = mikroOrm(false, null);
+
+			const error = await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID).catch((reason) => reason);
+
+			expect(error).toBeInstanceOf(NotFoundException);
+			expect(em.nativeUpdate.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing]);
+		});
+
+		it('reads the approval’s organization off its relation when the `persist: false` mirror is not hydrated', async () => {
+			asUser(RolesEnum.MANAGER, ORG);
+			const { service, em } = mikroOrm(false, {
+				id: APPROVAL_ID,
+				requestId: ID,
+				organization: { id: OTHER_ORG }
+			});
+
+			const error = await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID).catch((reason) => reason);
+
+			// The approval is another organization's: out of a confined manager's reach.
+			expect(error).toBeInstanceOf(NotFoundException);
+			expect(em.nativeUpdate.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing]);
 		});
 
 		it('stamps the update date and the deciding user on the approval, through its `persist: false` mirror', async () => {
 			const { service, em } = mikroOrm(true);
 
-			await service.decideWithRequestApproval(ID, REFUSED);
+			await service.decideWithRequestApproval(ID, REFUSED, APPROVAL_ID);
 
 			const [, , row] = em.nativeUpdate.mock.calls.find(([entity]) => entity === RequestApproval) as [
 				unknown,
