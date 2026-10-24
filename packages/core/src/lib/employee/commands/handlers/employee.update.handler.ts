@@ -11,6 +11,7 @@ import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
 import { ActivityLogService } from './../../../activity-log/activity-log.service';
+import { ownContactPatch } from './../../../contact/profile-contact.helper';
 import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
@@ -69,6 +70,15 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// The acknowledgement is a request flag, not an employee column.
 		const changes: IEmployeeUpdateInput = { ...input };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
+
+		// The edit writes the employee's own contact and never another one. `contact` cascades by id, and a
+		// nested id used to re-point the employee at an organization's, a client's or a candidate's contact
+		// and overwrite it. Only the stored `contactId` is kept as an id, and the contact carries the
+		// employee's tenant and organization. The contact link itself is never the edit's to move.
+		delete (changes as { contactId?: unknown }).contactId;
+		if (changes.contact) {
+			changes.contact = ownContactPatch(employee, changes.contact);
+		}
 
 		// An external id the request leaves out keeps its stored value, and one sent empty is cleared.
 		// The key is dropped rather than left undefined, because the MikroORM assign copies undefined onto the row.
