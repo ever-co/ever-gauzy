@@ -4,6 +4,7 @@ import {
 	ensureDesktopSeedCredentials,
 	findDesktopSeededAccounts,
 	generateDesktopSeedPassword,
+	parseDesktopSeedAccountEmails,
 	parsePublishedPasswordAccounts,
 	reportsDesktopSeedCompleted,
 	reportsDesktopSeedStarted
@@ -107,6 +108,39 @@ describe('desktop seed credentials', () => {
 			expect(credentials.superAdmin).toBe('generated-password-0001');
 		});
 
+		it('keeps a pending account recorded with an empty email: its password is still the one the seed used', () => {
+			const stored = {
+				superAdmin: 'generated-password-9999',
+				admin: 'generated-password-8888',
+				employee: 'generated-password-7777',
+				pending: [
+					{ key: 'superAdmin' as const, email: '' },
+					{ key: 'admin' as const, email: 'local.admin@ever.co' }
+				]
+			};
+
+			const { credentials, changed } = ensureDesktopSeedCredentials(stored, generate);
+
+			expect(changed).toBe(false);
+			expect(credentials.pending).toEqual(stored.pending);
+			expect(credentials.superAdmin).toBe('generated-password-9999');
+		});
+
+		it('forgets a pending entry without an email field: it is not one this module recorded', () => {
+			const { credentials, changed } = ensureDesktopSeedCredentials(
+				{
+					superAdmin: 'generated-password-9999',
+					admin: 'generated-password-8888',
+					employee: 'generated-password-7777',
+					pending: [{ key: 'superAdmin' } as never, { key: 'admin', email: 'local.admin@ever.co' }]
+				},
+				generate
+			);
+
+			expect(changed).toBe(true);
+			expect(credentials.pending).toEqual([{ key: 'admin', email: 'local.admin@ever.co' }]);
+		});
+
 		it('does not modify what it was given', () => {
 			const stored = Object.freeze({ superAdmin: '' });
 
@@ -150,21 +184,41 @@ describe('desktop seed credentials', () => {
 			employee: 'generated-employee-0001'
 		};
 
-		it('names every account seeded with its generated password, with the default emails', () => {
-			expect(findDesktopSeededAccounts(credentials, desktopSeedCredentialsToEnv(credentials))).toEqual([
+		/** What the API reports for a seed with its default emails (`Database Default Seed Accounts:`). */
+		const reported = { superAdmin: 'admin@ever.co', admin: 'local.admin@ever.co', employee: 'employee@ever.co' };
+
+		it('names every account seeded with its generated password, with the emails the API reported', () => {
+			expect(findDesktopSeededAccounts(credentials, desktopSeedCredentialsToEnv(credentials), reported)).toEqual([
 				{ key: 'superAdmin', email: 'admin@ever.co' },
 				{ key: 'admin', email: 'local.admin@ever.co' },
 				{ key: 'employee', email: 'employee@ever.co' }
 			]);
 		});
 
-		it('uses the email the API was configured with', () => {
+		it('uses the email the API was configured with when it reported none', () => {
 			const env = { ...desktopSeedCredentialsToEnv(credentials), DEMO_SUPER_ADMIN_EMAIL: ' boss@example.com ' };
 
 			expect(findDesktopSeededAccounts(credentials, env)[0]).toEqual({
 				key: 'superAdmin',
 				email: 'boss@example.com'
 			});
+		});
+
+		it('prefers what the API reported: that is the email it seeded', () => {
+			const env = { ...desktopSeedCredentialsToEnv(credentials), DEMO_SUPER_ADMIN_EMAIL: 'stale@example.com' };
+
+			expect(findDesktopSeededAccounts(credentials, env, { superAdmin: ' boss@example.com ' })[0]).toEqual({
+				key: 'superAdmin',
+				email: 'boss@example.com'
+			});
+		});
+
+		it('keeps no copy of the defaults: without a report or a variable the email is left empty', () => {
+			expect(findDesktopSeededAccounts(credentials, desktopSeedCredentialsToEnv(credentials))).toEqual([
+				{ key: 'superAdmin', email: '' },
+				{ key: 'admin', email: '' },
+				{ key: 'employee', email: '' }
+			]);
 		});
 
 		it('leaves out an account the operator gave its own password', () => {
@@ -218,6 +272,41 @@ describe('desktop seed credentials', () => {
 			expect(parsePublishedPasswordAccounts(' INSECURE SEED CREDENTIALS: DEMO_SUPER_ADMIN_PASSWORD \n')).toEqual(
 				[]
 			);
+		});
+
+		it('reads the emails the API reports for its default seed, with or without terminal colours', () => {
+			// What SeedDataService.runDefaultSeed prints just before "Database Default Seed Started".
+			const line =
+				'Database Default Seed Accounts: {"superAdmin":"admin@ever.co","admin":"local.admin@ever.co","employee":"employee@ever.co"}\n';
+
+			expect(
+				parseDesktopSeedAccountEmails(`Found 0 users in DB\n${line}Database Default Seed Started\n`)
+			).toEqual({
+				superAdmin: 'admin@ever.co',
+				admin: 'local.admin@ever.co',
+				employee: 'employee@ever.co'
+			});
+			expect(parseDesktopSeedAccountEmails(`\u001b[35m${line.trimEnd()}\u001b[39m\n`)).toEqual({
+				superAdmin: 'admin@ever.co',
+				admin: 'local.admin@ever.co',
+				employee: 'employee@ever.co'
+			});
+		});
+
+		it('waits for the whole accounts line, and reads nothing from a line that is not JSON', () => {
+			expect(parseDesktopSeedAccountEmails('Database Default Seed Accounts: {"superAdmin":"admin@ev')).toEqual(
+				{}
+			);
+			expect(parseDesktopSeedAccountEmails('Database Default Seed Accounts: admin@ever.co\n')).toEqual({});
+			expect(parseDesktopSeedAccountEmails('Database Default Seed Started\n')).toEqual({});
+		});
+
+		it('leaves out an account the report gives no usable email', () => {
+			expect(
+				parseDesktopSeedAccountEmails(
+					'Database Default Seed Accounts: {"superAdmin":" boss@example.com ","admin":"","employee":42,"other":"x@example.com"}\n'
+				)
+			).toEqual({ superAdmin: 'boss@example.com' });
 		});
 	});
 });

@@ -184,6 +184,70 @@ describe('ApiService', () => {
 			});
 		});
 
+		it('hands over the emails the API reported just before the seed started', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			// The two lines SeedDataService.runDefaultSeed prints, cut in the middle of the first one.
+			child.stdout.emit(
+				'data',
+				Buffer.from('Found 0 users in DB\nDatabase Default Seed Accounts: {"superAdmin":"admin@ev')
+			);
+			child.stdout.emit(
+				'data',
+				Buffer.from(
+					'er.co","admin":"local.admin@ever.co","employee":"employee@ever.co"}\nDatabase Default Seed Started\n'
+				)
+			);
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+			expect(mockRecordSeed.mock.calls[0][0]).toMatchObject({
+				DEMO_SUPER_ADMIN_PASSWORD: 'generated-super-admin-1'
+			});
+			expect(mockRecordSeed.mock.calls[0][1]).toEqual({
+				superAdmin: 'admin@ever.co',
+				admin: 'local.admin@ever.co',
+				employee: 'employee@ever.co'
+			});
+		});
+
+		/** The line SeedDataService.runDefaultSeed prints just before "Database Default Seed Started". */
+		const accountsLine =
+			'Database Default Seed Accounts: {"superAdmin":"admin@ever.co","admin":"local.admin@ever.co","employee":"employee@ever.co"}\n';
+		const reportedEmails = {
+			superAdmin: 'admin@ever.co',
+			admin: 'local.admin@ever.co',
+			employee: 'employee@ever.co'
+		};
+
+		it('reads the reports of a chunk longer than the tail it keeps (the seed logs that follow, coalesced)', async () => {
+			for (const later of [3_950, 10_000]) {
+				mockRecordSeed.mockReset();
+				const { started, child } = start(false, { port: 3000 });
+				child.stdout.emit(
+					'data',
+					Buffer.from(`${accountsLine}Database Default Seed Started\n${'x'.repeat(later)}\n`)
+				);
+				listening(child);
+				await started;
+
+				expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+				expect(mockRecordSeed.mock.calls[0][1]).toEqual(reportedEmails);
+			}
+		});
+
+		it('keeps the reported emails when more than the tail of other output comes before "Started"', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			child.stdout.emit('data', Buffer.from(accountsLine));
+			child.stderr.emit('data', Buffer.from(`${'y'.repeat(10_000)}\n`));
+			child.stdout.emit('data', Buffer.from('Database Default Seed Started\n'));
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+			expect(mockRecordSeed.mock.calls[0][1]).toEqual(reportedEmails);
+		});
+
 		it('records a seed that starts and completes only once', async () => {
 			const { started, child } = start(false, { port: 3000 });
 			child.stdout.emit('data', Buffer.from('Database Default Seed Started\n'));
