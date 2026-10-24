@@ -62,11 +62,31 @@ describe('mcp-auth token introspection — who may ask, and about what', () => {
 				manager.isResourceServer(await manager.validateClient(registered.client_id, registered.client_secret))
 			).toBe(false);
 		});
+
+		it('does not count a self-registered client that claims to be a resource server in its metadata', async () => {
+			const manager = new OAuth2ClientManager();
+			(manager as any).securityLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
+			const registered = await manager.registerClient({
+				client_name: 'Anyone',
+				redirect_uris: ['https://anyone.test/callback'],
+				metadata: { resource_server: true }
+			});
+
+			const client = await manager.validateClient(registered.client_id, registered.client_secret);
+			expect(client).toMatchObject({ clientType: 'confidential', metadata: { resource_server: true } });
+			expect(manager.isResourceServer(client)).toBe(false);
+		});
 	});
 
 	describe('the introspection endpoint', () => {
 		let tokenManager: OAuth2TokenManager;
 		let payloads: Map<string, TokenPayload>;
+
+		// The endpoint asks the shared client manager, which answers only the resource server registered with it
+		beforeAll(async () => {
+			(oAuth2ClientManager as any).securityLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
+			await oAuth2ClientManager.registerResourceServer(RESOURCE_SERVER, SECRET);
+		});
 
 		beforeEach(() => {
 			tokenManager = new OAuth2TokenManager('https://issuer.test', 'gauzy-mcp-api');
@@ -157,7 +177,11 @@ describe('mcp-auth token introspection — who may ask, and about what', () => {
 
 		it.each([
 			['a public client, which needs no secret', { clientId: 'chatgpt-mcp-client', clientType: 'public' }],
-			['a self-registered confidential client', { clientId: 'anyone', clientType: 'confidential', metadata: {} }]
+			['a self-registered confidential client', { clientId: 'anyone', clientType: 'confidential', metadata: {} }],
+			[
+				'a self-registered confidential client claiming resource_server in its metadata',
+				{ clientId: 'anyone', clientType: 'confidential', metadata: { resource_server: true } }
+			]
 		])('refuses %s', async (_case, client) => {
 			const { accessToken } = await signIn();
 			const { introspect, errorHandler, responseBuilder } = build(client);

@@ -107,7 +107,8 @@ export function loadAuthorizationConfig(env: NodeJS.ProcessEnv = process.env): A
 
 	return {
 		enabled,
-		requiredScopes: splitList(env.MCP_AUTH_REQUIRED_SCOPES ?? env.MCP_REQUIRED_SCOPES ?? 'mcp.read'),
+		// `||`, not `??`: the deploy substitutes an unset secret as '', which must not mean "no scope required"
+		requiredScopes: splitList(env.MCP_AUTH_REQUIRED_SCOPES || env.MCP_REQUIRED_SCOPES || 'mcp.read'),
 		resourceUri: env.MCP_AUTH_RESOURCE_URI || env.MCP_RESOURCE_URI,
 		authorizationServers:
 			enabled && issuer

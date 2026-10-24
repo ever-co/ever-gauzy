@@ -24,6 +24,13 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 	let tokenManager: OAuth2TokenManager;
 	let payloads: Map<string, TokenPayload>;
 
+	// The client is the registered resource server, the only one the introspection endpoint answers (decision 7).
+	// Marked directly: `registerResourceServer` hashes the secret with `bcryptjs`, whose default import is undefined
+	// under this project's Jest setup (no `esModuleInterop`).
+	beforeAll(() => {
+		(oAuth2ClientManager as any).resourceServerIds.add(CLIENT_ID);
+	});
+
 	beforeEach(() => {
 		tokenManager = new OAuth2TokenManager('https://issuer.test', 'https://audience.test');
 		payloads = new Map();
@@ -33,7 +40,6 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 			return handle;
 		});
 		(tokenManager as any).securityLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
-		// The client is a registered resource server: only one may introspect (decision 7)
 		jest.spyOn(oAuth2ClientManager, 'validateClient').mockResolvedValue({
 			clientId: CLIENT_ID,
 			clientType: 'confidential',

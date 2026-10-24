@@ -49,6 +49,8 @@ export const MIN_RESOURCE_SERVER_SECRET_LENGTH = 32;
 
 export class OAuth2ClientManager {
 	private clients = new Map<string, OAuth2Client>();
+	/** The clients registered by {@link registerResourceServer}: the only ones the introspection endpoint answers */
+	private readonly resourceServerIds = new Set<string>();
 	private securityLogger: SecurityLogger;
 
 	// Default supported scopes for MCP
@@ -159,14 +161,19 @@ export class OAuth2ClientManager {
 			isActive: true,
 			metadata: { resource_server: true }
 		});
+		this.resourceServerIds.add(clientId);
 		this.securityLogger.log(`Resource server registered: ${clientId}`);
 	}
 
 	/**
 	 * Whether a client is a resource server the operator registered ({@link registerResourceServer}).
+	 *
+	 * Decided by that registration alone, never by the client's `metadata`: a dynamic registration
+	 * (`POST /oauth2/register`, open to anyone) stores the `metadata` it is sent, so a self-registered confidential
+	 * client could claim `{ "resource_server": true }` and be answered at the introspection endpoint.
 	 */
 	isResourceServer(client: OAuth2Client | null | undefined): boolean {
-		return client?.clientType === 'confidential' && client.metadata?.resource_server === true;
+		return !!client && client.clientType === 'confidential' && this.resourceServerIds.has(client.clientId);
 	}
 
 	/**
