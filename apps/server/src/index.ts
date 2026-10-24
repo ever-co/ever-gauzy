@@ -42,6 +42,8 @@ import {
 	DialogOpenFile,
 	DialogStopServerExitConfirmation,
 	desktopSecretsToEnv,
+	desktopSeedCredentialsToEnv,
+	DesktopSignInNotices,
 	desktopStatsEnv,
 	ensureDesktopSecrets,
 	ErrorEventManager,
@@ -344,6 +346,9 @@ const runMainWindow = async () => {
 		setting: serverConfig.setting
 	});
 
+	// Generated passwords of a database seeded in an earlier run whose dialog was never confirmed.
+	void DesktopSignInNotices.show(serverWindow);
+
 	new DesktopThemeListener();
 };
 
@@ -378,6 +383,10 @@ const runServer = async () => {
 			signal,
 			uiPort
 		);
+
+		// The API has started: show the generated passwords if it just seeded a new database, or warn
+		// if the accounts of an existing one still use a published password.
+		void DesktopSignInNotices.show(serverWindow);
 	} catch (error) {
 		if (error.name === 'AbortError') {
 			console.log('You exit without to stop the server');
@@ -417,6 +426,10 @@ const getEnvApi = () => {
 		}),
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
+		// This install's random passwords for the accounts the API creates when it seeds an empty
+		// database, instead of the published `admin` / `12345678` (GHSA-4r2r-mv32-3468). A password set
+		// in the environment, or in the additional settings below, is left as it is.
+		...desktopSeedCredentialsToEnv(DesktopSignInNotices.provisionSeedCredentials(), process.env),
 		...addsConfig,
 		// The embedded server reports its anonymous usage statistics as a desktop installation of
 		// this release, and the statistics switch typed in the settings is normalised.

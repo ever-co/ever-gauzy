@@ -32,6 +32,8 @@ import {
 	DialogErrorHandler,
 	DESKTOP_LOOPBACK_HOST,
 	desktopSecretsToEnv,
+	desktopSeedCredentialsToEnv,
+	DesktopSignInNotices,
 	applyDesktopStatsEnv,
 	ensureDesktopSecrets,
 	ErrorEventManager,
@@ -110,6 +112,10 @@ log.info(`GAUZY_SEED_PATH: ${process.env.GAUZY_SEED_PATH}`);
 
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
+
+// The environment the app was started with, before the integrated server's settings are written into
+// it: a seed password set there is the operator's, and the generated one never replaces it.
+const launchEnv: Record<string, string | undefined> = { ...process.env };
 
 try {
 	initSentry();
@@ -405,6 +411,14 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		// All four are already provisioned above, so this returns them unchanged.
 		Object.assign(process.env, desktopSecretsToEnv(ensureDesktopSecrets(setupConfig.secret).secret));
 
+		// This install's random passwords for the accounts the API creates when it seeds an empty
+		// database, instead of the published `admin` / `12345678` (GHSA-4r2r-mv32-3468). Shown once,
+		// after the seed, by DesktopSignInNotices.
+		Object.assign(
+			process.env,
+			desktopSeedCredentialsToEnv(DesktopSignInNotices.provisionSeedCredentials(), launchEnv)
+		);
+
 		console.log('Setting additional environment variables...', process.env.API_PORT);
 		console.log('Setting additional environment variables...', process.env.API_HOST);
 		console.log('Setting additional environment variables...', process.env.API_BASE_URL);
@@ -669,6 +683,12 @@ app.on('ready', async () => {
 		if (configs && configs.isSetup) {
 			setGlobalVariable(configs);
 			await startServer(configs);
+			if (configs.isLocalServer) {
+				// The generated passwords, if the integrated server seeded a new database (the setup
+				// screen relaunches the app right after the first start, so they appear here), or a
+				// warning if its accounts still use a published password.
+				void DesktopSignInNotices.show(gauzyWindow ?? timeTrackerWindow);
+			}
 		} else {
 			await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			appWindowManager.setupWindow?.show?.();
