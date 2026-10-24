@@ -486,7 +486,7 @@ export class HelpCenterArticleService extends KnowledgeBaseCrudService<HelpCente
 			.where('id = :id', { id });
 
 		if (tenantId) {
-			qb.andWhere('"tenantId" = :tenantId', { tenantId });
+			qb.andWhere(p('"tenantId" = :tenantId'), { tenantId });
 		}
 
 		// And to the caller's organization boundary, as the read of the description is (see `getDescriptionBinary`).
