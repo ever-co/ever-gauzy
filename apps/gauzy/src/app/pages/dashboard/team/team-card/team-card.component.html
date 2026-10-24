@@ -32,7 +32,7 @@
 		</div>
 	</div>
 	<div class="profile-actions">
-		<a nbButton size="small" status="basic" [routerLink]="['/pages/organization/teams/view', team.id]">
+		<a nbButton ghost size="small" status="primary" class="open-team" [routerLink]="['/pages/organization/teams/view', team.id]">
 			{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OPEN_TEAM' | translate }}
 			<nb-icon icon="arrow-forward-outline"></nb-icon>
 		</a>

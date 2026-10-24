@@ -1,3 +1,5 @@
+@use 'themes' as *;
+
 :host {
   display: block;
 }
@@ -13,5 +15,22 @@
 
   a[nbButton] nb-icon {
     margin-inline-start: 0.25rem;
+  }
+
+  // The active tab's colour: primary text on a light primary tint.
+  a[nbButton].open-team {
+    background-color: color-mix(in srgb, nb-theme(color-primary-500) 10%, transparent);
+    color: nb-theme(color-primary-500);
+
+    // A global `a > nb-icon` rule forces the basic text colour with `!important`;
+    // only another `!important` lets the arrow follow the button's colour.
+    nb-icon {
+      color: inherit !important;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: color-mix(in srgb, nb-theme(color-primary-500) 16%, transparent);
+    }
   }
 }
