@@ -21,7 +21,7 @@
 		"@electron/rebuild": "^4.2.1",
 		"@types/moment-duration-format": "^2.2.7",
 		"@types/node-fetch": "^2.6.13",
-		"electron": "^44.7.0",
+		"electron": "^44.9.3",
 		"electron-builder": "26.15.3",
 		"electron-installer-dmg": "^5.0.1",
 		"electron-packager": "^17.1.2",
