@@ -178,15 +178,15 @@ export interface SeedCredentialOptions {
  *   production build, and `DEMO !== 'true'`), unless the operator opts out via
  *   `ALLOW_INSECURE_SEED_CREDENTIALS=true`.
  *
- * Exemptions:
- * - `DEMO=true` — the daily-reset demo is meant to be logged into with the documented credentials;
- * - `IS_ELECTRON` — the desktop Gauzy Server spawns this API locally against a private database,
- *   and the desktop README tells the user to sign in as `admin@ever.co`. Refusing to boot there
- *   would break the desktop product. This exemption is NOT harmless: every desktop launcher binds
- *   the API to `0.0.0.0` (remote timers connect to it), so the published seed passwords are
- *   reachable from the LAN — or further, if the port is forwarded — until the user rotates them.
- *   It stays only until the desktop apps seed random per-install passwords and show them in the
- *   setup UI (GHSA-4r2r-mv32-3468 residual).
+ * Exemption: `DEMO=true` — the daily-reset demo is meant to be logged into with the documented
+ * credentials.
+ *
+ * The desktop apps (`IS_ELECTRON`) are no longer exempt. They used to be, because they seeded the
+ * published passwords while Gauzy Server listened on the network (GHSA-4r2r-mv32-3468 residual); each
+ * launcher now passes random per-install `DEMO_*_PASSWORD` values and shows them to the user once
+ * after the seed (`DesktopSignInNotices` in `@gauzy/desktop-lib`), so a desktop seed passes this check
+ * like any other deployment. A desktop seed that would still use a published password is refused in
+ * a production build, with the same `ALLOW_INSECURE_SEED_CREDENTIALS` override.
  *
  * This only runs when a seed is about to run. The boot-time seed runs only against a database with
  * no users, so an existing deployment is never refused by it.
@@ -195,7 +195,7 @@ export interface SeedCredentialOptions {
  * it inserts, so an abort has to happen first to be harmless.
  *
  * @param options - What the seed about to run creates.
- * @throws Error in production (non-demo, non-Electron) when a published seed password is detected.
+ * @throws Error in production (non-demo) when a published seed password is detected.
  */
 export function validateSeedCredentials(options: SeedCredentialOptions = {}): void {
 	const weak = KNOWN_DEFAULT_SEED_CREDENTIALS.filter(({ key, value }) => {
@@ -245,9 +245,8 @@ export function validateSeedCredentials(options: SeedCredentialOptions = {}): vo
 	// deployment that runs a non-prod build with NODE_ENV=production is still protected.
 	const isProduction = process.env.NODE_ENV === 'production' || environment.production === true;
 	const isDemo = process.env.DEMO === 'true' || environment.demo === true;
-	const isElectron = process.env.IS_ELECTRON === 'true' || environment.isElectron === true;
 
-	if (isProduction && !isDemo && !isElectron) {
+	if (isProduction && !isDemo) {
 		if (process.env.ALLOW_INSECURE_SEED_CREDENTIALS === 'true') {
 			// eslint-disable-next-line no-console
 			console.error(
