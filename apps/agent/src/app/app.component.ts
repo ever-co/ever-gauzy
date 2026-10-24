@@ -1,12 +1,13 @@
 import { AfterViewInit, Component, HostBinding, NgZone, OnDestroy, OnInit, Renderer2, ChangeDetectionStrategy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
+import { IAuthResponse, IUser } from '@gauzy/contracts';
 import {
 	ActivityWatchElectronService,
+	AuthService,
 	AuthStrategy,
 	ElectronService,
 	LanguageElectronService,
 	Store,
-	TimeTrackerDateManager,
 	TokenRefreshService
 } from '@gauzy/desktop-ui-lib';
 import { NbToastrService } from '@nebular/theme';
@@ -32,6 +33,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		private electronService: ElectronService,
 		private appService: AppService,
 		private authStrategy: AuthStrategy,
+		private readonly authService: AuthService,
+		private readonly router: Router,
 		public readonly translate: TranslateService,
 		private store: Store,
 		private toastrService: NbToastrService,
@@ -60,6 +63,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.electronService.ipcRenderer.removeListener('server_ping', this.handleServerPing.bind(this));
 		this.electronService.ipcRenderer.removeListener('server_ping_restart', this.handleRestart.bind(this));
 		this.electronService.ipcRenderer.removeListener('social_auth_success', this.handleSocialAuthSuccess.bind(this));
+		this.electronService.ipcRenderer.removeListener(
+			'social_auth_workspaces',
+			this.handleSocialAuthWorkspaces.bind(this)
+		);
 		this.electronService.ipcRenderer.removeListener('__logout__', this.handleLogout.bind(this));
 		this.electronService.ipcRenderer.removeListener('__auth__', this.handleAuthSuccess.bind(this));
 		if (this.pingHostInterval) {
@@ -152,12 +159,33 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		});
 	}
 
+	/**
+	 * A provider sign-in for an address with several workspaces ends at the workspace picker, with a one-time sign-in
+	 * code instead of a token: the picker the e-mail code sign-in uses confirms the code, lists the workspaces and signs
+	 * in to the one chosen (`AUTH_SUCCESS`). The code goes in the navigation state, never in the URL.
+	 */
+	handleSocialAuthWorkspaces(_: unknown, arg: { email?: string; code?: string }) {
+		this._ngZone.run(async () => {
+			if (!arg?.email || !arg?.code) {
+				return;
+			}
+			try {
+				await this.router.navigate(['/auth/magic-sign-in'], {
+					state: { email: arg.email, code: arg.code }
+				});
+			} catch (error) {
+				console.log('ERROR', error);
+			}
+		});
+	}
+
 	ngAfterViewInit(): void {
 		this.languageElectronService.initialize();
 		this.electronService.ipcRenderer.on('server_ping', this.handleServerPing.bind(this));
 		this.electronService.ipcRenderer.on('server_ping_restart', this.handleRestart.bind(this));
 		this.electronService.ipcRenderer.on('__logout__', this.handleLogout.bind(this));
 		this.electronService.ipcRenderer.on('social_auth_success', this.handleSocialAuthSuccess.bind(this));
+		this.electronService.ipcRenderer.on('social_auth_workspaces', this.handleSocialAuthWorkspaces.bind(this));
 		this.electronService.ipcRenderer.on('__auth__', this.handleAuthSuccess.bind(this));
 	}
 
@@ -165,23 +193,21 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		const jwtParsed: any = await this.jwtDecode(arg.token);
 		if (jwtParsed) {
 			if (jwtParsed.employeeId) {
-				const user: any = await this.appService.getUserDetail();
-				TimeTrackerDateManager.organization = user?.employee?.organization;
-				this.store.organizationId = user?.employee?.organizationId;
-				this.store.tenantId = jwtParsed.tenantId;
-				this.store.user = user;
-				this.electronService.ipcRenderer.send('auth_success', {
-					user: user,
-					token: arg.token,
-					userId: arg.userId,
-					employeeId: jwtParsed.employeeId,
-					tenantId: jwtParsed.tenantId,
-					organizationId: user?.employee?.organizationId
-				});
+				const user: IUser = await this.appService.getUserDetail();
+				// Finished as the password and e-mail code sign-ins are. The agent's main process listens for
+				// `AUTH_SUCCESS` (never `auth_success`, which only the timer handles): it saves the account, starts
+				// tracking and closes the sign-in window. A provider sign-in brings no refresh token.
+				const response: IAuthResponse = { user, token: arg.token };
+				this.authStrategy.storeAuthenticationData(response);
 
 				// Start token refresh timer after social auth
 				if (arg.token && this.store.refreshToken) {
 					this.tokenRefreshService.start();
+				}
+
+				const signedIn = this.authService.electronAuthentication(response);
+				if (signedIn) {
+					await firstValueFrom(signedIn);
 				}
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {
