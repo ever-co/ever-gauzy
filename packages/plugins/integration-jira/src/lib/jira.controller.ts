@@ -252,13 +252,6 @@ export function getControllerClass({ path, config }: JiraModuleOptions): Type<an
 			}
 		};
 
-		/**
-		 * The hooks are public and their bodies are not verified, so a body is never written to the log: anyone
-		 * could fill the log with it, and the `installed` lifecycle payload of a real installation carries the
-		 * tenant's `sharedSecret` (and `clientKey`), which a log line would hand to whoever reads the logs.
-		 */
-		readonly logger = new Logger('JiraHook');
-
 		@Post('issue-created')
 		issueCreated(@Body() body: any) {
 			// TODO handle Issue Created
