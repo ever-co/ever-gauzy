@@ -235,41 +235,9 @@ const SOFT_PAIR = ['softRemove', 'softRecover'];
  * Every create/update/delete row here is also in that spec's AWAITING_TRIAGE or DELIBERATELY_OPEN list.
  */
 const CORE_OPEN = {
-	AppointmentEmployeesController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	AvailabilitySlotsController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	CandidateFeedbacksController: {
-		handlers: ['delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	CandidatePersonalQualitiesController: {
-		handlers: ['update'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	CandidateTechnologiesController: {
-		handlers: ['update'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
 	CommentController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'user-owned: CommentService pins the author to the caller’s employee; only a CHANGE_SELECTED_EMPLOYEE holder may edit or delete another employee’s comment'
-	},
-	ContactController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	EmployeeAppointmentController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	EmployeeLevelController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
 	},
 	EmployeeNotificationController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
@@ -287,65 +255,9 @@ const CORE_OPEN = {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
 	},
-	EquipmentController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	EquipmentSharingController: {
-		handlers: ['create', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	EventTypeController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
 	FavoriteController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'user-owned: FavoriteService pins the favourite to the caller’s employee and refuses to delete somebody else’s'
-	},
-	GoalController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	GoalGeneralSettingController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	GoalKpiController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	GoalKpiTemplateController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	GoalTemplateController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	GoalTimeFrameController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	InvoiceEstimateHistoryController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	InvoiceItemController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	IssueTypeController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	KeyResultController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	KeyresultTemplateController: {
-		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
-		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
 	},
 	KeyResultUpdateController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
@@ -355,93 +267,21 @@ const CORE_OPEN = {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
 	},
-	OrganizationAwardController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	OrganizationDocumentController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	OrganizationLanguageController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	OrganizationRecurringExpenseController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
 	OrganizationVendorController: {
 		handlers: ['create'],
 		reason: 'the shared vendor select creates a vendor inline from the Expenses dialog, which expense editors reach without ALL_ORG_EDIT'
-	},
-	ProductOptionController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	ProductVariantController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	ProductVariantPriceController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	ProductVariantSettingController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
 	},
 	ReactionController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'user-owned: ReactionService pins the reacting employee to the caller and refuses another employee’s reaction'
 	},
-	RequestApprovalController: {
-		handlers: ['delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
 	ResourceLinkController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
 	},
-	ScreeningTasksController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
 	SharedEntityController: {
 		handlers: ['create', 'update', 'delete', 'softRemove', 'softRecover'],
 		reason: 'no write grant exists for this resource and every member writes it today; the soft pair stays equal to update, which states none (owner decision 5) — awaiting triage'
-	},
-	SkillController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TagTypeController: {
-		handlers: ['delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TaskPriorityController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TaskRelatedIssueTypeController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TaskSizeController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TaskStatusController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TaskVersionController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
-	},
-	TaskViewController: {
-		handlers: ['create', 'update', 'delete'],
-		reason: 'awaiting triage (GHSA-v79w-54p2-wmh5 inventory): no write grant stated on these routes yet'
 	}
 };
 

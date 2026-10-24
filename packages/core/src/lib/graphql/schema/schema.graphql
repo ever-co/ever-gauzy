@@ -12112,14 +12112,14 @@ type Mutation {
   recoverSellerPayout(id: ID!): SellerPayout!
 
   """
-  Removes a payout line, answering the count the deletion reports.
+  Refused: a payout line is released by canceling its payout (`cancelSellerPayout`), never deleted.
   
   Mirrors `DELETE /seller-payout-lines/:id`, which takes `SELLERS_DELETE`: a line is the join row of one payout and one ledger row, and every row under the seller belongs to the seller.
   """
   deleteSellerPayoutLine(id: ID!): SellerDeleteResult!
 
   """
-  Archives a payout line, keeping the row.
+  Refused: a payout line is released by canceling its payout (`cancelSellerPayout`), never archived.
   
   Mirrors `DELETE /seller-payout-lines/:id/soft`, which takes `SELLERS_DELETE`: a line is the join row
   of one payout and one ledger row, and every row under the seller belongs to the seller.
@@ -12127,7 +12127,7 @@ type Mutation {
   softDeleteSellerPayoutLine(id: ID!): SellerPayoutLine!
 
   """
-  Restores a soft-deleted payout line.
+  Refused: a payout line archived by a cancellation belongs to a canceled payout and is never restored.
   
   Mirrors `PUT /seller-payout-lines/:id/recover`: restoring the join row is what makes its ledger row
   payable at most once again, so it takes `SELLERS_DELETE` and not the payout grants.
