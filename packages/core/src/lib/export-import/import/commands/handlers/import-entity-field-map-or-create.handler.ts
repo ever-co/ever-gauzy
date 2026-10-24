@@ -29,6 +29,12 @@ export class ImportEntityFieldMapOrCreateHandler implements ICommandHandler<Impo
 			throw new NotFoundException();
 		} catch (error) {
 			try {
+				// A row without an id in the archive was never imported. The lookup below would drop the empty
+				// `sourceId` from its conditions and answer an arbitrary mapping of the table, and the row was then
+				// saved over that unrelated row, keeping every column it did not state.
+				if (!isNotEmpty(sourceId)) {
+					throw new NotFoundException(`The import record was not found`);
+				}
 				const { record, success } = await this._commandBus.execute(
 					new ImportRecordFindOrFailCommand({
 						tenantId: RequestContext.currentTenantId(),

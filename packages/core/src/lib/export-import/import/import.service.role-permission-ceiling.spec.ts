@@ -246,6 +246,26 @@ describe('ImportService — role permissions are imported under the role-permiss
 		);
 	});
 
+	it('drops the role and tenant relations of a row, so only the judged columns reach the save', async () => {
+		// The relations name the ADMIN role and another tenant; the judged columns name the custom role.
+		writeArchive(
+			[
+				'id,roleId,permission,enabled,role,tenant',
+				`src-held,src-role-custom,${PermissionsEnum.ORG_EMPLOYEES_VIEW},true,role-admin,tenant-other`
+			].join('\n') + '\n'
+		);
+		const { service, written } = buildService();
+
+		await service.parse(extractPath, false);
+
+		expect(written()).toHaveLength(1);
+		expect(written()[0].row).toEqual(
+			expect.objectContaining({ roleId: 'role-custom', permission: PermissionsEnum.ORG_EMPLOYEES_VIEW })
+		);
+		expect(written()[0].row).not.toHaveProperty('role');
+		expect(written()[0].row).not.toHaveProperty('tenant');
+	});
+
 	it('writes no role permission for an ADMIN who may not change role permissions', async () => {
 		mockCaller.permissions = [PermissionsEnum.IMPORT_ADD, PermissionsEnum.ORG_EMPLOYEES_VIEW];
 		const { service, written } = buildService();

@@ -58,6 +58,12 @@ const TENANT_SETTING_TABLE = 'tenant_setting';
 const ROLE_PERMISSION_TABLE = 'role_permission';
 
 /**
+ * The relations of a `role_permission` row. An archive states its role and tenant by the `roleId` and `tenantId`
+ * columns, which are mapped and judged; a relation of the same name is not, so it is never written from an archive.
+ */
+const ROLE_PERMISSION_RELATIONS: readonly string[] = Object.freeze(['role', 'tenant']);
+
+/**
  * The tables whose clean-up removes the permissions of the SUPER_ADMIN and ADMIN roles: the permissions themselves,
  * and the roles, whose delete cascades to their permissions.
  */
@@ -392,9 +398,15 @@ export class ImportService {
 				// The lookup reads the mapped row: the archive's tenant and foreign keys are the source ids.
 				const mapped = await this.mapFields(item, entity);
 				// A role's permission is written only as the role-permission API would write it, judged on the mapped
-				// row: its role is then the importing tenant's.
-				if (masterTable === ROLE_PERMISSION_TABLE && !(await this.mayImportRolePermission(mapped, source.id))) {
-					return resolve(true);
+				// row: its role is then the importing tenant's. The role and tenant relations are dropped first, so the
+				// columns judged are the only statement of them that reaches the save.
+				if (masterTable === ROLE_PERMISSION_TABLE) {
+					for (const relation of ROLE_PERMISSION_RELATIONS) {
+						delete mapped[relation];
+					}
+					if (!(await this.mayImportRolePermission(mapped, source.id))) {
+						return resolve(true);
+					}
 				}
 				// A shared table's row is never written: its id is only mapped to the row that already exists.
 				const destination = this.isSharedTable(item)
