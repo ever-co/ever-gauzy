@@ -246,7 +246,8 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	 * related object. Nothing checked them here, so this route could point a sharing at another organization's
 	 * equipment or policy. That organization is the body's (`organizationId` or `organization: { id }`), else that of
 	 * the stored row a body-supplied id names (the base's create is an upsert by id), else the caller's, and the row
-	 * is stored in the organization it was checked in (`EquipmentSharingService.assertCreateIsInScope`).
+	 * is stored with exactly the organization, equipment and policy that were checked, none of them left for the
+	 * upsert to keep from the stored row (`EquipmentSharingService.assertCreateIsInScope`).
 	 *
 	 * @param entity The record to store.
 	 * @param options The inherited options, forwarded to the service.

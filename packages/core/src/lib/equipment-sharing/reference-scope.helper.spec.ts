@@ -211,7 +211,7 @@ describe('sharingAsStored', () => {
 		const values = withReferencesAsIds({ organization: { id: 'org-B' }, equipmentId: 'equipment-b' });
 
 		expect(sharingAsStored(values, null, 'org-A')).toEqual({
-			values: { organizationId: 'org-B', equipmentId: 'equipment-b' },
+			values: { organizationId: 'org-B', equipmentId: 'equipment-b', equipmentSharingPolicyId: null },
 			references: { equipmentId: 'equipment-b', equipmentSharingPolicyId: undefined },
 			organizationId: 'org-B'
 		});
@@ -219,17 +219,22 @@ describe('sharingAsStored', () => {
 
 	it('stores a new row that names no organization in the caller’s, where it was checked', () => {
 		expect(sharingAsStored({ equipmentId: 'equipment-a' }, null, 'org-A')).toEqual({
-			values: { equipmentId: 'equipment-a', organizationId: 'org-A' },
+			values: { equipmentId: 'equipment-a', organizationId: 'org-A', equipmentSharingPolicyId: null },
 			references: { equipmentId: 'equipment-a', equipmentSharingPolicyId: undefined },
 			organizationId: 'org-A'
 		});
 	});
 
-	it('checks an upsert in the stored row’s organization, which the write keeps', () => {
+	it('checks an upsert in the stored row’s organization, and writes the organization and the policy it checked', () => {
 		const stored = { organizationId: 'org-B', equipmentId: 'equipment-b', equipmentSharingPolicyId: 'policy-b' };
 
 		expect(sharingAsStored({ id: 'sharing-1', equipmentId: 'equipment-a' } as any, stored, 'org-A')).toEqual({
-			values: { id: 'sharing-1', equipmentId: 'equipment-a' },
+			values: {
+				id: 'sharing-1',
+				organizationId: 'org-B',
+				equipmentId: 'equipment-a',
+				equipmentSharingPolicyId: 'policy-b'
+			},
 			references: { equipmentId: 'equipment-a', equipmentSharingPolicyId: 'policy-b' },
 			organizationId: 'org-B'
 		});
@@ -239,7 +244,12 @@ describe('sharingAsStored', () => {
 		const stored = { organizationId: 'org-B', equipmentId: 'equipment-b', equipmentSharingPolicyId: 'policy-b' };
 
 		expect(sharingAsStored({ id: 'sharing-1', organizationId: 'org-A' } as any, stored, 'org-A')).toEqual({
-			values: { id: 'sharing-1', organizationId: 'org-A' },
+			values: {
+				id: 'sharing-1',
+				organizationId: 'org-A',
+				equipmentId: 'equipment-b',
+				equipmentSharingPolicyId: 'policy-b'
+			},
 			references: { equipmentId: 'equipment-b', equipmentSharingPolicyId: 'policy-b' },
 			organizationId: 'org-A'
 		});
@@ -253,11 +263,45 @@ describe('sharingAsStored', () => {
 		).toEqual({ equipmentId: 'equipment-a', equipmentSharingPolicyId: null });
 	});
 
-	it('holds the references of a row stored without an organization to the caller’s, and does not move the row', () => {
+	it('holds the references of a row stored without an organization to the caller’s, and stores it there', () => {
 		const stored = { organizationId: null, equipmentId: 'equipment-a', equipmentSharingPolicyId: null };
 
 		const asStored = sharingAsStored({ id: 'sharing-1' } as any, stored, 'org-A');
 		expect(asStored.organizationId).toBe('org-A');
-		expect(asStored.values).toEqual({ id: 'sharing-1' });
+		expect(asStored.values).toEqual({
+			id: 'sharing-1',
+			organizationId: 'org-A',
+			equipmentId: 'equipment-a',
+			equipmentSharingPolicyId: null
+		});
+	});
+
+	it('writes the triple it checked, so an upsert keeps no reference a concurrent write stored meanwhile', () => {
+		// Read before another upsert moved the sharing to org-B with org-B's equipment and policy.
+		const read = { organizationId: 'org-A', equipmentId: 'equipment-a', equipmentSharingPolicyId: 'policy-a' };
+
+		const asStored = sharingAsStored({ id: 'sharing-1', equipmentId: 'equipment-a2' } as any, read, 'org-A');
+
+		expect(asStored.references).toEqual({ equipmentId: 'equipment-a2', equipmentSharingPolicyId: 'policy-a' });
+		expect(asStored.organizationId).toBe('org-A');
+		// Every column the check read is written: landing after the move, the write stores org-A's sharing whole,
+		// never org-A's equipment in org-B's sharing.
+		expect(asStored.values).toEqual({
+			id: 'sharing-1',
+			organizationId: 'org-A',
+			equipmentId: 'equipment-a2',
+			equipmentSharingPolicyId: 'policy-a'
+		});
+	});
+
+	it('writes a reference the stored row and the body both leave absent as cleared, never as omitted', () => {
+		const stored = { organizationId: 'org-A', equipmentId: 'equipment-a', equipmentSharingPolicyId: null };
+
+		expect(sharingAsStored({ id: 'sharing-1' } as any, stored, 'org-A').values).toEqual({
+			id: 'sharing-1',
+			organizationId: 'org-A',
+			equipmentId: 'equipment-a',
+			equipmentSharingPolicyId: null
+		});
 	});
 });

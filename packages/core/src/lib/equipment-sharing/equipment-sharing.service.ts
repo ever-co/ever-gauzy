@@ -78,8 +78,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *
 	 * The payload is read as the row it will store ({@link sharingAsStored}): the organization in either form the body
 	 * names it, and — the CRUD base's `create()` being an upsert by id — the organization and the references of the
-	 * stored row a body-supplied id names, where the body states none. The payload answered carries each reference
-	 * once, as its column, and the organization it was checked in, so the row is stored where it was checked.
+	 * stored row a body-supplied id names, where the body states none. The payload answered states the organization,
+	 * the equipment and the policy exactly as they were checked, each as its column, so the upsert keeps none of the
+	 * stored row's: the row is stored where, and with what, it was checked, even when another write changed the
+	 * stored row in the meantime.
 	 *
 	 * @param input - The raw request body.
 	 * @returns The payload to hand to `create()`.

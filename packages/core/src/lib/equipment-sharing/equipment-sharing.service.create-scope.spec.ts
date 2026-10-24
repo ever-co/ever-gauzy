@@ -26,6 +26,7 @@ const orgB = createTenantFixture({ tenantId: tenantA.tenantId }).organizationId;
 const REFERENCED = [
 	{ table: 'equipment', id: 'equipment-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
 	{ table: 'equipment', id: 'equipment-of-b', tenantId: tenantA.tenantId, organizationId: orgB },
+	{ table: 'equipment', id: 'equipment-of-b2', tenantId: tenantA.tenantId, organizationId: orgB },
 	{ table: 'equipment_sharing_policy', id: 'policy-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
 	{ table: 'equipment_sharing_policy', id: 'policy-of-b', tenantId: tenantA.tenantId, organizationId: orgB }
 ];
@@ -176,8 +177,40 @@ describe('EquipmentSharingService.assertCreateIsInScope — a create is checked 
 			checked('equipment', 'equipment-of-b', orgB),
 			checked('equipment_sharing_policy', 'policy-of-b', orgB)
 		]);
-		// The stored row keeps its organization: the payload is not moved into the caller's.
-		expect(payload).toEqual({ id: 'sharing-of-b', notes: 'extended' });
+		// The stored row keeps its organization, not the caller's, and the payload states what was checked.
+		expect(payload).toEqual({
+			id: 'sharing-of-b',
+			notes: 'extended',
+			organizationId: orgB,
+			equipmentId: 'equipment-of-b',
+			equipmentSharingPolicyId: 'policy-of-b'
+		});
+	});
+
+	it('answers the triple it checked, so the upsert keeps no reference of the stored row', async () => {
+		const { storing } = setUp();
+
+		// An equipment-only change, checked in the organization the row was read in.
+		const payload = await storing({ id: 'sharing-of-b', equipmentId: 'equipment-of-b2' });
+
+		// A concurrent upsert may move the stored row to another organization, with that organization's equipment
+		// and policy, before this write lands: stating all three, the write never pairs this equipment with them.
+		expect(payload).toEqual({
+			id: 'sharing-of-b',
+			organizationId: orgB,
+			equipmentId: 'equipment-of-b2',
+			equipmentSharingPolicyId: 'policy-of-b'
+		});
+	});
+
+	it('answers a reference checked as absent as cleared, not omitted', async () => {
+		const { storing } = setUp();
+
+		await expect(storing({ equipmentId: 'equipment-of-a' })).resolves.toEqual({
+			organizationId: orgA,
+			equipmentId: 'equipment-of-a',
+			equipmentSharingPolicyId: null
+		});
 	});
 
 	it('checks a reference the body states in the stored row’s organization when the body omits the organization', async () => {
@@ -204,7 +237,12 @@ describe('EquipmentSharingService.assertCreateIsInScope — a create is checked 
 	it('reads a soft-deleted stored sharing as the upsert does: its retained references are checked too', async () => {
 		const { lookup, storing } = setUp();
 
-		await expect(storing({ id: 'retired-sharing-of-b' })).resolves.toEqual({ id: 'retired-sharing-of-b' });
+		await expect(storing({ id: 'retired-sharing-of-b' })).resolves.toEqual({
+			id: 'retired-sharing-of-b',
+			organizationId: orgB,
+			equipmentId: 'equipment-of-b',
+			equipmentSharingPolicyId: 'policy-of-b'
+		});
 		expect(lookup.mock.calls).toEqual([
 			checked('equipment', 'equipment-of-b', orgB),
 			checked('equipment_sharing_policy', 'policy-of-b', orgB)
@@ -301,6 +339,20 @@ describe('EquipmentSharingController.create — POST /equipment-sharing stores o
 			equipmentId: 'equipment-of-a',
 			equipmentSharingPolicyId: 'policy-of-a',
 			organizationId: orgA
+		});
+	});
+
+	it('persists, beside a changed equipment, the organization and the policy it checked rather than leaving them to the upsert', async () => {
+		const { create, post } = controllerOver();
+
+		await post({ id: 'sharing-of-b', equipmentId: 'equipment-of-b2' });
+
+		expect(create).toHaveBeenCalledTimes(1);
+		expect(create).toHaveBeenCalledWith({
+			id: 'sharing-of-b',
+			organizationId: orgB,
+			equipmentId: 'equipment-of-b2',
+			equipmentSharingPolicyId: 'policy-of-b'
 		});
 	});
 });
