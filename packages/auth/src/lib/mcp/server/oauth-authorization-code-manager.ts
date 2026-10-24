@@ -110,9 +110,55 @@ export class OAuth2AuthorizationCodeManager {
 	}
 
 	/**
-	 * Exchange authorization code for token information
+	 * Checks an authorization code exactly as {@link exchangeAuthorizationCode} does, without using it up: the token
+	 * endpoint checks the code, then the account it names (a database lookup that can fail for a while), and only
+	 * then exchanges it, so a failed lookup leaves the code usable for a retry.
+	 *
+	 * @returns The code's details, or null when it would not be exchanged.
+	 */
+	checkAuthorizationCode(
+		code: string,
+		clientId: string,
+		redirectUri: string,
+		codeVerifier?: string
+	): AuthorizationCode | null {
+		const authCode = this.findExchangeableCode(code, clientId, redirectUri, codeVerifier);
+		return authCode ? { ...authCode } : null;
+	}
+
+	/**
+	 * Exchange authorization code for token information. A code is exchanged once: a second exchange, or a check
+	 * after the exchange, fails and forgets the code.
 	 */
 	exchangeAuthorizationCode(
+		code: string,
+		clientId: string,
+		redirectUri: string,
+		codeVerifier?: string
+	): AuthorizationCode | null {
+		const authCode = this.findExchangeableCode(code, clientId, redirectUri, codeVerifier);
+		if (!authCode) {
+			return null;
+		}
+
+		// Mark code as used
+		authCode.isUsed = true;
+
+		this.securityLogger.log(`Authorization code exchanged successfully for user ${authCode.userId}, client ${clientId}`);
+
+		// Remove code after successful exchange
+		setTimeout(() => {
+			this.codes.delete(code);
+		}, 1000); // Small delay to prevent race conditions
+
+		return { ...authCode };
+	}
+
+	/**
+	 * The stored code, when it may be exchanged by this client, for this redirect URI and with this PKCE verifier. An
+	 * expired or already used code is forgotten.
+	 */
+	private findExchangeableCode(
 		code: string,
 		clientId: string,
 		redirectUri: string,
@@ -164,17 +210,7 @@ export class OAuth2AuthorizationCodeManager {
 			}
 		}
 
-		// Mark code as used
-		authCode.isUsed = true;
-
-		this.securityLogger.log(`Authorization code exchanged successfully for user ${authCode.userId}, client ${clientId}`);
-
-		// Remove code after successful exchange
-		setTimeout(() => {
-			this.codes.delete(code);
-		}, 1000); // Small delay to prevent race conditions
-
-		return { ...authCode };
+		return authCode;
 	}
 
 	/**
