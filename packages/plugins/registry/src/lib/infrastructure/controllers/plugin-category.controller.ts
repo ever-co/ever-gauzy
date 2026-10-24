@@ -87,7 +87,16 @@ export class PluginCategoryController {
 		if (format === 'tree') {
 			return this.queryBus.execute(new GetPluginCategoryTreeQuery(options));
 		}
-		return this.queryBus.execute(new GetPluginCategoriesQuery(options));
+		// The category scope is the caller's tenant, but a joined relation is not: `relations[]=plugins.settings` or
+		// `plugins.subscriptions.subscriber` loaded those rows for every tenant (see public-read-options.ts)
+		return this.queryBus.execute(
+			new GetPluginCategoriesQuery(
+				options && {
+					...options,
+					relations: allowedRelations(options.relations, PUBLIC_PLUGIN_CATEGORY_RELATIONS)
+				}
+			)
+		);
 	}
 
 	/**

@@ -35,6 +35,7 @@ jest.mock('../../shared', () => ({
 import { PluginCategoryController } from './plugin-category.controller';
 import { PluginController } from './plugin.controller';
 import {
+	allowedOrder,
 	allowedRelations,
 	ownColumnFilter,
 	PUBLIC_PLUGIN_CATEGORY_RELATIONS,
@@ -83,6 +84,22 @@ describe('public read options', () => {
 		expect(ownColumnFilter({ subscriptions: { tenantId: 'tenant-b' } })).toBeUndefined();
 		expect(ownColumnFilter(undefined)).toBeUndefined();
 	});
+
+	it('sorts on the entity’s own columns and on the relations the read may load only', () => {
+		expect(
+			allowedOrder(
+				{
+					createdAt: 'DESC',
+					versions: { releaseDate: 'DESC', plugin: { settings: { value: 'ASC' } } },
+					settings: { value: 'ASC' },
+					pluginTenants: { allowedUsers: { email: 'ASC' } }
+				},
+				PUBLIC_PLUGIN_RELATIONS
+			)
+		).toEqual({ createdAt: 'DESC', versions: { releaseDate: 'DESC' } });
+		expect(allowedOrder({ settings: { value: 'ASC' } }, PUBLIC_PLUGIN_RELATIONS)).toBeUndefined();
+		expect(allowedOrder(undefined, PUBLIC_PLUGIN_RELATIONS)).toBeUndefined();
+	});
 });
 
 describe('the public plugin and category reads', () => {
@@ -127,6 +144,27 @@ describe('the public plugin and category reads', () => {
 		expect(options).toEqual({ relations: ['versions'], where: undefined, select: ['id', 'name'] });
 	});
 
+	it('GET /plugins sorts on plugin columns and public relations only (an order joins its relation)', async () => {
+		const controller = new PluginController(queryBus as any);
+
+		await controller.findAll({ order: { createdAt: 'DESC', settings: { value: 'ASC' } }, take: 10 } as any);
+
+		const [params] = (queryBus.execute.mock.calls[0][0] as any).args;
+		expect(params.order).toEqual({ createdAt: 'DESC' });
+	});
+
+	it('GET /plugins/:id keeps the version order the plugin page asks for, and no other relation’s', async () => {
+		const controller = new PluginController(queryBus as any);
+
+		await controller.findById('plugin-1', {
+			relations: ['versions'],
+			order: { versions: { releaseDate: 'DESC' }, subscriptions: { subscriber: { email: 'ASC' } } }
+		} as any);
+
+		const [, options] = (queryBus.execute.mock.calls[0][0] as any).args;
+		expect(options.order).toEqual({ versions: { releaseDate: 'DESC' } });
+	});
+
 	it('GET /plugin-categories/:id never loads settings', async () => {
 		const controller = new PluginCategoryController(queryBus as any, queryBus as any);
 
@@ -135,5 +173,18 @@ describe('the public plugin and category reads', () => {
 		const [id, relations] = (queryBus.execute.mock.calls[0][0] as any).args;
 		expect(id).toBe('category-1');
 		expect(relations).toEqual(['plugins']);
+	});
+
+	it('GET /plugin-categories loads the category relations only, nothing joined through the plugins', async () => {
+		const controller = new PluginCategoryController(queryBus as any, queryBus as any);
+
+		await controller.findAll(undefined, {
+			isActive: true,
+			relations: ['plugins', 'plugins.settings', 'plugins.subscriptions.subscriber', 'parent']
+		} as any);
+
+		const query = queryBus.execute.mock.calls[0][0] as any;
+		expect(query.name).toBe('GetPluginCategoriesQuery');
+		expect(query.args[0]).toEqual({ isActive: true, relations: ['plugins', 'parent'] });
 	});
 });

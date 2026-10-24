@@ -96,3 +96,29 @@ export function ownColumnFilter(where: unknown): Record<string, string | number 
 	);
 	return conditions.length > 0 ? Object.fromEntries(conditions) : undefined;
 }
+
+/**
+ * A public read's sort order: on the entity's own columns, and on the columns of the relations the read may load.
+ * TypeORM joins any relation an `order` names, so sorting on another one (`order[settings][value]=ASC`) placed a
+ * plugin whose setting the caller chose among the others by values the caller cannot see: one comparison per request,
+ * enough to read a value back.
+ *
+ * @param order - The `order` the query string carried.
+ * @param allowed - The dotted relation paths the read may load.
+ * @param prefix - The relation path `order` sits under, when called for a nested relation.
+ * @returns The sort order left, or `undefined` when none is.
+ */
+export function allowedOrder(
+	order: unknown,
+	allowed: readonly string[],
+	prefix = ''
+): Record<string, unknown> | undefined {
+	if (!order || typeof order !== 'object' || Array.isArray(order)) return undefined;
+	const entries = Object.entries(order).flatMap(([key, value]): [string, unknown][] => {
+		if (typeof value === 'string' || typeof value === 'number') return [[key, value]];
+		const path = prefix ? `${prefix}.${key}` : key;
+		const nested = allowed.includes(path) ? allowedOrder(value, allowed, path) : undefined;
+		return nested ? [[key, nested]] : [];
+	});
+	return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
