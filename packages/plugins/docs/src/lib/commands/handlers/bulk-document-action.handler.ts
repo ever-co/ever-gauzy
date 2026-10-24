@@ -197,7 +197,7 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 	 * Bulk tree actions need `DOCS_MANAGE`, which reads every document of the organization today; the filter keeps the
 	 * cascade tied to the read rule rather than to that.
 	 */
-	private readableIn(document: { organizationId: ID }): (ids: ID[]) => Promise<ID[]> {
+	private readableIn(document: { organizationId?: ID }): (ids: ID[]) => Promise<ID[]> {
 		return (ids: ID[]) => this.documentService.filterReadableDocumentIds(ids, document.organizationId);
 	}
 
