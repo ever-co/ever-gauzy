@@ -1805,7 +1805,7 @@
 			"ALL_TEAMS": "所有团队",
 			"WORKED_TODAY": "今日工作",
 			"TEAMS_ACTIVE": "活跃团队",
-			"OF_TEAMS": "共 {{ total }} 个团队记录了时间",
+			"OF_TEAMS": "共 {{ total }} 个团队",
 			"MEMBERS_WORKED": "活跃成员",
 			"OF_PROJECTS": "共 {{ total }} 个项目",
 			"TEAMS_CAPTION": "所选日期各团队的工作成员",
