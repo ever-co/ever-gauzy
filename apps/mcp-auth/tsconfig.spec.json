@@ -4,6 +4,14 @@
 		"outDir": "../../dist/out-tsc",
 		"module": "commonjs",
 		"moduleResolution": "node10",
+		// Transpile each file on its own instead of type-checking the whole program, as integration-plane,
+		// integration-zapier, integration-activepieces and integration-sim do. ts-jest type-checks every file a spec
+		// loads under THIS app's tsconfig, and the specs load workspace packages (`@gauzy/core`, `@gauzy/config`,
+		// `@gauzy/auth`) from SOURCE, so a source that compiles under its own package's settings could fail a suite
+		// here: `@gauzy/core`'s category.seed.ts imports a JSON file, which needs `resolveJsonModule` (TS2732). The
+		// cost: specs are not type-checked when Jest runs them. Test tooling only; `tsconfig.app.json` (the build)
+		// is unchanged.
+		"isolatedModules": true,
 		"types": ["jest", "node"]
 	},
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

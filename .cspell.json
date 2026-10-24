@@ -180,6 +180,7 @@
 		"autocapture",
 		"autodrain",
 		"automake",
+		"autorun",
 		"backgrounding",
 		"backoff",
 		"badal",
@@ -1691,7 +1692,14 @@
 		"csecret",
 		"fsecret",
 		"unhydrated",
-		"knownknownknownknownknu"
+		"knownknownknownknownknu",
+		"Ceph",
+		"Delivr",
+		"Langfuse",
+		"roadmaps",
+		"decompile",
+		"reputational",
+		"parenthesised"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
