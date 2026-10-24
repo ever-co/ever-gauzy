@@ -272,10 +272,14 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
 			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ description: 'Moved' }));
 
+			// The stored policy in another case is the same UUID to the database, so it is not a change either.
+			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'POLICY-APPROVAL' } }));
+
 			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
 			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-no-approval' } }));
 
-			expect(save).toHaveBeenCalledTimes(2);
+			expect(save).toHaveBeenCalledTimes(3);
 		});
 
 		it('lets a caller who may approve time off move an approved request onto any policy', async () => {

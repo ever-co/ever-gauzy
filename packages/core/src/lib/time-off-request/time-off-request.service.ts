@@ -263,7 +263,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		if (!policyId || stored?.status !== StatusTypesEnum.APPROVED) {
 			return;
 		}
-		if (policyId === (stored.policy?.id ?? stored.policyId)) {
+		// The database compares UUIDs without regard to case, so the stored policy in another case is not a change
+		const storedPolicyId = stored.policy?.id ?? stored.policyId;
+		if (storedPolicyId && policyId.toLowerCase() === String(storedPolicyId).toLowerCase()) {
 			return;
 		}
 		if (
