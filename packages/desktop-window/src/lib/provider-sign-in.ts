@@ -3,7 +3,9 @@ import { app, BrowserWindow, shell } from 'electron';
 /**
  * Where a redirect seen during a provider (social) sign-in leads.
  *
- * - `provider`: the provider's own sign-in page (Google, LinkedIn), shown in a popup.
+ * - `provider`: the provider's own sign-in page (Google, LinkedIn) over https, shown in a popup.
+ * - `insecure-provider`: a provider's sign-in page over plain http: refused, as its traffic (the password typed there,
+ *   the result it redirects to) could be read and changed on the way.
  * - `signed-in`: the API signed the one matching account in (`#/sign-in/success?jwt=…&userId=…`).
  * - `workspaces`: the address has several workspaces, so the API sends the workspace picker a one-time sign-in code
  *   instead of a token (`#/auth/magic-sign-in?email=…&code=…`).
@@ -11,6 +13,7 @@ import { app, BrowserWindow, shell } from 'electron';
  */
 export type ProviderSignInRedirect =
 	| { type: 'provider' }
+	| { type: 'insecure-provider' }
 	| { type: 'signed-in'; token: string; userId: string | null }
 	| { type: 'workspaces'; email: string | null; code: string | null }
 	| { type: 'register' };
@@ -74,7 +77,7 @@ export function parseProviderSignInRedirect(url: string): ProviderSignInRedirect
 		target.hostname === 'accounts.google.com' ||
 		(target.hostname === 'www.linkedin.com' && target.pathname.startsWith('/oauth'))
 	) {
-		return { type: 'provider' };
+		return { type: target.protocol === 'https:' ? 'provider' : 'insecure-provider' };
 	}
 
 	const { path, params } = hashRoute(target);
@@ -125,10 +128,24 @@ export function installProviderSignIn(options: IProviderSignInOptions): void {
 
 	const showPopup = async (url: string) => {
 		closePopup();
-		popup = new BrowserWindow({ ...POPUP_OPTIONS, webPreferences: { ...POPUP_OPTIONS.webPreferences } });
-		popupContentsId = popup.webContents.id;
-		await popup.loadURL(url, { userAgent: POPUP_USER_AGENT });
-		popup.show();
+		// A local reference: a redirect while the page loads may close this popup, or open another one
+		const opened = new BrowserWindow({ ...POPUP_OPTIONS, webPreferences: { ...POPUP_OPTIONS.webPreferences } });
+		popup = opened;
+		popupContentsId = opened.webContents.id;
+		try {
+			await opened.loadURL(url, { userAgent: POPUP_USER_AGENT });
+		} catch (error) {
+			// No hidden window left behind
+			if (popup === opened) {
+				closePopup();
+			} else if (!opened.isDestroyed()) {
+				opened.destroy();
+			}
+			throw error;
+		}
+		if (!opened.isDestroyed()) {
+			opened.show();
+		}
 	};
 
 	const tell = (channel: string, payload: Record<string, unknown>) => {
@@ -139,16 +156,23 @@ export function installProviderSignIn(options: IProviderSignInOptions): void {
 	};
 
 	app.on('web-contents-created', (_event, contents) => {
-		contents.on('will-redirect', async (event, url) => {
+		contents.on('will-redirect', async (event, legacyUrl) => {
+			// The details' `url` first: the positional one is deprecated
+			const url = (event as { url?: string }).url || legacyUrl;
 			const redirect = parseProviderSignInRedirect(url);
 			if (!redirect) {
 				return;
 			}
 			// A sign-in result counts only in the popup this sign-in opened
-			if (redirect.type !== 'provider' && (popupContentsId === null || contents.id !== popupContentsId)) {
+			const isResult =
+				redirect.type === 'signed-in' || redirect.type === 'workspaces' || redirect.type === 'register';
+			if (isResult && (popupContentsId === null || contents.id !== popupContentsId)) {
 				return;
 			}
 			switch (redirect.type) {
+				case 'insecure-provider':
+					event.preventDefault();
+					return;
 				case 'provider':
 					event.preventDefault();
 					try {

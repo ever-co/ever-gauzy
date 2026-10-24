@@ -91,6 +91,25 @@ describe('AppComponent — provider sign-in', () => {
 		expect(ipcRenderer.send).not.toHaveBeenCalledWith('auth_success', expect.anything());
 	});
 
+	it('keeps the employee the token pair names (a user employed in several organizations)', async () => {
+		jest.spyOn(component, 'jwtDecode').mockResolvedValue({ employeeId: 'employee-1', tenantId: 'tenant-1' });
+		const otherEmployee = { id: 'employee-2', organizationId: 'org-2', organization: { id: 'org-2' } };
+		authService.switchWorkspace.mockReturnValue(
+			of({ user: { id: 'user-1', employee: otherEmployee }, token: 'pair-access', refresh_token: 'pair-refresh' })
+		);
+
+		handlers['social_auth_success']({}, { token: 'provider-jwt', userId: 'user-1' });
+		await flush();
+
+		const session = {
+			user: { ...user, employee: otherEmployee },
+			token: 'pair-access',
+			refresh_token: 'pair-refresh'
+		};
+		expect(authStrategy.storeAuthenticationData).toHaveBeenLastCalledWith(session);
+		expect(authService.electronAuthentication).toHaveBeenCalledWith(session);
+	});
+
 	it('goes on with the access token alone when no token pair is issued', async () => {
 		jest.spyOn(component, 'jwtDecode').mockResolvedValue({ employeeId: 'employee-1', tenantId: 'tenant-1' });
 		jest.spyOn(console, 'warn').mockImplementation(() => undefined);

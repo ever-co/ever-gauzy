@@ -220,8 +220,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 	 * The session a provider sign-in starts. The provider's redirect brings an access token only, and a desktop session
 	 * is a token pair: `Store.isAuthenticated$`, which the dashboard's `authGuard` reads, needs the refresh token too, as
 	 * does the token refresh. The pair is asked for the workspace the token names, the caller's own account
-	 * (`POST /auth/switch-workspace`): the pair a password sign-in gets. Should that fail, the sign-in goes on with the
-	 * access token alone.
+	 * (`POST /auth/switch-workspace`): the pair a password sign-in gets. The employee comes with the pair: for a user
+	 * employed in several organizations it is the one the tokens name, which `/user/me` need not have returned. Should
+	 * that fail, the sign-in goes on with the access token alone.
 	 *
 	 * @param user The signed-in user, with the employee.
 	 * @param token The access token the provider sign-in brought.
@@ -233,7 +234,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 		try {
 			const pair = await firstValueFrom(this.authService.switchWorkspace(user.tenantId));
 			if (pair?.token && pair?.refresh_token) {
-				const response: IAuthResponse = { user, token: pair.token, refresh_token: pair.refresh_token };
+				const sessionUser: IUser = pair.user?.employee ? { ...user, employee: pair.user.employee } : user;
+				const response: IAuthResponse = {
+					user: sessionUser,
+					token: pair.token,
+					refresh_token: pair.refresh_token
+				};
 				this.authStrategy.storeAuthenticationData(response);
 				return response;
 			}

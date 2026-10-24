@@ -10,6 +10,7 @@ const mockOpenExternal = jest.fn(async (_url: string) => undefined);
 const mockAppListeners: Record<string, (...args: any[]) => void> = {};
 const mockPopups: any[] = [];
 let mockLastContentsId = 0;
+let mockLoadFailure: Error | null = null;
 
 jest.mock(
 	'electron',
@@ -19,7 +20,9 @@ jest.mock(
 		BrowserWindow: class {
 			destroyed = false;
 			webContents: Record<string, unknown> = { id: ++mockLastContentsId };
-			loadURL = jest.fn(async () => undefined);
+			loadURL = jest.fn(async () => {
+				if (mockLoadFailure) throw mockLoadFailure;
+			});
 			show = jest.fn();
 			destroy = jest.fn(() => (this.destroyed = true));
 			isDestroyed = () => this.destroyed;
@@ -43,6 +46,15 @@ describe('parseProviderSignInRedirect', () => {
 		});
 		expect(parseProviderSignInRedirect('https://www.linkedin.com/oauth/v2/authorization?x=1')).toEqual({
 			type: 'provider'
+		});
+	});
+
+	it("refuses a provider's sign-in page over plain http", () => {
+		expect(parseProviderSignInRedirect('http://accounts.google.com/o/oauth2/v2/auth?client_id=x')).toEqual({
+			type: 'insecure-provider'
+		});
+		expect(parseProviderSignInRedirect('http://www.linkedin.com/oauth/v2/authorization?x=1')).toEqual({
+			type: 'insecure-provider'
 		});
 	});
 
@@ -94,16 +106,20 @@ describe('installProviderSignIn', () => {
 			if (name === 'will-redirect') willRedirect = listener;
 		};
 		mockAppListeners['web-contents-created']({}, webContents);
-		return async (url: string) => {
+		const redirect = async (url: string) => {
 			const event = { preventDefault: jest.fn() };
 			await willRedirect(event, url);
 			return event.preventDefault.mock.calls.length > 0 ? 'cancelled' : 'followed';
 		};
+		/** The handler itself, for an event of one's own */
+		redirect.raw = (event: { preventDefault: () => void }, url: string) => willRedirect(event, url);
+		return redirect;
 	}
 
 	beforeEach(() => {
 		mockOpenExternal.mockClear();
 		mockPopups.length = 0;
+		mockLoadFailure = null;
 		signInWindow = { isDestroyed: () => false, webContents: { send: jest.fn() } };
 		installProviderSignIn({ signInWindow: () => signInWindow as any, signInDetails: () => ({ host: 'local' }) });
 	});
@@ -126,6 +142,31 @@ describe('installProviderSignIn', () => {
 		await contents()(providerUrl);
 		return contents(mockPopups[mockPopups.length - 1].webContents);
 	}
+
+	it("cancels a provider's sign-in page over plain http, and opens no popup", async () => {
+		expect(await contents()('http://accounts.google.com/o/oauth2/v2/auth?client_id=x')).toBe('cancelled');
+		expect(mockPopups).toHaveLength(0);
+	});
+
+	it('closes a popup whose page did not load, and leaves no hidden window behind', async () => {
+		mockLoadFailure = new Error('ERR_CONNECTION_REFUSED');
+
+		expect(await contents()('https://accounts.google.com/o/oauth2/v2/auth')).toBe('cancelled');
+		expect(mockPopups[0].destroy).toHaveBeenCalled();
+		expect(mockPopups[0].show).not.toHaveBeenCalled();
+	});
+
+	it('reads the URL from the event details first (the positional URL is deprecated)', async () => {
+		const popupRedirect = await inPopup();
+		const event = { preventDefault: jest.fn(), url: `${WEB}/#/sign-in/success?jwt=${JWT}&userId=user-1` };
+
+		await (popupRedirect as any).raw(event, 'https://ignored.example/');
+
+		expect(signInWindow!.webContents.send).toHaveBeenCalledWith(
+			'social_auth_success',
+			expect.objectContaining({ token: JWT, userId: 'user-1' })
+		);
+	});
 
 	it('closes the popup and tells the sign-in window the token (social_auth_success)', async () => {
 		const popupRedirect = await inPopup();
