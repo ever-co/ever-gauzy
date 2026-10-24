@@ -39,7 +39,10 @@ export class AuthStrategy extends NbAuthStrategy {
 				failure: null
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully registered.']
+			defaultMessages: ['You have been successfully registered.'],
+			confirmEmailMessages: [
+				'Your account has been created. Open the link in the email we sent you to activate it, then sign in.'
+			]
 		},
 		logout: {
 			redirect: {
@@ -203,6 +206,13 @@ export class AuthStrategy extends NbAuthStrategy {
 					throw new Error(res.message);
 				}
 				const user: IUser = res;
+				// A self-registration stays inactive until the link in its verification email is opened: a
+				// sign-in now would only be refused, so the person is asked to confirm their address first.
+				if (isNotEmpty(user) && user.isActive === false) {
+					return of(
+						new NbAuthResult(true, res, false, [], AuthStrategy.config.register.confirmEmailMessages)
+					);
+				}
 				if (isNotEmpty(user)) {
 					return this.login({ email, password });
 				} else {

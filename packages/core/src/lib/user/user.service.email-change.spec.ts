@@ -56,6 +56,13 @@ class FixtureUser {
 	@Column('varchar', { nullable: true })
 	firstName?: string;
 
+	// Read by `markEmailAsVerified`, which also activates a self-registration waiting for its confirmation.
+	@Column('boolean', { nullable: true })
+	isActive?: boolean | null;
+
+	@Column('varchar', { nullable: true })
+	tenantId?: string | null;
+
 	@Column({ type: 'datetime', insert: false, nullable: true })
 	emailVerifiedAt?: Date | null;
 

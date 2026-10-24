@@ -20,7 +20,8 @@ import {
 	In,
 	UpdateResult,
 	DeleteResult,
-	MoreThan
+	MoreThan,
+	IsNull
 } from 'typeorm';
 import { EventBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
@@ -265,6 +266,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async markEmailAsVerified(id: ID, email?: string): Promise<boolean> {
 		const where = email === undefined ? { id } : { id, email };
+
+		// A self-registration waits inactive for exactly this confirmation (owner decision 4, see
+		// `AuthService.register`): the confirmed address activates it. Only that state matches: inactive, no
+		// tenant yet and never confirmed. An account an admin deactivated belongs to a tenant, so confirming
+		// an address never re-activates it. Done before the confirmation is recorded, so a failure here
+		// leaves the link usable for another try instead of a confirmed account that can never sign in.
+		await this.activatePendingSignup(where);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return (
@@ -284,6 +293,34 @@ export class UserService extends TenantAwareCrudService<User> {
 				});
 				// Same reading as storeEmailVerificationCode: only a reported 0 means nothing was written.
 				return affected !== 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Activates a self-registration that is waiting for its e-mail confirmation: an account that is
+	 * inactive, has no tenant yet and has never confirmed its address. Any other account is left as it is.
+	 *
+	 * @param where The account (`id`, and the confirmed `email` when known).
+	 * @returns Whether an account was activated.
+	 */
+	private async activatePendingSignup(where: { id: ID; email?: string }): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (
+					(await this.mikroOrmRepository.nativeUpdate(
+						{ ...where, isActive: false, tenantId: null, emailVerifiedAt: null } as any,
+						{ isActive: true }
+					)) > 0
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmRepository.update(
+					{ ...where, isActive: false, tenantId: IsNull(), emailVerifiedAt: IsNull() },
+					{ isActive: true }
+				);
+				return !!affected;
 			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
