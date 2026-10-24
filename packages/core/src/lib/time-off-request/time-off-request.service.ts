@@ -1,5 +1,13 @@
 import { Injectable, BadRequestException, ConflictException, ForbiddenException, HttpException } from '@nestjs/common';
-import { Brackets, LessThanOrEqual, Like, MoreThanOrEqual, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import {
+	Brackets,
+	In,
+	LessThanOrEqual,
+	Like,
+	MoreThanOrEqual,
+	SelectQueryBuilder,
+	WhereExpressionBuilder
+} from 'typeorm';
 import * as moment from 'moment';
 import {
 	ITimeOffCreateInput,
@@ -16,7 +24,7 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
-import { TimeOffPolicy } from '../core/entities/internal';
+import { Employee, TimeOffPolicy } from '../core/entities/internal';
 import {
 	filedTimeOffStatus,
 	ITimeOffWriteBody,
@@ -75,6 +83,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 		const members = writableTimeOffMembers(body, { create: true });
 		const employees = timeOffEmployees(body?.employees, this.timeOffCaller(), { create: true });
+		await this.assertEmployeesOfOrganization(
+			employees,
+			tenantId,
+			members.organizationId ?? RequestContext.currentOrganizationId()
+		);
 		const requiresApproval = await this.policyRequiresApproval(
 			requestedPolicyId(body),
 			tenantId,
@@ -200,7 +213,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			// `findOneByIdString` THROWS NotFoundException when nothing matches the tenant-scoped
 			// conditions, so this call is the check — an id belonging to another tenant, or to no row
 			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
-			const stored = await this.findOneByIdString(id, { relations: { policy: true } });
+			const stored = await this.findOneByIdString(id, { relations: { policy: true, organization: true } });
 
 			// Only the members an edit may change are written (see `time-off-request-input.helper.ts`): never the
 			// status — approving or denying is the approve / deny routes' decision — and the employees only for a
@@ -209,6 +222,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const members = writableTimeOffMembers(body, { create: false });
 			const employees = timeOffEmployees(body?.employees, this.timeOffCaller(), { create: false });
 
+			await this.assertEmployeesOfOrganization(
+				employees,
+				RequestContext.currentTenantId(),
+				stored.organizationId ?? stored.organization?.id
+			);
 			await this.assertPolicyChangeKeepsDecision(stored, members.policy?.id);
 
 			return await this.save({
@@ -285,6 +303,44 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		throw new ForbiddenException(
 			'An approved time-off request cannot be moved onto a policy that requires approval. File a new request.'
 		);
+	}
+
+	/**
+	 * Refuses employees a caller who may act for others names, unless each is an employee of the request's organization
+	 * (or of none) in the caller's tenant.
+	 *
+	 * The save checks a relation's tenant only, so such a caller linked a request of their organization to an employee
+	 * of another organization of the tenant. The employee a caller files for themselves is their own and is not checked
+	 * here: a user's employee can belong to an organization other than the one they file in.
+	 *
+	 * @param employees The employees the write stores, or undefined when it keeps the stored ones.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationId The request's organization.
+	 * @throws ForbiddenException when an employee is unknown in the tenant or belongs to another organization.
+	 */
+	private async assertEmployeesOfOrganization(
+		employees: Array<{ id: ID }> | undefined,
+		tenantId: ID | null | undefined,
+		organizationId: ID | null | undefined
+	): Promise<void> {
+		if (!employees?.length || !this.timeOffCaller().mayActForOthers) {
+			return;
+		}
+		const ids = employees.map(({ id }) => id);
+		const found = tenantId
+			? await this.typeOrmRepository.manager.find(Employee, {
+					where: { id: In(ids), tenantId },
+					select: { id: true, organizationId: true }
+				})
+			: [];
+		const same = (a: unknown, b: unknown) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
+		const outside = ids.filter((id) => {
+			const employee = found.find((row) => same(row.id, id));
+			return !employee || (isNotEmpty(employee.organizationId) && !same(employee.organizationId, organizationId));
+		});
+		if (outside.length > 0) {
+			throw new ForbiddenException('The employees of a time-off request must be employees of its organization.');
+		}
 	}
 
 	/**
