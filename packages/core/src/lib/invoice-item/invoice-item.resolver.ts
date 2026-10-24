@@ -119,13 +119,13 @@ const INVOICE_ITEM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below reaches the same `InvoiceItemService` method or dispatches the same
  * command the `/api/invoice-item` routes reach.
  *
- * **The guard is the controller's guard, and no permission is stated above it.** The delivered read
- * routes carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would
- * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is exactly
- * what this delivery exists to prevent. Every write is the exception, and it is the controller's rather
- * than this resolver's: the write routes state `PermissionGuard` with the invoice edit permission — the
- * inherited ones because the controller overrides them only to attach it (GHSA-v79w-54p2-wmh5) — so the
- * fields state the same guard and the same permission.
+ * **The guard is the controller's guard, and every permission is its route's.** The class carries
+ * `TenantPermissionGuard` as the controller does, and each field states the guard and the permission its
+ * route states, neither wider nor narrower: the reads state `PermissionGuard` with `INVOICES_VIEW`, the
+ * grant the invoice reads themselves state (a line is read under the grant of the document it bills), and
+ * the writes state it with the invoice edit permission — the inherited routes because the controller
+ * overrides them only to attach it (GHSA-v79w-54p2-wmh5). Two surfaces of one concept with two scopes is
+ * exactly what this delivery exists to prevent.
  *
  * **The whole surface is behind the capability the catalogue declares for GraphQL.** `FeatureFlagGuard`
  * is appended to the controller's guard — after the tenant guard, so a caller with no credential is
@@ -158,8 +158,11 @@ export class InvoiceItemResolver {
 	 * The delivered list route binds a `data` query string and reads the rows with the `findInput` and
 	 * the `relations` it names. This surface has no query string to bind: the connection protocol
 	 * states the same narrowing in `filter`, which is applied to the rows the service returns, so the
-	 * read runs with the route's own defaults — no `findInput` and no `relations`.
+	 * read runs with the route's own defaults — no `findInput` and no `relations`. Under the read grant that
+	 * route states: `INVOICES_VIEW`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Query('invoiceItems')
 	async invoiceItems(
 		@Args('filter') filter?: ConnectionFilter,
@@ -191,6 +194,8 @@ export class InvoiceItemResolver {
 	 * such row" on a field that may have none, and the REST route's `404` is that same fact stated in
 	 * the other protocol's vocabulary.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Query('invoiceItem')
 	async invoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<InvoiceItem | null> {
 		try {
@@ -212,6 +217,8 @@ export class InvoiceItemResolver {
 	 * argument of that shape, so the field states no narrowing of its own. The tenant is applied to the
 	 * criterion by the service, from the credential rather than from the caller.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Query('invoiceItemCount')
 	async invoiceItemCount(): Promise<number> {
 		return await this.invoiceItemService.countBy();
@@ -313,8 +320,7 @@ export class InvoiceItemResolver {
 	 * cast carries the body through as it was validated rather than tightening the surface to a type the
 	 * delivered write does not enforce.
 	 *
-	 * This is the one field of this resource that carries a permission, because its route is the one
-	 * route that does.
+	 * It states the edit permission its route states, as every other write here does.
 	 */
 	@Mutation('createInvoiceItemsInBulk')
 	@UseGuards(PermissionGuard)
