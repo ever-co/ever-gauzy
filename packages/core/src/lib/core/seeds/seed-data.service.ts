@@ -346,6 +346,8 @@ export class SeedDataService {
 			// Disconnect to database
 			await this.closeConnection();
 
+			// Do not change: the desktop apps watch for this line to show the passwords they generated for
+			// the seeded accounts (DESKTOP_API_SEED_COMPLETED_MARKER in @gauzy/desktop-lib).
 			console.log('Database Default Seed Completed');
 		} catch (error) {
 			this.handleError(error);

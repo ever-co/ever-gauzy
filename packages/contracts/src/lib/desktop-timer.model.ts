@@ -18,6 +18,12 @@ export interface DesktopSetupConfig extends IDesktopSecret {
 	isSetup?: boolean;
 	serverUrl?: string;
 	isLocalServer?: boolean;
+	/**
+	 * Gauzy Server and Gauzy API Server: whether other computers on the network may connect to the API
+	 * and the web UI. Only `false` turns it off (an install from before the setting has none). Gauzy
+	 * Desktop's integrated server ignores it and accepts connections from the same computer only.
+	 */
+	lanAccess?: boolean | null;
 	postgres?: {
 		dbHost: string;
 		dbPort: string;

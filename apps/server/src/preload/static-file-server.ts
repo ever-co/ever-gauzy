@@ -30,7 +30,11 @@ export class StaticFileServer {
 		});
 	}
 
-	public startServer(port: number): void {
+	/**
+	 * @param port - The web UI port.
+	 * @param host - The address to listen on: `0.0.0.0` when other computers may connect, else `127.0.0.1`.
+	 */
+	public startServer(port: number, host: string): void {
 		const server = http.createServer((req, res) => this.serveFile(req, res));
 
 		server.on('listening', () => {
@@ -41,7 +45,7 @@ export class StaticFileServer {
 			console.error(`[CRITICAL::ERROR]: Server error: ${error}`);
 		});
 
-		server.listen(port, '0.0.0.0');
+		server.listen(port, host);
 	}
 
 	public static getInstance(): StaticFileServer {
