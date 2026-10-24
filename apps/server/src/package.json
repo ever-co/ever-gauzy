@@ -368,7 +368,6 @@
 		"**/request/qs": "^6.16.0"
 	},
 	"optionalDependencies": {
-		"node-linux": "^0.1.12",
 		"node-mac": "^1.0.1",
 		"node-windows": "^1.0.0-beta.8"
 	},
