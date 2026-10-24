@@ -24,6 +24,28 @@ describe('ownContactPatch', () => {
 		expect(patch.id).toBe(OWN_CONTACT);
 	});
 
+	it("keeps the profile's own contact id in another case, as the stored id", () => {
+		// PostgreSQL, and MySQL's default collation, compare UUIDs without regard to case.
+		const patch = ownContactPatch(owner, { id: OWN_CONTACT.toUpperCase(), city: 'Sofia' } as IContact);
+
+		expect(patch.id).toBe(OWN_CONTACT);
+	});
+
+	it('reads the stored links off the loaded relations when the id columns are empty, as under MikroORM', () => {
+		// MikroORM's relation-id columns are `persist: false` mirrors, which a read leaves empty.
+		const patch = ownContactPatch(
+			{ contact: { id: OWN_CONTACT }, tenant: { id: 'tenant-1' }, organization: { id: 'organization-1' } },
+			{ id: OWN_CONTACT, city: 'Sofia' } as IContact
+		);
+
+		expect(patch).toEqual({
+			id: OWN_CONTACT,
+			city: 'Sofia',
+			tenantId: 'tenant-1',
+			organizationId: 'organization-1'
+		});
+	});
+
 	it('drops any id for a profile that has no contact yet, so the edit cascades a new row', () => {
 		const patch = ownContactPatch(
 			{ ...owner, contactId: null },
@@ -44,6 +66,20 @@ describe('ownContactPatch', () => {
 			tenantId: 'tenant-1',
 			organizationId: 'organization-1'
 		});
+	});
+
+	it('copies only the postal, geographic and fiscal facts: never a column the server manages', () => {
+		// `PUT /candidate/:id` does not whitelist its body, so these reached the cascading contact save.
+		const patch = ownContactPatch(owner, {
+			city: 'Sofia',
+			createdAt: new Date('2020-01-01T00:00:00.000Z'),
+			deletedAt: new Date('2020-01-01T00:00:00.000Z'),
+			isActive: false,
+			isArchived: true,
+			createdByUserId: 'user-other'
+		} as unknown as IContact);
+
+		expect(patch).toEqual({ city: 'Sofia', tenantId: 'tenant-1', organizationId: 'organization-1' });
 	});
 
 	it("stamps the profile's tenant and organization over the body's, and drops the contact's other owners", () => {

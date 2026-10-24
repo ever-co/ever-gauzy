@@ -6,7 +6,7 @@ import '../../core/entities/internal';
 
 import { ValidationPipe } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { getMetadataStorage } from 'class-validator';
+import { getMetadataStorage, validate } from 'class-validator';
 import { UpdateCandidateDTO } from '../../candidate/dto/update-candidate.dto';
 import { ProfileContactDTO } from './profile-contact.dto';
 import { UpdateEmployeeDTO } from './update-employee.dto';
@@ -72,5 +72,39 @@ describe('ProfileContactDTO — the contact a profile edit may send', () => {
 
 		const instance = plainToInstance(dto as never, { contact: { city: 'Sofia' } }) as { contact: unknown };
 		expect(instance.contact).toBeInstanceOf(ProfileContactDTO);
+	});
+
+	it.each([
+		['UpdateProfileDTO', UpdateProfileDTO],
+		['UpdateEmployeeDTO', UpdateEmployeeDTO],
+		['UpdateCandidateDTO', UpdateCandidateDTO]
+	])('%s refuses a nested contact id that is not a UUID', async (_name, dto) => {
+		// Read off the contact's own errors: the DTOs require other members this body does not send.
+		const instance = plainToInstance(dto as never, { contact: { id: 'not-a-uuid', city: 'Sofia' } });
+		const errors = await validate(instance as object);
+
+		const contact = errors.find((error) => error.property === 'contact');
+		const id = contact?.children?.find((child) => child.property === 'id');
+		expect(id?.constraints).toHaveProperty('isUuid');
+	});
+
+	it.each([
+		// The employee routes validate with `whitelist`; the candidate route does not, and its contact is filtered by
+		// `ownContactPatch` in the update handler instead (candidate.update.handler.spec.ts).
+		['UpdateProfileDTO', UpdateProfileDTO],
+		['UpdateEmployeeDTO', UpdateEmployeeDTO]
+	])('%s strips the scope and the other owners from its contact under the whitelist', async (_name, dto) => {
+		const instance = plainToInstance(dto as never, {
+			contact: {
+				city: 'Sofia',
+				tenantId: '11111111-1111-4111-8111-111111111111',
+				organizationContact: { id: 'client-1' },
+				deletedAt: '2020-01-01T00:00:00.000Z'
+			}
+		}) as { contact: Record<string, unknown> };
+
+		await validate(instance as object, { whitelist: true });
+
+		expect({ ...instance.contact }).toEqual({ city: 'Sofia' });
 	});
 });

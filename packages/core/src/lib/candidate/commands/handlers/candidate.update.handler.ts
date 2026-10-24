@@ -4,6 +4,7 @@ import { ICandidate, ICandidateUpdateInput } from '@gauzy/contracts';
 import { CandidateService } from '../../candidate.service';
 import { CandidateUpdateCommand } from '../candidate.update.command';
 import { ownContactPatch } from '../../../contact/profile-contact.helper';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(CandidateUpdateCommand)
 export class CandidateUpdateHandler
@@ -30,8 +31,15 @@ export class CandidateUpdateHandler
 		// the candidate's stored contact is kept as an id, under the candidate's tenant and organization.
 		delete (candidate as any).contactId;
 		if (candidate.contact) {
-			const stored = await this.candidateService.findOneByIdString(id);
-			candidate.contact = ownContactPatch(stored, candidate.contact);
+			// The contact and the organization are read as relations: under MikroORM their id columns are not filled.
+			// The candidate is read inside the caller's tenant, which is the tenant its contact is stamped with.
+			const stored = await this.candidateService.findOneByIdString(id, {
+				relations: { contact: true, organization: true }
+			});
+			candidate.contact = ownContactPatch(
+				{ ...stored, tenantId: stored.tenantId ?? RequestContext.currentTenantId() },
+				candidate.contact
+			);
 		}
 
 		try {
