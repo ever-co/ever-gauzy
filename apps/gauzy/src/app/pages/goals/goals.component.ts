@@ -531,10 +531,9 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 				);
 				this.loadPage();
 			} else {
-				this.goals[index].progress = this.calculateGoalProgress(this.goals[index].keyResults);
-				const goalData = this.goals[index];
-				delete goalData.keyResults;
-				await this.goalService.update(this.goals[index].id, goalData);
+				// A progress update filed in the details moved the key result and its goal on the server (owner
+				// decision 2(a), 2026-10-23); writing the goal back with `PUT /goals/:id` needs `GOALS_EDIT` and
+				// refused an employee reporting their own key result. The page re-reads instead.
 				this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 				this.loadPage();
 			}
@@ -556,12 +555,8 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		});
 		const response = await firstValueFrom(keyResultDialog.onClose);
 		if (!!response) {
-			const keyResultData = response;
-			delete keyResultData.goal;
-			delete keyResultData.updates;
-			await this.keyResultService.update(selectedKeyResult.id, keyResultData);
-			this.goals[index].progress = this.calculateGoalProgress(this.goals[index].keyResults);
-			await this.goalService.update(this.goals[index].id, this.goals[index]);
+			// The dialog filed the update and the server applied it to the key result and its goal, so neither is
+			// written back here (`PUT /key-results/:id` and `PUT /goals/:id` need `GOALS_EDIT`).
 			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
 		}
