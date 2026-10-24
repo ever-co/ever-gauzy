@@ -50,6 +50,21 @@ const ACCOUNT_SWEEP_INTERVAL_MS = 60 * 1000;
 /** How many user ids one `inactiveUsersProvider` call is asked about. */
 const ACCOUNT_SWEEP_BATCH_SIZE = 500;
 
+/**
+ * Per-address budgets of the token introspection endpoint, kept apart from the 100 requests per 15 minutes the other
+ * endpoints share. Its caller is the operator's resource server (the MCP server), asking from one address about each
+ * bearer token it is shown, at most once a minute per token (its cache). Under the shared budget seven continuously
+ * active users used it up, and the MCP server then refused every request as if its token were invalid.
+ *
+ * - `requests`: every introspection request; this many tokens in use at once per MCP server address.
+ * - `failedAuthentications`: only the requests refused for their client credentials (401), with the budget the
+ *   endpoint had before, so guessing the resource server's secret (a bcrypt comparison each) is no cheaper.
+ */
+const INTROSPECTION_RATE_LIMITS = Object.freeze({
+	requests: Object.freeze({ windowMs: 60 * 1000, limit: 600 }),
+	failedAuthentications: Object.freeze({ windowMs: 15 * 60 * 1000, limit: 100 })
+});
+
 export interface UserInfo {
 	userId: string;
 	email: string;
@@ -643,10 +658,11 @@ export class OAuth2AuthorizationServer {
 			next();
 		});
 
-		// Rate limiting
+		// Rate limiting. Token introspection has budgets of its own (see setupRoutes), so it is left out of this one.
 		const authRateLimit = rateLimit({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: 100, // requests per windowMs
+			skip: (req) => this.isIntrospectionRequest(req),
 			message: {
 				error: 'too_many_requests',
 				error_description: 'Rate limit exceeded'
@@ -661,6 +677,42 @@ export class OAuth2AuthorizationServer {
 		// hundred bytes; 10 MB let anyone make the server parse, and dynamic registration keep, megabytes per request.
 		this.app.use(express.json({ limit: '64kb' }));
 		this.app.use(express.urlencoded({ extended: true, limit: '64kb' }));
+	}
+
+	/**
+	 * Whether a request is a token introspection request, which has budgets of its own ({@link INTROSPECTION_RATE_LIMITS})
+	 * instead of the one the other endpoints share. Any other spelling of the path stays under the shared budget too.
+	 */
+	private isIntrospectionRequest(req: Request): boolean {
+		return (
+			!!this.config.introspectionEndpoint &&
+			req.method === 'POST' &&
+			req.path === this.config.introspectionEndpoint
+		);
+	}
+
+	/**
+	 * The rate limits in front of the introspection endpoint ({@link INTROSPECTION_RATE_LIMITS}).
+	 */
+	private createIntrospectionRateLimits() {
+		const message = { error: 'too_many_requests', error_description: 'Rate limit exceeded' };
+		return {
+			requests: rateLimit({
+				...INTROSPECTION_RATE_LIMITS.requests,
+				message,
+				standardHeaders: true,
+				legacyHeaders: false
+			}),
+			failedAuthentications: rateLimit({
+				...INTROSPECTION_RATE_LIMITS.failedAuthentications,
+				// Only the requests refused for their client credentials count
+				skipSuccessfulRequests: true,
+				requestWasSuccessful: (_req, res) => res.statusCode !== 401,
+				message,
+				standardHeaders: false,
+				legacyHeaders: false
+			})
+		};
 	}
 
 	/**
@@ -713,7 +765,8 @@ export class OAuth2AuthorizationServer {
 
 		// Token introspection endpoint (RFC 7662)
 		if (this.config.introspectionEndpoint) {
-			this.app.post(this.config.introspectionEndpoint, (req, res) => {
+			const { requests, failedAuthentications } = this.createIntrospectionRateLimits();
+			this.app.post(this.config.introspectionEndpoint, requests, failedAuthentications, (req, res) => {
 				this.handleTokenIntrospection(req, res);
 			});
 		}
