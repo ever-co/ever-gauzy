@@ -117,7 +117,7 @@ describe('the public plugin and category reads', () => {
 		} as any);
 
 		const [params] = (queryBus.execute.mock.calls[0][0] as any).args;
-		expect(params).toEqual({ relations: ['subscriptions', 'versions'], where: { status: 'ACTIVE' }, take: 10 });
+		expect(params).toEqual({ relations: ['versions'], where: { status: 'ACTIVE' }, take: 10 });
 	});
 
 	it('GET /plugins?search= hands the same public options to the search', async () => {

@@ -15,6 +15,7 @@ export const PUBLIC_PLUGIN_RELATIONS: readonly string[] = [
 	'versions',
 	'versions.sources',
 	'category',
+	// The publisher's public fields only: the controller reduces the user row (see public-plugin-publisher.ts)
 	'uploadedBy',
 	'subscriptionPlans',
 	'pluginTags',
