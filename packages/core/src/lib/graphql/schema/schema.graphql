@@ -9513,8 +9513,8 @@ type Mutation {
   Files a request, and the approval record that carries it forward, in one call.
   
   The delivered write stores the request and then files the approval row that says who has to decide it,
-  so a request never exists without one. The status a caller states seeds that record; an absent status
-  is the delivered write's own default, which is "requested".
+  so a request never exists without one. The status is the write's, not the caller's: a request is filed
+  "requested", or "approved" when the stored policy it names requires no approval.
   """
   createTimeOffRequest(input: CreateTimeOffRequestInput!): TimeOffRequest!
 
@@ -41600,8 +41600,8 @@ the four columns the row cannot be without: the entity declares all four non-nul
 write assigns them straight onto the row it stores. The tenant is stamped from the credential, as it is
 on every write of this platform, and is therefore not a member.
 
-`status` seeds the approval record the delivered write files beside the request; an absent status is
-that write's own default, which is "requested".
+`status` is accepted and ignored: a request is filed "requested", or "approved" when the stored policy it
+names requires no approval, and a caller who may not act for other employees files for themselves.
 """
 input CreateTimeOffRequestInput {
   """The organization the request is filed in."""
@@ -41616,7 +41616,9 @@ input CreateTimeOffRequestInput {
   """The day the leave was asked for."""
   requestDate: DateTime!
 
-  """The employees the leave is for, by identifier."""
+  """
+  The employees the leave is for, by identifier. A caller who may not act for others files for themselves.
+  """
   employeeIds: [ID!]
 
   """Why the leave is being asked for."""
@@ -41626,7 +41628,7 @@ input CreateTimeOffRequestInput {
   policyId: ID
 
   """
-  Where the decision starts, if the caller states it rather than leaving the delivered default.
+  Ignored. The write files the request as requested, or approved under a policy that needs no approval.
   """
   status: String
 
@@ -41647,12 +41649,15 @@ and the body's own interface declares one member — where the decision stands. 
 member beside the identifier, and stating it is the whole of what an edit can change: a request's dates
 and its employees are what the request *is*, and rewriting them would leave the approval record filed
 beside it describing a leave nobody asked for.
+
+The status is no longer written by an edit either: it stays as stored, and approveTimeOffRequest and
+denyTimeOffRequest, which carry the administrative roles, are where a decision is made.
 """
 input UpdateTimeOffRequestInput {
   id: ID!
 
   """
-  Where the decision stands. The delivered write stores the value it is given.
+  Ignored. An edit keeps the stored status; approveTimeOffRequest and denyTimeOffRequest decide it.
   """
   status: String
 }
