@@ -184,6 +184,33 @@ describe('ApiService', () => {
 			});
 		});
 
+		it('hands over the emails the API reported just before the seed started', async () => {
+			const { started, child } = start(false, { port: 3000 });
+			// The two lines SeedDataService.runDefaultSeed prints, cut in the middle of the first one.
+			child.stdout.emit(
+				'data',
+				Buffer.from('Found 0 users in DB\nDatabase Default Seed Accounts: {"superAdmin":"admin@ev')
+			);
+			child.stdout.emit(
+				'data',
+				Buffer.from(
+					'er.co","admin":"local.admin@ever.co","employee":"employee@ever.co"}\nDatabase Default Seed Started\n'
+				)
+			);
+			listening(child);
+			await started;
+
+			expect(mockRecordSeed).toHaveBeenCalledTimes(1);
+			expect(mockRecordSeed.mock.calls[0][0]).toMatchObject({
+				DEMO_SUPER_ADMIN_PASSWORD: 'generated-super-admin-1'
+			});
+			expect(mockRecordSeed.mock.calls[0][1]).toEqual({
+				superAdmin: 'admin@ever.co',
+				admin: 'local.admin@ever.co',
+				employee: 'employee@ever.co'
+			});
+		});
+
 		it('records a seed that starts and completes only once', async () => {
 			const { started, child } = start(false, { port: 3000 });
 			child.stdout.emit('data', Buffer.from('Database Default Seed Started\n'));

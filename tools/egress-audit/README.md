@@ -111,13 +111,20 @@ node tools/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/ru
 Run on every pull request that touches code, with nothing installed but the harness:
 
 - `node tools/egress-audit/static-hostnames.mjs`: no file outside the Ever Platform modules (their
-  packages, their docs, this directory, tests and prose) names an Ever host (the `ever_owned`
-  names of the harness's never-allowed list and every name under them) or `EVER_PLATFORM_API_URL` /
-  `EVER_STATS_API_URL` more often than `static-hostnames.baseline.json` records. The baseline holds
-  what Gauzy named before the modules (the product site, documentation, demo accounts, downloads);
-  it may only shrink (`--check-shrink <the file at the base>`), and `--write` refuses to grow it. With
-  `--bundle <dir>` the same scan reads a built web app (the `/srv/gauzy` of the web app image)
-  against the baseline's `bundle` hosts; the `static-bundle` job does it on the image under test.
+  packages, their docs, this directory, tests and prose, and the external uptime monitor) names an
+  Ever host (the `ever_owned` names of the harness's never-allowed list and every name under them)
+  or `EVER_PLATFORM_API_URL` / `EVER_STATS_API_URL` more often than `static-hostnames.baseline.json`
+  records. The baseline holds what Gauzy named before the modules (the product site, documentation,
+  demo accounts, downloads); it may only shrink (`--check-shrink <the file at the base>`), and
+  `--write` refuses to grow it. With `--bundle <dir>` the same scan reads a built web app (the
+  `/srv/gauzy` of the web app image) against the baseline's `bundle` hosts; the `static-bundle` job
+  does it on the image under test.
+
+  The uptime monitor (`.github/workflows/external-uptime-monitor.yml`) is exempt by its exact path,
+  for the reason tests are: it never ships. It is a scheduled job on a GitHub-hosted runner that
+  probes Gauzy's production hosts from outside, so naming them is all it does, and a baseline that
+  may only shrink would stop it from watching a new one. Every other workflow stays in the scan,
+  because the workflows that build and deploy the images can put a host into one.
 - `node tools/ever-platform/check-import-boundary.mjs`: only the modules and the two plugin lists
   import a module, through its entry point; the statistics never import the connection or an
   analytics plugin, the instance identity no HTTP client, the connection and the sign-in plugin

@@ -53,11 +53,18 @@ describe('DesktopSignInNotices', () => {
 		restartApp();
 	});
 
-	/** What a launcher does before the start, then the API seeding a new database with that env. */
+	/**
+	 * What a launcher does before the start, then the API seeding a new database with that env and
+	 * reporting its default accounts' emails (`Database Default Seed Accounts:`).
+	 */
 	const startAndSeed = (inherited: Record<string, string> = {}) => {
 		const credentials = notices.provisionSeedCredentials();
 		const env = { ...inherited, ...desktopSeedCredentialsToEnv(credentials, inherited) };
-		notices.recordSeed(env);
+		notices.recordSeed(env, {
+			superAdmin: 'admin@ever.co',
+			admin: 'local.admin@ever.co',
+			employee: 'employee@ever.co'
+		});
 		return credentials;
 	};
 

@@ -2,6 +2,7 @@ import { BrowserWindow, clipboard, dialog, MessageBoxOptions, MessageBoxReturnVa
 import { store } from '@gauzy/desktop-core';
 import {
 	DESKTOP_SEED_CREDENTIALS_STORE_KEY,
+	DesktopSeedAccountEmails,
 	DesktopSeedAccountKey,
 	DesktopSeedCredentials,
 	ensureDesktopSeedCredentials,
@@ -41,12 +42,14 @@ function translate(key: string, fallback: string, params?: Record<string, string
  * - Before each start the app takes this install's random seed passwords from
  *   {@link provisionSeedCredentials} and hands them to the API (`DEMO_*_PASSWORD`).
  * - When the API reports that it began seeding a new database, {@link recordSeed} marks the accounts
- *   that receive them (at the start, so a seed that fails after creating them still shows them).
- *   {@link show} then displays them in a native dialog, at every start until the user confirms they
- *   saved them; the stored copy is deleted at that moment, so they are shown once.
+ *   that receive them (at the start, so a seed that fails after creating them still shows them),
+ *   with the emails the API reported for them. {@link show} then displays them in a native dialog, at
+ *   every start until the user confirms they saved them; the stored copy is deleted at that moment,
+ *   so they are shown once.
  * - When the API reports, at boot, accounts of an existing database still using a published
- *   password (`admin@ever.co` / `admin` from an install made before these passwords), {@link show}
- *   warns once per run. Those accounts are not changed: the user keeps signing in as before.
+ *   password (such as the Super Admin's `admin`, from an install made before these passwords),
+ *   {@link show} warns once per run. Those accounts are not changed: the user keeps signing in as
+ *   before.
  */
 export class DesktopSignInNotices {
 	private static publishedPasswordAccounts: string[] = [];
@@ -77,11 +80,15 @@ export class DesktopSignInNotices {
 	 * so a seed that failed before creating them and runs again uses the same ones.
 	 *
 	 * @param env - The environment the API process ran with (inherited variables included).
+	 * @param reportedEmails - The emails the API reported for the accounts of its seed.
 	 */
-	public static recordSeed(env: Record<string, string | undefined>): void {
+	public static recordSeed(
+		env: Record<string, string | undefined>,
+		reportedEmails: DesktopSeedAccountEmails = {}
+	): void {
 		try {
 			const stored = this.read();
-			const accounts = findDesktopSeededAccounts(stored, env);
+			const accounts = findDesktopSeededAccounts(stored, env, reportedEmails);
 			if (accounts.length > 0) {
 				this.write({ ...stored, pending: accounts });
 				this.showIfRequested();
