@@ -453,3 +453,11 @@ jobs:
         run: |
           node --test tools/scripts/migration-duplicate-column-check.test.mjs
           node tools/scripts/migration-duplicate-column-check.mjs
+
+      # The desktop apps' electron-builder `beforeBuild` hook installs the packaged app's production dependencies and,
+      # when that install fails (one HTTP 500 from the npm cache failed a whole release), retries once against the
+      # public registry. Nothing else runs that path before a release build does, so its cases run here (spawnSync is
+      # stubbed: no install, no network).
+      - name: The packaged app's dependency install retries once, then fails the build
+        if: always()
+        run: node --test tools/electron/before-build.test.js
