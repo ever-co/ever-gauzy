@@ -1,4 +1,5 @@
 import { IEmployee } from '@gauzy/contracts';
+import { AVATAR_DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 /** Live presence of a member, as the team page shows it. */
 export type Presence = 'tracking' | 'online' | 'away' | 'offline';
@@ -68,9 +69,6 @@ export interface IRankedMember {
 	width: number;
 }
 
-/** Placeholder picture assigned to users who never uploaded one. */
-const DEFAULT_AVATAR_PATTERN = /avatar-default\.svg/i;
-
 /**
  * Live presence of a member: a running timer in the selected day's logs wins,
  * then the employee's own flags, read the same way as the team page.
@@ -82,9 +80,12 @@ export function presenceOf(employee: IEmployee, isRunningTimer = false): Presenc
 	return 'offline';
 }
 
-/** A real profile picture, or `null` for none and for the generic silhouette. */
-export function avatarOf(url: string | undefined | null): string | null {
-	return url && !DEFAULT_AVATAR_PATTERN.test(url) ? url : null;
+/**
+ * A member's picture: their photo, or the app's default avatar when they have none.
+ * A photo that fails to load falls back to the same default through `ImgDirective`.
+ */
+export function avatarOf(url: string | undefined | null): string {
+	return url || AVATAR_DEFAULT_SVG;
 }
 
 /** Up to two initials of a name. */
