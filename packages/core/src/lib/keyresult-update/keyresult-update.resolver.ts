@@ -21,7 +21,8 @@ import { deleteRemovedRows } from '../graphql/delete-answer';
 /** The members `CreateKeyResultUpdateInput` declares in the schema. */
 export interface ICreateKeyResultUpdateInput {
 	owner: string;
-	progress: number;
+	/** Ignored on create: the service computes the progress from `update` and the key result. */
+	progress?: number;
 	update: number;
 	status: string;
 	keyResultId?: Id;
