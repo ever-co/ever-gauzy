@@ -187,7 +187,9 @@ export class TaskSettingPermissionGuard extends PermissionGuard implements CanAc
 		}
 
 		const request = this.getRequest(context);
-		return { id: request.params?.id, body: request.body, reorder: request.body?.reorder };
+		// Express types a route parameter as `string | string[]`; a list is never a row id.
+		const id = request.params?.id;
+		return { id: typeof id === 'string' ? id : undefined, body: request.body, reorder: request.body?.reorder };
 	}
 
 	/**
