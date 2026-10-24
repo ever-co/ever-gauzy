@@ -6,6 +6,7 @@ import { And, Equal, IsNull, Or } from 'typeorm';
 import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 
@@ -38,9 +39,10 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			id: 'row-manager',
 			employeeId: 'manager-employee',
 			roleId: 'role-manager',
-			role: { name: RolesEnum.MANAGER }
+			role: { name: RolesEnum.MANAGER },
+			isManager: true
 		},
-		{ id: 'row-member', employeeId: 'member-employee', roleId: null, role: null }
+		{ id: 'row-member', employeeId: 'member-employee', roleId: null, role: null, isManager: false }
 	].map((row) => ({ ...row, organizationTeamId: teamId, organizationId: manager.organizationId }));
 
 	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
@@ -159,6 +161,89 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 				id: { id: 'row-member', tenantId: manager.tenantId, ...insideBoundary(manager.organizationId) },
 				changes: { role: { id: 'role-manager' }, isManager: true }
 			}
+		]);
+	});
+
+	/**
+	 * The manager flag lets a manager act for the team's members (ManagedEmployeeService), so it is set on a new
+	 * manager, or repaired on a manager row that lacks it, only for a caller who may already act for every employee.
+	 */
+	const asCallerWithChangeSelectedEmployee = () => {
+		restore();
+		({ restore } = asTenantUser(manager, { permissions: [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE] }));
+	};
+
+	/** Edits the team while the manager row carries the MANAGER role without the flag, as older rows do. */
+	const editTeamWithUnflaggedManager = async () => {
+		const managerRow = rows.find((row) => row.id === 'row-manager');
+		managerRow.isManager = false;
+
+		try {
+			await editTeam(['manager-employee'], ['member-employee']);
+		} finally {
+			managerRow.isManager = true;
+		}
+	};
+
+	it('sets the manager flag on a manager whose role is already MANAGER but whose flag was never set', async () => {
+		// Rows written by the team create and edit before the flag was set carry the MANAGER role only.
+		asCallerWithChangeSelectedEmployee();
+
+		await editTeamWithUnflaggedManager();
+
+		expect(updated).toEqual([
+			{
+				id: expect.objectContaining({ id: 'row-manager', tenantId: manager.tenantId }),
+				changes: { role: { id: 'role-manager' }, isManager: true }
+			}
+		]);
+	});
+
+	it('leaves the flag unset for a team manager without CHANGE_SELECTED_EMPLOYEE editing the team', async () => {
+		// An employee made the manager of a team they created holds the role only: an edit of that team must not
+		// hand them the flag, which would let them act for the members they picked.
+		await editTeamWithUnflaggedManager();
+
+		expect(updated).toEqual([]);
+	});
+
+	/** Adds a new manager and a new member, and answers the rows the edit saved. */
+	const addNewManagerAndMember = async (): Promise<Record<string, unknown>[]> => {
+		const saved: Record<string, unknown>[] = [];
+		jest.spyOn(TenantAwareCrudService.prototype, 'saveMany').mockImplementation(async (entities) => {
+			saved.push(...(entities as Record<string, unknown>[]));
+			return entities as never;
+		});
+
+		await requestStorage.run(new Map(), () =>
+			service.updateOrganizationTeam(
+				teamId,
+				manager.organizationId,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				[{ id: 'new-manager' }, { id: 'new-member' }] as any,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				{ id: 'role-manager' } as any,
+				['manager-employee', 'new-manager'],
+				['member-employee', 'new-member']
+			)
+		);
+
+		return saved;
+	};
+
+	it('adds a new manager with the manager flag set, and a new member without it', async () => {
+		asCallerWithChangeSelectedEmployee();
+
+		expect(await addNewManagerAndMember()).toEqual([
+			expect.objectContaining({ employeeId: 'new-manager', isManager: true, roleId: 'role-manager' }),
+			expect.objectContaining({ employeeId: 'new-member', isManager: false, roleId: null })
+		]);
+	});
+
+	it('gives a new manager the role but not the flag when the caller lacks CHANGE_SELECTED_EMPLOYEE', async () => {
+		expect(await addNewManagerAndMember()).toEqual([
+			expect.objectContaining({ employeeId: 'new-manager', isManager: false, roleId: 'role-manager' }),
+			expect.objectContaining({ employeeId: 'new-member', isManager: false, roleId: null })
 		]);
 	});
 
