@@ -3,6 +3,7 @@ import { IOrganization, IUser } from '@gauzy/contracts';
 import { uniq } from 'underscore';
 import { ElectronService } from '../../electron/services';
 import { Store } from '../../services';
+import { OrganizationSwitchService } from './organization-switch.service';
 import { UserOrganizationService } from './user-organization.service';
 import { NgSelectComponent, NgOptionTemplateDirective, NgLabelTemplateDirective } from '@ng-select/ng-select';
 import { NbTooltipModule } from '@nebular/theme';
@@ -42,18 +43,22 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 
 	@Output() organizationChange: EventEmitter<IOrganization>;
 
+	/** True while the API is asked to switch organization; the selector is disabled meanwhile. */
+	public switching = false;
+
 	constructor(
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _electronService: ElectronService,
 		private readonly _store: Store,
-		private readonly _ngZone: NgZone
+		private readonly _ngZone: NgZone,
+		private readonly _organizationSwitchService: OrganizationSwitchService
 	) {
 		this.organizationChange = new EventEmitter();
 		this._isDisabled = false;
 	}
 
 	ngOnInit() {
-		this.selectOrganization(this._store.selectedOrganization);
+		this.setSelection(this._store.selectedOrganization);
 	}
 
 	/**
@@ -76,11 +81,49 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	}
 
 	/**
-	 * Sets the selected organization and emits an event indicating that the organization has changed.
+	 * Handles the user picking an organization in the selector.
 	 *
-	 * @param organization The organization to select.
+	 * The API confines a non-admin to the organization of their access token, so the pick first asks the API to switch
+	 * (`OrganizationSwitchService`), which stores the new tokens; only then does the selection change and
+	 * `organizationChange` fire. When the switch is refused, the selector goes back to the organization the timer still
+	 * works in and the user is shown why.
+	 *
+	 * @param organization The organization picked.
 	 */
-	public selectOrganization(organization: IOrganization): void {
+	public async selectOrganization(organization: IOrganization): Promise<void> {
+		// Ensure that a valid organization is provided
+		if (!organization) {
+			console.warn('No organization provided to select.');
+			return; // Exit early if organization is null or undefined
+		}
+
+		// The organization the timer works in before this pick (ngModel has already moved `selectedOrganization`).
+		const previous = this.currentOrganization;
+		if (previous?.id === organization.id) {
+			this.selectedOrganization = previous;
+			return;
+		}
+
+		this.switching = true;
+		try {
+			const switched = await this._organizationSwitchService.switchOrganization(organization);
+			if (!switched) {
+				// Keep the old selection; the service has told the user why.
+				this.selectedOrganization = previous;
+				return;
+			}
+			this.setSelection(organization);
+		} finally {
+			this.switching = false;
+		}
+	}
+
+	/**
+	 * Sets the selected organization without asking the API to switch, and emits `organizationChange`.
+	 *
+	 * @param organization The organization to show as selected.
+	 */
+	private setSelection(organization: IOrganization): void {
 		// Ensure that a valid organization is provided
 		if (!organization) {
 			console.warn('No organization provided to select.');
@@ -95,6 +138,18 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 			this._store.selectedOrganization = this.selectedOrganization;
 			this.organizationChange.emit(organization);
 		}
+	}
+
+	/**
+	 * The organization the timer works in: the one whose token the store holds.
+	 */
+	private get currentOrganization(): IOrganization | null {
+		const organizationId = this._store.organizationId;
+		return (
+			this.organizations.find((organization) => organization.id === organizationId) ??
+			this._store.selectedOrganization ??
+			null
+		);
 	}
 
 	/**
@@ -132,10 +187,14 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 				// Select the first organization from the list
 				const [firstOrganization] = this.organizations;
 
-				if (this.organizationId) {
+				// The organization the session's token was issued for comes first, so the selector never shows an
+				// organization the timer does not work in (picking that one would then not even reach the switch).
+				const workingOrganizationId = this._store.organizationId ?? this.organizationId;
+
+				if (workingOrganizationId) {
 					// Find the organization that matches the provided ID
 					const matchingOrganization = this.organizations.find(
-						(organization) => organization.id === this.organizationId
+						(organization) => organization.id === workingOrganizationId
 					);
 
 					// Set the selected organization, fallback to default or first

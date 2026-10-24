@@ -4,6 +4,7 @@ export * from './language.interceptor';
 export * from './organization.interceptor';
 export * from './refresh-token.interceptor';
 export * from './server-error.interceptor';
+export * from './skip-error-notification.token';
 export * from './tenant.interceptor';
 export * from './timeout.interceptor';
 export * from './token.interceptor';

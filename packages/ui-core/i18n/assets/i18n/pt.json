@@ -5576,7 +5576,9 @@
 			"SERVICE_UNAVAILABLE": "Serviço temporariamente indisponível.",
 			"UNEXPECTED_ERROR": "Ocorreu um erro inesperado.",
 			"NETWORK_ERROR": "Erro de rede: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "Não foi possível mudar para {{ name }}: {{ reason }}. Você continua trabalhando na sua organização atual.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Você não é um funcionário ativo de {{ name }}, portanto o cronômetro não pode registrar tempo lá. Você continua trabalhando na sua organização atual."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "O rastreador foi parado devido à inatividade!",

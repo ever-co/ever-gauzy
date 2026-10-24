@@ -5574,7 +5574,9 @@
 			"SERVICE_UNAVAILABLE": "الخدمة غير متاحة مؤقتًا.",
 			"UNEXPECTED_ERROR": "حدث خطأ غير متوقع.",
 			"NETWORK_ERROR": "خطأ في الشبكة: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام."
+			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام.",
+			"ORGANIZATION_SWITCH_REFUSED": "تعذّر التبديل إلى {{ name }}: {{ reason }}. ما زلت تعمل في مؤسستك الحالية.",
+			"ORGANIZATION_NOT_EMPLOYEE": "أنت لست موظفًا نشطًا في {{ name }}، لذلك لا يمكن للمؤقت تتبع الوقت هناك. ما زلت تعمل في مؤسستك الحالية."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",
