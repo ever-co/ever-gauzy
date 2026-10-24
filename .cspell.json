@@ -1675,6 +1675,7 @@
 		"**/fixtures/**/*.json",
 		"**/fixtures/sampleCode/*errors/",
 		"**/node_modules/**",
+		"tools/electron/patches/**",
 		"**/vscode-extension/**",
 		"package-lock.json",
 		"yarn.lock",

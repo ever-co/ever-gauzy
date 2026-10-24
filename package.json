@@ -118,7 +118,7 @@
 		"postinstall.manual": "patch-package && yarn node ./.scripts/postinstall.js",
 		"test:postinstall": "node --test .scripts/postinstall.test.js",
 		"test:publish-channel": "node --test .scripts/electron-package-utils/assert-publish-channel.test.js",
-		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
+		"postinstall.electron": "patch-package --patch-dir tools/electron/patches --error-on-fail && yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall",
 		"build:desktop": "cross-env NODE_ENV=production yarn run copy-files-i18n-desktop && yarn run postinstall.electron && yarn run config:prod && yarn run config:desktop:prod && yarn run pack:desktop && yarn run generate:icons:desktop --environment=prod && yarn run build:package:all:prod && yarn ng:prod run gauzy:desktop-ui --base-href ./ && yarn ng:prod run api:desktop-api && yarn ng:prod build desktop-api --configuration=production --output-path=dist/apps/desktop/desktop-api && yarn ng:prod build desktop --configuration=production --base-href ./ && yarn run prepare:desktop && yarn run copy-files-desktop && yarn run copy-assets-gauzy",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:desktop && electron dist/apps/desktop",
