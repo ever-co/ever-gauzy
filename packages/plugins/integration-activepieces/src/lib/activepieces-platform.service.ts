@@ -19,6 +19,12 @@ import {
 	ListActivepiecesPlatformProjectsQueryDto
 } from './dto';
 
+/** The `code` of the refusal to give a project that already belongs to another tenant (or another external id). */
+export const ACTIVEPIECES_PROJECT_ALREADY_LINKED = 'ACTIVEPIECES_PROJECT_ALREADY_LINKED';
+
+/** The `code` of the refusal to give a tenant a project when another project already holds its external id. */
+export const ACTIVEPIECES_TENANT_ALREADY_LINKED = 'ACTIVEPIECES_TENANT_ALREADY_LINKED';
+
 /** What the operator's provisioning or linking of a tenant's project answers. */
 export interface IActivepiecesTenantProjectLink {
 	tenantId: string;
@@ -36,6 +42,7 @@ export interface IActivepiecesTenantProjectLink {
 @Injectable()
 export class ActivepiecesPlatformService {
 	private readonly logger = new Logger(ActivepiecesPlatformService.name);
+	private readonly linking = new Map<string, Promise<void>>();
 
 	constructor(private readonly credentials: ActivepiecesCredentialsService) {}
 
@@ -97,27 +104,47 @@ export class ActivepiecesPlatformService {
 			return { tenantId, externalId, projectId: found, linked: false };
 		}
 
+		// One link of a project at a time on this server: a second request for the same project reads it after the first
+		// one wrote, and sees the project taken
+		return this.oneAtATime(projectId, () => this.linkProject(tenantId, externalId, projectId, platformApiKey));
+	}
+
+	/**
+	 * Gives an existing project the tenant's external id, after checking it holds no other one, and checks afterwards
+	 * that the external id Activepieces kept is this tenant's.
+	 *
+	 * Activepieces has no conditional update: two operator requests on two API servers can both read the project
+	 * unassigned and both write. The re-read after the write tells which write Activepieces kept: the request whose
+	 * external id is not the one kept is answered `409 ACTIVEPIECES_PROJECT_ALREADY_LINKED` and links nothing; the
+	 * other tenant's external id, which won, stays as it is.
+	 */
+	private async linkProject(
+		tenantId: string,
+		externalId: string,
+		projectId: string,
+		platformApiKey: string
+	): Promise<IActivepiecesTenantProjectLink> {
 		const holder = await this.credentials.findProjectByExternalId(externalId, platformApiKey);
 		if (holder?.id === projectId) {
 			return { tenantId, externalId, projectId, linked: true };
 		}
 		if (holder) {
-			throw new ConflictException(
-				`Project ${holder.id} already holds the external id ${externalId}: clear it in Activepieces first.`
-			);
+			throw new ConflictException({
+				message: `Project ${holder.id} already holds the external id ${externalId}: clear it in Activepieces first.`,
+				code: ACTIVEPIECES_TENANT_ALREADY_LINKED
+			});
 		}
 
 		const projectUrl = `${ACTIVEPIECES_PROJECTS_URL}/${encodeURIComponent(projectId)}`;
-		const target = await this.credentials.requestActivepieces<IActivepiecesProject>(
-			'get',
-			projectUrl,
-			platformApiKey,
-			'read the project'
-		);
+		const readProject = () =>
+			this.credentials.requestActivepieces<IActivepiecesProject>('get', projectUrl, platformApiKey, 'read the project');
+
+		const target = await readProject();
 		if (target?.externalId && target.externalId !== externalId) {
-			throw new ConflictException(
-				`Project ${projectId} already has the external id ${target.externalId}: clear it in Activepieces first.`
-			);
+			throw new ConflictException({
+				message: `Project ${projectId} already has the external id ${target.externalId}: clear it in Activepieces first.`,
+				code: ACTIVEPIECES_PROJECT_ALREADY_LINKED
+			});
 		}
 
 		await this.credentials.requestActivepieces<IActivepiecesProject>(
@@ -127,9 +154,39 @@ export class ActivepiecesPlatformService {
 			'give the project to the tenant',
 			{ data: { externalId } }
 		);
+
+		const kept = await readProject();
+		if (kept?.externalId !== externalId) {
+			this.logger.warn(
+				`Activepieces project ${projectId} was given to another tenant (${kept?.externalId}) at the same time as to tenant ${tenantId}: not linked`
+			);
+			throw new ConflictException({
+				message: `Project ${projectId} was given to another tenant at the same time (${kept?.externalId}).`,
+				code: ACTIVEPIECES_PROJECT_ALREADY_LINKED
+			});
+		}
+
 		this.credentials.forgetTenant(tenantId);
 		this.logger.log(`Activepieces project ${projectId} given to tenant ${tenantId}`);
 		return { tenantId, externalId, projectId, linked: true };
+	}
+
+	/** Runs the tasks of one key one after the other, on this server. */
+	private async oneAtATime<T>(key: string, task: () => Promise<T>): Promise<T> {
+		const previous = this.linking.get(key) ?? Promise.resolve();
+		const run = previous.then(task, task);
+		const tail = run.then(
+			() => undefined,
+			() => undefined
+		);
+		this.linking.set(key, tail);
+		try {
+			return await run;
+		} finally {
+			if (this.linking.get(key) === tail) {
+				this.linking.delete(key);
+			}
+		}
 	}
 
 	/**
