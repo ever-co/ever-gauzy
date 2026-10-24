@@ -86,6 +86,41 @@ describe('EquipmentSharingCreateHandler — the status a request is filed with',
 		expect(row).not.toHaveProperty('equipment');
 	});
 
+	it('checks and stores the policy the related object names, not only the policy column', async () => {
+		const { handler, sharingService } = setUp(false);
+
+		await handler.execute(
+			file({
+				equipmentId: 'equipment-1',
+				equipmentSharingPolicyId: 'policy-1',
+				equipmentSharingPolicy: { id: 'other-orgs-policy' }
+			})
+		);
+
+		expect(sharingService.assertReferencesAreInScope).toHaveBeenCalledWith(
+			expect.objectContaining({ equipmentSharingPolicyId: 'other-orgs-policy' }),
+			{ tenantId: 'tenant-a', organizationId: 'org-1' }
+		);
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row['equipmentSharingPolicyId']).toBe('other-orgs-policy');
+		expect(row).not.toHaveProperty('equipmentSharingPolicy');
+	});
+
+	it('refuses a policy of another organization named as the related object, before anything is stored', async () => {
+		const { handler, sharingService, approvalService } = setUp(false);
+		sharingService.assertReferencesAreInScope.mockRejectedValueOnce(new Error('not available here'));
+
+		await expect(
+			handler.execute(file({ equipmentId: 'equipment-1', equipmentSharingPolicy: { id: 'other-orgs-policy' } }))
+		).rejects.toThrow('not available here');
+		expect(sharingService.assertReferencesAreInScope).toHaveBeenCalledWith(
+			expect.objectContaining({ equipmentSharingPolicyId: 'other-orgs-policy' }),
+			expect.anything()
+		);
+		expect(sharingService.create).not.toHaveBeenCalled();
+		expect(approvalService.create).not.toHaveBeenCalled();
+	});
+
 	it('keeps the status a caller who may decide a sharing chose', async () => {
 		for (const permission of [
 			PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,

@@ -18,7 +18,12 @@ import { MultiORMEnum, parseSortOrder } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
-import { assertReferencesAreInScope, IReferenceScope } from './reference-scope.helper';
+import {
+	assertReferencesAreInScope,
+	IReferenceScope,
+	ISharingReferences,
+	sharingReferences
+} from './reference-scope.helper';
 
 /**
  * Columns the equipment sharing table can be sorted by. Any other `order` key from the query string is ignored.
@@ -46,21 +51,20 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *
 	 * Both targets extend TenantOrganizationBaseEntity, so both are scopeable.
 	 *
+	 * Each target is checked in both forms the body can name it, the column (`equipmentSharingPolicyId`) and the
+	 * related object (`equipmentSharingPolicy: { id }`), which the ORM persists as the foreign key just the same —
+	 * see `sharingReferences`.
+	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
 	 * @throws ForbiddenException when a referenced row is outside the scope.
 	 */
 	public async assertReferencesAreInScope(
-		input: Partial<IEquipmentSharingUpdateInput>,
+		input: Partial<IEquipmentSharingUpdateInput> | ISharingReferences,
 		scope: IReferenceScope
 	): Promise<void> {
-		await assertReferencesAreInScope(
-			[
-				['equipment', input?.equipmentId as ID],
-				['equipment_sharing_policy', input?.equipmentSharingPolicyId as ID]
-			],
-			scope,
-			(table, where) => this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
+			this.typeOrmRepository.manager.findOne(table, { where: where as any })
 		);
 	}
 
