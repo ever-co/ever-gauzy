@@ -1,18 +1,19 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
 import { UpdateResult, DeepPartial } from 'typeorm';
-import { TenantAwareCrudService, RequestContext, sanitizeRichHtml } from '@gauzy/core';
+import { RequestContext, sanitizeRichHtml } from '@gauzy/core';
 import { ID, IHelpCenterArticle } from '@gauzy/contracts';
 import { HelpCenterArticleVersion } from './help-center-article-version.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { TypeOrmHelpCenterArticleVersionRepository } from './repository/type-orm-help-center-article-version.repository';
 import { MikroOrmHelpCenterArticleVersionRepository } from './repository/mikro-orm-help-center-article-version.repository';
+import { KnowledgeBaseCrudService } from '../knowledge-base-crud.service';
 
 /**
  * Service for managing HelpCenterArticle versions.
  * Inherits all CRUD operations from TenantAwareCrudService.
  */
 @Injectable()
-export class HelpCenterArticleVersionService extends TenantAwareCrudService<HelpCenterArticleVersion> {
+export class HelpCenterArticleVersionService extends KnowledgeBaseCrudService<HelpCenterArticleVersion> {
 	constructor(
 		readonly typeOrmHelpCenterArticleVersionRepository: TypeOrmHelpCenterArticleVersionRepository,
 		readonly mikroOrmHelpCenterArticleVersionRepository: MikroOrmHelpCenterArticleVersionRepository,
@@ -33,9 +34,15 @@ export class HelpCenterArticleVersionService extends TenantAwareCrudService<Help
 	async restoreToVersion(versionId: ID): Promise<IHelpCenterArticle | UpdateResult> {
 		// 1. Get the version to restore
 		const { record: version } = await this.findOneOrFailByIdString(versionId);
+		if (!version) {
+			throw new NotFoundException('The requested record was not found');
+		}
 
 		// 2. Get current article state before overwriting
 		const { record: currentArticle } = await this.articleService.findOneOrFailByIdString(version.articleId);
+		if (!currentArticle) {
+			throw new NotFoundException('The requested record was not found');
+		}
 
 		// 3. Get current user's employee ID for version ownership
 		const employeeId = RequestContext.currentEmployeeId() || RequestContext.currentUser()?.employeeId;

@@ -12,6 +12,7 @@ import { debugInDevelopment } from './../../../../logger';
 import { MultiORM, MultiORMEnum, getORMType } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
+import { assertTimeLogReferencesOfTenant } from '../../time-log-references';
 import { TimeSlot } from '../../../time-slot/time-slot.entity';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
@@ -71,6 +72,9 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		const { employeeId: previousEmployeeId, organizationId, tenantId, timesheetId: previousTimesheetId } = timeLog;
 		debugInDevelopment(this.logger, () => `Tenant ID: ${tenantId}`);
 		const changes = omitScopeFields(input);
+
+		// A project, task, client or team the update names is a row of the log's tenant (see time-log-references.ts)
+		await assertTimeLogReferencesOfTenant(this.typeOrmTimeLogRepository, changes, tenantId);
 
 		// The employee the log belongs to once updated. `employeeId` is not a scope field: the manual-time update
 		// moves a log to another employee of the SAME organization (`TimeLogService.updateManualTime` refuses any

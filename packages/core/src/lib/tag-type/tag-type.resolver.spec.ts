@@ -481,17 +481,17 @@ describe('TagTypeResolver — the guard stack and the permission are the control
 		expect(stated).toEqual(expected);
 	});
 
-	it('carries no permission on the node query and the removal, because their routes carry none', () => {
-		// `GET /:id` and the removal are inherited from the CRUD base without a permission of their own, and
-		// this controller states none on the class either — so they run under the guards alone. Demanding a
-		// permission here would refuse a caller the REST route serves; the asymmetry between reading one
-		// group and listing them is the controller's to resolve, and resolving it in one surface only is
-		// exactly what this delivery exists to prevent.
-		for (const handler of ['findById', 'delete']) {
+	it('carries no permission on the node query, because its route carries none', () => {
+		// `GET /:id` is inherited from the CRUD base without a permission of its own, and this controller
+		// states none on the class either — so it runs under the guards alone. Demanding a permission here
+		// would refuse a caller the REST route serves; the asymmetry between reading one group and listing
+		// them is the controller's to resolve, and resolving it in one surface only is exactly what this
+		// delivery exists to prevent.
+		for (const handler of ['findById']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(TagTypeController)[handler])).toBeUndefined();
 			expect(permissionOfRoute(TagTypeController, handler)).toBeUndefined();
 		}
-		for (const field of ['tagType', 'deleteTagType']) {
+		for (const field of ['tagType']) {
 			expect(permissionOfField(field)).toBeUndefined();
 		}
 

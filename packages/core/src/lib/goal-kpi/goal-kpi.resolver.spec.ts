@@ -11,8 +11,9 @@ import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { CursorCodec } from '../api/cursor';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { GoalKpiController } from './goal-kpi.controller';
 import { GoalKpiResolver } from './goal-kpi.resolver';
 
@@ -432,12 +433,19 @@ describe('GoalKpiResolver — one concept, two protocols, the same operations', 
 });
 
 describe('GoalKpiResolver — the guard stack and the permission are the controller’s', () => {
+	/**
+	 * The routes that write. Each states `GOALS_EDIT` behind `PermissionGuard` on its handler — the inherited ones
+	 * through an override that exists only to attach them (owner decision 2, 2026-10-22) — and its field states the
+	 * same; the reads state neither.
+	 */
+	const WRITES = ['create', 'update', 'delete', 'softRemove', 'softRecover'];
+
 	it('guards the resolver the way the controller is guarded, and not more widely', () => {
 		expect(Reflect.getMetadata('__guards__', GoalKpiController)).toEqual([TenantPermissionGuard]);
 		expect(Reflect.getMetadata('__guards__', GoalKpiResolver)).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
 	});
 
-	it('runs every route under the guard chain the resolver states', () => {
+	it('runs every read under the guard chain the resolver states, and every write under the permission guard as well', () => {
 		const stated = Reflect.getMetadata('__guards__', GoalKpiResolver) ?? [];
 		const routes = [
 			'findAll',
@@ -452,7 +460,23 @@ describe('GoalKpiResolver — the guard stack and the permission are the control
 		];
 
 		for (const handler of routes) {
-			expect([...guardsOfRoute(GoalKpiController, handler), FeatureFlagGuard].sort()).toEqual([...stated].sort());
+			// The controller's chain plus the gate on the endpoint itself is the resolver's chain, which is the
+			// parity claim; a write adds the permission guard its handler states, and its field states the same
+			// (asserted below), so neither protocol is narrower or wider than the other.
+			const expected = WRITES.includes(handler) ? [...stated, PermissionGuard] : [...stated];
+
+			expect([...guardsOfRoute(GoalKpiController, handler), FeatureFlagGuard].sort()).toEqual(expected.sort());
+		}
+	});
+
+	it('states PermissionGuard on every write field, as its route does, and on no read field', () => {
+		const fields = GoalKpiResolver.prototype as unknown as Record<string, object>;
+
+		for (const [field, handler] of ROUTES) {
+			expect({ field, guards: Reflect.getMetadata('__guards__', fields[field]) ?? [] }).toEqual({
+				field,
+				guards: WRITES.includes(handler) ? [PermissionGuard] : []
+			});
 		}
 	});
 
@@ -461,14 +485,19 @@ describe('GoalKpiResolver — the guard stack and the permission are the control
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, GoalKpiResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its own route runs under, which is none', () => {
+	it('states on every field the permission its own route runs under: GOALS_EDIT on a write, none on a read', () => {
 		const stated = Object.fromEntries(ROUTES.map(([field]) => [field, permissionOfField(field)]));
 		const expected = Object.fromEntries(
 			ROUTES.map(([field, handler]) => [field, permissionOfRoute(GoalKpiController, handler)])
 		);
 
 		expect(stated).toEqual(expected);
-		expect(Object.values(stated).every((value) => value === undefined)).toBe(true);
+		for (const [field, handler] of ROUTES) {
+			expect({ field, permission: stated[field] }).toEqual({
+				field,
+				permission: WRITES.includes(handler) ? [PermissionsEnum.GOALS_EDIT] : undefined
+			});
+		}
 	});
 });
 

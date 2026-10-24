@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ImageAsset, ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ImageAsset, ProductVariant, RequestContext } from '@gauzy/core';
 import { assertAllInCallerScope, assertInCallerScope, callerScope } from '../catalog.scope';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { MikroOrmProductVariantMediaRepository } from './repository/mikro-orm-product-variant-media.repository';
 import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-product-variant-media.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * A variant's gallery.
@@ -22,7 +23,7 @@ import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-prod
  * on row order (R5-07).
  */
 @Injectable()
-export class ProductVariantMediaService extends TenantAwareCrudService<ProductVariantMedia> {
+export class ProductVariantMediaService extends CatalogCrudService<ProductVariantMedia> {
 	constructor(
 		readonly typeOrmProductVariantMediaRepository: TypeOrmProductVariantMediaRepository,
 		readonly mikroOrmProductVariantMediaRepository: MikroOrmProductVariantMediaRepository

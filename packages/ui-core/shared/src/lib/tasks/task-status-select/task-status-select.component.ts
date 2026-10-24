@@ -3,7 +3,15 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject, combineLatest, debounceTime, filter, firstValueFrom, map, Subject, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ID, IOrganization, IPagination, ITaskStatus, ITaskStatusFindInput, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	ID,
+	IOrganization,
+	IPagination,
+	ITaskStatus,
+	ITaskStatusFindInput,
+	PermissionsEnum,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, Store, TaskStatusesService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -49,6 +57,14 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	 * @property addTag - Whether adding new tags is allowed (default: true).
 	 */
 	@Input() addTag: boolean = true;
+
+	/**
+	 * Whether the select offers to create a new status from what the user typed: only when `addTag` allows it and
+	 * the user holds `ORG_TASK_SETTING`, the grant the API requires to create one.
+	 */
+	get canCreate(): boolean {
+		return this.addTag && this._store.hasPermission(PermissionsEnum.ORG_TASK_SETTING);
+	}
 
 	/**
 	 * The placeholder text to be displayed in the project selector.

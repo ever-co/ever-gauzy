@@ -1141,7 +1141,8 @@ export class StatisticService {
 						'user.id as user_id',
 						knex.raw(`${totalDurationExpr} as duration`),
 						'employee.isOnline as isOnline',
-						'employee.isAway as isAway'
+						'employee.isAway as isAway',
+						'employee.kind as kind'
 					])
 					.where('employee.tenantId', tenantId)
 					.andWhere('employee.organizationId', organizationId)
@@ -1164,6 +1165,7 @@ export class StatisticService {
 					.groupBy('employee.id')
 					.groupBy('employee.isOnline')
 					.groupBy('employee.isAway')
+					.groupBy('employee.kind')
 					.groupBy('user.id')
 					.orderBy('duration', 'DESC')) as unknown as IMembersStatistics[];
 
@@ -1375,6 +1377,7 @@ export class StatisticService {
 					.addSelect(getTotalDurationQueryString(dbType, 'timeLogs'), `duration`)
 					.addSelect(p(`"${query.alias}"."isOnline"`), 'isOnline')
 					.addSelect(p(`"${query.alias}"."isAway"`), 'isAway')
+					.addSelect(p(`"${query.alias}"."kind"`), 'kind')
 					.innerJoin(`${query.alias}.user`, 'user')
 					.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 					.andWhere(
@@ -1417,6 +1420,7 @@ export class StatisticService {
 					.groupBy(p(`"${query.alias}"."id"`))
 					.addGroupBy(p(`"${query.alias}"."isOnline"`))
 					.addGroupBy(p(`"${query.alias}"."isAway"`))
+					.addGroupBy(p(`"${query.alias}"."kind"`))
 					.addGroupBy(p(`"user"."id"`))
 					.orderBy('duration', 'DESC')
 					.getRawMany();
@@ -2713,7 +2717,10 @@ export class StatisticService {
 					.leftJoin('user', function () {
 						this.on('employee.userId', 'user.id').andOnNull('user.deletedAt');
 					})
-					.select([
+					// DISTINCT: the slot joins give one row per time slot, so without it a log with several
+					// slots filled the top 5 with copies of itself. Every selected column is per log, and the
+					// ORDER BY column (`time_log.startedAt`) is in the list, as DISTINCT requires.
+					.distinct([
 						'time_log.id as id',
 						'time_log.startedAt as startedAt',
 						'time_log.duration as duration',
@@ -2723,7 +2730,8 @@ export class StatisticService {
 						'user.imageUrl as user_imageUrl',
 						'organization_project.name as project_name',
 						'organization_project.imageUrl as project_imageUrl',
-						'employee.id as employee_id'
+						'employee.id as employee_id',
+						'employee.kind as employee_kind'
 					])
 					.where('time_log.logType', TimeLogType.MANUAL)
 					.andWhere('time_log.tenantId', tenantId)
@@ -2755,7 +2763,7 @@ export class StatisticService {
 					},
 					project: { name: row.project_name, imageUrl: row.project_imageUrl },
 					employeeId: row.employee_id,
-					employee: { id: row.employee_id }
+					employee: { id: row.employee_id, kind: row.employee_kind }
 				}));
 				break;
 			}
@@ -3054,6 +3062,7 @@ export class StatisticService {
 						'time_log.employeeId as id',
 						'employee.isOnline as isOnline',
 						'employee.isAway as isAway',
+						'employee.kind as kind',
 						knex.raw('MAX("time_log"."startedAt") as "startedAt"'),
 						'user.id as user_id'
 					])
@@ -3079,6 +3088,7 @@ export class StatisticService {
 					.groupBy('user.id')
 					.groupBy('employee.isOnline')
 					.groupBy('employee.isAway')
+					.groupBy('employee.kind')
 					.orderBy('startedAt', 'DESC')
 					.limit(3)) as unknown as ITimeSlotStatistics[];
 
@@ -3190,6 +3200,7 @@ export class StatisticService {
 				query.select(p(`"${query.alias}"."employeeId"`), 'id');
 				query.addSelect(p(`"employee"."isOnline"`), 'isOnline');
 				query.addSelect(p(`"employee"."isAway"`), 'isAway');
+				query.addSelect(p(`"employee"."kind"`), 'kind');
 				query.addSelect(p(`MAX("${query.alias}"."startedAt")`), 'startedAt');
 				query.addSelect(p(`"user"."id"`), 'user_id');
 
@@ -3217,6 +3228,7 @@ export class StatisticService {
 				query.addGroupBy(p(`"user"."id"`));
 				query.addGroupBy(p(`"employee"."isOnline"`));
 				query.addGroupBy(p(`"employee"."isAway"`));
+				query.addGroupBy(p(`"employee"."kind"`));
 				query.addOrderBy(p(`"startedAt"`), 'DESC');
 				query.limit(3);
 

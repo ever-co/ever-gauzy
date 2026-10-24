@@ -29,11 +29,19 @@ export class GetPluginTenantUsersHandler implements IQueryHandler<GetPluginTenan
 	public async execute(query: GetPluginTenantUsersQuery): Promise<GetPluginTenantUsersResult> {
 		const { pluginTenantId, userType, skip = 0, take = 20, searchTerm } = query;
 		const currentUserId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
+
+		// The query is raw SQL, so nothing applies the caller's tenant for it the way the tenant-aware services
+		// do: without the clause below, the users allowed or denied a plugin in any tenant were readable by the
+		// plugin-tenant's id. A request that carries no tenant reads nothing rather than everything.
+		if (!tenantId) {
+			return { items: [], total: 0 };
+		}
 
 		this.logger.log(`Getting ${userType} users for plugin tenant ${pluginTenantId}`);
 
 		// ---------- WHERE & PARAMS ----------
-		const params: (string | number)[] = [pluginTenantId, currentUserId];
+		const params: (string | number)[] = [pluginTenantId, currentUserId, tenantId];
 		let searchClause = '';
 
 		if (searchTerm) {
@@ -60,7 +68,7 @@ export class GetPluginTenantUsersHandler implements IQueryHandler<GetPluginTenan
 			FROM plugin_tenant_allowed_users ptau
 			JOIN "user" u ON u.id = ptau."userId"
 			JOIN "plugin_tenants" pt ON pt.id = ptau."pluginTenantsId"
-			WHERE ptau."pluginTenantsId" = $1 AND u.id <> $2
+			WHERE ptau."pluginTenantsId" = $1 AND u.id <> $2 AND pt."tenantId" = $3
 			${searchClause}
 		`;
 
@@ -76,7 +84,7 @@ export class GetPluginTenantUsersHandler implements IQueryHandler<GetPluginTenan
 			FROM plugin_tenant_denied_users ptdu
 			JOIN "user" u ON u.id = ptdu."userId"
 			JOIN "plugin_tenants" pt ON pt.id = ptdu."pluginTenantsId"
-			WHERE ptdu."pluginTenantsId" = $1 AND u.id <> $2
+			WHERE ptdu."pluginTenantsId" = $1 AND u.id <> $2 AND pt."tenantId" = $3
 			${searchClause}
 		`;
 

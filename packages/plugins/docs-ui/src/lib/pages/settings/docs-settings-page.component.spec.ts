@@ -22,9 +22,17 @@ import { DocsSettingsPageComponent } from './docs-settings-page.component';
 
 const GIB = 1024 * 1024 * 1024;
 
-/** A settings envelope shaped exactly like `DocumentSettingsService.getSettings()`. */
-function settings(quotaBytes: number | undefined, usedBytes = 512 * 1024 * 1024): IDocumentSettings {
+/**
+ * A settings envelope shaped exactly like `DocumentSettingsService.getSettings()`. `canEditQuota` is what the server
+ * answers the installation's operator; everyone else is answered `false`.
+ */
+function settings(
+	quotaBytes: number | undefined,
+	usedBytes = 512 * 1024 * 1024,
+	canEditQuota = true
+): IDocumentSettings {
 	return {
+		canEditQuota,
 		defaults: {
 			importToKnowledgeDefault: false,
 			defaultVisibility: DocumentVisibilityEnum.ORGANIZATION,
@@ -108,6 +116,32 @@ describe('DocsSettingsPageComponent — storage quota (spec 08 §5.7 / 10 §7.1 
 		expect(page.storage).toBeNull();
 		expect(page.canEditQuota).toBe(false);
 		expect(page.quotaGib).toBeNull();
+	});
+
+	it('shows a DOCS_MANAGE holder who does not operate the installation the usage and the limit, but no editor', async () => {
+		// Owner decision 14 (2026-10-22): only the installation's operator sets the quota; the PUT refuses anyone else.
+		const { page, documentsService } = createPage(settings(2 * GIB, 512 * 1024 * 1024, false));
+
+		await page.load();
+
+		expect(page.storage).toEqual({ usedBytes: 512 * 1024 * 1024, quotaBytes: 2 * GIB });
+		expect(page.storagePercent).toBe(25);
+		expect(page.canEditQuota).toBe(false);
+		expect(page.quotaDirty).toBe(false);
+
+		page.quotaGib = 5;
+		await page.saveQuota();
+		expect(documentsService.updateSettings).not.toHaveBeenCalled();
+	});
+
+	it('offers no editor when the server does not say the caller may change the quota (an older server)', async () => {
+		const older = settings(2 * GIB);
+		delete older.canEditQuota;
+		const { page } = createPage(older);
+
+		await page.load();
+
+		expect(page.canEditQuota).toBe(false);
 	});
 
 	it('edits in GiB and sends `quotaBytes` in BYTES — the field the DTO whitelists', async () => {

@@ -1215,7 +1215,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfaz",
 			"TITLE": "Interfaz de usuario",
-			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes.",
+			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes. Ambas interfaces muestran las mismas páginas, con los mismos datos, diseño y funciones; solo cambia la tecnología que hay detrás, por lo que cambiar no modifica lo que sus usuarios ven o pueden hacer.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (predeterminado)",
 				"REACT": "React (nuevo)"
@@ -5410,6 +5410,8 @@
 			"API_SERVER_PORT": "Puerto del servidor de API",
 			"UI_SERVER_PORT": "Puerto del servidor de interfaz de usuario",
 			"SERVER_HOSTNAME": "Nombre de host/IP del servidor",
+			"LAN_ACCESS": "Permitir que otros equipos de la red se conecten",
+			"LAN_ACCESS_HINT": "Si está desactivado, solo este equipo puede conectarse a la API y a la interfaz web.",
 			"AUTO_START_STARTUP": "Inicio automático al iniciar",
 			"SERVER_TYPE": "Tipo de servidor",
 			"LOCAL_API_PORT": "Puerto de API local",
@@ -5536,7 +5538,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "No pudimos determinar si tiene datos sin conexión sin sincronizar. Eliminar la base de datos puede borrar PERMANENTEMENTE trabajo no guardado. Si no está seguro, haga clic en 'Conservar'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Sus datos de inicio de sesión",
+			"SEED_CREDENTIALS_MESSAGE": "Guarde estas contraseñas ahora. Solo se muestran una vez.",
+			"SEED_CREDENTIALS_DETAIL": "Esta instalación creó sus cuentas con contraseñas aleatorias en lugar de los valores predeterminados publicados.\n\n{{ accounts }}\n\nPuede cambiar una contraseña más adelante en su página de perfil de Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Copiado al portapapeles.",
+			"SEED_CREDENTIALS_SAVED": "Ya las he guardado",
+			"SEED_ROLE_SUPER_ADMIN": "Superadministrador",
+			"SEED_ROLE_ADMIN": "Administrador",
+			"SEED_ROLE_EMPLOYEE": "Empleado",
+			"SEED_PASSWORD": "Contraseña",
+			"PUBLISHED_PASSWORDS_TITLE": "La contraseña predeterminada sigue en uso",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Cambie la contraseña predeterminada de estas cuentas.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} todavía inician sesión con la contraseña predeterminada publicada en la documentación de Gauzy. Cualquiera que pueda acceder a este servidor puede iniciar sesión con ella. Inicie sesión en Gauzy y cámbiela en la página de perfil."
 		},
 		"NO_LIMIT": "∞ Sin límite",
 		"TASK": "Tarea",
@@ -5564,7 +5578,12 @@
 			"SERVICE_UNAVAILABLE": "Servicio temporalmente no disponible.",
 			"UNEXPECTED_ERROR": "Ha ocurrido un error inesperado.",
 			"NETWORK_ERROR": "Error de red: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Se requiere permiso de acceso a la pantalla para habilitar la captura automática de pantalla. Por favor, conceda el permiso en la configuración del sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Se requiere permiso de acceso a la pantalla para habilitar la captura automática de pantalla. Por favor, conceda el permiso en la configuración del sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "No se pudo cambiar a {{ name }}: {{ reason }}. Sigues trabajando en tu organización actual.",
+			"ORGANIZATION_NOT_EMPLOYEE": "No eres un empleado activo de {{ name }}, por lo que el temporizador no puede registrar tiempo allí. Sigues trabajando en tu organización actual.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Se está cambiando de organización. Inicia el temporizador cuando termine el cambio.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "No eres un empleado activo de {{ name }} y no se pudo volver a tu organización anterior. Inicia sesión de nuevo.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "No se pudo completar el cambio a {{ name }} en este dispositivo. Inicia sesión de nuevo."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "¡El seguimiento fue detenido debido a la inactividad!",

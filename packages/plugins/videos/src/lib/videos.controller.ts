@@ -45,6 +45,7 @@ import { GetVideoCountQuery } from './queries/get-video-count.query';
 import { GetVideoQuery } from './queries/get-video.query';
 import { GetVideosQuery } from './queries/get-videos.query';
 import { IDeleteVideo, IVideo } from './video.model';
+import { videoUploaderOf } from './video-uploader';
 
 @ApiTags('Video Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -162,7 +163,7 @@ export class VideosController {
 			// Extract necessary properties from the request body
 			const tenantId = input.tenantId || RequestContext.currentTenantId();
 			const organizationId = input.organizationId;
-			const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
+			const uploadedById = videoUploaderOf(input.uploadedById);
 			const storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
 
 			// Create a new video record

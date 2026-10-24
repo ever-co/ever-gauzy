@@ -234,7 +234,8 @@ export class SearchController {
 	async indexStatus(
 		@Query() query: SearchIndexStatusQueryDTO
 	): Promise<{ items: ISearchIndexStatus[]; total: number }> {
-		const items = await this.reindexService.status(query.entities);
+		// Through the search service, as the GraphQL field reads it: it reports only the entities the caller may view.
+		const items = await this.searchService.indexStatus(query.entities);
 
 		return { items, total: items.length };
 	}

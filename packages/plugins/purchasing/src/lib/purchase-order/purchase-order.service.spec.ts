@@ -122,7 +122,8 @@ import {
 	OrganizationVendor,
 	ProductVariant,
 	ProductVariantPrice,
-	RequestContext
+	RequestContext,
+	Warehouse
 } from '@gauzy/core';
 import { PurchaseOrderStatus } from '../purchasing.types';
 import { VendorProductTermService } from '../vendor-product-term/vendor-product-term.service';
@@ -163,6 +164,7 @@ const OTHER_ORG = '00000000-0000-4000-8000-000000000003';
 const BUYER = '00000000-0000-4000-8000-000000000050';
 const VENDOR = 'vendor-1';
 const WAREHOUSE = 'warehouse-1';
+const THEIR_WAREHOUSE = 'warehouse-of-another-organization';
 const VARIANT = 'variant-1';
 const OTHER_VARIANT = 'variant-2';
 const DAY = 24 * 60 * 60 * 1000;
@@ -177,6 +179,7 @@ interface ITables {
 	product_variant: Row[];
 	product_variant_price: Row[];
 	organization: Row[];
+	warehouse: Row[];
 }
 
 /**
@@ -396,7 +399,11 @@ function orderFixture(
 				unitCostCurrency: 'USD'
 			}
 		],
-		organization: [{ id: ORG, tenantId: TENANT, currency: 'USD' }]
+		organization: [{ id: ORG, tenantId: TENANT, currency: 'USD' }],
+		warehouse: [
+			{ id: WAREHOUSE, tenantId: TENANT, organizationId: ORG },
+			{ id: THEIR_WAREHOUSE, tenantId: TENANT, organizationId: OTHER_ORG }
+		]
 	};
 	const managerFor = () => ({
 		connection: { options: { type: 'postgres' } },
@@ -418,6 +425,9 @@ function orderFixture(
 			}
 			if (entity === Organization) {
 				return repository(tables, 'organization').findOne(findOptions);
+			}
+			if (entity === Warehouse) {
+				return repository(tables, 'warehouse').findOne(findOptions);
 			}
 			if (entity === PurchaseOrder) {
 				return repository(tables, 'purchase_order').findOne(findOptions);
@@ -560,6 +570,20 @@ describe('PurchaseOrderService — raising an order (doc 09 §9.2, doc 05 §16.1
 		await expect(
 			fixture.service.create({ vendorId: VENDOR, warehouseId: WAREHOUSE, lines: [] } as never)
 		).rejects.toThrow(/PURCHASE_ORDER_CURRENCY_REQUIRED/);
+		expect(fixture.tables.purchase_order).toEqual([]);
+		expect(fixture.sequenceCalls).toEqual([]);
+	});
+
+	it('refuses a receiving location of another organization, which its receipts would stock', async () => {
+		// The stock ledger checks only the tenant of the location it writes at, and every receipt of the order is
+		// posted at the order's location: an order raised in one organization could stock another's warehouse.
+		const fixture = orderFixture();
+
+		for (const warehouseId of [THEIR_WAREHOUSE, 'no-such-warehouse']) {
+			await expect(
+				fixture.service.create({ vendorId: VENDOR, warehouseId, currency: 'USD', lines: [] } as never)
+			).rejects.toThrow(/PURCHASE_ORDER_WAREHOUSE_NOT_FOUND/);
+		}
 		expect(fixture.tables.purchase_order).toEqual([]);
 		expect(fixture.sequenceCalls).toEqual([]);
 	});
@@ -763,6 +787,36 @@ describe('PurchaseOrderService — amending and deleting a draft (doc 05 §16.1)
 
 		expect(amended.expectedAt).toEqual(first);
 		expect(fixture.liveLines('order-1')).toHaveLength(2);
+	});
+
+	it('withdraws the approval of a draft it amends, so the amended order is approved again before it is sent', async () => {
+		// `send` checks only that `approvedAt` is set: an approved draft whose lines were replaced afterwards used to
+		// go to the supplier on the approval of the order it no longer was.
+		const approved = {
+			approvedAt: new Date('2026-01-01T00:00:00.000Z'),
+			approvedByUserId: 'approver',
+			approvalId: 'a-1'
+		};
+		const fixture = orderFixture({ orders: [orderRow('order-1', approved)], lines: [lineRow('line-1')] });
+
+		const amended = await fixture.service.update('order-1', {
+			lines: [{ variantId: VARIANT, quantity: '1000', unitCost: '10' }]
+		} as never);
+
+		expect(amended).toMatchObject({ approvedAt: null, approvedByUserId: null, approvalId: null });
+		await expect(fixture.service.send('order-1')).rejects.toThrow(/PURCHASE_ORDER_NOT_APPROVED/);
+
+		// A line written through the line surface is an amendment too: its totals are rewritten through
+		// `recomputeTotalsFor`, which withdraws the approval with them.
+		const lineSurface = orderFixture({ orders: [orderRow('order-1', approved)], lines: [lineRow('line-1')] });
+
+		await expect(lineSurface.service.recomputeTotalsFor('order-1')).resolves.toMatchObject({ approvedAt: null });
+
+		// An unapproved draft is amended as before, with nothing to withdraw.
+		const draft = orderFixture({ orders: [orderRow('order-1')] });
+
+		await expect(draft.service.update('order-1', { note: 'x' } as never)).resolves.toMatchObject({ note: 'x' });
+		expect(draft.order('order-1')).not.toHaveProperty('approvedAt', null);
 	});
 
 	it('deletes a draft and refuses to delete anything the supplier has been told about', async () => {

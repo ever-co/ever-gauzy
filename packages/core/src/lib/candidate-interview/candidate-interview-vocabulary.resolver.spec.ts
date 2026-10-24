@@ -676,13 +676,14 @@ describe('CandidateInterviewVocabularyResolver — the guard stack is the contro
 	});
 
 	it('restates the role guard and the same three roles on the routes that state them, and nowhere else', () => {
-		// The role guard is on the handlers the two controllers declare — the two lifecycle routes included,
-		// which they now override only to state the roles — and the inherited CRUD routes still left (the
-		// count, the node and the edit) carry neither it nor the roles. That asymmetry is the controllers'
-		// own, and it is why the guard is per field rather than on the class.
+		// The role guard is on the handlers the two controllers declare — the two lifecycle routes and the
+		// edit included, which they now override only to state the roles — and the inherited CRUD routes
+		// still left (the count and the node) carry neither it nor the roles. That asymmetry is the
+		// controllers' own, and it is why the guard is per field rather than on the class.
 		for (const field of [
 			'candidateTechnologies',
 			'createCandidateTechnology',
+			'updateCandidateTechnology',
 			'deleteCandidateTechnology',
 			'softDeleteCandidateTechnology',
 			'recoverCandidateTechnology',
@@ -691,6 +692,7 @@ describe('CandidateInterviewVocabularyResolver — the guard stack is the contro
 			'deleteCandidateTechnologiesBulk',
 			'candidatePersonalQualities',
 			'createCandidatePersonalQuality',
+			'updateCandidatePersonalQuality',
 			'deleteCandidatePersonalQuality',
 			'softDeleteCandidatePersonalQuality',
 			'recoverCandidatePersonalQuality',
@@ -704,13 +706,28 @@ describe('CandidateInterviewVocabularyResolver — the guard stack is the contro
 		for (const field of [
 			'candidateTechnology',
 			'candidateTechnologyCount',
-			'updateCandidateTechnology',
 			'candidatePersonalQuality',
-			'candidatePersonalQualityCount',
-			'updateCandidatePersonalQuality'
+			'candidatePersonalQualityCount'
 		]) {
 			expect(guardsOfField(field)).not.toContain(RoleGuard);
 			expect(rolesOfField(field)).toBeUndefined();
+		}
+	});
+
+	it.each([
+		{ field: 'updateCandidateTechnology', controller: CandidateTechnologiesController },
+		{ field: 'updateCandidatePersonalQuality', controller: CandidatePersonalQualitiesController }
+	])('$field refuses the callers its REST edit refuses (ever-co/ever-gauzy#11228 parity)', ({ field, controller }) => {
+		// The REST edit gained the role guard in ever-co/ever-gauzy#11228; the GraphQL edit had kept the
+		// tenant guard alone, so a VIEWER or EMPLOYEE could rewrite a sitting's vocabulary over GraphQL.
+		expect(guardsOfRoute(controller, 'update')).toContain(RoleGuard);
+		expect(guardsOfField(field)).toContain(RoleGuard);
+		expect(rolesOfField(field)).toEqual(rolesOfRoute(controller, 'update'));
+
+		const roles = rolesOfField(field) as RolesEnum[];
+
+		for (const refused of [RolesEnum.EMPLOYEE, RolesEnum.VIEWER, RolesEnum.MANAGER, RolesEnum.DATA_ENTRY]) {
+			expect(roles).not.toContain(refused);
 		}
 	});
 });

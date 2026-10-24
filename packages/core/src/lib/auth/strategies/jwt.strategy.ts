@@ -1,4 +1,11 @@
-import { Injectable, Logger, Optional, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+	Injectable,
+	Logger,
+	NotFoundException,
+	Optional,
+	ServiceUnavailableException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from 'jsonwebtoken';
@@ -175,6 +182,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 * token that fails several checks is refused with exactly the exception it always was — including when
 	 * a lookup itself throws: the employee lookup's error is still the one that propagates.
 	 *
+	 * A token WITHOUT an organization claim falls back to the organization stored on the user:
+	 * `RequestContext.currentOrganizationId()` reads `user.lastOrganizationId`, and the organization boundary
+	 * confines the request to it. That column is a preference the user's own profile writes, not a grant, so it
+	 * is held to the claim's rule: it is kept only while the user is an active member of that organization,
+	 * and is cleared on the request user otherwise (the request then reaches no organization, as one without a
+	 * stored organization does). It is cleared rather than refused, so a stale preference never locks a user out.
+	 *
 	 * @param user - The authenticated user, mutated with the validated claims.
 	 * @param claims - The `employeeId`, `organizationId` and `tenantId` claims of the token.
 	 * @returns The `UnauthorizedException` that rejects the request, or `null` when both claims pass.
@@ -185,12 +199,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	): Promise<UnauthorizedException | null> {
 		const { employeeId, organizationId, tenantId } = claims;
 
+		// The organization the request falls back to when the token names none (see above).
+		const storedOrganizationId = organizationId ? null : user.lastOrganizationId || null;
+		const membershipOrganizationId = organizationId || storedOrganizationId;
+
 		const employeeLookup = employeeId ? this._employeeService.findOneByIdString(employeeId) : null;
-		const membershipLookup = organizationId
+		const membershipLookup = membershipOrganizationId
 			? this._userOrganizationService.findOneByOptions({
 					where: {
 						userId: user.id,
-						organizationId,
+						organizationId: membershipOrganizationId,
 						tenantId: tenantId || user.tenantId,
 						isActive: true,
 						isArchived: false
@@ -235,6 +253,19 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			}
 
 			user.lastOrganizationId = organizationId;
+		} else if (storedOrganizationId) {
+			// `findOneByOptions` answers a missing membership by throwing NotFoundException: that is "not a
+			// member" here. Any other failure (an unreachable database included) propagates as it does for a claim.
+			const userOrganization = await membershipLookup.catch((error: unknown) => {
+				if (error instanceof NotFoundException) {
+					return null;
+				}
+				throw error;
+			});
+
+			if (!userOrganization) {
+				user.lastOrganizationId = null;
+			}
 		}
 
 		return null;

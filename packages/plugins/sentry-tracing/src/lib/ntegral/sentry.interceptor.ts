@@ -18,10 +18,10 @@ import type {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Scope } from '@sentry/node';
-import { httpRequestToRequestData } from '@sentry/core';
 
 import { SentryInterceptorOptions, SentryInterceptorOptionsFilter } from './sentry.interfaces';
 import { SentryService } from './sentry.service';
+import { redactUrl, redactedRequestOf, sentryUserOf } from '../sentry-request-redaction';
 
 @Injectable()
 export class SentryInterceptor implements NestInterceptor {
@@ -82,19 +82,16 @@ export class SentryInterceptor implements NestInterceptor {
 
 		const request = http.getRequest();
 
-		// V9 Migration: Use httpRequestToRequestData instead of manual extraction
-		// Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/#removals-in-sentrycore
-		// The addRequestDataToEvent method has been removed. Use httpRequestToRequestData instead and put the resulting object directly on event.request.
-		const requestData = httpRequestToRequestData(request);
-
-		scope.setExtra('req', requestData);
-		scope.setTag('url', request.url);
+		// The request with its credentials redacted and without its body, and the user by id alone
+		// (`sentry-request-redaction.ts`)
+		scope.setExtra('req', redactedRequestOf(request));
+		scope.setTag('url', redactUrl(request.url));
 		scope.setTag('method', request.method);
 
 		// V9 Migration: Manual user context setting since requestDataIntegration no longer automatically sets user from request.user
 		// Reference: https://docs.sentry.io/platforms/javascript/guides/node/migration/v8-to-v9/#behavior-changes
 		if (request.user) {
-			scope.setUser(request.user);
+			scope.setUser(sentryUserOf(request.user));
 		}
 
 		sentry.captureException(exception);

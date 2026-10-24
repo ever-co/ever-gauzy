@@ -1,5 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { DeleteResult } from 'typeorm';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ID,
 	IEntitySubscription,
@@ -7,7 +8,9 @@ import {
 	IEntitySubscriptionFindInput
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
+import { assertCallerIsAuthorOrTenantAdmin, isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { Employee } from './../core/entities/internal';
 import { EntitySubscription } from './entity-subscription.entity';
 import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
@@ -106,6 +109,12 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 	 */
 	async unsubscribe(id: ID, input?: IEntitySubscriptionFindInput): Promise<DeleteResult> {
 		try {
+			// Only the subscriber, or a tenant administrator, may remove a subscription ({@link assertCallerMayChange}).
+			// The criterion below pinned the caller's employee, but a caller with no employee record has none to pin:
+			// the key was dropped and any subscription of the tenant was removed by its id.
+			await this.assertCallerMayChange(id, true);
+			const tenantAdmin = isCallerTenantAdmin();
+
 			// Extract the tenant ID from the request context
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			// Extract the user from the request context
@@ -114,17 +123,21 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 			const employeeId = user.employeeId;
 			// Extract the entity ID and type from the input
 			const { entity, entityId, organizationId } = input;
-			// Delete the subscription
+			// Delete the subscription: the caller's own, or — for a tenant administrator — whoever's it is
 			return await super.delete(id, {
 				where: {
 					entity,
 					entityId,
-					employeeId,
+					...(tenantAdmin ? {} : { employeeId }),
 					organizationId,
 					tenantId
 				}
 			});
 		} catch (error) {
+			// A refused removal, or a subscription that is not there, keeps its status
+			if (error instanceof ForbiddenException || error instanceof NotFoundException) {
+				throw error;
+			}
 			console.log(`Error unsubscribing employee from entity: ${error}`);
 			throw new BadRequestException('Failed to unsubscribing employee from entity', error);
 		}
@@ -147,5 +160,90 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 			throw new BadRequestException('An employee is required to delete their subscription');
 		}
 		return await this.withoutEmployeeFilter(() => this.delete(where));
+	}
+
+	/**
+	 * Changes a subscription (`PUT /entity-subscription/:id`, `updateEntitySubscription`), if it is the caller's or
+	 * the caller administers the tenant ({@link assertCallerMayChange}). The patch cannot hand it to another
+	 * employee ({@link withoutAuthorChange}).
+	 *
+	 * @param id - The subscription's id, or criteria.
+	 * @param input - The columns to write.
+	 * @returns The update result, or the updated row, whichever the ORM answers.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<EntitySubscription>,
+		input: QueryDeepPartialEntity<EntitySubscription>
+	): Promise<EntitySubscription | UpdateResult> {
+		if (typeof id === 'string') {
+			await this.assertCallerMayChange(id, false);
+		}
+
+		return super.update(id, withoutAuthorChange(input, ['employeeId', 'employee']));
+	}
+
+	/**
+	 * Withdraws a subscription (`DELETE /entity-subscription/:id/soft`, `softDeleteEntitySubscription`), if it is the
+	 * caller's or the caller administers the tenant.
+	 *
+	 * @param id - The subscription to withdraw.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The withdrawn subscription.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<EntitySubscription>,
+		saveOptions?: SaveOptions
+	): Promise<EntitySubscription> {
+		await this.assertCallerMayChange(id, false);
+
+		return super.softRemove(id, options, saveOptions);
+	}
+
+	/**
+	 * Restores a withdrawn subscription (`PUT /entity-subscription/:id/recover`, `recoverEntitySubscription`), if it
+	 * is the caller's or the caller administers the tenant.
+	 *
+	 * @param id - The subscription to restore.
+	 * @param options - Find options, passed to the base method unchanged.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored subscription.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<EntitySubscription>,
+		saveOptions?: SaveOptions
+	): Promise<EntitySubscription> {
+		await this.assertCallerMayChange(id, true);
+
+		return super.softRecover(id, options, saveOptions);
+	}
+
+	/**
+	 * Who may change a subscription through its routes: the employee it belongs to (`employeeId` — the subscriber,
+	 * not `createdByUserId`, which for a mention's subscription is the author of the mention), or a tenant
+	 * administrator (owner decision 2, 2026-10-22). The subscription routes state no permission, so before this any
+	 * member of the tenant could rewrite, withdraw or restore another member's subscription; a caller without
+	 * `CHANGE_SELECTED_EMPLOYEE` was held to their own employee's rows by the CRUD base, but a holder of it, or a
+	 * caller with no employee record, was not.
+	 *
+	 * The services that remove a member's subscriptions when the member leaves a team, a project or a sprint go
+	 * through {@link deleteForEmployee}, after their own checks, and are not affected.
+	 *
+	 * The read is the tenant-scoped one, so a subscription of another tenant, or one that is not there, is a 404.
+	 *
+	 * @param id - The subscription's id.
+	 * @param withDeleted - Whether a withdrawn subscription counts (a recovery, and a removal, act on one).
+	 * @throws ForbiddenException when the subscription is not the caller's and the caller does not administer the
+	 * tenant.
+	 */
+	private async assertCallerMayChange(id: ID, withDeleted: boolean): Promise<void> {
+		if (isCallerTenantAdmin()) {
+			return;
+		}
+
+		const subscription = await this.findOneByIdString(id, withDeleted ? { withDeleted: true } : undefined);
+		assertCallerIsAuthorOrTenantAdmin({ employeeId: subscription.employeeId }, 'a subscription');
 	}
 }

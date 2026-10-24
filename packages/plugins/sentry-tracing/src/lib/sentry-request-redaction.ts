@@ -36,7 +36,10 @@ export const REDACTED_QUERY_KEYS: ReadonlySet<string> = new Set([
 	'apikey',
 	'key',
 	'signature',
-	'state'
+	'state',
+	'jwt',
+	'handoff',
+	'ticket'
 ]);
 
 function isRedactedSegment(key: string): boolean {
@@ -85,4 +88,35 @@ export function redactUrl(url: string): string {
 		}
 	}
 	return changed ? `${url.slice(0, at)}?${params.toString()}` : url;
+}
+
+/**
+ * What an error event says about the request: its method, and its URL, headers and query with every credential
+ * replaced by `[Filtered]`. Never the body, which carries passwords, tokens and one-time codes as readily as anything
+ * else (`dataCollection.httpBodies` in `SentryService` collects none either).
+ *
+ * The interceptors used to attach `httpRequestToRequestData(request)` (HTTP) and `{ headers, data: body }` (GraphQL)
+ * as they were, so every reported error carried the caller's bearer token, cookies, `X-API-KEY` and request body to
+ * Sentry, past the redaction the request middleware applies to the same request.
+ *
+ * @param request The request the error was raised for.
+ */
+export function redactedRequestOf(request: any): Record<string, unknown> {
+	return {
+		method: request?.method,
+		url: redactUrl(request?.originalUrl ?? request?.url),
+		headers: redactHeaders(request?.headers ?? {}),
+		query: redactQuery(request?.query)
+	};
+}
+
+/**
+ * Who an event is about: the user's id, and nothing else of the row. `request.user` is the whole `User` entity, its
+ * password hash, refresh token, e-mail token and pending sign-in code included, and it was handed to `setUser` as it
+ * was (`dataCollection.userInfo` in `SentryService` is off).
+ *
+ * @param user The authenticated user, if any.
+ */
+export function sentryUserOf(user: { id?: unknown } | null | undefined): { id: string } | null {
+	return user?.id ? { id: String(user.id) } : null;
 }

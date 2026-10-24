@@ -27,7 +27,7 @@ import {
 	Money,
 	RequestContext,
 	TaxLineService,
-	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	currencyPrecision,
 	normalizeDecimalString,
@@ -71,6 +71,8 @@ import {
 	ICartStockPort,
 	ICartTaxPort
 } from '../cart.types';
+import { CART_REFERENCES } from '../cart.references';
+import { CartCrudService } from '../cart-crud.service';
 
 /**
  * How long a cart lives, in hours, when nothing narrower is configured.
@@ -166,7 +168,7 @@ interface IStockRefusal {
  * ledgers from ever disagreeing.
  */
 @Injectable()
-export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
+export class CommerceCartService extends CartCrudService<CommerceCart> {
 	constructor(
 		readonly typeOrmCommerceCartRepository: TypeOrmCommerceCartRepository,
 		readonly mikroOrmCommerceCartRepository: MikroOrmCommerceCartRepository,
@@ -217,6 +219,22 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
+	 * Refuses a cart, or a change to one, that names a channel, region, customer or user of another tenant
+	 * (`CART_REFERENCES`). Checked on the TypeORM manager, which reads these tables under either ORM.
+	 *
+	 * @param payload The cart, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: object): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmCommerceCartRepository.manager,
+			payload,
+			CART_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
 	 * Writes the fields a caller changed onto a cart, under the version that caller read.
 	 *
 	 * The write is predicated on the caller's version rather than on the one the row happens to hold,
@@ -251,6 +269,8 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 			throw this.checkoutInProgress(id);
 		}
 
+		await this.assertReferences(changes ?? {});
+
 		await commitVersionedUpdate<CommerceCart>(this, {
 			id,
 			expectation,
@@ -276,6 +296,20 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		}
 		if (!entity.currency) {
 			throw new BadRequestException('CART_CURRENCY_REQUIRED: a cart is priced in one currency.');
+		}
+
+		await this.assertReferences(entity);
+
+		// A caller confined to the organization of their token — anyone but a tenant admin — creates a cart in that
+		// organization (`CartCrudService`). The base would refuse another one with a bare 403 when it writes; the
+		// refusal is stated here, before anything is written, with the way out. A tenant admin may state any
+		// organization of the tenant, and a request with no signed-in caller (a job) is not confined.
+		const boundary = this.organizationBoundary();
+
+		if (boundary && entity.organizationId && String(entity.organizationId) !== String(boundary.organizationId)) {
+			throw new BadRequestException(
+				'CART_ORGANIZATION_NOT_IN_SESSION: a cart is created in the organization the session is scoped to; switch organization to create one in another.'
+			);
 		}
 
 		const now = new Date();

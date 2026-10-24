@@ -173,7 +173,16 @@ export class GithubSyncService {
 				const delay: number = 0;
 
 				// Attempt to synchronize GitHub issues using the syncGithubIssues method.
-				await this.syncingGithubIssues(integrationId, input, delay);
+				const result = await this.syncingGithubIssues(integrationId, input, delay);
+
+				// A run that failed part-way resolves to `false` instead of throwing: record it as an error.
+				if (result === false) {
+					await this._githubRepositoryService.update(repository.id, {
+						status: GithubRepositoryStatusEnum.ERROR
+					});
+
+					return false; // Return false to indicate that an error occurred during synchronization.
+				}
 
 				// Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
 				await this._githubRepositoryService.update(repository.id, {

@@ -75,6 +75,17 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	}
 
 	/**
+	 * A favorite is its employee's, or the organization's when an admin creates it without one. Any other caller who
+	 * may not act for other employees and has no employee record (a viewer, a candidate) may create none, so the
+	 * reads the CRUD base scopes match no row for them, instead of the tenant-wide scope it keeps by default, through
+	 * which such a caller listed every employee's favorites (`GET /favorite/employee`, `GET /favorite/type`). An
+	 * admin keeps that scope, as {@link create} lets them file organization-level favorites.
+	 */
+	protected override findConditionsWithoutOwnEmployee(): FindOptionsWhere<Favorite> {
+		return this.hasAdminRole() ? super.findConditionsWithoutOwnEmployee() : this.neverMatchingEmployeeCondition();
+	}
+
+	/**
 	 * @description Find favorites by employee
 	 * @param {BaseQueryDTO<Favorite>} options Filter criteria to find favorites
 	 * @returns A promise that resolves to paginated list of favorites

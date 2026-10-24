@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { Money, RequestContext, SequenceService } from '@gauzy/core';
 import {
 	IOrderExchangeLineInput,
 	IOrderFulfillmentPort,
@@ -13,6 +13,7 @@ import { OrderReturnLineService } from '../order-return-line/order-return-line.s
 import { OrderExchange } from './order-exchange.entity';
 import { MikroOrmOrderExchangeRepository } from './repository/mikro-orm-order-exchange.repository';
 import { TypeOrmOrderExchangeRepository } from './repository/type-orm-order-exchange.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The series key exchanges are numbered from. */
 const EXCHANGE_NUMBER_KEY = 'EXCHANGE';
@@ -42,7 +43,7 @@ const DECIDABLE_STATUSES: OrderExchangeStatus[] = [OrderExchangeStatus.OPEN, Ord
  * ledger through its inbound return, which is that first service's flow.
  */
 @Injectable()
-export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> {
+export class OrderExchangeService extends ReturnsCrudService<OrderExchange> {
 	constructor(
 		readonly typeOrmOrderExchangeRepository: TypeOrmOrderExchangeRepository,
 		readonly mikroOrmOrderExchangeRepository: MikroOrmOrderExchangeRepository,

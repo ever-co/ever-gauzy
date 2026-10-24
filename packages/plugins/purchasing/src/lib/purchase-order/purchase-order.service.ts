@@ -8,8 +8,8 @@ import {
 	RequestContext,
 	readAffectedRows,
 	SequenceService,
-	TenantAwareCrudService,
 	User,
+	Warehouse,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import {
@@ -27,6 +27,7 @@ import { PurchaseOrderLineService } from '../purchase-order-line/purchase-order-
 import { PurchaseOrder } from './purchase-order.entity';
 import { MikroOrmPurchaseOrderRepository } from './repository/mikro-orm-purchase-order.repository';
 import { TypeOrmPurchaseOrderRepository } from './repository/type-orm-purchase-order.repository';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /** The series key purchase-order numbers are allocated from. */
 const PURCHASE_ORDER_NUMBER_KEY = 'PO';
@@ -94,7 +95,7 @@ const DERIVED_WRITE_ATTEMPTS = 3;
  * for a decision is still a draft, and a refused approval has to leave the order where it was.
  */
 @Injectable()
-export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> {
+export class PurchaseOrderService extends PurchasingCrudService<PurchaseOrder> {
 	constructor(
 		readonly typeOrmPurchaseOrderRepository: TypeOrmPurchaseOrderRepository,
 		readonly mikroOrmPurchaseOrderRepository: MikroOrmPurchaseOrderRepository,
@@ -151,6 +152,8 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		}
 
 		const vendor = await this.assertVendorUsable(entity.vendorId);
+
+		await this.assertWarehouseInOrganization(entity.warehouseId);
 
 		if (entity.buyerUserId) {
 			await this.assertBuyerInTenant(entity.buyerUserId);
@@ -278,7 +281,11 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 			entity.shippingTotal !== undefined ? entity.shippingTotal : purchaseOrder.shippingTotal
 		);
 
-		await this.commitTransition(purchaseOrder, { ...changes, ...totals }, (entity as { version?: number }).version);
+		await this.commitTransition(
+			purchaseOrder,
+			{ ...changes, ...totals, ...this.withdrawnApproval(purchaseOrder) },
+			(entity as { version?: number }).version
+		);
 
 		return await this.findOneDetailed(id);
 	}
@@ -354,7 +361,7 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		await this.whileDraft(line.purchaseOrderId as ID, 'amended', async (manager, purchaseOrder) => {
 			await manager.softDelete(PurchaseOrderLine, { id: lineId, ...this.writeScope } as never);
 
-			return await this.totalsOn(manager, purchaseOrder);
+			return { ...(await this.totalsOn(manager, purchaseOrder)), ...this.withdrawnApproval(purchaseOrder) };
 		});
 
 		return (await this.typeOrmPurchaseOrderRepository.manager.findOne(PurchaseOrderLine, {
@@ -389,7 +396,7 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		await this.whileDraft(line.purchaseOrderId as ID, 'amended', async (manager, purchaseOrder) => {
 			await manager.restore(PurchaseOrderLine, { id: lineId, ...this.writeScope } as never);
 
-			return await this.totalsOn(manager, purchaseOrder);
+			return { ...(await this.totalsOn(manager, purchaseOrder)), ...this.withdrawnApproval(purchaseOrder) };
 		});
 
 		return await this.lineService.findScoped(lineId);
@@ -1057,9 +1064,27 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		// version member at all, so a recomputation changed the order's `grandTotal` without moving the
 		// counter and a client still holding the older version passed `assertVersion` and filed an
 		// approval carrying a total that was no longer the order's.
+		// Its only caller is the line surface, after a line was added, changed or removed: an amendment, so the
+		// approval the draft had is withdrawn with the totals it was given for.
 		return await this.commitDerived(id, async (purchaseOrder) => ({
-			...this.lineService.computeTotalsForLines(lines, currency, purchaseOrder.shippingTotal)
+			...this.lineService.computeTotalsForLines(lines, currency, purchaseOrder.shippingTotal),
+			...this.withdrawnApproval(purchaseOrder)
 		}));
+	}
+
+	/**
+	 * The patch that withdraws a draft's approval when it is amended.
+	 *
+	 * An approval is of the order as it stood. `send` checks only that `approvedAt` is set, so an approved draft
+	 * that was then amended (a line added, a quantity or a cost raised, the currency changed) went to the supplier
+	 * on an approval of a different order, and the approve permission stopped separating anyone from the spend.
+	 * Every amendment of an approved draft withdraws its approval, and the order is approved again before it is sent.
+	 *
+	 * @param purchaseOrder The draft being amended, as read before the amendment.
+	 * @returns The members that clear the approval, or nothing when the draft had none.
+	 */
+	private withdrawnApproval(purchaseOrder: PurchaseOrder): Record<string, unknown> {
+		return purchaseOrder.approvedAt ? { approvedAt: null, approvedByUserId: null, approvalId: null } : {};
 	}
 
 	/**
@@ -1119,6 +1144,34 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		}
 
 		return vendor;
+	}
+
+	/**
+	 * Refuses a receiving location outside the caller's organization.
+	 *
+	 * The order's location is where its goods are received: every receipt against it is posted there
+	 * (`GoodsReceiptService.resolveWarehouse` refuses any other), and the stock ledger checks only the tenant of the
+	 * location it writes at. A location of another organization of the tenant was taken as stated, so an order raised
+	 * in one organization received stock into another's warehouse. It is read in the caller's tenant and
+	 * organization, as the supplier is.
+	 *
+	 * @param warehouseId The location the order names.
+	 * @throws NotFoundException when the location is not one of the caller's organization.
+	 */
+	private async assertWarehouseInOrganization(warehouseId: ID): Promise<void> {
+		const warehouse = await this.typeOrmPurchaseOrderRepository.manager.findOne(Warehouse, {
+			where: {
+				id: warehouseId,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			}
+		});
+
+		if (!warehouse) {
+			throw new NotFoundException(
+				`PURCHASE_ORDER_WAREHOUSE_NOT_FOUND: location '${warehouseId}' could not be found in this organization.`
+			);
+		}
 	}
 
 	/**

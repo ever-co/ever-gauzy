@@ -131,7 +131,7 @@ export class SharedEntityResolver {
 	) {}
 
 	/**
-	 * The shares of the caller's tenant, newest first.
+	 * The shares of the caller's tenant, newest first, each without its token unless the caller manages it.
 	 */
 	@Query('sharedEntities')
 	async sharedEntities(
@@ -154,7 +154,10 @@ export class SharedEntityResolver {
 		const { items }: IPagination<SharedEntity> = await this.sharedEntityService.findAll(options);
 
 		return buildConnection<SharedEntity>({
-			rows: items ?? [],
+			// A share's token reads its record without signing in, so a row carries it only for the share's author
+			// or an organization administrator, as the REST list answers it. The tokens are dropped before the
+			// connection filters run, so a `token` filter can only match a token the caller may already read.
+			rows: (items ?? []).map((share) => this.sharedEntityService.withTokenForManager(share)),
 			filterable: SHARED_ENTITY_FILTERABLE,
 			sortable: SHARED_ENTITY_SORTABLE,
 			defaultSort: SHARED_ENTITY_DEFAULT_SORT,
@@ -163,12 +166,12 @@ export class SharedEntityResolver {
 	}
 
 	/**
-	 * One share of the caller's tenant.
+	 * One share of the caller's tenant, without its token unless the caller manages it (see `sharedEntities`).
 	 */
 	@Query('sharedEntity')
 	async sharedEntity(@Args('id', { type: () => ID }) id: Id): Promise<SharedEntity | null> {
 		try {
-			return await this.sharedEntityService.findOneByIdString(id);
+			return this.sharedEntityService.withTokenForManager(await this.sharedEntityService.findOneByIdString(id));
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return null;

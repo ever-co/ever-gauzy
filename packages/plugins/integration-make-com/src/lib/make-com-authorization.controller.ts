@@ -1,14 +1,20 @@
-import { Controller, Get, Query, Res, BadRequestException, Logger } from '@nestjs/common';
+import { Controller, Get, Query, Res, BadRequestException, Logger, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
-import { IntegrationEnum } from '@gauzy/contracts';
+import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { MakeComOAuthService } from './make-com-oauth.service';
 import { MAKE_POST_INSTALL_URL } from './make-com.config';
 
+/**
+ * Only the callback is public: Make.com redirects the browser to it without the API token, and the single-use
+ * state it carries is what authenticates it. Starting a flow is not: the state it issues names the tenant the
+ * tokens are saved under, so it is issued to a signed-in user who may add an integration, as
+ * `POST /integration/make-com/oauth-settings` is.
+ */
 @ApiTags('Make.com OAuth')
-@Public()
 @Controller('/integration/make-com/oauth')
 export class MakeComAuthorizationController {
 	private readonly logger = new Logger(MakeComAuthorizationController.name);
@@ -27,6 +33,8 @@ export class MakeComAuthorizationController {
 		status: 200,
 		description: 'Returns the Make.com authorization URL'
 	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 	@Get('/authorize')
 	async authorize(@Query() { state }: { state?: string }) {
 		const authorizationUrl = await this.makeComOAuthService.getAuthorizationUrl({ state });
@@ -82,6 +90,7 @@ export class MakeComAuthorizationController {
 		status: 302,
 		description: 'Redirects to the application with token information'
 	})
+	@Public()
 	@Get('/callback')
 	async callback(
 		@Query()

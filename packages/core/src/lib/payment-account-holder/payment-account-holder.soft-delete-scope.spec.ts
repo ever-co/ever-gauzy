@@ -350,7 +350,10 @@ describe('PaymentAccountHolderService and PaymentMethodTokenService — the soft
 			const { typeOrm, mikroOrm, stored } = await arrange(ormType);
 			const service = SERVICES[1].build(typeOrm, mikroOrm);
 
-			// What every route and field reached before: the fixture can see the row, and only the scope refuses it.
+			// What every route and field reached before: the fixture can see the row, and only the scope refuses it. The
+			// CRUD base now keeps a non-admin inside their organization too, so the control runs as a tenant admin, whom
+			// that boundary does not confine.
+			jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
 			await expect(CrudService.prototype.softRemove.call(service, SIBLING_ORGANIZATION)).resolves.toMatchObject({
 				id: SIBLING_ORGANIZATION
 			});

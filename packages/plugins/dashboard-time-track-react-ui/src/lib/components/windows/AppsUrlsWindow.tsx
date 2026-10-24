@@ -7,9 +7,9 @@ import { NbButton } from '../NbButton';
 import { WindowCard } from './WindowCard';
 
 /**
- * `ngx-activity-item [isDashboard]="true"` for one activity: title (5 cols), `x%` + tiny bar,
- * duration. The percentage is truncated to an integer like the Angular `item` setter
- * (`parseInt(...).toFixed(1)`).
+ * `ngx-activity-item [isDashboard]="true"` for one activity, on the same title / progress /
+ * duration split as the Projects and Tasks rows. The percentage is truncated to an integer like
+ * the Angular `item` setter (`parseInt(...).toFixed(1)`).
  */
 export function ActivityItem({ item }: { item: IActivitiesStatistics }) {
 	const percentage = parseFloat(parseInt(`${item.durationPercentage ?? 0}`, 10).toFixed(1)) || 0;
@@ -19,7 +19,7 @@ export function ActivityItem({ item }: { item: IActivitiesStatistics }) {
 				{item.title}
 			</div>
 			<div className="gz-rtt-activity-progress">
-				<div className="gz-rtt-percentage-col">{percentage}%</div>
+				<span className="gz-rtt-progress-cell-value">{percentage}%</span>
 				<ProgressBar className="gz-rtt-tracking-progress" value={percentage} status={progressStatus(percentage)} height="5px" />
 			</div>
 			<div className="gz-rtt-activity-duration">{durationFormat(item.duration)}</div>
@@ -36,20 +36,26 @@ export interface AppsUrlsWindowProps {
 }
 
 /**
- * The Apps & URLs window (`gaWindowTemplate` #4): "View Report" + one activity item per row.
+ * The Apps & URLs window (`gaWindowTemplate` #4): "View Report" in the header + one activity
+ * item per row.
  */
 export function AppsUrlsWindow({ activities, loading, emptyMessage, onViewReport }: AppsUrlsWindowProps) {
 	const { t } = useTranslation();
 	// The statistics hook hands over `null` while a request is in flight — normalise once.
 	const rows = activities ?? [];
 	return (
-		<WindowCard title={t('TIMESHEET.APPS_URLS')} loading={loading} hasData={rows.length > 0} emptyMessage={emptyMessage} flexHeader>
-			<div className="gz-rtt-custom-card-button">
+		<WindowCard
+			title={t('TIMESHEET.APPS_URLS')}
+			loading={loading}
+			hasData={rows.length > 0}
+			emptyMessage={emptyMessage}
+			action={
 				<NbButton appearance="outline" status="primary" size="small" onClick={onViewReport}>
 					{t('BUTTONS.VIEW_REPORT')}
 				</NbButton>
-			</div>
-			<nb-list>
+			}
+		>
+			<nb-list className="gz-rtt-data-list gz-rtt-apps-urls-list">
 				{rows.map((activity, index) => (
 					<nb-list-item key={`${activity.title ?? ''}-${index}`}>
 						<div className="gz-rtt-w-100">

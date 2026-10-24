@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalTemplate } from './goal-template.entity';
 import { GoalTemplateService } from './goal-template.service';
@@ -83,10 +84,15 @@ const GOAL_TEMPLATE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * result rather than a row, which is why the edit field here writes and then reads the row back
  * through the same reader the node query uses.
  *
- * **The guard chain is the controller's, and no field states a permission.** `GoalTemplateController`
- * carries `TenantPermissionGuard` on the class and nothing else, on any of the nine routes, so the
- * permission guard is not part of this resolver's chain either. The spec reads the controller's
- * `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.** `GoalTemplateController`
+ * carries `TenantPermissionGuard` on the class; its reads state no permission, and every write route — the
+ * filing, the edit, the removal and the two lifecycle moves, the inherited ones overridden only to attach the
+ * grant — states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2, 2026-10-22: the writes stated none,
+ * and the permission guard answers `true` to empty metadata, so any member of the tenant could write —
+ * GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the gate, the reads state nothing, and
+ * each write field states `PermissionGuard` and `GOALS_EDIT`, neither wider nor narrower than its route. The
+ * spec reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's,
+ * field by field.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -173,6 +179,8 @@ export class GoalTemplateResolver {
 	 * The same service method the create route calls, with the row's own shape — that route declares no
 	 * validation pipe, so what it accepts is the entity the store is handed.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createGoalTemplate')
 	async createGoalTemplate(@Args('input') input: ICreateGoalTemplateInput): Promise<GoalTemplate> {
 		return await this.goalTemplateService.create(input as never);
@@ -186,6 +194,8 @@ export class GoalTemplateResolver {
 	 * update whose answer is the store's update result. A field that promises a row cannot answer a
 	 * statement about a write, so the row is read back through the same reader the node query uses.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateGoalTemplate')
 	async updateGoalTemplate(@Args('input') input: IUpdateGoalTemplateInput): Promise<GoalTemplate> {
 		const { id, ...values } = input;
@@ -201,6 +211,8 @@ export class GoalTemplateResolver {
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
 	 * row — so this field answers whether the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteGoalTemplate')
 	async deleteGoalTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.goalTemplateService.delete(id));
@@ -211,6 +223,8 @@ export class GoalTemplateResolver {
 	 *
 	 * The inherited `DELETE /goal-templates/:id/soft` route's own call.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteGoalTemplate')
 	async softDeleteGoalTemplate(@Args('id', { type: () => ID }) id: Id): Promise<GoalTemplate> {
 		return (await this.goalTemplateService.softRemove(id)) as GoalTemplate;
@@ -219,6 +233,8 @@ export class GoalTemplateResolver {
 	/**
 	 * Puts a withdrawn catalogue entry back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverGoalTemplate')
 	async recoverGoalTemplate(@Args('id', { type: () => ID }) id: Id): Promise<GoalTemplate> {
 		return (await this.goalTemplateService.softRecover(id)) as GoalTemplate;

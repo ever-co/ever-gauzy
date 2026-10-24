@@ -2,9 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	PlainReferenceColumns,
 	RequestContext,
-	TenantAwareCrudService,
 	addDecimalStrings,
+	assertPlainReferencesNotForeign,
 	compareDecimalStrings,
 	subtractDecimalStrings
 } from '@gauzy/core';
@@ -16,6 +17,14 @@ import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repos
 import { OrderLineInvoice } from './order-line-invoice.entity';
 import { MikroOrmOrderLineInvoiceRepository } from './repository/mikro-orm-order-line-invoice.repository';
 import { TypeOrmOrderLineInvoiceRepository } from './repository/type-orm-order-line-invoice.repository';
+import { OrderCrudService } from '../order-crud.service';
+
+/**
+ * The invoice item a link names: a row of the kernel's `invoice_item` table, held by a plain column. An item of another
+ * tenant was linked as given, and `UQ_order_line_invoice_item` holds one link per item across every tenant, so the
+ * tenant that issued the item could never link it to its own line.
+ */
+const LINK_REFERENCES: PlainReferenceColumns = { invoiceItemId: 'invoice_item' };
 
 /** One link as the invoice bridge writes it. */
 export interface IRecordInvoiceLinkInput {
@@ -77,7 +86,7 @@ export interface IRecordInvoiceLinkInput {
  * produced.
  */
 @Injectable()
-export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInvoice> {
+export class OrderLineInvoiceService extends OrderCrudService<OrderLineInvoice> {
 	constructor(
 		readonly typeOrmOrderLineInvoiceRepository: TypeOrmOrderLineInvoiceRepository,
 		readonly mikroOrmOrderLineInvoiceRepository: MikroOrmOrderLineInvoiceRepository,
@@ -151,6 +160,13 @@ export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInv
 		if (!input.invoiceItemId) {
 			throw new BadRequestException('ORDER_LINE_INVOICE_ITEM_REQUIRED: a link records one invoice item.');
 		}
+
+		await assertPlainReferencesNotForeign(
+			this.typeOrmOrderLineInvoiceRepository.manager,
+			input,
+			LINK_REFERENCES,
+			tenantId
+		);
 
 		const existing = await this.typeOrmOrderLineInvoiceRepository.findOne({
 			where: { invoiceItemId: input.invoiceItemId, tenantId, organizationId }

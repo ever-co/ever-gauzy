@@ -137,6 +137,8 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	protected deleting = false;
 	/** The images picked for each box, in the order picked. */
 	protected pending: Record<CommentBox, IPendingImage[]> = { comment: [], reply: [] };
+	/** The uploads each box's post in flight refers to: only these are kept when the box is cleared mid-post. */
+	private posting: Record<CommentBox, Set<ID>> = { comment: new Set(), reply: new Set() };
 	/** The image open full size, over the page. */
 	protected viewing: IViewedImage | null = null;
 	/** Each attached image's addresses by asset; `null` once a lookup failed (deleted, or not readable here). */
@@ -210,11 +212,13 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		const text = this.commentControl.value.trim();
 		const images = this.uploaded('comment');
 		this.postingComment = true;
+		this.posting.comment = new Set(images.map((image) => image.assetId));
 		if (await this.post(withCommentImages(text, images))) {
 			// The box stays editable while posting: clear what was sent, keeping anything added since.
 			if (this.commentControl.value.trim() === text) this.commentControl.reset();
 			this.dropImages('comment', images);
 		}
+		this.posting.comment = new Set();
 		this.postingComment = false;
 	}
 
@@ -244,12 +248,14 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		const images = this.uploaded('reply');
 		const id = thread.entry.comment.id;
 		this.postingReply = true;
+		this.posting.reply = new Set(images.map((image) => image.assetId));
 		// The reply box is shared by every thread: clear it only if the user is still in this thread, and only of
 		// what was sent. The thread stays open to show the reply.
 		if ((await this.post(withCommentImages(text, images), id)) && this.openThreadId === id) {
 			if (this.replyControl.value.trim() === text) this.replyControl.reset();
 			this.dropImages('reply', images);
 		}
+		this.posting.reply = new Set();
 		this.postingReply = false;
 	}
 
@@ -459,12 +465,16 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	}
 
 	/**
-	 * Empties a box, deleting its uploads — unless it is posting them: those are only dropped, as the comment on
-	 * its way refers to them.
+	 * Empties a box, deleting its uploads — except those the post in flight refers to: they are only dropped, as
+	 * the comment on its way needs them. An image added during that post is not in it, so it is deleted.
 	 */
 	private clearImages(box: CommentBox): void {
-		if (this.isPosting(box)) this.dropImages(box, this.pending[box]);
-		else this.discardImages(box, this.pending[box]);
+		const sent = this.posting[box];
+		const inPost = (image: IPendingImage) => !!image.assetId && sent.has(image.assetId);
+		const kept = this.pending[box].filter(inPost);
+		const unsent = this.pending[box].filter((image) => !inPost(image));
+		this.dropImages(box, kept);
+		this.discardImages(box, unsent);
 	}
 
 	/**

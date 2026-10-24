@@ -140,6 +140,8 @@ import { FulfillmentController } from './fulfillment.controller';
 import { FulfillmentService } from './fulfillment.service';
 import { FulfillmentResolver } from '../graphql/fulfillment.resolver';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
+import { FulfillmentLineController } from '../fulfillment-line/fulfillment-line.controller';
+import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
 
 /**
  * The fulfilment resource's retry and concurrency contract.
@@ -786,5 +788,45 @@ describe('FulfillmentResolver — the mirrored label request', () => {
 
 		expect(replayed.result).toEqual(sent.result);
 		expect(surface.service.requestLabel).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('FulfillmentLineController — a line written on its own follows the shipment’s rules', () => {
+	// `POST /fulfillment-lines` used to write the row straight through the line service, which reads neither the
+	// shipment's status, nor its order, nor what the order line still has to ship, and moves no counter. The
+	// shipment's later `ship` and `cancel` then moved the named order line's counters by a line they never counted,
+	// even one of another order. The route now appends through `FulfillmentService.addLine`.
+	const line = { fulfillmentId: FULFILLMENT, orderLineId: ORDER_LINE, quantity: 2 };
+
+	it('appends through the shipment, and answers the line it wrote', async () => {
+		const written = { id: 'line-1', fulfillmentId: FULFILLMENT, orderLineId: ORDER_LINE, quantity: 2 };
+		const lineService = { create: jest.fn() };
+		const fulfillmentService = {
+			addLine: jest.fn(async () => ({
+				id: FULFILLMENT,
+				lines: [{ id: 'line-0', orderLineId: 'another-order-line' }, written]
+			}))
+		};
+		const controller = new FulfillmentLineController(
+			lineService as unknown as FulfillmentLineService,
+			fulfillmentService as unknown as FulfillmentService
+		);
+
+		await expect(controller.create(line as never)).resolves.toEqual(written);
+		expect(fulfillmentService.addLine).toHaveBeenCalledWith(FULFILLMENT, line);
+		expect(lineService.create).not.toHaveBeenCalled();
+	});
+
+	it('writes nothing when the shipment refuses the line', async () => {
+		const lineService = { create: jest.fn() };
+		const mismatch = new Error('FULFILLMENT_LINE_ORDER_MISMATCH');
+		const fulfillmentService = { addLine: jest.fn(async () => Promise.reject(mismatch)) };
+		const controller = new FulfillmentLineController(
+			lineService as unknown as FulfillmentLineService,
+			fulfillmentService as unknown as FulfillmentService
+		);
+
+		await expect(controller.create(line as never)).rejects.toBe(mismatch);
+		expect(lineService.create).not.toHaveBeenCalled();
 	});
 });

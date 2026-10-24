@@ -3,6 +3,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import * as jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { Cache } from 'cache-manager';
+import { environment } from '@gauzy/config';
+import { isAccessTokenPayload, JWT_ALGORITHMS } from '../../auth/purpose-token';
 import { TenantSettingService } from './tenant-setting.service';
 
 /**
@@ -24,6 +26,38 @@ export const TENANT_SETTINGS_TTL_MS = 5 * 60 * 1000;
  * within a minute, and the queries run at most once a minute.
  */
 export const EMPTY_TENANT_SETTINGS_TTL_MS = 60 * 1000;
+
+/**
+ * The tenant named by a bearer token, when the token is an access token this API signed; otherwise none.
+ *
+ * The settings attached from it are not hints: the file storage providers sign and upload with the tenant's own
+ * credentials and bucket from them. This middleware runs before any guard, and on a `@Public` route nothing else
+ * checks the token, so a decoded (unverified) token let anyone name another tenant and have its storage
+ * credentials used for their request. Each new name also cost two queries and a cache entry.
+ *
+ * @param token - The bearer token of the request.
+ */
+export function tenantIdOfAccessToken(token: string | undefined): string | undefined {
+	if (!token) {
+		return undefined;
+	}
+
+	let payload: string | jwt.JwtPayload;
+	try {
+		payload = jwt.verify(token, environment.JWT_SECRET, { algorithms: JWT_ALGORITHMS });
+	} catch {
+		return undefined;
+	}
+
+	// A token minted for another flow (password reset, invoice share, ...) does not stand for a session.
+	if (!isAccessTokenPayload(payload)) {
+		return undefined;
+	}
+
+	// Only a string names a tenant (an object would reach `where` and the cache key as-is).
+	const tenantId = (payload as jwt.JwtPayload).tenantId;
+	return typeof tenantId === 'string' ? tenantId : undefined;
+}
 
 @Injectable()
 export class TenantSettingsMiddleware implements NestMiddleware {
@@ -48,8 +82,7 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 	 *
 	 * Attaches `tenantSettings` (the tenant's own settings; an empty object when the token names no tenant or
 	 * the tenant has none) and, when there are any, `resolvedSettings` (global settings overridden by the
-	 * tenant's). The token is decoded, not verified: the settings are read-only hints, and `JwtStrategy` is
-	 * what authenticates the request.
+	 * tenant's). Only a token this API signed names the tenant: see {@link tenantIdOfAccessToken}.
 	 *
 	 * @param {Request} _request - The incoming HTTP request object.
 	 * @param {Response} _response - The outgoing HTTP response object.
@@ -64,13 +97,7 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 			const authHeader = _request.headers.authorization;
 
 			if (authHeader) {
-				const token = authHeader.split(' ')[1];
-
-				// Decode JWT token
-				const decodedToken: any = jwt.decode(token);
-				// Unverified token: only a string names a tenant (an object would reach `where` and the cache key as-is).
-				const tenantId: string | undefined =
-					typeof decodedToken?.tenantId === 'string' ? decodedToken.tenantId : undefined;
+				const tenantId = tenantIdOfAccessToken(authHeader.split(' ')[1]);
 
 				let tenantSettings: Record<string, any> = {};
 

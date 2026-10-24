@@ -1212,7 +1212,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfejs",
 			"TITLE": "Interfejs użytkownika",
-			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
+			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach. Oba interfejsy wyświetlają te same strony, z tymi samymi danymi, układem i funkcjami — różni się tylko technologia, dlatego przełączenie nie zmienia tego, co użytkownicy widzą ani co mogą zrobić.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (domyślny)",
 				"REACT": "React (nowy)"
@@ -5407,6 +5407,8 @@
 			"API_SERVER_PORT": "Port serwera API",
 			"UI_SERVER_PORT": "Port serwera interfejsu użytkownika",
 			"SERVER_HOSTNAME": "Nazwa hosta/adres IP serwera",
+			"LAN_ACCESS": "Zezwalaj innym komputerom w sieci na połączenie",
+			"LAN_ACCESS_HINT": "Po wyłączeniu tylko ten komputer może łączyć się z API i interfejsem WWW.",
 			"AUTO_START_STARTUP": "Automatyczne uruchamianie przy starcie",
 			"SERVER_TYPE": "Typ serwera",
 			"LOCAL_API_PORT": "Port lokalnego interfejsu API",
@@ -5533,7 +5535,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Nie udało się ustalić, czy masz niezynchronizowane dane offline. Usunięcie bazy danych może TRWALE usunąć niezapisaną pracę. Jeśli nie jesteś pewien, kliknij 'Zachowaj'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Twoje dane logowania",
+			"SEED_CREDENTIALS_MESSAGE": "Zapisz teraz te hasła. Są wyświetlane tylko raz.",
+			"SEED_CREDENTIALS_DETAIL": "Ta instalacja utworzyła swoje konta z losowymi hasłami zamiast opublikowanych wartości domyślnych.\n\n{{ accounts }}\n\nHasło możesz później zmienić na swojej stronie profilu w Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Skopiowano do schowka.",
+			"SEED_CREDENTIALS_SAVED": "Zapisałem je",
+			"SEED_ROLE_SUPER_ADMIN": "Superadministrator",
+			"SEED_ROLE_ADMIN": "Administrator",
+			"SEED_ROLE_EMPLOYEE": "Pracownik",
+			"SEED_PASSWORD": "Hasło",
+			"PUBLISHED_PASSWORDS_TITLE": "Domyślne hasło nadal w użyciu",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Zmień domyślne hasło tych kont.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} nadal logują się domyślnym hasłem opublikowanym w dokumentacji Gauzy. Każdy, kto ma dostęp do tego serwera, może się nim zalogować. Zaloguj się do Gauzy i zmień je na stronie profilu."
 		},
 		"NO_LIMIT": "∞ Bez ograniczeń",
 		"TASK": "Zadanie",
@@ -5561,7 +5575,12 @@
 			"SERVICE_UNAVAILABLE": "Usługa chwilowo niedostępna.",
 			"UNEXPECTED_ERROR": "Wystąpił nieoczekiwany błąd.",
 			"NETWORK_ERROR": "Błąd sieci: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu.",
+			"ORGANIZATION_SWITCH_REFUSED": "Nie można przełączyć na {{ name }}: {{ reason }}. Nadal pracujesz w bieżącej organizacji.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Trwa przełączanie organizacji. Uruchom licznik czasu po zakończeniu przełączania.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Nie jesteś aktywnym pracownikiem {{ name }}, a powrót do poprzedniej organizacji nie powiódł się. Zaloguj się ponownie.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",

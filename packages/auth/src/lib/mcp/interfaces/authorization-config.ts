@@ -103,7 +103,7 @@ export interface TokenValidationResult {
 
 export interface AuthorizationError {
 	/** OAuth 2.0 error code */
-	error: 'invalid_token' | 'insufficient_scope' | 'invalid_request' | 'access_denied' | 'invalid_client' | 'invalid_grant' | 'invalid_scope' | 'unsupported_grant_type' | 'server_error' | 'temporarily_unavailable' | 'unsupported_response_type';
+	error: 'invalid_token' | 'insufficient_scope' | 'invalid_request' | 'access_denied' | 'invalid_client' | 'invalid_grant' | 'invalid_scope' | 'unauthorized_client' | 'unsupported_grant_type' | 'server_error' | 'temporarily_unavailable' | 'unsupported_response_type';
 	/** Human-readable error description */
 	errorDescription?: string;
 	/** URI to error documentation */

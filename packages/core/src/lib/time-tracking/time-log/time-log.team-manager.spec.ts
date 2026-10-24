@@ -508,7 +508,9 @@ describe('Manual time — whose time a write records, over REST and GraphQL, on 
 			tenantId: TENANT,
 			employeeId: caller.employeeId,
 			permissions: caller.permissions,
-			role: { name: RolesEnum.EMPLOYEE }
+			role: { name: RolesEnum.EMPLOYEE },
+			// The organization of the caller's token, which `JwtStrategy` attaches after checking the membership.
+			lastOrganizationId: ORGANIZATION
 		};
 		jest.spyOn(RequestContext, 'currentRequestContext').mockReturnValue({ _req: { user } } as any);
 

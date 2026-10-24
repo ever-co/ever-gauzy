@@ -107,6 +107,11 @@ jest.mock('@gauzy/core', () => {
 		async delete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.delete(criteria);
 		}
+
+		/** The organization boundary that applies to the service right now: none, unless a case states one. */
+		organizationBoundary(): any {
+			return null;
+		}
 	}
 
 	return {
@@ -146,6 +151,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { NotFoundException } from '@nestjs/common';
+import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { ShippingProfileVariant } from '../shipping-profile-variant/shipping-profile-variant.entity';
 import { ShippingProfileVariantService } from '../shipping-profile-variant/shipping-profile-variant.service';
@@ -204,6 +210,11 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			// TypeORM drops an `undefined` member from the condition rather than matching nothing.
 			if (expected === undefined) {
 				return true;
+			}
+
+			// `IsNull()`: the row states no value.
+			if (expected instanceof FindOperator && expected.type === 'isNull') {
+				return row[field] === null || row[field] === undefined;
 			}
 
 			return same(row[field], expected);
@@ -317,6 +328,11 @@ function profileFixture(seed: { shipping_profile?: Row[]; shipping_profile_varia
 			tables.shipping_profile_variant.filter((row) => row.variantId === variantId)
 	};
 }
+
+// The request is made in the organization the fixture's rows are stored in: the code and the default are checked in
+// the organization a profile is written in, which a create that states none takes from the request.
+beforeEach(() => jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG as never));
+afterEach(() => jest.restoreAllMocks());
 
 describe('ShippingProfileService — the code a profile claims (doc 09 §12.1)', () => {
 	it('refuses a profile that states no code', async () => {
@@ -671,5 +687,156 @@ describe('ShippingProfileService — the organization a profile is created in (r
 		await fixture.service.create({ name: 'Standard', code: 'STANDARD', organizationId: 'org-stated' } as never);
 
 		expect(fixture.byCode('STANDARD')).toMatchObject({ organizationId: 'org-stated' });
+	});
+});
+
+describe('ShippingProfileService — the default and the code are the profile organization’s own', () => {
+	const SIBLING_ORG = '00000000-0000-4000-8000-000000000003';
+
+	/** The caller is confined to the organization of their token, as anyone but a tenant admin is. */
+	const confinedToTheirOrganization = () =>
+		jest
+			.spyOn(ShippingProfileService.prototype as any, 'organizationBoundary')
+			.mockReturnValue({ organizationId: ORG });
+
+	it('demotes the default of the promoted profile’s organization only, and leaves a sibling organization’s alone', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('cold'),
+				profile('theirs', { isDefault: true, organizationId: SIBLING_ORG })
+			]
+		});
+
+		await fixture.service.update('cold', { isDefault: true } as never);
+
+		expect(fixture.row('standard')).toMatchObject({ isDefault: false });
+		expect(fixture.row('cold')).toMatchObject({ isDefault: true });
+		expect(fixture.row('theirs')).toMatchObject({ isDefault: true });
+	});
+
+	it('refuses to promote a profile it cannot read, and demotes nothing on the way', async () => {
+		// The base answers a profile outside the caller's organization boundary exactly as one that does not exist.
+		const fixture = profileFixture({ shipping_profile: [profile('standard', { isDefault: true })] });
+
+		await expect(fixture.service.update(UNKNOWN, { isDefault: true } as never)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+		expect(fixture.row('standard')).toMatchObject({ isDefault: true });
+	});
+
+	it('falls back to the default of the request’s organization only, never a sibling organization’s', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [profile('theirs', { isDefault: true, organizationId: SIBLING_ORG })]
+		});
+
+		expect(await fixture.service.resolveForVariant(VARIANT_B)).toBeNull();
+	});
+
+	it('falls back to the tenant’s own default when the request has no organization, never an organization’s', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as never);
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('house', { isDefault: true, organizationId: null })
+			]
+		});
+
+		expect((await fixture.service.resolveForVariant(VARIANT_B))?.id).toBe('house');
+	});
+
+	it('lets the caller use a code a sibling organization uses', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [profile('theirs', { code: 'STANDARD', organizationId: SIBLING_ORG })]
+		});
+
+		await fixture.service.create({ name: 'Standard', code: 'STANDARD' } as never);
+
+		expect(fixture.tables.shipping_profile.filter((row) => row.code === 'STANDARD')).toHaveLength(2);
+	});
+
+	it('checks the code and demotes the default of the organization a tenant admin creates a profile in, not of their token’s', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('old', { isDefault: true, organizationId: SIBLING_ORG })
+			]
+		});
+
+		await fixture.service.create({
+			name: 'Standard',
+			code: 'STANDARD',
+			isDefault: true,
+			organizationId: SIBLING_ORG
+		} as never);
+
+		expect(
+			fixture.tables.shipping_profile.filter((row) => row.code === 'STANDARD').map((row) => row.organizationId)
+		).toEqual([ORG, SIBLING_ORG]);
+		expect(fixture.row('old')).toMatchObject({ isDefault: false });
+		expect(fixture.defaults().map((row) => row.organizationId)).toEqual([ORG, SIBLING_ORG]);
+	});
+
+	it('demotes the default of the organization a tenant admin promotes a profile in, and leaves their token’s alone', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('old', { isDefault: true, organizationId: SIBLING_ORG }),
+				profile('theirs', { organizationId: SIBLING_ORG })
+			]
+		});
+
+		await fixture.service.update('theirs', { isDefault: true } as never);
+
+		expect(fixture.row('standard')).toMatchObject({ isDefault: true });
+		expect(fixture.row('old')).toMatchObject({ isDefault: false });
+		expect(fixture.row('theirs')).toMatchObject({ isDefault: true });
+	});
+
+	it('checks a tenant admin’s move of a profile in the organization it moves to', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('cold'),
+				profile('old', { isDefault: true, organizationId: SIBLING_ORG })
+			]
+		});
+
+		await fixture.service.update('cold', { isDefault: true, organizationId: SIBLING_ORG } as never);
+
+		expect(fixture.row('standard')).toMatchObject({ isDefault: true });
+		expect(fixture.row('old')).toMatchObject({ isDefault: false });
+	});
+
+	it('checks a confined caller’s update in the organization the profile stays in, since the base drops the move', async () => {
+		confinedToTheirOrganization();
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('cold'),
+				profile('old', { isDefault: true, organizationId: SIBLING_ORG })
+			]
+		});
+
+		await fixture.service.update('cold', { isDefault: true, organizationId: SIBLING_ORG } as never);
+
+		expect(fixture.row('standard')).toMatchObject({ isDefault: false });
+		expect(fixture.row('old')).toMatchObject({ isDefault: true });
+	});
+
+	it('promotes a profile of no organization among the tenant’s own profiles, and demotes no organization’s default', async () => {
+		const fixture = profileFixture({
+			shipping_profile: [
+				profile('standard', { isDefault: true }),
+				profile('house-old', { isDefault: true, organizationId: null }),
+				profile('house', { organizationId: null })
+			]
+		});
+
+		await fixture.service.update('house', { isDefault: true } as never);
+
+		expect(fixture.row('standard')).toMatchObject({ isDefault: true });
+		expect(fixture.row('house-old')).toMatchObject({ isDefault: false });
+		expect(fixture.row('house')).toMatchObject({ isDefault: true });
 	});
 });

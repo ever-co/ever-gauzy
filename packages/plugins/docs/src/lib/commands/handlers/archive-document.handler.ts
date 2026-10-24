@@ -12,8 +12,8 @@ export class ArchiveDocumentHandler implements ICommandHandler<ArchiveDocumentCo
 	) {}
 
 	/**
-	 * Handles the `ArchiveDocumentCommand`: archives the node and cascades to the whole
-	 * subtree. Idempotent.
+	 * Handles the `ArchiveDocumentCommand`: archives the node and cascades to the subtree the
+	 * caller may read (a descendant it cannot see is left as it is). Idempotent.
 	 *
 	 * @param command - The command carrying the id.
 	 * @returns The archived document.
@@ -22,7 +22,9 @@ export class ArchiveDocumentHandler implements ICommandHandler<ArchiveDocumentCo
 		const document = await this.documentService.findOneScoped(command.id);
 		await this.documentService.assertCanWrite(document);
 		const wasArchived = document.isArchived === true;
-		await this.documentTreeService.archiveSubtree(document);
+		await this.documentTreeService.archiveSubtree(document, (ids) =>
+			this.documentService.filterReadableDocumentIds(ids, document.organizationId)
+		);
 		const archived = await this.documentService.findOneScoped(command.id);
 		// `field` + before/after so the activity timeline records the archive (R-COL-03).
 		this.documentService.emitDocumentEvent(archived, 'updated', {

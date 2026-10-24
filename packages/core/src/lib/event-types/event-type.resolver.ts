@@ -2,7 +2,7 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { DecimalString, ID as Id, IEventTypeCreateInput, IPagination } from '@gauzy/contracts';
+import { DecimalString, ID as Id, IEventTypeCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -12,7 +12,8 @@ import {
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
 import { EventTypeCreateCommand } from './commands';
@@ -111,12 +112,14 @@ const EVENT_TYPE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * directly would write a row the REST route would never write.
  *
  * **The guard chain and the permission are the controller's.** The controller guards its class with
- * `TenantPermissionGuard` alone and states no permission on the class or on any handler, so this resolver
- * carries that one guard and no field states a permission. That is not an omission: a field that stated a
- * grant the route does not ask for would narrow REST below GraphQL, and an empty `@Permissions()` would
- * restate the same absence as though it were a decision this surface had made. The node read is the
- * controller's own override rather than the CRUD base's, and it too declares no permission — so the field
- * mirrors it exactly as it mirrors the inherited ones.
+ * `TenantPermissionGuard`, which its reads run under alone, and states `EVENT_TYPES_EDIT` behind
+ * `PermissionGuard` on every write — the filing, the edit, and the removal and withdraw/restore pair it overrides
+ * from the CRUD base (GHSA-v79w-54p2-wmh5; owner decision 2, 2026-10-22: the routes stated no permission, and
+ * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could write the vocabulary). So
+ * this resolver carries that one guard on the class, each write field states `EVENT_TYPES_EDIT` behind the same
+ * guard, and no read field states a permission: a field that stated a grant its route does not ask for would
+ * narrow REST below GraphQL. The node read is the controller's own override rather than the CRUD base's, and it
+ * too declares no permission — so the field mirrors it exactly as it mirrors the inherited ones.
  *
  * **The gate is the catalogue's, and it is declared once for every field.** `FeatureFlagGuard` is appended
  * to the chain above — after the controller's own, so a caller with no credential is refused as a
@@ -231,6 +234,8 @@ export class EventTypeResolver {
 	 * too, then builds the row from them and stamps the caller's tenant from the credential — so the
 	 * command is not an indirection around the service but the write the route actually performs.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EVENT_TYPES_EDIT)
 	@Mutation('createEventType')
 	async createEventType(@Args('input') input: ICreateEventTypeInput): Promise<EventType> {
 		return await this.commandBus.execute(
@@ -248,6 +253,8 @@ export class EventTypeResolver {
 	 * edit through the create command, which would resolve the organization and the employee a second time
 	 * and write a row the REST route would not.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EVENT_TYPES_EDIT)
 	@Mutation('updateEventType')
 	async updateEventType(@Args('input') input: IUpdateEventTypeInput): Promise<EventType> {
 		const { id, ...values } = input;
@@ -266,6 +273,8 @@ export class EventTypeResolver {
 	 * `deleteEventType` may return; the field answers whether the removal reached a row —
 	 * `false` for an identifier that names none of the caller’s, as the route’s `affected: 0` says.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EVENT_TYPES_EDIT)
 	@Mutation('deleteEventType')
 	async deleteEventType(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.eventTypeService.delete(id));
@@ -274,20 +283,23 @@ export class EventTypeResolver {
 	/**
 	 * Withdraws a meeting length without removing the row.
 	 *
-	 * No permission is stated on the field beyond what the controller's class carries, because the
-	 * delivered route states none of its own: the withdrawal is inherited from the CRUD base, where the
-	 * controller's class-level declaration — none — is the whole of its scope. The delivered route passes
-	 * the service the empty option list that leaves, so the field states none either.
+	 * The field states `EVENT_TYPES_EDIT` behind `PermissionGuard`, as its route does: the controller overrides the
+	 * withdrawal it inherits from the CRUD base only to attach that grant. The delivered route passes the service the
+	 * empty option list the route leaves, so the field passes none either.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EVENT_TYPES_EDIT)
 	@Mutation('softDeleteEventType')
 	async softDeleteEventType(@Args('id', { type: () => ID }) id: Id): Promise<EventType> {
 		return await this.eventTypeService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn meeting length back. Its permission is the withdrawal's, for the same reason: the
-	 * delivered route carries none of its own to mirror.
+	 * Puts a withdrawn meeting length back. Its permission is the withdrawal's, `EVENT_TYPES_EDIT`, as the route the
+	 * controller overrides to attach it states.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EVENT_TYPES_EDIT)
 	@Mutation('recoverEventType')
 	async recoverEventType(@Args('id', { type: () => ID }) id: Id): Promise<EventType> {
 		return await this.eventTypeService.softRecover(id);

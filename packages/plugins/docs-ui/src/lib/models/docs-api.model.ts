@@ -468,7 +468,8 @@ export interface IDocumentSettingsDefaults {
 	 *
 	 * The ONE writable quota field — `DocumentSettingsDTO.quotaBytes` accepts it on
 	 * `PUT /settings` (`@IsInt() @Min(0)`), the usage numbers in {@link IDocumentSettingsQuota}
-	 * are computed and never sent back. Optional because a deployment that predates
+	 * are computed and never sent back. Only the installation's operator may send it
+	 * ({@link IDocumentSettings.canEditQuota}). Optional because a deployment that predates
 	 * §5.7 omits it from the defaults block entirely.
 	 */
 	quotaBytes?: number;
@@ -537,6 +538,12 @@ export interface IDocumentSettings {
 	 * deployment may still answer in this shape; `quota` wins when both are present.
 	 */
 	storage?: IDocumentSettingsStorage;
+	/**
+	 * Whether the caller may change `defaults.quotaBytes`: only the installation's operator
+	 * (owner decision 14, 2026-10-22). Absent from a deployment that predates the rule, and
+	 * absent means no: the `PUT` would refuse anyone else with `403 DOCS_QUOTA_OPERATOR_ONLY`.
+	 */
+	canEditQuota?: boolean;
 }
 
 /**

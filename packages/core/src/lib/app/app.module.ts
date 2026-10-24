@@ -195,6 +195,7 @@ import { BillingModule } from '../shared/billing';
 import { createThrottlerStorage } from '../throttler/redis-throttler.storage';
 import { resolveRedisCacheReadTimeout, withKeyvReadDeadline } from './keyv-read-deadline';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
+import { clientIpSecretOf, EVER_CLIENT_IP_MIN_SECRET_LENGTH } from '../throttler/tracker';
 import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
 import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
@@ -256,6 +257,15 @@ if (environment.THROTTLE_ENABLED) {
 
 	const limit = environment.THROTTLE_LIMIT;
 	console.log('Throttle Limit: ', limit);
+}
+
+// A configured but unusable Ever Teams client-IP secret is ignored (the forwarded address is not trusted),
+// which the operator should read here rather than infer from every Ever Teams user sharing one bucket.
+if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environment.EVER_TEAMS_CLIENT_IP_SECRET)) {
+	console.warn(
+		`EVER_TEAMS_CLIENT_IP_SECRET is shorter than ${EVER_CLIENT_IP_MIN_SECRET_LENGTH} characters and is ignored: ` +
+			'the client address forwarded by Ever Teams is not trusted. Set the same strong value on both sides.'
+	);
 }
 
 @Module({

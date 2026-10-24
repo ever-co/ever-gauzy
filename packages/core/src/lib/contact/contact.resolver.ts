@@ -95,17 +95,16 @@ const CONTACT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below calls the same `ContactService` the `/api/contact` routes call.
  *
  * **The guard is the controller's guard, and no permission is stated above it.** The delivered
- * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere —
- * not on its own list route and not on any of the routes it inherits from the CRUD base — so every
- * one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
- * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
- * two-protocol rule forbids; tightening the resource is a change to make in both places at once, and
- * it is not this delivery's to make.
+ * controller carries `TenantPermissionGuard` on the class and states no `@Permissions` on its reads —
+ * not on its own list route and not on the node and count routes it inherits from the CRUD base — so
+ * those are tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission there
+ * would refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol rule
+ * forbids.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_CONTACT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
- * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
- * (GHSA-v79w-54p2-wmh5) — so `softDeleteContact` and `recoverContact` state the same, neither wider nor
+ * **Except every write.** The controller overrides the inherited create, update, delete, soft delete and
+ * recovery only to state `ORG_CONTACT_EDIT` behind `PermissionGuard` — the CRUD base declares no
+ * permission, and `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could
+ * write a contact (GHSA-v79w-54p2-wmh5) — so every mutation below states the same, neither wider nor
  * narrower than REST.
  *
  * **The list is a connection, and no relation is a field of it.** The delivered list read answers
@@ -198,6 +197,8 @@ export class ContactResolver {
 	 * and overwrites whatever a body states, so a caller states which organization the row is filed
 	 * under and never which tenant it is written into.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Mutation('createContact')
 	async createContact(@Args('input') input: ICreateContactInput): Promise<Contact> {
 		return await this.contactService.create(input as unknown as Contact);
@@ -215,6 +216,8 @@ export class ContactResolver {
 	 * route answers the store's own update result — a statement about the write, `{ affected }` —
 	 * which is not a row and not what a GraphQL field named `updateContact` may return.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Mutation('updateContact')
 	async updateContact(@Args('input') input: IUpdateContactInput): Promise<Contact> {
 		const { id, ...values } = input;
@@ -231,6 +234,8 @@ export class ContactResolver {
 	 * answers with, so a caller that names one is told it is missing rather than that the removal
 	 * succeeded.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Mutation('deleteContact')
 	async deleteContact(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.contactService.delete(id));

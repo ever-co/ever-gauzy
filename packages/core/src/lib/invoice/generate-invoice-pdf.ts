@@ -63,6 +63,8 @@ export async function generateInvoicePdfDefinition(
 	};
 
 	const body = [];
+	// A line's employee, project, task, product or expense is set to null when that record is deleted:
+	// the line is then printed with an empty item instead of failing the whole PDF.
 	for (const item of invoice.invoiceItems) {
 		const currentItem = [
 			`${item.description}`,
@@ -73,24 +75,24 @@ export async function generateInvoicePdfDefinition(
 		switch (invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				const employee = item.employee;
-				currentItem.unshift(`${employee.user.name}`);
+				currentItem.unshift(employee?.user?.name ?? '');
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				const project = item.project;
-				currentItem.unshift(`${project.name}`);
+				currentItem.unshift(project?.name ?? '');
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
 				const task = item.task;
-				currentItem.unshift(`${task.title}`);
+				currentItem.unshift(task?.title ?? '');
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				let product: any = item.product;
-				product = translatedProduct(product, language);
-				currentItem.unshift(`${product.name}`);
+				product = product ? translatedProduct(product, language) : null;
+				currentItem.unshift(product?.name ?? '');
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
 				const expense = item.expense;
-				currentItem.unshift(`${expense.purpose}`);
+				currentItem.unshift(expense?.purpose ?? '');
 				break;
 			default:
 				break;

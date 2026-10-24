@@ -30,7 +30,10 @@ export class DuplicateDocumentHandler implements ICommandHandler<DuplicateDocume
 			await this.documentService.assertCanWrite(parent);
 		}
 
-		const copy = await this.documentTreeService.duplicateDocument(document, command.input);
+		// A deep copy takes only the descendants the caller may read: each copy becomes the caller's own document.
+		const copy = await this.documentTreeService.duplicateDocument(document, command.input, (descendant) =>
+			this.documentService.canRead(descendant)
+		);
 		this.documentService.emitDocumentEvent(copy, 'created');
 		return copy;
 	}

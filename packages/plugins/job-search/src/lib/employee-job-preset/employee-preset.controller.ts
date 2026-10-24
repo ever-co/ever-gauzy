@@ -1,18 +1,29 @@
-import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
 	IEmployeeUpworkJobsSearchCriterion,
 	IGetMatchingCriterions,
-	IJobPreset
+	IJobPreset,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
 import { SaveEmployeePresetDTO, SaveJobPresetCriterionDTO } from './dto';
 
+/**
+ * The job-search criteria and presets of one employee.
+ *
+ * The routes are the job-matching page's, which the web app opens to `ORG_JOB_MATCHING_VIEW` alone, so the
+ * class states that grant for every route, the writes included (no edit grant of its own exists). They used
+ * to state no guard and no permission, so any member of the tenant (VIEWER, EMPLOYEE, CANDIDATE) could read,
+ * replace or delete the job-search criteria of any employee.
+ */
 @ApiTags('EmployeeJobPreset')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ORG_JOB_MATCHING_VIEW)
 @Controller('/job-preset/employee')
 export class EmployeePresetController {
 	constructor(private readonly jobPresetService: JobPresetService) {}

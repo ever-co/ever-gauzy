@@ -1,10 +1,10 @@
 import '../core/entities/internal';
 
 import { NotFoundException } from '@nestjs/common';
-import { OrganizationStrategicVisibilityScopeEnum, PermissionsEnum } from '@gauzy/contracts';
+import { OrganizationStrategicVisibilityScopeEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { UserOrganization } from '../core/entities/internal';
+import { Organization, UserOrganization } from '../core/entities/internal';
 import { OrganizationStrategicInitiativeService } from './organization-strategic-initiative.service';
 
 const TENANT = 'a0000000-0000-4000-8000-000000000001';
@@ -51,17 +51,27 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 			projects: []
 		}) as any;
 
-	/** Signs in: `employeeId` is the user's own employee; an admin's `currentEmployeeId()` is empty. */
+	/**
+	 * Signs in: `employeeId` is the user's own employee; an admin's `currentEmployeeId()` is empty. The token names
+	 * `tokenOrganization` (the organization the caller last switched to), and `role` is the role they hold.
+	 */
 	const signIn = (
 		employeeId: string | null,
 		granted: PermissionsEnum[] = [],
-		organizations: typeof memberOf = [ORGANIZATION]
+		organizations: typeof memberOf = [ORGANIZATION],
+		tokenOrganization: string = ORGANIZATION,
+		role: RolesEnum = RolesEnum.EMPLOYEE
 	) => {
 		permissions = granted;
 		memberOf = organizations;
 		const admin = granted.includes(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(admin ? null : employeeId);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER, employeeId } as any);
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			id: USER,
+			employeeId,
+			lastOrganizationId: tokenOrganization,
+			role: { name: role }
+		} as any);
 	};
 	/** What the three reads answer for one initiative: the row, or `null` for a miss (404 / filtered out). */
 	const reads = async (row: any, projectOrganizationId: string = row.organizationId) => {
@@ -87,11 +97,20 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 	beforeEach(() => {
 		membership = { find: jest.fn().mockResolvedValue([]), findOne: jest.fn().mockResolvedValue(null) };
 		manager = {
-			find: jest.fn(async (entity: unknown, { where }: any) =>
-				entity === UserOrganization && where.userId === USER && where.tenantId === TENANT
-					? memberOf.map((row) => (typeof row === 'string' ? { organizationId: row } : row))
-					: []
-			)
+			find: jest.fn(async (entity: unknown, { where }: any) => {
+				if (entity === Organization) {
+					// The organizations of the tenant, as a tenant admin is answered them.
+					return where.tenantId === TENANT ? [{ id: ORGANIZATION }, { id: OTHER_ORGANIZATION }] : [];
+				}
+				return entity === UserOrganization && where.userId === USER && where.tenantId === TENANT
+					? memberOf
+							.map((row) => (typeof row === 'string' ? { organizationId: row } : row))
+							.filter(
+								(row) =>
+									where.organizationId === undefined || row.organizationId === where.organizationId
+							)
+					: [];
+			})
 		};
 		project = { findOne: jest.fn() };
 		service = Object.create(OrganizationStrategicInitiativeService.prototype);
@@ -251,12 +270,38 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 			).toEqual(hidden);
 		});
 
-		it('a member of both organizations sees both', async () => {
+		it('a member of both organizations sees the one of their token, and the other once they switch to it', async () => {
+			// The organization boundary (owner decision, 2026-10-22): a non-admin reaches only the organization of
+			// their token. This case used to answer both organizations at once.
 			signIn(OTHER, reader, [ORGANIZATION, OTHER_ORGANIZATION]);
 			expect(
-				await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION))
+				await reads(
+					initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION)
+				)
+			).toEqual(hidden);
+			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(seen);
+
+			signIn(OTHER, reader, [ORGANIZATION, OTHER_ORGANIZATION], OTHER_ORGANIZATION);
+			expect(
+				await reads(
+					initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION)
+				)
 			).toEqual(seen);
+			expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(hidden);
 		});
+
+		it.each([RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN])(
+			'a tenant admin (%s) sees them in every organization of the tenant, a member of it or not',
+			async (role) => {
+				signIn(OTHER, reader, [ORGANIZATION], ORGANIZATION, role);
+				expect(
+					await reads(
+						initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION, STEWARD, OTHER_ORGANIZATION)
+					)
+				).toEqual(seen);
+				expect(await reads(initiative(OrganizationStrategicVisibilityScopeEnum.ORGANIZATION))).toEqual(seen);
+			}
+		);
 
 		it('the steward of one in an organization they are no longer a member of does not', async () => {
 			signIn(STEWARD, reader, [ORGANIZATION]);
@@ -314,11 +359,11 @@ describe('OrganizationStrategicInitiativeService — who sees an initiative', ()
 			await service.findAll({ take: 10, skip: 0, where: { title: 'Agents ship' } } as any);
 			const [options] = findAll.mock.calls[0] as any[];
 			expect(options).toMatchObject({ take: 10, skip: 0, where: { title: 'Agents ship' } });
-			expect(organizationsOf(options.where)).toEqual([ORGANIZATION, OTHER_ORGANIZATION]);
-			// A stated organization of theirs is kept as it is; another one reads nothing.
-			await service.findAll({ where: { organizationId: OTHER_ORGANIZATION } } as any);
-			expect((findAll.mock.calls[1][0] as any).where).toEqual({ organizationId: OTHER_ORGANIZATION });
-			signIn(OTHER, reader, [ORGANIZATION]);
+			// Of the two organizations the caller belongs to, only the one of their token (the organization boundary).
+			expect(organizationsOf(options.where)).toEqual([ORGANIZATION]);
+			// A stated organization of their token is kept as it is; another one reads nothing, even one they belong to.
+			await service.findAll({ where: { organizationId: ORGANIZATION } } as any);
+			expect((findAll.mock.calls[1][0] as any).where).toEqual({ organizationId: ORGANIZATION });
 			expect(await service.findAll({ where: { organizationId: OTHER_ORGANIZATION } } as any)).toEqual({ items: [], total: 0 });
 			expect(findAll).toHaveBeenCalledTimes(2);
 			// No organization at all: nothing is read.

@@ -8,8 +8,8 @@ export class KeyResultUpdateBulKDeleteHandler implements ICommandHandler<KeyResu
 
 	public async execute(command: KeyResultUpdateBulkDeleteCommand): Promise<any> {
 		const { id } = command;
-		const updates = await this.keyResultUpdateService.findByKeyResultId(id);
-		await this.keyResultUpdateService.deleteMany(updates.map((item) => item.id));
+		// The caller's own updates of the key result, or all of them for a tenant administrator
+		await this.keyResultUpdateService.deleteByKeyResultId(id);
 		return;
 	}
 }

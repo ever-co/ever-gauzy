@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
-import { RelationId, JoinTable, JoinColumn } from 'typeorm';
+import { IsInt, IsNumber, IsObject, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { RelationId, JoinTable, JoinColumn, VersionColumn } from 'typeorm';
 import {
 	ID,
 	IEmployee,
@@ -23,6 +23,7 @@ import {
 	MultiORMManyToMany,
 	MultiORMManyToOne
 } from './../core/decorators/entity';
+import { MikroOrmVersionProperty } from './../concurrency/mikro-orm-version-property.decorator';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 
 @MultiORMEntity('equipment_sharing', { mikroOrmRepository: () => MikroOrmEquipmentSharingRepository })
@@ -72,6 +73,29 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity implements IE
 	@IsNumber()
 	@MultiORMColumn()
 	status: number;
+
+	/**
+	 * The row's optimistic-concurrency version: 1 when the sharing is filed, and moved on by every write — TypeORM's
+	 * update and save increment a `@VersionColumn` themselves, and `CrudService.update` does it in the statement under
+	 * MikroORM.
+	 *
+	 * Two authorized editors who read the same sharing and both write it back used to interleave column by column
+	 * (`save()` writes only the columns that differ from what it loaded; ever-co/ever-gauzy#11359). An edit is now a
+	 * compare-and-set on the version it is based on — the one the body states, else the one the server read — and is
+	 * refused with 409 `ENTITY_VERSION_CONFLICT` when the stored row has moved on. Stating it is optional, so a client
+	 * that never sends it keeps working.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		description: 'Optimistic-concurrency version: the edit is refused (409) when the stored row has moved on',
+		example: 1
+	})
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@VersionColumn()
+	@MikroOrmVersionProperty()
+	version?: number;
 
 	/*
 	|--------------------------------------------------------------------------

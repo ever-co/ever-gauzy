@@ -464,17 +464,24 @@ describe('OrganizationAwardResolver — the guard stack is the controller’s, a
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = Reflect.getMetadata('__guards__', OrganizationAwardResolver) ?? [];
 		const routes = ['findAll', 'findById', 'getCount', 'create', 'update', 'delete', 'softRemove', 'softRecover'];
+		const writes = ['create', 'update', 'delete', 'softRemove', 'softRecover'];
 
 		for (const handler of routes) {
 			// The controller's chain plus the gate on the endpoint itself and the resolver's are the same
 			// set, which is the whole parity claim.
 			expect([...guardsOfRoute(OrganizationAwardController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated, ...(['softRemove', 'softRecover'].includes(handler) ? [PermissionGuard] : [])].sort()
+				[...stated, ...(writes.includes(handler) ? [PermissionGuard] : [])].sort()
 			);
 		}
 
-		// The retire-and-restore pair states `PermissionGuard` on the handler (above) and on the field alike.
-		for (const field of ['softDeleteOrganizationAward', 'recoverOrganizationAward']) {
+		// Every write states `PermissionGuard` on the handler (above) and on the field alike.
+		for (const field of [
+			'createOrganizationAward',
+			'updateOrganizationAward',
+			'deleteOrganizationAward',
+			'softDeleteOrganizationAward',
+			'recoverOrganizationAward'
+		]) {
 			expect(Reflect.getMetadata('__guards__', (OrganizationAwardResolver.prototype as any)[field])).toEqual([PermissionGuard]);
 		}
 	});
@@ -502,13 +509,18 @@ describe('OrganizationAwardResolver — the guard stack is the controller’s, a
 		);
 
 		expect(stated).toEqual(expected);
-		// Every one of them is unpermissioned, on both surfaces: the controller states none on any route,
-		// and a field that demanded one would refuse a caller the REST route serves.
-		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
-		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
-		// empty metadata, so any member of the tenant could retire or restore a row.
+		// The reads are unpermissioned on both surfaces, and every write states `ALL_ORG_EDIT` behind
+		// `PermissionGuard` on both (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers
+		// `true` to empty metadata, so any member of the tenant could write a row.
+		const writeFields = [
+			'createOrganizationAward',
+			'updateOrganizationAward',
+			'deleteOrganizationAward',
+			'softDeleteOrganizationAward',
+			'recoverOrganizationAward'
+		];
 		for (const [field, permission] of Object.entries(stated)) {
-			expect(permission).toEqual(['softDeleteOrganizationAward', 'recoverOrganizationAward'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
+			expect(permission).toEqual(writeFields.includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
 		}
 	});
 });

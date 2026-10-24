@@ -14,7 +14,7 @@ import {
 	SellerTransactionStatus,
 	SellerVerificationStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, SequenceService } from '@gauzy/core';
 import { SellerPayout } from './seller-payout.entity';
 import { MikroOrmSellerPayoutRepository } from './repository/mikro-orm-seller-payout.repository';
 import { TypeOrmSellerPayoutRepository } from './repository/type-orm-seller-payout.repository';
@@ -26,6 +26,7 @@ import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
 import { assertNoLifecycleMembers } from '../lifecycle-members';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /** The sequence key payout numbers are drawn from. */
 const SELLER_PAYOUT_SEQUENCE = 'SELLER_PAYOUT';
@@ -89,7 +90,7 @@ export const SELLER_PAYOUT_LIFECYCLE_MEMBERS: readonly string[] = [
  * it to be moved.
  */
 @Injectable()
-export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
+export class SellerPayoutService extends MarketplaceCrudService<SellerPayout> {
 	constructor(
 		readonly typeOrmSellerPayoutRepository: TypeOrmSellerPayoutRepository,
 		readonly mikroOrmSellerPayoutRepository: MikroOrmSellerPayoutRepository,

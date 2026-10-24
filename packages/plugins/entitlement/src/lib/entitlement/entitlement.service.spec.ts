@@ -106,6 +106,9 @@ jest.mock('@gauzy/core', () => {
 		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
+		// The cross-tenant reference check a grant runs reads a real database; the grant's own refusal of another
+		// tenant's ids is asserted in `entitlement.service.grant-references.spec.ts`.
+		assertPlainReferencesNotForeign: async () => undefined,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,

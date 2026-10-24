@@ -120,8 +120,10 @@ const REQUEST_APPROVAL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * controller states `TenantPermissionGuard` and `PermissionGuard` on its class and no `@Permissions`
  * anywhere, so the class here carries the same two guards — and no class-level permission, which would
  * narrow every field below it below the route each mirrors. Each field then states the permission its
- * own route runs under: the inherited `GET /:id`, `GET /count`, `DELETE /:id`, `DELETE /:id/soft` and
- * `PUT /:id/recover` declare none, so neither do the five fields that mirror them. The one route whose
+ * own route runs under: the inherited `GET /:id` and `GET /count` declare none, so neither do the two
+ * fields that mirror them, and `DELETE /:id`, `DELETE /:id/soft` and `PUT /:id/recover`, which the
+ * controller overrides only to attach it (GHSA-v79w-54p2-wmh5), state `REQUEST_APPROVAL_EDIT`, as do the
+ * three fields that mirror them. The one route whose
  * permission is not the one a reader would guess is `GET /:id`, whose missing permission is the
  * controller's own asymmetry between reading one request and listing them; restating it differently
  * here is exactly what the two-protocol rule forbids.
@@ -327,10 +329,11 @@ export class RequestApprovalResolver {
 	 * Removes a request outright.
 	 *
 	 * The service is the one the REST route calls, and the field answers whether the removal happened
-	 * rather than the removed row, because the delivered route answers the store's delete result. No
-	 * permission is stated: the inherited route states none.
+	 * rather than the removed row, because the delivered route answers the store's delete result. Under the
+	 * permission its route states: `REQUEST_APPROVAL_EDIT`.
 	 */
 	@Mutation('deleteRequestApproval')
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	async deleteRequestApproval(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.requestApprovalService.delete(id));
 	}

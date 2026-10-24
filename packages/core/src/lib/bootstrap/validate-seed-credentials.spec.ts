@@ -11,7 +11,8 @@ import { validateSeedCredentials } from './validate-secrets';
  * publicly known credentials.
  *
  * The guard mirrors `validateApplicationSecrets` (GHSA-chm8-2ggf-pgjq): warn everywhere, refuse in
- * a real production deployment, with demo and the Electron desktop server exempt.
+ * a real production deployment, with demo exempt. The Electron desktop apps were exempt too until
+ * their launchers passed random per-install passwords (owner decision 8, 2026-10-22).
  */
 describe('validateSeedCredentials', () => {
 	/** Which `environment.demoCredentialConfig` field each variable feeds. */
@@ -195,12 +196,42 @@ describe('validateSeedCredentials', () => {
 		expect(error).toHaveBeenCalled();
 	});
 
-	it('warns but keeps the Electron desktop server working', () => {
-		process.env.NODE_ENV = 'production';
-		process.env.IS_ELECTRON = 'true';
+	describe('Electron desktop apps (no longer exempt)', () => {
+		beforeEach(() => {
+			process.env.NODE_ENV = 'production';
+			process.env.IS_ELECTRON = 'true';
+		});
 
-		expect(() => validateSeedCredentials()).not.toThrow();
-		expect(error).toHaveBeenCalled();
+		it('refuses a desktop seed that would use the published passwords', () => {
+			// What a launcher from before the per-install passwords produced: nothing set, so the
+			// Super Admin of a Gauzy Server reachable from the LAN was `admin@ever.co` / `admin`.
+			expect(() => validateSeedCredentials()).toThrow(/Refusing to seed/);
+			expect(() => validateSeedCredentials()).toThrow(/DEMO_SUPER_ADMIN_PASSWORD/);
+		});
+
+		it('refuses it on the build flag alone too', () => {
+			delete process.env.IS_ELECTRON;
+			environment.isElectron = true;
+
+			expect(() => validateSeedCredentials()).toThrow(/Refusing to seed/);
+		});
+
+		it('lets the seed through, silently, with the random passwords the launcher passes', () => {
+			// desktopSeedCredentialsToEnv(): 24 random URL-safe characters per account.
+			setSeedPassword('DEMO_SUPER_ADMIN_PASSWORD', 'q3V_8mYp-2KxLrT9aWcZ0bNe');
+			setSeedPassword('DEMO_ADMIN_PASSWORD', 'Hf7-sD2kPq9_xZm4RtLc8vBn');
+			setSeedPassword('DEMO_EMPLOYEE_PASSWORD', 'Wn3_pXe6-YkT1qLs9dMf5aRu');
+
+			expect(() => validateSeedCredentials()).not.toThrow();
+			expect(error).not.toHaveBeenCalled();
+		});
+
+		it('keeps the documented emergency override', () => {
+			process.env.ALLOW_INSECURE_SEED_CREDENTIALS = 'true';
+
+			expect(() => validateSeedCredentials()).not.toThrow();
+			expect(error).toHaveBeenCalled();
+		});
 	});
 
 	it('warns but does not block local development or CI', () => {

@@ -443,6 +443,6 @@ export const GAUZY_PAGE_REGISTRY: IAgentPageInfo[] = [
 		path: '/pages/settings/import-export',
 		title: 'Import/Export',
 		description: 'Import or export organization data as archives.',
-		permissions: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_ADD, PermissionsEnum.EXPORT_ADD]
+		permissions: [PermissionsEnum.IMPORT_ADD, PermissionsEnum.EXPORT_ADD]
 	}
 ];

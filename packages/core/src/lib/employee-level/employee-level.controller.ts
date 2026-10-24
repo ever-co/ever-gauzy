@@ -1,4 +1,19 @@
-import { Controller, Get, Param, UseGuards, Query, Body, Put, BadRequestException, Delete, HttpCode, HttpStatus, UsePipes } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Param,
+	UseGuards,
+	Query,
+	Body,
+	Post,
+	Put,
+	BadRequestException,
+	Delete,
+	HttpCode,
+	HttpStatus,
+	UsePipes
+} from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IEmployeeLevel, IPagination, ID, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -28,6 +43,8 @@ export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 		});
 	}
 
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -39,6 +56,50 @@ export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Creates an employee level.
+	 *
+	 * Overrides the inherited `CrudController.create()` route only to attach a permission. The base declares the
+	 * route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member of
+	 * the tenant could write the organization's employee levels. It now states `ALL_ORG_EDIT`, the grant its soft
+	 * delete and recovery state (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param entity The record to create.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The created record.
+	 */
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record created successfully' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided' })
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Post()
+	async create(@Body() entity: DeepPartial<EmployeeLevel>, ...options: any[]): Promise<EmployeeLevel> {
+		return await super.create(entity, ...options);
+	}
+
+	/**
+	 * Deletes an employee level.
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach a permission, for the reason `create`
+	 * gives: `ALL_ORG_EDIT` (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param id The record to delete.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The store's delete result, as the base route answers it.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<any> {
+		return await super.delete(id, ...options);
 	}
 
 	/**

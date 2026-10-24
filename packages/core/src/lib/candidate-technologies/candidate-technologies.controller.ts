@@ -14,6 +14,7 @@ import {
 	CandidateTechnologiesBulkUpdateCommand
 } from './commands';
 import { TenantOrganizationBaseDTO } from '../core/dto';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @ApiTags('CandidateTechnology')
 @UseGuards(TenantPermissionGuard)
@@ -137,6 +138,36 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	@Delete(':id')
 	delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.candidateTechnologiesService.delete(id);
+	}
+
+	/**
+	 * Updates technologies.
+	 *
+	 * Overrides the inherited `CrudController.update()` route only to attach its role guard. Every other write of
+	 * this controller runs under `RoleGuard` for `CANDIDATE`, `SUPER_ADMIN` and `ADMIN`, but the inherited update
+	 * declared no guard of its own, and `PermissionGuard` answers `true` to empty metadata, so any member of the
+	 * tenant could rewrite a candidate's technologies (GHSA-v79w-54p2-wmh5). The base route still strips the
+	 * members a body never writes.
+	 *
+	 * @param id The record to update.
+	 * @param entity The columns to change.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The store's update result, as the base route answers it.
+	 */
+	@ApiOperation({ summary: 'Update existing record' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'Record updated successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input provided for update' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: QueryDeepPartialEntity<CandidateTechnologies>,
+		...options: any[]
+	): Promise<any> {
+		return await super.update(id, entity, ...options);
 	}
 
 	/**

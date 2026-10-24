@@ -2,13 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import {
-	EventBus,
-	Product,
-	RequestContext,
-	TenantAwareCrudService,
-	assertPlainReferencesNotForeign
-} from '@gauzy/core';
+import { EventBus, Product, RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { PUBLICATION_REFERENCES } from '../catalog.references';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
@@ -16,6 +10,7 @@ import { ProductPublishedEvent, ProductUnpublishedEvent } from '../events';
 import { ProductChannel } from './product-channel.entity';
 import { MikroOrmProductChannelRepository } from './repository/mikro-orm-product-channel.repository';
 import { TypeOrmProductChannelRepository } from './repository/type-orm-product-channel.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Publication of products on channels.
@@ -25,7 +20,7 @@ import { TypeOrmProductChannelRepository } from './repository/type-orm-product-c
  * `ACTIVE` **and** the product is enabled. The publication row grants; it never overrides.
  */
 @Injectable()
-export class ProductChannelService extends TenantAwareCrudService<ProductChannel> {
+export class ProductChannelService extends CatalogCrudService<ProductChannel> {
 	constructor(
 		readonly typeOrmProductChannelRepository: TypeOrmProductChannelRepository,
 		readonly mikroOrmProductChannelRepository: MikroOrmProductChannelRepository,

@@ -101,6 +101,7 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TASK_ADD)
 	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateScreeningTaskDTO): Promise<IScreeningTask> {
@@ -128,6 +129,7 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Put('/:id')
 	@UseValidationPipe()
 	async update(
@@ -153,6 +155,7 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Delete('/:id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.screeningTasksService.delete(id);

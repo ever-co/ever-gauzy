@@ -334,6 +334,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		 * ACCEPTED
 		 */
 		if (action === OrganizationTeamJoinRequestStatusEnum.ACCEPTED) {
+			this.assertAwaitsApproval(request);
+
 			/**
 			 * Fetch user if already present in current tenant
 			 */
@@ -447,6 +449,36 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				status: OrganizationTeamJoinRequestStatusEnum.REJECTED
 			});
 		}
+	}
+
+	/**
+	 * Refuses to accept a join request that is not waiting for a manager's decision.
+	 *
+	 * A request moves through one sequence. The public `create` stores it with `status: null`. The requester
+	 * confirms their address with the emailed code or token (`validateJoinRequest`, which only matches
+	 * `status IS NULL` within `expiredAt`), and that moves it to `REQUESTED`. A manager then accepts or rejects it.
+	 * `acceptRequestToJoin` never read the status, so an unconfirmed request (an address nobody proved they own)
+	 * could be accepted. That added the existing employee behind that address to the team without their consent,
+	 * or provisioned a passwordless EMPLOYEE account for it. A request already accepted or rejected could also be
+	 * accepted again. Only `REQUESTED` is accepted now. That is also the only status the Ever Teams invitation
+	 * table shows the accept action for.
+	 *
+	 * `expiredAt` is not re-checked: it bounds the confirmation code, which a `REQUESTED` request has already
+	 * redeemed, and a manager may decide after that window.
+	 *
+	 * @param request - The join request a manager is accepting.
+	 * @throws {ConflictException} When the request is unconfirmed, or already decided.
+	 */
+	private assertAwaitsApproval(request: IOrganizationTeamJoinRequest): void {
+		if (request.status === OrganizationTeamJoinRequestStatusEnum.REQUESTED) {
+			return;
+		}
+
+		if (!request.status) {
+			throw new ConflictException('This join request has not been confirmed by email yet.');
+		}
+
+		throw new ConflictException(`This join request was already ${String(request.status).toLowerCase()}.`);
 	}
 
 	/**

@@ -1214,7 +1214,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Interface utilisateur",
-			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
+			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions. Les deux interfaces affichent les mêmes pages, avec les mêmes données, la même mise en page et les mêmes fonctionnalités — seule la technologie utilisée diffère, donc changer ne modifie ni ce que voient vos utilisateurs ni ce qu'ils peuvent faire.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (par défaut)",
 				"REACT": "React (nouveau)"
@@ -5405,6 +5405,8 @@
 			"API_SERVER_PORT": "Port du serveur API",
 			"UI_SERVER_PORT": "Port du serveur UI",
 			"SERVER_HOSTNAME": "Nom d'hôte/adresse IP du serveur",
+			"LAN_ACCESS": "Autoriser les autres ordinateurs du réseau à se connecter",
+			"LAN_ACCESS_HINT": "Si désactivé, seul cet ordinateur peut se connecter à l'API et à l'interface web.",
 			"AUTO_START_STARTUP": "Démarrage automatique au démarrage",
 			"SERVER_TYPE": "Type de serveur",
 			"LOCAL_API_PORT": "Port API local",
@@ -5531,7 +5533,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Nous n'avons pas pu déterminer si vous avez des données hors ligne non synchronisées. La suppression de la base de données risque d'effacer DÉFINITIVEMENT des données non sauvegardées. En cas de doute, cliquez sur 'Conserver'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Vos identifiants de connexion",
+			"SEED_CREDENTIALS_MESSAGE": "Enregistrez ces mots de passe maintenant. Ils ne sont affichés qu'une seule fois.",
+			"SEED_CREDENTIALS_DETAIL": "Cette installation a créé ses comptes avec des mots de passe aléatoires au lieu des valeurs par défaut publiées.\n\n{{ accounts }}\n\nVous pourrez modifier un mot de passe plus tard depuis votre page de profil dans Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Copié dans le presse-papiers.",
+			"SEED_CREDENTIALS_SAVED": "Je les ai enregistrés",
+			"SEED_ROLE_SUPER_ADMIN": "Super administrateur",
+			"SEED_ROLE_ADMIN": "Administrateur",
+			"SEED_ROLE_EMPLOYEE": "Employé",
+			"SEED_PASSWORD": "Mot de passe",
+			"PUBLISHED_PASSWORDS_TITLE": "Mot de passe par défaut toujours utilisé",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Modifiez le mot de passe par défaut de ces comptes.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} se connectent encore avec le mot de passe par défaut publié dans la documentation de Gauzy. Toute personne pouvant accéder à ce serveur peut se connecter avec. Connectez-vous à Gauzy et modifiez-le depuis la page de profil."
 		},
 		"NO_LIMIT": "∞ Sans limite",
 		"TASK": "Tâche",
@@ -5559,7 +5573,12 @@
 			"SERVICE_UNAVAILABLE": "Service temporairement indisponible.",
 			"UNEXPECTED_ERROR": "Une erreur inattendue s’est produite.",
 			"NETWORK_ERROR": "Erreur réseau : {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorisation d'accès à l'écran est requise pour activer la capture d'écran automatique. Veuillez accorder l'autorisation dans les paramètres système."
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorisation d'accès à l'écran est requise pour activer la capture d'écran automatique. Veuillez accorder l'autorisation dans les paramètres système.",
+			"ORGANIZATION_SWITCH_REFUSED": "Impossible de passer à {{ name }} : {{ reason }}. Vous travaillez toujours dans votre organisation actuelle.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Vous n'êtes pas un employé actif de {{ name }}, le minuteur ne peut donc pas y suivre le temps. Vous travaillez toujours dans votre organisation actuelle.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Le changement d'organisation est en cours. Démarrez le minuteur une fois le changement terminé.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Vous n'êtes pas un employé actif de {{ name }}, et le retour à votre organisation précédente a échoué. Veuillez vous reconnecter.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Le passage à {{ name }} n'a pas pu être terminé sur cet appareil. Veuillez vous reconnecter."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",

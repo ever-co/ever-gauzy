@@ -1213,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfaccia",
 			"TITLE": "Interfaccia utente",
-			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni.",
+			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni. Entrambe le interfacce mostrano le stesse pagine, con gli stessi dati, lo stesso layout e le stesse funzioni: cambia solo la tecnologia sottostante, quindi il passaggio non modifica ciò che i tuoi utenti vedono o possono fare.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (predefinito)",
 				"REACT": "React (nuovo)"
@@ -5408,6 +5408,8 @@
 			"API_SERVER_PORT": "Porta del server API",
 			"UI_SERVER_PORT": "Porta del server UI",
 			"SERVER_HOSTNAME": "Nome host/indirizzo IP del server",
+			"LAN_ACCESS": "Consenti la connessione da altri computer della rete",
+			"LAN_ACCESS_HINT": "Se disattivato, solo questo computer può connettersi all'API e all'interfaccia web.",
 			"AUTO_START_STARTUP": "Avvio automatico all'avvio",
 			"SERVER_TYPE": "Tipo di server",
 			"LOCAL_API_PORT": "Porta API locale",
@@ -5534,7 +5536,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Non siamo riusciti a determinare se si dispone di dati offline non sincronizzati. La rimozione del database potrebbe cancellare DEFINITIVAMENTE lavoro non salvato. In caso di dubbio, fare clic su 'Mantieni'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} timer/i non sincronizzati",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} intervallo/i non sincronizzato/i",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "I tuoi dati di accesso",
+			"SEED_CREDENTIALS_MESSAGE": "Salva subito queste password. Vengono mostrate una sola volta.",
+			"SEED_CREDENTIALS_DETAIL": "Questa installazione ha creato i suoi account con password casuali invece dei valori predefiniti pubblicati.\n\n{{ accounts }}\n\nPuoi cambiare una password in seguito dalla tua pagina del profilo in Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Copiato negli appunti.",
+			"SEED_CREDENTIALS_SAVED": "Le ho salvate",
+			"SEED_ROLE_SUPER_ADMIN": "Super amministratore",
+			"SEED_ROLE_ADMIN": "Amministratore",
+			"SEED_ROLE_EMPLOYEE": "Dipendente",
+			"SEED_PASSWORD": "Password",
+			"PUBLISHED_PASSWORDS_TITLE": "Password predefinita ancora in uso",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Cambia la password predefinita di questi account.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} accedono ancora con la password predefinita pubblicata nella documentazione di Gauzy. Chiunque possa raggiungere questo server può accedere con essa. Accedi a Gauzy e cambiala dalla pagina del profilo."
 		},
 		"NO_LIMIT": "∞ Senza Limiti",
 		"TASK": "Compito",
@@ -5562,7 +5576,12 @@
 			"SERVICE_UNAVAILABLE": "Servizio temporaneamente non disponibile.",
 			"UNEXPECTED_ERROR": "Si è verificato un errore imprevisto.",
 			"NETWORK_ERROR": "Errore di rete: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "L'autorizzazione di accesso allo schermo è necessaria per abilitare la cattura automatica dello schermo. Si prega di concedere l'autorizzazione nelle impostazioni di sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "Impossibile passare a {{ name }}: {{ reason }}. Stai ancora lavorando nella tua organizzazione attuale.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Non sei un dipendente attivo di {{ name }}, quindi il timer non può registrare il tempo lì. Stai ancora lavorando nella tua organizzazione attuale.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "È in corso il cambio di organizzazione. Avvia il timer al termine del cambio.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Non sei un dipendente attivo di {{ name }} e il ritorno alla tua organizzazione precedente non è riuscito. Accedi di nuovo.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",

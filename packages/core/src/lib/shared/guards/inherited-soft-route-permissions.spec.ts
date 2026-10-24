@@ -16,6 +16,7 @@ import { TaskRelatedIssueTypeController } from '../../tasks/related-issue-type/r
 import { TaskSizeController } from '../../tasks/sizes/size.controller';
 import { TaskStatusController } from '../../tasks/statuses/status.controller';
 import { TaskVersionController } from '../../tasks/versions/version.controller';
+import { TaskSettingPermissionGuard } from '../../tasks/task-setting-access';
 import { PermissionGuard } from './permission.guard';
 import { RoleGuard } from './role.guard';
 
@@ -55,7 +56,7 @@ function handler(controller: Function, name: string): Function {
 
 describe('the retire-and-restore pair of the controllers without a resolver', () => {
 	it.each(TASK_SETTINGS.map((controller) => [controller.name, controller]))(
-		'%s states ORG_TASK_SETTING behind PermissionGuard on both routes, and still serves them',
+		'%s states ORG_TASK_SETTING behind the task-setting permission guard on both routes, and still serves them',
 		(_name, controller) => {
 			for (const [name, method, path] of PAIR) {
 				const route = handler(controller as Function, name);
@@ -64,7 +65,9 @@ describe('the retire-and-restore pair of the controllers without a resolver', ()
 				expect(Object.prototype.hasOwnProperty.call((controller as Function).prototype, name)).toBe(true);
 				expect(Reflect.getMetadata('method', route)).toBe(method);
 				expect(Reflect.getMetadata('path', route)).toBe(path);
-				expect(Reflect.getMetadata(GUARDS_METADATA, route)).toEqual([PermissionGuard]);
+				// `PermissionGuard`, plus a team's managers for its own rows (owner decision 2(b), 2026-10-23)
+				expect(Reflect.getMetadata(GUARDS_METADATA, route)).toEqual([TaskSettingPermissionGuard]);
+				expect(Object.getPrototypeOf(TaskSettingPermissionGuard)).toBe(PermissionGuard);
 				expect(Reflect.getMetadata(PERMISSIONS_METADATA, route)).toEqual([PermissionsEnum.ORG_TASK_SETTING]);
 			}
 		}

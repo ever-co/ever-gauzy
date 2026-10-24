@@ -3,7 +3,7 @@
 	(change)="selectPriority($event); select.blur()"
 	(clear)="select.blur()"
 	[(ngModel)]="priority"
-	[addTag]="addTag ? createNew : null"
+	[addTag]="canCreate ? createNew : null"
 	[clearable]="true"
 	[items]="priorities$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASK_PRIORITY' | translate"

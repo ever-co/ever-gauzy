@@ -2,6 +2,7 @@ import '../../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { And, Equal, IsNull, Or } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { DailyPlanService } from './daily-plan.service';
@@ -29,7 +30,13 @@ const inRequest = <R>(callback: () => Promise<R>): Promise<R> => requestStorage.
 describe('DailyPlanService manager access', () => {
 	const originalClsService = RequestContext['clsService'];
 	let service: DailyPlanService;
-	let repository: { metadata: unknown; findOne: jest.Mock; findOneOrFail: jest.Mock; save: jest.Mock };
+	let repository: {
+		metadata: unknown;
+		find: jest.Mock;
+		findOne: jest.Mock;
+		findOneOrFail: jest.Mock;
+		save: jest.Mock;
+	};
 	let managedEmployeeService: { canManageEmployee: jest.Mock };
 	let taskService: { findOneByIdString: jest.Mock };
 	let plan: Record<string, unknown>;
@@ -54,6 +61,8 @@ describe('DailyPlanService manager access', () => {
 				tableName: 'daily_plan',
 				hasColumnWithPropertyPath: (path: string) => ['employeeId', 'tenantId', 'organizationId'].includes(path)
 			},
+			// The organization boundary of `save()` reads the stored plan's organization by id.
+			find: jest.fn(async () => [plan]),
 			findOne: jest.fn(async () => plan),
 			findOneOrFail: jest.fn(async () => plan),
 			save: jest.fn(async (entity: unknown) => entity)
@@ -77,7 +86,9 @@ describe('DailyPlanService manager access', () => {
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
 			id: 'c0ffee00-0000-4000-8000-000000000001',
 			tenantId: TENANT_ID,
-			employeeId: MANAGER_ID
+			employeeId: MANAGER_ID,
+			// The organization of the manager's token, which `JwtStrategy` attaches after checking the membership.
+			lastOrganizationId: ORGANIZATION_ID
 		} as any);
 	});
 
@@ -99,7 +110,8 @@ describe('DailyPlanService manager access', () => {
 					id: PLAN_ID,
 					employeeId: MEMBER_ID,
 					tenantId: TENANT_ID,
-					organizationId: ORGANIZATION_ID
+					// The organization the request names, kept inside the manager's organization boundary.
+					organizationId: And(Equal(ORGANIZATION_ID), Or(Equal(ORGANIZATION_ID), IsNull()))
 				})
 			);
 			// The caller's own employee scope must not have been injected into the lookup.

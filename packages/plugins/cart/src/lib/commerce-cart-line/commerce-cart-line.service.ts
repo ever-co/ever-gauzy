@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { CART_LINE_REFERENCES } from '../cart.references';
 import { CommerceCartLine } from './commerce-cart-line.entity';
 import { TypeOrmCommerceCartLineRepository } from './repository/type-orm-commerce-cart-line.repository';
 import { MikroOrmCommerceCartLineRepository } from './repository/mikro-orm-commerce-cart-line.repository';
+import { CartCrudService } from '../cart-crud.service';
 
 /**
  * The lines of a cart.
@@ -20,7 +21,7 @@ import { MikroOrmCommerceCartLineRepository } from './repository/mikro-orm-comme
  * held to the caller's tenant (`cart.references.ts`).
  */
 @Injectable()
-export class CommerceCartLineService extends TenantAwareCrudService<CommerceCartLine> {
+export class CommerceCartLineService extends CartCrudService<CommerceCartLine> {
 	constructor(
 		readonly typeOrmCommerceCartLineRepository: TypeOrmCommerceCartLineRepository,
 		readonly mikroOrmCommerceCartLineRepository: MikroOrmCommerceCartLineRepository

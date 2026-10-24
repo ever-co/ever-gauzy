@@ -15,14 +15,22 @@ import {
 	IStatisticSum
 } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { EmployeeService } from '../employee/employee.service';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { assertStatisticsReadInScope } from './employee-statistics-scope';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import {
 	AggregatedEmployeeStatisticQuery,
 	EmployeeStatisticsHistoryQuery,
 	MonthAggregatedEmployeeStatisticsQuery
 } from './queries';
+import { Permissions } from '../shared/decorators';
+import {
+	EMPLOYEE_STATISTICS_AGGREGATE_PERMISSIONS,
+	EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS
+} from './employee-statistics.permissions';
 
 /**
  * One employee's sum over a range, as `EmployeeStatisticByEmployee` declares it.
@@ -69,11 +77,14 @@ export interface IEmployeeStatisticsHistoryEntry extends Omit<IEmployeeStatistic
  * The controller serves four `GET` routes and no other operation, and this surface states exactly those
  * four capabilities.
  *
- * **The guard chain is the controller's and the permission is the absence the controller states.**
- * `EmployeeStatisticsController` carries `TenantPermissionGuard` at class level and no `@Permissions`
- * anywhere — on the class or on a handler — so the class here carries that guard beside the gate and
- * every field states no permission at all. A field that demanded one would refuse a caller the REST
- * route serves, which is the narrowing this delivery exists to prevent.
+ * **The guard chain and the permissions are the controller's.** `EmployeeStatisticsController` carries
+ * `TenantPermissionGuard` at class level, and each route states `PermissionGuard` beside the pair of the
+ * dashboard tab that shows its figures (`employee-statistics.permissions.ts`): the organization aggregate the
+ * Accounting tab's `ADMIN_DASHBOARD_VIEW` or `ACCOUNTING_DASHBOARD`, one employee's series, months and history
+ * the Human Resources tab's `ADMIN_DASHBOARD_VIEW` or `HUMAN_RESOURCE_DASHBOARD` (owner decision 2, 2026-10-22:
+ * the routes stated none, so any member of the tenant could read these money figures). The class here carries
+ * the tenant guard beside the gate, and each field states the guard and the pair its route states — neither
+ * wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -87,7 +98,9 @@ export interface IEmployeeStatisticsHistoryEntry extends Omit<IEmployeeStatistic
 export class EmployeeStatisticsResolver {
 	constructor(
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
-		private readonly queryBus: QueryBus
+		private readonly queryBus: QueryBus,
+		private readonly employeeService: EmployeeService,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
 	) {}
 
 	/**
@@ -99,6 +112,8 @@ export class EmployeeStatisticsResolver {
 	 * read by, which is the only difference between the answer the route returns and the answer this
 	 * field returns.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_AGGREGATE_PERMISSIONS)
 	@Query('employeeStatisticsAggregate')
 	async employeeStatisticsAggregate(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
@@ -139,11 +154,15 @@ export class EmployeeStatisticsResolver {
 	 * stated-but-empty options object is a `TypeError` rather than "no date". A caller that states none
 	 * gets the call the route makes when its `data` parameter carries none.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Query('employeeStatisticsSeries')
 	async employeeStatisticsSeries(
 		@Args('employeeId', { type: () => ID }) employeeId: Id,
 		@Args('valueDate', { type: () => Date, nullable: true }) valueDate?: Date
 	): Promise<IEmployeeStatistics> {
+		await this.assertInScope(undefined, employeeId);
+
 		return await this.employeeStatisticsService.getStatisticsByEmployeeId(
 			employeeId,
 			valueDate ? ({ valueDate } as IEmployeeStatisticsFindInput) : undefined
@@ -158,6 +177,8 @@ export class EmployeeStatisticsResolver {
 	 * expenses. An absent end of the range is the statement the delivered handler defaults, so the field
 	 * passes it through rather than substituting a date of its own.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Query('employeeMonthlyStatistics')
 	async employeeMonthlyStatistics(
 		@Args('employeeId', { type: () => ID }) employeeId: Id,
@@ -165,6 +186,8 @@ export class EmployeeStatisticsResolver {
 		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<IMonthAggregatedEmployeeStatistics[]> {
+		await this.assertInScope(organizationId, employeeId);
+
 		return await this.queryBus.execute(
 			new MonthAggregatedEmployeeStatisticsQuery({
 				employeeId,
@@ -185,6 +208,8 @@ export class EmployeeStatisticsResolver {
 	 * Each line is reshaped in one place: the delivered line carries the client as a row and this
 	 * surface carries its identifier, for the same reason the aggregate's account is carried that way.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(...EMPLOYEE_STATISTICS_EMPLOYEE_PERMISSIONS)
 	@Query('employeeStatisticsHistory')
 	async employeeStatisticsHistory(
 		@Args('employeeId', { type: () => ID }) employeeId: Id,
@@ -193,6 +218,8 @@ export class EmployeeStatisticsResolver {
 		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
 		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id
 	): Promise<IEmployeeStatisticsHistoryEntry[]> {
+		await this.assertInScope(organizationId, employeeId);
+
 		const lines: IEmployeeStatisticsHistory[] = await this.queryBus.execute(
 			new EmployeeStatisticsHistoryQuery({
 				employeeId,
@@ -216,5 +243,23 @@ export class EmployeeStatisticsResolver {
 			source: line.source,
 			splitExpense: line.splitExpense
 		}));
+	}
+
+	/**
+	 * The scope check the routes make before an employee's figures are read (`assertStatisticsReadInScope`).
+	 *
+	 * The organization-membership interceptor checks an employee only against an organization stated beside it.
+	 * These fields take the organization as optional, and without one the reads behind them reach the employee in
+	 * whichever organization of the tenant it belongs to, so the employee's own organization has to be the
+	 * caller's.
+	 *
+	 * @param organizationId The organization the field was given, if any.
+	 * @param employeeId The employee whose figures are read.
+	 */
+	private async assertInScope(organizationId: Id | undefined, employeeId: Id): Promise<void> {
+		await assertStatisticsReadInScope(this.typeOrmEmployeeRepository.manager, this.employeeService, {
+			organizationId,
+			employeeId
+		});
 	}
 }

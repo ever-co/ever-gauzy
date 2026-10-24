@@ -6,7 +6,7 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap } from '@gauzy/plugin';
 import { SentryRequestMiddleware } from './sentry-request.middleware';
 import { SentryTraceMiddleware } from './sentry-trace.middleware';
 import { SentryPluginOptions } from './sentry.types';
-import { SentryCustomInterceptor } from './sentry-custom.interceptor';
+import { SENTRY_INTERCEPTOR_OPTIONS, SentryCustomInterceptor } from './sentry-custom.interceptor';
 import { GraphqlInterceptor, SENTRY_MODULE_OPTIONS, SentryModule } from './ntegral';
 import { createDefaultSentryIntegrations, parseOptions, removeDuplicateIntegrations } from './sentry.helper';
 
@@ -32,7 +32,9 @@ export const DefaultSentryIntegrations: Integration[] = createDefaultSentryInteg
 		},
 		{
 			provide: APP_INTERCEPTOR,
-			useFactory: () => new GraphqlInterceptor()
+			// The same filter as the HTTP interceptor: with none, every client error (4xx) was reported, and with it
+			// the request it was raised for
+			useFactory: () => new GraphqlInterceptor(SENTRY_INTERCEPTOR_OPTIONS)
 		}
 	]
 })

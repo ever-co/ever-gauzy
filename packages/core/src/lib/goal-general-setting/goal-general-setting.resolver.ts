@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
@@ -85,10 +86,15 @@ const GOAL_GENERAL_SETTING_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its own: every field below calls the same `GoalGeneralSettingService` method the
  * `/api/goal-general-setting` routes call.
  *
- * **The guard chain is the controller's, and no field states a permission.**
- * `GoalGeneralSettingController` carries `TenantPermissionGuard` on the class and nothing else, on any
- * of the nine routes, so the permission guard is not part of this resolver's chain either. The spec
- * reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.**
+ * `GoalGeneralSettingController` carries `TenantPermissionGuard` on the class; its reads state no permission,
+ * and every write route — the filing, the edit, the removal and the two lifecycle moves, the inherited ones
+ * overridden only to attach the grant — states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2,
+ * 2026-10-22: the writes stated none, and the permission guard answers `true` to empty metadata, so any
+ * member of the tenant could write — GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the
+ * gate, the reads state nothing, and each write field states `PermissionGuard` and `GOALS_EDIT`, neither
+ * wider nor narrower than its route. The spec reads the controller's `__guards__` and `PERMISSIONS_METADATA`
+ * and compares them with this class's, field by field.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -171,6 +177,8 @@ export class GoalGeneralSettingResolver {
 	 *
 	 * The same service method the create route calls, with the body that route validates.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createGoalGeneralSetting')
 	async createGoalGeneralSetting(
 		@Args('input') input: ICreateGoalGeneralSettingInput
@@ -186,6 +194,8 @@ export class GoalGeneralSettingResolver {
 	 * wrapper is a statement about the HTTP status this surface does not have, so the service's own
 	 * refusal — which is a bad request already — travels instead.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateGoalGeneralSetting')
 	async updateGoalGeneralSetting(
 		@Args('input') input: IUpdateGoalGeneralSettingInput
@@ -202,6 +212,8 @@ export class GoalGeneralSettingResolver {
 	 * delete result, a statement about the write rather than a row, so this field answers whether the
 	 * removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteGoalGeneralSetting')
 	async deleteGoalGeneralSetting(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.goalGeneralSettingService.delete(id));
@@ -212,6 +224,8 @@ export class GoalGeneralSettingResolver {
 	 *
 	 * The inherited `DELETE /goal-general-setting/:id/soft` route's own call.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteGoalGeneralSetting')
 	async softDeleteGoalGeneralSetting(@Args('id', { type: () => ID }) id: Id): Promise<GoalGeneralSetting> {
 		return await this.goalGeneralSettingService.softRemove(id);
@@ -220,6 +234,8 @@ export class GoalGeneralSettingResolver {
 	/**
 	 * Puts a withdrawn policy back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverGoalGeneralSetting')
 	async recoverGoalGeneralSetting(@Args('id', { type: () => ID }) id: Id): Promise<GoalGeneralSetting> {
 		return await this.goalGeneralSettingService.softRecover(id);

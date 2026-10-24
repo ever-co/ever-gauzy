@@ -24,44 +24,41 @@ const requestContext = {
 	permissions: [] as string[]
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FavoriteService: () => () => undefined,
-		EventBus: class {},
-		MentionService: class {},
-		CreateEntitySubscriptionEvent: class {
-			constructor(public readonly input: any) {}
-		},
-		RequestContext: {
-			currentTenantId: () => requestContext.tenantId,
-			currentOrganizationId: () => requestContext.organizationId,
-			currentUserId: () => requestContext.userId,
-			currentEmployeeId: () => requestContext.employeeId,
-			currentRequestContext: () => ({}),
-			hasPermission: (permission: string) => requestContext.permissions.includes(permission)
-		},
-		TenantAwareCrudService: class {
-			protected typeOrmRepository: any;
-			constructor(typeOrmRepository: any) {
-				this.typeOrmRepository = typeOrmRepository;
-			}
-		},
-		prepareSQLQuery: (sql: string) => sql,
-		sanitizeRichHtml: (html: string) => sanitizeRichHtmlMock(html),
-		// Mock drift, found while working on TASK 9 of the improvement roadmap: `document.service.ts`
-		// calls the real `parseFindOptionsRelations` (converts the legacy string-array `relations`
-		// form TypeORM >= 1.0 rejects into its object form — see the big comment on
-		// `findOneWithinScope`), but this hand-written `@gauzy/core` mock never grew that export, so
-		// EVERY call to `findOneScoped(id, ['parent' | 'children'])` threw `... is not a function`
-		// before reaching the fake repository — the three "joined relations are scoped too" tests
-		// below never actually ran the scoping logic they exist to pin. This is a simplified replica
-		// (flat names only, no dot-path nesting) matching what the fake `findOne` below actually
-		// receives; the real function's full behavior is covered separately in `packages/core`.
-		parseFindOptionsRelations: (relations: string[] = []) =>
-			Object.fromEntries(relations.map((relation) => [relation, true]))
-	})
-);
+jest.mock('@gauzy/core', () => ({
+	FavoriteService: () => () => undefined,
+	EventBus: class {},
+	MentionService: class {},
+	CreateEntitySubscriptionEvent: class {
+		constructor(public readonly input: any) {}
+	},
+	RequestContext: {
+		currentTenantId: () => requestContext.tenantId,
+		currentOrganizationId: () => requestContext.organizationId,
+		currentUserId: () => requestContext.userId,
+		currentEmployeeId: () => requestContext.employeeId,
+		currentRequestContext: () => ({}),
+		hasPermission: (permission: string) => requestContext.permissions.includes(permission)
+	},
+	TenantAwareCrudService: class {
+		protected typeOrmRepository: any;
+		constructor(typeOrmRepository: any) {
+			this.typeOrmRepository = typeOrmRepository;
+		}
+	},
+	prepareSQLQuery: (sql: string) => sql,
+	sanitizeRichHtml: (html: string) => sanitizeRichHtmlMock(html),
+	// Mock drift, found while working on TASK 9 of the improvement roadmap: `document.service.ts`
+	// calls the real `parseFindOptionsRelations` (converts the legacy string-array `relations`
+	// form TypeORM >= 1.0 rejects into its object form — see the big comment on
+	// `findOneWithinScope`), but this hand-written `@gauzy/core` mock never grew that export, so
+	// EVERY call to `findOneScoped(id, ['parent' | 'children'])` threw `... is not a function`
+	// before reaching the fake repository — the three "joined relations are scoped too" tests
+	// below never actually ran the scoping logic they exist to pin. This is a simplified replica
+	// (flat names only, no dot-path nesting) matching what the fake `findOne` below actually
+	// receives; the real function's full behavior is covered separately in `packages/core`.
+	parseFindOptionsRelations: (relations: string[] = []) =>
+		Object.fromEntries(relations.map((relation) => [relation, true]))
+}));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../entities/document-link.entity', () => ({ DocumentLink: class {} }));
 jest.mock('../events/document.event', () => ({ DocumentEvent: class {} }));
@@ -114,11 +111,14 @@ const recordingQueryBuilder = () => {
  * @param access Stubbed answers of the share-overlay service.
  */
 const buildService = (rows: any[] = [], access: { canRead?: boolean; canWrite?: boolean } = {}) => {
-	const findOne = jest.fn(async ({ where }: any) =>
-		rows.find(
-			(row) =>
-				row.id === where.id && row.tenantId === where.tenantId && row.organizationId === where.organizationId
-		) ?? null
+	const findOne = jest.fn(
+		async ({ where }: any) =>
+			rows.find(
+				(row) =>
+					row.id === where.id &&
+					row.tenantId === where.tenantId &&
+					row.organizationId === where.organizationId
+			) ?? null
 	);
 	const queryBuilder = recordingQueryBuilder();
 	const repository: any = {
@@ -544,5 +544,62 @@ describe('DocumentService — mentions carry the document organization', () => {
 			undefined,
 			'org-1'
 		);
+	});
+});
+
+/**
+ * An `EDIT` share lets its grantee write the document, and `PUT /documents/:id` accepted `visibility`, `isLocked` and
+ * `organizationId` under that check alone: the grantee of the owner's PRIVATE page could publish it to the whole
+ * organization, lift the owner's lock, or move it into another organization (keeping their share, which matches on
+ * the document id only). Those fields are now the owner's, or a DOCS_MANAGE holder's, as the shares are.
+ */
+describe('DocumentService — the owner keeps visibility, lock and organization', () => {
+	const privatePage = () =>
+		documentRow({ createdByUserId: 'owner-1', visibility: DocumentVisibilityEnum.PRIVATE, isLocked: true });
+
+	const asGrantee = (administersShares: boolean) => {
+		// The grantee reads and writes the page through their EDIT share.
+		const built = buildService([privatePage()], { canRead: true, canWrite: true });
+		built.accessService.canAdministerShares = jest.fn(async () => administersShares);
+		(built.service as any).save = jest.fn(async (input: any) => input);
+		return built;
+	};
+
+	it.each([
+		['publishes it to the organization', { visibility: DocumentVisibilityEnum.ORGANIZATION }],
+		["lifts the owner's lock", { isLocked: false }],
+		['moves it into another organization', { organizationId: 'org-2' }]
+	])('refuses an EDIT grantee who %s, before anything is written', async (_label, input) => {
+		const { service } = asGrantee(false);
+
+		await expect(service.updateDocument('doc-1', input as any)).rejects.toMatchObject({
+			response: { code: DOCS_WRITE_FORBIDDEN }
+		});
+		expect((service as any).save).not.toHaveBeenCalled();
+	});
+
+	it('still lets the grantee edit the rest, and resend the current values (control)', async () => {
+		const { service } = asGrantee(false);
+
+		await expect(
+			service.updateDocument('doc-1', {
+				name: 'Renamed',
+				visibility: DocumentVisibilityEnum.PRIVATE,
+				isLocked: true,
+				organizationId: 'org-1'
+			} as any)
+		).resolves.toMatchObject({ name: 'Renamed', visibility: DocumentVisibilityEnum.PRIVATE });
+	});
+
+	it('lets the owner, or a DOCS_MANAGE holder, change them (control)', async () => {
+		const { service, accessService } = asGrantee(true);
+
+		await expect(
+			service.updateDocument('doc-1', { visibility: DocumentVisibilityEnum.ORGANIZATION, isLocked: false } as any)
+		).resolves.toMatchObject({ visibility: DocumentVisibilityEnum.ORGANIZATION, isLocked: false });
+		expect(accessService.canAdministerShares).toHaveBeenCalledWith({
+			createdByUserId: 'owner-1',
+			visibility: DocumentVisibilityEnum.PRIVATE
+		});
 	});
 });

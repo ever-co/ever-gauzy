@@ -376,13 +376,18 @@ export const registerKeyResultTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'create_key_result_update',
-		'Create an update for a key result',
+		'Create an update for a key result; the server moves the key result and its goal to it',
 		{
 			keyResultId: z.string().uuid().describe('The key result ID'),
 			update_data: z
 				.object({
 					update: z.number().describe('The current value/update'),
-					progress: z.number().min(0).max(100).describe('The progress percentage (0-100)'),
+					progress: z
+						.number()
+						.min(0)
+						.max(100)
+						.optional()
+						.describe('Ignored: the server computes the progress from the value and the key result'),
 					description: z.string().optional().describe('Description of the update'),
 					status: z.string().optional().describe('Status of the key result')
 				})

@@ -26,7 +26,6 @@ import {
 	IVersionedWriter,
 	MultiORMEnum,
 	RequestContext,
-	TenantAwareCrudService,
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	compareDecimalStrings,
@@ -55,6 +54,7 @@ import {
 	FULFILLMENT_LABEL_PROVIDER,
 	IFulfillmentLabelProviderPort
 } from '../fulfillment.types';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * The transitions the fulfilment lifecycle allows, and nothing else.
@@ -284,7 +284,7 @@ type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
  * the columns and the version move in one statement.
  */
 @Injectable()
-export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
+export class FulfillmentService extends FulfillmentCrudService<Fulfillment> {
 	/** Where a re-derivation that could not run is reported, since the caller is not told of it. */
 	private readonly logger = new Logger(FulfillmentService.name);
 
@@ -447,11 +447,11 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	/**
 	 * Appends a line to a shipment that has not left yet.
 	 *
-	 * The operation behind `POST /fulfillments/:id/lines` and `addFulfillmentLine` (review R2-G40): a shipment's
-	 * lines used to be stated only when it was created, and the standalone `POST /fulfillment-lines` writes a
-	 * row without the shipment's rules — it moves no order-line counter and reads neither the shipment's status
-	 * nor what the order line still has to ship. Appending applies exactly what `create` applies to each of its
-	 * lines, in the same order:
+	 * The operation behind `POST /fulfillments/:id/lines`, `addFulfillmentLine` and the standalone
+	 * `POST /fulfillment-lines` (review R2-G40): a shipment's lines used to be stated only when it was created, and
+	 * the standalone route used to write a row without the shipment's rules — it moved no order-line counter and
+	 * read neither the shipment's status nor what the order line still had to ship. Appending applies exactly what
+	 * `create` applies to each of its lines, in the same order:
 	 *
 	 * - the shipment is still `PENDING` (a shipped, delivered or cancelled one is refused with
 	 *   `FULFILLMENT_NOT_PENDING`), and the order line is one of the shipment's own order (`FULFILLMENT_LINE_ORDER_MISMATCH`);

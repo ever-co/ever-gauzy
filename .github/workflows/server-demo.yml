@@ -100,6 +100,31 @@ jobs:
         os: [[self-hosted, Windows, X64]]
 
     steps:
+      # `shell: bash` runs whichever bash.exe the runner SERVICE finds first on its PATH. On EVERDESK3
+      # and EVERGR (stage-apps, 2026-10-23) C:\Windows\System32 comes before Git for Windows, so that
+      # is System32\bash.exe - the WSL launcher - which refuses to start under the service account:
+      # "Running WSL as local system is not supported" (Bash/WSL_E_LOCAL_SYSTEM_NOT_SUPPORTED). Every
+      # bash step then fails before running a line: Configure Registry, Ensure dist directory exists
+      # and Scrub registry credentials. EVERDESK1/EVERDESK4 resolve Git Bash and pass, which is why
+      # the failure followed the runner, not the workflow. The runner resolves `bash` with GITHUB_PATH
+      # prepended, so adding Git's bin directory there makes every later bash step use Git Bash on
+      # every runner. First step, ahead of the checkout, so the always() scrub step is covered even
+      # when the checkout fails. Git\bin holds only bash, sh and git: nothing else on PATH is shadowed.
+      - name: Use Git Bash for bash steps
+        shell: powershell
+        run: |
+          $candidates = @()
+          $git = Get-Command git.exe -ErrorAction SilentlyContinue
+          if ($git) { $candidates += Join-Path (Split-Path (Split-Path $git.Source -Parent) -Parent) 'bin' }
+          $candidates += Join-Path $env:ProgramFiles 'Git\bin'
+          $bin = $candidates | Where-Object { Test-Path (Join-Path $_ 'bash.exe') } | Select-Object -First 1
+          if ($bin) {
+            Write-Host "Using Git Bash from $bin"
+            $bin | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          } else {
+            Write-Host "::warning title=Git Bash not found::No Git for Windows bash.exe on $env:RUNNER_NAME - bash steps fall back to the first bash on the runner's PATH."
+          }
+
       - name: Check out Git repository
         uses: actions/checkout@v5
         with:
@@ -139,6 +164,10 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+          # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
+          # on an image whose newest is VS 2026 (windows-11-arm today) node-gyp then refuses the
+          # mismatched VS Command Prompt.
+          vsversion: 2022
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'

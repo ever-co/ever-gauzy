@@ -7,7 +7,6 @@ import {
 	MultiORMEnum,
 	prepareSQLQuery,
 	RequestContext,
-	TenantAwareCrudService,
 	toPositionalStatement,
 	versionExpectationOf,
 	Warehouse
@@ -45,6 +44,7 @@ import { TWarehouseRows, runMikroOrmStatement, warehouseRowsOf } from '../wareho
 import { WarehouseBin } from './warehouse-bin.entity';
 import { MikroOrmWarehouseBinRepository } from './repository/mikro-orm-warehouse-bin.repository';
 import { TypeOrmWarehouseBinRepository } from './repository/type-orm-warehouse-bin.repository';
+import { WarehouseCrudService } from '../warehouse-crud.service';
 
 /** How deep the bin hierarchy may go, counting the root as level one. */
 const MAX_BIN_DEPTH = 5;
@@ -141,7 +141,7 @@ function acceptedVersionExpectation(): TVersionExpectation | undefined {
  * what their operator meant.
  */
 @Injectable()
-export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
+export class WarehouseBinService extends WarehouseCrudService<WarehouseBin> {
 	constructor(
 		readonly typeOrmWarehouseBinRepository: TypeOrmWarehouseBinRepository,
 		readonly mikroOrmWarehouseBinRepository: MikroOrmWarehouseBinRepository,

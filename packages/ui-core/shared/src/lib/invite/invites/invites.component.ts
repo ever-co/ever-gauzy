@@ -196,7 +196,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			});
 		}
 
-		if (!this.selectedInvite) {
+		// No token: the invitation grants a role the caller may not issue, and the API withheld it.
+		if (!this.selectedInvite?.token) {
 			return;
 		}
 

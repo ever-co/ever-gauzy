@@ -4,7 +4,7 @@
 	(change)="selectSize($event); select.blur()"
 	(clear)="select.blur()"
 	[(ngModel)]="size"
-	[addTag]="addTag ? createNew : null"
+	[addTag]="canCreate ? createNew : null"
 	[clearable]="true"
 	[items]="sizes$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASK_SIZE' | translate"

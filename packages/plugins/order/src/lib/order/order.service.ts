@@ -21,8 +21,9 @@ import {
 	OrderChangeStatus,
 	OrderStatus
 } from '@gauzy/contracts';
-import { Money, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { Money, RequestContext, SequenceService, assertPlainReferencesNotForeign } from '@gauzy/core';
 import { Order } from './order.entity';
+import { ORDER_REFERENCES } from '../order.references';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
 import {
@@ -47,6 +48,7 @@ import { OrderShippingMethodService } from '../order-shipping-method/order-shipp
 import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { ICartToOrderRowMap, OrderCartLedgerCarryover } from '../checkout/order-cart-ledger-carryover.service';
+import { OrderCrudService } from '../order-crud.service';
 
 /** The series every order number is allocated from. */
 const ORDER_SEQUENCE_KEY = 'ORDER';
@@ -91,7 +93,7 @@ export interface IOrderApprovalRequested {
  * context consumes.
  */
 @Injectable()
-export class OrderService extends TenantAwareCrudService<Order> {
+export class OrderService extends OrderCrudService<Order> {
 	private readonly logger = new Logger(OrderService.name);
 
 	constructor(
@@ -146,6 +148,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		if (!entity.currency) {
 			throw new BadRequestException('ORDER_CURRENCY_REQUIRED: an order is priced in one currency.');
 		}
+
+		await this.assertReferences(entity);
 
 		const allocated = entity.number
 			? { formatted: entity.number, value: 0, key: ORDER_SEQUENCE_KEY }
@@ -706,6 +710,23 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
+	 * Refuses an order, or a change to one, that names a customer, channel, region, user, cart, parent order or payment
+	 * term of another tenant (`order.references.ts`). Checked on the TypeORM manager, which reads these tables under
+	 * either ORM.
+	 *
+	 * @param payload The order, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: object): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmOrderRepository.manager,
+			payload,
+			ORDER_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
 	 * Updates the few fields of an order that may change outside a change.
 	 *
 	 * Everything else — a line, a price, a quantity, an address, a delivery choice — is a modification of
@@ -745,6 +766,8 @@ export class OrderService extends TenantAwareCrudService<Order> {
 				details: { fields: illegal, changeEndpoint: `POST /api/orders/${orderId}/changes` }
 			});
 		}
+
+		await this.assertReferences(changes ?? {});
 
 		return this.totalsService.recompute(order.id, 'ORDER_UPDATED', {
 			expectation,
