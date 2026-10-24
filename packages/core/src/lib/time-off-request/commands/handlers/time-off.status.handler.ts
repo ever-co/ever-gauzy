@@ -1,7 +1,10 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { NotFoundException } from '@nestjs/common';
-import { StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
+import { EntityManager } from 'typeorm';
+import { isMySQL, isPostgres } from '@gauzy/config';
+import { ID, StatusTypesEnum, StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
+import { RequestApproval } from '../../../core/entities/internal';
 import { TimeOffStatusCommand } from '../time-off.status.command';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
@@ -14,6 +17,17 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
 	) {}
 
+	/**
+	 * Approves or denies a time-off request (`PUT /time-off-request/approval|denied/:id`, GraphQL
+	 * `approveTimeOffRequest` / `denyTimeOffRequest`), and the request approval recorded beside it.
+	 *
+	 * Who may decide, and that a decided request may be decided again, are unchanged. What changed is how the two rows
+	 * are written (follow-up listed on ever-co/ever-gauzy#11382): see {@link decide}.
+	 *
+	 * @param command The request and the decision.
+	 * @returns The request, as decided.
+	 * @throws NotFoundException when the request is not one of the caller's tenant.
+	 */
 	public async execute(command?: TimeOffStatusCommand): Promise<TimeOffRequest> {
 		const { id, status } = command;
 		// Both repositories are RAW (not tenant-aware): the request and its approval row must be
@@ -24,21 +38,55 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 			throw new NotFoundException('Request time off not found');
 		}
 
-		const [timeOffRequest, requestApproval] = await Promise.all([
-			this.typeOrmTimeOffRequestRepository.findOneBy({ id, tenantId }),
-			this.typeOrmRequestApprovalRepository.findOneBy({ requestId: id, tenantId })
-		]);
-
+		// The read that answers an unknown (or withdrawn) request with 404, as before.
+		const timeOffRequest = await this.typeOrmTimeOffRequestRepository.findOneBy({ id, tenantId });
 		if (!timeOffRequest) {
 			throw new NotFoundException('Request time off not found');
 		}
 
-		timeOffRequest.status = status;
-		if (requestApproval) {
-			requestApproval.status = StatusTypesMapRequestApprovalEnum[status];
-			await this.typeOrmRequestApprovalRepository.save(requestApproval);
-		}
+		await this.decide(timeOffRequest.id, tenantId, status);
 
-		return await this.typeOrmTimeOffRequestRepository.save(timeOffRequest);
+		return await this.typeOrmTimeOffRequestRepository.findOneBy({ id: timeOffRequest.id, tenantId });
+	}
+
+	/**
+	 * Writes the decision on the request and on its request approval, in one transaction.
+	 *
+	 * The route used to read both rows, set their status in memory, and `save()` each copy on its own. A save writes
+	 * every column its copy differs in from the stored row, so an edit of the leave that landed between the read and
+	 * the save (its dates, its policy, its employees) was written back to what the read had found, and the two rows
+	 * could end up disagreeing when two decisions, or a decision and an answer through the request approval's own
+	 * route, crossed.
+	 *
+	 * Now, on one transaction: the request approval's row is locked first (`SELECT … FOR UPDATE` on PostgreSQL and
+	 * MySQL; SQLite serializes the transaction instead), the lock the request approval's own answer route takes before
+	 * it moves the leave (ever-co/ever-gauzy#11382), so the two routes take turns and take their locks in one order;
+	 * then each row's status is written, and nothing else.
+	 *
+	 * @param id The time-off request.
+	 * @param tenantId The caller's tenant.
+	 * @param status The decision.
+	 */
+	protected async decide(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<void> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
+		await this.typeOrmTimeOffRequestRepository.manager.transaction(async (manager: EntityManager) => {
+			// The approval's row alone (a query builder joins no eager relation), so the lock is on that row.
+			const query = manager
+				.createQueryBuilder(RequestApproval, 'request_approval')
+				.where({ requestId: id, tenantId });
+			const requestApproval = rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+
+			await manager.update(TimeOffRequest, { id, tenantId }, { status });
+
+			if (requestApproval) {
+				await manager.update(
+					RequestApproval,
+					{ id: requestApproval.id, tenantId },
+					{ status: StatusTypesMapRequestApprovalEnum[status] }
+				);
+			}
+		});
 	}
 }
