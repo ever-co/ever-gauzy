@@ -17,6 +17,18 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
+/** The public npm registry, which the internal npm cache mirrors: the fallback when an install through the cache fails. */
+const PUBLIC_REGISTRY = 'https://registry.yarnpkg.com';
+
+/** A warning annotation on GitHub Actions, so a fallback shows on the run summary; a plain warning elsewhere. */
+function warn(message) {
+	if (process.env.GITHUB_ACTIONS === 'true') {
+		console.log(`::warning title=App dependency install retried::${message}`);
+	} else {
+		console.warn(`  ⚠ ${message}`);
+	}
+}
+
 /** The environment electron-builder 26.0 installed with (its `getGypEnv`), so install scripts target Electron. */
 function electronInstallEnv({ electronVersion, platform, arch }) {
 	const npmArch = arch === 'armv7l' ? 'arm' : arch;
@@ -65,16 +77,27 @@ exports.default = async function beforeBuild({ appDir, electronVersion, platform
 		'--network-timeout',
 		'600000'
 	];
+	const env = electronInstallEnv({ electronVersion, platform, arch });
+	const install = (extraArgs) => {
+		const result = spawnSync(command, [...args, ...extraArgs], { cwd: appDir, env, stdio: 'inherit', shell });
+		if (result.error) throw result.error;
+		return result.status;
+	};
 	console.log(`  • installing production dependencies of the app  appDir=${appDir} electron=${electronVersion}`);
-	const result = spawnSync(command, args, {
-		cwd: appDir,
-		env: electronInstallEnv({ electronVersion, platform, arch }),
-		stdio: 'inherit',
-		shell
-	});
-	if (result.error) throw result.error;
-	if (result.status !== 0) {
-		throw new Error(`Installing the production dependencies of ${appDir} failed (exit code ${result.status})`);
+	let status = install([]);
+	if (status !== 0) {
+		// In CI the registry is the internal npm cache (Verdaccio) whenever it answers its ping: the Configure Registry
+		// action writes it into the workspace .yarnrc, which this install inherits. A cache that answers the ping can
+		// still fail a single tarball - an HTTP 500 on @nestjs/core-12.2.0.tgz failed the stage Desktop Timer build on
+		// EVERDESK4 (2026-10-23) - and with no lockfile here one bad fetch fails the whole release. Retry once against
+		// the public registry the cache mirrors (a plain retry where that already was the registry), and say so.
+		warn(
+			`Installing the production dependencies of ${appDir} failed (exit code ${status}); retrying once against ${PUBLIC_REGISTRY}`
+		);
+		status = install(['--registry', PUBLIC_REGISTRY]);
+	}
+	if (status !== 0) {
+		throw new Error(`Installing the production dependencies of ${appDir} failed (exit code ${status})`);
 	}
 	// true: electron-builder goes on to rebuild the native modules of this tree for Electron, then packs it.
 	return true;
