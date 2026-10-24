@@ -16,12 +16,19 @@ import {
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard } from '../shared/guards';
+import { TASK_SETTING_WRITE_METADATA, TaskSettingPermissionGuard } from './task-setting-access';
 import { IssueTypeController } from './issue-type/issue-type.controller';
+import { IssueTypeService } from './issue-type/issue-type.service';
 import { TaskPriorityController } from './priorities/priority.controller';
+import { TaskPriorityService } from './priorities/priority.service';
 import { TaskRelatedIssueTypeController } from './related-issue-type/related-issue-type.controller';
+import { TaskRelatedIssueTypeService } from './related-issue-type/related-issue-type.service';
 import { TaskSizeController } from './sizes/size.controller';
+import { TaskSizeService } from './sizes/size.service';
 import { TaskStatusController } from './statuses/status.controller';
+import { TaskStatusService } from './statuses/status.service';
 import { TaskVersionController } from './versions/version.controller';
+import { TaskVersionService } from './versions/version.service';
 
 /**
  * GHSA-v79w-54p2-wmh5, owner decision 2 (2026-10-22) — the task settings are written under `ORG_TASK_SETTING`.
@@ -35,6 +42,10 @@ import { TaskVersionController } from './versions/version.controller';
  * This suite reads the metadata Nest itself reads, on the most derived handler, for every mutating route each
  * controller serves — inherited ones included — and checks that each override still serves the inherited route
  * the way the base did (path, method, status code, validation).
+ *
+ * The guard is `TaskSettingPermissionGuard`, a `PermissionGuard` that also lets a manager of a team write the rows of
+ * that team (owner decision 2(b), 2026-10-23); every write names its rows with `@TaskSettingWrite`, the controller's
+ * own service and how the write names them (`task-setting-permission.guard.spec.ts` covers the decisions).
  */
 const CONTROLLERS = [
 	IssueTypeController,
@@ -73,6 +84,27 @@ function routes(controller: Function): Map<string, { handler: Function; declared
 	return found;
 }
 
+/** Each controller's own service: the rows its writes name. */
+const SERVICE_OF = new Map<Function, Function>([
+	[IssueTypeController, IssueTypeService],
+	[TaskPriorityController, TaskPriorityService],
+	[TaskRelatedIssueTypeController, TaskRelatedIssueTypeService],
+	[TaskSizeController, TaskSizeService],
+	[TaskStatusController, TaskStatusService],
+	[TaskVersionController, TaskVersionService]
+]);
+
+/** How each write names its rows, by handler name. */
+const KIND_OF: Record<string, string> = {
+	create: 'create',
+	update: 'update',
+	delete: 'stored',
+	softRemove: 'stored',
+	softRecover: 'stored',
+	markAsDefault: 'markAsDefault',
+	reorder: 'reorder'
+};
+
 /** The handler the `CrudFactory` base declares for a route, which the controller now overrides. */
 function inheritedHandler(controller: Function, name: string): Function {
 	return (Object.getPrototypeOf(controller.prototype) as Record<string, Function>)[name];
@@ -87,7 +119,7 @@ function bodyTypeOf(handler: Function): unknown {
 
 describe('the task-settings controllers — every write states ORG_TASK_SETTING', () => {
 	it.each(CONTROLLERS.map((controller) => [controller.name, controller]))(
-		'%s states ORG_TASK_SETTING behind PermissionGuard on every mutating route, inherited ones included',
+		'%s states ORG_TASK_SETTING behind the task-setting guard on every mutating route, inherited ones included',
 		(_name, controller) => {
 			const mutating = [...routes(controller)].filter(([, { handler }]) =>
 				MUTATING.has(Reflect.getMetadata(METHOD_METADATA, handler))
@@ -102,19 +134,21 @@ describe('the task-settings controllers — every write states ORG_TASK_SETTING'
 				mutating.map(([name, { handler, declaredOn }]) => ({
 					route: name,
 					declaredOn: declaredOn.name,
-					permissionGuard: ((Reflect.getMetadata(GUARDS_METADATA, handler) ?? []) as Function[]).includes(
-						PermissionGuard
-					),
-					permissions: Reflect.getMetadata(PERMISSIONS_METADATA, handler)
+					guards: Reflect.getMetadata(GUARDS_METADATA, handler),
+					permissions: Reflect.getMetadata(PERMISSIONS_METADATA, handler),
+					write: Reflect.getMetadata(TASK_SETTING_WRITE_METADATA, handler)
 				}))
 			).toEqual(
 				mutating.map(([name]) => ({
 					route: name,
 					declaredOn: controller.name,
-					permissionGuard: true,
-					permissions: [PermissionsEnum.ORG_TASK_SETTING]
+					guards: [TaskSettingPermissionGuard],
+					permissions: [PermissionsEnum.ORG_TASK_SETTING],
+					write: { rows: SERVICE_OF.get(controller), kind: KIND_OF[name] }
 				}))
 			);
+			// The guard is still `PermissionGuard` for a holder of the grant
+			expect(Object.getPrototypeOf(TaskSettingPermissionGuard)).toBe(PermissionGuard);
 		}
 	);
 
@@ -158,8 +192,12 @@ describe('the task-settings controllers — every write states ORG_TASK_SETTING'
 
 			expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(method);
 			expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe(path);
-			expect(Reflect.getMetadata(GUARDS_METADATA, handler)).toContain(PermissionGuard);
+			expect(Reflect.getMetadata(GUARDS_METADATA, handler)).toEqual([TaskSettingPermissionGuard]);
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handler)).toEqual([PermissionsEnum.ORG_TASK_SETTING]);
+			expect(Reflect.getMetadata(TASK_SETTING_WRITE_METADATA, handler)).toEqual({
+				rows: SERVICE_OF.get(controller),
+				kind: KIND_OF[name]
+			});
 		}
 	});
 

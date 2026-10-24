@@ -27,7 +27,8 @@ import {
 	ITaskStatusUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { TenantPermissionGuard, PermissionGuard } from './../../shared/guards';
+import { TenantPermissionGuard } from './../../shared/guards';
+import { TaskSettingPermissionGuard, TaskSettingWrite } from '../task-setting-access';
 import { CountQueryDTO } from './../../shared/dto';
 import { UseValidationPipe, AbstractValidationPipe, UUIDValidationPipe } from '../../shared/pipes';
 import { CrudFactory, BaseQueryDTO } from './../../core/crud';
@@ -39,6 +40,12 @@ import { ReorderRequestDTO } from './dto/reorder.dto';
 import { Permissions } from '../../shared/decorators';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 
+/**
+ * Every write states `ORG_TASK_SETTING` behind `TaskSettingPermissionGuard`: the grant's holders write every row, as
+ * `PermissionGuard` decides it, and a manager of a team may also write the rows of that team (`organizationTeamId`
+ * set) without it, as Ever Teams' team settings do (owner decision 2(b), 2026-10-23). `@TaskSettingWrite` tells the
+ * guard how each write names its rows.
+ */
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Status')
 @Controller('/task-statuses')
@@ -76,8 +83,9 @@ export class TaskStatusController extends CrudFactory<
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: 'An error occurred during reordering.' // Description for internal server error
 	})
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'reorder')
 	@Patch('/reorder')
 	@UseValidationPipe({ whitelist: true })
 	async reorder(@Body() { reorder }: ReorderRequestDTO) {
@@ -127,8 +135,9 @@ export class TaskStatusController extends CrudFactory<
 		description: 'Task status marked as default'
 	})
 	@HttpCode(HttpStatus.OK)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'markAsDefault')
 	@Put(':id/default')
 	@UseValidationPipe({ whitelist: true })
 	async markAsDefault(@Param('id') id: ID, @Body() input: UpdatesStatusDTO): Promise<ITaskStatus[]> {
@@ -153,8 +162,9 @@ export class TaskStatusController extends CrudFactory<
 		description: 'Invalid input, The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'create')
 	@Post()
 	@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: CreateStatusDTO }))
 	async create(@Body() entity: DeepPartial<TaskStatus>): Promise<TaskStatus> {
@@ -181,8 +191,9 @@ export class TaskStatusController extends CrudFactory<
 		description: 'Invalid input, The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'update')
 	@Put(':id')
 	@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: UpdatesStatusDTO }))
 	async update(
@@ -207,8 +218,9 @@ export class TaskStatusController extends CrudFactory<
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted.' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found.' })
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'stored')
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await super.delete(id);
@@ -230,8 +242,9 @@ export class TaskStatusController extends CrudFactory<
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'stored')
 	@Delete(':id/soft')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<TaskStatus> {
@@ -254,8 +267,9 @@ export class TaskStatusController extends CrudFactory<
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TaskSettingPermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TASK_SETTING)
+	@TaskSettingWrite(TaskStatusService, 'stored')
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<TaskStatus> {
