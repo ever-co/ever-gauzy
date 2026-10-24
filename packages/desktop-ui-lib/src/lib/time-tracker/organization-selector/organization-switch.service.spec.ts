@@ -148,6 +148,25 @@ describe('OrganizationSwitchService', () => {
 		expect(sentChannels()).toEqual(['update_project_on', 'refresh-timer']);
 	});
 
+	it('sends the user to sign in again when the main process fails to save the new account', async () => {
+		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
+		authService.electronAuthentication.mockReturnValue(throwError(() => new Error('GET_EMP_SETTING')));
+
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(false);
+
+		// Renderer and main process disagree now: no reset, no reload, but a clean sign-in.
+		expect(ipcRenderer.send).not.toHaveBeenCalled();
+		for (const selector of Object.values(selectors)) {
+			expect(selector.resetPage).not.toHaveBeenCalled();
+		}
+		expect(translate.instant).toHaveBeenCalledWith('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_INCOMPLETE', {
+			name: organizationB.name
+		});
+		expect(toastr.error).toHaveBeenCalledTimes(1);
+		expect(sessionExpiredHandler.execute).toHaveBeenCalledTimes(1);
+		expect(service.isSwitching).toBe(false);
+	});
+
 	it('empties the four selectors (items, page and pick) before the timer loads the new organization', async () => {
 		authService.switchOrganization.mockReturnValue(of(authResponse(organizationB.id)));
 		ipcRenderer.send.mockImplementation((channel: string) => {
@@ -303,6 +322,20 @@ describe('OrganizationSwitchService', () => {
 		expect(toastr.error).toHaveBeenCalledTimes(1);
 		expect(sessionExpiredHandler.execute).toHaveBeenCalledTimes(1);
 		expect(service.isSwitching).toBe(false);
+	});
+
+	it('sends the user to sign in again when the main process fails to save the switch back', async () => {
+		authService.switchOrganization.mockImplementation((organizationId: string) =>
+			of(authResponse(organizationId, organizationId === organizationA.id))
+		);
+		authService.electronAuthentication.mockReturnValue(throwError(() => new Error('save failed')));
+
+		await expect(service.switchOrganization(organizationB)).resolves.toBe(false);
+
+		expect(translate.instant).toHaveBeenCalledWith('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_BACK_FAILED', {
+			name: organizationB.name
+		});
+		expect(sessionExpiredHandler.execute).toHaveBeenCalledTimes(1);
 	});
 
 	it('sends the user to sign in again when switching back gives no employee either', async () => {

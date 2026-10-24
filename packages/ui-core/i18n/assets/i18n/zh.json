@@ -5580,7 +5580,8 @@
 			"ORGANIZATION_SWITCH_REFUSED": "无法切换到 {{ name }}：{{ reason }}。您仍在当前组织中工作。",
 			"ORGANIZATION_NOT_EMPLOYEE": "您不是 {{ name }} 的在职员工，因此计时器无法在那里记录时间。您仍在当前组织中工作。",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "正在切换组织。请在切换完成后再启动计时器。",
-			"ORGANIZATION_SWITCH_BACK_FAILED": "您不是 {{ name }} 的在职员工，且未能切换回您之前的组织。请重新登录。"
+			"ORGANIZATION_SWITCH_BACK_FAILED": "您不是 {{ name }} 的在职员工，且未能切换回您之前的组织。请重新登录。",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "无法在此设备上完成切换到 {{ name }}。请重新登录。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",

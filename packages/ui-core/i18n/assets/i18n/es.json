@@ -5582,7 +5582,8 @@
 			"ORGANIZATION_SWITCH_REFUSED": "No se pudo cambiar a {{ name }}: {{ reason }}. Sigues trabajando en tu organización actual.",
 			"ORGANIZATION_NOT_EMPLOYEE": "No eres un empleado activo de {{ name }}, por lo que el temporizador no puede registrar tiempo allí. Sigues trabajando en tu organización actual.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Se está cambiando de organización. Inicia el temporizador cuando termine el cambio.",
-			"ORGANIZATION_SWITCH_BACK_FAILED": "No eres un empleado activo de {{ name }} y no se pudo volver a tu organización anterior. Inicia sesión de nuevo."
+			"ORGANIZATION_SWITCH_BACK_FAILED": "No eres un empleado activo de {{ name }} y no se pudo volver a tu organización anterior. Inicia sesión de nuevo.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "No se pudo completar el cambio a {{ name }} en este dispositivo. Inicia sesión de nuevo."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "¡El seguimiento fue detenido debido a la inactividad!",

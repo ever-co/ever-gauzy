@@ -5577,7 +5577,8 @@
 			"ORGANIZATION_SWITCH_REFUSED": "Impossible de passer à {{ name }} : {{ reason }}. Vous travaillez toujours dans votre organisation actuelle.",
 			"ORGANIZATION_NOT_EMPLOYEE": "Vous n'êtes pas un employé actif de {{ name }}, le minuteur ne peut donc pas y suivre le temps. Vous travaillez toujours dans votre organisation actuelle.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Le changement d'organisation est en cours. Démarrez le minuteur une fois le changement terminé.",
-			"ORGANIZATION_SWITCH_BACK_FAILED": "Vous n'êtes pas un employé actif de {{ name }}, et le retour à votre organisation précédente a échoué. Veuillez vous reconnecter."
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Vous n'êtes pas un employé actif de {{ name }}, et le retour à votre organisation précédente a échoué. Veuillez vous reconnecter.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Le passage à {{ name }} n'a pas pu être terminé sur cet appareil. Veuillez vous reconnecter."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",

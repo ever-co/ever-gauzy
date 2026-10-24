@@ -5578,7 +5578,8 @@
 			"ORGANIZATION_SWITCH_REFUSED": "تعذّر التبديل إلى {{ name }}: {{ reason }}. ما زلت تعمل في مؤسستك الحالية.",
 			"ORGANIZATION_NOT_EMPLOYEE": "أنت لست موظفًا نشطًا في {{ name }}، لذلك لا يمكن للمؤقت تتبع الوقت هناك. ما زلت تعمل في مؤسستك الحالية.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "جارٍ تبديل المؤسسة. ابدأ المؤقت بعد اكتمال التبديل.",
-			"ORGANIZATION_SWITCH_BACK_FAILED": "أنت لست موظفًا نشطًا في {{ name }}، وفشلت العودة إلى مؤسستك السابقة. يرجى تسجيل الدخول مرة أخرى."
+			"ORGANIZATION_SWITCH_BACK_FAILED": "أنت لست موظفًا نشطًا في {{ name }}، وفشلت العودة إلى مؤسستك السابقة. يرجى تسجيل الدخول مرة أخرى.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "تعذّر إكمال التبديل إلى {{ name }} على هذا الجهاز. يرجى تسجيل الدخول مرة أخرى."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",

@@ -127,12 +127,7 @@ export class OrganizationSwitchService {
 				// Not even that worked: a later token refresh would carry the session into the organization just
 				// refused, where the timer has no employee to track. End the session through the usual sign-in instead
 				// of letting the timer go on with tokens that are about to stop working.
-				this._toastrNotificationService.error(
-					this._translateService.instant('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_BACK_FAILED', {
-						name: organization.name
-					})
-				);
-				await firstValueFrom(this._sessionExpiredHandler.execute(), { defaultValue: undefined });
+				await this.endSession('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_BACK_FAILED', organization);
 				return false;
 			}
 			this._toastrNotificationService.error(
@@ -143,16 +138,31 @@ export class OrganizationSwitchService {
 			return false;
 		}
 
-		await this.enter(response, organization);
+		if (!(await this.enter(response, organization))) {
+			// The renderer holds the new organization's tokens, the Electron main process may hold the old ones or none
+			// (the agent clears them when it cannot read the employee's settings), and the API has replaced the refresh
+			// token held before: the two halves of the app can no longer be brought to agree. Sign in again.
+			await this.endSession('TIMER_TRACKER.TOASTR.ORGANIZATION_SWITCH_INCOMPLETE', organization);
+			return false;
+		}
 		return true;
+	}
+
+	/**
+	 * End the session through the usual sign-in (`SessionExpiredHandler`), after telling the user why.
+	 */
+	private async endSession(messageKey: string, organization: IOrganization): Promise<void> {
+		this._toastrNotificationService.error(this._translateService.instant(messageKey, { name: organization.name }));
+		await firstValueFrom(this._sessionExpiredHandler.execute(), { defaultValue: undefined });
 	}
 
 	/**
 	 * Switch back to the organization the user was in after the API issued tokens for an organization the timer cannot
 	 * track in. Only the tokens change: the organization, and the client, project, team and task picked in it, stay.
 	 *
-	 * @returns `true` when the API switched back and its tokens are stored; `false` when the request failed or its answer
-	 * cannot be used, in which case nothing was stored.
+	 * @returns `true` when the API switched back and its tokens are stored, in the renderer and in the Electron main
+	 * process; `false` when the request failed, its answer cannot be used (nothing was stored then), or the main process
+	 * failed to save it.
 	 */
 	private async returnTo(organizationId: string | null): Promise<boolean> {
 		if (!organizationId) {
@@ -166,11 +176,10 @@ export class OrganizationSwitchService {
 				);
 				return false;
 			}
-			await this.storeAuthentication(
+			return await this.storeAuthentication(
 				response,
 				this._store.selectedOrganization ?? this._store.user?.employee?.organization
 			);
-			return true;
 		} catch (error) {
 			console.error('[OrganizationSwitchService] Switching back to the previous organization failed:', error);
 			return false;
@@ -180,18 +189,25 @@ export class OrganizationSwitchService {
 	/**
 	 * Make `organization`, which the API has just issued `response` for, the one the timer works in: store the tokens,
 	 * drop the work picked in the organization left, and reload the time tracker.
+	 *
+	 * @returns `false` when the Electron main process failed to save the new account; nothing is reset or reloaded then.
 	 */
-	private async enter(response: IAuthResponse, organization: IOrganization): Promise<void> {
-		await this.storeAuthentication(response, organization);
+	private async enter(response: IAuthResponse, organization: IOrganization): Promise<boolean> {
+		if (!(await this.storeAuthentication(response, organization))) {
+			return false;
+		}
 		this.resetWorkSelection();
 		await this.reloadTimeTracker();
+		return true;
 	}
 
 	/**
 	 * Store the tokens and user the API issued for `organization`, in the renderer store and in the Electron main
 	 * process. Resolves once the main process has saved them.
+	 *
+	 * @returns `false` when the main process failed to save them (the renderer store holds them already).
 	 */
-	private async storeAuthentication(response: IAuthResponse, organization: IOrganization): Promise<void> {
+	private async storeAuthentication(response: IAuthResponse, organization: IOrganization): Promise<boolean> {
 		const { employee } = response.user;
 
 		// The switch response carries the employee without its organization; the time tracker reads the organization's
@@ -221,11 +237,13 @@ export class OrganizationSwitchService {
 			if (saved$) {
 				await firstValueFrom(saved$, { defaultValue: undefined });
 			}
+			return true;
 		} catch (error) {
 			console.error(
 				'[OrganizationSwitchService] The Electron main process failed to save the new account:',
 				error
 			);
+			return false;
 		}
 	}
 
