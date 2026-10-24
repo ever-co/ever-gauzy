@@ -24,11 +24,20 @@
 					<nb-icon icon="chevron-left-outline"></nb-icon>
 				</button>
 				}
-				<div #tabsList class="tabs team-tabs" role="tablist" (scroll)="updateTabsScroll()">
+				<!-- One panel renders at a time, so every tab controls the same panel id. -->
+				<div
+					#tabsList
+					class="tabs team-tabs"
+					role="tablist"
+					[attr.aria-label]="'ORGANIZATIONS_PAGE.TEAMS' | translate"
+					(scroll)="updateTabsScroll()"
+				>
 					<button
 						type="button"
 						role="tab"
 						class="tab"
+						id="teams-dashboard-tab-all"
+						aria-controls="teams-dashboard-panel"
 						[class.is-active]="!selectedTeamId"
 						[attr.aria-selected]="!selectedTeamId"
 						(click)="select(null)"
@@ -41,6 +50,8 @@
 						type="button"
 						role="tab"
 						class="tab"
+						[attr.id]="'teams-dashboard-tab-' + row.id"
+						aria-controls="teams-dashboard-panel"
 						[class.is-active]="selectedTeamId === row.id"
 						[attr.aria-selected]="selectedTeamId === row.id"
 						(click)="select(row.id)"
@@ -77,6 +88,8 @@
 		<!-- ══ All teams ══ -->
 		<gauzy-all-team
 			role="tabpanel"
+			id="teams-dashboard-panel"
+			aria-labelledby="teams-dashboard-tab-all"
 			[teams]="teamRows"
 			[membersByTeam]="membersByTeam"
 			[topMembers]="topMembers"
@@ -87,7 +100,12 @@
 		} @else {
 		<!-- ══ One team ══ -->
 		@let team = selectedTeam;
-		<div class="tab-pane" role="tabpanel">
+		<div
+			class="tab-pane"
+			role="tabpanel"
+			id="teams-dashboard-panel"
+			[attr.aria-labelledby]="'teams-dashboard-tab-' + team.id"
+		>
 			<gauzy-team-card [team]="team"></gauzy-team-card>
 
 			<section class="kpi-row">

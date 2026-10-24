@@ -89,13 +89,14 @@ nb-card-body.ev-body {
     transition: opacity 0.15s ease-in-out;
   }
 
+  // Logical edges, so the start fade sits on the right in a right-to-left layout.
   &::before {
-    left: 0;
+    inset-inline-start: 0;
     background: linear-gradient(to right, var(--gauzy-card-1) 35%, transparent);
   }
 
   &::after {
-    right: 0;
+    inset-inline-end: 0;
     background: linear-gradient(to left, var(--gauzy-card-1) 35%, transparent);
   }
 
@@ -144,11 +145,28 @@ nb-card-body.ev-body {
   }
 
   &--start {
-    left: 0;
+    inset-inline-start: 0;
   }
 
   &--end {
-    right: 0;
+    inset-inline-end: 0;
+  }
+}
+
+// Right-to-left: the fades point the other way and the chevrons face their logical edge.
+:host-context([dir='rtl']) {
+  .tabs-scroller {
+    &::before {
+      background: linear-gradient(to left, var(--gauzy-card-1) 35%, transparent);
+    }
+
+    &::after {
+      background: linear-gradient(to right, var(--gauzy-card-1) 35%, transparent);
+    }
+  }
+
+  .tabs-arrow nb-icon {
+    transform: scaleX(-1);
   }
 }
 

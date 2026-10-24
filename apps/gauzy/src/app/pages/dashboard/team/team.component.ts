@@ -99,7 +99,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				this._tabsResizeObserver.observe(element);
 			});
 		}
-		this.updateTabsScroll();
+		// Deferred: the query is refreshed after the template was checked, so flipping the bound
+		// arrow flags synchronously here would raise ExpressionChangedAfterItHasBeenChecked.
+		setTimeout(() => this.updateTabsScroll());
 	}
 
 	/** `null` shows "All teams"; otherwise the id of the open team. */
@@ -111,6 +113,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	public membersByTeam: Record<string, IMemberRow[]> = {};
 	public topMembers: IRankedMember[] = [];
 	public projectCount = 0;
+	/** Sequence of the project-count requests: only the latest one may write `projectCount`. */
+	private _projectCountRequest = 0;
 
 	/** Organization-wide figures of the "All teams" summary strip. */
 	public overview = {
@@ -184,12 +188,18 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this._revealActiveTab();
 	}
 
-	/** Re-reads which sides of the team tabs have more to scroll to. */
+	/**
+	 * Re-reads which sides of the team tabs have more to scroll to. Sides are LOGICAL: in a
+	 * right-to-left layout `scrollLeft` runs from 0 towards negative values, so the distance from
+	 * the start edge is its absolute value.
+	 */
 	public updateTabsScroll(): void {
 		const list = this._tabsList;
+		const position = list ? Math.abs(list.scrollLeft) : 0;
+		const maxPosition = list ? list.scrollWidth - list.clientWidth : 0;
 		// One pixel of slack: fractional widths leave `scrollLeft` a hair short of the end.
-		const start = !!list && list.scrollLeft > 1;
-		const end = !!list && list.scrollLeft + list.clientWidth < list.scrollWidth - 1;
+		const start = !!list && position > 1;
+		const end = !!list && position < maxPosition - 1;
 		if (start !== this.canScrollStart || end !== this.canScrollEnd) {
 			this.canScrollStart = start;
 			this.canScrollEnd = end;
@@ -197,13 +207,18 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		}
 	}
 
-	/** Scrolls the team tabs by most of a visible width, so the next tabs come into view. */
+	/**
+	 * Scrolls the team tabs by most of a visible width towards their logical start (`-1`) or end
+	 * (`1`); in a right-to-left layout moving towards the end means a negative `left`.
+	 */
 	public scrollTabs(direction: 1 | -1): void {
 		const list = this._tabsList;
 		if (!list) {
 			return;
 		}
-		list.scrollBy({ left: direction * list.clientWidth * 0.8, behavior: 'smooth' });
+		const rtl = getComputedStyle(list).direction === 'rtl';
+		const distance = direction * list.clientWidth * 0.8;
+		list.scrollBy({ left: rtl ? -distance : distance, behavior: 'smooth' });
 	}
 
 	/** Brings the selected tab fully into view, clear of the arrows. */
@@ -245,10 +260,17 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			return;
 		}
 		const { id: organizationId, tenantId } = this.organization;
+		// Filters can change while a count is in flight: an older answer, success or failure, is dropped.
+		const request = ++this._projectCountRequest;
 		try {
-			this.projectCount = await this._organizationProjectsService.getCount({ organizationId, tenantId });
+			const count = await this._organizationProjectsService.getCount({ organizationId, tenantId });
+			if (request === this._projectCountRequest) {
+				this.projectCount = count;
+			}
 		} catch (e) {
-			this.projectCount = 0;
+			if (request === this._projectCountRequest) {
+				this.projectCount = 0;
+			}
 		}
 	}
 
@@ -402,22 +424,37 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					.length,
 				duration: working.reduce((total, member) => total + (member.todayWorkDuration || 0), 0),
 				activity: this._average(working.map((member) => member.activity || 0)),
-				projects: this._uniques(working.flatMap((member) => member.projects ?? [])).length,
+				// Logs without a project group under an empty object: not a project worked.
+				projects: this._uniques(working.flatMap((member) => member.projects ?? []).filter((project) => !!project?.id))
+					.length,
 				managers: members
-					.filter((member) => member.role?.name === RolesEnum.MANAGER)
+					.filter((member) => this._isManager(member))
 					.map((member) => member.employee?.user?.name)
 					.filter(Boolean)
 			};
 		});
 
-		// A person on several teams counts once across the organization.
+		// A person on several teams counts once across the organization, with the time of every
+		// team added up (each team's figure only holds that team's logs). The label names the team
+		// with the largest share of the day.
 		const people = new Map<string, any>();
 		for (const team of this._todayTeamsWorkers) {
 			for (const member of team.members) {
+				const duration = member.todayWorkDuration || 0;
 				const known = people.get(member.employeeId);
-				if (!known || (member.todayWorkDuration || 0) > (known.todayWorkDuration || 0)) {
-					people.set(member.employeeId, { ...member, teamName: team.name });
+				if (!known) {
+					people.set(member.employeeId, { ...member, teamName: team.name, teamDuration: duration });
+					continue;
 				}
+				const isLargerShare = duration > known.teamDuration;
+				people.set(member.employeeId, {
+					...known,
+					todayWorkDuration: (known.todayWorkDuration || 0) + duration,
+					isWorkingToday: known.isWorkingToday || member.isWorkingToday,
+					isRunningTimer: known.isRunningTimer || member.isRunningTimer,
+					teamName: isLargerShare ? team.name : known.teamName,
+					teamDuration: isLargerShare ? duration : known.teamDuration
+				});
 			}
 		}
 		const worked = [...people.values()].filter((member) => member.isWorkingToday);
@@ -471,7 +508,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					caption: member.employee?.organizationPosition?.name || user?.email || null,
 					avatarUrl: avatarOf(user?.image?.fullUrl || user?.imageUrl),
 					presence: presenceOf(member.employee, member.isRunningTimer),
-					isManager: member.role?.name === RolesEnum.MANAGER,
+					isManager: this._isManager(member),
 					isWorking: !!member.isWorkingToday,
 					tasks: (member.tasks ?? []).map((task, index) => {
 						const estimate = Number(task?.estimate) || 0;
@@ -497,6 +534,14 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					b.duration - a.duration ||
 					a.name.localeCompare(b.name)
 			);
+	}
+
+	/**
+	 * A team manager: the membership flag, or the legacy Manager role — the same rule as
+	 * `OrganizationTeamEmployeeService.findMemberSets()`.
+	 */
+	private _isManager(member: any): boolean {
+		return member?.isManager === true || member?.role?.name === RolesEnum.MANAGER;
 	}
 
 	private _average(values: number[]): number {
