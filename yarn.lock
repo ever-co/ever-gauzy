@@ -32109,10 +32109,15 @@ nodemailer-handlebars@^1.0.1:
   dependencies:
     express-handlebars "^3.0.0"
 
-nodemailer@10.1.0, nodemailer@^10.1.0, nodemailer@^7.0.12:
+nodemailer@10.1.0:
   version "10.1.0"
   resolved "https://registry.npmjs.org/nodemailer/-/nodemailer-10.1.0.tgz#315f81d5ebe08f0627e4539727b50c27e9730803"
   integrity sha512-fXW8AulB25aOTuwfRYV6lqHyfz2VM4rr4SGXH03mE7x5znEUpzL5mu6anARUpZN7744Ziwkmr4AxSLPJsBQspg==
+
+nodemailer@^10.1.0, nodemailer@^7.0.12:
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-10.2.1.tgz#255f4220fc401ff76ae28ef3b7e67349ea293c88"
+  integrity sha512-ZrDNsPFoDMwefNs7sJwrYiEJ/CG4ClJWDZv05iNJsEBWa8GRDry1QJHTJxsuTAY9eDDKjX4k+q3SxslXJOao7w==
 
 nodemon@^3.1.14:
   version "3.1.14"
