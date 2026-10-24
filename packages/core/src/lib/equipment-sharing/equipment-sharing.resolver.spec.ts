@@ -400,6 +400,16 @@ describe('EquipmentSharingResolver — the SDL declares the capabilities the RES
 		expect(printed).toMatch(/input UpdateEquipmentSharingInput \{/);
 	});
 
+	it('carries the optimistic-concurrency version on the row, and lets an edit state it without requiring it', () => {
+		const fieldsOf = (name: string) =>
+			(schema.getType(name) as unknown as { getFields(): Record<string, { type: unknown }> }).getFields();
+
+		expect(String(fieldsOf('EquipmentSharing')['version']?.type)).toBe('Int');
+		expect(String(fieldsOf('UpdateEquipmentSharingInput')['version']?.type)).toBe('Int');
+		// A new period starts at version 1: the create states none.
+		expect(fieldsOf('CreateEquipmentSharingInput')['version']).toBeUndefined();
+	});
+
 	it('carries the row’s own columns and not the relations the list read never joins', () => {
 		const members = memberNames('EquipmentSharing');
 
@@ -812,6 +822,20 @@ describe('EquipmentSharingResolver — one resource, two protocols, the same ope
 			status: RequestApprovalStatusTypesEnum.APPROVED,
 			shareEndDay: new Date('2026-07-01T10:00:00.000Z')
 		});
+	});
+
+	it('hands the version an edit states to the command, which compare-and-sets on it', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		await resolver.updateEquipmentSharing({
+			id: APPROVED_PERIOD,
+			status: RequestApprovalStatusTypesEnum.APPROVED,
+			version: 3
+		});
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command).toBeInstanceOf(EquipmentSharingUpdateCommand);
+		expect(command.input).toEqual({ status: RequestApprovalStatusTypesEnum.APPROVED, version: 3 });
 	});
 
 	it('approves a period through the status command, with the approved value', async () => {
