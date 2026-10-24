@@ -61,22 +61,38 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 	 * Now, on one transaction: the request approval's row is locked first (`SELECT … FOR UPDATE` on PostgreSQL and
 	 * MySQL; SQLite serializes the transaction instead), the lock the request approval's own answer route takes before
 	 * it moves the leave (ever-co/ever-gauzy#11382), so the two routes take turns and take their locks in one order;
-	 * then each row's status is written, and nothing else.
+	 * then the leave is read again under its own lock, and refused (404, nothing written) when it is gone; then each
+	 * row's status is written, and nothing else.
+	 *
+	 * This handler works through TypeORM's repositories on either ORM the installation runs, as it always has: the
+	 * locks are the database's, so they hold against the MikroORM answer route as well.
 	 *
 	 * @param id The time-off request.
 	 * @param tenantId The caller's tenant.
 	 * @param status The decision.
+	 * @throws NotFoundException when the leave was removed since it was read; neither status is written then.
 	 */
 	protected async decide(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<void> {
 		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
 		const rowLock = isPostgres() || isMySQL();
 
 		await this.typeOrmTimeOffRequestRepository.manager.transaction(async (manager: EntityManager) => {
-			// The approval's row alone (a query builder joins no eager relation), so the lock is on that row.
-			const query = manager
+			// Each row alone (a query builder joins no eager relation, such as the leave's document), so each lock is
+			// on that row; the approval's first, then the leave's.
+			const approvalQuery = manager
 				.createQueryBuilder(RequestApproval, 'request_approval')
 				.where({ requestId: id, tenantId });
-			const requestApproval = rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+			const requestApproval = rowLock
+				? await approvalQuery.setLock('pessimistic_write').getOne()
+				: await approvalQuery.getOne();
+
+			// The leave again, under its lock: one removed (or withdrawn) since the read that answered 404 is not
+			// decided, and neither is its approval — the transaction rolls back with the same 404.
+			const leaveQuery = manager.createQueryBuilder(TimeOffRequest, 'time_off_request').where({ id, tenantId });
+			const leave = rowLock ? await leaveQuery.setLock('pessimistic_write').getOne() : await leaveQuery.getOne();
+			if (!leave) {
+				throw new NotFoundException('Request time off not found');
+			}
 
 			await manager.update(TimeOffRequest, { id, tenantId }, { status });
 

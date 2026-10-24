@@ -19,8 +19,8 @@ import { TimeOffStatusHandler } from './time-off.status.handler';
  * row — could leave the two rows disagreeing.
  *
  * The decision is now one transaction: the approval's row is locked first (the request approval route's lock and lock
- * order), then each row's status is written, and nothing else. Who may decide, and re-deciding a decided leave, are
- * unchanged.
+ * order), then the leave's, which must still be there; then each row's status is written, and nothing else. Who may
+ * decide, and re-deciding a decided leave, are unchanged.
  */
 
 jest.mock('@gauzy/config', () => ({
@@ -52,13 +52,16 @@ function setUp({ leave = true, approval = true }: { leave?: boolean; approval?: 
 			: null
 	};
 
-	const query = {
+	/** A query builder over one row: its locking read answers what is committed. */
+	const queryOf = (row: () => Row | null) => ({
 		where: jest.fn().mockReturnThis(),
 		setLock: jest.fn().mockReturnThis(),
-		getOne: jest.fn(async () => (store.approval ? copy(store.approval) : null))
-	};
+		getOne: jest.fn(async () => (row() ? copy(row()) : null))
+	});
+	const query = queryOf(() => store.approval);
+	const leaveQuery = queryOf(() => store.leave);
 	const manager = {
-		createQueryBuilder: jest.fn(() => query),
+		createQueryBuilder: jest.fn((entity: unknown) => (entity === RequestApproval ? query : leaveQuery)),
 		// An UPDATE writes the columns it states, and nothing else.
 		update: jest.fn(async (entity: unknown, criteria: Row, columns: Row) => {
 			const row = entity === TimeOffRequest ? store.leave : store.approval;
@@ -80,7 +83,7 @@ function setUp({ leave = true, approval = true }: { leave?: boolean; approval?: 
 	const handler = new TimeOffStatusHandler(timeOffRequests as any, requestApprovals as any);
 	const decide = (status: StatusTypesEnum) => handler.execute(new TimeOffStatusCommand(ID, status));
 
-	return { store, query, manager, timeOffRequests, requestApprovals, decide };
+	return { store, query, leaveQuery, manager, timeOffRequests, requestApprovals, decide };
 }
 
 describe('TimeOffStatusHandler', () => {
@@ -122,17 +125,26 @@ describe('TimeOffStatusHandler', () => {
 	it.each([
 		['PostgreSQL', isPostgres],
 		['MySQL', isMySQL]
-	])('on %s locks the approval FOR UPDATE, then writes both statuses on the transaction', async (_, dialect) => {
+	])('on %s locks the approval, then the leave, FOR UPDATE, then writes both statuses', async (_, dialect) => {
 		(dialect as jest.Mock).mockReturnValue(true);
-		const { query, manager, timeOffRequests, requestApprovals, decide } = setUp();
+		const { query, leaveQuery, manager, timeOffRequests, requestApprovals, decide } = setUp();
 
 		await decide(StatusTypesEnum.DENIED);
 
 		expect(timeOffRequests.manager.transaction).toHaveBeenCalledTimes(1);
-		expect(manager.createQueryBuilder).toHaveBeenCalledWith(RequestApproval, 'request_approval');
+		expect(manager.createQueryBuilder.mock.calls).toEqual([
+			[RequestApproval, 'request_approval'],
+			[TimeOffRequest, 'time_off_request']
+		]);
 		expect(query.where).toHaveBeenCalledWith({ requestId: ID, tenantId: TENANT });
+		expect(leaveQuery.where).toHaveBeenCalledWith({ id: ID, tenantId: TENANT });
 		expect(query.setLock).toHaveBeenCalledWith('pessimistic_write');
-		expect(query.getOne.mock.invocationCallOrder[0]).toBeLessThan(manager.update.mock.invocationCallOrder[0]);
+		expect(leaveQuery.setLock).toHaveBeenCalledWith('pessimistic_write');
+		// The approval's lock, then the leave's, then the writes: the order the request approval's route takes.
+		const [approvalLocked] = query.getOne.mock.invocationCallOrder;
+		const [leaveLocked] = leaveQuery.getOne.mock.invocationCallOrder;
+		expect(approvalLocked).toBeLessThan(leaveLocked);
+		expect(leaveLocked).toBeLessThan(manager.update.mock.invocationCallOrder[0]);
 		const denied = { status: StatusTypesMapRequestApprovalEnum.DENIED };
 		expect(manager.update.mock.calls).toEqual([
 			[TimeOffRequest, { id: ID, tenantId: TENANT }, { status: StatusTypesEnum.DENIED }],
@@ -143,13 +155,41 @@ describe('TimeOffStatusHandler', () => {
 		expect(requestApprovals.save).not.toHaveBeenCalled();
 	});
 
-	it('on SQLite takes no row lock, and still reads the approval: the transaction is serialized there', async () => {
-		const { query, decide } = setUp();
+	it('on SQLite takes no row lock, and still reads both rows: the transaction is serialized there', async () => {
+		const { query, leaveQuery, decide } = setUp();
 
 		await decide(StatusTypesEnum.APPROVED);
 
 		expect(query.setLock).not.toHaveBeenCalled();
+		expect(leaveQuery.setLock).not.toHaveBeenCalled();
 		expect(query.getOne).toHaveBeenCalledTimes(1);
+		expect(leaveQuery.getOne).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		['PostgreSQL', isPostgres],
+		['SQLite', null]
+	])('on %s decides nothing (404) when the leave was removed after the first read', async (_, dialect) => {
+		if (dialect) {
+			(dialect as jest.Mock).mockReturnValue(true);
+		}
+		const { store, manager, timeOffRequests, decide } = setUp();
+		// The inherited DELETE route removes the leave right after the handler's read.
+		const read = timeOffRequests.findOneBy.getMockImplementation() as (where: Row) => Promise<Row | null>;
+		timeOffRequests.findOneBy.mockImplementationOnce(async (where: Row) => {
+			const row = await read(where);
+			store.leave = null;
+			return row;
+		});
+
+		await expect(decide(StatusTypesEnum.APPROVED)).rejects.toBeInstanceOf(NotFoundException);
+
+		// Thrown out of the transaction's callback, which rolls back: neither status is written.
+		await expect(timeOffRequests.manager.transaction.mock.results[0].value).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+		expect(manager.update).not.toHaveBeenCalled();
+		expect(store.approval.status).toBe(StatusTypesMapRequestApprovalEnum.REQUESTED);
 	});
 
 	it('writes only the leave when it has no request approval, as before', async () => {
