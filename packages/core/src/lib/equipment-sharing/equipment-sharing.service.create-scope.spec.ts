@@ -59,7 +59,14 @@ const SHARINGS = [
 	}
 ];
 
-const STORED_SHARING_SELECT = { id: true, organizationId: true, equipmentId: true, equipmentSharingPolicyId: true };
+const STORED_SHARING_SELECT = {
+	id: true,
+	organizationId: true,
+	equipmentId: true,
+	equipmentSharingPolicyId: true,
+	// The version an upsert of the stored row is a compare-and-set on (`EquipmentSharingService.storeCreate`).
+	version: true
+};
 
 /** The service over a store double: the sharing repository answers by id and tenant, as a database would. */
 function setUp() {

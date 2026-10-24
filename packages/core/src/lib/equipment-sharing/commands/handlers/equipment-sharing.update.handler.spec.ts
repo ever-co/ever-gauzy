@@ -14,13 +14,19 @@ jest.mock('../../equipment-sharing.entity', () => ({ EquipmentSharing: class {} 
 import { EquipmentSharingUpdateCommand } from '../equipment-sharing.update.command';
 import { EquipmentSharingUpdateHandler } from './equipment-sharing.update.handler';
 
-const STORED = { id: 'sharing-1', tenantId: 'tenant-a', organizationId: 'org-1', name: 'Laptop for a week' };
+const STORED = {
+	id: 'sharing-1',
+	tenantId: 'tenant-a',
+	organizationId: 'org-1',
+	name: 'Laptop for a week',
+	version: 4
+};
 
 function setUp() {
 	const sharingService = {
 		findOneByIdString: jest.fn(async () => ({ ...STORED })),
 		assertReferencesAreInScope: jest.fn(async () => undefined),
-		delete: jest.fn(async () => ({ affected: 1 })),
+		deleteAtVersion: jest.fn(async (_id: string, _expected: number | null) => undefined),
 		create: jest.fn(async (row: Record<string, unknown>) => ({ ...row }))
 	};
 	const approvalService = {
@@ -62,7 +68,7 @@ describe('EquipmentSharingUpdateHandler — the rows an edit points at', () => {
 		await expect(handler.execute(edit({ equipmentSharingPolicy: { id: 'other-orgs-policy' } }))).rejects.toThrow(
 			'not available here'
 		);
-		expect(sharingService.delete).not.toHaveBeenCalled();
+		expect(sharingService.deleteAtVersion).not.toHaveBeenCalled();
 		expect(approvalService.delete).not.toHaveBeenCalled();
 		expect(sharingService.create).not.toHaveBeenCalled();
 	});
@@ -113,5 +119,74 @@ describe('EquipmentSharingUpdateHandler — the rows an edit points at', () => {
 
 		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
 		expect(row).toMatchObject({ equipmentId: 'equipment-1', equipmentSharingPolicyId: 'policy-1' });
+	});
+});
+
+describe('EquipmentSharingUpdateHandler — an edit is a compare-and-set on the version it read (ever-co/ever-gauzy#11359)', () => {
+	it('removes the row only at the version the server read when the body states none, and recreates it at the next', async () => {
+		const { handler, sharingService, approvalService } = setUp();
+
+		await handler.execute(edit({ equipmentId: 'equipment-1' }));
+
+		expect(sharingService.deleteAtVersion).toHaveBeenCalledWith('sharing-1', 4);
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row['version']).toBe(5);
+		// The approval row is removed only once the sharing row was, and recreated beside it.
+		expect(sharingService.deleteAtVersion.mock.invocationCallOrder[0]).toBeLessThan(
+			approvalService.delete.mock.invocationCallOrder[0]
+		);
+		expect(approvalService.create).toHaveBeenCalledTimes(1);
+	});
+
+	it('removes the row only at the version the body states, and recreates it at the one after that', async () => {
+		const { handler, sharingService } = setUp();
+
+		await handler.execute(edit({ version: 3 }));
+
+		expect(sharingService.deleteAtVersion).toHaveBeenCalledWith('sharing-1', 3);
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row['version']).toBe(4);
+	});
+
+	it('accepts the version as the text a raw body may carry it in', async () => {
+		const { handler, sharingService } = setUp();
+
+		await handler.execute(edit({ version: '4' }));
+
+		expect(sharingService.deleteAtVersion).toHaveBeenCalledWith('sharing-1', 4);
+	});
+
+	it.each([[0], [-1], [1.5], ['three'], [{ $gt: 0 }]])(
+		'refuses a body version that is not one (%p) with 400, before anything is removed',
+		async (version) => {
+			const { handler, sharingService, approvalService } = setUp();
+
+			await expect(handler.execute(edit({ version }))).rejects.toMatchObject({ status: 400 });
+			expect(sharingService.deleteAtVersion).not.toHaveBeenCalled();
+			expect(approvalService.delete).not.toHaveBeenCalled();
+			expect(sharingService.create).not.toHaveBeenCalled();
+		}
+	);
+
+	it('writes nothing more when the row has moved on: the 409 of the conditional removal stands', async () => {
+		const { handler, sharingService, approvalService } = setUp();
+		const conflict = Object.assign(new Error('changed since you read it'), { status: 409 });
+		sharingService.deleteAtVersion.mockRejectedValueOnce(conflict);
+
+		await expect(handler.execute(edit({ version: 3 }))).rejects.toBe(conflict);
+		expect(approvalService.delete).not.toHaveBeenCalled();
+		expect(sharingService.create).not.toHaveBeenCalled();
+		expect(approvalService.create).not.toHaveBeenCalled();
+	});
+
+	it('removes a row stored without a version without a precondition, and recreates it at version 1', async () => {
+		const { handler, sharingService } = setUp();
+		sharingService.findOneByIdString.mockResolvedValueOnce({ ...STORED, version: null } as any);
+
+		await handler.execute(edit({}));
+
+		expect(sharingService.deleteAtVersion).toHaveBeenCalledWith('sharing-1', null);
+		const [row] = sharingService.create.mock.calls[0] as [Record<string, unknown>];
+		expect(row['version']).toBe(1);
 	});
 });

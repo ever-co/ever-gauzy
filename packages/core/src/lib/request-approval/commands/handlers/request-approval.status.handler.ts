@@ -1,11 +1,22 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import {
+	ApprovalPolicyTypesStringEnum,
+	ID,
+	StatusTypesEnum,
+	StatusTypesMapRequestApprovalEnum
+} from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context';
+import { isWithinOrganizationBoundary } from '../../../core/crud/organization-boundary';
 import { RequestApprovalStatusCommand } from '../request-approval.status.command';
 import { RequestApproval } from '../../request-approval.entity';
-import { RequestApprovalService } from '../../request-approval.service';
-import { EquipmentSharingService } from '../../../equipment-sharing';
-import { ApprovalPolicyTypesStringEnum, ID, StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
-import { TimeOffRequestService } from '../../../time-off-request/time-off-request.service';
+import {
+	IRequestApprovalAnswerTransaction,
+	IRequestApprovalLinkedDocument,
+	IRequestApprovalSettlement,
+	RequestApprovalLinkedDocumentKind,
+	RequestApprovalService
+} from '../../request-approval.service';
 import { RequestApprovalVerdict } from '../../request-approval-decision';
 import { assertMayDecideLinkedDocument } from '../../linked-document-decision.gate';
 
@@ -20,68 +31,119 @@ import { assertMayDecideLinkedDocument } from '../../linked-document-decision.ga
  *
  * When the answer decides the request, the time-off request or equipment sharing it is about moves with it — and
  * only for a caller who could move that document through its own approve/refuse route, because this command is a
- * second door onto the same state change. The gate is checked and the document moved before the answer is
- * written, so a refusal (403, or the document's own 409) leaves the request exactly as it was. An answer whose
- * writes failed after the document moved can be sent again: see {@link moveTimeOff}.
+ * second door onto the same state change.
+ *
+ * The whole answer is one transaction (see {@link RequestApprovalService.answer}): the request is read again under a
+ * row lock, the decision is made on what the lock found, and the slots, the request's status and the document are
+ * written in the same commit. Two approvers answering at the same time answer one after the other, so the document
+ * ends up with the request's own decision, and a refusal (403, 404, or the document's 409) leaves the request, its
+ * slots and the document exactly as they were.
  */
 @CommandHandler(RequestApprovalStatusCommand)
 export class RequestApprovalStatusHandler implements ICommandHandler<RequestApprovalStatusCommand> {
-	constructor(
-		private requestApprovalService: RequestApprovalService,
-		private equipmentSharingService: EquipmentSharingService,
-		private timeOffRequestService: TimeOffRequestService
-	) {}
+	constructor(private readonly requestApprovalService: RequestApprovalService) {}
 
 	public async execute(command?: RequestApprovalStatusCommand): Promise<RequestApproval> {
 		const { requestApprovalId, status } = command;
 
-		const answer = await this.requestApprovalService.prepareAnswer(
+		return await this.requestApprovalService.answer(
 			requestApprovalId,
-			status as RequestApprovalVerdict
+			status as RequestApprovalVerdict,
+			(settlement) => this.settleLinkedDocument(settlement)
 		);
-		const { requestApproval, outcome } = answer;
+	}
 
-		if (outcome.settles) {
-			assertMayDecideLinkedDocument(requestApproval.requestType);
+	/**
+	 * Moves the document a settling decision is about, on the answer's transaction.
+	 *
+	 * The caller must pass the document's own approve/refuse gate. The document is then read on the transaction, in the
+	 * scope its own service reads it in — the caller's tenant, withdrawn rows left out, and the caller's organization
+	 * unless they are a tenant administrator — and is not found otherwise.
+	 *
+	 * @param settlement The request as the locked read found it, what the answer did, and the transaction.
+	 * @throws ForbiddenException when the caller does not pass the document's gate.
+	 * @throws NotFoundException when the document is not in the caller's scope.
+	 * @throws ConflictException when a time-off request was decided otherwise.
+	 */
+	private async settleLinkedDocument({
+		requestApproval,
+		outcome,
+		transaction
+	}: IRequestApprovalSettlement): Promise<void> {
+		assertMayDecideLinkedDocument(requestApproval.requestType);
 
-			if (requestApproval.requestType === ApprovalPolicyTypesStringEnum.TIME_OFF) {
-				const timeOffStatus = StatusTypesMapRequestApprovalEnum[outcome.status];
-				await this.moveTimeOff(requestApproval.requestId, timeOffStatus);
-			} else if (requestApproval.requestType === ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING) {
-				await this.equipmentSharingService.updateStatusEquipmentSharingByAdmin(
-					requestApproval.requestId,
-					outcome.status
-				);
-			}
+		const tenantId = RequestContext.currentTenantId() ?? requestApproval.tenantId;
+
+		if (requestApproval.requestType === ApprovalPolicyTypesStringEnum.TIME_OFF) {
+			const timeOffStatus = StatusTypesMapRequestApprovalEnum[outcome.status] as StatusTypesEnum;
+			const timeOff = await this.readLinkedDocument(transaction, 'time-off', requestApproval.requestId, tenantId);
+			await this.moveTimeOff(transaction, timeOff.id, tenantId, timeOffStatus);
+		} else if (requestApproval.requestType === ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING) {
+			const sharing = await this.readLinkedDocument(
+				transaction,
+				'equipment-sharing',
+				requestApproval.requestId,
+				tenantId
+			);
+			await transaction.moveEquipmentSharing(sharing.id, tenantId, outcome.status);
+		}
+	}
+
+	/**
+	 * Reads the document a request is about, in the scope its own service reads it in.
+	 *
+	 * It is read under a row lock, held until the answer commits: the organization checked is the one the row holds
+	 * now, and stays so through the write that moves it. A plain read on MySQL (REPEATABLE READ) answers from the
+	 * transaction's snapshot, taken at the slots' read, so a document an administrator moved to another organization
+	 * since then still read as the former one, and the write (by id and tenant) then moved it in the new one.
+	 *
+	 * @throws NotFoundException when it is not there, or outside the caller's organization boundary.
+	 */
+	private async readLinkedDocument(
+		transaction: IRequestApprovalAnswerTransaction,
+		kind: RequestApprovalLinkedDocumentKind,
+		id: ID,
+		tenantId: ID
+	): Promise<IRequestApprovalLinkedDocument> {
+		const document = id && tenantId ? await transaction.readLinkedDocument(kind, id, tenantId, true) : null;
+
+		if (!document || !isWithinOrganizationBoundary(document.organizationId)) {
+			throw new NotFoundException(`The ${kind} this request approval is about was not found.`);
 		}
 
-		return await this.requestApprovalService.recordAnswer(answer);
+		return document;
 	}
 
 	/**
 	 * Moves the time-off request a decision is about.
 	 *
-	 * The time-off service refuses (409) a leave that is no longer `REQUESTED`. A leave can already carry the
-	 * status this decision gives it: an earlier attempt moved it and then failed to write its answer, or the leave
-	 * was decided through its own route. The answer is written then, instead of being refused on every retry; the
-	 * slot and status writes of `recordAnswer` set the same values again. Any other conflict stands, such as an
-	 * administrator deciding an approved leave the other way.
+	 * The leave moves only while it is `REQUESTED` (a compare-and-set, as the time-off route's own 409 states). A
+	 * leave can already carry the status this decision gives it — it was decided through its own route — and the
+	 * answer is written then, instead of being refused. Any other status stands, such as an administrator deciding an
+	 * approved leave the other way.
 	 *
+	 * After a compare-and-set that moved nothing, the leave is read again under a row lock: on MySQL (REPEATABLE READ)
+	 * a plain read answers from the transaction's snapshot, which predates a decision the time-off route committed
+	 * while the answer ran, and would still show the leave `REQUESTED`.
+	 *
+	 * @param transaction The answer's transaction.
 	 * @param id The time-off request.
+	 * @param tenantId The caller's tenant.
 	 * @param status The status the decision gives it.
 	 * @throws ConflictException when the leave was decided otherwise.
 	 */
-	private async moveTimeOff(id: ID, status: string): Promise<void> {
-		try {
-			await this.timeOffRequestService.updateStatusTimeOffByAdmin(id, status);
-		} catch (error) {
-			if (error instanceof ConflictException) {
-				const timeOff = await this.timeOffRequestService.findOneByIdString(id);
-				if (timeOff?.status === status) {
-					return;
-				}
-			}
-			throw error;
+	private async moveTimeOff(
+		transaction: IRequestApprovalAnswerTransaction,
+		id: ID,
+		tenantId: ID,
+		status: StatusTypesEnum
+	): Promise<void> {
+		if ((await transaction.moveTimeOff(id, tenantId, status)) > 0) {
+			return;
 		}
+		if ((await transaction.readLinkedDocument('time-off', id, tenantId, true))?.status === status) {
+			return;
+		}
+		throw new ConflictException('Request time off is Conflict');
 	}
 }

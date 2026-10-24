@@ -260,8 +260,11 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Post()
 	async create(@Body() entity: EquipmentSharing, ...options: any[]): Promise<EquipmentSharing> {
-		const values = await this.equipmentSharingService.assertCreateIsInScope(entity ?? ({} as EquipmentSharing));
-		return await super.create(values as EquipmentSharing, ...options);
+		// Checked as the row it stores; a body naming a stored sharing is an edit, a compare-and-set on its version
+		// (the body's `version`, else the one the check read), and is refused with 409 when the row has moved on.
+		return await this.equipmentSharingService.storeCreate(entity ?? ({} as EquipmentSharing), (values) =>
+			super.create(values as EquipmentSharing, ...options)
+		);
 	}
 
 	/**

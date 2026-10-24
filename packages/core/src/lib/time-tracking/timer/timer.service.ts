@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In } from 'typeorm';
+import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -49,7 +49,9 @@ import {
 	addRelationsToQuery,
 	buildCommonQueryParameters,
 	buildLogQueryParameters,
-	buildRunningLogQueryParameters
+	buildRunningLogQueryParameters,
+	exclusiveWindowEnd,
+	secondsWithinWindow
 } from './timer.helper';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
@@ -123,6 +125,9 @@ export class TimerService {
 		const todayWindowStart = moment.utc(todayStart || moment().startOf('day'));
 		const todayWindowEnd = moment.utc(todayEnd || moment().endOf('day'));
 		const { start, end } = getDateRangeFormat(todayWindowStart, todayWindowEnd);
+		// `todayEnd` is inclusive (`23:59:59.999`, or `23:59:59`); today's seconds are counted up to the exclusive end
+		// after it, so a log running through the day's end counts the last second too. The queries keep `end`.
+		const countedUntil = exclusiveWindowEnd(todayWindowEnd);
 
 		let logs: TimeLog[] = [];
 
@@ -136,12 +141,23 @@ export class TimerService {
 			organizationId
 		};
 
+		// Today's completed logs are those overlapping today's window, not only those started in it: a timer that ran
+		// past midnight kept its after-midnight part in today's duration while it ran (see the running log below), and
+		// lost it the moment it was stopped. Each completed log is counted for its part inside the window only.
+		const completedQueryParams = {
+			...queryParams,
+			startedAt: LessThanOrEqual<Date>(end as Date),
+			stoppedAt: MoreThanOrEqual<Date>(start as Date)
+		};
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				/**
 				 * Get today's completed timelogs
 				 */
-				const parseQueryParams = parseTypeORMFindToMikroOrm<TimeLog>(buildLogQueryParameters(queryParams));
+				const parseQueryParams = parseTypeORMFindToMikroOrm<TimeLog>(
+					buildLogQueryParameters(completedQueryParams)
+				);
 				const items = await this.mikroOrmTimeLogRepository.findAll(parseQueryParams);
 				// Optionally wrapSerialize is a function that serializes the entity
 				logs = items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
@@ -153,7 +169,7 @@ export class TimerService {
 				// runtime. `buildLogQueryParameters` still carries that inner join for the MikroORM
 				// path; for TypeORM we apply it explicitly on the query builder — an inner join on
 				// `timeSlots` filters to time logs that have at least one time slot.
-				const completedLogQueryParams = buildLogQueryParameters(queryParams);
+				const completedLogQueryParams = buildLogQueryParameters(completedQueryParams);
 				logs = await this.typeOrmTimeLogRepository
 					.createQueryBuilder('time_log')
 					.setFindOptions({ where: completedLogQueryParams.where, order: completedLogQueryParams.order })
@@ -178,8 +194,16 @@ export class TimerService {
 			lastLog: null
 		};
 
-		// Calculate completed timelogs duration
-		status.duration += logs.filter(Boolean).reduce((sum, log) => sum + log.duration, 0);
+		// Completed logs, each for its part inside today's window: one started yesterday counts from `todayStart`, one
+		// stopped after `todayEnd` up to `todayEnd`. The running log is not among them (`isRunning: false`), and is
+		// left out by id as well, so its time is counted once, below.
+		const runningLogId = lastLog?.isRunning ? lastLog.id : null;
+		status.duration += logs
+			.filter((log) => log && log.id !== runningLogId)
+			.reduce(
+				(sum, log) => sum + secondsWithinWindow(log.startedAt, log.stoppedAt, todayWindowStart, countedUntil),
+				0
+			);
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
@@ -190,9 +214,8 @@ export class TimerService {
 				// Today's duration holds only the part of the running log inside today's window: a timer started
 				// before `todayStart` counts from `todayStart`, its earlier part belongs to the day it started on.
 				// `lastLog` stays the whole log, so a client still reads the full session from its `startedAt`.
-				const countedFrom = moment.max(moment(lastLog.startedAt), todayWindowStart);
-				const countedTo = moment.min(moment(), todayWindowEnd);
-				status.duration += Math.max(0, countedTo.diff(countedFrom, 'seconds'));
+				// The same clipping as the completed logs above, so a log counts the same before and after it stops.
+				status.duration += secondsWithinWindow(lastLog.startedAt, moment(), todayWindowStart, countedUntil);
 			}
 		}
 
@@ -657,13 +680,16 @@ export class TimerService {
 		// Extract employeeId and organizationId
 		const { id: employeeId, organizationId } = await this.findEmployee();
 
-		// Define common query conditions
+		// Define common query conditions. Nothing on `stoppedAt`, as the status read has nothing on it
+		// (`buildRunningLogQueryParameters`): a running log is written with `stoppedAt = startedAt`, but a row stored
+		// before `TimeLogCreateHandler` gave it that shape may hold a null `stoppedAt`. Filtering those out left the
+		// row running with nothing able to stop it; found here, stop closes it and `stopPreviousRunningTimers` hands
+		// it to `ScheduleTimeLogEntriesCommand`, which gives a null `stoppedAt` an end as it stops the log.
 		const whereClause = {
 			employeeId,
 			tenantId,
 			organizationId,
-			isRunning: true,
-			stoppedAt: Not(IsNull()) // Logs should have a non-null `stoppedAt`
+			isRunning: true
 		};
 
 		switch (this.ormType) {
