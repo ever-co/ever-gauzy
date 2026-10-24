@@ -1,5 +1,6 @@
 import '../core/entities/internal';
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import {
 	BaseEntityEnum,
 	EmployeeNotificationTypeEnum,
@@ -8,6 +9,8 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
+import { RequestContext } from '../core/context';
+import { CrudService } from '../core/crud/crud.service';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { MentionService } from './mention.service';
@@ -136,5 +139,144 @@ describe('MentionService.updateEntityMentions', () => {
 			mentionedEmployeeId: 'mentioned-employee',
 			organizationId: author.organizationId
 		});
+	});
+});
+
+/**
+ * An edit is synced against the mentions of every author of the entity. For an employee without
+ * CHANGE_SELECTED_EMPLOYEE (EMPLOYEE / MANAGER role) the employee filter narrowed both the read and the delete to
+ * the mentions the editor had written: saving content someone else had mentioned an employee in re-published
+ * that mention in the editor's name, and removing it from the text left the other author's row in place.
+ */
+describe('MentionService.updateEntityMentions, on content another employee mentioned someone in', () => {
+	// The editor has no CHANGE_SELECTED_EMPLOYEE, the role the employee filter applies to
+	const editor = createTenantFixture({ user: { employeeId: 'editor-employee' } as IUser });
+
+	// Stand-in for the per-request store withoutEmployeeFilter() keeps its state in
+	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
+	const originalClsService = RequestContext['clsService'];
+
+	// The mentions another author wrote on the task: one an edit removes, one it keeps
+	const stored = () => [
+		{
+			id: 'mention-1',
+			entity: BaseEntityEnum.Task,
+			entityId: 'task-1',
+			mentionedEmployeeId: 'mentioned-employee',
+			employeeId: 'author-employee',
+			tenantId: editor.tenantId
+		},
+		{
+			id: 'mention-2',
+			entity: BaseEntityEnum.Task,
+			entityId: 'task-1',
+			mentionedEmployeeId: 'kept-employee',
+			employeeId: 'author-employee',
+			tenantId: editor.tenantId
+		}
+	];
+
+	let restore: () => void;
+	let eventBus: { publish: jest.Mock };
+	let read: jest.SpyInstance;
+	let deleted: jest.SpyInstance;
+	let service: MentionService;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(editor));
+		RequestContext['clsService'] = {
+			get: (key: string) => requestStorage.getStore()?.get(key),
+			set: (key: string, value: unknown) => requestStorage.getStore()?.set(key, value)
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any;
+		// The store answers the rows matching every column the read is scoped by
+		read = jest.spyOn(CrudService.prototype, 'find').mockImplementation(async (options) => {
+			const where = (options?.where ?? {}) as Record<string, unknown>;
+			return stored().filter((row) =>
+				Object.entries(where).every(
+					([column, value]) => typeof value !== 'string' || row[column as keyof typeof row] === value
+				)
+			) as never;
+		});
+		deleted = jest.spyOn(CrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
+		eventBus = { publish: jest.fn() };
+		service = new MentionService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ metadata: { tableName: 'mention', hasColumnWithPropertyPath: () => true } } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			eventBus as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ publishNotificationEvent: jest.fn() } as any
+		);
+	});
+
+	afterEach(() => {
+		RequestContext['clsService'] = originalClsService;
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const sync = (mentionEmployeeIds: string[]) =>
+		requestStorage.run(new Map(), () =>
+			service.updateEntityMentions(
+				BaseEntityEnum.Task,
+				'task-1',
+				mentionEmployeeIds,
+				undefined,
+				undefined,
+				editor.organizationId
+			)
+		);
+
+	it('publishes nothing for a mention another author already wrote', async () => {
+		await sync(['mentioned-employee', 'kept-employee']);
+
+		expect(eventBus.publish).not.toHaveBeenCalled();
+		expect(deleted).not.toHaveBeenCalled();
+	});
+
+	it("deletes only another author's mention the edit removed, within the tenant", async () => {
+		await sync(['kept-employee']);
+
+		expect(deleted).toHaveBeenCalledTimes(1);
+		const [criteria] = deleted.mock.calls[0];
+		expect(criteria).toMatchObject({ entity: BaseEntityEnum.Task, entityId: 'task-1', tenantId: editor.tenantId });
+		expect(criteria.mentionedEmployeeId.value).toEqual(['mentioned-employee']);
+		expect(criteria).not.toHaveProperty('employeeId');
+		expect(eventBus.publish).not.toHaveBeenCalled();
+	});
+
+	it('reads the mentions of the entity within the tenant, as full rows', async () => {
+		await sync(['mentioned-employee', 'kept-employee']);
+
+		const [options] = read.mock.calls[0];
+		expect(options.where).toMatchObject({
+			entity: BaseEntityEnum.Task,
+			entityId: 'task-1',
+			tenantId: editor.tenantId
+		});
+		expect(options.where).not.toHaveProperty('employeeId');
+		// A partial load leaves the `persist: false` mirror `mentionedEmployeeId` unset on MikroORM
+		expect(options.select).toBeUndefined();
+	});
+
+	it('publishes a new mention once the employee filter is back in place', async () => {
+		let filterSkipped: boolean | undefined;
+		eventBus.publish.mockImplementation(() => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			filterSkipped = (service as any).getSkipEmployeeFilter();
+		});
+
+		await sync(['kept-employee', 'other-employee']);
+
+		expect(eventBus.publish).toHaveBeenCalledTimes(1);
+		expect(eventBus.publish.mock.calls[0][0].input).toMatchObject({
+			mentionedEmployeeId: 'other-employee',
+			employeeId: 'editor-employee'
+		});
+		expect(filterSkipped).toBe(false);
+		expect(deleted).toHaveBeenCalledTimes(1);
 	});
 });

@@ -163,19 +163,17 @@ const ORGANIZATION_RECURRING_EXPENSE_DEFAULT_SORT: readonly ConnectionSortKey[] 
  * same command or executes the same query the `/api/organization-recurring-expense` route behind it
  * does, with the same payload and the same request facts.
  *
- * **The guard chain is the controller's and the permission is the absence the controller states.** The
- * controller carries `TenantPermissionGuard` on the class and no `@Permissions` anywhere — on the class
- * or on any handler — so the class here carries that guard beside the gate and every field states no
- * permission at all. A field that demanded one would refuse a caller the REST route serves, which is
- * the narrowing this delivery exists to prevent, and a field that stated none while the route stated one
- * would be a way around the permission model. The `PermissionGuard` is deliberately absent for the same
- * reason: the controller does not carry it, so a permission stated here would never be read.
+ * **The guard chain is the controller's and the permissions are the routes'.** The controller carries
+ * `TenantPermissionGuard` on the class and no `@Permissions` on the class, so the class here carries that
+ * guard beside the gate, and every field states the guard and the permission its route states. A field that
+ * demanded more would refuse a caller the REST route serves, which is the narrowing this delivery exists to
+ * prevent, and a field that stated less than its route would be a way around the permission model.
  *
- * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
- * `ORG_EXPENSES_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
- * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
- * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationRecurringExpense` and
- * `recoverOrganizationRecurringExpense` state the same, neither wider nor narrower than REST.
+ * Every read states `ORG_EXPENSES_VIEW` behind `PermissionGuard`, as its route does: the grant the page that
+ * shows these costs requires. Every write states `ORG_EXPENSES_EDIT`: the controller states it on its create,
+ * edit and removal, and overrides the inherited retire-and-restore pair only to state the same — the CRUD
+ * base declares no permission, and `PermissionGuard` answers `true` to empty metadata, so any member of the
+ * tenant could write a standing cost of the organization (GHSA-v79w-54p2-wmh5).
  *
  * **The month route is folded into the connection and the other two reads are root fields of their
  * own.** The month route is a narrowing of the list — its criterion is a disjunction over the beginning
@@ -218,6 +216,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * route is the third spelling of the same read, so the surface states it once and the month criterion
 	 * arrives in `filter`.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Query('organizationRecurringExpenses')
 	async organizationRecurringExpenses(
 		@Args('filter') filter?: ConnectionFilter,
@@ -261,6 +261,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * row" on a field that may have none, and the REST route's `404` is that same fact stated in the
 	 * other protocol's vocabulary.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Query('organizationRecurringExpense')
 	async organizationRecurringExpense(
 		@Args('id', { type: () => ID }) id: Id
@@ -283,6 +285,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * to the store's own `where` and hands it to `countBy`, and the connection protocol has no argument
 	 * of that shape, so the field states no narrowing of its own.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Query('organizationRecurringExpenseCount')
 	async organizationRecurringExpenseCount(): Promise<number> {
 		return await this.organizationRecurringExpenseService.countBy();
@@ -297,6 +301,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * that fall inside the gap. The verdict is carried as the contracts' own value and never declared as
 	 * a schema enum here, because the vocabulary is shared with the employee's own arrangements.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Query('organizationRecurringExpenseStartDateUpdateType')
 	async organizationRecurringExpenseStartDateUpdateType(
 		@Args('recurringExpenseId', { type: () => ID }) recurringExpenseId: Id,
@@ -324,6 +330,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * delivered read passes to its date constructor. Both are required because the delivered read cannot
 	 * answer without them: it builds one instant from the two and measures every arrangement against it.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Query('organizationRecurringExpenseShares')
 	async organizationRecurringExpenseShares(
 		@Args('organizationId', { type: () => ID }) organizationId: Id,
@@ -351,6 +359,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * body — which is what the delivered controller binds. The delivered handler answers the row it
 	 * stored with the parent it set to itself, which is what this field answers.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Mutation('createOrganizationRecurringExpense')
 	async createOrganizationRecurringExpense(
 		@Args('input') input: ICreateOrganizationRecurringExpenseInput
@@ -365,6 +375,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * delivered handler decides what the change means and answers whichever row that produced, which is
 	 * what this field answers.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Mutation('updateOrganizationRecurringExpense')
 	async updateOrganizationRecurringExpense(
 		@Args('input') input: IUpdateOrganizationRecurringExpenseInput
@@ -388,6 +400,8 @@ export class OrganizationRecurringExpenseResolver {
 	 * therefore answers the one fact the route establishes, that the removal ran; a caller that needs the
 	 * arrangement as it now stands reads it back from the connection.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Mutation('deleteOrganizationRecurringExpense')
 	async deleteOrganizationRecurringExpense(
 		@Args('id', { type: () => ID }) id: Id,

@@ -40,7 +40,7 @@ const fakeRepository = (rows: any[]) => ({
 function createService() {
 	const employees = fakeRepository(EMPLOYEES);
 	const teams = fakeRepository(TEAMS);
-	// updateRequestApproval clears the previous approver rows through a query builder first.
+	// The request repository: the edit now removes the previous approver rows on its transaction (below).
 	const requestApprovals = {
 		createQueryBuilder: () => {
 			const builder: any = {
@@ -61,6 +61,19 @@ function createService() {
 		{} as any
 	);
 	jest.spyOn(service, 'save').mockImplementation(async (entity: any) => entity);
+	// The edit runs in a transaction under the request's lock (`request-approval.edit-atomic.spec.ts` pins it); here,
+	// one that finds the request and saves what it is handed.
+	for (const check of ['assertNotForeignRow', 'assertNestedGraphNotForeign', 'assertInsideOrganizationBoundary']) {
+		jest.spyOn(service as any, check).mockResolvedValue(undefined);
+	}
+	jest.spyOn(service as any, 'editTransaction').mockImplementation((work: any) =>
+		work({
+			lockRequest: async (id: string) => ({ id, tenantId: TENANT_A }),
+			deleteSlots: async () => undefined,
+			saveRequest: async (entity: any) => entity,
+			writeRequestStatus: async () => undefined
+		})
+	);
 	return { service, employees, teams };
 }
 

@@ -57,3 +57,5 @@ export * from './lib/gift-card-transaction/gift-card-transaction.controller';
 export * from './lib/graphql/schema-extensions';
 export * from './lib/graphql/resolvers';
 export * from './lib/graphql/types';
+
+export * from './lib/promotion-order-usage/promotion-order-usage.adapter';

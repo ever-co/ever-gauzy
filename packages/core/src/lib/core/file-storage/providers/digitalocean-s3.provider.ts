@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'node:path';
-import * as moment from 'moment';
 import {
 	S3Client,
 	DeleteObjectCommand,
@@ -12,11 +11,14 @@ import {
 	HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { cachedPresign, getCachedS3Client, PRESIGNED_URL_EXPIRES_IN_SECONDS } from './s3-client-cache';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { ensureHttpPrefix, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
+import { refusalForStorageEndpoint, tenantStorageHttpsAgent } from '../storage-endpoint-policy';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 import { RequestContext } from '../../context';
 
 /**
@@ -44,6 +46,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 	private readonly detailedLoggingEnabled = false;
 	public instance: DigitalOceanS3Provider;
 	public config: IDigitalOceanProviderConfig;
+	/** Whether the service URL in use is the tenant's own (see storage-endpoint-policy.ts). */
+	private endpointFromTenant = false;
 	public defaultConfig: IDigitalOceanProviderConfig;
 
 	constructor() {
@@ -94,6 +98,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 		this.config = {
 			...this.defaultConfig
 		};
+		this.endpointFromTenant = false;
 
 		if (this.detailedLoggingEnabled) {
 			this.logger.debug('setDigitalOceanConfiguration: initializing with default config');
@@ -130,12 +135,21 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					}
 
 					if (trimIfNotEmpty(settings.digitalocean_service_url)) {
-						this.config.digitalocean_service_url = ensureHttpPrefix(
-							trimIfNotEmpty(settings.digitalocean_service_url)
-						);
+						// The API connects to it: a tenant URL that points at a private network is not used.
+						const refusal = refusalForStorageEndpoint(settings.digitalocean_service_url);
+						if (refusal) {
+							this.logger.warn(
+								`setDigitalOceanConfiguration: tenant digitalocean_service_url ignored. ${refusal}`
+							);
+						} else {
+							this.config.digitalocean_service_url = ensureHttpPrefix(
+								trimIfNotEmpty(settings.digitalocean_service_url)
+							);
+							this.endpointFromTenant = true;
 
-						if (this.detailedLoggingEnabled) {
-							this.logger.debug('setDigitalOceanConfiguration: digitalocean_service_url overridden');
+							if (this.detailedLoggingEnabled) {
+								this.logger.debug('setDigitalOceanConfiguration: digitalocean_service_url overridden');
+							}
 						}
 					}
 
@@ -184,15 +198,12 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			const s3Client = this.getDigitalOceanInstance();
 
 			if (s3Client) {
-				const signedUrl = await getSignedUrl(
-					s3Client,
-					new GetObjectCommand({
-						Bucket: this.getDigitalOceanBucket(),
-						Key: fileURL
-					}),
-					{
-						expiresIn: 3600
-					}
+				// One signature per object for a few minutes, from a client shared per configuration (s3-client-cache.ts).
+				const bucket = this.getDigitalOceanBucket();
+				const signedUrl = await cachedPresign(s3Client, bucket, fileURL, () =>
+					getSignedUrl(s3Client, new GetObjectCommand({ Bucket: bucket, Key: fileURL }), {
+						expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS
+					})
 				);
 
 				return signedUrl;
@@ -250,10 +261,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = defaultStoredFileName(prefix, extension);
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -408,7 +416,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			if (this.config && this.config.digitalocean_access_key_id && this.config.digitalocean_secret_access_key) {
 				const endpoint = ensureHttpPrefix(this.config.digitalocean_service_url);
 
-				const s3Client = new S3Client({
+				const s3Client = getCachedS3Client({
 					/**
 					 * Whether to force path style URLs for S3 objects
 					 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>
@@ -419,7 +427,9 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					credentials: {
 						accessKeyId: this.config.digitalocean_access_key_id,
 						secretAccessKey: this.config.digitalocean_secret_access_key
-					}
+					},
+					// A tenant's public host name that resolves to a private address is refused at connect time.
+					...(this.endpointFromTenant ? { requestHandler: { httpsAgent: tenantStorageHttpsAgent() } } : {})
 				});
 
 				return s3Client;

@@ -35,7 +35,14 @@ export function ManageWidgetsPopover({ widgets, windows, widgetTitle, windowTitl
 		<div className="gz-rtt-category">
 			<div className="gz-rtt-view">
 				{t(labelKey)}
-				<NbButton className="gz-rtt-manage-widget gz-rtt-undo" status="basic" onClick={() => layout.undo()} disabled={!layout.canUndo}>
+				<NbButton
+					className="gz-rtt-undo"
+					appearance="ghost"
+					size="tiny"
+					status="basic"
+					onClick={() => layout.undo()}
+					disabled={!layout.canUndo}
+				>
 					<i className="fas fa-undo" />
 					{t('REACT_UI.BUTTONS.UNDO')}
 				</NbButton>
@@ -49,7 +56,9 @@ export function ManageWidgetsPopover({ widgets, windows, widgetTitle, windowTitl
 					onClick={() => onToggled(item, layout.toggle(item.position))}
 				>
 					<i className="fas fa-check" style={{ visibility: item.hide ? 'hidden' : 'visible' }} />
-					<div>{titleOf(item.position)}</div>
+					<div className="gz-rtt-title-label" title={titleOf(item.position)}>
+						{titleOf(item.position)}
+					</div>
 				</button>
 			))}
 		</div>
@@ -66,8 +75,15 @@ export function ManageWidgetsPopover({ widgets, windows, widgetTitle, windowTitl
 				</div>
 			}
 		>
-			<NbButton className="gz-rtt-manage-widget" size="small" status="basic" aria-haspopup="dialog">
-				{t('BUTTONS.MANAGE_WIDGET')}
+			<NbButton
+				className="gz-rtt-manage-widget"
+				size="small"
+				status="basic"
+				aria-haspopup="dialog"
+				title={t('BUTTONS.MANAGE_WIDGET')}
+				aria-label={t('BUTTONS.MANAGE_WIDGET')}
+			>
+				<span className="gz-rtt-action-label">{t('BUTTONS.MANAGE_WIDGET')}</span>
 				<NbIcon icon="more-vertical-outline" />
 			</NbButton>
 		</Popover>

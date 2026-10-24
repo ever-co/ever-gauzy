@@ -120,6 +120,18 @@ spec:
                         value: 'cloud'
                       - name: NODE_ENV
                         value: 'production'
+                      # V8 must feel the container's 2 GiB limit: the image default (--max-old-space-size=12288) let the
+                      # heap grow until the kernel OOM-killed the pod instead of collecting garbage.
+                      - name: NODE_OPTIONS
+                        value: '--max-old-space-size=1536'
+                      # libuv threads shared by DNS, pg SCRAM, bcrypt and fs (Node default 4).
+                      - name: UV_THREADPOOL_SIZE
+                        value: '16'
+                      # The Documents pipeline (PDF/XLSX/DOCX extraction, OCR, chunking) is CPU-bound on the main thread.
+                      # The worker deployment consumes the queue; the API pods only enqueue, so a large document can no
+                      # longer block every request of an API pod for seconds.
+                      - name: GAUZY_DOCS_QUEUE_WORKER_ENABLED
+                        value: 'false'
                       - name: ADMIN_PASSWORD_RESET
                         value: 'true'
                       - name: LOG_LEVEL
@@ -220,6 +232,8 @@ spec:
                         value: '$JWT_SECRET'
                       - name: JWT_REFRESH_TOKEN_SECRET
                         value: '$JWT_REFRESH_TOKEN_SECRET'
+                      - name: EVER_TEAMS_CLIENT_IP_SECRET
+                        value: '$EVER_TEAMS_CLIENT_IP_SECRET'
                       - name: JWT_VERIFICATION_TOKEN_SECRET
                         value: '$JWT_VERIFICATION_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
@@ -340,6 +354,31 @@ spec:
                   ports:
                       - containerPort: 3000
                         protocol: TCP
+                  # Without probes a pod whose event loop is blocked kept receiving traffic: ingress-nginx waited its
+                  # default 60 s proxy_read_timeout per request, then retried on the other pod — the "everything hangs
+                  # ~60 s, then continues" symptom. Readiness takes such a pod out of the Service; liveness restarts it.
+                  # /api/health/live has no dependency checks (see health.controller.ts); /api/health checks DB/cache/Redis.
+                  startupProbe:
+                      httpGet:
+                          path: /api/health/live
+                          port: 3000
+                      periodSeconds: 10
+                      timeoutSeconds: 5
+                      failureThreshold: 60
+                  readinessProbe:
+                      httpGet:
+                          path: /api/health
+                          port: 3000
+                      periodSeconds: 10
+                      timeoutSeconds: 5
+                      failureThreshold: 3
+                  livenessProbe:
+                      httpGet:
+                          path: /api/health/live
+                          port: 3000
+                      periodSeconds: 15
+                      timeoutSeconds: 5
+                      failureThreshold: 6
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -450,6 +489,53 @@ spec:
                         value: 'false'
                       - name: NODE_ENV
                         value: 'production'
+                      # Fits the container's 2 GiB limit (see the API deployment); the worker now runs the Documents pipeline.
+                      - name: NODE_OPTIONS
+                        value: '--max-old-space-size=1536'
+                      - name: UV_THREADPOOL_SIZE
+                        value: '16'
+                      # File storage, as on the API: the worker now runs the Documents pipeline, which reads uploaded files
+                      # through these providers (GAUZY_DOCS_QUEUE_WORKER_ENABLED=false on the API).
+                      - name: AWS_ACCESS_KEY_ID
+                        value: '$AWS_ACCESS_KEY_ID'
+                      - name: AWS_SECRET_ACCESS_KEY
+                        value: '$AWS_SECRET_ACCESS_KEY'
+                      - name: AWS_REGION
+                        value: '$AWS_REGION'
+                      - name: AWS_S3_BUCKET
+                        value: '$AWS_S3_BUCKET'
+                      - name: WASABI_ACCESS_KEY_ID
+                        value: '$WASABI_ACCESS_KEY_ID'
+                      - name: WASABI_SECRET_ACCESS_KEY
+                        value: '$WASABI_SECRET_ACCESS_KEY'
+                      - name: WASABI_REGION
+                        value: '$WASABI_REGION'
+                      - name: WASABI_SERVICE_URL
+                        value: '$WASABI_SERVICE_URL'
+                      - name: WASABI_S3_BUCKET
+                        value: '$WASABI_S3_BUCKET'
+                      - name: WASABI_S3_FORCE_PATH_STYLE
+                        value: '$WASABI_S3_FORCE_PATH_STYLE'
+                      - name: DIGITALOCEAN_ACCESS_KEY_ID
+                        value: '$DIGITALOCEAN_ACCESS_KEY_ID'
+                      - name: DIGITALOCEAN_SECRET_ACCESS_KEY
+                        value: '$DIGITALOCEAN_SECRET_ACCESS_KEY'
+                      - name: DIGITALOCEAN_REGION
+                        value: '$DIGITALOCEAN_REGION'
+                      - name: DIGITALOCEAN_SERVICE_URL
+                        value: '$DIGITALOCEAN_SERVICE_URL'
+                      - name: DIGITALOCEAN_CDN_URL
+                        value: '$DIGITALOCEAN_CDN_URL'
+                      - name: DIGITALOCEAN_S3_BUCKET
+                        value: '$DIGITALOCEAN_S3_BUCKET'
+                      - name: DIGITALOCEAN_S3_FORCE_PATH_STYLE
+                        value: '$DIGITALOCEAN_S3_FORCE_PATH_STYLE'
+                      - name: CLOUDINARY_API_KEY
+                        value: '$CLOUDINARY_API_KEY'
+                      - name: CLOUDINARY_API_SECRET
+                        value: '$CLOUDINARY_API_SECRET'
+                      - name: CLOUDINARY_CLOUD_NAME
+                        value: '$CLOUDINARY_CLOUD_NAME'
                       - name: LOG_LEVEL
                         value: 'info'
                       - name: CLOUD_PROVIDER

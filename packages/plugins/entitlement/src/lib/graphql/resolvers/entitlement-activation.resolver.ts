@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
@@ -112,6 +112,11 @@ export class EntitlementActivationResolver {
 	@Mutation('activateEntitlement')
 	async activateEntitlement(@Args('input') input: IEntitlementActivationInput) {
 		try {
+			// `seenIntervalSeconds` is the member `POST /entitlement-activations` validates with `@Min(0)` (R2-G16).
+			if (typeof input?.seenIntervalSeconds === 'number' && input.seenIntervalSeconds < 0) {
+				throw new BadRequestException('VALIDATION_FAILED: seenIntervalSeconds must not be less than 0.');
+			}
+
 			const result = await this.entitlementActivationService.activate(input);
 
 			return { activation: result.activation, entitlement: result.entitlement, created: result.created, userErrors: [] };

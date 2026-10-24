@@ -1,34 +1,58 @@
 import { Global, Module } from '@nestjs/common';
 import { PaymentInstrumentEligibilityService, PaymentInstrumentModule } from '@gauzy/core';
-import { CART_STOCK_AVAILABILITY, CART_TAX_CALCULATION } from '@gauzy/plugin-cart';
+import {
+	CART_PRICE_RESOLUTION,
+	CART_PROMOTION_EVALUATION,
+	CART_SHIPPING_RATE,
+	CART_STOCK_AVAILABILITY,
+	CART_TAX_CALCULATION,
+	CART_TAX_CATEGORY
+} from '@gauzy/plugin-cart';
 import { CatalogItemService, CatalogModule, ProductVariantSaleService } from '@gauzy/plugin-catalog';
 import {
 	FulfillmentModule,
 	ReturnShipmentService,
+	ShippingOptionService,
 	WarehouseFulfillmentService
 } from '@gauzy/plugin-fulfillment';
 import { InventoryModule, StockAvailabilityService, StockLedgerService } from '@gauzy/plugin-inventory';
 import {
 	ORDER_APPROVAL,
+	ORDER_CHECKOUT_PAYMENTS,
 	ORDER_INVOICING,
+	ORDER_PROMOTION_USAGE,
 	OrderApprovalAdapter,
 	OrderInvoicingAdapter,
 	OrderLineFulfillmentService,
 	OrderLineService,
 	OrderModule,
+	OrderPaymentLedgerService,
 	OrderPlatformAdaptersModule,
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
-import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
-import { PAYMENT_ORDER_LINE_REFUND, PaymentModule, ReturnRefundService } from '@gauzy/plugin-payment';
+import { PricingModule, ProductPriceService, RecurringPriceService } from '@gauzy/plugin-pricing';
+import {
+	PAYMENT_ORDER_LEDGER,
+	PAYMENT_ORDER_LINE_REFUND,
+	PaymentModule,
+	PaymentOrderLinkService,
+	ReturnRefundService
+} from '@gauzy/plugin-payment';
+import { PromotionModule, PromotionOrderUsageAdapter, PromotionService } from '@gauzy/plugin-promotion';
 import {
 	PURCHASING_APPROVAL,
 	PURCHASING_INVENTORY,
 	PurchaseApprovalService,
 	PurchasingModule
 } from '@gauzy/plugin-purchasing';
-import { ENTITLEMENT_CATALOG_PORT } from '@gauzy/plugin-entitlement';
+import {
+	ENTITLEMENT_CATALOG_PORT,
+	EntitlementModule,
+	EntitlementOrderLinePolicyAdapter
+} from '@gauzy/plugin-entitlement';
+// Its own statement, so the order port the entitlement package answers sits beside that package (Q7-W5).
+import { ORDER_LINE_ENTITLEMENT_POLICY } from '@gauzy/plugin-order';
 import {
 	RETURNS_ORDER_FULFILLMENT,
 	RETURNS_ORDER_TOTALS,
@@ -42,7 +66,7 @@ import {
 	SUBSCRIPTION_ORDER_GATEWAY,
 	SUBSCRIPTION_PRICING
 } from '@gauzy/plugin-subscription';
-import { TaxModule, TaxRateService } from '@gauzy/plugin-tax';
+import { TaxCategoryService, TaxModule, TaxRateService } from '@gauzy/plugin-tax';
 import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-warehouse';
 
 /**
@@ -84,6 +108,8 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// The catalogue owns what a product and a variant are, which is what a plan is attached to and
 		// what a right is granted over.
 		CatalogModule,
+		// The entitlement package answers what right an order line grants, and its module exports the adapter.
+		EntitlementModule,
 		// The order package owns the line's refund register, and its module already exports the service
 		// that moves it. It also answers how much of a line has been fulfilled, which is what a return
 		// is measured against.
@@ -111,12 +137,22 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		PaymentModule,
 		// What a line is taxed at is the tax package's rate tables, its regimes and its rounding — none
 		// of which the cart may read for itself.
-		TaxModule
+		TaxModule,
+		// What a promotion takes off a cart is the promotion package's evaluation — its rules, stacking
+		// and budgets — and never an amount the cart was handed (R3-07).
+		PromotionModule
 	],
 	providers: [
 		// The payment package reports what a succeeded refund paid back per line; the order package is
 		// the only writer of `order_line.refundedQuantity` / `refundedAmount`.
 		{ provide: PAYMENT_ORDER_LINE_REFUND, useExisting: OrderLineService },
+		// Every authorisation, capture, void and refund is a row of the order's own money ledger, which only the
+		// order package writes; the payment package reports each one after its money moved (Q7-W1b). Unbound, an
+		// order paid in full answered NOT_PAID for ever and could never complete.
+		{ provide: PAYMENT_ORDER_LEDGER, useExisting: OrderPaymentLedgerService },
+		// A buyer pays before the order exists, on a collection opened for the cart; the checkout hands that
+		// collection and its payments to the order the cart became (Q7-W1b).
+		{ provide: ORDER_CHECKOUT_PAYMENTS, useExisting: PaymentOrderLinkService },
 		// A return cannot exceed what was sent, and only the order package knows how much that is.
 		{ provide: RETURNS_ORDER_FULFILLMENT, useExisting: OrderLineFulfillmentService },
 		// A billing period is priced by the pricing package, so a subscription asks it rather than
@@ -129,6 +165,11 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// An entitlement names the product and the variant it is over, and only the catalogue can say
 		// what those identifiers name.
 		{ provide: ENTITLEMENT_CATALOG_PORT, useExisting: CatalogItemService },
+		// An order asks, at placement, what right each of its lines grants — the variant's catalogue policy, else
+		// the product's; never the line's own metadata, which the cart editor writes — so its `order.placed` event
+		// carries the lines the grant path issues a right for (Q7-W5). Unbound, an order announces no lines and a
+		// purchase grants nothing.
+		{ provide: ORDER_LINE_ENTITLEMENT_POLICY, useExisting: EntitlementOrderLinePolicyAdapter },
 		// A purchase order is approved by the platform's own approval machinery: the purchasing package
 		// files the request, and the core approval service owns the row.
 		{ provide: PURCHASING_APPROVAL, useExisting: PurchaseApprovalService },
@@ -149,6 +190,27 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// and a tax-inclusive catalogue had each line's net computed as `gross - 0`, folding the tax the
 		// price already contained into the subtotal without declaring it anywhere.
 		{ provide: CART_TAX_CALCULATION, useExisting: TaxRateService },
+		// What a promotion grants a cart is the promotion engine's answer: the cart hands it the cart and
+		// the codes it carries and records what comes back. Unbound, the cart refuses to apply a promotion
+		// rather than recording an amount the caller stated — which is what it did before (R3-07): a buyer
+		// could name any code and any discount, and the cart re-priced from it.
+		{ provide: CART_PROMOTION_EVALUATION, useExisting: PromotionService },
+		// What the engine granted is also a redemption: a checkout takes the promotion's use before the order
+		// is written and registers it once placed, and a cancellation gives it back (Q7-W1c). Unbound, a
+		// promotion's usage limit counted nothing and could be redeemed without end.
+		{ provide: ORDER_PROMOTION_USAGE, useExisting: PromotionOrderUsageAdapter },
+		// What a cart line costs is the pricing package's resolution — its price lists, sale and override
+		// lists, quantity bands and currency — for the cart and the line's quantity. Unbound, the cart refuses a
+		// line rather than recording the price its caller stated, which is what it did before (R3-07b).
+		{ provide: CART_PRICE_RESOLUTION, useExisting: ProductPriceService },
+		// What a delivery choice costs is the configured shipping option's rate on the cart, and how it is taxed
+		// is the option's too; the fulfilment package owns both. Unbound, the cart refuses a delivery choice
+		// rather than recording the amount its caller stated, which is what it did before (R3-07c).
+		{ provide: CART_SHIPPING_RATE, useExisting: ShippingOptionService },
+		// What a line is taxed under is the variant's category, or the organization's default: the tax package
+		// reads both. Unbound, a line carries no category (the rate resolution then applies the default), never
+		// the one its caller named (R3-07c).
+		{ provide: CART_TAX_CATEGORY, useExisting: TaxCategoryService },
 		// The warehouse reads bin contents from the ledger and writes every physical move back through
 		// it; a return restocks what came back through the same ledger, in the same instance.
 		{ provide: WAREHOUSE_STOCK_LEDGER, useExisting: StockLedgerService },
@@ -185,11 +247,16 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		SUBSCRIPTION_PRICING,
 		SUBSCRIPTION_CATALOG,
 		ENTITLEMENT_CATALOG_PORT,
+		ORDER_LINE_ENTITLEMENT_POLICY,
 		PURCHASING_APPROVAL,
 		SUBSCRIPTION_INSTRUMENTS,
 		SUBSCRIPTION_ORDER_GATEWAY,
 		CART_STOCK_AVAILABILITY,
 		CART_TAX_CALCULATION,
+		CART_PROMOTION_EVALUATION,
+		CART_PRICE_RESOLUTION,
+		CART_SHIPPING_RATE,
+		CART_TAX_CATEGORY,
 		WAREHOUSE_STOCK_LEDGER,
 		RETURNS_STOCK_LEDGER,
 		PURCHASING_INVENTORY,
@@ -197,7 +264,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		RETURNS_SHIPMENT_GATEWAY,
 		RETURNS_REFUND_GATEWAY,
 		ORDER_INVOICING,
-		ORDER_APPROVAL
+		ORDER_APPROVAL,
+		PAYMENT_ORDER_LEDGER,
+		ORDER_CHECKOUT_PAYMENTS,
+		ORDER_PROMOTION_USAGE
 	]
 })
 export class PluginCompositionModule {}

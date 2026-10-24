@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	HttpException,
 	HttpStatus,
 	Inject,
 	Injectable,
@@ -7,7 +8,7 @@ import {
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, SaveOptions } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, IsNull, SaveOptions } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
 	IOrderLineReceiptMove,
@@ -40,7 +41,7 @@ import {
 	MultiORMEnum,
 	RequestContext,
 	SequenceService,
-	TenantAwareCrudService,
+	Warehouse,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
@@ -52,6 +53,7 @@ import {
 import { OrderReturn } from './order-return.entity';
 import { MikroOrmOrderReturnRepository } from './repository/mikro-orm-order-return.repository';
 import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The series key returns are numbered from. */
 const RETURN_NUMBER_KEY = 'RETURN';
@@ -218,7 +220,7 @@ interface IReceiptSteps {
  * this class — it is set by the conditional update, in the same statement that checks it.
  */
 @Injectable()
-export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
+export class OrderReturnService extends ReturnsCrudService<OrderReturn> {
 	/** Where a failure that must not be thrown — a compensation that did not land — is reported. */
 	private readonly logger = new Logger(OrderReturnService.name);
 
@@ -688,6 +690,13 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	): Promise<IOrderReturnReceiptOutcome> {
 		const orderReturn = await this.findOneScoped(id);
 
+		// A receipt that also refunds is refused BEFORE the goods move when the caller may not settle a refund:
+		// the refund is the receipt's last step, and refused there it would leave goods received and stock
+		// posted under an error answer (review R3-09).
+		if (options.refund !== undefined && options.refund !== null && String(options.refund) !== '') {
+			await this.refundGateway?.assertMayRefund?.();
+		}
+
 		this.assertStatus(orderReturn, RECEIVABLE_STATUSES, 'receive');
 
 		// The status the receipt was decided from, taken before anything else runs, for the reason
@@ -713,6 +722,11 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			plan = await this.lineService.planReceipt(id, lines);
 
 			const movements = this.planMovements(orderReturn, plan, fulfilled, options.warehouseId);
+
+			await this.assertWarehousesInOrganization([
+				options.warehouseId,
+				...movements.map((movement) => movement.warehouseId)
+			]);
 
 			settlement = this.summarize(plan);
 
@@ -844,9 +858,10 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		amount: string | number,
 		reasonId?: ID,
 		note?: string,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		idempotencyKey?: string
 	): Promise<IRefundResult> {
-		const settled = await this.settleRefund(id, amount, reasonId, note, expectation);
+		const settled = await this.settleRefund(id, amount, reasonId, note, expectation, idempotencyKey);
 
 		return settled.refund;
 	}
@@ -874,7 +889,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		amount: string | number,
 		reasonId: ID | undefined,
 		note: string | undefined,
-		expectation: IVersionExpectation
+		expectation: IVersionExpectation,
+		idempotencyKey?: string
 	): Promise<{ refund: IRefundResult; version: number }> {
 		const orderReturn = await this.findOneScoped(id);
 
@@ -902,30 +918,204 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			throw new BadRequestException('A refund must be for a positive amount.');
 		}
 
-		const result = await this.refundGateway.createRefund({
-			orderId: orderReturn.orderId,
-			returnId: orderReturn.id,
-			amount: refundable.toStorageString(),
-			currency: orderReturn.currency,
-			reasonId,
-			note
-		});
+		// A caller who may not settle a refund is refused before the return is written at all.
+		await this.refundGateway.assertMayRefund?.();
 
-		const runningTotal = Money.of(orderReturn.refundAmount ?? '0', orderReturn.currency)
-			.add(Money.of(result.amount, result.currency))
+		/**
+		 * **A retry under the same key is answered by the refund it already produced** (review R3-09r2). The route
+		 * requires an `Idempotency-Key`, and the platform replays a completed request under it; a request whose
+		 * outcome nobody saw — the money went back and the answer did not — is not completed, and its retry used to
+		 * claim the return and ask for the money a second time. The refund carries the key, so it is looked up
+		 * first: a succeeded refund is the answer and nothing is written; a pending one was already claimed on the
+		 * return by the attempt that left it, so it is settled without claiming again.
+		 */
+		const found =
+			idempotencyKey && this.refundGateway.findRefund
+				? await this.refundGateway.findRefund({
+						orderId: orderReturn.orderId,
+						returnId: orderReturn.id,
+						idempotencyKey
+					})
+				: null;
+
+		if (found) {
+			const refund: IRefundResult =
+				found.status === 'SUCCEEDED'
+					? { refundId: found.refundId, amount: found.amount, currency: found.currency }
+					: await this.refundGateway.createRefund({
+							orderId: orderReturn.orderId,
+							returnId: orderReturn.id,
+							amount: found.amount,
+							currency: orderReturn.currency,
+							reasonId,
+							note,
+							idempotencyKey
+						});
+
+			const version = Number(orderReturn.version ?? 1);
+
+			if (found.status !== 'SUCCEEDED') {
+				// The attempt that left the refund pending stopped before it announced it, so the settlement this retry
+				// made is announced now (Greptile, #10906). A succeeded refund is a plain replay and is not announced
+				// again: whichever attempt settled it is the one that could.
+				await this.announce(RETURN_EVENTS.REFUNDED, orderReturn, version, {
+					refundedAmount: refund.amount,
+					refundId: refund.refundId ?? null
+				});
+			}
+
+			await this.refreshOrderTotals(orderReturn.orderId);
+
+			return { refund, version };
+		}
+
+		/**
+		 * **Claim, then pay** (review R3-09r1). The return's header used to be written after the money had gone
+		 * back: a version that moved meanwhile (a second refund of the same return, a close) answered `409` for a
+		 * refund that had happened, and the running total `refundAmount` missed it — the caller retried and paid
+		 * again. The header is now written first, conditionally on the version the caller stated *and* on the
+		 * running total this call read, so of two overlapping refunds one wins the write and the other is refused
+		 * before any money moves; the winner then asks the payment capability for the refund.
+		 */
+		const previous = orderReturn.refundAmount ?? null;
+		const runningTotal = Money.of(previous ?? '0', orderReturn.currency)
+			.add(refundable)
 			.round()
 			.toStorageString();
-
-		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, {
-			name: RETURN_EVENTS.REFUNDED,
-			data: { refundedAmount: result.amount, refundId: result.refundId ?? null }
+		const version = await this.commitHeader(orderReturn, { refundAmount: runningTotal }, expectation, undefined, {
+			precondition: { refundAmount: previous === null ? IsNull() : previous }
 		});
+
+		let result: IRefundResult;
+
+		try {
+			result = await this.refundGateway.createRefund({
+				orderId: orderReturn.orderId,
+				returnId: orderReturn.id,
+				amount: refundable.toStorageString(),
+				currency: orderReturn.currency,
+				reasonId,
+				note,
+				...(idempotencyKey ? { idempotencyKey } : {})
+			});
+		} catch (error) {
+			if (isRefusal(error)) {
+				// Refused before any money moved (4xx): the running total this call claimed is given back.
+				await this.adjustClaimedTotal(orderReturn, runningTotal, refundable.negate(), {
+					restore: previous,
+					reason: 'RETURN_REFUND_RELEASE_FAILED'
+				});
+			} else {
+				// Anything else may have come after the refund committed; the claimed total stays, so a retry is
+				// measured against it rather than paying the return back twice.
+				this.logger.warn(
+					`RETURN_REFUND_OUTCOME_UNKNOWN: return ${orderReturn.id} keeps refundAmount ${runningTotal} because its ` +
+						`refund failed with a non-refusal (${describe(error)}); check the return's refunds before correcting it.`
+				);
+			}
+
+			throw error;
+		}
+
+		// The port answers what was actually refunded, which may be less than was asked for: the claim is
+		// corrected to it, so the running total and the event state the same figure (Greptile, #10895).
+		let settledTotal = runningTotal;
+		let settledVersion = version;
+		const refunded = Money.of(result.amount, orderReturn.currency).round();
+
+		if (!refunded.equals(refundable)) {
+			const corrected = await this.adjustClaimedTotal(orderReturn, runningTotal, refunded.subtract(refundable), {
+				reason: 'RETURN_REFUND_TOTAL_CORRECTION_FAILED'
+			});
+
+			if (corrected) {
+				settledTotal = corrected.total;
+				settledVersion = corrected.version;
+			}
+		}
+
+		await this.announce(
+			RETURN_EVENTS.REFUNDED,
+			{ ...orderReturn, refundAmount: settledTotal } as OrderReturn,
+			settledVersion,
+			{ refundedAmount: result.amount, refundId: result.refundId ?? null }
+		);
 
 		// The refund is on the order's ledger now, and the order's totals, its payment status and its
 		// summary row are all derived from that ledger — so they are refreshed before this returns.
 		await this.refreshOrderTotals(orderReturn.orderId);
 
-		return { refund: result, version };
+		return { refund: result, version: settledVersion };
+	}
+
+	/**
+	 * Moves the running total a refund claimed by `delta` — back out after a refusal, or down to what was actually
+	 * refunded — conditionally on the total it reads, retried a few times.
+	 *
+	 * **Predicated on the total, not on the version the claim wrote** (Greptile, #10895). A write that does not
+	 * touch the total (a close) moves the version while the payment capability is being asked, and a release
+	 * predicated on the claimed version then failed and left the return reporting money that never moved. Each
+	 * attempt reads the return, computes the new total from the one it read and writes it only while the total is
+	 * still that one, so another refund's claim in between is kept and this one's amount is the only one moved.
+	 * When nothing else touched the total since the claim and a value to restore is given, that value is written
+	 * back exactly (an absent total stays absent).
+	 *
+	 * @param orderReturn The return as the refund read it.
+	 * @param claimedTotal The running total the claim wrote.
+	 * @param delta How much to move it by (negative to give back).
+	 * @param options The value to restore when the total is untouched, and the code a failure is logged under.
+	 * @returns The total and the version written, or `undefined` when it could not be written (logged).
+	 */
+	private async adjustClaimedTotal(
+		orderReturn: OrderReturn,
+		claimedTotal: string,
+		delta: Money,
+		options: { restore?: unknown; reason: string }
+	): Promise<{ total: string; version: number } | undefined> {
+		const currency = orderReturn.currency;
+		let failure: unknown;
+
+		for (let attempt = 0; attempt < 3; attempt++) {
+			try {
+				const current = await this.findOneScoped(orderReturn.id);
+				const read = current.refundAmount ?? null;
+				const untouched =
+					read !== null && Money.of(String(read), currency).equals(Money.of(claimedTotal, currency));
+				let total: string;
+				let patch: unknown;
+
+				if (untouched && options.restore !== undefined) {
+					patch = options.restore;
+					total = options.restore === null ? '0' : String(options.restore);
+				} else {
+					const moved = Money.of(String(read ?? '0'), currency)
+						.add(delta)
+						.round();
+
+					total = (moved.isNegative() ? Money.zero(currency) : moved).toStorageString();
+					patch = total;
+				}
+
+				const version = await this.commitHeader(current, { refundAmount: patch }, ANY_VERSION, undefined, {
+					precondition: { refundAmount: read === null ? IsNull() : read }
+				});
+
+				return { total, version };
+			} catch (error) {
+				failure = error;
+
+				if (!(error instanceof HttpException) || error.getStatus() !== HttpStatus.CONFLICT) {
+					break;
+				}
+			}
+		}
+
+		this.logger.warn(
+			`${options.reason}: return ${orderReturn.id} could not move the refund total it claimed by ${delta.toStorageString()} ` +
+				`(${describe(failure)}); its refundAmount needs a correction.`
+		);
+
+		return undefined;
 	}
 
 	/**
@@ -1426,6 +1616,48 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	}
 
 	/**
+	 * Refuses a receiving location outside the caller's organization, before anything of the receipt is written.
+	 *
+	 * The location comes from the receipt request, the return line or the return itself, and every one of them was
+	 * taken as stated: the stock ledger checks only the tenant of the location it writes at, so a return of one
+	 * organization could restock units into another organization's warehouse of the same tenant. Each location the
+	 * receipt would write at is read in the caller's tenant and organization.
+	 *
+	 * @param warehouseIds The locations the receipt names or would write at.
+	 * @throws NotFoundException with `RETURN_WAREHOUSE_NOT_FOUND` when one is not the caller's organization's.
+	 */
+	private async assertWarehousesInOrganization(warehouseIds: Array<ID | null | undefined>): Promise<void> {
+		const ids = [...new Set(warehouseIds.filter((id): id is ID => !!id).map(String))] as ID[];
+
+		if (!ids.length) {
+			return;
+		}
+
+		const scope = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+		const found: Warehouse[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? await this.mikroOrmOrderReturnRepository
+						.getEntityManager()
+						.find(Warehouse, { id: { $in: ids }, ...scope } as never)
+				: await this.typeOrmOrderReturnRepository.manager.find(Warehouse, {
+						where: { id: In(ids), ...scope }
+					});
+		const known = new Set(found.map((warehouse) => String(warehouse.id)));
+		const foreign = ids.filter((id) => !known.has(String(id)));
+
+		if (foreign.length) {
+			throw new NotFoundException({
+				message: `RETURN_WAREHOUSE_NOT_FOUND: location ${foreign.join(', ')} could not be found in this organization.`,
+				code: 'RETURN_WAREHOUSE_NOT_FOUND',
+				details: { warehouseIds: foreign }
+			});
+		}
+	}
+
+	/**
 	 * Puts a receipt that could not be posted back the way it was found.
 	 *
 	 * Every way a receipt can fail ends here (doc 10 §11.6: "a failure in steps 2–3 compensates fully
@@ -1698,4 +1930,21 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
  */
 function describe(error: unknown): string {
 	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
+}
+
+/**
+ * Whether an error is a refusal answered before anything was written — an HTTP 4xx — rather than a fault whose
+ * effect is unknown (see `settleRefund`).
+ *
+ * @param error What the payment capability threw.
+ * @returns True for a 4xx `HttpException`.
+ */
+function isRefusal(error: unknown): boolean {
+	if (!(error instanceof HttpException)) {
+		return false;
+	}
+
+	const status = error.getStatus();
+
+	return status >= 400 && status < 500;
 }

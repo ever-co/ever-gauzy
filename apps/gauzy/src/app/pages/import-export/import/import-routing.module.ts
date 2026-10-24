@@ -17,7 +17,7 @@ const routes: Routes = [
 					if (token && userId) {
 						return [];
 					} else {
-						return [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_ADD];
+						return [PermissionsEnum.IMPORT_ADD];
 					}
 				},
 				redirectTo: '/pages/settings'

@@ -1,6 +1,16 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import {
+	BadRequestException,
+	ConflictException,
+	HttpException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { Money, RequestContext, SequenceService, readAffectedRows } from '@gauzy/core';
 import {
 	IOrderClaimLineInput,
 	IOrderTotalsPort,
@@ -18,12 +28,22 @@ import { TypeOrmOrderExchangeRepository } from '../order-exchange/repository/typ
 import { OrderClaim } from './order-claim.entity';
 import { MikroOrmOrderClaimRepository } from './repository/mikro-orm-order-claim.repository';
 import { TypeOrmOrderClaimRepository } from './repository/type-orm-order-claim.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The series key claims are numbered from. */
 const CLAIM_NUMBER_KEY = 'CLAIM';
 
 /** Statuses a claim may still be decided from. */
 const DECIDABLE_STATUSES: OrderClaimStatus[] = [OrderClaimStatus.OPEN, OrderClaimStatus.REQUESTED];
+
+/**
+ * The claim metadata members a refund decision is recorded under (review R3-09r2): the key the claim's refund is
+ * asked under, and the status the claim was decided from. A `REFUND` claim left `APPROVED` by an outcome nobody saw
+ * carries both, which is what lets an approval resume it — find the refund the key produced, or ask for it again
+ * under the same key — rather than refuse it or pay twice.
+ */
+const REFUND_DECISION_KEY = 'refundDecisionKey';
+const REFUND_DECIDED_FROM = 'refundDecidedFrom';
 
 /**
  * A complaint about a delivered order and the resolution chosen for it.
@@ -38,7 +58,9 @@ const DECIDABLE_STATUSES: OrderClaimStatus[] = [OrderClaimStatus.OPEN, OrderClai
  * amount is normalised at the currency's scale through the platform money layer first.
  */
 @Injectable()
-export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
+export class OrderClaimService extends ReturnsCrudService<OrderClaim> {
+	private readonly logger = new Logger(OrderClaimService.name);
+
 	constructor(
 		readonly typeOrmOrderClaimRepository: TypeOrmOrderClaimRepository,
 		readonly mikroOrmOrderClaimRepository: MikroOrmOrderClaimRepository,
@@ -61,9 +83,7 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 	 * @param entity The claim to create, with its claimed lines.
 	 * @returns The created claim, with its lines.
 	 */
-	public async create(
-		entity: Partial<OrderClaim> & { lines?: IOrderClaimLineInput[] }
-	): Promise<OrderClaim> {
+	public async create(entity: Partial<OrderClaim> & { lines?: IOrderClaimLineInput[] }): Promise<OrderClaim> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 		const { lines = [], ...header } = entity;
@@ -133,11 +153,25 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		note?: string
 	): Promise<{ claim: OrderClaim; refund?: IRefundResult }> {
 		const claim = await this.findOneScoped(id);
+		// The status this approval decides from, taken before anything else runs: the conditional write below is
+		// predicated on it, not on whatever the row object holds by then.
+		const decidedFrom = claim.status;
+		// A `REFUND` claim left in flight (`APPROVED`, with the decision key its refund was asked under) is resumed
+		// rather than refused: see `resumeRefund`.
+		const resuming =
+			claim.type === OrderClaimType.REFUND &&
+			claim.status === OrderClaimStatus.APPROVED &&
+			typeof claim.metadata?.[REFUND_DECISION_KEY] === 'string';
+
+		if (resuming) {
+			return await this.resumeRefund(claim, refundAmount, note);
+		}
 
 		this.assertStatus(claim, DECIDABLE_STATUSES, 'approve');
 
 		const lines = await this.lineService.findForClaim(id);
-		const canBeShipped = lines.some((line) => line.isAdditionalItem === true) || (await this.hasLinkedExchange(claim));
+		const canBeShipped =
+			lines.some((line) => line.isAdditionalItem === true) || (await this.hasLinkedExchange(claim));
 
 		if (claim.type === OrderClaimType.REPLACE && !canBeShipped) {
 			throw new BadRequestException(
@@ -146,7 +180,39 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		}
 
 		if (claim.type === OrderClaimType.REFUND) {
-			const refund = await this.settleRefund(claim, refundAmount, note);
+			// A caller who may not settle a refund is refused before the claim moves at all (review R3-09).
+			await this.refundGateway?.assertMayRefund?.();
+
+			// The decision is taken before the money moves, and only once. Two approvals of the same claim that
+			// overlapped — a double click, a retry after a lost answer while the first was still settling — both
+			// read it as decidable and each settled a refund; the claim then closed once with two refunds behind it.
+			const decisionKey = randomUUID();
+
+			await this.takeRefundDecision(claim, decidedFrom, decisionKey);
+
+			let refund: IRefundResult;
+
+			try {
+				refund = await this.settleRefund(claim, refundAmount, note, decisionKey);
+			} catch (error) {
+				// A refusal (4xx: no amount, no gateway, past the ceiling, no grant, a lost compare-and-swap) is
+				// answered before the refund commits, so nothing was paid back and the claim is decidable again.
+				// Anything else may have come after the refund committed — a read of the settled row that failed —
+				// and reopening the claim then would let a retry pay it back twice. Such a claim stays APPROVED,
+				// which `reject`, `cancel` and `close` accept, for an operator to finish against the refund list
+				// (Greptile, #10856).
+				if (this.isRefusal(error)) {
+					await this.releaseRefundDecision(claim, decidedFrom);
+				} else {
+					this.logger.warn(
+						`CLAIM_REFUND_OUTCOME_UNKNOWN: claim ${claim.id} is left APPROVED because its refund failed with ` +
+							`a non-refusal (${error instanceof Error ? error.message : String(error)}); check the refunds of ` +
+							'the claim before closing, rejecting or cancelling it.'
+					);
+				}
+
+				throw error;
+			}
 
 			await super.update(id, {
 				status: OrderClaimStatus.CLOSED,
@@ -309,7 +375,8 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 	private async settleRefund(
 		claim: OrderClaim,
 		refundAmount: string | number | undefined,
-		note?: string
+		note?: string,
+		idempotencyKey?: string
 	): Promise<IRefundResult> {
 		const requested = refundAmount ?? claim.refundAmount;
 
@@ -336,7 +403,10 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			claimId: claim.id,
 			amount: refundable.toStorageString(),
 			currency: claim.currency,
-			note
+			note,
+			// The decision's key: a resume asks again under it, and the payment capability answers with the refund
+			// the first request produced rather than paying twice (review R3-09r2).
+			...(idempotencyKey ? { idempotencyKey } : {})
 		});
 
 		// A claim that settles in money answered by appending an `order_transaction`, so the order's
@@ -409,6 +479,164 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		}
 
 		return claim;
+	}
+
+	/**
+	 * Moves a `REFUND` claim out of its decidable status before its refund is settled, conditionally on the
+	 * status this approval read, so exactly one of two overlapping approvals goes on to pay anything back.
+	 * `APPROVED` is the in-flight status: the claim is decided and its money is on its way, and the approval
+	 * closes it as soon as the refund settles.
+	 *
+	 * @param claim The claim as this approval read it.
+	 * @param from The status this approval read it in.
+	 * @throws ConflictException with `CLAIM_DECISION_CONFLICT` when another call decided the claim first.
+	 */
+	private async takeRefundDecision(claim: OrderClaim, from: OrderClaimStatus, decisionKey: string): Promise<void> {
+		let affected = 0;
+
+		try {
+			const result = await super.update(
+				{ id: claim.id, status: from } as any,
+				{
+					status: OrderClaimStatus.APPROVED,
+					// Recorded with the decision, so a resume knows the key the refund was asked under and the status
+					// to give back on a refusal (review R3-09r2).
+					metadata: {
+						...(claim.metadata ?? {}),
+						[REFUND_DECISION_KEY]: decisionKey,
+						[REFUND_DECIDED_FROM]: from
+					}
+				} as any
+			);
+
+			// Whichever ORM and driver answered: a count read as zero would be a refusal of a write that landed.
+			affected = readAffectedRows(result);
+		} catch (error) {
+			// The scoped update reads the row under the same criteria first; a claim whose status moved on reads
+			// as missing there, which is the same lost race as a statement that changed no row.
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
+
+		if (affected === 0) {
+			throw new ConflictException({
+				message: `CLAIM_DECISION_CONFLICT: claim '${claim.id}' was decided by another call while this approval was reading it, so no second refund was issued. Read the claim again.`,
+				code: 'CLAIM_DECISION_CONFLICT'
+			});
+		}
+	}
+
+	/**
+	 * Resumes a `REFUND` claim left `APPROVED` by an outcome nobody saw (review R3-09r2).
+	 *
+	 * The claim's decision recorded the key its refund was asked under. The payment capability is asked first
+	 * whether that key produced a refund: a succeeded one closes the claim with it, and nothing is paid. Otherwise
+	 * the refund is asked for again **under the same key** — the payment capability settles a refund the key left
+	 * pending, answers one a concurrent resume just produced, or records the refund that never happened — so the
+	 * claim is paid back once however often it is resumed. A refusal gives the claim back the status it was decided
+	 * from; any other failure leaves it in flight, as the first attempt did.
+	 *
+	 * @param claim The claim, `APPROVED` with a decision key.
+	 * @param refundAmount The amount to refund when no refund stands under the key yet.
+	 * @param note An operator note.
+	 * @returns The claim, closed, and the refund it was closed on.
+	 */
+	private async resumeRefund(
+		claim: OrderClaim,
+		refundAmount: string | number | undefined,
+		note?: string
+	): Promise<{ claim: OrderClaim; refund?: IRefundResult }> {
+		const decisionKey = String(claim.metadata?.[REFUND_DECISION_KEY]);
+		const decidedFrom = (claim.metadata?.[REFUND_DECIDED_FROM] as OrderClaimStatus) ?? OrderClaimStatus.OPEN;
+
+		if (!this.refundGateway?.findRefund) {
+			throw new BadRequestException(
+				'CLAIM_REFUND_RESUME_UNAVAILABLE: the payment capability cannot look a refund up by its key, so a claim left in flight cannot be resumed; check its refunds and close, reject or cancel it.'
+			);
+		}
+
+		const found = await this.refundGateway.findRefund({
+			orderId: claim.orderId,
+			claimId: claim.id,
+			idempotencyKey: decisionKey
+		});
+		let refund: IRefundResult;
+
+		if (found && found.status === 'SUCCEEDED') {
+			refund = { refundId: found.refundId, amount: found.amount, currency: found.currency };
+		} else {
+			await this.refundGateway.assertMayRefund?.();
+
+			// A refund the key left pending is settled for its own amount, not for whatever this retry states — the
+			// claim may carry no amount of its own (Greptile, #10906). The payment capability settles it under the key.
+			const amount = found?.amount ?? refundAmount;
+
+			try {
+				refund = await this.settleRefund(claim, amount, note, decisionKey);
+			} catch (error) {
+				// **A refused resume never releases the decision** (Greptile, #10906). The approval that took it may
+				// still be paying: releasing here would reopen the claim, and another approval could take a new key and
+				// pay a second refund beside the first. The claim stays in flight for an operator, as an unknown
+				// outcome leaves it.
+				this.logger.warn(
+					`CLAIM_REFUND_RESUME_REFUSED: claim ${claim.id} stays APPROVED (decided from ${decidedFrom}) because ` +
+						`its resumed refund was refused (${error instanceof Error ? error.message : String(error)}).`
+				);
+
+				throw error;
+			}
+		}
+
+		await super.update(claim.id, {
+			status: OrderClaimStatus.CLOSED,
+			refundAmount: refund.amount,
+			note: note ?? claim.note
+		} as any);
+
+		return { claim: await this.findOneScoped(claim.id), refund };
+	}
+
+	/**
+	 * Gives a claim its decidable status back when its refund was refused, conditionally on the in-flight
+	 * status {@link takeRefundDecision} wrote — a claim another call moved on in the meantime is left alone.
+	 * Best effort: the refusal being answered is the error the caller needs, not a failure to undo.
+	 *
+	 * @param claim The claim as the approval read it.
+	 * @param from The status the approval read it in, which it is given back.
+	 */
+	private async releaseRefundDecision(claim: OrderClaim, from: OrderClaimStatus): Promise<void> {
+		try {
+			await super.update(
+				{ id: claim.id, status: OrderClaimStatus.APPROVED } as any,
+				{
+					status: from
+				} as any
+			);
+		} catch (error) {
+			// The original refusal is what the caller is answered with; the claim it could not reopen is reported.
+			this.logger.warn(
+				`CLAIM_DECISION_RELEASE_FAILED: claim ${claim.id} stays APPROVED after a refused refund ` +
+					`(${error instanceof Error ? error.message : String(error)}); reject, cancel or close it by hand.`
+			);
+		}
+	}
+
+	/**
+	 * Whether an error is a refusal answered before anything was written — an HTTP 4xx — rather than a fault
+	 * whose effect is unknown.
+	 *
+	 * @param error What the settlement threw.
+	 * @returns True for a 4xx `HttpException`.
+	 */
+	private isRefusal(error: unknown): boolean {
+		if (!(error instanceof HttpException)) {
+			return false;
+		}
+
+		const status = error.getStatus();
+
+		return status >= 400 && status < 500;
 	}
 
 	/**

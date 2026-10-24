@@ -82,20 +82,17 @@ describe('OAuth2TokenManager.refreshAccessToken — account re-check', () => {
 		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, resolveUser)).not.toBeNull();
 	});
 
-	it('refuses when the user no longer resolves (inactive/archived), without revoking the token', async () => {
+	it('refuses when the user no longer resolves (inactive/archived), and revokes the token', async () => {
 		const refreshToken = await issueRefreshToken();
 		const jti = payloads.get(refreshToken)!.jti;
 
 		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => null)).toBeNull();
 
-		// NOT revoked: refusing already blocks every use of the token, and a revocation could not be
-		// undone if the account is re-activated. (A lookup that FAILS is a separate case now — the
-		// provider rejects rather than answering null — and is covered below.)
-		expect((manager as any).refreshTokens.get(jti).isRevoked).toBe(false);
-		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => null)).toBeNull();
-
-		// Reactivating the account makes the same refresh token usable again, which is the point.
-		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => ({ sub: USER_ID }))).not.toBeNull();
+		// Revoked (owner decision, 2026-10-22): a deactivation ends the user's MCP access, so
+		// re-activating the account does not bring this refresh token back. (A lookup that FAILS is a
+		// separate case — the provider rejects rather than answering null — and is covered below.)
+		expect((manager as any).refreshTokens.get(jti).isRevoked).toBe(true);
+		expect(await manager.refreshAccessToken(refreshToken, CLIENT_ID, async () => ({ sub: USER_ID }))).toBeNull();
 	});
 
 	it('reports a FAILED lookup separately from an inactive account, and keeps the token usable', async () => {

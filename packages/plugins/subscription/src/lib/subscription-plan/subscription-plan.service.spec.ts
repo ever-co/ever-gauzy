@@ -94,6 +94,8 @@ jest.mock('@gauzy/core', () => {
 		BaseEvent: class {},
 		EventBus: class {},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The plan's discount is range-checked on its digits (`normalizeDiscountFraction`), by the platform's own comparison.
+		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		SequenceService: class SequenceService {},
 		RequestContext: {
@@ -579,6 +581,57 @@ describe('SubscriptionPlanService — amending a plan that is already in use (do
 		});
 		await expect(fixture.service.updatePlan('plan-1', { code: 'TEAM' })).rejects.toBeInstanceOf(ConflictException);
 		expect(fixture.plan('plan-1')).toMatchObject({ code: 'PROFESSIONAL' });
+	});
+
+	// R2-G16: `updateSubscriptionPlan` gains the `currency` member `PUT /subscription-plans/:id` always had, and both
+	// surfaces now refuse to move it under live subscriptions, which are priced and billed in it.
+	it('refuses to change the currency of a plan that has live subscriptions, and accepts a restatement', async () => {
+		const fixture = planFixture({
+			plans: [planRow('plan-1')],
+			subscriptions: [subscriptionRow('sub-1', { status: SubscriptionStatus.ACTIVE })]
+		});
+		const currency = fixture.plan('plan-1')?.currency;
+		const other = currency === 'EUR' ? 'USD' : 'EUR';
+
+		await expect(fixture.service.updatePlan('plan-1', { currency: other } as never)).rejects.toThrow(
+			/SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE/
+		);
+		expect(fixture.plan('plan-1')?.currency).toBe(currency);
+		await expect(fixture.service.updatePlan('plan-1', { currency, trialDays: 3 } as never)).resolves.toMatchObject({
+			trialDays: 3
+		});
+	});
+
+	it('checks and stores a stated currency in its canonical form, and refuses one that is not a code', async () => {
+		const fixture = planFixture({
+			plans: [planRow('plan-1')],
+			subscriptions: [subscriptionRow('sub-1', { status: SubscriptionStatus.ACTIVE })]
+		});
+		const currency = String(fixture.plan('plan-1')?.currency);
+
+		// A restatement in another spelling is the same currency, so a live plan accepts it.
+		await expect(
+			fixture.service.updatePlan('plan-1', { currency: ` ${currency.toLowerCase()} ` } as never)
+		).resolves.toMatchObject({ currency });
+
+		for (const invalid of [null, 'US', 'DOLLARS', 42]) {
+			await expect(fixture.service.updatePlan('plan-1', { currency: invalid } as never)).rejects.toThrow(
+				/SUBSCRIPTION_PLAN_CURRENCY_INVALID/
+			);
+		}
+		expect(fixture.plan('plan-1')?.currency).toBe(currency);
+	});
+
+	it('changes the currency of a plan nobody is subscribed to', async () => {
+		const fixture = planFixture({
+			plans: [planRow('plan-1')],
+			subscriptions: [subscriptionRow('sub-1', { status: SubscriptionStatus.CANCELED })]
+		});
+		const other = fixture.plan('plan-1')?.currency === 'EUR' ? 'USD' : 'EUR';
+
+		await expect(fixture.service.updatePlan('plan-1', { currency: other } as never)).resolves.toMatchObject({
+			currency: other
+		});
 	});
 
 	it('refuses to deactivate a plan that still has live subscriptions', async () => {

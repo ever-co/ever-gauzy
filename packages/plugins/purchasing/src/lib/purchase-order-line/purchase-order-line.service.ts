@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { EntityManager, IsNull } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, readAffectedRows, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Money, readAffectedRows, RequestContext } from '@gauzy/core';
 import {
 	IPurchaseOrderLine,
 	IPurchaseOrderLineInput,
@@ -26,6 +26,7 @@ import { VendorProductTermService } from '../vendor-product-term/vendor-product-
 import { PurchaseOrderLine } from './purchase-order-line.entity';
 import { MikroOrmPurchaseOrderLineRepository } from './repository/mikro-orm-purchase-order-line.repository';
 import { TypeOrmPurchaseOrderLineRepository } from './repository/type-orm-purchase-order-line.repository';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /** What a line needs to know about its order before its price can be resolved. */
 export interface IPurchaseOrderLineContext {
@@ -129,7 +130,7 @@ export class ReceivedCountersMovedError extends Error {}
  * through inline arithmetic on numbers.
  */
 @Injectable()
-export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrderLine> {
+export class PurchaseOrderLineService extends PurchasingCrudService<PurchaseOrderLine> {
 	constructor(
 		readonly typeOrmPurchaseOrderLineRepository: TypeOrmPurchaseOrderLineRepository,
 		readonly mikroOrmPurchaseOrderLineRepository: MikroOrmPurchaseOrderLineRepository,

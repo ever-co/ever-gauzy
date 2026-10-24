@@ -219,6 +219,12 @@ jobs:
         if: always()
         run: node tools/scripts/api-parity-check.mjs
 
+      # The parity gate's acknowledgement readers: a commented-out REST-only route is not mapped, and a mirror
+      # field declared without arguments is still declared (single-route rule and ledger rule).
+      - name: The parity gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/api-parity-check.test.mjs
+
       - name: GraphQL feature gates
         if: always()
         run: node tools/scripts/graphql-feature-gate-check.mjs
@@ -276,6 +282,14 @@ jobs:
       - name: Every phantom design name is triaged, and the build backlog only shrinks
         if: always()
         run: node tools/scripts/design-name-triage-check.mjs
+
+      # The packaged Gauzy Desktop / Server / API Server fork an embedded API whose bundle require()s every
+      # @gauzy package at load, and electron-builder ships only what the app manifest lists in "dependencies".
+      # The released Gauzy Server v111.50.14 lacked 17 of them (ai-chat, docs, the AI providers), so its API could
+      # not start; nothing in the monorepo's builds or tests can see that.
+      - name: The packaged desktop apps ship every @gauzy package their embedded API requires
+        if: always()
+        run: node tools/scripts/desktop-api-dependency-check.mjs
 
       # Owner decision (2026-09-21): a pull request into develop does not start a workflow - the Actions
       # minutes belonged to every commit of the branch being merged, and the run belongs to the merge. The
@@ -439,3 +453,21 @@ jobs:
         run: |
           node --test tools/scripts/migration-duplicate-column-check.test.mjs
           node tools/scripts/migration-duplicate-column-check.mjs
+
+      # The desktop apps' electron-builder `beforeBuild` hook installs the packaged app's production dependencies and,
+      # when that install fails (one HTTP 500 from the npm cache failed a whole release), retries once against the
+      # public registry. Nothing else runs that path before a release build does, so its cases run here (spawnSync is
+      # stubbed: no install, no network).
+      - name: The packaged app's dependency install retries once, then fails the build
+        if: always()
+        run: node --test tools/electron/before-build.test.js
+
+      # electron-builder 26.15.3's x64 snap target deletes chrome-sandbox from linux-unpacked while the AppImage target
+      # copies that directory, which failed the API Server's Linux x64 release ("failed to build AppImage", ENOENT on
+      # linux-unpacked/chrome-sandbox). postinstall.electron patches the delete out (tools/electron/patches). Only a
+      # release build applies the patch, so these cases keep it made for the app-builder-lib the lockfile installs (and
+      # say when an upgrade makes it obsolete) and out of patches/, which the API and worker images apply without
+      # app-builder-lib installed.
+      - name: The electron-builder snap patch matches the locked app-builder-lib
+        if: always()
+        run: node --test tools/electron/app-builder-lib-patch.test.js

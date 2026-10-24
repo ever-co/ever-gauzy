@@ -6,13 +6,15 @@ import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { SaveEmployeeCriterionCommand } from '../save-employee-criterion.command';
 import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../repository/type-orm-employee-upwork-jobs-search-criterion.repository';
+import { TypeOrmJobPresetRepository } from '../../repository/type-orm-job-preset.repository';
 
 @CommandHandler(SaveEmployeeCriterionCommand)
 export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmployeeCriterionCommand> {
 	constructor(
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-		private readonly _gauzyAIService: GauzyAIService
+		private readonly _gauzyAIService: GauzyAIService,
+		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository
 	) {}
 
 	/**
@@ -23,8 +25,8 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 	public async execute(command: SaveEmployeeCriterionCommand): Promise<IMatchingCriterions> {
 		const { input } = command;
 
-		// Set tenantId
-		input.tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		// The caller's tenant, and no other: every write below goes through a raw repository
+		input.tenantId = RequestContext.currentTenantId();
 
 		// If the current user has the permission to change the selected employee, use their ID
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
@@ -51,6 +53,25 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 		}
 		if (!input.organizationId) {
 			input.organizationId = employee.organizationId;
+		}
+
+		// A preset must be one of this tenant, and an id may only name one of this employee's own criteria: the
+		// raw `save` below updates whatever row the id names, in any tenant, and moves it into this one
+		if (
+			input.jobPresetId &&
+			!(await this.typeOrmJobPresetRepository.findOneBy({ id: input.jobPresetId, tenantId }))
+		) {
+			throw new NotFoundException('Job preset not found');
+		}
+		if (
+			input.id &&
+			!(await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findOneBy({
+				id: input.id,
+				employeeId: input.employeeId,
+				tenantId
+			}))
+		) {
+			throw new NotFoundException('Employee job search criterion not found');
 		}
 
 		// Create criteria

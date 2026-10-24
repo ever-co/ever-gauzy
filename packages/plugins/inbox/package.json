@@ -1,0 +1,69 @@
+{
+	"name": "@gauzy/plugin-inbox",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform plugin for the Inbox: questions, approvals, escalations and notices addressed to a user, with per-recipient state and a source-handler registry; off unless GAUZY_INBOX_ENABLED=true",
+	"author": {
+		"name": "Ever Co. LTD",
+		"url": "https://github.com/ever-co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/inbox"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://github.com/ever-co/ever-gauzy/tree/develop/packages/plugins/inbox",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-inbox",
+		"lib:build:prod": "yarn nx build plugin-inbox",
+		"lib:watch": "yarn nx build plugin-inbox --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^12.0.0",
+		"@nestjs/core": "^12.0.0"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@mikro-orm/nestjs": "^6.1.2",
+		"@nestjs/graphql": "^14.0.3",
+		"@nestjs/swagger": "^12.0.2",
+		"@nestjs/typeorm": "^12.0.2",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.15.1",
+		"graphql-tag": "^2.12.7",
+		"mailparser": "^3.12.4",
+		"rxjs": "^7.8.2",
+		"sanitize-html": "^2.18.0",
+		"tslib": "^2.8.1",
+		"typeorm": "^1.1.2"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^26.6.5",
+		"@types/sanitize-html": "^2.16.2",
+		"typescript": "~6.0.3"
+	},
+	"keywords": [
+		"gauzy",
+		"inbox",
+		"approvals",
+		"notifications",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=26",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

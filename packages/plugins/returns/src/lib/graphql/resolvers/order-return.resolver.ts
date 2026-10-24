@@ -88,6 +88,8 @@ interface IRefundOrderReturnArgs {
 	note?: string;
 	/** The version the caller read. */
 	version?: number;
+	/** The client's retry key, which this operation requires (read by the idempotency kernel). */
+	idempotencyKey?: string;
 }
 
 /** The return leg a return is shipped back on, as the schema declares it. */
@@ -412,17 +414,19 @@ export class OrderReturnResolver {
 	 * field mirrors what its route *does*: §3.1 forbids a field narrower or wider than its route, so a
 	 * field stating the documented grant would move money over GraphQL for a caller the same act refuses
 	 * over REST. The divergence is recorded rather than resolved, because settling it changes both sides.
+	 * Settling the refund additionally needs `REFUNDS_APPROVE`, which the payment capability checks before it
+	 * writes anything (`REFUND_APPROVAL_REQUIRED`), on both protocols.
 	 *
-	 * No `@Idempotent` is declared, because the route declares none: §7.14 writes "Yes
-	 * (Idempotency-Key, required)" for it while the controller's decorators sit on the request and the
-	 * receipt only, and a scope invented here would replay a GraphQL retry that REST lets through — a
-	 * difference in behaviour rather than in transport.
+	 * The retry key is the route's, as §7.14 states it ("Yes (Idempotency-Key, required)"): a client retrying a
+	 * refund whose answer was lost must not give the money back twice. REST and GraphQL declare the same scope,
+	 * so a key presented on either names the same operation.
 	 *
 	 * @param id The return being refunded.
 	 * @param input The amount, the governed reason and a note.
 	 * @param context The operation's context, which carries the request the guard ran on.
 	 * @returns The payload, carrying the refund that was written and the return as it now stands.
 	 */
+	@Idempotent({ scope: 'return.refund', required: true, resourceType: 'order_return' })
 	@Versioned({ resource: OrderReturnService })
 	@Mutation('refundOrderReturn')
 	@Permissions(ReturnsPermissions.RETURNS_RECEIVE)
@@ -434,13 +438,26 @@ export class OrderReturnResolver {
 		let refunded: IRefundResult | undefined;
 
 		try {
-			refunded = await this.orderReturnService.refund(
-				id,
-				input.amount,
-				input.reasonId,
-				input.note,
-				versionExpectationOf(context?.req)
-			);
+			// The retry key the field requires, so a retry after an outcome nobody saw finds its refund (R3-09r2).
+			// Passed only when one was sent, exactly as the route passes it.
+			const idempotencyKey = input.idempotencyKey?.trim();
+
+			refunded = idempotencyKey
+				? await this.orderReturnService.refund(
+						id,
+						input.amount,
+						input.reasonId,
+						input.note,
+						versionExpectationOf(context?.req),
+						idempotencyKey
+					)
+				: await this.orderReturnService.refund(
+						id,
+						input.amount,
+						input.reasonId,
+						input.note,
+						versionExpectationOf(context?.req)
+					);
 		} catch (error) {
 			return { orderReturn: null, refundId: null, refundAmount: null, currency: null, userErrors: [toUserError(error)] };
 		}

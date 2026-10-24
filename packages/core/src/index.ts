@@ -17,15 +17,20 @@ export {
 	FileStorage,
 	FileStorageFactory,
 	MARKUP_SCAN_MAX_BYTES,
+	MAX_BUFFERED_FILE_BYTES,
 	UploadedFileStorage,
 	archiveUploadFileFilter,
 	assertNotMarkupContent,
 	audioUploadFileFilter,
+	createImageThumbnail,
 	createUploadFileFilter,
 	documentUploadFileFilter,
+	FileContentTooLargeError,
+	fileContentToBuffer,
 	imageUploadFileFilter,
 	isMarkupContent,
 	shouldScanForMarkup,
+	thumbnailFileName,
 	videoUploadFileFilter,
 	RENDERABLE_KEY_EXTENSIONS,
 	toSafeStorageExtension
@@ -132,6 +137,12 @@ export { InvoiceModule } from './lib/invoice/invoice.module';
 export { InvoiceService } from './lib/invoice/invoice.service';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
+// The command that invites people through the platform's own invite flow (its e-mail, its role rules, its accept
+// path), for a package that invites someone it found elsewhere: the Ever Works integration's "invite to Gauzy".
+export { InviteBulkCreateCommand } from './lib/invite/commands/invite.bulk.create.command';
+// The membership check a REST DTO makes through `@IsOrganizationBelongsToUser()`, for a package that resolves the
+// organization from a stored record rather than from the request (an integration ID, for instance).
+export { assertCurrentUserBelongsToOrganization } from './lib/user-organization/assert-organization-membership';
 
 export * from './lib/organization';
 export {
@@ -152,6 +163,12 @@ export {
 } from './lib/organization-vendor';
 
 export * from './lib/employee';
+export {
+	EmployeeAgentProfile,
+	EmployeeAgentProfileModule,
+	EmployeeAgentProfileService,
+	pickAgentProfileInput
+} from './lib/employee-agent-profile';
 export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, TaskUpdateCommand } from './lib/tasks';
 
 export { IntegrationModule, IntegrationService } from './lib/integration';
@@ -186,10 +203,13 @@ export {
 	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
+export type { IIntegrationSyncCompletion } from './lib/integration-tenant';
 export {
+	INTEGRATION_TENANT_SYNCED,
 	IntegrationTenantGetCommand,
 	IntegrationTenantModule,
 	IntegrationTenantService,
+	IntegrationTenantSyncService,
 	IntegrationTenantUpdateOrCreateCommand
 } from './lib/integration-tenant';
 
@@ -374,9 +394,33 @@ export * from './lib/auth/purpose-token';
 // plugin's sign-up requires exactly the documents the register form requires.
 export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
+// The per-account login failure counter, for the MCP OAuth server (apps/mcp-auth), which checks Gauzy
+// passwords against the same database and must give a guesser no more attempts than the API's login does.
+export { LoginAttemptModule } from './lib/auth/login-attempt.module';
+export { LoginAttemptService, LoginAttemptScope } from './lib/auth/login-attempt.service';
+export type { LoginAttempt, LoginAttemptRequest } from './lib/auth/login-attempt.service';
 export { TermsAcceptanceModule } from './lib/terms-acceptance/terms-acceptance.module';
 export { TermsAcceptanceService } from './lib/terms-acceptance/terms-acceptance.service';
 // The instance-wide counters of `GET /api/stats/global`, for the anonymous usage statistics plugin,
 // which reads the same counters outside any request (instance-wide, never per tenant).
 export { StatsModule } from './lib/stats/stats.module';
 export { StatsService } from './lib/stats/stats.service';
+// The email transport seam (plan 04 §5.5, G-P4-5): a provider plugin (Resend, Postmark, ...) registers a resolver
+// that supplies an API transport per tenant / organization, and the Inbox sends its replies and forwards through
+// `EmailSendService.sendMessage`. With no resolver registered every send takes the SMTP chain as before. Exported at
+// the end: `./lib/core` above has loaded the module graph by then, so this adds no edge to it.
+export { EmailSendModule } from './lib/email-send/email-send.module';
+export { EmailSendService } from './lib/email-send/email-send.service';
+export type {
+	IOutboundEmailMessage,
+	IOutboundEmailResult,
+	IOutboundEmailScope,
+	OutboundEmailAddress
+} from './lib/email-send/email-send.service';
+export { EmailTransportRegistry, getEmailTransportRegistry } from './lib/email-send/email-transport.registry';
+export type {
+	IEmailTransportRequest,
+	IEmailTransportResolution,
+	IEmailTransportResolver
+} from './lib/email-send/email-transport.registry';
+export { describeEmailSendError, redactEmailAddresses } from './lib/email-send/email-send-error';

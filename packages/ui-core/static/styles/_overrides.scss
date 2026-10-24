@@ -59,6 +59,10 @@ body {
   z-index: 1050 !important;
 }
 
+nb-spinner {
+  z-index: 1000 !important;
+}
+
 // ── Card edge ────────────────────────────────────────────────────────────────
 // The hairline ring an `nb-card` is drawn with. The value itself is registered
 // as the `card-shadow` token in both gauzy theme maps (`themes.scss`), which is

@@ -1,18 +1,20 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import {
-	Money,
-	RequestContext,
-	TenantAwareCrudService,
-	addDecimalStrings,
-	compareDecimalStrings
-} from '@gauzy/core';
+import { Money, RequestContext, addDecimalStrings, compareDecimalStrings } from '@gauzy/core';
 import { Order } from '../order/order.entity';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 import { OrderLine } from './order-line.entity';
 import { TypeOrmOrderLineRepository } from './repository/type-orm-order-line.repository';
 import { MikroOrmOrderLineRepository } from './repository/mikro-orm-order-line.repository';
+import {
+	IOrderLineEntitlementPolicy,
+	IOrderLineEntitlementPolicyPort,
+	IOrderPlacedLines,
+	ORDER_LINE_ENTITLEMENT_POLICY,
+	placedLinesOf
+} from './order-line-entitlement';
+import { OrderCrudService } from '../order-crud.service';
 
 /** One refund as the payment side records it against a line. */
 export interface IRecordLineRefundInput {
@@ -41,13 +43,124 @@ export interface IRecordLineRefundInput {
  * totals the payment side reports.
  */
 @Injectable()
-export class OrderLineService extends TenantAwareCrudService<OrderLine> {
+export class OrderLineService extends OrderCrudService<OrderLine> {
 	constructor(
 		readonly typeOrmOrderLineRepository: TypeOrmOrderLineRepository,
 		readonly mikroOrmOrderLineRepository: MikroOrmOrderLineRepository,
-		private readonly typeOrmOrderRepository: TypeOrmOrderRepository
+		private readonly typeOrmOrderRepository: TypeOrmOrderRepository,
+		/**
+		 * What right each line grants (Q7-W5). Optional and last: bound by the installation that hosts the
+		 * entitlement package; unbound, an order announces no lines.
+		 */
+		@Optional()
+		@Inject(ORDER_LINE_ENTITLEMENT_POLICY)
+		private readonly entitlementPolicy?: IOrderLineEntitlementPolicyPort
 	) {
 		super(typeOrmOrderLineRepository, mikroOrmOrderLineRepository);
+	}
+
+	private readonly logger = new Logger(OrderLineService.name);
+
+	/**
+	 * The `lines` an order's `order.placed` event carries, with the right each line grants (Q7-W5).
+	 *
+	 * The policy is the variant's, else the product's — the entitlement package answers which, from the catalogue.
+	 * A line's own `metadata.entitlement` is not asked about: line metadata is whatever the cart editor wrote, and
+	 * checkout copies it onto the order line, so honouring it let a cart editor choose the right a purchase grants
+	 * (Greptile on #10914).
+	 *
+	 * Asked before the placement is committed, and it writes nothing, so it never fails the placement or changes a
+	 * draft that the placement then refuses: an unbound port, a capability that is off for the order's scope, or a
+	 * port that throws all answer `undefined` and the order announces no lines — what every order did before. The
+	 * record of what was granted is written once the placement has committed (`recordPlacedEntitlements`).
+	 *
+	 * @param order The order being placed.
+	 * @param lines Its lines.
+	 * @returns The projection, or undefined when the entitlement capability does not answer for the order.
+	 */
+	public async placedLinesFor(
+		order: Pick<Order, 'id' | 'tenantId' | 'organizationId'>,
+		lines: readonly OrderLine[]
+	): Promise<IOrderPlacedLines | undefined> {
+		if (!this.entitlementPolicy || lines.length === 0) {
+			return undefined;
+		}
+
+		let policies: Record<string, IOrderLineEntitlementPolicy | null> | null;
+
+		try {
+			policies = await this.entitlementPolicy.policiesFor({
+				tenantId: order.tenantId ?? null,
+				organizationId: order.organizationId ?? null,
+				lines: lines.map((line) => ({
+					orderLineId: line.id,
+					productId: line.productId ?? null,
+					variantId: line.variantId ?? null,
+					quantity: Number(line.quantity ?? 1)
+				}))
+			});
+		} catch (error) {
+			this.logger.warn(
+				`ORDER_ENTITLEMENT_POLICY_UNAVAILABLE: order ${order.id} is placed without its lines: ${
+					(error as Error)?.message ?? error
+				}`
+			);
+			return undefined;
+		}
+
+		if (!policies) {
+			return undefined;
+		}
+
+		return placedLinesOf(lines, policies);
+	}
+
+	/**
+	 * Records on each line the right its placement granted (`metadata.entitlement`), once the placement committed.
+	 *
+	 * The snapshot keeps what was bought readable on the line when the catalogue changes later. It is written after
+	 * the placing write rather than before it, so a placement refused on a stale version leaves the draft as it was
+	 * (Greptile on #10914). A line that grants a right carries exactly the policy the event announced; a line that
+	 * grants nothing loses a `metadata.entitlement` a cart editor wrote, so the record never shows a right that was
+	 * not granted. Its other metadata is kept. A write that fails is logged: the event already carries the policy.
+	 *
+	 * @param order The placed order.
+	 * @param lines Its lines, as read for the placement.
+	 * @param placed What its `order.placed` event carried, or undefined when it announced no lines.
+	 */
+	public async recordPlacedEntitlements(
+		order: Pick<Order, 'id'>,
+		lines: readonly OrderLine[],
+		placed: IOrderPlacedLines | undefined
+	): Promise<void> {
+		if (!placed) {
+			return;
+		}
+
+		const granted = new Map(placed.lines.map((line) => [String(line.orderLineId), line.entitlement]));
+
+		for (const line of lines) {
+			const metadata = { ...((line.metadata as Record<string, unknown>) ?? {}) };
+			const policy = granted.get(String(line.id));
+
+			if (policy) {
+				metadata['entitlement'] = policy;
+			} else if (metadata['entitlement'] !== undefined) {
+				delete metadata['entitlement'];
+			} else {
+				continue;
+			}
+
+			try {
+				await this.update(line.id, { metadata } as any);
+			} catch (error) {
+				this.logger.warn(
+					`ORDER_LINE_ENTITLEMENT_NOT_SNAPSHOTTED: line ${line.id} of order ${order.id}: ${
+						(error as Error)?.message ?? error
+					}`
+				);
+			}
+		}
 	}
 
 	/**

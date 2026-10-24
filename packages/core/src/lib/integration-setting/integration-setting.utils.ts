@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { isNotEmpty, isObject } from '@gauzy/utils';
 import { maskSecret } from '../core/decorators/is-secret';
@@ -62,6 +63,34 @@ export function isUserEditableIntegrationSetting(provider: string | null | undef
 		return false;
 	}
 	return userEditableIntegrationSettings[provider].includes(settingsName);
+}
+
+/** The refusal both protocols answer when a client states a setting the server manages. */
+export const SERVER_MANAGED_INTEGRATION_SETTING = 'This integration setting is managed by the server and cannot be set by a client.';
+
+/**
+ * Refuses the settings a client may not bring when it connects an integration (GHSA-4rwq-65wh-45h4).
+ *
+ * One check for both protocols: `POST /integration-tenant` and the GraphQL `createIntegrationTenant` call it before
+ * the service cascade-inserts the settings (SEC-E-03 — the field used to skip it). Fails closed: anything under
+ * `settings` that is not a plain list of allowlisted settings is refused. Absent settings are fine.
+ *
+ * @param provider - The integration tenant's `name` (its provider).
+ * @param settings - What the client stated under `settings`.
+ * @throws ForbiddenException when any setting is not on {@link userEditableIntegrationSettings}.
+ */
+export function assertClientMayWriteIntegrationSettings(provider: string | null | undefined, settings: unknown): void {
+	if (settings == null) {
+		return;
+	}
+	if (!Array.isArray(settings)) {
+		throw new ForbiddenException(SERVER_MANAGED_INTEGRATION_SETTING);
+	}
+	for (const setting of settings) {
+		if (!isUserEditableIntegrationSetting(provider, setting?.settingsName)) {
+			throw new ForbiddenException(SERVER_MANAGED_INTEGRATION_SETTING);
+		}
+	}
 }
 
 /**

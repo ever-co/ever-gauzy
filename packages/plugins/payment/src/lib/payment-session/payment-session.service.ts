@@ -1,13 +1,14 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { EntityManager } from 'typeorm';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { BaseEvent, EventBus, Money, readAffectedRows } from '@gauzy/core';
+import { BaseEvent, EventBus, Money, Payment, readAffectedRows } from '@gauzy/core';
 import { PaymentSession } from './payment-session.entity';
 import { TypeOrmPaymentSessionRepository } from './repository/type-orm-payment-session.repository';
 import { MikroOrmPaymentSessionRepository } from './repository/mikro-orm-payment-session.repository';
 import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import {
+	IPaymentCollection,
 	IPaymentSession,
 	IPaymentSessionCreateInput,
 	IPaymentSessionUpdateInput,
@@ -17,6 +18,7 @@ import { PaymentCollectionService } from '../payment-collection/payment-collecti
 import { PaymentProviderService } from '../payment-provider/payment-provider.service';
 import { PAYMENT_SETTINGS } from '../payment.settings';
 import { PaymentAuthorizedEvent, PaymentCanceledEvent, PaymentFailedEvent } from '../events';
+import { PaymentOrderLedgerMirror } from '../payment-order-ledger/payment-order-ledger.mirror';
 
 /**
  * The lifetime of a session: created at the provider, authorised, captured or closed.
@@ -69,7 +71,13 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 		readonly mikroOrmPaymentSessionRepository: MikroOrmPaymentSessionRepository,
 		private readonly paymentCollectionService: PaymentCollectionService,
 		private readonly paymentProviderService: PaymentProviderService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		/**
+		 * Tells the order an authorisation or a void happened (Q7-W1b). Optional and last, so a suite that
+		 * builds this service by position is unchanged and a deployment without the order package authorises.
+		 */
+		@Optional()
+		private readonly orderLedger?: PaymentOrderLedgerMirror
 	) {
 		super(typeOrmPaymentSessionRepository, mikroOrmPaymentSessionRepository);
 	}
@@ -285,6 +293,7 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 		const collection = await this.paymentCollectionService.findCollectionOrFail(session.collectionId);
 		this.paymentCollectionService.assertCanAuthorize(collection, session.amount);
 
+		let authorizedPayment: Payment | undefined;
 		const authorized = await this.typeOrmPaymentSessionRepository.manager.transaction(
 			async (manager: EntityManager) => {
 				const moved = await this.transition(manager, session.id, readStatus, {
@@ -294,7 +303,18 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 				});
 
 				if (moved) {
-					await this.paymentCollectionService.recordAuthorization(collection.id, session.amount, manager);
+					// The collection as it stands under the authorisation's lock: a checkout that attached it to its
+					// order after the read above is seen here, so the payment names that order (Greptile on #10890).
+					const locked = await this.paymentCollectionService.recordAuthorization(
+						collection.id,
+						session.amount,
+						manager
+					);
+					// The payment the authorisation is (Q7-W1b). Nothing wrote the core `payment` row, so a capture
+					// — which is taken against it — was refused `PAYMENT_NOT_AUTHORIZED` for every session ever
+					// authorised. Written by the delivery that won the conditional transition only, on the same
+					// transaction, so a re-delivered approval cannot write a second one.
+					authorizedPayment = await this.writeAuthorizedPayment(manager, session, locked ?? collection);
 				}
 
 				return moved;
@@ -323,7 +343,107 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 			`session ${session.id}`
 		);
 
+		if (authorizedPayment?.orderId) {
+			await this.orderLedger?.mirror(
+				{
+					orderId: authorizedPayment.orderId,
+					type: 'AUTHORIZATION',
+					amount: session.amount,
+					currency: session.currency,
+					referenceType: 'PAYMENT',
+					referenceId: authorizedPayment.id,
+					paymentId: authorizedPayment.id,
+					occurredAt: authorizedPayment.authorizedAt
+				},
+				`authorisation of session ${session.id}`
+			);
+		}
+
 		return this.findSessionOrFail(id);
+	}
+
+	/**
+	 * Releases what the payment of a voided session held (Q7-W1b).
+	 *
+	 * @param manager The void's transaction.
+	 * @param session The session, as read.
+	 * @param released The amount the void released.
+	 * @returns The payment as it now stands, or `undefined` for a session authorised before the payment row
+	 * was written.
+	 */
+	private async releaseAuthorizedPayment(
+		manager: EntityManager,
+		session: IPaymentSession,
+		released: DecimalString
+	): Promise<Payment | undefined> {
+		const payment = (await manager.findOne(Payment, {
+			where: { paymentSessionId: session.id, ...this.scope } as never
+		})) as Payment | null;
+
+		if (!payment) {
+			return undefined;
+		}
+
+		const canceledAt = new Date();
+		const canceledAmount = Money.of(String(payment.canceledAmount ?? '0'), session.currency).add(
+			Money.of(released, session.currency)
+		).amount;
+
+		await manager.update(
+			Payment,
+			{ id: payment.id } as never,
+			{
+				canceledAmount,
+				canceledAt,
+				status: 'CANCELED'
+			} as never
+		);
+
+		return { ...payment, canceledAmount, canceledAt } as unknown as Payment;
+	}
+
+	/**
+	 * Writes the core `payment` row an authorised session stands for (Q7-W1b).
+	 *
+	 * The row is what a capture is taken against and what a refund gives back, and it carries the four
+	 * lifecycle amounts of the money: authorised here, captured and refunded by the capture and refund
+	 * services, cancelled by a void. It names the order when the collection already pays one; a collection
+	 * opened for a cart is attached to its order at checkout (`PaymentOrderLinkService`), which re-points
+	 * this row with it.
+	 *
+	 * @param manager The authorisation's transaction.
+	 * @param session The session, as read.
+	 * @param collection The collection it is for.
+	 * @returns The stored payment.
+	 */
+	private async writeAuthorizedPayment(
+		manager: EntityManager,
+		session: IPaymentSession,
+		collection: IPaymentCollection
+	): Promise<Payment> {
+		const authorizedAt = new Date();
+
+		return manager.save(
+			Payment,
+			manager.create(Payment, {
+				orderId: collection.orderId ?? null,
+				paymentCollectionId: collection.id,
+				paymentSessionId: session.id,
+				paymentProviderId: session.providerId,
+				amount: session.amount,
+				currency: session.currency,
+				authorizedAmount: session.amount,
+				capturedAmount: '0',
+				refundedAmount: '0',
+				canceledAmount: '0',
+				status: 'AUTHORIZED',
+				authorizedAt,
+				paymentDate: authorizedAt,
+				tenantId: session.tenantId ?? this.scope.tenantId,
+				organizationId: session.organizationId ?? this.scope.organizationId,
+				metadata: { source: 'payment_session' }
+			} as never)
+		) as unknown as Promise<Payment>;
 	}
 
 	/**
@@ -408,18 +528,23 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 		// The cancellation and the release of what it held are one write, conditional on the status this
 		// call read: a void the collection refuses leaves the session holding its authorisation, and a void
 		// that overlapped another transition of the session releases nothing it no longer holds.
-		const voided = await this.typeOrmPaymentSessionRepository.manager.transaction(async (manager: EntityManager) => {
-			const moved = await this.transition(manager, session.id, readStatus, {
-				status: PaymentSessionStatus.CANCELED,
-				metadata: { ...(session.metadata ?? {}), ...metadata }
-			});
+		let voidedPayment: Payment | undefined;
+		const voided = await this.typeOrmPaymentSessionRepository.manager.transaction(
+			async (manager: EntityManager) => {
+				const moved = await this.transition(manager, session.id, readStatus, {
+					status: PaymentSessionStatus.CANCELED,
+					metadata: { ...(session.metadata ?? {}), ...metadata }
+				});
 
-			if (moved && Money.of(released, session.currency).isPositive()) {
-				await this.paymentCollectionService.recordCancellation(session.collectionId, released, manager);
+				if (moved && Money.of(released, session.currency).isPositive()) {
+					await this.paymentCollectionService.recordCancellation(session.collectionId, released, manager);
+					// The payment the authorisation wrote releases what it held, on the same transaction (Q7-W1b).
+					voidedPayment = await this.releaseAuthorizedPayment(manager, session, released);
+				}
+
+				return moved;
 			}
-
-			return moved;
-		});
+		);
 
 		if (!voided) {
 			const current = await this.findSessionOrFail(id);
@@ -442,6 +567,22 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 			),
 			`session ${session.id}`
 		);
+
+		if (voidedPayment?.orderId) {
+			await this.orderLedger?.mirror(
+				{
+					orderId: voidedPayment.orderId,
+					type: 'VOID',
+					amount: released,
+					currency: session.currency,
+					referenceType: 'PAYMENT',
+					referenceId: voidedPayment.id,
+					paymentId: voidedPayment.id,
+					occurredAt: new Date()
+				},
+				`void of session ${session.id}`
+			);
+		}
 
 		return this.findSessionOrFail(id);
 	}

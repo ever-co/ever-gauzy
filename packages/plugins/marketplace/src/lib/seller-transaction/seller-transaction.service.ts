@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, IsNull, Not } from 'typeorm';
+import { EntityManager, FindOptionsWhere, IsNull, Not } from 'typeorm';
 import {
 	DecimalString,
 	ID,
@@ -9,13 +9,14 @@ import {
 	SellerTransactionKind,
 	SellerTransactionStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext } from '@gauzy/core';
 import { SellerTransaction } from './seller-transaction.entity';
 import { MikroOrmSellerTransactionRepository } from './repository/mikro-orm-seller-transaction.repository';
 import { TypeOrmSellerTransactionRepository } from './repository/type-orm-seller-transaction.repository';
 import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /**
  * Reads and advances the seller ledger.
@@ -26,7 +27,7 @@ import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
  * statement be replayed and a payout stay reconcilable against the provider that executed it.
  */
 @Injectable()
-export class SellerTransactionService extends TenantAwareCrudService<SellerTransaction> {
+export class SellerTransactionService extends MarketplaceCrudService<SellerTransaction> {
 	constructor(
 		readonly typeOrmSellerTransactionRepository: TypeOrmSellerTransactionRepository,
 		readonly mikroOrmSellerTransactionRepository: MikroOrmSellerTransactionRepository,
@@ -99,20 +100,22 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	async settle(id: ID, note?: string, scope?: ISellerScope): Promise<SellerTransaction> {
 		const transaction = await this.getTransaction(id, scope);
 
-		if (transaction.status === SellerTransactionStatus.SETTLED || transaction.status === SellerTransactionStatus.PAID) {
-			// A row already inside a payout must not be pulled back into another one.
-			throw new ConflictException('This transaction is already covered by a payout.');
-		}
+		// A row already inside a payout must not be pulled back into another one.
+		this.assertNotCoveredByPayout(transaction, 'This transaction is already covered by a payout.');
 
 		transaction.status = SellerTransactionStatus.SETTLEABLE;
 		transaction.settleableAt = transaction.settleableAt ?? new Date();
 		transaction.holdReason = null;
 
-		const saved = await this.typeOrmSellerTransactionRepository.save(transaction);
+		// The row and `seller.transaction.settleable` commit together: an append that fails rolls the status
+		// back, and a save that fails appends nothing.
+		return await this.typeOrmSellerTransactionRepository.manager.transaction(async (manager) => {
+			const saved = await manager.save(SellerTransaction, transaction);
 
-		await this.emit(saved, 'seller.transaction.settleable', { note });
+			await this.emit(saved, 'seller.transaction.settleable', { note }, manager);
 
-		return saved;
+			return saved;
+		});
 	}
 
 	/**
@@ -136,6 +139,14 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 		if (!reason) {
 			throw new BadRequestException('A hold needs a reason.');
 		}
+
+		// A row inside a payout is held by canceling that payout, which releases it. Holding it in place
+		// did not keep it out: paying the payout marked it `PAID` anyway. And a hold followed by `settle`
+		// turned a paid row back into a settleable one, ready for a second payout.
+		this.assertNotCoveredByPayout(
+			transaction,
+			'This transaction is already covered by a payout; cancel that payout to hold it.'
+		);
 
 		transaction.status = SellerTransactionStatus.HELD;
 		transaction.holdReason = reason;
@@ -270,14 +281,43 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 	}
 
 	/**
+	 * Refuses a row that a payout covers, or has paid.
+	 *
+	 * `SETTLED` and `PAID` rows are inside a payout. `paidAt` is checked as well because it outlives the
+	 * status: a full refund turns a paid row `REVERSED`, and the money it was paid out with is still gone.
+	 *
+	 * @param transaction The row.
+	 * @param message What the refusal says.
+	 * @throws ConflictException when a payout covers or has paid the row.
+	 */
+	private assertNotCoveredByPayout(transaction: SellerTransaction, message: string): void {
+		if (
+			transaction.status === SellerTransactionStatus.SETTLED ||
+			transaction.status === SellerTransactionStatus.PAID ||
+			transaction.paidAt
+		) {
+			throw new ConflictException(message);
+		}
+	}
+
+	/**
 	 * Writes one outbox row for a ledger state change.
+	 *
+	 * A call that hands over the transaction its write ran in appends through it, so the fact commits or
+	 * rolls back with the row it describes; a call that states none opens a transaction of its own.
 	 *
 	 * @param transaction The row the event is about.
 	 * @param name The catalogued event name.
 	 * @param extra Payload fields beyond the row's own.
+	 * @param within The transaction the row was written in, when the caller opened one.
 	 */
-	async emit(transaction: SellerTransaction, name: string, extra: Record<string, any> = {}): Promise<void> {
-		await this.typeOrmSellerTransactionRepository.manager.transaction(async (manager) => {
+	async emit(
+		transaction: SellerTransaction,
+		name: string,
+		extra: Record<string, any> = {},
+		within?: EntityManager
+	): Promise<void> {
+		const append = async (manager: EntityManager) => {
 			await this.outbox.append(manager, {
 				name,
 				aggregateType: 'SELLER_TRANSACTION',
@@ -297,7 +337,15 @@ export class SellerTransactionService extends TenantAwareCrudService<SellerTrans
 				tenantId: transaction.tenantId,
 				organizationId: transaction.organizationId
 			});
-		});
+		};
+
+		if (within) {
+			await append(within);
+
+			return;
+		}
+
+		await this.typeOrmSellerTransactionRepository.manager.transaction(append);
 	}
 
 	/**

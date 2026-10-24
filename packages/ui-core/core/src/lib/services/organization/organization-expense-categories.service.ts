@@ -6,7 +6,7 @@ import {
 	IOrganizationExpenseCategory,
 	IOrganizationExpenseCategoryFindInput
 } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -30,7 +30,12 @@ export class OrganizationExpenseCategoriesService {
 			this.http.get<{ items: IOrganizationExpenseCategory[]; total: number }>(
 				`${API_PREFIX}/expense-categories`,
 				{
-					params: { data }
+					// `data` is kept for the tenant guard; the route only filters on `where`.
+					params: toParams({
+						data,
+						...(findInput ? { where: findInput } : {}),
+						...(relations?.length ? { relations } : {})
+					})
 				}
 			)
 		);

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, HttpException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { IComment } from '@gauzy/contracts';
@@ -15,7 +15,7 @@ export class CommentUpdateHandler implements ICommandHandler<CommentUpdateComman
 	 * comment service's update method to perform the update. It returns a promise that resolves to either
 	 * the updated comment or an update result.
 	 *
-	 * If an error occurs during the update, the error is logged and a BadRequestException is thrown.
+	 * An HTTP error of the service is rethrown as is; any other error is logged and a BadRequestException is thrown.
 	 *
 	 * @param {CommentUpdateCommand} command - The command containing the comment ID and update data.
 	 * @returns {Promise<IComment | UpdateResult>} A promise that resolves to the updated comment or update result.
@@ -26,6 +26,10 @@ export class CommentUpdateHandler implements ICommandHandler<CommentUpdateComman
 			const { id, input } = command;
 			return await this.commentService.update(id, input);
 		} catch (error) {
+			// Keep the service's own HTTP errors (e.g. 403 for someone else's comment) instead of turning them into a 400
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			console.log(`Error while updating comment: ${error.message}`, error);
 			throw new BadRequestException('Comment update failed', error);
 		}

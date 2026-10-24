@@ -13,10 +13,10 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { buildSchema, printSchema } from 'graphql';
-import { AvailabilityMergeType } from '@gauzy/contracts';
+import { AvailabilityMergeType, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { AvailabilitySlotsController } from './availability-slots.controller';
 import { AvailabilitySlotsModule } from './availability-slots.module';
 import { AvailabilitySlotsResolver } from './availability-slots.resolver';
@@ -36,8 +36,9 @@ import { AvailabilitySlotsBulkCreateCommand, AvailabilitySlotsCreateCommand } fr
  * - every field reaches the same service method, or dispatches the same command, that the REST route
  *   reaches — including the upsert, which is the service call the `PUT /:id` route makes rather than a
  *   command;
- * - **the guard chain is the controller's** — the tenant guard and nothing else, with no permission
- *   stated on either surface — so the schema is not a second, wider or narrower door to the same rows;
+ * - **the guard chain and the permissions are the controller's** — the tenant guard on the class, and on each
+ *   write the availability grant its route states behind `PermissionGuard` — so the schema is not a second,
+ *   wider or narrower door to the same rows;
  * - the vocabulary of `type` is carried as its value and no value set is redeclared, and the relation is
  *   carried as the identifier that always travels;
  * - the bulk filing answers the rows the write produced rather than a positional echo of its input.
@@ -84,6 +85,7 @@ function surfaces() {
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		create: jest.fn().mockResolvedValue(ROWS[0]),
+		updateSlot: jest.fn().mockResolvedValue(ROWS[0]),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
 		softRecover: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: null })
@@ -182,8 +184,8 @@ function handlersOf(controller: typeof AvailabilitySlotsController): Record<stri
  *
  * This is the rule the guards themselves apply — the reflector's `getAllAndOverride` over
  * `[handler, class]` — restated here, so the resolver is held to the controller's own metadata rather
- * than to a second copy of the same list written out in this file. For this resource both readings are
- * `undefined`, and the comparison against the fields below is what holds the resolver to that.
+ * than to a second copy of the same list written out in this file. For the reads both readings are
+ * `undefined`; each write states its availability grant on both sides.
  */
 function permissionOfRoute(controller: typeof AvailabilitySlotsController, handler: string): unknown {
 	return (
@@ -604,7 +606,7 @@ describe('AvailabilitySlotsResolver — one concept, two protocols, the same ope
 		expect(command.input).toEqual(input);
 	});
 
-	it('upserts a slot through the same service call the REST update route makes', async () => {
+	it('updates a slot through the same service call the REST update route makes', async () => {
 		const { resolver, availabilitySlotsService } = surfaces();
 
 		await resolver.updateAvailabilitySlot({
@@ -615,11 +617,14 @@ describe('AvailabilitySlotsResolver — one concept, two protocols, the same ope
 			endTime: new Date('2026-03-02T18:00:00.000Z')
 		});
 
-		// The delivered route merges the identifier from the path into the body and calls `create`; this
-		// surface carries the identifier in the input and calls the same method with the same body.
-		expect(availabilitySlotsService.create).toHaveBeenCalledWith(
-			expect.objectContaining({ id: FIRST, type: 'Recurring', endTime: new Date('2026-03-02T18:00:00.000Z') })
+		// The route takes the identifier from the path and the values from the body; this surface carries the
+		// identifier in the input and hands the service the same two arguments. The ownership rule lives in
+		// the service (availability-slots.authorization.spec.ts proves it on a real database).
+		expect(availabilitySlotsService.updateSlot).toHaveBeenCalledWith(
+			FIRST,
+			expect.objectContaining({ type: 'Recurring', endTime: new Date('2026-03-02T18:00:00.000Z') })
 		);
+		expect(availabilitySlotsService.create).not.toHaveBeenCalled();
 	});
 
 	it('removes a slot through the same service method the inherited delete route calls', async () => {
@@ -684,9 +689,9 @@ describe('AvailabilitySlotsResolver — the guard stack and the permission are t
 		const controllerGuards = Reflect.getMetadata('__guards__', AvailabilitySlotsController) ?? [];
 		const resolverGuards = Reflect.getMetadata('__guards__', AvailabilitySlotsResolver) ?? [];
 
-		// The delivered controller carries the tenant guard and no `@Permissions` at all, so neither class
-		// states a permission: the gate appended to the resolver's chain is the one difference, and it is a
-		// capability rather than a scope.
+		// The delivered controller carries the tenant guard and no `@Permissions` on the class — the writes state
+		// theirs on the handler — so neither class states a permission: the gate appended to the resolver's chain
+		// is the one difference, and it is a capability rather than a scope.
 		expect(controllerGuards).toEqual([TenantPermissionGuard]);
 		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, AvailabilitySlotsController)).toBeUndefined();
@@ -696,12 +701,16 @@ describe('AvailabilitySlotsResolver — the guard stack and the permission are t
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = Reflect.getMetadata('__guards__', AvailabilitySlotsResolver) ?? [];
 
-		for (const { route } of ROUTE_PARITY) {
-			// The controller's chain plus the gate on the endpoint itself are the same set as the
-			// resolver's, which is the whole parity claim: a route that added a guard of its own would
-			// narrow REST below GraphQL and is caught here.
+		for (const { field, route } of ROUTE_PARITY) {
+			// The controller's chain plus the gate on the endpoint itself are the same set as the resolver's,
+			// which is the whole parity claim: a route that added a guard of its own would narrow REST below
+			// GraphQL and is caught here. The writes state `PermissionGuard` on the handler and on the field
+			// alike, so the field's own guards join the class's on the resolver side.
+			const fieldGuards = (Reflect.getMetadata('__guards__', fieldsOf(AvailabilitySlotsResolver)[field]) ??
+				[]) as unknown[];
+
 			expect([...guardsOfRoute(AvailabilitySlotsController, route), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...new Set([...stated, ...fieldGuards])].sort()
 			);
 		}
 	});
@@ -719,27 +728,49 @@ describe('AvailabilitySlotsResolver — the guard stack and the permission are t
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(AvailabilitySlotsController, route));
 	});
 
-	it('states no permission on any field, because no route states one', () => {
-		// The resource is scoped by the tenant guard alone: a field that demanded a permission would refuse
-		// here a caller the REST route serves, and the four creates and upserts are the fields where that
-		// mistake is most tempting.
-		for (const field of ROUTE_PARITY.map((entry) => entry.field)) {
-			expect(permissionOfField(field)).toBeUndefined();
-		}
+	it('states on every write field the availability grant its route states, and none on the reads', () => {
+		// GHSA-v79w-54p2-wmh5, owner decision 2 (2026-10-22): the writes stated no permission, and
+		// `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could file, change or
+		// remove an employee's bookable hours. Stated explicitly as well as compared above, so a field and its
+		// route that lost the grant together are still caught.
+		expect(Object.fromEntries(ROUTE_PARITY.map(({ field }) => [field, permissionOfField(field)]))).toEqual({
+			availabilitySlots: undefined,
+			availabilitySlot: undefined,
+			availabilitySlotCount: undefined,
+			createAvailabilitySlot: [PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE],
+			createAvailabilitySlots: [PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE],
+			updateAvailabilitySlot: [PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE],
+			deleteAvailabilitySlot: [PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE],
+			softDeleteAvailabilitySlot: [PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE],
+			recoverAvailabilitySlot: [PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE]
+		});
 	});
 
-	it('holds every field to the inherited routes’ own absence of a permission', () => {
+	it('holds the inherited reads to their own absence of a permission, and overrides every inherited write', () => {
 		for (const [field, route] of [
 			['availabilitySlot', 'findById'],
-			['availabilitySlotCount', 'getCount'],
-			['deleteAvailabilitySlot', 'delete'],
-			['softDeleteAvailabilitySlot', 'softRemove'],
-			['recoverAvailabilitySlot', 'softRecover']
+			['availabilitySlotCount', 'getCount']
 		] as ReadonlyArray<[string, string]>) {
 			expect(Reflect.getMetadata('__guards__', handlersOf(AvailabilitySlotsController)[route])).toBeUndefined();
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(AvailabilitySlotsController)[route])).toBeUndefined();
 			expect(Reflect.getMetadata('__guards__', fieldsOf(AvailabilitySlotsResolver)[field])).toBeUndefined();
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(AvailabilitySlotsResolver)[field])).toBeUndefined();
+		}
+
+		// The three writes the CRUD base declares bare are the controller's own handlers now, behind
+		// `PermissionGuard`, and so are the fields that mirror them.
+		for (const [field, route] of [
+			['deleteAvailabilitySlot', 'delete'],
+			['softDeleteAvailabilitySlot', 'softRemove'],
+			['recoverAvailabilitySlot', 'softRecover']
+		] as ReadonlyArray<[string, string]>) {
+			expect(Object.prototype.hasOwnProperty.call(AvailabilitySlotsController.prototype, route)).toBe(true);
+			expect(Reflect.getMetadata('__guards__', handlersOf(AvailabilitySlotsController)[route])).toEqual([
+				PermissionGuard
+			]);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(AvailabilitySlotsResolver)[field])).toEqual([
+				PermissionGuard
+			]);
 		}
 	});
 });

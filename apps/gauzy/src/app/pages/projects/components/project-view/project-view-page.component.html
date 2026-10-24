@@ -1,0 +1,231 @@
+<!-- A project's own page: the list's back button, a favorite star and the period, then tabs — Overview,
+     Board, Activity and Comments — in the manner of Jira's project pages. -->
+<ngx-record-view-page
+	heading="SM_TABLE.PROJECT"
+	[backLink]="backLink"
+	[state]="state"
+	(retry)="load()"
+>
+	@if (card) {
+	<div recordPageActions class="project-page-actions">
+		<ngx-favorite-toggle
+			[entityType]="'OrganizationProject'"
+			[entityId]="card.id"
+			[entityName]="card.name"
+			size="small"
+			status="basic"
+			spacing="list"
+		></ngx-favorite-toggle>
+		<!-- The period, on the tabs whose figures read over it. -->
+		@if (showsPeriod) {
+		<span class="project-page-range">
+			<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+			{{ rangeLabel }}
+		</span>
+		<nb-select
+			class="project-page-period"
+			size="small"
+			status="basic"
+			[(selected)]="period"
+			[attr.aria-label]="'EMPLOYEES_PAGE.VIEW.PERIOD' | translate"
+		>
+			@for (option of periods; track option) {
+			<nb-option [value]="option">{{ 'EMPLOYEES_PAGE.VIEW.PERIODS.' + option | translate }}</nb-option>
+			}
+		</nb-select>
+		}
+	</div>
+	}
+	@if (card) {
+	<div class="project-page">
+		<div class="tab-row project-page-tabs">
+			<div class="tabs" role="tablist" [attr.aria-label]="card.name">
+				@for (item of tabs; track item.id) {
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					[id]="'project-view-tab-' + item.id"
+					[attr.aria-controls]="'project-view-pane-' + item.id"
+					[class.is-active]="tab === item.id"
+					[attr.aria-selected]="tab === item.id"
+					(click)="selectTab(item.id)"
+				>
+					<nb-icon [icon]="item.icon" aria-hidden="true"></nb-icon>
+					{{ item.label | translate }}
+					@if (item.id === 'comments' && commentCount) {
+					<span class="title-count tab-count">{{ commentCount }}</span>
+					}
+				</button>
+				}
+			</div>
+		</div>
+
+		<!-- Overview stays loaded while another tab is open, so coming back to it does not reload it. -->
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-overview"
+			aria-labelledby="project-view-tab-overview"
+			[hidden]="tab !== 'overview'"
+		>
+			<ngx-project-quick-look
+				#quickLook
+				mode="page"
+				[project]="card"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+				[rangeStart]="periodStartIso"
+				[rangeEnd]="periodEndIso"
+				[period]="period"
+				[scopeEmployeeIds]="null"
+				[tasksInDrawer]="true"
+			></ngx-project-quick-look>
+		</div>
+
+		<!-- The Board loads when first opened, then stays loaded: a move still saving when another tab opens
+		     still reaches the Overview. -->
+		@if (boardOpened) {
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-board"
+			aria-labelledby="project-view-tab-board"
+			[hidden]="tab !== 'board'"
+		>
+			<!-- A card moved on the board changes its task's status: the Overview's task panels read it again. -->
+			<ga-project-board
+				[projectId]="card.id"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+				(taskMoved)="quickLook.reloadTasks()"
+			></ga-project-board>
+		</div>
+		}
+
+		<!-- The Comments load when first opened, then stay loaded, keeping any draft. -->
+		@if (commentsOpened) {
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-comments"
+			aria-labelledby="project-view-tab-comments"
+			[hidden]="tab !== 'comments'"
+		>
+			<ga-project-comments
+				[projectId]="card.id"
+				[projectName]="card.name"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+				(countChange)="onCommentCount($event)"
+			></ga-project-comments>
+		</div>
+		}
+
+		<!-- Activity loads each time it is opened. -->
+		@switch (tab) {
+		@case ('activity') {
+		<div class="project-page-pane" role="tabpanel" id="project-view-pane-activity" aria-labelledby="project-view-tab-activity">
+			<ga-project-activity
+				[projectId]="card.id"
+				[projectName]="card.name"
+				[organizationId]="organization?.id"
+				[tenantId]="organization?.tenantId"
+			></ga-project-activity>
+		</div>
+		}
+		}
+	</div>
+	}
+</ngx-record-view-page>
+
+<!-- A task opened from any tab (`?task=<id>`): the quick look the task lists open, with a button on to the
+     task's own page. The projected content is gated here so the record renderer is built fresh per task. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTaskId"
+	[heading]="'TASKS_PAGE.HEADER'"
+	[wide]="true"
+	[fullViewLink]="viewedTaskId ? '/pages/tasks/view/' + viewedTaskId : null"
+	[fullViewLabel]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_PAGE_SHORT'"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<div recordViewHeader class="project-task-head">
+			<ga-task-view-header [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+			<!-- Time worked against the estimate, as the "Most worked tasks" rows draw it: label, a thin bar, then
+			     the time worked over its share. Without an estimate, the share is of the project's tracked time.
+			     The bar always fills to the share. -->
+			@if (viewProgress; as progress) {
+			<div class="project-task-progress" [class.is-over]="progress.over" [class.is-relative]="progress.relative">
+				<span class="project-task-progress-label">
+					<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+					{{ 'PROJECT_VIEW.TASK_PROGRESS' | translate }}
+				</span>
+				@if (progress.hint; as hint) {
+				<span
+					class="project-task-progress-bar"
+					role="progressbar"
+					aria-valuemin="0"
+					[attr.aria-valuenow]="progress.share"
+					[attr.aria-label]="'PROJECT_VIEW.TASK_PROGRESS' | translate"
+					[attr.aria-valuetext]="hint.key | translate : hint.params"
+					[nbTooltip]="hint.key | translate : hint.params"
+					nbTooltipPlacement="top"
+					><span [style.width.%]="progress.fill"></span
+				></span>
+				} @else {
+				<span class="project-task-progress-none">{{ 'PROJECT_VIEW.TASK_NO_ESTIMATE' | translate }}</span>
+				}
+				<span class="project-task-progress-figures">
+					<span class="project-task-progress-time">{{ progress.worked }}</span>
+					@if (progress.share !== null) {
+					<span class="project-task-progress-share">{{ progress.share }}%</span>
+					}
+				</span>
+			</div>
+			}
+			<!-- Who worked most on the task: photo and name | bar | time over share, as "Most worked tasks". -->
+			@if (viewWorkers.length) {
+			<div class="project-task-workers">
+				<span class="project-task-workers-title">{{ 'PROJECT_VIEW.TASK_TOP_PEOPLE' | translate }}</span>
+				<ol class="project-task-workers-list">
+					@for (worker of viewWorkers; track worker.person.id) {
+					<li class="project-task-worker">
+						<a class="project-task-worker-person" [routerLink]="['/pages/employees/view', worker.person.id]">
+							<span class="project-task-worker-avatar">
+								@if (worker.person.avatarUrl) {
+								<img [src]="worker.person.avatarUrl" [alt]="worker.person.name" />
+								} @else {
+								<span aria-hidden="true">{{ worker.person.initials }}</span>
+								}
+							</span>
+							<span class="project-task-worker-name" [nbTooltip]="worker.person.name" nbTooltipPlacement="top">{{ worker.person.name }}</span>
+						</a>
+						<span class="project-task-progress-bar" aria-hidden="true"><span [style.width.%]="worker.share"></span></span>
+						<span class="project-task-progress-figures">
+							<span class="project-task-progress-time">{{ worker.worked }}</span>
+							<span class="project-task-progress-share">{{ worker.share }}%</span>
+						</span>
+					</li>
+					}
+				</ol>
+			</div>
+			}
+		</div>
+	</ngx-record-view>
+	} @else if (viewedTaskId) {
+	@if (viewState === 'loading') {
+	<div class="project-task-loading" [nbSpinner]="true" nbSpinnerSize="medium" nbSpinnerStatus="basic"></div>
+	} @else {
+	<div class="project-task-error">
+		<p>{{ (viewState === 'forbidden' ? 'RECORD_VIEW_PAGE.FORBIDDEN' : viewState === 'not-found' ? 'RECORD_VIEW_PAGE.NOT_FOUND' : 'RECORD_VIEW_PAGE.ERROR') | translate }}</p>
+		@if (viewState === 'error') {
+		<button nbButton size="small" status="basic" (click)="loadTask()">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.RETRY' | translate }}
+		</button>
+		}
+	</div>
+	}
+	}
+</ngx-record-view-drawer>

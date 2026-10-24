@@ -4,6 +4,7 @@ import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
+	Idempotent,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -98,6 +99,9 @@ export class RefundLineResolver {
 	 * Records a line against a pending refund.
 	 */
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	// The input has always declared `idempotencyKey`, and nothing read it (R2-G16): honoured now, optional, under
+	// the scope `POST /refund-lines` declares.
+	@Idempotent({ scope: 'refund.line.create', required: false, resourceType: 'refund_line' })
 	@Mutation('createRefundLine')
 	async createRefundLine(@Args('input') input: ICreateRefundLineGraphInput): Promise<ICreateRefundLinePayload> {
 		try {

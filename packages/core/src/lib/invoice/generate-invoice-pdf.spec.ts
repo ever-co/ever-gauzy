@@ -128,6 +128,98 @@ describe('generateInvoicePdfDefinition', () => {
 		expect(all).toEqual(expect.arrayContaining(['10', '5', '7']));
 		expect(all.some((text) => text.endsWith('%'))).toBe(false);
 	});
+
+	// #10690: the header dates used to print as `Thu Oct 01` (no year, server time zone), and a document
+	// without a due date or a contact threw before the PDF was built.
+	describe('header dates and contact', () => {
+		// 5 and 31 October picked in a UTC+2 / UTC+1 browser are stored as the previous day, UTC.
+		const dated = { invoiceDate: new Date('2026-10-04T22:00:00Z'), dueDate: new Date('2026-10-30T23:00:00Z') };
+		const paris = { ...organization(undefined, 'Europe/Paris'), dateFormat: 'DD.MM.YYYY' };
+
+		it.each([
+			['an invoice', false, 'Invoice Date: '],
+			['an estimate', true, 'Estimate Date: ']
+		])(
+			'prints the dates of %s as full days in the organization time zone and format',
+			async (_, isEstimate, label) => {
+				const all = texts(
+					await generateInvoicePdfDefinition(
+						invoice({ ...dated, isEstimate }),
+						paris,
+						contact,
+						translatedText
+					)
+				);
+
+				expect(all).toEqual(expect.arrayContaining([label, '05.10.2026', 'Due Date: ', '31.10.2026']));
+			}
+		);
+
+		it('renders a document without a due date, printing that date empty', async () => {
+			const all = texts(
+				await generateInvoicePdfDefinition(
+					invoice({ ...dated, isEstimate: true, dueDate: null }),
+					paris,
+					contact,
+					translatedText
+				)
+			);
+
+			expect(all).toContain('05.10.2026');
+			expect(all[all.indexOf('Due Date: ') + 1]).toBe('');
+		});
+
+		it.each([null, undefined])('renders a document whose contact is %s', async (missing) => {
+			const all = texts(await generateInvoicePdfDefinition(invoice(dated), paris, missing, translatedText));
+
+			expect(all[all.indexOf('To:\n') + 1]).toBe('');
+			expect(all).toContain('Total Value: USD 108');
+		});
+	});
+
+	// A line's employee, project, task, product or expense is set to null when that record is deleted
+	describe('lines whose item record is gone', () => {
+		const line = { description: 'Work', quantity: 1, price: 108, totalValue: 108 };
+
+		it.each([
+			[InvoiceTypeEnum.BY_EMPLOYEE_HOURS, { employee: null }],
+			[InvoiceTypeEnum.BY_EMPLOYEE_HOURS, { employee: { user: null } }],
+			[InvoiceTypeEnum.BY_PROJECT_HOURS, { project: null }],
+			[InvoiceTypeEnum.BY_TASK_HOURS, { task: null }],
+			[InvoiceTypeEnum.BY_PRODUCTS, { product: null }],
+			[InvoiceTypeEnum.BY_EXPENSES, { expense: null }]
+		])('renders a %s invoice whose line has %o, with an empty item', async (invoiceType, relation) => {
+			const doc = await generateInvoicePdfDefinition(
+				invoice({ invoiceType, invoiceItems: [{ ...line, ...(relation as object) }] }),
+				organization(),
+				contact,
+				translatedText,
+				'en'
+			);
+			const [, row] = (doc.content.find((node: any) => node?.table) as any).table.body;
+
+			expect(row).toEqual(['', 'Work', '1', 'USD 108', 'USD 108']);
+		});
+
+		it.each([
+			[InvoiceTypeEnum.BY_EMPLOYEE_HOURS, { employee: { user: { name: 'Jane Doe' } } }, 'Jane Doe'],
+			[InvoiceTypeEnum.BY_PROJECT_HOURS, { project: { name: 'Gauzy' } }, 'Gauzy'],
+			[InvoiceTypeEnum.BY_TASK_HOURS, { task: { title: 'Fix PDF' } }, 'Fix PDF'],
+			[InvoiceTypeEnum.BY_PRODUCTS, { product: { name: 'Widget', translations: [] } }, 'Widget'],
+			[InvoiceTypeEnum.BY_EXPENSES, { expense: { purpose: 'Travel' } }, 'Travel']
+		])('still prints the item of a %s line', async (invoiceType, relation, item) => {
+			const doc = await generateInvoicePdfDefinition(
+				invoice({ invoiceType, invoiceItems: [{ ...line, ...(relation as object) }] }),
+				organization(),
+				contact,
+				translatedText,
+				'en'
+			);
+			const [, row] = (doc.content.find((node: any) => node?.table) as any).table.body;
+
+			expect(row[0]).toBe(item);
+		});
+	});
 });
 
 describe('generateInvoicePaymentPdfDefinition', () => {
@@ -222,5 +314,29 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 		);
 
 		expect(texts(doc)).toContain('2026-10-07');
+	});
+
+	it('renders a payment without a recording user, with that column empty', async () => {
+		const doc = await generateInvoicePaymentPdfDefinition(
+			invoice(),
+			[{ ...payments[0], createdByUser: null }],
+			organization(),
+			contact,
+			3,
+			translatedText
+		);
+		const [, row] = (doc.content.find((node: any) => node?.table) as any).table.body;
+
+		expect(row[2]).toBe('');
+		expect(texts(doc)).toContain('USD 3');
+	});
+
+	it.each([null, undefined])('renders the payments of an invoice whose contact is %s', async (missing) => {
+		const all = texts(
+			await generateInvoicePaymentPdfDefinition(invoice(), payments, organization(), missing, 8, translatedText)
+		);
+
+		expect(all[all.indexOf('Received from:\n') + 1]).toBe('');
+		expect(all).toContain('Jane');
 	});
 });

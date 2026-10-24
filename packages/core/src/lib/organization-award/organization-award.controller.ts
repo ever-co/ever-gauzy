@@ -74,6 +74,8 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(@Body() entity: DeepPartial<OrganizationAward>): Promise<OrganizationAward> {
 		return this.organizationAwardService.create(entity);
@@ -100,6 +102,8 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -124,6 +128,8 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.organizationAwardService.delete(id);

@@ -1,10 +1,13 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
 	Get,
+	Headers,
 	HttpCode,
 	HttpStatus,
+	NotFoundException,
 	Param,
 	Post,
 	Put,
@@ -12,7 +15,7 @@ import {
 	UseGuards,
 	UsePipes
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { CommerceCartValidationMode, ICommerceCart } from '@gauzy/contracts';
 import {
@@ -69,8 +72,13 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	 * the first attempt. No version is required of the caller — there is no cart to have read yet — and
 	 * the created cart's version is published in the response for the writes that follow.
 	 *
+	 * The answer carries the cart's guest-access `token`, and it is the only answer that does: the cart
+	 * stores the token's digest, never the token. A retry under the same key is answered from the record of
+	 * the first attempt and so carries the same token — that replay is how a client that lost the first
+	 * answer gets its token back, and it lasts only as long as the key's own retention.
+	 *
 	 * @param entity The cart to create.
-	 * @returns The created cart, with its totals computed.
+	 * @returns The created cart, with its totals computed and its guest-access token.
 	 */
 	@ApiOperation({ summary: 'Create a cart' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Cart created' })
@@ -81,6 +89,60 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateCommerceCartDTO): Promise<ICommerceCart> {
 		return this.commerceCartService.create(entity);
+	}
+
+	/**
+	 * Reads the cart a guest-access token names.
+	 *
+	 * The token is the one the create answered with; the cart stores only its digest, and the service
+	 * looks that digest up inside the caller's tenant, answering nothing when there is no tenant to scope
+	 * it by. The grant is the one the cart's read route runs under — the class-level `CARTS_VIEW` — because
+	 * this is the same read addressed by another key. The `cartByToken` field answers the same lookup.
+	 *
+	 * The token is a key, not a credential: it names a cart, and it admits nobody. The route runs under the
+	 * guards and the grant every cart route runs under, so its caller is an authenticated caller of the cart's
+	 * tenant — a storefront holding the token on behalf of a buyer who has not signed in — exactly as for
+	 * `GET /carts/:id`; what the token adds is a handle the buyer can hold that no other buyer can guess.
+	 *
+	 * **The token rides in the `X-Cart-Token` header, never in the URL.** A URL is written down all the way
+	 * along: the ingress and CDN access logs, every proxy's, the request-lifecycle lines
+	 * `RequestContextMiddleware` logs with the full URL, and the URL an error report carries — a token in the
+	 * path would land in every one of them (CWE-598). A header is in none of those, the error reports filter
+	 * a header named like a token, and the API-call log redacts it by name.
+	 *
+	 * Declared before `:id` **for the router**: `by-token` is one segment, as an id is, and Nest registers a
+	 * controller's routes in the order its methods are declared, so this route is matched first. A cart could
+	 * not be addressed as `by-token` either way — its id is a UUID, and the id read's pipe refuses anything else.
+	 *
+	 * @param token The plaintext token, from the `X-Cart-Token` header.
+	 * @returns The cart, with its lines, delivery choices and promotions.
+	 * @throws BadRequestException when the header is missing or blank.
+	 * @throws NotFoundException when no cart of the caller's tenant carries that token.
+	 */
+	@ApiOperation({ summary: 'Find a cart by its guest-access token' })
+	@ApiHeader({
+		name: 'X-Cart-Token',
+		required: true,
+		description: 'The guest-access token the cart create answered with.'
+	})
+	@ApiResponse({ status: HttpStatus.OK, description: 'Cart found' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'CART_TOKEN_REQUIRED: no X-Cart-Token header' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No cart carries that token' })
+	@Get('by-token')
+	async findByToken(@Headers('x-cart-token') token?: string): Promise<ICommerceCart> {
+		if (typeof token !== 'string' || token.trim() === '') {
+			throw new BadRequestException(
+				'CART_TOKEN_REQUIRED: state the guest-access token the cart create answered with in the X-Cart-Token header.'
+			);
+		}
+
+		const cart = await this.commerceCartService.findByToken(token);
+
+		if (!cart) {
+			throw new NotFoundException('CART_NOT_FOUND: no cart carries that token.');
+		}
+
+		return cart;
 	}
 
 	/**
@@ -99,13 +161,28 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	/**
 	 * Changes a cart's contact details, addresses or note.
 	 *
+	 * **The status is not one of them (R2-G25).** The body is `PartialType(CommerceCartDTO)`, which carries
+	 * `status`, and `applyChanges` wrote whatever it was handed: `PUT /carts/:id { "status": "ACTIVE" }` on
+	 * a COMPLETED cart reopened a cart an order had already been placed from — mutable again, completable
+	 * again — and a MERGED or EXPIRED cart came back the same way. A cart's status moves through its own
+	 * acts, each with its rules and its grant: `POST /carts/:id/complete`, `/abandon` and `/merge`, and the
+	 * expiry sweep. The `updateCart` mutation's input never carried a status, so this is the REST door
+	 * brought to the GraphQL one. A body that restates the status the cart already has — a client sending
+	 * the whole cart back — is accepted, and the member is dropped; a different status is refused with
+	 * `400 CART_STATUS_NOT_WRITABLE` before anything is written.
+	 *
 	 * @param id The cart.
 	 * @param entity The fields to change.
 	 * @param request The request, which carries the version the caller read the cart at.
 	 * @returns The cart.
+	 * @throws BadRequestException `CART_STATUS_NOT_WRITABLE` when the body asks for another status.
 	 */
 	@ApiOperation({ summary: 'Update a cart' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Cart updated' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'CART_STATUS_NOT_WRITABLE: the status moves through complete, abandon and merge'
+	})
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
 	@Versioned({ resource: CommerceCartService })
 	@Put(':id')
@@ -115,7 +192,9 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 		@Body() entity: UpdateCommerceCartDTO,
 		@Req() request: Request
 	): Promise<ICommerceCart> {
-		return this.commerceCartService.applyChanges(id, entity as any, versionExpectationOf(request));
+		const changes = await this.withoutStatusChange(id, entity);
+
+		return this.commerceCartService.applyChanges(id, changes as any, versionExpectationOf(request));
 	}
 
 	/**
@@ -180,13 +259,21 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	/**
 	 * Marks a cart abandoned and makes it a notification target.
 	 *
+	 * **The grant is the checkout's (R2-G17).** The `abandonCheckout` mutation reaches the same
+	 * `CommerceCartService.abandon` under `CARTS_CHECKOUT`, and this route asked only `CARTS_EDIT`, so a role
+	 * refused the act over GraphQL performed it over REST. The two are aligned on the stricter grant rather
+	 * than the looser one: abandoning is one of the two ends of a checkout — the other being completion —
+	 * and it puts the buyer into the abandoned-cart follow-up audience, which is not something preparing a
+	 * cart for a buyer (`CARTS_EDIT`) is meant to decide. Both grants are held by the same default roles, so
+	 * only a custom role holding `CARTS_EDIT` without `CARTS_CHECKOUT` sees a difference.
+	 *
 	 * @param id The cart.
 	 * @param request The request, which carries the version the caller read the cart at.
 	 * @returns The abandoned cart.
 	 */
 	@ApiOperation({ summary: 'Mark a cart abandoned' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Cart abandoned' })
-	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Permissions(CART_PERMISSIONS.CARTS_CHECKOUT)
 	@Versioned({ resource: CommerceCartService })
 	@Post(':id/abandon')
 	@HttpCode(HttpStatus.OK)
@@ -365,12 +452,20 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	 * `CARTS_VIEW` alone. Removing a cart is a `CARTS_DELETE` action, the same grant the `deleteCart`
 	 * mutation states.
 	 *
+	 * **Versioned, as `deleteCart` is (R2-G18).** A deletion is a write to a versioned record even though it
+	 * overwrites no column: the caller states in `If-Match` the version it read, and a cart that has moved on
+	 * since — a line added, a checkout completed — is refused (`409`) rather than removed from under the
+	 * change that moved it; no version is `428`. The mutation demanded its `version` argument and this route
+	 * demanded nothing, so the same act was guarded on one protocol only. The refusal is the guard's, before
+	 * the handler runs: a deletion has no update statement for a conditional write to predicate.
+	 *
 	 * @param id The cart.
 	 * @returns The result of the deletion.
 	 */
 	@ApiOperation({ summary: 'Delete a cart' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Cart deleted' })
 	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Versioned({ resource: CommerceCartService })
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
@@ -421,5 +516,44 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
 		return await super.softRecover(id, ...options);
+	}
+
+	/**
+	 * The update's change set without its `status` member, refused when it asks for another status.
+	 *
+	 * See {@link update}. The cart is read only when the body states a status at all, so an update that
+	 * does not touch it costs no extra read.
+	 *
+	 * @param id The cart.
+	 * @param entity The validated body.
+	 * @returns The change set to write, without `status`.
+	 * @throws NotFoundException when the cart does not exist.
+	 * @throws BadRequestException `CART_STATUS_NOT_WRITABLE` when the stated status differs from the cart's.
+	 */
+	private async withoutStatusChange(
+		id: string,
+		entity: UpdateCommerceCartDTO
+	): Promise<Omit<UpdateCommerceCartDTO, 'status'>> {
+		const { status, ...changes } = (entity ?? {}) as UpdateCommerceCartDTO;
+
+		if (status === undefined || status === null) {
+			return changes;
+		}
+
+		const cart = await this.commerceCartService.findOneByIdString(id);
+
+		if (!cart) {
+			throw new NotFoundException(`CART_NOT_FOUND: no cart exists with id ${id}.`);
+		}
+
+		if (cart.status !== status) {
+			throw new BadRequestException({
+				message: `CART_STATUS_NOT_WRITABLE: a cart's status is not written by an update; a ${cart.status} cart moves through POST /carts/:id/complete, /abandon or /merge.`,
+				code: 'CART_STATUS_NOT_WRITABLE',
+				details: { status: cart.status, requested: status }
+			});
+		}
+
+		return changes;
 	}
 }

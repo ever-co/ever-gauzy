@@ -32,7 +32,9 @@ class DeliveryLedger {
 		);
 
 		if (existing) {
-			if (existing.status === EventOutboxStatus.PUBLISHED) {
+			// Settled either way, as the service reads it: an acknowledged record, or a dead letter nothing
+			// re-drives until a replay writes it back to PENDING.
+			if (existing.status === EventOutboxStatus.PUBLISHED || existing.status === EventOutboxStatus.DEAD) {
 				return { claimed: false, delivery: existing };
 			}
 
@@ -254,6 +256,36 @@ describe('running a consumer exactly once per event', () => {
 		expect(retried.outcome).toBe(EventConsumerRunOutcome.FAILED);
 		expect(retried.delivery.attemptCount).toBe(1);
 		expect(attempts).toEqual([1, 2]);
+	});
+
+	it('stops invoking a consumer whose record is dead-lettered, and reports the run as dead-lettered', async () => {
+		const { service, ledger } = registry();
+		const attempts: number[] = [];
+		const subscriber: IEventConsumer = {
+			key: 'notification.order-confirmation',
+			events: ['order.placed'],
+			maxAttempts: 1,
+			async handle(): Promise<void> {
+				attempts.push(attempts.length + 1);
+				throw new Error('the mail relay refused the message');
+			}
+		};
+
+		service.register(subscriber);
+
+		await service.runOnce(subscriber, event());
+		const spent = await service.runOnce(subscriber, event());
+
+		expect(spent.outcome).toBe(EventConsumerRunOutcome.FAILED);
+		expect(ledger.records[0]).toMatchObject({ status: EventOutboxStatus.DEAD, attemptCount: 1 });
+
+		const settled = await service.runOnce(subscriber, event());
+
+		// Nothing was invoked and nothing was counted: the dead letter stays as the budget left it.
+		expect(settled.outcome).toBe(EventConsumerRunOutcome.DEAD_LETTERED);
+		expect(settled.delivery.status).toBe(EventOutboxStatus.DEAD);
+		expect(attempts).toEqual([1, 2]);
+		expect(ledger.records[0]).toMatchObject({ status: EventOutboxStatus.DEAD, attemptCount: 1 });
 	});
 
 	it('lets a consumer mark itself delivered, and makes marking twice harmless', async () => {

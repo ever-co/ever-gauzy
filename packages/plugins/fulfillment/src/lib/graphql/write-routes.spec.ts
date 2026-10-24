@@ -836,7 +836,9 @@ describe('the fulfilment document — the three routes no field answered are dec
 		const names = rootFieldNames('Mutation');
 
 		expect(new Set(names).size).toBe(names.length);
-		expect(names).toHaveLength(27);
+		// 27, plus `addFulfillmentLine` (review R2-G40).
+		expect(names).toHaveLength(28);
+		expect(names).toContain('addFulfillmentLine');
 	});
 });
 
@@ -1150,7 +1152,10 @@ describe('the fourteen routes — four buckets, none of them left unread', () =>
 			}),
 			create: jest.fn().mockResolvedValue(FOREIGN),
 			delete: jest.fn().mockResolvedValue(REMOVED),
-			update: jest.fn().mockResolvedValue(FOREIGN)
+			update: jest.fn().mockResolvedValue(FOREIGN),
+			// The cross-tenant check of the added variants; it reads a database, and is exercised in
+			// `fulfillment-references.db.spec.ts`.
+			assertReferences: jest.fn().mockResolvedValue(undefined)
 		};
 		const service = new ShippingProfileService({} as never, {} as never, pivotService as never);
 

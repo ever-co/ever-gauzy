@@ -1,5 +1,12 @@
-import { BadRequestException, ConflictException, Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
-import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
+import {
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	HttpStatus,
+	NotFoundException
+} from '@nestjs/common';
+import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions, In } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -12,6 +19,7 @@ import {
 	IRole,
 	LanguagesEnum,
 	OrganizationTeamJoinRequestStatusEnum,
+	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { generateAlphaNumericCode } from '@gauzy/utils';
@@ -71,7 +79,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		entity: IOrganizationTeamJoinRequestCreateInput & Partial<IAppIntegrationConfig>,
 		languageCode?: LanguagesEnum
 	): Promise<IOrganizationTeamJoinRequest> {
-		const { organizationTeamId, email } = entity;
+		const { organizationTeamId, email, fullName, linkAddress, position } = entity;
 
 		/** find existing team join request and throw exception */
 		const request = await this.count({
@@ -118,13 +126,18 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			const createEntityLike = this.typeOrmRepository.create({
 				organizationTeamId,
 				email,
+				fullName,
+				linkAddress,
+				position,
 				organizationId,
 				tenantId,
 				code,
 				token,
 				status: null
 			});
-			const organizationTeamJoinRequest = await this.save(createEntityLike);
+			// Public route, no caller tenant to stamp: the row keeps the tenant of the public team found above.
+			// Saved as a plain copy so MikroORM builds the relations from their ids instead of upserting the instance.
+			const organizationTeamJoinRequest = await this.saveWithoutEnrichment({ ...createEntityLike });
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink, companyLink, companyName } = entity;
@@ -315,10 +328,14 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			throw new NotFoundException('Request not found.');
 		}
 
+		await this.assertMayActOnRequest(request, tenantId);
+
 		/**
 		 * ACCEPTED
 		 */
 		if (action === OrganizationTeamJoinRequestStatusEnum.ACCEPTED) {
+			this.assertAwaitsApproval(request);
+
 			/**
 			 * Fetch user if already present in current tenant
 			 */
@@ -350,12 +367,22 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				let employeePresentInTeam = null;
 
 				if (employee) {
-					employeePresentInTeam = await this._organizationTeamService.findOneByWhereOptions({
-						members: {
-							employeeId: employee.id
-						},
-						id: request.organizationTeamId
-					});
+					try {
+						await this._organizationTeamService.findOneByWhereOptions({
+							members: {
+								employeeId: employee.id
+							},
+							id: request.organizationTeamId
+						});
+						employeePresentInTeam = true;
+					} catch (error) {
+						// A miss (404) means "not on the team yet". Any other failure is not an answer to that
+						// question, so it is raised rather than read as a miss that would add the employee again.
+						if (!(error instanceof NotFoundException)) {
+							throw error;
+						}
+						employeePresentInTeam = false;
+					}
 				}
 
 				/**
@@ -368,7 +395,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 						tenantId,
 						organizationId: request.organizationId
 					});
+				}
 
+				/**
+				 * Mark the request accepted, whether the employee was just added or was already on the team
+				 */
+				if (employee) {
 					await super.update(id, {
 						status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 						userId: currentTenantUser.id
@@ -381,7 +413,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			 * Current user is not belong to this tenant
 			 */
 			if (!currentTenantUser) {
-				const names = request?.fullName?.split(' ');
+				const names = request?.fullName?.trim().split(/\s+/) ?? [];
 
 				const role: IRole = await this._roleService.findOneByWhereOptions({
 					name: RolesEnum.EMPLOYEE
@@ -389,8 +421,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				const newTenantUser = await this._inviteService.createUser(
 					{
 						user: {
-							firstName: (names && names.length && names[0]) || '',
-							lastName: (names && names.length && names[1]) || '',
+							firstName: names[0] ?? '',
+							lastName: names.slice(1).join(' '),
 							email: request.email,
 							tenantId: tenantId,
 							role: role
@@ -416,6 +448,89 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			await super.update(id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REJECTED
 			});
+		}
+	}
+
+	/**
+	 * Refuses to accept a join request that is not waiting for a manager's decision.
+	 *
+	 * A request moves through one sequence. The public `create` stores it with `status: null`. The requester
+	 * confirms their address with the emailed code or token (`validateJoinRequest`, which only matches
+	 * `status IS NULL` within `expiredAt`), and that moves it to `REQUESTED`. A manager then accepts or rejects it.
+	 * `acceptRequestToJoin` never read the status, so an unconfirmed request (an address nobody proved they own)
+	 * could be accepted. That added the existing employee behind that address to the team without their consent,
+	 * or provisioned a passwordless EMPLOYEE account for it. A request already accepted or rejected could also be
+	 * accepted again. Only `REQUESTED` is accepted now. That is also the only status the Ever Teams invitation
+	 * table shows the accept action for.
+	 *
+	 * `expiredAt` is not re-checked: it bounds the confirmation code, which a `REQUESTED` request has already
+	 * redeemed, and a manager may decide after that window.
+	 *
+	 * @param request - The join request a manager is accepting.
+	 * @throws {ConflictException} When the request is unconfirmed, or already decided.
+	 */
+	private assertAwaitsApproval(request: IOrganizationTeamJoinRequest): void {
+		if (request.status === OrganizationTeamJoinRequestStatusEnum.REQUESTED) {
+			return;
+		}
+
+		if (!request.status) {
+			throw new ConflictException('This join request has not been confirmed by email yet.');
+		}
+
+		throw new ConflictException(`This join request was already ${String(request.status).toLowerCase()}.`);
+	}
+
+	/**
+	 * Without ORG_TEAM_JOIN_REQUEST_EDIT or CHANGE_SELECTED_EMPLOYEE, only a manager of the request's team may
+	 * accept or reject it. A manager is whoever ever-teams shows the invitations to: a member flagged
+	 * `isManager`, a member whose team role is MANAGER (how team creation stores managers), ADMIN or
+	 * SUPER_ADMIN, or the team's creator. Both entry points are guarded, so a call without a request user is
+	 * an internal one and is left as it was.
+	 *
+	 * @param request - The join request acted on.
+	 * @param tenantId - The caller's tenant, which the request was read in.
+	 * @throws {ForbiddenException} When the caller does not manage the request's team.
+	 */
+	private async assertMayActOnRequest(request: IOrganizationTeamJoinRequest, tenantId: string): Promise<void> {
+		const user = RequestContext.currentUser();
+		if (!user) {
+			return;
+		}
+
+		if (
+			RequestContext.hasAnyPermission([
+				PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			])
+		) {
+			return;
+		}
+
+		// TypeORM drops an undefined where value, which would widen both reads below to any team.
+		const { organizationTeamId } = request;
+		if (!organizationTeamId || !tenantId) {
+			throw new ForbiddenException();
+		}
+
+		if (user.employeeId) {
+			const member = { tenantId, organizationTeamId, employeeId: user.employeeId };
+			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy([
+				{ ...member, isManager: true },
+				{ ...member, role: { name: In([RolesEnum.MANAGER, RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN]) } }
+			]);
+			if (managesTeam) {
+				return;
+			}
+		}
+
+		const createdTeam = await this._organizationTeamService.findOneOrFailByWhereOptions({
+			id: organizationTeamId,
+			tenantId,
+			createdByUserId: user.id
+		});
+		if (!createdTeam.success) {
+			throw new ForbiddenException('You can only accept or reject join requests for teams you manage.');
 		}
 	}
 }

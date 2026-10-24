@@ -3,9 +3,9 @@ import { gql } from 'graphql-tag';
 /**
  * The fulfilment domain's contribution to the one GraphQL schema.
  *
- * Only `extend type Query` and `extend type Mutation` blocks and the domain's own types are declared:
- * the root types belong to the core schema, and a second `type Query` block would be a duplicate
- * definition that fails the boot. The type names are the concepts' own names.
+ * Only `extend type Query`, `extend type Mutation` and `extend type Subscription` blocks and the domain's own
+ * types are declared: the root types belong to the core schema, and a second `type Query` block would be a
+ * duplicate definition that fails the boot. The type names are the concepts' own names.
  */
 export const fulfillmentSchemaExtensions = gql`
 	"A set of variants that ship the same way."
@@ -226,6 +226,55 @@ export const fulfillmentSchemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	"""
+	What a caller changes on a shipping profile. Every member is optional; \`idempotencyKey\` is absent, because an
+	edit is not a create a retry could duplicate.
+	"""
+	input UpdateShippingProfileInput {
+		name: String
+		code: String
+		isDefault: Boolean
+		description: String
+	}
+
+	"""
+	What a caller changes on a shipping option. Every member is optional; \`idempotencyKey\` is absent, because an
+	edit is not a create a retry could duplicate.
+	"""
+	input UpdateShippingOptionInput {
+		name: String
+		code: String
+		priceType: String
+		amount: Decimal
+		currency: String
+		isTaxInclusive: Boolean
+		taxCategoryId: ID
+		providerKey: String
+		profileId: ID
+		channelId: ID
+		regionId: ID
+		priority: Int
+		estimatedMinDays: Int
+		estimatedMaxDays: Int
+		requiresShippingAddress: Boolean
+		allowPickup: Boolean
+		maxWeight: Decimal
+		maxItemCount: Int
+	}
+
+	"""
+	A line appended to a shipment that has not left yet. \`idempotencyKey\` makes a retry safe; \`version\` is the
+	version the caller read the shipment at, honoured when stated.
+	"""
+	input AddFulfillmentLineInput {
+		orderLineId: ID!
+		quantity: Decimal!
+		warehouseId: ID
+		metadata: JSON
+		idempotencyKey: String
+		version: Int
+	}
+
 	input UpdateFulfillmentInput {
 		trackingNumber: String
 		trackingUrl: String
@@ -317,7 +366,16 @@ export const fulfillmentSchemaExtensions = gql`
 
 	extend type Mutation {
 		createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
-		updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
+		"""
+		Updates a shipping profile. State the changes once: as \`patch\`, whose every member is optional, or as the
+		older \`input\`, the create's shape, which restates \`name\` and \`code\` and keeps working. Both, or neither,
+		is refused.
+		"""
+		updateShippingProfile(
+			id: ID!
+			input: CreateShippingProfileInput
+			patch: UpdateShippingProfileInput
+		): ShippingProfile!
 		deleteShippingProfile(id: ID!): Boolean!
 		"Retire a shipping profile recoverably, so the variants that ship under it keep their group."
 		softDeleteShippingProfile(id: ID!): ShippingProfile!
@@ -329,7 +387,16 @@ export const fulfillmentSchemaExtensions = gql`
 		"Restore a soft-deleted variant attachment."
 		recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
 		createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
-		updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
+		"""
+		Updates a shipping option. State the changes once: as \`patch\`, whose every member is optional, or as the
+		older \`input\`, the create's shape, which restates \`name\`, \`code\` and \`priceType\` and keeps working. Both, or
+		neither, is refused.
+		"""
+		updateShippingOption(
+			id: ID!
+			input: CreateShippingOptionInput
+			patch: UpdateShippingOptionInput
+		): ShippingOption!
 		deleteShippingOption(id: ID!): Boolean!
 		"Retire a shipping option recoverably, so the carts that selected it keep their record."
 		softDeleteShippingOption(id: ID!): ShippingOption!
@@ -337,6 +404,12 @@ export const fulfillmentSchemaExtensions = gql`
 		recoverShippingOption(id: ID!): ShippingOption!
 		createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
 		updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+		"""
+		Append a line to a shipment that has not left yet: the shipment must still be PENDING, the order line must be
+		one of its order's and still have the quantity to ship, and on an outbound shipment the order line's counter
+		moves with the line (a return-direction shipment moves none).
+		"""
+		addFulfillmentLine(id: ID!, input: AddFulfillmentLineInput!): Fulfillment!
 		"Correct one shipment line: the quantity, the location, the order line it covers, or its payload."
 		updateFulfillmentLine(id: ID!, input: UpdateFulfillmentLineInput!): FulfillmentLine!
 		shipFulfillment(id: ID!, input: ShipFulfillmentInput): Fulfillment!
@@ -357,5 +430,27 @@ export const fulfillmentSchemaExtensions = gql`
 		recoverFulfillmentLine(id: ID!): FulfillmentLine!
 		"Remove a shipment line outright. The recoverable withdrawal is softDeleteFulfillmentLine."
 		deleteFulfillmentLine(id: ID!): Boolean!
+	}
+
+	extend type Subscription {
+		"""
+		A shipment of the caller's tenant was created — outbound for an order, or the leg a return travels back on —
+		with its lines, as \`fulfillment(id:)\` reads it when the event is delivered: a move made since the creation may
+		already show in it. Narrowed by the order and by the location; each only narrows what the credential may
+		read. Follows the \`fulfillment.created\` fact the fulfilment service appends to the
+		outbox. A subscription is a notification and never a system of record: a shipment created while the client is
+		disconnected is not replayed.
+		"""
+		fulfillmentCreated(orderId: ID, warehouseId: ID): Fulfillment!
+		"""
+		Every lifecycle move of a shipment of the caller's tenant — created, shipped, in transit, delivered, canceled —
+		with the shipment as \`fulfillment(id:)\` reads it when the move is delivered, not a snapshot of the move: a move
+		made since may already show in it. Narrowed by
+		\`fulfillmentId\`, by the order the shipment is of, and by \`action\` (the move: \`shipped\`, \`in_transit\`,
+		\`delivered\`, …); each only narrows what the credential may read. Follows the \`fulfillment.*\` facts the
+		fulfilment service appends to the outbox. A subscription is a notification and never a system of record: a move
+		made while the client is disconnected is not replayed.
+		"""
+		fulfillmentChanged(fulfillmentId: ID, orderId: ID, action: String): Fulfillment!
 	}
 `;

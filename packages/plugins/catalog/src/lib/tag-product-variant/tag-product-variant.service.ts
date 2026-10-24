@@ -1,21 +1,25 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { assertInCallerScope, callerScope } from '../catalog.scope';
+import { ProductVariant, RequestContext, Tag } from '@gauzy/core';
+import { assertAllInCallerScope, assertInCallerScope, callerScope } from '../catalog.scope';
 import { TagProductVariant } from './tag-product-variant.entity';
 import { MikroOrmTagProductVariantRepository } from './repository/mikro-orm-tag-product-variant.repository';
 import { TypeOrmTagProductVariantRepository } from './repository/type-orm-tag-product-variant.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Variant-level facets.
  *
- * The pivot has no soft-delete column, deliberately: a soft-deleted join row would still be found by
- * every existing tag query on the platform, which does not know this table exists. Removal is
- * therefore a hard delete of the pair, and replacing a variant's facets deletes the pairs that are no
- * longer requested inside the same transaction that inserts the new ones.
+ * Removal through the set writes is a hard delete of the pair: replacing a variant's facets deletes the pairs
+ * that are no longer requested inside the same transaction that inserts the new ones. A facet row can also be
+ * retired recoverably — the inherited `DELETE /tag-product-variants/:id/soft` and `softDeleteTagProductVariant`
+ * — and the pair's unique index, `UQ_tag_product_variant`, is not partial on `deletedAt`: a retired row still
+ * holds its pair. Attaching that facet value again therefore restores the retired row rather than inserting a
+ * second one the index refuses (review R2-24 (d)).
  */
 @Injectable()
-export class TagProductVariantService extends TenantAwareCrudService<TagProductVariant> {
+export class TagProductVariantService extends CatalogCrudService<TagProductVariant> {
 	constructor(
 		readonly typeOrmTagProductVariantRepository: TypeOrmTagProductVariantRepository,
 		readonly mikroOrmTagProductVariantRepository: MikroOrmTagProductVariantRepository
@@ -37,6 +41,59 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 	}
 
 	/**
+	 * Attaches one facet value to a variant — `POST /tag-product-variants`.
+	 *
+	 * A pair whose row was retired recoverably is restored and answered, because the pair's unique index still
+	 * holds it and a second row is refused by the database (R2-24 (d)); a pair that is already attached is refused
+	 * by name rather than by the constraint.
+	 *
+	 * @param entity The pair to attach.
+	 * @returns The attached facet row.
+	 * @throws BadRequestException When the variant already carries the facet value.
+	 */
+	public async create(entity: DeepPartial<TagProductVariant>): Promise<TagProductVariant> {
+		const productVariantId = entity?.productVariantId ?? entity?.productVariant?.id;
+		const tagId = entity?.tagId ?? entity?.tag?.id;
+
+		if (productVariantId && tagId) {
+			const existing = await this.typeOrmTagProductVariantRepository.findOne({
+				where: { productVariantId, tagId, ...callerScope() },
+				withDeleted: true
+			});
+
+			if (existing && !existing.deletedAt) {
+				throw new BadRequestException('The variant already carries that facet value.');
+			}
+
+			if (existing) {
+				// A retired pair is restored only between a variant and a facet value the caller may still use: a
+				// retired variant or tag, or another tenant's, is refused as `replaceTags` refuses it.
+				await assertInCallerScope(
+					this.typeOrmTagProductVariantRepository.manager,
+					ProductVariant,
+					productVariantId,
+					'variant'
+				);
+				await assertAllInCallerScope(
+					this.typeOrmTagProductVariantRepository.manager,
+					Tag,
+					[tagId],
+					'facet values',
+					{
+						tenantWide: true,
+						global: true
+					}
+				);
+				await this.typeOrmTagProductVariantRepository.restore(existing.id);
+
+				return this.findOneByIdString(existing.id);
+			}
+		}
+
+		return super.create(entity);
+	}
+
+	/**
 	 * Replaces a variant's facets with the requested set.
 	 *
 	 * @param variantId The variant whose facets are being written.
@@ -54,16 +111,33 @@ export class TagProductVariantService extends TenantAwareCrudService<TagProductV
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 		await assertInCallerScope(this.typeOrmTagProductVariantRepository.manager, ProductVariant, variantId, 'variant');
+		// The facet values are the caller's, the tenant's or the installation's (SEC-D-04): another tenant's tag went in
+		// by its id and was read back with the variant's facets.
+		await assertAllInCallerScope(this.typeOrmTagProductVariantRepository.manager, Tag, tagIds, 'facet values', {
+			tenantWide: true,
+			global: true
+		});
 
+		// The retired rows are read too: a retired pair still holds `UQ_tag_product_variant`, so a requested facet
+		// value whose row is retired is restored, where inserting it again failed on the index (R2-24 (d)).
 		const existing = await this.typeOrmTagProductVariantRepository.find({
-			where: { productVariantId: variantId, ...callerScope() }
+			where: { productVariantId: variantId, ...callerScope() },
+			withDeleted: true
 		});
 		const kept = new Set(tagIds);
-		const removed = existing.filter((row) => !kept.has(row.tagId));
+		const removed = existing.filter((row) => !row.deletedAt && !kept.has(row.tagId));
+		const restored = existing.filter((row) => row.deletedAt && kept.has(row.tagId));
 
 		await this.typeOrmTagProductVariantRepository.manager.transaction(async (manager) => {
 			if (removed.length) {
 				await manager.delete(TagProductVariant, removed.map((row) => row.id));
+			}
+
+			if (restored.length) {
+				await manager.restore(
+					TagProductVariant,
+					restored.map((row) => row.id)
+				);
 			}
 
 			for (const tagId of tagIds) {

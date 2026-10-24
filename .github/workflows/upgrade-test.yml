@@ -1,5 +1,5 @@
 name: Upgrade Test
-# cspell:words println gsub
+# cspell:words println gsub sendgrid
 
 # develop -> this branch, on a database that already holds develop's schema and data.
 #
@@ -9,6 +9,11 @@ name: Upgrade Test
 # a commerce list, and the commerce e2e suites (tools/scripts/*-e2e.mjs). Once on SQLite (what the demo runs) and
 # once on PostgreSQL (what stage and prod run). The checks live in .github/scripts/upgrade-test.sh; the job summary
 # carries one table with every check per database.
+#
+# The plugins behind a switch (GATED_PLUGIN_FLAGS below) run their migrations only when switched on, so after each
+# upgrade this branch's image boots once more on the same database with them on: their migrations have to apply on
+# top, and their routes have to answer. Its checks are the "<db>-gated" columns; the switches-off checks above are
+# unchanged. Dispatch with gated_plugins=false to leave it out.
 #
 # Nothing leaves the runner. The after image is built with `push: false` and tagged
 # `gauzy-api-upgrade-after:<sha>`, a name no deployment or image updater follows (the build step is the one
@@ -49,6 +54,10 @@ on:
         description: Also boot this branch on a FRESH database (tells an upgrade defect from a defect of the branch itself)
         type: boolean
         default: false
+      gated_plugins:
+        description: After each upgrade, boot this branch once more on the same database with the gated plugins switched on (their migrations run only then)
+        type: boolean
+        default: true
 
 concurrency:
   group: upgrade-test-${{ github.head_ref || github.ref }}
@@ -67,13 +76,21 @@ env:
   DATABASES: ${{ inputs.databases || 'both' }}
   RESULTS_DIR: ${{ github.workspace }}/upgrade-test-results
   NEW_MIGRATIONS: ${{ github.workspace }}/upgrade-test-results/new-migrations.tsv
+  # The gated plugins (the Ever Works integration, the Inbox, Inbox email, the email providers) load, and register their
+  # migrations, only when their switch is exactly `true`, so the upgrade boots above them never run those migrations.
+  # With these set, upgrade-test.sh boots this branch once more on the same database with the switches on and adds
+  # its checks as a "<db>-gated" column; the switches-off checks are unchanged. Empty (dispatched with
+  # gated_plugins=false) = no such boot. A switch no plugin of this branch reads is harmless.
+  GATED_PLUGIN_FLAGS: ${{ (github.event_name != 'workflow_dispatch' || inputs.gated_plugins) && 'EVER_WORKS_ENABLED=true GAUZY_INBOX_ENABLED=true GAUZY_INBOX_EMAIL_ENABLED=true EMAIL_PROVIDER_RESEND_ENABLED=true EMAIL_PROVIDER_POSTMARK_ENABLED=true EMAIL_PROVIDER_MAILGUN_ENABLED=true EMAIL_PROVIDER_SENDGRID_ENABLED=true EMAIL_PROVIDER_SES_ENABLED=true' || '' }}
+  # Routes of those plugins the super admin reads after that boot (each must answer 200).
+  GATED_SMOKE_PATHS: /api/integration/ever-works/status,/api/inbox/items/counts,/api/inbox/providers
 
 jobs:
   upgrade:
     name: develop -> this branch, on SQLite and PostgreSQL
     # GitHub-hosted on purpose: a manual, occasional run that needs only Docker, kept off the self-hosted ARC pool the
     # PR builds and the demo image build queue on. Consequence: the image installs from the public npm registry (the
-    # internal Verdaccio VIP is unreachable from here, and the token route through packages.ever.co truncates large
+    # internal Verdaccio VIP is unreachable from here, and its public token route truncates large
     # tarballs), so no Verdaccio argument or secret is passed — every package in yarn.lock is public.
     runs-on: ubuntu-latest
     timeout-minutes: 330
@@ -184,7 +201,7 @@ jobs:
         run: |
           set -uo pipefail
           labels=()
-          for label in sqlite postgres sqlite-fresh postgres-fresh; do
+          for label in sqlite postgres sqlite-gated postgres-gated sqlite-fresh postgres-fresh; do
             [ -f "$RESULTS_DIR/$label/checks.tsv" ] && labels+=("$label")
           done
           {

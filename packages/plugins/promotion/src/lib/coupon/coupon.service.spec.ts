@@ -98,7 +98,12 @@ function same(left: unknown, right: unknown): boolean {
  * itself uses the database's clock, which the double stands in for.
  * @returns The service, the rows it wrote and the events it published.
  */
-function serviceUnderTest(coupons: ICouponRow[], usages: IUsageRow[] = [], now: Date = AT) {
+function serviceUnderTest(
+	coupons: ICouponRow[],
+	usages: IUsageRow[] = [],
+	now: Date = AT,
+	promotions: Record<string, unknown>[] = []
+) {
 	const published: unknown[] = [];
 
 	const repository = {
@@ -115,11 +120,23 @@ function serviceUnderTest(coupons: ICouponRow[], usages: IUsageRow[] = [], now: 
 
 			return entity;
 		},
+		// An `UPDATE … SET <patch> WHERE <criteria>`: the scoped criteria the base class assembles.
+		update: async (criteria: string | Record<string, unknown>, partial: Partial<ICouponRow>) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
+			const matched = coupons.filter((row) => matches(row, where));
+
+			matched.forEach((row) => Object.assign(row, partial));
+
+			return { affected: matched.length, raw: [], generatedMaps: [] };
+		},
 		manager: {
 			getRepository: () => ({
 				count: async (options?: { where?: Record<string, unknown> }) =>
 					usages.filter((row) => matches(row, options?.where)).length
-			})
+			}),
+			// The promotions a coupon may name: read by id in the caller's tenant and organization.
+			findOneBy: async (_entity: unknown, where: Record<string, unknown>) =>
+				promotions.filter((row) => matches(row, where))[0] ?? null
 		},
 		// The conditional statement of doc 08 §13.2, modelled: it consumes a use only when the code is
 		// active, inside its window and below its limit, and reports one affected row when it did.
@@ -359,5 +376,119 @@ describe('CouponService.validate — the behaviour the defect was found by', () 
 		const verdict = await service.validate('not-a-code', { at: AT });
 
 		expect(verdict).toEqual({ valid: false, reason: 'COUPON_INVALID' });
+	});
+});
+
+/**
+ * R2-G27: `PUT /coupons/:id` (the REST body is the create shape) wrote `usageCount` and `code` as stated: a used-up
+ * single-use code came back with `{"usageCount":0}`, and a code was stored lower-case (never validating) or as a
+ * duplicate of another coupon's. `updateCoupon` reaches the same method and carries neither member.
+ */
+describe('CouponService.update — the counter and the code (R2-G27)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to move the redemption counter, and accepts a body that restates it', async () => {
+		const { service, coupons } = serviceUnderTest([
+			coupon({ id: 'cp-1', code: 'ONCE', usageLimit: 1, usageCount: 1 })
+		]);
+
+		await expect(service.update('cp-1', { usageCount: 0 } as never)).rejects.toMatchObject({
+			response: { code: 'COUPON_FIELD_NOT_WRITABLE', details: { couponId: 'cp-1', fields: ['usageCount'] } }
+		});
+		expect(coupons[0].usageCount).toBe(1);
+
+		await service.update('cp-1', { usageCount: 1, usageLimit: 2 } as never);
+
+		expect(coupons[0]).toMatchObject({ usageCount: 1, usageLimit: 2 });
+	});
+
+	it('stores a changed code normalised, as a create stores it', async () => {
+		const { service, coupons } = serviceUnderTest([coupon({ id: 'cp-1', code: 'SPRING10' })]);
+
+		await service.update('cp-1', { code: '  summer10 ' } as never);
+
+		expect(coupons[0].code).toBe('SUMMER10');
+		await expect(service.validate('summer10')).resolves.toMatchObject({ valid: true });
+	});
+
+	it('refuses a code another coupon of the organization holds, and an empty one', async () => {
+		const { service, coupons } = serviceUnderTest([
+			coupon({ id: 'cp-1', code: 'SPRING10' }),
+			coupon({ id: 'cp-2', code: 'SUMMER10' })
+		]);
+
+		await expect(service.update('cp-1', { code: 'summer10' } as never)).rejects.toThrow(/COUPON_INVALID/);
+		await expect(service.update('cp-1', { code: '   ' } as never)).rejects.toThrow(/COUPON_INVALID/);
+		expect(coupons[0].code).toBe('SPRING10');
+
+		// Restating its own code in another case is not a clash with itself.
+		await service.update('cp-1', { code: 'spring10' } as never);
+		expect(coupons[0].code).toBe('SPRING10');
+	});
+
+	it('answers 404 for a coupon outside the caller’s organization before writing anything', async () => {
+		const { service, coupons } = serviceUnderTest([
+			coupon({ id: 'cp-1', code: 'SPRING10', organizationId: '00000000-0000-4000-8000-0000000000ff' })
+		]);
+
+		await expect(service.update('cp-1', { code: 'OTHER' } as never)).rejects.toBeInstanceOf(NotFoundException);
+		expect(coupons[0].code).toBe('SPRING10');
+	});
+});
+
+describe('CouponService — a coupon names a promotion of the caller only', () => {
+	/**
+	 * A coupon grants the promotion it names, and the id comes from the request: the create, batch and update paths
+	 * stored it as given, so a coupon could be filed against another tenant's promotion.
+	 */
+	const OWN = { id: PROMOTION, tenantId: TENANT, organizationId: ORG };
+	const FOREIGN_PROMOTION = '00000000-0000-4000-8000-0000000000f0';
+	const FOREIGN = { id: FOREIGN_PROMOTION, tenantId: '00000000-0000-4000-8000-0000000000b0', organizationId: ORG };
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('files a coupon against a promotion of the caller', async () => {
+		const { service, coupons } = serviceUnderTest([], [], AT, [OWN, FOREIGN]);
+
+		await service.createCoupon({ code: 'save10', promotionId: PROMOTION } as never);
+
+		expect(coupons).toEqual([expect.objectContaining({ code: 'SAVE10', promotionId: PROMOTION })]);
+	});
+
+	it('refuses a promotion of another tenant on a create, a batch and an update, and writes nothing', async () => {
+		const stored = coupon({ id: 'c-1', code: 'SAVE10' });
+		const { service, coupons } = serviceUnderTest([stored], [], AT, [OWN, FOREIGN]);
+
+		await expect(
+			service.createCoupon({ code: 'other', promotionId: FOREIGN_PROMOTION } as never)
+		).rejects.toBeInstanceOf(NotFoundException);
+		await expect(
+			service.createBatch({ code: 'BATCH', count: 3, promotionId: FOREIGN_PROMOTION } as never)
+		).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.update('c-1', { promotionId: FOREIGN_PROMOTION } as never)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+
+		expect(coupons).toHaveLength(1);
+		expect(coupons[0].promotionId).toBe(PROMOTION);
+	});
+
+	it('still files a coupon that names no promotion yet', async () => {
+		const { service, coupons } = serviceUnderTest([], [], AT, [OWN]);
+
+		await service.createCoupon({ code: 'later' });
+
+		expect(coupons).toEqual([expect.objectContaining({ code: 'LATER' })]);
+		expect(coupons[0].promotionId).toBeUndefined();
 	});
 });

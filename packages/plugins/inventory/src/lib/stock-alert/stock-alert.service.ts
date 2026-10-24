@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
+import { RequestContext, WarehouseProductVariant } from '@gauzy/core';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
 import { StockAlert } from './stock-alert.entity';
 import { TypeOrmStockAlertRepository } from './repository/type-orm-stock-alert.repository';
 import { MikroOrmStockAlertRepository } from './repository/mikro-orm-stock-alert.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** What one evaluation pass found. */
 export interface IStockAlertEvaluation {
@@ -13,6 +14,9 @@ export interface IStockAlertEvaluation {
 	readonly fired: Array<{ alertId: ID; variantId: ID; warehouseId?: ID; availability: number; threshold: number }>;
 	readonly suppressed: number;
 }
+
+/** The members an edit of a rule never writes: a request member, the row's identity and its tenancy. */
+export const STOCK_ALERT_UNWRITABLE_MEMBERS: readonly string[] = ['idempotencyKey', 'id', 'tenantId', 'organizationId'];
 
 /**
  * Maintains the low-stock rules and evaluates them.
@@ -22,7 +26,7 @@ export interface IStockAlertEvaluation {
  * alert is a notification, and a notification must never be able to change a level.
  */
 @Injectable()
-export class StockAlertService extends TenantAwareCrudService<StockAlert> {
+export class StockAlertService extends InventoryCrudService<StockAlert> {
 	constructor(
 		readonly typeOrmStockAlertRepository: TypeOrmStockAlertRepository,
 		readonly mikroOrmStockAlertRepository: MikroOrmStockAlertRepository
@@ -42,6 +46,14 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 	 * gets a named refusal instead of a constraint violation.
 	 */
 	public async createAlert(input: Partial<StockAlert>): Promise<StockAlert> {
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a rule created over GraphQL was written with `organizationId = NULL` — and the
+		// rule belonged to no organization: a read narrowed to the caller's organization never listed it (review
+		// R2-G37, the R2-23 class). The evaluation pass reads by tenant, so the rule still fired. The caller's
+		// organization is stamped when the input states none; an organization the request stated is kept (REST
+		// validates it against the caller).
+		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const existing = await this.typeOrmStockAlertRepository.findOne({
 			where: {
 				variantId: input.variantId,
@@ -56,7 +68,34 @@ export class StockAlertService extends TenantAwareCrudService<StockAlert> {
 				{ details: { alertId: existing.id } }
 			);
 		}
-		return await this.create(input);
+		return await this.create({ ...input, organizationId });
+	}
+
+	/**
+	 * Writes the changes of an edit and answers the rule as it now stands.
+	 *
+	 * This is the write behind `updateStockAlert`. The field handed its input to the inherited `update`,
+	 * which answers the ORM's `UpdateResult` — so the mutation, typed `StockAlert!`, failed with a null `id`
+	 * after the row had been written — and wrote the input's `idempotencyKey`, which is a request member and
+	 * no column (review R2-G35). The members an edit does not write are dropped here: the key, the row's id
+	 * and its tenancy (a rule never moves to another tenant or organization).
+	 *
+	 * @param id The rule.
+	 * @param changes The members the caller changes.
+	 * @returns The rule after the write.
+	 */
+	public async updateAlert(id: ID, changes: Partial<StockAlert> & { idempotencyKey?: string }): Promise<StockAlert> {
+		const values: Record<string, unknown> = { ...(changes ?? {}) };
+
+		for (const member of STOCK_ALERT_UNWRITABLE_MEMBERS) {
+			delete values[member];
+		}
+
+		if (Object.keys(values).length > 0) {
+			await this.update(id, values as any);
+		}
+
+		return await this.findOneByIdString(id);
 	}
 
 	/**

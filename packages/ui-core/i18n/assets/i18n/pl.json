@@ -836,6 +836,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Musisz być pracownikiem, aby móc śledzić czas, tworzyć podziały kosztów i korzystać z innych funkcji związanych z pracownikami"
 	},
 	"MENU": {
+		"INITIATIVES": "Inicjatywy",
 		"BREADCRUMB": "Ścieżka nawigacji",
 		"PIPELINES": "Rurociągi",
 		"DASHBOARD": "Dashboard",
@@ -1211,7 +1212,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interfejs",
 			"TITLE": "Interfejs użytkownika",
-			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
+			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach. Oba interfejsy wyświetlają te same strony, z tymi samymi danymi, układem i funkcjami — różni się tylko technologia, dlatego przełączenie nie zmienia tego, co użytkownicy widzą ani co mogą zrobić.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (domyślny)",
 				"REACT": "React (nowy)"
@@ -1948,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Rodzaj",
+		"KIND_ALL": "Wszyscy",
+		"KIND_HUMAN": "Osoby",
+		"KIND_AGENT": "Agenci",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Zarządzany przez Ever Works: nazwa i profil tego agenta są zmieniane w Ever Works i synchronizowane z Gauzy.",
+		"MANAGED_EXTERNALLY": "Zarządzany zewnętrznie: nazwa i profil tego agenta są zmieniane w systemie źródłowym i synchronizowane z Gauzy.",
+		"OPEN_MANAGED_AGENT": "Otwórz stronę agenta",
 		"HEADER": "Zarządzaj pracownikami",
 		"ADD_EMPLOYEE": "Dodaj pracownika",
 		"ACTIVE": "Aktywny",
@@ -2087,7 +2096,68 @@
 				"IN_DAYS": "Za {{ count }} dni"
 			},
 			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
-			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku",
+			"PROJECTS_CAPTION": "Projekty tej osoby i czas poświęcony każdemu z nich w tym okresie",
+			"NO_PROJECTS": "Nie jest członkiem żadnego projektu i nie ma czasu w projektach w tym okresie",
+			"NOT_A_MEMBER": "Nie jest członkiem",
+			"NOT_A_MEMBER_HINT": "Zarejestrowano czas w tym projekcie, ale ta osoba nie jest jego członkiem",
+			"VIEW_PROFILE": "Zobacz profil",
+			"MEMBERSHIP_UNKNOWN": "Nie udało się wczytać członkostwa w projektach, więc członkowie i nie-członkowie nie są rozróżniani.",
+			"PROJECT_TIMES_PARTIAL": "Nie udało się wczytać części czasów projektów, więc projekt bez czasu może go jednak mieć."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Inicjatywy strategiczne",
+		"SUBTITLE": "Kierunki, w których Twoja organizacja postanowiła się rozwijać, oraz powiązane z nimi cele, projekty i zespoły.",
+		"ADD": "Dodaj inicjatywę",
+		"EDIT": "Edytuj inicjatywę",
+		"EMPTY": "Brak inicjatyw strategicznych.",
+		"TITLE": "Tytuł",
+		"STATE": "Stan",
+		"VISIBILITY": "Widoczność",
+		"TEAMS": "Zespoły",
+		"TEAMS_HINT": "Przy widoczności „Zespół” inicjatywę widzą członkowie tych zespołów (oraz zespołów powiązanych projektów).",
+		"PROJECTS": "Projekty",
+		"GOALS": "Cele",
+		"CONFIDENCE": "Pewność",
+		"MOMENTUM": "Dynamika",
+		"INTENT": "Intencja",
+		"INTENT_HINT": "Co świadomie chcemy posunąć naprzód i dlaczego?",
+		"STEWARD": "Opiekun",
+		"SIGNALS": "Sygnały",
+		"KNOWN_RISKS": "Znane ryzyka",
+		"KNOWN_RISKS_HINT": "Jedno ryzyko w wierszu",
+		"NOTES": "Notatki",
+		"LAST_ASSESSED": "Ostatnia ocena",
+		"NO_TEAMS": "Brak powiązanych zespołów.",
+		"NO_GOALS": "Brak powiązanych celów.",
+		"NO_PROJECTS": "Brak powiązanych projektów.",
+		"NOT_FOUND": "Nie znaleziono inicjatywy lub nie masz do niej dostępu.",
+		"DELETE_TITLE": "Usuń inicjatywę",
+		"DELETE_CONFIRMATION": "Usunąć inicjatywę „{{ name }}”?",
+		"DELETED": "Usunięto inicjatywę „{{ name }}”.",
+		"CREATED": "Utworzono inicjatywę „{{ name }}”.",
+		"UPDATED": "Zaktualizowano inicjatywę „{{ name }}”.",
+		"STATES": {
+			"DRAFT": "Szkic",
+			"ACTIVE": "Aktywna",
+			"RESOLVED": "Zrealizowana",
+			"RETIRED": "Wycofana"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Kierownictwo",
+			"ORGANIZATION": "Organizacja",
+			"TEAM": "Zespół"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Niska",
+			"MEDIUM": "Średnia",
+			"HIGH": "Wysoka"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Zastój",
+			"PROGRESSING": "Postępuje",
+			"ACCELERATING": "Przyspiesza"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2106,6 +2176,17 @@
 		"UPDATE": "Aktualizuj",
 		"ALIGNMENTS": "Wyrównania",
 		"COMMENTS": "Komentarze",
+		"COMMENT_THREAD": {
+			"REPLY": "Odpowiedz",
+			"ONE_MESSAGE": "1 wiadomość",
+			"MESSAGES": "Wiadomości: {{ count }}",
+			"NO_MESSAGES": "W tym wątku nie ma jeszcze wiadomości.",
+			"REPLY_PLACEHOLDER": "Odpowiedz na ten komentarz…",
+			"UNKNOWN_AUTHOR": "Nieznany",
+			"DELETE_CONFIRM": "Usunąć ten komentarz?",
+			"DELETED": "Komentarz usunięty",
+			"LOAD_ERROR": "Nie udało się wczytać komentarzy."
+		},
 		"KEY_RESULTS": "Wyniki kluczowe",
 		"GROUP_BY": "Grupuj według",
 		"DELETE_OBJECTIVE": "Usuń cel",
@@ -2153,6 +2234,7 @@
 			"NO_KEY_RESULT": "Brak wyników kluczowych do wyświetlenia",
 			"NO_UPDATES": "Nie ma jeszcze aktualizacji",
 			"NO_ALIGNMENT": "Brak jeszcze wyrównań",
+			"NO_COMMENTS": "Brak komentarzy.",
 			"NO_PROGRESS_DATA": "Brak jeszcze danych postępu do wykresu"
 		},
 		"LEVELS": {
@@ -2669,7 +2751,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",
-				"MEMBERS": "Członkowie"
+				"MEMBERS": "Członkowie",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Szczegóły"
+					},
+					"PUBLIC": "Publiczny",
+					"PRIVATE": "Prywatny",
+					"PREFIX": "Prefiks zadań",
+					"MEMBERS_COUNT": "Członkowie: {{ count }}",
+					"LIVE": "Śledzą teraz: {{ tracking }} · Online: {{ online }}",
+					"OF_MEMBERS": "{{ count }} z {{ total }} członków",
+					"CREATED": "Utworzono",
+					"UPDATED": "Ostatnia aktualizacja",
+					"ACTIVE_MEMBERS": "Aktywni członkowie",
+					"ACTIVE_MEMBERS_META": "z {{ total }} członków rejestrowało czas",
+					"TIME_BY_MEMBER": "Czas według członków",
+					"TEAM_TASKS": "Zadania zespołu",
+					"NO_TEAM_TASKS": "Brak zadań przypisanych do tego zespołu",
+					"NO_MEMBERS": "Ten zespół nie ma jeszcze członków",
+					"NO_PROJECTS": "Brak projektów powiązanych z tym zespołem",
+					"COLUMNS": {
+						"MEMBER": "Członek",
+						"ROLE": "Rola",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Bieżące zadanie",
+						"TODAY": "Dziś",
+						"ACTIVITY": "Aktywność"
+					},
+					"ROLE": {
+						"MANAGER": "Menedżer",
+						"MEMBER": "Członek"
+					},
+					"GENERAL": "Ogólne",
+					"SETTINGS": "Ustawienia",
+					"RECORD": "Rekord",
+					"TEAM_SIZE": "Wielkość zespołu",
+					"COLOR": "Kolor",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Link do profilu",
+					"VISIBILITY": "Widoczność",
+					"SHARE_PROFILE_VIEW": "Członkowie widzą nawzajem swoje profile",
+					"REQUIRE_PLAN": "Wymagaj planu do śledzenia czasu",
+					"NOT_FOUND": "Nie znaleziono tego zespołu",
+					"LOAD_FAILED": "Nie udało się wczytać zespołu",
+					"RETRY": "Spróbuj ponownie",
+					"OPEN_TASK_DETAILS": "Pokaż szczegóły: {{ title }}",
+					"OPEN_PROJECT_DETAILS": "Pokaż szczegóły projektu: {{ name }}",
+					"PROJECT_PROGRESS": "Postęp",
+					"PROJECT_PROGRESS_META": "Ukończono {{ done }} z {{ total }} zadań",
+					"NO_PROJECT_TASKS": "Brak zadań w tym projekcie",
+					"TOP_CONTRIBUTORS": "Kto pracował najwięcej",
+					"TOP_CONTRIBUTORS_CAPTION": "Czas członków zespołu przy tym projekcie · {{ range }}",
+					"PROJECT_ACTIVITY": "Aktywność dzienna",
+					"NEEDS_ATTENTION": "Wymaga uwagi",
+					"NEEDS_ATTENTION_CAPTION": "Zadania zaległe i z terminem w ciągu 3 dni",
+					"BUDGET_USED": "Wykorzystano {{ used }} z {{ budget }}",
+					"OVER_BUDGET": "{{ value }} ponad budżet",
+					"OPEN_TASK_PAGE": "Otwórz stronę: {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Otwórz stronę zadania",
+					"UNASSIGNED": "Nieprzypisane",
+					"SHOW_ALL": "Pokaż wszystkie",
+					"SHOW_LESS": "Pokaż mniej",
+					"PROJECTS_CAPTION": "Projekty zespołu i czas poświęcony każdemu z nich w tym okresie",
+					"NOT_LINKED": "Niepowiązany",
+					"NOT_LINKED_HINT": "Członkowie rejestrowali czas w tym projekcie, ale nie jest on powiązany z zespołem"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2814,6 +2961,9 @@
 			"DOCS_MANAGE": "Zarządzanie kategoriami dokumentów i adresami przechwytywania",
 			"DOCS_REVIEW": "Zatwierdzanie/odrzucanie przeglądów dokumentów",
 			"DOCS_AI_IMPORT": "Zarządzanie wiedzą AI dokumentów",
+			"INBOX_VIEW": "Wyświetlanie skrzynki odbiorczej",
+			"INBOX_MAILBOX_MANAGE": "Zarządzanie skrzynkami pocztowymi i kontami dostawców",
+			"INBOX_MAILBOX_READ_ALL": "Odczyt wszystkich wspólnych skrzynek pocztowych",
 			"INSUFFICIENT": "Nie masz wystarczających uprawnień. Brakuje następujących uprawnień:",
 			"ORG_SPRINT_EDIT": "Edytuj sprint",
 			"ORG_SPRINT_VIEW": "Wyświetl sprint",
@@ -3054,7 +3204,27 @@
 			"SELLER_PAYOUTS_CREATE": "Tworzenie wypłat dla sprzedawców",
 			"SELLER_PAYOUTS_APPROVE": "Zatwierdzanie wypłat dla sprzedawców",
 			"SELLER_PAYOUTS_CANCEL": "Anulowanie wypłat dla sprzedawców",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Usuń organizacyjną strategiczną inicjatywę"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Usuń organizacyjną strategiczną inicjatywę",
+			"INTEGRATION_ADD": "Dodaj integracje",
+			"INTEGRATION_EDIT": "Edytuj integracje",
+			"INTEGRATION_DELETE": "Usuń integracje",
+			"AI_CHAT_ACCESS": "Dostęp do czatu AI",
+			"AI_CHAT_SETTINGS": "Zarządzaj ustawieniami czatu AI",
+			"ORG_JOB_APPLY": "Aplikuj na oferty pracy",
+			"ORG_JOB_SEARCH": "Wyświetl oferty pracy",
+			"ORG_JOB_EDIT": "Edytuj oferty pracy",
+			"ORG_EMPLOYEES_ADD": "Twórz pracowników organizacji",
+			"ORG_EMPLOYEES_DELETE": "Usuń pracowników organizacji",
+			"DAILY_PLAN_CREATE": "Twórz plany dnia",
+			"DAILY_PLAN_READ": "Wyświetl plany dnia",
+			"DAILY_PLAN_UPDATE": "Aktualizuj plany dnia",
+			"DAILY_PLAN_DELETE": "Usuń plany dnia",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Usuń konto jako członka zespołu",
+			"CUSTOM_SMTP_EDIT": "Edytuj niestandardowy serwer SMTP",
+			"IMPORT_ADD": "Importuj swoje dane",
+			"EXPORT_ADD": "Eksportuj swoje dane",
+			"OAUTH_CLIENT_VIEW": "Wyświetl klientów OAuth",
+			"OAUTH_CLIENT_EDIT": "Zarządzaj klientami OAuth"
 		},
 		"BILLING": "Rozliczenie / Faktury",
 		"BUDGET": "Budżet",
@@ -3088,6 +3258,35 @@
 			"CONTINUE": "Dalej",
 			"SKIP": "Pomiń",
 			"CREATE": "Utwórz organizację"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Sekcje projektu",
+			"DETAILS": "Szczegóły",
+			"LOGO": "Logo projektu",
+			"LOGO_HINT": "Opcjonalnie. Kliknij logo, aby przesłać kwadratowy obraz.",
+			"PEOPLE": "Osoby",
+			"TIMELINE": "Harmonogram",
+			"APPEARANCE": "Wygląd",
+			"OPTIONS": "Opcje",
+			"REPOSITORY": "Repozytorium",
+			"TASK_SYNC": "Synchronizacja zadań",
+			"CREATE_SUBTITLE": "Utwórz nowy projekt z jego osobami, harmonogramem i rozliczeniami.",
+			"OPEN_SOURCE_TITLE": "Projekt open source",
+			"OPEN_SOURCE_DESCRIPTION": "Udostępnij publicznie kod tego projektu. Włącz, aby dodać link do jego publicznego repozytorium.",
+			"OPEN_SOURCE_URL_HINT": "Publiczny adres kodu, na przykład repozytorium w GitHub lub GitLab.",
+			"OPEN_REPOSITORY": "Otwórz repozytorium",
+			"DESCRIPTION_CARD_DESC": "Opisz cele i zakres projektu dla wszystkich, którzy nad nim pracują.",
+			"TAGS_DESC": "Oznacz projekt tagami, aby łatwiej go znaleźć i grupować.",
+			"BILLING_DESC": "Jak klient jest rozliczany za ten projekt i w jakiej walucie.",
+			"BUDGET_DESC": "Ustal budżet w godzinach lub kosztach, aby utrzymać projekt na właściwym torze.",
+			"APPEARANCE_DESC": "Kolor projektu i sposób wyświetlania jego zadań.",
+			"PUBLIC_TITLE": "Projekt publiczny",
+			"PUBLIC_DESC": "W projekcie publicznym wszyscy widzą, kto nad nim pracuje. W prywatnym każdy widzi tylko siebie, chyba że ma dostęp do projektów prywatnych.",
+			"BILLABLE_DESC": "Oznacz pracę nad tym projektem jako podlegającą rozliczeniu z klientem.",
+			"REPOSITORY_DESC": "Wybierz repozytorium GitHub, z którego zgłoszeniami pracuje ten projekt.",
+			"AUTO_SYNC_DESC": "Utrzymuj zadania projektu w zgodzie ze zgłoszeniami repozytorium. Zmiany tutaj są zapisywane od razu.",
+			"SYNC_LABEL_TITLE": "Synchronizacja według etykiety",
+			"SYNC_LABEL_DESC": "Synchronizuj tylko zgłoszenia z ustawioną przez Ciebie etykietą. Zmiany tutaj są zapisywane od razu."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3149,9 +3348,14 @@
 		"MEMBER_SINCE": "Członek od",
 		"NO_DESCRIPTION": "Nie dodano jeszcze opisu",
 		"NO_SKILLS": "Brak umiejętności",
+		"NO_EMPLOYEES": "Brak pracowników do wyświetlenia",
+		"NO_CLIENTS": "Brak klientów do wyświetlenia",
+		"EMPLOYEES_LOAD_FAILED": "Nie udało się wczytać pracowników.",
+		"CLIENTS_LOAD_FAILED": "Nie udało się wczytać klientów.",
 		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
 		"EDIT": {
 			"NO_AWARDS": "Nie dodano jeszcze nagród",
+			"NO_LANGUAGES": "Nie dodano jeszcze żadnych języków",
 			"ADD_AWARD": "Dodaj nagrodę",
 			"PRIVACY_HELP": "Wybierz, które dane odwiedzający widzą w profilu publicznym."
 		}
@@ -3367,7 +3571,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Data musi być późniejsza niż dzień zgłoszenia",
 			"EXCEED_PERIOD_ERR": "Maksymalna dozwolona liczba dni dla tego przedmiotu to ",
 			"BEFORE_START_DATE_ERR": "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia",
-			"ITEM_RETURNED_BEFORE_ERR": "Przedmiot powinien zostać zwrócony przed"
+			"ITEM_RETURNED_BEFORE_ERR": "Przedmiot powinien zostać zwrócony przed",
+			"CHANGED_BY_SOMEONE_ELSE": "Ktoś inny zmienił w międzyczasie ten wniosek. Lista została odświeżona: sprawdź wniosek i spróbuj ponownie."
 		},
 		"ACTIONS": "Akcje",
 		"APPROVE": "Zatwierdź",
@@ -3782,17 +3987,20 @@
 		"USER": {
 			"MANAGE": "Zarządzanie zaproszeniami użytkowników",
 			"HEADER": "Zaproś użytkowników",
-			"ACTION": "Zaproś użytkowników"
+			"ACTION": "Zaproś użytkowników",
+			"DESCRIPTION": "Zaproś osoby do dołączenia do Twojej organizacji jako użytkownicy. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Zarządzaj zaproszeniami dla pracowników",
 			"HEADER": "Zaprosić pracowników",
-			"ACTION": "Zaproszenie pracowników"
+			"ACTION": "Zaproszenie pracowników",
+			"DESCRIPTION": "Zaproś osoby do dołączenia do Twojej organizacji jako pracownicy. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Zarządzaj zaproszeniami kandydatów",
 			"HEADER": "Zaproszenie kandydatów",
-			"ACTION": "Zaproszenie kandydatów"
+			"ACTION": "Zaproszenie kandydatów",
+			"DESCRIPTION": "Zaproś kandydatów do procesu rekrutacji. Każdy odbiorca otrzyma e-mail z bezpiecznym linkiem do akceptacji."
 		},
 		"SENT": "{{total}} Wysłane zaproszenia",
 		"IGNORED": "Wysłano {{total}} zaproszeń. {{ignored}} zostało już zaproszonych i zostało zignorowanych",
@@ -3802,6 +4010,23 @@
 			"TWO_WEEK": "14 dni",
 			"MONTH": "30 dni",
 			"NEVER": "Nigdy"
+		},
+		"FORM": {
+			"RECIPIENTS": "Odbiorcy",
+			"EMAILS_PLACEHOLDER": "imie@firma.pl",
+			"EMAILS_HINT": "Naciśnij Enter po każdym adresie, aby dodać wielu odbiorców.",
+			"CLEAR_EMAILS": "Wyczyść wszystko",
+			"ACCESS": "Dostęp",
+			"ACCESS_HINT": "Opcjonalnie. Wybierz, do czego nowi członkowie będą mieli dostęp od razu po dołączeniu.",
+			"DETAILS": "Szczegóły zaproszenia",
+			"RECIPIENT_COUNT": "Odbiorcy: {{count}}",
+			"NO_RECIPIENTS": "Nie dodano jeszcze odbiorców"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Usuń zaproszenie",
+			"WARNING": "Zaproszenie dla {{ email }} zostanie trwale usunięte, a jego link przestanie działać. Tej operacji nie można cofnąć.",
+			"TYPE_TO_CONFIRM": "Wpisz poniższy tekst, aby potwierdzić:",
+			"CONFIRM": "Usuń zaproszenie"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5183,6 +5408,8 @@
 			"API_SERVER_PORT": "Port serwera API",
 			"UI_SERVER_PORT": "Port serwera interfejsu użytkownika",
 			"SERVER_HOSTNAME": "Nazwa hosta/adres IP serwera",
+			"LAN_ACCESS": "Zezwalaj innym komputerom w sieci na połączenie",
+			"LAN_ACCESS_HINT": "Po wyłączeniu tylko ten komputer może łączyć się z API i interfejsem WWW.",
 			"AUTO_START_STARTUP": "Automatyczne uruchamianie przy starcie",
 			"SERVER_TYPE": "Typ serwera",
 			"LOCAL_API_PORT": "Port lokalnego interfejsu API",
@@ -5309,7 +5536,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Nie udało się ustalić, czy masz niezynchronizowane dane offline. Usunięcie bazy danych może TRWALE usunąć niezapisaną pracę. Jeśli nie jesteś pewien, kliknij 'Zachowaj'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Twoje dane logowania",
+			"SEED_CREDENTIALS_MESSAGE": "Zapisz teraz te hasła. Są wyświetlane tylko raz.",
+			"SEED_CREDENTIALS_DETAIL": "Ta instalacja utworzyła swoje konta z losowymi hasłami zamiast opublikowanych wartości domyślnych.\n\n{{ accounts }}\n\nHasło możesz później zmienić na swojej stronie profilu w Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Skopiowano do schowka.",
+			"SEED_CREDENTIALS_SAVED": "Zapisałem je",
+			"SEED_ROLE_SUPER_ADMIN": "Superadministrator",
+			"SEED_ROLE_ADMIN": "Administrator",
+			"SEED_ROLE_EMPLOYEE": "Pracownik",
+			"SEED_PASSWORD": "Hasło",
+			"PUBLISHED_PASSWORDS_TITLE": "Domyślne hasło nadal w użyciu",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Zmień domyślne hasło tych kont.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} nadal logują się domyślnym hasłem opublikowanym w dokumentacji Gauzy. Każdy, kto ma dostęp do tego serwera, może się nim zalogować. Zaloguj się do Gauzy i zmień je na stronie profilu."
 		},
 		"NO_LIMIT": "∞ Bez ograniczeń",
 		"TASK": "Zadanie",
@@ -5337,7 +5576,12 @@
 			"SERVICE_UNAVAILABLE": "Usługa chwilowo niedostępna.",
 			"UNEXPECTED_ERROR": "Wystąpił nieoczekiwany błąd.",
 			"NETWORK_ERROR": "Błąd sieci: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu.",
+			"ORGANIZATION_SWITCH_REFUSED": "Nie można przełączyć na {{ name }}: {{ reason }}. Nadal pracujesz w bieżącej organizacji.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Trwa przełączanie organizacji. Uruchom licznik czasu po zakończeniu przełączania.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Nie jesteś aktywnym pracownikiem {{ name }}, a powrót do poprzedniej organizacji nie powiódł się. Zaloguj się ponownie.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",
@@ -5584,7 +5828,40 @@
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres dat, pracownika lub projekt",
 		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}",
 		"NO_TIME_TRACKED": "Brak zarejestrowanego czasu",
-		"MINUTES_TRACKED": "Zarejestrowano {{ minutes }} min"
+		"MINUTES_TRACKED": "Zarejestrowano {{ minutes }} min",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Łączny czas",
+			"APPS_USED": "Używane aplikacje",
+			"SITES_VISITED": "Odwiedzone witryny",
+			"TOP_APP": "Najczęściej używana aplikacja",
+			"TOP_SITE": "Najczęściej odwiedzana witryna",
+			"VIEW": "Widok",
+			"BY_APP": "Wg aplikacji",
+			"BY_SITE": "Wg witryny",
+			"BY_MEMBERS": "Wg członka",
+			"BY_HOURS": "Wg godziny",
+			"SEARCH_APPS": "Szukaj aplikacji…",
+			"SEARCH_SITES": "Szukaj witryn…",
+			"SORT": "Zmień sortowanie",
+			"SORT_TIME": "Najwięcej czasu",
+			"SORT_NAME": "Nazwa A–Z",
+			"LOAD_FAILED": "Nie udało się wczytać aktywności. Spróbuj ponownie.",
+			"NO_MATCH": "Brak wyników dla „{{ search }}”.",
+			"APP": "Aplikacja",
+			"SITE": "Witryna",
+			"TIME": "Czas",
+			"SHOW_PAGES": "Pokaż strony odwiedzone w {{ site }}",
+			"LOADING_PAGES": "Wczytywanie stron…",
+			"PAGES_FAILED": "Nie udało się wczytać stron.",
+			"NO_PAGES": "Dla tej witryny nie zapisano szczegółów stron.",
+			"SHOW_ALL": "Pokaż wszystkie ({{ count }})",
+			"SHOW_LESS": "Pokaż mniej",
+			"UNKNOWN_MEMBER": "Nieznany członek",
+			"APPS_COUNT": "Aplikacje: {{ count }}",
+			"SITES_COUNT": "Witryny: {{ count }}",
+			"OF_TOTAL": "{{ value }} całości",
+			"PAGES_TRUNCATED": "Ta witryna ma więcej rekordów, niż można wyświetlić; zestawienie obejmuje tylko część jej czasu."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -6110,6 +6387,7 @@
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",
 		"OR_SIGN_IN_WITH": "Albo zaloguj się korzystając z",
 		"SIGN_IN_WITH_EVER_ID": "Zaloguj się przez Ever ID",
+		"LOGIN_WITH_EVER_ID": "Zaloguj się przez {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Zaloguj się przez Keycloak",
 		"FORGOT_EMAIL_TITLE": "Zapomniałeś e-maila?",
 		"LOGIN_MAGIC": {
@@ -6627,5 +6905,82 @@
 			"ROTATE_FAILED": "Nie udało się obrócić sekretu klienta",
 			"DELETE_FAILED": "Nie udało się unieważnić klienta OAuth"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Pokaż szczegóły projektu: {{ name }}",
+		"PROGRESS": "Postęp",
+		"PROGRESS_META": "Ukończono {{ done }} z {{ total }} zadań",
+		"NO_TASKS": "Brak zadań w tym projekcie",
+		"NEEDS_ATTENTION": "Wymaga uwagi",
+		"NEEDS_ATTENTION_CAPTION": "Zadania zaległe i z terminem w ciągu 3 dni",
+		"ACTIVITY": "Aktywność dzienna",
+		"ACTIVITY_VIEWS": "Widok aktywności",
+		"ACTIVITY_VIEW_CHART": "Wykres",
+		"ACTIVITY_VIEW_GRID": "Siatka wkładu",
+		"GRID_NONE": "Brak czasu",
+		"GRID_LAST_YEAR": "Ostatnie 12 miesięcy",
+		"GRID_OLDER": "Wcześniejszy rok",
+		"GRID_NEWER": "Późniejszy rok",
+		"GRID_DAY": "{{ time }} w dniu {{ date }}",
+		"GRID_DAY_EMPTY": "Brak czasu w dniu {{ date }}",
+		"TOP_CONTRIBUTORS": "Kto pracował najwięcej",
+		"CONTRIBUTORS_CAPTION": "Czas wszystkich przy tym projekcie · {{ range }}",
+		"YOUR_TIME_CAPTION": "Twój czas przy tym projekcie · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Czas członków zespołu przy tym projekcie · {{ range }}",
+		"BUDGET_USED": "Wykorzystano {{ used }} z {{ budget }}",
+		"OVER_BUDGET": "{{ value }} ponad budżet",
+		"TOTAL_TRACKED": "Łącznie zarejestrowano",
+		"TOTAL_TRACKED_HINT": "Od początku projektu",
+		"THIS_PERIOD": "Ten okres",
+		"VS_PREVIOUS": "{{ value }} względem poprzedniego okresu",
+		"TIMELINE": "Harmonogram",
+		"NO_DATES": "Nie ustawiono dat",
+		"STARTS_IN": "Rozpoczyna się za {{ count }} dni",
+		"STARTS_TOMORROW": "Rozpoczyna się jutro",
+		"FINISHED": "Zakończony",
+		"TEAM": "Zespół",
+		"NO_MEMBERS": "Brak członków w tym projekcie",
+		"MODULES": "Moduły",
+		"MODULE_TASK": "1 zadanie",
+		"MODULE_TASKS": "{{ count }} zadań"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Przegląd",
+			"BOARD": "Tablica",
+			"ACTIVITY": "Aktywność",
+			"COMMENTS": "Komentarze"
+		},
+		"BOARD": "Tablica",
+		"COLUMN_EMPTY": "Brak zadań",
+		"CANNOT_DROP": "Zadań nie można przenieść do „{{ column }}”, ponieważ nie jest to status tego projektu.",
+		"ACTIVITY": "Aktywność",
+		"ACTIVITY_CAPTION": "Ostatnie zmiany w projekcie i jego zadaniach",
+		"NO_ACTIVITY": "Brak aktywności",
+		"ACTIVITY_PARTIAL": "Nie udało się wczytać części aktywności, więc lista może być niepełna.",
+		"ACTIVITY_CREATED": "{{ actor }} utworzył(a)",
+		"ACTIVITY_UPDATED": "{{ actor }} zaktualizował(a)",
+		"ACTIVITY_DELETED": "{{ actor }} usunął(-ęła)",
+		"ACTIVITY_COMMENTED": "{{ actor }} skomentował(a)",
+		"ACTIVITY_REPLIED": "{{ actor }} odpowiedział(a) na komentarz w",
+		"ACTIVITY_FIELDS": "Zmieniono: {{ fields }}",
+		"SOMEONE": "Ktoś",
+		"TODAY": "Dzisiaj",
+		"YESTERDAY": "Wczoraj",
+		"TASK_PROGRESS": "Postęp",
+		"TASK_PROGRESS_OF": "{{ worked }} z {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% czasu zarejestrowanego w projekcie (brak szacunku)",
+		"TASK_TOP_PEOPLE": "Najwięcej pracowali",
+		"TASK_NO_ESTIMATE": "Brak szacunku",
+		"COMMENTS": "Komentarze",
+		"NO_COMMENTS": "Brak komentarzy. Rozpocznij dyskusję.",
+		"COMMENT_PLACEHOLDER": "Napisz komentarz…",
+		"COMMENT_IMAGE": "Obraz",
+		"ATTACH_IMAGES": "Załącz obrazy",
+		"REMOVE_IMAGE": "Usuń obraz",
+		"OPEN_IMAGE": "Otwórz oryginał",
+		"COMMENT_IMAGE_TYPES": "Można załączać tylko obrazy PNG, JPEG, GIF, WebP i BMP.",
+		"COMMENT_IMAGE_LIMIT": "Komentarz może zawierać do {{ count }} obrazów.",
+		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
 	}
 }

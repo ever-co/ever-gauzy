@@ -1,5 +1,5 @@
 import { IUser } from './user.model';
-import { IEmployee, IEmployeeEntityInput } from './employee.model';
+import { EmployeeKindEnum, IEmployee, IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -59,6 +59,19 @@ export interface ITasksStatistics extends ITask {
 	durationPercentage?: number;
 }
 
+export interface IGetTaskEmployeesStatistics extends ITimeLogFilters {
+	onlyMe?: boolean;
+}
+
+/** One employee's tracked time on the requested tasks, with only what is needed to show who they are. */
+export interface ITaskEmployeesStatistics {
+	/** The employee's id. */
+	id: ID;
+	/** Seconds tracked. */
+	duration: number;
+	user: Pick<IUser, 'id' | 'firstName' | 'lastName' | 'imageUrl'> | null;
+}
+
 export interface IGetManualTimesStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
@@ -81,6 +94,8 @@ export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFil
 export interface IMembersStatistics {
 	id?: string;
 	user_id?: string;
+	/** Human or agent employee — the dashboard shows an "Agent" badge for agents. */
+	kind?: EmployeeKindEnum;
 	weekHours?: Array<{ duration: number; day: number }>;
 	weekTime?: {
 		duration: number;

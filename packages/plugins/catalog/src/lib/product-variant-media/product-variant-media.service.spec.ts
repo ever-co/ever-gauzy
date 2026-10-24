@@ -235,8 +235,16 @@ function manager(tables: ITables, entityToTable: Map<unknown, keyof ITables>) {
 		 * the caller's own; the refusal of another tenant's subject is pinned against a real database in
 		 * `catalog-tenant-scope.db.spec.ts`.
 		 */
-		count: async (entity: unknown, options: any = {}) =>
-			entityToTable.has(entity) ? rows(entity).filter((row: any) => same(row.id, options.where?.id)).length : 1,
+		count: async (entity: unknown, options: any = {}) => {
+			if (entityToTable.has(entity)) {
+				return rows(entity).filter((row: any) => same(row.id, options.where?.id)).length;
+			}
+			// Unkept tables (the variant, the images) answer found — one per id an `In(...)` names.
+			const where = Array.isArray(options.where) ? options.where[0] : options.where;
+			const id = where?.id;
+			const listed = id && typeof id === 'object' ? (id._value ?? id.value) : undefined;
+			return Array.isArray(listed) ? listed.length : 1;
+		},
 		/**
 		 * The transaction the write path asks for: the callback sees the same datastore, and a throw
 		 * from anywhere inside it leaves the datastore exactly as it was — which is the property every
@@ -481,6 +489,63 @@ describe('ProductVariantMediaService — the gallery and its thumbnail (doc 05 �
 		expect(written.map((row) => row.imageAssetId)).toEqual([FRONT, SIDE, DETAIL]);
 		expect(written.map((row) => row.position)).toEqual([0, 1, 2]);
 		expect(fixture.primaries()).toEqual([SIDE]);
+	});
+
+	// Greptile on #10887 / R2-G4: a reorder must not add or remove images, not even when it overlaps an attach.
+	it('reorders a gallery in place, keeping its rows, its primary and every image it holds', async () => {
+		const fixture = galleryFixture();
+
+		await fixture.service.replaceMedia(VARIANT, [FRONT, SIDE, DETAIL], SIDE);
+		const ids = fixture
+			.gallery()
+			.map((row) => row.id)
+			.sort();
+
+		const reordered = await fixture.service.reorderMedia(VARIANT, [DETAIL, FRONT, SIDE]);
+
+		expect(reordered.map((row) => row.imageAssetId)).toEqual([DETAIL, FRONT, SIDE]);
+		expect(
+			fixture
+				.gallery()
+				.map((row) => row.id)
+				.sort()
+		).toEqual(ids);
+		expect(fixture.primaries()).toEqual([SIDE]);
+	});
+
+	it('refuses a reorder that adds, drops or repeats an image, and writes nothing', async () => {
+		const fixture = galleryFixture();
+
+		await fixture.service.replaceMedia(VARIANT, [FRONT, SIDE, DETAIL], FRONT);
+		const before = fixture.gallery().map((row) => ({ ...row }));
+
+		await expect(fixture.service.reorderMedia(VARIANT, [FRONT, SIDE])).rejects.toBeInstanceOf(BadRequestException);
+		await expect(fixture.service.reorderMedia(VARIANT, [FRONT, SIDE, DETAIL, 'extra'])).rejects.toThrow(
+			/attachProductVariantMedia/
+		);
+		await expect(fixture.service.reorderMedia(VARIANT, [FRONT, FRONT, SIDE])).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(fixture.gallery()).toEqual(before);
+	});
+
+	it('leaves an image attached by an overlapping request where it is, refusing the stale list', async () => {
+		// The caller read FRONT, SIDE, DETAIL; another request attached a fourth image before the reorder ran.
+		const fixture = galleryFixture();
+
+		await fixture.service.replaceMedia(VARIANT, [FRONT, SIDE, DETAIL], FRONT);
+		fixture.tables.product_variant_media.push({
+			...fixture.gallery()[0],
+			id: 'attached-meanwhile',
+			imageAssetId: 'meanwhile',
+			position: 3,
+			isPrimary: false
+		});
+
+		await expect(fixture.service.reorderMedia(VARIANT, [DETAIL, SIDE, FRONT])).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(fixture.gallery().map((row) => row.imageAssetId)).toContain('meanwhile');
 	});
 
 	it('reorders an existing gallery without re-attaching its images', async () => {

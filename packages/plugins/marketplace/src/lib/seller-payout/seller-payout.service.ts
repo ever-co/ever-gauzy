@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
+import { EntityManager, FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	CurrencyCode,
@@ -14,7 +14,7 @@ import {
 	SellerTransactionStatus,
 	SellerVerificationStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, SequenceService } from '@gauzy/core';
 import { SellerPayout } from './seller-payout.entity';
 import { MikroOrmSellerPayoutRepository } from './repository/mikro-orm-seller-payout.repository';
 import { TypeOrmSellerPayoutRepository } from './repository/type-orm-seller-payout.repository';
@@ -26,9 +26,13 @@ import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
 import { assertNoLifecycleMembers } from '../lifecycle-members';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /** The sequence key payout numbers are drawn from. */
 const SELLER_PAYOUT_SEQUENCE = 'SELLER_PAYOUT';
+
+/** The prefix the series is created with when an organization has none (`1791000000790`'s, the seed's). */
+const SELLER_PAYOUT_SEQUENCE_PREFIX = 'SP-';
 
 /**
  * The members of a payout only its own operations write, which an edit therefore refuses.
@@ -86,7 +90,7 @@ export const SELLER_PAYOUT_LIFECYCLE_MEMBERS: readonly string[] = [
  * it to be moved.
  */
 @Injectable()
-export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
+export class SellerPayoutService extends MarketplaceCrudService<SellerPayout> {
 	constructor(
 		readonly typeOrmSellerPayoutRepository: TypeOrmSellerPayoutRepository,
 		readonly mikroOrmSellerPayoutRepository: MikroOrmSellerPayoutRepository,
@@ -431,8 +435,6 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 			payout.failureCode = result.failureCode;
 			payout.failureReason = result.failureReason;
 
-			const saved = await this.typeOrmSellerPayoutRepository.save(payout);
-
 			// The money did not move, so the rows are payable again: nothing about them changed except
 			// that they are once more available, and the release is what makes another attempt possible.
 			for (const transaction of transactions) {
@@ -440,15 +442,27 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 				transaction.settledAt = null;
 			}
 
-			await this.transactionRepository.save(transactions);
+			// The failure, the release and `seller_payout.failed` commit together, as the paid path's do: they
+			// used to be three writes in a row with the event in a transaction of its own, so a failed append
+			// left a failed payout and released rows that nothing announced.
+			return await this.typeOrmSellerPayoutRepository.manager.transaction(async (manager) => {
+				const saved = await manager.save(SellerPayout, payout);
 
-			await this.emit(saved, 'seller_payout.failed', {
-				failureCode: result.failureCode,
-				failureReason: result.failureReason,
-				retryable: true
+				await manager.save(SellerTransaction, transactions);
+
+				await this.emit(
+					saved,
+					'seller_payout.failed',
+					{
+						failureCode: result.failureCode,
+						failureReason: result.failureReason,
+						retryable: true
+					},
+					manager
+				);
+
+				return saved;
 			});
-
-			return saved;
 		}
 
 		const currency = payout.currency as CurrencyCode;
@@ -1042,12 +1056,81 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	/**
 	 * Draws the next payout number from the platform's sequence.
 	 *
+	 * The `SELLER_PAYOUT` series is seeded for every organization (`1791000000790` for the ones that existed,
+	 * the commerce-defaults seed for the ones created since). An organization that still has none — created
+	 * between the two, or whose seed step was skipped — gets the default series created here
+	 * (`SequenceService.ensure`, idempotent) and the allocation is retried once, so its first payout is
+	 * numbered instead of failing with 404 (Q7-W3). Only a missing series is repaired: an inactive one, or any
+	 * other failure, is answered as before.
+	 *
 	 * @returns The formatted number.
 	 */
 	private async allocateNumber(): Promise<string> {
-		const allocated = (await this.sequenceService.allocate(SELLER_PAYOUT_SEQUENCE)) as any;
+		let allocated: any;
+
+		try {
+			allocated = await this.sequenceService.allocate(SELLER_PAYOUT_SEQUENCE);
+		} catch (error) {
+			if (!this.isMissingSeries(error)) {
+				throw error;
+			}
+
+			await this.ensureSeries();
+			allocated = await this.sequenceService.allocate(SELLER_PAYOUT_SEQUENCE);
+		}
 
 		return allocated?.formatted ?? allocated?.number ?? String(allocated?.value ?? Date.now());
+	}
+
+	/** Whether an allocation failed because the organization has no `SELLER_PAYOUT` series at all. */
+	private isMissingSeries(error: unknown): boolean {
+		return error instanceof NotFoundException || (error as { status?: number } | null)?.status === 404;
+	}
+
+	/**
+	 * Creates the organization's default `SELLER_PAYOUT` series when it has none.
+	 *
+	 * Its width follows the organization's `ORDER` series, which both seed paths pad from the default channel
+	 * (so a payout number is as wide as the seed would have made it), and 6 when there is none.
+	 *
+	 * A concurrent first payout of the same organization may create it a moment earlier; the unique series
+	 * index then refuses this insert, which is fine — the retried allocation numbers from that row. Any other
+	 * cause surfaces through the retried allocation, which fails exactly as it did before. Nothing is created
+	 * without an organization in context: a series attached to no organization is one no scoped allocation reads.
+	 */
+	private async ensureSeries(): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+
+		if (!tenantId || !organizationId) {
+			return;
+		}
+
+		let padding = 6;
+
+		try {
+			const orderSeries = await this.sequenceService.findSeries('ORDER');
+
+			if (orderSeries?.padding != null && Number(orderSeries.padding) > 0) {
+				padding = Number(orderSeries.padding);
+			}
+		} catch {
+			// No ORDER series either: the documented default width.
+		}
+
+		try {
+			await this.sequenceService.ensure({
+				tenantId,
+				organizationId,
+				key: SELLER_PAYOUT_SEQUENCE,
+				prefix: SELLER_PAYOUT_SEQUENCE_PREFIX,
+				padding,
+				nextValue: 1,
+				step: 1
+			});
+		} catch {
+			// See above: the retried allocation answers.
+		}
 	}
 
 	/**
@@ -1077,17 +1160,16 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 	 * @param payout The payout.
 	 * @param name The catalogued event name.
 	 * @param data The payload.
+	 * @param within The transaction the payout was written in; the fact commits or rolls back with it.
 	 */
-	private async emit(payout: SellerPayout, name: string, data: Record<string, any>): Promise<void> {
-		await this.typeOrmSellerPayoutRepository.manager.transaction(async (manager) => {
-			await this.outbox.append(manager, {
-				name,
-				aggregateType: 'SELLER_PAYOUT',
-				aggregateId: payout.id as ID,
-				data: { payoutId: payout.id, number: payout.number, sellerId: payout.sellerId, ...data },
-				tenantId: payout.tenantId,
-				organizationId: payout.organizationId
-			});
+	private async emit(payout: SellerPayout, name: string, data: Record<string, any>, within: EntityManager): Promise<void> {
+		await this.outbox.append(within, {
+			name,
+			aggregateType: 'SELLER_PAYOUT',
+			aggregateId: payout.id as ID,
+			data: { payoutId: payout.id, number: payout.number, sellerId: payout.sellerId, ...data },
+			tenantId: payout.tenantId,
+			organizationId: payout.organizationId
 		});
 	}
 }

@@ -146,6 +146,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.EVENT_TYPES_EDIT,
+			PermissionsEnum.GOALS_EDIT,
+			PermissionsEnum.SKILLS_EDIT,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
 			/** Integration CRUD Permissions Start */
 			PermissionsEnum.INTEGRATION_ADD,
@@ -238,6 +241,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.INBOX_MAILBOX_MANAGE,
+			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -600,6 +608,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.EVENT_TYPES_EDIT,
+			PermissionsEnum.GOALS_EDIT,
+			PermissionsEnum.SKILLS_EDIT,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
 
 			/** Integration CRUD Permissions Start */
@@ -695,6 +706,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.INBOX_MAILBOX_MANAGE,
+			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -1045,6 +1061,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Organization Strategic Initiative Permissions Start */
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -1078,6 +1097,31 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Goals, Skills and Event Types Permissions Start */
+			PermissionsEnum.GOALS_EDIT,
+			PermissionsEnum.SKILLS_EDIT,
+			PermissionsEnum.EVENT_TYPES_EDIT,
+			/** Goals, Skills and Event Types Permissions End */
+			/**
+			 * Task settings and availability writes (owner decision 2(b), 2026-10-23): the organization's task
+			 * settings, and availability slots, appointments and their invitations. Existing tenants get the same from
+			 * `GrantManagerTaskSettingAndAvailabilityPermissions1791000000841`.
+			 */
+			PermissionsEnum.ORG_TASK_SETTING,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			/**
+			 * Switching among the organizations the user belongs to (`POST /auth/switch-organization`, which checks the
+			 * membership): since ever-co/ever-gauzy#11316 a non-admin works only in the organization of their token, so a
+			 * manager of two organizations needs it to reach the second. Existing tenants get the same from
+			 * `GrantChangeSelectedOrganizationPermission1791000000861`.
+			 */
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			/** Inbox Permissions End */
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
 			PermissionsEnum.DOCS_CREATE,
@@ -1102,6 +1146,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.VIEWER,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			/**
+			 * Switching among the organizations the user belongs to; see the note on `MANAGER`. Existing tenants get it
+			 * from `GrantChangeSelectedOrganizationPermission1791000000861`.
+			 */
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
 			/** Documents Permissions End */

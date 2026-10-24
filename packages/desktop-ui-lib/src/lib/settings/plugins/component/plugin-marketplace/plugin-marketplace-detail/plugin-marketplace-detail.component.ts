@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, OnInit } from '@angular/core';
+import type { SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
+import { IPlugin, IPluginSubscription, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
 import { NbBadgeModule, NbButtonModule, NbContextMenuModule, NbIconModule, NbMenuItem, NbMenuService, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { filter, map, tap } from 'rxjs';
+import { BehaviorSubject, catchError, filter, map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
@@ -18,6 +19,7 @@ import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
+import { PluginSubscriptionService } from '../../../services/plugin-subscription.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
 import { AsyncPipe, CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -32,7 +34,7 @@ import { SpinnerButtonDirective } from '../../../../../directives/spinner-button
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NbBadgeModule, NbTooltipModule, NbIconModule, SpinnerButtonDirective, ReadMoreDirective, NbButtonModule, NbContextMenuModule, NbToggleModule, AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe, TranslatePipe]
 })
-export class PluginMarketplaceDetailComponent implements OnInit {
+export class PluginMarketplaceDetailComponent implements OnInit, OnChanges {
 	@Input()
 	public plugin: IPlugin;
 
@@ -43,6 +45,21 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	private readonly router = inject(Router);
 	private readonly action = inject(Actions);
 	private readonly translate = inject(TranslateService);
+	private readonly subscriptionService = inject(PluginSubscriptionService);
+	private readonly plugin$ = new BehaviorSubject<IPlugin>(null);
+
+	/**
+	 * The signed-in user's own subscription to the plugin, or `null`. The public plugin read no longer lists a plugin's
+	 * subscriptions (it listed every tenant's, and this card showed the first of them as the user's own).
+	 */
+	public readonly subscription$: Observable<IPluginSubscription | null> = this.plugin$.pipe(
+		switchMap((plugin) =>
+			plugin?.id
+				? this.subscriptionService.getCurrentSubscription(plugin.id).pipe(catchError(() => of(null)))
+				: of(null)
+		),
+		shareReplay({ bufferSize: 1, refCount: true })
+	);
 
 	constructor(
 		private readonly utils: PluginMarketplaceUtilsService,
@@ -54,6 +71,13 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly environmentService: PluginEnvironmentService
 	) {}
+
+	ngOnChanges(changes: SimpleChanges): void {
+		// A reloaded list hands the card a new plugin object: read the subscription again
+		if (changes['plugin']) {
+			this.plugin$.next(this.plugin);
+		}
+	}
 
 	ngOnInit(): void {
 		// Listen to context menu item clicks

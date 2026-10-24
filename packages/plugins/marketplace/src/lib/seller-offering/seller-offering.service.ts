@@ -7,7 +7,6 @@ import {
 	EventOutboxService,
 	IBulkTransactionRunner,
 	RequestContext,
-	TenantAwareCrudService,
 	isUniqueViolation,
 	operationOf
 } from '@gauzy/core';
@@ -24,6 +23,7 @@ import { TypeOrmSellerOfferingRepository } from './repository/type-orm-seller-of
 import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /** The members of an offering only its state moves write (review R4-19). */
 const OFFERING_LIFECYCLE_MEMBERS = ['status', 'approvedAt', 'approvedByUserId'] as const;
@@ -55,7 +55,7 @@ function sameValue(stored: unknown, stated: unknown): boolean {
  *   cannot publish a variant the platform has not published.
  */
 @Injectable()
-export class SellerOfferingService extends TenantAwareCrudService<SellerOffering> {
+export class SellerOfferingService extends MarketplaceCrudService<SellerOffering> {
 	constructor(
 		readonly typeOrmSellerOfferingRepository: TypeOrmSellerOfferingRepository,
 		readonly mikroOrmSellerOfferingRepository: MikroOrmSellerOfferingRepository,
@@ -128,7 +128,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		return offering;
 	}
 
-	/** Creates an offering in `DRAFT`; publishing it is a separate act. */
+	/** Creates an offering in `DRAFT`; publishing it is a separate act, and a stated other status is refused. */
 	async createOffering(input: Partial<SellerOffering>, scope?: ISellerScope): Promise<SellerOffering> {
 		if (!input.sellerId || !input.variantId) {
 			throw new BadRequestException('An offering needs a seller and a variant.');
@@ -138,6 +138,14 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			assertSellerScope(scope, input.sellerId);
 		}
 
+		// An offering is created in DRAFT and moves through submit, publish, pause, unpause and withdraw — the edit
+		// already refuses `status` for that reason (review R4-19). The create did not: `POST /seller-offerings` and
+		// `createSellerOffering` stored the stated status, so `{status: "ACTIVE"}` listed an offering without the
+		// publication clauses `publish` checks (the seller's own status, the window, the channel and region sets,
+		// the catalogue's publication) and without its approval stamp. A body that restates DRAFT is accepted;
+		// any other status, or an approval stamp, is refused whichever surface carried it (review R2-G45).
+		this.assertCreatedDraft(input);
+
 		const seller = await this.requireSeller(input.sellerId);
 		const window = this.assertWindow(input.availableFrom, input.availableTo);
 		this.assertPrice(input.priceAmount, input.priceCurrency);
@@ -145,7 +153,7 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		const offering = this.typeOrmSellerOfferingRepository.create({
 			...input,
 			...window,
-			status: input.status ?? OfferingStatus.DRAFT,
+			status: OfferingStatus.DRAFT,
 			// The organization is copied from the seller the service read, never from the request body: a
 			// child row that could name another organization would be the leak the invariant exists for.
 			organizationId: seller.organizationId,
@@ -153,17 +161,26 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		} as Partial<SellerOffering>);
 
 		try {
-			const created = await this.typeOrmSellerOfferingRepository.save(offering as SellerOffering);
+			// The row and the fact that announces it commit together: an append that fails rolls the offering
+			// back, and an offering that fails to save appends nothing.
+			return await this.transaction(async (manager) => {
+				const created = await this.repository(manager).save(offering as SellerOffering);
 
-			await this.emit(created, 'seller_offering.created', {
-				variantId: created.variantId,
-				productId: created.productId,
-				sellerSku: created.sellerSku,
-				priceAmount: created.priceAmount,
-				priceCurrency: created.priceCurrency
+				await this.emit(
+					created,
+					'seller_offering.created',
+					{
+						variantId: created.variantId,
+						productId: created.productId,
+						sellerSku: created.sellerSku,
+						priceAmount: created.priceAmount,
+						priceCurrency: created.priceCurrency
+					},
+					manager
+				);
+
+				return created;
 			});
-
-			return created;
 		} catch (error) {
 			if (!isUniqueViolation(error)) {
 				throw error;
@@ -172,6 +189,34 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 			// `(sellerId, variantId)` is unique among live offerings, so a second offer of one variant by
 			// one seller is a conflict rather than a duplicate listing.
 			throw new ConflictException('This seller already offers this variant, or the SKU is already used.');
+		}
+	}
+
+	/**
+	 * Refuses a create that states a lifecycle the offering has not been through.
+	 *
+	 * `status` may be absent, `null` or `DRAFT` — the status every offering starts in; `approvedAt` and
+	 * `approvedByUserId` are `publish`'s stamps and may not be stated at all.
+	 *
+	 * @throws BadRequestException (`SELLER_OFFERING_FIELD_NOT_WRITABLE`) naming every refused member.
+	 */
+	private assertCreatedDraft(input: Partial<SellerOffering>): void {
+		const stated = input as Record<string, unknown>;
+		const refused = OFFERING_LIFECYCLE_MEMBERS.filter((member) =>
+			member === 'status'
+				? stated[member] !== undefined && stated[member] !== null && stated[member] !== OfferingStatus.DRAFT
+				: stated[member] !== undefined
+		);
+
+		if (refused.length > 0) {
+			throw new BadRequestException({
+				message:
+					`SELLER_OFFERING_FIELD_NOT_WRITABLE: ${refused.join(', ')} of a new offering ` +
+					`${refused.length === 1 ? 'moves' : 'move'} through submit, publish, pause, unpause and withdraw; ` +
+					`an offering is created in ${OfferingStatus.DRAFT}.`,
+				code: 'SELLER_OFFERING_FIELD_NOT_WRITABLE',
+				details: { fields: refused }
+			});
 		}
 	}
 
@@ -317,8 +362,17 @@ export class SellerOfferingService extends TenantAwareCrudService<SellerOffering
 		return paused;
 	}
 
-	/** Withdraws an offering; the row is kept, because it explains a past line's price and commission. */
+	/**
+	 * Withdraws an offering; the row is kept, because it explains a past line's price and commission.
+	 *
+	 * A call that states no manager opens one transaction for the read, the write and the fact that announces
+	 * it, so the withdrawal and `seller_offering.withdrawn` commit together or not at all.
+	 */
 	async withdraw(id: ID, scope?: ISellerScope, manager?: EntityManager): Promise<SellerOffering> {
+		if (!manager) {
+			return await this.transaction((own) => this.withdraw(id, scope, own));
+		}
+
 		const offering = await this.getOffering(id, scope, manager);
 
 		if (offering.status === OfferingStatus.WITHDRAWN) {

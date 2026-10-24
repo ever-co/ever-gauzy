@@ -55,9 +55,10 @@ import {
  * - **the month route is a filter of that connection and not a second field**, so the disjunction it
  *   applies is asserted to be expressible in the connection's own vocabulary rather than merely
  *   documented;
- * - **the permission is the absence the controller states**, field by field: this controller carries the
- *   tenant guard and no `@Permissions` at all, so no field here may state one, and the class does not
- *   carry the permission guard either;
+ * - **the permission is the one the route states**, field by field: this controller carries the tenant
+ *   guard and no class-level `@Permissions`, and each route states `PermissionGuard` with its own grant
+ *   (`ORG_EXPENSES_VIEW` on the reads, `ORG_EXPENSES_EDIT` on the writes), so each field states the same
+ *   guard and the same grant, and the class does not carry the permission guard either;
  * - every amount the surface carries is an exact decimal and never a floating-point number — on the
  *   object type, on the computed share, on the filter and on the way into a write;
  * - **the whole surface is behind the capability the catalogue declares for GraphQL**, so a tenant that
@@ -1026,7 +1027,7 @@ describe('OrganizationRecurringExpenseResolver — one ledger, two protocols, th
 	});
 });
 
-describe('OrganizationRecurringExpenseResolver — the guard chain is the controller’s, and the permission is its absence', () => {
+describe('OrganizationRecurringExpenseResolver — the guard chain is the controller’s, and the permission is the route’s', () => {
 	it('guards the resolver the way the controller is guarded, plus the gate', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', OrganizationRecurringExpenseResolver) ?? [];
 		const controllerGuards = Reflect.getMetadata('__guards__', OrganizationRecurringExpenseController) ?? [];
@@ -1036,9 +1037,8 @@ describe('OrganizationRecurringExpenseResolver — the guard chain is the contro
 		// addition rather than a substitution: the controller's own guard comes first, so a caller with no
 		// credential is refused as a credential problem before a tenant's switches are read.
 		expect(resolverGuards).toEqual([...controllerGuards, FeatureFlagGuard]);
-		// The controller does not carry the permission guard, so the resolver does not either: a
-		// permission stated on this surface would never be read, and carrying the guard without a
-		// permission would refuse nothing while looking like a scope that does not exist.
+		// The controller does not carry the permission guard on the class, so the resolver does not either:
+		// each route states it beside its own grant, and each field does the same (asserted below).
 		expect(resolverGuards).not.toContain(PermissionGuard);
 	});
 
@@ -1063,11 +1063,14 @@ describe('OrganizationRecurringExpenseResolver — the guard chain is the contro
 	});
 
 	it.each(PERMISSION_PARITY)('$field states the permission $route does', ({ field, route }) => {
-		// The delivered controller carries the tenant guard and no permission on the class or on any handler
-		// but the retire-and-restore pair, which it overrides only to state the organization-expenses edit
-		// grant behind `PermissionGuard` (GHSA-v79w-54p2-wmh5) — so a field that required more would refuse
-		// a caller the REST route serves, which is the narrowing this delivery exists to prevent.
-		const expected = ['softRemove', 'softRecover'].includes(route) ? [PermissionsEnum.ORG_EXPENSES_EDIT] : undefined;
+		// The controller carries the tenant guard and no permission on the class. It states the
+		// organization-expenses read grant behind `PermissionGuard` on every read — the inherited node read
+		// and count included, which it overrides only to state it — and the edit grant on every write — the
+		// inherited retire-and-restore pair included (GHSA-v79w-54p2-wmh5) — so a field that required more or
+		// less would disagree with the REST route it mirrors.
+		const expected = ['create', 'update', 'delete', 'softRemove', 'softRecover'].includes(route)
+			? [PermissionsEnum.ORG_EXPENSES_EDIT]
+			: [PermissionsEnum.ORG_EXPENSES_VIEW];
 
 		expect(permissionOfRoute(OrganizationRecurringExpenseController, route)).toEqual(expected);
 		expect(permissionOfField(field)).toEqual(expected);
@@ -1148,5 +1151,108 @@ describe('OrganizationRecurringExpenseModule — the resolver is declared where 
 		expect(resolved.map((entry) => (entry as { name?: string })?.name)).toContain('RolePermissionModule');
 		expect(Reflect.getMetadata(GLOBAL_MODULE_METADATA, FeatureModule)).toBe(true);
 		expect(resolved).not.toContain(FeatureModule);
+	});
+});
+
+describe('OrganizationRecurringExpenseController and its resolver — a standing cost is read only under the expenses read grant', () => {
+	const TENANT_ROLE = '00000000-0000-4000-8000-0000000000aa';
+
+	/** The two classes whose reads are under test. */
+	type Target = typeof OrganizationRecurringExpenseController | typeof OrganizationRecurringExpenseResolver;
+
+	/** Every read route and every read field, the inherited routes the controller overrides included. */
+	const READS: ReadonlyArray<[Target, string]> = [
+		[OrganizationRecurringExpenseController, 'getCount'],
+		[OrganizationRecurringExpenseController, 'pagination'],
+		[OrganizationRecurringExpenseController, 'findAllExpenses'],
+		[OrganizationRecurringExpenseController, 'findStartDateUpdateType'],
+		[OrganizationRecurringExpenseController, 'getSplitExpensesForEmployee'],
+		[OrganizationRecurringExpenseController, 'findAll'],
+		[OrganizationRecurringExpenseController, 'findById'],
+		[OrganizationRecurringExpenseResolver, 'organizationRecurringExpenses'],
+		[OrganizationRecurringExpenseResolver, 'organizationRecurringExpense'],
+		[OrganizationRecurringExpenseResolver, 'organizationRecurringExpenseCount'],
+		[OrganizationRecurringExpenseResolver, 'organizationRecurringExpenseStartDateUpdateType'],
+		[OrganizationRecurringExpenseResolver, 'organizationRecurringExpenseShares']
+	];
+
+	/**
+	 * The spies this block installs, restored one by one after each test: the suite-wide organization spy
+	 * above must outlive them, so `jest.restoreAllMocks()` is not an option here.
+	 */
+	let spies: jest.SpyInstance[] = [];
+
+	/** The real permission guard, over a cache and a role service that must not be consulted. */
+	function permissionGuard() {
+		const cacheManager = { get: jest.fn().mockResolvedValue(null), set: jest.fn() };
+		const rolePermissionService = { checkRolePermission: jest.fn().mockResolvedValue(true) };
+
+		return {
+			guard: new PermissionGuard(cacheManager as never, new Reflector(), rolePermissionService as never),
+			rolePermissionService
+		};
+	}
+
+	/** Signs the request in as a member whose current role holds `permissions`, as `JwtStrategy` attaches it. */
+	function actAs(permissions: PermissionsEnum[]): void {
+		const user = {
+			id: 'user-1',
+			tenantId: TENANT,
+			roleId: TENANT_ROLE,
+			role: { id: TENANT_ROLE, name: 'EMPLOYEE', tenantId: TENANT },
+			permissions
+		};
+
+		spies.push(
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue(user as never),
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT),
+			jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(TENANT_ROLE),
+			jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(user.id),
+			jest.spyOn(RequestContext, 'currentRoleName').mockReturnValue(user.role.name as never)
+		);
+	}
+
+	/** The context the guard reads for one handler of one class. */
+	function contextOf(target: Target, handler: string): ExecutionContext {
+		return {
+			getHandler: () => (target.prototype as unknown as Record<string, unknown>)[handler],
+			getClass: () => target,
+			getType: () => 'http'
+		} as unknown as ExecutionContext;
+	}
+
+	beforeEach(() => {
+		spies.push(jest.spyOn(console, 'log').mockImplementation(() => undefined));
+	});
+
+	afterEach(() => {
+		for (const spy of spies) {
+			spy.mockRestore();
+		}
+		spies = [];
+	});
+
+	it('overrides every inherited read route, so none of them runs with the CRUD base’s empty metadata', () => {
+		for (const handler of ['getCount', 'pagination', 'findById']) {
+			expect(
+				Object.prototype.hasOwnProperty.call(OrganizationRecurringExpenseController.prototype, handler)
+			).toBe(true);
+		}
+	});
+
+	it.each(READS)('%p.%s refuses a member whose role holds no expenses read grant', async (target, handler) => {
+		// The default EMPLOYEE role: invoices and its own expenses, never the organization's standing costs.
+		const { guard, rolePermissionService } = permissionGuard();
+		actAs([PermissionsEnum.INVOICES_VIEW, PermissionsEnum.EMPLOYEE_EXPENSES_VIEW]);
+
+		await expect(guard.canActivate(contextOf(target, handler))).resolves.toBe(false);
+		expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+	});
+
+	it.each(READS)('%p.%s serves a member whose role holds ORG_EXPENSES_VIEW', async (target, handler) => {
+		const { guard } = permissionGuard();
+		actAs([PermissionsEnum.ORG_EXPENSES_VIEW]);
+
+		await expect(guard.canActivate(contextOf(target, handler))).resolves.toBe(true);
 	});
 });

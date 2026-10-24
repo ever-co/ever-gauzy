@@ -9,6 +9,7 @@ export * from './get-plugin-subscription-plans-by-plugin-id.handler';
 export * from './get-plugin-subscriptions-by-plugin-id.handler';
 export * from './get-plugin-subscriptions-by-subscriber-id.handler';
 export * from './get-plugin-subscriptions.handler';
+export * from './get-publisher-plugin-subscriptions.handler';
 export * from './get-subscription-access.handler';
 export * from './get-user-subscribed-plugins.handler';
 export * from './list-plugin-subscription-plans.handler';

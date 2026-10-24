@@ -22,6 +22,7 @@ import { Changelog } from './changelog.entity';
 import { ChangelogService } from './changelog.service';
 import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
 import { ChangelogQueryDTO } from './dto/changelog-query.dto';
+import { ChangelogWriteGuard } from './guards/changelog-write.guard';
 
 /**
  * Changelog is PLATFORM-level content: the public GET feeds the "What's New"
@@ -78,7 +79,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Invalid input'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, ChangelogWriteGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Post('/')
 	async create(@Body() entity: IChangelogCreateInput): Promise<IChangelog> {
@@ -105,7 +106,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Invalid input'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, ChangelogWriteGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put('/:id')
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: IChangelogUpdateInput): Promise<IChangelog> {
@@ -129,7 +130,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, ChangelogWriteGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete('/:id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
@@ -145,7 +146,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Record soft deleted successfully'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, ChangelogWriteGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete('/:id/soft')
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<Changelog> {
@@ -161,7 +162,7 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Record restored successfully'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard)
+	@UseGuards(RoleGuard, ChangelogWriteGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put('/:id/recover')
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<Changelog> {

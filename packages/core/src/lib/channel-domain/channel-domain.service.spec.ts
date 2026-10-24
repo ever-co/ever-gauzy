@@ -32,6 +32,20 @@ jest.mock('../core/crud/tenant-aware-crud.service', () => {
 		async softDelete(id: any): Promise<any> {
 			return this.typeOrmRepository.update(id, { deletedAt: new Date() });
 		}
+
+		// The real base resolves the row by tenant only, so the doubles below withdraw and restore by id alone:
+		// an organization check has to come from the service under test.
+		async softRemove(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: new Date() });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
+
+		async softRecover(id: any): Promise<any> {
+			await this.typeOrmRepository.update(id, { deletedAt: null });
+
+			return this.typeOrmRepository.findOneBy({ id });
+		}
 	}
 
 	return { TenantAwareCrudService };
@@ -56,8 +70,10 @@ jest.mock('@gauzy/config', () => ({
 	isMySQL: () => false
 }));
 
+import { HttpException } from '@nestjs/common';
 import { ChannelDomain } from './channel-domain.entity';
 import { ChannelDomainService } from './channel-domain.service';
+import { RequestContext } from '../core/context/request-context';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
 const ORG = '00000000-0000-4000-8000-000000000002';
@@ -160,7 +176,13 @@ function world(seed: { domains?: Row[] } = {}) {
 	const repository = {
 		manager,
 		metadata: { tableName: 'channel_domain', hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => tables.channel_domain.filter((row) => matches(row, options.where)),
+		// An array `where` is an alternative, as TypeORM reads it: a row matches when one branch does.
+		find: async (options: any = {}) =>
+			tables.channel_domain.filter((row) =>
+				Array.isArray(options.where)
+					? options.where.some((one: Row) => matches(row, one))
+					: matches(row, options.where)
+			),
 		findOne: async (options: any = {}) =>
 			tables.channel_domain.find((row) => matches(row, options.where)) ?? null,
 		findOneBy: async (where: Row) => tables.channel_domain.find((row) => matches(row, where)) ?? null,
@@ -209,6 +231,20 @@ async function refusalOf(call: () => Promise<unknown>): Promise<string | undefin
 		return undefined;
 	} catch (error) {
 		return (error as Error).message;
+	}
+}
+
+/** The HTTP status and the message of the error a call raises, or `undefined` when the call does not raise. */
+async function httpRefusalOf(call: () => Promise<unknown>): Promise<{ status?: number; message: string } | undefined> {
+	try {
+		await call();
+
+		return undefined;
+	} catch (error) {
+		return {
+			status: error instanceof HttpException ? error.getStatus() : undefined,
+			message: (error as Error).message
+		};
 	}
 }
 
@@ -388,6 +424,65 @@ describe('ChannelDomainService — one primary per channel, moved and never dupl
 	});
 });
 
+describe('ChannelDomainService — the organization-wide lists', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	/** Two hostnames of the caller's organization and one of a sibling organization of the same tenant. */
+	const twoOrganizations = () =>
+		world({
+			domains: [
+				domainRow('domain-1', 'shop.example.com'),
+				domainRow('domain-2', 'www.example.com', { channelId: OTHER_CHANNEL }),
+				domainRow('domain-3', 'shop.sibling.example', { organizationId: 'another-org' })
+			]
+		});
+
+	it('lists only the hostnames of the caller organization when no channel narrows the read', async () => {
+		const store = twoOrganizations();
+
+		const rows = await store.service.find();
+
+		expect(rows.map((row) => row.id).sort()).toEqual(['domain-1', 'domain-2']);
+	});
+
+	it('keeps the caller filter and adds the organization to it', async () => {
+		const store = twoOrganizations();
+
+		expect((await store.service.find({ where: { hostname: 'shop.sibling.example' } } as never)).length).toBe(0);
+		expect(
+			(await store.service.find({ where: { channelId: OTHER_CHANNEL } } as never)).map((row) => row.id)
+		).toEqual(['domain-2']);
+	});
+
+	it('does not let a stated organization widen the read past the caller organization', async () => {
+		const store = twoOrganizations();
+
+		const rows = await store.service.find({ where: { organizationId: 'another-org' } } as never);
+
+		// The caller's organization replaces the stated one: no hostname of the sibling organization is read.
+		expect(rows.map((row) => row.id).sort()).toEqual(['domain-1', 'domain-2']);
+	});
+
+	it('adds the organization to every branch of an alternative', async () => {
+		const store = twoOrganizations();
+
+		const rows = await store.service.find({
+			where: [{ hostname: 'shop.example.com' }, { hostname: 'shop.sibling.example' }]
+		} as never);
+
+		expect(rows.map((row) => row.id)).toEqual(['domain-1']);
+	});
+
+	it('keeps the tenant-wide read for a caller with no current organization', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+		const store = twoOrganizations();
+
+		const rows = await store.service.find();
+
+		expect(rows.map((row) => row.id).sort()).toEqual(['domain-1', 'domain-2', 'domain-3']);
+	});
+});
+
 describe('ChannelDomainService — removal and the servability invariant (I-25)', () => {
 	it('refuses to remove the last hostname of a channel, and allows it when forced', async () => {
 		const store = world({ domains: [domainRow('domain-1', 'shop.example.com', { isPrimary: true })] });
@@ -437,5 +532,57 @@ describe('ChannelDomainService — removal and the servability invariant (I-25)'
 		expect(await refusalOf(() => store.service.findDomainOrFail('domain-1'))).toMatch(
 			/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/
 		);
+	});
+});
+
+describe('ChannelDomainService — soft delete and recover stay inside the caller organization', () => {
+	it('refuses to withdraw a hostname of another organization, and leaves the row alone', async () => {
+		const store = world({
+			domains: [domainRow('domain-1', 'shop.example.com', { organizationId: 'another-org' })]
+		});
+
+		expect(await httpRefusalOf(() => store.service.softRemove('domain-1'))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/)
+		});
+		expect(store.domain('domain-1')?.deletedAt).toBeUndefined();
+	});
+
+	it('withdraws a hostname of the caller organization', async () => {
+		const store = world({ domains: [domainRow('domain-1', 'shop.example.com')] });
+
+		await store.service.softRemove('domain-1');
+
+		expect(store.domain('domain-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('refuses to restore a withdrawn hostname of another organization, and leaves it withdrawn', async () => {
+		const deletedAt = new Date('2026-01-01T00:00:00.000Z');
+		const store = world({
+			domains: [domainRow('domain-1', 'shop.example.com', { organizationId: 'another-org', deletedAt })]
+		});
+
+		expect(await httpRefusalOf(() => store.service.softRecover('domain-1'))).toEqual({
+			status: 404,
+			message: expect.stringMatching(/^RESOURCE_NOT_FOUND: CHANNEL_DOMAIN_NOT_FOUND/)
+		});
+		expect(store.domain('domain-1')?.deletedAt).toBe(deletedAt);
+	});
+
+	it('restores a withdrawn hostname of the caller organization, reading withdrawn rows to find it', async () => {
+		const store = world({
+			domains: [domainRow('domain-1', 'shop.example.com', { deletedAt: new Date('2026-01-01T00:00:00.000Z') })]
+		});
+		const find = jest.spyOn(store.service, 'find');
+
+		await store.service.softRecover('domain-1');
+
+		expect(find).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ id: 'domain-1', organizationId: ORG }),
+				withDeleted: true
+			})
+		);
+		expect(store.domain('domain-1')?.deletedAt).toBeNull();
 	});
 });

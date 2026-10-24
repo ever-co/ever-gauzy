@@ -33,6 +33,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './subscription-parity-check.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '..');
@@ -94,6 +95,8 @@ const GRAPHQL_ONLY = {
 	validateCoupon: 'Whether a coupon applies, a question about coupons rather than a coupon.',
 	giftCardBalance: 'The remaining balance of a gift card, a computation over its transactions.',
 	orderByNumber: 'An order addressed by its number rather than its id; REST filters the order route by number.',
+	cartByToken:
+		'A cart addressed by its guest-access token rather than its id; REST serves the same lookup at `GET /carts/by-token`, the token in the `X-Cart-Token` header (never the URL).',
 	orderTotals: 'The totals of an order, which the order resource already carries over REST.',
 	orderLineInvoicingPosition: 'How far a line has been invoiced, a computation over its invoice links.',
 	fulfillmentOutstanding: 'How much of a line is still to ship, a computation over its fulfilments.',
@@ -101,6 +104,8 @@ const GRAPHQL_ONLY = {
 	shippingOptionsForContext: 'The options eligible in a context, which the option resource cannot answer without the context.',
 	shippingRate: 'The price an option quotes for a context, a computation over the option’s price shapes.',
 	subscriptionPlanByCode: 'A plan addressed by its code rather than its id; REST filters the plan route by code.',
+	upcomingSubscriptionBilling:
+		'The next billing of a subscription, a computation over its lines and plan that writes nothing; REST serves it at `/subscriptions/:id/upcoming-billing` on the subscription resource.',
 	warehouseBinSubtree: 'Everything under a bin, a walk of the bin hierarchy.',
 	warehouseBinContents: 'What a bin holds, derived from the stock ledger.',
 	warehouseBinCapacity: 'How much of a bin’s capacity a request would use, a conversion and a comparison.',
@@ -124,6 +129,66 @@ const REST_ONLY = {
 	'product-variant-channels': 'The link between a variant and a channel, reached over GraphQL through the variant.',
 	'product-variant-tags': 'The link between a variant and a tag, reached over GraphQL through the variant.'
 };
+
+/**
+ * Ledger resources whose direct writes GraphQL deliberately does not mirror.
+ *
+ * Each is read over both protocols and serves the recoverable withdraw/restore pair on both, while its direct
+ * create, update and hard delete have no GraphQL field — the rows are written by the operations that own them,
+ * and the specifications refuse to mirror a direct write over a ledger. What REST does with those routes differs
+ * and each entry says it: the gift-card ledger refuses them on REST too, while the two usage ledgers keep them
+ * on REST as a gated back-office correction. That is a decision, not a gap, and it used to be recorded only in
+ * the package's own write-route suite (`promotion/src/lib/graphql/resolvers/write-routes.spec.ts`, `REFUSED`);
+ * listing it here makes the gate say so too (R2-G34). An entry fails when no controller declares the resource
+ * (stale), and when the package's schema declares a `create`/`update`/`delete` field for it after all.
+ */
+const LEDGERS = {
+	'gift-card-transactions':
+		'The append-only ledger of a gift card, written by the card operations (issue, redeem, refund, adjust, void); REST refuses the direct writes too (GIFT_CARD_TRANSACTION_APPEND_ONLY).',
+	'promotion-usages':
+		'The redemption ledger, written by the checkout and cancellation operations; the direct writes stay REST-only, gated as a back-office correction (06 §7.22).',
+	'campaign-budget-usages':
+		'The per-value consumption of a campaign budget, maintained by the budget increment inside its transaction; the direct writes stay REST-only, gated (08 §8.3).',
+	'order-summaries':
+		'The totals history of an order, one row per committed version, appended by the totals writer; append-only (edits answer ORDER_LEDGER_APPEND_ONLY), the direct POST stays REST-only as a gated back-office write (ORDERS_CREATE) (R2-G22).',
+	'order-history':
+		'The timeline of an order, appended by the operation that causes each entry; append-only (ORDER_LEDGER_APPEND_ONLY), the direct POST stays REST-only as a gated back-office write (ORDERS_CREATE) (R2-G22).',
+	'order-transactions':
+		'The money ledger of an order, written by the operations that move the money; its one direct write, POST /order-transactions, records an operator’s MANUAL correction and stays REST-only (ORDERS_CREATE, idempotent under order.transaction.manual), edits answer ORDER_LEDGER_APPEND_ONLY (R2-G22).'
+};
+
+/**
+ * Single write routes GraphQL deliberately does not mirror, on resources whose other writes it does.
+ *
+ * `LEDGERS` above acknowledges a resource whose direct writes are all REST-only; these are narrower — one route
+ * of a resource that GraphQL otherwise writes — so they are named route by route, with the field a mirror would
+ * be called (R2-G22, R2-G23). An entry fails when no controller of the package maps the route (stale), and when
+ * the package's schema declares the field after all: the acknowledgement would then describe a surface that no
+ * longer exists.
+ */
+const REST_ONLY_ROUTES = [
+	{
+		resource: 'order-change-actions',
+		method: 'Post',
+		path: '',
+		field: 'createOrderChangeAction',
+		reason: 'An action is created with its change — `requestOrderEdit(input.actions)` / `POST /orders/:id/changes` — and amended or retired over both protocols; the standalone create stays a gated REST back-office write (ORDERS_CREATE).'
+	},
+	{
+		resource: 'order-claims',
+		method: 'Post',
+		path: ':id/close',
+		field: 'closeOrderClaim',
+		reason: '10-orders-payments-and-returns-spec §12.6 makes CLAIM_RESOLVE the only writer of claim state and §12.1 gives CLOSED to it (`approveOrderClaim`); 06 §7.14 declares no close route — pinned by the returns write-route suite (`REFUSED`).'
+	},
+	{
+		resource: 'order-exchanges',
+		method: 'Post',
+		path: ':id/close',
+		field: 'closeOrderExchange',
+		reason: '10-orders-payments-and-returns-spec §12.6 makes EXCHANGE_RESOLVE the only writer of exchange state and §12.2 gives CLOSED to it once the difference settled (`approveOrderExchange`); 06 §7.14 declares no close route — pinned by the returns write-route suite (`REFUSED`).'
+	}
+];
 
 /** Reads a file, or the empty string when it cannot be read. */
 function read(file) {
@@ -343,8 +408,62 @@ function schemaSourceOf(dir) {
 	return files.map(read).join('\n');
 }
 
+/**
+ * The source of the controller that serves a resource, without its comments, or the empty string.
+ *
+ * Comments are stripped before anything is matched, so a route that was commented out reads as absent
+ * rather than as mapped (Greptile, #10901) — the reading `subscription-parity-check.mjs` gives a
+ * commented-out producer.
+ *
+ * @param dir The package directory.
+ * @param resource The resource, without a leading slash.
+ * @returns {string} The controller's text, without comments.
+ */
+function controllerSourceOf(dir, resource) {
+	for (const file of walk(dir, (name) => name.endsWith('.controller.ts'))) {
+		const source = stripComments(read(file));
+		const prefix = /@Controller\(\s*['"`]([^'"`]*)['"`]\s*\)/.exec(source);
+
+		if (prefix && prefix[1].split('/').filter(Boolean)[0] === resource) return source;
+	}
+
+	return '';
+}
+
+/**
+ * Whether a controller maps a route: `@Post()` for the collection, `@Post(':id/close')` for a sub-route.
+ *
+ * @param source The controller's text.
+ * @param method The decorator, `Post`, `Put`, `Delete` or `Patch`.
+ * @param path The path below the resource, empty for the collection.
+ * @returns {boolean} Whether the decorator is there.
+ */
+function mapsRoute(source, method, path) {
+	const escaped = path.replace(/[.*+?^${}()|[\]\\/]/g, (character) => `\\${character}`);
+	const pattern = path
+		? new RegExp(`@${method}\\(\\s*['"\`]${escaped}['"\`]\\s*\\)`)
+		: new RegExp(`@${method}\\(\\s*(?:['"\`]['"\`])?\\s*\\)`);
+
+	return pattern.test(source);
+}
+
+/**
+ * Whether a schema document defines a field: its name followed by its arguments or by its type.
+ *
+ * A field with no arguments — `closeOrderClaim: Boolean!` — is a field too, so both `(` and `:` count
+ * (CodeRabbit, #10901). The ledger rule and the single-route rule both read fields this way.
+ *
+ * @param schema The package's schema source.
+ * @param field The field name.
+ * @returns {boolean} Whether the document defines it.
+ */
+function definesField(schema, field) {
+	return new RegExp(`\\b${field}\\s*[(:]`).test(schema);
+}
+
 const problems = [];
 const acknowledged = [];
+const restOnlyRoutes = [];
 const oneSided = [];
 const children = [];
 const declaredFields = new Set();
@@ -477,6 +596,53 @@ for (const name of PACKAGES) {
 		fields: fields.size
 	});
 
+	// A ledger whose direct writes GraphQL is said not to mirror must not have grown such a field: the
+	// acknowledgement would then describe a surface that no longer exists.
+	const ledgersHere = [...resources].filter((resource) => LEDGERS[resource]);
+	if (ledgersHere.length) {
+		const schema = schemaSourceOf(dir);
+
+		for (const resource of ledgersHere) {
+			const type = camelCase(singular(resource)).replace(/^./, (first) => first.toUpperCase());
+			const writes = ['create', 'update', 'delete']
+				.map((verb) => `${verb}${type}`)
+				.filter((field) => definesField(schema, field));
+
+			if (writes.length) {
+				problems.push({
+					package: name,
+					kind: 'ledger-write',
+					detail: `/${resource} is acknowledged as a ledger GraphQL does not write, and the schema declares ${writes.join(', ')}`
+				});
+			}
+		}
+	}
+
+	// A single route acknowledged as REST-only must still be mapped, and must not have grown its mirror.
+	for (const entry of REST_ONLY_ROUTES.filter(({ resource }) => resources.has(resource))) {
+		const route = `${entry.method.toUpperCase()} /${entry.resource}${entry.path ? `/${entry.path}` : ''}`;
+
+		if (!mapsRoute(controllerSourceOf(dir, entry.resource), entry.method, entry.path)) {
+			problems.push({
+				package: name,
+				kind: 'stale-route',
+				detail: `${route} is acknowledged as REST-only and no controller of the package maps it`
+			});
+			continue;
+		}
+
+		if (definesField(stripComments(schemaSourceOf(dir)), entry.field)) {
+			problems.push({
+				package: name,
+				kind: 'route-mirrored',
+				detail: `${route} is acknowledged as REST-only, and the schema declares ${entry.field}`
+			});
+			continue;
+		}
+
+		restOnlyRoutes.push({ package: name, route, field: entry.field, reason: entry.reason });
+	}
+
 	for (const resource of resources) declaredResources.add(resource);
 }
 
@@ -496,9 +662,16 @@ const staleResources = Object.keys(REST_ONLY).filter(
 	(resource) => !declaredResources.has(resource) || !oneSidedResources.has(resource)
 );
 
+const staleLedgers = Object.keys(LEDGERS).filter((resource) => !declaredResources.has(resource));
+const staleRoutes = REST_ONLY_ROUTES.filter(({ resource }) => !declaredResources.has(resource));
+
 const stale = [
 	...staleFields.map((field) => `GraphQL field \`${field}\``),
-	...staleResources.map((resource) => `REST resource /${resource}`)
+	...staleResources.map((resource) => `REST resource /${resource}`),
+	...staleLedgers.map((resource) => `ledger /${resource}`),
+	...staleRoutes.map(
+		({ resource, method, path }) => `REST route ${method.toUpperCase()} /${resource}${path ? `/${path}` : ''}`
+	)
 ];
 
 console.log('');
@@ -529,6 +702,20 @@ console.log('');
 console.log(`  ${oneSided.length} REST resource(s) acknowledged as deliberately one-sided:`);
 for (const entry of oneSided) {
 	console.log(`    ${`/${entry.resource}`.padEnd(28)} ${entry.package} — ${entry.reason}`);
+}
+
+console.log('');
+console.log(
+	`  ${Object.keys(LEDGERS).length} ledger resource(s) read and withdrawn/restored on both protocols, their direct writes not mirrored over GraphQL:`
+);
+for (const [resource, reason] of Object.entries(LEDGERS)) {
+	console.log(`    ${`/${resource}`.padEnd(28)} ${reason}`);
+}
+
+console.log('');
+console.log(`  ${restOnlyRoutes.length} REST write route(s) on GraphQL-written resources, deliberately not mirrored:`);
+for (const entry of restOnlyRoutes) {
+	console.log(`    ${entry.route.padEnd(34)} ${entry.package} — (no ${entry.field}) ${entry.reason}`);
 }
 
 if (stale.length) {

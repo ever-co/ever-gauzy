@@ -750,18 +750,18 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 // The Documents panel ships as a card of its own; inside this pane that drew a
 // second box inside the first. Flattened, so its header (title, count, actions)
 // reads as the pane's toolbar.
-:host gz-document-links-panel ::ng-deep nb-card.docs-links-panel {
+:host gz-document-links-panel ::ng-deep .docs-links-panel {
 	margin: 0;
 	border: none;
 	box-shadow: none;
 	background: transparent;
 
-	> nb-card-header {
+	> .docs-links-panel-header {
 		padding: 0 0 0.75rem;
 		border-bottom: $panel-border;
 	}
 
-	> nb-card-body {
+	> .docs-links-panel-body {
 		padding: 0.75rem 0 0;
 	}
 }

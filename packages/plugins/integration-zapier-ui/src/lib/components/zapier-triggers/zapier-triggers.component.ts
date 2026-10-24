@@ -101,7 +101,7 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 		this._zapierService
 			.getAccessToken(this.integrationId)
 			.pipe(
-				switchMap((accessToken: string) => this._zapierService.getTriggers(accessToken)),
+				switchMap((accessToken: string) => this._zapierService.getTriggers(accessToken, this.integrationId)),
 
 				// Store the retrieved triggers
 				tap((triggers: IZapierEndpoint[]) => {

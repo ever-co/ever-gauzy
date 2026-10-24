@@ -78,7 +78,7 @@ that ends on it faults the run.
 | `loaded_off` | both modules loaded: statistics on by configuration and switched off by the operator in Settings, connection on and not connected | yes | no call at all, in both legs |
 | `positive_stats` | statistics on, `EVER_STATS_API_URL` = the mock platform | yes | reports accepted (`202`), no call but the statistics report; the browser's settings page asks the API for the statistics status |
 | control | `positive_stats` with the mock platform left out | yes | must **fail** (exit 1): a green run is not a blind one |
-| `every_trigger` | both modules on against the mock platform; the adapter fires every trigger of every call (connect with `EVER_CONNECT_CODE`, link, entitlement refresh unchanged and new, a consent and the operator's accept, the statistics link, switching off, unlink, disconnect; the report goes out by itself) | no | the calls made are **exactly** the Gauzy rows of the contract this release makes, row for row; the rows it does not make (`every_trigger_exclude_rows`, kept equal to the "not made" table of [the list of outbound calls](../../docs/ever-platform/outbound-calls.md) by a check) are never called |
+| `every_trigger` | both modules on against the mock platform; the adapter fires every trigger of every call (connect with `EVER_CONNECT_CODE`, link, entitlement refresh unchanged and new, a consent and the operator's accept, the statistics link, switching off, unlink, disconnect; the report goes out by itself) | no | the calls made are **exactly** the Gauzy rows of the contract this release makes, row for row; the rows it does not make (`every_trigger_exclude_rows`, kept equal to the "not made" table of [the list of outbound calls](../ever-platform/outbound-calls.md) by a check) are never called |
 | `connect_off_sign_in_on` | connection off, statistics off, the Ever ID sign-in plugin on (`ZITADEL_ENABLED=true`) with an issuer on an Ever host | yes | the plugin leaves the issuer unused on a self-hosted installation: no Ever host looked up or requested, no redirect to it, `/api/ever-stats/*` 404 |
 | `entitlement_ladder` | connection on against the mock platform; the mock's clock moves so its documents are issued 600 s in the future, 8 days ago (a 7-day document: expired a day ago), 38 days ago (expired 31 days ago), 200 s ahead | no | the future one is refused and the stored one kept; the others are stored and the ladder reads `grace`, `paused` (every feature off), `valid`; Gauzy's own routes (health, sign-in, the user, the organization, projects, invoices, time logs, contacts) answer the same at every step; only the connection's documented calls |
 | static-bundle | the web app image's built files | - | no Ever host the baseline's `bundle` list does not have |
@@ -111,13 +111,20 @@ node tools/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/ru
 Run on every pull request that touches code, with nothing installed but the harness:
 
 - `node tools/egress-audit/static-hostnames.mjs`: no file outside the Ever Platform modules (their
-  packages, their docs, this directory, tests and prose) names an Ever host (the `ever_owned`
-  names of the harness's never-allowed list and every name under them) or `EVER_PLATFORM_API_URL` /
-  `EVER_STATS_API_URL` more often than `static-hostnames.baseline.json` records. The baseline holds
-  what Gauzy named before the modules (the product site, documentation, demo accounts, downloads);
-  it may only shrink (`--check-shrink <the file at the base>`), and `--write` refuses to grow it. With
-  `--bundle <dir>` the same scan reads a built web app (the `/srv/gauzy` of the web app image)
-  against the baseline's `bundle` hosts; the `static-bundle` job does it on the image under test.
+  packages, their docs, this directory, tests and prose, and the external uptime monitor) names an
+  Ever host (the `ever_owned` names of the harness's never-allowed list and every name under them)
+  or `EVER_PLATFORM_API_URL` / `EVER_STATS_API_URL` more often than `static-hostnames.baseline.json`
+  records. The baseline holds what Gauzy named before the modules (the product site, documentation,
+  demo accounts, downloads); it may only shrink (`--check-shrink <the file at the base>`), and
+  `--write` refuses to grow it. With `--bundle <dir>` the same scan reads a built web app (the
+  `/srv/gauzy` of the web app image) against the baseline's `bundle` hosts; the `static-bundle` job
+  does it on the image under test.
+
+  The uptime monitor (`.github/workflows/external-uptime-monitor.yml`) is exempt by its exact path,
+  for the reason tests are: it never ships. It is a scheduled job on a GitHub-hosted runner that
+  probes Gauzy's production hosts from outside, so naming them is all it does, and a baseline that
+  may only shrink would stop it from watching a new one. Every other workflow stays in the scan,
+  because the workflows that build and deploy the images can put a host into one.
 - `node tools/ever-platform/check-import-boundary.mjs`: only the modules and the two plugin lists
   import a module, through its entry point; the statistics never import the connection or an
   analytics plugin, the instance identity no HTTP client, the connection and the sign-in plugin
@@ -125,7 +132,7 @@ Run on every pull request that touches code, with nothing installed but the harn
   entitlement code. The same rules are the ESLint rule `ever-platform/import-boundary` of the root
   `eslint.config.js` (`tools/ever-platform/import-boundary.cjs`).
 - `node tools/ever-platform/outbound-calls.mjs --check`: the tables of
-  [`docs/ever-platform/outbound-calls.md`](../../docs/ever-platform/outbound-calls.md) are the pinned
+  [`tools/ever-platform/outbound-calls.md`](../ever-platform/outbound-calls.md) are the pinned
   contract's rows for what Gauzy makes (`--write` regenerates them), the connection README's request
   table names exactly those rows and their requests, the statistics README its request, the audit
   excludes exactly the rows Gauzy does not make, and the harness and the modules pin one contract

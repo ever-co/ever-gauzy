@@ -19,6 +19,7 @@ import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
 import { AuditLogHandler } from './audit';
+import { redactSecretsForLog } from './config/desktop-secrets';
 import {
 	AsyncTimerSyncQueue,
 	DEFAULT_TIMER_QUEUE,
@@ -398,7 +399,7 @@ export default class TimerHandler {
 			const config = LocalStore.getStore('configs');
 
 			logger.info(`App Setting: ${moment().format()}`, appSetting);
-			logger.info(`Config: ${moment().format()}`, config);
+			logger.info(`Config: ${moment().format()}`, redactSecretsForLog(config));
 
 			const lastTimerId = this.lastTimer ? this.lastTimer.id : null;
 			const awActivities = await this._activityWatchService.activities(lastTimerId);
@@ -498,7 +499,7 @@ export default class TimerHandler {
 		const config = LocalStore.getStore('configs');
 
 		logger.info(`App Setting: ${now.format()}`, appSetting);
-		logger.info(`Config: ${now.format()}`, config);
+		logger.info(`Config: ${now.format()}`, redactSecretsForLog(config));
 
 		const updatePeriod =
 			parseInt(appSetting.randomScreenshotTime ? this._randomSyncPeriod : appSetting.timer.updatePeriod, 10) * 60;

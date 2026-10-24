@@ -90,6 +90,8 @@ function matches(stored: Row, where: Row = {}): boolean {
  */
 function storage(rows: Row[]) {
 	const writes: Array<{ orm: MultiORM; op: string; id: string }> = [];
+	/** The conditions every delete and soft delete statement was handed, as the ORM received them. */
+	const statements: Array<{ orm: MultiORM; op: string; where: Row }> = [];
 	const visible = (withDeleted: boolean) => rows.filter((stored) => withDeleted || !stored.deletedAt);
 
 	const typeOrm = {
@@ -116,6 +118,39 @@ function storage(rows: Row[]) {
 			entity.deletedAt = null;
 
 			return entity;
+		},
+		findOneBy: async (where: Row) => visible(false).find((stored) => matches(stored, where)) ?? null,
+		// An `UPDATE … SET <patch> WHERE <criteria>`: every visible row the criteria match takes the patch.
+		update: async (where: Row, patch: Row) => {
+			const matched = visible(false).filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'typeorm', op: 'update', id: stored.id });
+				Object.assign(stored, patch);
+			}
+
+			return { affected: matched.length, raw: [], generatedMaps: [] };
+		},
+		// A `DELETE … WHERE <criteria>`: every row the criteria match is gone.
+		delete: async (where: Row) => {
+			statements.push({ orm: 'typeorm', op: 'delete', where });
+			const matched = rows.filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'typeorm', op: 'delete', id: stored.id });
+				rows.splice(rows.indexOf(stored), 1);
+			}
+
+			return { affected: matched.length, raw: [] };
+		},
+		// An `UPDATE … SET "deletedAt" = now WHERE <criteria>`, as TypeORM's `softDelete` issues it.
+		softDelete: async (where: Row) => {
+			statements.push({ orm: 'typeorm', op: 'softDelete', where });
+			const matched = visible(false).filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'typeorm', op: 'softDelete', id: stored.id });
+				stored.deletedAt = WITHDRAWN_AT;
+			}
+
+			return { affected: matched.length, raw: [], generatedMaps: [] };
 		}
 	};
 
@@ -133,10 +168,31 @@ function storage(rows: Row[]) {
 		},
 		persistAndFlush: async (entity: Row) => {
 			writes.push({ orm: 'mikro-orm', op: 'persistAndFlush', id: entity.id });
+		},
+		// The same `UPDATE … SET <patch> WHERE <criteria>` as TypeORM's, answering the count MikroORM answers.
+		nativeUpdate: async (where: Row, patch: Row) => {
+			const matched = visible(false).filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'mikro-orm', op: 'nativeUpdate', id: stored.id });
+				Object.assign(stored, patch);
+			}
+
+			return matched.length;
+		},
+		// The same `DELETE … WHERE <criteria>`, answering the count MikroORM answers.
+		nativeDelete: async (where: Row) => {
+			statements.push({ orm: 'mikro-orm', op: 'nativeDelete', where });
+			const matched = rows.filter((stored) => matches(stored, where));
+			for (const stored of matched) {
+				writes.push({ orm: 'mikro-orm', op: 'nativeDelete', id: stored.id });
+				rows.splice(rows.indexOf(stored), 1);
+			}
+
+			return matched.length;
 		}
 	};
 
-	return { typeOrm, mikroOrm, writes };
+	return { typeOrm, mikroOrm, writes, statements };
 }
 
 /** A service of this package's shape, with the ORM branch chosen by the case rather than by `DB_ORM`. */
@@ -378,5 +434,201 @@ describe.each<MultiORM>(['typeorm', 'mikro-orm'])('PromotionService on %s — a 
 		expect(recovery.userErrors).toEqual([]);
 		expect(recovery.promotion).toMatchObject({ id: OWN });
 		expect(find(rows, OWN).deletedAt).toBeNull();
+	});
+});
+
+describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s — an update never moves a row out of the caller’s scope (SEC-A-03)', (orm) => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('writes the payload but keeps the row’s tenant and organization', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		// The failure scenario: a `PUT` with `{"tenantId": "<B>", "organizationId": "<B org>"}` moved the caller's own
+		// gift card, coupon or campaign into another tenant.
+		await service.update(OWN, { code: 'SPRING', tenantId: OTHER_TENANT, organizationId: OTHER_ORG } as any);
+
+		const own = find(rows, OWN);
+		expect(own.tenantId).toBe(TENANT);
+		expect(own.organizationId).toBe(ORG);
+		expect(own.code).toBe('SPRING');
+	});
+
+	it('refuses to update a row of a sibling organization of the caller’s tenant, and writes nothing', async () => {
+		// The failure scenario: `PUT /coupons/:id` with a sibling organization's coupon id wrote the coupon, and the
+		// scoped read-back answered 404 only after the write had landed.
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.update(FOREIGN_ORG, { code: 'SPRING' } as any)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(
+			service.update({ id: FOREIGN_ORG, organizationId: OTHER_ORG } as any, { code: 'SPRING' } as any)
+		).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(find(rows, FOREIGN_ORG).code).toBeUndefined();
+		expect(writes).toEqual([]);
+	});
+
+	it('keeps a conditional write of a sibling organization’s row from matching it', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+		find(rows, FOREIGN_ORG).version = 1;
+
+		// A criterion naming a `version` skips the pre-read, so the statement's own conditions are what refuse it.
+		await service.update({ id: FOREIGN_ORG, version: 1 } as any, { code: 'SPRING' } as any);
+
+		expect(find(rows, FOREIGN_ORG).code).toBeUndefined();
+		expect(writes).toEqual([]);
+	});
+
+	it('still updates the row a job names when no organization is in context', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as any);
+
+		const rows = table();
+		const { typeOrm, mikroOrm } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.update(FOREIGN_ORG, { code: 'SPRING' } as any);
+
+		expect(find(rows, FOREIGN_ORG).code).toBe('SPRING');
+	});
+});
+
+/**
+ * R2-G26: a hard delete is narrowed to the caller's organization, not only its tenant.
+ *
+ * `delete` predicated its pre-read and its statement on the tenant alone, so `DELETE /promotions/:id`, `/coupons/:id`
+ * and `/campaigns/:id` destroyed a sibling organization's row of the caller's tenant — one no read of this package
+ * shows the caller and one the GraphQL `delete<Resource>` fields refuse. Run on both ORM branches of the kernel's own
+ * `CrudService`, and through the real promotion route.
+ */
+describe.each<MultiORM>(['typeorm', 'mikro-orm'])('TenantScopedCrudService on %s — a hard delete (R2-G26)', (orm) => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to delete a row of a sibling organization of the caller’s tenant, and writes nothing', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.delete(FOREIGN_ORG)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(service.delete({ id: FOREIGN_ORG, organizationId: OTHER_ORG } as any)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+
+		expect(rows.map(({ id }) => id)).toContain(FOREIGN_ORG);
+		expect(writes).toEqual([]);
+	});
+
+	it('refuses to delete another tenant’s row, and writes nothing', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.delete(FOREIGN_TENANT)).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(rows.map(({ id }) => id)).toContain(FOREIGN_TENANT);
+		expect(writes).toEqual([]);
+	});
+
+	it('deletes the caller’s own row, with the organization in the statement', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes, statements } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.delete(OWN);
+
+		expect(rows.map(({ id }) => id)).toEqual([FOREIGN_TENANT, FOREIGN_ORG]);
+		expect(writes.map(({ id }) => id)).toEqual([OWN]);
+		// The statement itself carries the scope, not only the read before it: an id alone would delete the same row
+		// here, so the conditions the ORM received are what this asserts.
+		expect(statements).toHaveLength(1);
+		expect(statements[0].where).toMatchObject({ id: OWN, tenantId: TENANT, organizationId: ORG });
+	});
+
+	it('keeps a stated organization from widening the statement', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, statements } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.delete({ id: OWN, organizationId: OTHER_ORG } as any);
+
+		expect(statements[0].where).toMatchObject({ id: OWN, tenantId: TENANT, organizationId: ORG });
+	});
+
+	it('refuses to soft delete a sibling organization’s row, and writes nothing', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await expect(service.softDelete(FOREIGN_ORG)).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(find(rows, FOREIGN_ORG).deletedAt).toBeNull();
+		expect(writes).toEqual([]);
+	});
+
+	it('soft deletes the caller’s own row, with the organization in the statement', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes, statements } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.softDelete(OWN);
+
+		expect(find(rows, OWN).deletedAt).toEqual(WITHDRAWN_AT);
+		expect(writes.map(({ id }) => id)).toEqual([OWN]);
+
+		// TypeORM hands the conditions to `softDelete`; MikroORM resolves the row through `findOne` with them and
+		// removes the entity it found, so on that branch the read is the statement's predicate.
+		if (orm === 'typeorm') {
+			expect(statements[0].where).toMatchObject({ id: OWN, tenantId: TENANT, organizationId: ORG });
+		}
+	});
+
+	it('still reaches the row a job names when no organization is in context', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as any);
+
+		const rows = table();
+		const { typeOrm, mikroOrm } = storage(rows);
+		const service = new ScopedRowService(typeOrm, mikroOrm, orm);
+
+		await service.delete(FOREIGN_ORG);
+
+		expect(rows.map(({ id }) => id)).toEqual([OWN, FOREIGN_TENANT]);
+	});
+
+	it('answers DELETE /promotions/:id of a sibling organization’s promotion with 404 and keeps it', async () => {
+		const rows = table();
+		const { typeOrm, mikroOrm, writes } = storage(rows);
+		const service = new PromotionService(
+			typeOrm as never,
+			mikroOrm as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never
+		);
+
+		Object.defineProperty(service, 'ormType', { get: () => orm });
+		const controller = new PromotionController(service);
+
+		await expect(controller.delete(FOREIGN_ORG)).rejects.toBeInstanceOf(NotFoundException);
+		expect(rows.map(({ id }) => id)).toContain(FOREIGN_ORG);
+		expect(writes).toEqual([]);
+
+		await controller.delete(OWN);
+		expect(rows.map(({ id }) => id)).not.toContain(OWN);
 	});
 });

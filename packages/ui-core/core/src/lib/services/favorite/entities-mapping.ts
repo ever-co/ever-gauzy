@@ -39,7 +39,11 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 	[BaseEntityEnum.Equipment]: 'fas fa-tools',
 	[BaseEntityEnum.Payment]: 'fas fa-credit-card',
 	[BaseEntityEnum.Product]: 'fas fa-box',
-	[BaseEntityEnum.Proposal]: 'fas fa-file-signature'
+	[BaseEntityEnum.Proposal]: 'fas fa-file-signature',
+	[BaseEntityEnum.Goal]: 'fas fa-flag-checkered',
+	[BaseEntityEnum.KeyResult]: 'fas fa-chart-line',
+	[BaseEntityEnum.InboxItem]: 'fas fa-inbox',
+	[BaseEntityEnum.InboxEmail]: 'fas fa-envelope'
 };
 
 /** Record-specific icons, where one type holds two kinds of record (an estimate is an invoice row). */
@@ -66,8 +70,9 @@ export type FavoriteLinkBuilder = (id: string, record?: IFavoriteRecord) => stri
 /**
  * A document favorite opens the document itself: a PAGE in the document page — inside the Documents
  * shell, which keeps only the narrow "All documents" tree beside it (owner, 2026-10-13) — and a FOLDER as
- * that folder. An uploaded FILE has no page of its own, so it (and a record whose kind is unknown) opens
- * in the hub with its preview, which handles every kind.
+ * that folder. Everything else — an uploaded FILE, and a record whose kind is unknown — opens on the
+ * document's own full-width page, `/pages/documents/file/<id>` (owner, 2026-10-15: a favorite "should display
+ * document full width, not display a list of documents"); that page forwards a page or folder to its view.
  */
 function documentLink(id: string, record?: IFavoriteRecord): string {
 	switch (record?.['kind']) {
@@ -78,7 +83,7 @@ function documentLink(id: string, record?: IFavoriteRecord): string {
 		case DocumentKindEnum.FOLDER:
 			return `/pages/documents?folder=${id}`;
 		default:
-			return `/pages/documents?id=${id}`;
+			return `/pages/documents/file/${id}`;
 	}
 }
 
@@ -134,11 +139,16 @@ export const ENTITY_LINKS: Record<BaseEntityEnum, FavoriteLinkBuilder> = {
 	[BaseEntityEnum.Language]: () => `/pages/settings/general`,
 	[BaseEntityEnum.Organization]: (id) => `/pages/organizations/edit/${id}`,
 	[BaseEntityEnum.Broadcast]: () => `/pages/dashboard`,
-	[BaseEntityEnum.OrganizationStrategicInitiative]: () => `/pages/goals`,
+	[BaseEntityEnum.OrganizationStrategicInitiative]: (id) => `/pages/goals/initiatives/${id}`,
 	[BaseEntityEnum.Equipment]: (id) => `/pages/organization/equipment/view/${id}`,
 	[BaseEntityEnum.Payment]: (id) => `/pages/accounting/payments/view/${id}`,
 	[BaseEntityEnum.Product]: (id) => `/pages/organization/inventory/view/${id}`,
-	[BaseEntityEnum.Proposal]: (id) => `/pages/sales/proposals/details/${id}`
+	[BaseEntityEnum.Proposal]: (id) => `/pages/sales/proposals/details/${id}`,
+	// Goals and key results are read on the Goals page; the Inbox has no page of its own yet.
+	[BaseEntityEnum.Goal]: () => `/pages/goals`,
+	[BaseEntityEnum.KeyResult]: () => `/pages/goals`,
+	[BaseEntityEnum.InboxItem]: () => `/pages/dashboard`,
+	[BaseEntityEnum.InboxEmail]: () => `/pages/dashboard`
 };
 
 /** `120 USD` — an amount with its currency, as a record's name when it has no other. */

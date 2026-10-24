@@ -114,7 +114,8 @@ export const pluginConfig: ApplicationPluginConfig = {
 				error: (...args) => loggers.forEach((logger) => logger.error?.(...args)),
 				warn: (...args) => loggers.forEach((logger) => logger.warn?.(...args)),
 				debug: (...args) => loggers.forEach((logger) => logger.debug?.(...args)),
-				verbose: (...args) => loggers.forEach((logger) => logger.verbose?.(...args))
+				verbose: (...args) => loggers.forEach((logger) => logger.verbose?.(...args)),
+				setLogLevels: (levels) => loggers.forEach((logger) => logger.setLogLevels?.(levels))
 			};
 		}
 	})(),

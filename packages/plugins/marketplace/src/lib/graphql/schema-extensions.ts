@@ -1252,20 +1252,20 @@ export const schemaExtensions = gql`
 		"""
 		recoverSellerPayout(id: ID!): SellerPayout!
 		"""
-		Removes a payout line, answering the count the deletion reports.
+		Refused: a payout line is released by canceling its payout (\`cancelSellerPayout\`), never deleted.
 
 		Mirrors \`DELETE /seller-payout-lines/:id\`, which takes \`SELLERS_DELETE\`: a line is the join row of one payout and one ledger row, and every row under the seller belongs to the seller.
 		"""
 		deleteSellerPayoutLine(id: ID!): SellerDeleteResult!
 		"""
-		Archives a payout line, keeping the row.
+		Refused: a payout line is released by canceling its payout (\`cancelSellerPayout\`), never archived.
 
 		Mirrors \`DELETE /seller-payout-lines/:id/soft\`, which takes \`SELLERS_DELETE\`: a line is the join row
 		of one payout and one ledger row, and every row under the seller belongs to the seller.
 		"""
 		softDeleteSellerPayoutLine(id: ID!): SellerPayoutLine!
 		"""
-		Restores a soft-deleted payout line.
+		Refused: a payout line archived by a cancellation belongs to a canceled payout and is never restored.
 
 		Mirrors \`PUT /seller-payout-lines/:id/recover\`: restoring the join row is what makes its ledger row
 		payable at most once again, so it takes \`SELLERS_DELETE\` and not the payout grants.
@@ -1331,5 +1331,49 @@ export const schemaExtensions = gql`
 		backwards, and a restored report is one the discrepancy of a period is read against again.
 		"""
 		recoverSellerSettlement(id: ID!): SellerSettlement!
+	}
+
+	extend type Subscription {
+		"""
+		Every move of a seller account of the caller's tenant — created, edited, submitted, verified, activated,
+		suspended, rejected, offboarding started — with the seller as \`seller\` reads it when the move is delivered,
+		not a snapshot of the move: a move made since may already show in it. Narrowed by \`sellerId\` and by \`action\` (the move: \`activated\`, \`offboarding-started\`, …);
+		each only narrows what the credential may read, and a seller's own person hears its own seller only.
+		Follows the \`seller.*\` facts the seller service appends to the outbox in the transaction of each move. A
+		subscription is a notification and never a system of record: a move made while the client is disconnected
+		is not replayed.
+		"""
+		sellerChanged(sellerId: ID, action: String): Seller!
+		"""
+		Every streamed move of an offering of the caller's tenant — listed or withdrawn — with the offering as it
+		reads when the move is delivered, not a snapshot of the move: a change made since may already show in it.
+		Narrowed by \`sellerOfferingId\`, by the seller and by \`action\`; a seller's own
+		person hears its own seller's offerings only. A price edit is not streamed (\`seller_offering.updated\` is
+		withheld from subscriptions for the reason \`price.updated\` is).
+		"""
+		sellerOfferingChanged(sellerOfferingId: ID, sellerId: ID, action: String): SellerOffering!
+		"""
+		Every move of a payout of the caller's tenant — created, paid, failed, canceled — with the payout and its
+		lines, as \`sellerPayout\` reads it when the move is delivered: a move made since may already show in it.
+		Narrowed by \`sellerPayoutId\`, by the seller and by \`action\`; a
+		seller's own person hears its own seller's payouts only. Requires the marketplace payouts feature, as the
+		payout queries do.
+		"""
+		sellerPayoutChanged(sellerPayoutId: ID, sellerId: ID, action: String): SellerPayout!
+		"""
+		Every move of a provider settlement of the caller's tenant — recorded, closed — with the settlement as it
+		reads when the move is delivered, not a snapshot of the move: a move made since may already show in it.
+		Narrowed by \`sellerSettlementId\`, by the seller and by \`action\`; a seller's own
+		person hears its own seller's settlements only. Requires the marketplace payouts feature, as the
+		settlement queries do.
+		"""
+		sellerSettlementChanged(sellerSettlementId: ID, sellerId: ID, action: String): SellerSettlement!
+		"""
+		Every move of the seller ledger of the caller's tenant — an order's sale recorded, a row made settleable, a
+		reversal — with the rows the move wrote or changed, each as it reads when the move is delivered: one fact can
+		move several rows, one per seller-owned line, and a change made since may already show in them. Narrowed by the seller, by the order and by \`action\` (\`recorded\`, \`settleable\`, \`reversed\`);
+		a seller's own person is answered only its own seller's rows, and not told of a move that touched none.
+		"""
+		sellerTransactionChanged(sellerId: ID, orderId: ID, action: String): [SellerTransaction!]!
 	}
 `;

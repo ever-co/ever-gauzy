@@ -22,6 +22,7 @@ import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/type-orm-organization-project-employee.repository';
 import { MikroOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/mikro-orm-organization-project-employee.repository';
+import { OrganizationBelongsToUserConstraint } from '../shared/validators/constraints/organization-belongs-to-user.constraint';
 
 /**
  * The employee: the engagement one organization has of one person, and the account it belongs to.
@@ -58,6 +59,9 @@ import { MikroOrmOrganizationProjectEmployeeRepository } from '../organization-p
 		MikroOrmEmployeeRepository,
 		TypeOrmOrganizationTeamEmployeeRepository, MikroOrmOrganizationTeamEmployeeRepository,
 		TypeOrmOrganizationProjectEmployeeRepository, MikroOrmOrganizationProjectEmployeeRepository,
+		// The working routes check organization membership in the controller. ValidatorModule imports
+		// this module, so the stateless constraint is provided here rather than imported from there.
+		OrganizationBelongsToUserConstraint,
 		...CommandHandlers
 	],
 	exports: [

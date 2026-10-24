@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
 import { CommerceCheckoutSessionStatus, ID, IPagination } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { CommerceCheckoutSession } from './commerce-checkout-session.entity';
 import { TypeOrmCommerceCheckoutSessionRepository } from './repository/type-orm-commerce-checkout-session.repository';
 import { MikroOrmCommerceCheckoutSessionRepository } from './repository/mikro-orm-commerce-checkout-session.repository';
+import { CartCrudService } from '../cart-crud.service';
 
 /** The statuses in which a checkout session still holds the cart. */
 const NON_TERMINAL_STATUSES = [
@@ -19,12 +21,30 @@ const NON_TERMINAL_STATUSES = [
  * unique index is the database-side expression of the same rule on the dialects that support one.
  */
 @Injectable()
-export class CommerceCheckoutSessionService extends TenantAwareCrudService<CommerceCheckoutSession> {
+export class CommerceCheckoutSessionService extends CartCrudService<CommerceCheckoutSession> {
 	constructor(
 		readonly typeOrmCommerceCheckoutSessionRepository: TypeOrmCommerceCheckoutSessionRepository,
 		readonly mikroOrmCommerceCheckoutSessionRepository: MikroOrmCommerceCheckoutSessionRepository
 	) {
 		super(typeOrmCommerceCheckoutSessionRepository, mikroOrmCommerceCheckoutSessionRepository);
+	}
+
+	/**
+	 * Opens a checkout session.
+	 *
+	 * **The organization is the request's when the payload states none (R2-G19).** The GraphQL inputs declare
+	 * no organization, and the tenant-aware base stamps the tenant only, so a row written over GraphQL had
+	 * `organizationId = NULL` and every organization-scoped read missed it. A stated organization is kept (REST
+	 * states it, validated against the caller).
+	 *
+	 * @param entity The session to open.
+	 * @returns The opened session.
+	 */
+	public async create(entity: DeepPartial<CommerceCheckoutSession>): Promise<CommerceCheckoutSession> {
+		return super.create({
+			...entity,
+			organizationId: entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as DeepPartial<CommerceCheckoutSession>);
 	}
 
 	/**

@@ -4,6 +4,7 @@ import { CommerceCartStatus, ICommerceCart, ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	ColumnNumericTransformerPipe,
+	ExportRedacted,
 	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
@@ -26,6 +27,7 @@ import { MikroOrmCommerceCartRepository } from './repository/mikro-orm-commerce-
  * makes a cart re-priceable: dropping the cache and recomputing it can never disagree with the
  * ledgers, because the ledgers are what it is computed from.
  */
+@ColumnIndex('UQ_commerce_cart_token_hash', ['tokenHash'], { unique: true, where: '"tokenHash" IS NOT NULL' })
 @MultiORMEntity('commerce_cart', { mikroOrmRepository: () => MikroOrmCommerceCartRepository })
 export class CommerceCart extends TenantOrganizationBaseEntity implements ICommerceCart {
 	/**
@@ -154,6 +156,31 @@ export class CommerceCart extends TenantOrganizationBaseEntity implements IComme
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	orderId?: ID;
+
+	/**
+	 * The checkout that holds this cart while its order is being placed (R3-10).
+	 *
+	 * A completion claims the cart with one conditional update — predicated on the version it validated,
+	 * on a completable status and on `orderId IS NULL` — **before** the checkout handler creates the order.
+	 * Two concurrent completions therefore cannot both reach the handler: the second one's update matches
+	 * no row and it is told the checkout is already in progress. The claim is cleared when the order is
+	 * recorded, released when the handler fails, and lapses after a bounded time so a process that died
+	 * mid-checkout does not hold the cart forever.
+	 *
+	 * No DTO or GraphQL input declares it, so the validation pipe strips it from any body that tries to
+	 * set it; only the checkout path writes it.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ nullable: true, type: 'varchar', length: 36 })
+	checkoutClaimId?: string;
+
+	/** When the checkout named by `checkoutClaimId` claimed the cart; what decides that a claim lapsed. */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	checkoutClaimedAt?: Date;
 
 	/** The address book row the shipping address came from, kept for traceability. */
 	@ApiPropertyOptional({ type: () => String })
@@ -317,6 +344,26 @@ export class CommerceCart extends TenantOrganizationBaseEntity implements IComme
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	externalId?: string;
+
+	/**
+	 * The SHA-256 digest of the cart's guest-access token — never the token itself.
+	 *
+	 * The token is issued when the cart is created and answered once, by that create; `cartByToken` and
+	 * `GET /carts/by-token` (the token in the `X-Cart-Token` header) hash what they are given and look this
+	 * column up within the caller's tenant. Storing the digest is what keeps a read of this table, a backup of
+	 * it or an export from yielding a token that opens a cart. The one other place the plaintext rests is the create's own idempotency
+	 * record, when the caller sent a key: the platform keeps the first answer, token included, so that a retry
+	 * is answered with it, for the key's retention window (at most seven days), and no read surface answers
+	 * that stored body. Null on a cart created before tokens existed, which therefore has none.
+	 *
+	 * The column is no part of any read: TypeORM leaves it out of every `SELECT` (`select: false`), MikroORM
+	 * leaves it out of every serialized row (`hidden`), the export writes it blank, and no DTO or GraphQL
+	 * input declares it, so the validation pipe strips it from any body that tries to set it.
+	 */
+	// a digest of a bearer token that opens a cart — blank, because a digest is not useful to an import
+	@ExportRedacted({ blank: true })
+	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true, select: false, hidden: true })
+	tokenHash?: string;
 
 	/*
 	|--------------------------------------------------------------------------

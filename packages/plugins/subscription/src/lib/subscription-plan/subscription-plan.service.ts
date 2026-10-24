@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import { Money, RequestContext, isUniqueViolation } from '@gauzy/core';
 import {
 	ISubscriptionCatalogPort,
 	ISubscriptionPlan,
@@ -15,6 +15,7 @@ import { SubscriptionPlan } from './subscription-plan.entity';
 import { MikroOrmSubscriptionPlanRepository } from './repository/mikro-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionPlanRepository } from './repository/type-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionRepository } from '../subscription/repository/type-orm-subscription.repository';
+import { SubscriptionCrudService } from '../subscription-crud.service';
 
 /** The statuses that count as a plan being in use. */
 const LIVE_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
@@ -40,7 +41,7 @@ const LIVE_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
  *   variant must not stop an agreement already paid for.
  */
 @Injectable()
-export class SubscriptionPlanService extends TenantAwareCrudService<SubscriptionPlan> {
+export class SubscriptionPlanService extends SubscriptionCrudService<SubscriptionPlan> {
 	constructor(
 		readonly typeOrmSubscriptionPlanRepository: TypeOrmSubscriptionPlanRepository,
 		readonly mikroOrmSubscriptionPlanRepository: MikroOrmSubscriptionPlanRepository,
@@ -102,8 +103,14 @@ export class SubscriptionPlanService extends TenantAwareCrudService<Subscription
 	 * @throws BadRequestException when the plan is in use and the code or its active state would move.
 	 * @throws NotFoundException when the plan is not the caller's.
 	 */
-	public async updatePlan(id: ID, changes: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
+	public async updatePlan(id: ID, stated: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
 		const plan = await this.findOneScoped(id);
+		// A stated currency is checked and written in its canonical form, so the live-subscription check below compares
+		// the value that is stored: `" usd "` is `USD`, and `null` or `"US"` is refused rather than reaching the column.
+		const changes: Partial<SubscriptionPlan> =
+			stated?.currency !== undefined
+				? { ...stated, currency: canonicalPlanCurrency(stated.currency) as never }
+				: stated;
 		const normalized = this.normalize({ ...plan, ...changes } as Partial<SubscriptionPlan>);
 
 		if (changes.code && changes.code !== plan.code) {
@@ -114,6 +121,19 @@ export class SubscriptionPlanService extends TenantAwareCrudService<Subscription
 			}
 
 			await this.assertCodeIsFree(changes.code, id);
+		}
+
+		// The currency is frozen under live subscriptions for the reason the code is (R2-G16): their lines, setup fee
+		// and prorations are priced in it, and `POST /subscriptions` refuses a request whose currency differs from
+		// the plan's. `PUT /subscription-plans/:id` always took a currency; `updateSubscriptionPlan` takes it now too.
+		if (
+			changes.currency !== undefined &&
+			changes.currency !== canonicalStoredCurrency(plan.currency) &&
+			(await this.hasLiveSubscriptions(id))
+		) {
+			throw new BadRequestException(
+				'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE: a plan with live subscriptions cannot change currency; they are priced and billed in it.'
+			);
 		}
 
 		if (changes.isActive === false && plan.isActive !== false && (await this.hasLiveSubscriptions(id))) {
@@ -439,4 +459,35 @@ export class SubscriptionPlanService extends TenantAwareCrudService<Subscription
 			);
 		}
 	}
+}
+
+/**
+ * The canonical form of a plan currency a caller stated: a three-letter ISO 4217 code, upper case.
+ *
+ * @param value The stated currency.
+ * @returns The code, trimmed and upper-cased.
+ * @throws BadRequestException `SUBSCRIPTION_PLAN_CURRENCY_INVALID` for anything that is not three letters, `null` included.
+ */
+function canonicalPlanCurrency(value: unknown): string {
+	const currency = typeof value === 'string' ? value.trim().toUpperCase() : '';
+
+	if (!/^[A-Z]{3}$/.test(currency)) {
+		throw new BadRequestException(
+			'SUBSCRIPTION_PLAN_CURRENCY_INVALID: a plan currency is a three-letter ISO 4217 code, such as USD.'
+		);
+	}
+
+	return currency;
+}
+
+/**
+ * The stored currency of a plan, in the form {@link canonicalPlanCurrency} compares against.
+ *
+ * @param value The stored currency.
+ * @returns It, trimmed and upper-cased; the empty string when none is stored.
+ */
+function canonicalStoredCurrency(value: unknown): string {
+	return String(value ?? '')
+		.trim()
+		.toUpperCase();
 }

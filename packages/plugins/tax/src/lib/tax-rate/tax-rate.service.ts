@@ -2,6 +2,8 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { CurrencyCode, DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
+	IParsedDecimal,
+	LegacyFindOneOptions,
 	Money,
 	RequestContext,
 	TenantAwareCrudService,
@@ -9,9 +11,11 @@ import {
 	compareDecimalStrings,
 	divideDecimalUnits,
 	formatDecimalUnits,
+	multiplyDecimalUnits,
 	normalizeDecimalString,
 	parseDecimalString
 } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TaxCategory } from '../tax-category/tax-category.entity';
 import { TaxCategoryService } from '../tax-category/tax-category.service';
@@ -36,6 +40,13 @@ import {
 	TaxRuleMatcher,
 	TaxWriteInput
 } from '../tax.types';
+import {
+	assertCountryCode,
+	assertOrganizationUnchanged,
+	assertPriority,
+	inCallerOrganization,
+	retirementResult
+} from '../write-rules';
 import { TaxRate } from './tax-rate.entity';
 import { MikroOrmTaxRateRepository } from './repository/mikro-orm-tax-rate.repository';
 import { TypeOrmTaxRateRepository } from './repository/type-orm-tax-rate.repository';
@@ -54,11 +65,26 @@ const TAX_RATE_MATCH_LEVELS: readonly TaxRateMatchLevel[] = [
 ];
 
 /**
- * How many times the inclusive extraction walks a compound chain before it settles. A chain is monotone
- * and every rate of it is non-negative, so the walk converges in a couple of passes; the bound is what
- * keeps a pathological rate set from looping.
+ * Digits the extracted net is carried beyond the currency's scale before it is rounded half-up. The
+ * quotient is truncated there, and a truncated quotient rounds exactly as the true one does as long as
+ * at least one digit is kept below the boundary; four is the money layer's own division guard.
  */
-const TAX_EXTRACTION_PASSES = 4;
+const TAX_EXTRACTION_GUARD_DIGITS = 4;
+
+/** Exact zero and one, as the decimal kernel carries them. */
+const EXACT_ZERO: IParsedDecimal = { units: 0n, scale: 0 };
+const EXACT_ONE: IParsedDecimal = { units: 1n, scale: 0 };
+
+/**
+ * The tax of a chain as a function of the net it is assessed on: `tax(net) = slope × net + intercept`,
+ * with both coefficients exact. Every part of a chain is linear in the net — a percentage part is a share
+ * of the net or of the running total, and the running total is the net plus the parts before it; a fixed
+ * part is a constant — so the whole chain is.
+ */
+interface ILinearTax {
+	slope: IParsedDecimal;
+	intercept: IParsedDecimal;
+}
 
 /**
  * Renders a `numeric(9,6)` rate as the fixed six-decimal form the wire and the tax ledger carry.
@@ -102,6 +128,20 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	}
 
 	/**
+	 * Reads a tax rate of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRate>): Promise<TaxRate> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
+	}
+
+	/**
 	 * Retrieves a paginated list of tax rates.
 	 *
 	 * @param filter Optional filtering criteria.
@@ -135,6 +175,8 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 		this.assertPostalCodePattern(entity.postalCodePattern);
 		this.assertCompoundPriority(entity.isCompound, entity.priority);
 		this.assertDirection(entity.direction);
+		assertPriority(entity.priority, 'a tax rate');
+		assertCountryCode(entity.countryCode, 'a tax rate');
 		await this.assertCodeIsUnambiguous({
 			organizationId,
 			code: entity.code,
@@ -164,20 +206,33 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			throw new NotFoundException(`The tax rate ${id} was not found.`);
 		}
 
+		assertOrganizationUnchanged(entity, rate.organizationId, RequestContext.currentOrganizationId(), 'A tax rate');
+		assertPriority(entity.priority, 'a tax rate');
+		assertCountryCode(entity.countryCode, 'a tax rate');
+
 		if (entity.taxCategoryId) {
 			await this.assertCategoryExists(entity.taxCategoryId);
 		}
 		if (entity.rate !== undefined) {
 			this.assertRate(entity.rate);
 		}
+		// A member the caller states — `null` included, which clears it — is validated as written; only an
+		// absent member keeps the stored value. Reading `null` as "keep" checked a value the write was
+		// about to replace (R2-30).
 		if (entity.startsAt !== undefined || entity.endsAt !== undefined) {
-			this.assertWindow(entity.startsAt ?? rate.startsAt, entity.endsAt ?? rate.endsAt);
+			this.assertWindow(
+				entity.startsAt !== undefined ? entity.startsAt : rate.startsAt,
+				entity.endsAt !== undefined ? entity.endsAt : rate.endsAt
+			);
 		}
 		if (entity.postalCodePattern !== undefined) {
 			this.assertPostalCodePattern(entity.postalCodePattern);
 		}
-		if (entity.isCompound === true) {
-			this.assertCompoundPriority(entity.isCompound, entity.priority ?? rate.priority);
+		// A rate that compounds after the write — because the caller made it compound, or because it already
+		// was and the caller changes its priority — must keep a priority.
+		const compoundAfterWrite = entity.isCompound !== undefined ? entity.isCompound : rate.isCompound;
+		if (compoundAfterWrite === true && (entity.isCompound !== undefined || entity.priority !== undefined)) {
+			this.assertCompoundPriority(true, entity.priority !== undefined ? entity.priority : rate.priority);
 		}
 		this.assertDirection(entity.direction);
 		if (entity.amountType === TaxAmountType.FIXED) {
@@ -270,8 +325,7 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 * @returns The delete result, so the route keeps the platform's response shape.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<TaxRate>): Promise<DeleteResult> {
-		await super.softDelete(criteria);
-		return { affected: 1, raw: [] } as DeleteResult;
+		return retirementResult(await super.softDelete(criteria));
 	}
 
 	/**
@@ -1030,10 +1084,16 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 *
 	 * A single rate that does not compound and whose breakdown is the whole rate on the whole base is
 	 * extracted by one exact division — the net is the only unknown in `net + net × rate = gross`. Every
-	 * other chain has no closed form: a compound rate's base includes the amount of the rate before it and
-	 * a part's base is its own share of the value, so the net is found by walking the chain a bounded
-	 * number of times from the gross downward. The walk converges because the chain is monotone and every
-	 * rate of it is non-negative.
+	 * other chain is solved the same way, because it is linear in the net too: a compound rate's base is
+	 * the net plus the parts before it and a part's base is its own share of that, so the chain's tax is
+	 * `slope × net + intercept` (see {@link linearTaxOf}) and the net is the one unknown of
+	 * `net + slope × net + intercept = gross`. The coefficients are exact decimals and the one division
+	 * is rounded half-up at the currency's scale, exactly as the single-rate case is; the per-part rounding
+	 * of the drafts is then reconciled by the residual rule.
+	 *
+	 * This replaces a walk from the gross downward that stopped after four passes (R2-29). Its error only
+	 * shrank by the chain's effective rate per pass, so a 5 % + 9.975 % compound chain left a gross of
+	 * 10 000.00 about 0.77 away from its net, and a chain whose rates sum to 100 % or more never converged.
 	 *
 	 * @param gross The amount including tax.
 	 * @param chain The rates that are inside the gross.
@@ -1041,6 +1101,8 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 	 * @param currency The currency of the document.
 	 * @param regime The regime the document is taxed under.
 	 * @returns The net, at the currency's scale.
+	 * @throws BadRequestException when the chain takes the whole net or more, so that no net is contained
+	 * in the gross.
 	 */
 	private extractNet(
 		gross: Money,
@@ -1056,26 +1118,117 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			return gross.divide(denominator.amount, { scale: gross.decimals });
 		}
 
-		let net = gross;
-		for (let pass = 0; pass < TAX_EXTRACTION_PASSES; pass++) {
-			const tax = this.sumDrafts(this.chainTaxLines(net, chain, currency, quantity, regime), currency);
-			const candidate = gross.subtract(tax).round();
+		const { slope, intercept } = this.linearTaxOf(chain, currency, quantity);
+		const denominator = this.addExact(EXACT_ONE, slope);
 
-			if (candidate.compare(net) === 0) {
-				return candidate;
-			}
+		if (denominator.units <= 0n) {
+			const rates = chain.map((rate) => rate.code ?? rate.name).join(', ');
+			const under = regime?.taxRegimeId ? ` under the regime ${regime.taxRegimeId}` : '';
 
-			net = candidate;
+			throw new BadRequestException(
+				`TAX_INCLUSIVE_NO_NET: the rates ${rates}${under} take the whole net or more, ` +
+					`so no net is contained in the gross ${gross.amount} ${currency}.`
+			);
 		}
 
-		return net.round();
+		const numerator = this.addExact(parseDecimalString(gross.amount), this.negateExact(intercept));
+		const scale = Math.min(WORKING_SCALE, gross.decimals + TAX_EXTRACTION_GUARD_DIGITS);
+		const quotient = formatDecimalUnits(divideDecimalUnits(numerator, denominator, scale), scale);
+
+		return Money.of(quotient, currency, gross.decimals).round();
+	}
+
+	/**
+	 * The tax of a chain as an exact linear function of the net it is assessed on.
+	 *
+	 * It mirrors {@link chainTaxLines} part by part: a percentage part is `rate × baseFactor × share` of
+	 * the net, or of the running total when its rate compounds, without the per-part rounding that only
+	 * the drafts apply; a fixed part is the amount {@link partAmount} posts for it — already rounded at the
+	 * currency's scale, because that rounding does not depend on the net and the posted amount is what the
+	 * gross contains; and the running total starts at the net and accumulates every part.
+	 *
+	 * @param chain The rates, in the order they are applied.
+	 * @param currency The currency of the document.
+	 * @param quantity The owner's quantity, which a fixed part is applied per unit of.
+	 * @returns The slope and the intercept of the chain's tax.
+	 */
+	private linearTaxOf(chain: IResolvedTaxRate[], currency: CurrencyCode, quantity: DecimalString): ILinearTax {
+		let slope = EXACT_ZERO;
+		let intercept = EXACT_ZERO;
+		let runningSlope = EXACT_ONE;
+		let runningIntercept = EXACT_ZERO;
+
+		for (const rate of chain) {
+			for (const part of [...rate.parts].sort((left, right) => left.sequence - right.sequence)) {
+				if (part.partType !== TaxPartType.TAX) {
+					continue;
+				}
+
+				const share = this.exact(this.fraction(part.factorPercent));
+				let partSlope = EXACT_ZERO;
+				let partIntercept = EXACT_ZERO;
+
+				if (part.amountType === TaxAmountType.FIXED) {
+					// The base is not read for a fixed part; the amount is the one the draft will carry.
+					partIntercept = this.exact(
+						this.partAmount(part, Money.zero(currency), rate, currency, quantity).amount
+					);
+				} else {
+					const factor = multiplyDecimalUnits(
+						multiplyDecimalUnits(this.exact(rate.rate), this.exact(part.baseFactor)),
+						share
+					);
+
+					partSlope = multiplyDecimalUnits(rate.isCompound ? runningSlope : EXACT_ONE, factor);
+					partIntercept = rate.isCompound ? multiplyDecimalUnits(runningIntercept, factor) : EXACT_ZERO;
+				}
+
+				slope = this.addExact(slope, partSlope);
+				intercept = this.addExact(intercept, partIntercept);
+				runningSlope = this.addExact(runningSlope, partSlope);
+				runningIntercept = this.addExact(runningIntercept, partIntercept);
+			}
+		}
+
+		return { slope, intercept };
+	}
+
+	/**
+	 * @param value A decimal as the wire or the kernel carries it.
+	 * @returns Its exact units, without redundant trailing zeroes so that products stay short.
+	 */
+	private exact(value: DecimalString | number): IParsedDecimal {
+		return parseDecimalString(normalizeDecimalString(value));
+	}
+
+	/**
+	 * @param left One exact decimal.
+	 * @param right Another.
+	 * @returns Their exact sum.
+	 */
+	private addExact(left: IParsedDecimal, right: IParsedDecimal): IParsedDecimal {
+		const scale = Math.max(left.scale, right.scale);
+
+		return {
+			units: left.units * 10n ** BigInt(scale - left.scale) + right.units * 10n ** BigInt(scale - right.scale),
+			scale
+		};
+	}
+
+	/**
+	 * @param value An exact decimal.
+	 * @returns The same decimal with the opposite sign.
+	 */
+	private negateExact(value: IParsedDecimal): IParsedDecimal {
+		return { units: -value.units, scale: value.scale };
 	}
 
 	/**
 	 * @param rate A resolved rate.
-	 * @returns Whether the rate is one percentage part carrying the whole rate on the whole base, which is
-	 * the only breakdown whose net has a closed form. Any other breakdown — a reduced base, a split share,
-	 * a fixed amount — has to be walked, because the net is no longer the only unknown.
+	 * @returns Whether the rate is one percentage part carrying the whole rate on the whole base. Such a rate
+	 * is extracted by one division of the gross by `1 + rate`; every other breakdown — a reduced base, a
+	 * split share, a fixed amount — is extracted through the chain's linear coefficients (see
+	 * {@link linearTaxOf}).
 	 */
 	private isWholeRateOnWholeBase(rate: IResolvedTaxRate): boolean {
 		if (rate.parts.length !== 1) {
@@ -1262,18 +1415,20 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 			return;
 		}
 
+		// Every rate of the code is read, not only those of the same direction: a `BOTH` rate applies to sales
+		// and purchases alike, so a `SALE` rate of the same code and window is the same code meaning two
+		// rates on the sales path — which the direction filter in the query used to hide (R2-30).
 		const neighbours = await this.find({
 			where: {
 				organizationId: candidate.organizationId ?? this.requireOrganizationId(),
-				code: candidate.code,
-				direction: candidate.direction
+				code: candidate.code
 			} as FindOptionsWhere<TaxRate>
 		});
 
 		const overlap = neighbours.find(
 			(rate) =>
 				rate.id !== candidate.exceptId &&
-				(rate.direction ?? TaxDirection.SALE) === candidate.direction &&
+				this.directionsOverlap(rate.direction ?? TaxDirection.SALE, candidate.direction) &&
 				this.windowsOverlap(candidate.startsAt, candidate.endsAt, this.toDate(rate.startsAt), this.toDate(rate.endsAt))
 		);
 
@@ -1282,6 +1437,16 @@ export class TaxRateService extends TenantAwareCrudService<TaxRate> {
 				`TAX_RATE_WINDOW_OVERLAP: the rate "${candidate.code}" already exists for this direction and its window overlaps the one being written.`
 			);
 		}
+	}
+
+	/**
+	 * @param left The direction of one rate.
+	 * @param right The direction of another.
+	 * @returns Whether a document of some direction is taxed by both: the same direction, or either of
+	 * them `BOTH`.
+	 */
+	private directionsOverlap(left: TaxDirection, right: TaxDirection): boolean {
+		return left === right || left === TaxDirection.BOTH || right === TaxDirection.BOTH;
 	}
 
 	/**

@@ -257,6 +257,19 @@ describe('DocumentLinksPanelComponent — record-side Documents panel (spec 00 �
 			expect(router.navigate).toHaveBeenLastCalledWith(['/pages/documents'], { queryParams: { id: FILE_ID } });
 		});
 
+		it('reads a family and a short type label from the MIME type and file name', () => {
+			const { panel } = createPanel();
+			const image = fileLink({
+				document: { id: FILE_ID, name: 'Screenshot.png', kind: DocumentKindEnum.FILE, mimeType: 'image/png' } as IDocument
+			});
+
+			expect(panel.familyOf(fileLink())).toBe('pdf');
+			expect(panel.familyOf(image)).toBe('image');
+			expect(panel.familyOf(pageLink())).toBe('page');
+			expect(panel.typeOf(image)).toBe('PNG');
+			expect(panel.typeOf(pageLink())).toBe('');
+		});
+
 		it('resolves the signed URL through the authenticated client before opening it', async () => {
 			// 🛑 `/:id/download` answers `{ url }` as JSON behind the JWT guard — handing
 			// the endpoint itself to the browser sends no token and lands on a 401.
@@ -324,6 +337,69 @@ describe('DocumentLinksPanelComponent — record-side Documents panel (spec 00 �
 			await panel.uploadNew({ files: [], value: '' } as unknown as HTMLInputElement);
 
 			expect(documentsService.upload).not.toHaveBeenCalled();
+		});
+
+		it('uploads every picked file in turn, keeps going past a failure, and sums up once', async () => {
+			const { panel, documentsService, toastrService } = createPanel();
+			const respond = (id: string) => of(new HttpResponse({ body: { id, name: id } as IDocument }));
+			documentsService.upload
+				.mockReturnValueOnce(respond('a'))
+				.mockReturnValueOnce(throwError(() => new Error('too large')))
+				.mockReturnValueOnce(respond('c'));
+
+			const files = ['a.pdf', 'b.zip', 'c.png'].map((name) => new File(['x'], name));
+			await panel.uploadNew({ files, value: 'a.pdf' } as unknown as HTMLInputElement);
+
+			expect(documentsService.upload).toHaveBeenCalledTimes(3);
+			expect(documentsService.createLink).toHaveBeenCalledTimes(2);
+			expect(toastrService.success).toHaveBeenCalledWith('DOCS.LINKS.TOAST_ADDED_MANY');
+			expect(toastrService.danger).toHaveBeenCalledWith('DOCS.LINKS.TOAST_FAILED_SOME');
+			// Reloaded once for the batch, and idle again.
+			expect(documentsService.findLinks).toHaveBeenCalledTimes(1);
+			expect(panel.uploading).toBe(false);
+			expect(panel.uploadProgress).toBeNull();
+		});
+
+		it('takes files dropped on the panel, and ignores drags that carry no files', () => {
+			const { panel } = createPanel();
+			const uploadFiles = jest.spyOn(panel, 'uploadFiles').mockResolvedValue();
+			const dropped = [new File(['x'], 'a.pdf'), new File(['y'], 'b.pdf')];
+			const drag = (types: string[]) =>
+				({ preventDefault: jest.fn(), dataTransfer: { types, files: dropped, dropEffect: 'none' } }) as unknown as DragEvent;
+
+			panel.onDragEnter(drag(['text/plain']));
+			expect(panel.dragActive).toBe(false);
+
+			panel.onDragEnter(drag(['Files']));
+			expect(panel.dragActive).toBe(true);
+			panel.onDrop(drag(['Files']));
+
+			expect(panel.dragActive).toBe(false);
+			expect(uploadFiles).toHaveBeenCalledWith(dropped);
+		});
+
+		it('is no drop target while a batch is uploading — the files would be dropped silently', () => {
+			const { panel } = createPanel();
+			const uploadFiles = jest.spyOn(panel, 'uploadFiles');
+			panel.uploading = true;
+			const drag = { preventDefault: jest.fn(), dataTransfer: { types: ['Files'], files: [] } } as unknown as DragEvent;
+
+			panel.onDragEnter(drag);
+			panel.onDrop(drag);
+
+			expect(panel.dragActive).toBe(false);
+			// Not prevented, so the browser refuses the drop instead of the panel swallowing it.
+			expect(drag.preventDefault).not.toHaveBeenCalled();
+			expect(uploadFiles).not.toHaveBeenCalled();
+		});
+
+		it('is no drop target on a read-only host', () => {
+			const { panel } = createPanel();
+			panel.readonly = true;
+
+			panel.onDragEnter({ preventDefault: jest.fn(), dataTransfer: { types: ['Files'] } } as unknown as DragEvent);
+
+			expect(panel.dragActive).toBe(false);
 		});
 	});
 });

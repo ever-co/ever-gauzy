@@ -116,6 +116,14 @@ enum IntegrationEntity {
 	Proposal
 	JOB_MATCHING
 	EMPLOYEE_PERFORMANCE
+	Goal
+	KeyResult
+	OrganizationTeam
+	StrategicInitiative
+	Comment
+	Document
+	InboxItem
+	Agent
 }
 
 """

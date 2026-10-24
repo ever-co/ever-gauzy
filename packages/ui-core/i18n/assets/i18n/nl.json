@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Je moet werknemer zijn om tijd te kunnen bijhouden, kosten te kunnen splitsen en andere functies gerelateerd aan werknemers te kunnen gebruiken."
 	},
 	"MENU": {
+		"INITIATIVES": "Initiatieven",
 		"BREADCRUMB": "Kruimelpad",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
@@ -1212,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Gebruikersinterface",
-			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn. Beide interfaces tonen dezelfde pagina's, met dezelfde gegevens, indeling en functies — alleen de onderliggende technologie verschilt, dus overschakelen verandert niets aan wat je gebruikers zien of kunnen doen.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (standaard)",
 				"REACT": "React (nieuw)"
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Soort",
+		"KIND_ALL": "Alle",
+		"KIND_HUMAN": "Personen",
+		"KIND_AGENT": "Agenten",
+		"AGENT_BADGE": "Agent",
+		"MANAGED_BY_EVER_WORKS": "Beheerd door Ever Works: de naam en het profiel van deze agent worden in Ever Works gewijzigd en met Gauzy gesynchroniseerd.",
+		"MANAGED_EXTERNALLY": "Extern beheerd: de naam en het profiel van deze agent worden in het bronsysteem gewijzigd en met Gauzy gesynchroniseerd.",
+		"OPEN_MANAGED_AGENT": "Agentpagina openen",
 		"HEADER": "Beheer medewerkers",
 		"ADD_EMPLOYEE": "Voeg medewerker toe",
 		"ACTIVE": "Actief",
@@ -2088,7 +2097,68 @@
 				"IN_DAYS": "Over {{ count }} dagen"
 			},
 			"SHOWING": "{{ shown }} van {{ total }} taken getoond",
-			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave"
+			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave",
+			"PROJECTS_CAPTION": "Hun projecten en de tijd die er deze periode aan is besteed",
+			"NO_PROJECTS": "Geen lid van een project en geen projecttijd in deze periode",
+			"NOT_A_MEMBER": "Geen lid",
+			"NOT_A_MEMBER_HINT": "Er is tijd op dit project geregistreerd, maar zij zijn er geen lid van",
+			"VIEW_PROFILE": "Profiel bekijken",
+			"MEMBERSHIP_UNKNOWN": "Het projectlidmaatschap kon niet worden geladen, dus leden en niet-leden worden niet onderscheiden.",
+			"PROJECT_TIMES_PARTIAL": "Sommige projecttijden konden niet worden geladen, dus een project zonder tijd kan toch tijd hebben."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Strategische initiatieven",
+		"SUBTITLE": "De richtingen waarin uw organisatie wil bewegen, en de doelen, projecten en teams die daarop zijn afgestemd.",
+		"ADD": "Initiatief toevoegen",
+		"EDIT": "Initiatief bewerken",
+		"EMPTY": "Nog geen strategische initiatieven.",
+		"TITLE": "Titel",
+		"STATE": "Status",
+		"VISIBILITY": "Zichtbaarheid",
+		"TEAMS": "Teams",
+		"TEAMS_HINT": "Bij zichtbaarheid \"Team\" zien de leden van deze teams (en van de teams van gekoppelde projecten) het initiatief.",
+		"PROJECTS": "Projecten",
+		"GOALS": "Doelen",
+		"CONFIDENCE": "Vertrouwen",
+		"MOMENTUM": "Momentum",
+		"INTENT": "Intentie",
+		"INTENT_HINT": "Wat willen we bewust vooruit helpen, en waarom?",
+		"STEWARD": "Verantwoordelijke",
+		"SIGNALS": "Signalen",
+		"KNOWN_RISKS": "Bekende risico's",
+		"KNOWN_RISKS_HINT": "Eén risico per regel",
+		"NOTES": "Notities",
+		"LAST_ASSESSED": "Laatst beoordeeld",
+		"NO_TEAMS": "Geen teams gekoppeld.",
+		"NO_GOALS": "Geen doelen gekoppeld.",
+		"NO_PROJECTS": "Geen projecten gekoppeld.",
+		"NOT_FOUND": "Het initiatief is niet gevonden of u mag het niet zien.",
+		"DELETE_TITLE": "Initiatief verwijderen",
+		"DELETE_CONFIRMATION": "Initiatief \"{{ name }}\" verwijderen?",
+		"DELETED": "Initiatief \"{{ name }}\" verwijderd.",
+		"CREATED": "Initiatief \"{{ name }}\" aangemaakt.",
+		"UPDATED": "Initiatief \"{{ name }}\" bijgewerkt.",
+		"STATES": {
+			"DRAFT": "Concept",
+			"ACTIVE": "Actief",
+			"RESOLVED": "Bereikt",
+			"RETIRED": "Stopgezet"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Leiding",
+			"ORGANIZATION": "Organisatie",
+			"TEAM": "Team"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Laag",
+			"MEDIUM": "Gemiddeld",
+			"HIGH": "Hoog"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Stilgevallen",
+			"PROGRESSING": "Vordert",
+			"ACCELERATING": "Versnelt"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2107,6 +2177,17 @@
 		"UPDATE": "Bijwerken",
 		"ALIGNMENTS": "Uitlijningen",
 		"COMMENTS": "Reacties",
+		"COMMENT_THREAD": {
+			"REPLY": "Beantwoorden",
+			"ONE_MESSAGE": "1 bericht",
+			"MESSAGES": "{{ count }} berichten",
+			"NO_MESSAGES": "Er zijn nog geen berichten in deze thread.",
+			"REPLY_PLACEHOLDER": "Reageer op deze opmerking…",
+			"UNKNOWN_AUTHOR": "Onbekend",
+			"DELETE_CONFIRM": "Deze opmerking verwijderen?",
+			"DELETED": "Opmerking verwijderd",
+			"LOAD_ERROR": "De opmerkingen konden niet worden geladen."
+		},
 		"KEY_RESULTS": "Belangrijkste Resultaten",
 		"GROUP_BY": "Groeperen op",
 		"DELETE_OBJECTIVE": "Doel verwijderen",
@@ -2154,6 +2235,7 @@
 			"NO_KEY_RESULT": "Geen sleutelresultaten om weer te geven.",
 			"NO_UPDATES": "Nog geen updates.",
 			"NO_ALIGNMENT": "Nog geen uitlijningen.",
+			"NO_COMMENTS": "Nog geen opmerkingen.",
 			"NO_PROGRESS_DATA": "Nog geen voortgangsgegevens om weer te geven."
 		},
 		"LEVELS": {
@@ -2670,7 +2752,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Leden"
+				"MEMBERS": "Leden",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Details"
+					},
+					"PUBLIC": "Openbaar",
+					"PRIVATE": "Privé",
+					"PREFIX": "Taakprefix",
+					"MEMBERS_COUNT": "{{ count }} leden",
+					"LIVE": "{{ tracking }} registreren nu · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} van {{ total }} leden",
+					"CREATED": "Aangemaakt",
+					"UPDATED": "Laatst bijgewerkt",
+					"ACTIVE_MEMBERS": "Actieve leden",
+					"ACTIVE_MEMBERS_META": "van {{ total }} leden registreerden tijd",
+					"TIME_BY_MEMBER": "Tijd per lid",
+					"TEAM_TASKS": "Teamtaken",
+					"NO_TEAM_TASKS": "Geen taken toegewezen aan dit team",
+					"NO_MEMBERS": "Dit team heeft nog geen leden",
+					"NO_PROJECTS": "Geen projecten gekoppeld aan dit team",
+					"COLUMNS": {
+						"MEMBER": "Lid",
+						"ROLE": "Rol",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Huidige taak",
+						"TODAY": "Vandaag",
+						"ACTIVITY": "Activiteit"
+					},
+					"ROLE": {
+						"MANAGER": "Manager",
+						"MEMBER": "Lid"
+					},
+					"GENERAL": "Algemeen",
+					"SETTINGS": "Instellingen",
+					"RECORD": "Record",
+					"TEAM_SIZE": "Teamgrootte",
+					"COLOR": "Kleur",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Profiellink",
+					"VISIBILITY": "Zichtbaarheid",
+					"SHARE_PROFILE_VIEW": "Leden kunnen elkaars profielen zien",
+					"REQUIRE_PLAN": "Plan vereist om tijd te registreren",
+					"NOT_FOUND": "Dit team is niet gevonden",
+					"LOAD_FAILED": "Het team kon niet worden geladen",
+					"RETRY": "Opnieuw proberen",
+					"OPEN_TASK_DETAILS": "Details van {{ title }} tonen",
+					"OPEN_PROJECT_DETAILS": "Details van project {{ name }} tonen",
+					"PROJECT_PROGRESS": "Voortgang",
+					"PROJECT_PROGRESS_META": "{{ done }} van {{ total }} taken klaar",
+					"NO_PROJECT_TASKS": "Nog geen taken in dit project",
+					"TOP_CONTRIBUTORS": "Wie het meest heeft gewerkt",
+					"TOP_CONTRIBUTORS_CAPTION": "Tijd van teamleden aan dit project · {{ range }}",
+					"PROJECT_ACTIVITY": "Dagelijkse activiteit",
+					"NEEDS_ATTENTION": "Vraagt aandacht",
+					"NEEDS_ATTENTION_CAPTION": "Achterstallige taken en taken die binnen 3 dagen vervallen",
+					"BUDGET_USED": "{{ used }} van {{ budget }} gebruikt",
+					"OVER_BUDGET": "{{ value }} boven budget",
+					"OPEN_TASK_PAGE": "Pagina van {{ title }} openen",
+					"OPEN_TASK_PAGE_SHORT": "Taakpagina openen",
+					"UNASSIGNED": "Niet toegewezen",
+					"SHOW_ALL": "Alles tonen",
+					"SHOW_LESS": "Minder tonen",
+					"PROJECTS_CAPTION": "De projecten van het team en de tijd die er deze periode aan is besteed",
+					"NOT_LINKED": "Niet gekoppeld",
+					"NOT_LINKED_HINT": "Leden hebben tijd op dit project geregistreerd, maar het is niet aan het team gekoppeld"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2815,6 +2962,9 @@
 			"DOCS_MANAGE": "Documentcategorieën en invoeradressen beheren",
 			"DOCS_REVIEW": "Documentbeoordelingen goedkeuren/afwijzen",
 			"DOCS_AI_IMPORT": "AI-kennis van documenten beheren",
+			"INBOX_VIEW": "Inbox bekijken",
+			"INBOX_MAILBOX_MANAGE": "Mailboxen en provideraccounts beheren",
+			"INBOX_MAILBOX_READ_ALL": "Alle gedeelde mailboxen lezen",
 			"INSUFFICIENT": "U heeft onvoldoende rechten. De volgende rechten ontbreken:",
 			"ORG_SPRINT_EDIT": "Sprint bewerken",
 			"ORG_SPRINT_VIEW": "Sprint bekijken",
@@ -3055,7 +3205,27 @@
 			"SELLER_PAYOUTS_CREATE": "Uitbetalingen aan verkopers aanmaken",
 			"SELLER_PAYOUTS_APPROVE": "Uitbetalingen aan verkopers goedkeuren",
 			"SELLER_PAYOUTS_CANCEL": "Uitbetalingen aan verkopers annuleren",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Verwijder organisatiestrategische initiatief"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Verwijder organisatiestrategische initiatief",
+			"INTEGRATION_ADD": "Integraties toevoegen",
+			"INTEGRATION_EDIT": "Integraties bewerken",
+			"INTEGRATION_DELETE": "Integraties verwijderen",
+			"AI_CHAT_ACCESS": "Toegang tot AI-chat",
+			"AI_CHAT_SETTINGS": "AI-chatinstellingen beheren",
+			"ORG_JOB_APPLY": "Solliciteren op vacatures",
+			"ORG_JOB_SEARCH": "Vacatures bekijken",
+			"ORG_JOB_EDIT": "Vacatures bewerken",
+			"ORG_EMPLOYEES_ADD": "Organisatiemedewerkers aanmaken",
+			"ORG_EMPLOYEES_DELETE": "Organisatiemedewerkers verwijderen",
+			"DAILY_PLAN_CREATE": "Dagplannen maken",
+			"DAILY_PLAN_READ": "Dagplannen bekijken",
+			"DAILY_PLAN_UPDATE": "Dagplannen bijwerken",
+			"DAILY_PLAN_DELETE": "Dagplannen verwijderen",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Account als teamlid verwijderen",
+			"CUSTOM_SMTP_EDIT": "Aangepaste SMTP bewerken",
+			"IMPORT_ADD": "Uw gegevens importeren",
+			"EXPORT_ADD": "Uw gegevens exporteren",
+			"OAUTH_CLIENT_VIEW": "OAuth-clients bekijken",
+			"OAUTH_CLIENT_EDIT": "OAuth-clients beheren"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",
@@ -3089,6 +3259,35 @@
 			"CONTINUE": "Doorgaan",
 			"SKIP": "Overslaan",
 			"CREATE": "Organisatie aanmaken"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Projectonderdelen",
+			"DETAILS": "Details",
+			"LOGO": "Projectlogo",
+			"LOGO_HINT": "Optioneel. Klik op het logo om een vierkante afbeelding te uploaden.",
+			"PEOPLE": "Mensen",
+			"TIMELINE": "Tijdlijn",
+			"APPEARANCE": "Weergave",
+			"OPTIONS": "Opties",
+			"REPOSITORY": "Repository",
+			"TASK_SYNC": "Taaksynchronisatie",
+			"CREATE_SUBTITLE": "Stel een nieuw project in met de mensen, tijdlijn en facturering.",
+			"OPEN_SOURCE_TITLE": "Open-sourceproject",
+			"OPEN_SOURCE_DESCRIPTION": "Deel de code van dit project openbaar. Zet dit aan om de link naar de openbare repository toe te voegen.",
+			"OPEN_SOURCE_URL_HINT": "Het openbare adres van de code, bijvoorbeeld een GitHub- of GitLab-repository.",
+			"OPEN_REPOSITORY": "Repository openen",
+			"DESCRIPTION_CARD_DESC": "Beschrijf de doelen en reikwijdte van het project voor iedereen die eraan werkt.",
+			"TAGS_DESC": "Geef het project tags, zodat het makkelijker te vinden en te groeperen is.",
+			"BILLING_DESC": "Hoe de klant voor dit project wordt gefactureerd, en in welke valuta.",
+			"BUDGET_DESC": "Stel een budget in uren of kosten in om het project op koers te houden.",
+			"APPEARANCE_DESC": "De kleur van het project en hoe de taken worden getoond.",
+			"PUBLIC_TITLE": "Openbaar project",
+			"PUBLIC_DESC": "Bij een openbaar project ziet iedereen wie eraan werkt. Bij een privéproject ziet ieder alleen zichzelf, tenzij diegene toegang heeft tot privéprojecten.",
+			"BILLABLE_DESC": "Markeer het werk aan dit project als factureerbaar aan de klant.",
+			"REPOSITORY_DESC": "Kies de GitHub-repository waarvan dit project de issues gebruikt.",
+			"AUTO_SYNC_DESC": "Houd de taken van het project gelijk met de issues van de repository. Wijzigingen hier worden direct opgeslagen.",
+			"SYNC_LABEL_TITLE": "Synchroniseren op label",
+			"SYNC_LABEL_DESC": "Synchroniseer alleen issues met het label dat je instelt. Wijzigingen hier worden direct opgeslagen."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3150,9 +3349,14 @@
 		"MEMBER_SINCE": "Lid sinds",
 		"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd",
 		"NO_SKILLS": "Nog geen vaardigheden vermeld",
+		"NO_EMPLOYEES": "Nog geen medewerkers om te tonen",
+		"NO_CLIENTS": "Nog geen klanten om te tonen",
+		"EMPLOYEES_LOAD_FAILED": "Medewerkers konden niet worden geladen.",
+		"CLIENTS_LOAD_FAILED": "Klanten konden niet worden geladen.",
 		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
 		"EDIT": {
 			"NO_AWARDS": "Nog geen onderscheidingen",
+			"NO_LANGUAGES": "Nog geen talen toegevoegd",
 			"ADD_AWARD": "Onderscheiding toevoegen",
 			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
 		}
@@ -3368,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "De datum moet na de aanvraagdatum liggen.",
 			"EXCEED_PERIOD_ERR": "Het maximale aantal toegestane dagen voor dit item is",
 			"BEFORE_START_DATE_ERR": "Einddatum kan niet vóór de begindatum zijn.",
-			"ITEM_RETURNED_BEFORE_ERR": "Item moet worden teruggebracht voor"
+			"ITEM_RETURNED_BEFORE_ERR": "Item moet worden teruggebracht voor",
+			"CHANGED_BY_SOMEONE_ELSE": "Iemand anders heeft dit verzoek intussen gewijzigd. De lijst is opnieuw geladen: controleer het verzoek en probeer het opnieuw."
 		},
 		"ACTIONS": "Acties",
 		"APPROVE": "Goedkeuren",
@@ -3783,17 +3988,20 @@
 		"USER": {
 			"MANAGE": "Beheer gebruikersuitnodigingen",
 			"HEADER": "Nodig gebruikers uit",
-			"ACTION": "Uitnodigen van gebruikers"
+			"ACTION": "Uitnodigen van gebruikers",
+			"DESCRIPTION": "Nodig mensen uit om lid te worden van uw organisatie als gebruiker. Elke ontvanger krijgt een e-mail met een beveiligde link om te accepteren."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Beheer werknemersuitnodigingen",
 			"HEADER": "Nodig werknemers uit",
-			"ACTION": "Nodig werknemers uit."
+			"ACTION": "Nodig werknemers uit.",
+			"DESCRIPTION": "Nodig mensen uit om lid te worden van uw organisatie als medewerker. Elke ontvanger krijgt een e-mail met een beveiligde link om te accepteren."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Beheer Kandidaat Uitnodigingen",
 			"HEADER": "Kandidaten uitnodigen",
-			"ACTION": "Nodig kandidaten uit"
+			"ACTION": "Nodig kandidaten uit",
+			"DESCRIPTION": "Nodig kandidaten uit voor uw wervingsproces. Elke ontvanger krijgt een e-mail met een beveiligde link om te accepteren."
 		},
 		"SENT": "{{total}} Uitnodigingen Verzonden.",
 		"IGNORED": "{{total}} Uitnodigingen verstuurd. {{ignored}} waren al uitgenodigd en zijn genegeerd.",
@@ -3803,6 +4011,23 @@
 			"TWO_WEEK": "14 Dagen",
 			"MONTH": "30 dagen",
 			"NEVER": "Nooit"
+		},
+		"FORM": {
+			"RECIPIENTS": "Ontvangers",
+			"EMAILS_PLACEHOLDER": "naam@bedrijf.nl",
+			"EMAILS_HINT": "Druk na elk adres op Enter om meerdere ontvangers toe te voegen.",
+			"CLEAR_EMAILS": "Alles wissen",
+			"ACCESS": "Toegang",
+			"ACCESS_HINT": "Optioneel. Kies waartoe nieuwe leden direct toegang krijgen zodra ze lid worden.",
+			"DETAILS": "Uitnodigingsdetails",
+			"RECIPIENT_COUNT": "Ontvangers: {{count}}",
+			"NO_RECIPIENTS": "Nog geen ontvangers toegevoegd"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Uitnodiging verwijderen",
+			"WARNING": "De uitnodiging voor {{ email }} wordt permanent verwijderd en de link werkt niet meer. Deze actie kan niet ongedaan worden gemaakt.",
+			"TYPE_TO_CONFIRM": "Typ het volgende om te bevestigen:",
+			"CONFIRM": "Uitnodiging verwijderen"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5184,6 +5409,8 @@
 			"API_SERVER_PORT": "API Serverpoort",
 			"UI_SERVER_PORT": "UI Serverpoort",
 			"SERVER_HOSTNAME": "Servernaam/IP-adres",
+			"LAN_ACCESS": "Andere computers in het netwerk toestaan verbinding te maken",
+			"LAN_ACCESS_HINT": "Indien uitgeschakeld, kan alleen deze computer verbinding maken met de API en de webinterface.",
 			"AUTO_START_STARTUP": "Automatisch starten bij opstarten",
 			"SERVER_TYPE": "Servertype",
 			"LOCAL_API_PORT": "Lokale API-poort",
@@ -5310,7 +5537,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "We konden niet bepalen of u niet-gesynchroniseerde offline gegevens heeft. Het verwijderen van de database kan niet-opgeslagen werk PERMANENT wissen. Als u het niet zeker weet, klik dan op 'Behouden'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} niet-gesynchroniseerde timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} niet-gesynchroniseerde interval(len)",
-			"AND_JOIN": "en"
+			"AND_JOIN": "en",
+			"SEED_CREDENTIALS_TITLE": "Uw aanmeldgegevens",
+			"SEED_CREDENTIALS_MESSAGE": "Bewaar deze wachtwoorden nu. Ze worden maar één keer getoond.",
+			"SEED_CREDENTIALS_DETAIL": "Deze installatie heeft haar accounts aangemaakt met willekeurige wachtwoorden in plaats van de gepubliceerde standaardwaarden.\n\n{{ accounts }}\n\nU kunt een wachtwoord later wijzigen op uw profielpagina in Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Gekopieerd naar het klembord.",
+			"SEED_CREDENTIALS_SAVED": "Ik heb ze bewaard",
+			"SEED_ROLE_SUPER_ADMIN": "Superbeheerder",
+			"SEED_ROLE_ADMIN": "Beheerder",
+			"SEED_ROLE_EMPLOYEE": "Medewerker",
+			"SEED_PASSWORD": "Wachtwoord",
+			"PUBLISHED_PASSWORDS_TITLE": "Standaardwachtwoord nog in gebruik",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Wijzig het standaardwachtwoord van deze accounts.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} melden zich nog aan met het standaardwachtwoord dat in de Gauzy-documentatie is gepubliceerd. Iedereen die deze server kan bereiken, kan zich daarmee aanmelden. Meld u aan bij Gauzy en wijzig het op de profielpagina."
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",
@@ -5338,7 +5577,12 @@
 			"SERVICE_UNAVAILABLE": "Dienst tijdelijk niet beschikbaar.",
 			"UNEXPECTED_ERROR": "Er is een onverwachte fout opgetreden.",
 			"NETWORK_ERROR": "Netwerkfout: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Schermtoegangsmachtiging is vereist om automatische schermopname in te schakelen. Gelieve de machtiging te verlenen in uw systeeminstellingen.",
+			"ORGANIZATION_SWITCH_REFUSED": "Overschakelen naar {{ name }} is mislukt: {{ reason }}. Je werkt nog steeds in je huidige organisatie.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Je bent geen actieve medewerker van {{ name }}, dus de timer kan daar geen tijd registreren. Je werkt nog steeds in je huidige organisatie.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "De organisatie wordt gewisseld. Start de timer zodra het wisselen is voltooid.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Je bent geen actieve medewerker van {{ name }} en terugschakelen naar je vorige organisatie is mislukt. Meld je opnieuw aan.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Overschakelen naar {{ name }} kon op dit apparaat niet worden voltooid. Meld je opnieuw aan."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",
@@ -5585,7 +5829,40 @@
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",
 		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd",
 		"NO_TIME_TRACKED": "Geen tijd bijgehouden",
-		"MINUTES_TRACKED": "{{ minutes }} min bijgehouden"
+		"MINUTES_TRACKED": "{{ minutes }} min bijgehouden",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Totale tijd",
+			"APPS_USED": "Gebruikte apps",
+			"SITES_VISITED": "Bezochte sites",
+			"TOP_APP": "Meest gebruikte app",
+			"TOP_SITE": "Meest bezochte site",
+			"VIEW": "Weergave",
+			"BY_APP": "Per app",
+			"BY_SITE": "Per site",
+			"BY_MEMBERS": "Per lid",
+			"BY_HOURS": "Per uur",
+			"SEARCH_APPS": "Apps zoeken…",
+			"SEARCH_SITES": "Sites zoeken…",
+			"SORT": "Sortering wijzigen",
+			"SORT_TIME": "Meeste tijd",
+			"SORT_NAME": "Naam A–Z",
+			"LOAD_FAILED": "De activiteit kon niet worden geladen. Probeer het opnieuw.",
+			"NO_MATCH": "Niets komt overeen met “{{ search }}”.",
+			"APP": "App",
+			"SITE": "Site",
+			"TIME": "Tijd",
+			"SHOW_PAGES": "Bezochte pagina's op {{ site }} tonen",
+			"LOADING_PAGES": "Pagina's laden…",
+			"PAGES_FAILED": "De pagina's konden niet worden geladen.",
+			"NO_PAGES": "Er zijn geen paginagegevens vastgelegd voor deze site.",
+			"SHOW_ALL": "Alle {{ count }} tonen",
+			"SHOW_LESS": "Minder tonen",
+			"UNKNOWN_MEMBER": "Onbekend lid",
+			"APPS_COUNT": "{{ count }} apps",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} van totaal",
+			"PAGES_TRUNCATED": "Deze site heeft meer records dan er getoond kunnen worden; de uitsplitsing dekt slechts een deel van de tijd."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",
@@ -6111,6 +6388,7 @@
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
 		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
+		"LOGIN_WITH_EVER_ID": "Inloggen met {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
@@ -6628,5 +6906,82 @@
 			"ROTATE_FAILED": "Kan clientgeheim niet roteren",
 			"DELETE_FAILED": "Kan OAuth-client niet intrekken"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Details van project {{ name }} tonen",
+		"PROGRESS": "Voortgang",
+		"PROGRESS_META": "{{ done }} van {{ total }} taken klaar",
+		"NO_TASKS": "Nog geen taken in dit project",
+		"NEEDS_ATTENTION": "Vraagt aandacht",
+		"NEEDS_ATTENTION_CAPTION": "Achterstallige taken en taken die binnen 3 dagen vervallen",
+		"ACTIVITY": "Dagelijkse activiteit",
+		"ACTIVITY_VIEWS": "Activiteitsweergave",
+		"ACTIVITY_VIEW_CHART": "Grafiek",
+		"ACTIVITY_VIEW_GRID": "Bijdragenraster",
+		"GRID_NONE": "Geen tijd",
+		"GRID_LAST_YEAR": "Afgelopen 12 maanden",
+		"GRID_OLDER": "Vorig jaar",
+		"GRID_NEWER": "Volgend jaar",
+		"GRID_DAY": "{{ time }} op {{ date }}",
+		"GRID_DAY_EMPTY": "Geen tijd op {{ date }}",
+		"TOP_CONTRIBUTORS": "Wie het meest heeft gewerkt",
+		"CONTRIBUTORS_CAPTION": "Ieders tijd aan dit project · {{ range }}",
+		"YOUR_TIME_CAPTION": "Jouw tijd aan dit project · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Tijd van teamleden aan dit project · {{ range }}",
+		"BUDGET_USED": "{{ used }} van {{ budget }} gebruikt",
+		"OVER_BUDGET": "{{ value }} boven budget",
+		"TOTAL_TRACKED": "Totaal geregistreerd",
+		"TOTAL_TRACKED_HINT": "Sinds de start van het project",
+		"THIS_PERIOD": "Deze periode",
+		"VS_PREVIOUS": "{{ value }} t.o.v. vorige periode",
+		"TIMELINE": "Tijdlijn",
+		"NO_DATES": "Geen datums ingesteld",
+		"STARTS_IN": "Start over {{ count }} dagen",
+		"STARTS_TOMORROW": "Start morgen",
+		"FINISHED": "Afgerond",
+		"TEAM": "Team",
+		"NO_MEMBERS": "Nog geen leden in dit project",
+		"MODULES": "Modules",
+		"MODULE_TASK": "1 taak",
+		"MODULE_TASKS": "{{ count }} taken"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Overzicht",
+			"BOARD": "Bord",
+			"ACTIVITY": "Activiteit",
+			"COMMENTS": "Opmerkingen"
+		},
+		"BOARD": "Bord",
+		"COLUMN_EMPTY": "Geen taken",
+		"CANNOT_DROP": "Taken kunnen niet naar ‘{{ column }}’ worden verplaatst, omdat dit geen status van dit project is.",
+		"ACTIVITY": "Activiteit",
+		"ACTIVITY_CAPTION": "Recente wijzigingen aan het project en zijn taken",
+		"NO_ACTIVITY": "Nog geen activiteit",
+		"ACTIVITY_PARTIAL": "Een deel van de activiteit kon niet worden geladen, dus deze lijst is mogelijk onvolledig.",
+		"ACTIVITY_CREATED": "{{ actor }} heeft aangemaakt",
+		"ACTIVITY_UPDATED": "{{ actor }} heeft bijgewerkt",
+		"ACTIVITY_DELETED": "{{ actor }} heeft verwijderd",
+		"ACTIVITY_COMMENTED": "{{ actor }} reageerde op",
+		"ACTIVITY_REPLIED": "{{ actor }} beantwoordde een opmerking op",
+		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
+		"SOMEONE": "Iemand",
+		"TODAY": "Vandaag",
+		"YESTERDAY": "Gisteren",
+		"TASK_PROGRESS": "Voortgang",
+		"TASK_PROGRESS_OF": "{{ worked }} van {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% van de geregistreerde projecttijd (geen schatting)",
+		"TASK_TOP_PEOPLE": "Meest aan gewerkt",
+		"TASK_NO_ESTIMATE": "Geen schatting",
+		"COMMENTS": "Opmerkingen",
+		"NO_COMMENTS": "Nog geen opmerkingen. Start de discussie.",
+		"COMMENT_PLACEHOLDER": "Schrijf een opmerking…",
+		"COMMENT_IMAGE": "Afbeelding",
+		"ATTACH_IMAGES": "Afbeeldingen bijvoegen",
+		"REMOVE_IMAGE": "Afbeelding verwijderen",
+		"OPEN_IMAGE": "Origineel openen",
+		"COMMENT_IMAGE_TYPES": "Alleen PNG-, JPEG-, GIF-, WebP- en BMP-afbeeldingen kunnen worden bijgevoegd.",
+		"COMMENT_IMAGE_LIMIT": "Een opmerking kan maximaal {{ count }} afbeeldingen bevatten.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	}
 }

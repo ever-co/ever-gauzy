@@ -182,7 +182,9 @@ function transactionFixture(seed: { transactions?: Row[]; sellers?: Row[] } = {}
 
 	const manager: any = {
 		transaction: async (run: (transactional: any) => Promise<any>) => await run(manager),
-		save: async () => undefined
+		// A row written inside the transaction lands in the same table the repository writes: a settle saves the
+		// row and appends its fact through the transaction's own manager.
+		save: async (_entity: unknown, entityRow: Row) => await transactionRepository.save(entityRow)
 	};
 
 	const transactionRepository: any = {
@@ -291,6 +293,30 @@ describe('SellerTransactionService — advancing a row (doc 20 §5.1, §7.6)', (
 
 		await expect(fixture.service.hold('t1', undefined as never)).rejects.toThrow(/needs a reason/);
 		expect(fixture.store('t1')?.status).toBe(SellerTransactionStatus.SETTLEABLE);
+	});
+
+	it('refuses to hold a row a payout covers or has paid, so it cannot be settled into a second payout', async () => {
+		// A hold followed by `settle` used to turn a paid row `SETTLEABLE` again, and once its payout line was gone
+		// the next run paid it a second time. A hold on a row inside an unpaid payout did not keep it out either.
+		for (const status of [SellerTransactionStatus.SETTLED, SellerTransactionStatus.PAID]) {
+			const fixture = transactionFixture({ transactions: [row('t1', { status })] });
+
+			await expect(fixture.service.hold('t1', SellerHoldReason.CHARGEBACK)).rejects.toThrow(/cancel that payout/);
+			expect(fixture.store('t1')?.status).toBe(status);
+		}
+	});
+
+	it('refuses to settle or hold a paid row that a refund has since reversed', async () => {
+		const fixture = transactionFixture({
+			transactions: [
+				row('t1', { status: SellerTransactionStatus.REVERSED, paidAt: new Date('2026-02-01T00:00:00.000Z') })
+			]
+		});
+
+		await expect(fixture.service.settle('t1')).rejects.toBeInstanceOf(ConflictException);
+		await expect(fixture.service.hold('t1', SellerHoldReason.CHARGEBACK)).rejects.toBeInstanceOf(ConflictException);
+		expect(fixture.store('t1')?.status).toBe(SellerTransactionStatus.REVERSED);
+		expect(fixture.events()).toEqual([]);
 	});
 
 	it('refuses a row that is not the caller’s, and one that does not exist', async () => {

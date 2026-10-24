@@ -1,24 +1,29 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull } from 'typeorm';
+import { IsNull, Raw, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
-import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as path from 'node:path';
 import * as chalk from 'chalk';
 import { EntityManager as MikroOrmEntityManager } from '@mikro-orm/knex';
-import { ID } from '@gauzy/contracts';
+import { canInviteWithRole, ID, IRole, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { convertToDatetime, getORMType, MultiORMEnum } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
+import {
+	isInstallationOperator,
+	isOperatorOnlyTenantSetting,
+	keepingOperatorOnlySettings
+} from '../../tenant/tenant-setting/operator-only-tenant-settings';
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
+import { extractImportArchive } from './import-archive-extract';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
 	mikroOrmClosureRebuildRunner,
@@ -32,6 +37,106 @@ import {
 	IRepositoryModel,
 	RepositoriesService
 } from '../repositories/repositories.service';
+
+/**
+ * The column a row of a shared table the platform seeds is recognized by in another instance's archive, where its id is
+ * not this instance's (see {@link ImportService.findSharedRow}).
+ */
+const SHARED_TABLE_NATURAL_KEYS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+	country: ['isoCode'],
+	currency: ['isoCode'],
+	feature: ['code'],
+	language: ['code'],
+	report: ['slug'],
+	report_category: ['name']
+});
+
+/** The table of the tenant's settings, some of whose rows only the installation operator may write. */
+const TENANT_SETTING_TABLE = 'tenant_setting';
+
+/** The table of the permissions each role holds, which an archive writes only as the role-permission API would. */
+const ROLE_PERMISSION_TABLE = 'role_permission';
+
+/**
+ * The relations of a `role_permission` row. An archive states its role and tenant by the `roleId` and `tenantId`
+ * columns, which are mapped and judged; a relation of the same name is not, so it is never written from an archive.
+ */
+const ROLE_PERMISSION_RELATIONS: readonly string[] = Object.freeze(['role', 'tenant']);
+
+/**
+ * The tables whose clean-up removes the permissions of the SUPER_ADMIN and ADMIN roles: the permissions themselves,
+ * and the roles, whose delete cascades to their permissions.
+ */
+const ROLE_PERMISSION_CLEANUP_TABLES: readonly string[] = Object.freeze(['role', ROLE_PERMISSION_TABLE]);
+
+/** The tenant's roles, which an archive writes only as `POST`/`PUT /roles` would: a platform role is never written. */
+const ROLE_TABLE = 'role';
+
+/**
+ * The relations of a `role` row an archive never writes: the role's tenant is the `tenantId` column, which is mapped,
+ * and its permissions are the `role_permission` rows, which are judged one by one.
+ */
+const ROLE_RELATIONS: readonly string[] = Object.freeze(['tenant', 'rolePermissions']);
+
+/**
+ * The tables whose rows hold a role a person signs in with: a user, and an invitation, whose accept-invite token
+ * registers a user with its role. An archive writes them only with a role the importer could grant through the API.
+ */
+const USER_TABLE = 'user';
+const INVITE_TABLE = 'invite';
+
+/**
+ * The permissions each of those tables is written with through the API, any of them: `POST /user` takes
+ * `ORG_USERS_EDIT`, `POST /invite/emails` `ORG_INVITE_EDIT` or `ORG_TEAM_ADD`.
+ */
+const ROLE_HOLDER_PERMISSIONS: Readonly<Record<string, readonly PermissionsEnum[]>> = Object.freeze({
+	[USER_TABLE]: [PermissionsEnum.ORG_USERS_EDIT],
+	[INVITE_TABLE]: [PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_TEAM_ADD]
+});
+
+/**
+ * The relations of a user or invitation row. An archive states their role and tenant by the `roleId` and `tenantId`
+ * columns, which are mapped and judged; a relation of the same name is not, so it is never written from an archive
+ * (TypeORM writes a bare id given for a many-to-one relation as its foreign key).
+ */
+const ROLE_HOLDER_RELATIONS: readonly string[] = Object.freeze(['role', 'tenant']);
+
+/**
+ * The tables of {@link ROLE_HOLDER_PERMISSIONS} a clean import may wipe only for a SUPER_ADMIN. The clean-up deletes
+ * every row of the tenant, a SUPER_ADMIN's user and invitations included, and the import writes back only the rows
+ * within the importer's role ceiling, by an importer holding the table's permission: an ADMIN's clean import of a bare
+ * `user.csv` deleted every user of the tenant and restored none above ADMIN, and a header-only `invite.csv` deleted
+ * every invitation for an importer holding no invite permission at all.
+ */
+const ROLE_HOLDER_CLEANUP_TABLES: readonly string[] = Object.freeze([USER_TABLE, INVITE_TABLE]);
+
+/**
+ * Unique keys a table declares as a unique INDEX (`@ColumnIndex(..., { unique: true })`) rather than a `@Unique`
+ * constraint. The repository graph reads constraints only, so such a table had no key to match an archive row on:
+ * the upsert's conditions were empty and every row was created afresh. `role_permission` holds each permission of a
+ * role once (`IDX_role_permission_unique`: tenant, role, permission); the tenant is added by
+ * {@link ImportService.uniqueKeyConditions}.
+ */
+const UNIQUE_INDEX_KEYS: Readonly<Record<string, readonly (readonly string[])[]>> = Object.freeze({
+	[ROLE_PERMISSION_TABLE]: [['roleId', 'permission']]
+});
+
+/** A UUID, the only id a shared table's row can have: anything else is not looked up as an id. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** {@link ImportService.importRoleAs}: the archive's `role` row is written as any other row. */
+const WRITE_ROW = Symbol('write');
+
+/** {@link ImportService.importRoleAs}: the archive's `role` row is skipped, neither written nor mapped. */
+const SKIP_ROW = Symbol('skip');
+
+/**
+ * Whether a role name is a platform role's: a `RolesEnum` value, compared case-insensitively and ignoring surrounding
+ * spaces, the rule `RoleService.isReservedName` applies to `POST`/`PUT /roles`.
+ */
+function isPlatformRoleName(name: unknown): name is string {
+	return typeof name === 'string' && (Object.values(RolesEnum) as string[]).includes(name.trim().toUpperCase());
+}
 
 @Injectable()
 export class ImportService {
@@ -107,7 +212,7 @@ export class ImportService {
 	 */
 	public async unzipAndParse(extractPath: string, filePath: string, cleanup: boolean = false) {
 		const file = await new FileStorage().getProvider().getFile(filePath);
-		await unzipper.Open.buffer(file).then((d) => d.extract({ path: extractPath }));
+		await extractImportArchive(file, extractPath);
 		await this.parse(extractPath, cleanup);
 	}
 
@@ -116,11 +221,16 @@ export class ImportService {
 		 * Can only run in a particular order
 		 */
 		const tenantId = RequestContext.currentTenantId();
+		// Before anything is removed: a refused clean import must leave the tenant as it was.
+		if (cleanup) {
+			this.assertMayCleanUp(extractPath);
+		}
 		const repositories = await this.getRepositories();
 		// Only an archive this server wrote carries the escape, so only such an archive is decoded: a
 		// legacy dump, a filled-in `/export/template` or an externally built CSV set would otherwise
 		// lose a legitimate leading apostrophe from a value such as `'=notes` (GHSA-7xp5-j564-4752).
 		const decodeCells = await usesSpreadsheetSafeCells(extractPath);
+		const junctionOwners: IRepositoryModel[] = [];
 		for await (const item of repositories) {
 			const { repository, isStatic = false, relations = [] } = item;
 			const nameFile = repository.metadata.tableName;
@@ -140,10 +250,14 @@ export class ImportService {
 					 * This will first collect all the data and then insert
 					 * If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
 					 */
-					if (cleanup && isStatic !== true) {
+					if (cleanup && isStatic !== true && !this.isSharedTable(item)) {
 						try {
-							let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
-							await repository.query(sql);
+							if (masterTable === TENANT_SETTING_TABLE) {
+								await this.cleanUpTenantSettings(repository, tenantId);
+							} else {
+								let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
+								await repository.query(sql);
+							}
 							console.log(chalk.yellow(`Clean up processing for table: ${masterTable}`));
 						} catch (error) {
 							console.log(chalk.red(`Failed to clean up process for table: ${masterTable}`), error);
@@ -165,7 +279,7 @@ export class ImportService {
 						results = results.filter(isNotEmpty);
 						try {
 							for await (const data of results) {
-								if (isNotEmpty(data)) {
+								if (isNotEmpty(data) && (await this.mayImportRow(item, data))) {
 									await this.migrateImportEntityRecord(item, data);
 								}
 							}
@@ -188,15 +302,24 @@ export class ImportService {
 				await this.rebuildProductCategoryClosure(tenantId);
 			}
 
-			// export pivot relational tables
-			if (isNotEmpty(relations)) {
-				await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
+			// A shared table's own junctions (the integration catalogue's types, ...) are shared too: never written.
+			if (isNotEmpty(relations) && !this.isSharedTable(item)) {
+				junctionOwners.push(item);
 			}
+		}
+
+		// A junction row links two master tables, so both must be imported first: `tag_task` names
+		// tags, and tags are imported after tasks.
+		for (const item of junctionOwners) {
+			await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
 		}
 	}
 
 	/**
 	 * Imports the junction tables of one entity.
+	 *
+	 * Each row is written between the destination ids of its two ends. A row with an end that was not
+	 * imported for the tenant is skipped. Run it once every master table is imported.
 	 *
 	 * @param extractPath - This request's extraction directory.
 	 * @param entity - The entity whose junction tables to read.
@@ -238,22 +361,39 @@ export class ImportService {
 					stream.on('end', async () => {
 						results = results.filter(isNotEmpty);
 
+						// `orIgnore` hides whether a pair was new, so the count is of rows linked, new or already there.
+						let linked = 0;
+						let skipped = 0;
 						for await (const data of results) {
 							try {
 								if (isNotEmpty(data)) {
 									const fields = await this.mapRelationFields(item, data);
-									const sql = `INSERT INTO "${joinTableName}" (${
-										'"' + Object.keys(fields).join(`", "`) + '"'
-									}) VALUES ("$1", "$2")`;
-									// const items = await getManager().query(sql, Object.values(fields));
-									console.log(sql);
-									// console.log(chalk.green(`Success to inserts data for table: ${joinTableName}`));
+									const row = Object.fromEntries(
+										item.foreignKeys.map(({ column }) => [column, fields[column]])
+									);
+									// An end with no import record for this tenant maps to undefined: nothing to link.
+									if (item.foreignKeys.some(({ column }) => !isNotEmpty(row[column]))) {
+										skipped++;
+										continue;
+									}
+									// `orIgnore` lets a merge re-import of the same archive pass the composite primary key.
+									await entity.repository.manager
+										.createQueryBuilder()
+										.insert()
+										.into(joinTableName)
+										.values(row)
+										.orIgnore()
+										.execute();
+									linked++;
 								}
 							} catch (error) {
 								console.log(chalk.red(`Failed to inserts data for table: ${joinTableName}`), error);
-								reject(error);
+								return reject(error);
 							}
 						}
+						this.logger.log(
+							`Imported junction table ${joinTableName}: ${linked} rows linked (new or already present), ${skipped} skipped with an end not imported`
+						);
 						resolve(true);
 					});
 				} catch (error) {
@@ -304,29 +444,58 @@ export class ImportService {
 	 * Map static tables import record before insert data
 	 */
 	async migrateImportEntityRecord(item: IRepositoryModel, entity: any): Promise<any> {
-		const { repository, uniqueIdentifiers = [] } = item;
+		const { repository } = item;
 		const masterTable = repository.metadata.tableName;
 
 		return await new Promise(async (resolve, reject) => {
 			try {
 				const source = JSON.parse(JSON.stringify(entity));
-				const where = [];
-				if (isNotEmpty(uniqueIdentifiers) && Array.isArray(uniqueIdentifiers)) {
-					if ('tenantId' in entity && isNotEmpty(entity['tenantId'])) {
-						where.push({ tenantId: RequestContext.currentTenantId() });
+				// The lookup reads the mapped row: the archive's tenant and foreign keys are the source ids.
+				const mapped = await this.mapFields(item, entity);
+				// A role's permission is written only as the role-permission API would write it, judged on the mapped
+				// row: its role is then the importing tenant's. The role and tenant relations are dropped first, so the
+				// columns judged are the only statement of them that reaches the save.
+				if (masterTable === ROLE_PERMISSION_TABLE) {
+					for (const relation of ROLE_PERMISSION_RELATIONS) {
+						delete mapped[relation];
 					}
-					for (const unique of uniqueIdentifiers) {
-						where.push({ [unique.column]: entity[unique.column] });
+					if (!(await this.mayImportRolePermission(mapped, source.id))) {
+						return resolve(true);
 					}
 				}
-				const destination = await this.commandBus.execute(
-					new ImportEntityFieldMapOrCreateCommand(
-						repository,
-						where,
-						await this.mapFields(item, entity),
-						source.id
-					)
-				);
+				// A role is written only as the role API would write it. A platform role (SUPER_ADMIN, ADMIN, ...) is
+				// never written by anyone but a SUPER_ADMIN: its archive row is only mapped to the tenant's own role
+				// of that name, and only when the importer could grant that role.
+				if (masterTable === ROLE_TABLE) {
+					const role = await this.importRoleAs(mapped, source.id);
+					if (role === SKIP_ROW) {
+						return resolve(true);
+					}
+					if (role !== WRITE_ROW) {
+						await this.mappedImportRecord(item, role, source);
+						return resolve(true);
+					}
+				}
+				// A user's or an invitation's role is held to the importer's own, as the user and invite APIs hold it.
+				if (masterTable === USER_TABLE || masterTable === INVITE_TABLE) {
+					for (const relation of ROLE_HOLDER_RELATIONS) {
+						delete mapped[relation];
+					}
+					if (!(await this.mayImportRoleHolder(item, mapped, source.id))) {
+						return resolve(true);
+					}
+				}
+				// A shared table's row is never written: its id is only mapped to the row that already exists.
+				const destination = this.isSharedTable(item)
+					? await this.findSharedRow(item, mapped, source.id)
+					: await this.commandBus.execute(
+							new ImportEntityFieldMapOrCreateCommand(
+								repository,
+								this.uniqueKeyConditions(item, mapped),
+								mapped,
+								source.id
+							)
+						);
 				if (destination) {
 					await this.mappedImportRecord(item, destination, source);
 				}
@@ -338,8 +507,518 @@ export class ImportService {
 		});
 	}
 
+	/**
+	 * Whether an archive row may be written. A `tenant_setting` row only the installation operator may write
+	 * (`operator-only-tenant-settings.ts`: an organization's Documents storage limit) is skipped for anyone else, as
+	 * `POST /tenant-setting/dynamic` refuses it: an archive must not set or lift the limit.
+	 *
+	 * The row it would be written over counts too. An archive row whose id an earlier import mapped is saved over that
+	 * row ({@link ImportEntityFieldMapOrCreateCommand}), name included, so an ordinary name on the source id of an
+	 * imported limit row renamed the limit away, and Documents fell back to the deployment default, which may be no
+	 * limit at all.
+	 *
+	 * @param item - The table being imported.
+	 * @param row - The archive row, as read (its `id` is still the archive's).
+	 */
+	private async mayImportRow(item: IRepositoryModel, row: Record<string, unknown>): Promise<boolean> {
+		if (item.repository.metadata.tableName !== TENANT_SETTING_TABLE || isInstallationOperator()) {
+			return true;
+		}
+		if (isOperatorOnlyTenantSetting(row?.['name'])) {
+			this.logger.warn(
+				`Skipped the tenant setting ${String(row['name'])}: only the installation's operator sets it.`
+			);
+			return false;
+		}
+		const overwritten = await this.importedDestinationName(item.repository, row?.['id']);
+		if (isOperatorOnlyTenantSetting(overwritten)) {
+			this.logger.warn(
+				`Skipped the tenant setting ${String(row['name'])}: an earlier import mapped it to ${String(
+					overwritten
+				)}, which only the installation's operator sets.`
+			);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * The name of the `tenant_setting` row an earlier import of this tenant mapped an archive id to, which is the row
+	 * that archive row would be saved over, or `undefined` when the id was never imported.
+	 *
+	 * @param repository - The `tenant_setting` repository.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async importedDestinationName(repository: Repository<any>, sourceId: unknown): Promise<unknown> {
+		const destinationId = await this.importedDestinationId(TENANT_SETTING_TABLE, sourceId);
+		if (!destinationId) {
+			return undefined;
+		}
+		// Trashed rows too: the save reaches the row by its id whether or not it is soft-deleted.
+		const destination = await repository.findOne({
+			where: { id: destinationId },
+			select: { id: true, name: true },
+			withDeleted: true
+		});
+		return destination?.name;
+	}
+
+	/**
+	 * The row of this tenant an earlier import mapped an archive id to, which is the row that archive row would be
+	 * saved over ({@link ImportEntityFieldMapOrCreateCommand}), or `undefined` when the id was never imported.
+	 *
+	 * @param entityType - The table.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async importedDestinationId(entityType: string, sourceId: unknown): Promise<ID | undefined> {
+		if (!isNotEmpty(sourceId)) {
+			return undefined;
+		}
+		try {
+			const found = await this.commandBus.execute(
+				new ImportRecordFindOrFailCommand({
+					tenantId: RequestContext.currentTenantId(),
+					sourceId: sourceId as ID,
+					entityType
+				})
+			);
+			return (found?.success ? found.record?.destinationId : undefined) || undefined;
+		} catch {
+			// No import record: the import creates a new row rather than saving over one.
+			return undefined;
+		}
+	}
+
+	/**
+	 * Whether an archive's `role_permission` row may be written: only as `POST`/`PUT /role-permissions` would write it.
+	 *
+	 * The import wrote these rows like any other, without the rules of the role-permission API, so an archive (a
+	 * hand-built ZIP is accepted) handed an ADMIN or a custom role `SUPER_ADMIN_EDIT`, `GLOBAL_SETTING`,
+	 * `PAYMENT_PROVIDERS_EDIT`, ... which the importing ADMIN does not hold, and the role could then be given to a user
+	 * they control. The API refuses that (ever-co/ever-gauzy#11232), and refuses an ADMIN any change to the
+	 * permissions of the SUPER_ADMIN and ADMIN roles (SEC-A-07). The same rules now decide here, on the row as it will
+	 * stand:
+	 *
+	 * - a SUPER_ADMIN is bounded by neither, as the grant ceiling leaves it unbounded: it is the tenant's top role, and
+	 *   restoring its own archive (a clean import wipes the tenant's roles and their permissions) must keep working;
+	 * - anyone else writes a role's permissions only as an ADMIN holding `CHANGE_ROLES_PERMISSIONS`, only for a role of
+	 *   the tenant below ADMIN, never over a row of the SUPER_ADMIN or ADMIN roles an earlier import mapped the archive
+	 *   id to, and never enabling a permission they do not hold themselves.
+	 *
+	 * A row refused is skipped, as an operator-only tenant setting is ({@link mayImportRow}); the rest of the archive
+	 * is imported.
+	 *
+	 * @param row - The archive row after {@link mapFields}: its tenant is the importer's and its role the role of this
+	 * tenant an earlier import of the archive's roles mapped it to (`undefined` when none did).
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async mayImportRolePermission(row: Record<string, unknown>, sourceId: unknown): Promise<boolean> {
+		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+			return true;
+		}
+
+		const skip = (reason: string): boolean => {
+			this.logger.warn(`Skipped the role permission ${String(row?.['permission'])}: ${reason}.`);
+			return false;
+		};
+
+		if (
+			!RequestContext.hasRole(RolesEnum.ADMIN) ||
+			!RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
+		) {
+			return skip(
+				'only a SUPER_ADMIN, or an ADMIN holding CHANGE_ROLES_PERMISSIONS, changes the permissions of a role'
+			);
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+		const changeable = (role: Pick<IRole, 'name'> | null | undefined): boolean =>
+			!!role?.name && role.name !== RolesEnum.SUPER_ADMIN && role.name !== RolesEnum.ADMIN;
+
+		// The row an earlier import mapped this archive id to is saved over: its current role is held to the rule too.
+		const destinationId = await this.importedDestinationId(ROLE_PERMISSION_TABLE, sourceId);
+		const overwritten = destinationId
+			? await this.repositoriesService.typeOrmRolePermissionRepository.findOne({
+					where: { id: destinationId, tenantId },
+					relations: { role: true },
+					withDeleted: true
+				})
+			: null;
+		if (overwritten && !changeable(overwritten.role)) {
+			return skip(`it would be saved over a permission of the ${overwritten.role?.name ?? 'unknown'} role`);
+		}
+
+		// The role the row will name, never looked up without an id: TypeORM drops an undefined key, matching any role.
+		// The stored role stands only when the row states none: a role the archive names but this tenant does not map
+		// is written as null, which the save would refuse after the stored role had been judged in its place.
+		const roleId = 'roleId' in (row ?? {}) ? (row['roleId'] as ID) : overwritten?.roleId;
+		const role = isNotEmpty(roleId)
+			? await this.repositoriesService.typeOrmRoleRepository.findOne({ where: { id: roleId, tenantId } })
+			: null;
+		if (!role) {
+			return skip('its role is not a role of this tenant');
+		}
+		if (!changeable(role)) {
+			return skip(`the permissions of the ${role.name} role are not an ADMIN's to change`);
+		}
+
+		// Enabling a permission is held to the grant ceiling; anything but an explicit off is read as enabling.
+		const permission = 'permission' in (row ?? {}) ? row['permission'] : overwritten?.permission;
+		const enabled = 'enabled' in (row ?? {}) ? row['enabled'] : overwritten?.enabled;
+		const grants = enabled !== false && enabled !== null && enabled !== undefined;
+		if (grants && (!isNotEmpty(permission) || !RequestContext.hasPermission(permission as PermissionsEnum))) {
+			return skip('it would grant a permission the importer does not hold');
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether the importer could grant a role through the API: their own level or lower, the ceiling invitations use
+	 * (`canInviteWithRole`, ever-co/ever-gauzy#11318). Only a SUPER_ADMIN grants SUPER_ADMIN, only an ADMIN or a
+	 * SUPER_ADMIN grants ADMIN or a role the tenant created, and an importer holding a role the tenant created counts
+	 * as the lowest level. The importer's role is the one loaded for this request, not the access token's.
+	 *
+	 * @param roleName - The role's name as stored.
+	 */
+	private mayGrantRole(roleName: string | null | undefined): boolean {
+		return canInviteWithRole(RequestContext.currentRoleName(), roleName);
+	}
+
+	/**
+	 * How an archive's `role` row is imported: as `POST`/`PUT /roles` would write it.
+	 *
+	 * A role's name is an authorization identity: `RoleGuard`, `RequestContext.hasRole` and the permission rules read
+	 * it, not the role's id. The import wrote these rows like any other, and the table has no unique key the import
+	 * could match on, so a hand-built `role.csv` row named `SUPER_ADMIN` created a second role of that name in the
+	 * tenant, and a `user.csv` row naming it created a user, with a password hash of the importer's choosing, whom
+	 * every guard took for a SUPER_ADMIN. The role API refuses a platform role name, the rename of a platform role and
+	 * a change of `isSystem` (R7-01), and takes `CHANGE_ROLES_PERMISSIONS`. The same rules now decide here:
+	 *
+	 * - a SUPER_ADMIN's row is written as before: restoring their own archive must keep working;
+	 * - anyone else never writes `isSystem` or the role's relations, and never writes a platform role. An archive row
+	 *   named after one is mapped to the tenant's own role of that name, without writing it, when the importer could
+	 *   grant that role, so the archive's users and invitations still find it; otherwise it is skipped, so nothing
+	 *   later in the archive can name it;
+	 * - a role the tenant created is written only by an importer holding `CHANGE_ROLES_PERMISSIONS` who could grant it
+	 *   (an ADMIN), and never over a platform role an earlier import mapped the archive id to.
+	 *
+	 * @param row - The archive row after {@link mapFields}.
+	 * @param sourceId - The row's id in the archive.
+	 * @returns {@link WRITE_ROW} to write the row, {@link SKIP_ROW} to skip it, or the tenant's role to map it to.
+	 */
+	private async importRoleAs(
+		row: Record<string, unknown>,
+		sourceId: unknown
+	): Promise<typeof WRITE_ROW | typeof SKIP_ROW | IRole> {
+		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+			return WRITE_ROW;
+		}
+
+		const skip = (reason: string): typeof SKIP_ROW => {
+			this.logger.warn(`Skipped the role ${String(row?.['name'])}: ${reason}.`);
+			return SKIP_ROW;
+		};
+
+		// Whether a role is a system role is not a caller's to set (`RoleService.update`), and the relations are
+		// stated by the columns judged here.
+		delete row['isSystem'];
+		for (const relation of ROLE_RELATIONS) {
+			delete row[relation];
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+
+		// The role an earlier import mapped this archive id to is saved over: it is held to the rule too.
+		const destinationId = await this.importedDestinationId(ROLE_TABLE, sourceId);
+		const overwritten = destinationId
+			? await this.repositoriesService.typeOrmRoleRepository.findOne({
+					where: { id: destinationId, tenantId },
+					withDeleted: true
+				})
+			: null;
+
+		const name = 'name' in row ? row['name'] : overwritten?.name;
+
+		if (isPlatformRoleName(name)) {
+			// Never written: the archive's id is mapped to the tenant's own role of that name, as an export of this
+			// tenant carries it, and only when the importer could grant it.
+			const own = await this.repositoriesService.typeOrmRoleRepository.findOne({
+				where: { tenantId, name: name.trim().toUpperCase() }
+			});
+			if (!own) {
+				return skip('it is a platform role this tenant does not have, which only a SUPER_ADMIN creates');
+			}
+			if (!this.mayGrantRole(own.name)) {
+				return skip(`the ${own.name} role is above the importer's own`);
+			}
+			return own;
+		}
+
+		if (overwritten && (overwritten.isSystem || isPlatformRoleName(overwritten.name))) {
+			return skip(`it would be saved over the ${overwritten.name} role, a platform role`);
+		}
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)) {
+			return skip('only an importer holding CHANGE_ROLES_PERMISSIONS creates or changes a role');
+		}
+		if (!isNotEmpty(name) || !this.mayGrantRole(String(name))) {
+			return skip('a role the tenant created takes a tenant admin to create, which the importer is not');
+		}
+		return WRITE_ROW;
+	}
+
+	/**
+	 * Whether an archive's `user` or `invite` row may be written: only with a role the importer could grant through
+	 * the API, by an importer holding the permission the API takes for that table.
+	 *
+	 * Both rows let someone sign in with their role: a user row carries the password hash (a hand-built archive states
+	 * one of the importer's choosing), and an invitation the token `POST /invite/accept` registers a user with. The
+	 * import wrote both like any other row, so an ADMIN (`IMPORT_ADD`) could create a SUPER_ADMIN user with a known
+	 * password, give an existing user the SUPER_ADMIN role, or save over the SUPER_ADMIN user's own row (its hash and
+	 * e-mail included) through the archive id an earlier import had mapped to it. The user and invite APIs hold the
+	 * role to the caller's own; the same rule now decides here, on the row as it will stand:
+	 *
+	 * - a SUPER_ADMIN is unbounded, as before: restoring their own archive must keep working;
+	 * - anyone else writes the row only holding {@link ROLE_HOLDER_PERMISSIONS}, only with a role of this tenant they
+	 *   could grant ({@link mayGrantRole}), and never over a row whose stored role they could not grant. They do not
+	 *   change their own role either, as `PUT /user/:id` refuses;
+	 * - an invitation is held to the account its e-mail already has, too: `POST /invite/accept` signs the invitee into
+	 *   the tenant's user of that address, tokens and all, instead of registering one. The archive states both the
+	 *   e-mail and the code or token, so an allowed role on an invitation addressed to a SUPER_ADMIN's e-mail signed
+	 *   the importer in as that SUPER_ADMIN. The e-mail the row will hold (the stored one when the row states none)
+	 *   must not be the address of a user whose role the importer could not grant.
+	 *
+	 * A refused row is skipped with a warning, password hash and all; the rest of the archive is imported. A row within
+	 * the ceiling keeps the hash it states: the importer could have set that user's password through the API.
+	 *
+	 * @param item - The table being imported (`user` or `invite`).
+	 * @param row - The archive row after {@link mapFields}: its tenant is the importer's and its role the role of this
+	 * tenant an earlier import of the archive's roles mapped it to (`null` when none did).
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async mayImportRoleHolder(
+		item: IRepositoryModel,
+		row: Record<string, unknown>,
+		sourceId: unknown
+	): Promise<boolean> {
+		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+			return true;
+		}
+
+		const { repository } = item;
+		const table = repository.metadata.tableName;
+		const skip = (reason: string): boolean => {
+			this.logger.warn(`Skipped the ${table} row ${String(sourceId ?? '')}: ${reason}.`);
+			return false;
+		};
+
+		const permissions = ROLE_HOLDER_PERMISSIONS[table] ?? [];
+		if (!permissions.some((permission) => RequestContext.hasPermission(permission))) {
+			return skip(`writing it through the API takes ${permissions.join(' or ')}`);
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+
+		// The row an earlier import mapped this archive id to is saved over: its stored role is held to the rule too.
+		const destinationId = await this.importedDestinationId(table, sourceId);
+		const overwritten: { id?: ID; roleId?: ID; email?: string; role?: Pick<IRole, 'name'> } | null = destinationId
+			? await repository.findOne({
+					where: { id: destinationId, tenantId },
+					relations: { role: true },
+					withDeleted: true
+				})
+			: null;
+		if (overwritten && !this.mayGrantRole(overwritten.role?.name)) {
+			return skip(`it would be saved over a ${table} holding the ${overwritten.role?.name ?? 'unknown'} role`);
+		}
+
+		// The role the row will hold, never looked up without an id: TypeORM drops an undefined key, matching any role.
+		// The stored role stands only when the row states none; a role the archive names but this tenant does not map
+		// is written as null.
+		const roleId = 'roleId' in (row ?? {}) ? (row['roleId'] as ID) : overwritten?.roleId;
+		if (table === USER_TABLE && overwritten && String(overwritten.id) === String(RequestContext.currentUserId())) {
+			if (String(roleId) !== String(overwritten.roleId)) {
+				return skip("it would change the importer's own role");
+			}
+		}
+		const role = isNotEmpty(roleId)
+			? await this.repositoriesService.typeOrmRoleRepository.findOne({ where: { id: roleId, tenantId } })
+			: null;
+		if (!role) {
+			return skip('its role is not a role of this tenant');
+		}
+		if (!this.mayGrantRole(role.name)) {
+			return skip(`the ${role.name} role is above the importer's own`);
+		}
+
+		if (table === INVITE_TABLE) {
+			const email = 'email' in (row ?? {}) ? row['email'] : overwritten?.email;
+			const account = await this.accountAboveCeiling(email, tenantId);
+			if (account) {
+				return skip(`accepting it signs in the user of its e-mail, who holds the ${account} role`);
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The role of a user of this tenant with the given e-mail that the importer could not grant: the account an
+	 * invitation to that address would sign its invitee into.
+	 *
+	 * The address is compared case-insensitively, as MySQL's collation compares it on the accept path, and soft-deleted
+	 * users count, as a restore brings them back.
+	 *
+	 * @param email - The e-mail an invitation will hold.
+	 * @param tenantId - The importing tenant.
+	 * @returns The role's name (`'no'` for a user holding none), or `null` when no such user has the address.
+	 */
+	private async accountAboveCeiling(email: unknown, tenantId: ID): Promise<string | null> {
+		if (typeof email !== 'string' || !email.trim()) {
+			return null;
+		}
+		const { typeOrmUserRepository } = this.repositoriesService;
+		const users: { role?: Pick<IRole, 'name'> | null }[] = await typeOrmUserRepository.find({
+			where: { tenantId, email: Raw((alias) => `LOWER(${alias}) = LOWER(:email)`, { email: email.trim() }) },
+			relations: { role: true },
+			withDeleted: true
+		});
+		const above = users.find((user) => !this.mayGrantRole(user.role?.name));
+		return above ? (above.role?.name ?? 'no') : null;
+	}
+
+	/**
+	 * Refuses a clean import that would wipe rows the importer cannot write back, unless the caller is a SUPER_ADMIN.
+	 *
+	 * A clean import deletes the tenant's rows of every table the archive carries before it writes the archive's rows;
+	 * a header-only CSV is enough. Two groups of tables are refused to anyone else:
+	 *
+	 * - `role_permission`, and `role`, whose delete cascades to it: that removes the permissions of the SUPER_ADMIN and
+	 *   ADMIN roles as well, and {@link mayImportRolePermission} lets only a SUPER_ADMIN write those back, so an ADMIN
+	 *   restoring even an unchanged archive left both roles, their own included, without a permission;
+	 * - `user` and `invite` ({@link ROLE_HOLDER_CLEANUP_TABLES}): that removes every user and invitation of the
+	 *   tenant, a SUPER_ADMIN's included, and {@link mayImportRoleHolder} writes back only those within the importer's
+	 *   ceiling, and none for an importer without the table's permission.
+	 *
+	 * A merge import, or a clean import whose archive carries none of these tables, is not refused.
+	 *
+	 * @param extractPath - This request's extraction directory.
+	 * @throws ForbiddenException when a caller other than a SUPER_ADMIN would clean up one of these tables.
+	 */
+	private assertMayCleanUp(extractPath: string): void {
+		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+			return;
+		}
+		const carried = (tables: readonly string[]) =>
+			tables.filter((table) => fs.existsSync(path.join(extractPath, `${table}.csv`)));
+
+		const rolePermissions = carried(ROLE_PERMISSION_CLEANUP_TABLES);
+		if (rolePermissions.length > 0) {
+			throw new ForbiddenException(
+				`Only a SUPER_ADMIN may clean-import ${rolePermissions.join(' and ')}: the clean-up removes the ` +
+					'permissions of the SUPER_ADMIN and ADMIN roles, and only a SUPER_ADMIN imports them back. Use a ' +
+					'merge import.'
+			);
+		}
+
+		const roleHolders = carried(ROLE_HOLDER_CLEANUP_TABLES);
+		if (roleHolders.length > 0) {
+			throw new ForbiddenException(
+				`Only a SUPER_ADMIN may clean-import ${roleHolders.join(' and ')}: the clean-up removes every row of ` +
+					"the tenant, a SUPER_ADMIN's included, and the import writes back only those within the " +
+					"importer's role ceiling. Use a merge import."
+			);
+		}
+	}
+
+	/**
+	 * A clean import's wipe of `tenant_setting`: every row of the tenant, soft-deleted ones included, except the rows
+	 * only the installation operator may write when someone else imports. Removing such a row would put the deployment
+	 * default back, which may be no limit at all.
+	 *
+	 * @param repository - The `tenant_setting` repository.
+	 * @param tenantId - The importing tenant.
+	 */
+	private async cleanUpTenantSettings(repository: Repository<any>, tenantId: ID | null): Promise<void> {
+		if (!tenantId) {
+			return;
+		}
+		await repository.delete(await keepingOperatorOnlySettings(repository, { tenantId }));
+	}
+
+	/**
+	 * Whether the table holds rows every tenant shares: it has no tenant column. These are the tenants themselves, the
+	 * countries, currencies and languages, the features and reports, the integration catalogue and the plugin
+	 * marketplace — rows the platform seeds and every tenant reads.
+	 *
+	 * An archive used to be written into them like into any other table: a row that matched none was created for every
+	 * tenant to see, and a row whose id an earlier import had mapped was saved over, so a tenant administrator could add
+	 * to or rewrite the integration catalogue, the features or the marketplace of the whole installation by importing.
+	 *
+	 * @param item - The table being imported.
+	 */
+	private isSharedTable(item: IRepositoryModel): boolean {
+		return !item.repository.metadata.findColumnWithPropertyName('tenantId');
+	}
+
+	/**
+	 * The existing row a shared table's archive row stands for, or `null`: the row with the same unique key, else the
+	 * row with the same id (an archive of this instance), else the row with the same natural key (another instance's,
+	 * {@link SHARED_TABLE_NATURAL_KEYS}). Nothing is created or changed; a reference to a row that matches none maps to
+	 * nothing, like any other unmapped relation.
+	 *
+	 * @param item - The shared table being imported.
+	 * @param row - The row after {@link mapFields}.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async findSharedRow(item: IRepositoryModel, row: Record<string, unknown>, sourceId: unknown) {
+		const { repository } = item;
+		const naturalKeys = SHARED_TABLE_NATURAL_KEYS[repository.metadata.tableName] ?? [];
+		const candidates: Record<string, unknown>[] = [
+			...this.uniqueKeyConditions(item, row),
+			...(typeof sourceId === 'string' && UUID.test(sourceId) ? [{ id: sourceId }] : []),
+			...(naturalKeys.length > 0 && naturalKeys.every((key) => isNotEmpty(row[key]))
+				? [Object.fromEntries(naturalKeys.map((key) => [key, row[key]]))]
+				: [])
+		];
+		for (const where of candidates) {
+			const existing = await repository.findOne({ where });
+			if (existing) {
+				return existing;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * One condition per unique constraint of the table, each matching every column of the constraint
+	 * within the importing tenant. A constraint with an empty column is skipped: a null never collides,
+	 * and an undefined key would be dropped from the query and match any row.
+	 *
+	 * @param item - The table being imported.
+	 * @param row - The row after {@link mapFields}.
+	 */
+	private uniqueKeyConditions(item: IRepositoryModel, row: Record<string, unknown>): Record<string, unknown>[] {
+		const { repository, uniqueConstraints = [] } = item;
+		const isTenantScoped = !!repository.metadata.findColumnWithPropertyName('tenantId');
+		const where: Record<string, unknown>[] = [];
+		for (const columns of [...uniqueConstraints, ...(UNIQUE_INDEX_KEYS[repository.metadata.tableName] ?? [])]) {
+			if (columns.some((column) => row[column] === null || row[column] === undefined)) {
+				continue;
+			}
+			const condition: Record<string, unknown> = isTenantScoped ? { tenantId: row['tenantId'] ?? IsNull() } : {};
+			for (const column of columns) {
+				condition[column] = row[column];
+			}
+			where.push(condition);
+		}
+		return where;
+	}
+
 	/*
-	 * Map import record after find or insert data
+	 * Map import record after find or insert data.
+	 *
+	 * A row the archive gives no id is not mapped: no other archive row can name it, and the mapping's `sourceId` is a
+	 * required column, so writing one failed the import after the row itself was saved.
 	 */
 	async mappedImportRecord(item: IRepositoryModel, destination: any, row: any): Promise<any> {
 		const { repository } = item;
@@ -347,7 +1026,7 @@ export class ImportService {
 
 		return await new Promise(async (resolve, reject) => {
 			try {
-				if (destination) {
+				if (destination && isNotEmpty(row?.id)) {
 					await this.commandBus.execute(
 						new ImportRecordUpdateOrCreateCommand({
 							tenantId: RequestContext.currentTenantId(),
@@ -373,7 +1052,10 @@ export class ImportService {
 		if ('id' in data && isNotEmpty(data['id'])) {
 			delete data['id'];
 		}
-		if ('tenantId' in data && isNotEmpty(data['tenantId'])) {
+		// An empty or missing tenantId would save the row without a tenant, where every tenant reads it
+		// as a platform default, so any table with the column gets the importer's tenant.
+		const hasTenantColumn = !!item.repository.metadata.findColumnWithPropertyName('tenantId');
+		if (hasTenantColumn || ('tenantId' in data && isNotEmpty(data['tenantId']))) {
 			data['tenantId'] = RequestContext.currentTenantId();
 		}
 		if ('organizationId' in data && isNotEmpty(data['organizationId'])) {

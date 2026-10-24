@@ -246,9 +246,8 @@ export class PipelineResolver {
 	 * calls.
 	 *
 	 * The answer is the row the write produced, read back through the same service. The delivered
-	 * method answers the pipeline its transaction saved — and answers nothing at all when that
-	 * transaction rolled back, which its own `catch` swallows — so the field answers the row as it
-	 * now stands rather than a row the write may not have produced.
+	 * method answers the pipeline its transaction saved and throws when that transaction rolled back
+	 * (404 for an unknown pipeline, 400 otherwise), so the field answers the row as it now stands.
 	 */
 	@Mutation('updatePipeline')
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)

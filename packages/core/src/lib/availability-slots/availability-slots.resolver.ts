@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { ID as Id, IAvailabilitySlotsCreateInput, IPagination } from '@gauzy/contracts';
+import { ID as Id, IAvailabilitySlotsCreateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
@@ -95,12 +96,14 @@ const AVAILABILITY_SLOT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * own: every field below dispatches the same command, or reaches the same `AvailabilitySlotsService`
  * method, that the `/api/availability-slots` routes reach.
  *
- * **The guard chain is the controller's, and neither surface states a permission.** The delivered
- * controller carries `TenantPermissionGuard` and no `@Permissions` — at class level or on any handler —
- * so every route it serves runs under that guard alone, and every field below states the same and
- * nothing more. A resolver that demanded a permission would refuse here a caller the REST route serves;
- * tightening this resource is a change to make in both places at once, and it is not this delivery's to
- * make.
+ * **The guard chain and the permissions are the controller's.** The delivered controller carries
+ * `TenantPermissionGuard` on the class, which the reads run under alone, and states the availability grant of
+ * each write behind `PermissionGuard` on the handler — `EMPLOYEE_AVAILABILITY_CREATE` on the single and the bulk
+ * filing, `EMPLOYEE_AVAILABILITY_UPDATE` on the edit and on the withdraw/restore pair (owner decision 5, 2026-10-13:
+ * the pair requires the edit grant), `EMPLOYEE_AVAILABILITY_DELETE` on the removal (GHSA-v79w-54p2-wmh5; owner
+ * decision 2, 2026-10-22: `PermissionGuard` answers `true` to a route that states no permission, so every member of
+ * the tenant could write these rows). Each write field below states the same grant behind the same guard, neither
+ * wider nor narrower than its route; the reads state none, as their routes do.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the catalogue declares for the GraphQL
  * endpoint and its resolvers, applied once here so every field below is behind the one capability.
@@ -206,6 +209,8 @@ export class AvailabilitySlotsResolver {
 	 * own value — see `AvailabilitySlot.type` — while the delivered input type names the enum, and the
 	 * value is the same string either way.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE)
 	@Mutation('createAvailabilitySlot')
 	async createAvailabilitySlot(@Args('input') input: ICreateAvailabilitySlotInput): Promise<AvailabilitySlot> {
 		return await this.commandBus.execute(
@@ -222,6 +227,8 @@ export class AvailabilitySlotsResolver {
 	 * a list of rows rather than a positional echo of the input**: an entry the write answered nothing for
 	 * is not a row, which is why the answer may be shorter than the input.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE)
 	@Mutation('createAvailabilitySlots')
 	async createAvailabilitySlots(
 		@Args('input') input: ICreateAvailabilitySlotInput[]
@@ -232,17 +239,19 @@ export class AvailabilitySlotsResolver {
 	}
 
 	/**
-	 * Writes a slot under an identifier the caller states.
+	 * Updates the slot the input identifies.
 	 *
-	 * The service is the one the `PUT /:id` route calls, and the call is the route's own: **an upsert**
-	 * through `create`, which the delivered service documents as writing a new row or updating the
-	 * existing one the stated identifier names. The delivered route merges the identifier from the path
-	 * into the body; this surface has no path, so the identifier travels inside the input and is read
-	 * from the same place the write reads it.
+	 * The service method is the one the `PUT /:id` route calls: it updates a slot the caller can read — its
+	 * own, or any when it may act for other employees — and answers 404 for any other identifier, rather than
+	 * the upsert on any identifier of the tenant both surfaces used to make. The route takes the identifier
+	 * from the path; this surface has no path, so the identifier travels inside the input.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Mutation('updateAvailabilitySlot')
 	async updateAvailabilitySlot(@Args('input') input: IUpdateAvailabilitySlotInput): Promise<AvailabilitySlot> {
-		return await this.availabilitySlotsService.create({ ...input } as unknown as AvailabilitySlot);
+		const { id, ...values } = input;
+		return await this.availabilitySlotsService.updateSlot(id, values as unknown as AvailabilitySlot);
 	}
 
 	/**
@@ -252,6 +261,8 @@ export class AvailabilitySlotsResolver {
 	 * `{ affected }` — which is not a row and not what a field named `deleteAvailabilitySlot` may return,
 	 * so the field answers the one fact that call establishes, that the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE)
 	@Mutation('deleteAvailabilitySlot')
 	async deleteAvailabilitySlot(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.availabilitySlotsService.delete(id));
@@ -260,6 +271,8 @@ export class AvailabilitySlotsResolver {
 	/**
 	 * Withdraws a slot without removing it.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Mutation('softDeleteAvailabilitySlot')
 	async softDeleteAvailabilitySlot(@Args('id', { type: () => ID }) id: Id): Promise<AvailabilitySlot> {
 		return await this.availabilitySlotsService.softRemove(id);
@@ -268,6 +281,8 @@ export class AvailabilitySlotsResolver {
 	/**
 	 * Puts a withdrawn slot back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Mutation('recoverAvailabilitySlot')
 	async recoverAvailabilitySlot(@Args('id', { type: () => ID }) id: Id): Promise<AvailabilitySlot> {
 		return await this.availabilitySlotsService.softRecover(id);

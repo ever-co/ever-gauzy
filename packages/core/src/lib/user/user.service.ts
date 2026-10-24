@@ -20,13 +20,15 @@ import {
 	In,
 	UpdateResult,
 	DeleteResult,
-	MoreThan
+	MoreThan,
+	IsNull
 } from 'typeorm';
 import { EventBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import {
 	ComponentLayoutStyleEnum,
+	EmployeeKindEnum,
 	ID,
 	IEmployee,
 	IFindMeUser,
@@ -44,6 +46,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { liftEmployeeAgentRestrictions } from '../employee/agent-exit-logout-restriction';
@@ -52,6 +55,7 @@ import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
+import { Employee } from '../core/entities/internal';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { isEmailAddressChange, UNCONFIRMED_EMAIL_STATE } from './email-change.util';
@@ -129,19 +133,52 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getUserStats(): Promise<UserStats> {
 		try {
-			const [count, lastMonthActiveUsers] = await Promise.all([
+			const [count, agentUsers, lastMonthActiveUsers] = await Promise.all([
 				this.count(), // Get the total number of users
+				this.countAgentUsers(), // The users behind agent employees, which are not people
 				this.getMonthlyActiveUsers() // Get the number of users active in the last 30 days
 			]);
 
 			return {
-				count, // The total number of users
-				lastMonthActiveUsers // The number of active users in the last month
+				count: Math.max(0, count - agentUsers), // The total number of users (people)
+				lastMonthActiveUsers // The number of active users in the last month (an agent never signs in)
 			};
 		} catch (error) {
 			console.error('Error fetching user stats:', error);
 			throw new Error(`Failed to retrieve user statistics: ${error.message}`);
 		}
+	}
+
+	/**
+	 * The users that stand behind an agent employee (`employee.kind = 'agent'`): the accounts the
+	 * agent-provisioning path creates, which have no password and never sign in. Left out of the user
+	 * statistics, which count people.
+	 *
+	 * Scoped like the user count it is subtracted from: the caller's tenant when there is one, and the whole
+	 * instance when there is none (the public `GET /stats/global`). An account behind an agent employee stays
+	 * an agent account after that employee is retired (soft-deleted), so retired employee rows count here; a
+	 * soft-deleted USER is in neither count.
+	 *
+	 * @returns {Promise<number>} - The number of agent users
+	 */
+	async countAgentUsers(): Promise<number> {
+		const tenantId = RequestContext.currentTenantId();
+		// `withDeleted` keeps the retired agent employees in the join; it also lifts the soft-delete filter of
+		// the users, which is therefore stated explicitly.
+		const query = this.typeOrmRepository
+			.createQueryBuilder('user')
+			.withDeleted()
+			.innerJoin(Employee, 'employee', 'employee.userId = user.id AND employee.kind = :agentKind', {
+				agentKind: EmployeeKindEnum.AGENT
+			})
+			.where('user.deletedAt IS NULL');
+		if (tenantId) {
+			query.andWhere('user.tenantId = :tenantId', { tenantId });
+		}
+		const row = await query
+			.select('COUNT(DISTINCT user.id)', 'agentUsers')
+			.getRawOne<{ agentUsers: string | number }>();
+		return Number(row?.agentUsers ?? 0) || 0;
 	}
 
 	/**
@@ -184,7 +221,6 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		// Fetch the user along with requested relations (excluding employee).
 		const user = await this.findMe(options.relations);
-		console.log('findMe found User with Id:', user.id);
 
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
@@ -230,6 +266,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async markEmailAsVerified(id: ID, email?: string): Promise<boolean> {
 		const where = email === undefined ? { id } : { id, email };
+
+		// A self-registration waits inactive for exactly this confirmation (owner decision 4, see
+		// `AuthService.register`): the confirmed address activates it. Only that state matches: inactive, no
+		// tenant yet and never confirmed. An account an admin deactivated belongs to a tenant, so confirming
+		// an address never re-activates it. Done before the confirmation is recorded, so a failure here
+		// leaves the link usable for another try instead of a confirmed account that can never sign in.
+		await this.activatePendingSignup(where);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return (
@@ -249,6 +293,34 @@ export class UserService extends TenantAwareCrudService<User> {
 				});
 				// Same reading as storeEmailVerificationCode: only a reported 0 means nothing was written.
 				return affected !== 0;
+			}
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Activates a self-registration that is waiting for its e-mail confirmation: an account that is
+	 * inactive, has no tenant yet and has never confirmed its address. Any other account is left as it is.
+	 *
+	 * @param where The account (`id`, and the confirmed `email` when known).
+	 * @returns Whether an account was activated.
+	 */
+	private async activatePendingSignup(where: { id: ID; email?: string }): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (
+					(await this.mikroOrmRepository.nativeUpdate(
+						{ ...where, isActive: false, tenantId: null, emailVerifiedAt: null } as any,
+						{ isActive: true }
+					)) > 0
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmRepository.update(
+					{ ...where, isActive: false, tenantId: IsNull(), emailVerifiedAt: IsNull() },
+					{ isActive: true }
+				);
+				return !!affected;
 			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -312,24 +384,61 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * GET user by email using social logins
+	 * The account a sign-in through an identity provider (Google, GitHub, Keycloak…) resolves a verified email to.
 	 *
-	 * @param email
-	 * @returns
+	 * A row nobody has proven is never chosen: one with no tenant and no verified email is a self-registration that
+	 * never got past `POST /auth/register`, which takes any address without proof of owning it. Matching it handed
+	 * the session of the address's real owner, on their first sign-in through the provider, to whoever had
+	 * registered the address first with a password of their own, and with it the workspace the owner then created.
+	 * When several rows carry the email, a verified one is chosen before an unverified one.
+	 *
+	 * Only active, non-archived rows are considered: `getJwtAccessToken` refuses any other, so preferring a verified
+	 * but deactivated row over an active one would turn the sign-in into an error instead of signing in the account
+	 * that is still allowed in.
+	 *
+	 * @param email The email the identity provider vouches for.
+	 * @returns The account, or null when no proven, active account carries the email.
+	 * @deprecated The provider sign-in uses {@link findOAuthLoginUsers} (owner decision 5): it matches only accounts
+	 * whose own address is confirmed, and offers the workspace picker when there are several.
 	 */
-	async getOAuthLoginEmail(email: string): Promise<IUser> {
-		try {
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.findOneOrFail({ email } as any);
-				case MultiORMEnum.TypeORM:
-					return await this.typeOrmRepository.findOneByOrFail({ email });
-				default:
-					throw new Error(`Not implemented for ${this.ormType}`);
-			}
-		} catch (error) {
-			throw new NotFoundException(`The requested record was not found`);
+	async findOAuthLoginUser(email: string): Promise<IUser | null> {
+		const rows: IUser[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.find({ email, ...ACTIVE_ACCOUNT } as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where: { email, ...ACTIVE_ACCOUNT } });
+		const proven = rows.filter((row) => !!row.tenantId || !!row.emailVerifiedAt);
+
+		return proven.find((row) => !!row.emailVerifiedAt) ?? proven[0] ?? null;
+	}
+
+	/**
+	 * The accounts a sign-in through an identity provider (Google, GitHub, Keycloak…) may resolve a provider-verified
+	 * email to: the active accounts with that address that have confirmed it themselves (owner decision 5).
+	 *
+	 * An unconfirmed account carrying the address may have been registered by anyone, since `POST /auth/register`
+	 * takes any address without proof, or set by an admin of another tenant. Matching it signed the address's owner
+	 * in to a workspace whose password someone else holds. Every match is returned: when there are several, the
+	 * caller offers the workspace picker rather than choosing one.
+	 *
+	 * @param email The email the identity provider vouches for, as the provider wrote it.
+	 * @param options.requireVerifiedAccount `false` (the `SOCIAL_SIGNIN_REQUIRE_VERIFIED_ACCOUNT=false` switch) also
+	 * accepts an unconfirmed account that belongs to a tenant, as {@link findOAuthLoginUser} did.
+	 * @returns The matching accounts; empty when none.
+	 */
+	async findOAuthLoginUsers(email: string, { requireVerifiedAccount = true } = {}): Promise<IUser[]> {
+		// An absent email would be dropped from the `where` and match every user.
+		if (!email) {
+			return [];
 		}
+		const where = { email, isActive: true, isArchived: false };
+		const rows: IUser[] =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmRepository.find(where as any)) as IUser[])
+				: await this.typeOrmRepository.find({ where });
+
+		return rows.filter((row) =>
+			requireVerifiedAccount ? !!row.emailVerifiedAt : !!row.emailVerifiedAt || !!row.tenantId
+		);
 	}
 
 	/**
@@ -409,8 +518,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ id });
 
-			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.findOneBy({ id });
+			case MultiORMEnum.TypeORM: {
+				// `find`, not `findOneBy`: the JWT strategy calls this on EVERY authenticated request. `findOneBy`
+				// adds `take: 1`, and TypeORM answers a limited query that has joins (the user's eager `image`) with
+				// two round trips — a `SELECT DISTINCT` of the ids, then the rows. A primary-key lookup can match one
+				// row at most, so the unlimited `find` returns the same user (with the same eager relations and the
+				// same soft-delete filter) in one round trip.
+				const [user] = await this.typeOrmRepository.find({ where: { id } });
+				return user ?? null;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -555,6 +671,11 @@ export class UserService extends TenantAwareCrudService<User> {
 				await this.assertCanAssignRoles(entity);
 			}
 
+			// The organization a profile points at must be one the user belongs to. `lastOrganizationId` is
+			// what a token without an organization claim falls back to and what the next sign-in scopes its
+			// token to, so naming another organization of the tenant here put the user inside it.
+			await this.assertOrganizationPreferencesAreMemberships(user, entity);
+
 			// Update password hash if provided
 			if (entity['hash']) {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
@@ -688,11 +809,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			return;
 		}
 		try {
-			await liftEmployeeAgentRestrictions(
-				this._employeeService,
-				this._activityLogService,
-				{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
-				`the worker's time zone moved into the EEA/UK (${timeZone})`
+			// Every employee record of the worker, in every organization: the right to exit and log out follows the
+			// worker, not the organization of the token the profile was saved with.
+			await runOutsideOrganizationBoundary(() =>
+				liftEmployeeAgentRestrictions(
+					this._employeeService,
+					this._activityLogService,
+					{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
+					`the worker's time zone moved into the EEA/UK (${timeZone})`
+				)
 			);
 		} catch (error) {
 			new Logger(UserService.name).error(
@@ -857,6 +982,150 @@ export class UserService extends TenantAwareCrudService<User> {
 				return { affected: updatedRow } as UpdateResult;
 			case MultiORMEnum.TypeORM:
 				return await this.typeOrmRepository.update({ id }, { lastLoginAt });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Refuses a profile write that points the user at an organization they are not an active member of.
+	 *
+	 * `lastOrganizationId` is read as the organization the user works in: a token without an organization
+	 * claim falls back to it (`RequestContext.currentOrganizationId()`, which the organization boundary confines
+	 * the request to), and the next sign-in and token refresh scope their token to it. `PUT /user/:id` and the
+	 * `updateUser` field write it from the body, and `PROFILE_EDIT` (every employee holds it) may edit one's
+	 * own profile, so without this check a user could name any organization of the tenant and work inside it.
+	 * `defaultOrganizationId` is the same kind of pointer (the MCP sign-in reads it) and follows the same rule.
+	 *
+	 * Each pointer is checked in both forms the entity accepts, the column and the relation object. Clearing a
+	 * pointer, and restating the value already stored, need no check. The membership is the one
+	 * `POST /auth/switch-organization` and the JWT strategy require: active and not archived, in the user's
+	 * tenant. A tenant admin needs one too: the token minted for an organization they are not a member of is
+	 * refused by the JWT strategy, so pointing an admin at it would only break their next sign-in.
+	 *
+	 * @param stored - The user as stored, before this write.
+	 * @param entity - The profile write.
+	 * @throws ForbiddenException when a pointer names an organization the user is not an active member of.
+	 */
+	private async assertOrganizationPreferencesAreMemberships(stored: IUser, entity: User): Promise<void> {
+		const pointers = [
+			['lastOrganizationId', 'lastOrganization'],
+			['defaultOrganizationId', 'defaultOrganization']
+		] as const;
+
+		for (const [column, relation] of pointers) {
+			const related = entity[relation];
+			const stated = [entity[column], related && typeof related === 'object' ? related.id : undefined];
+
+			for (const organizationId of stated) {
+				if (organizationId === undefined || organizationId === null || organizationId === '') {
+					continue;
+				}
+				if (String(organizationId) === String(stored[column])) {
+					continue;
+				}
+				if (
+					typeof organizationId !== 'string' ||
+					!(await this.hasActiveOrganizationMembership(stored.id, organizationId, stored.tenantId))
+				) {
+					throw new ForbiddenException();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Whether a user holds an active, non-archived membership of an organization of their tenant: the
+	 * criteria `POST /auth/switch-organization` and the JWT strategy apply.
+	 *
+	 * Read by entity name through the repository's manager, as {@link resolveRoleName} reads roles: the user
+	 * module does not depend on the user-organization module.
+	 *
+	 * @param userId - The user.
+	 * @param organizationId - The organization.
+	 * @param tenantId - The user's tenant.
+	 * @returns True when an active membership exists; false when any argument is missing.
+	 */
+	public async hasActiveOrganizationMembership(userId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		if (!userId || !organizationId || !tenantId) {
+			return false;
+		}
+
+		const where = { userId, organizationId, tenantId, isActive: true, isArchived: false };
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmRepository.getEntityManager().count('UserOrganization', where as any)) > 0;
+			case MultiORMEnum.TypeORM:
+			default:
+				return (await this.typeOrmRepository.manager.count('UserOrganization', { where: where as any })) > 0;
+		}
+	}
+
+	/**
+	 * The organization of a user's first active, non-archived membership in a tenant (oldest first): the default a
+	 * sign-in scopes its token to when nothing else names an organization.
+	 *
+	 * Read by entity name through the repository's manager, as {@link hasActiveOrganizationMembership} is, so the
+	 * tenant is the one passed in and not the request's: a workspace switch runs while the request still names the
+	 * tenant being left, and a token refresh runs inside the organization boundary of the token being refreshed.
+	 *
+	 * @param userId - The user.
+	 * @param tenantId - The tenant the membership must belong to.
+	 * @returns The organization of the oldest active membership; null when there is none or an argument is missing.
+	 */
+	public async findFirstActiveOrganizationId(userId: ID, tenantId: ID): Promise<ID | null> {
+		if (!userId || !tenantId) {
+			return null;
+		}
+
+		type Membership = { organizationId?: ID; organization?: { id?: ID } } | null;
+		const where = { userId, tenantId, isActive: true, isArchived: false };
+		let membership: Membership;
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				membership = (await this.mikroOrmRepository
+					.getEntityManager()
+					.findOne('UserOrganization', where as any, { orderBy: { createdAt: 'ASC' } as any })) as Membership;
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				membership = (await this.typeOrmRepository.manager.findOne('UserOrganization', {
+					where: where as any,
+					order: { createdAt: 'ASC' } as any
+				})) as Membership;
+				break;
+		}
+
+		return membership?.organizationId ?? membership?.organization?.id ?? null;
+	}
+
+	/**
+	 * Replaces the organization stored on a user (`lastOrganizationId`) that is no longer one of their memberships.
+	 *
+	 * The write is conditional on the stored value still being `staleOrganizationId`, so an organization the user
+	 * switched to in the meantime is never overwritten.
+	 *
+	 * @param userId - The user.
+	 * @param staleOrganizationId - The stored organization the user is no longer an active member of.
+	 * @param organizationId - The organization to store instead, or null to clear it.
+	 */
+	public async replaceStaleLastOrganization(
+		userId: ID,
+		staleOrganizationId: ID,
+		organizationId: ID | null
+	): Promise<void> {
+		const criteria = { id: userId, lastOrganizationId: staleOrganizationId };
+		const partialEntity = { lastOrganizationId: organizationId ?? null };
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.nativeUpdate(criteria, partialEntity);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmRepository.update(criteria, partialEntity);
+				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}

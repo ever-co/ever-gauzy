@@ -9,12 +9,24 @@ import {
 	Body,
 	UseGuards,
 	Post,
-	Delete
+	Delete,
+	NotFoundException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, ITask, IPagination, ID } from '@gauzy/contracts';
+import { PermissionsEnum, ITask, IPagination, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	BulkExecutor,
+	BulkOperation,
+	BulkResult,
+	IBulkCreateRequest,
+	applyAsSingleCreate,
+	bulkCreateRequest,
+	bulkOptionsOf,
+	singleRouteBody
+} from './../api';
+import { Idempotent } from './../idempotency/idempotent.decorator';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -31,7 +43,8 @@ import {
 	TaskByNumberQueryDTO,
 	TaskMaxNumberQueryDTO,
 	TaskQueryDTO,
-	UpdateTaskDTO
+	UpdateTaskDTO,
+	UpdateTaskStatusDTO
 } from './dto';
 
 @ApiTags('Tasks')
@@ -39,7 +52,11 @@ import {
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller('/tasks')
 export class TaskController extends CrudController<Task> {
-	constructor(private readonly taskService: TaskService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly taskService: TaskService,
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
+	) {
 		super(taskService);
 	}
 
@@ -288,6 +305,70 @@ export class TaskController extends CrudController<Task> {
 	}
 
 	/**
+	 * POST tasks in bulk
+	 *
+	 * One request files many tasks and answers one outcome per item. The batch is the platform's —
+	 * `@BulkOperation` declares what this route accepts, the executor is configured from that declaration,
+	 * authorises the whole request once and refuses a batch it cannot read before writing anything.
+	 *
+	 * **Each item is `POST /tasks`**: its body runs through that route's own validation pipe and then through
+	 * that route's handler, which dispatches `TaskCreateCommand` — so every task is numbered by the handler
+	 * that numbers a single task, from the highest number its project holds at the moment the item is
+	 * applied. The executor applies the items one after another, never two at once, so each item reads the
+	 * number the item before it took: the numbers a batch hands out are the numbers the same tasks filed one
+	 * by one would have, with no two items racing for the same one.
+	 *
+	 * The permission is the create route's — either of its two grants admits the caller — on the guard and
+	 * on the declaration alike. A batch files what it can and reports the rest; **`atomic: true` is refused
+	 * before item 0** (`BULK_ATOMIC_UNSUPPORTED`, declared `atomic: false`): each item runs the single
+	 * create, which writes through its own repositories, so the batch cannot be rolled back as one. The route
+	 * declares no dry run and no write mode either (see `bulkCreateRequest`).
+	 *
+	 * @param request The batch: the items, each the body `POST /tasks` takes.
+	 * @returns What applied, what did not, and the counts derived from both.
+	 */
+	@ApiOperation({ summary: 'Create tasks in bulk' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The batch was applied, with one outcome per item' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The request or an item could not be read, or it asked for "atomic" (BULK_ATOMIC_UNSUPPORTED)'
+	})
+	@ApiResponse({ status: HttpStatus.PAYLOAD_TOO_LARGE, description: 'BULK_LIMIT_EXCEEDED' })
+	@ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'BULK_ALL_ITEMS_FAILED' })
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
+	@Idempotent({ scope: 'task.bulk', required: false, resourceType: 'task' })
+	@BulkOperation({
+		resource: 'task',
+		// The platform's cap for every resource but the price and stock matrices: an item is one task row
+		// with its member links, numbered by one read of its project's highest number.
+		maxItems: 200,
+		permission: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD],
+		// Each item is the single create, which writes through its own repositories: no batch transaction.
+		atomic: false
+	})
+	@Post('/bulk')
+	async bulk(@Body() request: IBulkCreateRequest<ITaskCreateInput>): Promise<BulkResult<ITaskCreateInput>> {
+		const batch = bulkCreateRequest(request);
+
+		return await this.bulkExecutor.execute<ITaskCreateInput>(
+			batch,
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createAsSingleRoute(body)),
+			bulkOptionsOf(TaskController, 'bulk')
+		);
+	}
+
+	/**
+	 * Files one item of a batch exactly as `POST /tasks` files its body: through the route's own pipes, then
+	 * through the route's handler.
+	 *
+	 * @param body The item, as the single route's body.
+	 * @returns The task filed.
+	 */
+	private async createAsSingleRoute(body: ITaskCreateInput): Promise<ITask> {
+		return await this.create(await singleRouteBody<CreateTaskDTO>(TaskController, 'create')(body));
+	}
+
+	/**
 	 * PUT update an existing task
 	 *
 	 * @param id The ID of the task to update.
@@ -307,6 +388,41 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateTaskDTO): Promise<ITask> {
 		return this.commandBus.execute(new TaskUpdateCommand(id, entity));
+	}
+
+	/**
+	 * PUT move a task to another status, changing nothing else
+	 *
+	 * The full update needs the title, so a client that changes only the status (a card dropped on
+	 * another column of the project board) would send back a title it read earlier and undo a rename.
+	 *
+	 * @param id The ID of the task to move.
+	 * @param input The status to move it to.
+	 * @returns The updated task.
+	 */
+	@ApiOperation({ summary: "Update a task's status." })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: "The task's status has been successfully updated."
+	})
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/status')
+	@UseValidationPipe({ whitelist: true })
+	async updateStatus(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdateTaskStatusDTO): Promise<ITask> {
+		const { organizationId, status, taskStatusId } = input;
+		// The organization is one of the caller's (the DTO checks it) and must be the task's: the guards check
+		// the tenant only, so a member of one organization could otherwise move a task of another in the same
+		// tenant. A task of another organization reads as not found, as one of another tenant does.
+		const task = await this.taskService.findOneByIdString(id);
+		if (!task || task.organizationId !== organizationId) {
+			throw new NotFoundException('The requested record was not found');
+		}
+		// Only the status reaches the update, a partial one as the service takes it: the organization is the
+		// request's context and is never written.
+		return this.commandBus.execute(new TaskUpdateCommand(id, { status, taskStatusId } as ITaskUpdateInput));
 	}
 
 	/**

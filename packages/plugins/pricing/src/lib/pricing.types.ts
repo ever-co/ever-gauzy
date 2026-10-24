@@ -101,7 +101,10 @@ export enum PriceSource {
 export enum PriceComputeMode {
 	/** The row's `amount` **is** the price. The only mode before this revision. */
 	AMOUNT = 'AMOUNT',
-	/** The price is **derived** from a base: `amount = base × (1 − percent / 100)`, then `roundTo`. */
+	/**
+	 * The price is **derived** from a base: `amount = base × (1 − percent)`, then `roundTo`. `percent` is a
+	 * signed fraction: `0.25` is 25 % off, `-0.15` a 15 % markup.
+	 */
 	PERCENT_OFF = 'PERCENT_OFF'
 }
 

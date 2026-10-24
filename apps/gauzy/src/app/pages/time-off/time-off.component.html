@@ -147,7 +147,7 @@
 
 			<!-- Show Actions Button -->
 			@if (!showActions) {
-			<button nbButton (click)="showActions = true" status="basic" size="small" class="action">
+			<button nbButton ghost (click)="showActions = true" status="basic" size="small" class="action more-actions">
 				<nb-icon icon="more-horizontal-outline" cursor="pointer"></nb-icon>
 			</button>
 			}
@@ -189,7 +189,7 @@
 				<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
 				{{ 'BUTTONS.ARCHIVE' | translate }}
 			</button>
-			<button nbButton (click)="showActions = false" status="basic" size="small" class="action">
+			<button nbButton ghost (click)="showActions = false" status="basic" size="small" class="action more-actions">
 				<nb-icon icon="close-outline" cursor="pointer"></nb-icon>
 			</button>
 		</div>

@@ -3,13 +3,15 @@
 # `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
-# **The guard chain is the controller's, and the controller's is one guard and no permission.**
-# `SkillController` states `TenantPermissionGuard` on the class and declares no `@Permissions`
-# anywhere — not on the name route it owns and not on any of the routes it inherits from the CRUD base
-# — so every one of its routes is tenant-guarded and otherwise unpermissioned. No field below states a
-# permission, and the class states none either: a permission here would demand a grant no route asks
-# for, which is exactly the asymmetry the two-protocol rule forbids. Tightening this resource is a
-# change to make in both places at once, and it is not this delivery's to make.
+# **The guard chain and the permissions are the controller's: open reads, a write grant.**
+# `SkillController` states `TenantPermissionGuard` on the class and no `@Permissions` there, so its reads —
+# the list, the node, the count and the name route — are tenant-guarded and otherwise unpermissioned, and
+# so are the three query fields below. Every write — the filing, the edit, the removal and the two
+# lifecycle moves — states `SKILLS_EDIT` behind `PermissionGuard`, on the route and on the mutation field
+# alike: the CRUD base declares no permission and the guard answers `true` to empty metadata, so any member
+# of the tenant could change the skills vocabulary (GHSA-v79w-54p2-wmh5) until owner decision 2
+# (2026-10-22) gave the resource a write grant of its own. The two protocols stay symmetric: a grant
+# stated on one side and not the other would make one of them the better surface.
 #
 # The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
 # `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
@@ -20,12 +22,8 @@
 # **The name route is a filter rather than a root field of its own.** `GET /skills/getByName/:name`
 # reads one skill by its name and joins nothing the list read does not: its answer is the row a
 # `name` filter over the connection selects, so stating it twice would be two surfaces that could
-# disagree. One difference is worth writing down rather than hiding, and it is a difference the
-# delivery does not reproduce: the delivered name route builds its own query and names no tenant in
-# it, so it answers a skill of any tenant, while the connection's read is the tenant-scoped list read
-# and answers only the caller's own rows. Adding a root field that reached across tenants would be a
-# widening nobody asked for, so the filter is narrower than that one route and the narrowing is
-# stated here.
+# disagree. Both answer only the caller's own rows: the route scopes its query by the caller's
+# tenant, and the connection's read is the tenant-scoped list read.
 
 extend type Query {
 	"""

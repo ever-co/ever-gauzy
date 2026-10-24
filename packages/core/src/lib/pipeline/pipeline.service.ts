@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityNotFoundError, FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
@@ -10,6 +10,7 @@ import { LIKE_OPERATOR } from '../core/util';
 import { assertSensitiveRelationsAllowed } from '../core/util/sensitive-relations.helper';
 import { parseFindOptionsRelations } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
+import { IPartialEntity } from './../core/crud/icrud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
@@ -94,10 +95,15 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param id - The ID of the Pipeline to update.
 	 * @param entity - The partial entity data to update.
 	 * @returns The result of the update operation.
+	 * @throws NotFoundException when the pipeline is not found, BadRequestException when the transaction rolled back.
 	 */
 	public async update(id: ID, partialEntity: QueryDeepPartialEntity<Pipeline>): Promise<UpdateResult | Pipeline> {
 		// Retrieve the current tenant ID from the request context
 		const tenantId = RequestContext.currentTenantId();
+
+		// The stages below are saved by primary key alone, so run the nested check create() and save() run.
+		// It stays outside the try block, whose catch would swallow the refusal.
+		await this.assertNestedGraphNotForeign([{ ...partialEntity, id } as IPartialEntity<Pipeline>], tenantId);
 
 		const queryRunner = this.connectionEntityManager.rawConnection.createQueryRunner();
 
@@ -107,7 +113,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			await queryRunner.startTransaction();
 
 			// Fetch the existing pipeline
-			await queryRunner.manager.findOneByOrFail(Pipeline, { id, tenantId });
+			const existing = await queryRunner.manager.findOneByOrFail(Pipeline, { id, tenantId });
 
 			// Create a new pipeline instance with the updated data
 			const pipeline: Pipeline = queryRunner.manager.create(
@@ -139,6 +145,13 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				(stage) => !updatedStages.some((updatedStage) => updatedStage.id === stage.id)
 			);
 
+			// A new stage the body files under no tenant or organization (GraphQL never states them) takes the
+			// pipeline's, or the deals read and the next edit would never see it.
+			for (const stage of createdStages) {
+				stage.tenantId ??= tenantId;
+				stage.organizationId ??= pipeline.organizationId ?? existing.organizationId;
+			}
+
 			// Prepare the pipeline for saving
 			pipeline.__before_persist();
 			delete pipeline.stages;
@@ -158,6 +171,15 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		} catch (error) {
 			console.log('Rollback Pipeline Transaction', error);
 			await queryRunner.rollbackTransaction();
+
+			// Nothing was written: report the failure rather than answer an empty edit as a success
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			if (error instanceof EntityNotFoundError) {
+				throw new NotFoundException('Record not found');
+			}
+			throw new BadRequestException(error?.message);
 		} finally {
 			await queryRunner.release();
 		}

@@ -1,16 +1,18 @@
 import { IMatchingCriterions, PermissionsEnum } from '@gauzy/contracts';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
 import { SavePresetCriterionCommand } from '../save-preset-criterion.command';
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../repository/type-orm-job-preset-upwork-job-search-criterion.repository';
+import { TypeOrmJobPresetRepository } from '../../repository/type-orm-job-preset.repository';
 
 @CommandHandler(SavePresetCriterionCommand)
 export class SavePresetCriterionHandler implements ICommandHandler<SavePresetCriterionCommand> {
 	constructor(
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository
+		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
+		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository
 	) {}
 
 	/**
@@ -21,9 +23,31 @@ export class SavePresetCriterionHandler implements ICommandHandler<SavePresetCri
 	 */
 	public async execute(command: SavePresetCriterionCommand): Promise<IMatchingCriterions> {
 		const { input } = command;
-		input.tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		if (!input.tenantId) {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
 			throw new ForbiddenException('Tenant context is required');
+		}
+		input.tenantId = tenantId;
+
+		// The preset (from the route) must be one of this tenant, and an id may only name one of its own criteria:
+		// the raw `save` below updates whatever row the id names, in any tenant, and moves it into this one
+		// (an empty id would be dropped from the SQL and match any preset of the tenant)
+		if (!input.jobPresetId) {
+			throw new BadRequestException('jobPresetId is required');
+		}
+		const jobPreset = await this.typeOrmJobPresetRepository.findOneBy({ id: input.jobPresetId, tenantId });
+		if (!jobPreset) {
+			throw new NotFoundException('Job preset not found');
+		}
+		if (
+			input.id &&
+			!(await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findOneBy({
+				id: input.id,
+				jobPresetId: jobPreset.id,
+				tenantId
+			}))
+		) {
+			throw new NotFoundException('Job preset criterion not found');
 		}
 
 		// If the current user has the permission to change the selected employee, use their ID

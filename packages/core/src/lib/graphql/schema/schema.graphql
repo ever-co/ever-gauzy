@@ -66,8 +66,24 @@ type Query {
     organization: JSON
   ): AccountingTemplatePreview!
 
-  """The activity log of the caller's tenant, newest first."""
-  activityLogs(filter: ActivityLogFilter, sort: [ActivityLogSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ActivityLogConnection!
+  """
+  The activity log of one organization the caller belongs to, newest first.
+  """
+  activityLogs(
+    """
+    The organization whose log is read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: ActivityLogFilter
+    sort: [ActivityLogSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ActivityLogConnection!
   addressRoles(addressId: ID!): [AddressRole!]!
   addressRoleDefault(role: AddressRoleEnum!, ownerAddressIds: [ID!]!): ID
 
@@ -77,8 +93,24 @@ type Query {
   """One address of the caller's organization, or null when there is none."""
   address(id: ID!): Address
 
-  """The API call logs of the caller's tenant, most recent request first."""
-  apiCallLogs(filter: ApiCallLogFilter, sort: [ApiCallLogSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ApiCallLogConnection!
+  """
+  The API call logs of one organization the caller belongs to, most recent request first.
+  """
+  apiCallLogs(
+    """
+    The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: ApiCallLogFilter
+    sort: [ApiCallLogSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): ApiCallLogConnection!
 
   """
   The invitations of the caller's tenant, newest first. An appointment's invitees are this connection
@@ -661,7 +693,21 @@ type Query {
   store holds: the read answers a bounded set, and the connection's filter, order and page are applied
   over exactly that set.
   """
-  employeeRecentVisits(filter: EmployeeRecentVisitFilter, sort: [EmployeeRecentVisitSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeRecentVisitConnection!
+  employeeRecentVisits(
+    """
+    The organization whose rows are read. The caller must belong to it, as on the REST route. Required: a call without it is refused with `ORGANIZATION_REQUIRED` — the argument is nullable on purpose, so that error rather than schema validation is the contract.
+    """
+    organizationId: ID
+    filter: EmployeeRecentVisitFilter
+    sort: [EmployeeRecentVisitSort!]
+    page: PageInput
+    first: Int
+    after: String
+    last: Int
+    before: String
+    limit: Int
+    offset: Int
+  ): EmployeeRecentVisitConnection!
 
   """
   The standing costs of the caller's organization, newest arrangement first.
@@ -4615,7 +4661,9 @@ type Query {
   """Read one cart with its lines, delivery choices and promotions."""
   cart(id: ID!): Cart
 
-  """Read the cart a buyer token names."""
+  """
+  Read the cart a guest-access token names, within the caller's tenant; null when none carries it. The token is the one createCart answered with.
+  """
   cartByToken(token: String!): Cart
 
   """List checkout sessions."""
@@ -4807,6 +4855,11 @@ type Query {
 
   """One subscription, with its lines and its billing history."""
   subscription(id: ID!): CustomerSubscription
+
+  """
+  The next billing of a subscription, previewed without writing anything; null when it will not bill again as it stands.
+  """
+  upcomingSubscriptionBilling(id: ID!): UpcomingSubscriptionBilling
 
   """The recurring lines of a subscription."""
   subscriptionItems(filter: SubscriptionItemFilter, page: PageInput, withDeleted: Boolean): SubscriptionItemConnection!
@@ -6615,6 +6668,16 @@ type Mutation {
   createExpense(input: CreateExpenseInput!): Expense!
 
   """
+  Records a batch of costs — each item exactly as `createExpense` records one, its employee's average
+  expense recomputed as a single expense's is — and answers one outcome per item. The batch
+  `POST /expense/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateExpenses(input: BulkCreateExpensesInput!): BulkCreateExpensesPayload!
+
+  """
   Changes a cost that exists.
   
   The delivered edit reaches the same write the create does, carrying the identifier in the path and
@@ -8013,10 +8076,9 @@ type Mutation {
   
   The delivered method answers nothing at all, so this field answers whether the call ran, which is
   the most the route's answer carries. `true` is not a statement that the request moved: the delivered
-  move is conditional, and leaves the row exactly as it was when the applicant is already a member of
-  the team, or when the address has no employee record in the tenant. A caller that needs the row as
-  it now stands reads it back through `organizationTeamJoinRequests`, which is where this surface
-  reads the row.
+  move is conditional, and leaves the row exactly as it was when the address has no employee record in
+  the tenant. A caller that needs the row as it now stands reads it back through
+  `organizationTeamJoinRequests`, which is where this surface reads the row.
   """
   acceptOrganizationTeamJoinRequest(id: ID!, action: OrganizationTeamJoinRequestAction!): Boolean!
 
@@ -8127,6 +8189,16 @@ type Mutation {
   its first administrators need.
   """
   createOrganization(input: CreateOrganizationInput!): Organization!
+
+  """
+  Files a batch of organizations — each item exactly as `createOrganization` files one, with everything
+  that command creates beside it — and answers one outcome per item. The batch `POST /organization/bulk`
+  applies, under the same permission and cap (20: each organization is created with its defaults).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateOrganizations(input: BulkCreateOrganizationsInput!): BulkCreateOrganizationsPayload!
 
   """
   Replaces the stated facts of an organization. The visibility flags of the public profile are
@@ -8988,8 +9060,27 @@ type Mutation {
   """Puts a withdrawn tag back."""
   recoverTag(id: ID!): Tag!
 
+  """
+  Files a batch of tags — each item exactly as `createTag` and `POST /tags` file one — and answers one
+  outcome per item. The batch `POST /tags/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTags(input: BulkCreateTagsInput!): BulkCreateTagsPayload!
+
   """Files a task."""
   createTask(input: CreateTaskInput!): Task!
+
+  """
+  Files a batch of tasks — each item exactly as `createTask` files one, numbered by the same handler from
+  its project's highest number as the items before it left it — and answers one outcome per item. The
+  batch `POST /tasks/bulk` applies, under the same permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTasks(input: BulkCreateTasksInput!): BulkCreateTasksPayload!
 
   """Edits a task that exists."""
   updateTask(input: UpdateTaskInput!): Task!
@@ -9422,8 +9513,8 @@ type Mutation {
   Files a request, and the approval record that carries it forward, in one call.
   
   The delivered write stores the request and then files the approval row that says who has to decide it,
-  so a request never exists without one. The status a caller states seeds that record; an absent status
-  is the delivered write's own default, which is "requested".
+  so a request never exists without one. The status is the write's, not the caller's: a request is filed
+  "requested", or "approved" when the stored policy it names requires no approval.
   """
   createTimeOffRequest(input: CreateTimeOffRequestInput!): TimeOffRequest!
 
@@ -9508,17 +9599,28 @@ type Mutation {
   The delivered write resolves the conflicts of the interval first — trimming the conflicting slots
   of the logs it finds — and files the interval into the payroll period it belongs to. That is the
   handler's work and is not restated here; what this field states is the same body the route states,
-  with the employee replaced by the caller's own and the log type and source set as the delivered
-  body sets them.
+  with the employee it names and the log type and source set as the delivered body sets them. An
+  employee the caller may not record time for is refused (403), as the route refuses it.
   """
   addManualTime(input: CreateManualTimeLogInput!): TimeLog!
+
+  """
+  Records a batch of intervals by hand — each item exactly as `addManualTime` records one, its conflicts
+  resolved against the intervals the items before it recorded — and answers one outcome per item. The
+  batch `POST /timesheet/time-log/bulk` applies, under the same guard, permission and cap (200).
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the manual-time create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateTimeLogs(input: BulkCreateTimeLogsInput!): BulkCreateTimeLogsPayload!
 
   """
   Edits a hand-recorded interval, and answers the row as it stands after the write.
   
   The delivered write resolves the interval's conflicts again, stamps the instant it was edited and
-  files the row into the period its new start belongs to. A body that states an employee the caller
-  may not choose has it replaced by the caller's own, exactly as the create does.
+  files the row into the period its new start belongs to. The employee the body states is kept and
+  judged exactly as the create judges it: one the caller may not record time for is refused (403),
+  never replaced by the caller's own.
   """
   updateManualTime(input: UpdateManualTimeLogInput!): TimeLog!
 
@@ -9674,6 +9776,17 @@ type Mutation {
   may not grant is refused by the delivered handler rather than here.
   """
   createUser(input: CreateUserInput!): User!
+
+  """
+  Files a batch of accounts — each item exactly as `createUser` files one, its role resolved in the
+  caller's tenant and refused when the caller may not grant it — and answers one outcome per item. The
+  batch `POST /user/bulk` applies, under the same permission and cap (50). An outcome names the account by
+  its id and nothing else.
+  A batch applies what it can and reports the rest; `atomic: true` is refused before any item with
+  `BULK_ATOMIC_UNSUPPORTED`: each item runs the single create, which writes through its own repositories,
+  so the batch cannot be rolled back as one.
+  """
+  bulkCreateUsers(input: BulkCreateUsersInput!): BulkCreateUsersPayload!
 
   """
   Edits an account that exists.
@@ -9882,6 +9995,11 @@ type Mutation {
   removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 
   """
+  Writes the whole product set of a collection in one call, in order — the set route's own operation.
+  """
+  replaceCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+
+  """
   Retires one collection membership recoverably, so the product stays curated into the collection.
   """
   softDeleteCollectionProduct(id: ID!): CollectionProduct!
@@ -9914,6 +10032,11 @@ type Mutation {
   """Restores a soft-deleted facet."""
   recoverTagProductVariant(id: ID!): TagProductVariant!
   assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
+
+  """
+  Updates one collection publication row - its status or its date - as PUT /collection-channels/:id does.
+  """
+  updateCollectionChannel(id: ID!, input: UpdateCollectionChannelInput!): CollectionChannel!
   unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
 
   """
@@ -10136,7 +10259,14 @@ type Mutation {
   cancelStockAdjustment(id: ID!): StockAdjustment!
   createStockReservation(input: StockReservationInput!): StockReservation!
   releaseStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
-  consumeStockReservation(id: ID!): StockReservation!
+
+  """
+  Consumes a hold: the held units leave, and the hold closes with them.
+  
+  `reason` is the machine-readable reason recorded on the ledger row, as `POST /stock-reservations/:id/consume?reason=`
+  records it; `idempotencyKey` makes a retry safe, as on the release beside it.
+  """
+  consumeStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
 
   """
   Pushes the expiry of every active hold of a document.
@@ -10155,7 +10285,14 @@ type Mutation {
   cancelStockTransfer(id: ID!, reason: String): StockTransfer!
   addStockTransferLine(input: StockTransferLineInput!): StockTransferLine!
   createStockAlert(input: StockAlertInput!): StockAlert!
-  updateStockAlert(id: ID!, input: StockAlertInput!): StockAlert!
+
+  """
+  Updates an alert rule and answers it as it now stands.
+  
+  State the changes once: as `patch`, whose every member is optional, or as the older `input`, the create's
+  shape, which restates the rule's required members and keeps working. Both, or neither, is refused.
+  """
+  updateStockAlert(id: ID!, input: StockAlertInput, patch: UpdateStockAlertInput): StockAlert!
   deleteStockAlert(id: ID!): Boolean!
   createStockCount(input: StockCountInput!): StockCount!
   openStockCount(id: ID!): StockCount!
@@ -10470,6 +10607,11 @@ type Mutation {
   updateOrder(id: ID!, input: UpdateOrderInput!): Order!
   cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!
   archiveOrder(id: ID!, version: Int): Order!
+
+  """
+  Completes an order whose goods are accounted for and whose money is settled; refused with ORDER_NOT_COMPLETABLE otherwise.
+  """
+  completeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
   placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
   confirmOrder(id: ID!, version: Int): Order!
 
@@ -10984,7 +11126,13 @@ type Mutation {
   """Restores a soft-deleted gift-card movement."""
   recoverGiftCardTransaction(id: ID!): RecoverGiftCardTransactionPayload!
   createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
-  updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
+
+  """
+  Updates a shipping profile. State the changes once: as `patch`, whose every member is optional, or as the
+  older `input`, the create's shape, which restates `name` and `code` and keeps working. Both, or neither,
+  is refused.
+  """
+  updateShippingProfile(id: ID!, input: CreateShippingProfileInput, patch: UpdateShippingProfileInput): ShippingProfile!
   deleteShippingProfile(id: ID!): Boolean!
 
   """
@@ -11004,7 +11152,13 @@ type Mutation {
   """Restore a soft-deleted variant attachment."""
   recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
   createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
-  updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
+
+  """
+  Updates a shipping option. State the changes once: as `patch`, whose every member is optional, or as the
+  older `input`, the create's shape, which restates `name`, `code` and `priceType` and keeps working. Both, or
+  neither, is refused.
+  """
+  updateShippingOption(id: ID!, input: CreateShippingOptionInput, patch: UpdateShippingOptionInput): ShippingOption!
   deleteShippingOption(id: ID!): Boolean!
 
   """
@@ -11016,6 +11170,13 @@ type Mutation {
   recoverShippingOption(id: ID!): ShippingOption!
   createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
   updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+
+  """
+  Append a line to a shipment that has not left yet: the shipment must still be PENDING, the order line must be
+  one of its order's and still have the quantity to ship, and on an outbound shipment the order line's counter
+  moves with the line (a return-direction shipment moves none).
+  """
+  addFulfillmentLine(id: ID!, input: AddFulfillmentLineInput!): Fulfillment!
 
   """
   Correct one shipment line: the quantity, the location, the order line it covers, or its payload.
@@ -11105,12 +11266,12 @@ type Mutation {
   field mirrors what its route *does*. Stating the documented grant here would let a caller holding
   it move money over GraphQL while the same caller is refused the same act over REST — the one
   direction §3.1 forbids. The divergence is recorded rather than resolved, because settling it
-  changes the route as well as the field.
+  changes the route as well as the field. Settling the refund additionally needs
+  `REFUNDS_APPROVE`, refused with `REFUND_APPROVAL_REQUIRED` before anything is written.
   
-  No retry key is declared, because the route declares none. §7.14 writes "Yes (Idempotency-Key,
-  required)" for it and the controller's own `@Idempotent` decorators sit on the request and the
-  receipt only; inventing a scope here would dedupe a GraphQL retry that the REST route lets
-  through, which is a difference in behaviour rather than a difference in transport.
+  The retry key is required, as §7.14 states and as the REST route declares: the same
+  `return.refund` scope on both, so a client retrying after a lost answer does not give the
+  money back twice.
   """
   refundOrderReturn(id: ID!, input: RefundOrderReturnInput!): RefundOrderReturnPayload!
 
@@ -11337,6 +11498,11 @@ type Mutation {
 
   """Ends a subscription."""
   cancelSubscription(id: ID!, input: CancelSubscriptionInput): CustomerSubscriptionPayload!
+
+  """
+  Withdraws a cancellation at the end of the period, so the subscription keeps billing.
+  """
+  undoSubscriptionCancellation(id: ID!, version: Int, idempotencyKey: String): CustomerSubscriptionPayload!
 
   """Ends a subscription because it ran out."""
   expireSubscription(id: ID!, input: ExpireSubscriptionInput): CustomerSubscriptionPayload!
@@ -11597,7 +11763,18 @@ type Mutation {
   Extends the term of a right, which is what a successful renewal does. The caller states the
   'version' it read, and a right that has moved on since is refused.
   """
-  extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int, version: Int, idempotencyKey: String): EntitlementPayload!
+  extendEntitlement(
+    id: ID!
+    endsAt: DateTime!
+    quantity: Int
+    version: Int
+    idempotencyKey: String
+
+    """
+    What extended the right (e.g. the subscription billing cycle), carried on the renewal event, as POST /entitlements/:id/extend takes it.
+    """
+    note: String
+  ): EntitlementPayload!
 
   """
   Edits a right: its ceiling, its term, its grace, its activation limit, its extras and its
@@ -11935,14 +12112,14 @@ type Mutation {
   recoverSellerPayout(id: ID!): SellerPayout!
 
   """
-  Removes a payout line, answering the count the deletion reports.
+  Refused: a payout line is released by canceling its payout (`cancelSellerPayout`), never deleted.
   
   Mirrors `DELETE /seller-payout-lines/:id`, which takes `SELLERS_DELETE`: a line is the join row of one payout and one ledger row, and every row under the seller belongs to the seller.
   """
   deleteSellerPayoutLine(id: ID!): SellerDeleteResult!
 
   """
-  Archives a payout line, keeping the row.
+  Refused: a payout line is released by canceling its payout (`cancelSellerPayout`), never archived.
   
   Mirrors `DELETE /seller-payout-lines/:id/soft`, which takes `SELLERS_DELETE`: a line is the join row
   of one payout and one ledger row, and every row under the seller belongs to the seller.
@@ -11950,7 +12127,7 @@ type Mutation {
   softDeleteSellerPayoutLine(id: ID!): SellerPayoutLine!
 
   """
-  Restores a soft-deleted payout line.
+  Refused: a payout line archived by a cancellation belongs to a canceled payout and is never restored.
   
   Mirrors `PUT /seller-payout-lines/:id/recover`: restoring the join row is what makes its ledger row
   payable at most once again, so it takes `SELLERS_DELETE` and not the payout grants.
@@ -15600,6 +15777,18 @@ type Subscription {
   ): EventEnvelope
 
   """
+  Every finished synchronisation of an integration connection of the caller's tenant — a GitHub issue sync, a
+  Hubstaff automatic sync — with the connection as `integrationTenant(id:)` reads it when the event is delivered (a
+  later run may already have moved its `lastSyncedAt`), the provider, and this run's moment and counts. Narrowed by `integrationTenantId` and by the provider `name`; each only narrows what
+  the credential may read. Follows the `integration_tenant.synced` fact the run appends in the transaction that
+  stamps the connection's `lastSyncedAt`.
+  
+  A subscription is a notification and never a system of record: a run that finishes while the client is
+  disconnected is not replayed, and `lastSyncedAt` on the connection is the record.
+  """
+  integrationSyncCompleted(integrationTenantId: ID, name: String): IntegrationSyncCompleted!
+
+  """
   A step of an operation of the caller's tenant moving: it started, succeeded, failed, or was
   compensated during the undo walk.
   
@@ -15669,6 +15858,17 @@ type Subscription {
   stockTransferChanged(id: ID): StockTransfer!
 
   """
+  Every move of a pick list of the caller's tenant — created, assigned, started, picked, canceled — with the list,
+  its lines and its wave, as `pickList(id:)` reads it when the move is delivered, not a snapshot of the move: a
+  move made since may already show in it. Narrowed by `pickListId`, by the location, the wave
+  and the picker the list is assigned to, and by `action` (the move: `assigned`, `picked`, …); each only
+  narrows what the credential may read. Follows the `pick_list.*` facts the pick-list service appends to the
+  outbox in the transaction of each move. A subscription is a notification and never a system of record: a move
+  made while the client is disconnected is not replayed.
+  """
+  pickListChanged(pickListId: ID, warehouseId: ID, waveId: ID, assignedToUserId: ID, action: String): PickList!
+
+  """
   Every lifecycle move of an order of the caller's tenant — placed, confirmed, canceled, completed,
   archived — with the order in the state the move left it, as `order(id:)` reads it. Narrowed by
   `orderId` and by `action` (the move: `placed`, `canceled`, …); both only narrow what the
@@ -15714,6 +15914,27 @@ type Subscription {
   giftCardRedeemed(giftCardId: ID): GiftCardRedeemedPayload!
 
   """
+  A shipment of the caller's tenant was created — outbound for an order, or the leg a return travels back on —
+  with its lines, as `fulfillment(id:)` reads it when the event is delivered: a move made since the creation may
+  already show in it. Narrowed by the order and by the location; each only narrows what the credential may
+  read. Follows the `fulfillment.created` fact the fulfilment service appends to the
+  outbox. A subscription is a notification and never a system of record: a shipment created while the client is
+  disconnected is not replayed.
+  """
+  fulfillmentCreated(orderId: ID, warehouseId: ID): Fulfillment!
+
+  """
+  Every lifecycle move of a shipment of the caller's tenant — created, shipped, in transit, delivered, canceled —
+  with the shipment as `fulfillment(id:)` reads it when the move is delivered, not a snapshot of the move: a move
+  made since may already show in it. Narrowed by
+  `fulfillmentId`, by the order the shipment is of, and by `action` (the move: `shipped`, `in_transit`,
+  `delivered`, …); each only narrows what the credential may read. Follows the `fulfillment.*` facts the
+  fulfilment service appends to the outbox. A subscription is a notification and never a system of record: a move
+  made while the client is disconnected is not replayed.
+  """
+  fulfillmentChanged(fulfillmentId: ID, orderId: ID, action: String): Fulfillment!
+
+  """
   Every lifecycle move of a return of the caller's tenant — requested, approved, rejected, canceled,
   received, refunded, closed — with the return in the state the move left it, as `orderReturn(id:)`
   reads it. Narrowed by `orderReturnId`, by the order the return is against, and by `action` (the move:
@@ -15724,6 +15945,17 @@ type Subscription {
   """
   orderReturnChanged(orderReturnId: ID, orderId: ID, action: String): OrderReturn!
 
+  """
+  Every lifecycle move of a customer's subscription of the caller's tenant — created, activated, paused, resumed,
+  canceled, its cancellation undone, expired, renewed, or a cycle's payment failed — with the subscription as `subscription(id:)` reads it
+  when the move is delivered, not a snapshot of the move: a move made since may already show in it. Narrowed by `subscriptionId`, by the customer, and by `action` (the move:
+  `activated`, `payment-failed`, …); each only narrows what the credential may read. Follows the
+  `subscription.*` facts the subscription service appends to the outbox. The field is not `subscriptionChanged`
+  because the type is `CustomerSubscription`: `Subscription` is the root operation type. A subscription is a
+  notification and never a system of record: a move made while the client is disconnected is not replayed.
+  """
+  customerSubscriptionChanged(subscriptionId: ID, customerId: ID, action: String): CustomerSubscription!
+
   """Streams rights that were granted or changed."""
   entitlementChanged(entitlementId: ID): Entitlement!
 
@@ -15732,6 +15964,63 @@ type Subscription {
 
   """Streams rights that were withdrawn."""
   entitlementRevoked(entitlementId: ID): Entitlement!
+
+  """
+  Every streamed move of a licence key of the caller's tenant — today, its withdrawal — with the key as
+  `entitlementKeys` reads it when the move is delivered (the display prefix, never key material), not a snapshot
+  of the move: a change made since may already show in it. Narrowed by
+  `entitlementKeyId` and by the right the key was issued against; each only narrows what the credential may
+  read. Follows the `entitlement_key.*` facts `Subscription.events` streams — `entitlement_key.issued` is
+  withheld there, because its payload carries the holder's e-mail, and so here too. A subscription is a
+  notification and never a system of record: a move made while the client is disconnected is not replayed.
+  """
+  entitlementKeyChanged(entitlementKeyId: ID, entitlementId: ID): EntitlementKey!
+
+  """
+  Every move of a seller account of the caller's tenant — created, edited, submitted, verified, activated,
+  suspended, rejected, offboarding started — with the seller as `seller` reads it when the move is delivered,
+  not a snapshot of the move: a move made since may already show in it. Narrowed by `sellerId` and by `action` (the move: `activated`, `offboarding-started`, …);
+  each only narrows what the credential may read, and a seller's own person hears its own seller only.
+  Follows the `seller.*` facts the seller service appends to the outbox in the transaction of each move. A
+  subscription is a notification and never a system of record: a move made while the client is disconnected
+  is not replayed.
+  """
+  sellerChanged(sellerId: ID, action: String): Seller!
+
+  """
+  Every streamed move of an offering of the caller's tenant — listed or withdrawn — with the offering as it
+  reads when the move is delivered, not a snapshot of the move: a change made since may already show in it.
+  Narrowed by `sellerOfferingId`, by the seller and by `action`; a seller's own
+  person hears its own seller's offerings only. A price edit is not streamed (`seller_offering.updated` is
+  withheld from subscriptions for the reason `price.updated` is).
+  """
+  sellerOfferingChanged(sellerOfferingId: ID, sellerId: ID, action: String): SellerOffering!
+
+  """
+  Every move of a payout of the caller's tenant — created, paid, failed, canceled — with the payout and its
+  lines, as `sellerPayout` reads it when the move is delivered: a move made since may already show in it.
+  Narrowed by `sellerPayoutId`, by the seller and by `action`; a
+  seller's own person hears its own seller's payouts only. Requires the marketplace payouts feature, as the
+  payout queries do.
+  """
+  sellerPayoutChanged(sellerPayoutId: ID, sellerId: ID, action: String): SellerPayout!
+
+  """
+  Every move of a provider settlement of the caller's tenant — recorded, closed — with the settlement as it
+  reads when the move is delivered, not a snapshot of the move: a move made since may already show in it.
+  Narrowed by `sellerSettlementId`, by the seller and by `action`; a seller's own
+  person hears its own seller's settlements only. Requires the marketplace payouts feature, as the
+  settlement queries do.
+  """
+  sellerSettlementChanged(sellerSettlementId: ID, sellerId: ID, action: String): SellerSettlement!
+
+  """
+  Every move of the seller ledger of the caller's tenant — an order's sale recorded, a row made settleable, a
+  reversal — with the rows the move wrote or changed, each as it reads when the move is delivered: one fact can
+  move several rows, one per seller-owned line, and a change made since may already show in them. Narrowed by the seller, by the order and by `action` (`recorded`, `settleable`, `reversed`);
+  a seller's own person is answered only its own seller's rows, and not told of a move that touched none.
+  """
+  sellerTransactionChanged(sellerId: ID, orderId: ID, action: String): [SellerTransaction!]!
 }
 
 """
@@ -16119,9 +16408,9 @@ never from an argument, but the organization is a member the caller names and th
 validates against the caller's own memberships. There is no member for the tenant, for the same reason
 there is none on any other write here.
 
-The author is the credential's employee wherever the credential carries one, so `employeeId` is what a
-caller holding the kernel's change-selected-employee permission states on behalf of somebody else, and
-what the delivered write falls back to when the credential names no employee at all.
+The author is always the caller: the credential's employee when it carries one, and otherwise nobody,
+the comment then being owned by the user who posted it. `employeeId` and `resolvedByEmployeeId` are
+accepted so that existing clients keep validating, and both are ignored.
 
 `parentId` makes the comment a reply. `mentionEmployeeIds` is the one member the delivered write reads
 without storing it on the row: each identifier named there is published a mention against the comment
@@ -16153,12 +16442,10 @@ input CreateCommentInput {
   """When the text was last edited. Omit while it stands as first written."""
   editedAt: DateTime
 
-  """
-  The employee to record as the author. Omit to record the caller's own employee.
-  """
+  """Ignored: the author is always the caller."""
   employeeId: ID
 
-  """The employee to record as the one who resolved the conversation."""
+  """Ignored: a new comment has no resolver."""
   resolvedByEmployeeId: ID
 
   """The comment this one answers. Omit to start a conversation."""
@@ -16218,10 +16505,10 @@ input UpdateCommentInput {
   """When the text was last edited."""
   editedAt: DateTime
 
-  """The employee recorded as the author."""
+  """The author. Only a tenant administrator's edit changes it."""
   employeeId: ID
 
-  """The employee recorded as the one who resolved the conversation."""
+  """The caller, or whom a tenant admin names; null clears it."""
   resolvedByEmployeeId: ID
 
   """The comment this one answers."""
@@ -20581,6 +20868,11 @@ type Employee {
   linkedInId: String
 
   """
+  What the row represents: `human` for a person, `agent` for an agent employee provisioned by an integration. Never written through this surface.
+  """
+  kind: String
+
+  """
   The account this engagement belongs to. The account row is read from this surface's own `user(id)` by this identifier.
   """
   userId: ID
@@ -20704,6 +20996,7 @@ input EmployeeFilter {
   trackAllDisplays: BooleanFilter
   upworkId: StringFilter
   linkedInId: StringFilter
+  kind: StringFilter
   userId: IDFilter
   contactId: IDFilter
   organizationPositionId: IDFilter
@@ -21550,6 +21843,13 @@ type EquipmentSharing {
   equipmentSharingPolicyId: ID
 
   """
+  The row's optimistic-concurrency version: 1 when the period is filed, moved on by every write. State it
+  in `UpdateEquipmentSharingInput.version` to have an edit refused (409 `ENTITY_VERSION_CONFLICT`) when the
+  period changed since it was read.
+  """
+  version: Int
+
+  """
   The employees the asset is handed to. Joined by the two by-organization and by-employee reads, which
   is why the members are nullable: the list connection's own rows are not joined.
   """
@@ -21723,6 +22023,12 @@ row exists.
 """
 input UpdateEquipmentSharingInput {
   id: ID!
+
+  """
+  The version of the period the edit is based on. The edit is refused (409 `ENTITY_VERSION_CONFLICT`) when
+  the stored period has moved on; omitted, the server uses the version it reads before the edit.
+  """
+  version: Int
   name: String
   shareRequestDay: DateTime
   shareStartDay: DateTime
@@ -23045,6 +23351,50 @@ type ExpenseStatistics {
 
   """The totals per project and currency."""
   byProject: [ExpenseGroupTotal!]!
+}
+
+"""
+A batch of costs to record, as `bulkCreateExpenses` takes it: the body `POST /expense/bulk` accepts plus
+the retry key.
+
+Each item is a `CreateExpenseInput` and is recorded exactly as `createExpense` records one, so an item is
+refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it
+is optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateExpensesInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateExpenseInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of costs adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateExpensesPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """
@@ -24554,6 +24904,33 @@ type UserError {
   details: JSON
 }
 
+"""
+One item's outcome in a batch that creates rows: the row the item created, or the item's own failure.
+
+Shared by every create-only batch field (`bulkCreateTags`, `bulkCreateTasks`, …): each applies its items
+through the resource's single-item create, so an outcome has the same shape whatever the resource, and the
+index is part of it because a batch is answered in one piece — a caller that sent twenty items reads which
+of them applied without matching rows back to its request by hand.
+"""
+type BulkCreateItemResult {
+  """The item's position in the request."""
+  index: Int!
+
+  """Whether the item applied."""
+  ok: Boolean!
+
+  """The row the item created, when it applied."""
+  id: ID
+
+  """The resource that changed."""
+  resource: String
+
+  """
+  Why the item did not apply, with the code the same item would have produced alone. The path names the item it belongs to.
+  """
+  error: UserError
+}
+
 """How far a durable multi-step operation has come."""
 enum OperationStatus {
   PENDING
@@ -25757,6 +26134,30 @@ input UpdateIntegrationTenantInput {
 }
 
 """
+A synchronisation of a connected integration that finished: what `Subscription.integrationSyncCompleted` delivers.
+
+The connection is re-read as the subscriber when the event is delivered, so it is the row `integrationTenant(id:)`
+would answer then — a later run may already have moved its `lastSyncedAt`; `syncedAt` is this run's own moment. The
+counts are what the run stated about itself and are counts only: no synchronised record and no identifier of one
+travels with the fact.
+"""
+type IntegrationSyncCompleted {
+  """The connection that finished synchronizing."""
+  integrationTenant: IntegrationTenant!
+
+  """The provider, as the connection names it (`GITHUB`, `HUBSTAFF`, …)."""
+  name: String!
+
+  """When the run finished."""
+  syncedAt: DateTime!
+
+  """
+  How many records of each kind the run handled, keyed by entity (`issue`, `project`, `task`, …).
+  """
+  counts: JSON!
+}
+
+"""
 One entry of the integration catalogue: a provider this installation can be connected to.
 """
 type Integration {
@@ -25862,6 +26263,14 @@ enum IntegrationEntity {
   Proposal
   JOB_MATCHING
   EMPLOYEE_PERFORMANCE
+  Goal
+  KeyResult
+  OrganizationTeam
+  StrategicInitiative
+  Comment
+  Document
+  InboxItem
+  Agent
 }
 
 """The boundary of one page of catalogue entries."""
@@ -27627,7 +28036,9 @@ the key result the move is recorded against.
 """
 input CreateKeyResultUpdateInput {
   owner: String!
-  progress: Int!
+
+  """Ignored: the server computes it from `update` and the key result."""
+  progress: Int
   update: Int!
   status: String!
   keyResultId: ID
@@ -31451,6 +31862,12 @@ type OrganizationStrategicInitiative {
   """
   stewardId: ID
 
+  """
+  The teams the initiative is linked to directly, by identifier. With `visibilityScope` `team`, their
+  members may read it, as may the members of the teams of its aligned projects.
+  """
+  teamIds: [ID!]
+
   """The organization the initiative is filed under, by identifier."""
   organizationId: ID
 
@@ -31590,6 +32007,11 @@ input CreateOrganizationStrategicInitiativeInput {
   The steward who owns the clarity of the intent. Omit it and the caller's own employee is recorded.
   """
   stewardId: ID
+
+  """
+  The teams to link the initiative to directly. Each must be a team of the initiative's organization.
+  """
+  teamIds: [ID!]
 }
 
 """
@@ -31608,6 +32030,11 @@ input UpdateOrganizationStrategicInitiativeInput {
   visibilityScope: String
   signals: JSON
   stewardId: ID
+
+  """
+  Replaces the directly linked teams when stated (an empty list unlinks them all); omitted, they stay.
+  """
+  teamIds: [ID!]
 }
 
 """
@@ -32157,9 +32584,9 @@ type OrganizationTeamJoinRequest {
   email: String!
 
   """
-  The name the applicant stated. The delivered write does not persist a stated name — see
-  `CreateOrganizationTeamJoinRequestInput` — so this member is read on a row some other write filled
-  in, and is null on a request filed over either protocol.
+  The name the applicant stated. The REST create stores the name its body carries.
+  `CreateOrganizationTeamJoinRequestInput` does not offer one yet, so a request filed over GraphQL
+  leaves it null.
   """
   fullName: String
 
@@ -32353,12 +32780,12 @@ What a caller states when it asks to join one team.
 
 **Only the members the delivered write actually reads are offered.** `email` and `organizationTeamId`
 are the address and the team the row is filed under, and the six branding members are what the
-confirmation message is composed with — those are the whole of the payload the delivered create builds
-its row from, and it builds it explicitly: the team, the address, the tenant and organization of the
-team, the generated code and token, and a null status. A body member for the applicant's own name, link
-or position is validated by the delivered body and then dropped, so offering one here would be offering
-a write that is accepted and silently discarded; a member for the state would be dropped the same way,
-and the state a new ask is in is what the delivered write decides rather than what a caller states.
+confirmation message is composed with. The delivered create builds its row explicitly: the team, the
+address, the applicant's name, link and position, the tenant and organization of the team, the
+generated code and token, and a null status. The REST body carries the name, link and position; this
+input does not offer them yet, so a request filed over GraphQL stores them as null. A member for the
+state would be dropped, since the state a new ask is in is what the delivered write decides rather
+than what a caller states.
 
 Nothing names the tenant or the organization. Both are taken from the team the request names — the
 delivered write reads the team and stamps its tenant and organization — so a caller cannot file a
@@ -33545,6 +33972,50 @@ input UpdateOrganizationInput {
   Whether the public profile shows how many people work in the organization.
   """
   show_employees_count: Boolean
+}
+
+"""
+A batch of organizations to file, as `bulkCreateOrganizations` takes it: the body
+`POST /organization/bulk` accepts plus the retry key.
+
+Each item is a `CreateOrganizationInput` and is filed exactly as `createOrganization` files one, so an
+item is refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the
+batch, and it is optional: a GraphQL document can carry many mutations and a header cannot say which of
+them a key belongs to, so the key travels here.
+"""
+input BulkCreateOrganizationsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateOrganizationInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of organizations adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateOrganizationsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 type PaymentTerm {
@@ -37646,9 +38117,10 @@ type SharedEntity {
 
   """
   The bearer capability itself. Anyone holding it may read the record the share points at through
-  `sharedEntityByToken`, which is why this member travels only to a caller the tenant guard admitted.
+  `sharedEntityByToken`, which is why this member travels only to the share's author or an
+  organization administrator (`ALL_ORG_EDIT`); for any other member of the tenant it is null.
   """
-  token: String!
+  token: String
 
   """
   What the share points at, as the platform's own entity vocabulary names it.
@@ -37718,9 +38190,10 @@ The fields a share list may be narrowed by. `and` is the default; `or` requires 
 `not` excludes the rows that match it.
 
 A share's own token is filterable, and that is deliberate rather than a leak: the list is
-tenant-guarded, its rows are the caller's own, and the token is already a member of every row it
-answers. What it is *not* is a way to resolve the shared record — that is the token read, and its
-answer is the target rather than a `SharedEntity`.
+tenant-guarded, and the filter runs over the rows as the caller reads them, so it only matches a
+token the row already answers — one of a share the caller manages. What it is *not* is a way to
+resolve the shared record — that is the token read, and its answer is the target rather than a
+`SharedEntity`.
 """
 input SharedEntityFilter {
   id: IDFilter
@@ -38261,6 +38734,50 @@ input UpdateTagInput {
   tagTypeId: ID
   organizationTeamId: ID
   organizationId: ID
+}
+
+"""
+A batch of tags to file, as `bulkCreateTags` takes it: the body `POST /tags/bulk` accepts plus the retry
+key.
+
+Each item is a `CreateTagInput` and is filed exactly as `createTag` files one, so an item is refused for
+the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it is
+optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateTagsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateTagInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of tags adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTagsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """One unit of work."""
@@ -39926,6 +40443,50 @@ type TaskMetadata {
 }
 
 """
+A batch of tasks to file, as `bulkCreateTasks` takes it: the body `POST /tasks/bulk` accepts plus the
+retry key.
+
+Each item is a `CreateTaskInput` and is filed exactly as `createTask` files one, so an item is refused for
+the reason it would be refused alone. `idempotencyKey` is the retry key of the batch, and it is
+optional: a GraphQL document can carry many mutations and a header cannot say which of them a key
+belongs to, so the key travels here.
+"""
+input BulkCreateTasksInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateTaskInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of tasks adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTasksPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
+"""
 The pair a caller has just had issued: the identifier it sends on every request, and the secret that
 proves the request is its own.
 
@@ -41050,8 +41611,8 @@ the four columns the row cannot be without: the entity declares all four non-nul
 write assigns them straight onto the row it stores. The tenant is stamped from the credential, as it is
 on every write of this platform, and is therefore not a member.
 
-`status` seeds the approval record the delivered write files beside the request; an absent status is
-that write's own default, which is "requested".
+`status` is accepted and ignored: a request is filed "requested", or "approved" when the stored policy it
+names requires no approval, and a caller who may not act for other employees files for themselves.
 """
 input CreateTimeOffRequestInput {
   """The organization the request is filed in."""
@@ -41066,7 +41627,9 @@ input CreateTimeOffRequestInput {
   """The day the leave was asked for."""
   requestDate: DateTime!
 
-  """The employees the leave is for, by identifier."""
+  """
+  The employees the leave is for, by identifier. A caller who may not act for others files for themselves.
+  """
   employeeIds: [ID!]
 
   """Why the leave is being asked for."""
@@ -41076,7 +41639,7 @@ input CreateTimeOffRequestInput {
   policyId: ID
 
   """
-  Where the decision starts, if the caller states it rather than leaving the delivered default.
+  Ignored. The write files the request as requested, or approved under a policy that needs no approval.
   """
   status: String
 
@@ -41093,16 +41656,19 @@ input CreateTimeOffRequestInput {
 What a caller states when it edits a filed request.
 
 The delivered edit takes the identifier from its own argument and passes the body through to the write,
-and the body's own interface declares one member — where the decision stands. So this body declares one
-member beside the identifier, and stating it is the whole of what an edit can change: a request's dates
-and its employees are what the request *is*, and rewriting them would leave the approval record filed
-beside it describing a leave nobody asked for.
+and the body's own interface declares one member beside the identifier: `status`. A request's dates and
+its employees are what the request *is*, and rewriting them would leave the approval record filed beside
+it describing a leave nobody asked for, so this body does not declare them.
+
+`status` is accepted for client compatibility and ignored: an edit through this field keeps the stored
+status, changes nothing, and answers the stored request. approveTimeOffRequest and denyTimeOffRequest,
+which carry the administrative roles, are where a decision is made.
 """
 input UpdateTimeOffRequestInput {
   id: ID!
 
   """
-  Where the decision stands. The delivered write stores the value it is given.
+  Ignored. An edit keeps the stored status; approveTimeOffRequest and denyTimeOffRequest decide it.
   """
   status: String
 }
@@ -42875,8 +43441,10 @@ What a caller states when it records time by hand.
 
 The organization is stated because the delivered create does not derive one: the tenant is stamped
 from the credential, never from an argument, but the organization is a member the caller names. The
-employee is stated and is the caller's own unless the caller may change the selected employee — the
-delivered pipe rewrites it, and this surface restates that rule rather than trusting the body.
+employee is stated and kept, as the delivered pipe keeps it, and the write refuses one the caller may
+not record time for (403) rather than recording the interval against the caller: a caller writes for
+its own employee, for a member of a team it manages, or for anyone if it may change the selected
+employee.
 
 Neither the log type nor the source is a member. The delivered body's own transform states both for
 itself — `MANUAL` and `BROWSER` — whatever a caller sends, so an input carrying them would be offering
@@ -42886,7 +43454,7 @@ input CreateManualTimeLogInput {
   organizationId: ID!
 
   """
-  The employee the interval belongs to. A caller that may not choose one records against itself.
+  The employee the interval belongs to: the caller's own, a member of a team it manages, or anyone if it may change the selected employee.
   """
   employeeId: ID!
 
@@ -42953,6 +43521,50 @@ input DeleteTimeLogsInput {
 
   """Whether to delete the rows outright rather than withdraw them."""
   forceDelete: Boolean
+}
+
+"""
+A batch of intervals to record by hand, as `bulkCreateTimeLogs` takes it: the body
+`POST /timesheet/time-log/bulk` accepts plus the retry key.
+
+Each item is a `CreateManualTimeLogInput` and is recorded exactly as `addManualTime` records one, so an
+item is refused for the reason it would be refused alone. `idempotencyKey` is the retry key of the
+batch, and it is optional: a GraphQL document can carry many mutations and a header cannot say which of
+them a key belongs to, so the key travels here.
+"""
+input BulkCreateTimeLogsInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateManualTimeLogInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the manual-time create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of hand-recorded intervals adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer.
+"""
+type BulkCreateTimeLogsPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
 }
 
 """One ten-minute window of one employee's tracked time."""
@@ -44271,6 +44883,51 @@ input UpdateUserInput {
   isActive: Boolean
 }
 
+"""
+A batch of accounts to file, as `bulkCreateUsers` takes it: the body `POST /user/bulk` accepts plus the
+retry key.
+
+Each item is a `CreateUserInput` and is filed exactly as `createUser` files one, so an item asking for a
+role the caller may not grant is refused for that reason while the others apply. `idempotencyKey` is the
+retry key of the batch, and it is optional: a GraphQL document can carry many mutations and a header
+cannot say which of them a key belongs to, so the key travels here.
+"""
+input BulkCreateUsersInput {
+  """
+  The items of the batch, in caller order. The answer refers to them by position.
+  """
+  items: [CreateUserInput!]!
+
+  """
+  Refused when true (`BULK_ATOMIC_UNSUPPORTED`): each item runs the single create, so the batch cannot be rolled back as one.
+  """
+  atomic: Boolean
+
+  """The client's retry key for this batch."""
+  idempotencyKey: String
+}
+
+"""
+What a batch of accounts adds up to.
+
+`succeeded` and `failed` count the two kinds of entry in `results`, so a client can assert
+`succeeded + failed == total` against the same answer. An entry names an account by its id and carries
+nothing else of it.
+"""
+type BulkCreateUsersPayload {
+  """One entry per request item, in request order."""
+  results: [BulkCreateItemResult!]!
+
+  """How many items applied."""
+  succeeded: Int!
+
+  """How many items did not."""
+  failed: Int!
+
+  """How many items the request carried."""
+  total: Int!
+}
+
 """One stock location and its role in the network."""
 type Warehouse {
   id: ID!
@@ -45204,15 +45861,35 @@ type Collection {
   isFeatured: Boolean!
   startsAt: DateTime
   endsAt: DateTime
+
+  """
+  The earliest `publishedAt` among the collection's current channel publications (each keeps the instant
+  it first became ACTIVE). Null when no current channel publication carries one. The collection has no such
+  column of its own; the date is per channel.
+  """
   publishedAt: DateTime
-  imageAssetId: ID
+
+  """
+  Id of the hero image, under the name the entity and the REST routes give it.
+  """
+  imageId: ID
+
+  """The earlier name of `imageId`, answered from the same column."""
+  imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
   parentId: ID
   customerId: ID
   parent: Collection
   children: [Collection!]
   products: [CollectionProduct!]
   variants: [CollectionVariant!]
-  channelPublications: [CollectionChannel!]
+
+  """
+  Where the collection is published: its channel publication rows, under the entity's name.
+  """
+  channels: [CollectionChannel!]
+
+  """The earlier name of `channels`, answered from the same rows."""
+  channelPublications: [CollectionChannel!] @deprecated(reason: "Use channels; removal planned for 0.3.0")
   metadata: JSON
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -45541,7 +46218,12 @@ input CreateCollectionInput {
   isFeatured: Boolean
   startsAt: DateTime
   endsAt: DateTime
-  imageAssetId: ID
+
+  """Id of the hero image."""
+  imageId: ID
+
+  """The earlier name of `imageId`; `imageId` wins when both are stated."""
+  imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
   parentId: ID
   customerId: ID
   metadata: JSON
@@ -45557,7 +46239,12 @@ input UpdateCollectionInput {
   isFeatured: Boolean
   startsAt: DateTime
   endsAt: DateTime
-  imageAssetId: ID
+
+  """Id of the hero image."""
+  imageId: ID
+
+  """The earlier name of `imageId`; `imageId` wins when both are stated."""
+  imageAssetId: ID @deprecated(reason: "Use imageId; removal planned for 0.3.0")
   parentId: ID
   metadata: JSON
 }
@@ -45577,6 +46264,11 @@ input UpdateProductRelationInput {
 input CollectionChannelInput {
   channelId: ID!
   status: PublicationStatus!
+  publishedAt: DateTime
+}
+
+input UpdateCollectionChannelInput {
+  status: PublicationStatus
   publishedAt: DateTime
 }
 
@@ -47486,6 +48178,20 @@ input StockAlertInput {
   idempotencyKey: String
 }
 
+"""
+What a caller changes on an alert rule. Every member is optional, because an edit states what changed rather
+than restating the rule; `idempotencyKey` is absent, because an edit is not a create a retry could duplicate.
+"""
+input UpdateStockAlertInput {
+  variantId: ID
+  warehouseId: ID
+  threshold: Float
+  notifyEmails: [String!]
+  notifyRoles: [String!]
+  cooldownMinutes: Int
+  isActive: Boolean
+}
+
 input StockCountInput {
   warehouseId: ID!
   mode: String
@@ -48538,6 +49244,11 @@ type Cart {
   abandonedAt: DateTime
   externalId: String
   metadata: JSON
+
+  """
+  The guest-access token, in plaintext. Answered by createCart alone (a retry under its idempotency key replays that answer); null on every read, because the cart stores only its digest.
+  """
+  token: String
   lines: [CartLine!]
   shippingMethods: [CartShippingMethod!]
   promotions: [CartPromotion!]
@@ -48694,7 +49405,7 @@ input AddCartLineInput {
   sku: String
   thumbnail: String
   quantity: Decimal!
-  unitPrice: Decimal!
+  unitPrice: Decimal
   originalUnitPrice: Decimal
   isTaxInclusive: Boolean
   taxCategoryId: ID
@@ -48721,8 +49432,8 @@ input UpdateCartLineInput {
 input SetCartShippingMethodInput {
   cartId: ID!
   shippingOptionId: ID
-  name: String!
-  amount: Decimal!
+  name: String
+  amount: Decimal
   isTaxInclusive: Boolean
   isManual: Boolean
   taxCategoryId: ID
@@ -48736,7 +49447,7 @@ input ApplyCartPromotionInput {
   promotionId: ID
   couponId: ID
   code: String
-  amount: Decimal!
+  amount: Decimal
   isAutomatic: Boolean
   version: Int
   idempotencyKey: String
@@ -49232,8 +49943,16 @@ input UpdateOrderInput {
   email: String
   phone: String
   locale: String
+
+  """
+  Not a field of an order: a stated note is refused (ORDER_NOTE_NOT_A_FIELD); a change carries one.
+  """
   note: String
   externalId: String
+
+  """
+  Recorded by cancelOrder only: a stated reason is refused (ORDER_CANCEL_REASON_NOT_WRITABLE).
+  """
   cancelReason: String
   paymentTermId: ID
 
@@ -49291,6 +50010,11 @@ input RequestOrderEditInput {
   Retry key: a repeat of this input under the same key is answered from the first attempt.
   """
   idempotencyKey: String
+
+  """
+  The version of the order this change was reasoned about; omitted, the change is refused.
+  """
+  version: Int
 }
 
 """
@@ -50136,6 +50860,16 @@ input UpdatePaymentCollectionInput {
   fxRateId: ID
   fxCapturedAt: DateTime
   metadata: JSON
+
+  """
+  The amount to collect, as `PUT /payment-collections/:id` takes it; refused once money has moved against the collection.
+  """
+  amount: Decimal
+
+  """
+  The currency of the amount, as the route takes it; refused once money has moved against the collection.
+  """
+  currency: String
 }
 
 input OpenPaymentSessionInput {
@@ -52817,6 +53551,55 @@ input CreateFulfillmentInput {
   idempotencyKey: String
 }
 
+"""
+What a caller changes on a shipping profile. Every member is optional; `idempotencyKey` is absent, because an
+edit is not a create a retry could duplicate.
+"""
+input UpdateShippingProfileInput {
+  name: String
+  code: String
+  isDefault: Boolean
+  description: String
+}
+
+"""
+What a caller changes on a shipping option. Every member is optional; `idempotencyKey` is absent, because an
+edit is not a create a retry could duplicate.
+"""
+input UpdateShippingOptionInput {
+  name: String
+  code: String
+  priceType: String
+  amount: Decimal
+  currency: String
+  isTaxInclusive: Boolean
+  taxCategoryId: ID
+  providerKey: String
+  profileId: ID
+  channelId: ID
+  regionId: ID
+  priority: Int
+  estimatedMinDays: Int
+  estimatedMaxDays: Int
+  requiresShippingAddress: Boolean
+  allowPickup: Boolean
+  maxWeight: Decimal
+  maxItemCount: Int
+}
+
+"""
+A line appended to a shipment that has not left yet. `idempotencyKey` makes a retry safe; `version` is the
+version the caller read the shipment at, honoured when stated.
+"""
+input AddFulfillmentLineInput {
+  orderLineId: ID!
+  quantity: Decimal!
+  warehouseId: ID
+  metadata: JSON
+  idempotencyKey: String
+  version: Int
+}
+
 input UpdateFulfillmentInput {
   trackingNumber: String
   trackingUrl: String
@@ -53375,6 +54158,12 @@ input RefundOrderReturnInput {
   reasonId: ID
   note: String
   version: Int
+
+  """
+  The client's own key for this request, which this operation requires. A refund is refused
+  without one, because a retry after a lost answer would give the money back twice.
+  """
+  idempotencyKey: String
 }
 
 """The return leg: the shipment that brings the goods back."""
@@ -53837,6 +54626,11 @@ input CreateSubscriptionPlanInput {
   setupFee: Decimal
   discountPercentage: Decimal
   metadata: JSON
+
+  """
+  Create the plan inactive (not offered to new subscriptions), as POST /subscription-plans allows. Defaults to active.
+  """
+  isActive: Boolean
 }
 
 """The plan as it is updated."""
@@ -53854,6 +54648,11 @@ input UpdateSubscriptionPlanInput {
   discountPercentage: Decimal
   isActive: Boolean
   metadata: JSON
+
+  """
+  The currency the plan's amounts are expressed in, as PUT /subscription-plans/:id takes it; refused while the plan has live subscriptions (SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE).
+  """
+  currency: String
 }
 
 """One recurring line as it is stated."""
@@ -53886,6 +54685,10 @@ input CreateSubscriptionInput {
 
   """Leave the subscription inside the plan's trial."""
   startTrial: Boolean
+
+  """
+  A discount for this subscription only, as a fraction between 0 and 1, applied to every cycle in place of the plan's own discount. Served over GraphQL only: POST /subscriptions does not take it.
+  """
   discountPercentage: Decimal
   metadata: JSON
   idempotencyKey: String
@@ -54092,6 +54895,28 @@ type SubscriptionBillingOutcomePayload {
   errorCode: String
   message: String
   userErrors: [UserError!]!
+}
+
+"""
+The next billing a subscription is due, previewed: computed exactly as the bill will be, and written nowhere.
+"""
+type UpcomingSubscriptionBilling {
+  subscriptionId: ID!
+
+  """
+  What the cycle will bill: the amount billSubscription records on the cycle and raises its order for.
+  """
+  amount: Decimal!
+  currency: String!
+  periodStart: DateTime!
+
+  """The end of the period the cycle covers, exclusive."""
+  periodEnd: DateTime!
+
+  """
+  The instant the cycle is due to bill: the start of the period it covers, or the next retry when a charge of that period failed.
+  """
+  nextBillingAt: DateTime!
 }
 
 """What one billing pass did."""
@@ -55181,6 +56006,11 @@ input GrantEntitlementInput {
   a grant that names no key behaves exactly as it always did.
   """
   idempotencyKey: String
+
+  """
+  An explicit number for the right (at most 32 characters), as POST /entitlements takes it; allocated from the ENTITLEMENT series when absent.
+  """
+  number: String
 }
 
 """The request that occupies a slot."""
@@ -55204,6 +56034,11 @@ input ActivateEntitlementInput {
   activation that states no key behaves exactly as it always did.
   """
   idempotencyKey: String
+
+  """
+  Refresh lastSeenAt of an existing activation only after this many seconds (0 or more), as POST /entitlement-activations takes it.
+  """
+  seenIntervalSeconds: Int
 }
 
 """The request that asks whether a right may be exercised."""
@@ -57067,7 +57902,12 @@ input SearchIndexDefinitionUpdateInput {
 
 """What a rebuild covers."""
 input SearchReindexInput {
-  scope: SearchReindexScope!
+  """
+  The scope `reindexAll` rebuilds — honoured as `POST /search/reindex` honours it; `ENTITY` is refused there
+  (use `reindexEntity`). When omitted, `reindexAll` rebuilds one channel when `channelId` is stated and every
+  index otherwise. `reindexEntity` always rebuilds its entity.
+  """
+  scope: SearchReindexScope
 
   """Required for the entity scope."""
   entity: String

@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { BadRequestException, ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
+import { SUBSCRIPTION_OPTIONS_METADATA } from '@nestjs/graphql/dist/graphql.constants';
 import { ChannelStatus, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
@@ -38,12 +39,14 @@ jest.mock('../core/crud/tenant-aware-crud.service', () => {
 	return { TenantAwareCrudService };
 });
 
+let mockOrganizationId: string | null = 'org-1';
+
 jest.mock('../core/context/request-context', () => ({
 	RequestContext: {
 		currentUser: () => ({ id: 'user-1', tenantId: 'tenant-1' }),
 		currentUserId: () => 'user-1',
 		currentTenantId: () => 'tenant-1',
-		currentOrganizationId: () => 'org-1',
+		currentOrganizationId: () => mockOrganizationId,
 		currentEmployeeId: () => null,
 		hasPermission: () => false
 	}
@@ -295,6 +298,39 @@ describe('RegionResolver — subscriptions (§10.2, §10.4)', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, RegionResolver.prototype.regionChanged)).toEqual([
 			PermissionsEnum.REGIONS_VIEW
 		]);
+	});
+});
+
+describe('RegionResolver — the organization a fact belongs to', () => {
+	/** The filter the field was declared with, as the subscription runtime calls it. */
+	const filter = (payload: Record<string, unknown>): boolean =>
+		Reflect.getMetadata(SUBSCRIPTION_OPTIONS_METADATA, RegionResolver.prototype.regionChanged).filter(payload, {});
+	const fact = (organizationId: string | null) => ({
+		tenantId: 'tenant-1',
+		organizationId,
+		action: 'updated',
+		region: ROWS[0]
+	});
+
+	afterEach(() => {
+		mockOrganizationId = 'org-1';
+	});
+
+	it('withholds a region of another organization of the same tenant, which the region reads refuse', () => {
+		// The topic is the tenant's: the filter is the only thing between a sibling organization's regions and
+		// this subscriber.
+		expect(filter(fact('org-2'))).toBe(false);
+	});
+
+	it('withholds an organization’s region from a subscriber acting in no organization', () => {
+		mockOrganizationId = null;
+
+		expect(filter(fact('org-1'))).toBe(false);
+	});
+
+	it('CONTROL: delivers a region of the organization the subscriber acts in, and a tenant-wide one', () => {
+		expect(filter(fact('org-1'))).toBe(true);
+		expect(filter(fact(null))).toBe(true);
 	});
 });
 

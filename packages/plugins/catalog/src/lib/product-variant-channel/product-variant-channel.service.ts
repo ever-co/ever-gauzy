@@ -1,11 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { ProductVariant, RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { PUBLICATION_REFERENCES } from '../catalog.references';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
 import { ProductVariantChannel } from './product-variant-channel.entity';
 import { MikroOrmProductVariantChannelRepository } from './repository/mikro-orm-product-variant-channel.repository';
 import { TypeOrmProductVariantChannelRepository } from './repository/type-orm-product-variant-channel.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Publication of variants on channels.
@@ -15,12 +19,55 @@ import { TypeOrmProductVariantChannelRepository } from './repository/type-orm-pr
  * purchasable on a channel only when its own row **and** its product's row are both `ACTIVE`.
  */
 @Injectable()
-export class ProductVariantChannelService extends TenantAwareCrudService<ProductVariantChannel> {
+export class ProductVariantChannelService extends CatalogCrudService<ProductVariantChannel> {
 	constructor(
 		readonly typeOrmProductVariantChannelRepository: TypeOrmProductVariantChannelRepository,
 		readonly mikroOrmProductVariantChannelRepository: MikroOrmProductVariantChannelRepository
 	) {
 		super(typeOrmProductVariantChannelRepository, mikroOrmProductVariantChannelRepository);
+	}
+
+	/**
+	 * Refuses publication rows, or a change to one, naming a channel of another tenant (`catalog.references.ts`).
+	 *
+	 * @param payloads The row or rows, or the change set, about to be written.
+	 * @throws ForbiddenException when a channel belongs to another tenant.
+	 */
+	private async assertChannelNotForeign(payloads: unknown): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmProductVariantChannelRepository.manager,
+			payloads,
+			PUBLICATION_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
+	 * Creates a variant publication row, refusing a channel of another tenant.
+	 *
+	 * @param entity The row to create.
+	 * @returns The created row.
+	 */
+	public async create(entity: DeepPartial<ProductVariantChannel>): Promise<ProductVariantChannel> {
+		await this.assertChannelNotForeign(entity);
+
+		return super.create(entity);
+	}
+
+	/**
+	 * Changes a variant publication row, refusing a change that points it at a channel of another tenant.
+	 *
+	 * @param id The row, or the conditions that select the rows to change.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<ProductVariantChannel>,
+		partialEntity: QueryDeepPartialEntity<ProductVariantChannel>
+	): Promise<ProductVariantChannel | UpdateResult> {
+		await this.assertChannelNotForeign(partialEntity);
+
+		return super.update(id, partialEntity);
 	}
 
 	/**
@@ -64,6 +111,7 @@ export class ProductVariantChannelService extends TenantAwareCrudService<Product
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 		await assertInCallerScope(this.typeOrmProductVariantChannelRepository.manager, ProductVariant, variantId, 'variant');
+		await this.assertChannelNotForeign(items);
 
 		const existing = await this.typeOrmProductVariantChannelRepository.find({
 			where: { variantId, ...callerScope() }

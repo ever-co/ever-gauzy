@@ -1,6 +1,8 @@
 import { EntityCaseNamingStrategy, EntitySchema, MikroORM } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { In, IsNull, LessThan, Not } from 'typeorm';
 import { MikroOrmBaseEntityRepository } from '../repository/mikro-orm-base-entity.repository';
+import { RequestContext } from '../context/request-context';
 import { MultiORMEnum } from '../utils';
 import { CrudService } from './crud.service';
 
@@ -18,6 +20,7 @@ class VersionedRow {
 	id!: string;
 	label?: string;
 	updatedAt?: Date;
+	updatedByUserId?: string;
 	version!: number;
 }
 
@@ -28,6 +31,7 @@ const VersionedRowSchema = new EntitySchema<VersionedRow>({
 		id: { type: 'string', primary: true },
 		label: { type: 'string', nullable: true },
 		updatedAt: { type: 'Date', nullable: true, onCreate: () => new Date(), onUpdate: () => new Date() },
+		updatedByUserId: { type: 'string', nullable: true },
 		// As `Token.version` is mapped for MikroORM: a plain integer, since `version: true` expects a default.
 		version: { type: 'integer', onCreate: (row: VersionedRow) => row.version ?? 1 }
 	}
@@ -71,7 +75,7 @@ describe('CrudService.update under MikroORM', () => {
 		await orm.em
 			.getConnection()
 			.execute(
-				'CREATE TABLE versioned_row (id varchar PRIMARY KEY NOT NULL, label varchar NULL, updatedAt datetime NULL, version integer NOT NULL)'
+				'CREATE TABLE versioned_row (id varchar PRIMARY KEY NOT NULL, label varchar NULL, updatedAt datetime NULL, updatedByUserId varchar NULL, version integer NOT NULL)'
 			);
 	});
 
@@ -112,6 +116,29 @@ describe('CrudService.update under MikroORM', () => {
 		expect(await stored()).toMatchObject({ label: 'first writer', version: 2 });
 	});
 
+	it('stamps the signed-in user as the updater, as the TypeORM update subscriber does', async () => {
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+
+		await service().update('r1', { label: 'by a user' });
+
+		const [row] = await orm.em
+			.getConnection()
+			.execute('SELECT updatedByUserId FROM versioned_row WHERE id = ?', ['r1']);
+		expect(row.updatedByUserId).toBe('user-1');
+	});
+
+	it('leaves the updater empty with no signed-in user, and keeps one the payload states', async () => {
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(null);
+		await service().update('r1', { label: 'by a job' });
+		const select = () =>
+			orm.em.getConnection().execute('SELECT updatedByUserId FROM versioned_row WHERE id = ?', ['r1']);
+		expect((await select())[0].updatedByUserId).toBeNull();
+
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		await service().update('r1', { label: 'stated', updatedByUserId: 'user-2' } as any);
+		expect((await select())[0].updatedByUserId).toBe('user-2');
+	});
+
 	it('keeps an update date or version the payload states', async () => {
 		const stated = new Date('2024-06-01T00:00:00.000Z');
 		await service().update('r1', { label: 'stated', updatedAt: stated, version: 7 } as any);
@@ -125,6 +152,67 @@ describe('CrudService.update under MikroORM', () => {
 		expect(created.version).toBe(1);
 		const [row] = await orm.em.getConnection().execute('SELECT version FROM versioned_row WHERE id = ?', ['r2']);
 		expect(row.version).toBe(1);
+	});
+
+	describe('translates TypeORM operators in the criteria (#10670)', () => {
+		const LATER = new Date('2030-01-01T00:00:00.000Z');
+
+		/** r1 (above), r2 with no label and the earlier date, r3 with a label and the later date. */
+		beforeEach(async () => {
+			await orm.em
+				.getConnection()
+				.execute(
+					'INSERT INTO versioned_row (id, label, updatedAt, version) VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
+					['r2', null, EARLIER.getTime(), 1, 'r3', 'third', LATER.getTime(), 1]
+				);
+		});
+
+		const labels = async (): Promise<Record<string, string | null>> => {
+			const rows: any[] = await orm.em.getConnection().execute('SELECT id, label FROM versioned_row ORDER BY id');
+			return Object.fromEntries(rows.map(({ id, label }) => [id, label]));
+		};
+
+		it('updates the rows an In() names, and only those', async () => {
+			// Untranslated, the criterion reached the statement as the text '[object Object]' and matched nothing.
+			await expect(service().update({ id: In(['r1', 'r2']) } as any, { label: 'in' })).resolves.toEqual({
+				affected: 2
+			});
+
+			expect(await labels()).toEqual({ r1: 'in', r2: 'in', r3: 'third' });
+		});
+
+		it('updates the rows an IsNull() matches, and only those', async () => {
+			await expect(service().update({ label: IsNull() } as any, { label: 'was null' })).resolves.toEqual({
+				affected: 1
+			});
+
+			expect(await labels()).toEqual({ r1: 'first', r2: 'was null', r3: 'third' });
+		});
+
+		it('updates the rows a LessThan() on a date matches, and only those', async () => {
+			const cutoff = new Date('2025-01-01T00:00:00.000Z');
+			await expect(
+				service().update({ updatedAt: LessThan(cutoff) } as any, { label: 'expired' })
+			).resolves.toEqual({ affected: 2 });
+
+			expect(await labels()).toEqual({ r1: 'expired', r2: 'expired', r3: 'third' });
+		});
+
+		it('keeps a Date stated as the criterion a predicate rather than dropping it', async () => {
+			await expect(service().update({ updatedAt: LATER } as any, { label: 'dated' })).resolves.toEqual({
+				affected: 1
+			});
+
+			expect(await labels()).toEqual({ r1: 'first', r2: null, r3: 'dated' });
+		});
+
+		it('combines an operator with a plain condition, as the tenant-aware update states them', async () => {
+			await expect(
+				service().update({ id: In(['r1', 'r2', 'r3']), label: Not(IsNull()) } as any, { label: 'both' })
+			).resolves.toEqual({ affected: 2 });
+
+			expect(await labels()).toEqual({ r1: 'both', r2: null, r3: 'both' });
+		});
 	});
 
 	it('passes the payload on untouched to a stand-in that is not a MikroORM repository', async () => {

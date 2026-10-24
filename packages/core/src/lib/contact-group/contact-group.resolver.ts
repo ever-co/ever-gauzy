@@ -297,6 +297,10 @@ export class ContactGroupResolver {
 		filter: (payload: IContactGroupChangedEnvelope, variables: { groupId?: Id; action?: string }) =>
 			Boolean(payload) &&
 			payload.tenantId === RequestContext.currentTenantId() &&
+			// The organization too, as the group reads are scoped (`ContactGroupService.scope`): the topic is the
+			// tenant's, so a subscriber acting in one organization used to receive another organization's groups
+			(!payload.organizationId ||
+				String(payload.organizationId) === String(RequestContext.currentOrganizationId() ?? '')) &&
 			(!variables?.groupId || String(payload.group?.id) === String(variables.groupId)) &&
 			(!variables?.action || payload.action === variables.action),
 		resolve: (payload: IContactGroupChangedEnvelope) => payload.group

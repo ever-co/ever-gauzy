@@ -352,13 +352,17 @@ describe('ScreeningTaskResolver — the guard stack and the permission are the c
 		);
 
 		expect(stated).toEqual(expected);
-		// The class states an empty list, which every field inherits — except the retire-and-restore pair,
-		// which the controller overrides only to state the task edit grant (GHSA-v79w-54p2-wmh5): the CRUD
-		// base declares none, and `PermissionGuard` answers `true` to an empty list, so any member of the
-		// tenant could retire or restore a screening.
+		// The class states an empty list, which every read inherits — the writes state the task grants on
+		// their own handlers (GHSA-v79w-54p2-wmh5): `PermissionGuard` answers `true` to an empty list, so any
+		// member of the tenant could write, retire or restore a screening.
+		const edits = ['updateScreeningTask', 'deleteScreeningTask', 'softDeleteScreeningTask', 'recoverScreeningTask'];
 		for (const [field] of ROUTE_OF_FIELD) {
 			expect(permissionOfField(field)).toEqual(
-				['softDeleteScreeningTask', 'recoverScreeningTask'].includes(field) ? [PermissionsEnum.ORG_TASK_EDIT] : []
+				field === 'createScreeningTask'
+					? [PermissionsEnum.ORG_TASK_ADD]
+					: edits.includes(field)
+						? [PermissionsEnum.ORG_TASK_EDIT]
+						: []
 			);
 		}
 	});

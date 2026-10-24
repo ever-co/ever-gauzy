@@ -1,11 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Product, RequestContext } from '@gauzy/core';
+import { assertAllInCallerScope } from '../catalog.scope';
 import { Collection } from '../collection/collection.entity';
 import { CollectionProduct } from './collection-product.entity';
 import { MikroOrmCollectionProductRepository } from './repository/mikro-orm-collection-product.repository';
 import { TypeOrmCollectionProductRepository } from './repository/type-orm-collection-product.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * The caller's tenant and organization as criteria, each only when the credential states it: a key present with an
@@ -27,7 +29,7 @@ function callerScope(): { tenantId?: ID; organizationId?: ID } {
  * requested set — additions, removals and the new positions — inside one transaction.
  */
 @Injectable()
-export class CollectionProductService extends TenantAwareCrudService<CollectionProduct> {
+export class CollectionProductService extends CatalogCrudService<CollectionProduct> {
 	constructor(
 		readonly typeOrmCollectionProductRepository: TypeOrmCollectionProductRepository,
 		readonly mikroOrmCollectionProductRepository: MikroOrmCollectionProductRepository
@@ -80,6 +82,9 @@ export class CollectionProductService extends TenantAwareCrudService<CollectionP
 		if (!collection) {
 			throw new NotFoundException('The collection was not found.');
 		}
+
+		// The members are the caller's products too (SEC-D-04): inserted below without the core foreign-row check.
+		await assertAllInCallerScope(this.typeOrmCollectionProductRepository.manager, Product, productIds, 'products');
 
 		const existing = await this.typeOrmCollectionProductRepository.find({
 			where: { collectionId, ...callerScope() }

@@ -227,6 +227,31 @@ export class OrderController extends CrudController<Order> {
 	}
 
 	/**
+	 * Completes an order whose goods are all accounted for and whose money is settled (Q7-W1b).
+	 *
+	 * The platform completes such an order by itself when its last payment or shipment lands; this is the
+	 * operator's door to the same rule, and it says what still stands in the way when the rule does not hold.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The completed order.
+	 */
+	@ApiOperation({ summary: 'Complete an order whose goods are accounted for and whose money is settled' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Order completed' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'ORDER_NOT_COMPLETABLE, with what still stands in the way'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.complete', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/complete')
+	@HttpCode(HttpStatus.OK)
+	async complete(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.orderService.complete(id, versionExpectationOf(request));
+	}
+
+	/**
 	 * Cancels an order that nothing has shipped from.
 	 *
 	 * @param id The order.

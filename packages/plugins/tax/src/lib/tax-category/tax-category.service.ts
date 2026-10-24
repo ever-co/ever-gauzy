@@ -1,8 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere } from 'typeorm';
+import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import {
+	LegacyFindOneOptions,
+	MultiORMEnum,
+	ProductVariant,
+	RequestContext,
+	TenantAwareCrudService
+} from '@gauzy/core';
 import { TaxWriteInput } from '../tax.types';
+import { confiningOrganizationId } from '../organization-boundary';
+import { assertOrganizationUnchanged, inCallerOrganization, retirementResult } from '../write-rules';
 import { TaxCategory } from './tax-category.entity';
 import { MikroOrmTaxCategoryRepository } from './repository/mikro-orm-tax-category.repository';
 import { TypeOrmTaxCategoryRepository } from './repository/type-orm-tax-category.repository';
@@ -26,6 +34,20 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 		readonly mikroOrmTaxCategoryRepository: MikroOrmTaxCategoryRepository
 	) {
 		super(typeOrmTaxCategoryRepository, mikroOrmTaxCategoryRepository);
+	}
+
+	/**
+	 * Reads a tax category of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxCategory>): Promise<TaxCategory> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**
@@ -80,6 +102,13 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 			throw new NotFoundException(`The tax category ${id} was not found.`);
 		}
 
+		assertOrganizationUnchanged(
+			entity,
+			category.organizationId,
+			RequestContext.currentOrganizationId(),
+			'A tax category'
+		);
+
 		const organizationId = category.organizationId ?? this.resolveOrganizationId(entity);
 		const code = entity.code === undefined ? undefined : this.assertCode(entity.code);
 
@@ -114,8 +143,7 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 	 * @returns The delete result, so the route keeps the platform's response shape.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<TaxCategory>): Promise<DeleteResult> {
-		await super.softDelete(criteria);
-		return { affected: 1, raw: [] } as DeleteResult;
+		return retirementResult(await super.softDelete(criteria));
 	}
 
 	/**
@@ -138,6 +166,50 @@ export class TaxCategoryService extends TenantAwareCrudService<TaxCategory> {
 		} as FindOptionsWhere<TaxCategory>);
 
 		return outcome.success ? (outcome.record as TaxCategory) : null;
+	}
+
+	/**
+	 * The category each variant is taxed under, for a document that carries variants (R3-07c).
+	 *
+	 * A variant names its category (`product_variant.taxCategoryId`); a variant that names none is taxed under
+	 * the organization's default category when it has declared one, and under none otherwise — the same
+	 * precedence the rate resolution applies. A document line takes its category from here rather than from
+	 * whoever wrote the line, because the category decides which rate applies, and a caller that could name it
+	 * could name a zero rate. A variant this tenant does not hold answers the fallback like one with none.
+	 *
+	 * The variants are read through whichever ORM is active, as the pricing package reads them.
+	 *
+	 * @param variantIds The variants.
+	 * @returns One answer per distinct variant, in the order asked.
+	 */
+	public async taxCategoriesOf(variantIds: ID[]): Promise<Array<{ variantId: ID; taxCategoryId: ID | null }>> {
+		const ids = [...new Set((variantIds ?? []).filter(Boolean).map((id) => String(id)))];
+
+		if (!ids.length) {
+			return [];
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+		const rows: Array<{ id: ID; taxCategoryId?: ID | null }> =
+			this.ormType === MultiORMEnum.MikroORM
+				? ((await this.mikroOrmTaxCategoryRepository
+						.getEntityManager()
+						.find(
+							ProductVariant,
+							{ id: { $in: ids }, ...(tenantId ? { tenantId } : {}) } as any,
+							{ fields: ['id', 'taxCategoryId'] } as any
+						)) as any[])
+				: ((await this.typeOrmTaxCategoryRepository.manager.find(ProductVariant, {
+						where: { id: In(ids), ...(tenantId ? { tenantId } : {}) } as FindOptionsWhere<ProductVariant>,
+						select: { id: true, taxCategoryId: true } as any
+				  })) as any[]);
+		const named = new Map(rows.map((row) => [String(row.id), row.taxCategoryId ?? null]));
+		// The default is the caller's organization's: another organization of the tenant may declare its own.
+		const fallback = ids.some((id) => !named.get(id))
+			? (await this.findDefault(RequestContext.currentOrganizationId() ?? undefined))?.id ?? null
+			: null;
+
+		return ids.map((id) => ({ variantId: id as ID, taxCategoryId: named.get(id) ?? fallback }));
 	}
 
 	/**

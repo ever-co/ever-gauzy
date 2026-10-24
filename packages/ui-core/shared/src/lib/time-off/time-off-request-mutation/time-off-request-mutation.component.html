@@ -25,6 +25,7 @@
 							fullWidth
 							required
 							[skipGlobalChange]="true"
+							[selectedEmployee]="selectedEmployee"
 							class="employees"
 						></ga-employee-selector>
 					</div>
@@ -116,7 +117,6 @@
 						<ngx-file-uploader-input
 							[placeholder]=" 'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER' | translate "
 							[fileUrl]="form.get('documentUrl').value"
-							(uploadedImgUrl)="form.get('documentUrl').setValue($event)"
 							(uploadedImageAsset)="uploadDocumentAsset($event)"
 							(uploadedImgUrl)="uploadDocumentAssetUrl($event)"
 						></ngx-file-uploader-input>
@@ -156,7 +156,7 @@
 			(click)="saveRequest()"
 			status="success"
 			nbButton
-			[disabled]="form.invalid"
+			[disabled]="form.invalid || !employeeSelector?.selectedEmployee?.id"
 		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>

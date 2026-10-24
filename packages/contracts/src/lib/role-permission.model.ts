@@ -156,6 +156,11 @@ export enum PermissionsEnum {
 	ORG_TASK_SETTING = 'ORG_TASK_SETTING',
 	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
 	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW',
+	EVENT_TYPES_EDIT = 'EVENT_TYPES_EDIT',
+	/** Goals, their KPIs, key results, time frames, templates and settings */
+	GOALS_EDIT = 'GOALS_EDIT',
+	/** The skills vocabulary */
+	SKILLS_EDIT = 'SKILLS_EDIT',
 	TIME_TRACKER = 'TIME_TRACKER',
 	TENANT_ADD_EXISTING_USER = 'TENANT_ADD_EXISTING_USER',
 	/** Integration CRUD Permissions Start */
@@ -255,6 +260,14 @@ export enum PermissionsEnum {
 	ORG_STRATEGIC_INITIATIVE_UPDATE = 'ORG_STRATEGIC_INITIATIVE_UPDATE',
 	ORG_STRATEGIC_INITIATIVE_DELETE = 'ORG_STRATEGIC_INITIATIVE_DELETE',
 	/** Organization Strategic Initiative Permissions End */
+	/** Inbox Permissions Start (@gauzy/plugin-inbox) */
+	/** Read and act on the inbox items addressed to me. */
+	INBOX_VIEW = 'INBOX_VIEW',
+	/** Manage the organization's and teams' mailboxes and provider accounts. */
+	INBOX_MAILBOX_MANAGE = 'INBOX_MAILBOX_MANAGE',
+	/** Read the items of every shared mailbox of the organization (shared-mailbox administrators). */
+	INBOX_MAILBOX_READ_ALL = 'INBOX_MAILBOX_READ_ALL',
+	/** Inbox Permissions End */
 	/** AI Chat Permissions Start */
 	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',
 	AI_CHAT_SETTINGS = 'AI_CHAT_SETTINGS',
@@ -630,6 +643,9 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
+		PermissionsEnum.EVENT_TYPES_EDIT,
+		PermissionsEnum.GOALS_EDIT,
+		PermissionsEnum.SKILLS_EDIT,
 		PermissionsEnum.TIME_TRACKER,
 		PermissionsEnum.INVENTORY_GALLERY_VIEW,
 		PermissionsEnum.INVENTORY_GALLERY_EDIT,
@@ -685,6 +701,9 @@ export const PermissionGroups = {
 		/** Organization Strategic Initiative Permissions Start */
 		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 		/** Organization Strategic Initiative Permissions End */
+		/** Inbox Permissions Start */
+		PermissionsEnum.INBOX_VIEW,
+		/** Inbox Permissions End */
 		/** Documents Permissions Start */
 		PermissionsEnum.DOCS_READ,
 		PermissionsEnum.DOCS_CREATE,
@@ -886,6 +905,10 @@ export const PermissionGroups = {
 		/** OAuth App Client Registry */
 		PermissionsEnum.OAUTH_CLIENT_VIEW,
 		PermissionsEnum.OAUTH_CLIENT_EDIT,
+		/** Inbox Permissions Start */
+		PermissionsEnum.INBOX_MAILBOX_MANAGE,
+		PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+		/** Inbox Permissions End */
 		/** Documents Permissions Start */
 		PermissionsEnum.DOCS_DELETE,
 		PermissionsEnum.DOCS_MANAGE,

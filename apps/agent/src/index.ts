@@ -1,17 +1,16 @@
 import { logger as log } from '@gauzy/desktop-core';
 import { InstallPluginHandler, LocalStore, ProtocolRouter, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { installNavigationGuard, installProviderSignIn } from '@gauzy/desktop-window';
+import { app, ipcMain } from 'electron';
 import * as path from 'path';
 import { environment } from './environments/environment';
 import { InitApplication } from './main/init';
+import { getApiBaseUrl } from './main/util';
+import AppWindow from './main/window-manager';
 Object.assign(process.env, environment);
-
-let popupWin: BrowserWindow | null = null;
 
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
-
-const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 const args = process.argv.slice(1);
 args.some((val) => val === '--serve');
@@ -85,78 +84,12 @@ function quit() {
 	}
 }
 
-app.on('web-contents-created', (_, contents) => {
-	contents.on('will-redirect', async (event, url) => {
-		const defaultBrowserConfig = {
-			title: '',
-			width: 1280,
-			height: 600,
-			webPreferences: {
-				allowRunningInsecureContent: false,
-				contextIsolation: true,
-				enableRemoteModule: true,
-				javascript: true,
-				webSecurity: false,
-				webviewTag: false,
-				nodeIntegration: true
-			}
-		};
+// A window with Node or a preload follows no link out of its own pages (a task description's link loaded the
+// linked page with Node); the configured API stays reachable, where the social sign-in links start.
+installNavigationGuard({ trustedUrls: () => [getApiBaseUrl(LocalStore.getStore('configs') || {})] });
 
-		const isLinkedInOAuth = url.includes('https://www.linkedin.com/oauth');
-		const isGoogleOAuth = url.includes('https://accounts.google.com');
-		const isSignInSuccess = url.includes('sign-in/success?jwt');
-		const isAuthRegister = url.includes('/auth/register');
-		const targetUrl = new URL(url);
-
-		if (!ALLOWED_PROTOCOLS.has(targetUrl.protocol)) {
-			return;
-		}
-
-		if (isLinkedInOAuth || isGoogleOAuth) {
-			try {
-				event.preventDefault();
-				await showPopup(url, defaultBrowserConfig);
-			} catch (_) {
-				// Soft fail
-			}
-			return;
-		}
-
-		if (isSignInSuccess) {
-			if (popupWin) popupWin.destroy();
-		}
-
-		if (isAuthRegister) {
-			try {
-				await shell.openExternal(url);
-			} catch (error) {
-				console.error('Error opening external URL:', error);
-			}
-		}
-	});
-});
-
-const showPopup = async (url: string, options: Electron.BrowserWindowConstructorOptions) => {
-	const { width = 1280, height = 768, ...otherOptions } = options;
-
-	// Close existing popup window if it exists
-	if (popupWin) {
-		popupWin.destroy();
-	}
-
-	// Create a new BrowserWindow with specified options
-	popupWin = new BrowserWindow({
-		width,
-		height,
-		...otherOptions
-	});
-
-	// Set a custom user agent to emulate a specific browser version
-	const userAgent = 'Chrome/104.0.0.0';
-	await popupWin.loadURL(url, { userAgent });
-
-	// Show the popup window
-	popupWin.show();
-};
+// The social sign-in: the provider's pages open in a popup, and the sign-in window is told how the sign-in ended
+// (a token, or the workspace picker's one-time code when the address has several workspaces)
+installProviderSignIn({ signInWindow: () => AppWindow.getInstance(__dirname).authWindow?.browserWindow });
 
 ipcMain.handle('get-app-path', () => app.getAppPath());

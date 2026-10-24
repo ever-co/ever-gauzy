@@ -135,6 +135,7 @@ const MIRRORED: Array<{ route: any; mutation: any }> = [
 	{ route: OrderController.prototype.place, mutation: OrderResolver.prototype.placeOrder },
 	{ route: OrderController.prototype.cancel, mutation: OrderResolver.prototype.cancelOrder },
 	{ route: OrderController.prototype.archive, mutation: OrderResolver.prototype.archiveOrder },
+	{ route: OrderController.prototype.complete, mutation: OrderResolver.prototype.completeOrder },
 	{ route: OrderController.prototype.recalculate, mutation: OrderResolver.prototype.recalculateOrder },
 	{ route: OrderController.prototype.invoice, mutation: OrderResolver.prototype.generateOrderInvoice },
 	{ route: OrderController.prototype.sendQuote, mutation: OrderResolver.prototype.sendOrderQuote },
@@ -165,7 +166,7 @@ describe('The order mutations mirror the order routes', () => {
 
 		// A control: the routes that adopted the convention are the ones compared, not two tables of
 		// `undefined`.
-		expect(MIRRORED.filter(({ route }) => retryOf(route) !== undefined).length).toBe(7);
+		expect(MIRRORED.filter(({ route }) => retryOf(route) !== undefined).length).toBe(8);
 	});
 
 	it('carries the same versioned resource on the mutation as on the route it mirrors', () => {
@@ -449,5 +450,55 @@ describe('The order list fields read their page in a total order', () => {
 		for (const order of orders) {
 			expect(Object.keys(order).pop()).toBe('id');
 		}
+	});
+});
+
+/**
+ * R2-G19: `createOrder` wrote `organizationId = NULL`.
+ *
+ * `CreateOrderInput` declares no organization and the field handed its input to `OrderService.create`
+ * unchanged; the tenant-aware base stamps the tenant only. `POST /orders` states a validated organization, so
+ * the field now stamps the request's, and keeps one the input states.
+ */
+describe('createOrder — the order is written in the request’s organization (R2-G19)', () => {
+	const resolverWith = (orderService: Record<string, unknown>) =>
+		new OrderResolver(
+			orderService as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any
+		);
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the request’s organization on an order the input names none for', async () => {
+		const { RequestContext } = jest.requireMock('@gauzy/core');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+		const orderService = { create: jest.fn(async (entity: any) => ({ id: 'order-1', ...entity })) };
+
+		await resolverWith(orderService).createOrder({ channelId: 'channel-1', currency: 'USD' });
+
+		expect(orderService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ channelId: 'channel-1', organizationId: 'org-1' })
+		);
+	});
+
+	it('keeps an organization the input states', async () => {
+		const { RequestContext } = jest.requireMock('@gauzy/core');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+		const orderService = { create: jest.fn(async (entity: any) => ({ id: 'order-1', ...entity })) };
+
+		await resolverWith(orderService).createOrder({
+			channelId: 'channel-1',
+			currency: 'USD',
+			organizationId: 'org-2'
+		});
+
+		expect(orderService.create).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-2' }));
 	});
 });

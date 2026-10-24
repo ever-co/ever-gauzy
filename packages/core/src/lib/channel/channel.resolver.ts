@@ -284,6 +284,13 @@ export class ChannelResolver {
 	 * may already read: a caller without `CHANNELS_VIEW` is refused by the guard before the stream is
 	 * opened, and the tenant is taken from the credential rather than from an argument.
 	 *
+	 * A channel that belongs to an organization reaches only a subscriber acting in that organization,
+	 * the rows `channels` and `channel(id)` answer it with. A subscriber with no organization is not sent
+	 * one either: `ChannelService` scopes its reads to the caller's organization, so such a caller reads
+	 * only the channels stored without one, and the stream answers it the same rows (the rule
+	 * `Subscription.events` applies to an organization-less subscriber). A channel stored without an
+	 * organization is tenant-wide and reaches every subscriber of its tenant.
+	 *
 	 * Without a resolved tenant nothing is subscribed to: the topic of an unauthenticated connection
 	 * is one no fact is ever published on, so the stream is silent rather than wide.
 	 */
@@ -291,6 +298,8 @@ export class ChannelResolver {
 		filter: (payload: IChannelChangedEnvelope, variables: { channelId?: Id; action?: string }) =>
 			Boolean(payload) &&
 			payload.tenantId === RequestContext.currentTenantId() &&
+			(!payload.organizationId ||
+				String(payload.organizationId) === String(RequestContext.currentOrganizationId() ?? '')) &&
 			(!variables?.channelId || String(payload.channel?.id) === String(variables.channelId)) &&
 			(!variables?.action || payload.action === variables.action),
 		resolve: (payload: IChannelChangedEnvelope) => payload.channel

@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Você precisa ser um funcionário para poder rastrear o tempo, criar despesas divididas e usar outras funcionalidades relacionadas a outros funcionários."
 	},
 	"MENU": {
+		"INITIATIVES": "Iniciativas",
 		"BREADCRUMB": "Trilha de navegação",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Painel de Controle",
@@ -1212,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "Interface",
 			"TITLE": "Interface do usuário",
-			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões.",
+			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões. Ambas as interfaces mostram as mesmas páginas, com os mesmos dados, layout e recursos — apenas a tecnologia por trás delas muda, por isso alternar não altera o que os seus usuários veem ou podem fazer.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (padrão)",
 				"REACT": "React (novo)"
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Tipo",
+		"KIND_ALL": "Todos",
+		"KIND_HUMAN": "Pessoas",
+		"KIND_AGENT": "Agentes",
+		"AGENT_BADGE": "Agente",
+		"MANAGED_BY_EVER_WORKS": "Gerido pelo Ever Works: o nome e o perfil deste agente são alterados no Ever Works e sincronizados com o Gauzy.",
+		"MANAGED_EXTERNALLY": "Gerido externamente: o nome e o perfil deste agente são alterados no sistema de origem e sincronizados com o Gauzy.",
+		"OPEN_MANAGED_AGENT": "Abrir página do agente",
 		"HEADER": "Gerenciar funcionários",
 		"ADD_EMPLOYEE": "Adicionar Funcionário",
 		"ACTIVE": "Ativo",
@@ -2088,7 +2097,68 @@
 				"IN_DAYS": "Em {{ count }} dias"
 			},
 			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
-			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão",
+			"PROJECTS_CAPTION": "Os projetos e o tempo trabalhado em cada um neste período",
+			"NO_PROJECTS": "Não é membro de nenhum projeto e não tem tempo em projetos neste período",
+			"NOT_A_MEMBER": "Não é membro",
+			"NOT_A_MEMBER_HINT": "Foi registrado tempo neste projeto, mas a pessoa não é membro dele",
+			"VIEW_PROFILE": "Ver perfil",
+			"MEMBERSHIP_UNKNOWN": "Não foi possível carregar a participação nos projetos, por isso membros e não membros não são distinguidos.",
+			"PROJECT_TIMES_PARTIAL": "Não foi possível carregar alguns tempos de projeto, por isso um projeto sem tempo pode ainda assim ter."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Iniciativas estratégicas",
+		"SUBTITLE": "As direções em que a sua organização decidiu avançar, e os objetivos, projetos e equipas alinhados com elas.",
+		"ADD": "Adicionar iniciativa",
+		"EDIT": "Editar iniciativa",
+		"EMPTY": "Ainda não há iniciativas estratégicas.",
+		"TITLE": "Título",
+		"STATE": "Estado",
+		"VISIBILITY": "Visibilidade",
+		"TEAMS": "Equipas",
+		"TEAMS_HINT": "Com visibilidade \"Equipa\", os membros destas equipas (e das equipas dos projetos alinhados) podem ver a iniciativa.",
+		"PROJECTS": "Projetos",
+		"GOALS": "Objetivos",
+		"CONFIDENCE": "Confiança",
+		"MOMENTUM": "Impulso",
+		"INTENT": "Intenção",
+		"INTENT_HINT": "O que queremos fazer avançar deliberadamente, e porquê?",
+		"STEWARD": "Responsável",
+		"SIGNALS": "Sinais",
+		"KNOWN_RISKS": "Riscos conhecidos",
+		"KNOWN_RISKS_HINT": "Um risco por linha",
+		"NOTES": "Notas",
+		"LAST_ASSESSED": "Última avaliação",
+		"NO_TEAMS": "Nenhuma equipa ligada.",
+		"NO_GOALS": "Nenhum objetivo alinhado.",
+		"NO_PROJECTS": "Nenhum projeto alinhado.",
+		"NOT_FOUND": "A iniciativa não foi encontrada ou não a pode ver.",
+		"DELETE_TITLE": "Eliminar iniciativa",
+		"DELETE_CONFIRMATION": "Eliminar a iniciativa \"{{ name }}\"?",
+		"DELETED": "Iniciativa \"{{ name }}\" eliminada.",
+		"CREATED": "Iniciativa \"{{ name }}\" criada.",
+		"UPDATED": "Iniciativa \"{{ name }}\" atualizada.",
+		"STATES": {
+			"DRAFT": "Rascunho",
+			"ACTIVE": "Ativa",
+			"RESOLVED": "Concluída",
+			"RETIRED": "Retirada"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Liderança",
+			"ORGANIZATION": "Organização",
+			"TEAM": "Equipa"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Baixa",
+			"MEDIUM": "Média",
+			"HIGH": "Alta"
+		},
+		"MOMENTUMS": {
+			"STALLED": "Parada",
+			"PROGRESSING": "A progredir",
+			"ACCELERATING": "A acelerar"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2107,6 +2177,17 @@
 		"UPDATE": "Atualizar",
 		"ALIGNMENTS": "Alinhamentos",
 		"COMMENTS": "Comentários",
+		"COMMENT_THREAD": {
+			"REPLY": "Responder",
+			"ONE_MESSAGE": "1 mensagem",
+			"MESSAGES": "{{ count }} mensagens",
+			"NO_MESSAGES": "Ainda não há mensagens neste tópico.",
+			"REPLY_PLACEHOLDER": "Responder a este comentário…",
+			"UNKNOWN_AUTHOR": "Desconhecido",
+			"DELETE_CONFIRM": "Excluir este comentário?",
+			"DELETED": "Comentário excluído",
+			"LOAD_ERROR": "Não foi possível carregar os comentários."
+		},
 		"KEY_RESULTS": "Resultados Chave",
 		"GROUP_BY": "Agrupe por",
 		"DELETE_OBJECTIVE": "Excluir Objetivo",
@@ -2154,6 +2235,7 @@
 			"NO_KEY_RESULT": "Não há resultados-chave para exibir.",
 			"NO_UPDATES": "Ainda não há atualizações.",
 			"NO_ALIGNMENT": "Ainda não há alinhamentos.",
+			"NO_COMMENTS": "Ainda não há comentários.",
 			"NO_PROGRESS_DATA": "Ainda não há dados de progresso para o gráfico."
 		},
 		"LEVELS": {
@@ -2670,7 +2752,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Gerentes",
-				"MEMBERS": "Membros"
+				"MEMBERS": "Membros",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Detalhes"
+					},
+					"PUBLIC": "Público",
+					"PRIVATE": "Privado",
+					"PREFIX": "Prefixo das tarefas",
+					"MEMBERS_COUNT": "{{ count }} membros",
+					"LIVE": "{{ tracking }} registrando agora · {{ online }} online",
+					"OF_MEMBERS": "{{ count }} de {{ total }} membros",
+					"CREATED": "Criado",
+					"UPDATED": "Última atualização",
+					"ACTIVE_MEMBERS": "Membros ativos",
+					"ACTIVE_MEMBERS_META": "de {{ total }} membros registraram tempo",
+					"TIME_BY_MEMBER": "Tempo por membro",
+					"TEAM_TASKS": "Tarefas da equipe",
+					"NO_TEAM_TASKS": "Nenhuma tarefa atribuída a esta equipe",
+					"NO_MEMBERS": "Esta equipe ainda não tem membros",
+					"NO_PROJECTS": "Nenhum projeto vinculado a esta equipe",
+					"COLUMNS": {
+						"MEMBER": "Membro",
+						"ROLE": "Função",
+						"STATUS": "Status",
+						"CURRENT_TASK": "Tarefa atual",
+						"TODAY": "Hoje",
+						"ACTIVITY": "Atividade"
+					},
+					"ROLE": {
+						"MANAGER": "Gerente",
+						"MEMBER": "Membro"
+					},
+					"GENERAL": "Geral",
+					"SETTINGS": "Configurações",
+					"RECORD": "Registro",
+					"TEAM_SIZE": "Tamanho da equipe",
+					"COLOR": "Cor",
+					"EMOJI": "Emoji",
+					"PROFILE_LINK": "Link do perfil",
+					"VISIBILITY": "Visibilidade",
+					"SHARE_PROFILE_VIEW": "Os membros podem ver os perfis uns dos outros",
+					"REQUIRE_PLAN": "Exigir um plano para registrar tempo",
+					"NOT_FOUND": "Esta equipe não foi encontrada",
+					"LOAD_FAILED": "Não foi possível carregar a equipe",
+					"RETRY": "Tentar novamente",
+					"OPEN_TASK_DETAILS": "Ver detalhes de {{ title }}",
+					"OPEN_PROJECT_DETAILS": "Ver detalhes do projeto {{ name }}",
+					"PROJECT_PROGRESS": "Progresso",
+					"PROJECT_PROGRESS_META": "{{ done }} de {{ total }} tarefas concluídas",
+					"NO_PROJECT_TASKS": "Ainda não há tarefas neste projeto",
+					"TOP_CONTRIBUTORS": "Quem trabalhou mais",
+					"TOP_CONTRIBUTORS_CAPTION": "Tempo dos membros da equipe neste projeto · {{ range }}",
+					"PROJECT_ACTIVITY": "Atividade diária",
+					"NEEDS_ATTENTION": "Requer atenção",
+					"NEEDS_ATTENTION_CAPTION": "Tarefas atrasadas e com prazo nos próximos 3 dias",
+					"BUDGET_USED": "{{ used }} de {{ budget }} usadas",
+					"OVER_BUDGET": "{{ value }} acima do orçamento",
+					"OPEN_TASK_PAGE": "Abrir a página de {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Abrir página da tarefa",
+					"UNASSIGNED": "Não atribuída",
+					"SHOW_ALL": "Mostrar tudo",
+					"SHOW_LESS": "Mostrar menos",
+					"PROJECTS_CAPTION": "Os projetos da equipe e o tempo trabalhado em cada um neste período",
+					"NOT_LINKED": "Não vinculado",
+					"NOT_LINKED_HINT": "Membros registraram tempo neste projeto, mas ele não está vinculado à equipe"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2815,6 +2962,9 @@
 			"DOCS_MANAGE": "Gerenciar categorias de documentos e endereços de captura",
 			"DOCS_REVIEW": "Aprovar/rejeitar revisões de documentos",
 			"DOCS_AI_IMPORT": "Gerenciar o conhecimento de IA dos documentos",
+			"INBOX_VIEW": "Ver a caixa de entrada",
+			"INBOX_MAILBOX_MANAGE": "Gerenciar caixas de correio e contas de provedores",
+			"INBOX_MAILBOX_READ_ALL": "Ler todas as caixas de correio compartilhadas",
 			"INSUFFICIENT": "Você não tem permissões suficientes. Estão faltando as seguintes permissões:",
 			"ORG_SPRINT_EDIT": "Editar sprint",
 			"ORG_SPRINT_VIEW": "Ver sprint",
@@ -3055,7 +3205,27 @@
 			"SELLER_PAYOUTS_CREATE": "Criar repasses a vendedores",
 			"SELLER_PAYOUTS_APPROVE": "Aprovar repasses a vendedores",
 			"SELLER_PAYOUTS_CANCEL": "Cancelar repasses a vendedores",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Excluir Iniciativa Estratégica da Organização"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Excluir Iniciativa Estratégica da Organização",
+			"INTEGRATION_ADD": "Adicionar integrações",
+			"INTEGRATION_EDIT": "Editar integrações",
+			"INTEGRATION_DELETE": "Excluir integrações",
+			"AI_CHAT_ACCESS": "Acessar o chat de IA",
+			"AI_CHAT_SETTINGS": "Gerenciar configurações do chat de IA",
+			"ORG_JOB_APPLY": "Candidatar-se a vagas",
+			"ORG_JOB_SEARCH": "Visualizar vagas",
+			"ORG_JOB_EDIT": "Editar vagas",
+			"ORG_EMPLOYEES_ADD": "Criar funcionários da organização",
+			"ORG_EMPLOYEES_DELETE": "Excluir funcionários da organização",
+			"DAILY_PLAN_CREATE": "Criar planos diários",
+			"DAILY_PLAN_READ": "Visualizar planos diários",
+			"DAILY_PLAN_UPDATE": "Atualizar planos diários",
+			"DAILY_PLAN_DELETE": "Excluir planos diários",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Remover conta como membro da equipe",
+			"CUSTOM_SMTP_EDIT": "Editar SMTP personalizado",
+			"IMPORT_ADD": "Importar seus dados",
+			"EXPORT_ADD": "Exportar seus dados",
+			"OAUTH_CLIENT_VIEW": "Visualizar clientes OAuth",
+			"OAUTH_CLIENT_EDIT": "Gerenciar clientes OAuth"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",
@@ -3089,6 +3259,35 @@
 			"CONTINUE": "Continuar",
 			"SKIP": "Pular",
 			"CREATE": "Criar organização"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Seções do projeto",
+			"DETAILS": "Detalhes",
+			"LOGO": "Logotipo do projeto",
+			"LOGO_HINT": "Opcional. Clique no logotipo para enviar uma imagem quadrada.",
+			"PEOPLE": "Pessoas",
+			"TIMELINE": "Cronograma",
+			"APPEARANCE": "Aparência",
+			"OPTIONS": "Opções",
+			"REPOSITORY": "Repositório",
+			"TASK_SYNC": "Sincronização de tarefas",
+			"CREATE_SUBTITLE": "Configure um novo projeto com suas pessoas, cronograma e faturamento.",
+			"OPEN_SOURCE_TITLE": "Projeto de código aberto",
+			"OPEN_SOURCE_DESCRIPTION": "Compartilhe publicamente o código deste projeto. Ative para adicionar o link do repositório público.",
+			"OPEN_SOURCE_URL_HINT": "O endereço público do código, por exemplo um repositório do GitHub ou GitLab.",
+			"OPEN_REPOSITORY": "Abrir repositório",
+			"DESCRIPTION_CARD_DESC": "Descreva os objetivos e o escopo do projeto para todos que trabalham nele.",
+			"TAGS_DESC": "Adicione tags ao projeto para facilitar encontrá-lo e agrupá-lo.",
+			"BILLING_DESC": "Como o cliente é cobrado por este projeto e em qual moeda.",
+			"BUDGET_DESC": "Defina um orçamento em horas ou em custo para manter o projeto nos trilhos.",
+			"APPEARANCE_DESC": "A cor do projeto e como suas tarefas são exibidas.",
+			"PUBLIC_TITLE": "Projeto público",
+			"PUBLIC_DESC": "Todos veem quem trabalha em um projeto público. Em um privado, cada pessoa vê apenas a si mesma, a menos que tenha acesso a projetos privados.",
+			"BILLABLE_DESC": "Marque o trabalho neste projeto como faturável ao cliente.",
+			"REPOSITORY_DESC": "Escolha o repositório do GitHub com cujas issues este projeto trabalha.",
+			"AUTO_SYNC_DESC": "Mantenha as tarefas do projeto em dia com as issues do repositório. As alterações aqui são salvas na hora.",
+			"SYNC_LABEL_TITLE": "Sincronizar por rótulo",
+			"SYNC_LABEL_DESC": "Sincronize apenas as issues com o rótulo que você definir. As alterações aqui são salvas na hora."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3150,9 +3349,14 @@
 		"MEMBER_SINCE": "Membro desde",
 		"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda",
 		"NO_SKILLS": "Nenhuma habilidade listada",
+		"NO_EMPLOYEES": "Ainda não há funcionários para mostrar",
+		"NO_CLIENTS": "Ainda não há clientes para mostrar",
+		"EMPLOYEES_LOAD_FAILED": "Não foi possível carregar os funcionários.",
+		"CLIENTS_LOAD_FAILED": "Não foi possível carregar os clientes.",
 		"VIEW_COMPANY_PROFILE": "Ver perfil da empresa",
 		"EDIT": {
 			"NO_AWARDS": "Nenhum prêmio adicionado",
+			"NO_LANGUAGES": "Ainda não foram adicionados idiomas",
 			"ADD_AWARD": "Adicionar prêmio",
 			"PRIVACY_HELP": "Escolha quais detalhes os visitantes veem no perfil público."
 		}
@@ -3368,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "A data deve ser posterior ao dia do pedido.",
 			"EXCEED_PERIOD_ERR": "O número máximo de dias permitidos para este item é.",
 			"BEFORE_START_DATE_ERR": "A data de término não pode ser anterior à data de início.",
-			"ITEM_RETURNED_BEFORE_ERR": "O item deve ser devolvido antes de"
+			"ITEM_RETURNED_BEFORE_ERR": "O item deve ser devolvido antes de",
+			"CHANGED_BY_SOMEONE_ELSE": "Outra pessoa alterou esta solicitação nesse meio-tempo. A lista foi recarregada: verifique a solicitação e tente novamente."
 		},
 		"ACTIONS": "Ações",
 		"APPROVE": "Aprovar.",
@@ -3783,17 +3988,20 @@
 		"USER": {
 			"MANAGE": "Gerenciar convites de usuários",
 			"HEADER": "Convidar usuários",
-			"ACTION": "Convidar Usuários"
+			"ACTION": "Convidar Usuários",
+			"DESCRIPTION": "Convide pessoas para participar da sua organização como usuários. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Gerenciar convites de funcionários",
 			"HEADER": "Convidar funcionários",
-			"ACTION": "Convidar funcionários"
+			"ACTION": "Convidar funcionários",
+			"DESCRIPTION": "Convide pessoas para participar da sua organização como funcionários. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Gerenciar Convites de Candidatos.",
 			"HEADER": "Convidar Candidatos",
-			"ACTION": "Convidar candidatos"
+			"ACTION": "Convidar candidatos",
+			"DESCRIPTION": "Convide candidatos para o seu processo seletivo. Cada destinatário recebe um e-mail com um link seguro para aceitar."
 		},
 		"SENT": "{{total}} Convites enviados.",
 		"IGNORED": "{{total}} Convites Enviados. {{ignored}} já foram convidados e foram ignorados.",
@@ -3803,6 +4011,23 @@
 			"TWO_WEEK": "14 dias",
 			"MONTH": "30 Dias",
 			"NEVER": "Nunca"
+		},
+		"FORM": {
+			"RECIPIENTS": "Destinatários",
+			"EMAILS_PLACEHOLDER": "nome@empresa.com",
+			"EMAILS_HINT": "Pressione Enter após cada endereço para adicionar vários destinatários.",
+			"CLEAR_EMAILS": "Limpar tudo",
+			"ACCESS": "Acesso",
+			"ACCESS_HINT": "Opcional. Escolha o que os novos membros poderão acessar assim que entrarem.",
+			"DETAILS": "Detalhes do convite",
+			"RECIPIENT_COUNT": "Destinatários: {{count}}",
+			"NO_RECIPIENTS": "Nenhum destinatário adicionado ainda"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Excluir convite",
+			"WARNING": "O convite para {{ email }} será excluído permanentemente e o link deixará de funcionar. Esta ação não pode ser desfeita.",
+			"TYPE_TO_CONFIRM": "Digite o seguinte para confirmar:",
+			"CONFIRM": "Excluir convite"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -4585,7 +4810,7 @@
 			"": ""
 		},
 		"EMAIL_HISTORY": {
-			"CUSTOM_EMAIL_TEMPLATE": ""
+			"CUSTOM_EMAIL_TEMPLATE": "Modelo de e-mail personalizado"
 		},
 		"SETTING": {
 			"FILE_STORAGE": "Armazenamento de arquivo",
@@ -5184,6 +5409,8 @@
 			"API_SERVER_PORT": "Porta do servidor API",
 			"UI_SERVER_PORT": "Porta do servidor UI",
 			"SERVER_HOSTNAME": "Nome de host/endereço IP do servidor",
+			"LAN_ACCESS": "Permitir que outros computadores da rede se conectem",
+			"LAN_ACCESS_HINT": "Quando desativado, apenas este computador pode se conectar à API e à interface web.",
 			"AUTO_START_STARTUP": "Iniciar automaticamente na inicialização",
 			"SERVER_TYPE": "Tipo de servidor",
 			"LOCAL_API_PORT": "Porta da API local",
@@ -5310,7 +5537,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Não foi possível determinar se você tem dados offline não sincronizados. Remover o banco de dados pode PERMANENTEMENTE apagar trabalho não salvo. Se não tiver certeza, clique em 'Manter'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Seus dados de acesso",
+			"SEED_CREDENTIALS_MESSAGE": "Salve estas senhas agora. Elas são exibidas apenas uma vez.",
+			"SEED_CREDENTIALS_DETAIL": "Esta instalação criou suas contas com senhas aleatórias em vez dos valores padrão publicados.\n\n{{ accounts }}\n\nVocê pode alterar uma senha depois na sua página de perfil no Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Copiado para a área de transferência.",
+			"SEED_CREDENTIALS_SAVED": "Já as salvei",
+			"SEED_ROLE_SUPER_ADMIN": "Superadministrador",
+			"SEED_ROLE_ADMIN": "Administrador",
+			"SEED_ROLE_EMPLOYEE": "Funcionário",
+			"SEED_PASSWORD": "Senha",
+			"PUBLISHED_PASSWORDS_TITLE": "Senha padrão ainda em uso",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Altere a senha padrão destas contas.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} ainda entram com a senha padrão publicada na documentação do Gauzy. Qualquer pessoa que alcance este servidor pode entrar com ela. Entre no Gauzy e altere-a na página de perfil."
 		},
 		"NO_LIMIT": "∞ Sem Limite",
 		"TASK": "Tarefa",
@@ -5338,7 +5577,12 @@
 			"SERVICE_UNAVAILABLE": "Serviço temporariamente indisponível.",
 			"UNEXPECTED_ERROR": "Ocorreu um erro inesperado.",
 			"NETWORK_ERROR": "Erro de rede: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema."
+			"SCREEN_ACCESS_REQUIRED_MSG": "A permissão de acesso à tela é necessária para habilitar a captura automática de tela. Por favor, conceda a permissão nas configurações do sistema.",
+			"ORGANIZATION_SWITCH_REFUSED": "Não foi possível mudar para {{ name }}: {{ reason }}. Você continua trabalhando na sua organização atual.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Você não é um funcionário ativo de {{ name }}, portanto o cronômetro não pode registrar tempo lá. Você continua trabalhando na sua organização atual.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "A organização está sendo trocada. Inicie o cronômetro quando a troca terminar.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Você não é um funcionário ativo de {{ name }} e não foi possível voltar para sua organização anterior. Faça login novamente.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Não foi possível concluir a troca para {{ name }} neste dispositivo. Faça login novamente."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "O rastreador foi parado devido à inatividade!",
@@ -5585,7 +5829,40 @@
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
 		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)",
 		"NO_TIME_TRACKED": "Nenhum tempo registrado",
-		"MINUTES_TRACKED": "{{ minutes }} min registrados"
+		"MINUTES_TRACKED": "{{ minutes }} min registrados",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Tempo total",
+			"APPS_USED": "Aplicativos usados",
+			"SITES_VISITED": "Sites visitados",
+			"TOP_APP": "Aplicativo mais usado",
+			"TOP_SITE": "Site mais visitado",
+			"VIEW": "Visualização",
+			"BY_APP": "Por aplicativo",
+			"BY_SITE": "Por site",
+			"BY_MEMBERS": "Por membro",
+			"BY_HOURS": "Por hora",
+			"SEARCH_APPS": "Pesquisar aplicativos…",
+			"SEARCH_SITES": "Pesquisar sites…",
+			"SORT": "Alterar a ordenação",
+			"SORT_TIME": "Mais tempo",
+			"SORT_NAME": "Nome A–Z",
+			"LOAD_FAILED": "Não foi possível carregar a atividade. Tente novamente.",
+			"NO_MATCH": "Nada corresponde a “{{ search }}”.",
+			"APP": "Aplicativo",
+			"SITE": "Site",
+			"TIME": "Tempo",
+			"SHOW_PAGES": "Mostrar as páginas visitadas em {{ site }}",
+			"LOADING_PAGES": "Carregando páginas…",
+			"PAGES_FAILED": "Não foi possível carregar as páginas.",
+			"NO_PAGES": "Nenhum detalhe de página foi registrado para este site.",
+			"SHOW_ALL": "Mostrar todos ({{ count }})",
+			"SHOW_LESS": "Mostrar menos",
+			"UNKNOWN_MEMBER": "Membro desconhecido",
+			"APPS_COUNT": "{{ count }} aplicativos",
+			"SITES_COUNT": "{{ count }} sites",
+			"OF_TOTAL": "{{ value }} do total",
+			"PAGES_TRUNCATED": "Este site tem mais registros do que é possível mostrar; o detalhamento cobre apenas parte do seu tempo."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",
@@ -6111,6 +6388,7 @@
 		"FORGOT_PASSWORD_TITLE": "Esqueceu a senha?",
 		"OR_SIGN_IN_WITH": "Ou faça login com",
 		"SIGN_IN_WITH_EVER_ID": "Entrar com Ever ID",
+		"LOGIN_WITH_EVER_ID": "Entrar com {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Entrar com Keycloak",
 		"FORGOT_EMAIL_TITLE": "Esqueceu o e-mail?",
 		"LOGIN_MAGIC": {
@@ -6628,5 +6906,82 @@
 			"ROTATE_FAILED": "Falha ao rotacionar segredo do cliente",
 			"DELETE_FAILED": "Falha ao revogar cliente OAuth"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Ver detalhes do projeto {{ name }}",
+		"PROGRESS": "Progresso",
+		"PROGRESS_META": "{{ done }} de {{ total }} tarefas concluídas",
+		"NO_TASKS": "Ainda não há tarefas neste projeto",
+		"NEEDS_ATTENTION": "Requer atenção",
+		"NEEDS_ATTENTION_CAPTION": "Tarefas atrasadas e com prazo nos próximos 3 dias",
+		"ACTIVITY": "Atividade diária",
+		"ACTIVITY_VIEWS": "Visualização da atividade",
+		"ACTIVITY_VIEW_CHART": "Gráfico",
+		"ACTIVITY_VIEW_GRID": "Grade de contribuições",
+		"GRID_NONE": "Sem tempo",
+		"GRID_LAST_YEAR": "Últimos 12 meses",
+		"GRID_OLDER": "Ano anterior",
+		"GRID_NEWER": "Ano seguinte",
+		"GRID_DAY": "{{ time }} em {{ date }}",
+		"GRID_DAY_EMPTY": "Sem tempo em {{ date }}",
+		"TOP_CONTRIBUTORS": "Quem trabalhou mais",
+		"CONTRIBUTORS_CAPTION": "Tempo de todos neste projeto · {{ range }}",
+		"YOUR_TIME_CAPTION": "Seu tempo neste projeto · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Tempo dos membros da equipe neste projeto · {{ range }}",
+		"BUDGET_USED": "{{ used }} de {{ budget }} usadas",
+		"OVER_BUDGET": "{{ value }} acima do orçamento",
+		"TOTAL_TRACKED": "Total registrado",
+		"TOTAL_TRACKED_HINT": "Desde o início do projeto",
+		"THIS_PERIOD": "Este período",
+		"VS_PREVIOUS": "{{ value }} em relação ao período anterior",
+		"TIMELINE": "Cronograma",
+		"NO_DATES": "Sem datas definidas",
+		"STARTS_IN": "Começa em {{ count }} dias",
+		"STARTS_TOMORROW": "Começa amanhã",
+		"FINISHED": "Concluído",
+		"TEAM": "Equipe",
+		"NO_MEMBERS": "Ainda não há membros neste projeto",
+		"MODULES": "Módulos",
+		"MODULE_TASK": "1 tarefa",
+		"MODULE_TASKS": "{{ count }} tarefas"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Visão geral",
+			"BOARD": "Quadro",
+			"ACTIVITY": "Atividade",
+			"COMMENTS": "Comentários"
+		},
+		"BOARD": "Quadro",
+		"COLUMN_EMPTY": "Sem tarefas",
+		"CANNOT_DROP": "As tarefas não podem ser movidas para “{{ column }}” porque não é um status deste projeto.",
+		"ACTIVITY": "Atividade",
+		"ACTIVITY_CAPTION": "Mudanças recentes no projeto e em suas tarefas",
+		"NO_ACTIVITY": "Ainda não há atividade",
+		"ACTIVITY_PARTIAL": "Não foi possível carregar parte da atividade, por isso esta lista pode estar incompleta.",
+		"ACTIVITY_CREATED": "{{ actor }} criou",
+		"ACTIVITY_UPDATED": "{{ actor }} atualizou",
+		"ACTIVITY_DELETED": "{{ actor }} excluiu",
+		"ACTIVITY_COMMENTED": "{{ actor }} comentou em",
+		"ACTIVITY_REPLIED": "{{ actor }} respondeu a um comentário em",
+		"ACTIVITY_FIELDS": "Alterado: {{ fields }}",
+		"SOMEONE": "Alguém",
+		"TODAY": "Hoje",
+		"YESTERDAY": "Ontem",
+		"TASK_PROGRESS": "Progresso",
+		"TASK_PROGRESS_OF": "{{ worked }} de {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% do tempo registrado do projeto (sem estimativa)",
+		"TASK_TOP_PEOPLE": "Quem mais trabalhou",
+		"TASK_NO_ESTIMATE": "Sem estimativa",
+		"COMMENTS": "Comentários",
+		"NO_COMMENTS": "Ainda não há comentários. Inicie a discussão.",
+		"COMMENT_PLACEHOLDER": "Escreva um comentário…",
+		"COMMENT_IMAGE": "Imagem",
+		"ATTACH_IMAGES": "Anexar imagens",
+		"REMOVE_IMAGE": "Remover imagem",
+		"OPEN_IMAGE": "Abrir original",
+		"COMMENT_IMAGE_TYPES": "Só é possível anexar imagens PNG, JPEG, GIF, WebP e BMP.",
+		"COMMENT_IMAGE_LIMIT": "Um comentário pode ter até {{ count }} imagens.",
+		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	}
 }

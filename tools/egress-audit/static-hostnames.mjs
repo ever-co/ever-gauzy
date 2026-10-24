@@ -39,7 +39,13 @@ export const BASELINE_FILE = join(HERE, 'static-hostnames.baseline.json');
 
 /**
  * Where an Ever host may be named: the modules themselves, their docs, the audit and its checks,
- * prose (Markdown) and tests. Everything else is core code.
+ * prose (Markdown) and tests, and the external uptime monitor. Everything else is core code.
+ *
+ * The uptime monitor is named by its exact path. Like the tests, it never ships: it is a scheduled CI
+ * job on a GitHub-hosted runner that probes Gauzy's own production hosts from outside, and its only
+ * job is to name them, so a baseline that may only shrink would stop it from ever watching a new
+ * one. The other workflows stay in the scan: they build and deploy the images, and a host they name
+ * can end up inside one.
  */
 export const ALLOWED = [
 	'packages/plugins/ever-connect/',
@@ -47,14 +53,14 @@ export const ALLOWED = [
 	'packages/plugins/ever-stats/',
 	'packages/plugins/ever-stats-ui/',
 	'packages/plugins/ever-instance/',
-	'docs/ever-platform/',
 	'tools/egress-audit/',
 	'tools/ever-platform/',
 	'**/*.md',
 	'**/*.spec.ts',
 	'**/*.e2e-spec.ts',
 	'**/*.test.*',
-	'apps/gauzy-e2e/'
+	'apps/gauzy-e2e/',
+	'.github/workflows/external-uptime-monitor.yml'
 ];
 
 /** The Ever Platform base URL variables: only the modules read them. */

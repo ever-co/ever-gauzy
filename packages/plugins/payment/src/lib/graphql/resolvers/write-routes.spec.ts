@@ -214,6 +214,7 @@ import { PaymentMethodTokenController } from '../../payment-method-token/payment
 import { UpdatePaymentMethodTokenDTO } from '../../payment-method-token/dto';
 import { RefundController } from '../../refund/refund.controller';
 import { RefundReasonController } from '../../refund-reason/refund-reason.controller';
+import { RefundLineController } from '../../refund-line/refund-line.controller';
 import { PaymentCaptureController } from '../../payment-capture/payment-capture.controller';
 import { PaymentCollectionController } from '../../payment-collection/payment-collection.controller';
 import { PaymentWebhookEventController } from '../../payment-webhook-event/payment-webhook-event.controller';
@@ -222,6 +223,8 @@ import { PaymentSessionResolver } from './payment-session.resolver';
 import { PaymentMethodTokenResolver } from './payment-method-token.resolver';
 import { RefundResolver } from './refund.resolver';
 import { RefundReasonResolver } from './refund-reason.resolver';
+import { RefundLineResolver } from './refund-line.resolver';
+import { PaymentCollectionResolver } from './payment-collection.resolver';
 import { PaymentCaptureResolver } from './payment-capture.resolver';
 
 type Row = Record<string, any>;
@@ -281,7 +284,8 @@ const REFUND_EDIT = { reason: 'damaged', note: 'operator repair', metadata: { no
 const CAPTURE_INPUT = { paymentId: ID, amount: '42.500000', currency: 'USD' };
 
 /** The body `POST /payment-sessions` takes, which the field's input states identically. */
-const SESSION_OPEN = { collectionId: ID, amount: '42.500000' };
+// The provider is named, as the route's DTO requires (`@IsUUID() providerId`) and the field now checks (R2-G11).
+const SESSION_OPEN = { collectionId: ID, providerId: ID, amount: '42.500000' };
 
 /**
  * What a collapsed route's service answers, so the two surfaces can be compared by identity.
@@ -1502,3 +1506,36 @@ function resolverFor(field: string, stubs: Row): Row {
 			throw new Error(`this suite declares no resolver for the field "${field}"`);
 	}
 }
+
+// R2-G16: `ApproveRefundInput` and `CreateRefundLineInput` declared `idempotencyKey`, and neither the field nor its
+// route declared a retry scope, so a presented key was read by nothing. Both surfaces now declare one scope per
+// act, optional, so a retried act is answered the first one.
+describe('the refund acts whose inputs carry a retry key — one optional scope on both protocols', () => {
+	it.each([
+		[RefundController, 'approve', RefundResolver, 'approveRefund', 'refund.approve', 'refund'],
+		[RefundLineController, 'create', RefundLineResolver, 'createRefundLine', 'refund.line.create', 'refund_line']
+	] as const)('%p.%s and %p.%s declare %s', (controller, route, resolver, field, scope, resourceType) => {
+		const declared = { scope, required: false, resourceType };
+
+		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, handlersOf(controller)[route])).toEqual(declared);
+		expect(Reflect.getMetadata(IDEMPOTENT_METADATA_KEY, fieldsOf(resolver)[field])).toEqual(declared);
+	});
+});
+
+// R2-G16 review (Greptile): the new `UpdatePaymentCollectionInput.amount` is a `Decimal`, which carries more
+// fractional digits than the column's six; the route refuses a seventh with `@IsDecimalAmount()`, and so does the field.
+describe('updatePaymentCollection — the amount the route accepts, and no other', () => {
+	it('passes an exact six-digit amount on, and refuses a seventh digit before the service is reached', async () => {
+		const service = { updateCollection: jest.fn(async (id: string, input: Row) => ({ id, ...input })) };
+		const resolver = new PaymentCollectionResolver(service as never) as unknown as Row;
+
+		await expect(resolver.updatePaymentCollection({ id: ID, amount: '12.123456' })).resolves.toMatchObject({
+			userErrors: []
+		});
+		await expect(resolver.updatePaymentCollection({ id: ID, amount: '1.1234567' })).resolves.toMatchObject({
+			paymentCollection: null,
+			userErrors: [{ code: 'VALIDATION_FAILED' }]
+		});
+		expect(service.updateCollection).toHaveBeenCalledTimes(1);
+	});
+});

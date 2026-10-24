@@ -13,7 +13,7 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { buildSchema, printSchema } from 'graphql';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -35,9 +35,9 @@ import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } fr
  *   here and a refusal is the query protocol's own code;
  * - every field reaches the same service method, or dispatches the same command, that the REST route
  *   reaches, so a client does not choose a better surface by choosing a protocol;
- * - **the guard chain is the controller's and no permission is stated anywhere**, because the controller
- *   states none — not on its own routes and not on the routes it inherits from the CRUD base — read from
- *   the controller's own metadata rather than restated here;
+ * - **the guard chain and the permissions are the controller's** — the tenant guard on the class, and on each
+ *   write, its own and the ones it overrides from the CRUD base, the availability grant its route states behind
+ *   `PermissionGuard` — read from the controller's own metadata rather than restated here;
  * - the two reads that answer something other than a row — the signed token and the identifier it carries
  *   — are root fields of their own, and a token that carries no identifier answers null;
  * - the relations the delivered reads do not join are identifiers on the type and never members, and the
@@ -775,38 +775,49 @@ describe('EmployeeAppointmentResolver — the guard stack and the permission are
 		const controllerGuards = Reflect.getMetadata('__guards__', EmployeeAppointmentController) ?? [];
 		const resolverGuards = Reflect.getMetadata('__guards__', EmployeeAppointmentResolver) ?? [];
 
-		// The delivered controller carries the tenant guard at class level and no permission anywhere, so
-		// the resolver states the same guard and appends the gate to it.
+		// The delivered controller carries the tenant guard at class level, so the resolver states the same guard
+		// and appends the gate to it.
 		expect(controllerGuards).toEqual([TenantPermissionGuard]);
 		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
-		// No permission guard, because there is no permission to guard: a `PermissionGuard` here would be a
-		// guard with nothing to read and a scope the routes do not have.
+		// No permission guard on the class: the reads state no permission, and the writes state
+		// `PermissionGuard` on their own handlers and fields, where their grants are.
 		expect(resolverGuards).not.toContain(PermissionGuard);
 	});
 
-	it('states no permission on the class and none on any field, as the controller does', () => {
+	it('states no permission on either class, a grant on every write field, and none on the reads', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeAppointmentController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeAppointmentResolver)).toBeUndefined();
 
-		for (const { field } of ROUTE_PARITY) {
-			expect(permissionOfField(field)).toBeUndefined();
-		}
-		// The query protocol's own reads are held to the same rule: the routes state nothing, so the fields
-		// state nothing.
-		expect(permissionOfField('employeeAppointments')).toBeUndefined();
-		expect(permissionOfField('employeeAppointment')).toBeUndefined();
-		expect(permissionOfField('employeeAppointmentCount')).toBeUndefined();
+		// GHSA-v79w-54p2-wmh5, owner decision 2 (2026-10-22): the writes stated no permission, and
+		// `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could book, change or
+		// remove any employee's appointment. The reads — the signed token and its decoding included — state none.
+		expect(Object.fromEntries(ROUTE_PARITY.map(({ field }) => [field, permissionOfField(field)]))).toEqual({
+			employeeAppointments: undefined,
+			employeeAppointment: undefined,
+			employeeAppointmentCount: undefined,
+			signEmployeeAppointment: undefined,
+			decodeEmployeeAppointment: undefined,
+			createEmployeeAppointment: [PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE],
+			updateEmployeeAppointment: [PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE],
+			deleteEmployeeAppointment: [PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE],
+			softDeleteEmployeeAppointment: [PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE],
+			recoverEmployeeAppointment: [PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE]
+		});
 	});
 
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = Reflect.getMetadata('__guards__', EmployeeAppointmentResolver) ?? [];
 
-		for (const { route } of ROUTE_PARITY) {
+		for (const { field, route } of ROUTE_PARITY) {
 			// The controller's chain plus the gate on the endpoint itself and the resolver's are the same set,
 			// which is the whole parity claim: a route that added a guard of its own would narrow REST below
-			// GraphQL and is caught here, and so is a field that added one.
+			// GraphQL and is caught here, and so is a field that added one. The writes state `PermissionGuard`
+			// on the handler and on the field alike, so the field's own guards join the class's.
+			const fieldGuards = (Reflect.getMetadata('__guards__', fieldsOf(EmployeeAppointmentResolver)[field]) ??
+				[]) as unknown[];
+
 			expect([...guardsOfRoute(EmployeeAppointmentController, route), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...new Set([...stated, ...fieldGuards])].sort()
 			);
 		}
 	});
@@ -822,18 +833,37 @@ describe('EmployeeAppointmentResolver — the guard stack and the permission are
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(EmployeeAppointmentController, route));
 	});
 
-	it('holds the three inherited routes to the metadata the base controller carries for them', () => {
-		for (const route of ['getCount', 'delete', 'softRemove', 'softRecover']) {
-			// The CRUD base carries neither a guard nor a permission of its own, so the controller's class
-			// level guard is the whole of what those routes run under — and therefore the whole of what the
-			// fields mirroring them run under.
-			expect(Reflect.getMetadata('__guards__', handlersOf(EmployeeAppointmentController)[route])).toBeUndefined();
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EmployeeAppointmentController)[route])).toBeUndefined();
-		}
+	it('holds the inherited count to the metadata the base controller carries for it, and overrides the inherited writes', () => {
+		// The CRUD base carries neither a guard nor a permission of its own on the count, so the controller's class
+		// level guard is the whole of what that route runs under — and therefore the whole of what its field runs
+		// under.
+		expect(
+			Reflect.getMetadata('__guards__', handlersOf(EmployeeAppointmentController)['getCount'])
+		).toBeUndefined();
+		expect(
+			Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EmployeeAppointmentController)['getCount'])
+		).toBeUndefined();
+		expect(
+			Reflect.getMetadata('__guards__', fieldsOf(EmployeeAppointmentResolver)['employeeAppointmentCount'])
+		).toBeUndefined();
+		expect(
+			Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(EmployeeAppointmentResolver)['employeeAppointmentCount'])
+		).toBeUndefined();
 
-		for (const field of ['employeeAppointmentCount', 'deleteEmployeeAppointment', 'softDeleteEmployeeAppointment', 'recoverEmployeeAppointment']) {
-			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeAppointmentResolver)[field])).toBeUndefined();
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(EmployeeAppointmentResolver)[field])).toBeUndefined();
+		// The three writes the CRUD base declares bare are the controller's own handlers now, behind
+		// `PermissionGuard`, and so are the fields that mirror them.
+		for (const [field, route] of [
+			['deleteEmployeeAppointment', 'delete'],
+			['softDeleteEmployeeAppointment', 'softRemove'],
+			['recoverEmployeeAppointment', 'softRecover']
+		] as ReadonlyArray<[string, string]>) {
+			expect(Object.prototype.hasOwnProperty.call(EmployeeAppointmentController.prototype, route)).toBe(true);
+			expect(Reflect.getMetadata('__guards__', handlersOf(EmployeeAppointmentController)[route])).toEqual([
+				PermissionGuard
+			]);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeAppointmentResolver)[field])).toEqual([
+				PermissionGuard
+			]);
 		}
 	});
 

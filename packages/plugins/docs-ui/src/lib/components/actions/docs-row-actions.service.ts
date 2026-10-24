@@ -318,7 +318,8 @@ export class DocsRowActionsService implements OnDestroy {
 	/**
 	 * The document a sidebar favorite points at. The store names every entry `favorite-<entity>-<id>`, which
 	 * holds whatever the link looks like; the link is the fallback, in each shape a Documents favorite opens
-	 * (`/pages/documents/page/<uuid>` for a page, `?folder=<uuid>` for a folder, `?id=<uuid>` otherwise).
+	 * (`/pages/documents/page/<uuid>` for a page, `?folder=<uuid>` for a folder, `/pages/documents/file/<uuid>`
+	 * otherwise — and `?id=<uuid>`, the shape favorites had before that page existed).
 	 */
 	private documentIdOfFavorite(item: { id?: unknown; link?: unknown } | null | undefined): string | null {
 		const entryId = String(item?.id ?? '');
@@ -333,7 +334,7 @@ export class DocsRowActionsService implements OnDestroy {
 		const value = String(link ?? '');
 		if (!value.startsWith(DOCS_PAGE_LINK)) return null;
 		const [path, query = ''] = value.split('?');
-		const page = path.slice(DOCS_PAGE_LINK.length).match(/^\/page\/([^/]+)$/);
+		const page = path.slice(DOCS_PAGE_LINK.length).match(/^\/(?:page|file)\/([^/]+)$/);
 		if (page) return page[1];
 		const params = new URLSearchParams(query);
 		return params.get('id') || params.get('folder') || null;

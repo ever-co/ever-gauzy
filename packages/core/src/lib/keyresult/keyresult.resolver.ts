@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResult } from './keyresult.entity';
 import { KeyResultService } from './keyresult.service';
@@ -134,10 +135,15 @@ const KEY_RESULT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * states each capability where the controller declares it. The spec asserts that ordering, so the
  * note cannot quietly stop being true.
  *
- * **The guard chain is the controller's, and no field states a permission.** `KeyResultController`
- * carries `TenantPermissionGuard` on the class and nothing else, on any of the nine routes, so the
- * permission guard is not part of this resolver's chain either. The spec reads the controller's
- * `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.** `KeyResultController` carries
+ * `TenantPermissionGuard` on the class; its reads state no permission, and every write route — the filing and
+ * the bulk filing, the edit, the removal and the two lifecycle moves, the inherited ones overridden only to
+ * attach the grant — states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2, 2026-10-22: the writes
+ * stated none, and the permission guard answers `true` to empty metadata, so any member of the tenant could
+ * write — GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the gate, the reads state nothing,
+ * and each write field states `PermissionGuard` and `GOALS_EDIT`, neither wider nor narrower than its route.
+ * The spec reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this
+ * class's, field by field.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -224,6 +230,8 @@ export class KeyResultResolver {
 	 *
 	 * The same service method the create route calls, with the body that route validates.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createKeyResult')
 	async createKeyResult(@Args('input') input: ICreateKeyResultInput): Promise<KeyResult> {
 		return await this.keyResultService.create(input as never);
@@ -236,6 +244,8 @@ export class KeyResultResolver {
 	 * what this field does with the list it is given. The delivered save is an upsert rather than an
 	 * insert, so an entry carrying an identifier updates the row it names.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createKeyResults')
 	async createKeyResults(@Args('input') input: ICreateKeyResultInput[]): Promise<KeyResult[]> {
 		return await this.keyResultService.createBulk(input as never);
@@ -247,6 +257,8 @@ export class KeyResultResolver {
 	 * The delivered route is an update-through-create and this field is the same call with the stated
 	 * identifier spread over the body.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateKeyResult')
 	async updateKeyResult(@Args('input') input: IUpdateKeyResultInput): Promise<KeyResult> {
 		const { id, ...values } = input;
@@ -260,6 +272,8 @@ export class KeyResultResolver {
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
 	 * row — so this field answers whether the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteKeyResult')
 	async deleteKeyResult(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.keyResultService.delete(id));
@@ -270,6 +284,8 @@ export class KeyResultResolver {
 	 *
 	 * The inherited `DELETE /key-results/:id/soft` route's own call.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteKeyResult')
 	async softDeleteKeyResult(@Args('id', { type: () => ID }) id: Id): Promise<KeyResult> {
 		return await this.keyResultService.softRemove(id);
@@ -278,6 +294,8 @@ export class KeyResultResolver {
 	/**
 	 * Puts a withdrawn key result back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverKeyResult')
 	async recoverKeyResult(@Args('id', { type: () => ID }) id: Id): Promise<KeyResult> {
 		return await this.keyResultService.softRecover(id);

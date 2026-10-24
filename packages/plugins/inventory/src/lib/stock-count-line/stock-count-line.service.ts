@@ -4,7 +4,6 @@ import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	ProductVariantPrice,
 	RequestContext,
-	TenantAwareCrudService,
 	addDecimalStrings,
 	compareDecimalStrings,
 	formatDecimalUnits,
@@ -15,6 +14,7 @@ import { toDecimalWire } from './../inventory.decimal';
 import { StockCountLine } from './stock-count-line.entity';
 import { TypeOrmStockCountLineRepository } from './repository/type-orm-stock-count-line.repository';
 import { MikroOrmStockCountLineRepository } from './repository/mikro-orm-stock-count-line.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /**
  * Reads the lines of a count session.
@@ -24,7 +24,7 @@ import { MikroOrmStockCountLineRepository } from './repository/mikro-orm-stock-c
  * isolation would let a caller change what a signed-off session says.
  */
 @Injectable()
-export class StockCountLineService extends TenantAwareCrudService<StockCountLine> {
+export class StockCountLineService extends InventoryCrudService<StockCountLine> {
 	constructor(
 		readonly typeOrmStockCountLineRepository: TypeOrmStockCountLineRepository,
 		readonly mikroOrmStockCountLineRepository: MikroOrmStockCountLineRepository

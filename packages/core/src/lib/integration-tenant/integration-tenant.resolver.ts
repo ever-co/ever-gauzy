@@ -1,4 +1,4 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
@@ -20,6 +20,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
+import { assertClientMayWriteIntegrationSettings } from '../integration-setting/integration-setting.utils';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationTenantService } from './integration-tenant.service';
 import { IntegrationTenantDeleteCommand, IntegrationTenantUpdateCommand } from './commands';
@@ -229,12 +230,18 @@ export class IntegrationTenantResolver {
 	 * The service is the route's own, and so is the shape of the write: the delivered creation stamps
 	 * the caller's tenant onto the row and the credentials and decisions it carries, so a body cannot
 	 * name another tenant. The answer is the row the store produced.
+	 *
+	 * **The settings are held to the route's allowlist** (SEC-E-03, GHSA-4rwq-65wh-45h4): a client may bring only the
+	 * settings a client may edit (the Gauzy AI keys). `installation_id`, OAuth tokens and account ids are written by
+	 * the integrations themselves and trusted by the server; this field used to plant any of them.
 	 */
 	@Mutation('createIntegrationTenant')
 	@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 	async createIntegrationTenant(
 		@Args('input') input: ICreateIntegrationTenantInput
 	): Promise<IntegrationTenant> {
+		assertClientMayWriteIntegrationSettings(input?.name, input?.settings);
+
 		return (await this.integrationTenantService.create(
 			input as unknown as IIntegrationTenantCreateInput
 		)) as IntegrationTenant;
@@ -246,14 +253,27 @@ export class IntegrationTenantResolver {
 	 * The command is the route's own and reads the row, writes the columns the caller states and
 	 * answers the row read back — a partial column update rather than a replacement, which is what makes
 	 * an absent member "leave it as it is".
+	 *
+	 * **It changes the connection, never its settings — as the route** (SEC-E-03). The route's DTO whitelist strips
+	 * `settings`; here the command handed them to `bulkUpdateOrCreate`, which deletes EVERY setting of the
+	 * integration (its server-held tokens and installation id included) and saves the caller's instead. Settings are
+	 * therefore refused — even allowlisted ones, whose bulk write would delete the rest; `updateIntegrationSetting`
+	 * is the field that rewrites one client-editable value.
 	 */
 	@Mutation('updateIntegrationTenant')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	async updateIntegrationTenant(
 		@Args('input') input: IUpdateIntegrationTenantInput
 	): Promise<IntegrationTenant> {
+		const { settings, ...edit } = input;
+		if (settings != null && (!Array.isArray(settings) || settings.length > 0)) {
+			throw new ForbiddenException(
+				'Integration settings are not changed by updateIntegrationTenant; use updateIntegrationSetting for a client-editable value.'
+			);
+		}
+
 		return await this.commandBus.execute(
-			new IntegrationTenantUpdateCommand(input.id, input as unknown as IIntegrationTenantUpdateInput)
+			new IntegrationTenantUpdateCommand(edit.id, edit as unknown as IIntegrationTenantUpdateInput)
 		);
 	}
 

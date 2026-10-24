@@ -15,6 +15,227 @@ export interface IReferenceScope {
 export type ScopedLookup = (table: string, where: Record<string, unknown>) => Promise<unknown>;
 
 /**
+ * Looks rows up by id within scoped criteria, in one query: the rows of `table` whose id is one of `ids` and that
+ * match `scope` (the tenant, and the organization when there is one). Returns the rows found, with their `id`.
+ */
+export type ScopedBatchLookup = (
+	table: string,
+	ids: ID[],
+	scope: Record<string, unknown>
+) => Promise<ReadonlyArray<{ id?: unknown }>>;
+
+/**
+ * The rows a sharing points at, in every form a body can name them: the foreign-key column, or the related object
+ * (`equipment: { id }`, `equipmentSharingPolicy: { id }`, `organization: { id }`) — which the ORM persists as the
+ * foreign key just the same, MikroORM even when it is a bare id string.
+ */
+export interface ISharingReferences {
+	equipmentId?: ID | null;
+	equipment?: unknown;
+	equipmentSharingPolicyId?: ID | null;
+	equipmentSharingPolicy?: unknown;
+	organizationId?: ID | null;
+	organization?: unknown;
+}
+
+/**
+ * A sharing payload once {@link withReferencesAsIds} has stated each reference as its column.
+ */
+export type ISharingColumns = Omit<ISharingReferences, 'equipment' | 'equipmentSharingPolicy' | 'organization'>;
+
+/**
+ * What a stored sharing holds of the rows it points at, as {@link sharingAsStored} reads it.
+ */
+export interface IStoredSharing {
+	organizationId?: ID | null;
+	equipmentId?: ID | null;
+	equipmentSharingPolicyId?: ID | null;
+}
+
+/**
+ * The id a related object names: its `id`, or the value itself when the body sent a bare id string.
+ *
+ * @param related - The related object as the body sent it.
+ * @returns The id; `null` when the body clears the relation (`null`, or `{ id: null }`); `undefined` when it names
+ * nothing (the key is absent, or the object carries no id).
+ */
+function relatedId(related: unknown): ID | null | undefined {
+	if (related === null) {
+		return null;
+	}
+	const id = typeof related === 'object' ? (related as { id?: unknown }).id : related;
+	if (id === null) {
+		return null;
+	}
+	return id === undefined || id === '' ? undefined : (id as ID);
+}
+
+/**
+ * The one value a payload states for a reference it may name twice, as the column and as the related object.
+ *
+ * An id the related object names wins: it is the row the ORM would point at. Else the column, as stated. Else a
+ * relation the body clears (`equipmentSharingPolicy: null`) clears the column too: dropping it instead would turn the
+ * clearing into an omission, and an upsert would keep the stored reference.
+ *
+ * @param related - The related object as the body sent it.
+ * @param column - The column as the body sent it.
+ * @returns The id, `null` to clear the reference, or `undefined` when the payload states neither.
+ */
+function statedReference(related: unknown, column: ID | null | undefined): ID | null | undefined {
+	const id = relatedId(related);
+	if (id !== undefined && id !== null) {
+		return id;
+	}
+	return column !== undefined ? column : id;
+}
+
+/**
+ * Every `[table, id]` a sharing payload names, in both forms (see {@link ISharingReferences}), for
+ * {@link assertReferencesAreInScope}. The column and the related object are both listed, so a payload that states
+ * an in-scope column beside a foreign object is refused, whichever of the two the ORM would write.
+ *
+ * @param input - The create/update payload.
+ * @returns The references to validate: the ids the payload states, an id stated twice listed once.
+ */
+export function sharingReferences(input: ISharingReferences): Array<readonly [string, ID | undefined]> {
+	const references: Array<readonly [string, ID | null | undefined]> = [
+		['equipment', input?.equipmentId],
+		['equipment', relatedId(input?.equipment)],
+		['equipment_sharing_policy', input?.equipmentSharingPolicyId],
+		['equipment_sharing_policy', relatedId(input?.equipmentSharingPolicy)]
+	];
+	return references.filter(
+		(reference, index): reference is readonly [string, ID] =>
+			reference[1] !== undefined &&
+			reference[1] !== null &&
+			references.findIndex(([other, otherId]) => other === reference[0] && otherId === reference[1]) === index
+	);
+}
+
+/**
+ * The employees and the teams a sharing is handed to, as a body can list them: each entry a related object
+ * (`{ id }`, the form sends the whole row) or a bare id string (MikroORM persists both as the pivot row).
+ */
+export interface ISharingMembers {
+	employees?: unknown;
+	teams?: unknown;
+}
+
+/**
+ * The ids a member list names, each once. A value that is not a list is read as a list of one, so that whatever the
+ * ORM could make of it is checked too.
+ *
+ * @param members - The list as the body sent it.
+ * @returns The ids the entries name; an entry that names none is skipped, as an absent column is.
+ */
+function memberIds(members: unknown): ID[] {
+	if (members === undefined || members === null) {
+		return [];
+	}
+	const entries = Array.isArray(members) ? members : [members];
+	return entries
+		.map((entry) => relatedId(entry))
+		.filter((id, index, ids): id is ID => id !== undefined && id !== null && ids.indexOf(id) === index);
+}
+
+/**
+ * Every `[table, id]` the member lists of a sharing payload name (see {@link ISharingMembers}), for
+ * {@link assertMembersAreInScope}.
+ *
+ * The many-to-many lists were checked against the tenant only (the nested-graph guard of the CRUD base), so a body
+ * could hand a sharing to another organization's employees or teams of the same tenant. Each listed employee and team
+ * must now be a row of the sharing's organization, like its equipment and its policy.
+ *
+ * @param input - The create/update payload.
+ * @returns The members to validate, an id listed twice listed once.
+ */
+export function sharingMemberReferences(input: ISharingMembers): Array<readonly [string, ID | undefined]> {
+	return [
+		...memberIds(input?.employees).map((id) => ['employee', id] as const),
+		...memberIds(input?.teams).map((id) => ['organization_team', id] as const)
+	];
+}
+
+/**
+ * A sharing payload with each reference stated once, as its foreign-key column.
+ *
+ * The related object's id wins over the column when the body carries both (the form sends both, with the same id):
+ * it is the row the ORM would point at. The objects themselves are dropped, so the id that is checked is the id
+ * that is stored, and nothing else the object carries reaches the write. A relation the body clears
+ * (`equipmentSharingPolicy: null`) is kept as a cleared column (`equipmentSharingPolicyId: null`), so an upsert
+ * still clears it — see {@link statedReference}.
+ *
+ * The organization is folded the same way (`organization: { id }` into `organizationId`): the scope a write is
+ * checked in, the organization a handler pins and the organization-boundary guard of the CRUD base all read the
+ * column, while the ORM wrote the row into the organization the object named.
+ *
+ * @param input - The create/update payload.
+ * @returns The payload without `equipment` / `equipmentSharingPolicy` / `organization`, with their ids in the columns.
+ */
+export function withReferencesAsIds<T extends ISharingReferences>(
+	input: T
+): Omit<T, 'equipment' | 'equipmentSharingPolicy' | 'organization'> {
+	const { equipment, equipmentSharingPolicy, organization, ...values } = (input ?? {}) as T;
+	const equipmentId = statedReference(equipment, input?.equipmentId);
+	const equipmentSharingPolicyId = statedReference(equipmentSharingPolicy, input?.equipmentSharingPolicyId);
+	const organizationId = statedReference(organization, input?.organizationId);
+
+	return {
+		...values,
+		...(equipmentId !== undefined ? { equipmentId } : {}),
+		...(equipmentSharingPolicyId !== undefined ? { equipmentSharingPolicyId } : {}),
+		...(organizationId !== undefined ? { organizationId } : {})
+	};
+}
+
+/**
+ * A `POST /equipment-sharing` payload read as the row it will store, for the scope check: the organization the row
+ * lands in, the equipment and the policy it points at, and the payload to persist.
+ *
+ * The CRUD base's `create()` is an upsert by id. So the row is checked in the organization the payload states (the
+ * column; {@link withReferencesAsIds} has folded `organization: { id }` into it); else, when the payload carries the
+ * id of a stored row, that row's own; else the caller's. The references are the payload's, else the stored row's: a
+ * payload that only moves a stored sharing to another organization has the equipment and the policy the row keeps
+ * checked there. A row stored without an organization has its references held to the caller's.
+ *
+ * The payload to persist states all three exactly as they were checked — the organization, the equipment and the
+ * policy, each as its column, `null` for one checked as absent — so the upsert keeps none of the stored row's. Left
+ * to the upsert, a column the payload omits was read again at the write: an upsert that only changes the equipment,
+ * checked in organization A, could land after a concurrent upsert moved the sharing to organization B with B's
+ * equipment and policy, and store A's equipment in B's sharing (review on ever-co/ever-gauzy#11359). The row a
+ * write stores is now always the triple that write checked; of two concurrent writes, the last one wins whole.
+ *
+ * @param values - The payload, normalised by {@link withReferencesAsIds}.
+ * @param stored - The stored row the payload's id names (tenant-scoped), or `null` when it names none.
+ * @param callerOrganizationId - The caller's current organization.
+ * @returns The payload to persist, the references to check and the organization to check them in.
+ */
+export function sharingAsStored<T extends ISharingColumns>(
+	values: T,
+	stored: IStoredSharing | null,
+	callerOrganizationId: ID | null | undefined
+): { values: T; references: IStoredSharing; organizationId: ID | undefined } {
+	const asStored = (column: keyof IStoredSharing): ID | null | undefined =>
+		values[column] !== undefined ? values[column] : stored?.[column];
+	const references: IStoredSharing = {
+		equipmentId: asStored('equipmentId'),
+		equipmentSharingPolicyId: asStored('equipmentSharingPolicyId')
+	};
+	const organizationId = asStored('organizationId') ?? callerOrganizationId ?? undefined;
+
+	return {
+		values: {
+			...values,
+			organizationId: organizationId ?? null,
+			equipmentId: references.equipmentId ?? null,
+			equipmentSharingPolicyId: references.equipmentSharingPolicyId ?? null
+		},
+		references,
+		organizationId
+	};
+}
+
+/**
  * Refuses a referenced row that is not inside the given scope.
  *
  * The equipment-sharing update is a delete-then-recreate that spreads the request body, so a
@@ -41,6 +262,12 @@ export async function assertReferencesAreInScope(
 			continue;
 		}
 
+		// An id is a string. Anything else (an operator object, a number) would be handed to the lookup as a
+		// criterion rather than compared as a value, so it is refused rather than looked up.
+		if (typeof referenceId !== 'string') {
+			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
+		}
+
 		// Fail CLOSED without a tenant. An existence check that cannot be scoped proves nothing, and
 		// answering "in scope" because there is no scope to compare against is how these guards rot.
 		if (!scope.tenantId) {
@@ -53,6 +280,67 @@ export async function assertReferencesAreInScope(
 		}
 
 		if (!(await lookup(table, where))) {
+			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
+		}
+	}
+}
+
+/**
+ * Refuses a member list naming a row that is not inside the given scope: {@link assertReferencesAreInScope} for the
+ * employees and the teams of a sharing, which may be many.
+ *
+ * The ids are grouped by table and each table is read once, with every id of that table in one scoped query, rather
+ * than one query per member. Every id must be found in the scope. An id that is not a string (an operator object, a
+ * number) is refused before any query, as it would be handed to the lookup as a criterion rather than compared as a
+ * value. Without a tenant to scope by, a non-empty list is refused (fail closed, as for a single reference).
+ *
+ * Ids are compared case-insensitively: a UUID column matches whatever case the body used, and answers its own.
+ *
+ * @param references - `[table, id]` pairs to validate (see {@link sharingMemberReferences}); entries without an id
+ * are skipped.
+ * @param scope - The tenant/organization the referencing record belongs to.
+ * @param lookupMany - Reads the rows of one table by id within the scope.
+ * @throws ForbiddenException when an id is not a string, when a row is not found in the scope, or when there is no
+ * tenant to scope by.
+ */
+export async function assertMembersAreInScope(
+	references: ReadonlyArray<readonly [string, ID | undefined]>,
+	scope: IReferenceScope,
+	lookupMany: ScopedBatchLookup
+): Promise<void> {
+	const idsByTable = new Map<string, ID[]>();
+	for (const [table, referenceId] of references) {
+		if (!referenceId) {
+			continue;
+		}
+		if (typeof referenceId !== 'string') {
+			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
+		}
+		const ids = idsByTable.get(table) ?? [];
+		if (!ids.includes(referenceId)) {
+			ids.push(referenceId);
+		}
+		idsByTable.set(table, ids);
+	}
+
+	if (idsByTable.size === 0) {
+		return;
+	}
+
+	// Fail CLOSED without a tenant, as `assertReferencesAreInScope` does.
+	if (!scope.tenantId) {
+		throw new ForbiddenException('Cannot validate the referenced record without a tenant context');
+	}
+
+	const criteria: Record<string, unknown> = { tenantId: scope.tenantId };
+	if (scope.organizationId) {
+		criteria['organizationId'] = scope.organizationId;
+	}
+
+	for (const [table, ids] of idsByTable) {
+		const rows = await lookupMany(table, ids, criteria);
+		const found = new Set((rows ?? []).map((row) => String(row?.id).toLowerCase()));
+		if (ids.some((id) => !found.has(id.toLowerCase()))) {
 			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
 		}
 	}

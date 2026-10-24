@@ -20,6 +20,19 @@ import {
 	ICampaignBudgetUsage
 } from '../promotion.types';
 import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+import { withoutRestatedMembers } from '../shared/ledger-members';
+import { CampaignService } from '../campaign/campaign.service';
+
+/**
+ * The members of a budget a request body never writes (review R2-G28): `used` is the cache of the usage ledger that
+ * `reserve`/`release` move and only the campaign's reset route forgets, and `campaignId` is the campaign the ceiling
+ * belongs to, which `PUT /campaign-budgets/:id` could move onto another campaign. The ceiling is the rest:
+ * {@link CAMPAIGN_BUDGET_CEILING_MEMBERS}.
+ */
+export const CAMPAIGN_BUDGET_LEDGER_MEMBERS = ['campaignId', 'used'] as const;
+
+/** The members of a budget a request writes: the ceiling and its shape. */
+export const CAMPAIGN_BUDGET_CEILING_MEMBERS = ['type', 'limit', 'attribute', 'currency'] as const;
 
 /** Result of an attempt to consume budget. */
 export interface IBudgetReservation {
@@ -84,10 +97,18 @@ export const UNLIMITED_BUDGET_HEADROOM: DecimalString = '99999999999999.000000';
  */
 @Injectable()
 export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudget> {
+	/**
+	 * @param typeOrmCampaignBudgetRepository The budget table, TypeORM.
+	 * @param mikroOrmCampaignBudgetRepository The budget table, MikroORM.
+	 * @param typeOrmCampaignBudgetUsageRepository The per-value consumption table.
+	 * @param campaignService The campaigns, read to prove a campaign a ceiling is set on is the caller's. Always
+	 * injected by the module; optional in the signature only so suites that build the service by hand keep compiling.
+	 */
 	constructor(
 		readonly typeOrmCampaignBudgetRepository: TypeOrmCampaignBudgetRepository,
 		readonly mikroOrmCampaignBudgetRepository: MikroOrmCampaignBudgetRepository,
-		readonly typeOrmCampaignBudgetUsageRepository: TypeOrmCampaignBudgetUsageRepository
+		readonly typeOrmCampaignBudgetUsageRepository: TypeOrmCampaignBudgetUsageRepository,
+		private readonly campaignService?: CampaignService
 	) {
 		super(typeOrmCampaignBudgetRepository, mikroOrmCampaignBudgetRepository);
 	}
@@ -152,24 +173,119 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * Replacing a ceiling leaves the consumption already recorded alone: this route moves the ceiling,
 	 * and forgetting what was spent is the campaign's own reset route, an operator action with a reason.
 	 *
+	 * Only the ceiling is written (review R2-G28): the campaign is the one named by the path or the field, and must be
+	 * a campaign of the caller's organization (a 404 otherwise, as every read of a campaign answers); a body that names
+	 * another `campaignId`, or a `used` other than what the write leaves (the stored consumption, or zero for a new
+	 * ceiling), is refused with `CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE`. `PUT /campaigns/:id/budget`,
+	 * `POST /campaign-budgets` and `updateCampaignBudget` all come here.
+	 *
 	 * @param campaignId The campaign the budget belongs to.
 	 * @param input The ceiling to store.
 	 * @returns The stored budget.
-	 * @throws BadRequestException when the shape does not match the type.
+	 * @throws BadRequestException when the shape does not match the type, or the body moves `campaignId` or `used`.
+	 * @throws NotFoundException when the campaign is not the caller's.
 	 */
 	async setBudget(campaignId: ID, input: ICampaignBudgetCreateInput): Promise<ICampaignBudget> {
 		this.assertShape(input);
+		await this.assertCampaignOwned(campaignId);
 
 		const existing = await this.findOneOrFailByWhereOptions({ campaignId, ...this.scope } as never);
 
 		if (existing.success && existing.record) {
 			const budget = existing.record as unknown as ICampaignBudget;
+			const ceiling = this.ceilingOf(
+				withoutRestatedMembers(input, CAMPAIGN_BUDGET_LEDGER_MEMBERS, budget, this.ledgerRefusal(budget.id))
+			);
 
-			await this.update(budget.id, { ...input } as never);
+			await this.update(budget.id, ceiling as never);
 			return this.findOneByWhereOptions({ id: budget.id } as never);
 		}
 
-		return this.create({ ...input, campaignId, used: '0', ...this.scope } as never);
+		const ceiling = this.ceilingOf(
+			withoutRestatedMembers(
+				input,
+				CAMPAIGN_BUDGET_LEDGER_MEMBERS,
+				{ campaignId, used: '0' },
+				{ ...this.ledgerRefusal(null), nullIsAbsent: true }
+			)
+		);
+
+		return this.create({ ...ceiling, campaignId, used: '0', ...this.scope } as never);
+	}
+
+	/**
+	 * Changes the ceiling of one budget, addressed by its own identifier (`PUT /campaign-budgets/:id`).
+	 *
+	 * The route used to hand its body to the inherited `update`, which wrote `campaignId` and `used` as stated and ran
+	 * no shape check (review R2-G28). The budget is read in the caller's tenant and organization first; `campaignId`
+	 * and `used` are refused with `CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE` when the body would change them (restating
+	 * them is accepted); and the ceiling the change leaves is checked against its type as {@link setBudget} checks it.
+	 *
+	 * @param id The budget to change.
+	 * @param input The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws NotFoundException when the budget is not the caller's.
+	 * @throws BadRequestException when the body moves `campaignId` or `used`, or the shape does not match the type.
+	 */
+	async updateBudget(id: ID, input: Partial<ICampaignBudgetCreateInput> & { used?: DecimalString }) {
+		const current = await this.findBudgetOrFail(id);
+		const ceiling = this.ceilingOf(
+			withoutRestatedMembers(input, CAMPAIGN_BUDGET_LEDGER_MEMBERS, current, this.ledgerRefusal(current.id))
+		);
+
+		this.assertShape({ ...this.ceilingOf(current), ...ceiling } as ICampaignBudgetCreateInput);
+
+		return this.update(current.id, ceiling as never);
+	}
+
+	/**
+	 * The ceiling members of a body, and only those that are stated.
+	 *
+	 * @param input The body.
+	 * @returns The stated members of {@link CAMPAIGN_BUDGET_CEILING_MEMBERS}.
+	 */
+	private ceilingOf(input: object): Partial<ICampaignBudgetCreateInput> {
+		const body = (input ?? {}) as Record<string, unknown>;
+		const ceiling: Record<string, unknown> = {};
+
+		for (const member of CAMPAIGN_BUDGET_CEILING_MEMBERS) {
+			if (body[member] !== undefined) {
+				ceiling[member] = body[member];
+			}
+		}
+
+		return ceiling as Partial<ICampaignBudgetCreateInput>;
+	}
+
+	/**
+	 * @param budgetId The budget refused, when there is one yet.
+	 * @returns How a refusal of the ledger members is worded.
+	 */
+	private ledgerRefusal(budgetId: ID | null) {
+		return {
+			code: 'CAMPAIGN_BUDGET_FIELD_NOT_WRITABLE',
+			subject: 'a campaign budget',
+			movedBy:
+				'a ceiling belongs to the campaign it was set on, and its consumption moves with the usage ledger and is ' +
+				'forgotten only by POST /campaigns/:id/budget/reset.',
+			details: { budgetId }
+		};
+	}
+
+	/**
+	 * Proves the campaign a ceiling is set on is one of the caller's organization.
+	 *
+	 * @param campaignId The campaign.
+	 * @throws NotFoundException when it is not.
+	 */
+	private async assertCampaignOwned(campaignId: ID): Promise<void> {
+		if (!campaignId) {
+			throw new BadRequestException('CAMPAIGN_BUDGET_INVALID: a ceiling is set on a campaign.');
+		}
+
+		if (this.campaignService) {
+			await this.campaignService.findCampaignOrFail(campaignId);
+		}
 	}
 
 	/**
@@ -484,8 +600,8 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * Executes a statement through whichever ORM is active.
 	 *
 	 * The two ORMs are handed the parameters in the form each one binds: TypeORM's raw query takes the
-	 * values positionally, and so does the MikroORM connection, whose `execute` substitutes one
-	 * placeholder per element of the array it is given. The statements are written with named
+	 * values positionally, and so does the MikroORM connection, whose `execute` substitutes one `?`
+	 * per element of the array it is given, on every dialect. The statements are written with named
 	 * parameters because two of them bind the same value twice, so the MikroORM branch first resolves
 	 * the names into that positional form.
 	 *
@@ -501,7 +617,7 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 		// driver could bind an array to a statement that declares no `?`, so every campaign ceiling
 		// failed on every dialect. `Object.values()` was wrong a second time over: two of these
 		// statements bind the same name twice, and an object has one entry for it.
-		const bound = toPositionalStatement(sql, parameters);
+		const bound = toPositionalStatement(sql, parameters, { questionMarks: this.ormType === MultiORMEnum.MikroORM });
 
 		if (this.ormType === MultiORMEnum.MikroORM) {
 			const connection = this.mikroOrmCampaignBudgetRepository.getEntityManager().getConnection();
@@ -520,8 +636,8 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * to the column, so the single named value is two placeholders carrying the same figure.
 	 *
 	 * **Superseded by `toPositionalStatement` in `@gauzy/core`**, which both branches of
-	 * {@link execute} now go through: it does the same rewrite, chooses `$1` for Postgres rather than
-	 * assuming `?`, and is the one copy every package shares. This one stays because it is part of
+	 * {@link execute} now go through: it does the same rewrite, chooses `$1` for Postgres under TypeORM
+	 * and `?` for MikroORM, and is the one copy every package shares. This one stays because it is part of
 	 * this service's surface and something may still call it; it delegates rather than keeping a
 	 * second implementation that can drift from the first.
 	 *
@@ -530,7 +646,7 @@ export class CampaignBudgetService extends TenantScopedCrudService<CampaignBudge
 	 * @returns The statement in positional form, with its values in matching order.
 	 */
 	private toPositional(sql: string, parameters: Record<string, unknown>): { sql: string; values: unknown[] } {
-		const bound = toPositionalStatement(sql, parameters);
+		const bound = toPositionalStatement(sql, parameters, { questionMarks: true });
 
 		return { sql: bound.sql, values: bound.parameters };
 	}

@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { ProductRelationType } from '../catalog.types';
 import { ProductRelation } from './product-relation.entity';
 import { MikroOrmProductRelationRepository } from './repository/mikro-orm-product-relation.repository';
 import { TypeOrmProductRelationRepository } from './repository/type-orm-product-relation.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Directed product-to-product links.
@@ -15,7 +16,7 @@ import { TypeOrmProductRelationRepository } from './repository/type-orm-product-
  * when it is noticed.
  */
 @Injectable()
-export class ProductRelationService extends TenantAwareCrudService<ProductRelation> {
+export class ProductRelationService extends CatalogCrudService<ProductRelation> {
 	constructor(
 		readonly typeOrmProductRelationRepository: TypeOrmProductRelationRepository,
 		readonly mikroOrmProductRelationRepository: MikroOrmProductRelationRepository
@@ -64,9 +65,15 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 	/**
 	 * Updates a relation, re-checking the self-reference rule when either end changes.
 	 *
+	 * The base class answers a write with the write's own result — an affected-row count — and this method
+	 * used to hand that back cast as the relation (review R2-24 (a)): `updateProductRelation` promises a
+	 * non-null `ProductRelation!`, so every update over GraphQL failed on the missing `id` after the row had
+	 * been written, and `PUT /product-relations/:id` answered `{ affected }` where its documented response is
+	 * the relation. The row the write produced is read back and answered, as `CollectionService.update` does.
+	 *
 	 * @param id Id of the relation.
 	 * @param entity The fields to change.
-	 * @returns The updated relation.
+	 * @returns The relation as the update left it.
 	 */
 	public async update(id: ID, entity: DeepPartial<ProductRelation>): Promise<ProductRelation> {
 		const relation = await this.findOneByIdString(id);
@@ -77,7 +84,9 @@ export class ProductRelationService extends TenantAwareCrudService<ProductRelati
 			throw new BadRequestException('A product cannot be related to itself.');
 		}
 
-		return (await super.update(id, entity)) as ProductRelation;
+		await super.update(id, entity);
+
+		return this.findOneByIdString(id);
 	}
 
 	/**

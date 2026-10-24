@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
 	HealthCheckService,
 	TypeOrmHealthIndicator,
@@ -16,6 +16,8 @@ import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 
+// Readiness probes call the health check every few seconds: its progress lines are debug-level (LOG_LEVEL).
+const logger = new Logger('HealthService');
 @Injectable()
 export class HealthService {
 	private readonly ormType: MultiORM;
@@ -49,14 +51,14 @@ export class HealthService {
 	 */
 	async getHealthStatus(): Promise<HealthCheckResult> {
 		const uniqueLabel = `HealthCheckExecutionTimer-${uuid()}`;
-		console.log('Health check started: ', uniqueLabel);
-		console.time(uniqueLabel);
+		logger.debug(`Health check started: ${uniqueLabel}`);
+		const startedAt = Date.now();
 
 		const checks = [];
 
 		if (this.checkDb) {
 			checks.push(async () => {
-				console.log(`Checking ${uniqueLabel} Database...`);
+				logger.debug(`Checking ${uniqueLabel} Database...`);
 
 				if (this.ormType === MultiORMEnum.TypeORM) {
 					return await this.checkDatabaseTypeOrm(uniqueLabel);
@@ -72,16 +74,16 @@ export class HealthService {
 
 		if (this.checkStorage) {
 			checks.push(async () => {
-				console.log(`Checking ${uniqueLabel} Storage...`);
+				logger.debug(`Checking ${uniqueLabel} Storage...`);
 				try {
 					const currentPath = path.resolve(__dirname);
-					console.log(`Checking ${uniqueLabel} Storage at path: ${currentPath}`);
+					logger.debug(`Checking ${uniqueLabel} Storage at path: ${currentPath}`);
 					const resStorage = await this.diskHealthIndicator.checkStorage('storage', {
 						path: currentPath,
 						// basically will fail if disk is full
 						thresholdPercent: 99.999999
 					});
-					console.log(`Storage check ${uniqueLabel} completed`);
+					logger.debug(`Storage check ${uniqueLabel} completed`);
 					return resStorage;
 				} catch (err) {
 					console.error(`Storage check ${uniqueLabel} failed`, err);
@@ -97,9 +99,9 @@ export class HealthService {
 
 		if (this.checkCache) {
 			checks.push(async () => {
-				console.log(`Checking ${uniqueLabel} Cache...`);
+				logger.debug(`Checking ${uniqueLabel} Cache...`);
 				const resCache = await this.cacheHealthIndicator.isHealthy('cache');
-				console.log(`Cache check ${uniqueLabel} completed`);
+				logger.debug(`Cache check ${uniqueLabel} completed`);
 				return resCache;
 			});
 		}
@@ -107,9 +109,9 @@ export class HealthService {
 		if (this.checkRedis) {
 			if (process.env.REDIS_ENABLED === 'true') {
 				checks.push(async () => {
-					console.log(`Checking ${uniqueLabel} Redis...`);
+					logger.debug(`Checking ${uniqueLabel} Redis...`);
 					const resRedis = await this.redisHealthIndicator.isHealthy('redis');
-					console.log(`Redis check ${uniqueLabel} completed`);
+					logger.debug(`Redis check ${uniqueLabel} completed`);
 					return resRedis;
 				});
 			}
@@ -117,9 +119,14 @@ export class HealthService {
 
 		const result = await this.healthCheckService.check(checks);
 
-		console.timeEnd(uniqueLabel);
+		const tookMs = Date.now() - startedAt;
 
-		console.log(`Health check ${uniqueLabel} result: ${JSON.stringify(result)}`);
+		// Probes call this every few seconds on every pod: a healthy result is a debug line, anything else a warning.
+		if (result?.status === 'ok') {
+			logger.debug(`Health check ${uniqueLabel} result (${tookMs}ms): ${JSON.stringify(result)}`);
+		} else {
+			logger.warn(`Health check ${uniqueLabel} result (${tookMs}ms): ${JSON.stringify(result)}`);
+		}
 
 		return result;
 	}
@@ -147,9 +154,11 @@ export class HealthService {
 				message = resDatabase?.database?.message;
 			}
 
-			const usersCount = await this.typeOrmUserRepository.count();
-			console.log(`Database (TypeORM) users count ${uniqueLabel} is: ${usersCount}`);
-			console.log(`Database (TypeORM) check ${uniqueLabel} completed`);
+			// Probes run this every few seconds on every pod. One row of `user` proves the database answers and the
+			// schema is there; the COUNT it replaces (a COUNT(DISTINCT) with the eager image join over the whole
+			// table, 7 ms) was the most frequent statement on production: 1.6 million calls a month.
+			await this.typeOrmUserRepository.createQueryBuilder('user').select('user.id').limit(1).getRawOne();
+			logger.debug(`Database (TypeORM) check ${uniqueLabel} completed`);
 
 			return {
 				database: {
@@ -188,9 +197,9 @@ export class HealthService {
 				message = resDatabase?.database?.message;
 			}
 
-			const usersCount = await this.mikroOrmUserRepository.count();
-			console.log(`Database (MikroORM) users count ${uniqueLabel} is: ${usersCount}`);
-			console.log(`Database (MikroORM) check ${uniqueLabel} completed`);
+			// One row, not a COUNT over the table (see the TypeORM check).
+			await this.mikroOrmUserRepository.findAll({ fields: ['id'], limit: 1 });
+			logger.debug(`Database (MikroORM) check ${uniqueLabel} completed`);
 
 			return {
 				database: {

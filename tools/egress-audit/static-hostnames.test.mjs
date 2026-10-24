@@ -59,17 +59,22 @@ test('the modules, docs, the audit and tests may name Ever hosts; core code may 
 	for (const file of [
 		'packages/plugins/ever-connect/src/lib/sdk.ts',
 		'packages/plugins/ever-stats-ui/src/index.ts',
-		'docs/ever-platform/outbound-calls.md',
+		'tools/ever-platform/outbound-calls.md',
 		'README.md',
 		'packages/core/src/lib/user/user.service.spec.ts',
-		'tools/egress-audit/adapter.mjs'
+		'tools/egress-audit/adapter.mjs',
+		// A CI probe of the production hosts from outside; it builds and ships nothing.
+		'.github/workflows/external-uptime-monitor.yml'
 	])
 		assert.equal(allowed(file), true, file);
 	for (const file of [
 		'packages/core/src/lib/user/user.service.ts',
 		'apps/gauzy/src/app/app.component.ts',
 		'.env.sample',
-		'packages/plugins/ever-connector/x.ts'
+		'packages/plugins/ever-connector/x.ts',
+		// The workflows that build and deploy the images stay in the scan: only the monitor is named.
+		'.github/workflows/deploy-do-app-platform-prod.yml',
+		'.github/workflows/external-uptime-monitor-copy.yml'
 	])
 		assert.equal(allowed(file), false, file);
 });

@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { EventBus, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventBus, RequestContext } from '@gauzy/core';
 import { CollectionType, PublicationStatus } from '../catalog.types';
 import { CollectionChangedEvent } from '../events';
 import { Collection } from './collection.entity';
 import { MikroOrmCollectionRepository } from './repository/mikro-orm-collection.repository';
 import { TypeOrmCollectionRepository } from './repository/type-orm-collection.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Collections and their tree.
@@ -17,7 +18,7 @@ import { TypeOrmCollectionRepository } from './repository/type-orm-collection.re
  * a label.
  */
 @Injectable()
-export class CollectionService extends TenantAwareCrudService<Collection> {
+export class CollectionService extends CatalogCrudService<Collection> {
 	constructor(
 		readonly typeOrmCollectionRepository: TypeOrmCollectionRepository,
 		readonly mikroOrmCollectionRepository: MikroOrmCollectionRepository,
@@ -65,6 +66,10 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			await this.assertSlugIsAvailable(entity.slug, entity.customerId ?? null);
 		}
 
+		if (entity.parentId) {
+			await this.assertParentIsInOrganization(entity.parentId, organizationId);
+		}
+
 		const collection = await super.create({
 			type: CollectionType.MANUAL,
 			status: PublicationStatus.DRAFT,
@@ -88,9 +93,19 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 * the same state, which is what lets a subscriber invalidate the listing it is told about rather
 	 * than an unnamed one.
 	 *
+	 * A new parent goes through the same refusal `move` applies (review R2-24 (c)): `PUT /collections/:id` and
+	 * `updateCollection` both reach this method with a `parentId`, and neither checked it — a collection could
+	 * be made its own parent, or a child of its own descendant, and every walk up the tree from it then never
+	 * ended.
+	 *
+	 * The new parent has to be a collection of the same organization: the base class refuses another
+	 * tenant's row, not another organization's of the same tenant.
+	 *
 	 * @param id Id of the collection.
 	 * @param entity The fields to change.
 	 * @returns The updated collection.
+	 * @throws BadRequestException When the new parent is not a collection of the same organization, or would
+	 * put the collection in a cycle.
 	 */
 	public async update(id: ID, entity: DeepPartial<Collection>): Promise<Collection> {
 		const collection = await this.findOneByIdString(id);
@@ -99,7 +114,24 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 			await this.assertSlugIsAvailable(entity.slug, entity.customerId ?? collection.customerId ?? null, id);
 		}
 
-		await super.update(id, entity);
+		if (entity.parentId && entity.parentId !== collection.parentId) {
+			await this.assertParentIsInOrganization(entity.parentId, collection.organizationId);
+			await this.assertParentKeepsTreeAcyclic(id, entity.parentId);
+
+			// The parent goes first and alone, so a re-parent a concurrent move turned into a cycle is undone
+			// before anything else of this update is written.
+			const others: DeepPartial<Collection> = { ...entity };
+
+			delete others.parentId;
+
+			await this.writeParent(id, entity.parentId as ID, collection.parentId ?? null);
+
+			if (Object.keys(others).length) {
+				await super.update(id, others);
+			}
+		} else {
+			await super.update(id, entity);
+		}
 
 		const updated = await this.findOneByIdString(id);
 
@@ -125,18 +157,14 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	 */
 	public async move(id: ID, parentId: ID | null): Promise<Collection> {
 		if (parentId) {
-			if (parentId === id) {
-				throw new BadRequestException('A collection cannot be its own parent.');
-			}
+			const collection = await this.findOneByIdString(id);
 
-			if (await this.isDescendantOf(parentId, id)) {
-				throw new BadRequestException(
-					'A collection cannot be moved under one of its own descendants; that would create a cycle.'
-				);
-			}
+			await this.assertParentIsInOrganization(parentId, collection.organizationId);
+			await this.assertParentKeepsTreeAcyclic(id, parentId);
+			await this.writeParent(id, parentId, collection.parentId ?? null);
+		} else {
+			await super.update(id, { parentId });
 		}
-
-		await super.update(id, { parentId });
 
 		const moved = await this.findOneByIdString(id);
 
@@ -207,22 +235,92 @@ export class CollectionService extends TenantAwareCrudService<Collection> {
 	}
 
 	/**
+	 * Refuses a parent that is not a live collection of the given organization.
+	 *
+	 * @param parentId The proposed parent.
+	 * @param organizationId The organization of the collection being given the parent.
+	 * @throws BadRequestException When no such collection exists in the caller's tenant and that organization.
+	 */
+	private async assertParentIsInOrganization(parentId: ID, organizationId: ID | undefined): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const parent = await this.typeOrmCollectionRepository.findOne({
+			where: { id: parentId, organizationId, ...(tenantId ? { tenantId } : {}) },
+			select: { id: true }
+		});
+
+		if (!parent) {
+			throw new BadRequestException('The parent collection was not found in this organization.');
+		}
+	}
+
+	/**
+	 * Writes a new parent and re-runs the cycle walk on the written state.
+	 *
+	 * The walk before the write cannot see a concurrent one: two requests that each move one of two collections
+	 * under the other both pass it before either writes, and both writes would land. Walking again after the
+	 * write closes that — the later of two such writes sees both, finds the cycle, and puts its own row back —
+	 * without a lock the three databases would each take differently.
+	 *
+	 * @param id The collection being re-parented.
+	 * @param parentId The new parent.
+	 * @param previousParentId The parent it had, restored when the write formed a cycle.
+	 * @throws BadRequestException When the written parent closed a cycle.
+	 */
+	private async writeParent(id: ID, parentId: ID, previousParentId: ID | null): Promise<void> {
+		await super.update(id, { parentId });
+
+		if (await this.isDescendantOf(parentId, id)) {
+			await super.update(id, { parentId: previousParentId });
+
+			throw new BadRequestException(
+				'A collection cannot be moved under one of its own descendants; a concurrent move made this one a cycle.'
+			);
+		}
+	}
+
+	/**
+	 * Refuses a parent that would put the collection in a cycle: itself, or one of its own descendants.
+	 *
+	 * @param id The collection being given a parent.
+	 * @param parentId The parent it is given.
+	 * @throws BadRequestException When the parent is the collection or sits below it.
+	 */
+	private async assertParentKeepsTreeAcyclic(id: ID, parentId: ID): Promise<void> {
+		if (parentId === id) {
+			throw new BadRequestException('A collection cannot be its own parent.');
+		}
+
+		if (await this.isDescendantOf(parentId, id)) {
+			throw new BadRequestException(
+				'A collection cannot be moved under one of its own descendants; that would create a cycle.'
+			);
+		}
+	}
+
+	/**
 	 * @param candidateId The id being tested as a descendant.
 	 * @param ancestorId The id being tested as an ancestor.
-	 * @returns True when `candidateId` sits below `ancestorId` in the tree. The walk is bounded by the
-	 * tree's depth, which a move cannot exceed because a cycle is refused as soon as it would form.
+	 * @returns True when `candidateId` sits below `ancestorId` in the tree. The walk reads the caller's tenant
+	 * only — a parent chain never leaves it, because a foreign parent is refused on write — and it stops at a
+	 * collection it has already visited, so a chain that is already cyclic (written before the update path
+	 * refused one) ends the walk instead of looping forever.
 	 */
 	private async isDescendantOf(candidateId: ID, ancestorId: ID): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+		let visited = new Set<ID>();
 		let current: ID | undefined | null = candidateId;
 
-		while (current) {
+		while (current && !visited.has(current)) {
 			if (current === ancestorId) {
 				return true;
 			}
 
+			visited.add(current);
+
 			const parent = await this.typeOrmCollectionRepository.findOne({
-				where: { id: current },
-				select: { id: true, parentId: true }
+				where: { id: current, ...(tenantId ? { tenantId } : {}) },
+				select: { id: true, parentId: true },
+				withDeleted: true
 			});
 
 			current = parent?.parentId;

@@ -16,6 +16,7 @@ import { MultiORMEnum } from '../utils';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { ContactService } from '../../contact/contact.service';
 import { SeedCoreDefaults1791000000520 } from '../../database/migrations/1791000000520-SeedCoreDefaults';
+import { SeedSellerPayoutSequence1791000000790 } from '../../database/migrations/1791000000790-SeedSellerPayoutSequence';
 import { OrganizationCreateCommand } from '../../organization/commands';
 import { CommandHandlers } from '../../organization/commands/handlers';
 import { OrganizationService } from '../../organization/organization.service';
@@ -266,6 +267,16 @@ describe('R5-05 — an organization created at runtime gets the commerce default
 		await expect(sequenceService.allocate('PO')).resolves.toMatchObject({ formatted: 'PO-000001', value: 1 });
 	});
 
+	it('Q7-W3: numbers the first seller payout of an organization created through the command', async () => {
+		await boot();
+		await createOrganization();
+
+		await expect(sequenceService.allocate('SELLER_PAYOUT')).resolves.toMatchObject({
+			formatted: 'SP-000001',
+			value: 1
+		});
+	});
+
 	it('writes the default channel, region, series, tax category, price preference, units and search definitions', async () => {
 		await boot();
 		const id = await createOrganization();
@@ -287,9 +298,16 @@ describe('R5-05 — an organization created at runtime gets the commerce default
 			`SELECT "key" FROM "sequence" WHERE "organizationId" = ? AND "channelId" IS NULL ORDER BY "key"`,
 			[id]
 		);
-		expect(series.map((row: { key: string }) => row.key)).toEqual(
-			['CLAIM', 'ENTITLEMENT', 'EXCHANGE', 'ORDER', 'PO', 'RETURN', 'SUBSCRIPTION']
-		);
+		expect(series.map((row: { key: string }) => row.key)).toEqual([
+			'CLAIM',
+			'ENTITLEMENT',
+			'EXCHANGE',
+			'ORDER',
+			'PO',
+			'RETURN',
+			'SELLER_PAYOUT',
+			'SUBSCRIPTION'
+		]);
 
 		await expect(
 			dataSource.query(`SELECT "code", "isDefault" FROM "tax_category" WHERE "organizationId" = ?`, [id])
@@ -319,14 +337,18 @@ describe('R5-05 — an organization created at runtime gets the commerce default
 	});
 });
 
-describe('createDefaultCommerceDefaults — agreement with 1791000000520 and idempotence (SQLite)', () => {
+describe('createDefaultCommerceDefaults — agreement with 1791000000520 + 1791000000790 and idempotence (SQLite)', () => {
 	let dataSource: DataSource;
-	const migration = new SeedCoreDefaults1791000000520();
+	// An upgraded installation runs every seed migration in order: the seven series of 0520, then 0790's
+	// SELLER_PAYOUT (Q7-W3). A new organization gets all eight from the runtime seed.
+	const migrations = [new SeedCoreDefaults1791000000520(), new SeedSellerPayoutSequence1791000000790()];
 
 	async function runMigration(): Promise<void> {
 		const queryRunner = dataSource.createQueryRunner();
 		try {
-			await migration.up(queryRunner);
+			for (const migration of migrations) {
+				await migration.up(queryRunner);
+			}
 		} finally {
 			await queryRunner.release();
 		}
@@ -376,7 +398,7 @@ describe('createDefaultCommerceDefaults — agreement with 1791000000520 and ide
 		await createDefaultCommerceDefaults(dataSource, [{ id: NEW_ORG }]);
 
 		expect(await rowCounts(dataSource)).toEqual(before);
-		expect(before).toMatchObject({ channel: 1, region: 1, channel_region: 1, sequence: 7, tax_category: 1 });
+		expect(before).toMatchObject({ channel: 1, region: 1, channel_region: 1, sequence: 8, tax_category: 1 });
 	});
 
 	it('keeps an administrator’s renumbered ORDER series instead of adding a second one', async () => {

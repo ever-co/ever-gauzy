@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Money, RequestContext } from '@gauzy/core';
 import {
 	IOrderExchangeLineInput,
 	IOrderFulfillmentPort,
@@ -14,6 +14,7 @@ import { TypeOrmOrderExchangeRepository } from '../order-exchange/repository/typ
 import { OrderExchangeLine } from './order-exchange-line.entity';
 import { MikroOrmOrderExchangeLineRepository } from './repository/mikro-orm-order-exchange-line.repository';
 import { TypeOrmOrderExchangeLineRepository } from './repository/type-orm-order-exchange-line.repository';
+import { ReturnsCrudService } from '../returns-crud.service';
 
 /** The exchange statuses in which its outbound line set may still be written. */
 const EDITABLE_STATUSES: OrderExchangeStatus[] = [OrderExchangeStatus.OPEN, OrderExchangeStatus.REQUESTED];
@@ -31,7 +32,7 @@ const EDITABLE_STATUSES: OrderExchangeStatus[] = [OrderExchangeStatus.OPEN, Orde
  * Writing the lines moves no stock. The reservation happens when the exchange is approved.
  */
 @Injectable()
-export class OrderExchangeLineService extends TenantAwareCrudService<OrderExchangeLine> {
+export class OrderExchangeLineService extends ReturnsCrudService<OrderExchangeLine> {
 	constructor(
 		readonly typeOrmOrderExchangeLineRepository: TypeOrmOrderExchangeLineRepository,
 		readonly mikroOrmOrderExchangeLineRepository: MikroOrmOrderExchangeLineRepository,

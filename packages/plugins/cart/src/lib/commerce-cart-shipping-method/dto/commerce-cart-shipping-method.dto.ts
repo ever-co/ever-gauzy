@@ -6,8 +6,9 @@ import { DecimalAmount, IsDecimalAmount } from '../../shared/is-decimal-amount.v
 /**
  * The writable surface of a delivery choice held against a cart.
  *
- * `amount` is the price the shipping calculation produced; the cart records it and never computes it,
- * which is why the field is required on a manual override too.
+ * `name`, `amount`, `isTaxInclusive`, `taxCategoryId` and `isManual` are **accepted and ignored (R3-07c)**: a
+ * delivery choice names a configured shipping option (`shippingOptionId`), and its name, its rate on the cart and
+ * how it is taxed are that option's. The members stay so an existing client's body keeps validating.
  */
 export class CommerceCartShippingMethodDTO extends TenantOrganizationBaseDTO {
 	@ApiProperty({ type: () => String })
@@ -19,18 +20,20 @@ export class CommerceCartShippingMethodDTO extends TenantOrganizationBaseDTO {
 	@IsUUID()
 	readonly shippingOptionId: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, deprecated: true, description: "Ignored: the shipping option's name." })
+	@IsOptional()
 	@IsString()
 	@MaxLength(255)
-	readonly name: string;
+	readonly name?: string;
 
 	/**
 	 * The computed shipping amount. A decimal string or a number: the GraphQL schema types it
 	 * `Decimal!` and the two surfaces have to agree about one field's wire format.
 	 */
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, deprecated: true, description: "Ignored: the shipping option's rate." })
+	@IsOptional()
 	@IsDecimalAmount()
-	readonly amount: DecimalAmount;
+	readonly amount?: DecimalAmount;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

@@ -103,6 +103,30 @@ describe.each([
 		expect(errors.some((error) => error.property === 'employeeId')).toBe(true);
 	});
 
+	// #10692: months are 0-based like `Date.getMonth()`, as the dialog and the edit and delete handlers use
+	// them, so January is 0. `@Min(1)` answered 400 for every expense starting or ending in January.
+	it('accepts January (month 0) as the start and end month', async () => {
+		const { errors } = await validatePayload(DTOClass, {
+			...REQUIRED_FIELDS,
+			startMonth: 0,
+			endDay: 31,
+			endMonth: 0,
+			endYear: 2027
+		});
+
+		expect(errors).toHaveLength(0);
+	});
+
+	it('still rejects a negative or out-of-range month', async () => {
+		const negative = await validatePayload(DTOClass, { ...REQUIRED_FIELDS, startMonth: -1, endMonth: -1 });
+		const tooLarge = await validatePayload(DTOClass, { ...REQUIRED_FIELDS, startMonth: 13 });
+
+		expect(negative.errors.map((error) => error.property)).toEqual(
+			expect.arrayContaining(['startMonth', 'endMonth'])
+		);
+		expect(tooLarge.errors.some((error) => error.property === 'startMonth')).toBe(true);
+	});
+
 	it('still rejects a payload missing the required expense fields (control: PartialType only relaxed employee/employeeId)', async () => {
 		const { errors } = await validatePayload(DTOClass, { employeeId: null });
 

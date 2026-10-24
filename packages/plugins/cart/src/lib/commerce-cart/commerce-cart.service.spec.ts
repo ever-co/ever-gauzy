@@ -1,4 +1,4 @@
-// cspell:ignore TENOFF
+// cspell:ignore TENOFF SHIPFREE
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a cart service needs and none of which is available
@@ -11,6 +11,9 @@
  * row before it writes, `findAll` answers with `{ items, total }` — without any tenant merging, which
  * is the part that needs a request context.
  */
+/** The platform's cross-tenant reference check, recorded: every child service and the cart itself run it. */
+const mockAssertReferences = jest.fn(async (..._args: unknown[]) => undefined);
+
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException, SetMetadata } = require('@nestjs/common');
 
@@ -87,6 +90,17 @@ jest.mock('@gauzy/core', () => {
 			return record;
 		}
 
+		/** A miss raises, exactly as the kernel's read does — which is what the token lookup turns into null. */
+		async findOneByOptions(options: any = {}): Promise<any> {
+			const record = await this.typeOrmRepository.findOne(options);
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return record;
+		}
+
 		async create(entity: any): Promise<any> {
 			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
 		}
@@ -119,6 +133,11 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	class TenantAwareCrudService extends CrudService {
+		/** The organization boundary that applies to the service right now: none, unless a case states one. */
+		organizationBoundary(): any {
+			return null;
+		}
+
 		async update(id: any, partial: any): Promise<any> {
 			if (typeof id === 'string') {
 				await this.findOneByIdString(id);
@@ -139,6 +158,8 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseDTO: class {},
 		MikroOrmBaseEntityRepository: class {},
 		ColumnIndex: decorator,
+		// The export mark the cart's token digest carries; nothing is exported here.
+		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
 		MultiORMOneToMany: decorator,
@@ -181,6 +202,9 @@ jest.mock('@gauzy/core', () => {
 		// the three-decimal case below pass for the wrong reason.
 		currencyPrecision: jest.requireActual('@gauzy/core/src/lib/money/currency-precision').currencyPrecision,
 		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
+		// The child services' cross-tenant reference check reads a real database; it is exercised in
+		// `cart-references.db.spec.ts`, and the order the cart's verbs run it in is asserted below.
+		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -195,13 +219,17 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
+import { createHash } from 'node:crypto';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { AdjustmentOwnerType, CommerceCartStatus, CommerceCheckoutSessionStatus, TaxLineOwnerType } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { CommerceCartService } from './commerce-cart.service';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
 import { CommerceCartPromotionService } from '../commerce-cart-promotion/commerce-cart-promotion.service';
 import { CommerceCartShippingMethodService } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.service';
 import { CommerceCheckoutSessionService } from '../commerce-checkout-session/commerce-checkout-session.service';
 import { cartCheckoutRegistry } from '../checkout/cart-checkout.registry';
+import { CART_REFERENCES } from '../cart.references';
 
 /**
  * The cart aggregate.
@@ -278,6 +306,10 @@ function repository(tables: ITables, tableName: keyof ITables) {
 					return value !== undefined && value !== null && new Date(value) <= new Date(expected.value);
 				case 'moreThanOrEqual':
 					return value !== undefined && value !== null && new Date(value) >= new Date(expected.value);
+				// The checkout claim is predicated on `orderId IS NULL` (R3-10), and a double that could not
+				// evaluate it would let the second of two completions claim a cart the first one completed.
+				case 'isNull':
+					return value === undefined || value === null;
 				default:
 					return false;
 			}
@@ -362,10 +394,19 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			// A criteria that names a version is a conditional update: the row has to still be at that
 			// version for the statement to change it, and the affected count is what reports which of
 			// the two happened. Without this the double could not tell a lost race from a won one.
+			// The other members of an object criteria narrow the statement too — a status, `orderId IS NULL`,
+			// the claim a release names (R3-10) — and are evaluated the way a read evaluates them. The scope
+			// members are left out: the fixtures seed no tenant, and the scope is the kernel's concern.
+			const narrowing = Object.fromEntries(
+				Object.entries(criteria && typeof criteria === 'object' ? criteria : {}).filter(
+					([field]) => !['id', 'version', 'tenantId', 'organizationId'].includes(field)
+				)
+			);
 			const stored = rows().find(
 				(row: any) =>
 					String(row.id ?? '') === String(id ?? '') &&
-					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version))
+					(criteria?.version === undefined || String(row.version ?? '') === String(criteria.version)) &&
+					matches(row, narrowing)
 			);
 
 			if (stored) {
@@ -429,7 +470,60 @@ type StockLevel = number | { sellableQuantity: number; allowBackorder?: boolean;
  * @param options.stock Per-variant levels, overriding `DEFAULT_STOCK_LEVEL`; `false` for an
  * installation with no stock capability registered.
  */
-function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxRate?: number } = {}) {
+/** What the promotion engine double grants for one code: an amount, or an amount under a stated promotion id. */
+type PromotionGrant = number | string | { amount: number | string; promotionId?: string };
+
+/**
+ * What the promotion engine double grants when a fixture states nothing (R3-07).
+ *
+ * The cart no longer records the amount a caller states beside a code — it asks the engine — so the suite's
+ * money cases, which apply `TENOFF` for 4 and `PENNIES` for 0.10, are answered by an engine that grants
+ * exactly those amounts for exactly those codes. A case that needs a different grant states its own table.
+ */
+const DEFAULT_PROMOTION_GRANTS: Record<string, PromotionGrant> = {
+	TENOFF: { amount: 4, promotionId: 'promo-1' },
+	PENNIES: '0.1'
+};
+
+/** One configured shipping option of the delivery-rate capability double (R3-07c). */
+interface ShippingOptionStub {
+	name: string;
+	amount: number | string;
+	currency?: string;
+	isTaxInclusive?: boolean;
+	taxCategoryId?: string;
+	eligible?: boolean;
+	providerKey?: string;
+	reason?: string;
+}
+
+/** What the price capability double charges for one unit of a variant: an amount, or one per quantity. */
+type PriceGrant = number | ((quantity: number) => number);
+
+function cartFixture(
+	options: {
+		stock?: Record<string, StockLevel> | false;
+		taxRate?: number;
+		promotions?: Record<string, PromotionGrant> | false;
+		/**
+		 * The price capability (R3-07b). Absent: the suite's money cases, which add lines at the prices they
+		 * state, are in-process callers that resolved their price themselves — the service is built without a
+		 * price capability and `addLine` / `updateLine` are called with `statedPrice`. A table: the capability
+		 * prices each variant from it, as it does for a route. `'unbound'`: no capability and no stated price —
+		 * the installation that has no pricing package.
+		 */
+		prices?: Record<string, PriceGrant> | 'unbound';
+		/**
+		 * The delivery-rate capability (R3-07c). Absent: the suite's delivery cases state a name and an amount,
+		 * and each stated choice is registered as a configured option at that rate before it is set — the
+		 * stated rate becomes the option's rate, and the cart rates it through the capability as it does in
+		 * production. A table: the configured options. `'unbound'`: no capability.
+		 */
+		shippingOptions?: Record<string, ShippingOptionStub> | 'unbound';
+		/** The tax-category capability (R3-07c): each variant's category. Absent: no capability is bound. */
+		taxCategories?: Record<string, string | null>;
+	} = {}
+) {
 	const tables: ITables = {
 		commerce_cart: [],
 		commerce_cart_line: [],
@@ -588,6 +682,141 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 					})
 				};
 
+	/**
+	 * The promotion capability (R3-07), in the engine's own shape: it is handed the cart's codes and lines —
+	 * never an amount — and answers from a table of what each code grants, with a notice for a code that
+	 * names nothing. `promotions: false` leaves the port absent, which is the installation with no engine.
+	 */
+	const promotionTable = options.promotions === false ? {} : options.promotions ?? DEFAULT_PROMOTION_GRANTS;
+	const promotionPort =
+		options.promotions === false
+			? undefined
+			: {
+					evaluate: jest.fn(async (query: any): Promise<any> => {
+						const codes: string[] = query.codes ?? [];
+						const applications = codes
+							.filter((code) => promotionTable[code] !== undefined)
+							.map((code) => {
+								const grant = promotionTable[code];
+								const stated = typeof grant === 'object' ? grant : { amount: grant };
+
+								return {
+									promotionId: stated.promotionId ?? `promotion-${code}`,
+									code,
+									isAutomatic: false,
+									amount: String(stated.amount),
+									currency: query.currency
+								};
+							});
+						const notices = codes
+							.filter((code) => promotionTable[code] === undefined)
+							.map((code) => ({
+								promotionId: '',
+								code,
+								notice: 'COUPON_INACTIVE',
+								message: `No promotion carries the code "${code}".`
+							}));
+
+						return { result: { applications, notices, discountTotal: '0', currency: query.currency } };
+					})
+				};
+
+	/** The price capability double (R3-07b): a mutable table, so a case can move a price between two calls. */
+	const priceTable: Record<string, PriceGrant> =
+		options.prices && options.prices !== 'unbound' ? { ...options.prices } : {};
+	/**
+	 * In the suite's money cases (`prices` absent) the lines carry the prices their in-process callers stated,
+	 * and checkout prices every line again (R3-07b): the capability there answers with the price the cart's
+	 * line of that variant states, which is the price those callers resolved.
+	 */
+	const statedPort =
+		options.prices === undefined
+			? {
+					resolvePrices: jest.fn(async (query: any): Promise<any[]> =>
+						(query.variantIds ?? [])
+							.map((variantId: string) =>
+								tables.commerce_cart_line.find(
+									(row: any) => row.variantId === variantId && !row.deletedAt
+								)
+							)
+							.filter(Boolean)
+							.map((row: any) => ({
+								variantId: row.variantId,
+								currency: query.currency,
+								amount: String(row.unitPrice),
+								originalAmount: String(row.originalUnitPrice ?? row.unitPrice),
+								taxInclusive: Boolean(row.isTaxInclusive)
+							}))
+					)
+				}
+			: undefined;
+	const pricePort =
+		options.prices && options.prices !== 'unbound'
+			? {
+					resolvePrices: jest.fn(async (query: any): Promise<any[]> =>
+						(query.variantIds ?? [])
+							.filter((variantId: string) => priceTable[variantId] !== undefined)
+							.map((variantId: string) => {
+								const grant = priceTable[variantId];
+								const amount = typeof grant === 'function' ? grant(Number(query.quantity ?? 1)) : grant;
+
+								return {
+									variantId,
+									priceId: `price-${variantId}`,
+									currency: query.currency,
+									amount: String(amount),
+									taxInclusive: false
+								};
+							})
+					)
+				}
+			: undefined;
+
+	/** The delivery-rate capability double (R3-07c): the configured options, mutable between two calls. */
+	const shippingTable: Record<string, ShippingOptionStub> =
+		options.shippingOptions && options.shippingOptions !== 'unbound' ? { ...options.shippingOptions } : {};
+	const shippingPort =
+		options.shippingOptions === 'unbound'
+			? undefined
+			: {
+					findOneByIdString: jest.fn(async (id: string): Promise<any> => {
+						const option = shippingTable[id];
+
+						if (!option) {
+							throw new NotFoundException('The requested record was not found');
+						}
+
+						return {
+							id,
+							name: option.name,
+							isTaxInclusive: option.isTaxInclusive ?? false,
+							taxCategoryId: option.taxCategoryId
+						};
+					}),
+					calculate: jest.fn(async (id: string, _context: unknown): Promise<any> => {
+						const option = shippingTable[id];
+
+						return {
+							amount: option.amount,
+							currency: option.currency,
+							providerKey: option.providerKey,
+							eligible: option.eligible !== false,
+							reason: option.reason
+						};
+					})
+				};
+	/** The tax-category capability double (R3-07c). */
+	const taxCategoryPort = options.taxCategories
+		? {
+				taxCategoriesOf: jest.fn(async (variantIds: string[]): Promise<any[]> =>
+					variantIds.map((variantId) => ({
+						variantId,
+						taxCategoryId: (options.taxCategories as Record<string, string | null>)[variantId] ?? null
+					}))
+				)
+			}
+		: undefined;
+
 	const service = new CommerceCartService(
 		repository(tables, 'commerce_cart') as never,
 		{} as never,
@@ -598,8 +827,44 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 		adjustmentService as never,
 		taxLineService as never,
 		stockPort as never,
-		taxPort as never
+		taxPort as never,
+		promotionPort as never,
+		(pricePort ?? statedPort) as never,
+		shippingPort as never,
+		taxCategoryPort as never
 	);
+
+	if (options.shippingOptions === undefined) {
+		// The suite's delivery cases state the rate; it becomes the configured option's (see above).
+		const setShippingMethod = service.setShippingMethod.bind(service);
+
+		service.setShippingMethod = ((cartId: any, method: any, expectation?: any) => {
+			const shippingOptionId = method?.shippingOptionId ?? `option-${Object.keys(shippingTable).length + 1}`;
+
+			shippingTable[shippingOptionId] ??= {
+				name: method?.name,
+				amount: method?.amount,
+				isTaxInclusive: method?.isTaxInclusive,
+				taxCategoryId: method?.taxCategoryId
+			};
+
+			return setShippingMethod(cartId, { ...method, shippingOptionId }, expectation);
+		}) as typeof service.setShippingMethod;
+	}
+
+	if (options.prices === undefined) {
+		// The in-process callers of the money cases state the prices they resolved (see `prices` above).
+		const addLine = service.addLine.bind(service);
+		const updateLine = service.updateLine.bind(service);
+
+		service.addLine = ((cartId: any, line: any, expectation?: any, writeOptions: any = {}) =>
+			addLine(cartId, line, expectation, { statedPrice: true, ...writeOptions })) as typeof service.addLine;
+		service.updateLine = ((cartId: any, lineId: any, changes: any, expectation?: any, writeOptions: any = {}) =>
+			updateLine(cartId, lineId, changes, expectation, {
+				statedPrice: true,
+				...writeOptions
+			})) as typeof service.updateLine;
+	}
 
 	return {
 		service,
@@ -609,7 +874,13 @@ function cartFixture(options: { stock?: Record<string, StockLevel> | false; taxR
 		shippingMethodService,
 		promotionService,
 		checkoutSessionService,
-		stockPort
+		stockPort,
+		promotionPort,
+		pricePort,
+		priceTable,
+		shippingPort,
+		shippingTable,
+		taxCategoryPort
 	};
 }
 
@@ -1153,7 +1424,7 @@ describe('CommerceCartService — money', () => {
 	it('rates the amount the buyer actually pays, after the discount the promotion allocated', async () => {
 		// The money specification's rule: `baseAmount` is the owner's net after discount. Rating the
 		// catalogue price instead would charge tax on money nobody pays.
-		const { service, ledger } = cartFixture({ taxRate: 0.2 });
+		const { service, ledger } = cartFixture({ taxRate: 0.2, promotions: { TENOFF: 10 } });
 		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
 
 		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
@@ -1372,6 +1643,188 @@ describe('CommerceCartService — checkout', () => {
 		expect(untouched.orderId).toBeUndefined();
 	});
 
+	/**
+	 * R3-10: two completions of one cart placed two orders.
+	 *
+	 * The cart was marked completed only after the handler had created the order, and nothing before
+	 * that excluded a second completion: each one read the cart, validated it, re-priced it under
+	 * whatever version the row held and reached the handler. The claim is the first write a completion
+	 * makes now, predicated on the version it validated, a completable status and `orderId IS NULL`.
+	 */
+	describe('the checkout claim (R3-10)', () => {
+		it('refuses a completion arriving while another one places the order; one order', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			let racing: { value?: unknown; error?: any } | undefined;
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					const call = ++checkoutCalls;
+
+					// The second completion arrives while the first is inside the handler, creating its order.
+					if (call === 1) {
+						racing = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' }).then(
+							(value) => ({ value }),
+							(error) => ({ error })
+						);
+					}
+
+					return { orderId: `order-${call}`, orderNumber: `ORD-${call}` };
+				}
+			});
+
+			const first = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+			expect(checkoutCalls).toBe(1);
+			expect(racing?.error?.response).toMatchObject({
+				code: 'CART_CHECKOUT_IN_PROGRESS',
+				details: { cartId: cart.id }
+			});
+			expect(first.orderId).toBe('order-1');
+
+			const stored = await fixture.service.findOneByIdString(cart.id);
+			expect(stored.status).toBe(CommerceCartStatus.COMPLETED);
+			expect(stored.orderId).toBe('order-1');
+			// The claim is cleared once the order is recorded.
+			expect(stored.checkoutClaimId ?? null).toBeNull();
+		});
+
+		it('refuses a completion that validated the cart before another one claimed and completed it', async () => {
+			// The true race: both completions read the same version. The one that loses is refused by the
+			// claim statement itself — predicated on the version it validated — not by a read it made first.
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			registerCheckoutHandler();
+
+			const validate = fixture.service.validate.bind(fixture.service);
+			let raced = false;
+
+			jest.spyOn(fixture.service, 'validate').mockImplementation(async (...args: Parameters<typeof validate>) => {
+				const verdict = await validate(...args);
+
+				if (!raced) {
+					raced = true;
+					// Another completion runs to the end between this one's validation and its claim.
+					await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+				}
+
+				return verdict;
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				response: { code: 'CART_ALREADY_COMPLETED', details: { cartId: cart.id, orderId: 'order-1' } }
+			});
+			expect(checkoutCalls).toBe(1);
+		});
+
+		it('releases the claim when the handler fails, so the buyer can complete again at once', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			let fail = true;
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					checkoutCalls++;
+
+					if (fail) {
+						fail = false;
+						throw new Error('ORDER_CREATE_FAILED');
+					}
+
+					return { orderId: 'order-2', orderNumber: 'ORD-2' };
+				}
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toThrow(
+				/ORDER_CREATE_FAILED/
+			);
+
+			const released = await fixture.service.findOneByIdString(cart.id);
+			expect(released.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(released.orderId ?? null).toBeNull();
+			expect(released.checkoutClaimId ?? null).toBeNull();
+
+			const retried = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+			expect(retried.orderId).toBe('order-2');
+			expect(checkoutCalls).toBe(2);
+		});
+
+		it('keeps every other writer off a claimed cart, and lets a lapsed claim go', async () => {
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+			registerCheckoutHandler();
+
+			const row = fixture.tables.commerce_cart.find((candidate: any) => candidate.id === cart.id);
+			// Another checkout holds the cart and is placing its order.
+			Object.assign(row, { checkoutClaimId: 'another-checkout', checkoutClaimedAt: new Date() });
+
+			await expect(
+				fixture.service.addLine(cart.id, {
+					variantId: 'variant-2',
+					title: 'More',
+					quantity: 1,
+					unitPrice: 5,
+					requiresShipping: false
+				})
+			).rejects.toMatchObject({ response: { code: 'CART_CHECKOUT_IN_PROGRESS' } });
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			expect(checkoutCalls).toBe(0);
+
+			// The cart's own fields, a merge of it into another cart and the expiry sweep wait too.
+			await expect(fixture.service.applyChanges(cart.id, { note: 'Ring twice.' } as any)).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			const other = await fixture.service.create({ channelId: 'channel-1', currency: 'USD' });
+			await expect(fixture.service.merge(other.id, cart.id)).rejects.toMatchObject({
+				response: { code: 'CART_CHECKOUT_IN_PROGRESS' }
+			});
+			row.expiresAt = new Date(Date.now() - 1000);
+			expect(await fixture.service.expireDueCarts()).not.toContain(cart.id);
+			expect(row.status).toBe(CommerceCartStatus.ACTIVE);
+			row.expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+			// A claim older than the bound belongs to a checkout that died: the cart can be bought again.
+			row.checkoutClaimedAt = new Date(Date.now() - 11 * 60 * 1000);
+
+			const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-2' });
+			expect(completed.orderId).toBe('order-1');
+			expect(checkoutCalls).toBe(1);
+		});
+
+		it('refuses the last write of a checkout whose claim another one took over, and records nothing', async () => {
+			// A checkout that outlived its claim must not record its order over the one that took the cart over;
+			// the next completion is answered with the placed order by the order package's handler instead.
+			const fixture = cartFixture();
+			const cart = await completableCart(fixture);
+
+			cartCheckoutRegistry.register({
+				key: 'order',
+				complete: async () => {
+					checkoutCalls++;
+					Object.assign(
+						fixture.tables.commerce_cart.find((candidate: any) => candidate.id === cart.id),
+						{ checkoutClaimId: 'the-checkout-that-took-over', checkoutClaimedAt: new Date() }
+					);
+
+					return { orderId: 'order-late', orderNumber: 'ORD-LATE' };
+				}
+			});
+
+			await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+				code: 'ENTITY_VERSION_CONFLICT'
+			});
+
+			const stored = await fixture.service.findOneByIdString(cart.id);
+			expect(stored.orderId ?? null).toBeNull();
+			expect(stored.status).toBe(CommerceCartStatus.ACTIVE);
+			expect(stored.checkoutClaimId).toBe('the-checkout-that-took-over');
+		});
+	});
+
 	it('marks an uncompleted cart abandoned and refuses to abandon a completed one', async () => {
 		const fixture = cartFixture();
 		const cart = await completableCart(fixture);
@@ -1464,6 +1917,66 @@ describe('CommerceCartService — merge', () => {
 		expect(methods[0].name).toBe('Express');
 		expect(merged.shippingSubtotal).toBe(15);
 	});
+
+	it.each([
+		['its second line', { warehouseId: 'foreign-location' }, {}],
+		['its delivery choice', {}, { shippingOptionId: 'foreign-option' }]
+	])(
+		'refuses a source whose %s names another tenant’s row before it copies anything (P0 #6c)',
+		async (_label, secondLine, delivery) => {
+			// A source cart written before the reference check existed can name another tenant's row anywhere in
+			// what the merge copies. The verbs check one write at a time, so a refusal on the second line or on the
+			// delivery choice used to leave the target with the lines already copied and its version spent, the
+			// source unmerged — and a retry copied the same quantities again. The check itself reads a real database
+			// (`cart-references.db.spec.ts`); here the child services refuse the two foreign ids.
+			const { service, tables, lineService, shippingMethodService } = cartFixture();
+			const target = await service.create({ channelId: 'channel-1', currency: 'USD' });
+			const source = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+			await service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+			await service.addLine(source.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+			await service.addLine(source.id, {
+				variantId: 'v2',
+				title: 'B',
+				quantity: 1,
+				unitPrice: 5,
+				...secondLine
+			} as any);
+			await service.setShippingMethod(source.id, { name: 'Express', amount: 15, ...delivery } as any);
+
+			const foreign = new ForbiddenException('A related record belongs to another tenant');
+			const refuse =
+				(column: string, value: string) =>
+				async (payloads: unknown): Promise<void> => {
+					const rows = (Array.isArray(payloads) ? payloads : [payloads]) as Array<Record<string, unknown>>;
+
+					if (rows.some((row) => row?.[column] === value)) {
+						throw foreign;
+					}
+				};
+
+			jest.spyOn(lineService, 'assertReferences').mockImplementation(refuse('warehouseId', 'foreign-location'));
+			jest.spyOn(shippingMethodService, 'assertReferences').mockImplementation(
+				refuse('shippingOptionId', 'foreign-option')
+			);
+
+			const targetRow = () => tables.commerce_cart.find((row: any) => row.id === target.id);
+			const sourceRow = () => tables.commerce_cart.find((row: any) => row.id === source.id);
+			const liveLines = (cartId: string) =>
+				tables.commerce_cart_line.filter((row: any) => row.cartId === cartId && !row.deletedAt);
+			const before = Number(targetRow().version);
+
+			await expect(service.merge(target.id, source.id)).rejects.toBe(foreign);
+
+			expect(Number(targetRow().version)).toBe(before);
+			expect(liveLines(target.id)).toEqual([expect.objectContaining({ variantId: 'v1', quantity: 1 })]);
+			expect(
+				tables.commerce_cart_shipping_method.filter((row: any) => row.cartId === target.id && !row.deletedAt)
+			).toEqual([]);
+			expect(sourceRow().status).not.toBe(CommerceCartStatus.MERGED);
+			expect(liveLines(source.id)).toHaveLength(2);
+		}
+	);
 
 	it('refuses to merge a cart into itself and refuses to merge a completed source', async () => {
 		const fixture = cartFixture();
@@ -1636,6 +2149,51 @@ describe('CommerceCartService — the versioned write', () => {
 		expect(tables.commerce_cart_promotion).toHaveLength(0);
 	});
 
+	it('refuses a reference to another tenant’s row before the version moves or a delivery choice is retired', async () => {
+		// The child services refuse a plain id column that names another tenant's row (security audit P0 #6c; the
+		// refusal itself is exercised against a real database in `cart-references.db.spec.ts`). The cart's verbs ask
+		// them first: a delivery choice is replaced by retiring the previous one, so a refusal raised by the create
+		// that follows would have left the cart with no choice at all and its version spent.
+		const { service, tables, lineService, shippingMethodService, promotionService } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 10 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 5 });
+		const line = tables.commerce_cart_line[0];
+		const before = Number(tables.commerce_cart[0].version);
+		const foreign = new ForbiddenException('A related record belongs to another tenant');
+
+		for (const child of [lineService, shippingMethodService, promotionService]) {
+			jest.spyOn(child, 'assertReferences').mockRejectedValue(foreign);
+		}
+
+		await expect(
+			service.addLine(cart.id, {
+				variantId: 'v2',
+				title: 'B',
+				quantity: 1,
+				unitPrice: 10,
+				productId: 'foreign'
+			} as any)
+		).rejects.toBe(foreign);
+		await expect(service.updateLine(cart.id, line.id, { warehouseId: 'foreign' } as any)).rejects.toBe(foreign);
+		await expect(
+			service.setShippingMethod(cart.id, { name: 'Express', amount: 15, shippingOptionId: 'foreign' } as any)
+		).rejects.toBe(foreign);
+		await expect(
+			service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4, promotionId: 'foreign' } as any)
+		).rejects.toBe(foreign);
+
+		expect(Number(tables.commerce_cart[0].version)).toBe(before);
+		expect(tables.commerce_cart_line.filter((row: any) => !row.deletedAt)).toEqual([
+			expect.objectContaining({ id: line.id, variantId: 'v1' })
+		]);
+		expect(line.warehouseId).toBeUndefined();
+		expect(tables.commerce_cart_shipping_method.filter((row: any) => !row.deletedAt)).toEqual([
+			expect.objectContaining({ name: 'Standard' })
+		]);
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+	});
+
 	it('predicates a write that no caller conditioned on the version the cart holds', async () => {
 		// The expiry pass, the checkout handler's follow-up and the merge of a second cart all write
 		// without a caller to condition them. They must still increment the version, or the next caller
@@ -1647,5 +2205,993 @@ describe('CommerceCartService — the versioned write', () => {
 
 		expect(abandoned.status).toBe(CommerceCartStatus.ABANDONED);
 		expect(tables.commerce_cart[0].version).toBe(Number(cart.version) + 1);
+	});
+});
+
+/**
+ * The guest-access token.
+ *
+ * A buyer who did not sign in reaches the cart they built by the token its create answered with, so the
+ * token is a bearer secret and the suite pins the four things that keep it one: it is random and long
+ * enough not to be guessed, it is answered once and stored only as a digest, it opens the cart it was
+ * issued for and nothing else, and it opens nothing at all outside the tenant that issued it — or when
+ * there is no tenant to scope the lookup by.
+ *
+ * The in-memory double stamps no tenant on a create (the base class's merge is the part of the kernel
+ * it leaves out), so each cart here states its tenant in the create; what the suite asserts is the lookup
+ * the service issues, which names the tenant itself.
+ */
+describe('CommerceCartService — the guest-access token', () => {
+	/** The digest a token is stored as, computed here rather than through the service's own helper. */
+	const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex');
+
+	/** Puts a caller of one tenant in context, or none at all. */
+	const asTenant = (tenantId: string | null) => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('answers the token once, on the create, and stores only its digest', async () => {
+		asTenant('tenant-1');
+		const { service, tables } = cartFixture();
+
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		const row = tables.commerce_cart[0];
+
+		// 32 random bytes, base64url: 43 characters of [A-Za-z0-9_-], which is 256 bits.
+		expect(cart.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+		// At rest: the digest, and the token nowhere in the row.
+		expect(row.tokenHash).toBe(sha256(cart.token));
+		expect(row).not.toHaveProperty('token');
+		expect(JSON.stringify(row)).not.toContain(cart.token);
+		// The answer carries the token and not the digest beside it.
+		expect(cart).not.toHaveProperty('tokenHash');
+
+		// No read answers it again.
+		const read = await service.findOneWithContent(cart.id);
+
+		expect(read).not.toHaveProperty('token');
+	});
+
+	it('issues every cart a token of its own', async () => {
+		asTenant('tenant-1');
+		const { service, tables } = cartFixture();
+
+		const first = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		const second = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+
+		expect(first.token).not.toBe(second.token);
+		expect(tables.commerce_cart[0].tokenHash).not.toBe(tables.commerce_cart[1].tokenHash);
+	});
+
+	it('overwrites a token or a digest the caller tried to choose', async () => {
+		// A token a caller chose is one somebody else can guess, so neither name is taken from the body.
+		asTenant('tenant-1');
+		const { service, tables } = cartFixture();
+
+		const cart = await service.create({
+			channelId: 'channel-1',
+			currency: 'USD',
+			tenantId: 'tenant-1',
+			token: 'chosen',
+			tokenHash: sha256('chosen')
+		} as any);
+
+		expect(cart.token).not.toBe('chosen');
+		expect(tables.commerce_cart[0].tokenHash).toBe(sha256(cart.token));
+		expect(await service.findByToken('chosen')).toBeNull();
+	});
+
+	it('finds the cart its token names, with its content and without the digest', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+
+		await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+
+		const found = await service.findByToken(cart.token);
+
+		expect(found?.id).toBe(cart.id);
+		expect(found?.lines).toHaveLength(1);
+		expect(found).not.toHaveProperty('tokenHash');
+		expect(found).not.toHaveProperty('token');
+	});
+
+	it('answers null for a token no cart carries', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		const token = cart.token;
+		// One character off is a different digest, not a near miss.
+		const altered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
+
+		expect(await service.findByToken(altered)).toBeNull();
+		expect(await service.findByToken('not-a-token')).toBeNull();
+		expect(await service.findByToken('')).toBeNull();
+		expect(await service.findByToken(undefined as any)).toBeNull();
+		// The control: the right token, in the same fixture, does find it.
+		expect((await service.findByToken(token))?.id).toBe(cart.id);
+	});
+
+	it('does not open another tenant’s cart with that tenant’s own token', async () => {
+		asTenant('tenant-2');
+		const { service } = cartFixture();
+		const theirs = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-2' });
+
+		asTenant('tenant-1');
+
+		expect(await service.findByToken(theirs.token)).toBeNull();
+
+		// The control: the same token, asked by its own tenant, opens it.
+		asTenant('tenant-2');
+
+		expect((await service.findByToken(theirs.token))?.id).toBe(theirs.id);
+	});
+
+	it('fails closed with no tenant in context, even for the right token', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+
+		asTenant(null);
+
+		expect(await service.findByToken(cart.token)).toBeNull();
+	});
+
+	it('raises a failure of the store rather than answering it as a miss', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+
+		jest.spyOn(service, 'findOneByOptions').mockRejectedValue(new Error('the store is unreachable'));
+
+		await expect(service.findByToken('any-token')).rejects.toThrow('the store is unreachable');
+	});
+});
+
+/**
+ * R3-07: the cart accepted a caller-stated discount.
+ *
+ * `applyPromotion` recorded whatever `amount` it was handed beside a code, and `POST /carts/:id/promotions`
+ * and `applyCartPromotion` handed it the request's — so a buyer could name any code and any discount and the
+ * cart re-priced from it. The discount is now the promotion engine's answer for this cart, reached through
+ * `CART_PROMOTION_EVALUATION`; the request names the promotion and nothing it says about an amount is read.
+ */
+describe('CommerceCartService — the discount is the promotion engine’s (R3-07)', () => {
+	it('records the amount the engine grants, never the amount the caller states', async () => {
+		const { service, tables } = cartFixture({ promotions: { TENOFF: 4 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20 });
+
+		// The buyer asks for the whole cart off.
+		const priced = await service.applyPromotion(cart.id, { code: 'tenoff', amount: 40 } as any);
+
+		expect(tables.commerce_cart_promotion).toHaveLength(1);
+		expect(Number(tables.commerce_cart_promotion[0].amount)).toBe(4);
+		expect(tables.commerce_cart_promotion[0].code).toBe('TENOFF');
+		expect(priced.discountTotal).toBe(4);
+		expect(priced.grandTotal).toBe(36);
+	});
+
+	it('hands the engine the cart and every code it carries, and no amount', async () => {
+		const { service, promotionPort } = cartFixture({ promotions: { TENOFF: 4, FIVE: 5 } });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', customerId: 'customer-1' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 20, sku: 'SKU-A' });
+		// A line the catalogue excluded from promotions is not the engine's to discount.
+		await service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			unitPrice: 7,
+			isDiscountable: false
+		});
+
+		await service.applyPromotion(cart.id, { code: 'TENOFF', amount: 999 } as any);
+		await service.applyPromotion(cart.id, { code: 'FIVE', amount: 999 } as any);
+
+		const query = promotionPort!.evaluate.mock.calls[1][0];
+
+		expect(query).toMatchObject({ currency: 'USD', channelId: 'channel-1', customerId: 'customer-1' });
+		expect(query.codes).toEqual(['TENOFF', 'FIVE']);
+		expect(query.lines).toHaveLength(1);
+		expect(query.lines[0]).toMatchObject({ quantity: 2, variantId: 'v1', sku: 'SKU-A' });
+		expect(Number(query.lines[0].amount)).toBe(40);
+		expect(JSON.stringify(promotionPort!.evaluate.mock.calls)).not.toContain('999');
+	});
+
+	it('refuses a promotion the engine grants nothing, with the engine’s notice, and writes nothing', async () => {
+		const { service, tables } = cartFixture({ promotions: {} });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		const added = await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await expect(service.applyPromotion(cart.id, { code: 'BOGUS', amount: 20 } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: {
+					code: 'BOGUS',
+					notices: [expect.objectContaining({ code: 'BOGUS', notice: 'COUPON_INACTIVE' })]
+				}
+			}
+		});
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+		expect(Number(tables.commerce_cart[0].version)).toBe(Number(added.version));
+	});
+
+	it('fails closed when no promotion engine is bound', async () => {
+		const { service, tables } = cartFixture({ promotions: false });
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		await expect(service.applyPromotion(cart.id, { code: 'TENOFF', amount: 4 } as any)).rejects.toMatchObject({
+			response: { code: 'CART_PROMOTION_ENGINE_MISSING' }
+		});
+		expect(tables.commerce_cart_promotion).toHaveLength(0);
+
+		const untouched = await service.findOneByIdString(cart.id);
+		expect(untouched.discountTotal ?? 0).toBe(0);
+	});
+
+	it('retires what the engine no longer grants beside the new code, so exclusive discounts never stack', async () => {
+		// LOW and HIGH are exclusive members of one stacking group, HIGH first by priority: applied alone LOW is
+		// granted, evaluated together only HIGH is. The cart keeps the engine's answer for the whole set.
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const codes: string[] = query.codes ?? [];
+			const grant = codes.includes('HIGH') ? { code: 'HIGH', amount: '20' } : { code: 'LOW', amount: '5' };
+
+			return {
+				result: {
+					applications: [
+						{
+							promotionId: `promotion-${grant.code}`,
+							code: grant.code,
+							isAutomatic: false,
+							amount: grant.amount,
+							currency: 'USD'
+						}
+					],
+					notices: [],
+					discountTotal: '0',
+					currency: 'USD'
+				}
+			};
+		});
+
+		await service.applyPromotion(cart.id, { code: 'LOW' } as any);
+		const priced = await service.applyPromotion(cart.id, { code: 'HIGH' } as any);
+
+		const live = tables.commerce_cart_promotion.filter((row: any) => !row.deletedAt);
+		expect(live.map((row: any) => row.code)).toEqual(['HIGH']);
+		expect(priced.discountTotal).toBe(20);
+		expect(priced.grandTotal).toBe(80);
+	});
+
+	it('records only what the engine takes off the lines, and refuses a delivery-only discount', async () => {
+		// The cart spreads a promotion over its lines, so a part the engine took off a delivery choice is not
+		// moved onto the items (it would reduce their tax base instead of shipping's).
+		const { service, tables, promotionPort } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 100 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 10 });
+
+		promotionPort!.evaluate.mockImplementation(async (query: any) => {
+			const line = query.lines[0];
+			const method = query.shipping[0];
+			const applications: any[] = [];
+			const allocations: any[] = [];
+
+			if ((query.codes ?? []).includes('BUNDLE')) {
+				applications.push({ promotionId: 'p-bundle', code: 'BUNDLE', isAutomatic: false, amount: '15' });
+				allocations.push(
+					{ ownerType: 'LINE', ownerId: line.id, promotionId: 'p-bundle', amount: '5' },
+					{ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-bundle', amount: '10' }
+				);
+			}
+
+			if ((query.codes ?? []).includes('SHIPFREE')) {
+				applications.push({ promotionId: 'p-ship', code: 'SHIPFREE', isAutomatic: false, amount: '10' });
+				allocations.push({ ownerType: 'SHIPPING', ownerId: method.id, promotionId: 'p-ship', amount: '10' });
+			}
+
+			return { result: { applications, notices: [], discountTotal: '0', currency: 'USD' }, allocations };
+		});
+
+		await expect(service.applyPromotion(cart.id, { code: 'SHIPFREE' } as any)).rejects.toMatchObject({
+			response: {
+				code: 'CART_PROMOTION_NOT_APPLICABLE',
+				details: { notices: [expect.objectContaining({ notice: 'SHIPPING_DISCOUNT_NOT_SUPPORTED' })] }
+			}
+		});
+
+		await service.applyPromotion(cart.id, { code: 'BUNDLE' } as any);
+
+		expect(tables.commerce_cart_promotion.map((row: any) => Number(row.amount))).toEqual([5]);
+	});
+
+	it('refuses a request that names no promotion at all', async () => {
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+
+		await expect(service.applyPromotion(cart.id, { amount: 4 } as any)).rejects.toMatchObject({
+			response: { code: 'CART_PROMOTION_REFERENCE_REQUIRED' }
+		});
+	});
+});
+
+/**
+ * R2-G19: the GraphQL cart writes (`createCart`, `addCartLine`, `setCartShippingMethod`, `applyCartPromotion`,
+ * `startCheckout`) wrote `organizationId = NULL`: the inputs declare no organization and the tenant-aware base
+ * stamps the tenant only. The cart takes the request's organization, a child row takes its cart's, and a stated
+ * organization is kept (REST states one, validated against the caller).
+ */
+describe('CommerceCartService — rows are written in the organization (R2-G19)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue('org-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('stamps the request’s organization on a cart, and on every row its verbs write', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+		await service.setShippingMethod(cart.id, { name: 'Standard', amount: 5 });
+		await service.applyPromotion(cart.id, { code: 'TENOFF' } as any);
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_shipping_method[0].organizationId).toBe('org-1');
+		expect(tables.commerce_cart_promotion[0].organizationId).toBe('org-1');
+	});
+
+	it('writes a child row in its cart’s organization rather than the request’s', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any);
+
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 20 });
+
+		expect(tables.commerce_cart[0].organizationId).toBe('org-2');
+		expect(tables.commerce_cart_line[0].organizationId).toBe('org-2');
+	});
+
+	it('refuses a caller confined to their organization a cart stated for another, writing nothing, and lets a tenant admin create it', async () => {
+		// Anyone but a tenant admin is confined to the organization of their token.
+		const boundary = jest.spyOn(CommerceCartService.prototype as any, 'organizationBoundary').mockReturnValue({
+			organizationId: 'org-1'
+		});
+		const { service, tables } = cartFixture();
+
+		await expect(
+			service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any)
+		).rejects.toThrow(/CART_ORGANIZATION_NOT_IN_SESSION/);
+		expect(tables.commerce_cart).toEqual([]);
+
+		await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-1' } as any);
+		expect(tables.commerce_cart).toHaveLength(1);
+
+		// A tenant admin, whom no boundary confines, may state any organization of the tenant.
+		boundary.mockReturnValue(null);
+		await service.create({ channelId: 'channel-1', currency: 'USD', organizationId: 'org-2' } as any);
+		expect(tables.commerce_cart.map((row: any) => row.organizationId)).toEqual(['org-1', 'org-2']);
+	});
+
+	it('stamps the request’s organization on a child row created directly, and keeps a stated one', async () => {
+		// The REST child routes (`/cart-lines`, `/cart-shipping-methods`, `/cart-promotions`) reach the child
+		// services' own `create`, which the cart's verbs do not exercise on their own.
+		const { lineService, shippingMethodService, promotionService } = cartFixture();
+
+		const line = await lineService.create({ cartId: 'cart-1', variantId: 'v1', quantity: 1, unitPrice: 1 } as any);
+		const method = await shippingMethodService.create({ cartId: 'cart-1', name: 'Standard', amount: 5 } as any);
+		const applied = await promotionService.create({ cartId: 'cart-1', code: 'TENOFF', amount: 4 } as any);
+
+		expect([line, method, applied].map((row: any) => row.organizationId)).toEqual(['org-1', 'org-1', 'org-1']);
+
+		const stated = await lineService.create({
+			cartId: 'cart-1',
+			variantId: 'v1',
+			quantity: 1,
+			unitPrice: 1,
+			organizationId: 'org-2'
+		} as any);
+		const statedMethod = await shippingMethodService.create({
+			cartId: 'cart-1',
+			name: 'Express',
+			amount: 9,
+			organizationId: 'org-2'
+		} as any);
+		const statedPromotion = await promotionService.create({
+			cartId: 'cart-1',
+			code: 'FIVE',
+			amount: 5,
+			organizationId: 'org-2'
+		} as any);
+
+		expect([stated, statedMethod, statedPromotion].map((row: any) => row.organizationId)).toEqual([
+			'org-2',
+			'org-2',
+			'org-2'
+		]);
+	});
+
+	it('opens a checkout session in the request’s organization when none is stated', async () => {
+		const { checkoutSessionService, tables } = cartFixture();
+
+		await checkoutSessionService.create({ cartId: 'cart-1', status: CommerceCheckoutSessionStatus.STARTED });
+
+		expect(tables.commerce_checkout_session[0].organizationId).toBe('org-1');
+	});
+});
+
+/**
+ * R3-07b: a cart line's price was whatever its caller stated.
+ *
+ * `addLine` and `updateLine` recorded the request's `unitPrice` ("the caller states the resolved unit price"),
+ * and `POST /carts/:id/lines`, `addCartLine` and `updateCartLine` handed it the request's — so a buyer could name
+ * their own price. The line is now priced by the price capability (`CART_PRICE_RESOLUTION`, the pricing
+ * package's `ProductPriceService`) for the cart and the quantity, and priced again at checkout.
+ */
+describe('CommerceCartService — a line is priced by the pricing package (R3-07b)', () => {
+	/** A cart the strict ladder accepts once it holds a line: a contact and a currency. */
+	const openCart = (fixture: ReturnType<typeof cartFixture>) =>
+		fixture.service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+	it('prices a line from the pricing package and ignores the price the request states', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+
+		const priced = await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 2,
+			unitPrice: 0.01,
+			originalUnitPrice: 0.01,
+			isTaxInclusive: true,
+			metadata: { priceSource: 'STATED' }
+		} as any);
+
+		const [line] = fixture.tables.commerce_cart_line;
+		expect(Number(line.unitPrice)).toBe(20);
+		expect(line.isTaxInclusive).toBe(false);
+		expect(line.metadata).toMatchObject({ priceSource: 'ENGINE', priceId: 'price-v1' });
+		expect(priced.itemSubtotal).toBe(40);
+		expect(fixture.pricePort!.resolvePrices).toHaveBeenCalledWith(
+			expect.objectContaining({ variantIds: ['v1'], currency: 'USD', quantity: 2, channelId: 'channel-1' })
+		);
+	});
+
+	it('prices a merged line for the sum, so a quantity band applies to what the cart holds', async () => {
+		const fixture = cartFixture({ prices: { v1: (quantity: number) => (quantity >= 3 ? 8 : 10) } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 } as any);
+		const merged = await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10
+		} as any);
+
+		const live = fixture.tables.commerce_cart_line.filter((row: any) => !row.deletedAt);
+		expect(live).toHaveLength(1);
+		expect(Number(live[0].quantity)).toBe(3);
+		expect(Number(live[0].unitPrice)).toBe(8);
+		expect(merged.itemSubtotal).toBe(24);
+	});
+
+	it('refuses a price the pricing package answers in another currency', async () => {
+		// The capability's legacy fallback answers in the currency the retail price was entered in; 100 USD is
+		// not 100 JPY, and the cart does not convert.
+		const fixture = cartFixture({ prices: { v1: 100 } });
+		fixture.pricePort!.resolvePrices.mockImplementation(async () => [
+			{ variantId: 'v1', currency: 'USD', amount: '100', taxInclusive: false }
+		]);
+		const cart = await fixture.service.create({ channelId: 'channel-1', currency: 'JPY' });
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1 } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED', details: { priceCurrency: 'USD' } }
+		});
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('refuses a variant the pricing package cannot price, and writes nothing', async () => {
+		const fixture = cartFixture({ prices: {} });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v9', title: 'Z', quantity: 1, unitPrice: 1 } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_LINE_PRICE_UNRESOLVED' } });
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('fails closed when no price capability is bound', async () => {
+		const fixture = cartFixture({ prices: 'unbound' });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1, unitPrice: 1 } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_PRICE_ENGINE_MISSING' } });
+		expect(fixture.tables.commerce_cart_line).toHaveLength(0);
+	});
+
+	it('ignores a stated price on a change, and prices the line again for its new quantity', async () => {
+		const fixture = cartFixture({ prices: { v1: (quantity: number) => (quantity >= 5 ? 7 : 10) } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 1 } as any);
+		const [line] = fixture.tables.commerce_cart_line;
+
+		await fixture.service.updateLine(cart.id, line.id, {
+			quantity: 5,
+			unitPrice: 0.5,
+			originalUnitPrice: 0.5,
+			isTaxInclusive: true,
+			metadata: { priceSource: 'STATED', note: 'gift' }
+		} as any);
+
+		expect(Number(line.unitPrice)).toBe(7);
+		expect(line.isTaxInclusive).toBe(false);
+		expect(line.metadata).toMatchObject({ priceSource: 'ENGINE', note: 'gift' });
+
+		// A change that names only a price changes nothing about it.
+		await fixture.service.updateLine(cart.id, line.id, { unitPrice: 0.5 } as any);
+		expect(Number(line.unitPrice)).toBe(7);
+	});
+
+	it('prices every line again at checkout: a moved price, an old line and a stated one', async () => {
+		// The stated marker is line metadata, which a direct write to the line resource can set, so checkout
+		// trusts no line's price: the order is built from the capability's prices only.
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30, v3: 6 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		// An in-process caller's line, at the price it resolved itself.
+		await fixture.service.addLine(
+			cart.id,
+			{ variantId: 'v3', title: 'Plan', quantity: 1, unitPrice: 5, requiresShipping: false } as any,
+			undefined,
+			{ statedPrice: true }
+		);
+		// A line written before the rule, at a price its caller chose.
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-legacy',
+			cartId: cart.id,
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			unitPrice: 1,
+			originalUnitPrice: 1,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false
+		});
+		fixture.priceTable.v1 = 25;
+		registerCheckoutHandler();
+
+		const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		const byVariant = (variantId: string) =>
+			fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId && !row.deletedAt);
+		expect(Number(byVariant('v1').unitPrice)).toBe(25);
+		expect(Number(byVariant('v2').unitPrice)).toBe(30);
+		expect(byVariant('v2').metadata).toMatchObject({ priceSource: 'ENGINE' });
+		expect(Number(byVariant('v3').unitPrice)).toBe(6);
+		expect(completed.cart.itemSubtotal).toBe(61);
+		expect(checkoutCalls).toBe(1);
+	});
+
+	it('refuses the checkout, and releases the cart, when a line can no longer be priced', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		delete fixture.priceTable.v1;
+		registerCheckoutHandler();
+
+		await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+		expect(checkoutCalls).toBe(0);
+		expect(fixture.tables.commerce_cart[0].checkoutClaimId ?? null).toBeNull();
+	});
+
+	it('writes no new price at a refused checkout, so the lines still match the totals', async () => {
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		fixture.priceTable.v1 = 25;
+		delete fixture.priceTable.v2;
+		registerCheckoutHandler();
+
+		await expect(fixture.service.complete(cart.id, { idempotencyKey: 'key-1' })).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+
+		const first = fixture.tables.commerce_cart_line.find((row: any) => row.variantId === 'v1');
+		expect(Number(first.unitPrice)).toBe(20);
+	});
+
+	it('records a moved price list at checkout even when the amount is the same', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			requiresShipping: false
+		} as any);
+		fixture.pricePort!.resolvePrices.mockImplementation(async (query: any) => [
+			{
+				variantId: 'v1',
+				currency: query.currency,
+				amount: '20',
+				taxInclusive: false,
+				priceId: 'price-b',
+				priceListId: 'list-b'
+			}
+		]);
+		registerCheckoutHandler();
+
+		await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(fixture.tables.commerce_cart_line[0].metadata).toMatchObject({ priceId: 'price-b', priceListId: 'list-b' });
+	});
+
+	it('refuses a merge whose lines cannot all be priced for the surviving cart, before copying any', async () => {
+		// Production `merge` adds the copied lines without a stated price, so the capability prices them for the
+		// surviving cart; a line it cannot price there refuses the merge with nothing copied.
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const target = await openCart(fixture);
+		const source = await openCart(fixture);
+		await fixture.service.addLine(source.id, { variantId: 'v1', title: 'A', quantity: 1 } as any);
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-unpriced',
+			cartId: source.id,
+			variantId: 'v9',
+			title: 'Z',
+			quantity: 1,
+			unitPrice: 1,
+			originalUnitPrice: 1,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false
+		});
+
+		await expect(fixture.service.merge(target.id, source.id)).rejects.toMatchObject({
+			response: { code: 'CART_LINE_PRICE_UNRESOLVED' }
+		});
+		expect(fixture.tables.commerce_cart_line.filter((row: any) => row.cartId === target.id)).toHaveLength(0);
+
+		// Priced, the merge copies the lines at the capability's price for the surviving cart.
+		fixture.priceTable.v9 = 3;
+		fixture.priceTable.v1 = 18;
+		await fixture.service.merge(target.id, source.id);
+
+		const copied = fixture.tables.commerce_cart_line.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+		expect(copied.map((row: any) => [row.variantId, Number(row.unitPrice)]).sort()).toEqual([
+			['v1', 18],
+			['v9', 3]
+		]);
+	});
+
+	it('records a price an in-process caller states, and keeps it', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(
+			cart.id,
+			{ variantId: 'v1', title: 'Plan', quantity: 1, unitPrice: 12 } as any,
+			undefined,
+			{ statedPrice: true }
+		);
+
+		const [line] = fixture.tables.commerce_cart_line;
+		expect(Number(line.unitPrice)).toBe(12);
+		expect(line.metadata).toMatchObject({ priceSource: 'STATED' });
+		expect(fixture.pricePort!.resolvePrices).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * R3-07c: a delivery choice's amount, and a line's tax category, were the caller's.
+ *
+ * `setShippingMethod` recorded the request's name, amount, tax inclusivity and tax category (and `isManual`), and
+ * `addLine` / `updateLine` the request's `taxCategoryId` — so a buyer could ship for free, or name a zero-rated
+ * category. The amount is now the configured shipping option's rate (`CART_SHIPPING_RATE`, the fulfilment
+ * package's `ShippingOptionService`), the category the catalogue's (`CART_TAX_CATEGORY`, the tax package's
+ * `TaxCategoryService`), and both are resolved again at checkout.
+ */
+describe('CommerceCartService — the delivery rate and the tax category are the platform’s (R3-07c)', () => {
+	const STANDARD: ShippingOptionStub = {
+		name: 'Standard',
+		amount: 7,
+		currency: 'USD',
+		isTaxInclusive: false,
+		taxCategoryId: 'tc-shipping'
+	};
+	const openCart = (fixture: ReturnType<typeof cartFixture>) =>
+		fixture.service.create({ channelId: 'channel-1', currency: 'USD', email: 'buyer@example.com' });
+
+	it('rates a delivery choice from the configured option and ignores what the request states', async () => {
+		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const cart = await openCart(fixture);
+
+		const rated = await fixture.service.setShippingMethod(cart.id, {
+			shippingOptionId: 'opt-standard',
+			name: 'Free!',
+			amount: 0,
+			isTaxInclusive: true,
+			taxCategoryId: 'tc-zero',
+			isManual: true
+		} as any);
+
+		const [method] = fixture.tables.commerce_cart_shipping_method;
+		expect(method).toMatchObject({
+			shippingOptionId: 'opt-standard',
+			name: 'Standard',
+			isTaxInclusive: false,
+			taxCategoryId: 'tc-shipping',
+			isManual: false
+		});
+		expect(Number(method.amount)).toBe(7);
+		expect(rated.shippingSubtotal).toBe(7);
+	});
+
+	it('refuses a delivery choice that names no configured option', async () => {
+		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { name: 'Mine', amount: 0 } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_REQUIRED' }
+		});
+		expect(fixture.tables.commerce_cart_shipping_method).toHaveLength(0);
+	});
+
+	it('fails closed when no delivery-rate capability is bound', async () => {
+		const fixture = cartFixture({ shippingOptions: 'unbound' });
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.setShippingMethod(cart.id, {
+				shippingOptionId: 'opt-standard',
+				name: 'X',
+				amount: 0
+			} as any)
+		).rejects.toMatchObject({ response: { code: 'CART_SHIPPING_ENGINE_MISSING' } });
+	});
+
+	it('refuses an ineligible option, a calculated rate nothing prices, and a rate in another currency', async () => {
+		const fixture = cartFixture({
+			shippingOptions: {
+				'opt-closed': { ...STANDARD, eligible: false, reason: 'SHIPPING_OPTION_REGION_MISMATCH' },
+				'opt-carrier': { ...STANDARD, amount: 0, providerKey: 'carrier-x' },
+				'opt-euro': { ...STANDARD, currency: 'EUR' }
+			}
+		});
+		const cart = await openCart(fixture);
+
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-closed' } as any)
+		).rejects.toMatchObject({
+			response: {
+				code: 'CART_SHIPPING_OPTION_INELIGIBLE',
+				details: { reason: 'SHIPPING_OPTION_REGION_MISMATCH' }
+			}
+		});
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-carrier' } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'CALCULATED_BY_STRATEGY' } }
+		});
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-euro' } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'CURRENCY_MISMATCH' } }
+		});
+		await expect(
+			fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-gone' } as any)
+		).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_RATE_UNRESOLVED', details: { reason: 'SHIPPING_OPTION_NOT_FOUND' } }
+		});
+		expect(fixture.tables.commerce_cart_shipping_method).toHaveLength(0);
+	});
+
+	it('rates the delivery choice again at checkout, and refuses one from before the rule', async () => {
+		const fixture = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const cart = await openCart(fixture);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10,
+			requiresShipping: false
+		});
+		await fixture.service.setShippingMethod(cart.id, { shippingOptionId: 'opt-standard' } as any);
+		fixture.shippingTable['opt-standard'] = { ...STANDARD, amount: 9 };
+		registerCheckoutHandler();
+
+		const completed = await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(Number(fixture.tables.commerce_cart_shipping_method[0].amount)).toBe(9);
+		expect(completed.cart.shippingSubtotal).toBe(9);
+
+		// A choice written before the rule names no option: nothing can rate it, so the checkout is refused.
+		const legacy = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+		const old = await openCart(legacy);
+		await legacy.service.addLine(old.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 10,
+			requiresShipping: false
+		});
+		legacy.tables.commerce_cart_shipping_method.push({
+			id: 'method-legacy',
+			cartId: old.id,
+			name: 'Mine',
+			amount: 0
+		});
+
+		await expect(legacy.service.complete(old.id, { idempotencyKey: 'key-2' })).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_REQUIRED' }
+		});
+	});
+
+	it('gives a line the catalogue’s tax category, never the one the request names', async () => {
+		const fixture = cartFixture({ prices: { v1: 20, v2: 30 }, taxCategories: { v1: 'tc-standard', v2: null } });
+		const cart = await openCart(fixture);
+
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			taxCategoryId: 'tc-zero'
+		} as any);
+		await fixture.service.addLine(cart.id, {
+			variantId: 'v2',
+			title: 'B',
+			quantity: 1,
+			taxCategoryId: 'tc-zero'
+		} as any);
+
+		const byVariant = (variantId: string) =>
+			fixture.tables.commerce_cart_line.find((row: any) => row.variantId === variantId);
+		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
+		// A variant with no category carries none: the tax package applies the organization's default.
+		expect(byVariant('v2').taxCategoryId).toBeNull();
+
+		await fixture.service.updateLine(cart.id, byVariant('v1').id, {
+			taxCategoryId: 'tc-zero',
+			note: 'gift'
+		} as any);
+		expect(byVariant('v1').taxCategoryId).toBe('tc-standard');
+	});
+
+	it('rates a carried-over delivery choice for the merged contents before copying anything', async () => {
+		// The source's option serves at most three items: the surviving cart's two and the source's two exceed it,
+		// so the merge is refused with nothing copied rather than after the lines were.
+		const fixture = cartFixture({ shippingOptions: { 'opt-small': { ...STANDARD } } });
+		fixture.shippingPort!.calculate.mockImplementation(async (_id: string, context: any) => ({
+			amount: 7,
+			currency: 'USD',
+			eligible: Number(context.itemCount ?? 0) <= 3,
+			reason: 'SHIPPING_OPTION_ITEM_COUNT_EXCEEDED'
+		}));
+		const target = await openCart(fixture);
+		const source = await openCart(fixture);
+		await fixture.service.addLine(target.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+		await fixture.service.addLine(source.id, { variantId: 'v2', title: 'B', quantity: 2, unitPrice: 10 });
+		await fixture.service.setShippingMethod(source.id, { shippingOptionId: 'opt-small' } as any);
+
+		await expect(fixture.service.merge(target.id, source.id)).rejects.toMatchObject({
+			response: { code: 'CART_SHIPPING_OPTION_INELIGIBLE' }
+		});
+		const copied = fixture.tables.commerce_cart_line.filter(
+			(row: any) => row.cartId === target.id && !row.deletedAt
+		);
+		expect(copied).toHaveLength(1);
+	});
+
+	it('refuses a delivery choice written straight to the child resource without the cart’s rating', async () => {
+		const { shippingMethodService } = cartFixture({ shippingOptions: { 'opt-standard': STANDARD } });
+
+		await expect(
+			shippingMethodService.create({ cartId: 'cart-1', shippingOptionId: 'opt-standard' } as any)
+		).rejects.toMatchObject({ response: { code: 'CART_SHIPPING_OPTION_REQUIRED' } });
+	});
+
+	it('sets every line’s tax category from the catalogue at checkout', async () => {
+		const fixture = cartFixture({ prices: { v1: 20 }, taxCategories: { v1: 'tc-standard' } });
+		const cart = await openCart(fixture);
+		fixture.tables.commerce_cart_line.push({
+			id: 'line-legacy',
+			cartId: cart.id,
+			variantId: 'v1',
+			title: 'A',
+			quantity: 1,
+			unitPrice: 20,
+			originalUnitPrice: 20,
+			isTaxInclusive: false,
+			isDiscountable: true,
+			requiresShipping: false,
+			taxCategoryId: 'tc-zero'
+		});
+		registerCheckoutHandler();
+
+		await fixture.service.complete(cart.id, { idempotencyKey: 'key-1' });
+
+		expect(fixture.tables.commerce_cart_line[0].taxCategoryId).toBe('tc-standard');
+	});
+});
+
+describe('CommerceCartService — the ids a cart names (CART_REFERENCES)', () => {
+	const refuse = async () => {
+		throw new ForbiddenException('A related record belongs to another tenant');
+	};
+	const cartChecks = () => mockAssertReferences.mock.calls.filter((call) => call[2] === CART_REFERENCES);
+
+	beforeEach(() => mockAssertReferences.mockClear());
+
+	it('checks a new cart’s ids, and writes no cart when one is refused', async () => {
+		const { service, tables } = cartFixture();
+		mockAssertReferences.mockImplementationOnce(refuse);
+
+		await expect(
+			service.create({ channelId: 'channel-1', currency: 'USD', customerId: 'contact-of-tenant-b' })
+		).rejects.toThrow(ForbiddenException);
+
+		expect(cartChecks().map((call) => call[1])).toEqual([
+			expect.objectContaining({ customerId: 'contact-of-tenant-b' })
+		]);
+		expect(tables.commerce_cart).toHaveLength(0);
+	});
+
+	it('checks a change before writing it, as `associateCartWithContact` and `PUT /carts/:id` send it', async () => {
+		const { service, tables } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD' });
+		mockAssertReferences.mockClear();
+		mockAssertReferences.mockImplementationOnce(refuse);
+
+		await expect(
+			service.applyChanges(cart.id, { customerId: 'contact-of-tenant-b' } as any, undefined, 'CUSTOMER_CHANGED')
+		).rejects.toThrow(ForbiddenException);
+
+		expect(cartChecks().map((call) => call[1])).toEqual([{ customerId: 'contact-of-tenant-b' }]);
+		expect(tables.commerce_cart[0].customerId).toBeUndefined();
+	});
+
+	it('states the channel, region, customer and user', () => {
+		expect(CART_REFERENCES).toEqual({
+			channelId: 'channel',
+			regionId: 'region',
+			customerId: 'organization_contact',
+			userId: 'user'
+		});
 	});
 });

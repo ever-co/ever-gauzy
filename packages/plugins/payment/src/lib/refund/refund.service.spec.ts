@@ -118,31 +118,31 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-jest.mock(
-	'@gauzy/config',
-	() => ({
-		isMySQL: () => false,
-		isPostgres: () => false,
-		DatabaseTypeEnum: {
-			mongodb: 'mongodb',
-			sqlite: 'sqlite',
-			betterSqlite3: 'better-sqlite3',
-			postgres: 'postgres',
-			mysql: 'mysql'
-		}
-	})
-);
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => false,
+	isPostgres: () => false,
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { Payment, RequestContext } from '@gauzy/core';
 import { RefundStatus } from '../payment.types';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
+import { PaymentCapture } from '../payment-capture/payment-capture.entity';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
 import { PaymentCollection } from '../payment-collection/payment-collection.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLine } from '../refund-line/refund-line.entity';
 import { RefundLineService } from '../refund-line/refund-line.service';
+import { RefundReason } from '../refund-reason/refund-reason.entity';
 import { Refund } from './refund.entity';
 import { RefundService } from './refund.service';
 
@@ -197,6 +197,14 @@ interface ITables {
 	payment_capture: Row[];
 	payment_collection: Row[];
 	order_line: Row[];
+	refund_reason: Row[];
+	/**
+	 * The other packages' documents a refund names, read by table name. A fixture that leaves one out models an
+	 * installation that does not register that table (the order or the returns package is not installed).
+	 */
+	order?: Row[];
+	order_return?: Row[];
+	order_claim?: Row[];
 }
 
 /** The entity classes the services hand to their transaction manager, resolved to tables. */
@@ -204,7 +212,10 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[Refund, 'refund'],
 	[RefundLine, 'refund_line'],
 	[Payment, 'payment'],
-	[PaymentCollection, 'payment_collection']
+	[PaymentCollection, 'payment_collection'],
+	[RefundReason, 'refund_reason'],
+	// The ceiling is re-read on the writing transaction's own manager (#10889), captures included.
+	[PaymentCapture, 'payment_capture']
 ]);
 
 /**
@@ -212,8 +223,9 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
  * and the transaction manager they share.
  *
  * @param tables The whole datastore.
+ * @param dialect The database type the shared data source reports (`options.type`).
  */
-function datastore(tables: ITables) {
+function datastore(tables: ITables, dialect = 'postgres') {
 	let sequence = 0;
 	const matches = (row: Row, where: Row = {}): boolean =>
 		Object.entries(where).every(([field, expected]) => {
@@ -270,19 +282,73 @@ function datastore(tables: ITables) {
 	};
 
 	/** The transaction manager: the services write their rows through this and nothing else. */
+	/**
+	 * The transactions in flight and the order lock (review R3-08r1). Each transaction runs in its own async
+	 * context, so the row lock a `pessimistic_write` read takes is held by that transaction until it ends, and a
+	 * second transaction asking for it waits — which is what a `SELECT … FOR UPDATE` does on PostgreSQL and MySQL.
+	 * A transaction keeps the rows as they were when it first locked or wrote, rather than when it began, so one
+	 * that waited for the lock and is then refused rolls back to what the lock holder committed, not over it.
+	 */
+	const transactions = new AsyncLocalStorage<{ id: number; copy?: Record<string, Row[]> }>();
+	let transactionSequence = 0;
+	let lockHolder: number | undefined;
+	let lockWaiters: Array<() => void> = [];
+	const locks: Array<{ transaction: number }> = [];
+	const touch = () => {
+		const transaction = transactions.getStore();
+
+		if (transaction && !transaction.copy) {
+			transaction.copy = snapshot();
+		}
+	};
+	const acquireLock = async () => {
+		const transaction = transactions.getStore();
+
+		if (!transaction) {
+			throw new Error('a pessimistic lock was taken outside a transaction');
+		}
+
+		while (lockHolder !== undefined && lockHolder !== transaction.id) {
+			await new Promise<void>((resolve) => lockWaiters.push(resolve));
+		}
+
+		lockHolder = transaction.id;
+		locks.push({ transaction: transaction.id });
+		touch();
+	};
+	const releaseLock = (id: number) => {
+		if (lockHolder === id) {
+			lockHolder = undefined;
+
+			const waiting = lockWaiters;
+
+			lockWaiters = [];
+			waiting.forEach((resolve) => resolve());
+		}
+	};
+
 	const manager: any = {
 		transaction: async (run: (transactional: any) => Promise<any>) => {
-			const copy = snapshot();
+			const transaction = { id: ++transactionSequence } as { id: number; copy?: Record<string, Row[]> };
 
-			try {
-				return await run(manager);
-			} catch (error) {
-				restore(copy);
-				throw error;
-			}
+			return transactions.run(transaction, async () => {
+				try {
+					return await run(manager);
+				} catch (error) {
+					if (transaction.copy) {
+						restore(transaction.copy);
+					}
+
+					throw error;
+				} finally {
+					releaseLock(transaction.id);
+				}
+			});
 		},
 		create: (_entity: unknown, partial: Row) => ({ ...partial }),
 		save: async (entity: unknown, rowOrRows: any) => {
+			touch();
+
 			const list = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
 			const saved = list.map((row) => save(tableOf(entity), row));
 
@@ -295,6 +361,8 @@ function datastore(tables: ITables) {
 		// A conditional write states its WHOLE criteria, the running totals it read among them, so a
 		// double that matched on the id alone would report a lost race as a write that landed.
 		update: async (entity: unknown, criteria: any, partial: Row) => {
+			touch();
+
 			const table = tableOf(entity);
 			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
 			const index = tables[table].findIndex((row) => matches(row, where));
@@ -306,15 +374,37 @@ function datastore(tables: ITables) {
 			return { affected: index >= 0 ? 1 : 0 };
 		},
 		/**
-		 * The one raw read this domain makes: the order lines a breakdown cites, read by name inside the
-		 * writing transaction. The conditions the service states are applied — the ids, the soft-delete
-		 * filter and the caller's own tenant and organization.
+		 * Whether the installation registers a table. A document table the fixture left out is one whose
+		 * package is not installed, and the refund service then has nothing to check an identifier against.
 		 */
-		createQueryBuilder: () => {
+		dataSource: {
+			// The dialect the refund service locks on: a row-locking one by default, so the order lock is taken.
+			options: { type: dialect },
+			hasMetadata: (name: string) => Array.isArray((tables as unknown as Record<string, unknown>)[name])
+		},
+		/**
+		 * The raw reads this domain makes by table name: the order lines a breakdown cites, and the order,
+		 * return or claim a refund names. The conditions the service states are applied — the ids, the
+		 * soft-delete filter of the line read and the caller's own tenant and organization.
+		 */
+		createQueryBuilder: (entity?: unknown) => {
 			const conditions: Array<{ sql: string; params: Row }> = [];
+			let fromTable = entity ? String(ENTITY_TABLES.get(entity) ?? 'unknown') : 'order_line';
+			let locked = false;
 			const builder: any = {
 				select: () => builder,
-				from: () => builder,
+				addSelect: () => builder,
+				orderBy: () => builder,
+				setLock: (mode: string) => {
+					locked = mode === 'pessimistic_write';
+
+					return builder;
+				},
+				from: (table: string) => {
+					fromTable = table;
+
+					return builder;
+				},
 				where: (sql: string, params: Row = {}) => {
 					conditions.push({ sql, params });
 
@@ -327,6 +417,35 @@ function datastore(tables: ITables) {
 				},
 				getRawMany: async () => {
 					const parameters = conditions.reduce<Row>((all, one) => ({ ...all, ...one.params }), {});
+
+					if (locked) {
+						// The order lock, held by this transaction until it commits or rolls back. A `FOR UPDATE` that
+						// matches no row locks nothing — on the order row or on the payment rows alike — and the double
+						// says so, because that is the gap an order with no payment rows used to fall through (#10906).
+						const matched =
+							fromTable === 'order'
+								? ((tables as unknown as Record<string, Row[]>).order ?? []).filter(
+										(row) => row.id === parameters.orderId
+									)
+								: tables.payment.filter((row) => row.orderId === parameters.orderId);
+						const scoped = matched
+							.filter((row) => row.tenantId === parameters.tenantId)
+							.filter((row) => row.organizationId === parameters.organizationId);
+
+						if (scoped.length) {
+							await acquireLock();
+						}
+
+						return scoped.map((row) => ({ id: row.id }));
+					}
+
+					if (fromTable !== 'order_line') {
+						return ((tables as unknown as Record<string, Row[]>)[fromTable] ?? [])
+							.filter((row) => row.id === parameters.refundSubjectId)
+							.filter((row) => row.tenantId === parameters.tenantId)
+							.filter((row) => row.organizationId === parameters.organizationId)
+							.map((row) => ({ id: row.id, orderId: row.orderId ?? null }));
+					}
 
 					return tables.order_line
 						.filter((line) => (parameters.orderLineIds ?? []).includes(line.id))
@@ -383,7 +502,7 @@ function datastore(tables: ITables) {
 		}
 	});
 
-	return { repository, manager };
+	return { repository, manager, locks };
 }
 
 /** One core `payment` row, as the refund service reads it. */
@@ -488,8 +607,16 @@ function refundFixture(
 		refunds?: Row[];
 		lines?: Row[];
 		orderLines?: Row[];
+		reasons?: Row[];
+		orders?: Row[];
+		returns?: Row[];
+		claims?: Row[];
 		withPort?: boolean;
 		port?: { recordRefund: (report: any) => Promise<any> };
+		/** The order's money ledger, as the payment side reports to it (Q7-W1b). */
+		orderLedger?: any;
+		/** The database type the data source reports; a row-locking `postgres` when not stated. */
+		dialect?: string;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -501,9 +628,13 @@ function refundFixture(
 		order_line: options.orderLines ?? [
 			{ id: LINE_ONE, tenantId: TENANT, organizationId: ORG, quantity: '2', unitPrice: '50' },
 			{ id: LINE_TWO, tenantId: TENANT, organizationId: ORG, quantity: '1', unitPrice: '10' }
-		]
+		],
+		refund_reason: options.reasons ?? [],
+		...(options.orders ? { order: options.orders } : {}),
+		...(options.returns ? { order_return: options.returns } : {}),
+		...(options.claims ? { order_claim: options.claims } : {})
 	};
-	const store = datastore(tables);
+	const store = datastore(tables, options.dialect);
 	const published: any[] = [];
 	const eventBus = {
 		publish: async (event: any) => {
@@ -533,7 +664,8 @@ function refundFixture(
 		collectionService,
 		refundLineService,
 		eventBus as never,
-		port as never
+		port as never,
+		options.orderLedger
 	);
 
 	return {
@@ -541,6 +673,7 @@ function refundFixture(
 		tables,
 		published,
 		port,
+		locks: store.locks,
 		payment: (id: string = PAYMENT) => tables.payment.find((row) => row.id === id),
 		collection: (id: string = COLLECTION) => tables.payment_collection.find((row) => row.id === id),
 		linesOf: (refundId: string) => tables.refund_line.filter((row) => row.refundId === refundId)
@@ -601,19 +734,25 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 	});
 
 	it('refuses a refund that names no payment, no return and no claim', async () => {
-		// An unattributed refund is a movement nobody can explain later.
+		// An unattributed refund is a movement nobody can explain later — on the attributed path too.
 		const fixture = refundFixture();
 
 		await expect(
-			fixture.service.createRefund({ orderId: ORDER, amount: '40', currency: 'USD' } as never)
+			fixture.service.createAttributedRefund({ orderId: ORDER, amount: '40', currency: 'USD' } as never)
 		).rejects.toThrow(/REFUND_NOT_ALLOWED/);
+		// The refund API refuses it earlier still: it names no payment (review R3-08).
+		await expect(
+			fixture.service.createRefund({ orderId: ORDER, amount: '40', currency: 'USD' } as never)
+		).rejects.toThrow(/REFUND_PAYMENT_REQUIRED/);
 		expect(fixture.tables.refund).toEqual([]);
 	});
 
-	it('accepts a refund attributed to a return or a claim with no payment at all', async () => {
+	it('accepts a refund attributed to a return or a claim with no payment at all — on the path those flows use', async () => {
+		// `createAttributedRefund` is what `ReturnRefundService` records through, after measuring the amount
+		// and requiring REFUNDS_APPROVE; the refund API itself refuses a refund that names no payment (R3-08).
 		const fixture = refundFixture();
 
-		const refund = await fixture.service.createRefund({
+		const refund = await fixture.service.createAttributedRefund({
 			orderId: ORDER,
 			returnId: 'return-1',
 			amount: '40',
@@ -634,7 +773,7 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 			/REFUND_AMOUNT_INVALID/
 		);
 		await expect(
-			fixture.service.createRefund({ orderId: ORDER, returnId: 'return-1', amount: '40' } as never)
+			fixture.service.createAttributedRefund({ orderId: ORDER, returnId: 'return-1', amount: '40' } as never)
 		).rejects.toThrow(/PAYMENT_CURRENCY_INVALID/);
 		expect(fixture.tables.refund).toEqual([]);
 	});
@@ -701,7 +840,12 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 		const fixture = refundFixture();
 
 		await expect(
-			fixture.service.createRefund({ orderId: ORDER, returnId: 'return-1', amount: 'forty', currency: 'USD' } as never)
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				returnId: 'return-1',
+				amount: 'forty',
+				currency: 'USD'
+			} as never)
 		).rejects.toThrow(/PAYMENT_AMOUNT_INVALID/);
 	});
 });
@@ -772,7 +916,10 @@ describe('RefundService — the breakdown is written with the refund, in one tra
 
 		await expect(
 			fixture.service.createRefund(
-				refundInput({ amount: '60', lines: [{ orderLineId: 'no-such-line', quantity: '1', amount: '50' }] }) as never
+				refundInput({
+					amount: '60',
+					lines: [{ orderLineId: 'no-such-line', quantity: '1', amount: '50' }]
+				}) as never
 			)
 		).rejects.toThrow(/REFUND_LINE_ORDER_LINE_NOT_FOUND/);
 		expect(fixture.tables.refund).toEqual([]);
@@ -815,6 +962,29 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 			amount: '40',
 			currency: 'USD',
 			tenantId: TENANT
+		});
+	});
+
+	// Q7-W1b. A succeeded refund is a negative row on the order's money ledger; a refund that names only the
+	// payment is the payment's order's (Greptile on #10897).
+	it('tells the order its money went back, through the payment when the refund names no order', async () => {
+		const orderLedger = { mirror: jest.fn(async (_fact: any, _label?: string) => ({ recorded: true })) };
+		const fixture = refundFixture({
+			orderLedger,
+			refunds: [refundRow('by-payment', { amount: '40', orderId: undefined })]
+		});
+
+		await fixture.service.approveRefund('by-payment');
+
+		expect(orderLedger.mirror).toHaveBeenCalledTimes(1);
+		expect(orderLedger.mirror.mock.calls[0][0]).toMatchObject({
+			orderId: ORDER,
+			type: 'REFUND',
+			amount: '40',
+			currency: 'USD',
+			referenceType: 'REFUND',
+			referenceId: 'by-payment',
+			paymentId: PAYMENT
 		});
 	});
 
@@ -987,7 +1157,9 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 		// 100 was authorised but only 40 was ever taken, so 40 is what may go back — whatever the amount
 		// recorded on the refund while it was pending.
 		const fixture = refundFixture({
-			payments: [paymentRow(PAYMENT, { capturedAmount: '40', refundedAmount: '0', status: 'PARTIALLY_CAPTURED' })],
+			payments: [
+				paymentRow(PAYMENT, { capturedAmount: '40', refundedAmount: '0', status: 'PARTIALLY_CAPTURED' })
+			],
 			captures: [captureRow('capture-1', { amount: '40' })],
 			refunds: [refundRow('too-big', { amount: '60' })]
 		});
@@ -1249,5 +1421,492 @@ describe('RefundService — an approval moves the payment, the collection and th
 		expect(fixture.payment().refundedAmount).toBe('0');
 		expect(fixture.collection().refundedAmount).toBe('0');
 		expect(fixture.tables.refund[0].status).toBe(RefundStatus.CANCELED);
+	});
+});
+
+describe('RefundService — what a refund cites is the caller’s, and the order is one ceiling (review R3-08)', () => {
+	const OTHER_ORDER = '00000000-0000-4000-8000-000000000011';
+	const FOREIGN_ORDER = '00000000-0000-4000-8000-000000000012';
+	const SECOND_PAYMENT = 'payment-2';
+	const RETURN = 'return-1';
+	const CLAIM = 'claim-1';
+
+	/** One document row of another package (order, return or claim), in the caller's organization by default. */
+	const documentRow = (id: string, overrides: Row = {}) => ({
+		id,
+		tenantId: TENANT,
+		organizationId: ORG,
+		...overrides
+	});
+
+	/** The installation registers the order and returns tables: two orders of ours and one of another organization. */
+	const registered = (overrides: Row = {}) => ({
+		orders: [
+			documentRow(ORDER),
+			documentRow(OTHER_ORDER),
+			documentRow(FOREIGN_ORDER, { organizationId: OTHER_ORG })
+		],
+		returns: [
+			documentRow(RETURN, { orderId: ORDER }),
+			documentRow('return-other-order', { orderId: OTHER_ORDER }),
+			documentRow('return-foreign', { organizationId: OTHER_ORG, orderId: FOREIGN_ORDER })
+		],
+		claims: [
+			documentRow(CLAIM, { orderId: ORDER }),
+			documentRow('claim-other-order', { orderId: OTHER_ORDER }),
+			documentRow('claim-foreign', { tenantId: 'another-tenant', orderId: ORDER })
+		],
+		reasons: [documentRow('reason-ours'), documentRow('reason-foreign', { organizationId: OTHER_ORG })],
+		...overrides
+	});
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** An order paid 10 + 10, which already gave 15 back through a return refund no single payment could carry. */
+	const splitOrder = (refunds: Row[] = []) =>
+		refundFixture({
+			payments: [paymentRow(PAYMENT, { amount: '10' }), paymentRow(SECOND_PAYMENT, { amount: '10' })],
+			captures: [
+				captureRow('capture-1', { amount: '10' }),
+				captureRow('capture-2', { paymentId: SECOND_PAYMENT, amount: '10' })
+			],
+			refunds: [
+				refundRow('return-refund', {
+					paymentId: undefined,
+					returnId: RETURN,
+					amount: '15',
+					status: RefundStatus.SUCCEEDED
+				}),
+				...refunds
+			]
+		});
+
+	it('counts a refund that names no payment against the order before a payment refunds its own money', async () => {
+		const fixture = splitOrder();
+
+		// The failure scenario: each payment's own figure still read 10, so 10 + 15 went back on 20 taken.
+		await expect(fixture.service.createRefund(refundInput({ amount: '10' }) as never)).rejects.toThrow(
+			/REFUND_AMOUNT_EXCEEDS_CAPTURED/
+		);
+		expect(fixture.tables.refund).toHaveLength(1);
+
+		// What is left on the order (20 − 15) is still refundable, from either payment.
+		const fits = await fixture.service.createRefund(refundInput({ amount: '5' }) as never);
+
+		expect(fits).toMatchObject({ amount: '5', status: RefundStatus.PENDING });
+	});
+
+	it('measures an approval against the order too, and a cancelled payment-less refund no longer counts', async () => {
+		const fixture = splitOrder([refundRow('pending-on-payment', { amount: '10' })]);
+
+		await expect(fixture.service.approveRefund('pending-on-payment')).rejects.toThrow(
+			/REFUND_AMOUNT_EXCEEDS_CAPTURED/
+		);
+		expect(fixture.payment().refundedAmount).toBe('0');
+
+		// Withdrawn, the return refund moved nothing, and the payment's own money is refundable again.
+		fixture.tables.refund[0].status = RefundStatus.CANCELED;
+
+		await expect(fixture.service.approveRefund('pending-on-payment')).resolves.toMatchObject({
+			status: RefundStatus.SUCCEEDED
+		});
+	});
+
+	it('sums only the standing refunds of the order that name no payment, in the currency asked', async () => {
+		const unattributed = (id: string, overrides: Row) =>
+			refundRow(id, { paymentId: undefined, returnId: RETURN, status: RefundStatus.SUCCEEDED, ...overrides });
+		const fixture = refundFixture({
+			refunds: [
+				unattributed('a', { amount: '3' }),
+				unattributed('b', { amount: '2', returnId: undefined, claimId: CLAIM, status: RefundStatus.PENDING }),
+				unattributed('c', { amount: '7', status: RefundStatus.CANCELED }),
+				unattributed('d', { amount: '9', currency: 'EUR' }),
+				refundRow('e', { amount: '11', status: RefundStatus.SUCCEEDED }),
+				unattributed('f', { amount: '13', organizationId: OTHER_ORG })
+			]
+		});
+
+		expect(await fixture.service.sumUnattributedForOrder(ORDER, 'USD')).toBe('5');
+	});
+
+	it('refuses an order, a return or a claim of another organization or tenant, on both entry points', async () => {
+		const fixture = refundFixture({ ...registered(), payments: [paymentRow(PAYMENT, { orderId: null })] });
+
+		// The payment names no order, so before this any order id at all was written beside it.
+		await expect(
+			fixture.service.createRefund(refundInput({ orderId: FOREIGN_ORDER }) as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_ORDER_NOT_FOUND' }) });
+		await expect(
+			fixture.service.createRefund(refundInput({ returnId: 'return-foreign' }) as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_RETURN_NOT_FOUND' }) });
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				claimId: 'claim-foreign',
+				amount: '5',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_CLAIM_NOT_FOUND' }) });
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				returnId: 'no-such-return',
+				amount: '5',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_RETURN_NOT_FOUND' }) });
+
+		expect(fixture.tables.refund).toEqual([]);
+	});
+
+	it('refuses a return or a claim raised against another order than the refund’s', async () => {
+		const fixture = refundFixture(registered());
+
+		await expect(
+			fixture.service.createRefund(refundInput({ returnId: 'return-other-order' }) as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_RETURN_ORDER_MISMATCH' }) });
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				claimId: 'claim-other-order',
+				amount: '5',
+				currency: 'USD'
+			} as never)
+		).rejects.toMatchObject({ response: expect.objectContaining({ code: 'REFUND_CLAIM_ORDER_MISMATCH' }) });
+		expect(fixture.tables.refund).toEqual([]);
+
+		// The control: the caller's own order, return and claim, all of one order, are recorded.
+		await expect(
+			fixture.service.createRefund(
+				refundInput({ returnId: RETURN, claimId: CLAIM, reasonId: 'reason-ours' }) as never
+			)
+		).resolves.toMatchObject({ returnId: RETURN, claimId: CLAIM, reasonId: 'reason-ours' });
+	});
+
+	it('refuses a governed reason of another organization', async () => {
+		const fixture = refundFixture(registered());
+
+		await expect(
+			fixture.service.createRefund(refundInput({ reasonId: 'reason-foreign' }) as never)
+		).rejects.toThrow(/REFUND_REASON_NOT_FOUND/);
+		expect(fixture.tables.refund).toEqual([]);
+	});
+
+	it('keeps the identifiers as plain attribution where the installation has no order or returns tables', async () => {
+		// No order and no returns package: nothing to check against, and no other tenant's row to leak into.
+		const fixture = refundFixture();
+
+		await expect(
+			fixture.service.createRefund(
+				refundInput({ returnId: 'external-return', claimId: 'external-claim' }) as never
+			)
+		).resolves.toMatchObject({ returnId: 'external-return', claimId: 'external-claim' });
+	});
+
+	it('measures a correction against what will be written: a cleared return no longer binds the order', async () => {
+		// The payment names no order, so the refund may be corrected to another order of ours — and the return
+		// it cited, which belongs to the first order, is cleared in the same request (Greptile, #10854).
+		const fixture = refundFixture({ ...registered(), payments: [paymentRow(PAYMENT, { orderId: null })] });
+		const refund = await fixture.service.createRefund(refundInput({ returnId: RETURN }) as never);
+
+		await expect(
+			fixture.service.updateRefund(refund.id, { orderId: OTHER_ORDER, returnId: null } as never)
+		).resolves.toMatchObject({ orderId: OTHER_ORDER, returnId: null });
+
+		// A refund with no payment is explained by its return or claim alone, so both cannot be cleared.
+		const attributed = await fixture.service.createAttributedRefund({
+			orderId: ORDER,
+			returnId: RETURN,
+			amount: '5',
+			currency: 'USD'
+		} as never);
+
+		await expect(fixture.service.updateRefund(attributed.id, { returnId: null } as never)).rejects.toThrow(
+			/REFUND_NOT_ALLOWED/
+		);
+	});
+
+	it('holds a changed attribution to the creation rules, and never moves a refund out of the organization', async () => {
+		const fixture = refundFixture(registered());
+		const refund = await fixture.service.createRefund(refundInput() as never);
+		const refusal = (input: Row) =>
+			fixture.service
+				.updateRefund(refund.id, input as never)
+				.then(() => undefined)
+				.catch((thrown) => thrown?.response?.code ?? thrown?.message);
+
+		// The failure scenario: `PUT /refunds/:id` re-pointed a pending refund at any order, return or claim.
+		expect(await refusal({ orderId: FOREIGN_ORDER })).toBe('REFUND_ORDER_NOT_FOUND');
+		expect(await refusal({ orderId: OTHER_ORDER })).toBe('REFUND_ORDER_MISMATCH');
+		expect(await refusal({ returnId: 'return-foreign' })).toBe('REFUND_RETURN_NOT_FOUND');
+		expect(await refusal({ claimId: 'claim-other-order' })).toBe('REFUND_CLAIM_ORDER_MISMATCH');
+		expect(await refusal({ reasonId: 'reason-foreign' })).toMatch(/REFUND_REASON_NOT_FOUND/);
+
+		const updated = await fixture.service.updateRefund(refund.id, {
+			tenantId: 'another-tenant',
+			organizationId: OTHER_ORG,
+			returnId: RETURN,
+			claimId: CLAIM,
+			note: 'corrected'
+		} as never);
+
+		expect(updated).toMatchObject({
+			tenantId: TENANT,
+			organizationId: ORG,
+			orderId: ORDER,
+			returnId: RETURN,
+			claimId: CLAIM,
+			note: 'corrected'
+		});
+	});
+});
+
+describe('RefundService — two refunds of one order are measured one after the other (review R3-08r1)', () => {
+	const SECOND_PAYMENT = 'payment-2';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** An order paid 10 + 10: 20 to give back between its payments, and no single payment can carry 15. */
+	const order = (refunds: Row[] = [], dialect?: string) =>
+		refundFixture({
+			payments: [paymentRow(PAYMENT, { amount: '10' }), paymentRow(SECOND_PAYMENT, { amount: '10' })],
+			captures: [
+				captureRow('capture-1', { amount: '10' }),
+				captureRow('capture-2', { paymentId: SECOND_PAYMENT, amount: '10' })
+			],
+			refunds,
+			dialect
+		});
+
+	/**
+	 * Makes the first read of the order's refunds that name no payment slow: what it read is stale by the time its
+	 * caller writes, unless the other caller waited for it. That is the window two concurrent requests have.
+	 */
+	const slowFirstRead = (fixture: ReturnType<typeof order>): Promise<void> => {
+		const read = fixture.service.sumUnattributedForOrder.bind(fixture.service);
+		let calls = 0;
+		let taken: () => void = () => undefined;
+		const firstReadTaken = new Promise<void>((resolve) => (taken = resolve));
+
+		jest.spyOn(fixture.service, 'sumUnattributedForOrder').mockImplementation(async (orderId, currency) => {
+			const value = await read(orderId, currency);
+
+			if (++calls === 1) {
+				taken();
+				await new Promise((resolve) => setTimeout(resolve, 25));
+			}
+
+			return value;
+		});
+
+		return firstReadTaken;
+	};
+
+	it('refuses the second of two concurrent return refunds the order cannot carry both of', async () => {
+		const fixture = order();
+
+		slowFirstRead(fixture);
+
+		const refund = (returnId: string) =>
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				returnId,
+				amount: '15',
+				currency: 'USD'
+			} as never);
+
+		// The failure scenario: both read the order's headroom (20) before either wrote, and 30 went back on 20 taken.
+		const outcomes = await Promise.allSettled([refund('return-a'), refund('return-b')]);
+
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+
+		const refused = outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult;
+
+		expect(refused.reason.getResponse()).toMatchObject({
+			code: 'REFUND_AMOUNT_EXCEEDS_CAPTURED',
+			details: { orderId: ORDER, requested: '15', refundable: '5', currency: 'USD' }
+		});
+		expect(fixture.tables.refund).toHaveLength(1);
+		// Each attempt took the order lock inside its own transaction.
+		expect(new Set(fixture.locks.map((lock) => lock.transaction)).size).toBe(2);
+	});
+
+	it('refuses an approval that would pass on what it read before a return refund of the same order committed', async () => {
+		const fixture = order([refundRow('pending-on-payment', { amount: '10' })]);
+		const approvalHasRead = slowFirstRead(fixture);
+
+		// The return refund lands while the approval holds a read of the order taken before it.
+		const outcomes = await Promise.allSettled([
+			fixture.service.approveRefund('pending-on-payment'),
+			approvalHasRead.then(() =>
+				fixture.service.createAttributedRefund({
+					orderId: ORDER,
+					returnId: 'return-a',
+					amount: '15',
+					currency: 'USD'
+				} as never)
+			)
+		]);
+
+		// One of the two is refused: 10 + 15 cannot both go back on 20 taken, whichever lands first.
+		expect(outcomes.filter((outcome) => outcome.status === 'rejected')).toHaveLength(1);
+
+		const refunded = fixture.tables.refund.filter((row) =>
+			[RefundStatus.SUCCEEDED, RefundStatus.PENDING].includes(row.status)
+		);
+		const total = refunded
+			.filter((row) => row.id !== 'pending-on-payment' || row.status === RefundStatus.SUCCEEDED)
+			.reduce((sum, row) => sum + Number(row.amount), 0);
+
+		expect(total).toBeLessThanOrEqual(20);
+	});
+
+	it('counts a refund that names no payment even when it is approved while the order is being read', async () => {
+		// Greptile, #10889: read as two statements (succeeded, then pending), a refund that moved from pending to
+		// succeeded between them was counted by neither. The order's refunds are one read now.
+		const fixture = order([
+			refundRow('return-refund', {
+				paymentId: undefined,
+				returnId: 'return-a',
+				amount: '15',
+				status: RefundStatus.PENDING
+			})
+		]);
+		const read = fixture.service.find.bind(fixture.service);
+
+		jest.spyOn(fixture.service, 'find').mockImplementation(async (options: any) => {
+			const rows = await read(options);
+
+			// The approval lands right after this read.
+			fixture.tables.refund[0].status = RefundStatus.SUCCEEDED;
+
+			return rows;
+		});
+
+		expect(await fixture.service.sumUnattributedForOrder(ORDER, 'USD')).toBe('15');
+	});
+
+	it('takes no row lock on a dialect that has none, and still measures the refund', async () => {
+		// A dialect without row locks, stated when the datastore is built (the data source's type is read-only).
+		const fixture = order([], 'better-sqlite3');
+
+		await fixture.service.createAttributedRefund({
+			orderId: ORDER,
+			returnId: 'return-a',
+			amount: '15',
+			currency: 'USD'
+		} as never);
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				returnId: 'return-b',
+				amount: '15',
+				currency: 'USD'
+			} as never)
+		).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+		expect(fixture.locks).toEqual([]);
+	});
+});
+
+describe('RefundService — one standing refund per key, decided under the order lock (review R3-09r2)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses the second of two concurrent refunds under one key, naming the first', async () => {
+		const fixture = refundFixture();
+		const refund = () =>
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				paymentId: PAYMENT,
+				claimId: 'claim-1',
+				amount: '10',
+				currency: 'USD',
+				metadata: { idempotencyKey: 'decision-1' }
+			} as never);
+
+		const outcomes = await Promise.allSettled([refund(), refund()]);
+
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+
+		const refused = outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult;
+
+		expect(refused.reason).toBeInstanceOf(ConflictException);
+		expect(refused.reason.getResponse()).toMatchObject({
+			code: 'REFUND_IDEMPOTENCY_KEY_IN_USE',
+			details: { refundId: fixture.tables.refund[0].id }
+		});
+		expect(fixture.tables.refund).toHaveLength(1);
+	});
+
+	it('records a refund under a key that only a withdrawn refund held', async () => {
+		const fixture = refundFixture({
+			refunds: [
+				refundRow('withdrawn', {
+					claimId: 'claim-1',
+					status: RefundStatus.CANCELED,
+					metadata: { idempotencyKey: 'decision-1' }
+				})
+			]
+		});
+
+		await expect(
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				paymentId: PAYMENT,
+				claimId: 'claim-1',
+				amount: '10',
+				currency: 'USD',
+				metadata: { idempotencyKey: 'decision-1' }
+			} as never)
+		).resolves.toMatchObject({ status: RefundStatus.PENDING });
+	});
+});
+
+describe('RefundService — the order row is the lock, whether or not the order has payments (Greptile, #10906)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses the second of two concurrent keyed refunds of an order that has no payment rows', async () => {
+		// No payment row to lock: before, both locked nothing, both read no holder of the key and both wrote.
+		const fixture = refundFixture({
+			payments: [],
+			captures: [],
+			orders: [{ id: ORDER, tenantId: TENANT, organizationId: ORG }]
+		});
+		const refund = () =>
+			fixture.service.createAttributedRefund({
+				orderId: ORDER,
+				claimId: 'claim-1',
+				amount: '10',
+				currency: 'USD',
+				metadata: { idempotencyKey: 'decision-1' }
+			} as never);
+
+		const outcomes = await Promise.allSettled([refund(), refund()]);
+
+		expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+		expect(fixture.tables.refund).toHaveLength(1);
 	});
 });

@@ -482,31 +482,30 @@ describe('ProductVariantSettingResolver — the resource, the route and the guar
 		expect(controllerGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
 	});
 
-	it('states no permission on the resolver and none on any route it mirrors', () => {
+	it('states no permission on the resolver and none on any read it mirrors', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductVariantSettingResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductVariantSettingController)).toBeUndefined();
 
 		// The handlers are read as well as the class: a permission stated on one route and not on its
 		// field would be the same asymmetry one level down.
-		for (const handler of [
-			'findAll',
-			'findById',
-			'getCount',
-			'create',
-			'update',
-			'delete'
-		]) {
+		for (const handler of ['findAll', 'findById', 'getCount']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlerOf(handler) as object)).toBeUndefined();
 		}
 
-		// Except the retire-and-restore pair: the controller overrides the two inherited routes only to state
-		// the inventory edit grant (GHSA-v79w-54p2-wmh5), and the fields mirror them.
-		for (const handler of ['softRemove', 'softRecover']) {
+		// Except the writes: the controller overrides the inherited routes only to state the inventory edit
+		// grant (GHSA-v79w-54p2-wmh5), and the fields mirror them.
+		for (const handler of ['create', 'update', 'delete', 'softRemove', 'softRecover']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlerOf(handler) as object)).toEqual([
 				PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
 			]);
 		}
-		for (const field of ['softDeleteProductVariantSetting', 'recoverProductVariantSetting']) {
+		for (const field of [
+			'createProductVariantSetting',
+			'updateProductVariantSetting',
+			'deleteProductVariantSetting',
+			'softDeleteProductVariantSetting',
+			'recoverProductVariantSetting'
+		]) {
 			expect(
 				Reflect.getMetadata(PERMISSIONS_METADATA, (ProductVariantSettingResolver.prototype as any)[field])
 			).toEqual([PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT]);
@@ -551,9 +550,8 @@ describe('ProductVariantSettingResolver — the resource, the route and the guar
 			expect(typeof handlerOf(handler)).toBe('function');
 		}
 
-		// Every one of them is `undefined`, which is the answer here and not an empty assertion: this
-		// resource is mounted without a permission, so a field that acquired one would be the
-		// asymmetry the two-protocol rule forbids.
+		// The reads are `undefined` and the writes are the inventory edit grant: a field that stated
+		// anything else than its route would be the asymmetry the two-protocol rule forbids.
 		expect(stated).toEqual(expected);
 	});
 });

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
 	ID,
@@ -11,8 +11,10 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Between, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { Between, DeleteResult, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { Employee } from '../core/entities/internal';
 import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { redactDatabaseError } from '../core/errors/database-error';
 import { RequestContext } from '../core/context/request-context';
@@ -174,6 +176,150 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			this.logger.error('Error while creating employee notification:', error);
 			throw new BadRequestException('Error while creating notification', error);
 		}
+	}
+
+	/**
+	 * Files a notification that a caller asked for over the API (`POST /employee-notification`, GraphQL
+	 * `createEmployeeNotification`). The notification is filed as the caller.
+	 *
+	 * Every notification the platform raises itself (mentions, task assignments, broadcasts) goes through
+	 * `publishNotificationEvent` and {@link create}, never through this route. So this route is the one
+	 * place where a body chose the sender and the receiver, and it used to persist both as given. Any member
+	 * (VIEWER and CANDIDATE included) could file a Payment / Invitation / Broadcast notification that looked
+	 * like it came from any employee, into any colleague's inbox. Now:
+	 * - **The sender is the caller's own employee**, read from the credential and never from the body. A
+	 *   caller with no employee record is refused, because nothing truthful could be shown as the sender,
+	 *   and a sender-less row reads as a notification the platform raised itself.
+	 * - **The receiver is the caller's own employee** (the default when the body names none), unless the
+	 *   caller holds `CHANGE_SELECTED_EMPLOYEE`. That is the permission the platform uses for acting on
+	 *   other employees, and only `SUPER_ADMIN` / `ADMIN` hold it by default. Such a caller may address
+	 *   any employee of the notification's organization in their tenant, still under their own name.
+	 * - **Only the content columns are taken from the body**: title, message, type, hold, the entity it is
+	 *   about, and the organization. A body `id` used to make the write an upsert of an existing
+	 *   notification. The relation objects and the read-state flags are not taken either.
+	 *
+	 * @param input - The notification the caller asked for.
+	 * @returns The created notification, or `undefined` when the receiver has switched this kind off.
+	 * @throws ForbiddenException when the caller has no employee record, or names another receiver
+	 * without `CHANGE_SELECTED_EMPLOYEE`, or names a receiver outside the notification's organization.
+	 */
+	async createForCaller(input: IEmployeeNotificationCreateInput): Promise<IEmployeeNotification | undefined> {
+		// RequestContext.currentEmployeeId() is deliberately null for a CHANGE_SELECTED_EMPLOYEE holder,
+		// so the caller's own employee is read off the JWT user too (as markAllAsRead does).
+		const senderEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+		if (!senderEmployeeId) {
+			throw new ForbiddenException('Only an employee can send a notification.');
+		}
+
+		// The body is bound to an interface, so nothing has checked these two ids' types yet. An array of the
+		// caller's own id would stringify to that id and skip the checks below, then reach the insert as given.
+		for (const key of ['receiverEmployeeId', 'organizationId'] as const) {
+			if (input?.[key] != null && typeof input[key] !== 'string') {
+				throw new BadRequestException(`${key} must be a string.`);
+			}
+		}
+
+		const organizationId = input?.organizationId ?? RequestContext.currentOrganizationId();
+		const receiverEmployeeId = input?.receiverEmployeeId ?? senderEmployeeId;
+
+		if (receiverEmployeeId !== senderEmployeeId) {
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				throw new ForbiddenException('You can only send a notification to yourself.');
+			}
+			const tenantId = RequestContext.currentTenantId();
+			if (!(await this.isEmployeeOfOrganization(receiverEmployeeId, organizationId, tenantId))) {
+				throw new ForbiddenException('The receiver is not an employee of this organization.');
+			}
+		}
+
+		return await this.create({
+			title: input?.title,
+			message: input?.message,
+			type: input?.type,
+			onHoldUntil: input?.onHoldUntil,
+			entity: input?.entity,
+			entityId: input?.entityId,
+			organizationId,
+			receiverEmployeeId,
+			sentByEmployeeId: senderEmployeeId
+		});
+	}
+
+	/**
+	 * Whether an employee belongs to the given organization of the given tenant.
+	 *
+	 * The lookup goes through TypeORM for both ORMs, as the platform's other ownership checks do (both ORMs
+	 * are initialised on the same database, and this only reads).
+	 */
+	protected async isEmployeeOfOrganization(employeeId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		if (!employeeId || !organizationId || !tenantId) {
+			return false;
+		}
+		const count = await this.typeOrmRepository.manager.count(Employee, {
+			where: { id: employeeId, organizationId, tenantId }
+		});
+		return count > 0;
+	}
+
+	/**
+	 * Edits a notification without re-addressing it.
+	 *
+	 * A notification's sender and receiver are fixed when it is filed: `IEmployeeNotificationUpdateInput` and
+	 * the GraphQL `UpdateEmployeeNotificationInput` both leave them out. The inherited REST
+	 * `PUT /employee-notification/:id` wrote whatever its body named, though. So the receiver of a
+	 * notification could re-point it at a colleague and name any sender, which is a forged notification
+	 * by a second route. Both columns and both relations are dropped from every patch. The rest of the
+	 * edit (read state, hold, archive) behaves as before.
+	 */
+	public async update(
+		id: string | FindOptionsWhere<EmployeeNotification>,
+		partialEntity: QueryDeepPartialEntity<EmployeeNotification>
+	): Promise<EmployeeNotification | UpdateResult> {
+		if (!partialEntity || typeof partialEntity !== 'object' || Array.isArray(partialEntity)) {
+			return await super.update(id, partialEntity);
+		}
+
+		const {
+			sentByEmployeeId: _sentByEmployeeId,
+			sentByEmployee: _sentByEmployee,
+			receiverEmployeeId: _receiverEmployeeId,
+			receiverEmployee: _receiverEmployee,
+			...patch
+		} = partialEntity as Record<string, unknown>;
+		void _sentByEmployeeId;
+		void _sentByEmployee;
+		void _receiverEmployeeId;
+		void _receiverEmployee;
+
+		return await super.update(id, patch as QueryDeepPartialEntity<EmployeeNotification>);
+	}
+
+	/**
+	 * Removes a notification. It must be the caller's own, unless they hold `CHANGE_SELECTED_EMPLOYEE`.
+	 *
+	 * The edit, withdraw and restore writes read the row through the receiver-scoped
+	 * {@link findOneByIdString} before they write. The inherited delete does not read first, so any member
+	 * could remove a colleague's notification by its id. The same receiver scope the reads use now joins the
+	 * delete's criteria. A caller with no employee record and without the permission removes nothing.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<EmployeeNotification>,
+		options?: LegacyFindOneOptions<EmployeeNotification>
+	): Promise<DeleteResult> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return await super.delete(criteria, options);
+		}
+
+		const receiverEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+		if (!receiverEmployeeId) {
+			return { affected: 0, raw: [] };
+		}
+
+		const where = options?.where && !Array.isArray(options.where) ? options.where : {};
+		return await super.delete(criteria, {
+			...options,
+			where: { ...where, receiverEmployeeId } as FindOptionsWhere<EmployeeNotification>
+		});
 	}
 
 	/**

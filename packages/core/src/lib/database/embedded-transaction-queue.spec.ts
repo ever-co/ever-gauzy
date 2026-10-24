@@ -851,6 +851,186 @@ describe('serializeEmbeddedTransactions — statements outside a transaction, Ty
 	});
 });
 
+describe('serializeEmbeddedTransactions — work a transaction leaves running, TypeORM on better-sqlite3', () => {
+	let store: ITypeOrmStore | undefined;
+
+	afterEach(async () => {
+		// A wedged connection is still inside a transaction: the close must not fail the next test.
+		await settle(closeTypeOrm(store));
+		store = undefined;
+	});
+
+	/**
+	 * Calls `work` the moment the connection receives the data source's next `COMMIT`, in the asynchronous context
+	 * `work` was handed in: the way work a write started and left running reaches its next statement while the
+	 * write's outermost commit is in flight.
+	 */
+	function atNextCommit(
+		log: StatementLog,
+		work: () => Promise<unknown>
+	): Promise<{ value?: unknown; error?: Error }> {
+		let reached!: () => void;
+		const commit = new Promise<void>((resolve) => (reached = resolve));
+		const logQuery = log.logQuery.bind(log);
+		log.logQuery = (query: string, parameters?: unknown[]) => {
+			if (query === 'COMMIT') {
+				log.logQuery = logQuery;
+				reached();
+			}
+			logQuery(query, parameters);
+		};
+
+		return settle(commit.then(work));
+	}
+
+	it("queues a transaction started from inside a write that reaches the connection during the write's commit (the local e2e wedge)", async () => {
+		// Found by the first local Gauzy <-> Ever Works run: a capture an entity subscriber started inside a comment's
+		// save, and left running, opened the outbound queue's transaction while the save's COMMIT was in flight. Its
+		// context still carried the save's claim, which still held the connection, so it was taken for a nested
+		// transaction: its SAVEPOINT began a transaction of its own after the COMMIT, the claim was never given back,
+		// its commit was refused (TransactionNotStartedError) and every later request waited out the queue's timeout.
+		store = await openTypeOrm({ waitTimeoutMs: 300 });
+		const dataSource = store.dataSource;
+		let background!: Promise<{ value?: unknown; error?: Error }>;
+
+		await dataSource.manager.transaction(async (manager) => {
+			await manager.insert(QueueRow, { id: 'w1', tag: 'w' });
+			// Not awaited: it inherits the write's context, as a subscriber's fire-and-forget work does.
+			background = atNextCommit(store!.log, () =>
+				dataSource.transaction((transactional) => transactional.insert(QueueRow, { id: 'q1', tag: 'q' }))
+			);
+		});
+
+		expect((await background).error).toBeUndefined();
+		// The connection is free again: the next request's transaction does not wait out the timeout.
+		expect(
+			(await settle(dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'n1', tag: 'n' })))).error
+		).toBeUndefined();
+		expect(store.file.committed()).toEqual(['n1', 'q1', 'w1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT w1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT q1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT n1',
+			'COMMIT'
+		]);
+	});
+
+	it('hands a commit that fails back to its owner, whose rollback frees the connection for the queued work (#11051 review)', async () => {
+		// A deferred foreign key fails the COMMIT and SQLite keeps the transaction open: the claim stays with its
+		// owner (no longer ending), the owner's rollback gives the connection back, and the work that reached its
+		// own transaction during the failed COMMIT runs after it.
+		store = await openTypeOrm({ waitTimeoutMs: 300 });
+		const dataSource = store.dataSource;
+		await dataSource.query('PRAGMA foreign_keys = ON');
+		await dataSource.query('CREATE TABLE "queue_parent" ("id" varchar PRIMARY KEY NOT NULL)');
+		await dataSource.query(
+			'CREATE TABLE "queue_child" ("id" varchar PRIMARY KEY NOT NULL, "parentId" varchar REFERENCES "queue_parent" ("id") DEFERRABLE INITIALLY DEFERRED)'
+		);
+		store.log.clear();
+		let background!: Promise<{ value?: unknown; error?: Error }>;
+
+		const write = await settle(
+			dataSource.manager.transaction(async (manager) => {
+				await manager.insert(QueueRow, { id: 'w1', tag: 'w' });
+				await manager.query('INSERT INTO "queue_child" ("id", "parentId") VALUES (?, ?)', ['c1', 'missing']);
+				background = atNextCommit(store!.log, () =>
+					dataSource.transaction((transactional) => transactional.insert(QueueRow, { id: 'q1', tag: 'q' }))
+				);
+			})
+		);
+
+		expect(write.error?.message).toMatch(/FOREIGN KEY/);
+		expect((await background).error).toBeUndefined();
+		expect(
+			(await settle(dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'n1', tag: 'n' })))).error
+		).toBeUndefined();
+		expect(store.file.committed()).toEqual(['n1', 'q1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT w1',
+			'COMMIT',
+			'ROLLBACK',
+			'BEGIN TRANSACTION',
+			'INSERT q1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT n1',
+			'COMMIT'
+		]);
+	});
+
+	it('does the same for a transaction it opens by hand on a query runner', async () => {
+		store = await openTypeOrm({ waitTimeoutMs: 300 });
+		const dataSource = store.dataSource;
+		let background!: Promise<{ value?: unknown; error?: Error }>;
+
+		await dataSource.manager.transaction(async (manager) => {
+			await manager.insert(QueueRow, { id: 'w1', tag: 'w' });
+			background = atNextCommit(store!.log, async () => {
+				const runner = dataSource.createQueryRunner();
+				await runner.startTransaction();
+				try {
+					await runner.manager.insert(QueueRow, { id: 'q1', tag: 'q' });
+					await runner.commitTransaction();
+				} catch (error) {
+					await runner.rollbackTransaction();
+					throw error;
+				} finally {
+					await runner.release();
+				}
+			});
+		});
+
+		expect((await background).error).toBeUndefined();
+		expect(
+			(await settle(dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'n1', tag: 'n' })))).error
+		).toBeUndefined();
+		expect(store.file.committed()).toEqual(['n1', 'q1', 'w1']);
+	});
+
+	it("keeps a write's own work that it awaits a savepoint of it, and work it leaves running after its commit a transaction of its own", async () => {
+		// The two cases the ending rule must not change: a transaction opened (and awaited) inside the write is
+		// nested, and one opened from the write's context once the write has given the connection back queues as a
+		// transaction of its own, as before.
+		store = await openTypeOrm({ waitTimeoutMs: 300 });
+		const dataSource = store.dataSource;
+		let goOn!: () => void;
+		const committed = new Promise<void>((resolve) => (goOn = resolve));
+		let background!: Promise<{ value?: unknown; error?: Error }>;
+
+		await dataSource.manager.transaction(async (manager) => {
+			await manager.insert(QueueRow, { id: 'w1', tag: 'w' });
+			await dataSource.transaction((inner) => inner.insert(QueueRow, { id: 'w2', tag: 'w' }));
+			// Left running in the write's context, it goes on once the write has committed.
+			background = settle(
+				committed.then(() =>
+					dataSource.transaction((transactional) => transactional.insert(QueueRow, { id: 'q1', tag: 'q' }))
+				)
+			);
+		});
+		goOn();
+		expect((await background).error).toBeUndefined();
+
+		expect(store.file.committed()).toEqual(['q1', 'w1', 'w2']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT w1',
+			'SAVEPOINT typeorm_1',
+			'INSERT w2',
+			'RELEASE SAVEPOINT typeorm_1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT q1',
+			'COMMIT'
+		]);
+	});
+});
+
 describe('serializeEmbeddedTransactions — the dialects it leaves alone', () => {
 	it.each([
 		['postgres', { type: 'postgres', host: 'localhost' }],

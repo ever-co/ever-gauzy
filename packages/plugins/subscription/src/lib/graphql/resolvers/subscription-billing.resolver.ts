@@ -8,6 +8,7 @@ import { SubscriptionFeatures } from '../../subscription.features';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import { SubscriptionBilling } from '../../subscription-billing/subscription-billing.entity';
 import { SubscriptionBillingService } from '../../subscription-billing/subscription-billing.service';
+import { SubscriptionService } from '../../subscription/subscription.service';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -48,7 +49,10 @@ interface ISubscriptionBillingFilter {
 @FeatureFlag(SubscriptionFeatures.SUBSCRIPTION)
 @Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 export class SubscriptionBillingResolver {
-	constructor(private readonly subscriptionBillingService: SubscriptionBillingService) {}
+	constructor(
+		private readonly subscriptionBillingService: SubscriptionBillingService,
+		private readonly subscriptionService?: SubscriptionService
+	) {}
 
 	/**
 	 * Lists billing cycles.
@@ -158,6 +162,9 @@ export class SubscriptionBillingResolver {
 	/**
 	 * Records that a cycle's money arrived.
 	 *
+	 * The twin of `POST /subscription-billings/:id/pay`, and it takes the same path: through the subscription
+	 * service, so the payment of an invoiced cycle puts the rights of its period in force (R4-05).
+	 *
 	 * @param id The cycle.
 	 * @param input When it settled, and a note.
 	 * @returns The payload.
@@ -167,7 +174,7 @@ export class SubscriptionBillingResolver {
 	async paySubscriptionBilling(@Args('id') id: ID, @Args('input') input?: { paidAt?: Date; note?: string }) {
 		try {
 			return {
-				subscriptionBilling: await this.subscriptionBillingService.markPaid(id, { paidAt: input?.paidAt }),
+				subscriptionBilling: await this.subscriptionService.payCycle(id, { paidAt: input?.paidAt }),
 				userErrors: []
 			};
 		} catch (error) {

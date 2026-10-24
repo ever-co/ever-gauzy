@@ -1,4 +1,17 @@
-import { Controller, UseGuards, HttpStatus, Body, Param, Get, Post, Put, HttpCode, Query } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	HttpStatus,
+	Body,
+	Param,
+	Get,
+	Post,
+	Put,
+	Delete,
+	HttpCode,
+	Query,
+	UsePipes
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -8,12 +21,15 @@ import {
 	IEmployeeAppointmentCreateInput,
 	IEmployeeAppointmentUpdateInput,
 	IEmployeeAppointment,
-	IPagination
+	IPagination,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 import { RelationsQueryDTO } from '../shared/dto';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { AbstractValidationPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } from './commands';
 import { EmployeeAppointment } from './employee-appointment.entity';
@@ -151,6 +167,8 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE)
 	@Post('/')
 	async create(
 		@Body() entity: IEmployeeAppointmentCreateInput,
@@ -180,11 +198,82 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
 	@Put('/:id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: IEmployeeAppointmentUpdateInput
 	): Promise<IEmployeeAppointment> {
 		return await this.commandBus.execute(new EmployeeAppointmentUpdateCommand(id, entity));
+	}
+
+	/**
+	 * DELETE employee appointment by id
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach the permission gate:
+	 * `PermissionGuard` authorizes any route that carries no `@Permissions` metadata, so an inherited handler is
+	 * reachable by every member of the tenant until it is gated here (GHSA-v79w-54p2-wmh5).
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'The record has been successfully deleted'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * SOFT DELETE employee appointment by id
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate: the edit grant
+	 * `update` states, as owner decision 5 (2026-10-13) has the soft-delete/recover pair require.
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record soft deleted successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<EmployeeAppointment> {
+		return super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted employee appointment by id
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate: the edit grant
+	 * `update` states, as owner decision 5 (2026-10-13) has the soft-delete/recover pair require.
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record restored successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<EmployeeAppointment> {
+		return super.softRecover(id, ...options);
 	}
 }

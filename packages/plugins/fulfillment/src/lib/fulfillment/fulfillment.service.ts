@@ -26,17 +26,18 @@ import {
 	IVersionedWriter,
 	MultiORMEnum,
 	RequestContext,
-	TenantAwareCrudService,
+	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	compareDecimalStrings,
 	subtractDecimalStrings
 } from '@gauzy/core';
-import { OrderLine, OrderLineService, OrderTotalsService } from '@gauzy/plugin-order';
+import { OrderLine, OrderLineService, OrderService, OrderTotalsService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { FULFILLMENT_REFERENCES } from '../fulfillment.references';
 import { isCountedShipment, removalCriteria } from '../fulfillment.removal';
 import {
 	Quantity,
@@ -53,6 +54,7 @@ import {
 	FULFILLMENT_LABEL_PROVIDER,
 	IFulfillmentLabelProviderPort
 } from '../fulfillment.types';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * The transitions the fulfilment lifecycle allows, and nothing else.
@@ -161,6 +163,26 @@ function cancelationIsolationOf(manager: EntityManager): 'READ COMMITTED' | unde
 }
 
 /**
+ * The refusal of a shipment of more than the order line still has to ship.
+ *
+ * Both figures are reported as the digits the comparison was made on. Rendering the remainder through `Number`
+ * would print a value that differs from the one the guard refused it against, which is the least helpful thing a
+ * refusal about a boundary can do.
+ *
+ * @param orderLineId The order line.
+ * @param requested The quantity asked for, as decimal text.
+ * @param outstanding What the order line still has to ship, as decimal text.
+ * @returns The `FULFILLMENT_QUANTITY_EXCEEDED` refusal.
+ */
+function quantityExceeded(orderLineId: ID, requested: string, outstanding: string): BadRequestException {
+	return new BadRequestException({
+		message: 'The shipment would exceed what the order line still has to ship.',
+		code: 'FULFILLMENT_QUANTITY_EXCEEDED',
+		details: { orderLineId, requested, outstanding }
+	});
+}
+
+/**
  * Whether an error is the concurrency kernel's refusal of a write predicated on a version that moved on.
  *
  * @param error What a conditional write threw.
@@ -262,7 +284,7 @@ type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
  * the columns and the version move in one statement.
  */
 @Injectable()
-export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
+export class FulfillmentService extends FulfillmentCrudService<Fulfillment> {
 	/** Where a re-derivation that could not run is reported, since the caller is not told of it. */
 	private readonly logger = new Logger(FulfillmentService.name);
 
@@ -280,9 +302,32 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		private readonly orderTotals: OrderTotalsService,
 		@Optional()
 		@Inject(FULFILLMENT_LABEL_PROVIDER)
-		private readonly labelProvider?: IFulfillmentLabelProviderPort
+		private readonly labelProvider?: IFulfillmentLabelProviderPort,
+		/**
+		 * The order's completion rule (Q7-W1b): an order whose money was settled before its goods shipped
+		 * completes when the last of them is accounted for here. Optional and last, so a suite that builds
+		 * this service by position is unchanged.
+		 */
+		@Optional()
+		private readonly orderService?: OrderService
 	) {
 		super(typeOrmFulfillmentRepository, mikroOrmFulfillmentRepository);
+	}
+
+	/**
+	 * Refuses a shipment, or a change to one, naming an order or a location of another tenant
+	 * (`fulfillment.references.ts`).
+	 *
+	 * @param payload The shipment, or the change set, about to be written.
+	 * @throws ForbiddenException when a reference names a row of another tenant.
+	 */
+	private async assertReferences(payload: unknown): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmFulfillmentRepository.manager,
+			payload,
+			FULFILLMENT_REFERENCES,
+			RequestContext.currentTenantId()
+		);
 	}
 
 	/**
@@ -344,15 +389,34 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			await this.assertQuantityAvailable(line.orderLineId as ID, line.quantity as Quantity, direction);
 		}
 
+		// What the shipment and its lines name has to be the caller's tenant's (P0 #6c). Checked before the shipment is
+		// written: the writes below are separate statements, so a line refused after the header would leave a shipment
+		// without it.
+		await this.assertReferences(entity);
+		await this.lineService.assertReferences(lines);
+
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a shipment created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads and the organization-scoped fulfilment subscriptions never found it again (review
+		// R2-G37, the R2-23 class). The caller's organization is stamped when the input states none; an organization the
+		// request stated is kept (REST validates it against the caller).
+		// Its lines are the shipment's own rows, so they carry the shipment's organization.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
 		const fulfillment = await super.create({
 			...entity,
+			organizationId,
 			direction,
 			status: FulfillmentStatusDetail.PENDING,
 			version: 1
 		} as DeepPartial<Fulfillment>);
 
 		for (const line of lines) {
-			await this.lineService.create({ ...line, fulfillmentId: fulfillment.id } as DeepPartial<FulfillmentLine>);
+			await this.lineService.create({
+				...line,
+				organizationId: line.organizationId ?? fulfillment.organizationId ?? undefined,
+				fulfillmentId: fulfillment.id
+			} as DeepPartial<FulfillmentLine>);
 
 			if (direction !== FulfillmentDirection.RETURN) {
 				await this.bumpOrderLineCounters(line.orderLineId as ID, line.quantity as Quantity, 'FULFILLED');
@@ -378,6 +442,230 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * Appends a line to a shipment that has not left yet.
+	 *
+	 * The operation behind `POST /fulfillments/:id/lines`, `addFulfillmentLine` and the standalone
+	 * `POST /fulfillment-lines` (review R2-G40): a shipment's lines used to be stated only when it was created, and
+	 * the standalone route used to write a row without the shipment's rules — it moved no order-line counter and
+	 * read neither the shipment's status nor what the order line still had to ship. Appending applies exactly what
+	 * `create` applies to each of its lines, in the same order:
+	 *
+	 * - the shipment is still `PENDING` (a shipped, delivered or cancelled one is refused with
+	 *   `FULFILLMENT_NOT_PENDING`), and the order line is one of the shipment's own order (`FULFILLMENT_LINE_ORDER_MISMATCH`);
+	 * - the quantity is positive and, outbound, within what the order line still has to ship
+	 *   (`FULFILLMENT_QUANTITY_EXCEEDED`); the references are the caller's tenant's; the order line is not already
+	 *   in this shipment (`FULFILLMENT_LINE_DUPLICATE`, the line service's own rule);
+	 * - the shipment's version moves while it is still `PENDING`, in one conditional statement, so a ship or a
+	 *   cancel that won the race is answered with the version conflict rather than gaining a line after it left;
+	 *   a caller that read the shipment may state the version it read;
+	 * - outbound, the order line's `fulfilledQuantity` moves by the line and the order's derived fulfilment state
+	 *   is re-derived; a return-direction shipment moves no counter, as on `create`.
+	 *
+	 * The line carries the shipment's tenant and organization, and only the members a line states — the order line,
+	 * the quantity, the location and the payload — are taken from the caller.
+	 *
+	 * **On TypeORM the claim, the line and the counter are one transaction** (`appendInTransaction`), so a ship of the
+	 * same shipment cannot slip between the claim and the line, and two appends of one order line cannot both pass its
+	 * remainder. On MikroORM the statements run one after the other, as `create` writes its lines.
+	 *
+	 * @param fulfillmentId The shipment.
+	 * @param line The line to append.
+	 * @param expectation The version the caller read the shipment at, when it stated one.
+	 * @returns The shipment, with its lines.
+	 */
+	public async addLine(
+		fulfillmentId: ID,
+		line: DeepPartial<FulfillmentLine>,
+		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
+	): Promise<Fulfillment> {
+		const fulfillment = await this.findOneByIdString(fulfillmentId);
+
+		if (fulfillment.status !== FulfillmentStatusDetail.PENDING) {
+			throw new ConflictException({
+				message: `FULFILLMENT_NOT_PENDING: fulfillment '${fulfillmentId}' is ${fulfillment.status}; a line is appended only to a shipment that has not left.`,
+				code: 'FULFILLMENT_NOT_PENDING',
+				details: { fulfillmentId, status: fulfillment.status }
+			});
+		}
+
+		// Only what a line states is taken from the caller (CodeRabbit): an `id` handed on to the write would make it an
+		// upsert of a line that already exists, and the shipment, the tenant and the organization are the shipment's.
+		const appended: DeepPartial<FulfillmentLine> = {
+			orderLineId: line?.orderLineId,
+			quantity: line?.quantity,
+			...(line?.warehouseId !== undefined ? { warehouseId: line.warehouseId } : {}),
+			...(line?.metadata !== undefined ? { metadata: line.metadata } : {})
+		};
+		const orderLineId = appended.orderLineId as ID;
+
+		if (!orderLineId) {
+			throw new BadRequestException(
+				'FULFILLMENT_LINE_ORDER_LINE_REQUIRED: a line names the order line it ships.'
+			);
+		}
+
+		const direction = fulfillment.direction ?? FulfillmentDirection.OUTBOUND;
+
+		await this.assertQuantityAvailable(orderLineId, appended.quantity as Quantity, direction);
+
+		const orderLine: IOrderLine = await this.orderLineService.findOneByIdString(orderLineId);
+
+		if (!orderLine || orderLine.orderId !== fulfillment.orderId) {
+			throw new BadRequestException({
+				message: `FULFILLMENT_LINE_ORDER_MISMATCH: order line '${orderLineId}' is not a line of order '${fulfillment.orderId}', which fulfillment '${fulfillmentId}' ships.`,
+				code: 'FULFILLMENT_LINE_ORDER_MISMATCH',
+				details: { fulfillmentId, orderLineId, orderId: fulfillment.orderId }
+			});
+		}
+
+		await this.lineService.assertReferences([appended]);
+
+		if (this.ormType === MultiORMEnum.TypeORM) {
+			const entityManager = this.typeOrmFulfillmentRepository.manager;
+			const work = (manager: EntityManager) =>
+				this.appendInTransaction(fulfillment, appended, direction, expectation, manager);
+			// The isolation the cancelation asks for, for the same reason: on MySQL the order line is read again
+			// under its lock, and that read must see what a transaction that held the lock before committed.
+			const isolation = cancelationIsolationOf(entityManager);
+
+			if (isolation) {
+				await entityManager.transaction(isolation, work);
+			} else {
+				await entityManager.transaction(work);
+			}
+		} else {
+			// The shipment is claimed while it is still PENDING: the version moves in one statement conditioned on the
+			// status, so a ship or a cancel that committed between the read above and this write is answered with the
+			// version conflict instead of the line joining a shipment that already left.
+			await commitVersionedUpdate<Fulfillment>(this, {
+				id: fulfillment.id,
+				expectation,
+				patch: {},
+				where: {
+					status: FulfillmentStatusDetail.PENDING,
+					...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+					...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+				}
+			});
+
+			await this.lineService.create({
+				...appended,
+				organizationId: fulfillment.organizationId ?? undefined,
+				fulfillmentId: fulfillment.id
+			} as DeepPartial<FulfillmentLine>);
+
+			if (direction !== FulfillmentDirection.RETURN) {
+				await this.bumpOrderLineCounters(orderLineId, appended.quantity as Quantity, 'FULFILLED');
+			}
+		}
+
+		// After the line committed, as on `create`: a re-derivation that could not run is logged and left to the nightly
+		// reconciliation rather than answered as the failure of a line that exists.
+		if (direction !== FulfillmentDirection.RETURN) {
+			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
+		}
+
+		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
+	}
+
+	/**
+	 * The append of a line, every statement on one TypeORM transaction (Greptile and CodeRabbit on #10913).
+	 *
+	 * Written as separate statements, the append had two races. The shipment's claim committed before the line was
+	 * written, so a ship that read the claimed version in between moved the shipment and counted its lines without the
+	 * one still being appended, which then joined a shipment that had left and never moved `shippedQuantity`. And the
+	 * order line's remainder was read and its counter moved by statements of their own, so two appends of one order
+	 * line to different shipments could both pass the check and ship more than was ordered.
+	 *
+	 * Here the shipment is claimed under its row lock (`transactionWriter`) and stays locked until the line and the
+	 * counter are written: a ship of it waits, then meets the moved version and is answered with the conflict. The
+	 * order line is locked before its remainder is read again, so a second append of it waits for the first and is
+	 * measured against what the first left. The line is written on the transaction too — written through the line
+	 * service's own repository it would be another pooled connection, waiting on the shipment row this one holds.
+	 * The locks are taken in the cancelation's order: the shipment, then its order line. Any failure rolls every
+	 * statement back.
+	 *
+	 * @param fulfillment The shipment, as read.
+	 * @param line The line to append: the members the caller may state.
+	 * @param direction Which way the shipment's goods travel.
+	 * @param expectation The version the caller read the shipment at.
+	 * @param manager The transaction.
+	 */
+	private async appendInTransaction(
+		fulfillment: Fulfillment,
+		line: DeepPartial<FulfillmentLine>,
+		direction: FulfillmentDirection,
+		expectation: IVersionExpectation,
+		manager: EntityManager
+	): Promise<void> {
+		await commitVersionedUpdate<Fulfillment>(this.transactionWriter(manager), {
+			id: fulfillment.id,
+			expectation,
+			patch: {},
+			where: {
+				status: FulfillmentStatusDetail.PENDING,
+				...(fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {}),
+				...(fulfillment.organizationId ? { organizationId: fulfillment.organizationId } : {})
+			}
+		});
+
+		const orderLineId = line.orderLineId as ID;
+		const lines = manager.getRepository(FulfillmentLine);
+		const scope = fulfillment.tenantId ? { tenantId: fulfillment.tenantId } : {};
+
+		// The line service's own rule, read on the transaction that writes the line.
+		const duplicate = await lines.findOne({
+			where: { ...scope, fulfillmentId: fulfillment.id, orderLineId }
+		} as never);
+
+		if (duplicate) {
+			throw new BadRequestException({
+				message:
+					'This order line is already in this fulfilment; a further partial shipment is a second fulfilment.',
+				code: 'FULFILLMENT_LINE_DUPLICATE',
+				details: { orderLineId, fulfillmentId: fulfillment.id }
+			});
+		}
+
+		if (direction !== FulfillmentDirection.RETURN) {
+			const tenantId = RequestContext.currentTenantId();
+			const orderLine = (await manager.getRepository(OrderLine).findOne({
+				where: { id: orderLineId, ...(tenantId ? { tenantId } : {}) },
+				...rowLockOf(manager)
+			} as never)) as IOrderLine | null;
+
+			if (!orderLine) {
+				throw new NotFoundException(`ORDER_LINE_NOT_FOUND: no order line exists with id ${orderLineId}.`);
+			}
+
+			const requested = toQuantityText(line.quantity as Quantity);
+			const outstanding = remainingQuantity(
+				orderLine.quantity,
+				orderLine.writtenOffQuantity,
+				orderLine.returnDismissedQuantity,
+				orderLine.fulfilledQuantity
+			);
+
+			if (compareDecimalStrings(requested, outstanding) > 0) {
+				throw quantityExceeded(orderLineId, requested, outstanding);
+			}
+		}
+
+		await lines.save(
+			lines.create({
+				...line,
+				...scope,
+				organizationId: fulfillment.organizationId ?? undefined,
+				fulfillmentId: fulfillment.id
+			} as DeepPartial<FulfillmentLine>)
+		);
+
+		if (direction !== FulfillmentDirection.RETURN) {
+			await this.bumpOrderLineCounters(orderLineId, line.quantity as Quantity, 'FULFILLED', manager);
+		}
 	}
 
 	/**
@@ -423,6 +711,8 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				'FULFILLMENT_ORDER_REQUIRED: a return leg is raised against the order its goods came from.'
 			);
 		}
+
+		await this.assertReferences(entity);
 
 		const leg = await super.create({
 			...entity,
@@ -781,6 +1071,8 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				}
 			}
 		}
+
+		await this.assertReferences(partialEntity);
 
 		return super.update(id, partialEntity);
 	}
@@ -1195,14 +1487,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		// Compared as decimals rather than as numbers, so that a request for exactly the remainder is
 		// accepted even when the remainder has no exact binary representation.
 		if (compareDecimalStrings(requested, outstanding) > 0) {
-			throw new BadRequestException({
-				message: 'The shipment would exceed what the order line still has to ship.',
-				code: 'FULFILLMENT_QUANTITY_EXCEEDED',
-				// Both figures are reported as the digits the comparison was made on. Rendering the
-				// remainder through `Number` would print a value that differs from the one the guard
-				// refused it against, which is the least helpful thing a refusal about a boundary can do.
-				details: { orderLineId, requested, outstanding }
-			});
+			throw quantityExceeded(orderLineId, requested, outstanding);
 		}
 	}
 
@@ -1363,6 +1648,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
 			try {
 				await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
+				await this.completeOrderIfSettled(orderId);
 
 				return;
 			} catch (error) {
@@ -1373,6 +1659,40 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 				this.logger.warn(
 					`The fulfilment state of order ${orderId} could not be re-derived after ${attempt} attempt(s), ` +
 						`and is left to the nightly reconciliation: ${error instanceof Error ? error.message : String(error)}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Gives the order its chance to complete once its goods are accounted for (Q7-W1b).
+	 *
+	 * An order paid before it shipped stayed open: completion was asked only when money moved, and the
+	 * goods were still out then. The order's own rule decides — nothing left to ship, nothing outstanding,
+	 * no change open — and a completion that fails is logged, never the shipment's failure.
+	 *
+	 * @param orderId The order.
+	 */
+	private async completeOrderIfSettled(orderId: ID): Promise<void> {
+		// A completion is a versioned write that a concurrent re-derivation of the same order can overtake;
+		// it reads the order afresh on every attempt, so a lost race is retried like the recompute above
+		// (CodeRabbit on #10890).
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderService?.completeIfSettled(orderId);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`Order ${orderId} could not be completed after its goods were accounted for: ${
+						error instanceof Error ? error.message : String(error)
+					}`
 				);
 
 				return;

@@ -300,6 +300,11 @@ class ScopeRowService extends TenantAwareCrudService<any> {
 	constructor(typeOrmRepository: unknown, mikroOrmRepository: unknown) {
 		super(typeOrmRepository as any, mikroOrmRepository as any);
 	}
+
+	/** The tenant and employee scoping alone: the organization boundary has its own spec. */
+	protected override appliesOrganizationBoundary(): boolean {
+		return false;
+	}
 }
 
 /** One ORM's store: a service over it, and a reader of the stored rows that bypasses the service. */
@@ -548,6 +553,41 @@ describe.each([
 		await expect(service.findOneByIdString(OWN_OTHER_EMPLOYEE)).rejects.toThrow(NotFoundException);
 	});
 
+	it('keeps the caller’s tenant and employee over a conditions-only read that names others', async () => {
+		caller.employeeId = EMPLOYEE_1;
+		caller.mayChangeEmployee = false;
+
+		// The criteria name another tenant's row and another employee's; the caller's scope replaces both.
+		await expect(service.countBy({ name: 'shared', tenantId: TENANT_B } as any)).resolves.toBe(1);
+		await expect(
+			service.findOneByWhereOptions({ name: 'shared', tenantId: TENANT_B } as any)
+		).resolves.toMatchObject({ id: OWN });
+		expect(
+			(await service.findOneOrFailByWhereOptions({ id: OWN_OTHER_EMPLOYEE, employeeId: EMPLOYEE_2 } as any))
+				.success
+		).toBe(false);
+	});
+
+	it('runs a conditions-only read with the stated conditions when no user is in context (#10666)', async () => {
+		// A public route or a background job: accepting a client invite looks up the new tenant's role this way.
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(null);
+		caller.employeeId = null;
+		caller.mayChangeEmployee = false;
+
+		// The stated tenant decides, whichever tenant it is.
+		await expect(service.countBy({ name: 'shared', tenantId: TENANT_B } as any)).resolves.toBe(1);
+		await expect(
+			service.findOneByWhereOptions({ name: 'shared', tenantId: TENANT_B } as any)
+		).resolves.toMatchObject({ id: FOREIGN });
+		const found = await service.findOneOrFailByWhereOptions({ id: OWN_OTHER_EMPLOYEE, tenantId: TENANT_A } as any);
+		expect(found).toMatchObject({ success: true, record: { id: OWN_OTHER_EMPLOYEE } });
+
+		// Nothing is added to what the caller states, and nothing of it is dropped.
+		await expect(service.countBy({ name: 'shared' } as any)).resolves.toBe(2);
+		await expect(service.countBy({ name: 'shared', tenantId: TENANT_A } as any)).resolves.toBe(1);
+		expect((await service.findOneOrFailByWhereOptions({ id: OWN, tenantId: TENANT_B } as any)).success).toBe(false);
+	});
+
 	/*
 	|--------------------------------------------------------------------------
 	| Updates
@@ -590,6 +630,41 @@ describe.each([
 		)) as any;
 		expect(result.affected).toBe(0);
 		expect((await harness.stored(SIBLING)).name).toBe('sibling');
+	});
+
+	it('keeps the row in the caller’s tenant when the payload names another tenant (SEC-A-03)', async () => {
+		// The failure scenario: the criteria were scoped, the payload was written as given — a `PUT` with
+		// `{"tenantId": "<B>"}` moved the caller's own row (a tenant setting, a bin, a notification) into tenant B.
+		await service.update(OWN, { name: 'renamed', tenantId: TENANT_B } as any);
+
+		const stored = await harness.stored(OWN);
+		expect(stored.tenantId).toBe(TENANT_A);
+		// The rest of the payload is still written: only the scope column is the caller's to keep.
+		expect(stored.name).toBe('renamed');
+	});
+
+	it('keeps the row in the caller’s tenant on a criteria update too (SEC-A-03)', async () => {
+		await service.update({ id: OWN, version: 1 } as any, { tenantId: TENANT_B } as any);
+
+		expect((await harness.stored(OWN)).tenantId).toBe(TENANT_A);
+	});
+
+	it('keeps a caller who may not act for other employees on their own employee’s rows (SEC-A-03)', async () => {
+		caller.employeeId = EMPLOYEE_1;
+		caller.mayChangeEmployee = false;
+
+		await service.update(OWN, { name: 'renamed', employeeId: EMPLOYEE_2 } as any);
+
+		const stored = await harness.stored(OWN);
+		expect(stored.employeeId).toBe(EMPLOYEE_1);
+		expect(stored.name).toBe('renamed');
+	});
+
+	it('still lets a caller who may act for other employees reassign a row', async () => {
+		// Control: CHANGE_SELECTED_EMPLOYEE is what makes the employee column the caller's to write.
+		await service.update(OWN, { employeeId: EMPLOYEE_2 } as any);
+
+		expect((await harness.stored(OWN)).employeeId).toBe(EMPLOYEE_2);
 	});
 
 	/*

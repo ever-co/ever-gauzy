@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, EntityManager, FindOptionsWhere, In, IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
+import { Money, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
 import { currentScope } from '../subscription.scope';
 import { normalizeDecimal } from '../subscription.cycle';
@@ -9,6 +9,7 @@ import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription
 import { SubscriptionBilling } from './subscription-billing.entity';
 import { MikroOrmSubscriptionBillingRepository } from './repository/mikro-orm-subscription-billing.repository';
 import { TypeOrmSubscriptionBillingRepository } from './repository/type-orm-subscription-billing.repository';
+import { SubscriptionCrudService } from '../subscription-crud.service';
 
 /**
  * The members of a cycle a correction may move (review R4-08): the members the GraphQL
@@ -31,6 +32,30 @@ const WAIVABLE_FROM: readonly SubscriptionBillingStatus[] = [
 	SubscriptionBillingStatus.PENDING,
 	SubscriptionBillingStatus.FAILED
 ];
+
+/**
+ * The metadata keys an invoiced cycle holds its rights back under until it is paid (R4-05, interim).
+ *
+ * `RIGHTS_DEFERRED` marks a cycle whose `subscription.renewed` waits for its payment; `ACTIVATION_DEFERRED` marks
+ * the one that also converted a trial, whose `subscription.activated` waits too; `RIGHTS_RELEASED_AT` records
+ * when the payment released them. Only flags are kept — the events are rebuilt from the cycle's own row when it
+ * is paid — so a correction that writes `metadata` cannot make a payment extend a right past the cycle's period.
+ */
+export const RIGHTS_DEFERRED = 'rightsDeferred';
+export const ACTIVATION_DEFERRED = 'activationDeferred';
+export const RIGHTS_RELEASED_AT = 'rightsReleasedAt';
+/** Why a paid cycle's rights were not put in force: the subscription's status when it was paid (R4-05). */
+export const RIGHTS_WITHHELD_FOR = 'rightsWithheldFor';
+/**
+ * The metadata key an invoiced cycle holds the subscription's calendar back under until it is paid (Q7-W4).
+ *
+ * A cycle invoiced with it set left the subscription on the period before it: its payment is what moves the
+ * calendar onto the cycle's period (`SubscriptionService.payCycle`). A cycle invoiced without it — by a build
+ * that rolled the calendar on the invoice — moves nothing when it is paid, because the subscription is already
+ * on its period. `CALENDAR_SETTLED_AT` records when the payment moved it.
+ */
+export const CALENDAR_DEFERRED = 'calendarDeferred';
+export const CALENDAR_SETTLED_AT = 'calendarSettledAt';
 
 /** The refusal of a settling action from a status it may not start from. */
 function invalidTransition(
@@ -78,7 +103,7 @@ function recordsBilledMoney(billing: SubscriptionBilling): boolean {
  * disagree about how many times a customer was charged.
  */
 @Injectable()
-export class SubscriptionBillingService extends TenantAwareCrudService<SubscriptionBilling> {
+export class SubscriptionBillingService extends SubscriptionCrudService<SubscriptionBilling> {
 	constructor(
 		readonly typeOrmSubscriptionBillingRepository: TypeOrmSubscriptionBillingRepository,
 		readonly mikroOrmSubscriptionBillingRepository: MikroOrmSubscriptionBillingRepository
@@ -151,19 +176,40 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 	/**
 	 * Records that a cycle produced an order.
 	 *
+	 * **The rights it holds back are recorded in the same statement (R4-05).** An invoiced cycle has an order
+	 * and no money, so the rights of its period wait for its payment; writing the flags with the status means
+	 * no payment can ever see the cycle `INVOICED` without them, which a second write after this one allowed.
+	 *
 	 * @param id The cycle.
 	 * @param orderId The order it produced.
 	 * @param amount The amount actually billed, when it differs from the opened one.
+	 * @param deferred The rights the cycle holds back until it is paid, and whether they include the activation
+	 * of the trial it converts.
 	 * @returns The updated cycle.
 	 */
-	public async markInvoiced(id: ID, orderId: ID, amount?: DecimalString): Promise<SubscriptionBilling> {
+	public async markInvoiced(
+		id: ID,
+		orderId: ID,
+		amount?: DecimalString,
+		deferred?: { activation: boolean; calendar?: boolean }
+	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 
 		await super.update(id, {
 			orderId,
 			status: SubscriptionBillingStatus.INVOICED,
 			amount: amount ? this.normalizeAmount(amount, billing.currency) : billing.amount,
-			lastError: null
+			lastError: null,
+			...(deferred
+				? {
+						metadata: {
+							...(billing.metadata ?? {}),
+							[RIGHTS_DEFERRED]: true,
+							...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {}),
+							...(deferred.calendar ? { [CALENDAR_DEFERRED]: true } : {})
+						}
+				  }
+				: {})
 		} as any);
 
 		return await this.findOneScoped(id);
@@ -210,6 +256,99 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			nextRetryAt: null,
 			lastError: null
 		} as any);
+
+		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Whether a cycle still holds the rights of its period back (R4-05).
+	 *
+	 * The flags are written by `markInvoiced` and cleared by `releaseDeferredRights` alone.
+	 *
+	 * @param billing The cycle.
+	 * @returns True when its `subscription.renewed` waits for its payment.
+	 */
+	public holdsDeferredRights(billing: SubscriptionBilling): boolean {
+		return billing?.metadata?.[RIGHTS_DEFERRED] === true;
+	}
+
+	/**
+	 * Whether a cycle that holds its rights back also holds back the activation of the trial it converted.
+	 *
+	 * @param billing The cycle.
+	 * @returns True when its `subscription.activated` waits for its payment.
+	 */
+	public holdsDeferredActivation(billing: SubscriptionBilling): boolean {
+		return this.holdsDeferredRights(billing) && billing?.metadata?.[ACTIVATION_DEFERRED] === true;
+	}
+
+	/**
+	 * Whether a cycle ever held rights back, released or not: a cycle invoiced unpaid whose payment came later.
+	 *
+	 * @param billing The cycle.
+	 * @returns True when the cycle's rights were, or still are, waiting for its payment.
+	 */
+	public heldRights(billing: SubscriptionBilling): boolean {
+		return this.holdsDeferredRights(billing) || typeof billing?.metadata?.[RIGHTS_RELEASED_AT] === 'string';
+	}
+
+	/**
+	 * Whether a cycle still holds the subscription's calendar back until it is paid (Q7-W4).
+	 *
+	 * @param billing The cycle.
+	 * @returns True when its payment is what moves the subscription onto its period.
+	 */
+	public holdsDeferredCalendar(billing: SubscriptionBilling): boolean {
+		return billing?.metadata?.[CALENDAR_DEFERRED] === true;
+	}
+
+	/**
+	 * Records that a cycle's payment settled the calendar it held back, so it is never moved twice (Q7-W4).
+	 *
+	 * The row is read again right before the write, and a cycle that no longer holds the calendar is left as it
+	 * is: of two payments racing, the second reaches here after the first has cleared the flag and writes nothing
+	 * over the metadata the first one (and the rights release after it) wrote.
+	 *
+	 * @param id The cycle.
+	 * @returns The updated cycle.
+	 */
+	public async releaseDeferredCalendar(id: ID): Promise<SubscriptionBilling> {
+		const billing = await this.findOneScoped(id);
+
+		if (!this.holdsDeferredCalendar(billing)) {
+			return billing;
+		}
+
+		const metadata: Record<string, unknown> = { ...(billing.metadata ?? {}) };
+
+		delete metadata[CALENDAR_DEFERRED];
+		metadata[CALENDAR_SETTLED_AT] = new Date().toISOString();
+
+		await super.update(id, { metadata } as any);
+
+		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Records that a cycle's payment released the rights it held back, so they are never released twice.
+	 *
+	 * @param id The cycle.
+	 * @param options Why the rights were withheld instead, when the subscription had ended by the payment.
+	 * @returns The updated cycle.
+	 */
+	public async releaseDeferredRights(id: ID, options: { withheldFor?: string } = {}): Promise<SubscriptionBilling> {
+		const billing = await this.findOneScoped(id);
+		const metadata: Record<string, unknown> = { ...(billing.metadata ?? {}) };
+
+		delete metadata[RIGHTS_DEFERRED];
+		delete metadata[ACTIVATION_DEFERRED];
+		metadata[RIGHTS_RELEASED_AT] = new Date().toISOString();
+
+		if (options.withheldFor) {
+			metadata[RIGHTS_WITHHELD_FOR] = options.withheldFor;
+		}
+
+		await super.update(id, { metadata } as any);
 
 		return await this.findOneScoped(id);
 	}
@@ -367,6 +506,27 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 			where: {
 				subscriptionId,
 				periodStart,
+				...currentScope()
+			}
+		});
+	}
+
+	/**
+	 * Reads the open invoices of a set of subscriptions: the cycles a billing pass checks its candidates against, so a
+	 * subscription whose calendar waits on one is not selected (Q7-W4, `SubscriptionService.findDue`).
+	 *
+	 * @param subscriptionIds The subscriptions.
+	 * @returns Their `INVOICED` cycles.
+	 */
+	public async findInvoicedFor(subscriptionIds: ID[]): Promise<SubscriptionBilling[]> {
+		if (!subscriptionIds.length) {
+			return [];
+		}
+
+		return await this.typeOrmSubscriptionBillingRepository.find({
+			where: {
+				subscriptionId: In(subscriptionIds),
+				status: SubscriptionBillingStatus.INVOICED,
 				...currentScope()
 			}
 		});

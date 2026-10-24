@@ -841,6 +841,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"INITIATIVES": "יוזמות",
 		"BREADCRUMB": "נתיב ניווט",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
@@ -1216,7 +1217,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "ממשק",
 			"TITLE": "ממשק משתמש",
-			"DESCRIPTION": "בחרו באיזה ממשק ישתמשו כל המשתמשים בדייר זה עבור דפים הזמינים בשתי הגרסאות.",
+			"DESCRIPTION": "בחרו באיזה ממשק ישתמשו כל המשתמשים בדייר זה עבור דפים הזמינים בשתי הגרסאות. שני הממשקים מציגים את אותם דפים, עם אותם נתונים, פריסה ותכונות — רק הטכנולוגיה שמאחוריהם שונה, ולכן המעבר אינו משנה את מה שהמשתמשים רואים או יכולים לעשות.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (ברירת מחדל)",
 				"REACT": "React (חדש)"
@@ -1993,6 +1994,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "סוג",
+		"KIND_ALL": "הכול",
+		"KIND_HUMAN": "אנשים",
+		"KIND_AGENT": "סוכנים",
+		"AGENT_BADGE": "סוכן",
+		"MANAGED_BY_EVER_WORKS": "מנוהל על ידי Ever Works: השם והפרופיל של סוכן זה משתנים ב-Ever Works ומסונכרנים ל-Gauzy.",
+		"MANAGED_EXTERNALLY": "מנוהל חיצונית: השם והפרופיל של סוכן זה משתנים במערכת שממנה הוא מגיע ומסונכרנים ל-Gauzy.",
+		"OPEN_MANAGED_AGENT": "פתח את דף הסוכן",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"ACTIVE": "פעיל",
@@ -2130,7 +2139,68 @@
 				"IN_DAYS": "בעוד {{ count }} ימים"
 			},
 			"SHOWING": "מוצגות {{ shown }} מתוך {{ total }} משימות",
-			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו"
+			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו",
+			"PROJECTS_CAPTION": "הפרויקטים והזמן שהושקע בכל אחד בתקופה זו",
+			"NO_PROJECTS": "אינו חבר באף פרויקט, ואין זמן בפרויקטים בתקופה זו",
+			"NOT_A_MEMBER": "לא חבר",
+			"NOT_A_MEMBER_HINT": "נרשם זמן בפרויקט זה, אך הוא אינו חבר בו",
+			"VIEW_PROFILE": "הצג פרופיל",
+			"MEMBERSHIP_UNKNOWN": "לא ניתן היה לטעון את החברות בפרויקטים, ולכן אין הבחנה בין חברים ללא-חברים.",
+			"PROJECT_TIMES_PARTIAL": "לא ניתן היה לטעון חלק מזמני הפרויקטים, ולכן לפרויקט ללא זמן עשוי בכל זאת להיות זמן."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "יוזמות אסטרטגיות",
+		"SUBTITLE": "הכיוונים שהארגון שלך החליט להתקדם בהם, והיעדים, הפרויקטים והצוותים המיושרים אליהם.",
+		"ADD": "הוספת יוזמה",
+		"EDIT": "עריכת יוזמה",
+		"EMPTY": "אין עדיין יוזמות אסטרטגיות.",
+		"TITLE": "כותרת",
+		"STATE": "מצב",
+		"VISIBILITY": "נראות",
+		"TEAMS": "צוותים",
+		"TEAMS_HINT": "בנראות \"צוות\", חברי הצוותים האלה (וצוותי הפרויקטים המיושרים) יכולים לראות את היוזמה.",
+		"PROJECTS": "פרויקטים",
+		"GOALS": "יעדים",
+		"CONFIDENCE": "ביטחון",
+		"MOMENTUM": "תנופה",
+		"INTENT": "כוונה",
+		"INTENT_HINT": "מה אנחנו רוצים לקדם במכוון, ולמה?",
+		"STEWARD": "אחראי",
+		"SIGNALS": "אותות",
+		"KNOWN_RISKS": "סיכונים ידועים",
+		"KNOWN_RISKS_HINT": "סיכון אחד בכל שורה",
+		"NOTES": "הערות",
+		"LAST_ASSESSED": "הערכה אחרונה",
+		"NO_TEAMS": "אין צוותים מקושרים.",
+		"NO_GOALS": "אין יעדים מיושרים.",
+		"NO_PROJECTS": "אין פרויקטים מיושרים.",
+		"NOT_FOUND": "היוזמה לא נמצאה או שאין לך הרשאה לראות אותה.",
+		"DELETE_TITLE": "מחיקת יוזמה",
+		"DELETE_CONFIRMATION": "למחוק את היוזמה \"{{ name }}\"?",
+		"DELETED": "היוזמה \"{{ name }}\" נמחקה.",
+		"CREATED": "היוזמה \"{{ name }}\" נוצרה.",
+		"UPDATED": "היוזמה \"{{ name }}\" עודכנה.",
+		"STATES": {
+			"DRAFT": "טיוטה",
+			"ACTIVE": "פעילה",
+			"RESOLVED": "הושגה",
+			"RETIRED": "הופסקה"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "הנהלה",
+			"ORGANIZATION": "ארגון",
+			"TEAM": "צוות"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "נמוך",
+			"MEDIUM": "בינוני",
+			"HIGH": "גבוה"
+		},
+		"MOMENTUMS": {
+			"STALLED": "תקועה",
+			"PROGRESSING": "מתקדמת",
+			"ACCELERATING": "מאיצה"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2149,6 +2219,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "השב",
+			"ONE_MESSAGE": "הודעה אחת",
+			"MESSAGES": "{{ count }} הודעות",
+			"NO_MESSAGES": "אין עדיין הודעות בשרשור זה.",
+			"REPLY_PLACEHOLDER": "השב לתגובה זו…",
+			"UNKNOWN_AUTHOR": "לא ידוע",
+			"DELETE_CONFIRM": "למחוק את התגובה הזו?",
+			"DELETED": "התגובה נמחקה",
+			"LOAD_ERROR": "לא ניתן היה לטעון את התגובות."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2196,6 +2277,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "אין עדיין תגובות.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
@@ -2698,7 +2780,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "פרטים"
+					},
+					"PUBLIC": "ציבורי",
+					"PRIVATE": "פרטי",
+					"PREFIX": "קידומת משימות",
+					"MEMBERS_COUNT": "{{ count }} חברים",
+					"LIVE": "{{ tracking }} עוקבים כעת · {{ online }} מחוברים",
+					"OF_MEMBERS": "{{ count }} מתוך {{ total }} חברים",
+					"CREATED": "נוצר",
+					"UPDATED": "עודכן לאחרונה",
+					"ACTIVE_MEMBERS": "חברים פעילים",
+					"ACTIVE_MEMBERS_META": "מתוך {{ total }} חברים רשמו זמן",
+					"TIME_BY_MEMBER": "זמן לפי חבר",
+					"TEAM_TASKS": "משימות הצוות",
+					"NO_TEAM_TASKS": "אין משימות שהוקצו לצוות זה",
+					"NO_MEMBERS": "לצוות זה אין עדיין חברים",
+					"NO_PROJECTS": "אין פרויקטים המקושרים לצוות זה",
+					"COLUMNS": {
+						"MEMBER": "חבר",
+						"ROLE": "תפקיד",
+						"STATUS": "סטטוס",
+						"CURRENT_TASK": "משימה נוכחית",
+						"TODAY": "היום",
+						"ACTIVITY": "פעילות"
+					},
+					"ROLE": {
+						"MANAGER": "מנהל",
+						"MEMBER": "חבר"
+					},
+					"GENERAL": "כללי",
+					"SETTINGS": "הגדרות",
+					"RECORD": "רשומה",
+					"TEAM_SIZE": "גודל הצוות",
+					"COLOR": "צבע",
+					"EMOJI": "אמוג'י",
+					"PROFILE_LINK": "קישור לפרופיל",
+					"VISIBILITY": "נראות",
+					"SHARE_PROFILE_VIEW": "חברים יכולים לראות את הפרופילים של האחרים",
+					"REQUIRE_PLAN": "דרוש תכנון למעקב אחר זמן",
+					"NOT_FOUND": "צוות זה לא נמצא",
+					"LOAD_FAILED": "לא ניתן לטעון את הצוות",
+					"RETRY": "נסה שוב",
+					"OPEN_TASK_DETAILS": "הצג פרטים של {{ title }}",
+					"OPEN_PROJECT_DETAILS": "הצג פרטים של הפרויקט {{ name }}",
+					"PROJECT_PROGRESS": "התקדמות",
+					"PROJECT_PROGRESS_META": "{{ done }} מתוך {{ total }} משימות הושלמו",
+					"NO_PROJECT_TASKS": "אין עדיין משימות בפרויקט זה",
+					"TOP_CONTRIBUTORS": "מי עבד הכי הרבה",
+					"TOP_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
+					"PROJECT_ACTIVITY": "פעילות יומית",
+					"NEEDS_ATTENTION": "דורש תשומת לב",
+					"NEEDS_ATTENTION_CAPTION": "משימות באיחור ומשימות לביצוע ב-3 הימים הקרובים",
+					"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
+					"OVER_BUDGET": "{{ value }} מעל התקציב",
+					"OPEN_TASK_PAGE": "פתח את הדף של {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "פתח את דף המשימה",
+					"UNASSIGNED": "לא הוקצתה",
+					"SHOW_ALL": "הצג הכל",
+					"SHOW_LESS": "הצג פחות",
+					"PROJECTS_CAPTION": "הפרויקטים של הצוות והזמן שהושקע בכל אחד בתקופה זו",
+					"NOT_LINKED": "לא מקושר",
+					"NOT_LINKED_HINT": "חברים רשמו זמן בפרויקט זה, אך הוא אינו מקושר לצוות"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2841,6 +2988,9 @@
 			"DOCS_MANAGE": "ניהול קטגוריות מסמכים וכתובות קליטה",
 			"DOCS_REVIEW": "אישור/דחייה של סקירות מסמכים",
 			"DOCS_AI_IMPORT": "ניהול ידע ה-AI של המסמכים",
+			"INBOX_VIEW": "צפייה בתיבת הדואר הנכנס",
+			"INBOX_MAILBOX_MANAGE": "ניהול תיבות דואר וחשבונות ספקים",
+			"INBOX_MAILBOX_READ_ALL": "קריאת כל תיבות הדואר המשותפות",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
 			"ORG_SPRINT_EDIT": "עריכת ספרינט",
 			"ORG_SPRINT_VIEW": "צפייה בספרינט",
@@ -3080,7 +3230,30 @@
 			"SELLER_PAYOUTS_CREATE": "יצירת תשלומים למוכרים",
 			"SELLER_PAYOUTS_APPROVE": "אישור תשלומים למוכרים",
 			"SELLER_PAYOUTS_CANCEL": "ביטול תשלומים למוכרים",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "מחק מבוארה סטרטגית עבור הארגון"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "מחק מבוארה סטרטגית עבור הארגון",
+			"AI_CHAT_ACCESS": "גישה לצ'אט AI",
+			"AI_CHAT_SETTINGS": "ניהול הגדרות צ'אט AI",
+			"ORG_TASK_ADD": "יצירת משימות",
+			"ORG_TASK_VIEW": "צפייה במשימות",
+			"ORG_TASK_EDIT": "עריכת משימות",
+			"ORG_TASK_DELETE": "מחיקת משימות",
+			"ORG_PROJECT_ADD": "יצירת פרויקטים",
+			"ORG_PROJECT_VIEW": "צפייה בפרויקטים",
+			"ORG_PROJECT_DELETE": "מחיקת פרויקטים",
+			"DAILY_PLAN_CREATE": "יצירת תוכניות יומיות",
+			"DAILY_PLAN_READ": "צפייה בתוכניות יומיות",
+			"DAILY_PLAN_UPDATE": "עדכון תוכניות יומיות",
+			"DAILY_PLAN_DELETE": "מחיקת תוכניות יומיות",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "הסרת החשבון כחבר צוות",
+			"MEDIA_GALLERY_ADD": "הוספה לגלריית המדיה",
+			"MEDIA_GALLERY_VIEW": "צפייה בגלריית המדיה",
+			"MEDIA_GALLERY_EDIT": "עריכת גלריית המדיה",
+			"MEDIA_GALLERY_DELETE": "מחיקה מגלריית המדיה",
+			"CUSTOM_SMTP_EDIT": "עריכת SMTP מותאם אישית",
+			"IMPORT_ADD": "ייבוא הנתונים שלך",
+			"EXPORT_ADD": "ייצוא הנתונים שלך",
+			"OAUTH_CLIENT_VIEW": "צפייה בלקוחות OAuth",
+			"OAUTH_CLIENT_EDIT": "ניהול לקוחות OAuth"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3114,6 +3287,35 @@
 			"CONTINUE": "המשך",
 			"SKIP": "דלג",
 			"CREATE": "צור ארגון"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "חלקי הפרויקט",
+			"DETAILS": "פרטים",
+			"LOGO": "לוגו הפרויקט",
+			"LOGO_HINT": "אופציונלי. לחצו על הלוגו כדי להעלות תמונה ריבועית.",
+			"PEOPLE": "אנשים",
+			"TIMELINE": "לוח זמנים",
+			"APPEARANCE": "מראה",
+			"OPTIONS": "אפשרויות",
+			"REPOSITORY": "מאגר",
+			"TASK_SYNC": "סנכרון משימות",
+			"CREATE_SUBTITLE": "הגדירו פרויקט חדש עם האנשים, לוח הזמנים והחיוב שלו.",
+			"OPEN_SOURCE_TITLE": "פרויקט קוד פתוח",
+			"OPEN_SOURCE_DESCRIPTION": "שתפו את הקוד של הפרויקט באופן ציבורי. הפעילו כדי להוסיף קישור למאגר הציבורי שלו.",
+			"OPEN_SOURCE_URL_HINT": "הכתובת הציבורית של הקוד, למשל מאגר ב-GitHub או ב-GitLab.",
+			"OPEN_REPOSITORY": "פתיחת המאגר",
+			"DESCRIPTION_CARD_DESC": "תארו את מטרות הפרויקט והיקפו לכל מי שעובד עליו.",
+			"TAGS_DESC": "הוסיפו תגיות לפרויקט כדי שיהיה קל יותר למצוא ולקבץ אותו.",
+			"BILLING_DESC": "איך הלקוח מחויב על הפרויקט הזה, ובאיזה מטבע.",
+			"BUDGET_DESC": "הגדירו תקציב בשעות או בעלות כדי לשמור על הפרויקט במסלול.",
+			"APPEARANCE_DESC": "הצבע של הפרויקט ואופן הצגת המשימות שלו.",
+			"PUBLIC_TITLE": "פרויקט ציבורי",
+			"PUBLIC_DESC": "בפרויקט ציבורי כולם רואים מי עובד עליו. בפרויקט פרטי כל אחד רואה רק את עצמו, אלא אם יש לו גישה לפרויקטים פרטיים.",
+			"BILLABLE_DESC": "סמנו את העבודה על הפרויקט הזה כניתנת לחיוב ללקוח.",
+			"REPOSITORY_DESC": "בחרו את מאגר GitHub שעם ה-Issues שלו הפרויקט הזה עובד.",
+			"AUTO_SYNC_DESC": "שמרו על משימות הפרויקט מתואמות עם ה-Issues של המאגר. שינויים כאן נשמרים מיד.",
+			"SYNC_LABEL_TITLE": "סנכרון לפי תווית",
+			"SYNC_LABEL_DESC": "סנכרנו רק Issues שנושאים את התווית שהגדרתם. שינויים כאן נשמרים מיד."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3175,9 +3377,14 @@
 		"MEMBER_SINCE": "חבר מאז",
 		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
 		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"NO_EMPLOYEES": "אין עדיין עובדים להצגה",
+		"NO_CLIENTS": "אין עדיין לקוחות להצגה",
+		"EMPLOYEES_LOAD_FAILED": "לא ניתן היה לטעון את העובדים.",
+		"CLIENTS_LOAD_FAILED": "לא ניתן היה לטעון את הלקוחות.",
 		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
 		"EDIT": {
 			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"NO_LANGUAGES": "עדיין לא נוספו שפות",
 			"ADD_AWARD": "הוספת פרס",
 			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
 		}
@@ -3393,7 +3600,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
-			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before ",
+			"CHANGED_BY_SOMEONE_ELSE": "מישהו אחר שינה את הבקשה הזו בינתיים. הרשימה נטענה מחדש: בדוק את הבקשה ונסה שוב."
 		},
 		"ACTIONS": "Actions",
 		"APPROVE": "Approve",
@@ -3801,17 +4009,20 @@
 		"USER": {
 			"MANAGE": "Manage User Invites",
 			"HEADER": "Invite Users",
-			"ACTION": "Invite Users"
+			"ACTION": "Invite Users",
+			"DESCRIPTION": "הזמינו אנשים להצטרף לארגון שלכם כמשתמשים. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Manage Employee Invites",
 			"HEADER": "Invite Employees",
-			"ACTION": "Invite Employees"
+			"ACTION": "Invite Employees",
+			"DESCRIPTION": "הזמינו אנשים להצטרף לארגון שלכם כעובדים. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Manage Candidate Invites",
 			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"ACTION": "Invite Candidates",
+			"DESCRIPTION": "הזמינו מועמדים לתהליך הגיוס שלכם. כל נמען יקבל דוא״ל עם קישור מאובטח לאישור."
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
@@ -3826,6 +4037,23 @@
 			"TWO_WEEK": "14 Days",
 			"MONTH": "30 Days",
 			"NEVER": "Never"
+		},
+		"FORM": {
+			"RECIPIENTS": "נמענים",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "הקישו Enter אחרי כל כתובת כדי להוסיף כמה נמענים.",
+			"CLEAR_EMAILS": "נקה הכול",
+			"ACCESS": "גישה",
+			"ACCESS_HINT": "אופציונלי. בחרו למה חברים חדשים יוכלו לגשת מיד עם הצטרפותם.",
+			"DETAILS": "פרטי ההזמנה",
+			"RECIPIENT_COUNT": "נמענים: {{count}}",
+			"NO_RECIPIENTS": "עדיין לא נוספו נמענים"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "מחיקת הזמנה",
+			"WARNING": "ההזמנה עבור {{ email }} תימחק לצמיתות והקישור שלה יפסיק לעבוד. לא ניתן לבטל פעולה זו.",
+			"TYPE_TO_CONFIRM": "הקלידו את הטקסט הבא לאישור:",
+			"CONFIRM": "מחק הזמנה"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5196,6 +5424,8 @@
 			"API_SERVER_PORT": "יציאת שרת API",
 			"UI_SERVER_PORT": "יציאת שרת ממשק משתמש",
 			"SERVER_HOSTNAME": "שם מארח/כתובת IP של השרת",
+			"LAN_ACCESS": "לאפשר למחשבים אחרים ברשת להתחבר",
+			"LAN_ACCESS_HINT": "כשהאפשרות כבויה, רק המחשב הזה יכול להתחבר ל-API ולממשק האינטרנט.",
 			"AUTO_START_STARTUP": "הפעלה אוטומטית בהתחלה",
 			"SERVER_TYPE": "סוג שרת",
 			"LOCAL_API_PORT": "יציאת API מקומית",
@@ -5322,7 +5552,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "לא הצלחנו לקבוע אם יש לך נתונים לא מסונכרנים. הסרת בסיס הנתונים עלולה למחוק לצמיתא עבודה שלא נשמרה. אם אינך בטוח, לחץ על 'שמור'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "פרטי ההתחברות שלך",
+			"SEED_CREDENTIALS_MESSAGE": "שמור את הסיסמאות האלה עכשיו. הן מוצגות פעם אחת בלבד.",
+			"SEED_CREDENTIALS_DETAIL": "התקנה זו יצרה את החשבונות שלה עם סיסמאות אקראיות במקום ערכי ברירת המחדל שפורסמו.\n\n{{ accounts }}\n\nתוכל לשנות סיסמה מאוחר יותר בדף הפרופיל שלך ב-Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "הועתק ללוח.",
+			"SEED_CREDENTIALS_SAVED": "שמרתי אותן",
+			"SEED_ROLE_SUPER_ADMIN": "מנהל-על",
+			"SEED_ROLE_ADMIN": "מנהל",
+			"SEED_ROLE_EMPLOYEE": "עובד",
+			"SEED_PASSWORD": "סיסמה",
+			"PUBLISHED_PASSWORDS_TITLE": "סיסמת ברירת המחדל עדיין בשימוש",
+			"PUBLISHED_PASSWORDS_MESSAGE": "שנה את סיסמת ברירת המחדל של חשבונות אלה.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} עדיין מתחברים עם סיסמת ברירת המחדל שפורסמה בתיעוד של Gauzy. כל מי שיכול להגיע לשרת הזה יכול להתחבר איתה. התחבר ל-Gauzy ושנה אותה בדף הפרופיל."
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",
@@ -5350,7 +5592,12 @@
 			"SERVICE_UNAVAILABLE": "השירות אינו זמין כעת.",
 			"UNEXPECTED_ERROR": "אירעה שגיאה בלתי צפויה.",
 			"NETWORK_ERROR": "שגיאת רשת: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "נדרשת הרשאת גישה למסך כדי לאפשר לכידת מסך אוטומטית. אנא העניקו את ההרשאה בהגדרות המערכת."
+			"SCREEN_ACCESS_REQUIRED_MSG": "נדרשת הרשאת גישה למסך כדי לאפשר לכידת מסך אוטומטית. אנא העניקו את ההרשאה בהגדרות המערכת.",
+			"ORGANIZATION_SWITCH_REFUSED": "לא ניתן לעבור אל {{ name }}: {{ reason }}. אתה עדיין עובד בארגון הנוכחי שלך.",
+			"ORGANIZATION_NOT_EMPLOYEE": "אינך עובד פעיל ב-{{ name }}, ולכן הטיימר אינו יכול לעקוב אחר זמן שם. אתה עדיין עובד בארגון הנוכחי שלך.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "הארגון מוחלף כעת. הפעל את הטיימר לאחר שההחלפה תסתיים.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "אינך עובד פעיל ב-{{ name }}, והחזרה לארגון הקודם שלך נכשלה. נא להתחבר מחדש.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "לא ניתן היה להשלים את המעבר אל {{ name }} במכשיר זה. נא להתחבר מחדש."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",
@@ -5597,7 +5844,40 @@
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
 		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
 		"NO_TIME_TRACKED": "לא נמדד זמן",
-		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו",
+		"APPS_URLS": {
+			"TOTAL_TIME": "זמן כולל",
+			"APPS_USED": "אפליקציות בשימוש",
+			"SITES_VISITED": "אתרים שבוקרו",
+			"TOP_APP": "האפליקציה הנפוצה ביותר",
+			"TOP_SITE": "האתר המבוקר ביותר",
+			"VIEW": "תצוגה",
+			"BY_APP": "לפי אפליקציה",
+			"BY_SITE": "לפי אתר",
+			"BY_MEMBERS": "לפי חבר",
+			"BY_HOURS": "לפי שעה",
+			"SEARCH_APPS": "חיפוש אפליקציות…",
+			"SEARCH_SITES": "חיפוש אתרים…",
+			"SORT": "שינוי סדר המיון",
+			"SORT_TIME": "הכי הרבה זמן",
+			"SORT_NAME": "שם א–ת",
+			"LOAD_FAILED": "לא ניתן לטעון את הפעילות. נסה שוב.",
+			"NO_MATCH": "אין תוצאות עבור „{{ search }}”.",
+			"APP": "אפליקציה",
+			"SITE": "אתר",
+			"TIME": "זמן",
+			"SHOW_PAGES": "הצג את הדפים שבוקרו ב-{{ site }}",
+			"LOADING_PAGES": "טוען דפים…",
+			"PAGES_FAILED": "לא ניתן לטעון את הדפים.",
+			"NO_PAGES": "לא נרשמו פרטי דפים עבור אתר זה.",
+			"SHOW_ALL": "הצג את כל {{ count }}",
+			"SHOW_LESS": "הצג פחות",
+			"UNKNOWN_MEMBER": "חבר לא ידוע",
+			"APPS_COUNT": "{{ count }} אפליקציות",
+			"SITES_COUNT": "{{ count }} אתרים",
+			"OF_TOTAL": "{{ value }} מהסך הכול",
+			"PAGES_TRUNCATED": "לאתר זה יש יותר רשומות ממה שניתן להציג; הפירוט מכסה רק חלק מהזמן שלו."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
@@ -6119,6 +6399,7 @@
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
 		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
+		"LOGIN_WITH_EVER_ID": "התחברות עם {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
@@ -6635,5 +6916,82 @@
 			"ROTATE_FAILED": "סיבוב סוד הלקוח נכשל",
 			"DELETE_FAILED": "ביטול לקוח OAuth נכשל"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "הצג פרטים של הפרויקט {{ name }}",
+		"PROGRESS": "התקדמות",
+		"PROGRESS_META": "{{ done }} מתוך {{ total }} משימות הושלמו",
+		"NO_TASKS": "אין עדיין משימות בפרויקט זה",
+		"NEEDS_ATTENTION": "דורש תשומת לב",
+		"NEEDS_ATTENTION_CAPTION": "משימות באיחור ומשימות לביצוע ב-3 הימים הקרובים",
+		"ACTIVITY": "פעילות יומית",
+		"ACTIVITY_VIEWS": "תצוגת פעילות",
+		"ACTIVITY_VIEW_CHART": "תרשים",
+		"ACTIVITY_VIEW_GRID": "רשת תרומות",
+		"GRID_NONE": "אין זמן",
+		"GRID_LAST_YEAR": "12 החודשים האחרונים",
+		"GRID_OLDER": "שנה קודמת",
+		"GRID_NEWER": "שנה הבאה",
+		"GRID_DAY": "{{ time }} ב-{{ date }}",
+		"GRID_DAY_EMPTY": "אין זמן ב-{{ date }}",
+		"TOP_CONTRIBUTORS": "מי עבד הכי הרבה",
+		"CONTRIBUTORS_CAPTION": "הזמן של כולם על פרויקט זה · {{ range }}",
+		"YOUR_TIME_CAPTION": "הזמן שלך על פרויקט זה · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "זמן חברי הצוות על פרויקט זה · {{ range }}",
+		"BUDGET_USED": "נוצלו {{ used }} מתוך {{ budget }}",
+		"OVER_BUDGET": "{{ value }} מעל התקציב",
+		"TOTAL_TRACKED": "סה\"כ זמן שנרשם",
+		"TOTAL_TRACKED_HINT": "מאז תחילת הפרויקט",
+		"THIS_PERIOD": "התקופה הנוכחית",
+		"VS_PREVIOUS": "{{ value }} לעומת התקופה הקודמת",
+		"TIMELINE": "ציר זמן",
+		"NO_DATES": "לא הוגדרו תאריכים",
+		"STARTS_IN": "מתחיל בעוד {{ count }} ימים",
+		"STARTS_TOMORROW": "מתחיל מחר",
+		"FINISHED": "הסתיים",
+		"TEAM": "צוות",
+		"NO_MEMBERS": "אין עדיין חברים בפרויקט זה",
+		"MODULES": "מודולים",
+		"MODULE_TASK": "משימה אחת",
+		"MODULE_TASKS": "{{ count }} משימות"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "סקירה",
+			"BOARD": "לוח",
+			"ACTIVITY": "פעילות",
+			"COMMENTS": "תגובות"
+		},
+		"BOARD": "לוח",
+		"COLUMN_EMPTY": "אין משימות",
+		"CANNOT_DROP": "לא ניתן להעביר משימות אל ״{{ column }}״, כי זה אינו סטטוס של פרויקט זה.",
+		"ACTIVITY": "פעילות",
+		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
+		"NO_ACTIVITY": "אין עדיין פעילות",
+		"ACTIVITY_PARTIAL": "לא ניתן היה לטעון חלק מהפעילות, ולכן הרשימה עשויה להיות חלקית.",
+		"ACTIVITY_CREATED": "{{ actor }} יצר",
+		"ACTIVITY_UPDATED": "{{ actor }} עדכן",
+		"ACTIVITY_DELETED": "{{ actor }} מחק",
+		"ACTIVITY_COMMENTED": "{{ actor }} הגיב/ה על",
+		"ACTIVITY_REPLIED": "{{ actor }} השיב/ה לתגובה על",
+		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
+		"SOMEONE": "מישהו",
+		"TODAY": "היום",
+		"YESTERDAY": "אתמול",
+		"TASK_PROGRESS": "התקדמות",
+		"TASK_PROGRESS_OF": "{{ worked }} מתוך {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% מהזמן שנרשם בפרויקט (ללא הערכה)",
+		"TASK_TOP_PEOPLE": "עבדו עליה הכי הרבה",
+		"TASK_NO_ESTIMATE": "אין הערכה",
+		"COMMENTS": "תגובות",
+		"NO_COMMENTS": "אין עדיין תגובות. התחילו את הדיון.",
+		"COMMENT_PLACEHOLDER": "כתבו תגובה…",
+		"COMMENT_IMAGE": "תמונה",
+		"ATTACH_IMAGES": "צירוף תמונות",
+		"REMOVE_IMAGE": "הסרת התמונה",
+		"OPEN_IMAGE": "פתיחת המקור",
+		"COMMENT_IMAGE_TYPES": "ניתן לצרף רק תמונות PNG, JPEG, GIF, WebP ו-BMP.",
+		"COMMENT_IMAGE_LIMIT": "תגובה יכולה לכלול עד {{ count }} תמונות.",
+		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	}
 }

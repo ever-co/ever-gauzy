@@ -143,6 +143,9 @@ export class RefundResolver {
 	 * Approves a pending refund, moving the payment and its collection with it.
 	 */
 	@Permissions(PaymentPermission.REFUNDS_APPROVE as PermissionsEnum)
+	// The input has always declared `idempotencyKey`, and nothing read it (R2-G16). The key is optional, under the
+	// scope `POST /refunds/:id/approve` declares, so a retried approval is answered the first one.
+	@Idempotent({ scope: 'refund.approve', required: false, resourceType: 'refund' })
 	@Mutation('approveRefund')
 	async approveRefund(@Args('input') input: IApproveRefundGraphInput): Promise<IApproveRefundPayload> {
 		try {

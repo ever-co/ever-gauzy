@@ -1,6 +1,7 @@
 // cspell:ignore whsec
 import { NotFoundException } from '@nestjs/common';
 import { createHmac } from 'node:crypto';
+import * as dnsPromises from 'node:dns/promises';
 import { validateSync } from 'class-validator';
 import { WebhookDeliveryStatus, WebhookHeader } from '@gauzy/contracts';
 import { WebhookDelivery } from './webhook-delivery.entity';
@@ -21,9 +22,10 @@ import { TypeOrmWebhookDeliveryRepository } from './repository/type-orm-webhook-
  * were signed, so a receiver reproducing the digest accepts them.
  *
  * Nothing leaves the process: the HTTP client (`WebhookTransport`) is a stub honouring its own contract —
- * at most `bodyLimit` bytes of the body — and the clock is pinned so every scheduled instant is asserted
- * rather than waited for. What the client itself does on a real socket (the pinned lookup, the bounded
- * read, no redirect followed) is `webhook-delivery.transport.spec.ts`.
+ * at most `bodyLimit` bytes of the body — the endpoint lookup an attempt makes before it posts answers a
+ * public address, and the clock is pinned so every scheduled instant is asserted rather than waited for.
+ * What the client itself does on a real socket (the pinned lookup, the bounded read, no redirect followed)
+ * is `webhook-delivery.transport.spec.ts`.
  */
 
 type Row = Record<string, any>;
@@ -32,6 +34,10 @@ const SECRET = 'whsec_test_fixture_2f8c1d';
 const SUBSCRIPTION_ID = '6b1e0f2a-0000-4000-8000-000000000002';
 const EVENT_ID = '6b1e0f2a-0000-4000-8000-000000000001';
 const T0 = new Date('2026-03-01T10:00:00Z');
+/** The host every subscription here names, which no resolver knows. */
+const RECEIVER_HOST = 'receiver.example.test';
+/** A public address, which the endpoint policy lets an attempt through to. */
+const PUBLIC_ADDRESS = '93.184.215.14';
 
 /** The error the driver raises for a duplicate unique tuple, as the classifier reads it. */
 function uniqueViolation(): Error {
@@ -267,14 +273,35 @@ const delivery = (table: DeliveryTable, overrides: Row = {}): Row =>
 /** The payload the body was sent for, as the receiver would read it. */
 const bodyOf = (calls: { init: Row }[]): string => String(calls[0].init.body);
 
+/** The endpoint lookup an attempt makes before it posts, answered here instead of by a resolver. */
+let lookup: jest.SpyInstance;
+/** The installation's private-network switch, set aside so the endpoint policy runs as it does by default. */
+let allowPrivateNetwork: string | undefined;
+
 beforeEach(() => {
 	jest.useFakeTimers();
 	jest.setSystemTime(T0);
+
+	allowPrivateNetwork = process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK;
+	delete process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK;
+
+	// Before it posts, an attempt resolves the endpoint's host for the rebinding check
+	// (`refusalForResolvedEndpoint`), and `receiver.example.test` is a name no resolver knows: a real lookup
+	// lasts as long as the machine's resolver takes to say so, which on a runner whose DNS is slow or
+	// unreachable is longer than the 5 s a test may take. The lookup answers a public address instead, so the
+	// policy still runs and lets the attempt through (the same fix as the resolver spec, ever-co/ever-gauzy#11361).
+	lookup = jest.spyOn(dnsPromises, 'lookup').mockResolvedValue([{ address: PUBLIC_ADDRESS, family: 4 }] as never);
 });
 
 afterEach(() => {
 	jest.useRealTimers();
 	jest.restoreAllMocks();
+
+	if (allowPrivateNetwork === undefined) {
+		delete process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK;
+	} else {
+		process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = allowPrivateNetwork;
+	}
 });
 
 describe('the delivery row', () => {
@@ -320,6 +347,8 @@ describe('one attempt', () => {
 		expect(attempt.delivery.deliveredAt).toEqual(T0);
 		expect(attempts).toEqual([{ delivered: true, status: 200 }]);
 		expect(calls[0].url).toBe('https://receiver.example.test/hooks/orders');
+		// The endpoint was checked through the stub, not through the machine's resolver.
+		expect(lookup).toHaveBeenCalledWith(RECEIVER_HOST, expect.objectContaining({ all: true }));
 	});
 
 	it('schedules the next attempt on the documented ladder, jittered around the step', async () => {
@@ -426,6 +455,8 @@ describe('one attempt', () => {
 		// Control: the operator switched the endpoint off, so calling it would be a request nobody
 		// asked for — and the delivery is recorded as dead so the backlog stays readable.
 		expect(calls).toHaveLength(0);
+		// Not even its host is resolved: the subscription is skipped before the endpoint is checked.
+		expect(lookup).not.toHaveBeenCalled();
 		expect(attempt.skipped).toBe(true);
 		expect(attempt.delivery).toMatchObject({ status: WebhookDeliveryStatus.DEAD, lastError: 'SUBSCRIPTION_DISABLED' });
 	});
@@ -435,6 +466,52 @@ describe('one attempt', () => {
 		const { service } = deliveries();
 
 		await expect(service.deliver('delivery-404')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+describe('the endpoint check before an attempt', () => {
+	it('refuses an endpoint whose name now answers a private address too, without calling it', async () => {
+		// The rebinding case the check exists for: the name answered a public address when the subscription was
+		// stored, and now answers the cloud metadata address alongside it.
+		lookup.mockResolvedValue([
+			{ address: PUBLIC_ADDRESS, family: 4 },
+			{ address: '169.254.169.254', family: 4 }
+		] as never);
+		const calls = http(200);
+		const { service, table, attempts } = deliveries();
+		const row = delivery(table);
+		table.rows.push(row);
+
+		const attempt = await service.deliver(row.id as string);
+
+		expect(lookup).toHaveBeenCalledWith(RECEIVER_HOST, expect.objectContaining({ all: true }));
+		expect(calls).toHaveLength(0);
+		expect(attempt.skipped).toBe(true);
+		// Dead rather than failed: the endpoint is unreachable by policy, so the ladder would only repeat the
+		// refusal.
+		expect(attempt.delivery).toMatchObject({
+			status: WebhookDeliveryStatus.DEAD,
+			attemptCount: 1,
+			nextAttemptAt: null,
+			lastError: expect.stringMatching(/private, loopback or link-local/)
+		});
+		// The endpoint never answered, so its counters are not moved.
+		expect(attempts).toEqual([]);
+	});
+
+	it('resolves nothing and calls the endpoint when private endpoints are allowed — control', async () => {
+		// Why the suite pins the switch off: with it on, the policy is skipped and no lookup is made at all.
+		process.env.GAUZY_WEBHOOK_ALLOW_PRIVATE_NETWORK = 'true';
+		const calls = http(200);
+		const { service, table } = deliveries();
+		const row = delivery(table);
+		table.rows.push(row);
+
+		const attempt = await service.deliver(row.id as string);
+
+		expect(lookup).not.toHaveBeenCalled();
+		expect(calls).toHaveLength(1);
+		expect(attempt.delivery.status).toBe(WebhookDeliveryStatus.DELIVERED);
 	});
 });
 

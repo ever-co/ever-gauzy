@@ -19,6 +19,9 @@ export function createTenantFixture(overrides: Partial<ITenantFixture> = {}): IT
 	// so a user override must never leave the two pointing at different tenants.
 	const user = {
 		id: randomUUID(),
+		// The organization of the user's token: what `RequestContext.currentOrganizationId()` reads, and what the
+		// organization boundary of the CRUD base keeps a non-admin inside.
+		lastOrganizationId: organizationId,
 		...overrides.user,
 		tenantId
 	} as IUser;

@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { EntityManager, IsNull, Repository } from 'typeorm';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import { EventBus, Money, Payment, readAffectedRows } from '@gauzy/core';
@@ -11,6 +11,7 @@ import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import { IPaymentCapture, IPaymentCaptureCreateInput } from '../payment.types';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { PaymentCapturedEvent } from '../events';
+import { PaymentOrderLedgerMirror } from '../payment-order-ledger/payment-order-ledger.mirror';
 
 /**
  * The capture ledger: money actually taken.
@@ -44,7 +45,13 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 		readonly mikroOrmPaymentCaptureRepository: MikroOrmPaymentCaptureRepository,
 		@InjectRepository(Payment) private readonly paymentRepository: Repository<Payment>,
 		private readonly paymentCollectionService: PaymentCollectionService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		/**
+		 * Tells the order the money was taken (Q7-W1b). Optional and last: a suite that builds this service by
+		 * position is unchanged, and a payment for an invoice or a payout has no order to tell.
+		 */
+		@Optional()
+		private readonly orderLedger?: PaymentOrderLedgerMirror
 	) {
 		super(typeOrmPaymentCaptureRepository, mikroOrmPaymentCaptureRepository);
 	}
@@ -187,6 +194,25 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 			`capture ${capture.id}`
 		);
 
+		// The order's ledger learns of the capture after the money moved, never as part of it: the order is
+		// the only writer of its ledger, and a ledger that refused must not turn into a capture the caller is
+		// told failed (Q7-W1b).
+		if (payment.orderId) {
+			await this.orderLedger?.mirror(
+				{
+					orderId: payment.orderId,
+					type: 'CAPTURE',
+					amount: amount.amount as DecimalString,
+					currency,
+					referenceType: 'PAYMENT_CAPTURE',
+					referenceId: capture.id,
+					paymentId: payment.id,
+					occurredAt: capturedAt
+				},
+				`capture ${capture.id}`
+			);
+		}
+
 		return this.findCaptureOrFail(capture.id);
 	}
 
@@ -328,8 +354,13 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 	 * @param paymentId The payment to sum for.
 	 * @returns The captured total as an exact decimal.
 	 */
-	async sumCapturedForPayment(paymentId: ID): Promise<DecimalString> {
-		const captures: IPaymentCapture[] = await this.find({ where: { paymentId, ...this.scope } as never });
+	async sumCapturedForPayment(paymentId: ID, manager?: EntityManager): Promise<DecimalString> {
+		// On the caller's transaction when it holds one: a refund re-reads the ceiling under the order's lock, and a
+		// second pool connection taken there can wait for the first (see `RefundService.readRefunds`).
+		const criteria = { paymentId, ...this.scope } as never;
+		const captures: IPaymentCapture[] = manager
+			? await manager.find(PaymentCapture, { where: criteria })
+			: await this.find({ where: criteria });
 		const currency = captures.length ? captures[0].currency : undefined;
 
 		if (!currency) {

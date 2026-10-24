@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,7 +10,8 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { KeyresultTemplateService } from './keyresult-template.service';
@@ -101,10 +102,15 @@ const KEY_RESULT_TEMPLATE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * result rather than a row, which is why the edit field here writes and then reads the row back
  * through the same reader the node query uses.
  *
- * **The guard chain is the controller's, and no field states a permission.**
- * `KeyresultTemplateController` carries `TenantPermissionGuard` on the class and nothing else, on any
- * of the nine routes, so the permission guard is not part of this resolver's chain either. The spec
- * reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's.
+ * **The guard chain is the controller's, and every write states `GOALS_EDIT`.** `KeyresultTemplateController`
+ * carries `TenantPermissionGuard` on the class; its reads state no permission, and every write route — the
+ * filing, the edit, the removal and the two lifecycle moves, the inherited ones overridden only to attach the
+ * grant — states `GOALS_EDIT` behind `PermissionGuard` (owner decision 2, 2026-10-22: the writes stated none,
+ * and the permission guard answers `true` to empty metadata, so any member of the tenant could write —
+ * GHSA-v79w-54p2-wmh5). So this class carries the tenant guard and the gate, the reads state nothing, and
+ * each write field states `PermissionGuard` and `GOALS_EDIT`, neither wider nor narrower than its route. The
+ * spec reads the controller's `__guards__` and `PERMISSIONS_METADATA` and compares them with this class's,
+ * field by field.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -190,6 +196,8 @@ export class KeyResultTemplateResolver {
 	 * kind and a deadline are the three it requires, and the goal template and the KPI template it
 	 * points at are the two relations its DTO joins.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('createKeyResultTemplate')
 	async createKeyResultTemplate(
 		@Args('input') input: ICreateKeyResultTemplateInput
@@ -205,6 +213,8 @@ export class KeyResultTemplateResolver {
 	 * update whose answer is the store's update result. A field that promises a row cannot answer a
 	 * statement about a write, so the row is read back through the same reader the node query uses.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('updateKeyResultTemplate')
 	async updateKeyResultTemplate(
 		@Args('input') input: IUpdateKeyResultTemplateInput
@@ -222,6 +232,8 @@ export class KeyResultTemplateResolver {
 	 * The delivered route answers the store's delete result — a statement about the write rather than a
 	 * row — so this field answers whether the removal ran.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('deleteKeyResultTemplate')
 	async deleteKeyResultTemplate(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.keyResultTemplateService.delete(id));
@@ -232,6 +244,8 @@ export class KeyResultTemplateResolver {
 	 *
 	 * The inherited `DELETE /key-result-templates/:id/soft` route's own call.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('softDeleteKeyResultTemplate')
 	async softDeleteKeyResultTemplate(@Args('id', { type: () => ID }) id: Id): Promise<KeyResultTemplate> {
 		return (await this.keyResultTemplateService.softRemove(id)) as KeyResultTemplate;
@@ -240,6 +254,8 @@ export class KeyResultTemplateResolver {
 	/**
 	 * Puts a withdrawn catalogue entry back.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.GOALS_EDIT)
 	@Mutation('recoverKeyResultTemplate')
 	async recoverKeyResultTemplate(@Args('id', { type: () => ID }) id: Id): Promise<KeyResultTemplate> {
 		return (await this.keyResultTemplateService.softRecover(id)) as KeyResultTemplate;

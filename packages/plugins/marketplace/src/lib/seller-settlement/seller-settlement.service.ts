@@ -7,7 +7,7 @@ import {
 	IPagination,
 	SellerSettlementStatus
 } from '@gauzy/contracts';
-import { EventOutboxService, Money, RequestContext, TenantAwareCrudService, compareDecimalStrings } from '@gauzy/core';
+import { EventOutboxService, Money, RequestContext, compareDecimalStrings } from '@gauzy/core';
 import { SellerSettlement } from './seller-settlement.entity';
 import { MikroOrmSellerSettlementRepository } from './repository/mikro-orm-seller-settlement.repository';
 import { TypeOrmSellerSettlementRepository } from './repository/type-orm-seller-settlement.repository';
@@ -15,6 +15,7 @@ import { SellerTransaction } from '../seller-transaction/seller-transaction.enti
 import { TypeOrmSellerTransactionRepository } from '../seller-transaction/repository/type-orm-seller-transaction.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
 import { assertNoLifecycleMembers } from '../lifecycle-members';
+import { MarketplaceCrudService } from '../marketplace-crud.service';
 
 /**
  * The members of a settlement only its own operations write, which an edit therefore refuses.
@@ -52,6 +53,47 @@ export const SELLER_SETTLEMENT_LIFECYCLE_MEMBERS: readonly string[] = [
 ];
 
 /**
+ * The members of a settlement its lifecycle operations stamp, which a recorded settlement therefore never
+ * takes from its caller: reconcile writes `reconciledAt` and `reconciledByUserId`, close writes `closedAt`.
+ */
+export const SELLER_SETTLEMENT_RECORD_LIFECYCLE_MEMBERS: readonly string[] = [
+	'reconciledAt',
+	'reconciledByUserId',
+	'closedAt'
+];
+
+/**
+ * Refuses a settlement record that states a lifecycle the settlement has not been through.
+ *
+ * `status` may be absent, `null` or `OPEN` — the status every recorded settlement starts in — and nothing
+ * else; the stamps of reconcile and close may not be stated at all.
+ *
+ * @param input The settlement as the caller stated it.
+ * @throws BadRequestException (`SELLER_SETTLEMENT_FIELD_NOT_EDITABLE`) naming what was refused.
+ */
+export function assertRecordedOpen(input: Partial<SellerSettlement>): void {
+	const status = (input as Record<string, unknown>)?.['status'];
+
+	if (status !== undefined && status !== null && status !== SellerSettlementStatus.OPEN) {
+		throw new BadRequestException(
+			`SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: a settlement is recorded ${SellerSettlementStatus.OPEN}, not ` +
+				`${String(status)}; it is reconciled, closed and disputed through its own operations.`
+		);
+	}
+
+	const stamped = SELLER_SETTLEMENT_RECORD_LIFECYCLE_MEMBERS.filter(
+		(member) => (input as Record<string, unknown>)?.[member] !== undefined
+	);
+
+	if (stamped.length > 0) {
+		throw new BadRequestException(
+			`SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: ${stamped.join(', ')} ${stamped.length === 1 ? 'is' : 'are'} not ` +
+				`stated when a settlement is recorded; it is reconciled, closed and disputed through its own operations.`
+		);
+	}
+}
+
+/**
  * Records what a provider reported, and reconciles it against the platform's own ledger.
  *
  * The single most important property here is what the service **refuses** to do: it never edits a
@@ -60,7 +102,7 @@ export const SELLER_SETTLEMENT_LIFECYCLE_MEMBERS: readonly string[] = [
  * function reads, not a repair.
  */
 @Injectable()
-export class SellerSettlementService extends TenantAwareCrudService<SellerSettlement> {
+export class SellerSettlementService extends MarketplaceCrudService<SellerSettlement> {
 	constructor(
 		readonly typeOrmSellerSettlementRepository: TypeOrmSellerSettlementRepository,
 		readonly mikroOrmSellerSettlementRepository: MikroOrmSellerSettlementRepository,
@@ -123,6 +165,13 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			assertSellerScope(scope, input.sellerId);
 		}
 
+		// A recorded settlement is OPEN: reconcile, close and dispute are what move it, each with its own checks
+		// (a closed settlement is final, a dispute needs a reason, a reconciliation compares the ledger). The
+		// recorder used to store whatever `status` the body stated, so `POST /seller-settlements {status:
+		// "CLOSED"}` wrote a settlement that was final before anything had compared it — and the stamps those
+		// operations write could be stated beside it. A body that restates OPEN is accepted (review R2-G45).
+		assertRecordedOpen(input);
+
 		const decimals = input.currencyDecimals ?? 2;
 		const currency = input.currency as CurrencyCode;
 
@@ -142,7 +191,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 
 		const settlement = this.typeOrmSellerSettlementRepository.create({
 			...input,
-			status: input.status ?? SellerSettlementStatus.OPEN,
+			status: SellerSettlementStatus.OPEN,
 			currencyDecimals: decimals,
 			// The net is derived from the reported figures rather than accepted beside them, so the row
 			// cannot state a net its own gross, commission and fee do not produce.
@@ -152,9 +201,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			organizationId: RequestContext.currentOrganizationId()
 		} as Partial<SellerSettlement>);
 
-		const saved = await this.typeOrmSellerSettlementRepository.save(settlement as SellerSettlement);
-
-		await this.emit(saved, 'seller_settlement.recorded', {
+		return await this.saveAndEmit(settlement as SellerSettlement, 'seller_settlement.recorded', (saved) => ({
 			providerKey: saved.providerKey,
 			grossAmount: saved.grossAmount,
 			commissionAmount: saved.commissionAmount,
@@ -163,9 +210,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			periodStart: saved.periodStart,
 			periodEnd: saved.periodEnd,
 			discrepancyAmount: saved.discrepancyAmount
-		});
-
-		return saved;
+		}));
 	}
 
 	/**
@@ -254,9 +299,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		settlement.closedAt = new Date();
 		settlement.note = note ?? settlement.note;
 
-		const saved = await this.typeOrmSellerSettlementRepository.save(settlement);
-
-		await this.emit(saved, 'seller_settlement.closed', {
+		return await this.saveAndEmit(settlement, 'seller_settlement.closed', (saved) => ({
 			providerKey: saved.providerKey,
 			netAmount: saved.netAmount,
 			closedAt: saved.closedAt,
@@ -265,9 +308,7 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 			// `0`, `-0.000000` and a column the provider left null are one answer, and no monetary decision
 			// in this package is made by parsing a decimal into a double.
 			reconciled: compareDecimalStrings(saved.discrepancyAmount ?? '0', '0') === 0
-		});
-
-		return saved;
+		}));
 	}
 
 	/** Marks a settlement disputed, which requires a reason. */
@@ -349,17 +390,36 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		return platformNet.subtract(reportedNet);
 	}
 
-	/** Writes one outbox row for a settlement state change. */
-	private async emit(settlement: SellerSettlement, name: string, data: Record<string, any>): Promise<void> {
-		await this.typeOrmSellerSettlementRepository.manager.transaction(async (manager) => {
+	/**
+	 * Saves a settlement and appends the fact that describes the save, in one transaction.
+	 *
+	 * The append used to run in a transaction of its own after the save had committed, so an append that
+	 * failed left a recorded or closed settlement nothing announced. The two now commit together or not at
+	 * all: a failing append rolls the save back, and a save that fails appends nothing.
+	 *
+	 * @param settlement The settlement in the state the operation left it.
+	 * @param name The event name.
+	 * @param data The payload beyond the settlement's identity, built from the row as it was saved.
+	 * @returns The saved settlement.
+	 */
+	private async saveAndEmit(
+		settlement: SellerSettlement,
+		name: string,
+		data: (saved: SellerSettlement) => Record<string, any>
+	): Promise<SellerSettlement> {
+		return await this.typeOrmSellerSettlementRepository.manager.transaction(async (manager) => {
+			const saved = await manager.save(SellerSettlement, settlement);
+
 			await this.outbox.append(manager, {
 				name,
 				aggregateType: 'SELLER_SETTLEMENT',
-				aggregateId: settlement.id as ID,
-				data: { settlementId: settlement.id, sellerId: settlement.sellerId, currency: settlement.currency, ...data },
-				tenantId: settlement.tenantId,
-				organizationId: settlement.organizationId
+				aggregateId: saved.id as ID,
+				data: { settlementId: saved.id, sellerId: saved.sellerId, currency: saved.currency, ...data(saved) },
+				tenantId: saved.tenantId,
+				organizationId: saved.organizationId
 			});
+
+			return saved;
 		});
 	}
 }

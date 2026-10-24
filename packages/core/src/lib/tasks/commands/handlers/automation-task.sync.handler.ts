@@ -15,6 +15,7 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
+import { sanitizeRichHtml } from '../../../core/html-sanitizer';
 import { IntegrationMap, TaskStatus } from '../../../core/entities/internal';
 import { CreateEntitySubscriptionEvent } from '../../../entity-subscription/events';
 import { EntitySubscriptionService } from '../../../entity-subscription/entity-subscription.service';
@@ -135,11 +136,11 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const user = RequestContext.currentUser();
 
 			// Retrieve the maximum task number for the project
-			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options);
+			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options, { withDeleted: true });
 
 			// Create a new task with the provided entity data
 			const newTask = this.typeOrmTaskRepository.create({
-				...entity,
+				...withSanitizedDescription(entity),
 				number: maxNumber + 1,
 				organizationId: options.organizationId,
 				tenantId: options.tenantId
@@ -253,7 +254,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const newMembers = members.filter((member) => !existingMemberIds.includes(member.id));
 
 			// Update the existing task with the new entity data
-			this.typeOrmTaskRepository.merge(existingTask, entity);
+			this.typeOrmTaskRepository.merge(existingTask, withSanitizedDescription(entity));
 
 			// Save the updated task
 			const updatedTask = await this.typeOrmTaskRepository.save(existingTask);
@@ -323,4 +324,18 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			console.log(chalk.red(`Error while updating task using Automation Task: %s`), error.message);
 		}
 	}
+}
+
+/**
+ * The synced issue with its description passed through the rich-text allowlist, as `TaskService.create()` and
+ * `update()` pass every other task's.
+ *
+ * The description is the issue body as GitHub sends it, so anyone who can open or edit an issue on a synced
+ * repository writes it. This handler saves through the repository rather than the service, and so stored that HTML
+ * as it came: a `<script>` or an `onerror` attribute then ran in every client that renders task descriptions as HTML.
+ */
+function withSanitizedDescription<T extends { description?: string }>(entity: T): T {
+	return typeof entity.description === 'string'
+		? { ...entity, description: sanitizeRichHtml(entity.description) }
+		: entity;
 }

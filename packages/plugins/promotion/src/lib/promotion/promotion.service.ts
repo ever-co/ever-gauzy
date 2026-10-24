@@ -40,6 +40,19 @@ import {
 	RevertOnReturnPolicy
 } from '../promotion.types';
 import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+import { withoutRestatedMembers } from '../shared/ledger-members';
+
+/**
+ * The members of a promotion only its own usage operations move (review R2-G27): the redemption counter and the
+ * consumption of the inline budget, both caches of the usage ledger that `consume`/`reserveUsage`/`revertUsage` and
+ * the reconciliation maintain. `POST /promotions` and `PUT /promotions/:id` accepted both from the body (the REST
+ * DTOs are the create shape), so a caller could reset a used-up limit or a spent budget; no GraphQL input carries
+ * them.
+ */
+export const PROMOTION_LEDGER_MEMBERS = ['usageCount', 'budgetSpent'] as const;
+
+/** Where the ledger members start: what a create may restate. */
+const PROMOTION_LEDGER_START = { usageCount: 0, budgetSpent: '0' };
 
 /** One line an evaluation may discount. */
 export interface IPromotionEvaluationLine {
@@ -126,6 +139,9 @@ interface IPromotionAdjustmentPlan {
  * kernel's evaluator, so this service asks one question — "does this promotion's rule set match this
  * context" — and never re-implements what "matches" means.
  */
+/** The code `reserveUsage` refuses a use with when the promotion's usage limit is reached. */
+export const PROMOTION_USAGE_LIMIT_EXCEEDED = 'PROMOTION_USAGE_LIMIT_EXCEEDED';
+
 @Injectable()
 export class PromotionService extends TenantScopedCrudService<Promotion> {
 	constructor(
@@ -153,11 +169,22 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 	/**
 	 * Creates a promotion.
 	 *
+	 * The ledger members ({@link PROMOTION_LEDGER_MEMBERS}) start at zero: a body that states another value is refused
+	 * with `PROMOTION_FIELD_NOT_WRITABLE` (review R2-G27).
+	 *
 	 * @param input The promotion to create.
 	 * @returns The stored promotion.
-	 * @throws BadRequestException when the code is already used or the actions are invalid.
+	 * @throws BadRequestException when the code is already used, the actions are invalid or a counter is stated.
 	 */
 	async createPromotion(input: IPromotionCreateInput): Promise<IPromotion> {
+		input = withoutRestatedMembers(input, PROMOTION_LEDGER_MEMBERS, PROMOTION_LEDGER_START, {
+			code: 'PROMOTION_FIELD_NOT_WRITABLE',
+			subject: 'a promotion',
+			movedBy:
+				'a new promotion starts with no redemption and no spend, and both move with its usage ledger only.',
+			nullIsAbsent: true
+		});
+
 		const code = input.code ? input.code.trim().toUpperCase() : undefined;
 
 		if (code) {
@@ -184,14 +211,33 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 	/**
 	 * Updates a promotion.
 	 *
+	 * Two rules sit here because both surfaces (`PUT /promotions/:id`, `updatePromotion`) reach this method (review
+	 * R2-G27): the ledger members ({@link PROMOTION_LEDGER_MEMBERS}) are refused with `PROMOTION_FIELD_NOT_WRITABLE`
+	 * when the change would move them (a body restating the stored value is accepted and they are left out of the
+	 * write); and a changed `code` is normalised and checked for uniqueness in the organization exactly as
+	 * {@link createPromotion} does, instead of being written as typed.
+	 *
 	 * @param id The promotion to update.
 	 * @param input The fields to change.
 	 * @returns The stored promotion.
 	 * @throws NotFoundException when the promotion is not in the caller's organization.
-	 * @throws BadRequestException when the funding the change states does not describe a funder.
+	 * @throws BadRequestException when the funding the change states does not describe a funder, a counter would
+	 * move, or the new code is already in use.
 	 */
 	async updatePromotion(id: ID, input: IPromotionUpdateInput): Promise<IPromotion> {
 		const current = await this.findPromotionOrFail(id);
+
+		input = withoutRestatedMembers(input, PROMOTION_LEDGER_MEMBERS, current, {
+			code: 'PROMOTION_FIELD_NOT_WRITABLE',
+			subject: 'a promotion',
+			movedBy: 'the redemption counter and the budget spend move with the usage ledger only.',
+			details: { promotionId: id }
+		});
+
+		if (input.code !== undefined) {
+			// `null` clears the code; the input type states the code as optional rather than nullable.
+			input = { ...input, code: (await this.changedCode(current, input.code)) as never };
+		}
 
 		/*
 		 * The rule is checked against the row the change produces, not against the fields the change
@@ -208,6 +254,29 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 		await this.update(id, { ...input } as never);
 
 		return this.findPromotionOrFail(id);
+	}
+
+	/**
+	 * The code an update stores: trimmed and upper-cased as a create stores it, and refused when another promotion of
+	 * the organization holds it. A cleared code (`null` or blank) is stored as none.
+	 *
+	 * @param current The promotion being changed.
+	 * @param stated The code the change states.
+	 * @returns The code to store.
+	 * @throws BadRequestException with `PROMOTION_ALREADY_APPLIED` when the code is taken.
+	 */
+	private async changedCode(current: IPromotion, stated: string | null): Promise<string | null> {
+		const code = typeof stated === 'string' ? stated.trim().toUpperCase() || null : null;
+
+		if (code && code !== current.code) {
+			const clash = await this.typeOrmPromotionRepository.findOneBy({ code, ...this.scope });
+
+			if (clash && clash.id !== current.id) {
+				throw new BadRequestException(`PROMOTION_ALREADY_APPLIED: the code "${code}" is already in use.`);
+			}
+		}
+
+		return code;
 	}
 
 	/**
@@ -235,7 +304,7 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 		if (!fundingType || fundingType === PromotionFunding.PLATFORM) {
 			if (sellerId) {
 				throw new BadRequestException(
-					'PROMOTION_FUNDING_SELLER_UNEXPECTED: a promotion the platform funds names no seller, because the cost it bears is not a seller\'s to record.'
+					"PROMOTION_FUNDING_SELLER_UNEXPECTED: a promotion the platform funds names no seller, because the cost it bears is not a seller's to record."
 				);
 			}
 
@@ -447,9 +516,13 @@ export class PromotionService extends TenantScopedCrudService<Promotion> {
 			// may redeem would hold budget and count against the per-customer limit for ever.
 			await this.promotionUsageService.releaseUsage(usage.id);
 
-			throw new BadRequestException(
-				`PROMOTION_USAGE_LIMIT_EXCEEDED: promotion ${input.promotionId} has reached its usage limit.`
-			);
+			// The code is stated as well as the text, so a caller that translates the refusal reads a stable
+			// member rather than matching a message (Q7-W1c, CodeRabbit on #10897).
+			throw new BadRequestException({
+				message: `PROMOTION_USAGE_LIMIT_EXCEEDED: promotion ${input.promotionId} has reached its usage limit.`,
+				code: PROMOTION_USAGE_LIMIT_EXCEEDED,
+				details: { promotionId: input.promotionId }
+			});
 		}
 
 		return usage;

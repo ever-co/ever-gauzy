@@ -393,6 +393,8 @@ export interface IEntitlementCatalogItem {
 	readonly id: ID;
 	readonly name?: string;
 	readonly sku?: string;
+	/** The item's free-form metadata; `metadata.entitlement` is the right a purchase of it grants (Q7-W5). */
+	readonly metadata?: Record<string, unknown> | null;
 }
 
 /** The catalogue capability as this package consumes it. */
@@ -455,7 +457,9 @@ export const EntitlementRevocationReason = {
 	/** The customer asked for their data to be erased. */
 	DATA_ERASURE: 'DATA_ERASURE',
 	/** The subscription that kept it alive ended. */
-	SUBSCRIPTION_ENDED: 'SUBSCRIPTION_ENDED'
+	SUBSCRIPTION_ENDED: 'SUBSCRIPTION_ENDED',
+	/** The order that granted it was cancelled before it was paid for (Q7-W5). */
+	ORDER_CANCELED: 'ORDER_CANCELED'
 } as const;
 
 /** The reason a right is suspended with. */

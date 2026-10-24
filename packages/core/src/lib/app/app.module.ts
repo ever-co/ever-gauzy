@@ -68,6 +68,7 @@ import { EmployeeRecurringExpenseModule } from '../employee-recurring-expense/em
 import { EmployeeSettingModule } from '../employee-setting/employee-setting.module';
 import { EmployeeStatisticsModule } from '../employee-statistics/employee-statistics.module';
 import { EmployeeModule } from '../employee/employee.module';
+import { EmployeeAgentProfileModule } from '../employee-agent-profile/employee-agent-profile.module';
 import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { EquipmentSharingPolicyModule } from '../equipment-sharing-policy/equipment-sharing-policy.module';
 import { EquipmentSharingModule } from '../equipment-sharing/equipment-sharing.module';
@@ -192,7 +193,9 @@ import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.mod
 import { TenantModule } from '../tenant/tenant.module';
 import { BillingModule } from '../shared/billing';
 import { createThrottlerStorage } from '../throttler/redis-throttler.storage';
+import { resolveRedisCacheReadTimeout, withKeyvReadDeadline } from './keyv-read-deadline';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
+import { clientIpSecretOf, EVER_CLIENT_IP_MIN_SECRET_LENGTH } from '../throttler/tracker';
 import { OfficialHolidayModule } from '../official-holiday/official-holiday.module';
 import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
@@ -256,6 +259,15 @@ if (environment.THROTTLE_ENABLED) {
 	console.log('Throttle Limit: ', limit);
 }
 
+// A configured but unusable Ever Teams client-IP secret is ignored (the forwarded address is not trusted),
+// which the operator should read here rather than infer from every Ever Teams user sharing one bucket.
+if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environment.EVER_TEAMS_CLIENT_IP_SECRET)) {
+	console.warn(
+		`EVER_TEAMS_CLIENT_IP_SECRET is shorter than ${EVER_CLIENT_IP_MIN_SECRET_LENGTH} characters and is ignored: ` +
+			'the client address forwarded by Ever Teams is not trusted. Set the same strong value on both sides.'
+	);
+}
+
 @Module({
 	imports: [
 		ClsModule.forRoot({
@@ -308,7 +320,8 @@ if (environment.THROTTLE_ENABLED) {
 								// - socket.reconnectStrategy: false (overrides any custom strategy)
 								// - throwOnConnectError: false
 
-								const secondary = createKeyvNonBlocking({
+								// Reads from Redis are awaited on every L1 miss: bounded, see keyv-read-deadline.ts.
+								const secondary = withKeyvReadDeadline(createKeyvNonBlocking({
 									url,
 									username,
 									password,
@@ -334,7 +347,7 @@ if (environment.THROTTLE_ENABLED) {
 										  },
 									// Send PING every 30s to keep connection alive
 									pingInterval: 30_000
-								});
+								}), resolveRedisCacheReadTimeout(process.env.REDIS_CACHE_READ_TIMEOUT_MS));
 
 								// Create Cacheable instance with 2-layer caching
 								// Note: The Cacheable instance is prepared for future use but cache-manager currently
@@ -430,6 +443,7 @@ if (environment.THROTTLE_ENABLED) {
 		UserModule,
 		SocialAccountModule,
 		EmployeeModule,
+		EmployeeAgentProfileModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,
 		CandidateModule,

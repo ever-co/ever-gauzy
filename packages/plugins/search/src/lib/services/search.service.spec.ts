@@ -580,7 +580,11 @@ function searchFixture(
 
 	const provider = new DatabaseSearchProvider(documentRepository, indexRegistry);
 	const providerRegistry = new SearchProviderRegistry(provider);
-	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, { findOne: async () => null } as never);
+	const indexer = new SearchIndexerService(new SearchSourceConnection(dataSource), indexRegistry, providerRegistry, {
+		findOne: async () => null,
+		// No organization holds its own copy of a definition in this suite (Q16).
+		find: async () => []
+	} as never);
 	const reindex = {
 		status: async (entities: string[]) => entities.map((entity) => ({ entity, indexedCount: tables.search_document.length, pendingCount: 0 }))
 	};
@@ -721,6 +725,14 @@ describe('SearchService — which entities a caller may search (doc 05 §3.18)',
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
 
 		expect((await fixture.service.indexStatus(['product'])).map((status) => status.entity)).toEqual(['product']);
+	});
+
+	it('reports nothing, rather than every entity, when the caller may view none of those asked for', async () => {
+		const fixture = searchFixture();
+
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission: never) => permission === (VISIBLE as never));
+
+		expect(await fixture.service.indexStatus(['secret_ledger'])).toEqual([]);
 	});
 });
 

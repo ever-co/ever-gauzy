@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
@@ -13,6 +13,26 @@ import {
 } from '@gauzy/contracts';
 import { ActivepiecesMcpUpdateDto } from './dto';
 import { ACTIVEPIECES_MCP_SERVERS_URL } from './activepieces.config';
+
+/**
+ * The Activepieces URL of one MCP server. The id is the caller's, from the route, and Express decodes `%2F` in a route
+ * parameter: unencoded, `..%2F..%2F<path>` turned the update and the token rotation into POSTs to any other path of the
+ * Activepieces API, under the installation's key when the tenant has none of its own. `encodeURIComponent` leaves dots
+ * alone, so `.` and `..` (`%2E%2E` in the route) are refused: the HTTP client resolves them as path segments, to the
+ * server list or to the API's root.
+ *
+ * @param serverId - The MCP server id.
+ * @throws BadRequestException for an empty id, or one that is only dots.
+ */
+export function mcpServerUrl(serverId: string): string {
+	if (!serverId?.trim()) {
+		throw new BadRequestException('serverId is required');
+	}
+	if (serverId === '.' || serverId === '..') {
+		throw new BadRequestException('serverId is not a valid MCP server id');
+	}
+	return `${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`;
+}
 
 @Injectable()
 export class ActivepiecesMcpService {
@@ -58,13 +78,7 @@ export class ActivepiecesMcpService {
 	 */
 	async getMcpServer(serverId: string): Promise<IActivepiecesMcpServer> {
 		try {
-			if (!serverId?.trim()) {
-				throw new BadRequestException('serverId is required');
-			}
-			return await this.request<IActivepiecesMcpServer>(
-				'get',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${encodeURIComponent(serverId)}`
-			);
+			return await this.request<IActivepiecesMcpServer>('get', mcpServerUrl(serverId));
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces MCP server:', error);
 			throw new HttpException(
@@ -79,11 +93,7 @@ export class ActivepiecesMcpService {
 	 */
 	async updateMcpServer(serverId: string, updateData: ActivepiecesMcpUpdateDto): Promise<IActivepiecesMcpServer> {
 		try {
-			const result = await this.request<IActivepiecesMcpServer>(
-				'post',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}`,
-				updateData
-			);
+			const result = await this.request<IActivepiecesMcpServer>('post', mcpServerUrl(serverId), updateData);
 
 			this.logger.log(`Successfully updated ActivePieces MCP server: ${result.id}`);
 			return result;
@@ -103,7 +113,7 @@ export class ActivepiecesMcpService {
 		try {
 			const result = await this.request<IActivepiecesMcpServer>(
 				'post',
-				`${ACTIVEPIECES_MCP_SERVERS_URL}/${serverId}/rotate`,
+				`${mcpServerUrl(serverId)}/rotate`,
 				{} // No body required for rotate
 			);
 
@@ -197,25 +207,21 @@ export class ActivepiecesMcpService {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			// 1. Try tenant-specific API key from database
-			let integrationTenant: any = null;
-			try {
-				integrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					},
-					relations: ['settings']
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
+			// 1. Try tenant-specific API key from database, from any of the tenant's rows that holds one,
+			// since connection calls used to add rows without an API key
+			const integrationTenants: any[] = await this.integrationTenantService.find({
+				where: {
+					tenantId,
+					integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+				},
+				relations: ['settings']
+			});
 
-			const apiKeySetting = integrationTenant?.settings?.find(
-				(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY
-			);
+			const apiKeySetting = integrationTenants
+				.flatMap((integrationTenant: any) => integrationTenant.settings ?? [])
+				.find(
+					(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY && setting.settingsValue
+				);
 
 			if (apiKeySetting?.settingsValue) {
 				return apiKeySetting.settingsValue;

@@ -112,7 +112,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 26.11.1
+          node-version: 26.12.1
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -133,8 +133,13 @@ jobs:
       - name: Change permissions
         run: 'sudo chown -R $(whoami) ./*'
 
+      # The X11 headers are for uiohook-napi (activity tracking), which electron-builder rebuilds from
+      # source for Electron: its prebuilds are not in a layout @electron/rebuild recognises. Without
+      # them the rebuild dies on "X11/keysym.h: No such file or directory" (stage-apps 2026-10-23).
+      # Same list as release-linux-arm64, whose identical rebuild passes; uiohook links X11, Xrandr,
+      # Xtst and Xt.
       - name: Install system dependencies
-        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick flatpak flatpak-builder'
+        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev flatpak flatpak-builder'
 
       - name: Initialize Flatpak
         run: |
@@ -341,7 +346,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 26.11.1
+          node-version: 26.12.1
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -609,7 +614,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 26.11.1
+          node-version: 26.12.1
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -838,6 +843,31 @@ jobs:
         os: [[self-hosted, Windows, X64]]
 
     steps:
+      # `shell: bash` runs whichever bash.exe the runner SERVICE finds first on its PATH. On EVERDESK3
+      # and EVERGR (stage-apps, 2026-10-23) C:\Windows\System32 comes before Git for Windows, so that
+      # is System32\bash.exe - the WSL launcher - which refuses to start under the service account:
+      # "Running WSL as local system is not supported" (Bash/WSL_E_LOCAL_SYSTEM_NOT_SUPPORTED). Every
+      # bash step then fails before running a line: Configure Registry, Ensure dist directory exists
+      # and Scrub registry credentials. EVERDESK1/EVERDESK4 resolve Git Bash and pass, which is why
+      # the failure followed the runner, not the workflow. The runner resolves `bash` with GITHUB_PATH
+      # prepended, so adding Git's bin directory there makes every later bash step use Git Bash on
+      # every runner. First step, ahead of the checkout, so the always() scrub step is covered even
+      # when the checkout fails. Git\bin holds only bash, sh and git: nothing else on PATH is shadowed.
+      - name: Use Git Bash for bash steps
+        shell: powershell
+        run: |
+          $candidates = @()
+          $git = Get-Command git.exe -ErrorAction SilentlyContinue
+          if ($git) { $candidates += Join-Path (Split-Path (Split-Path $git.Source -Parent) -Parent) 'bin' }
+          $candidates += Join-Path $env:ProgramFiles 'Git\bin'
+          $bin = $candidates | Where-Object { Test-Path (Join-Path $_ 'bash.exe') } | Select-Object -First 1
+          if ($bin) {
+            Write-Host "Using Git Bash from $bin"
+            $bin | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          } else {
+            Write-Host "::warning title=Git Bash not found::No Git for Windows bash.exe on $env:RUNNER_NAME - bash steps fall back to the first bash on the runner's PATH."
+          }
+
       - name: Check out Git repository
         uses: actions/checkout@v5
         with:
@@ -857,7 +887,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 26.11.1
+          node-version: 26.12.1
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -877,6 +907,31 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+          # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
+          # on an image whose newest is VS 2026 (windows-11-arm today) node-gyp then refuses the
+          # mismatched VS Command Prompt.
+          vsversion: 2022
+
+      - name: Put setup-node's Node back ahead of the VS dev env on PATH
+        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
+        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+
+      - name: Install Yarn next to setup-node's Node
+        # Node 26 ships no corepack/yarn, so `yarn` resolved to the runner's own C:\Program Files\nodejs\yarn.cmd,
+        # whose shim runs the node.exe beside it (24.x): yarn then refused the engine (">=26"). A yarn installed
+        # into setup-node's directory, which is ahead on PATH, runs setup-node's node.exe.
+        shell: bash
+        run: |
+          node_dir="$RUNNER_TOOL_CACHE/node/26.12.1/${RUNNER_ARCH,,}"
+          [ -x "$node_dir/node.exe" ] || { echo "::error::no setup-node Node in $node_dir"; exit 1; }
+          npm install --quiet -g --prefix "$node_dir" yarn@1.22.22
+          echo "yarn: $(command -v yarn), $(yarn --version)"
+          yarn_node="$(yarn --silent node --version)"
+          echo "node under yarn: $yarn_node"
+          case "$yarn_node" in v26.*) ;; *) echo "::error::yarn runs Node $yarn_node, not 26"; exit 1 ;; esac
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'
@@ -1140,7 +1195,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 26.11.1
+          node-version: 26.12.1
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -1162,19 +1217,28 @@ jobs:
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
         shell: powershell
         run: |
-          # The runner image normally ships VS with the VC ARM64 toolset. Only reach for
-          # Chocolatey if it is genuinely missing — community.chocolatey.org returning 504
-          # has failed this job before ("Chocolatey installed 0/0 packages"), and installing
-          # something already present costs ~6 min for nothing.
+          # Only reach for Chocolatey if VS 2022 with the VC ARM64 toolset is genuinely missing —
+          # community.chocolatey.org returning 504 has failed this job before ("Chocolatey
+          # installed 0/0 packages"), and installing something already present costs ~6 min.
+          #
+          # The probe is pinned to VS 2022, [17.0,18.0). windows-11-arm now boots the
+          # windows-11-vs2026-arm64 image, which ships only VS 2026 (version 18) - the last green
+          # build (2026-09-24) ran on windows-11-arm64 with VS 2022. The old unpinned probe accepted
+          # VS 2026 and skipped this install, and node-gyp, held to msvs_version=2022 by the next
+          # step, then found no Visual Studio at all: "Could not find any Visual Studio installation
+          # to use" rebuilding msgpackr-extract (stage-apps 2026-10-23, all six app workflows).
+          # Moving to VS 2026 instead is not a drop-in: node-gyp only learned it in 12.1, and this
+          # build still carries node-gyp 10 (the global install below, and get-windows' own
+          # dependency, used when it builds from source - it ships no win32-arm64 prebuild).
           $ErrorActionPreference = "Continue"
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $have = $false
           if (Test-Path $vswhere) {
-            $found = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath 2>$null
-            if ($found) { $have = $true; Write-Host "VC ARM64 toolset already present: $found" }
+            $found = & $vswhere -latest -products * -version "[17.0,18.0)" -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath 2>$null
+            if ($found) { $have = $true; Write-Host "VS 2022 with the VC ARM64 toolset already present: $found" }
           }
           if (-not $have) {
-            Write-Host "VC ARM64 toolset not found - installing via Chocolatey"
+            Write-Host "VS 2022 with the VC ARM64 toolset not found - installing via Chocolatey"
             choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
             if ($LASTEXITCODE -ne 0) {
               # Do not fail the job on a Chocolatey feed outage; the next step (msvc-dev-cmd)
@@ -1197,6 +1261,32 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: arm64
+          # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
+          # on an image whose newest is VS 2026 (windows-11-arm today) node-gyp then refuses the
+          # mismatched VS Command Prompt.
+          vsversion: 2022
+
+      - name: Put setup-node's Node back ahead of the VS dev env on PATH
+        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
+        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+          architecture: arm64
+
+      - name: Install Yarn next to setup-node's Node
+        # Node 26 ships no corepack/yarn, so `yarn` resolved to the runner's own C:\Program Files\nodejs\yarn.cmd,
+        # whose shim runs the node.exe beside it (24.x): yarn then refused the engine (">=26"). A yarn installed
+        # into setup-node's directory, which is ahead on PATH, runs setup-node's node.exe.
+        shell: bash
+        run: |
+          node_dir="$RUNNER_TOOL_CACHE/node/26.12.1/${RUNNER_ARCH,,}"
+          [ -x "$node_dir/node.exe" ] || { echo "::error::no setup-node Node in $node_dir"; exit 1; }
+          npm install --quiet -g --prefix "$node_dir" yarn@1.22.22
+          echo "yarn: $(command -v yarn), $(yarn --version)"
+          yarn_node="$(yarn --silent node --version)"
+          echo "node under yarn: $yarn_node"
+          case "$yarn_node" in v26.*) ;; *) echo "::error::yarn runs Node $yarn_node, not 26"; exit 1 ;; esac
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'

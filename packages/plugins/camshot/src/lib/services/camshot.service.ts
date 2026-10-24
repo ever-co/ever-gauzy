@@ -1,5 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { FileStorage, tempFile, TenantAwareCrudService } from '@gauzy/core';
+import { BadRequestException, Injectable, Logger, PayloadTooLargeException } from '@nestjs/common';
+import {
+	createImageThumbnail,
+	FileContentTooLargeError,
+	FileStorage,
+	fileContentToBuffer,
+	TenantAwareCrudService,
+	thumbnailFileName
+} from '@gauzy/core';
 import { Camshot } from '../entity/camshot.entity';
 import { TypeOrmCamshotRepository } from '../repositories/type-orm-camshot.repository';
 import { MikroOrmCamshotRepository } from '../repositories/mikro-orm-camshot.repository';
@@ -9,9 +16,6 @@ import { plainToInstance } from 'class-transformer';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IPreparedFile } from '../models/prepare.model';
 import * as path from 'path';
-import * as fs from 'fs';
-import { Jimp, JimpMime } from 'jimp';
-
 
 @Injectable()
 export class CamshotService extends TenantAwareCrudService<Camshot> {
@@ -63,40 +67,42 @@ export class CamshotService extends TenantAwareCrudService<Camshot> {
 
 	public async createThumbnail(provider: any, file: FileDTO): Promise<FileDTO> {
 		// Retrieve file content from the file storage provider
-		const fileContent = await provider.getFile(file.key);
-
-		// Create a temporary file for input
-		const inputFile = await tempFile('camshot-thumb');
-
+		let fileContent: Buffer | undefined;
 		try {
-			// Write the file content to the input temporary file
-			await fs.promises.writeFile(inputFile, fileContent);
-
-			// Read and resize the image using Jimp
-			const image = await Jimp.read(inputFile);
-			// Only the width is given, so the height follows the aspect ratio (jimp 0.x's Jimp.AUTO)
-			image.resize({ w: 250 });
-
-			// Get the resized image as a buffer (default to PNG)
-			const data = await image.getBuffer(JimpMime.png);
-
+			fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		} catch (error) {
+			// Too large to read back (already stored: the route sets no multer size limit): delete it, or it stays
+			// served from `/public/` with no record to delete it through, and answer 413.
+			if (error instanceof FileContentTooLargeError) {
+				try {
+					await provider.deleteFile(file.key);
+				} catch {
+					this.logger.error('Error while deleting an oversized camshot from file storage provider');
+				}
+				throw new PayloadTooLargeException('The camshot file is too large');
+			}
+			throw error;
+		}
+		if (!fileContent) {
+			// The key names the storage path: logged here, kept out of the response (CWE-209)
+			this.logger.error(`Could not read the uploaded camshot '${file.key}' back from the file storage provider`);
+			throw new BadRequestException('The uploaded camshot could not be read back from storage');
+		}
+		try {
+			// 250 px wide, the height following the aspect ratio, as PNG (what the thumbnail always was), oriented as
+			// the image displays: sharp (libvips) on its own thread pool. Jimp decoded and resized the full camshot in
+			// JavaScript on the event loop, inside the upload request.
+			const thumb = await createImageThumbnail(fileContent, { png: true });
 			// Define thumbnail file name and directory
-			const thumbName = `thumb-${file.filename}`;
+			// Named for what the bytes are (PNG), not for the client-supplied extension of the upload
+			const thumbName = thumbnailFileName(file.filename, thumb.extension);
 			const thumbDir = path.posix.dirname(file.key); // Use posix for forward slashes
 			const fullPath = path.posix.join(thumbDir, thumbName);
-
 			// Upload the thumbnail data to the file storage provider
-			return provider.putFile(data, fullPath);
+			return provider.putFile(thumb.data, fullPath);
 		} catch (error) {
 			this.logger.error('Error creating thumbnail:', error);
 			throw error;
-		} finally {
-			// Always remove the temporary input file
-			try {
-				await fs.promises.unlink(inputFile);
-			} catch (unlinkError) {
-				this.logger.error('Error while unlinking temp file:', unlinkError);
-			}
 		}
 	}
 }

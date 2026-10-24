@@ -33,7 +33,8 @@ import {
  * the same guards, in the same order: the default channel, the default region and its channel link,
  * the default tax category, the currency price preference, the measurement families with their
  * reference units (and the variant stock-unit backfill and the three tenant-scoped unit settings that
- * point at them), the seven numbering series and the search definitions. The migration's slug backfill
+ * point at them), the seven numbering series (plus `SELLER_PAYOUT`, which `1791000000790` seeds with the same
+ * statement) and the search definitions. The migration's slug backfill
  * is not per organization and a new organization has no products, so it is not repeated here. `commerce-defaults.seed.spec.ts` runs the migration for one organization and this
  * function for another on the same schema and compares the rows, so a change to one that is not made to
  * the other fails a test instead of shipping two kinds of organization.
@@ -101,7 +102,11 @@ export async function createDefaultCommerceDefaults(
 	}
 }
 
-/** The numbering series every organization needs before it can issue a document (`1791000000520`'s list). */
+/**
+ * The numbering series every organization needs before it can issue a document: `1791000000520`'s seven, then
+ * `SELLER_PAYOUT`, which `1791000000790-SeedSellerPayoutSequence` seeds for the organizations that existed before
+ * it (the marketplace numbers its seller payouts from it).
+ */
 export const DEFAULT_SEQUENCE_SERIES: ReadonlyArray<{ key: string; prefix: string }> = [
 	{ key: 'ORDER', prefix: 'SO-' },
 	{ key: 'RETURN', prefix: 'RT-' },
@@ -109,7 +114,8 @@ export const DEFAULT_SEQUENCE_SERIES: ReadonlyArray<{ key: string; prefix: strin
 	{ key: 'EXCHANGE', prefix: 'EX-' },
 	{ key: 'PO', prefix: 'PO-' },
 	{ key: 'SUBSCRIPTION', prefix: 'SUB-' },
-	{ key: 'ENTITLEMENT', prefix: 'EN-' }
+	{ key: 'ENTITLEMENT', prefix: 'EN-' },
+	{ key: 'SELLER_PAYOUT', prefix: 'SP-' }
 ];
 
 /** The code, name and order numbering the default channel is created with. */

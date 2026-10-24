@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import * as moment from 'moment';
 import * as chalk from 'chalk';
 import { Request } from 'express';
 import { SyncTags } from '@gauzy/constants';
@@ -28,6 +27,7 @@ import {
 	IntegrationMapSyncIssueCommand,
 	IntegrationMapSyncLabelCommand,
 	IntegrationTenantService,
+	IntegrationTenantSyncService,
 	OrganizationProjectService,
 	RequestContext
 } from '@gauzy/core';
@@ -55,7 +55,8 @@ export class GithubSyncService {
 		private readonly _octokitService: OctokitService,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _organizationProjectService: OrganizationProjectService,
-		private readonly _githubRepositoryService: GithubRepositoryService
+		private readonly _githubRepositoryService: GithubRepositoryService,
+		private readonly _integrationTenantSyncService: IntegrationTenantSyncService
 	) {}
 
 	/**
@@ -172,7 +173,16 @@ export class GithubSyncService {
 				const delay: number = 0;
 
 				// Attempt to synchronize GitHub issues using the syncGithubIssues method.
-				await this.syncingGithubIssues(integrationId, input, delay);
+				const result = await this.syncingGithubIssues(integrationId, input, delay);
+
+				// A run that failed part-way resolves to `false` instead of throwing: record it as an error.
+				if (result === false) {
+					await this._githubRepositoryService.update(repository.id, {
+						status: GithubRepositoryStatusEnum.ERROR
+					});
+
+					return false; // Return false to indicate that an error occurred during synchronization.
+				}
 
 				// Update the status of the GitHub repository to "Success" (GithubRepositoryStatusEnum.SUCCESSFULLY).
 				await this._githubRepositoryService.update(repository.id, {
@@ -318,9 +328,13 @@ export class GithubSyncService {
 					}
 				}
 
-				// Step 9: Update Integration Last Synced Date
-				await this._integrationTenantService.update(integrationId, {
-					lastSyncedAt: moment().toDate()
+				// Step 9: Update Integration Last Synced Date — and announce the finished run. The stamp and the
+				// `integration_tenant.synced` fact `Subscription.integrationSyncCompleted` follows are one transaction,
+				// scoped to the run's own tenant and organization; a run that failed above never reaches it.
+				await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
+					tenantId,
+					organizationId,
+					counts: { issue: integrationMaps.length }
 				});
 
 				// Call the success callback function if provided

@@ -6,8 +6,7 @@ import {
 	OrganizationVendor,
 	ProductVariant,
 	ProductVariantPrice,
-	RequestContext,
-	TenantAwareCrudService
+	RequestContext
 } from '@gauzy/core';
 import {
 	IVendorProductTerm,
@@ -30,6 +29,7 @@ import { PurchaseOrderLine } from '../purchase-order-line/purchase-order-line.en
 import { VendorProductTerm } from './vendor-product-term.entity';
 import { MikroOrmVendorProductTermRepository } from './repository/mikro-orm-vendor-product-term.repository';
 import { TypeOrmVendorProductTermRepository } from './repository/type-orm-vendor-product-term.repository';
+import { PurchasingCrudService } from '../purchasing-crud.service';
 
 /** The priority a term is written with when the caller states none. */
 const DEFAULT_PRIORITY = 100;
@@ -88,7 +88,7 @@ interface IVendorDefaults {
  * it and reports divergence.
  */
 @Injectable()
-export class VendorProductTermService extends TenantAwareCrudService<VendorProductTerm> {
+export class VendorProductTermService extends PurchasingCrudService<VendorProductTerm> {
 	constructor(
 		readonly typeOrmVendorProductTermRepository: TypeOrmVendorProductTermRepository,
 		readonly mikroOrmVendorProductTermRepository: MikroOrmVendorProductTermRepository
@@ -198,6 +198,15 @@ export class VendorProductTermService extends TenantAwareCrudService<VendorProdu
 		const term = await this.findScoped(id);
 		const vendorId = entity.vendorId ?? term.vendorId;
 		const variantId = entity.variantId ?? term.variantId;
+
+		// A changed supplier or variant is held to what a creation checks (SEC-D-09): `variantId` is a plain column,
+		// not a relation, so no core foreign-row check sees it — a term was re-pointed at another tenant's variant.
+		if (entity.vendorId !== undefined && entity.vendorId !== term.vendorId) {
+			await this.assertVendorUsable(vendorId);
+		}
+		if (entity.variantId !== undefined && entity.variantId !== term.variantId) {
+			await this.assertVariantExists(variantId);
+		}
 		const currency = (entity.currency ?? term.currency) as CurrencyCode;
 		const minQuantity = entity.minQuantity === undefined ? term.minQuantity : normalizeQuantity(entity.minQuantity);
 		const status = entity.status ?? term.status;

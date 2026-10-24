@@ -223,6 +223,8 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 	@ApiOperation({ summary: 'Refund a received return' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'The refund was issued.' })
 	@Permissions(ReturnsPermissions.RETURNS_RECEIVE)
+	// A retry after a lost answer must not give the money back twice (§7.14: Idempotency-Key, required).
+	@Idempotent({ scope: 'return.refund', required: true, resourceType: 'order_return' })
 	@Versioned({ resource: OrderReturnService })
 	@Post(':id/refund')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -231,6 +233,21 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 		@Body() entity: RefundOrderReturnDTO,
 		@Req() request: any
 	) {
+		// The key the route requires, so a retry after an outcome nobody saw finds its refund (R3-09r2). Passed only
+		// when one was sent, so a call without it is the call it always was.
+		const idempotencyKey = idempotencyKeyOf(request);
+
+		if (idempotencyKey) {
+			return await this.orderReturnService.refund(
+				id,
+				entity.amount,
+				entity.reasonId,
+				entity.note,
+				versionExpectationOf(request),
+				idempotencyKey
+			);
+		}
+
 		return await this.orderReturnService.refund(
 			id,
 			entity.amount,
@@ -400,4 +417,17 @@ export class OrderReturnController extends CrudController<OrderReturn> {
 	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
 		return await super.softRecover(id, ...options);
 	}
+}
+
+/**
+ * The `Idempotency-Key` a request presented, as the route's idempotency guard read it.
+ *
+ * @param request The HTTP request.
+ * @returns The key, or `undefined` when none was sent.
+ */
+function idempotencyKeyOf(request: any): string | undefined {
+	const header = request?.headers?.['idempotency-key'];
+	const value = Array.isArray(header) ? header[0] : header;
+
+	return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }

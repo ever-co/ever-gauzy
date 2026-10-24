@@ -1,5 +1,5 @@
 import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { applyDecorators, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import type { ID as Id, ISellerPayoutRunResult } from '@gauzy/contracts';
 import {
@@ -67,20 +67,7 @@ import {
 	SellerTransactionType,
 	SellerType
 } from './marketplace.types';
-
-/**
- * The codes a payout, payout-line or settlement field requires: the endpoint, the marketplace and its
- * payouts, which is what `SellerPayoutController`, `SellerPayoutLineController` and
- * `SellerSettlementController` require of their routes — and `sellerStatement`, which carries the
- * seller's payouts and settlements, as `GET /sellers/:id/statement` does. A field-level statement replaces the class's
- * codes for that field, so all three are stated here.
- */
-const MarketplacePayoutsGate = () =>
-	applyDecorators(
-		FeatureFlag(FEATURE_GRAPHQL),
-		FeatureFlag(MarketplaceFeatures.MARKETPLACE),
-		FeatureFlag(MarketplaceFeatures.PAYOUTS)
-	);
+import { MarketplacePayoutsGate } from './marketplace-gates';
 
 /**
  * The marketplace in GraphQL, with the parity the REST surface has.
@@ -1163,6 +1150,8 @@ export class SellerEntityResolver {
 	 * seller whose rows every row under it belongs to. It answers the count rather than a line, because
 	 * the row is gone — the archive beside it, `softDeleteSellerPayoutLine`, is the one that keeps a row
 	 * to hand back.
+	 *
+	 * `SellerPayoutLineService` refuses it, as it refuses the route: a line is released by canceling its payout.
 	 */
 	@MarketplacePayoutsGate()
 	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerPayoutLine' })
@@ -1186,6 +1175,8 @@ export class SellerEntityResolver {
 	 * The inherited route hands `CrudController.softRemove` its rest parameter — an empty array — which the
 	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
 	 * rather than an array the service would only discard.
+	 *
+	 * `SellerPayoutLineService` refuses it, as it refuses the route: a line is released by canceling its payout.
 	 */
 	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutLineType, { name: 'softDeleteSellerPayoutLine' })
@@ -1201,6 +1192,8 @@ export class SellerEntityResolver {
 	 * `SELLERS_DELETE` rather than the payout grants because the route states `SELLERS_DELETE`, and restoring
 	 * a join row is what makes a ledger row payable at most once again: the service reads the row
 	 * `withDeleted`, which is a visibility no ordinary read has.
+	 *
+	 * `SellerPayoutLineService` refuses it, as it refuses the route: a line is released by canceling its payout.
 	 */
 	@MarketplacePayoutsGate()
 	@Mutation(() => SellerPayoutLineType, { name: 'recoverSellerPayoutLine' })

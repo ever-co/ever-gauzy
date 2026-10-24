@@ -200,7 +200,11 @@ async function renderThroughBothOrms(): Promise<{ typeorm: IRendered; mikroorm: 
 				]);
 
 				// The caller: a user of the tenant, as the tenant guard leaves the request context.
-				jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ tenantId: TENANT });
+				// The token names the organization of the rows read, as `JwtStrategy` attaches it.
+				jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+					tenantId: TENANT,
+					lastOrganizationId: ORGANIZATION
+				});
 				jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 				jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(null);
 				jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
@@ -284,9 +288,10 @@ describe('InvoiceService — an invoice billed by product, rendered on MikroORM'
 		expect(linesOf(mikroorm.english.value)).toEqual(linesOf(typeorm.english.value));
 
 		expect(linesOf(mikroorm.german.value)).toEqual([
-			['Dings', 'Widgets', '2', 'EUR 10', 'EUR 20'],
-			// No German translation: the product is named by nothing, on both ORMs, as it always was.
-			['undefined', 'Bare ones', '1', 'EUR 15', 'EUR 15']
+			// No German translation: the product has no name in German, and the line is printed with an empty item
+			// on both ORMs, as a line whose product is gone is (it read "undefined" before).
+			['', 'Bare ones', '1', 'EUR 15', 'EUR 15'],
+			['Dings', 'Widgets', '2', 'EUR 10', 'EUR 20']
 		]);
 		expect(linesOf(mikroorm.english.value)).toEqual([
 			['Bare', 'Bare ones', '1', 'EUR 15', 'EUR 15'],

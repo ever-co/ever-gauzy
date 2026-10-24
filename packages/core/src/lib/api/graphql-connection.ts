@@ -363,6 +363,270 @@ function instantMillis(value: unknown): number | undefined {
 }
 
 /**
+ * Where a walk reads a gone cursor: `after` resumes past its position, `before` ends the window there.
+ */
+type CursorWalk = 'after' | 'before';
+
+/**
+ * The value an empty cursor sort value stands for, on a row's scale.
+ *
+ * A cursor spells a null and an empty text alike, so on a text column it names one of two positions:
+ * ascending, the empty text sorts first and the null last. A date, a number or a boolean is never empty
+ * text, so there it is the null, and a field declared with such a kind never asks for empty text at all
+ * (see {@link columnMayHoldEmptyText}). On text the walk reads the side that keeps every row it may owe
+ * the caller, the earlier position for `after` and the later one for `before`, and a row without a value
+ * reads the same side so the boundary stays one place in the order.
+ *
+ * @param rowValue The row's value under the sort key.
+ * @param emptyIsText Whether the walk reads an empty sort value as empty text.
+ * @returns The empty text or the null.
+ */
+function emptyCursorValue(rowValue: unknown, emptyIsText: boolean): unknown {
+	const isDate = rowValue instanceof Date;
+	const isBoolean = typeof rowValue === 'boolean';
+	const isNumber = typeof rowValue === 'number';
+
+	if (isDate || isBoolean || isNumber) {
+		return null;
+	}
+
+	if (emptyIsText) {
+		return '';
+	}
+
+	return null;
+}
+
+/**
+ * A cursor's sort value, on the scale of the row value it is compared with.
+ *
+ * A cursor carries its row's sort value as text, a `Date` as RFC 3339 and a null as empty text, while a
+ * row carries a `Date`, a number or a boolean. Compared as they stand, epoch milliseconds against
+ * RFC 3339 text read every date as later than the cursor, so the text is read back into the row's shape.
+ *
+ * @param rowValue The row's value under the sort key.
+ * @param cursorText The sort value the cursor carries.
+ * @param emptyIsText Whether the walk reads an empty sort value as empty text, see {@link emptyCursorValue}.
+ * @returns The cursor's value, comparable with the row's.
+ */
+function cursorValueOnRowScale(rowValue: unknown, cursorText: string, emptyIsText: boolean): unknown {
+	if (cursorText === '') {
+		return emptyCursorValue(rowValue, emptyIsText);
+	}
+
+	if (rowValue instanceof Date) {
+		const instant = instantMillis(cursorText);
+
+		if (instant === undefined) {
+			return cursorText;
+		}
+
+		return instant;
+	}
+
+	if (typeof rowValue === 'boolean') {
+		return cursorText === 'true';
+	}
+
+	if (typeof rowValue === 'number') {
+		const parsed = Number(cursorText);
+
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+
+	return cursorText;
+}
+
+/**
+ * How {@link sortsAfterCursor} places a row that ties with a gone cursor's row on the first sort key.
+ *
+ * `id` places it by the id, which is how {@link applyConnectionSort} orders those ties when the id comes
+ * right after the first key. Otherwise a later key orders them and the cursor does not carry it, so the
+ * row goes on a fixed side: `after` or `not-after`, picked so the walk repeats rows of that tie group
+ * rather than skipping them.
+ */
+type CursorTieRule = 'id' | 'after' | 'not-after';
+
+/**
+ * Whether {@link applyConnectionSort} orders rows tied on the first key by their id alone.
+ *
+ * @param sort The effective sort.
+ * @returns True for a sort of one key, or one whose second key is the id, in either direction.
+ */
+function idOrdersFirstKeyTies(sort: readonly ConnectionSortKey[]): boolean {
+	if (sort.length <= 1) {
+		return true;
+	}
+
+	return sort[1].field === 'id';
+}
+
+/**
+ * The direction {@link applyConnectionSort} orders first-key ties by the id in.
+ *
+ * @param sort The effective sort, one whose first-key ties the id orders.
+ * @returns The second key's direction when there is one, else the first key's.
+ */
+function idTieDirection(sort: readonly ConnectionSortKey[]): ConnectionSortKey['direction'] | undefined {
+	if (sort.length > 1) {
+		return sort[1].direction;
+	}
+
+	return sort[0]?.direction;
+}
+
+/**
+ * The tie rule a gone cursor is placed with.
+ *
+ * @param sort The effective sort.
+ * @param walk The walk that reads the cursor.
+ * @returns `id` when the id orders first-key ties, else the side that repeats tied rows for that walk.
+ */
+function cursorTieRule(sort: readonly ConnectionSortKey[], walk: CursorWalk): CursorTieRule {
+	if (idOrdersFirstKeyTies(sort)) {
+		return 'id';
+	}
+
+	if (walk === 'after') {
+		return 'after';
+	}
+
+	return 'not-after';
+}
+
+/**
+ * How one walk places a gone cursor, worked out once for the whole walk.
+ */
+interface GoneCursorPlacement {
+	/** The first sort key's field. */
+	readonly sortKey: string;
+	/** Whether the first sort key runs descending. */
+	readonly isDescending: boolean;
+	/** How a row tied with the cursor on the first key is placed. */
+	readonly tieRule: CursorTieRule;
+	/** Whether the id orders those ties descending, read when `tieRule` is `id`. */
+	readonly idDescending: boolean;
+	/** Whether an empty sort value is read as empty text rather than as a null. */
+	readonly emptyIsText: boolean;
+}
+
+/** The declared kinds whose values are never empty text, so an empty cursor sort value there is a null. */
+const NON_TEXT_KINDS: readonly ConnectionFieldKind[] = ['DATE', 'NUMBER', 'DECIMAL', 'BOOLEAN'];
+
+/**
+ * Whether a sort key's column may hold empty text, from the kind the resource declares for it.
+ *
+ * A field may be sortable without being filterable, and then nothing declares its kind. A column whose
+ * rows carry a date, a number or a boolean is not text, so its empty cursor sort value is a null there
+ * too; a field with no such value on any row is read as text, the side that repeats rows rather than
+ * skipping them.
+ *
+ * @param kind The declared kind, when the resource declares the field.
+ * @param rows The rows the service answered with.
+ * @param sortKey The first sort key's field.
+ * @returns False for a declared date, number, decimal or boolean, or for an undeclared field whose rows
+ * hold one, else true.
+ */
+function columnMayHoldEmptyText(
+	kind: ConnectionFieldKind | undefined,
+	rows: readonly unknown[],
+	sortKey: string
+): boolean {
+	if (kind !== undefined) {
+		return !NON_TEXT_KINDS.includes(kind);
+	}
+
+	return !rows.some((row) => {
+		const value = readPath(row, sortKey);
+
+		return value instanceof Date || typeof value === 'number' || typeof value === 'boolean';
+	});
+}
+
+/**
+ * The placement {@link sortsAfterCursor} reads for one walk.
+ *
+ * @param sort The effective sort.
+ * @param sortKey The first sort key's field.
+ * @param kind The kind the resource declares for that field, if it declares one.
+ * @param rows The rows the service answered with, which say the field's kind when nothing declares it.
+ * @param walk The walk that reads the cursor.
+ * @returns The placement.
+ */
+function goneCursorPlacement(
+	sort: readonly ConnectionSortKey[],
+	sortKey: string,
+	kind: ConnectionFieldKind | undefined,
+	rows: readonly unknown[],
+	walk: CursorWalk
+): GoneCursorPlacement {
+	const isDescending = sort[0]?.direction === 'DESC';
+	const isAfterWalk = walk === 'after';
+	// The earlier of the two empty-value positions for `after`, the later one for `before`.
+	const textSideKeepsRows = isAfterWalk !== isDescending;
+	const mayHoldEmptyText = columnMayHoldEmptyText(kind, rows, sortKey);
+	const emptyIsText = textSideKeepsRows && mayHoldEmptyText;
+	const tieRule = cursorTieRule(sort, walk);
+	const idDescending = idTieDirection(sort) === 'DESC';
+
+	return { sortKey, isDescending, tieRule, idDescending, emptyIsText };
+}
+
+/**
+ * Whether an order between a row and a cursor puts the row after it.
+ *
+ * @param order The ascending comparison of the row with the cursor.
+ * @param isDescending Whether the key runs descending.
+ * @returns True when the row comes after the cursor.
+ */
+function orderPlacesAfter(order: number, isDescending: boolean): boolean {
+	if (isDescending) {
+		return order < 0;
+	}
+
+	return order > 0;
+}
+
+/**
+ * Whether a row sorts after the position a cursor names, in the order {@link applyConnectionSort} gives.
+ *
+ * A cursor whose row is gone (deleted, or no longer matching the filter) is placed by the sort value and
+ * the id it still carries: the first key in its direction, then the tie rule for rows equal on that key.
+ *
+ * @param row The row.
+ * @param cursor The sort value and the id the cursor carries.
+ * @param placement How the walk places the cursor.
+ * @returns True when the row comes after the cursor's position.
+ */
+function sortsAfterCursor(
+	row: unknown,
+	cursor: { readonly id: string; readonly sortValue: string },
+	placement: GoneCursorPlacement
+): boolean {
+	const rowValue = readPath(row, placement.sortKey);
+	const cursorValue = cursorValueOnRowScale(rowValue, cursor.sortValue, placement.emptyIsText);
+	const order = compare(rowValue, cursorValue);
+
+	if (order !== 0) {
+		return orderPlacesAfter(order, placement.isDescending);
+	}
+
+	if (placement.tieRule === 'after') {
+		return true;
+	}
+
+	if (placement.tieRule === 'not-after') {
+		return false;
+	}
+
+	const idOrder = compare(readPath(row, 'id'), cursor.id);
+
+	return orderPlacesAfter(idOrder, placement.idDescending);
+}
+
+/**
  * Whether one row matches one condition.
  *
  * @param value The row's value for the field.
@@ -700,7 +964,13 @@ function readCursor(cursor: string, sort: readonly SortKey[]): { id: string; sor
  */
 export function buildConnection<T>(definition: ConnectionDefinition<T>): GraphqlConnection<T> {
 	const { rows, filterable, sortable, defaultSort } = definition;
-	const request = definition.request ?? {};
+	// GraphQL keeps an explicit `null` and a Relay client sends `after: null` on its first fetch, so a member
+	// stated as `null` states nothing here, as in the store-paged window (see statedPageMembers).
+	// A page object whose members are all null states nothing either, so it is dropped rather than read as
+	// cursor pagination beside a stated offset.
+	const { page: statedPage, ...stated } = statedMembers(definition.request);
+	const pageMembers = statedMembers(statedPage);
+	const request: ConnectionRequest = Object.keys(pageMembers).length > 0 ? { ...stated, page: pageMembers } : stated;
 
 	assertSinglePaginationStyle(request);
 
@@ -722,15 +992,19 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 	const before = request.page?.before ?? request.before;
 
 	if (after !== undefined) {
-		const { id, sortValue } = readCursor(after, sort);
-		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === id);
+		const cursor = readCursor(after, sort);
+		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === cursor.id);
 		// A row that has since been deleted cannot name a position, so the cursor's own sort value
 		// decides where the walk resumes — which is what makes cursor pagination stable under
 		// concurrent deletes rather than merely under inserts.
-		start =
-			index >= 0
-				? index + 1
-				: ordered.findIndex((row) => compare(readPath(row, sortKey), sortValue) > 0);
+		// When a later key orders first-key ties, the walk resumes at the start of the tie group.
+		const placement = goneCursorPlacement(sort, sortKey, filterable[sortKey], rows, 'after');
+
+		if (index >= 0) {
+			start = index + 1;
+		} else {
+			start = ordered.findIndex((row) => sortsAfterCursor(row, cursor, placement));
+		}
 		if (start < 0) {
 			start = ordered.length;
 		}
@@ -749,12 +1023,17 @@ export function buildConnection<T>(definition: ConnectionDefinition<T>): Graphql
 	}
 
 	if (before !== undefined) {
-		const { id, sortValue } = readCursor(before, sort);
-		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === id);
-		end =
-			index >= 0
-				? index
-				: ordered.findIndex((row) => compare(readPath(row, sortKey), sortValue) >= 0);
+		const cursor = readCursor(before, sort);
+		const index = ordered.findIndex((row) => String(readPath(row, 'id')) === cursor.id);
+		// For a gone row, the window ends at the first row that sorts after its position, and after the
+		// whole tie group when a later key orders first-key ties.
+		const placement = goneCursorPlacement(sort, sortKey, filterable[sortKey], rows, 'before');
+
+		if (index >= 0) {
+			end = index;
+		} else {
+			end = ordered.findIndex((row) => sortsAfterCursor(row, cursor, placement));
+		}
 		if (end < 0) {
 			end = ordered.length;
 		}
@@ -902,6 +1181,21 @@ export interface IConnectionPageSelection {
 	offset?: number | null;
 }
 
+/** An object's members once the `null` ones are dropped: optional, and never `null`. */
+type StatedMembers<T> = { [K in keyof T]?: Exclude<T[K], null> };
+
+/**
+ * The members of an object that state something, with every `null` member dropped.
+ *
+ * @param value The object as the resolver received it.
+ * @returns The members the caller actually stated.
+ */
+function statedMembers<T extends object>(value?: T | null): StatedMembers<T> {
+	return Object.fromEntries(
+		Object.entries(value ?? {}).filter(([, member]) => member !== null && member !== undefined)
+	) as StatedMembers<T>;
+}
+
 /**
  * The members of a page selection that state something, with every `null` member dropped.
  *
@@ -923,9 +1217,7 @@ function statedPageMembers(selection?: IConnectionPageSelection | null): {
 	limit?: number;
 	offset?: number;
 } {
-	return Object.fromEntries(
-		Object.entries(selection ?? {}).filter(([, value]) => value !== null && value !== undefined)
-	);
+	return statedMembers(selection);
 }
 
 /**

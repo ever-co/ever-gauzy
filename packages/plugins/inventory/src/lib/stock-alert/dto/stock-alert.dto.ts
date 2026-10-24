@@ -60,6 +60,16 @@ export class StockAlertDTO extends TenantOrganizationBaseDTO {
 	@IsOptional()
 	@IsInt()
 	cooldownMinutes?: number;
+
+	/**
+	 * Whether the rule is evaluated. The GraphQL input always carried it; the REST body did not, so the
+	 * validation pipe stripped it and a rule could be neither created paused nor paused by an edit over
+	 * REST (review R2-G36). Absent keeps the column default (enabled) on create and the stored value on edit.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	isActive?: boolean;
 }
 
 /**

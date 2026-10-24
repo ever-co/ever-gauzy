@@ -101,18 +101,23 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			await this.organizationService.update({ tenantId }, { isDefault: false });
 		}
 
-		// Simplify boolean assignments and handle optional fields like standardWorkHoursPerDay
+		// Simplify boolean assignments and handle optional fields like standardWorkHoursPerDay.
+		// Only the flags the input carries are written: a partial update (e.g. only the name) used to turn
+		// every unsent "show_*" flag back to its default.
+		const has = (key: keyof IOrganizationUpdateInput) => input[key] !== undefined;
 		const updateData: Partial<IOrganizationUpdateInput> = {
 			...input,
-			show_profits: !!input.show_profits,
-			show_bonuses_paid: !!input.show_bonuses_paid,
-			show_income: !!input.show_income,
-			show_total_hours: !!input.show_total_hours,
-			show_projects_count: input.show_projects_count !== false,
-			show_minimum_project_size: input.show_minimum_project_size !== false,
-			show_clients_count: input.show_clients_count !== false,
-			show_clients: input.show_clients !== false,
-			show_employees_count: input.show_employees_count !== false,
+			...(has('show_profits') && { show_profits: !!input.show_profits }),
+			...(has('show_bonuses_paid') && { show_bonuses_paid: !!input.show_bonuses_paid }),
+			...(has('show_income') && { show_income: !!input.show_income }),
+			...(has('show_total_hours') && { show_total_hours: !!input.show_total_hours }),
+			...(has('show_projects_count') && { show_projects_count: input.show_projects_count !== false }),
+			...(has('show_minimum_project_size') && {
+				show_minimum_project_size: input.show_minimum_project_size !== false
+			}),
+			...(has('show_clients_count') && { show_clients_count: input.show_clients_count !== false }),
+			...(has('show_clients') && { show_clients: input.show_clients !== false }),
+			...(has('show_employees_count') && { show_employees_count: input.show_employees_count !== false }),
 			...(input.standardWorkHoursPerDay !== undefined && {
 				standardWorkHoursPerDay: input.standardWorkHoursPerDay
 			})

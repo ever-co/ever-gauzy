@@ -179,3 +179,57 @@ describe('DocumentLinkService — forward lookup scope', () => {
 		expect(sqlOf(queryBuilder)).toContain('<visibility-scope:document>');
 	});
 });
+
+describe('DocumentLinkService — a link is written only for a document the caller can read', () => {
+	// The create named any `documentId` (another member's PRIVATE document, another organization's) and the delete
+	// checked only the link's organization; both now resolve the document through the read scope, as the lookups do.
+	const writableService = (options: { readable: boolean; link?: any }) => {
+		const repository: any = {
+			findOne: jest.fn(async ({ where }: any) => (where.documentId ? null : (options.link ?? null)))
+		};
+		const documentService: any = {
+			resolveOrganizationId: jest.fn(() => requestContext.organizationId),
+			findOneScoped: jest.fn(async (id: string) => {
+				if (!options.readable) {
+					throw new NotFoundException('Document was not found');
+				}
+				return { id, organizationId: 'org-1' };
+			})
+		};
+		const service: any = new DocumentLinkService(repository, {} as any, documentService);
+		service.create = jest.fn(async (row: any) => ({ id: 'link-1', ...row }));
+		service.softDelete = jest.fn(async () => undefined);
+
+		return { service, repository, documentService };
+	};
+	const input = {
+		organizationId: 'org-1',
+		documentId: 'doc-private',
+		entity: BaseEntityEnum.Task,
+		entityId: 'task-1'
+	};
+	const link = { id: 'link-1', documentId: 'doc-private', organizationId: 'org-1', metadata: null };
+
+	it('refuses to attach a document the caller cannot read, and writes nothing', async () => {
+		const { service, documentService } = writableService({ readable: false });
+
+		await expect(service.createLink(input as any)).rejects.toBeInstanceOf(NotFoundException);
+		expect(documentService.findOneScoped).toHaveBeenCalledWith('doc-private', [], 'org-1');
+		expect(service.create).not.toHaveBeenCalled();
+	});
+
+	it('refuses to detach a link whose document the caller cannot read', async () => {
+		const { service } = writableService({ readable: false, link });
+
+		await expect(service.deleteLink('link-1')).rejects.toBeInstanceOf(NotFoundException);
+		expect(service.softDelete).not.toHaveBeenCalled();
+	});
+
+	it('attaches and detaches a document the caller can read (control)', async () => {
+		const { service } = writableService({ readable: true, link });
+
+		await expect(service.createLink(input as any)).resolves.toMatchObject({ documentId: 'doc-private' });
+		await expect(service.deleteLink('link-1')).resolves.toMatchObject({ id: 'link-1' });
+		expect(service.softDelete).toHaveBeenCalledWith('link-1');
+	});
+});

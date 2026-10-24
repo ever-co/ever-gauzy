@@ -2,8 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PricePreferenceAttribute } from '../pricing.types';
+import { confiningOrganizationId } from '../organization-boundary';
+import { assertOrganizationUnchanged, inCallerOrganization, organizationForCreate } from '../organization-scope';
 import { PricePreference } from './price-preference.entity';
 import { TypeOrmPricePreferenceRepository } from './repository/type-orm-price-preference.repository';
 import { MikroOrmPricePreferenceRepository } from './repository/mikro-orm-price-preference.repository';
@@ -48,6 +50,20 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 			tenantId: RequestContext.currentTenantId(),
 			organizationId: RequestContext.currentOrganizationId()
 		};
+	}
+
+	/**
+	 * Reads a price preference of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The price preference.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<PricePreference>): Promise<PricePreference> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
 	}
 
 	/**
@@ -119,6 +135,9 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 	 * one scope would make a displayed price depend on row order.
 	 */
 	public async createOne(entity: DeepPartial<PricePreference>): Promise<PricePreference> {
+		// The caller's organization, stamped rather than read from the payload: the GraphQL input states
+		// none, and a preference stored without one is never read by `findFor` (R2-G31).
+		const organizationId = organizationForCreate(entity, this.scope.organizationId, 'A price preference');
 		const attribute = entity.attribute;
 
 		if (!attribute) {
@@ -134,7 +153,7 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 			);
 		}
 
-		return await super.create({ ...entity, value });
+		return await super.create({ ...entity, value, organizationId });
 	}
 
 	/**
@@ -150,7 +169,9 @@ export class PricePreferenceService extends TenantAwareCrudService<PricePreferen
 	): Promise<UpdateResult | PricePreference> {
 		// Read first: this both scopes the write to the caller's tenant and organization and refuses
 		// an update to a preference the caller cannot see.
-		await this.findOneByIdString(id);
+		const existing = await this.findOneByIdString(id);
+
+		assertOrganizationUnchanged(entity, existing.organizationId, this.scope.organizationId, 'A price preference');
 
 		return await super.update(id, entity);
 	}

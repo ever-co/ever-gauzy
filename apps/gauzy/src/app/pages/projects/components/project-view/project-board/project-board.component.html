@@ -1,0 +1,138 @@
+<!-- The project's tasks as a board: one column per status, each card opening its task. -->
+<section class="panel project-view-panel board-panel" [nbSpinner]="board.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+	<header class="panel-header">
+		<h5 class="panel-title panel-title--icon">
+			<nb-icon icon="grid-outline" aria-hidden="true"></nb-icon>
+			{{ 'PROJECT_VIEW.BOARD' | translate }}
+			@if (total) {
+			<span class="title-count">{{ total }}</span>
+			}
+		</h5>
+	</header>
+	<div class="panel-body">
+		@if (board.failed) {
+		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+		} @else if (!board.loading && !total) {
+		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+		} @else {
+		<div class="board" role="list" cdkDropListGroup>
+			@for (column of board.value; track column.id) {
+			<section class="board-column" role="listitem" [attr.aria-label]="column.name" [attr.data-column-id]="column.id" [class.is-refusing]="refusingColumnId === column.id">
+				<header class="board-column-header">
+					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
+					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
+					<span class="board-column-count">{{ column.cards.length }}</span>
+				</header>
+				<ul
+					class="board-cards"
+					cdkDropList
+					[cdkDropListData]="column"
+					[cdkDropListDisabled]="!canMove"
+					[cdkDropListEnterPredicate]="acceptsDrop"
+					[cdkDropListSortingDisabled]="true"
+					(cdkDropListDropped)="drop($event)"
+				>
+					@for (card of column.cards; track card.id) {
+					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }" (cdkDragMoved)="onDragMoved($event)">
+						<a
+							class="board-card"
+							[class.is-done]="card.done"
+							[class.is-saving]="card.saving"
+							[class.is-draggable]="canMove"
+							[attr.aria-busy]="card.saving || null"
+							[routerLink]="[]"
+							[queryParams]="{ task: card.id }"
+							queryParamsHandling="merge"
+						>
+							<span class="board-card-title">{{ card.title }}</span>
+							<span class="board-card-meta">
+								@if (card.key) {
+								<span class="board-card-key">{{ card.key }}</span>
+								}
+								@if (card.priority) {
+								<span [class]="'board-card-priority priority-' + (card.priorityLevel || 'none')">
+									<nb-icon
+										[icon]="card.priorityLevel === 'urgent' || card.priorityLevel === 'high' ? 'arrow-upward-outline' : card.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
+										aria-hidden="true"
+									></nb-icon>
+									{{ card.priority }}
+								</span>
+								}
+							</span>
+							<!-- Time worked against the estimate; without one, against the most-worked task. -->
+							@if (card.progress?.hint; as hint) {
+							<span
+								class="board-card-progress"
+								[class.is-over]="card.progress.over"
+								[class.is-relative]="card.progress.relative"
+								role="progressbar"
+								aria-valuemin="0"
+								[attr.aria-valuenow]="card.progress.share"
+								[attr.aria-label]="'PROJECT_VIEW.TASK_PROGRESS' | translate"
+								[attr.aria-valuetext]="hint.key | translate : hint.params"
+								[nbTooltip]="hint.key | translate : hint.params"
+								nbTooltipPlacement="top"
+							>
+								<span class="board-card-progress-bar" aria-hidden="true">
+									<span [style.width.%]="card.progress.fill"></span>
+								</span>
+								<span class="board-card-progress-figures">
+									<span class="board-card-progress-time">{{ card.progress.worked }}</span>
+									@if (card.progress.share !== null) {
+									<span class="board-card-progress-share">{{ card.progress.share }}%</span>
+									}
+								</span>
+							</span>
+							}
+							<span class="board-card-footer">
+								@if (card.due) {
+								<span class="board-card-due" [class.is-overdue]="card.overdue" [class.is-soon]="card.soon">
+									<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+									{{ card.due.key | translate : { count: card.due.count } }}
+								</span>
+								} @else {
+								<span></span>
+								}
+								<span class="board-card-people">
+									@for (person of card.people.slice(0, 3); track $index) {
+									<span class="board-card-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
+										@if (person.avatarUrl) {
+										<img [src]="person.avatarUrl" [alt]="person.name" />
+										} @else {
+										<span aria-hidden="true">{{ person.initials }}</span>
+										}
+									</span>
+									}
+									@if (card.people.length > 3) {
+									<span class="board-card-person board-card-person--more" [nbTooltip]="peopleNames(card.people.slice(3))" nbTooltipPlacement="top"
+										>+{{ card.people.length - 3 }}</span
+									>
+									}
+								</span>
+							</span>
+						</a>
+					</li>
+					} @empty {
+					<li class="board-column-empty">{{ 'PROJECT_VIEW.COLUMN_EMPTY' | translate }}</li>
+					}
+				</ul>
+			</section>
+			}
+		</div>
+		}
+	</div>
+</section>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #unavailable>
+	<div class="state">
+		<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EMPLOYEES_PAGE.VIEW.UNAVAILABLE' | translate }}</p>
+	</div>
+</ng-template>

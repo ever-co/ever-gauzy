@@ -8,7 +8,7 @@
  * case configured, and the dialect helpers behave the way
  * `packages/core/src/lib/database/database.helper.ts` behaves for the dialect the case configured —
  * a statement is left alone unless the dialect is MySQL, and a named parameter becomes `$n` on
- * Postgres and `?` everywhere else.
+ * Postgres and `?` everywhere else, or everywhere when the caller asks for `questionMarks`.
  */
 const mockOrm = { type: 'typeorm' };
 const mockDialect = { type: 'better-sqlite3' };
@@ -17,7 +17,11 @@ jest.mock('@gauzy/core', () => ({
 	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 	getORMType: () => mockOrm.type,
 	prepareSQLQuery: (sql: string) => (mockDialect.type === 'mysql' ? sql.replace(/"/g, '`') : sql),
-	toPositionalStatement: (sql: string, parameters: Record<string, unknown>) => {
+	toPositionalStatement: (
+		sql: string,
+		parameters: Record<string, unknown>,
+		options?: { questionMarks?: boolean }
+	) => {
 		const values: unknown[] = [];
 		const positional = sql.replace(/(?<!:):(\w+)\b/g, (match: string, name: string) => {
 			if (!Object.prototype.hasOwnProperty.call(parameters ?? {}, name)) {
@@ -26,7 +30,7 @@ jest.mock('@gauzy/core', () => ({
 
 			values.push(parameters[name]);
 
-			return mockDialect.type === 'postgres' ? `$${values.length}` : '?';
+			return mockDialect.type === 'postgres' && !options?.questionMarks ? `$${values.length}` : '?';
 		});
 
 		return { sql: positional, parameters: values };
@@ -162,6 +166,33 @@ describe('InventoryOrmConnection — which ORM answers a read', () => {
 
 		expect(typeorm.asked[2].sql).toContain('`quantity`');
 		expect(typeorm.asked[2].sql).toContain('`id` = ?');
+	});
+
+	it('binds with ? through MikroORM on Postgres, whose execute fills ? itself (#10678)', async () => {
+		// MikroORM's `Connection.execute()` formats the values into the statement and sends it with no
+		// bindings, looking for `?` on every dialect: a `$1` reached Postgres unbound and failed with
+		// "there is no parameter $1".
+		mockOrm.type = 'mikro-orm';
+		mockDialect.type = 'postgres';
+		const mikro = mikroOrmDouble();
+		const connection = new InventoryOrmConnection(undefined, mikro.mikroOrm as never);
+
+		await connection.rows('SELECT * FROM "bin" WHERE "tenantId" = :tenantId AND "id" = :id AND "parentId" = :id', {
+			tenantId: 'tenant-1',
+			id: 'bin-1'
+		});
+
+		expect(mikro.asked[0].sql).toBe('SELECT * FROM "bin" WHERE "tenantId" = ? AND "id" = ? AND "parentId" = ?');
+		expect(mikro.asked[0].parameters).toEqual(['tenant-1', 'bin-1', 'bin-1']);
+
+		// Control: TypeORM hands the statement to `pg` untouched, which binds `$n`.
+		mockOrm.type = 'typeorm';
+		const typeorm = typeOrmDouble();
+		await new InventoryOrmConnection(typeorm.dataSource as never, undefined).rows('SELECT 1 WHERE "id" = :id', {
+			id: 'bin-1'
+		});
+
+		expect(typeorm.asked[0].sql).toBe('SELECT 1 WHERE "id" = $1');
 	});
 
 	it('normalises a driver that answers one row rather than an array', async () => {

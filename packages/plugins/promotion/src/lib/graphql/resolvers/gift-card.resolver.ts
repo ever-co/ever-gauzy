@@ -171,9 +171,9 @@ export class GiftCardResolver {
 			const card = await this.giftCardService.issue({
 				...input,
 				// A card is identified by its code and the column is not nullable, so a caller who does not
-				// mint one is given one from the platform's own code generator rather than a card that
-				// could never be spent.
-				code: input.code ?? this.couponService.generateCode(DEFAULT_COUPON_FORMAT)
+				// mint one (or states a blank one) is given one from the platform's own code generator rather
+				// than a card that could never be spent. `POST /gift-cards` does the same (review R2-G30).
+				code: input.code?.trim() ? input.code : this.couponService.generateCode(DEFAULT_COUPON_FORMAT)
 			});
 
 			return { giftCard: card, operation: null, userErrors: [] };

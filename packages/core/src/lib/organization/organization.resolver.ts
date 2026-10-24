@@ -10,11 +10,16 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
+import { IBulkCreateInput, IBulkCreatePayload, applyAsSingleCreate, toBulkCreatePayload } from '../api/bulk-create';
+import { BulkExecutor } from '../api/bulk-executor.service';
+import { bulkOptionsOf } from '../api/bulk.decorator';
 import { BaseQueryDTO } from '../core/crud';
+import { Idempotent } from '../idempotency/idempotent.decorator';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
+import { OrganizationController } from './organization.controller';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { deleteRemovedRows } from '../graphql/delete-answer';
@@ -160,7 +165,8 @@ const ORGANIZATION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
 export class OrganizationResolver {
 	constructor(
 		private readonly organizationService: OrganizationService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
 	) {}
 
 	/**
@@ -249,6 +255,33 @@ export class OrganizationResolver {
 		return await this.commandBus.execute(
 			new OrganizationCreateCommand(input as unknown as IOrganizationCreateInput)
 		);
+	}
+
+	/**
+	 * Files a batch of organizations, one outcome per item.
+	 *
+	 * The batch `POST /organization/bulk` applies, run by the same executor from the same declaration — the
+	 * options are read off the controller's own `@BulkOperation`, so the resource, the cap and the permission
+	 * cannot differ between the two surfaces — and each item is filed by `createOrganization` itself, with
+	 * everything the command creates beside a single organization. `atomic: true` is refused before item 0
+	 * with the same `BULK_ATOMIC_UNSUPPORTED` the route answers — the declaration (`atomic: false`) is the
+	 * controller's, read by the same executor.
+	 *
+	 * `idempotencyKey` is read from the input by the platform's idempotency kernel rather than here.
+	 */
+	@Mutation('bulkCreateOrganizations')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	@Idempotent({ scope: 'organization.bulk', required: false, resourceType: 'organization' })
+	async bulkCreateOrganizations(
+		@Args('input') input: IBulkCreateInput<ICreateOrganizationInput>
+	): Promise<IBulkCreatePayload> {
+		const result = await this.bulkExecutor.execute<ICreateOrganizationInput>(
+			{ items: input.items, atomic: input.atomic },
+			(item, context) => applyAsSingleCreate(item, context, (body) => this.createOrganization(body)),
+			bulkOptionsOf(OrganizationController, 'bulk')
+		);
+
+		return toBulkCreatePayload(result);
 	}
 
 	/**

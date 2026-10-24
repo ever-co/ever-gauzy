@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { DataSource, FindOneOptions, FindOptionsWhere, Repository, UpdateResult } from "typeorm";
+import { DataSource, DeleteResult, FindOneOptions, FindOptionsWhere, Repository, SaveOptions, UpdateResult } from "typeorm";
 
-import { BaseEntityEnum, ID, ISharedEntityCreateInput, IShareRule } from "@gauzy/contracts";
+import { BaseEntityEnum, ID, ISharedEntityCreateInput, IShareRule, PermissionsEnum } from "@gauzy/contracts";
 import { RequestContext } from "../core/context";
 import { TenantAwareCrudService } from "../core/crud";
 import { MikroOrmSharedEntityRepository } from "./repository/mikro-orm-shared-entity.repository";
@@ -15,13 +15,16 @@ import {
     filterSharedEntity,
     generateSharedEntityToken
 } from "./shared-entity.helper";
+import { assertCallerMayShare, isWithinShareRules } from "./shared-entity.access";
+import { ManagedEmployeeService } from "../employee/managed-employee.service";
 
 @Injectable()
 export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     constructor(
         @InjectDataSource() private readonly dataSource: DataSource,
         typeOrmSharedEntityRepository: TypeOrmSharedEntityRepository,
-        mikroOrmSharedEntityRepository: MikroOrmSharedEntityRepository
+        mikroOrmSharedEntityRepository: MikroOrmSharedEntityRepository,
+        private readonly managedEmployeeService: ManagedEmployeeService
     ) {
         super(typeOrmSharedEntityRepository, mikroOrmSharedEntityRepository);
     }
@@ -44,14 +47,23 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // share-link pointing at another tenant's record by its id (cross-tenant IDOR -
             // GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
             const targetRepository = this.resolveRepository(input.entity);
+            const shareRules = this.parseShareRules(input.shareRules);
             // Only real, tenant-scoped relations, to a bounded depth (see assertShareRulesAreSafe).
-            assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(input.shareRules));
+            assertShareRulesAreSafe(targetRepository.metadata, shareRules);
             const owned = await targetRepository.findOne({
                 where: this.buildScopedWhere(targetRepository, input.entityId, tenantId, organizationId)
             });
             if (!owned) {
                 throw new ForbiddenException('Cannot share an entity that does not belong to your tenant');
             }
+            // The link is read without signing in, so the caller must be allowed to read what it shares.
+            await assertCallerMayShare(
+                targetRepository.metadata,
+                owned,
+                shareRules,
+                this.dataSource,
+                this.managedEmployeeService
+            );
 
             // Generate a unique token for the shared entity
             const token = generateSharedEntityToken();
@@ -211,6 +223,7 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
         id: ID | number | FindOptionsWhere<SharedEntity>,
         input: Partial<SharedEntity>
     ): Promise<SharedEntity | UpdateResult> {
+        await this.assertCallerManages(id);
         const {
             id: _id,
             entity: _entity,
@@ -234,7 +247,27 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 throw new NotFoundException('Shared entity not found');
             }
             const targetRepository = this.resolveRepository(existing.entity);
-            assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(safeInput.shareRules));
+            const shareRules = this.parseShareRules(safeInput.shareRules);
+            assertShareRulesAreSafe(targetRepository.metadata, shareRules);
+            // Only an edit that widens the share is checked like a new one: REST and GraphQL both
+            // require the rules on every edit, so a sharedOptions edit resends them unchanged.
+            if (!isWithinShareRules(shareRules, existing.shareRules)) {
+                const target = await targetRepository.findOne({
+                    where: this.buildScopedWhere(
+                        targetRepository,
+                        existing.entityId,
+                        existing.tenantId,
+                        existing.organizationId
+                    )
+                });
+                await assertCallerMayShare(
+                    targetRepository.metadata,
+                    target,
+                    shareRules,
+                    this.dataSource,
+                    this.managedEmployeeService
+                );
+            }
         }
         return await super.update(id as any, safeInput);
     }
@@ -268,5 +301,91 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             throw new BadRequestException(`Repository for entity "${entityName}" not found`);
         }
         return repository;
+    }
+
+    /**
+     * Whether the caller manages a share: its author, or an organization administrator (`ALL_ORG_EDIT`).
+     *
+     * A share's token reads its record without signing in, so whoever holds the token holds the share. Every
+     * member of the tenant reaches the share routes (they state no permission), and a member who could list
+     * another member's tokens could read the invoice, payment or candidate it names without the permission
+     * that record needs; one who could edit or withdraw another member's share could widen or revoke a link
+     * they did not issue.
+     *
+     * @param share - The share, as stored.
+     * @returns Whether the caller may see its token and change or withdraw it.
+     */
+    public callerManages(share: Pick<SharedEntity, "createdByUserId">): boolean {
+        const userId = RequestContext.currentUserId();
+        return (
+            (!!userId && share?.createdByUserId === userId) ||
+            RequestContext.hasPermission(PermissionsEnum.ALL_ORG_EDIT)
+        );
+    }
+
+    /**
+     * The share as the caller may read it: without its token unless they manage it ({@link callerManages}).
+     *
+     * @param share - The share, as stored.
+     * @returns The share, or a copy of it without its token.
+     */
+    public withTokenForManager(share: SharedEntity): SharedEntity {
+        if (!share || this.callerManages(share)) {
+            return share;
+        }
+        const { token: _token, ...withoutToken } = share;
+        void _token;
+        return withoutToken as SharedEntity;
+    }
+
+    /**
+     * Removes a share outright, if the caller manages it ({@link callerManages}).
+     */
+    public async delete(
+        criteria: string | FindOptionsWhere<SharedEntity>,
+        options?: FindOneOptions<SharedEntity>
+    ): Promise<DeleteResult> {
+        await this.assertCallerManages(criteria);
+        return await super.delete(criteria, options as any);
+    }
+
+    /**
+     * Withdraws a share, if the caller manages it ({@link callerManages}).
+     */
+    public async softRemove(id: ID, options?: any, saveOptions?: SaveOptions): Promise<SharedEntity> {
+        await this.assertCallerManages(id);
+        return await super.softRemove(id, options, saveOptions);
+    }
+
+    /**
+     * Restores a withdrawn share, if the caller manages it ({@link callerManages}).
+     */
+    public async softRecover(id: ID, options?: any, saveOptions?: SaveOptions): Promise<SharedEntity> {
+        await this.assertCallerManages(id, true);
+        return await super.softRecover(id, options, saveOptions);
+    }
+
+    /**
+     * Refuses a change to a share the caller does not manage ({@link callerManages}). The lookup is the
+     * tenant-scoped one, so a share of another tenant is still a miss rather than a refusal.
+     *
+     * @param criteria - The share's id, or the criterion an update or a removal was given.
+     * @param withDeleted - Whether a withdrawn share counts (the recovery acts on one).
+     * @throws ForbiddenException when the caller is neither the author nor an organization administrator.
+     */
+    private async assertCallerManages(
+        criteria: ID | number | FindOptionsWhere<SharedEntity>,
+        withDeleted = false
+    ): Promise<void> {
+        const lookup = (withDeleted ? { withDeleted: true } : undefined) as any;
+        const shares =
+            typeof criteria === "object" && criteria !== null
+                ? await this.find({ where: criteria, withDeleted } as any)
+                : [await this.findOneByIdString(String(criteria), lookup)];
+        if (shares.some((share) => !this.callerManages(share))) {
+            throw new ForbiddenException(
+                "Only the author of a share, or an organization administrator, may change or withdraw it"
+            );
+        }
     }
 }

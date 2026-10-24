@@ -837,6 +837,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "您必须成为公司职员才能够追踪时间、创建分摊费用以及使用其他与员工相关的功能。"
 	},
 	"MENU": {
+		"INITIATIVES": "举措",
 		"BREADCRUMB": "面包屑导航",
 		"PIPELINES": "管道",
 		"DASHBOARD": "仪表盘",
@@ -1212,7 +1213,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "界面",
 			"TITLE": "用户界面",
-			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
+			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。两种界面显示相同的页面，数据、布局和功能完全相同——只是底层技术不同，因此切换不会改变用户看到的内容或可执行的操作。",
 			"OPTIONS": {
 				"ANGULAR": "Angular（默认）",
 				"REACT": "React（新）"
@@ -1949,6 +1950,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "类型",
+		"KIND_ALL": "全部",
+		"KIND_HUMAN": "人员",
+		"KIND_AGENT": "智能体",
+		"AGENT_BADGE": "智能体",
+		"MANAGED_BY_EVER_WORKS": "由 Ever Works 管理：此智能体的名称和资料在 Ever Works 中修改，并同步到 Gauzy。",
+		"MANAGED_EXTERNALLY": "由外部系统管理：此智能体的名称和资料在其来源系统中修改，并同步到 Gauzy。",
+		"OPEN_MANAGED_AGENT": "打开智能体页面",
 		"HEADER": "管理员工",
 		"ADD_EMPLOYEE": "添加员工",
 		"ACTIVE": "活动",
@@ -2088,7 +2097,68 @@
 				"IN_DAYS": "{{ count }} 天后到期"
 			},
 			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
-			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+			"NO_TASKS_IN_VIEW": "此视图中没有任务",
+			"PROJECTS_CAPTION": "其项目及本期间在每个项目上的工作时间",
+			"NO_PROJECTS": "不是任何项目的成员，本期间也没有项目时间",
+			"NOT_A_MEMBER": "非成员",
+			"NOT_A_MEMBER_HINT": "在此项目上记录了时间，但其不是该项目的成员",
+			"VIEW_PROFILE": "查看资料",
+			"MEMBERSHIP_UNKNOWN": "无法加载项目成员关系，因此未区分成员与非成员。",
+			"PROJECT_TIMES_PARTIAL": "部分项目时间无法加载，因此显示无时间的项目实际可能有时间。"
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "战略举措",
+		"SUBTITLE": "组织决定前进的方向，以及与之对齐的目标、项目和团队。",
+		"ADD": "添加举措",
+		"EDIT": "编辑举措",
+		"EMPTY": "暂无战略举措。",
+		"TITLE": "标题",
+		"STATE": "状态",
+		"VISIBILITY": "可见性",
+		"TEAMS": "团队",
+		"TEAMS_HINT": "可见性为“团队”时，这些团队（以及对齐项目的团队）的成员可以查看该举措。",
+		"PROJECTS": "项目",
+		"GOALS": "目标",
+		"CONFIDENCE": "信心",
+		"MOMENTUM": "势头",
+		"INTENT": "意图",
+		"INTENT_HINT": "我们有意推动什么，为什么？",
+		"STEWARD": "负责人",
+		"SIGNALS": "信号",
+		"KNOWN_RISKS": "已知风险",
+		"KNOWN_RISKS_HINT": "每行一个风险",
+		"NOTES": "备注",
+		"LAST_ASSESSED": "上次评估",
+		"NO_TEAMS": "未关联团队。",
+		"NO_GOALS": "未对齐目标。",
+		"NO_PROJECTS": "未对齐项目。",
+		"NOT_FOUND": "未找到该举措，或您无权查看。",
+		"DELETE_TITLE": "删除举措",
+		"DELETE_CONFIRMATION": "删除举措“{{ name }}”？",
+		"DELETED": "举措“{{ name }}”已删除。",
+		"CREATED": "举措“{{ name }}”已创建。",
+		"UPDATED": "举措“{{ name }}”已更新。",
+		"STATES": {
+			"DRAFT": "草稿",
+			"ACTIVE": "进行中",
+			"RESOLVED": "已达成",
+			"RETIRED": "已停止"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "管理层",
+			"ORGANIZATION": "组织",
+			"TEAM": "团队"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "低",
+			"MEDIUM": "中",
+			"HIGH": "高"
+		},
+		"MOMENTUMS": {
+			"STALLED": "停滞",
+			"PROGRESSING": "推进中",
+			"ACCELERATING": "加速中"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2107,6 +2177,17 @@
 		"UPDATE": "更新",
 		"ALIGNMENTS": "对齐",
 		"COMMENTS": "评论",
+		"COMMENT_THREAD": {
+			"REPLY": "回复",
+			"ONE_MESSAGE": "1 条消息",
+			"MESSAGES": "{{ count }} 条消息",
+			"NO_MESSAGES": "此讨论串中还没有消息。",
+			"REPLY_PLACEHOLDER": "回复此评论…",
+			"UNKNOWN_AUTHOR": "未知",
+			"DELETE_CONFIRM": "删除此评论？",
+			"DELETED": "评论已删除",
+			"LOAD_ERROR": "无法加载评论。"
+		},
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",
 		"DELETE_OBJECTIVE": "删除目标",
@@ -2154,6 +2235,7 @@
 			"NO_KEY_RESULT": "没有要显示的关键结果。",
 			"NO_UPDATES": "目前尚未有任何更新。",
 			"NO_ALIGNMENT": "尚无对齐。",
+			"NO_COMMENTS": "暂无评论。",
 			"NO_PROGRESS_DATA": "尚无可绘制的进度数据。"
 		},
 		"LEVELS": {
@@ -2670,7 +2752,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",
-				"MEMBERS": "成员"
+				"MEMBERS": "成员",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "详情"
+					},
+					"PUBLIC": "公开",
+					"PRIVATE": "私有",
+					"PREFIX": "任务前缀",
+					"MEMBERS_COUNT": "{{ count }} 名成员",
+					"LIVE": "{{ tracking }} 人正在计时 · {{ online }} 人在线",
+					"OF_MEMBERS": "{{ total }} 名成员中的 {{ count }} 名",
+					"CREATED": "创建时间",
+					"UPDATED": "最后更新",
+					"ACTIVE_MEMBERS": "活跃成员",
+					"ACTIVE_MEMBERS_META": "（共 {{ total }} 名成员）记录了时间",
+					"TIME_BY_MEMBER": "按成员统计时间",
+					"TEAM_TASKS": "团队任务",
+					"NO_TEAM_TASKS": "此团队没有分配任务",
+					"NO_MEMBERS": "此团队还没有成员",
+					"NO_PROJECTS": "此团队没有关联项目",
+					"COLUMNS": {
+						"MEMBER": "成员",
+						"ROLE": "角色",
+						"STATUS": "状态",
+						"CURRENT_TASK": "当前任务",
+						"TODAY": "今天",
+						"ACTIVITY": "活跃度"
+					},
+					"ROLE": {
+						"MANAGER": "经理",
+						"MEMBER": "成员"
+					},
+					"GENERAL": "常规",
+					"SETTINGS": "设置",
+					"RECORD": "记录",
+					"TEAM_SIZE": "团队规模",
+					"COLOR": "颜色",
+					"EMOJI": "表情",
+					"PROFILE_LINK": "个人资料链接",
+					"VISIBILITY": "可见性",
+					"SHARE_PROFILE_VIEW": "成员可以查看彼此的资料",
+					"REQUIRE_PLAN": "计时前需要制定计划",
+					"NOT_FOUND": "找不到此团队",
+					"LOAD_FAILED": "无法加载团队",
+					"RETRY": "重试",
+					"OPEN_TASK_DETAILS": "查看 {{ title }} 的详情",
+					"OPEN_PROJECT_DETAILS": "查看项目 {{ name }} 的详情",
+					"PROJECT_PROGRESS": "进度",
+					"PROJECT_PROGRESS_META": "已完成 {{ done }}/{{ total }} 个任务",
+					"NO_PROJECT_TASKS": "此项目中暂无任务",
+					"TOP_CONTRIBUTORS": "谁投入最多",
+					"TOP_CONTRIBUTORS_CAPTION": "团队成员在此项目上的时间 · {{ range }}",
+					"PROJECT_ACTIVITY": "每日活动",
+					"NEEDS_ATTENTION": "需要关注",
+					"NEEDS_ATTENTION_CAPTION": "已逾期及 3 天内到期的任务",
+					"BUDGET_USED": "已使用 {{ used }} / {{ budget }}",
+					"OVER_BUDGET": "超出预算 {{ value }}",
+					"OPEN_TASK_PAGE": "打开 {{ title }} 的页面",
+					"OPEN_TASK_PAGE_SHORT": "打开任务页面",
+					"UNASSIGNED": "未分配",
+					"SHOW_ALL": "显示全部",
+					"SHOW_LESS": "收起",
+					"PROJECTS_CAPTION": "团队的项目及本期间在每个项目上的工作时间",
+					"NOT_LINKED": "未关联",
+					"NOT_LINKED_HINT": "成员在此项目上记录了时间，但该项目未关联到团队"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2815,6 +2962,9 @@
 			"DOCS_MANAGE": "管理文档类别和采集地址",
 			"DOCS_REVIEW": "批准/拒绝文档审核",
 			"DOCS_AI_IMPORT": "管理文档 AI 知识库",
+			"INBOX_VIEW": "查看收件箱",
+			"INBOX_MAILBOX_MANAGE": "管理邮箱和服务商账户",
+			"INBOX_MAILBOX_READ_ALL": "读取所有共享邮箱",
 			"INSUFFICIENT": "您没有足够的权限。缺少以下权限：",
 			"ORG_SPRINT_EDIT": "编辑冲刺",
 			"ORG_SPRINT_VIEW": "查看冲刺",
@@ -3055,7 +3205,27 @@
 			"SELLER_PAYOUTS_CREATE": "创建卖家付款",
 			"SELLER_PAYOUTS_APPROVE": "审批卖家付款",
 			"SELLER_PAYOUTS_CANCEL": "取消卖家付款",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "删除组织战略举措"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "删除组织战略举措",
+			"INTEGRATION_ADD": "添加整合",
+			"INTEGRATION_EDIT": "编辑整合",
+			"INTEGRATION_DELETE": "删除整合",
+			"AI_CHAT_ACCESS": "访问 AI 聊天",
+			"AI_CHAT_SETTINGS": "管理 AI 聊天设置",
+			"ORG_JOB_APPLY": "申请职位",
+			"ORG_JOB_SEARCH": "查看职位",
+			"ORG_JOB_EDIT": "编辑职位",
+			"ORG_EMPLOYEES_ADD": "创建组织员工",
+			"ORG_EMPLOYEES_DELETE": "删除组织员工",
+			"DAILY_PLAN_CREATE": "创建每日计划",
+			"DAILY_PLAN_READ": "查看每日计划",
+			"DAILY_PLAN_UPDATE": "更新每日计划",
+			"DAILY_PLAN_DELETE": "删除每日计划",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "将账户从团队成员中移除",
+			"CUSTOM_SMTP_EDIT": "编辑自定义SMTP",
+			"IMPORT_ADD": "导入您的数据",
+			"EXPORT_ADD": "导出您的数据",
+			"OAUTH_CLIENT_VIEW": "查看 OAuth 客户端",
+			"OAUTH_CLIENT_EDIT": "管理 OAuth 客户端"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",
@@ -3089,6 +3259,35 @@
 			"CONTINUE": "继续",
 			"SKIP": "跳过",
 			"CREATE": "创建组织"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "项目分区",
+			"DETAILS": "详情",
+			"LOGO": "项目标志",
+			"LOGO_HINT": "可选。点击标志上传一张方形图片。",
+			"PEOPLE": "人员",
+			"TIMELINE": "时间线",
+			"APPEARANCE": "外观",
+			"OPTIONS": "选项",
+			"REPOSITORY": "代码仓库",
+			"TASK_SYNC": "任务同步",
+			"CREATE_SUBTITLE": "设置新项目的人员、时间线和计费。",
+			"OPEN_SOURCE_TITLE": "开源项目",
+			"OPEN_SOURCE_DESCRIPTION": "公开分享此项目的代码。开启后可添加其公开代码仓库的链接。",
+			"OPEN_SOURCE_URL_HINT": "代码的公开地址，例如 GitHub 或 GitLab 仓库。",
+			"OPEN_REPOSITORY": "打开代码仓库",
+			"DESCRIPTION_CARD_DESC": "为所有参与者描述项目的目标和范围。",
+			"TAGS_DESC": "为项目添加标签，便于查找和分组。",
+			"BILLING_DESC": "该项目向客户计费的方式以及使用的货币。",
+			"BUDGET_DESC": "以工时或成本设定预算，帮助项目按计划推进。",
+			"APPEARANCE_DESC": "项目的颜色及其任务的显示方式。",
+			"PUBLIC_TITLE": "公开项目",
+			"PUBLIC_DESC": "公开项目中所有人都能看到谁在参与。在私有项目中，每个人只能看到自己，除非他们有权访问私有项目。",
+			"BILLABLE_DESC": "将此项目的工作标记为可向客户计费。",
+			"REPOSITORY_DESC": "选择此项目所对应 Issue 的 GitHub 代码仓库。",
+			"AUTO_SYNC_DESC": "让项目任务与代码仓库的 Issue 保持一致。此处的更改会立即保存。",
+			"SYNC_LABEL_TITLE": "按标签同步",
+			"SYNC_LABEL_DESC": "只同步带有你所设标签的 Issue。此处的更改会立即保存。"
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3150,9 +3349,14 @@
 		"MEMBER_SINCE": "加入时间",
 		"NO_DESCRIPTION": "尚未添加描述",
 		"NO_SKILLS": "尚未列出技能",
+		"NO_EMPLOYEES": "暂无可显示的员工",
+		"NO_CLIENTS": "暂无可显示的客户",
+		"EMPLOYEES_LOAD_FAILED": "无法加载员工。",
+		"CLIENTS_LOAD_FAILED": "无法加载客户。",
 		"VIEW_COMPANY_PROFILE": "查看公司简介",
 		"EDIT": {
 			"NO_AWARDS": "尚未添加奖项",
+			"NO_LANGUAGES": "尚未添加语言",
 			"ADD_AWARD": "添加奖项",
 			"PRIVACY_HELP": "选择访客可在公开资料中看到的信息。"
 		}
@@ -3368,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "日期必须在请求日期之后。",
 			"EXCEED_PERIOD_ERR": "此项目允许的最长天数是",
 			"BEFORE_START_DATE_ERR": "结束日期不能早于开始日期。",
-			"ITEM_RETURNED_BEFORE_ERR": "物品应该在之前退回。"
+			"ITEM_RETURNED_BEFORE_ERR": "物品应该在之前退回。",
+			"CHANGED_BY_SOMEONE_ELSE": "此请求在此期间已被其他人修改。列表已重新加载：请检查该请求后重试。"
 		},
 		"ACTIONS": "行动",
 		"APPROVE": "批准",
@@ -3783,17 +3988,20 @@
 		"USER": {
 			"MANAGE": "管理用户邀请",
 			"HEADER": "邀请用户",
-			"ACTION": "邀请用户"
+			"ACTION": "邀请用户",
+			"DESCRIPTION": "邀请他人以用户身份加入您的组织。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"EMPLOYEE": {
 			"MANAGE": "管理员工邀请",
 			"HEADER": "邀请员工",
-			"ACTION": "邀请员工"
+			"ACTION": "邀请员工",
+			"DESCRIPTION": "邀请他人以员工身份加入您的组织。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"CANDIDATE": {
 			"MANAGE": "管理候选人邀请",
 			"HEADER": "邀请候选人",
-			"ACTION": "邀请候选人"
+			"ACTION": "邀请候选人",
+			"DESCRIPTION": "邀请候选人进入您的招聘流程。每位收件人都会收到一封包含安全接受链接的电子邮件。"
 		},
 		"SENT": "{{total}} 已发送邀请。",
 		"IGNORED": "发送了{{total}}个邀请。其中{{ignored}}个已经被邀请并忽略。",
@@ -3803,6 +4011,23 @@
 			"TWO_WEEK": "14天",
 			"MONTH": "30天",
 			"NEVER": "永不"
+		},
+		"FORM": {
+			"RECIPIENTS": "收件人",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "每输入一个地址后按回车键，即可添加多位收件人。",
+			"CLEAR_EMAILS": "全部清除",
+			"ACCESS": "访问权限",
+			"ACCESS_HINT": "可选。选择新成员加入后即可访问的内容。",
+			"DETAILS": "邀请详情",
+			"RECIPIENT_COUNT": "收件人：{{count}}",
+			"NO_RECIPIENTS": "尚未添加收件人"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "删除邀请",
+			"WARNING": "发送给 {{ email }} 的邀请将被永久删除，其链接也将失效。此操作无法撤销。",
+			"TYPE_TO_CONFIRM": "请输入以下内容以确认：",
+			"CONFIRM": "删除邀请"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5184,6 +5409,8 @@
 			"API_SERVER_PORT": "API服务器端口",
 			"UI_SERVER_PORT": "UI服务器端口",
 			"SERVER_HOSTNAME": "服务器主机名/IP地址",
+			"LAN_ACCESS": "允许网络中的其他计算机连接",
+			"LAN_ACCESS_HINT": "关闭后，只有这台计算机可以连接到 API 和网页界面。",
 			"AUTO_START_STARTUP": "启动时自动启动",
 			"SERVER_TYPE": "服务器类型",
 			"LOCAL_API_PORT": "本地API端口",
@@ -5310,7 +5537,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "我们无法确定您是否有未同步的离线数据。删除数据库可能会永久清除未保存的工作。如果您不确定，请点击“保留”。",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "您的登录信息",
+			"SEED_CREDENTIALS_MESSAGE": "请立即保存这些密码。它们只显示一次。",
+			"SEED_CREDENTIALS_DETAIL": "此安装使用随机密码创建了账户，而不是公开的默认密码。\n\n{{ accounts }}\n\n之后您可以在 Gauzy 的个人资料页面中更改密码。",
+			"SEED_CREDENTIALS_COPIED": "已复制到剪贴板。",
+			"SEED_CREDENTIALS_SAVED": "我已保存",
+			"SEED_ROLE_SUPER_ADMIN": "超级管理员",
+			"SEED_ROLE_ADMIN": "管理员",
+			"SEED_ROLE_EMPLOYEE": "员工",
+			"SEED_PASSWORD": "密码",
+			"PUBLISHED_PASSWORDS_TITLE": "仍在使用默认密码",
+			"PUBLISHED_PASSWORDS_MESSAGE": "请更改这些账户的默认密码。",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} 仍在使用 Gauzy 文档中公开的默认密码登录。任何能访问此服务器的人都可以用它登录。请登录 Gauzy 并在个人资料页面中更改密码。"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",
@@ -5338,7 +5577,12 @@
 			"SERVICE_UNAVAILABLE": "服务暂不可用，请稍后重试。",
 			"UNEXPECTED_ERROR": "发生未知错误。",
 			"NETWORK_ERROR": "网络错误：{{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。"
+			"SCREEN_ACCESS_REQUIRED_MSG": "需要屏幕访问权限才能启用自动屏幕截图。请在系统设置中授予权限。",
+			"ORGANIZATION_SWITCH_REFUSED": "无法切换到 {{ name }}：{{ reason }}。您仍在当前组织中工作。",
+			"ORGANIZATION_NOT_EMPLOYEE": "您不是 {{ name }} 的在职员工，因此计时器无法在那里记录时间。您仍在当前组织中工作。",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "正在切换组织。请在切换完成后再启动计时器。",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "您不是 {{ name }} 的在职员工，且未能切换回您之前的组织。请重新登录。",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "无法在此设备上完成切换到 {{ name }}。请重新登录。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",
@@ -5585,7 +5829,40 @@
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
 		"SCREEN_SELECTED": "{{ count }} 屏幕已选择",
 		"NO_TIME_TRACKED": "未记录时间",
-		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟"
+		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟",
+		"APPS_URLS": {
+			"TOTAL_TIME": "总时间",
+			"APPS_USED": "使用的应用",
+			"SITES_VISITED": "访问的网站",
+			"TOP_APP": "最常用的应用",
+			"TOP_SITE": "最常访问的网站",
+			"VIEW": "视图",
+			"BY_APP": "按应用",
+			"BY_SITE": "按网站",
+			"BY_MEMBERS": "按成员",
+			"BY_HOURS": "按小时",
+			"SEARCH_APPS": "搜索应用…",
+			"SEARCH_SITES": "搜索网站…",
+			"SORT": "更改排序方式",
+			"SORT_TIME": "时间最多",
+			"SORT_NAME": "名称 A–Z",
+			"LOAD_FAILED": "无法加载活动，请重试。",
+			"NO_MATCH": "没有与“{{ search }}”匹配的结果。",
+			"APP": "应用",
+			"SITE": "网站",
+			"TIME": "时间",
+			"SHOW_PAGES": "显示在 {{ site }} 上访问的页面",
+			"LOADING_PAGES": "正在加载页面…",
+			"PAGES_FAILED": "无法加载页面。",
+			"NO_PAGES": "此网站没有记录页面详情。",
+			"SHOW_ALL": "显示全部 {{ count }} 项",
+			"SHOW_LESS": "收起",
+			"UNKNOWN_MEMBER": "未知成员",
+			"APPS_COUNT": "{{ count }} 个应用",
+			"SITES_COUNT": "{{ count }} 个网站",
+			"OF_TOTAL": "占总时间 {{ value }}",
+			"PAGES_TRUNCATED": "此网站的记录超出可显示的数量；明细仅涵盖其部分时间。"
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
@@ -6111,6 +6388,7 @@
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",
 		"OR_SIGN_IN_WITH": "或用以下方式登录",
 		"SIGN_IN_WITH_EVER_ID": "使用 Ever ID 登录",
+		"LOGIN_WITH_EVER_ID": "使用 {{ everId }} 登录",
 		"SIGN_IN_WITH_KEYCLOAK": "使用 Keycloak 登录",
 		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
 		"LOGIN_MAGIC": {
@@ -6628,5 +6906,82 @@
 			"ROTATE_FAILED": "轮换客户端密钥失败",
 			"DELETE_FAILED": "撤销OAuth客户端失败"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "查看项目 {{ name }} 的详情",
+		"PROGRESS": "进度",
+		"PROGRESS_META": "已完成 {{ done }}/{{ total }} 个任务",
+		"NO_TASKS": "此项目中暂无任务",
+		"NEEDS_ATTENTION": "需要关注",
+		"NEEDS_ATTENTION_CAPTION": "已逾期及 3 天内到期的任务",
+		"ACTIVITY": "每日活动",
+		"ACTIVITY_VIEWS": "活动视图",
+		"ACTIVITY_VIEW_CHART": "图表",
+		"ACTIVITY_VIEW_GRID": "贡献网格",
+		"GRID_NONE": "无时间",
+		"GRID_LAST_YEAR": "最近 12 个月",
+		"GRID_OLDER": "上一年",
+		"GRID_NEWER": "下一年",
+		"GRID_DAY": "{{ date }}：{{ time }}",
+		"GRID_DAY_EMPTY": "{{ date }}：无时间",
+		"TOP_CONTRIBUTORS": "谁投入最多",
+		"CONTRIBUTORS_CAPTION": "所有人在此项目上的时间 · {{ range }}",
+		"YOUR_TIME_CAPTION": "您在此项目上的时间 · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "团队成员在此项目上的时间 · {{ range }}",
+		"BUDGET_USED": "已使用 {{ used }} / {{ budget }}",
+		"OVER_BUDGET": "超出预算 {{ value }}",
+		"TOTAL_TRACKED": "累计记录",
+		"TOTAL_TRACKED_HINT": "自项目开始以来",
+		"THIS_PERIOD": "本期",
+		"VS_PREVIOUS": "较上期 {{ value }}",
+		"TIMELINE": "时间线",
+		"NO_DATES": "未设置日期",
+		"STARTS_IN": "{{ count }} 天后开始",
+		"STARTS_TOMORROW": "明天开始",
+		"FINISHED": "已完成",
+		"TEAM": "团队",
+		"NO_MEMBERS": "此项目暂无成员",
+		"MODULES": "模块",
+		"MODULE_TASK": "1 个任务",
+		"MODULE_TASKS": "{{ count }} 个任务"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "概览",
+			"BOARD": "看板",
+			"ACTIVITY": "动态",
+			"COMMENTS": "评论"
+		},
+		"BOARD": "看板",
+		"COLUMN_EMPTY": "暂无任务",
+		"CANNOT_DROP": "无法将任务移动到“{{ column }}”，因为它不是此项目的状态。",
+		"ACTIVITY": "动态",
+		"ACTIVITY_CAPTION": "项目及其任务的最新变更",
+		"NO_ACTIVITY": "暂无动态",
+		"ACTIVITY_PARTIAL": "部分动态无法加载，此列表可能不完整。",
+		"ACTIVITY_CREATED": "{{ actor }} 创建了",
+		"ACTIVITY_UPDATED": "{{ actor }} 更新了",
+		"ACTIVITY_DELETED": "{{ actor }} 删除了",
+		"ACTIVITY_COMMENTED": "{{ actor }} 评论了",
+		"ACTIVITY_REPLIED": "{{ actor }} 回复了评论：",
+		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
+		"SOMEONE": "某人",
+		"TODAY": "今天",
+		"YESTERDAY": "昨天",
+		"TASK_PROGRESS": "进度",
+		"TASK_PROGRESS_OF": "{{ worked }} / {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · 占项目记录时间的 {{ share }}%（无估算）",
+		"TASK_TOP_PEOPLE": "投入最多的成员",
+		"TASK_NO_ESTIMATE": "无估算",
+		"COMMENTS": "评论",
+		"NO_COMMENTS": "暂无评论。开始讨论吧。",
+		"COMMENT_PLACEHOLDER": "写评论…",
+		"COMMENT_IMAGE": "图片",
+		"ATTACH_IMAGES": "附加图片",
+		"REMOVE_IMAGE": "移除图片",
+		"OPEN_IMAGE": "打开原图",
+		"COMMENT_IMAGE_TYPES": "只能附加 PNG、JPEG、GIF、WebP 和 BMP 图片。",
+		"COMMENT_IMAGE_LIMIT": "一条评论最多可包含 {{ count }} 张图片。",
+		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	}
 }

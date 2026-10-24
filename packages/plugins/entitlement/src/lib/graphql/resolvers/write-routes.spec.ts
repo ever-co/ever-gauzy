@@ -1703,3 +1703,87 @@ describe('the sixteen flagged routes — four buckets, none of them left unread'
 		expect(permissionOfRoute(controller, route)).toEqual([grant]);
 	});
 });
+
+// R2-G16: three members the routes take had no GraphQL spelling — `POST /entitlements` `number`,
+// `POST /entitlements/:id/extend` `note`, `POST /entitlement-activations` `seenIntervalSeconds`. The fields
+// now declare them, hand them to the same service methods, and check them the way the DTOs do.
+describe('the members the routes take, on the fields that mirror them', () => {
+	const grantResolver = (entitlement: Row) =>
+		new EntitlementResolver(
+			entitlement as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never,
+			{} as never
+		) as unknown as Row;
+
+	it('declares number on GrantEntitlementInput, seenIntervalSeconds on ActivateEntitlementInput, note on extendEntitlement', () => {
+		expect(inputMembers('GrantEntitlementInput')).toContain('number');
+		expect(inputMember('GrantEntitlementInput', 'number').type.kind).toBe('NamedType');
+		expect(inputMembers('ActivateEntitlementInput')).toContain('seenIntervalSeconds');
+		expect(inputMember('ActivateEntitlementInput', 'seenIntervalSeconds').type.kind).toBe('NamedType');
+		expect((mutationField('extendEntitlement').arguments ?? []).map((argument) => argument.name.value)).toContain(
+			'note'
+		);
+	});
+
+	it('grants with the stated number, and refuses one longer than the column, as the DTO does', async () => {
+		const entitlement = { grant: jest.fn(async () => ({ entitlement: { id: ID }, created: true })) };
+		const resolver = grantResolver(entitlement);
+
+		await expect(resolver.grantEntitlement({ ...EDIT, number: 'ENT-0007' })).resolves.toMatchObject({
+			entitlement: { id: ID },
+			userErrors: []
+		});
+		expect(entitlement.grant).toHaveBeenCalledWith({ ...EDIT, number: 'ENT-0007' });
+
+		await expect(resolver.grantEntitlement({ ...EDIT, number: 'N'.repeat(33) })).resolves.toMatchObject({
+			entitlement: null,
+			userErrors: [{ code: 'VALIDATION_FAILED' }]
+		});
+		expect(entitlement.grant).toHaveBeenCalledTimes(1);
+	});
+
+	it('carries the note of an extension to the service, and leaves it out when none is stated', async () => {
+		const entitlement = { extend: jest.fn(async (..._args: unknown[]) => ({ id: ID })) };
+		const resolver = grantResolver(entitlement);
+		const endsAt = new Date('2027-01-01T00:00:00.000Z');
+		// The version the interceptor accepted, where the field reads it.
+		const expectation = { version: 6 };
+		const context = { req: { [VERSION_EXPECTATION_PROPERTY]: expectation } };
+
+		await resolver.extendEntitlement(ID, endsAt, 2, context, 'billing cycle 7');
+		await resolver.extendEntitlement(ID, endsAt, 2, context);
+
+		expect(entitlement.extend).toHaveBeenNthCalledWith(
+			1,
+			ID,
+			{ endsAt, quantity: 2, note: 'billing cycle 7' },
+			{},
+			expectation
+		);
+		expect(entitlement.extend.mock.calls[1][1]).toEqual({ endsAt, quantity: 2 });
+	});
+
+	it('activates with the stated refresh interval, and refuses a negative one, as the DTO does', async () => {
+		const activation = {
+			activate: jest.fn(async () => ({ activation: { id: ID }, entitlement: { id: ID }, created: true }))
+		};
+		const resolver = new EntitlementActivationResolver(activation as never, {} as never) as unknown as Row;
+
+		await expect(
+			resolver.activateEntitlement({ entitlementId: ID, deviceId: 'device-1', seenIntervalSeconds: 3600 })
+		).resolves.toMatchObject({ created: true, userErrors: [] });
+		expect(activation.activate).toHaveBeenCalledWith({
+			entitlementId: ID,
+			deviceId: 'device-1',
+			seenIntervalSeconds: 3600
+		});
+
+		await expect(
+			resolver.activateEntitlement({ entitlementId: ID, deviceId: 'device-1', seenIntervalSeconds: -1 })
+		).resolves.toMatchObject({ activation: null, userErrors: [{ code: 'VALIDATION_FAILED' }] });
+		expect(activation.activate).toHaveBeenCalledTimes(1);
+	});
+});

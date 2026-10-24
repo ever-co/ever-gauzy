@@ -125,6 +125,19 @@ describe('verifying a received signature', () => {
 		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${'0'.repeat(64)}`, { now: TS })).toBe(false);
 	});
 
+	it('refuses a signature of the right length that is not hex, without throwing', () => {
+		const digest = expectedDigest(SECRET, TS, BODY);
+		const notHex = `zz${digest.slice(2)}`;
+		const upperCase = digest.toUpperCase();
+
+		expect(() => verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${notHex}`, { now: TS })).not.toThrow();
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${notHex}`, { now: TS })).toBe(false);
+		// A non-hex value beside a valid one does not hide the valid one.
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${notHex},v1=${digest}`, { now: TS })).toBe(true);
+		// Upper-case hex decodes to the same bytes and stays accepted, as before.
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},v1=${upperCase}`, { now: TS })).toBe(true);
+	});
+
 	it('honours a caller’s own window when one is supplied', () => {
 		expect(verifyWebhookSignature(SECRET, BODY, signed.header, { now: TS + 60, toleranceSeconds: 30 })).toBe(false);
 		expect(verifyWebhookSignature(SECRET, BODY, signed.header, { now: TS + 600, toleranceSeconds: 3_600 })).toBe(true);
@@ -156,5 +169,19 @@ describe('a rotation', () => {
 
 	it('signs with the current secret alone when there is no previous one', () => {
 		expect(signWebhookPayload(SECRET, BODY, { timestamp: TS }).header.split('v1=')).toHaveLength(2);
+	});
+});
+
+describe('the timestamp', () => {
+	const signed = signWebhookPayload(SECRET, BODY, { timestamp: TS });
+	const signature = signed.header.split(',')[1];
+
+	it('is read only in the canonical form the signer writes, so a delivery has one valid header', () => {
+		expect(verifyWebhookSignature(SECRET, BODY, `t=${TS},${signature}`, { now: TS })).toBe(true);
+		// Every other spelling of the same instant would verify under Number() and re-send one captured delivery
+		// past a receiver's single-use guard.
+		for (const spelling of [`0${TS}`, `+${TS}`, `${TS}.0`, '1.7e9', `${TS}e0`, `0x${TS.toString(16)}`, ` ${TS}`]) {
+			expect(verifyWebhookSignature(SECRET, BODY, `t=${spelling},${signature}`, { now: TS })).toBe(false);
+		}
 	});
 });

@@ -48,6 +48,8 @@ export const cartSchemaExtensions = gql`
 		abandonedAt: DateTime
 		externalId: String
 		metadata: JSON
+		"The guest-access token, in plaintext. Answered by createCart alone (a retry under its idempotency key replays that answer); null on every read, because the cart stores only its digest."
+		token: String
 		lines: [CartLine!]
 		shippingMethods: [CartShippingMethod!]
 		promotions: [CartPromotion!]
@@ -204,7 +206,9 @@ export const cartSchemaExtensions = gql`
 		sku: String
 		thumbnail: String
 		quantity: Decimal!
-		unitPrice: Decimal!
+		# Ignored (R3-07b): the line is priced by the pricing package. Optional so an existing client that
+		# still sends it keeps validating.
+		unitPrice: Decimal
 		originalUnitPrice: Decimal
 		isTaxInclusive: Boolean
 		taxCategoryId: ID
@@ -231,8 +235,9 @@ export const cartSchemaExtensions = gql`
 	input SetCartShippingMethodInput {
 		cartId: ID!
 		shippingOptionId: ID
-		name: String!
-		amount: Decimal!
+		# Ignored (R3-07c): the name, the amount and the tax treatment are the shipping option's.
+		name: String
+		amount: Decimal
 		isTaxInclusive: Boolean
 		isManual: Boolean
 		taxCategoryId: ID
@@ -246,7 +251,9 @@ export const cartSchemaExtensions = gql`
 		promotionId: ID
 		couponId: ID
 		code: String
-		amount: Decimal!
+		# Ignored (R3-07): the discount is what the promotion engine grants for the named promotion.
+		# Optional so an existing client that still sends it keeps validating.
+		amount: Decimal
 		isAutomatic: Boolean
 		version: Int
 		idempotencyKey: String
@@ -281,7 +288,7 @@ export const cartSchemaExtensions = gql`
 		carts(status: String, customerId: ID, email: String, page: PageInput, withDeleted: Boolean): CartConnection!
 		"Read one cart with its lines, delivery choices and promotions."
 		cart(id: ID!): Cart
-		"Read the cart a buyer token names."
+		"Read the cart a guest-access token names, within the caller's tenant; null when none carries it. The token is the one createCart answered with."
 		cartByToken(token: String!): Cart
 		"List checkout sessions."
 		checkoutSessions(cartId: ID, status: String, page: PageInput, withDeleted: Boolean): CheckoutSessionConnection!

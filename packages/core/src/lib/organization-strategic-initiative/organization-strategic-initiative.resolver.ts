@@ -46,6 +46,8 @@ export interface ICreateOrganizationStrategicInitiativeInput {
 	visibilityScope?: string;
 	signals?: Record<string, unknown>;
 	stewardId?: Id;
+	/** The teams to link directly; each must be a team of the initiative's organization. */
+	teamIds?: Id[];
 }
 
 /** The members `UpdateOrganizationStrategicInitiativeInput` declares in the schema. */
@@ -230,7 +232,8 @@ export class OrganizationStrategicInitiativeResolver {
 	}
 
 	/**
-	 * How many strategic initiatives the caller's tenant holds.
+	 * How many strategic initiatives the caller may see: the service counts on its list read (the caller's
+	 * organizations, then the visibility rule), as the inherited REST count does.
 	 *
 	 * No permission is stated because the route this mirrors declares none: the count is inherited from
 	 * the CRUD base, where the controller's guard chain is the whole of its scope.

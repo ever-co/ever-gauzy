@@ -372,6 +372,43 @@ jobs:
       - name: Test Ever Async integration boundary
         run: yarn nx run plugin-integration-ever-async:test-integration
 
+      - name: Test the Ever Works integration plugin
+        # The switch (only EVER_WORKS_ENABLED=true loads it; anything else keeps it off and warns once),
+        # the operator settings (public HTTPS URLs only), and the catalog entry written at start only
+        # when switched on, without ever stopping the API.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/integration-ever-works/jest.config.ts --runInBand
+
+      - name: Test the Inbox plugin
+        # The switch (only GAUZY_INBOX_ENABLED=true loads it), the source-handler registry, and on a real
+        # SQLite database the migrations (up, up again, down), the role grants, the recipient-scoped reads,
+        # replies through a source handler (claimed once, released on refusal) and the source writes.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/inbox/jest.config.ts --runInBand
+
+      - name: Test the Resend email provider plugin
+        # The switch (EMAIL_PROVIDER_RESEND_ENABLED=true only), the webhook signature (an unsigned or forged request is refused),
+        # recorded provider payloads parsed into inbox messages, and the outbound transport.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/email-provider-resend/jest.config.ts --runInBand
+
+      - name: Test the Postmark email provider plugin
+        # The switch (EMAIL_PROVIDER_POSTMARK_ENABLED=true only), the webhook signature (an unsigned or forged request is refused),
+        # recorded provider payloads parsed into inbox messages, and the outbound transport.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/email-provider-postmark/jest.config.ts --runInBand
+
+      - name: Test the Mailgun email provider plugin
+        # The switch (EMAIL_PROVIDER_MAILGUN_ENABLED=true only), the webhook signature (an unsigned or forged request is refused),
+        # recorded provider payloads parsed into inbox messages, and the outbound transport.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/email-provider-mailgun/jest.config.ts --runInBand
+
+      - name: Test the SendGrid email provider plugin
+        # The switch (EMAIL_PROVIDER_SENDGRID_ENABLED=true only), the webhook signature (an unsigned or forged request is refused),
+        # recorded provider payloads parsed into inbox messages, and the outbound transport.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/email-provider-sendgrid/jest.config.ts --runInBand
+
+      - name: Test the Amazon SES email provider plugin
+        # The switch (EMAIL_PROVIDER_SES_ENABLED=true only), the webhook signature (an unsigned or forged request is refused),
+        # recorded provider payloads parsed into inbox messages, and the outbound transport.
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/email-provider-ses/jest.config.ts --runInBand
+
       - name: Test anonymous usage statistics on SQLite, PostgreSQL and MySQL
         # The database suites of the statistics plugins on the three engines (Postgres in a schema
         # of its own): migrations up/up/down, one identity under concurrent first boots, the operator
@@ -437,11 +474,22 @@ jobs:
       - name: Test the API plugin list and its boot order
         # The statistics plugin is in the list unless EVER_STATS_ENABLED=false, also when that is
         # written only in .env or .env.local (read before the list is built); the Ever Platform
-        # connection only with EVER_CONNECT_ENABLED=true; every combination of the optional plugins.
+        # connection only with EVER_CONNECT_ENABLED=true; the Ever Works integration only with
+        # EVER_WORKS_ENABLED=true; every combination of the optional plugins.
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c apps/api/jest.config.ts --runInBand plugins.matrix
 
       - name: Build API
         run: yarn build:api:prod:ci
+
+      - name: Test the Ever Works integration boundary
+        # The plugin's SQL-backed suite (plan 06 G-P1-12), in the style of the Ever Async one: its own
+        # migrations up/up/down/up on SQLite and on this job's Postgres service, tenant and organization
+        # isolation, webhook signatures, dedupe of webhook and change feed, loop suppression, the 412
+        # merge, an initial sync resumed by another process, and record scope - against the mock Ever
+        # Works server. After the build on purpose: a new suite never hides the build's own verdict.
+        env:
+          EVER_WORKS_TEST_DATABASE_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
+        run: yarn nx run plugin-integration-ever-works:test-integration
 
   build-web:
     name: build-web
@@ -508,6 +556,16 @@ jobs:
 
       - name: Build web
         run: yarn build:gauzy:prod:ci
+
+      - name: Test the Ever Works integration UI plugin
+        # The Angular specs of Integrations > Ever Works (plan 06 G-P1-11/12): the "not switched on" gate,
+        # the connect wizard (validate, connect, map, review, directions, dry run, start) and the sync
+        # settings (status, activity, conflicts, key, disconnect). jest-preset-angular runs without
+        # --experimental-vm-modules; the generated Angular environment file comes first (gitignored).
+        # After the build on purpose: a new suite never hides the build's own verdict.
+        run: |
+          yarn config:dev
+          node node_modules/jest/bin/jest.js -c packages/plugins/integration-ever-works-ui/jest.config.ts --runInBand
 
   build-desktop:
     name: build-desktop

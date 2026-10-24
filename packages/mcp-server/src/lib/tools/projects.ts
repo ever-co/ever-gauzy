@@ -7,6 +7,7 @@ import { authManager } from '../common/auth-manager';
 import { CurrenciesEnum } from '../input-schemas';
 
 import { registerTool, registerNoArgsTool } from './tool-helper';
+import { applyInTurn, buildListQuery, countByGroup, getCurrentEmployeeId, isWithinDates, readAllPages } from './utils';
 const logger = new Logger('ProjectTools');
 
 /**
@@ -67,22 +68,15 @@ export const registerProjectTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(name && { name }),
-					...(code && { code }),
-					...(isPublic !== undefined && { public: isPublic }),
-					...(billing && { billing }),
-					...(currency && { currency }),
-					page,
-					limit,
-					...(relations && { relations })
-				};
+				const params = buildListQuery(
+					defaultParams,
+					{ name, code, public: isPublic, billing, currency },
+					{ page, limit, relations, skipIsPage: usePaginationEndpoint }
+				);
 
 				const endpoint = usePaginationEndpoint
-					? '/api/organization-project/pagination'
-					: '/api/organization-project';
+					? '/api/organization-projects/pagination'
+					: '/api/organization-projects';
 				const response = await apiClient.get(endpoint, { params });
 
 				return {
@@ -127,7 +121,7 @@ export const registerProjectTools = (server: McpServer) => {
 					...(billing && { billing })
 				};
 
-				const response = await apiClient.get('/api/organization-project/count', { params });
+				const response = await apiClient.get('/api/organization-projects/count', { params });
 
 				return {
 					content: [
@@ -174,7 +168,7 @@ export const registerProjectTools = (server: McpServer) => {
 					limit
 				};
 
-				const response = await apiClient.get(`/api/organization-project/employee/${employeeId}`, { params });
+				const response = await apiClient.get(`/api/organization-projects/employee/${employeeId}`, { params });
 
 				return {
 					content: [
@@ -220,7 +214,8 @@ export const registerProjectTools = (server: McpServer) => {
 					limit
 				};
 
-				const response = await apiClient.get('/api/organization-project/me', { params });
+				const employeeId = await getCurrentEmployeeId();
+				const response = await apiClient.get(`/api/organization-projects/employee/${employeeId}`, { params });
 
 				return {
 					content: [
@@ -265,7 +260,7 @@ export const registerProjectTools = (server: McpServer) => {
 					...(relations && { relations })
 				};
 
-				const response = await apiClient.get(`/api/organization-project/${id}`, { params });
+				const response = await apiClient.get(`/api/organization-projects/${id}`, { params });
 
 				return {
 					content: [
@@ -312,7 +307,7 @@ export const registerProjectTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
-				const response = await apiClient.post('/api/organization-project', createData);
+				const response = await apiClient.post('/api/organization-projects', createData);
 
 				return {
 					content: [
@@ -347,7 +342,7 @@ export const registerProjectTools = (server: McpServer) => {
 						'Organization context is missing. Please ensure you are logged in with an organization.'
 					);
 				}
-				const existing = await apiClient.get(`/api/organization-project/${id}`, { params: defaultParams });
+				const existing = await apiClient.get(`/api/organization-projects/${id}`, { params: defaultParams });
 				if (!existing) throw new Error('Project not found or access denied');
 				const updateData = convertProjectDates({
 					...project_data,
@@ -355,7 +350,7 @@ export const registerProjectTools = (server: McpServer) => {
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
-				const response = await apiClient.put(`/api/organization-project/${id}`, updateData, {
+				const response = await apiClient.put(`/api/organization-projects/${id}`, updateData, {
 					params: defaultParams
 				});
 
@@ -394,7 +389,7 @@ export const registerProjectTools = (server: McpServer) => {
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
-				const response = await apiClient.delete(`/api/organization-project/${id}`, { params });
+				const response = await apiClient.delete(`/api/organization-projects/${id}`, { params });
 				return {
 					content: [
 						{
@@ -447,9 +442,9 @@ export const registerProjectTools = (server: McpServer) => {
 					})
 				);
 
-				const response = await apiClient.post('/api/organization-project/bulk', {
-					projects: projectsWithDefaults
-				});
+				const response = await applyInTurn(projectsWithDefaults, (project) =>
+					apiClient.post('/api/organization-projects', project)
+				);
 
 				return {
 					content: [
@@ -499,7 +494,9 @@ export const registerProjectTools = (server: McpServer) => {
 					})
 				}));
 
-				const response = await apiClient.put('/api/organization-project/bulk', { updates: processedUpdates });
+				const response = await applyInTurn(processedUpdates, ({ id, data }) =>
+					apiClient.put(`/api/organization-projects/${id}`, data, { params: defaultParams })
+				);
 
 				return {
 					content: [
@@ -534,16 +531,15 @@ export const registerProjectTools = (server: McpServer) => {
 				}
 				const params = {
 					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					ids
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
-				const response = await apiClient.delete('/api/organization-project/bulk', { data: { ids }, params });
+				await applyInTurn(ids, (id) => apiClient.delete(`/api/organization-projects/${id}`, { params }));
 
 				return {
 					content: [
 						{
 							type: 'text',
-							text: JSON.stringify(response, null, 2)
+							text: JSON.stringify({ success: true, deletedIds: ids }, null, 2)
 						}
 					]
 				};
@@ -576,16 +572,22 @@ export const registerProjectTools = (server: McpServer) => {
 					);
 				}
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(projectId && { projectId }),
-					...(employeeId && { employeeId }),
-					...(startDate && { startDate }),
-					...(endDate && { endDate })
+				// No statistics route: count the projects the pagination route lists, created in the date range
+				const where = { id: projectId, ...(employeeId && { members: { employeeId } }) };
+				const projects = (
+					await readAllPages<{ createdAt?: string; billing?: string; currency?: string; public?: boolean }>(
+						'/api/organization-projects/pagination',
+						(page, take) => buildListQuery(defaultParams, where, { page, limit: take, skipIsPage: true })
+					)
+				).filter(({ createdAt }) => isWithinDates(createdAt, startDate, endDate));
+				const response = {
+					total: projects.length,
+					...countByGroup(projects, {
+						byBilling: ({ billing }) => billing,
+						byCurrency: ({ currency }) => currency,
+						byVisibility: (project) => (project.public ? 'public' : 'private')
+					})
 				};
-
-				const response = await apiClient.get('/api/organization-project/statistics', { params });
 
 				return {
 					content: [
@@ -622,8 +624,9 @@ export const registerProjectTools = (server: McpServer) => {
 					);
 				}
 
-				const response = await apiClient.post(`/api/organization-project/${projectId}/assign`, {
-					employeeId,
+				const response = await apiClient.put('/api/organization-projects/employee', {
+					addedProjectIds: [projectId],
+					member: { id: employeeId },
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
@@ -663,12 +666,11 @@ export const registerProjectTools = (server: McpServer) => {
 					);
 				}
 
-				const response = await apiClient.delete(`/api/organization-project/${projectId}/assign`, {
-					data: {
-						employeeId,
-						organizationId: defaultParams.organizationId,
-						...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
-					}
+				const response = await apiClient.put('/api/organization-projects/employee', {
+					removedProjectIds: [projectId],
+					member: { id: employeeId },
+					organizationId: defaultParams.organizationId,
+					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				});
 
 				return {

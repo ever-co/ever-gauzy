@@ -35,6 +35,8 @@ interface ICreateSubscriptionPlanArgs {
 	setupFee?: string;
 	discountPercentage?: string;
 	metadata?: Record<string, unknown>;
+	/** As `POST /subscription-plans` takes it (R2-G16); the service writes it through, defaulting to active. */
+	isActive?: boolean;
 }
 
 /** The plan as it is updated. */

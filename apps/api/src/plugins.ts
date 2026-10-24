@@ -32,6 +32,13 @@ import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activep
 import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
+import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
+import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
+import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
+import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
+import { EmailProviderSendGridPlugin, isSendGridEnabled } from '@gauzy/plugin-email-provider-sendgrid';
+import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provider-ses';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -94,6 +101,50 @@ export const plugins = [
 	// EVER_CONNECT_ENABLED=true; when off it is not loaded at all (no route, no timer, no outbound
 	// request). Any other value keeps it off and is logged once.
 	...(isEverConnectEnabled(process.env, (message) => console.warn(message)) ? [EverConnectPlugin] : []),
+
+	// Ever Works integration (two-way sync of tasks, teams, goals, missions, ideas, agents, inbox and
+	// docs with an Ever Works tenant). Off unless EVER_WORKS_ENABLED=true; when off it is not loaded at
+	// all (no route, no table, no timer, no outbound request). Any other value keeps it off and is
+	// logged once.
+	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : []),
+
+	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
+	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
+	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
+	// logged once.
+	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+
+	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
+	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when
+	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
+	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
+		? [InboxEmailPlugin]
+		: []),
+
+	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isResendEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderResendPlugin] : []),
+
+	// Email provider: Postmark (plan 04 §5.2). Off unless EMAIL_PROVIDER_POSTMARK_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isPostmarkEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderPostmarkPlugin] : []),
+
+	// Email provider: Mailgun (plan 04 §5.2). Off unless EMAIL_PROVIDER_MAILGUN_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isMailgunEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderMailgunPlugin] : []),
+
+	// Email provider: SendGrid (plan 04 §5.2). Off unless EMAIL_PROVIDER_SENDGRID_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isSendGridEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSendGridPlugin] : []),
+
+	// Email provider: Amazon SES (plan 04 §5.2). Off unless EMAIL_PROVIDER_SES_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isSesEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSesPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

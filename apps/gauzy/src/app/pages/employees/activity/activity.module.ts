@@ -1,16 +1,9 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
+import { NbCardModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BookmarkQueryParamsResolver, PageRouteRegistryService } from '@gauzy/ui-core/core';
-import {
-	ActivityItemModule,
-	DateRangePickerResolver,
-	DynamicTabsModule,
-	GauzyFiltersModule,
-	NoDataMessageModule,
-	SharedModule
-} from '@gauzy/ui-core/shared';
+import { DateRangePickerResolver, DynamicTabsModule, GauzyFiltersModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createActivityRoutes } from './activity.routes';
 import { ActivityLayoutComponent } from './layout/layout.component';
 import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.component';
@@ -19,12 +12,12 @@ import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.com
 	imports: [
 		RouterModule.forChild([]),
 		NbCardModule,
+		NbIconModule,
 		NbSpinnerModule,
+		NbTooltipModule,
 		TranslatePipe,
-		ActivityItemModule,
 		DynamicTabsModule,
 		GauzyFiltersModule,
-		NoDataMessageModule,
 		SharedModule
 	],
 	declarations: [ActivityLayoutComponent, AppUrlActivityComponent],

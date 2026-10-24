@@ -249,6 +249,7 @@ function resource(row: Record<string, unknown> = returnRow()) {
 			outstandingQuantity: '0.000000'
 		})),
 		approve: jest.fn(async () => ({ ...row, status: OrderReturnStatus.APPROVED, version: 4 })),
+		refund: jest.fn(async () => ({ refundId: 'refund-1', amount: '5.000000', currency: 'USD' })),
 		findAll: jest.fn(async (_options?: Record<string, unknown>) => ({ items: [], total: 0 })),
 		findOneDetailed: jest.fn(async () => row),
 		findOneByIdString: jest.fn(async (id: string) => {
@@ -385,6 +386,50 @@ describe('OrderReturnResolver — a receipt that states no retry key', () => {
 		).rejects.toMatchObject({ status: 400, code: 'IDEMPOTENCY_KEY_REQUIRED' });
 		expect(surface.service.receive).not.toHaveBeenCalled();
 		expect(surface.store.claim).not.toHaveBeenCalled();
+	});
+});
+
+describe('OrderReturnResolver — refundOrderReturn carries its retry key in the input (review R3-09)', () => {
+	it('refuses a refund that states no retry key, before the resolver runs', async () => {
+		const surface = resource();
+		const input = { amount: '5', version: 3 };
+
+		await expect(
+			send(surface, 'refundOrderReturn', 'mutation', { id: RETURN, input }, (context) => [RETURN, input, context])
+		).rejects.toMatchObject({ status: 400, code: 'IDEMPOTENCY_KEY_REQUIRED' });
+		expect(surface.service.refund).not.toHaveBeenCalled();
+	});
+
+	it('refunds once for a refund that states one', async () => {
+		const surface = resource();
+		const input = { amount: '5', version: 3, idempotencyKey: 'refund-key-0001' };
+
+		await send(surface, 'refundOrderReturn', 'mutation', { id: RETURN, input }, (context) => [RETURN, input, context]);
+
+		expect(surface.service.refund).toHaveBeenCalledTimes(1);
+	});
+
+	it('replays the first refund when the key and the input are repeated, refunding once', async () => {
+		// A retried refund is what the key is for: the second request — a timeout retry, a double click — must answer
+		// the first refund rather than pay out twice.
+		const surface = resource();
+		const first = { amount: '5', version: 3, idempotencyKey: 'refund-key-0002' };
+		const second = { amount: '5', version: 3, idempotencyKey: 'refund-key-0002' };
+
+		const sent = await send(surface, 'refundOrderReturn', 'mutation', { id: RETURN, input: first }, (context) => [
+			RETURN,
+			first,
+			context
+		]);
+		const replayed = await send(surface, 'refundOrderReturn', 'mutation', { id: RETURN, input: second }, (context) => [
+			RETURN,
+			second,
+			context
+		]);
+
+		expect(replayed.result).toEqual(sent.result);
+		expect(surface.service.refund).toHaveBeenCalledTimes(1);
+		expect(surface.store.complete).toHaveBeenCalledTimes(1);
 	});
 });
 

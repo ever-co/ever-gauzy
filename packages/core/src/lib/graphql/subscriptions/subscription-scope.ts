@@ -62,6 +62,12 @@ export interface SubscriptionScopeInput {
 	readonly eventNames: readonly string[];
 	/** Narrows the stream to one aggregate. It can never widen it. */
 	readonly aggregateId?: string;
+	/**
+	 * The user the credential belongs to, taken from the credential like the tenant. An addressed event (one
+	 * that names its recipients, see {@link SubscriptionEventLike.recipientUserIds}) reaches the subscription
+	 * only when this user is one of them; without a user, no addressed event reaches it.
+	 */
+	readonly recipientUserId?: string;
 }
 
 /**
@@ -81,6 +87,7 @@ export interface SubscriptionScope {
 	readonly permissionEvaluator?: (permission: string) => boolean | Promise<boolean>;
 	readonly eventNames: readonly string[];
 	readonly aggregateId?: string;
+	readonly recipientUserId?: string;
 }
 
 /**
@@ -122,6 +129,52 @@ export interface SubscriptionEventLike {
 	readonly channelId?: string | null;
 	/** The aggregate that changed. */
 	readonly aggregate?: { readonly type: string; readonly id: string };
+	/**
+	 * The users an **addressed** event is for — a personal fact such as an inbox item, which other users of
+	 * the same tenant must not see however they were granted the stream. Absent: the event is not addressed
+	 * and the checks above decide alone. Present: only a subscription of one of these users receives it (an
+	 * empty list reaches nobody).
+	 */
+	readonly recipientUserIds?: readonly string[];
+}
+
+/**
+ * The recipients an event's payload addresses it to: the `recipientUserIds` member of its data.
+ *
+ * `undefined` when the payload names none (the event is not addressed). A member that is present but not a
+ * list of ids addresses the event to nobody rather than to everybody: a malformed address is a refusal.
+ *
+ * @param data The event's payload.
+ * @returns The recipients, or undefined.
+ */
+export function addressedRecipientsOf(data: unknown): readonly string[] | undefined {
+	if (data === null || typeof data !== 'object' || !('recipientUserIds' in data)) {
+		return undefined;
+	}
+
+	const recipients = (data as { recipientUserIds?: unknown }).recipientUserIds;
+	if (recipients === undefined) {
+		return undefined;
+	}
+
+	return Array.isArray(recipients)
+		? recipients.filter((id): id is string | number => typeof id === 'string' || typeof id === 'number').map(String)
+		: [];
+}
+
+/**
+ * Whether an addressed event may reach a user.
+ *
+ * @param recipients The event's recipients (`recipientUserIds`).
+ * @param userId The subscriber's user, captured from the credential.
+ * @returns True only when the recipients are a list that names the user.
+ */
+export function isAddressedTo(recipients: unknown, userId: string | null | undefined): boolean {
+	if (!userId || !Array.isArray(recipients)) {
+		return false;
+	}
+
+	return recipients.some((id) => String(id) === String(userId));
 }
 
 /**
@@ -185,7 +238,8 @@ export function resolveSubscriptionScope(input: SubscriptionScopeInput): Subscri
 		permissions: input.permissions ?? [],
 		permissionEvaluator: input.permissionEvaluator,
 		eventNames,
-		aggregateId: input.aggregateId
+		aggregateId: input.aggregateId,
+		recipientUserId: input.recipientUserId?.trim() || undefined
 	};
 }
 
@@ -319,6 +373,12 @@ export class SubscriptionAuthorizer {
 		}
 
 		if (scope.aggregateId && event.aggregate?.id !== scope.aggregateId) {
+			return false;
+		}
+
+		// An addressed event reaches its recipients only: another user of the tenant who holds the stream's
+		// permission (an operator, an admin) is not one of them.
+		if (event.recipientUserIds !== undefined && !isAddressedTo(event.recipientUserIds, scope.recipientUserId)) {
 			return false;
 		}
 

@@ -1,6 +1,8 @@
 // cspell:ignore ABCDEFGHJKMNPQRSTVWXYZ
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	booleanLiteral,
@@ -13,6 +15,7 @@ import {
 } from '@gauzy/core';
 import { CouponRedeemedEvent } from '../events';
 import { Coupon } from './coupon.entity';
+import { Promotion } from '../promotion/promotion.entity';
 import { TypeOrmCouponRepository } from './repository/type-orm-coupon.repository';
 import { MikroOrmCouponRepository } from './repository/mikro-orm-coupon.repository';
 import {
@@ -23,6 +26,7 @@ import {
 	PromotionUsageStatus
 } from '../promotion.types';
 import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+import { withoutRestatedMembers } from '../shared/ledger-members';
 
 /**
  * The alphabet codes are drawn from.
@@ -100,6 +104,31 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 	}
 
 	/**
+	 * Refuses a promotion that is not the caller's. A coupon grants the promotion it names, and the id comes from the
+	 * request: the create, batch and update paths stored it as given, so a coupon could be filed against another
+	 * tenant's promotion — the platform's relation check (`TenantAwareCrudService`) does not run on this package's
+	 * `CrudService` base, and promotion actions already check their promotion this way. No promotion is fine: the code
+	 * is then not attached yet (`COUPON_NOT_LINKED`).
+	 *
+	 * @param promotionId The promotion the coupon names, if any.
+	 * @throws NotFoundException when it is not a promotion of the caller's tenant and organization.
+	 */
+	private async assertPromotionOwned(promotionId: ID | null | undefined): Promise<void> {
+		if (!promotionId) {
+			return;
+		}
+
+		const promotion = await this.typeOrmCouponRepository.manager.findOneBy(Promotion, {
+			id: promotionId,
+			...this.scope
+		} as never);
+
+		if (!promotion) {
+			throw new NotFoundException('PROMOTION_NOT_FOUND: no promotion with that identifier.');
+		}
+	}
+
+	/**
 	 * Creates one coupon.
 	 *
 	 * @param input The coupon to create.
@@ -128,6 +157,7 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 			tenantId?: ID;
 			organizationId?: ID;
 		};
+		await this.assertPromotionOwned(fields.promotionId);
 
 		return this.create({ ...fields, code, usageCount: 0, ...this.scope } as never);
 	}
@@ -171,6 +201,7 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 			tenantId?: ID;
 			organizationId?: ID;
 		};
+		await this.assertPromotionOwned(template.promotionId);
 
 		for (let index = 0; index < rows.length; index += BATCH_CHUNK) {
 			const chunk = rows.slice(index, index + BATCH_CHUNK).map((code) => ({
@@ -417,6 +448,74 @@ export class CouponService extends TenantScopedCrudService<Coupon> {
 	 */
 	private randomBytes(size: number): Uint8Array {
 		return randomBytes(size);
+	}
+
+	/**
+	 * Writes the editable fields of a coupon. Both surfaces reach it: `PUT /coupons/:id` and `updateCoupon`.
+	 *
+	 * Two members of the REST body are not plain fields (review R2-G27), and the GraphQL input carries neither:
+	 *
+	 * * `usageCount` is the redemption counter, moved by `redeem` and `revert` in one conditional statement each;
+	 *   written by hand it re-opens a used-up single-use code. A change is refused with `COUPON_FIELD_NOT_WRITABLE`;
+	 *   a body that restates the stored value is accepted and the member left out of the write.
+	 * * `code` is stored the way {@link createCoupon} stores it: trimmed and upper-cased, and refused with
+	 *   `COUPON_INVALID` when it is empty or another coupon of the organization holds it. It used to be written as
+	 *   typed, so `save10` and `SAVE10` could both exist and a lower-case code never validated.
+	 *
+	 * Either member makes the coupon be read first, in the caller's tenant and organization, so a coupon outside it is
+	 * a 404 before anything is written.
+	 *
+	 * @param id The coupon, or the conditions that select the coupons to change.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException when the counter would move or the code is empty or taken.
+	 */
+	public async update(
+		id: string | number | FindOptionsWhere<Coupon>,
+		partialEntity: QueryDeepPartialEntity<Coupon>
+	): Promise<UpdateResult | Coupon> {
+		let patch = { ...((partialEntity ?? {}) as Record<string, unknown>) };
+		await this.assertPromotionOwned(patch.promotionId as ID | undefined);
+
+		if (patch.usageCount !== undefined || patch.code !== undefined) {
+			const stored = typeof id === 'string' ? await this.findCouponOrFail(id) : null;
+
+			patch = withoutRestatedMembers(patch, ['usageCount'], stored, {
+				code: 'COUPON_FIELD_NOT_WRITABLE',
+				subject: 'a coupon',
+				movedBy: 'the redemption counter moves with the redemptions of the coupon only.',
+				details: { couponId: typeof id === 'string' ? id : null }
+			});
+
+			if (patch.code !== undefined) {
+				if (!stored) {
+					throw new BadRequestException({
+						message:
+							'COUPON_FIELD_NOT_WRITABLE: a code is changed on one coupon at a time, named by its id.',
+						code: 'COUPON_FIELD_NOT_WRITABLE',
+						details: { couponId: null, fields: ['code'] }
+					});
+				}
+
+				const code = this.normalise(typeof patch.code === 'string' ? patch.code : '');
+
+				if (!code) {
+					throw new BadRequestException('COUPON_INVALID: a coupon needs a code.');
+				}
+
+				if (code !== stored.code) {
+					const existing = await this.typeOrmCouponRepository.findOneBy({ code, ...this.scope });
+
+					if (existing && existing.id !== stored.id) {
+						throw new BadRequestException(`COUPON_INVALID: the code "${code}" already exists.`);
+					}
+				}
+
+				patch.code = code;
+			}
+		}
+
+		return super.update(id, patch as QueryDeepPartialEntity<Coupon>);
 	}
 
 	/**

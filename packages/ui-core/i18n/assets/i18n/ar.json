@@ -836,6 +836,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "يجب أن تكون موظفًا لتتمكن من تتبع الوقت وإنشاء مصروفات مشتركة واستخدام ميزات أخرى تتعلق بالموظفين."
 	},
 	"MENU": {
+		"INITIATIVES": "المبادرات",
 		"BREADCRUMB": "مسار التنقل",
 		"PIPELINES": "خطوط الأنابيب",
 		"DASHBOARD": "لوحة القيادة",
@@ -1211,7 +1212,7 @@
 		"PREFERRED_UI": {
 			"LABEL": "الواجهة",
 			"TITLE": "واجهة المستخدم",
-			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين.",
+			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين. تعرض الواجهتان الصفحات نفسها بالبيانات والتخطيط والميزات نفسها — تختلف التقنية المستخدمة فقط، لذا لا يغيّر التبديل ما يراه المستخدمون أو ما يمكنهم فعله.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (افتراضي)",
 				"REACT": "React (جديد)"
@@ -1948,6 +1949,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "النوع",
+		"KIND_ALL": "الكل",
+		"KIND_HUMAN": "الأشخاص",
+		"KIND_AGENT": "الوكلاء",
+		"AGENT_BADGE": "وكيل",
+		"MANAGED_BY_EVER_WORKS": "يُدار بواسطة Ever Works: يتم تغيير اسم هذا الوكيل وملفه الشخصي في Ever Works ومزامنتهما مع Gauzy.",
+		"MANAGED_EXTERNALLY": "يُدار خارجيًا: يتم تغيير اسم هذا الوكيل وملفه الشخصي في النظام الذي جاء منه ومزامنتهما مع Gauzy.",
+		"OPEN_MANAGED_AGENT": "فتح صفحة الوكيل",
 		"HEADER": "إدارة الموظفين",
 		"ADD_EMPLOYEE": "إضافة موظف",
 		"ACTIVE": "نشط",
@@ -2087,7 +2096,68 @@
 				"IN_DAYS": "خلال {{ count }} أيام"
 			},
 			"SHOWING": "عرض {{ shown }} من {{ total }} مهمة",
-			"NO_TASKS_IN_VIEW": "لا توجد مهام في هذا العرض"
+			"NO_TASKS_IN_VIEW": "لا توجد مهام في هذا العرض",
+			"PROJECTS_CAPTION": "مشاريعه والوقت المستغرق في كل منها خلال هذه الفترة",
+			"NO_PROJECTS": "ليس عضوًا في أي مشروع، ولا يوجد وقت على المشاريع في هذه الفترة",
+			"NOT_A_MEMBER": "ليس عضوًا",
+			"NOT_A_MEMBER_HINT": "تم تسجيل وقت على هذا المشروع، لكنه ليس عضوًا فيه",
+			"VIEW_PROFILE": "عرض الملف الشخصي",
+			"MEMBERSHIP_UNKNOWN": "تعذر تحميل عضوية المشاريع، لذا لا يتم التمييز بين الأعضاء وغير الأعضاء.",
+			"PROJECT_TIMES_PARTIAL": "تعذر تحميل أوقات بعض المشاريع، لذا قد يكون لمشروع بلا وقت وقتٌ فعلًا."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "المبادرات الاستراتيجية",
+		"SUBTITLE": "الاتجاهات التي قررت مؤسستك المضي فيها، والأهداف والمشاريع والفرق المتوافقة معها.",
+		"ADD": "إضافة مبادرة",
+		"EDIT": "تعديل المبادرة",
+		"EMPTY": "لا توجد مبادرات استراتيجية بعد.",
+		"TITLE": "العنوان",
+		"STATE": "الحالة",
+		"VISIBILITY": "الظهور",
+		"TEAMS": "الفرق",
+		"TEAMS_HINT": "عند اختيار ظهور \"الفريق\" يمكن لأعضاء هذه الفرق (وفرق المشاريع المرتبطة) رؤية المبادرة.",
+		"PROJECTS": "المشاريع",
+		"GOALS": "الأهداف",
+		"CONFIDENCE": "الثقة",
+		"MOMENTUM": "الزخم",
+		"INTENT": "النية",
+		"INTENT_HINT": "ما الذي نريد دفعه إلى الأمام عن قصد، ولماذا؟",
+		"STEWARD": "المسؤول",
+		"SIGNALS": "المؤشرات",
+		"KNOWN_RISKS": "المخاطر المعروفة",
+		"KNOWN_RISKS_HINT": "خطر واحد في كل سطر",
+		"NOTES": "ملاحظات",
+		"LAST_ASSESSED": "آخر تقييم",
+		"NO_TEAMS": "لا توجد فرق مرتبطة.",
+		"NO_GOALS": "لا توجد أهداف مرتبطة.",
+		"NO_PROJECTS": "لا توجد مشاريع مرتبطة.",
+		"NOT_FOUND": "لم يتم العثور على المبادرة أو لا يمكنك رؤيتها.",
+		"DELETE_TITLE": "حذف المبادرة",
+		"DELETE_CONFIRMATION": "حذف المبادرة \"{{ name }}\"؟",
+		"DELETED": "تم حذف المبادرة \"{{ name }}\".",
+		"CREATED": "تم إنشاء المبادرة \"{{ name }}\".",
+		"UPDATED": "تم تحديث المبادرة \"{{ name }}\".",
+		"STATES": {
+			"DRAFT": "مسودة",
+			"ACTIVE": "نشطة",
+			"RESOLVED": "منجزة",
+			"RETIRED": "متوقفة"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "القيادة",
+			"ORGANIZATION": "المؤسسة",
+			"TEAM": "الفريق"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "منخفضة",
+			"MEDIUM": "متوسطة",
+			"HIGH": "عالية"
+		},
+		"MOMENTUMS": {
+			"STALLED": "متوقفة",
+			"PROGRESSING": "تتقدم",
+			"ACCELERATING": "تتسارع"
 		}
 	},
 	"GOALS_PAGE": {
@@ -2106,6 +2176,17 @@
 		"UPDATE": "تحديث",
 		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
+		"COMMENT_THREAD": {
+			"REPLY": "رد",
+			"ONE_MESSAGE": "رسالة واحدة",
+			"MESSAGES": "{{ count }} رسائل",
+			"NO_MESSAGES": "لا توجد رسائل في هذه السلسلة بعد.",
+			"REPLY_PLACEHOLDER": "الرد على هذا التعليق…",
+			"UNKNOWN_AUTHOR": "غير معروف",
+			"DELETE_CONFIRM": "حذف هذا التعليق؟",
+			"DELETED": "تم حذف التعليق",
+			"LOAD_ERROR": "تعذّر تحميل التعليقات."
+		},
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
 		"DELETE_OBJECTIVE": "حذف الهدف",
@@ -2153,6 +2234,7 @@
 			"NO_KEY_RESULT": "لا توجد نتائج مفتاحية لعرضها.",
 			"NO_UPDATES": "لا توجد تحديثات حتى الآن.",
 			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن.",
+			"NO_COMMENTS": "لا توجد تعليقات حتى الآن.",
 			"NO_PROGRESS_DATA": "لا توجد بيانات تقدّم لرسمها بعد."
 		},
 		"LEVELS": {
@@ -2668,7 +2750,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "المديرين",
-				"MEMBERS": "أعضاء"
+				"MEMBERS": "أعضاء",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "التفاصيل"
+					},
+					"PUBLIC": "عام",
+					"PRIVATE": "خاص",
+					"PREFIX": "بادئة المهام",
+					"MEMBERS_COUNT": "{{ count }} أعضاء",
+					"LIVE": "{{ tracking }} يتتبعون الآن · {{ online }} متصلون",
+					"OF_MEMBERS": "{{ count }} من {{ total }} أعضاء",
+					"CREATED": "تاريخ الإنشاء",
+					"UPDATED": "آخر تحديث",
+					"ACTIVE_MEMBERS": "الأعضاء النشطون",
+					"ACTIVE_MEMBERS_META": "من أصل {{ total }} أعضاء سجلوا وقتًا",
+					"TIME_BY_MEMBER": "الوقت حسب العضو",
+					"TEAM_TASKS": "مهام الفريق",
+					"NO_TEAM_TASKS": "لا توجد مهام مسندة لهذا الفريق",
+					"NO_MEMBERS": "لا يوجد أعضاء في هذا الفريق بعد",
+					"NO_PROJECTS": "لا توجد مشاريع مرتبطة بهذا الفريق",
+					"COLUMNS": {
+						"MEMBER": "العضو",
+						"ROLE": "الدور",
+						"STATUS": "الحالة",
+						"CURRENT_TASK": "المهمة الحالية",
+						"TODAY": "اليوم",
+						"ACTIVITY": "النشاط"
+					},
+					"ROLE": {
+						"MANAGER": "مدير",
+						"MEMBER": "عضو"
+					},
+					"GENERAL": "عام",
+					"SETTINGS": "الإعدادات",
+					"RECORD": "السجل",
+					"TEAM_SIZE": "حجم الفريق",
+					"COLOR": "اللون",
+					"EMOJI": "الرمز التعبيري",
+					"PROFILE_LINK": "رابط الملف الشخصي",
+					"VISIBILITY": "الظهور",
+					"SHARE_PROFILE_VIEW": "يمكن للأعضاء رؤية ملفات بعضهم",
+					"REQUIRE_PLAN": "يتطلب خطة لتتبع الوقت",
+					"NOT_FOUND": "تعذر العثور على هذا الفريق",
+					"LOAD_FAILED": "تعذر تحميل الفريق",
+					"RETRY": "إعادة المحاولة",
+					"OPEN_TASK_DETAILS": "عرض تفاصيل {{ title }}",
+					"OPEN_PROJECT_DETAILS": "عرض تفاصيل المشروع {{ name }}",
+					"PROJECT_PROGRESS": "التقدم",
+					"PROJECT_PROGRESS_META": "{{ done }} من {{ total }} مهام منجزة",
+					"NO_PROJECT_TASKS": "لا توجد مهام في هذا المشروع بعد",
+					"TOP_CONTRIBUTORS": "الأكثر عملاً",
+					"TOP_CONTRIBUTORS_CAPTION": "وقت أعضاء الفريق على هذا المشروع · {{ range }}",
+					"PROJECT_ACTIVITY": "النشاط اليومي",
+					"NEEDS_ATTENTION": "يحتاج إلى انتباه",
+					"NEEDS_ATTENTION_CAPTION": "المهام المتأخرة والمستحقة خلال 3 أيام",
+					"BUDGET_USED": "تم استخدام {{ used }} من {{ budget }}",
+					"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}",
+					"OPEN_TASK_PAGE": "فتح صفحة {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "فتح صفحة المهمة",
+					"UNASSIGNED": "غير مسندة",
+					"SHOW_ALL": "عرض الكل",
+					"SHOW_LESS": "عرض أقل",
+					"PROJECTS_CAPTION": "مشاريع الفريق والوقت المستغرق في كل منها خلال هذه الفترة",
+					"NOT_LINKED": "غير مرتبط",
+					"NOT_LINKED_HINT": "سجّل الأعضاء وقتًا على هذا المشروع، لكنه غير مرتبط بالفريق"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2809,6 +2956,9 @@
 			"DOCS_MANAGE": "إدارة فئات المستندات وعناوين الالتقاط",
 			"DOCS_REVIEW": "اعتماد/رفض مراجعات المستندات",
 			"DOCS_AI_IMPORT": "إدارة معرفة الذكاء الاصطناعي للمستندات",
+			"INBOX_VIEW": "عرض صندوق الوارد",
+			"INBOX_MAILBOX_MANAGE": "إدارة صناديق البريد وحسابات المزوّدين",
+			"INBOX_MAILBOX_READ_ALL": "قراءة جميع صناديق البريد المشتركة",
 			"INSUFFICIENT": "ليس لديك الأذونات الكافية. الأذونات التالية مفقودة:",
 			"ORG_SPRINT_EDIT": "تعديل السبرينت",
 			"ORG_SPRINT_VIEW": "عرض السبرينت",
@@ -3040,7 +3190,40 @@
 			"SELLER_PAYOUTS_CREATE": "إنشاء مدفوعات البائعين",
 			"SELLER_PAYOUTS_APPROVE": "اعتماد مدفوعات البائعين",
 			"SELLER_PAYOUTS_CANCEL": "إلغاء مدفوعات البائعين",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "حذف المبادرة الاستراتيجية للمؤسسة"
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "حذف المبادرة الاستراتيجية للمؤسسة",
+			"INTEGRATION_ADD": "إضافة التكاملات",
+			"INTEGRATION_EDIT": "تعديل التكاملات",
+			"INTEGRATION_DELETE": "حذف التكاملات",
+			"AI_CHAT_ACCESS": "الوصول إلى دردشة الذكاء الاصطناعي",
+			"AI_CHAT_SETTINGS": "إدارة إعدادات دردشة الذكاء الاصطناعي",
+			"ORG_JOB_APPLY": "التقدم إلى الوظائف",
+			"ORG_JOB_SEARCH": "عرض الوظائف",
+			"ORG_JOB_EDIT": "تعديل الوظائف",
+			"ORG_EMPLOYEES_ADD": "إنشاء موظفي المؤسسة",
+			"ORG_EMPLOYEES_DELETE": "حذف موظفي المؤسسة",
+			"DAILY_PLAN_CREATE": "إنشاء الخطط اليومية",
+			"DAILY_PLAN_READ": "عرض الخطط اليومية",
+			"DAILY_PLAN_UPDATE": "تحديث الخطط اليومية",
+			"DAILY_PLAN_DELETE": "حذف الخطط اليومية",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "إزالة الحساب كعضو في الفريق",
+			"ORG_TAG_TYPES_ADD": "إضافة نوع وسم",
+			"ORG_TAG_TYPES_VIEW": "عرض أنواع الوسوم",
+			"ORG_TAG_TYPES_EDIT": "تعديل نوع وسم",
+			"ORG_TAG_TYPES_DELETE": "حذف نوع وسم",
+			"EMPLOYEE_AVAILABILITY_CREATE": "إنشاء توفر الموظف",
+			"EMPLOYEE_AVAILABILITY_READ": "عرض توفر الموظف",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "تحديث توفر الموظف",
+			"EMPLOYEE_AVAILABILITY_DELETE": "حذف توفر الموظف",
+			"CUSTOM_SMTP_EDIT": "تعديل SMTP المخصص",
+			"IMPORT_ADD": "استيراد بياناتك",
+			"EXPORT_ADD": "تصدير بياناتك",
+			"API_CALL_LOG_READ": "قراءة سجل استدعاءات API",
+			"API_CALL_LOG_DELETE": "حذف سجل استدعاءات API",
+			"TENANT_API_KEY_CREATE": "إنشاء مفتاح API",
+			"TENANT_API_KEY_VIEW": "عرض مفتاح API",
+			"TENANT_API_KEY_DELETE": "حذف مفتاح API",
+			"OAUTH_CLIENT_VIEW": "عرض عملاء OAuth",
+			"OAUTH_CLIENT_EDIT": "إدارة عملاء OAuth"
 		},
 		"BILLING": "الفوترة",
 		"BUDGET": "ميزانية",
@@ -3074,6 +3257,35 @@
 			"CONTINUE": "متابعة",
 			"SKIP": "تخطي",
 			"CREATE": "إنشاء المؤسسة"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "أقسام المشروع",
+			"DETAILS": "التفاصيل",
+			"LOGO": "شعار المشروع",
+			"LOGO_HINT": "اختياري. انقر على الشعار لرفع صورة مربعة.",
+			"PEOPLE": "الأشخاص",
+			"TIMELINE": "الجدول الزمني",
+			"APPEARANCE": "المظهر",
+			"OPTIONS": "الخيارات",
+			"REPOSITORY": "المستودع",
+			"TASK_SYNC": "مزامنة المهام",
+			"CREATE_SUBTITLE": "أنشئ مشروعًا جديدًا مع أشخاصه وجدوله الزمني والفوترة.",
+			"OPEN_SOURCE_TITLE": "مشروع مفتوح المصدر",
+			"OPEN_SOURCE_DESCRIPTION": "شارك شيفرة هذا المشروع علنًا. فعّله لإضافة رابط مستودعه العام.",
+			"OPEN_SOURCE_URL_HINT": "العنوان العام للشيفرة، مثل مستودع على GitHub أو GitLab.",
+			"OPEN_REPOSITORY": "فتح المستودع",
+			"DESCRIPTION_CARD_DESC": "صف أهداف المشروع ونطاقه لكل من يعمل عليه.",
+			"TAGS_DESC": "صنّف المشروع بوسوم ليسهل العثور عليه وتجميعه.",
+			"BILLING_DESC": "كيفية فوترة العميل لهذا المشروع وبأي عملة.",
+			"BUDGET_DESC": "حدد ميزانية بالساعات أو بالتكلفة لإبقاء المشروع على المسار الصحيح.",
+			"APPEARANCE_DESC": "لون المشروع وطريقة عرض مهامه.",
+			"PUBLIC_TITLE": "مشروع عام",
+			"PUBLIC_DESC": "يمكن للجميع رؤية من يعمل على المشروع العام. أما في المشروع الخاص فلا يرى الأشخاص إلا أنفسهم ما لم يكن لديهم حق الوصول إلى المشاريع الخاصة.",
+			"BILLABLE_DESC": "حدد العمل على هذا المشروع كقابل للفوترة للعميل.",
+			"REPOSITORY_DESC": "اختر مستودع GitHub الذي يعمل هذا المشروع على مشكلاته.",
+			"AUTO_SYNC_DESC": "أبقِ مهام المشروع متوافقة مع مشكلات المستودع. تُحفظ التغييرات هنا فورًا.",
+			"SYNC_LABEL_TITLE": "المزامنة حسب التسمية",
+			"SYNC_LABEL_DESC": "زامن فقط المشكلات التي تحمل التسمية التي تحددها. تُحفظ التغييرات هنا فورًا."
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -3135,9 +3347,14 @@
 		"MEMBER_SINCE": "عضو منذ",
 		"NO_DESCRIPTION": "لم يُضف وصف بعد",
 		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"NO_EMPLOYEES": "لا يوجد موظفون لعرضهم بعد",
+		"NO_CLIENTS": "لا يوجد عملاء لعرضهم بعد",
+		"EMPLOYEES_LOAD_FAILED": "تعذّر تحميل الموظفين.",
+		"CLIENTS_LOAD_FAILED": "تعذّر تحميل العملاء.",
 		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
 		"EDIT": {
 			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"NO_LANGUAGES": "لم تتم إضافة أي لغات بعد",
 			"ADD_AWARD": "إضافة جائزة",
 			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
 		}
@@ -3353,7 +3570,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "يجب أن يكون التاريخ بعد يوم الطلب.",
 			"EXCEED_PERIOD_ERR": "الأيام المسموح بها الحد الأقصى لهذا العنصر هي",
 			"BEFORE_START_DATE_ERR": "لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.",
-			"ITEM_RETURNED_BEFORE_ERR": "يجب إرجاع العنصر قبل"
+			"ITEM_RETURNED_BEFORE_ERR": "يجب إرجاع العنصر قبل",
+			"CHANGED_BY_SOMEONE_ELSE": "قام شخص آخر بتغيير هذا الطلب في هذه الأثناء. تمت إعادة تحميل القائمة: تحقق من الطلب وحاول مرة أخرى."
 		},
 		"ACTIONS": "الإجراءات",
 		"APPROVE": "الموافقة",
@@ -3768,17 +3986,20 @@
 		"USER": {
 			"MANAGE": "إدارة دعوات المستخدمين",
 			"HEADER": "قم بدعوة المستخدمين",
-			"ACTION": "دعوة المستخدمين"
+			"ACTION": "دعوة المستخدمين",
+			"DESCRIPTION": "ادعُ أشخاصًا للانضمام إلى مؤسستك كمستخدمين. يتلقى كل مستلم بريدًا إلكترونيًا يحتوي على رابط آمن للقبول."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "إدارة دعوات الموظفين",
 			"HEADER": "دعوة الموظفين",
-			"ACTION": "دعوة الموظفين"
+			"ACTION": "دعوة الموظفين",
+			"DESCRIPTION": "ادعُ أشخاصًا للانضمام إلى مؤسستك كموظفين. يتلقى كل مستلم بريدًا إلكترونيًا يحتوي على رابط آمن للقبول."
 		},
 		"CANDIDATE": {
 			"MANAGE": "إدارة دعوات المرشحين",
 			"HEADER": "دعوة المرشحين",
-			"ACTION": "دعوة المرشحين"
+			"ACTION": "دعوة المرشحين",
+			"DESCRIPTION": "ادعُ مرشحين إلى مسار التوظيف لديك. يتلقى كل مستلم بريدًا إلكترونيًا يحتوي على رابط آمن للقبول."
 		},
 		"SENT": "{{total}} الدعوات المرسلة.",
 		"IGNORED": "تم إرسال {{total}} دعوة. تم دعوة {{ignored}} من قبل وتم تجاهلهم.",
@@ -3788,6 +4009,23 @@
 			"TWO_WEEK": "14 يومًا",
 			"MONTH": "30 يومًا",
 			"NEVER": "أبدا"
+		},
+		"FORM": {
+			"RECIPIENTS": "المستلمون",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "اضغط Enter بعد كل عنوان لإضافة عدة مستلمين.",
+			"CLEAR_EMAILS": "مسح الكل",
+			"ACCESS": "الوصول",
+			"ACCESS_HINT": "اختياري. اختر ما يمكن للأعضاء الجدد الوصول إليه فور انضمامهم.",
+			"DETAILS": "تفاصيل الدعوة",
+			"RECIPIENT_COUNT": "المستلمون: {{count}}",
+			"NO_RECIPIENTS": "لم تتم إضافة مستلمين بعد"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "حذف الدعوة",
+			"WARNING": "سيتم حذف الدعوة الخاصة بـ {{ email }} نهائيًا وسيتوقف رابطها عن العمل. لا يمكن التراجع عن هذا الإجراء.",
+			"TYPE_TO_CONFIRM": "اكتب ما يلي للتأكيد:",
+			"CONFIRM": "حذف الدعوة"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -5169,6 +5407,8 @@
 			"API_SERVER_PORT": "منفذ خادم واجهة برمجة التطبيقات",
 			"UI_SERVER_PORT": "منفذ خادم واجهة المستخدم",
 			"SERVER_HOSTNAME": "اسم المضيف/عنوان IP للخادم",
+			"LAN_ACCESS": "السماح لأجهزة الكمبيوتر الأخرى على الشبكة بالاتصال",
+			"LAN_ACCESS_HINT": "عند الإيقاف، يمكن لهذا الكمبيوتر فقط الاتصال بواجهة API وواجهة الويب.",
 			"AUTO_START_STARTUP": "تشغيل تلقائي عند بدء التشغيل",
 			"SERVER_TYPE": "نوع الخادم",
 			"LOCAL_API_PORT": "منفذ API المحلي",
@@ -5295,7 +5535,19 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "تعذّر علينا تحديد ما إذا كانت لديك بيانات غير متزامنة. قد تؤدي إزالة قاعدة البيانات إلى حذف عمل غير محفوظ بشكل دائم. إذا كنت غير متأكد، انقر على 'الاحتفاظ بها'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "بيانات تسجيل الدخول الخاصة بك",
+			"SEED_CREDENTIALS_MESSAGE": "احفظ كلمات المرور هذه الآن. لن تُعرض إلا مرة واحدة.",
+			"SEED_CREDENTIALS_DETAIL": "أنشأ هذا التثبيت حساباته بكلمات مرور عشوائية بدلاً من القيم الافتراضية المنشورة.\n\n{{ accounts }}\n\nيمكنك تغيير كلمة المرور لاحقاً من صفحة ملفك الشخصي في Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "تم النسخ إلى الحافظة.",
+			"SEED_CREDENTIALS_SAVED": "لقد حفظتها",
+			"SEED_ROLE_SUPER_ADMIN": "المسؤول الأعلى",
+			"SEED_ROLE_ADMIN": "المسؤول",
+			"SEED_ROLE_EMPLOYEE": "الموظف",
+			"SEED_PASSWORD": "كلمة المرور",
+			"PUBLISHED_PASSWORDS_TITLE": "كلمة المرور الافتراضية لا تزال مستخدمة",
+			"PUBLISHED_PASSWORDS_MESSAGE": "غيّر كلمة المرور الافتراضية لهذه الحسابات.",
+			"PUBLISHED_PASSWORDS_DETAIL": "لا تزال الحسابات {{ accounts }} تسجّل الدخول بكلمة المرور الافتراضية المنشورة في وثائق Gauzy. يمكن لأي شخص يصل إلى هذا الخادم تسجيل الدخول بها. سجّل الدخول إلى Gauzy وغيّرها من صفحة الملف الشخصي."
 		},
 		"NO_LIMIT": "∞ لا حدود",
 		"TASK": "مهمة",
@@ -5323,7 +5575,12 @@
 			"SERVICE_UNAVAILABLE": "الخدمة غير متاحة مؤقتًا.",
 			"UNEXPECTED_ERROR": "حدث خطأ غير متوقع.",
 			"NETWORK_ERROR": "خطأ في الشبكة: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام."
+			"SCREEN_ACCESS_REQUIRED_MSG": "مطلوب إذن الوصول إلى الشاشة لتمكين لقطة الشاشة التلقائية. يرجى منح الإذن في إعدادات النظام.",
+			"ORGANIZATION_SWITCH_REFUSED": "تعذّر التبديل إلى {{ name }}: {{ reason }}. ما زلت تعمل في مؤسستك الحالية.",
+			"ORGANIZATION_NOT_EMPLOYEE": "أنت لست موظفًا نشطًا في {{ name }}، لذلك لا يمكن للمؤقت تتبع الوقت هناك. ما زلت تعمل في مؤسستك الحالية.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "جارٍ تبديل المؤسسة. ابدأ المؤقت بعد اكتمال التبديل.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "أنت لست موظفًا نشطًا في {{ name }}، وفشلت العودة إلى مؤسستك السابقة. يرجى تسجيل الدخول مرة أخرى.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "تعذّر إكمال التبديل إلى {{ name }} على هذا الجهاز. يرجى تسجيل الدخول مرة أخرى."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",
@@ -5570,7 +5827,40 @@
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
 		"SCREEN_SELECTED": "{{ count }} شاشة محددة",
 		"NO_TIME_TRACKED": "لم يتم تتبع أي وقت",
-		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة"
+		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة",
+		"APPS_URLS": {
+			"TOTAL_TIME": "إجمالي الوقت",
+			"APPS_USED": "التطبيقات المستخدمة",
+			"SITES_VISITED": "المواقع التي تمت زيارتها",
+			"TOP_APP": "التطبيق الأكثر استخدامًا",
+			"TOP_SITE": "الموقع الأكثر زيارة",
+			"VIEW": "العرض",
+			"BY_APP": "حسب التطبيق",
+			"BY_SITE": "حسب الموقع",
+			"BY_MEMBERS": "حسب العضو",
+			"BY_HOURS": "حسب الساعة",
+			"SEARCH_APPS": "ابحث في التطبيقات…",
+			"SEARCH_SITES": "ابحث في المواقع…",
+			"SORT": "تغيير ترتيب الفرز",
+			"SORT_TIME": "الأكثر وقتًا",
+			"SORT_NAME": "الاسم أ–ي",
+			"LOAD_FAILED": "تعذر تحميل النشاط. يرجى المحاولة مرة أخرى.",
+			"NO_MATCH": "لا توجد نتائج مطابقة لـ «{{ search }}».",
+			"APP": "التطبيق",
+			"SITE": "الموقع",
+			"TIME": "الوقت",
+			"SHOW_PAGES": "عرض الصفحات التي تمت زيارتها على {{ site }}",
+			"LOADING_PAGES": "جارٍ تحميل الصفحات…",
+			"PAGES_FAILED": "تعذر تحميل الصفحات.",
+			"NO_PAGES": "لم يتم تسجيل تفاصيل الصفحات لهذا الموقع.",
+			"SHOW_ALL": "عرض الكل ({{ count }})",
+			"SHOW_LESS": "عرض أقل",
+			"UNKNOWN_MEMBER": "عضو غير معروف",
+			"APPS_COUNT": "{{ count }} تطبيقات",
+			"SITES_COUNT": "{{ count }} مواقع",
+			"OF_TOTAL": "{{ value }} من الإجمالي",
+			"PAGES_TRUNCATED": "يحتوي هذا الموقع على سجلات أكثر مما يمكن عرضه؛ التفصيل يغطي جزءًا فقط من وقته."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
@@ -6096,6 +6386,7 @@
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
 		"OR_SIGN_IN_WITH": "أو قم بتسجيل الدخول بـ",
 		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
+		"LOGIN_WITH_EVER_ID": "تسجيل الدخول باستخدام {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {
@@ -6607,5 +6898,82 @@
 			"ROTATE_FAILED": "فشل في تدوير سر العميل",
 			"DELETE_FAILED": "فشل في إلغاء عميل OAuth"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "عرض تفاصيل المشروع {{ name }}",
+		"PROGRESS": "التقدم",
+		"PROGRESS_META": "{{ done }} من {{ total }} مهام منجزة",
+		"NO_TASKS": "لا توجد مهام في هذا المشروع بعد",
+		"NEEDS_ATTENTION": "يحتاج إلى انتباه",
+		"NEEDS_ATTENTION_CAPTION": "المهام المتأخرة والمستحقة خلال 3 أيام",
+		"ACTIVITY": "النشاط اليومي",
+		"ACTIVITY_VIEWS": "عرض النشاط",
+		"ACTIVITY_VIEW_CHART": "مخطط",
+		"ACTIVITY_VIEW_GRID": "شبكة المساهمات",
+		"GRID_NONE": "لا وقت",
+		"GRID_LAST_YEAR": "آخر 12 شهرًا",
+		"GRID_OLDER": "السنة السابقة",
+		"GRID_NEWER": "السنة التالية",
+		"GRID_DAY": "{{ time }} في {{ date }}",
+		"GRID_DAY_EMPTY": "لا وقت في {{ date }}",
+		"TOP_CONTRIBUTORS": "الأكثر عملاً",
+		"CONTRIBUTORS_CAPTION": "وقت الجميع على هذا المشروع · {{ range }}",
+		"YOUR_TIME_CAPTION": "وقتك على هذا المشروع · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "وقت أعضاء الفريق على هذا المشروع · {{ range }}",
+		"BUDGET_USED": "تم استخدام {{ used }} من {{ budget }}",
+		"OVER_BUDGET": "تجاوز الميزانية بمقدار {{ value }}",
+		"TOTAL_TRACKED": "إجمالي الوقت المسجل",
+		"TOTAL_TRACKED_HINT": "منذ بدء المشروع",
+		"THIS_PERIOD": "هذه الفترة",
+		"VS_PREVIOUS": "{{ value }} مقارنة بالفترة السابقة",
+		"TIMELINE": "الجدول الزمني",
+		"NO_DATES": "لم يتم تحديد تواريخ",
+		"STARTS_IN": "يبدأ خلال {{ count }} أيام",
+		"STARTS_TOMORROW": "يبدأ غداً",
+		"FINISHED": "منتهٍ",
+		"TEAM": "الفريق",
+		"NO_MEMBERS": "لا يوجد أعضاء في هذا المشروع بعد",
+		"MODULES": "الوحدات",
+		"MODULE_TASK": "مهمة واحدة",
+		"MODULE_TASKS": "{{ count }} مهام"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "نظرة عامة",
+			"BOARD": "اللوحة",
+			"ACTIVITY": "النشاط",
+			"COMMENTS": "التعليقات"
+		},
+		"BOARD": "اللوحة",
+		"COLUMN_EMPTY": "لا توجد مهام",
+		"CANNOT_DROP": "لا يمكن نقل المهام إلى «{{ column }}» لأنها ليست حالة في هذا المشروع.",
+		"ACTIVITY": "النشاط",
+		"ACTIVITY_CAPTION": "أحدث التغييرات على المشروع ومهامه",
+		"NO_ACTIVITY": "لا يوجد نشاط بعد",
+		"ACTIVITY_PARTIAL": "تعذر تحميل بعض النشاط، لذا قد تكون هذه القائمة غير مكتملة.",
+		"ACTIVITY_CREATED": "أنشأ {{ actor }}",
+		"ACTIVITY_UPDATED": "حدّث {{ actor }}",
+		"ACTIVITY_DELETED": "حذف {{ actor }}",
+		"ACTIVITY_COMMENTED": "علّق {{ actor }} على",
+		"ACTIVITY_REPLIED": "ردّ {{ actor }} على تعليق في",
+		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
+		"SOMEONE": "شخص ما",
+		"TODAY": "اليوم",
+		"YESTERDAY": "أمس",
+		"TASK_PROGRESS": "التقدم",
+		"TASK_PROGRESS_OF": "{{ worked }} من {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% من الوقت المسجل للمشروع (بدون تقدير)",
+		"TASK_TOP_PEOPLE": "الأكثر عملاً عليها",
+		"TASK_NO_ESTIMATE": "لا يوجد تقدير",
+		"COMMENTS": "التعليقات",
+		"NO_COMMENTS": "لا توجد تعليقات بعد. ابدأ النقاش.",
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…",
+		"COMMENT_IMAGE": "صورة",
+		"ATTACH_IMAGES": "إرفاق صور",
+		"REMOVE_IMAGE": "إزالة الصورة",
+		"OPEN_IMAGE": "فتح الأصل",
+		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
+		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
+		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	}
 }

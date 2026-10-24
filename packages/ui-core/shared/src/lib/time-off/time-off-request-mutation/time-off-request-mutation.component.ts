@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import {
 	IEmployee,
@@ -67,7 +67,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				end: [null, Validators.required],
 				policy: [null, Validators.required],
 				policyId: [null, Validators.required],
-				documentUrl: [{ value: null, disabled: true }],
+				documentUrl: [null],
 				documentId: [],
 				status: [],
 				description: []
@@ -124,13 +124,12 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	 */
 	uploadDocumentAssetUrl(documentUrl: IDocumentAsset['fullUrl']) {
 		try {
-			const documentUrlControl = <FormControl>this.form.get('documentUrl');
-			if (documentUrl) {
-				documentUrlControl.enable();
-				documentUrlControl.setValue(documentUrl);
-			} else {
-				documentUrlControl.setValue(null);
-				documentUrlControl.disable();
+			const previousDocumentUrl = this.form.get('documentUrl').value;
+			const nextDocumentUrl = documentUrl || null;
+			this.form.get('documentUrl').setValue(nextDocumentUrl);
+			// A cleared or different URL no longer names the uploaded asset, so drop its id too
+			if (!nextDocumentUrl || previousDocumentUrl !== nextDocumentUrl) {
+				this.form.get('documentId').setValue(null);
 			}
 		} catch (error) {
 			console.log('Error while uploading document asset', error);
@@ -161,8 +160,10 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	saveRequest() {
 		this.selectedEmployee = this.employeeSelector.selectedEmployee;
-		if (this.selectedEmployee.id) {
-			this.employeesArr.push(this.selectedEmployee);
+		if (this.selectedEmployee?.id) {
+			// The selector shows the request's first employee: replace that one, keep the others of a shared request
+			const [, ...others] = this.timeOff?.employees ?? [];
+			this.employeesArr = [this.selectedEmployee, ...others.filter(({ id }) => id !== this.selectedEmployee.id)];
 			this._createNewRecord();
 		}
 	}

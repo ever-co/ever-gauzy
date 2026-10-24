@@ -8,6 +8,9 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
  */
 export const WEBHOOK_SIGNATURE_TOLERANCE_SECONDS = 300;
 
+/** `t=` as the signer writes it: whole unix seconds in decimal, no sign, no leading zero, no fraction or exponent. */
+const CANONICAL_TIMESTAMP = /^(0|[1-9]\d{0,14})$/;
+
 /**
  * A signature, ready to be sent.
  */
@@ -83,11 +86,17 @@ export function verifyWebhookSignature(
 		return false;
 	}
 
-	const timestamp = Number(timestampPart.slice(2));
+	// Only the canonical decimal form the signer writes (`signWebhookPayload`: whole unix seconds). `Number()`
+	// alone would also read `01700000000`, `+1700000000`, `1700000000.0` or `1.7e9` as the same instant, so one
+	// captured delivery could be re-sent under many header spellings that all verify, and a receiver that
+	// remembers deliveries by their header (a single-use replay guard) would take each spelling as new.
+	const rawTimestamp = timestampPart.slice(2);
 
-	if (!Number.isFinite(timestamp)) {
+	if (!CANONICAL_TIMESTAMP.test(rawTimestamp)) {
 		return false;
 	}
+
+	const timestamp = Number(rawTimestamp);
 
 	const now = options.now ?? Math.floor(Date.now() / 1000);
 	const tolerance = options.toleranceSeconds ?? WEBHOOK_SIGNATURE_TOLERANCE_SECONDS;
@@ -120,7 +129,10 @@ function hmacSha256Hex(secret: string, payload: string): string {
  * @returns True when they are equal.
  */
 function equalsInConstantTime(expected: string, received: string): boolean {
-	if (!received || received.length !== expected.length) {
+	// A value that is not hex is a mismatch, never an exception: Buffer.from(…, 'hex') stops at the
+	// first non-hex character, and timingSafeEqual throws on buffers of different lengths (contract vector
+	// invalid-non-hex-signature of the Ever Works integration).
+	if (!received || received.length !== expected.length || !/^[0-9a-fA-F]+$/.test(received)) {
 		return false;
 	}
 

@@ -230,14 +230,21 @@ function repository(tables: ITables, tableName: keyof ITables) {
 		});
 	};
 
+	// TypeORM leaves a soft-deleted row out of every read unless the read asks for `withDeleted`.
+	const visible = (options: any = {}) => rows().filter((row) => options.withDeleted || !row.deletedAt);
+
 	return {
 		rows,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => sorted(rows().filter((row) => matches(row, options.where)), options.order),
-		findOne: async (options: any = {}) => rows().find((row) => matches(row, options.where)) ?? null,
-		findOneBy: async (where: any) => rows().find((row) => matches(row, where)) ?? null,
+		find: async (options: any = {}) =>
+			sorted(
+				visible(options).filter((row) => matches(row, options.where)),
+				options.order
+			),
+		findOne: async (options: any = {}) => visible(options).find((row) => matches(row, options.where)) ?? null,
+		findOneBy: async (where: any) => visible().find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
-			const items = rows().filter((row) => matches(row, options.where));
+			const items = visible(options).filter((row) => matches(row, options.where));
 
 			return [items, items.length];
 		},
@@ -603,6 +610,120 @@ describe('CollectionService — the tree and the cycle refusal (doc 05 §4.3, §
 		expect(fixture.store('child')).toMatchObject({ parentId: 'sibling' });
 		expect(fixture.published).toHaveLength(1);
 	});
+
+	// R2-24 (c): `PUT /collections/:id` and `updateCollection` both reach `update` with a `parentId`, and only
+	// `move` — which nothing calls — refused a cycle.
+	it('refuses an update that makes a collection its own parent, and writes nothing', async () => {
+		const fixture = treeFixture();
+
+		await expect(fixture.service.update('child', { parentId: 'child' } as never)).rejects.toThrow(/own parent/);
+		expect(fixture.store('child')).toMatchObject({ parentId: 'root' });
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('refuses an update that moves a collection under one of its own descendants', async () => {
+		const fixture = treeFixture();
+
+		await expect(fixture.service.update('root', { parentId: 'grandchild' } as never)).rejects.toThrow(
+			/descendants/
+		);
+		await expect(fixture.service.update('child', { parentId: 'grandchild', name: 'x' } as never)).rejects.toThrow(
+			/descendants/
+		);
+		expect(fixture.store('root').parentId).toBeUndefined();
+		expect(fixture.store('child')).toMatchObject({ parentId: 'root', name: 'Collection child' });
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('accepts an update that re-parents under a sibling, restates the same parent, or makes a root', async () => {
+		const fixture = collectionFixture([
+			collectionRow('root'),
+			collectionRow('child', { parentId: 'root' }),
+			collectionRow('sibling', { parentId: 'root' })
+		]);
+
+		await fixture.service.update('child', { parentId: 'sibling' } as never);
+		expect(fixture.store('child')).toMatchObject({ parentId: 'sibling' });
+
+		await fixture.service.update('child', { parentId: 'sibling', name: 'Renamed' } as never);
+		expect(fixture.store('child')).toMatchObject({ parentId: 'sibling', name: 'Renamed' });
+
+		await fixture.service.update('child', { parentId: null } as never);
+		expect(fixture.store('child').parentId).toBeNull();
+	});
+
+	it('walks through a soft-deleted collection, which still links the chain', async () => {
+		// `mid` is retired but `leaf` still points at it: moving `root` under `leaf` is a cycle through `mid`.
+		const fixture = collectionFixture([
+			collectionRow('root'),
+			collectionRow('mid', { parentId: 'root', deletedAt: new Date('2026-10-01T00:00:00.000Z') }),
+			collectionRow('leaf', { parentId: 'mid' })
+		]);
+
+		await expect(fixture.service.update('root', { parentId: 'leaf' } as never)).rejects.toThrow(/descendants/);
+		expect(fixture.store('root').parentId).toBeUndefined();
+	});
+
+	it('refuses a parent of another organization, on update and on create', async () => {
+		const fixture = collectionFixture([
+			collectionRow('mine'),
+			collectionRow('theirs', { organizationId: OTHER_ORG })
+		]);
+
+		await expect(fixture.service.update('mine', { parentId: 'theirs' } as never)).rejects.toThrow(
+			/not found in this organization/
+		);
+		await expect(
+			fixture.service.create({ name: 'Child', slug: 'child', parentId: 'theirs' } as never)
+		).rejects.toThrow(/not found in this organization/);
+		expect(fixture.store('mine').parentId).toBeUndefined();
+		expect(fixture.tables.collection).toHaveLength(2);
+	});
+
+	it('undoes a re-parent that a concurrent move turned into a cycle, and writes nothing else of it', async () => {
+		// `a` → under `b` and, between this request's walk and its write, another request moved `b` under `a`.
+		const tables: ITables = { collection: [collectionRow('a'), collectionRow('b')] };
+		const store = repository(tables, 'collection');
+		const write = store.update;
+		let concurrent = true;
+
+		store.update = async (criteria: any, partial: any) => {
+			const result = await write(criteria, partial);
+
+			if (concurrent && partial?.parentId === 'b') {
+				concurrent = false;
+				tables.collection.find((row) => row.id === 'b').parentId = 'a';
+			}
+
+			return result;
+		};
+
+		const service = new CollectionService(
+			store as never,
+			{} as never,
+			{ publish: async (event: any) => event } as never
+		);
+
+		await expect(service.update('a', { parentId: 'b', name: 'Renamed' } as never)).rejects.toThrow(
+			/concurrent move/
+		);
+		expect(tables.collection.find((row) => row.id === 'a')).toMatchObject({ parentId: null, name: 'Collection a' });
+		expect(tables.collection.find((row) => row.id === 'b')).toMatchObject({ parentId: 'a' });
+	});
+
+	it('ends the walk on a chain that is already cyclic instead of looping forever', async () => {
+		// `a` and `b` point at each other — data an earlier unchecked update could have written. Placing `c`
+		// under `a` is not a cycle through `c`, and the walk up from `a` has to stop when it meets `a` again.
+		const fixture = collectionFixture([
+			collectionRow('a', { parentId: 'b' }),
+			collectionRow('b', { parentId: 'a' }),
+			collectionRow('c')
+		]);
+
+		await fixture.service.update('c', { parentId: 'a' } as never);
+
+		expect(fixture.store('c')).toMatchObject({ parentId: 'a' });
+	});
 });
 
 /**
@@ -736,5 +857,46 @@ describe('ProductRelationService — the organization of a relation created with
 		await service.create({ productId: 'product-a', relatedProductId: 'product-b', organizationId: OTHER_ORG } as never);
 
 		expect(rows[0].organizationId).toBe(OTHER_ORG);
+	});
+});
+
+describe('ProductRelationService — an update answers the relation it wrote (R2-24 (a))', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const relation = {
+		id: 'relation-1',
+		tenantId: TENANT,
+		organizationId: ORG,
+		productId: 'product-a',
+		relatedProductId: 'product-b',
+		type: 'RELATED',
+		position: 0
+	};
+
+	it('answers the updated row, not the write’s affected-row count', async () => {
+		// The double's `update` answers `{ affected }`, as TypeORM's does; `updateProductRelation: ProductRelation!`
+		// cannot be answered with that.
+		const tables = { collection: [{ ...relation }] };
+		const service = new ProductRelationService(repository(tables, 'collection') as never, undefined as never);
+
+		const updated = await service.update('relation-1', { position: 3 } as never);
+
+		expect(updated).toMatchObject({ id: 'relation-1', position: 3, productId: 'product-a' });
+		expect(updated).not.toHaveProperty('affected');
+	});
+
+	it('still refuses an update that relates a product to itself, and writes nothing', async () => {
+		const tables = { collection: [{ ...relation }] };
+		const service = new ProductRelationService(repository(tables, 'collection') as never, undefined as never);
+
+		await expect(service.update('relation-1', { relatedProductId: 'product-a' } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(tables.collection[0]).toMatchObject({ relatedProductId: 'product-b' });
 	});
 });

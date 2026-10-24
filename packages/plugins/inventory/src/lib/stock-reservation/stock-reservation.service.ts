@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager, FindManyOptions, FindOptionsWhere, LessThanOrEqual, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
+import { RequestContext, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
 import { assertLocationInScope, assertVariantInScope, narrowLevelReadToTenant, requestScope } from './../inventory.scope';
@@ -11,6 +11,7 @@ import { IStockMovementInput } from './../stock-level/stock-level.types';
 import { StockReservation } from './stock-reservation.entity';
 import { TypeOrmStockReservationRepository } from './repository/type-orm-stock-reservation.repository';
 import { MikroOrmStockReservationRepository } from './repository/mikro-orm-stock-reservation.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
 
 /** Default lifetimes, in minutes, of a hold that names no expiry of its own. */
 const DEFAULT_TTL_MINUTES: Record<StockReservationReferenceType, number> = {
@@ -101,7 +102,7 @@ function toMovementReference(type: StockReservationReferenceType): StockMovement
  * cannot exist without the ledger knowing, and a hold cannot be released twice.
  */
 @Injectable()
-export class StockReservationService extends TenantAwareCrudService<StockReservation> {
+export class StockReservationService extends InventoryCrudService<StockReservation> {
 	private readonly logger = new Logger(StockReservationService.name);
 
 	constructor(

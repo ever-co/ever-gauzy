@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
 import { ID, IPagination, ShippingPriceType } from '@gauzy/contracts';
-import { TenantAwareCrudService, commitVersionedUpdate } from '@gauzy/core';
+import { RequestContext, commitVersionedUpdate } from '@gauzy/core';
 import { ShippingOption } from './shipping-option.entity';
 import { TypeOrmShippingOptionRepository } from './repository/type-orm-shipping-option.repository';
 import { MikroOrmShippingOptionRepository } from './repository/mikro-orm-shipping-option.repository';
 import { ANY_FULFILLMENT_VERSION } from '../fulfillment.types';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
 
 /**
  * What a caller asks for when it wants to know which deliveries are available.
@@ -44,7 +45,7 @@ export interface IShippingOptionEligibility {
  * option's own physical limits and its channel, region and profile scope.
  */
 @Injectable()
-export class ShippingOptionService extends TenantAwareCrudService<ShippingOption> {
+export class ShippingOptionService extends FulfillmentCrudService<ShippingOption> {
 	constructor(
 		readonly typeOrmShippingOptionRepository: TypeOrmShippingOptionRepository,
 		readonly mikroOrmShippingOptionRepository: MikroOrmShippingOptionRepository
@@ -62,7 +63,15 @@ export class ShippingOptionService extends TenantAwareCrudService<ShippingOption
 		this.assertPriceShape(entity);
 		await this.assertCodeIsFree(entity.code);
 
-		return super.create(entity);
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so an option created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads and the checkout's eligible options never found it again (review R2-G37, the R2-23
+		// class). The caller's organization is stamped when the input states none; an organization the request stated is
+		// kept (REST validates it against the caller).
+		return super.create({
+			...entity,
+			organizationId: entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		});
 	}
 
 	/**

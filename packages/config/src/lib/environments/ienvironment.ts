@@ -109,6 +109,15 @@ export interface IEnvironment {
 	THROTTLE_TRUST_CF_CONNECTING_IP?: boolean;
 
 	/**
+	 * Secret shared with the Ever Teams server (the same value on both sides, at least 32 characters).
+	 * With it, the Ever Teams server forwards the browser's address on its calls to this API
+	 * (`X-Ever-Client-IP`, signed with an HMAC in `X-Ever-Client-IP-Timestamp` /
+	 * `X-Ever-Client-IP-Signature`), and per-client limits (anonymous routes, sign-in attempts) count
+	 * that address instead of the Ever Teams server's. Unset, blank or shorter: the headers are ignored.
+	 */
+	EVER_TEAMS_CLIENT_IP_SECRET?: string;
+
+	/**
 	 * Identifier-scoped brute-force control. Counts consecutive authentication failures per account
 	 * identifier (not per IP), so rotating source addresses does not reset the counter.
 	 */

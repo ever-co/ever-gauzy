@@ -14,6 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { LegacyFindOneOptions } from './../core/utils';
 import { Role } from './../core/entities/internal';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { TaskService } from './../tasks/task.service';
@@ -55,6 +56,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
+
+		// `isManager` lets a manager act for the team's members (ManagedEmployeeService). Only a caller who may
+		// already act for every employee sets it on a new manager or repairs a manager row that lacks it; a team
+		// manager without that permission changes the flag only together with the role, as before.
+		const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		// Fetch existing team members with their roles
 		// Bypass employee filter since authorization is handled at a higher level
@@ -115,8 +121,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? role : null;
 
-				// Only update if the role has changed
-				if (newRole?.id !== member.roleId) {
+				// Only update if the role or (for a caller who sets the flag) the manager flag has changed. A member
+				// without a role is stored with `roleId` null, and `newRole?.id` is undefined for them: compared as
+				// they were, every plain member was rewritten on each edit of the team.
+				const roleChanged = (newRole?.id ?? null) !== (member.roleId ?? null);
+				if (roleChanged || (flagsManagers && !!member.isManager !== isManager)) {
 					await this.withoutEmployeeFilter(() =>
 						super.update(member.id, {
 							role: newRole,
@@ -138,6 +147,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
+						isManager: flagsManagers && managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? role.id : null
 					})
 			);
@@ -217,6 +227,17 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				organizationTeamId
 			};
 
+			// Write the membership's own fields only. The REST body also carries `tenantId`, `tenant` and
+			// `organization`: they select nothing here, and writing them could clear or move the row's scope.
+			// Both bodies (`UpdateTeamMemberDTO`, `UpdateOrganizationTeamEmployeeInput`) carry `activeTaskId`.
+			const { activeTaskId, isTrackingEnabled, order } = entity as IOrganizationTeamEmployeeUpdateInput &
+				Pick<IOrganizationTeamEmployeeActiveTaskUpdateInput, 'activeTaskId'>;
+			const changes = Object.fromEntries(
+				Object.entries({ organizationId, organizationTeamId, activeTaskId, isTrackingEnabled, order }).filter(
+					([, value]) => value !== undefined
+				)
+			) as IOrganizationTeamEmployeeUpdateInput;
+
 			// Check if user has permission to change the selected employee
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				try {
@@ -234,15 +255,18 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						...whereClause
 					});
 
-					// If the employee is a manager, proceed with the update
-					return await super.update({ id: memberId, ...whereClause }, entity);
+					// If the employee is a manager, proceed with the update (bypassed: the filter would only match
+					// the manager's own row)
+					return await this.withoutEmployeeFilter(() =>
+						super.update({ id: memberId, ...whereClause }, changes)
+					);
 				} catch (error) {
 					throw new ForbiddenException('You do not have sufficient permissions to perform this action.');
 				}
 			}
 
 			// If user has permission, proceed with the update
-			return await super.update({ id: memberId, ...whereClause }, entity);
+			return await super.update({ id: memberId, ...whereClause }, changes);
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while updating the organization team member.');
 		}
@@ -304,10 +328,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						this.findOneByWhereOptions({ ...whereClause, id: memberId })
 					);
 
-					// Update the active task ID
-					return await super.update(
-						{ id: member.id, organizationId, organizationTeamId, tenantId },
-						{ activeTaskId }
+					// Update the active task ID (still bypassed: the filter would only match the manager's own row)
+					return await this.withoutEmployeeFilter(() =>
+						super.update({ id: member.id, organizationId, organizationTeamId, tenantId }, { activeTaskId })
 					);
 				}
 
@@ -325,6 +348,55 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			throw new ForbiddenException('You do not have permission to update this active task.');
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while updating the active task.');
+		}
+	}
+
+	/**
+	 * Finds a team member by id.
+	 *
+	 * A manager without `CHANGE_SELECTED_EMPLOYEE` may change any member of a team they manage, but the
+	 * employee filter limits this read to their own row, so reading the member back after such a change
+	 * (the GraphQL update fields do) answered not found. On a miss, the row is read past the filter and
+	 * returned only to a manager of its team, checked as `update` checks it; anyone else keeps the miss.
+	 *
+	 * @param id - ID of the team member
+	 * @param options - Options for the team member find query
+	 * @returns The team member
+	 */
+	public async findOneByIdString(
+		id: ID,
+		options?: LegacyFindOneOptions<OrganizationTeamEmployee>
+	): Promise<OrganizationTeamEmployee> {
+		try {
+			return await super.findOneByIdString(id, options);
+		} catch (error) {
+			const employeeId = RequestContext.currentEmployeeId();
+
+			// Only a caller held to their own row by the employee filter can miss a member they manage
+			if (!employeeId || RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				throw error;
+			}
+
+			try {
+				const member = await this.withoutEmployeeFilter(() => super.findOneByIdString(id, options));
+
+				// Without the member's team, the check below would accept a manager of any team
+				if (member.organizationTeamId) {
+					await this.findOneByWhereOptions({
+						employeeId,
+						role: { name: RolesEnum.MANAGER },
+						tenantId: RequestContext.currentTenantId(),
+						organizationId: member.organizationId,
+						organizationTeamId: member.organizationTeamId
+					});
+
+					return member;
+				}
+			} catch {
+				// Not a member of the caller's tenant, or not of a team the caller manages
+			}
+
+			throw error;
 		}
 	}
 

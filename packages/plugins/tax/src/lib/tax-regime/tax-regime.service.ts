@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { confiningOrganizationId } from '../organization-boundary';
 import { assertPostalCodePattern, matchesPostalCode } from '../postal-code.matcher';
 import { TypeOrmTaxRateRepository } from '../tax-rate/repository/type-orm-tax-rate.repository';
 import {
@@ -12,6 +13,13 @@ import {
 } from '../tax.types';
 import { TaxRegimeRate } from '../tax-regime-rate/tax-regime-rate.entity';
 import { TaxRegimeRateService } from '../tax-regime-rate/tax-regime-rate.service';
+import {
+	assertCountryCode,
+	assertOrganizationUnchanged,
+	assertPriority,
+	inCallerOrganization,
+	retirementResult
+} from '../write-rules';
 import { TaxRegime } from './tax-regime.entity';
 import { MikroOrmTaxRegimeRepository } from './repository/mikro-orm-tax-regime.repository';
 import { TypeOrmTaxRegimeRepository } from './repository/type-orm-tax-regime.repository';
@@ -53,6 +61,20 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	}
 
 	/**
+	 * Reads a tax regime of the caller's organization by its id.
+	 *
+	 * Every route that reads or writes one row by id resolves it here first; see {@link inCallerOrganization}.
+	 *
+	 * @param id The row's id.
+	 * @param options The find options the caller stated, if any.
+	 * @returns The row.
+	 * @throws NotFoundException when no row of the caller's organization carries the id.
+	 */
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<TaxRegime>): Promise<TaxRegime> {
+		return inCallerOrganization(await super.findOneByIdString(id, options), confiningOrganizationId());
+	}
+
+	/**
 	 * Retrieves a paginated list of regimes.
 	 *
 	 * @param filter Optional filtering criteria.
@@ -76,6 +98,8 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	public async create(entity: TaxWriteInput<TaxRegime>): Promise<TaxRegime> {
 		this.assertWindow(entity.startsAt, entity.endsAt);
 		this.assertPostalCodePattern(entity.postalCodePattern);
+		assertPriority(entity.priority, 'a tax regime');
+		assertCountryCode(entity.countryCode, 'a tax regime');
 
 		return await super.create({
 			...entity,
@@ -97,6 +121,15 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 		if (!regime) {
 			throw new NotFoundException(`The tax regime ${id} was not found.`);
 		}
+
+		assertOrganizationUnchanged(
+			entity,
+			regime.organizationId,
+			RequestContext.currentOrganizationId(),
+			'A tax regime'
+		);
+		assertPriority(entity.priority, 'a tax regime');
+		assertCountryCode(entity.countryCode, 'a tax regime');
 
 		if (entity.startsAt !== undefined || entity.endsAt !== undefined) {
 			this.assertWindow(entity.startsAt ?? regime.startsAt, entity.endsAt ?? regime.endsAt);
@@ -121,9 +154,7 @@ export class TaxRegimeService extends TenantAwareCrudService<TaxRegime> {
 	 * @returns The delete result, so the route keeps the platform's response shape.
 	 */
 	public async delete(criteria: string | FindOptionsWhere<TaxRegime>): Promise<DeleteResult> {
-		await super.softDelete(criteria);
-
-		return { affected: 1, raw: [] } as DeleteResult;
+		return retirementResult(await super.softDelete(criteria));
 	}
 
 	/*

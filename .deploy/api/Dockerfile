@@ -19,7 +19,7 @@
 # (and mirrored in the worker/webapp Dockerfiles): the dependencies stage COPY, the
 # prod-dependencies stage COPY, and the production stage per-package node_modules copy.
 
-FROM node:26.11.1-alpine3.24 AS dependencies
+FROM node:26.12.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -33,14 +33,31 @@ ENV NODE_ENV=development
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python
 
-RUN apk --update add bash && npm i -g npm@9 \
+# Global npm installs (here and in every later stage that has one) go through the internal
+# Verdaccio cache when VERDACCIO_REGISTRY is set and its /-/ping answers - the same probe as the
+# yarn install further down - and through the public npm registry otherwise, exactly as before
+# (forks, external runners, builds without the build-arg). These are public packages Verdaccio
+# proxies, so no token is involved and nothing secret reaches a layer. The fetch-retry flags make
+# a transient ETIMEDOUT on a saturated WAN retry instead of failing the image. In each such RUN,
+# "$@" holds those flags plus `--registry <cache>` when the probe succeeded.
+ARG VERDACCIO_REGISTRY=""
+
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    apk --update add bash && npm i -g npm@9 "$@" \
     && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
     snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install --quiet node-gyp@10.2.0 -g "$@" && npm install yarn -g --force "$@" && npm install --quiet ts-node@10.9.2 -g "$@"
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -73,6 +90,13 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/integration-ever-works/package.json ./packages/plugins/integration-ever-works/
+COPY --chown=node:node packages/plugins/inbox/package.json ./packages/plugins/inbox/
+COPY --chown=node:node packages/plugins/email-provider-resend/package.json ./packages/plugins/email-provider-resend/
+COPY --chown=node:node packages/plugins/email-provider-postmark/package.json ./packages/plugins/email-provider-postmark/
+COPY --chown=node:node packages/plugins/email-provider-mailgun/package.json ./packages/plugins/email-provider-mailgun/
+COPY --chown=node:node packages/plugins/email-provider-sendgrid/package.json ./packages/plugins/email-provider-sendgrid/
+COPY --chown=node:node packages/plugins/email-provider-ses/package.json ./packages/plugins/email-provider-ses/
 COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
 COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
@@ -163,7 +187,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     yarn cache clean && \
     rm -f .npmrc .yarnrc
 
-FROM node:26.11.1-alpine3.24 AS prod-dependencies
+FROM node:26.12.1-alpine3.24 AS prod-dependencies
 
 ENV CI=true
 
@@ -173,14 +197,26 @@ ARG NODE_ENV
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python
 
-RUN apk --update add bash && npm i -g npm@9 \
+# Global npm installs: internal Verdaccio cache when reachable + fetch retries (see the
+# dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    apk --update add bash && npm i -g npm@9 "$@" \
     && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
     snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
 # Verify installed versions
 RUN node --version && npm --version && python3 --version
 
-RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force && npm install --quiet ts-node@10.9.2 -g
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install --quiet node-gyp@10.2.0 -g "$@" && npm install yarn -g --force "$@" && npm install --quiet ts-node@10.9.2 -g "$@"
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
@@ -210,6 +246,13 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/integration-ever-works/package.json ./packages/plugins/integration-ever-works/
+COPY --chown=node:node packages/plugins/inbox/package.json ./packages/plugins/inbox/
+COPY --chown=node:node packages/plugins/email-provider-resend/package.json ./packages/plugins/email-provider-resend/
+COPY --chown=node:node packages/plugins/email-provider-postmark/package.json ./packages/plugins/email-provider-postmark/
+COPY --chown=node:node packages/plugins/email-provider-mailgun/package.json ./packages/plugins/email-provider-mailgun/
+COPY --chown=node:node packages/plugins/email-provider-sendgrid/package.json ./packages/plugins/email-provider-sendgrid/
+COPY --chown=node:node packages/plugins/email-provider-ses/package.json ./packages/plugins/email-provider-ses/
 COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
 COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
@@ -304,11 +347,17 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:26.11.1-alpine3.24 AS development
+FROM node:26.12.1-alpine3.24 AS development
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
-RUN npm install -g yarn@1.22.22
+# Internal Verdaccio cache when reachable + fetch retries (see the dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install -g yarn@1.22.22 "$@"
 
 USER node:node
 
@@ -318,11 +367,17 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:26.11.1-alpine3.24 AS build
+FROM node:26.12.1-alpine3.24 AS build
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
-RUN npm install -g yarn@1.22.22
+# Internal Verdaccio cache when reachable + fetch retries (see the dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    npm install -g yarn@1.22.22 "$@"
 
 WORKDIR /srv/gauzy
 
@@ -382,7 +437,7 @@ RUN --mount=type=bind,from=dependencies,source=/srv/gauzy/node_modules,target=/s
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:26.11.1-alpine3.24 AS production
+FROM node:26.12.1-alpine3.24 AS production
 
 WORKDIR /srv/gauzy
 
@@ -434,6 +489,13 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
     if [ -d /mnt/packages/plugins/integration-ever-async/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-async/node_modules ./node_modules/@gauzy/plugin-integration-ever-async/; fi && \
+    if [ -d /mnt/packages/plugins/integration-ever-works/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-works/node_modules ./node_modules/@gauzy/plugin-integration-ever-works/; fi && \
+    if [ -d /mnt/packages/plugins/inbox/node_modules ]; then cp -r /mnt/packages/plugins/inbox/node_modules ./node_modules/@gauzy/plugin-inbox/; fi && \
+    if [ -d /mnt/packages/plugins/email-provider-resend/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-resend/node_modules ./node_modules/@gauzy/plugin-email-provider-resend/; fi && \
+    if [ -d /mnt/packages/plugins/email-provider-postmark/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-postmark/node_modules ./node_modules/@gauzy/plugin-email-provider-postmark/; fi && \
+    if [ -d /mnt/packages/plugins/email-provider-mailgun/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-mailgun/node_modules ./node_modules/@gauzy/plugin-email-provider-mailgun/; fi && \
+    if [ -d /mnt/packages/plugins/email-provider-sendgrid/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-sendgrid/node_modules ./node_modules/@gauzy/plugin-email-provider-sendgrid/; fi && \
+    if [ -d /mnt/packages/plugins/email-provider-ses/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-ses/node_modules ./node_modules/@gauzy/plugin-email-provider-ses/; fi && \
     if [ -d /mnt/packages/plugins/auth-keycloak/node_modules ]; then cp -r /mnt/packages/plugins/auth-keycloak/node_modules ./node_modules/@gauzy/plugin-auth-keycloak/; fi && \
     if [ -d /mnt/packages/plugins/auth-zitadel/node_modules ]; then cp -r /mnt/packages/plugins/auth-zitadel/node_modules ./node_modules/@gauzy/plugin-auth-zitadel/; fi && \
     if [ -d /mnt/packages/plugins/ever-instance/node_modules ]; then cp -r /mnt/packages/plugins/ever-instance/node_modules ./node_modules/@gauzy/plugin-ever-instance/; fi && \

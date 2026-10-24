@@ -1,4 +1,13 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException, Inject } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	Logger,
+	HttpException,
+	HttpStatus,
+	NotFoundException,
+	Inject,
+	UnauthorizedException
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -68,7 +77,13 @@ export class MakeComOAuthService {
 		if (!redirectUri) {
 			throw new Error('Make.com redirect URI is not configured');
 		}
+		// The callback saves the tokens under the tenant this state names, so a flow is only ever started for a
+		// signed-in tenant: without one, an anonymous caller could connect their own Make.com account to a
+		// tenant-less integration row.
 		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new UnauthorizedException('A Make.com authorization is started by a signed-in tenant');
+		}
 		const organizationId = options?.organizationId;
 
 		// Use provided clientId or fallback to config
@@ -77,8 +92,13 @@ export class MakeComOAuthService {
 			throw new Error('Make.com client ID is not configured');
 		}
 
-		// Always generate state internally to ensure consistent format
-		const state = Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64url');
+		// Always generate state internally to ensure consistent format. The nonce makes each state unguessable
+		// and unique: without it the state was a function of the tenant and organization alone, so it could be
+		// computed from their ids, and two flows of one organization shared a cache key and overwrote each
+		// other's PKCE verifier.
+		const state = Buffer.from(
+			JSON.stringify({ tenantId, organizationId, nonce: randomBytes(16).toString('base64url') })
+		).toString('base64url');
 
 		// Generate PKCE parameters (required by Make.com OAuth v2)
 		const codeVerifier = this.generateCodeVerifier();
@@ -113,6 +133,10 @@ export class MakeComOAuthService {
 			// Decode the state parameter
 			const decodedState = JSON.parse(Buffer.from(state, 'base64url').toString());
 			const { tenantId, organizationId } = decodedState;
+			if (!tenantId) {
+				// A state issued before flows required a tenant: never save tokens to a tenant-less row.
+				throw new BadRequestException('The authorization state names no tenant');
+			}
 
 			// Read client credentials from server-side config (env vars) — never from tenant data
 			const makeComConfig = this.config.get('makeCom');
@@ -432,31 +456,34 @@ export class MakeComOAuthService {
 			// Get the tenant and organization IDs from the existing settings
 			const { tenantId, organizationId } = refreshTokenSetting;
 
-			const settingsToUpdate = [
-				{
-					settingsName: MakeSettingName.ACCESS_TOKEN,
-					settingsValue: access_token,
-					tenantId,
-					organizationId,
-					integration: { name: IntegrationEnum.MakeCom }
-				},
-				{
-					settingsName: MakeSettingName.REFRESH_TOKEN,
-					settingsValue: refresh_token,
-					tenantId,
-					organizationId,
-					integration: { name: IntegrationEnum.MakeCom }
-				},
-				{
-					settingsName: MakeSettingName.EXPIRES_AT,
-					settingsValue: expiresAt.toISOString(),
-					tenantId,
-					organizationId,
-					integration: { name: IntegrationEnum.MakeCom }
-				}
-			];
+			// Only the token rows are written: replacing the integration's settings would drop the zone,
+			// the Make.com organization and team, and the webhook settings stored beside them.
+			const tokenValues: Record<string, string> = {
+				[MakeSettingName.ACCESS_TOKEN]: access_token,
+				[MakeSettingName.EXPIRES_AT]: expiresAt.toISOString(),
+				// Keep the stored refresh token when Make.com does not issue a new one
+				...(refresh_token ? { [MakeSettingName.REFRESH_TOKEN]: refresh_token } : {})
+			};
 
-			await this.integrationSettingService.bulkUpdateOrCreate(integrationId, settingsToUpdate);
+			const storedSettings = await this.integrationSettingService.find({
+				where: { integration: { id: integrationId } }
+			});
+
+			const settingsToSave = Object.entries(tokenValues).map(([settingsName, settingsValue]) => {
+				const stored = storedSettings.find((setting) => setting.settingsName === settingsName);
+				return stored
+					? { id: stored.id, settingsValue }
+					: {
+							settingsName,
+							settingsValue,
+							integrationId,
+							integration: { id: integrationId },
+							tenantId,
+							organizationId
+						};
+			});
+
+			await this.integrationSettingService.saveMany(settingsToSave);
 
 			this.logger.log(`Successfully refreshed token for integration: ${integrationId}`);
 		} catch (error) {

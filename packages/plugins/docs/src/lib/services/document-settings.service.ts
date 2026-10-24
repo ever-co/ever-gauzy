@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
 import { DocumentVisibilityEnum, ID } from '@gauzy/contracts';
-import { RequestContext, TenantSettingService } from '@gauzy/core';
+import { isInstallationOperator, RequestContext, TenantSettingService } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
-import { DOCS_SETTING_PREFIX, DOCS_SETTING_QUOTA_BYTES } from '../docs.constants';
+import { DOCS_QUOTA_OPERATOR_ONLY, DOCS_SETTING_PREFIX, DOCS_SETTING_QUOTA_BYTES } from '../docs.constants';
 import { DocumentSettingsDTO, IDocumentSettings, IDocumentSettingsDefaults } from '../dto/document-settings.dto';
 import { VECTOR_STORE_LEXICAL } from '../knowledge/knowledge.constants';
 import { DocumentVectorStoreRegistry } from '../knowledge/vector-store/vector-store.registry';
@@ -44,7 +44,8 @@ export class DocumentSettingsService {
 	) {}
 
 	/**
-	 * Reads the org defaults + deployment capabilities + the live storage-quota state.
+	 * Reads the org defaults + deployment capabilities + the live storage-quota state, and whether the caller may
+	 * change the quota: every reader sees the usage and the limit, only the installation operator changes the limit.
 	 *
 	 * @param organizationId The organization scope.
 	 * @returns The settings envelope.
@@ -67,18 +68,32 @@ export class DocumentSettingsService {
 				acceptedTypes: DOCS_ACCEPTED_TYPES,
 				inboundEmailEnabled: config.inboundEmailEnabled
 			},
-			quota
+			quota,
+			canEditQuota: isInstallationOperator()
 		};
 	}
 
 	/**
 	 * Partial update of the org-defaults block only (`capabilities` is never writable).
 	 *
+	 * The storage quota is the installation operator's to set, or later the tenant's billing plan's (owner decision
+	 * 14, 2026-10-22): a `DOCS_MANAGE` holder could otherwise raise their organization's limit or lift it with `0`.
+	 * A body naming `quotaBytes` from anyone else is refused whole, before any default is written.
+	 *
 	 * @param organizationId The organization scope.
 	 * @param input The defaults to update.
 	 * @returns The updated settings envelope.
+	 * @throws ForbiddenException with `DOCS_QUOTA_OPERATOR_ONLY` when a caller who does not operate the
+	 * installation sends `quotaBytes`.
 	 */
 	async updateSettings(organizationId: ID, input: DocumentSettingsDTO): Promise<IDocumentSettings> {
+		if (input.quotaBytes !== undefined && !isInstallationOperator()) {
+			throw new ForbiddenException({
+				message: `${DOCS_QUOTA_OPERATOR_ONLY}: only the operator of this installation sets an organization's storage quota.`,
+				code: DOCS_QUOTA_OPERATOR_ONLY
+			});
+		}
+
 		const tenantId = RequestContext.currentTenantId();
 
 		const settings: Record<string, string> = {};

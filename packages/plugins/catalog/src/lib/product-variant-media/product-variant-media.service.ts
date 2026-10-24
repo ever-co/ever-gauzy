@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager, IsNull, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { assertInCallerScope, callerScope } from '../catalog.scope';
+import { ImageAsset, ProductVariant, RequestContext } from '@gauzy/core';
+import { assertAllInCallerScope, assertInCallerScope, callerScope } from '../catalog.scope';
 import { ProductVariantMedia } from './product-variant-media.entity';
 import { MikroOrmProductVariantMediaRepository } from './repository/mikro-orm-product-variant-media.repository';
 import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-product-variant-media.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * A variant's gallery.
@@ -22,7 +23,7 @@ import { TypeOrmProductVariantMediaRepository } from './repository/type-orm-prod
  * on row order (R5-07).
  */
 @Injectable()
-export class ProductVariantMediaService extends TenantAwareCrudService<ProductVariantMedia> {
+export class ProductVariantMediaService extends CatalogCrudService<ProductVariantMedia> {
 	constructor(
 		readonly typeOrmProductVariantMediaRepository: TypeOrmProductVariantMediaRepository,
 		readonly mikroOrmProductVariantMediaRepository: MikroOrmProductVariantMediaRepository
@@ -70,6 +71,10 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 		await assertInCallerScope(this.typeOrmProductVariantMediaRepository.manager, ProductVariant, variantId, 'variant');
+		// The images are the caller's too (SEC-D-04): another tenant's image went into the gallery by its id.
+		await assertAllInCallerScope(this.typeOrmProductVariantMediaRepository.manager, ImageAsset, imageAssetIds, 'images', {
+			tenantWide: true
+		});
 
 		const existing = await this.typeOrmProductVariantMediaRepository.find({
 			where: { variantId, ...callerScope() }
@@ -102,6 +107,58 @@ export class ProductVariantMediaService extends TenantAwareCrudService<ProductVa
 					organizationId,
 					tenantId
 				});
+			}
+		});
+
+		return this.findByVariant(variantId);
+	}
+
+	/**
+	 * Reorders a variant's gallery without changing what it holds.
+	 *
+	 * The order is written row by row inside one transaction that first reads the gallery: a list that is not
+	 * exactly its images, each once, is refused, and nothing is inserted or deleted — so a reorder that overlaps
+	 * an attach or a detach can neither drop the image just attached nor bring back the one just detached, which
+	 * a reorder written through {@link replaceMedia} did (Greptile on #10887, review sweep R2-G4). The primary
+	 * image is left as it is.
+	 *
+	 * @param variantId The variant whose gallery is reordered.
+	 * @param imageAssetIds The gallery's images, in their new order.
+	 * @returns The gallery rows after the write.
+	 * @throws BadRequestException When the list adds to, drops from or repeats an image of the gallery.
+	 * @throws NotFoundException When the variant is not the caller's.
+	 */
+	public async reorderMedia(variantId: ID, imageAssetIds: ID[]): Promise<ProductVariantMedia[]> {
+		const stated = imageAssetIds ?? [];
+
+		await assertInCallerScope(
+			this.typeOrmProductVariantMediaRepository.manager,
+			ProductVariant,
+			variantId,
+			'variant'
+		);
+
+		await this.typeOrmProductVariantMediaRepository.manager.transaction(async (manager) => {
+			const rows = await manager.find(ProductVariantMedia, { where: { variantId, ...callerScope() } as never });
+			const byImage = new Map(rows.map((row) => [row.imageAssetId, row]));
+
+			if (
+				new Set(stated).size !== stated.length ||
+				stated.length !== byImage.size ||
+				stated.some((id) => !byImage.has(id))
+			) {
+				throw new BadRequestException(
+					'A reorder states each image of the variant gallery once, and only those. Attach or detach images ' +
+						'with attachProductVariantMedia / detachProductVariantMedia.'
+				);
+			}
+
+			for (const [position, imageAssetId] of stated.entries()) {
+				const row = byImage.get(imageAssetId) as ProductVariantMedia;
+
+				if (row.position !== position) {
+					await manager.update(ProductVariantMedia, { id: row.id, ...callerScope() } as never, { position });
+				}
 			}
 		});
 

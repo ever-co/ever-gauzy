@@ -145,7 +145,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		try {
-			const { memberIds, managerIds, tasks = [] } = entity;
+			const { memberIds, managerIds, tasks } = entity;
 
 			// Retrieve existing module
 			const existingProjectModule = await this.findOneByIdString(id, {
@@ -182,29 +182,31 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				);
 			}
 
-			// Update tasks logic
+			// Update tasks logic: an update that does not state a task list leaves the module's tasks as they are
 			if (Array.isArray(tasks)) {
 				const existingTasks = await this.getExistingTasks(tasks);
+				const moduleTasks = existingProjectModule.tasks || [];
 
-				// Determine tasks to add
-				const existingTaskIds = new Set(existingTasks.map((task) => task.id));
-				const newTasks = tasks.filter((task) => !existingTaskIds.has(task.id));
+				// Determine tasks to add: stated tasks found in the database that are not yet in the module
+				const moduleTaskIds = new Set(moduleTasks.map((task) => task.id));
+				const newTasks = existingTasks.filter((task) => !moduleTaskIds.has(task.id));
 
 				// Determine tasks to remove
-				const tasksToRemove = existingProjectModule.tasks.filter(
+				const tasksToRemove = moduleTasks.filter(
 					(task) => !tasks.some((updatedTask) => updatedTask.id === task.id)
 				);
 
 				// Add new tasks
 				for (const task of newTasks) {
 					task.modules = [...(task.modules || []), existingProjectModule];
-					await this._taskService.update(task.id, task);
+					await this._taskService.update(task.id, { modules: task.modules });
 				}
 
-				// Remove tasks
-				for (const task of tasksToRemove) {
-					task.modules = task.modules?.filter((module) => module.id !== existingProjectModule.id) || [];
-					await this._taskService.update(task.id, task);
+				// Remove tasks: reload them with their modules so only the pairing with this module is dropped
+				const removedTasks = await this.getExistingTasks(tasksToRemove);
+				for (const task of removedTasks) {
+					task.modules = (task.modules || []).filter((module) => module.id !== existingProjectModule.id);
+					await this._taskService.update(task.id, { modules: task.modules });
 				}
 			}
 
@@ -293,14 +295,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 						const subQuery = qb.subQuery();
 						subQuery
-							.select(p('"project_module_employee"."organizationProjectModuleId"'))
-							.from(p('project_module_employee'), p('project_module_employee'));
+							.select(p('"module_employee"."organizationProjectModuleId"'))
+							.from(p('organization_project_module_employee'), p('module_employee'));
 
 						// If user have permission to change employee
 						if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 							if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 								const employeeId = members['id'];
-								subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), {
+								subQuery.andWhere(p('"module_employee"."employeeId" = :employeeId'), {
 									employeeId
 								});
 							}
@@ -308,15 +310,12 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 							// If employee has login and don't have permission to change employee
 							const employeeId = RequestContext.currentEmployeeId();
 							if (isNotEmpty(employeeId)) {
-								subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), {
+								subQuery.andWhere(p('"module_employee"."employeeId" = :employeeId'), {
 									employeeId
 								});
 							}
 						}
-						return (
-							p('"organization_project_module_members"."organizationProjectModuleId" IN ') +
-							subQuery.distinct(true).getQuery()
-						);
+						return p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery();
 					});
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
@@ -423,7 +422,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						query.withDeleted();
 					}
 
-					query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
+					const teamModulesCondition = (qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 						const subQuery = qb.subQuery();
 						subQuery
 							.select(p('"project_module_team"."organizationProjectModuleId"'))
@@ -455,20 +454,24 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 						if (isNotEmpty(teams)) {
 							subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), { teams });
 						}
-						return (
-							p(`"organization_project_module_members"."organizationProjectModuleId" IN `) +
-							subQuery.distinct(true).getQuery()
-						);
-					});
+						return p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery();
+					};
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						})
 					);
-					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-						query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
+					// With teams and a project, the project's modules are listed with the teams' modules. One
+					// bracket holds both, so the tenant and organization scope applies to each.
+					query.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(teamModulesCondition);
+							if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+								qb.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+							}
+						})
+					);
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							if (isNotEmpty(projectId) && isEmpty(teams)) {
@@ -542,11 +545,11 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					// Joins and where clauses
 					query.innerJoin(`${query.alias}.members`, 'member');
 					query.leftJoin(`${query.alias}.teams`, 'project_team');
-					query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
+					query.leftJoin(`${query.alias}.organizationSprints`, 'sprint');
 
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p('member.id = :employeeId'), { employeeId })
+							qb.andWhere(p('member.employeeId = :employeeId'), { employeeId })
 								.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
 								.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 

@@ -17,7 +17,7 @@
 # envsubst + replacements.sed. The ENV literals in the production stage below are the
 # load-bearing defaults for that substitution — keep them in sync with replacements.sed.
 
-FROM node:26.11.1-alpine3.24 AS dependencies
+FROM node:26.12.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -28,7 +28,20 @@ ENV CI=true
 # devDependencies even for production builds!
 ENV NODE_ENV=development
 
-RUN apk --update add bash && npm i -g npm@9 \
+# Global npm installs (here and in every later stage that has one) go through the internal
+# Verdaccio cache when VERDACCIO_REGISTRY is set and its /-/ping answers - the same probe as the
+# yarn install further down - and through the public npm registry otherwise, exactly as before
+# (forks, external runners, builds without the build-arg). These are public packages Verdaccio
+# proxies, so no token is involved and nothing secret reaches a layer. The fetch-retry flags make
+# a transient ETIMEDOUT on a saturated WAN retry instead of failing the image. In each such RUN,
+# "$@" holds those flags plus `--registry <cache>` when the probe succeeded.
+ARG VERDACCIO_REGISTRY=""
+
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+	if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+	set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+	fi && \
+	apk --update add bash && npm i -g npm@9 "$@" \
 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
 	mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
@@ -36,7 +49,11 @@ RUN apk --update add bash && npm i -g npm@9 \
 RUN node --version
 RUN npm --version
 
-RUN npm install yarn -g --force
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+	if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+	set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+	fi && \
+	npm install yarn -g --force "$@"
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed /
 
@@ -76,8 +93,10 @@ COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/integration-ever-works/package.json ./packages/plugins/integration-ever-works/
 COPY --chown=node:node packages/plugins/integration-plane-ui/package.json ./packages/plugins/integration-plane-ui/
 COPY --chown=node:node packages/plugins/integration-ever-async-ui/package.json ./packages/plugins/integration-ever-async-ui/
+COPY --chown=node:node packages/plugins/integration-ever-works-ui/package.json ./packages/plugins/integration-ever-works-ui/
 COPY --chown=node:node packages/plugins/auth-zitadel-ui/package.json ./packages/plugins/auth-zitadel-ui/
 COPY --chown=node:node packages/plugins/ever-stats-ui/package.json ./packages/plugins/ever-stats-ui/
 COPY --chown=node:node packages/plugins/ever-connect-ui/package.json ./packages/plugins/ever-connect-ui/
@@ -111,6 +130,11 @@ COPY --chown=node:node packages/plugins/dashboard-time-track-angular-ui/package.
 COPY --chown=node:node packages/plugins/dashboard-time-track-react-ui/package.json ./packages/plugins/dashboard-time-track-react-ui/
 COPY --chown=node:node packages/plugins/ai-chat-react-ui/package.json ./packages/plugins/ai-chat-react-ui/
 COPY --chown=node:node packages/plugins/docs-ui/package.json ./packages/plugins/docs-ui/
+# @gauzy/plugin-integration-ever-works depends on @gauzy/plugin-docs, which depends on @gauzy/plugin-ai-chat; without their
+# manifests yarn looks them up on npm and the install fails
+COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
+COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
+COPY --chown=node:node packages/plugins/inbox-ui/package.json ./packages/plugins/inbox-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
 COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
@@ -168,11 +192,17 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	yarn cache clean && \
 	rm -f .npmrc .yarnrc
 
-FROM node:26.11.1-alpine3.24 AS development
+FROM node:26.12.1-alpine3.24 AS development
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
-RUN npm install -g yarn@1.22.22
+# Internal Verdaccio cache when reachable + fetch retries (see the dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+	if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+	set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+	fi && \
+	npm install -g yarn@1.22.22 "$@"
 
 USER node:node
 
@@ -182,11 +212,17 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:26.11.1-alpine3.24 AS build
+FROM node:26.12.1-alpine3.24 AS build
 
 # The node:26 images ship without Yarn (`/bin/sh: yarn: not found` here on Node 26): every stage
 # that runs a yarn script installs the version package.json pins (`packageManager`).
-RUN npm install -g yarn@1.22.22
+# Internal Verdaccio cache when reachable + fetch retries (see the dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+	if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+	set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+	fi && \
+	npm install -g yarn@1.22.22 "$@"
 
 WORKDIR /srv/gauzy
 

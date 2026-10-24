@@ -131,7 +131,7 @@ export class ZitadelLinkService {
 	/** What the confirmation screen shows. */
 	async preview(key: string, userId: ID): Promise<ZitadelLinkPreview> {
 		const { pending, user } = await this.pendingFor(key, userId);
-		const siblings = await this.accounts.findSiblings(user, pending.identity);
+		const siblings = await this.siblingsOf(user, pending.identity);
 		return {
 			everIdEmail: pending.identity.email ?? '',
 			accountEmail: user.email,
@@ -156,7 +156,7 @@ export class ZitadelLinkService {
 			throw new ConflictException({ code: 'already_linked', message: 'This account is already connected to another Ever ID.' });
 		}
 
-		const eligible = new Map((await this.accounts.findSiblings(user, pending.identity)).map((sibling) => [sibling.id, sibling]));
+		const eligible = new Map((await this.siblingsOf(user, pending.identity)).map((sibling) => [sibling.id, sibling]));
 		const selected = (Array.isArray(rows) ? rows : []).filter((id) => eligible.has(id));
 
 		const proven: User[] = [];
@@ -208,6 +208,17 @@ export class ZitadelLinkService {
 		if (user) {
 			await this.events.unlinked(user, { issuer: link.issuer, subject: link.subject, everPersonId: link.everPersonId });
 		}
+	}
+
+	/**
+	 * The same-address accounts the signed-in account may link as well: none while its own address is unverified.
+	 *
+	 * They are found by the signed-in account's address and the preview lists them with their workspace names before
+	 * any code is asked for. Registration and password sign-in do not wait for an address to be verified, so an
+	 * account registered with someone else's address would otherwise list every workspace that address belongs to.
+	 */
+	private async siblingsOf(user: User, identity: ZitadelIdentity): Promise<User[]> {
+		return user.emailVerifiedAt ? this.accounts.findSiblings(user, identity) : [];
 	}
 
 	private async pendingFor(key: string, userId: ID): Promise<{ pending: ZitadelPendingLink; user: User }> {

@@ -1,12 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { DeepPartial, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, assertPlainReferencesNotForeign } from '@gauzy/core';
+import { PUBLICATION_REFERENCES } from '../catalog.references';
 import { assertInCallerScope, callerScope } from '../catalog.scope';
 import { PublicationStatus } from '../catalog.types';
 import { Collection } from '../collection/collection.entity';
 import { CollectionChannel } from './collection-channel.entity';
 import { MikroOrmCollectionChannelRepository } from './repository/mikro-orm-collection-channel.repository';
 import { TypeOrmCollectionChannelRepository } from './repository/type-orm-collection-channel.repository';
+import { CatalogCrudService } from '../catalog-crud.service';
 
 /**
  * Where each collection is shown.
@@ -17,12 +21,55 @@ import { TypeOrmCollectionChannelRepository } from './repository/type-orm-collec
  * `ACTIVE` publication row as sufficient on its own.
  */
 @Injectable()
-export class CollectionChannelService extends TenantAwareCrudService<CollectionChannel> {
+export class CollectionChannelService extends CatalogCrudService<CollectionChannel> {
 	constructor(
 		readonly typeOrmCollectionChannelRepository: TypeOrmCollectionChannelRepository,
 		readonly mikroOrmCollectionChannelRepository: MikroOrmCollectionChannelRepository
 	) {
 		super(typeOrmCollectionChannelRepository, mikroOrmCollectionChannelRepository);
+	}
+
+	/**
+	 * Refuses publication rows, or a change to one, naming a channel of another tenant (`catalog.references.ts`).
+	 *
+	 * @param payloads The row or rows, or the change set, about to be written.
+	 * @throws ForbiddenException when a channel belongs to another tenant.
+	 */
+	private async assertChannelNotForeign(payloads: unknown): Promise<void> {
+		await assertPlainReferencesNotForeign(
+			this.typeOrmCollectionChannelRepository.manager,
+			payloads,
+			PUBLICATION_REFERENCES,
+			RequestContext.currentTenantId()
+		);
+	}
+
+	/**
+	 * Creates a collection publication row, refusing a channel of another tenant.
+	 *
+	 * @param entity The row to create.
+	 * @returns The created row.
+	 */
+	public async create(entity: DeepPartial<CollectionChannel>): Promise<CollectionChannel> {
+		await this.assertChannelNotForeign(entity);
+
+		return super.create(entity);
+	}
+
+	/**
+	 * Changes a collection publication row, refusing a change that points it at a channel of another tenant.
+	 *
+	 * @param id The row, or the conditions that select the rows to change.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<CollectionChannel>,
+		partialEntity: QueryDeepPartialEntity<CollectionChannel>
+	): Promise<CollectionChannel | UpdateResult> {
+		await this.assertChannelNotForeign(partialEntity);
+
+		return super.update(id, partialEntity);
 	}
 
 	/**
@@ -34,6 +81,28 @@ export class CollectionChannelService extends TenantAwareCrudService<CollectionC
 	public async findByCollection(collectionId: ID): Promise<CollectionChannel[]> {
 		return this.typeOrmCollectionChannelRepository.find({
 			where: { collectionId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
+			order: { createdAt: 'ASC' }
+		});
+	}
+
+	/**
+	 * Reads the publication rows of several collections in one statement, inside the same scope as
+	 * {@link findByCollection} — the batched read the `Collection.channels` field makes for a page.
+	 *
+	 * @param collectionIds The collections to read.
+	 * @returns Their publication rows, in creation order.
+	 */
+	public async findByCollections(collectionIds: readonly ID[]): Promise<CollectionChannel[]> {
+		if (!collectionIds.length) {
+			return [];
+		}
+
+		return this.typeOrmCollectionChannelRepository.find({
+			where: {
+				collectionId: In([...collectionIds]),
+				...callerScope(),
+				organizationId: RequestContext.currentOrganizationId()
+			},
 			order: { createdAt: 'ASC' }
 		});
 	}
@@ -69,6 +138,7 @@ export class CollectionChannelService extends TenantAwareCrudService<CollectionC
 		const tenantId = RequestContext.currentTenantId();
 
 		await assertInCallerScope(this.typeOrmCollectionChannelRepository.manager, Collection, collectionId, 'collection');
+		await this.assertChannelNotForeign(items);
 
 		const existing = await this.typeOrmCollectionChannelRepository.find({
 			where: { collectionId, ...callerScope() }

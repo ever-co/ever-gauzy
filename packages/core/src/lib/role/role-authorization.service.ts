@@ -50,6 +50,14 @@ export class RoleAuthorizationService {
 	 */
 	private static readonly CACHE_TTL_MS = 60 * 1000;
 
+	/**
+	 * The database loads in flight, by role id. Every request authenticates through
+	 * {@link attachAuthorizationState}, so when the cached state of a role expires (or the process has just
+	 * started) all the requests of that role that arrive together miss the cache at once and each would run
+	 * the role + role-permissions query; they share the one load instead and the cache is written once.
+	 */
+	private readonly loading = new Map<ID, Promise<IRoleAuthorizationState | null>>();
+
 	constructor(
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
 		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
@@ -83,6 +91,27 @@ export class RoleAuthorizationService {
 			this.logger.warn(`Could not read the role authorization state from cache: ${error?.message}`);
 		}
 
+		// Concurrent misses of the same role share one load (see `loading`).
+		const loading = this.loading.get(roleId);
+		if (loading) {
+			return loading;
+		}
+
+		const load = this.loadAuthorizationState(roleId, cacheKey).finally(() => {
+			this.loading.delete(roleId);
+		});
+		this.loading.set(roleId, load);
+		return load;
+	}
+
+	/**
+	 * Reads a role's state from the database and caches it.
+	 *
+	 * @param roleId The role to resolve.
+	 * @param cacheKey Where the state is cached.
+	 * @returns The state, or `null` when the role does not exist.
+	 */
+	private async loadAuthorizationState(roleId: ID, cacheKey: string): Promise<IRoleAuthorizationState | null> {
 		const role = await this.findRoleWithPermissions(roleId);
 
 		if (!role) {

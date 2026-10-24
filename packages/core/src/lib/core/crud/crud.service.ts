@@ -43,6 +43,7 @@ import {
 	MultiORM,
 	MultiORMEnum,
 	concatIdToWhere,
+	convertTypeORMWhereToMikroORM,
 	getORMType,
 	parseFindOptionsRelations,
 	parseFindOptionsSelect,
@@ -73,6 +74,7 @@ import {
 	IUpdateCriteria
 } from './icrud.service';
 import { ITryRequest } from './try-request';
+import { RequestContext } from '../context/request-context';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -830,12 +832,21 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
 		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped DB error.
 		assertCriteriaHasPredicate(id, 'update');
+		// Nothing to write — e.g. a `PUT /:id` body of only the members the inherited route drops — is no statement:
+		// an empty `SET` is refused by both ORMs. The answer is the one an id matching no row gets (CodeRabbit, #10647).
+		if (partialEntity && typeof partialEntity === 'object' && !Array.isArray(partialEntity) && !Object.keys(partialEntity).length) {
+			return { generatedMaps: [], raw: [], affected: 0 } as UpdateResult;
+		}
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					let where: MikroFilterQuery<T>;
 					if (typeof id === 'string') {
 						where = { id } as any;
+					} else if (Utils.isPlainObject(id)) {
+						// Translated as `delete()` and the reads translate it: a TypeORM operator left in the criteria (`In`,
+						// `IsNull`, `LessThan`) reached the statement as the value '[object Object]'.
+						where = convertTypeORMWhereToMikroORM(id as MikroFilterQuery<T>);
 					} else {
 						where = id as MikroFilterQuery<T>;
 					}
@@ -1271,6 +1282,22 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				row[property.name] === undefined
 			) {
 				row[property.name] = property.onUpdate(row as never, this.mikroOrmRepository.getEntityManager());
+			}
+		}
+
+		// The audit stamp TypeORM's update gets from `BaseEntityEventSubscriber.beforeEntityUpdate` (its update query
+		// broadcasts the payload to the subscribers). `nativeUpdate` runs no subscriber, so under MikroORM
+		// `updatedByUserId` stayed empty through every `update()`, and an administrator's change read as an untouched
+		// default to the permission backfill migrations that rely on it.
+		// On the platform's entities `updatedByUserId` is the `persist: false` mirror of the `updatedByUser` relation, and
+		// `nativeUpdate` writes a mirror stated alone, so it is looked up whatever its `persist` (ever-co/ever-gauzy#11382).
+		if (
+			row['updatedByUserId'] === undefined &&
+			meta.props.some((property) => property.name === 'updatedByUserId')
+		) {
+			const userId = RequestContext.currentUserId();
+			if (userId) {
+				row['updatedByUserId'] = userId;
 			}
 		}
 
