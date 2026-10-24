@@ -15642,14 +15642,14 @@
   resolved "https://registry.yarnpkg.com/@zmotivat0r/o0/-/o0-1.0.2.tgz#5eb069a631678736234d4c34b07c3a2bae8f8e4b"
   integrity sha512-wQ/sHqJEtYb+QtgxtWlBpGASFZ2avpoRWbvpginEuy7howZHTZTy3zYMRMaBKok4bZwIGU5bjmzE59+m1IWqKQ==
 
-"@zone-eu/mailsplit@5.4.20":
-  version "5.4.20"
-  resolved "https://registry.yarnpkg.com/@zone-eu/mailsplit/-/mailsplit-5.4.20.tgz#29985edb0bcb6b387d964b2436d876fb1d13088c"
-  integrity sha512-6B2w0zRBWOwbO5h7SL5N/2z1AuNchTP3OT33MObUr4/cz9bWPrZ6KadLKxnSrOZG0AGu7Q03p4X7eQhZHc1u/A==
+"@zone-eu/mailsplit@5.4.29":
+  version "5.4.29"
+  resolved "https://registry.yarnpkg.com/@zone-eu/mailsplit/-/mailsplit-5.4.29.tgz#6f235b0b89cb4c9245dc9413a91017129192e87f"
+  integrity sha512-CCUNycmUjrV5M0wNf23waWAt9eOHczhjLbUQS7k0FNJvR0py9VSqHFt+tSl/D0+XI73VLG0U+PwYtq9R0zsm9Q==
   dependencies:
-    libbase64 "1.3.2"
-    libmime "5.4.7"
-    libqp "2.1.2"
+    libbase64 "1.4.1"
+    libmime "5.6.3"
+    libqp "3.0.1"
 
 JSONStream@1.3.5, JSONStream@^1.0.3:
   version "1.3.5"
@@ -23250,9 +23250,9 @@ fast-unique-numbers@^9.0.27:
     tslib "^2.8.1"
 
 fast-uri@^3.0.1, fast-uri@^3.0.5:
-  version "3.1.8"
-  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-3.1.8.tgz#f7db8d942e20eead3cfe93b0beeb4eb0169e938b"
-  integrity sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==
+  version "3.1.9"
+  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-3.1.9.tgz#f1deba822b1d6ac79da2f860e872a63470cff203"
+  integrity sha512-hS/0Wt3Ya043oKXs0sIxrMpKQITXhMLIrVAKKXi4gozGC9v7YRWVnXIZzjNPTO02M9BdxLCWqK1yRXgNziVyJQ==
 
 fast-url-parser@^1.1.3:
   version "1.1.3"
@@ -28649,20 +28649,20 @@ lib0@^0.2.100, lib0@^0.2.85, lib0@^0.2.99:
   dependencies:
     isomorphic.js "^0.2.4"
 
-libbase64@1.3.2:
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/libbase64/-/libbase64-1.3.2.tgz#8325261b572998c40ffe4236575bc1c4c49e9120"
-  integrity sha512-fFCoI0ceXhTu/0QiJ6Uf6BV9k7X/8QW2/D4BR1vw3BPrHcIjLbGLH+U7inQ4SeWrfNCOmpGE09Qt4XjSFfus0g==
+libbase64@1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/libbase64/-/libbase64-1.4.1.tgz#17be19d66d9c4c51fbfb505fe2263f66e3400962"
+  integrity sha512-Nyh3H90B3gRtrcxIe56Ayy7635J0jmh6AbxbQgQae8wrSPQMH5wFqJChiMTB13yKG512L3YspbA5DzumhFTITA==
 
-libmime@5.4.7:
-  version "5.4.7"
-  resolved "https://registry.yarnpkg.com/libmime/-/libmime-5.4.7.tgz#e4cf66d93dd9d8cfe81438fcb3ca3bf891c9d6d8"
-  integrity sha512-r1ENu4wMVSB52AAORwaW4L/MeQJr9rryzHLRpcjud3zcUPWXh1Xkgn+tAqL8oTnRO/LW7y5xxPBE20ta5amtMA==
+libmime@5.6.3:
+  version "5.6.3"
+  resolved "https://registry.yarnpkg.com/libmime/-/libmime-5.6.3.tgz#69da78d8781a64d53eccf1893264969138b50258"
+  integrity sha512-cuTUW/Jybvh5O4/U9p61gyutHOjDtZyGQYuY99+bfnaFwqcDf2Nb+R6hMHY6DDen2H9wLKQSMpofWUgn2TI5JQ==
   dependencies:
     encoding-japanese "2.4.0"
     iconv-lite "0.7.3"
-    libbase64 "1.3.2"
-    libqp "2.1.2"
+    libbase64 "1.4.1"
+    libqp "3.0.1"
 
 libnpmaccess@11.0.0:
   version "11.0.0"
@@ -28796,10 +28796,10 @@ libphonenumber-js@^1.11.1:
   resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.12.37.tgz#a60e3f14ce79f5df4c9a16bede3608d3eab37a5f"
   integrity sha512-rDU6bkpuMs8YRt/UpkuYEAsYSoNuDEbrE41I3KNvmXREGH6DGBJ8Wbak4by29wNOQ27zk4g4HL82zf0OGhwRuw==
 
-libqp@2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/libqp/-/libqp-2.1.2.tgz#d8d94ee8ed182c603d4aead9c7a8e5f72cb820ca"
-  integrity sha512-rp+U80tl9Os4K7GnVbPzPRmghPu6eqB8rcF+ontvNAnoga0JhMFG/bkTD/reC8yoznKMgOc5/ttZHJasiWeFPw==
+libqp@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/libqp/-/libqp-3.0.1.tgz#f6f8e68a469f3b99989fb116650045ef640f1764"
+  integrity sha512-7QZxpPX25pga1WiMueduWxmrHMVBFrZPH6ZUaozGYa/H98JH6NVBSET3qVw+4NxzoraIW7rJ81YxSU9IalvCpg==
 
 libsql@^0.5.29:
   version "0.5.29"
@@ -29578,19 +29578,17 @@ magic-string@1.4.1:
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.6.0"
 
-mailparser@^3.9.1:
-  version "3.9.38"
-  resolved "https://registry.yarnpkg.com/mailparser/-/mailparser-3.9.38.tgz#8573b35c991dee9262987686f3bec42416a1cfbc"
-  integrity sha512-CeSx2cx6MgFzuFPx2bnyGNmJABiMWvGJbrotOv6Ve47aQhlfCHO7cGd2CJHGVC3klfWjjcJ9itXDOdj2xXZFYg==
+mailparser@^3.12.4, mailparser@^3.9.1:
+  version "3.12.4"
+  resolved "https://registry.yarnpkg.com/mailparser/-/mailparser-3.12.4.tgz#2b430b6b64f557d400cf59d6c9b2462bcec1dc9e"
+  integrity sha512-FdoMF+S89/AQaJHY7StwTfABPHZ8Vey+CDyUno5j+TO0jF0UxM+la4Pe9MeqKqBO4Y9ZMB2eomdyg5i+jzpfZw==
   dependencies:
-    "@zone-eu/mailsplit" "5.4.20"
-    encoding-japanese "2.4.0"
+    "@zone-eu/mailsplit" "5.4.29"
     he "1.2.0"
     html-to-text "10.0.1"
-    iconv-lite "0.7.3"
-    libmime "5.4.7"
+    libmime "5.6.3"
     linkify-it "5.0.2"
-    nodemailer "10.1.0"
+    nodemailer "10.2.1"
     punycode.js "2.3.1"
     tlds "1.261.0"
 
@@ -32109,12 +32107,7 @@ nodemailer-handlebars@^1.0.1:
   dependencies:
     express-handlebars "^3.0.0"
 
-nodemailer@10.1.0:
-  version "10.1.0"
-  resolved "https://registry.npmjs.org/nodemailer/-/nodemailer-10.1.0.tgz#315f81d5ebe08f0627e4539727b50c27e9730803"
-  integrity sha512-fXW8AulB25aOTuwfRYV6lqHyfz2VM4rr4SGXH03mE7x5znEUpzL5mu6anARUpZN7744Ziwkmr4AxSLPJsBQspg==
-
-nodemailer@^10.1.0, nodemailer@^7.0.12:
+nodemailer@10.2.1, nodemailer@^10.1.0, nodemailer@^7.0.12:
   version "10.2.1"
   resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-10.2.1.tgz#255f4220fc401ff76ae28ef3b7e67349ea293c88"
   integrity sha512-ZrDNsPFoDMwefNs7sJwrYiEJ/CG4ClJWDZv05iNJsEBWa8GRDry1QJHTJxsuTAY9eDDKjX4k+q3SxslXJOao7w==

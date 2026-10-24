@@ -3572,7 +3572,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "De datum moet na de aanvraagdatum liggen.",
 			"EXCEED_PERIOD_ERR": "Het maximale aantal toegestane dagen voor dit item is",
 			"BEFORE_START_DATE_ERR": "Einddatum kan niet vóór de begindatum zijn.",
-			"ITEM_RETURNED_BEFORE_ERR": "Item moet worden teruggebracht voor"
+			"ITEM_RETURNED_BEFORE_ERR": "Item moet worden teruggebracht voor",
+			"CHANGED_BY_SOMEONE_ELSE": "Iemand anders heeft dit verzoek intussen gewijzigd. De lijst is opnieuw geladen: controleer het verzoek en probeer het opnieuw."
 		},
 		"ACTIONS": "Acties",
 		"APPROVE": "Goedkeuren",

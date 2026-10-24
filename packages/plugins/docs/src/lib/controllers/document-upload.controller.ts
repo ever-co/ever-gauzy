@@ -37,18 +37,23 @@ import { ReplaceDocumentFileCommand } from '../commands/replace-document-file.co
 import { ReprocessDocumentCommand } from '../commands/reprocess-document.command';
 import { UploadDocumentsCommand } from '../commands/upload-documents.command';
 import { DocumentUploadService } from '../services/document-upload.service';
+import { documentStorageOrganizationSegment } from './document-storage-scope';
 
 /**
  * Builds the per-request storage engine of the upload endpoint. Keys land under the
  * `documents/<tenantId>/<organizationId>/` prefix with a server-generated
- * `<uuid>.<ext>` object name — the client filename never enters the key.
+ * `<uuid>.<ext>` object name — the client filename never enters the key. The organization
+ * segment is the request's own organization, never the raw `Organization-Id` header, and a
+ * malformed header is refused before any byte is stored (see `documentStorageOrganizationSegment`).
  */
 const documentsStorage = (ctx: ExecutionContext) => {
 	const request: any = ctx.switchToHttp().getRequest();
 	const tenantId = RequestContext.currentTenantId() || uuid();
-	const rawOrganizationId: string = request?.headers?.['organization-id'] || uuid();
-	// Path-sanitize: ids are UUIDs, but never trust a header verbatim.
-	const organizationId = String(rawOrganizationId).replace(/[^a-zA-Z0-9-]/g, '') || uuid();
+	const organizationId = documentStorageOrganizationSegment(
+		RequestContext.currentOrganizationId(),
+		request?.headers?.['organization-id'],
+		() => uuid()
+	);
 
 	return new FileStorage().storage({
 		dest: () => path.join('documents', tenantId, organizationId),

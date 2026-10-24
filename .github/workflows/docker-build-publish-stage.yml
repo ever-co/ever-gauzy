@@ -109,7 +109,12 @@ jobs:
 
       - name: Push to Docker Hub Registry
         run: |
-          docker push everco/gauzy-api-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push everco/gauzy-api-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push everco/gauzy-api-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Install doctl
         if: ${{ vars.DO_ENABLED == 'true' }}
@@ -124,7 +129,12 @@ jobs:
       - name: Push to DigitalOcean Registry
         if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
-          docker push registry.digitalocean.com/ever/gauzy-api-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push registry.digitalocean.com/ever/gauzy-api-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push registry.digitalocean.com/ever/gauzy-api-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -135,7 +145,12 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-api-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push ghcr.io/ever-co/gauzy-api-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push ghcr.io/ever-co/gauzy-api-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
     #   - name: Login to CW Container Registry
     #     uses: docker/login-action@v4
@@ -220,7 +235,12 @@ jobs:
 
       - name: Push to Docker Hub Registry
         run: |
-          docker push everco/gauzy-webapp-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push everco/gauzy-webapp-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push everco/gauzy-webapp-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Install doctl
         if: ${{ vars.DO_ENABLED == 'true' }}
@@ -235,7 +255,12 @@ jobs:
       - name: Push to DigitalOcean Registry
         if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
-          docker push registry.digitalocean.com/ever/gauzy-webapp-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push registry.digitalocean.com/ever/gauzy-webapp-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push registry.digitalocean.com/ever/gauzy-webapp-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -246,7 +271,12 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-webapp-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push ghcr.io/ever-co/gauzy-webapp-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push ghcr.io/ever-co/gauzy-webapp-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
     #   - name: Login to CW Container Registry
     #     uses: docker/login-action@v4
@@ -336,7 +366,12 @@ jobs:
 
       - name: Push to Docker Hub Registry
         run: |
-          docker push everco/gauzy-worker-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push everco/gauzy-worker-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push everco/gauzy-worker-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Install doctl
         if: ${{ vars.DO_ENABLED == 'true' }}
@@ -351,7 +386,12 @@ jobs:
       - name: Push to DigitalOcean Registry
         if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
-          docker push registry.digitalocean.com/ever/gauzy-worker-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push registry.digitalocean.com/ever/gauzy-worker-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push registry.digitalocean.com/ever/gauzy-worker-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -362,7 +402,12 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-worker-stage:latest
+          for attempt in 1 2 3 4 5; do
+            docker push ghcr.io/ever-co/gauzy-worker-stage:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push ghcr.io/ever-co/gauzy-worker-stage:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
     #   - name: Login to CW Container Registry
     #     uses: docker/login-action@v4
