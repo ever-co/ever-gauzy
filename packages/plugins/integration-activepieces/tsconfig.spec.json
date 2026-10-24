@@ -3,6 +3,16 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"module": "commonjs",
+		// Mirrors packages/plugins/integration-plane/tsconfig.spec.json and integration-zapier's.
+		"allowJs": true,
+		// Transpile each file on its own instead of type-checking the whole program. ts-jest type-checks
+		// every file a spec loads under THIS package's tsconfig, so the specs re-checked the SOURCE of
+		// `@gauzy/config` and `@gauzy/contracts` under `strict` + `noPropertyAccessFromIndexSignature`
+		// and failed to load on errors those packages do not have under their own settings
+		// (`process.env.API_HOST` in config's default-config.ts; `employeeId?: string | null` in
+		// contracts' IEmployeeRecurringExpense). The cost: specs are not type-checked when Jest runs
+		// them. Test tooling only; `tsconfig.lib.json` (the build) is unchanged.
+		"isolatedModules": true,
 		"types": ["jest", "node"]
 	},
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

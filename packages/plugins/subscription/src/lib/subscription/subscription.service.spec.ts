@@ -783,12 +783,19 @@ function subscriptionFixture(
 }
 
 /**
- * The instant one calendar month after a date, at the same time of day — which is what the cycle
- * module's own month arithmetic produces. The suite only states it for mid-month instants, where no
- * end-of-month clamp is involved.
+ * The instant one calendar month after a date, at the same time of day, clamped to the last day of the
+ * next month when that month is shorter (31 October → 30 November, 31 January → 28 or 29 February):
+ * the billing rule the cycle module states and `subscription.cycle.spec.ts` pins with fixed dates.
+ *
+ * It used not to clamp, on the note that the suite only passed it mid-month instants, but several specs
+ * here pass it an instant read from the clock (a creation, an activation, a resume, a trial ending a week
+ * from now). Stage run 40080742318 (2026-10-24) had the trial end on 31 October, so the helper expected
+ * 1 December, where `Date.UTC`'s "31 November" rolls to, while the service rightly ended the period on
+ * 30 November.
  */
-const monthAfter = (date: Date) =>
-	new Date(
+const monthAfter = (date: Date) => {
+	const nextMonth = (date.getUTCMonth() + 1) % 12;
+	const next = new Date(
 		Date.UTC(
 			date.getUTCFullYear(),
 			date.getUTCMonth() + 1,
@@ -799,6 +806,15 @@ const monthAfter = (date: Date) =>
 			date.getUTCMilliseconds()
 		)
 	);
+
+	// A day the next month does not have rolls into the month after it; day 0 of that month is the next
+	// month's last day, at the same time of day.
+	if (next.getUTCMonth() !== nextMonth) {
+		next.setUTCDate(0);
+	}
+
+	return next;
+};
 
 describe('SubscriptionService — putting a customer on a plan (doc 11 §10.4)', () => {
 	beforeEach(() => {
