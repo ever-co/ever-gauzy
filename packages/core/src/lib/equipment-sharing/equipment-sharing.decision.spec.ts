@@ -83,6 +83,11 @@ class Store {
 	pauseAfterFirstWrite: Promise<void> | null = null;
 	/** Whether the last transaction committed (`false` when it rolled back). */
 	committed: boolean | null = null;
+	/**
+	 * Another write landing once the next transaction is entered: after every read the decision makes before it
+	 * (the handler's and the service's own), before the transaction's first statement.
+	 */
+	atTransactionEntry: (() => void) | null = null;
 
 	private lock: Promise<void> = Promise.resolve();
 
@@ -94,6 +99,10 @@ class Store {
 	}
 
 	async transaction<R>(work: (transaction: IEquipmentSharingDecisionTransaction) => Promise<R>): Promise<R> {
+		const landing = this.atTransactionEntry;
+		this.atTransactionEntry = null;
+		landing?.();
+
 		const pending: Array<() => void> = [];
 		let release = () => undefined as void;
 		// In one transaction a write becomes visible at the commit; without one, at once.
@@ -345,8 +354,9 @@ describe('the decision writes the sharing’s own request approval, and only whi
 		asAdmin();
 		const store = new Store();
 		const { decide, approvals } = system(store);
-		// The whole edit lands after the decision's reads: the sharing moves on, its approval is filed again.
-		changedAfterTheApprovalRead(approvals, () => {
+		// The whole edit lands after every read of the decision, the service's own included (version 1): the sharing
+		// moves on, its approval is filed again under a new id.
+		store.atTransactionEntry = () => {
 			store.sharing = { ...store.sharing, version: 2 };
 			delete store.approvals[APPROVAL_ID];
 			store.approvals['approval-2'] = {
@@ -356,14 +366,46 @@ describe('the decision writes the sharing’s own request approval, and only whi
 				organizationId: ORG,
 				status: REQUESTED
 			};
-		});
+		};
 
 		const { error } = await decide(APPROVED);
 
 		expect(error).toBeInstanceOf(ApiException);
 		expect((error as ApiException).getStatus()).toBe(409);
+		expect((error as ApiException).details).toMatchObject({ expectedVersion: 1, actualVersion: 2 });
+		expect(approvals.findOneByWhereOptions).toHaveBeenCalledTimes(1);
 		expect(store.sharing).toMatchObject({ status: REQUESTED, version: 2 });
 		expect(store.approvals['approval-2'].status).toBe(REQUESTED);
+	});
+
+	it('an edit that removed the approval after the decision’s reads, and has not moved the sharing yet, refuses it (404)', async () => {
+		asAdmin();
+		const store = new Store();
+		const { decide } = system(store);
+		// The edit's removal of the approval lands at the transaction's entry; the sharing is still at version 1.
+		store.atTransactionEntry = () => delete store.approvals[APPROVAL_ID];
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeInstanceOf(NotFoundException);
+		expect(store.committed).toBe(false);
+		expect(store.sharing).toMatchObject({ status: REQUESTED, version: 1 });
+	});
+
+	it('refuses a tenant administrator too (404) when the approval was moved to another organization than the sharing’s', async () => {
+		asAdmin();
+		const store = new Store();
+		const { decide } = system(store);
+		// An administrator's boundary takes in every organization, and the move does not change the sharing's version:
+		// only the comparison with the sharing's own organization sees it.
+		store.atTransactionEntry = () => (store.approval.organizationId = OTHER_ORG);
+
+		const { error } = await decide(APPROVED);
+
+		expect(error).toBeInstanceOf(NotFoundException);
+		expect(store.committed).toBe(false);
+		expect(store.sharing).toMatchObject({ status: REQUESTED, version: 1 });
+		expect(store.approval).toMatchObject({ organizationId: OTHER_ORG, status: REQUESTED });
 	});
 
 	it('refuses a confined caller (404) when the approval moved out of their organization under the lock', async () => {
@@ -588,6 +630,26 @@ describe('the decision transaction on each ORM', () => {
 			expect(error).toBeInstanceOf(NotFoundException);
 			expect(em.nativeUpdate.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing]);
 		});
+
+		it.each([
+			['the sharing’s', ORG, [EquipmentSharing, RequestApproval]],
+			['another', OTHER_ORG, [EquipmentSharing]]
+		])(
+			'compares the approval’s organization, read off its relation, with the sharing’s: %s organization',
+			async (_, organizationId, written) => {
+				// A tenant administrator: no boundary, so only the comparison with the sharing's organization decides.
+				const approval = { id: APPROVAL_ID, requestId: ID, organization: { id: organizationId } };
+				const { service, em } = mikroOrm(false, approval);
+
+				const error = await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID).then(
+					() => undefined,
+					(reason) => reason
+				);
+
+				expect(error === undefined).toBe(organizationId === ORG);
+				expect(em.nativeUpdate.mock.calls.map(([entity]) => entity)).toEqual(written);
+			}
+		);
 
 		it('stamps the update date and the deciding user on the approval, through its `persist: false` mirror', async () => {
 			const { service, em } = mikroOrm(true);

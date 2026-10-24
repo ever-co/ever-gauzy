@@ -594,11 +594,11 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * that row by its own id. Writing every approval whose `requestId` names the sharing reached further than the
 	 * scoped write it replaced (`RequestApprovalService.update`): approvals of other organizations of the tenant can
 	 * carry the same `requestId` (`POST /request-approval` stores the one it is given). The locked row must still be
-	 * there, still be this sharing's and still be inside the caller's organization boundary, or nothing is written
-	 * (404). That also covers an edit of the sharing caught half way (`EquipmentSharingUpdateHandler` recreates the
-	 * sharing first and its approval after it, under a new id): a decision that read the recreated sharing and the
-	 * approval the edit removed finds no approval under the lock, so it no longer commits a decided sharing whose
-	 * approval the edit then files as requested.
+	 * there, still be this sharing's, still be in the sharing's organization and inside the caller's organization
+	 * boundary, or nothing is written (404). That also covers an edit of the sharing caught half way
+	 * (`EquipmentSharingUpdateHandler` recreates the sharing first and its approval after it, under a new id): a
+	 * decision that read the recreated sharing and the approval the edit removed finds no approval under the lock, so
+	 * it no longer commits a decided sharing whose approval the edit then files as requested.
 	 *
 	 * @param id - The sharing.
 	 * @param status - The decision.
@@ -630,9 +630,14 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				if (!written) {
 					return false;
 				}
+				// The approval the handler read, still the sharing's: in the sharing's own organization (a move does
+				// not change the sharing's version, and an administrator's boundary takes in every organization, so
+				// only this comparison sees it), and inside the caller's boundary.
 				if (
 					!approval ||
 					!sameId(approval.requestId, equipmentSharing.id) ||
+					(!!equipmentSharing.organizationId &&
+						!sameId(approval.organizationId, equipmentSharing.organizationId)) ||
 					!isWithinOrganizationBoundary(approval.organizationId)
 				) {
 					// Thrown inside the transaction, so the sharing's write above is rolled back with it.
