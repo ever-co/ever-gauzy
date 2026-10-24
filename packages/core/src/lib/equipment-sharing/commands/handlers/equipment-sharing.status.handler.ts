@@ -21,16 +21,22 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 	public async execute(command: EquipmentSharingStatusCommand): Promise<IEquipmentSharing> {
 		const { id, status } = command;
 
-		// Retrieve the equipment sharing record and its associated request approval concurrently.
-		const [equipmentSharing, requestApproval] = await Promise.all([
-			this._equipmentSharingService.findOneByIdString(id),
-			this._requestApprovalService.findOneByWhereOptions({ requestId: id })
-		]);
+		// The equipment sharing record, in the caller's scope.
+		const equipmentSharing = await this._equipmentSharingService.findOneByIdString(id);
 
 		// If the equipment sharing record is not found, throw an exception.
 		if (!equipmentSharing) {
 			throw new NotFoundException('Equipment Sharing not found');
 		}
+
+		// Its request approval: the one the filing and the edit record beside the sharing, in the sharing's own
+		// organization. `requestId` alone could name another organization's approval of the tenant (a tenant
+		// administrator's read is not confined to one organization), since `POST /request-approval` stores the
+		// `requestId` it is given.
+		const requestApproval = await this._requestApprovalService.findOneByWhereOptions({
+			requestId: equipmentSharing.id,
+			...(equipmentSharing.organizationId ? { organizationId: equipmentSharing.organizationId } : {})
+		});
 
 		if (!requestApproval) {
 			throw new NotFoundException('Request Approval not found');
@@ -40,7 +46,9 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 		// row and re-inserts the payload, so approving/refusing (a { status }-only body) replaced the record with a
 		// stub. The sharing's status is a compare-and-set on the version read, answered 409 when the record changed
 		// in between, and the approval is written on the same transaction, under the locks it holds: a concurrent
-		// decision can no longer land between the two writes and leave the rows disagreeing.
-		return await this._equipmentSharingService.decideWithRequestApproval(id, status);
+		// decision can no longer land between the two writes and leave the rows disagreeing. The approval is the one
+		// read above, in the caller's scope, locked and written by its own id: another organization's approval that
+		// carries the same `requestId` is not touched, and one that is gone by then refuses the decision (404).
+		return await this._equipmentSharingService.decideWithRequestApproval(id, status, requestApproval.id);
 	}
 }

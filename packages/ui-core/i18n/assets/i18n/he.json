@@ -3600,7 +3600,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
-			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before ",
+			"CHANGED_BY_SOMEONE_ELSE": "מישהו אחר שינה את הבקשה הזו בינתיים. הרשימה נטענה מחדש: בדוק את הבקשה ונסה שוב."
 		},
 		"ACTIONS": "Actions",
 		"APPROVE": "Approve",

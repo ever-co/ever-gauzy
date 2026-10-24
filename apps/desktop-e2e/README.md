@@ -33,7 +33,7 @@ Needs the built API and the packaged app(s). Windows shown; on Linux/macOS use t
 ```bash
 yarn build:api                      # dist/apps/api
 yarn build:desktop-timer            # dist/apps/desktop-timer
-yarn electron-builder -c.electronVersion=44.7.0 build --windows --x64 --dir --project dist/apps/desktop-timer
+yarn electron-builder -c.electronVersion=44.9.3 build --windows --x64 --dir --project dist/apps/desktop-timer
                                     # dist/apps/desktop-timer-packages/win-unpacked/Gauzy Desktop Timer.exe
 yarn nx e2e desktop-e2e             # or: npx playwright test -c apps/desktop-e2e/playwright.config.ts [spec] [--grep app]
 DESKTOP_E2E_API=off yarn nx e2e desktop-e2e -- desktop-apps-start   # start-up checks only, no API

@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException, NotFoundException } from '@nestjs/common';
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
-import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, In, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IEquipmentSharing,
@@ -25,12 +25,15 @@ import { TypeOrmRequestApprovalRepository } from './../request-approval/reposito
 import { bumpVersion, parseEntityVersion } from '../concurrency/version.util';
 import { ApiException } from '../core/errors/api-exception';
 import {
+	assertMembersAreInScope,
 	assertReferencesAreInScope,
 	IReferenceScope,
 	ISharingColumns,
+	ISharingMembers,
 	ISharingReferences,
 	IStoredSharing,
 	sharingAsStored,
+	sharingMemberReferences,
 	sharingReferences,
 	withReferencesAsIds
 } from './reference-scope.helper';
@@ -42,17 +45,29 @@ interface IStoredSharingRow extends IStoredSharing {
 	version?: number | null;
 }
 
+/** The sharing's request approval, as the decision's locking read finds it. */
+export interface IDecisionRequestApproval {
+	id: ID;
+	/** The sharing the approval is recorded beside. */
+	requestId?: ID | null;
+	/** The approval's organization, as stored. */
+	organizationId?: ID | null;
+}
+
 /**
  * The statements of one decision of a sharing and of its request approval, all made on one transaction: see
  * {@link EquipmentSharingService.decideWithRequestApproval}.
  */
 export interface IEquipmentSharingDecisionTransaction {
 	/**
-	 * Takes the row lock of the sharing's request approval until the transaction ends (`SELECT … FOR UPDATE` on
-	 * PostgreSQL and MySQL; SQLite serializes the transaction instead). An answer through the request approval's own
-	 * route locks that row first as well (ever-co/ever-gauzy#11382), so the two routes take their locks in one order.
+	 * Reads the sharing's request approval by its own id, inside the tenant, and holds its row until the transaction
+	 * ends (`SELECT … FOR UPDATE` on PostgreSQL and MySQL; SQLite serializes the transaction instead, and the read
+	 * is a plain one there). An answer through the request approval's own route locks that row first as well
+	 * (ever-co/ever-gauzy#11382), so the two routes take their locks in one order.
+	 *
+	 * @returns The approval as stored now, or null when it is no longer there.
 	 */
-	lockRequestApproval(requestId: ID, tenantId: ID): Promise<void>;
+	lockRequestApproval(requestApprovalId: ID, tenantId: ID): Promise<IDecisionRequestApproval | null>;
 	/**
 	 * `UPDATE equipment_sharing SET status = :status, version = version + 1 WHERE <criteria>`: the decision's
 	 * compare-and-set, which holds the sharing's row until the transaction ends.
@@ -60,14 +75,20 @@ export interface IEquipmentSharingDecisionTransaction {
 	 * @returns How many rows were written: 0 when the sharing moved on from the version in the criteria.
 	 */
 	writeSharingStatus(criteria: FindOptionsWhere<EquipmentSharing>, status: number): Promise<number>;
-	/** Writes the status of the sharing's request approval, inside the tenant. */
-	writeRequestApprovalStatus(requestId: ID, tenantId: ID, status: number): Promise<void>;
+	/** Writes the status of the sharing's request approval, by its own id, inside the tenant. */
+	writeRequestApprovalStatus(requestApprovalId: ID, tenantId: ID, status: number): Promise<void>;
 }
 
 /**
  * Columns the equipment sharing table can be sorted by. Any other `order` key from the query string is ignored.
  */
 const SORTABLE_COLUMNS = ['shareRequestDay', 'shareStartDay', 'shareEndDay'] as const;
+
+/**
+ * Whether two identifiers name the same row: a request approval's `requestId` is a text column, which may hold the
+ * sharing's uuid in another case than the uuid column answers it in.
+ */
+const sameId = (a: unknown, b: unknown): boolean => !!a && !!b && String(a).toLowerCase() === String(b).toLowerCase();
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
@@ -94,16 +115,29 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * related object (`equipmentSharingPolicy: { id }`), which the ORM persists as the foreign key just the same —
 	 * see `sharingReferences`.
 	 *
+	 * The employees and the teams the sharing is handed to (`employees`, `teams`, each entry a related object or a
+	 * bare id) are held to the same scope: the CRUD base checks the nested rows against the tenant only, so a body
+	 * could list another organization's employees or teams of the same tenant — see `sharingMemberReferences`. A
+	 * sharing may list many, so each table is read once, with all of its ids (`assertMembersAreInScope`).
+	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
-	 * @throws ForbiddenException when a referenced row is outside the scope.
+	 * @throws ForbiddenException when a referenced row or a listed member is outside the scope.
 	 */
 	public async assertReferencesAreInScope(
-		input: Partial<IEquipmentSharingUpdateInput> | ISharingReferences,
+		input: Partial<IEquipmentSharingUpdateInput> | (ISharingReferences & ISharingMembers),
 		scope: IReferenceScope
 	): Promise<void> {
 		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
 			this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		);
+		// The contract types name no member lists, but the body the route receives can carry them
+		const members = sharingMemberReferences(input as ISharingMembers);
+		await assertMembersAreInScope(members, scope, (table, ids, criteria) =>
+			this.typeOrmRepository.manager.find(table, {
+				where: { ...criteria, id: In(ids) } as any,
+				select: { id: true } as any
+			})
 		);
 	}
 
@@ -184,11 +218,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		input: ISharingReferences & { id?: unknown; version?: unknown }
 	): Promise<{ payload: ISharingColumns & { id?: unknown }; stored: IStoredSharingRow | null }> {
 		const tenantId = RequestContext.currentTenantId();
-		const { version: _version, ...body } = (input ?? {}) as ISharingReferences & {
-			id?: unknown;
-			version?: unknown;
-		};
-		const values: ISharingColumns & { id?: unknown } = withReferencesAsIds(body);
+		type Body = ISharingReferences & ISharingMembers & { id?: unknown; version?: unknown };
+		const { version: _version, ...body } = (input ?? {}) as Body;
+		const values: ISharingColumns & ISharingMembers & { id?: unknown } = withReferencesAsIds(body);
 		const stored = await this.findStoredSharing(values.id, tenantId);
 		const {
 			values: payload,
@@ -196,7 +228,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			organizationId
 		} = sharingAsStored(values, stored, RequestContext.currentOrganizationId());
 
-		await this.assertReferencesAreInScope(references, { tenantId, organizationId });
+		// The employees and the teams the body lists are stored with the row too, so they are checked in the same
+		// organization as its equipment and its policy.
+		await this.assertReferencesAreInScope(
+			{ ...references, employees: values.employees, teams: values.teams },
+			{ tenantId, organizationId }
+		);
 		return { payload, stored };
 	}
 
@@ -572,14 +609,27 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * The compare-and-set also keeps the scoped read's organization boundary: every write moves the version on, so a
 	 * sharing moved out of the caller's reach since it was read is not matched.
 	 *
+	 * The request approval is the one the handler read in the caller's scope, and the transaction locks and writes
+	 * that row by its own id. Writing every approval whose `requestId` names the sharing reached further than the
+	 * scoped write it replaced (`RequestApprovalService.update`): approvals of other organizations of the tenant can
+	 * carry the same `requestId` (`POST /request-approval` stores the one it is given). The locked row must still be
+	 * there, still be this sharing's, still be in the sharing's organization and inside the caller's organization
+	 * boundary, or nothing is written (404). That also covers an edit of the sharing caught half way
+	 * (`EquipmentSharingUpdateHandler` recreates the sharing first and its approval after it, under a new id): a
+	 * decision that read the recreated sharing and the approval the edit removed finds no approval under the lock, so
+	 * it no longer commits a decided sharing whose approval the edit then files as requested.
+	 *
 	 * @param id - The sharing.
 	 * @param status - The decision.
+	 * @param requestApprovalId - The sharing's request approval, as the caller's scoped read found it.
 	 * @returns The sharing, as decided.
 	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the sharing changed after it was read; nothing is
 	 * written then.
-	 * @throws BadRequestException when the sharing is not found, or another error occurs.
+	 * @throws NotFoundException when the sharing or its request approval is no longer there (or no longer in the
+	 * caller's reach); nothing is written then.
+	 * @throws BadRequestException when another error occurs.
 	 */
-	async decideWithRequestApproval(id: ID, status: number): Promise<EquipmentSharing> {
+	async decideWithRequestApproval(id: ID, status: number, requestApprovalId: ID): Promise<EquipmentSharing> {
 		try {
 			const equipmentSharing = await this.findOneByIdString(id);
 			const tenantId = RequestContext.currentTenantId() ?? equipmentSharing.tenantId;
@@ -591,12 +641,28 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			} as FindOptionsWhere<EquipmentSharing>;
 
 			const decided = await this.decisionTransaction(async (transaction) => {
-				await transaction.lockRequestApproval(equipmentSharing.id, tenantId);
+				// The approval's lock first, the order the request approval's own answer route takes its locks in.
+				const approval = await transaction.lockRequestApproval(requestApprovalId, tenantId);
+				// The compare-and-set before the approval's checks, so a decision based on a read another write has
+				// overtaken is told so (409) whatever that write did to the approval.
 				const written = await transaction.writeSharingStatus(criteria, status);
 				if (!written) {
 					return false;
 				}
-				await transaction.writeRequestApprovalStatus(equipmentSharing.id, tenantId, status);
+				// The approval the handler read, still the sharing's: in the sharing's own organization (a move does
+				// not change the sharing's version, and an administrator's boundary takes in every organization, so
+				// only this comparison sees it), and inside the caller's boundary.
+				if (
+					!approval ||
+					!sameId(approval.requestId, equipmentSharing.id) ||
+					(!!equipmentSharing.organizationId &&
+						!sameId(approval.organizationId, equipmentSharing.organizationId)) ||
+					!isWithinOrganizationBoundary(approval.organizationId)
+				) {
+					// Thrown inside the transaction, so the sharing's write above is rolled back with it.
+					throw new NotFoundException('Request Approval not found');
+				}
+				await transaction.writeRequestApprovalStatus(approval.id, tenantId, status);
 				return true;
 			});
 
@@ -605,8 +671,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			}
 			return await this.findOneByIdString(id);
 		} catch (err) {
-			// The conflict stands as the 409 it is; everything else is answered as before.
-			if (err instanceof ApiException) {
+			// An HTTP refusal (the 409 conflict, the 404 of a missing approval) stands as what it is; any other
+			// failure is answered 400, as before.
+			if (err instanceof HttpException) {
 				throw err;
 			}
 			throw new BadRequestException(err);
@@ -646,19 +713,21 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	private typeOrmDecisionTransaction(manager: EntityManager, rowLock: boolean): IEquipmentSharingDecisionTransaction {
 		return {
-			lockRequestApproval: async (requestId, tenantId) => {
-				if (rowLock) {
-					await manager
-						.createQueryBuilder(RequestApproval, 'request_approval')
-						.where({ requestId, tenantId })
-						.setLock('pessimistic_write')
-						.getMany();
+			lockRequestApproval: async (requestApprovalId, tenantId) => {
+				if (!requestApprovalId || !tenantId) {
+					return null;
 				}
+				// The approval's row alone (a query builder joins no eager relation), so the lock is on that row.
+				const query = manager
+					.createQueryBuilder(RequestApproval, 'request_approval')
+					.where({ id: requestApprovalId, tenantId });
+				const row = rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+				return row ? { id: row.id, requestId: row.requestId, organizationId: row.organizationId } : null;
 			},
 			writeSharingStatus: async (criteria, status) =>
 				affectedRows(await manager.update(EquipmentSharing, criteria, { status })),
-			writeRequestApprovalStatus: async (requestId, tenantId, status) => {
-				await manager.update(RequestApproval, { requestId, tenantId }, { status });
+			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
+				await manager.update(RequestApproval, { id: requestApprovalId, tenantId }, { status });
 			}
 		};
 	}
@@ -673,21 +742,34 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		rowLock: boolean
 	): IEquipmentSharingDecisionTransaction {
 		return {
-			lockRequestApproval: async (requestId, tenantId) => {
-				if (rowLock) {
-					await em.find(
-						RequestApproval,
-						{ requestId, tenantId } as any,
-						{ disableIdentityMap: true, lockMode: LockMode.PESSIMISTIC_WRITE } as any
-					);
+			lockRequestApproval: async (requestApprovalId, tenantId) => {
+				if (!requestApprovalId || !tenantId) {
+					return null;
 				}
+				// From the table, not the identity map the fork inherited from the request's context.
+				const row = (await em.findOne(
+					RequestApproval,
+					{ id: requestApprovalId, tenantId } as any,
+					{
+						disableIdentityMap: true,
+						...(rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
+					} as any
+				)) as any;
+				// As stored: the `persist: false` organization mirror may be left unhydrated; the relation has its key.
+				return row
+					? {
+							id: row.id,
+							requestId: row.requestId,
+							organizationId: row.organizationId ?? row.organization?.id ?? null
+						}
+					: null;
 			},
 			writeSharingStatus: async (criteria, status) =>
 				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ status }) as any),
-			writeRequestApprovalStatus: async (requestId, tenantId, status) => {
+			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
 				await em.nativeUpdate(
 					RequestApproval,
-					{ requestId, tenantId } as any,
+					{ id: requestApprovalId, tenantId } as any,
 					this.mikroOrmRequestApprovalRow(em, { status }) as any
 				);
 			}

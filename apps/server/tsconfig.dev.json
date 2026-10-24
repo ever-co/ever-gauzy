@@ -22,5 +22,8 @@
     "include": [
         "src/index.ts",
         "src/preload/*.ts"
+    ],
+    "exclude": [
+        "src/**/*.spec.ts"
     ]
 }
