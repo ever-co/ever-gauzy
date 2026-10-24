@@ -28025,7 +28025,9 @@ the key result the move is recorded against.
 """
 input CreateKeyResultUpdateInput {
   owner: String!
-  progress: Int!
+
+  """Ignored: the server computes it from `update` and the key result."""
+  progress: Int
   update: Int!
   status: String!
   keyResultId: ID
