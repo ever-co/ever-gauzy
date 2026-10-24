@@ -362,7 +362,6 @@ async function createMainWindow(): Promise<void> {
 			shell.openExternal(url);
 		}
 	});
-
 }
 
 /**
