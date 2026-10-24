@@ -193,3 +193,26 @@ test('a field is held to the REST read that asks for the least', () => {
 
 	assert.match(out, /OK — no GraphQL root field asks for nothing/);
 });
+
+test('an empty @Permissions() on a field clears its class requirement, and fails where REST asks for one', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController(DELETE_ROUTE),
+		'tags/src/tag.resolver.ts': tagResolver(
+			'\t@Permissions()\n\t@Mutation(() => Boolean)\n\tasync deleteTag() {}',
+			'@Permissions(PermissionsEnum.ORG_TAGS_DELETE)\n'
+		)
+	});
+
+	assert.match(out, /Mutation deleteTag \[delete\] → \/tags requires ORG_TAGS_DELETE/);
+	assert.match(out, /api parity check: FAILED/);
+});
+
+test('an empty @Permissions() on a REST route clears its class requirement, so an open field mirrors it', () => {
+	const out = report({
+		'tags/src/tag.controller.ts': tagController("\t@Permissions()\n\t@Delete(':id')\n\tasync delete() {}"),
+		'tags/src/tag.resolver.ts': tagResolver('\t@Mutation(() => Boolean)\n\tasync deleteTag() {}')
+	});
+
+	assert.doesNotMatch(out, /Mutation deleteTag \[delete\]/);
+	assert.match(out, /OK — no GraphQL root field asks for nothing/);
+});

@@ -26,7 +26,8 @@
  * **The second pass is about scope rather than existence.** A concept served over both protocols is
  * only one concept if both protocols ask the caller for the same thing. This pass reads every REST
  * route's effective `@Permissions(...)` — the handler's own, or the controller's class-level metadata
- * when the handler states none, which is how `getAllAndOverride` resolves it — classifies it into the
+ * when the handler carries no `@Permissions` at all, which is how `getAllAndOverride` resolves it (an
+ * empty `@Permissions()` on the handler is metadata too, and clears the class's) — classifies it into the
  * canonical shape it has (`list`, `byId`, `count`, `create`, `update`, `delete`, `softDelete`,
  * `recover`), does the same for every `@Query`/`@Mutation` field, and refuses a field that states
  * **no** permission where the REST route of the same concept and the same shape states one. That is
@@ -539,6 +540,20 @@ function permissionsStated(decorators) {
 }
 
 /**
+ * The permissions a handler runs under, as `getAllAndOverride` resolves them: the handler's own
+ * `@Permissions(...)` whenever it carries one — an empty `@Permissions()` included, because an empty
+ * list is metadata, not its absence, and it overrides the class's — and the class's only when the
+ * handler carries none.
+ *
+ * @param {string[]} decorators The handler's decorator run.
+ * @param {Set<string>} classPermissions What the class states.
+ * @returns {Set<string>} The effective permissions.
+ */
+function effectivePermissions(decorators, classPermissions) {
+	return states(decorators, 'Permissions') ? permissionsStated(decorators) : new Set(classPermissions);
+}
+
+/**
  * The paths one route decorator's argument names: none for `@Get()`, one for `@Get(':id')`, every one
  * of `@Get(['/pagination', '/'])` — a route that answers at two addresses answers at both.
  *
@@ -679,12 +694,12 @@ function restRoutesByShape() {
 
 					if (!route) continue;
 
-					const own = permissionsStated(member.decorators);
+					const effective = effectivePermissions(member.decorators, classPermissions);
 
 					for (const path of routePaths(route[2])) {
 						const shape = restRouteShape(route[1], path);
 
-						if (shape) shapes.set(shape, own.size > 0 ? own : new Set(classPermissions));
+						if (shape) shapes.set(shape, effective);
 					}
 				}
 
@@ -721,8 +736,7 @@ function permissionParity(resources) {
 
 					const kind = GRAPHQL_ROOT_FIELD.exec(field)[1];
 					const name = fieldNameOfDecorator(field, member.name);
-					const own = permissionsStated(member.decorators);
-					const effective = own.size > 0 ? own : classPermissions;
+					const effective = effectivePermissions(member.decorators, classPermissions);
 					const shaped = graphqlFieldShape(kind, name);
 
 					if (!shaped) continue;
