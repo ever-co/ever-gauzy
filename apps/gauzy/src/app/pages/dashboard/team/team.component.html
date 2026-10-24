@@ -12,32 +12,55 @@
 		<!-- ── Team switcher: "All teams", then one tab per team ── -->
 		@if (teamRows.length) {
 		<div class="tab-row">
-			<div class="tabs team-tabs" role="tablist">
+			<!-- Arrows and fades show only on a side that has more teams to scroll to. -->
+			<div class="tabs-scroller" [class.can-scroll-start]="canScrollStart" [class.can-scroll-end]="canScrollEnd">
+				@if (canScrollStart) {
 				<button
 					type="button"
-					role="tab"
-					class="tab"
-					[class.is-active]="!selectedTeamId"
-					[attr.aria-selected]="!selectedTeamId"
-					(click)="select(null)"
+					class="tabs-arrow tabs-arrow--start"
+					[attr.aria-label]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.SCROLL_TEAMS_BACK' | translate"
+					(click)="scrollTabs(-1)"
 				>
-					{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.ALL_TEAMS' | translate }}
-					<span class="tab-count">{{ overview.teamsWorked }}/{{ teamRows.length }}</span>
+					<nb-icon icon="chevron-left-outline"></nb-icon>
 				</button>
-				@for (row of teamRows; track row.id) {
+				}
+				<div #tabsList class="tabs team-tabs" role="tablist" (scroll)="updateTabsScroll()">
+					<button
+						type="button"
+						role="tab"
+						class="tab"
+						[class.is-active]="!selectedTeamId"
+						[attr.aria-selected]="!selectedTeamId"
+						(click)="select(null)"
+					>
+						{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.ALL_TEAMS' | translate }}
+						<span class="tab-count">{{ overview.teamsWorked }}/{{ teamRows.length }}</span>
+					</button>
+					@for (row of teamRows; track row.id) {
+					<button
+						type="button"
+						role="tab"
+						class="tab"
+						[class.is-active]="selectedTeamId === row.id"
+						[attr.aria-selected]="selectedTeamId === row.id"
+						(click)="select(row.id)"
+					>
+						@if (row.tracking > 0) {
+						<span class="tab-live" aria-hidden="true"></span>
+						}
+						{{ row.name }}
+						<span class="tab-count">{{ row.worked }}/{{ row.total }}</span>
+					</button>
+					}
+				</div>
+				@if (canScrollEnd) {
 				<button
 					type="button"
-					role="tab"
-					class="tab"
-					[class.is-active]="selectedTeamId === row.id"
-					[attr.aria-selected]="selectedTeamId === row.id"
-					(click)="select(row.id)"
+					class="tabs-arrow tabs-arrow--end"
+					[attr.aria-label]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.SCROLL_TEAMS_FORWARD' | translate"
+					(click)="scrollTabs(1)"
 				>
-					@if (row.tracking > 0) {
-					<span class="tab-live" aria-hidden="true"></span>
-					}
-					{{ row.name }}
-					<span class="tab-count">{{ row.worked }}/{{ row.total }}</span>
+					<nb-icon icon="chevron-right-outline"></nb-icon>
 				</button>
 				}
 			</div>

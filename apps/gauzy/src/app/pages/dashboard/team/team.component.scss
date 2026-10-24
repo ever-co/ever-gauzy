@@ -41,6 +41,8 @@ nb-card-body.ev-body {
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
+  // A tab scrolled into view stops clear of the arrow over that edge.
+  scroll-padding-inline: 2.5rem;
 
   &::-webkit-scrollbar {
     display: none;
@@ -62,6 +64,99 @@ nb-card-body.ev-body {
   ::ng-deep .counter,
   ::ng-deep .point {
     height: 4px;
+  }
+}
+
+// Holds the tabs, the arrows and the fades. The fades are drawn in the header's
+// own colour, so tabs read as running on under them.
+.tabs-scroller {
+  --tabs-fade-width: 4rem;
+
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 2px; // leave the active tab's underline uncovered
+    z-index: 1;
+    width: var(--tabs-fade-width);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--gauzy-card-1) 35%, transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--gauzy-card-1) 35%, transparent);
+  }
+
+  &.can-scroll-start::before,
+  &.can-scroll-end::after {
+    opacity: 1;
+  }
+}
+
+.tabs-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--gauzy-border-default-color);
+  border-radius: 50%;
+  background-color: var(--gauzy-card-1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  color: var(--gauzy-text-color-2);
+  cursor: pointer;
+  // Centred on the tab labels, above the underline.
+  transform: translateY(calc(-50% - 1px));
+  transition:
+    color 0.12s ease-in-out,
+    background-color 0.12s ease-in-out;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint);
+    color: var(--gauzy-text-color-1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 1px;
+  }
+
+  &--start {
+    left: 0;
+  }
+
+  &--end {
+    right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs-scroller::before,
+  .tabs-scroller::after,
+  .tabs-arrow {
+    transition: none;
   }
 }
 
