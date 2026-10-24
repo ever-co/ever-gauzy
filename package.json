@@ -716,7 +716,14 @@
 		"**/@nestjs/graphql/@graphql-tools/utils": "^12.1.0",
 		"**/xtraverse/xmldom": "npm:@xmldom/xmldom@^0.8.15",
 		"**/embedded-queue/nedb": "npm:@seald-io/nedb@^4.1.2",
-		"**/@upwork/node-upwork-oauth2/request": "npm:@cypress/request@^4.0.1"
+		"**/@upwork/node-upwork-oauth2/request": "npm:@cypress/request@^4.0.1",
+		"**/embedded-queue/uuid": "^11.1.1",
+		"**/exceljs/uuid": "^11.1.1",
+		"**/better-queue/uuid": "^11.1.1",
+		"**/preview-email/uuid": "^11.1.1",
+		"**/@jimp/*/zod": "^4.6.7",
+		"**/get-windows/@mapbox/node-pre-gyp": "^2.0.3",
+		"**/get-windows/node-gyp": "^13.1.0"
 	},
 	"dependencies": {
 		"@angular/animations": "22.2.2",
