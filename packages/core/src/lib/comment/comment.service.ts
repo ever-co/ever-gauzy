@@ -169,7 +169,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 
 			// Update the comment with the new input data. Who wrote and who resolved it are not an edit's to
 			// restate, by the rule every per-user row follows (ever-co/ever-gauzy#11328, withoutAuthorChange):
-			// `createdByUserId` never, the author and resolver columns only by a tenant administrator.
+			// `createdByUserId` and `createdByUser` never, the author and resolver columns only by a tenant
+			// administrator.
 			// ICommentUpdateInput already leaves the author out, but the REST DTO still carried `employeeId`,
 			// and a CHANGE_SELECTED_EMPLOYEE holder's edit wrote it. A resolver the body names is the caller.
 			const updatedComment = await super.create({
