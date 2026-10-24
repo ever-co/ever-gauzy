@@ -43,6 +43,14 @@ export class EmailConfirmationService {
 	) {}
 
 	/**
+	 * Whether this deployment verifies e-mail addresses at all (`FEATURE_EMAIL_VERIFICATION`). While it is
+	 * off no verification e-mail goes out and the confirmation routes answer 404.
+	 */
+	public async isEmailVerificationEnabled(): Promise<boolean> {
+		return await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION);
+	}
+
+	/**
 	 * Sends an email verification link and code to the user.
 	 *
 	 * @param user The user to send the verification email to.

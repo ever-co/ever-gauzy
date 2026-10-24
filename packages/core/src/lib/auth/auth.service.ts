@@ -91,6 +91,7 @@ import { RoleService } from './../role/role.service';
 import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
+import { signupRequiresEmailVerification } from './signup-email-verification';
 import { SocialAccountService } from './social-account/social-account.service';
 import {
 	IVerifiedSocialIdentity,
@@ -1454,6 +1455,23 @@ export class AuthService extends SocialAuthService {
 		// `isTrackingEnabled`.
 		const featureAsEmployee = !!input.featureAsEmployee && !input.inviteId;
 
+		// 1.2 A self-registration stays inactive until its e-mail link is clicked (owner decision 4).
+		//
+		// Self-registration = no invitation and no tenant: an admin creating a user always names the tenant
+		// (step 1), and every invite path names both the tenant and the invitation, which itself confirms the
+		// address (step 4). Nothing proves that whoever registers an address owns it, so the account cannot
+		// sign in (every sign-in path reads active users only) until `UserService.markEmailAsVerified`
+		// activates it from the confirmation link. Otherwise an account registered on somebody else's address
+		// became a working workspace under that address. This holds for a second account on an address that
+		// already has one, too. Only while the deployment verifies addresses at all: with
+		// FEATURE_EMAIL_VERIFICATION off nothing could ever activate the account (see
+		// signup-email-verification.ts for the operator switch).
+		const awaitsEmailConfirmation =
+			!input.inviteId &&
+			!tenant?.id &&
+			signupRequiresEmailVerification() &&
+			(await this.emailConfirmationService.isEmailVerificationEnabled());
+
 		// 2. Register new user
 		let user: User;
 
@@ -1462,7 +1480,8 @@ export class AuthService extends SocialAuthService {
 				const userEntity = this.mikroOrmUserRepository.create({
 					...input.user,
 					tenant,
-					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {})
+					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {}),
+					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				await this.mikroOrmUserRepository.persistAndFlush(userEntity);
 				user = this.serialize(userEntity);
@@ -1495,7 +1514,8 @@ export class AuthService extends SocialAuthService {
 				const entity = this.typeOrmUserRepository.create({
 					...input.user,
 					tenant,
-					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {})
+					...(input.password ? { hash: await this.passwordHashService.hash(input.password) } : {}),
+					...(awaitsEmailConfirmation ? { isActive: false } : {})
 				});
 				user = await this.typeOrmUserRepository.save(entity);
 
