@@ -1360,15 +1360,16 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.debug('Token exchange: Client validated', { clientId: params.client_id });
 
-			// Exchange authorization code
-			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+			// Check the code without using it up: the account lookup below can fail for a while, and its 503 asks the
+			// client to retry with this same code.
+			const pendingCode = oAuth2AuthorizationCodeManager.checkAuthorizationCode(
 				params.code,
 				params.client_id,
 				params.redirect_uri,
 				params.code_verifier
 			);
 
-			if (!authCode) {
+			if (!pendingCode) {
 				this.securityLogger.error('Token exchange: Invalid authorization code', {
 					clientId: params.client_id,
 					redirectUri: params.redirect_uri,
@@ -1384,13 +1385,48 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.debug('Token exchange: Authorization code validated', {
 				clientId: params.client_id,
-				userId: authCode.userId,
-				scopes: authCode.scopes.join(' ')
+				userId: pendingCode.userId,
+				scopes: pendingCode.scopes.join(' ')
 			});
 
 			// The sign-in completes here, not at the login form: a code (or a login session) from before a
 			// deactivation must not turn into tokens.
-			const account = await this.checkAccount(authCode.userId);
+			const account = await this.checkAccount(pendingCode.userId);
+			if (account === 'unavailable') {
+				// The code stays unused, so the retry this answer asks for can still exchange it.
+				this.securityLogger.warn('Token exchange: account status unavailable; code kept for a retry', {
+					clientId: params.client_id,
+					userId: pendingCode.userId
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError(
+						'temporarily_unavailable',
+						'Account status could not be verified, retry later'
+					),
+					503
+				);
+				return;
+			}
+
+			// Use the code up now, once and for all. It may have been exchanged meanwhile by a concurrent request with
+			// the same code: that request won, and this one is refused.
+			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+				params.code,
+				params.client_id,
+				params.redirect_uri,
+				params.code_verifier
+			);
+			if (!authCode) {
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
+					400
+				);
+				return;
+			}
+
+			// An inactive account's code is used up with the rest: it can never turn into tokens.
 			if (account !== 'active') {
 				this.securityLogger.warn('Token exchange: account cannot sign in', {
 					clientId: params.client_id,
@@ -1399,13 +1435,8 @@ export class OAuth2AuthorizationServer {
 				});
 				this.errorHandler.handleOAuthError(
 					res,
-					account === 'inactive'
-						? BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active')
-						: BaseErrorHandler.createAuthError(
-								'temporarily_unavailable',
-								'Account status could not be verified, retry later'
-							),
-					account === 'inactive' ? 400 : 503
+					BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active'),
+					400
 				);
 				return;
 			}

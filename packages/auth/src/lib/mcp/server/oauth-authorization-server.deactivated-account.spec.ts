@@ -118,11 +118,12 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 			client_id: CLIENT_ID
 		};
 
+		let exchange: jest.SpyInstance;
+
 		beforeEach(() => {
-			jest.spyOn(oAuth2AuthorizationCodeManager, 'exchangeAuthorizationCode').mockReturnValue({
-				userId: USER_ID,
-				scopes: ['openid']
-			} as any);
+			const code = { userId: USER_ID, scopes: ['openid'] } as any;
+			jest.spyOn(oAuth2AuthorizationCodeManager, 'checkAuthorizationCode').mockReturnValue(code);
+			exchange = jest.spyOn(oAuth2AuthorizationCodeManager, 'exchangeAuthorizationCode').mockReturnValue(code);
 		});
 
 		it('positive control: an active account gets its tokens', async () => {
@@ -145,7 +146,7 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 			expect(tokenManager.isTokenRevoked(payloads.get(earlier.refreshToken!)!)).toBe(true);
 		});
 
-		it('answers a retryable 503, minting nothing, when the account cannot be looked up', async () => {
+		it('answers a retryable 503, minting nothing and leaving the code unused, when the account cannot be looked up', async () => {
 			const { server, responseBuilder, errorHandler } = build({
 				userInfoProvider: async () => {
 					throw new Error('database unavailable');
@@ -157,6 +158,78 @@ describe('OAuth2AuthorizationServer — deactivated accounts', () => {
 			expect(responseBuilder.sendTokenResponse).not.toHaveBeenCalled();
 			expect(errorHandler.handleOAuthError.mock.calls[0][1]).toMatchObject({ error: 'temporarily_unavailable' });
 			expect(errorHandler.handleOAuthError.mock.calls[0][2]).toBe(503);
+			expect(exchange).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * The code was used up before the account lookup, so the retry the 503 asks for answered `invalid_grant` even once
+	 * the database was back: the person had to sign in again. The code manager is the real one here.
+	 */
+	describe('authorization code exchange after a failed account lookup', () => {
+		const REDIRECT_URI = 'https://client.test/cb';
+
+		const issueCode = () =>
+			oAuth2AuthorizationCodeManager.generateAuthorizationCode(CLIENT_ID, USER_ID, REDIRECT_URI, ['openid']);
+
+		const exchangeParams = (code: string) => ({
+			grant_type: 'authorization_code',
+			code,
+			redirect_uri: REDIRECT_URI,
+			client_id: CLIENT_ID
+		});
+
+		it('keeps the code for the retry, which gets the tokens, and the code is still single-use', async () => {
+			let databaseUp = false;
+			const { server, responseBuilder, errorHandler } = build({
+				userInfoProvider: async (id) => {
+					if (!databaseUp) {
+						throw new Error('database unavailable');
+					}
+					return { userId: id };
+				}
+			});
+			const params = exchangeParams(issueCode());
+
+			await server.handleAuthorizationCodeGrant({}, {}, params);
+			expect(errorHandler.handleOAuthError.mock.calls[0][2]).toBe(503);
+
+			databaseUp = true;
+			await server.handleAuthorizationCodeGrant({}, {}, params);
+			expect(responseBuilder.sendTokenResponse).toHaveBeenCalledTimes(1);
+
+			await server.handleAuthorizationCodeGrant({}, {}, params);
+			expect(responseBuilder.sendTokenResponse).toHaveBeenCalledTimes(1);
+			expect(errorHandler.handleOAuthError.mock.calls[1][1]).toMatchObject({ error: 'invalid_grant' });
+		});
+
+		it('gives the tokens to one of two exchanges racing with the same code', async () => {
+			const { server, responseBuilder, errorHandler } = build({
+				userInfoProvider: async (id) => {
+					await new Promise((resolve) => setImmediate(resolve));
+					return { userId: id };
+				}
+			});
+			const params = exchangeParams(issueCode());
+
+			await Promise.all([
+				server.handleAuthorizationCodeGrant({}, {}, params),
+				server.handleAuthorizationCodeGrant({}, {}, params)
+			]);
+
+			expect(responseBuilder.sendTokenResponse).toHaveBeenCalledTimes(1);
+			expect(errorHandler.handleOAuthError).toHaveBeenCalledTimes(1);
+			expect(errorHandler.handleOAuthError.mock.calls[0][1]).toMatchObject({ error: 'invalid_grant' });
+		});
+
+		it('uses up the code of an account that can no longer sign in', async () => {
+			const { server, errorHandler } = build({ userInfoProvider: async () => null });
+			const code = issueCode();
+
+			await server.handleAuthorizationCodeGrant({}, {}, exchangeParams(code));
+
+			expect(errorHandler.handleOAuthError.mock.calls[0][1]).toMatchObject({ error: 'invalid_grant' });
+			expect(oAuth2AuthorizationCodeManager.getAuthorizationCode(code)?.isUsed).toBe(true);
 		});
 	});
 
