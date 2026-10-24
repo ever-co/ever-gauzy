@@ -131,7 +131,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
 			this.typeOrmRepository.manager.findOne(table, { where: where as any })
 		);
-		await assertMembersAreInScope(sharingMemberReferences(input), scope, (table, ids, criteria) =>
+		// The contract types name no member lists, but the body the route receives can carry them
+		const members = sharingMemberReferences(input as ISharingMembers);
+		await assertMembersAreInScope(members, scope, (table, ids, criteria) =>
 			this.typeOrmRepository.manager.find(table, {
 				where: { ...criteria, id: In(ids) } as any,
 				select: { id: true } as any
