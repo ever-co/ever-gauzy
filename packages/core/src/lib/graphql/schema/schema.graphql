@@ -16408,9 +16408,9 @@ never from an argument, but the organization is a member the caller names and th
 validates against the caller's own memberships. There is no member for the tenant, for the same reason
 there is none on any other write here.
 
-The author is the credential's employee wherever the credential carries one, so `employeeId` is what a
-caller holding the kernel's change-selected-employee permission states on behalf of somebody else, and
-what the delivered write falls back to when the credential names no employee at all.
+The author is always the caller: the credential's employee when it carries one, and otherwise nobody,
+the comment then being owned by the user who posted it. `employeeId` and `resolvedByEmployeeId` are
+accepted so that existing clients keep validating, and both are ignored.
 
 `parentId` makes the comment a reply. `mentionEmployeeIds` is the one member the delivered write reads
 without storing it on the row: each identifier named there is published a mention against the comment
@@ -16442,12 +16442,10 @@ input CreateCommentInput {
   """When the text was last edited. Omit while it stands as first written."""
   editedAt: DateTime
 
-  """
-  The employee to record as the author. Omit to record the caller's own employee.
-  """
+  """Ignored: the author is always the caller."""
   employeeId: ID
 
-  """The employee to record as the one who resolved the conversation."""
+  """Ignored: a new comment has no resolver."""
   resolvedByEmployeeId: ID
 
   """The comment this one answers. Omit to start a conversation."""
@@ -16507,10 +16505,10 @@ input UpdateCommentInput {
   """When the text was last edited."""
   editedAt: DateTime
 
-  """The employee recorded as the author."""
+  """The author. Only a tenant administrator's edit changes it."""
   employeeId: ID
 
-  """The employee recorded as the one who resolved the conversation."""
+  """The caller, or whom a tenant admin names; null clears it."""
   resolvedByEmployeeId: ID
 
   """The comment this one answers."""

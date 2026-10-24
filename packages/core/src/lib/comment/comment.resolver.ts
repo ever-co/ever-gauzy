@@ -226,7 +226,8 @@ export class CommentResolver {
 	 * The write is dispatched as the same command the REST route dispatches, carrying the same body, so
 	 * the two surfaces publish the same mentions and record the same author for the same caller: the
 	 * author and the tenant are resolved from the credential inside the handler, and a body that states
-	 * neither still posts a comment the caller owns.
+	 * neither still posts a comment the caller owns. An `employeeId` or `resolvedByEmployeeId` in the
+	 * input is ignored: the author is always the caller.
 	 *
 	 * The body is handed on as the contract's own input. The two members the schema carries as text —
 	 * `entity` and `actorType` — are the kernel's `BaseEntityEnum` and `ActorTypeEnum` values, and the

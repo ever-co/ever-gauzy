@@ -334,9 +334,9 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'AuthZitadelController.linkConfirm', // pending link must belong to the caller (pendingFor), plus the e-mail code for same-address accounts
 	'AuthZitadelController.linkPreview', // reads the caller's own pending link (pendingFor rejects another user's key)
 	'AuthZitadelController.unlink', // findOwnLink(id, caller): another user's link id is a 404; the last sign-in method is a 409
-	// CommentController: user-owned: CommentService pins the author to the employee of the caller, and only a
-	// CHANGE_SELECTED_EMPLOYEE holder may edit or delete another employee comment
-	// (comment.service.ts:52, 125)
+	// CommentController: user-owned: CommentService pins the author to the caller (their employee, else the posting
+	// user via createdByUserId; never the body), and only a CHANGE_SELECTED_EMPLOYEE holder may edit or delete another
+	// employee comment (comment.service.ts create, update, assertMayManage)
 	'CommentController.create',
 	'CommentController.delete',
 	'CommentController.softRecover',

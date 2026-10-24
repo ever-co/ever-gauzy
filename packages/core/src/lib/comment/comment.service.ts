@@ -17,9 +17,21 @@ import { RequestContext } from '../core/context';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
+import { isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
+
+/**
+ * The columns that say who wrote a comment and who resolved it. A body never states them on a create. On an
+ * edit only a tenant administrator may, and any other caller's stated resolver is themselves.
+ */
+const AUTHORSHIP_COLUMNS: ReadonlyArray<string> = Object.freeze([
+	'employeeId',
+	'employee',
+	'resolvedByEmployeeId',
+	'resolvedByEmployee'
+]);
 
 @Injectable()
 export class CommentService extends TenantAwareCrudService<Comment> {
@@ -51,12 +63,15 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		try {
 			// Retrieve context-specific IDs.
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			// The author is the caller's own employee. RequestContext.currentEmployeeId() is deliberately
-			// null for CHANGE_SELECTED_EMPLOYEE holders, so fall back to the JWT user's employee before the
-			// body value; a caller with no employee identity at all posts an author-less comment (as before).
-			const employeeId =
-				RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? input.employeeId;
-			const { mentionEmployeeIds = [], organizationId, ...data } = input;
+			// The author is the caller, and never the body. A caller with an employee record is the author.
+			// A caller without one posts an author-less comment, which is owned by the user who posted it:
+			// `createdByUserId` is stamped from the credential, which is the key assertMayManage manages it
+			// by and the identity the ever-co/ever-gauzy#11328 ownership rule reads. The body's `employeeId`
+			// used to be the fallback, so a caller with no employee record could post as any employee,
+			// mention notifications included.
+			const employeeId = this.callerEmployeeId();
+			// Who resolved a comment is not the body's to state either, and a new comment has no resolver.
+			const { mentionEmployeeIds = [], organizationId, ...data } = this.withoutAuthorship(input);
 
 			// Validate that the employee exists (only a real id can be looked up — an empty one used to
 			// match an arbitrary employee and pass vacuously).
@@ -152,9 +167,14 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				throw new BadRequestException(`Comment with id ${id} not found`);
 			}
 
-			// Update the comment with the new input data.
+			// Update the comment with the new input data. Who wrote and who resolved it are not an edit's to
+			// restate, by the rule every per-user row follows (ever-co/ever-gauzy#11328, withoutAuthorChange):
+			// `createdByUserId` never, the author and resolver columns only by a tenant administrator.
+			// ICommentUpdateInput already leaves the author out, but the REST DTO still carried `employeeId`,
+			// and a CHANGE_SELECTED_EMPLOYEE holder's edit wrote it. A resolver the body names is the caller.
 			const updatedComment = await super.create({
-				...input,
+				...withoutAuthorChange(input, AUTHORSHIP_COLUMNS),
+				...this.resolverStatedBy(input),
 				id
 			});
 
@@ -232,6 +252,53 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		return super.delete(criteria, options);
+	}
+
+	/**
+	 * The caller's own employee, or `undefined` when they have no employee record.
+	 *
+	 * `RequestContext.currentEmployeeId()` is deliberately null for a CHANGE_SELECTED_EMPLOYEE holder, so the JWT
+	 * user's employee is read as well. It is never read from a body.
+	 */
+	private callerEmployeeId(): ID | undefined {
+		return RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? undefined;
+	}
+
+	/**
+	 * A new comment's input without the members that say who wrote or resolved it.
+	 *
+	 * Those are the author (`employeeId` / `employee`), the resolver (`resolvedByEmployeeId` /
+	 * `resolvedByEmployee`) and the posting user (`createdByUserId` / `createdByUser`, which the base entity
+	 * subscriber stamps). `CreateCommentDTO` extends the entity, so a REST body kept the identifiers through
+	 * the whitelist, and the GraphQL input declares both. `create` states the author itself, for every
+	 * caller, as the resource-link create does.
+	 */
+	private withoutAuthorship<I extends object>(input: I): I {
+		const rest = { ...((input ?? {}) as Record<string, unknown>) };
+		for (const column of [...AUTHORSHIP_COLUMNS, 'createdByUserId', 'createdByUser']) {
+			delete rest[column];
+		}
+
+		return rest as I;
+	}
+
+	/**
+	 * The resolver an edit writes, when the edit states one and the caller is not a tenant administrator.
+	 *
+	 * A resolver the body names is the caller's own employee, so nobody can mark a comment as resolved by
+	 * a colleague. An explicit `null` (a reopen) clears the column. An edit that does not name the resolver
+	 * leaves it as stored. The Documents threads resolve with `resolved` / `resolvedAt` only, so their
+	 * flow is unchanged. A tenant administrator's edit keeps the resolver it states, as
+	 * {@link withoutAuthorChange} keeps their author columns.
+	 */
+	private resolverStatedBy(input: ICommentUpdateInput): Pick<IComment, 'resolvedByEmployeeId'> {
+		if (!input || input.resolvedByEmployeeId === undefined || isCallerTenantAdmin()) {
+			return {};
+		}
+
+		return {
+			resolvedByEmployeeId: input.resolvedByEmployeeId == null ? null : this.callerEmployeeId() ?? null
+		};
 	}
 
 	/**
