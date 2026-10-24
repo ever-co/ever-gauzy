@@ -707,7 +707,10 @@ export class ImportService {
 	}
 
 	/*
-	 * Map import record after find or insert data
+	 * Map import record after find or insert data.
+	 *
+	 * A row the archive gives no id is not mapped: no other archive row can name it, and the mapping's `sourceId` is a
+	 * required column, so writing one failed the import after the row itself was saved.
 	 */
 	async mappedImportRecord(item: IRepositoryModel, destination: any, row: any): Promise<any> {
 		const { repository } = item;
@@ -715,7 +718,7 @@ export class ImportService {
 
 		return await new Promise(async (resolve, reject) => {
 			try {
-				if (destination) {
+				if (destination && isNotEmpty(row?.id)) {
 					await this.commandBus.execute(
 						new ImportRecordUpdateOrCreateCommand({
 							tenantId: RequestContext.currentTenantId(),

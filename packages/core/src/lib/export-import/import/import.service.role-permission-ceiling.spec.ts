@@ -40,7 +40,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
-import { ImportRecordFindOrFailCommand } from '../import-record';
+import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 
 const TENANT = 'a0000000-0000-4000-8000-00000000000a';
 
@@ -126,7 +126,13 @@ function buildService(importRecords: Record<string, string> = {}, stored: Record
 				const [, where, row, sourceId] = (command as unknown as { args: any[] }).args;
 				return { sourceId, where, row };
 			});
-	return { service, written, typeOrmRolePermissionRepository, table };
+	/** The import records written: the archive id of each row and the row it was mapped to. */
+	const mapped = () =>
+		execute.mock.calls
+			.map(([command]) => command)
+			.filter((command) => command instanceof ImportRecordUpdateOrCreateCommand)
+			.map((command) => (command as unknown as { input: { sourceId?: string; destinationId?: string } }).input);
+	return { service, written, mapped, typeOrmRolePermissionRepository, table };
 }
 
 /**
@@ -264,6 +270,23 @@ describe('ImportService — role permissions are imported under the role-permiss
 		);
 		expect(written()[0].row).not.toHaveProperty('role');
 		expect(written()[0].row).not.toHaveProperty('tenant');
+	});
+
+	it('writes a row the archive gives no id, and maps only the rows that have one', async () => {
+		writeArchive(
+			[
+				'id,roleId,permission,enabled',
+				`,src-role-custom,${PermissionsEnum.ORG_EMPLOYEES_VIEW},true`,
+				`src-held,src-role-custom,${PermissionsEnum.ORG_EMPLOYEES_VIEW},false`
+			].join('\n') + '\n'
+		);
+		const { service, written, mapped } = buildService();
+
+		await service.parse(extractPath, false);
+
+		expect(written().map(({ sourceId }) => sourceId)).toEqual(['', 'src-held']);
+		// The mapping's source id is a required column: a mapping without one failed the import after the save.
+		expect(mapped()).toEqual([expect.objectContaining({ sourceId: 'src-held', destinationId: 'created-row' })]);
 	});
 
 	it('writes no role permission for an ADMIN who may not change role permissions', async () => {
