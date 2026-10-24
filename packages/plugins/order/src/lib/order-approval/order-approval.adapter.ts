@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import {
 	ApprovalPolicyTypesStringEnum,
 	DecimalString,
@@ -117,19 +117,31 @@ export class OrderApprovalAdapter implements IOrderApprovalPort {
 	 * Records the decision on every request of the order still awaiting one, through the approval service's
 	 * own decision path — the one an administrator's approve and refuse use.
 	 *
+	 * The open requests are read once and decided one by one, so an approver can decide one of them in between.
+	 * The decision path answers 409 for it. That request is not this call's to decide, and it does not stop the
+	 * rest from being decided.
+	 *
 	 * @param orderId The order.
 	 * @param approved True when the order was approved, false when it was refused.
-	 * @returns How many requests were decided.
+	 * @returns How many requests this call decided.
 	 */
 	public async settle(orderId: ID, approved: boolean): Promise<number> {
 		const open = await this.openRequests(orderId);
 		const status = approved ? RequestApprovalStatusTypesEnum.APPROVED : RequestApprovalStatusTypesEnum.REFUSED;
+		let decided = 0;
 
 		for (const request of open) {
-			await this.requestApprovalService.updateStatusRequestApprovalByAdmin(request.id, status);
+			try {
+				await this.requestApprovalService.updateStatusRequestApprovalByAdmin(request.id, status);
+				decided++;
+			} catch (error) {
+				if (!(error instanceof ConflictException)) {
+					throw error;
+				}
+			}
 		}
 
-		return open.length;
+		return decided;
 	}
 
 	/**

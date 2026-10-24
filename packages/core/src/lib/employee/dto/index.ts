@@ -1,4 +1,5 @@
 export * from './update-profile.dto';
+export * from './profile-contact.dto';
 export * from './employment.dto';
 export * from './update-employee.dto';
 export * from './employee-bulk-input.dto';

@@ -14,18 +14,16 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { DeepPartial } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { parseToBoolean } from '@gauzy/utils';
 import { IUserOrganization, IPagination, ID, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganization } from './user-organization.entity';
 import { UserOrganizationDeleteCommand } from './commands';
-import { FindMeUserOrganizationDTO } from './dto/find-me-user-organization.dto';
+import { CreateUserOrganizationDTO, FindMeUserOrganizationDTO, UpdateUserOrganizationDTO } from './dto';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -99,6 +97,10 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	 * authorizes any route whose permission metadata is empty. Method metadata is not inherited by an
 	 * override, so the base route's `@HttpCode` is restated to keep the response status unchanged.
 	 *
+	 * The body is whitelisted to what the GraphQL twin accepts, and its organization is checked the way
+	 * the twin's is (owner decision 1): a tenant admin may add a membership of any organization of the
+	 * tenant, anyone else only of the organization of their token.
+	 *
 	 * @param entity - The membership to create.
 	 * @returns The created membership.
 	 */
@@ -106,8 +108,9 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The membership has been created' })
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@UseValidationPipe({ whitelist: true })
 	@Post()
-	async create(@Body() entity: DeepPartial<UserOrganization>): Promise<UserOrganization> {
+	async create(@Body() entity: CreateUserOrganizationDTO): Promise<UserOrganization> {
 		return await super.create(entity);
 	}
 
@@ -118,6 +121,10 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	 * {@link create} for why an override is required. Method metadata is not inherited by an override,
 	 * so the base route's `@HttpCode` is restated to keep the response status unchanged.
 	 *
+	 * The body is whitelisted to the flags the GraphQL twin accepts: a membership is never re-pointed at
+	 * another person or organization. The membership itself must lie inside the caller's organization
+	 * boundary, which the service checks for both surfaces.
+	 *
 	 * @param id - The membership to update.
 	 * @param entity - The fields to update.
 	 * @returns The updated membership.
@@ -126,11 +133,9 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The membership has been updated' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@UseValidationPipe({ whitelist: true })
 	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: QueryDeepPartialEntity<UserOrganization>
-	): Promise<any> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateUserOrganizationDTO): Promise<any> {
 		return await super.update(id, entity);
 	}
 

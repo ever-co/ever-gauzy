@@ -13,7 +13,7 @@ jest.mock('@gauzy/core', () => ({
 	versionExpectationOf: () => undefined
 }));
 
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { ApprovalPolicyTypesStringEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { OrderApprovalAdapter } from './order-approval.adapter';
 
@@ -120,5 +120,29 @@ describe('OrderApprovalAdapter — the order’s approval, on the platform’s r
 			['approval-7', RequestApprovalStatusTypesEnum.REFUSED],
 			['approval-8', RequestApprovalStatusTypesEnum.REFUSED]
 		]);
+	});
+
+	it('goes on past a request an approver decided after the read, and counts only the ones it decided', async () => {
+		const service = approvalService([{ id: 'approval-7' }, { id: 'approval-8' }, { id: 'approval-9' }]);
+		// approval-7 was decided between the read of the open requests and its turn: the decision path answers 409.
+		service.updateStatusRequestApprovalByAdmin.mockRejectedValueOnce(
+			new ConflictException('Request Approval is Conflict')
+		);
+
+		await expect(new OrderApprovalAdapter(service as never).settle('order-1', true)).resolves.toBe(2);
+		expect(service.updateStatusRequestApprovalByAdmin.mock.calls.map(([id]) => id)).toEqual([
+			'approval-7',
+			'approval-8',
+			'approval-9'
+		]);
+	});
+
+	it('still fails on an error that is not a conflict', async () => {
+		const service = approvalService([{ id: 'approval-7' }]);
+		service.updateStatusRequestApprovalByAdmin.mockRejectedValueOnce(new Error('connection lost'));
+
+		await expect(new OrderApprovalAdapter(service as never).settle('order-1', true)).rejects.toThrow(
+			'connection lost'
+		);
 	});
 });
