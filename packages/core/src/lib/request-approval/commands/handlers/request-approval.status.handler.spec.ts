@@ -1,8 +1,7 @@
 // Must stay first: loads the entity graph before the service and the controllers pull an entity.
 import '../../../core/entities/internal';
 
-import { ConflictException, ForbiddenException } from '@nestjs/common';
-import { FindOperator } from 'typeorm';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PERMISSIONS_METADATA, ROLES_METADATA } from '@gauzy/constants';
 import {
 	ApprovalPolicyTypesStringEnum,
@@ -16,7 +15,7 @@ import { MultiORMEnum } from '../../../core/utils';
 import { EquipmentSharingController } from '../../../equipment-sharing/equipment-sharing.controller';
 import { TimeOffRequestController } from '../../../time-off-request/time-off-request.controller';
 import { EQUIPMENT_SHARING_DECISION_GATE, TIME_OFF_DECISION_GATE } from '../../linked-document-decision.gate';
-import { RequestApprovalService } from '../../request-approval.service';
+import { IRequestApprovalAnswerTransaction, RequestApprovalService } from '../../request-approval.service';
 import { RequestApprovalStatusCommand } from '../request-approval.status.command';
 import { RequestApprovalStatusHandler } from './request-approval.status.handler';
 
@@ -29,13 +28,16 @@ import { RequestApprovalStatusHandler } from './request-approval.status.handler'
  * let `@Roles(SUPER_ADMIN, ADMIN)` + `TIME_OFF_EDIT`, resp. `EQUIPMENT_APPROVE_REQUEST`, do. An employee approved a
  * colleague's leave, or their own equipment sharing.
  *
- * The real service runs over fake repositories; the two document services are fakes that log their calls.
+ * The real service and handler run over a fake of the answer's transaction: the writes it is handed are logged
+ * when the body returns (the commit) and dropped when it throws (the rollback), so `calls` is what a store would
+ * hold. The interleaving of two answers is covered in `request-approval.answer-atomic.spec.ts`.
  */
 
 const { REQUESTED, APPROVED, REFUSED } = RequestApprovalStatusTypesEnum;
 
 const TENANT = 'tenant-a';
 const ORGANIZATION = 'organization-a';
+const OTHER_ORGANIZATION = 'organization-b';
 const FINANCE = 'team-finance';
 
 interface IFixtureUser {
@@ -124,62 +126,80 @@ const equipmentRow = (overrides: Record<string, any> = {}) =>
 
 const aliceSlot = () => ({ id: 'slot-alice', employeeId: ALICE.employeeId, status: REQUESTED });
 
-function surfaces(row: Record<string, any>) {
+const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
+function surfaces(row: Record<string, any>, stored: { request?: Record<string, any> } = {}) {
 	const calls: string[] = [];
-	const manager = {
-		update: jest.fn(async (entity: { name: string }, _where: any, patch: any) => {
-			calls.push(`slot:${entity.name}:${patch.status}`);
-			return { affected: 1 };
-		})
+	const documents: Record<string, Record<string, any> | null> = {
+		'time-off': { id: 'time-off-1', organizationId: ORGANIZATION, status: 'REQUESTED' },
+		'equipment-sharing': { id: 'sharing-1', organizationId: ORGANIZATION, status: REQUESTED }
 	};
-	const teamMemberships = {
-		find: jest.fn(async ({ where }: any) =>
-			MEMBERSHIPS.filter(
-				(membership) =>
-					membership.employeeId === where.employeeId &&
-					membership.tenantId === where.tenantId &&
-					membership.isActive === where.isActive &&
-					((where.organizationTeamId as FindOperator<string[]>).value as unknown as string[]).includes(
-						membership.organizationTeamId
-					)
-			)
-		)
-	};
+	const slotWrites: { kind: string; ids: string[]; tenantId: string }[] = [];
+	const locks: { id: string; tenantId: string }[] = [];
+
 	const service = new RequestApprovalService(
-		{ manager } as any,
-		{} as any,
-		{} as any,
-		{} as any,
-		{} as any,
-		{} as any,
-		teamMemberships as any,
-		{} as any
+		...(Array.from({ length: 8 }, () => ({})) as [any, any, any, any, any, any, any, any])
 	);
-	// A fresh copy per read, as the store answers one: an answer applies itself to the row it read.
-	jest.spyOn(service, 'findOneByIdString').mockImplementation(async () => JSON.parse(JSON.stringify(row)));
-	const update = jest.spyOn(service, 'update').mockImplementation(async (_id: any, patch: any) => {
-		calls.push(`request:${patch.status}`);
-		return { affected: 1 } as any;
+	// The caller's scoped read: what decides whether the request is theirs to reach at all.
+	jest.spyOn(service, 'findOneByIdString').mockImplementation(async () => copy(row) as any);
+	// Nothing of the answer may go through the service's own connection.
+	const update = jest.spyOn(service, 'update');
+	const save = jest.spyOn(service, 'save');
+
+	jest.spyOn(service as any, 'answerTransaction').mockImplementation(async (work: any) => {
+		// The rows as the locked read finds them: the stored request, by default the one the scoped read found.
+		const locked = copy(stored.request ?? row);
+		const pending: string[] = [];
+		const transaction: IRequestApprovalAnswerTransaction = {
+			lockRequest: async (id, tenantId) => {
+				locks.push({ id, tenantId });
+				const { employeeApprovals: _e, teamApprovals: _t, ...request } = locked;
+				return id === locked.id && tenantId === locked.tenantId ? (request as any) : null;
+			},
+			readSlots: async () => ({
+				employeeApprovals: copy(locked.employeeApprovals),
+				teamApprovals: copy(locked.teamApprovals)
+			}),
+			readApproverTeams: async (employeeId, teamIds, tenantId) =>
+				MEMBERSHIPS.filter(
+					(membership) =>
+						membership.employeeId === employeeId &&
+						membership.tenantId === tenantId &&
+						membership.isActive &&
+						teamIds.includes(membership.organizationTeamId)
+				).map((membership) => membership.organizationTeamId),
+			writeSlots: async (kind, ids, tenantId, status) => {
+				slotWrites.push({ kind, ids, tenantId });
+				pending.push(`slot:${kind}:${status}`);
+			},
+			writeRequestStatus: async (_id, _tenantId, status) => {
+				pending.push(`request:${status}`);
+			},
+			readLinkedDocument: async (kind, id) => {
+				const document = documents[kind];
+				return document?.id === id ? copy(document as any) : null;
+			},
+			moveTimeOff: async (id, _tenantId, status) => {
+				if (documents['time-off']?.id !== id || documents['time-off'].status !== 'REQUESTED') {
+					return 0;
+				}
+				pending.push(`time-off:${id}:${status}`);
+				return 1;
+			},
+			moveEquipmentSharing: async (id, _tenantId, status) => {
+				pending.push(`equipment:${id}:${status}`);
+			}
+		};
+		// A body that throws commits nothing.
+		const result = await work(transaction);
+		calls.push(...pending);
+		return result;
 	});
-	const timeOffRequestService = {
-		updateStatusTimeOffByAdmin: jest.fn(async (id: string, status: string) => {
-			calls.push(`time-off:${id}:${status}`);
-		}),
-		findOneByIdString: jest.fn(async (id: string) => ({ id, status: 'REQUESTED' }))
-	};
-	const equipmentSharingService = {
-		updateStatusEquipmentSharingByAdmin: jest.fn(async (id: string, status: number) => {
-			calls.push(`equipment:${id}:${status}`);
-		})
-	};
-	const handler = new RequestApprovalStatusHandler(
-		service,
-		equipmentSharingService as any,
-		timeOffRequestService as any
-	);
+
+	const handler = new RequestApprovalStatusHandler(service);
 	const answer = (status: number) => handler.execute(new RequestApprovalStatusCommand(row.id, status));
 
-	return { answer, calls, manager, update, teamMemberships, timeOffRequestService, equipmentSharingService };
+	return { answer, calls, documents, slotWrites, locks, update, save };
 }
 
 describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approval)', () => {
@@ -214,34 +234,35 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 	describe('a designated approver', () => {
 		it('records an approval below min_count without moving the document', async () => {
 			asUser(ALICE);
-			const { answer, calls, update } = surfaces(
-				equipmentRow({ min_count: 2, employeeApprovals: [aliceSlot()] })
-			);
+			const { answer, calls } = surfaces(equipmentRow({ min_count: 2, employeeApprovals: [aliceSlot()] }));
 
 			const answered = await answer(APPROVED);
 
 			expect(answered.status).toBe(REQUESTED);
-			expect(calls).toEqual([`slot:RequestApprovalEmployee:${APPROVED}`]);
-			expect(update).not.toHaveBeenCalled();
+			expect(calls).toEqual([`slot:employee:${APPROVED}`]);
 		});
 
 		it('moves the equipment sharing once min_count is reached, when they hold its decision permission', async () => {
 			asUser(ALICE_MANAGER);
-			const { answer, calls, manager } = surfaces(equipmentRow({ employeeApprovals: [aliceSlot()] }));
+			const { answer, calls, slotWrites, locks, update, save } = surfaces(
+				equipmentRow({ employeeApprovals: [aliceSlot()] })
+			);
 
 			const answered = await answer(APPROVED);
 
 			expect(answered.status).toBe(APPROVED);
-			// The document first, so a refusal from its own service leaves the request untouched; then the answer.
+			// One commit: the document, the slot and the request together.
 			expect(calls).toEqual([
 				`equipment:sharing-1:${APPROVED}`,
-				`slot:RequestApprovalEmployee:${APPROVED}`,
+				`slot:employee:${APPROVED}`,
 				`request:${APPROVED}`
 			]);
-			// The slot is written by id inside the caller's tenant.
-			const [, where] = manager.update.mock.calls[0];
-			expect(where.tenantId).toBe(TENANT);
-			expect((where.id as FindOperator<string[]>).value).toEqual(['slot-alice']);
+			// The request is read again under the lock, inside the caller's tenant, and the slot written by id there.
+			expect(locks).toEqual([{ id: 'approval-1', tenantId: TENANT }]);
+			expect(slotWrites).toEqual([{ kind: 'employee', ids: ['slot-alice'], tenantId: TENANT }]);
+			// Nothing went through the service's own connection, outside the transaction.
+			expect(update).not.toHaveBeenCalled();
+			expect(save).not.toHaveBeenCalled();
 		});
 
 		it('is refused, before anything is written, when the answer would move an equipment sharing they may not decide', async () => {
@@ -250,6 +271,15 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 
 			await expect(answer(APPROVED)).rejects.toBeInstanceOf(ForbiddenException);
 			await expect(answer(REFUSED)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(calls).toEqual([]);
+		});
+
+		it('does not move an equipment sharing of another organization: 404, nothing written', async () => {
+			asUser(ALICE_MANAGER);
+			const { answer, calls, documents } = surfaces(equipmentRow({ employeeApprovals: [aliceSlot()] }));
+			documents['equipment-sharing'].organizationId = OTHER_ORGANIZATION;
+
+			await expect(answer(APPROVED)).rejects.toBeInstanceOf(NotFoundException);
 			expect(calls).toEqual([]);
 		});
 
@@ -263,7 +293,7 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 
 		it('answers for an approver team they are an active member of, in their own tenant', async () => {
 			asUser(MALLORY);
-			const { answer, calls, teamMemberships } = surfaces(
+			const { answer, calls } = surfaces(
 				approvalRow({
 					name: 'Conference trip',
 					requestType: ApprovalPolicyTypesStringEnum.BUSINESS_TRIP,
@@ -276,10 +306,7 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 
 			expect(answered.status).toBe(APPROVED);
 			// A request that moves no document needs no document permission.
-			expect(calls).toEqual([`slot:RequestApprovalTeam:${APPROVED}`, `request:${APPROVED}`]);
-			expect(teamMemberships.find).toHaveBeenCalledWith({
-				where: expect.objectContaining({ employeeId: MALLORY.employeeId, tenantId: TENANT, isActive: true })
-			});
+			expect(calls).toEqual([`slot:team:${APPROVED}`, `request:${APPROVED}`]);
 		});
 
 		it("does not answer for a team through another tenant's membership", async () => {
@@ -304,6 +331,38 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 			await expect(answer(REFUSED)).rejects.toBeInstanceOf(ConflictException);
 			expect(calls).toEqual([]);
 		});
+
+		it.each([APPROVED, REFUSED])(
+			'decides on the request the lock read, not on the earlier scoped read: decided meanwhile (%p) is a conflict',
+			async (decided) => {
+				asUser(ALICE_MANAGER);
+				const open = equipmentRow({ employeeApprovals: [aliceSlot()] });
+				const { answer, calls } = surfaces(open, {
+					request: { ...open, status: decided, employeeApprovals: [aliceSlot()] }
+				});
+
+				await expect(answer(APPROVED)).rejects.toBeInstanceOf(ConflictException);
+				expect(calls).toEqual([]);
+			}
+		);
+
+		it('counts min_count on the slots the lock read: an approval committed meanwhile completes the request', async () => {
+			asUser(ALICE_MANAGER);
+			const bobSlot = { id: 'slot-bob', employeeId: 'employee-bob', status: REQUESTED };
+			const open = equipmentRow({ min_count: 2, employeeApprovals: [aliceSlot(), bobSlot] });
+			const { answer, calls } = surfaces(open, {
+				request: { ...open, employeeApprovals: [aliceSlot(), { ...bobSlot, status: APPROVED }] }
+			});
+
+			const answered = await answer(APPROVED);
+
+			expect(answered.status).toBe(APPROVED);
+			expect(calls).toEqual([
+				`equipment:sharing-1:${APPROVED}`,
+				`slot:employee:${APPROVED}`,
+				`request:${APPROVED}`
+			]);
+		});
 	});
 
 	describe('a tenant administrator', () => {
@@ -320,6 +379,16 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 			expect(calls).toEqual([`time-off:time-off-1:${timeOffStatus}`, `request:${status}`]);
 		});
 
+		it('decides an approved equipment sharing the other way, and the sharing follows', async () => {
+			asUser(ADMIN);
+			const { answer, calls } = surfaces(equipmentRow({ status: APPROVED }));
+
+			const answered = await answer(REFUSED);
+
+			expect(answered.status).toBe(REFUSED);
+			expect(calls).toEqual([`equipment:sharing-1:${REFUSED}`, `request:${REFUSED}`]);
+		});
+
 		it('cannot move a document their role no longer may decide', async () => {
 			asUser(ADMIN_WITHOUT_DOCUMENT_GRANTS);
 
@@ -330,42 +399,33 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 			}
 		});
 
-		it("leaves the request untouched when the document's own service refuses the change", async () => {
+		it('writes the answer when the leave already carries the decision', async () => {
 			asUser(ADMIN);
-			const { answer, calls, timeOffRequestService } = surfaces(approvalRow());
-			timeOffRequestService.updateStatusTimeOffByAdmin.mockRejectedValueOnce(
-				new ConflictException('Request time off is Conflict')
-			);
+			const { answer, calls, documents } = surfaces(approvalRow());
+			// The leave was decided through its own route: it is no longer REQUESTED, and says what this answer says.
+			documents['time-off'].status = 'APPROVED';
+
+			const answered = await answer(APPROVED);
+
+			expect(answered.status).toBe(APPROVED);
+			expect(calls).toEqual([`request:${APPROVED}`]);
+		});
+
+		it('refuses a leave decided the other way, and writes nothing', async () => {
+			asUser(ADMIN);
+			const { answer, calls, documents } = surfaces(approvalRow());
+			documents['time-off'].status = 'DENIED';
 
 			await expect(answer(APPROVED)).rejects.toBeInstanceOf(ConflictException);
 			expect(calls).toEqual([]);
 		});
 
-		it('writes the answer when the leave already carries the decision, so a failed write is retried', async () => {
+		it('answers 404, and writes nothing, when the leave the request is about is gone', async () => {
 			asUser(ADMIN);
-			const { answer, calls, timeOffRequestService } = surfaces(approvalRow());
-			// An earlier attempt moved the leave, then failed to write its answer: the leave is no longer REQUESTED.
-			timeOffRequestService.updateStatusTimeOffByAdmin.mockRejectedValueOnce(
-				new ConflictException('Request time off is Conflict')
-			);
-			timeOffRequestService.findOneByIdString.mockResolvedValueOnce({ id: 'time-off-1', status: 'APPROVED' });
+			const { answer, calls, documents } = surfaces(approvalRow());
+			documents['time-off'] = null;
 
-			const answered = await answer(APPROVED);
-
-			expect(answered.status).toBe(APPROVED);
-			expect(timeOffRequestService.findOneByIdString).toHaveBeenCalledWith('time-off-1');
-			expect(calls).toEqual([`request:${APPROVED}`]);
-		});
-
-		it('still refuses a leave decided the other way', async () => {
-			asUser(ADMIN);
-			const { answer, calls, timeOffRequestService } = surfaces(approvalRow());
-			timeOffRequestService.updateStatusTimeOffByAdmin.mockRejectedValueOnce(
-				new ConflictException('Request time off is Conflict')
-			);
-			timeOffRequestService.findOneByIdString.mockResolvedValueOnce({ id: 'time-off-1', status: 'DENIED' });
-
-			await expect(answer(APPROVED)).rejects.toBeInstanceOf(ConflictException);
+			await expect(answer(APPROVED)).rejects.toBeInstanceOf(NotFoundException);
 			expect(calls).toEqual([]);
 		});
 
@@ -411,31 +471,61 @@ describe('RequestApprovalService.updateStatusRequestApprovalByAdmin (the order p
 	});
 	afterEach(() => jest.restoreAllMocks());
 
-	function service(status: number) {
+	/**
+	 * @param scopedStatus The status the scoped read finds.
+	 * @param lockedStatus The status the locked read finds, by default the same.
+	 */
+	function service(scopedStatus: number, lockedStatus: number = scopedStatus) {
 		const instance = new RequestApprovalService(
 			...(Array.from({ length: 6 }, () => ({})) as [any, any, any, any, any, any])
 		);
-		jest.spyOn(instance, 'findOneByIdString').mockResolvedValue(equipmentRow({ status }) as any);
+		jest.spyOn(instance, 'findOneByIdString').mockResolvedValue(equipmentRow({ status: scopedStatus }) as any);
 		const save = jest.spyOn(instance, 'save').mockImplementation(async (entity: any) => entity);
-		return { instance, save };
+		const written: number[] = [];
+		jest.spyOn(instance as any, 'answerTransaction').mockImplementation(async (work: any) => {
+			const pending: number[] = [];
+			const result = await work({
+				lockRequest: async (id: string, tenantId: string) =>
+					tenantId === TENANT ? equipmentRow({ id, status: lockedStatus }) : null,
+				writeRequestStatus: async (_id: string, _tenantId: string, status: number) => {
+					pending.push(status);
+				}
+			});
+			written.push(...pending);
+			return result;
+		});
+		return { instance, save, written };
 	}
 
-	it('decides an open request', async () => {
-		const { instance, save } = service(REQUESTED);
+	it('decides an open request, on the transaction', async () => {
+		const { instance, save, written } = service(REQUESTED);
 
 		expect((await instance.updateStatusRequestApprovalByAdmin('approval-1', APPROVED)).status).toBe(APPROVED);
-		expect(save).toHaveBeenCalled();
+		expect(written).toEqual([APPROVED]);
+		expect(save).not.toHaveBeenCalled();
 	});
 
 	it.each([APPROVED, REFUSED])(
 		'restores the conflict check: a decided request (%p) is not decided again',
 		async (decided) => {
-			const { instance, save } = service(decided);
+			const { instance, written } = service(decided);
 
 			await expect(instance.updateStatusRequestApprovalByAdmin('approval-1', REFUSED)).rejects.toBeInstanceOf(
 				ConflictException
 			);
-			expect(save).not.toHaveBeenCalled();
+			expect(written).toEqual([]);
+		}
+	);
+
+	it.each([APPROVED, REFUSED])(
+		"checks on the locked read: an approver's answer (%p) committed after the scoped read is not overwritten",
+		async (decided) => {
+			const { instance, written } = service(REQUESTED, decided);
+
+			await expect(instance.updateStatusRequestApprovalByAdmin('approval-1', APPROVED)).rejects.toBeInstanceOf(
+				ConflictException
+			);
+			expect(written).toEqual([]);
 		}
 	);
 });
