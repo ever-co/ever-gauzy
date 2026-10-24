@@ -765,8 +765,9 @@ export class DocumentUploadService {
 	 * duplicate a file (read access) and then replace the file on their own copy delete the original's
 	 * bytes. Trashed rows count too: they can still be recovered.
 	 *
-	 * Best-effort, as the delete itself is: it runs after the swap committed, so a reference check that fails keeps
-	 * the blob (an orphan costs storage) instead of failing a replace that already succeeded.
+	 * Best-effort, as the delete itself is: it runs after the swap committed, so a reference check, or a storage
+	 * provider that cannot be resolved, keeps the blob (an orphan costs storage) instead of failing a replace that
+	 * already succeeded and skipping its update event and extraction job.
 	 *
 	 * @param storageKey The key the document used before the replace.
 	 * @param storageProvider The provider that key lives on.
@@ -793,7 +794,15 @@ export class DocumentUploadService {
 		if (stillReferenced > 0) {
 			return;
 		}
-		await this.cleanupOne(new FileStorage().getProvider(storageProvider), { key: storageKey } as UploadedFile);
+		let provider: any;
+		try {
+			provider = new FileStorage().getProvider(storageProvider);
+		} catch (error) {
+			this.logger.warn(`Kept a replaced file's blob: its storage provider failed: ${(error as Error).message}`);
+			return;
+		}
+		// `cleanupOne` never throws: a failed delete is logged.
+		await this.cleanupOne(provider, { key: storageKey } as UploadedFile);
 	}
 
 	/**
