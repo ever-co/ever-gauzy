@@ -162,9 +162,13 @@ export class AuthManager {
 		}
 
 		try {
+			// The configured credentials are the GAUZY_AUTO_LOGIN account of whoever runs the server. A keyed caller that
+			// may not share that account (one from another machine, see `isLocalCaller`) does not get it by logging in
+			// without credentials of its own either: `test_api_connection` logs in that way.
+			const useConfigured = authKey === undefined || mayShareAutoLogin();
 			const credentials = {
-				email: email || environment.auth.email,
-				password: password || environment.auth.password
+				email: email || (useConfigured ? environment.auth.email : undefined),
+				password: password || (useConfigured ? environment.auth.password : undefined)
 			};
 
 			if (!credentials.email || !credentials.password) {
