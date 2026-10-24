@@ -107,6 +107,17 @@ describe('ImportEntityFieldMapOrCreateHandler', () => {
 		}
 	);
 
+	it('drops a blank id, which mapping turns into null, so the new row gets a generated one', async () => {
+		const repository = buildRepository();
+		const handler = new ImportEntityFieldMapOrCreateHandler({ execute: jest.fn() } as any);
+
+		await handler.execute(
+			new ImportEntityFieldMapOrCreateCommand(repository as any, [], { id: null, name: 'New' }, '')
+		);
+
+		expect(repository.create).toHaveBeenCalledWith({ name: 'New' });
+	});
+
 	describe('user rows', () => {
 		const VERIFIED_AT = new Date('2026-01-15T10:00:00.000Z');
 

@@ -6,7 +6,9 @@ jest.mock('../repositories/repositories.service', () => ({
 jest.mock('../../core/context', () => ({
 	RequestContext: {
 		currentTenantId: () => 'a0000000-0000-4000-8000-00000000000a',
-		currentUserId: () => 'u0000000-0000-4000-8000-00000000000u'
+		currentUserId: () => 'u0000000-0000-4000-8000-00000000000u',
+		// A clean import asks for the caller's role before it wipes a role table (none of these archives has one).
+		hasRole: () => false
 	}
 }));
 jest.mock('../../core/utils', () => ({ convertToDatetime: (value: unknown) => value }));

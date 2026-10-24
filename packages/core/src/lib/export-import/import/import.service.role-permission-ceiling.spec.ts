@@ -289,6 +289,32 @@ describe('ImportService — role permissions are imported under the role-permiss
 		expect(mapped()).toEqual([expect.objectContaining({ sourceId: 'src-held', destinationId: 'created-row' })]);
 	});
 
+	it('skips a mapped row whose role this tenant does not map, instead of judging the stored role', async () => {
+		// The mapped role is null: judged on the stored custom role, the row reached a save that refuses a null role.
+		writeArchive(
+			[
+				'id,roleId,permission,enabled',
+				`src-x,src-role-elsewhere,${PermissionsEnum.ORG_EMPLOYEES_VIEW},false`
+			].join('\n') + '\n'
+		);
+		const { service, written } = buildService(
+			{ 'role_permission:src-x': 'row-of-custom' },
+			{
+				'row-of-custom': {
+					id: 'row-of-custom',
+					roleId: 'role-custom',
+					role: { id: 'role-custom', name: 'CUSTOM' },
+					permission: PermissionsEnum.ORG_EMPLOYEES_VIEW,
+					enabled: false
+				}
+			}
+		);
+
+		await service.parse(extractPath, false);
+
+		expect(written()).toEqual([]);
+	});
+
 	it('writes no role permission for an ADMIN who may not change role permissions', async () => {
 		mockCaller.permissions = [PermissionsEnum.IMPORT_ADD, PermissionsEnum.ORG_EMPLOYEES_VIEW];
 		const { service, written } = buildService();

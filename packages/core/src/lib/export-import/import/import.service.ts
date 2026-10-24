@@ -572,7 +572,9 @@ export class ImportService {
 		}
 
 		// The role the row will name, never looked up without an id: TypeORM drops an undefined key, matching any role.
-		const roleId = isNotEmpty(row?.['roleId']) ? (row['roleId'] as ID) : overwritten?.roleId;
+		// The stored role stands only when the row states none: a role the archive names but this tenant does not map
+		// is written as null, which the save would refuse after the stored role had been judged in its place.
+		const roleId = 'roleId' in (row ?? {}) ? (row['roleId'] as ID) : overwritten?.roleId;
 		const role = isNotEmpty(roleId)
 			? await this.repositoriesService.typeOrmRoleRepository.findOne({ where: { id: roleId, tenantId } })
 			: null;
@@ -608,13 +610,10 @@ export class ImportService {
 	 * @throws ForbiddenException when a caller other than a SUPER_ADMIN would clean up either table.
 	 */
 	private assertMayCleanUpRolePermissions(extractPath: string): void {
-		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
-			return;
-		}
 		const wiped = ROLE_PERMISSION_CLEANUP_TABLES.filter((table) =>
 			fs.existsSync(path.join(extractPath, `${table}.csv`))
 		);
-		if (wiped.length > 0) {
+		if (wiped.length > 0 && !RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
 			throw new ForbiddenException(
 				`Only a SUPER_ADMIN may clean-import ${wiped.join(' and ')}: the clean-up removes the permissions of ` +
 					'the SUPER_ADMIN and ADMIN roles, and only a SUPER_ADMIN imports them back. Use a merge import.'

@@ -87,7 +87,9 @@ export class ImportEntityFieldMapOrCreateHandler implements ICommandHandler<Impo
 
 	private async _create(repository, entity) {
 		try {
-			const obj = repository.create(entity);
+			// A blank id cell is mapped to `null`, which would be inserted as the primary key instead of a new one.
+			const { id, ...rest } = (entity ?? {}) as Record<string, unknown>;
+			const obj = repository.create(isNotEmpty(id) ? entity : rest);
 			// https://github.com/Microsoft/TypeScript/issues/21592
 			return await repository.save(obj as any);
 		} catch (err) {
