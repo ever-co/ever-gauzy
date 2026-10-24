@@ -12,7 +12,8 @@ import {
 	IOrganizationTeam,
 	IEmployee,
 	IRequestApprovalTeam,
-	ID
+	ID,
+	RolesEnum
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -28,6 +29,27 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmOrganizationTeamRepository } from '../organization-team/repository/type-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamRepository } from '../organization-team/repository/mikro-orm-organization-team.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
+import {
+	answerRequestApproval,
+	IRequestApprovalAnswerOutcome,
+	isDecidedRequestApprovalStatus,
+	RequestApprovalVerdict
+} from './request-approval-decision';
+
+/**
+ * One caller's answer to a request approval, applied in memory and not yet written: see
+ * {@link RequestApprovalService.prepareAnswer} and {@link RequestApprovalService.recordAnswer}.
+ */
+export interface IPreparedRequestApprovalAnswer {
+	/** The request, with the answer applied to it and to the slots it was recorded on. */
+	requestApproval: RequestApproval;
+	/** The decision the caller made. */
+	verdict: RequestApprovalVerdict;
+	/** What the answer did. */
+	outcome: IRequestApprovalAnswerOutcome;
+}
 
 @Injectable()
 export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
@@ -37,7 +59,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository
+		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
+		readonly typeOrmOrganizationTeamEmployeeRepository?: TypeOrmOrganizationTeamEmployeeRepository,
+		readonly mikroOrmOrganizationTeamEmployeeRepository?: MikroOrmOrganizationTeamEmployeeRepository
 	) {
 		super(typeOrmRequestApprovalRepository, mikroOrmRequestApprovalRepository);
 	}
@@ -490,6 +514,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		return this.save(requestApproval);
 	}
 
+	/**
+	 * Sets a request's status outright, for a platform flow that has already authorized the decision itself (the
+	 * order package's `OrderApprovalAdapter.settle`, which settles the order's open requests).
+	 *
+	 * Not an HTTP path: `PUT /request-approval/{approval,refuse}/:id` used to reach this method for any holder of
+	 * `REQUEST_APPROVAL_EDIT`, with the check below commented out; those routes now go through
+	 * {@link prepareAnswer} / {@link recordAnswer}, which check who is answering.
+	 *
+	 * @param id The request.
+	 * @param status The decision.
+	 * @throws ConflictException when the request has already been decided.
+	 */
 	async updateStatusRequestApprovalByAdmin(id: string, status: number): Promise<RequestApproval> {
 		const requestApproval = await this.findOneByIdString(id, {
 			relations: {
@@ -497,23 +533,44 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 		});
 
-		// if (
-		// 	requestApproval.status ===
-		// 		RequestApprovalStatusTypesEnum.APPROVED ||
-		// 	requestApproval.status ===
-		// 		RequestApprovalStatusTypesEnum.REFUSED
-		// ) {
-		// 	throw new ConflictException('Request Approval is Conflict');
-		// }
+		if (isDecidedRequestApprovalStatus(requestApproval.status)) {
+			throw new ConflictException('Request Approval is Conflict');
+		}
 
 		requestApproval.status = status;
 
 		return this.save(requestApproval);
 	}
 
+	/**
+	 * Records the current caller's answer on a request and writes it, without moving the document the request is
+	 * about (the `RequestApprovalStatusCommand` handler does that, behind the document's own gate).
+	 *
+	 * @param id The request.
+	 * @param status The decision.
+	 * @returns The request, as answered.
+	 */
 	async updateStatusRequestApprovalByEmployeeOrTeam(id: string, status: number): Promise<RequestApproval> {
-		let minCount = 0;
-		const employeeId = RequestContext.currentUser().employeeId;
+		return await this.recordAnswer(await this.prepareAnswer(id, status as RequestApprovalVerdict));
+	}
+
+	/**
+	 * Applies the current caller's answer to a request approval in memory, and writes nothing.
+	 *
+	 * The request is read inside the caller's tenant and organization boundary, with its approver slots. The
+	 * caller answers as a tenant administrator, or as a designated approver — their own employee slot, or an
+	 * approver team they are an active member of — and anybody else is refused; see `request-approval-decision.ts`
+	 * for the rules. Split from {@link recordAnswer} so the caller can check, before anything is written, that a
+	 * decision which settles the request may move the document it is about.
+	 *
+	 * @param id The request.
+	 * @param verdict The decision.
+	 * @returns The answer, ready to be written.
+	 * @throws NotFoundException when the request is not in the caller's scope.
+	 * @throws ForbiddenException when the caller may not answer it.
+	 * @throws ConflictException when it has already been decided.
+	 */
+	async prepareAnswer(id: ID, verdict: RequestApprovalVerdict): Promise<IPreparedRequestApprovalAnswer> {
 		const requestApproval = await this.findOneByIdString(id, {
 			relations: {
 				employeeApprovals: true,
@@ -521,30 +578,122 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 		});
 
-		if (
-			requestApproval.status === RequestApprovalStatusTypesEnum.APPROVED ||
-			requestApproval.status === RequestApprovalStatusTypesEnum.REFUSED
-		) {
-			throw new ConflictException('Request Approval is Conflict');
-		}
+		const user = RequestContext.currentUser();
+		const employeeId = user?.employeeId ?? null;
+		const teamIds = await this.findApproverTeamsOfEmployee(
+			employeeId,
+			(requestApproval.teamApprovals ?? []).map((slot) => slot.teamId)
+		);
 
-		if (requestApproval.employeeApprovals && requestApproval.employeeApprovals.length > 0) {
-			requestApproval.employeeApprovals.forEach((req) => {
-				if (req.employeeId === employeeId) {
-					req.status = status;
+		const outcome = answerRequestApproval(requestApproval, verdict, {
+			userId: user?.id ?? null,
+			employeeId,
+			teamIds,
+			isTenantAdmin: RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
+		});
+
+		return { requestApproval, verdict, outcome };
+	}
+
+	/**
+	 * Writes an answer {@link prepareAnswer} applied: the status of each slot it was recorded on, then the
+	 * request's own status when the answer changed it.
+	 *
+	 * The slots are written by id, inside the caller's tenant, rather than through a cascading save of the request:
+	 * a cascade would write every slot back, and the request's status goes through the tenant-scoped `update()`.
+	 *
+	 * @param answer The prepared answer.
+	 * @returns The request, as answered.
+	 */
+	async recordAnswer(answer: IPreparedRequestApprovalAnswer): Promise<RequestApproval> {
+		const { requestApproval, verdict, outcome } = answer;
+		const tenantId = RequestContext.currentTenantId();
+
+		const employeeSlotIds = outcome.employeeSlots.map((slot) => slot.id).filter((id): id is ID => !!id);
+		const teamSlotIds = outcome.teamSlots.map((slot) => slot.id).filter((id): id is ID => !!id);
+
+		if (tenantId && (employeeSlotIds.length || teamSlotIds.length)) {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const em = this.mikroOrmRepository.getEntityManager();
+					if (employeeSlotIds.length) {
+						await em.nativeUpdate(
+							RequestApprovalEmployee,
+							{ id: { $in: employeeSlotIds }, tenantId } as any,
+							{ status: verdict } as any
+						);
+					}
+					if (teamSlotIds.length) {
+						await em.nativeUpdate(
+							RequestApprovalTeam,
+							{ id: { $in: teamSlotIds }, tenantId } as any,
+							{ status: verdict } as any
+						);
+					}
+					break;
 				}
-				if (req.status === RequestApprovalStatusTypesEnum.APPROVED) {
-					minCount++;
+				case MultiORMEnum.TypeORM:
+				default: {
+					const manager = this.typeOrmRepository.manager;
+					if (employeeSlotIds.length) {
+						await manager.update(
+							RequestApprovalEmployee,
+							{ id: In(employeeSlotIds), tenantId },
+							{ status: verdict }
+						);
+					}
+					if (teamSlotIds.length) {
+						await manager.update(
+							RequestApprovalTeam,
+							{ id: In(teamSlotIds), tenantId },
+							{ status: verdict }
+						);
+					}
+					break;
 				}
-			});
+			}
 		}
 
-		if (status === RequestApprovalStatusTypesEnum.REFUSED) {
-			requestApproval.status = RequestApprovalStatusTypesEnum.REFUSED;
-		} else if (minCount >= requestApproval.min_count) {
-			requestApproval.status = RequestApprovalStatusTypesEnum.APPROVED;
+		if (outcome.status !== outcome.previousStatus) {
+			await this.update(requestApproval.id, { status: outcome.status } as any);
 		}
 
-		return this.save(requestApproval);
+		return requestApproval;
+	}
+
+	/**
+	 * The teams, among a request's approver teams, the employee is an active member of — inside the caller's tenant.
+	 *
+	 * @param employeeId The employee answering, if the caller has one.
+	 * @param teamIds The request's approver teams.
+	 * @returns The ids of the teams the employee answers for.
+	 */
+	private async findApproverTeamsOfEmployee(employeeId: ID | null, teamIds: ID[]): Promise<ID[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const ids = (teamIds ?? []).filter(Boolean);
+		if (!employeeId || !tenantId || !ids.length) {
+			return [];
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const memberships = await this.mikroOrmOrganizationTeamEmployeeRepository.find({
+					employeeId,
+					organizationTeamId: { $in: ids },
+					tenantId,
+					isActive: true
+				} as any);
+				return memberships.map(
+					(membership: any) => membership.organizationTeam?.id ?? membership.organizationTeamId
+				);
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const memberships = await this.typeOrmOrganizationTeamEmployeeRepository.find({
+					where: { employeeId, organizationTeamId: In(ids), tenantId, isActive: true }
+				});
+				return memberships.map((membership) => membership.organizationTeamId);
+			}
+		}
 	}
 }
