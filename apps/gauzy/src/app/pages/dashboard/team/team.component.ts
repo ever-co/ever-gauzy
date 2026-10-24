@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
 import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -72,6 +72,32 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 
 	public isLoading = false;
 
+	/** Whether the team tabs overflow towards their start / end — shows that side's arrow and fade. */
+	public canScrollStart = false;
+	public canScrollEnd = false;
+
+	private _tabsList: HTMLElement | null = null;
+	private _tabsResizeObserver: ResizeObserver | null = null;
+
+	/** The tabs strip only exists once teams are loaded, so it is watched as it comes and goes. */
+	@ViewChild('tabsList')
+	set tabsList(ref: ElementRef<HTMLElement> | undefined) {
+		const element = ref?.nativeElement ?? null;
+		if (element === this._tabsList) {
+			return;
+		}
+		this._tabsResizeObserver?.disconnect();
+		this._tabsList = element;
+		if (element && typeof ResizeObserver !== 'undefined') {
+			// Outside Angular: a resize only toggles two flags, set back inside the zone when they change.
+			this._ngZone.runOutsideAngular(() => {
+				this._tabsResizeObserver = new ResizeObserver(() => this._ngZone.run(() => this.updateTabsScroll()));
+				this._tabsResizeObserver.observe(element);
+			});
+		}
+		this.updateTabsScroll();
+	}
+
 	/** `null` shows "All teams"; otherwise the id of the open team. */
 	public selectedTeamId: string | null = null;
 
@@ -101,7 +127,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 		private readonly _timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly _timesheetService: TimesheetService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _ngZone: NgZone,
+		private readonly _cdr: ChangeDetectorRef
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 		this._selectedOrganizationTeam = null;
@@ -119,7 +147,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		return isNaN(duration) ? 86400 : duration;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._tabsResizeObserver?.disconnect();
+	}
 
 	ngOnInit(): void {
 		this.subject$
@@ -147,6 +177,37 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	public select(teamId: string | null): void {
 		this.selectedTeamId = teamId;
 		this._buildMemberRows();
+		this._revealActiveTab();
+	}
+
+	/** Re-reads which sides of the team tabs have more to scroll to. */
+	public updateTabsScroll(): void {
+		const list = this._tabsList;
+		// One pixel of slack: fractional widths leave `scrollLeft` a hair short of the end.
+		const start = !!list && list.scrollLeft > 1;
+		const end = !!list && list.scrollLeft + list.clientWidth < list.scrollWidth - 1;
+		if (start !== this.canScrollStart || end !== this.canScrollEnd) {
+			this.canScrollStart = start;
+			this.canScrollEnd = end;
+			this._cdr.markForCheck();
+		}
+	}
+
+	/** Scrolls the team tabs by most of a visible width, so the next tabs come into view. */
+	public scrollTabs(direction: 1 | -1): void {
+		const list = this._tabsList;
+		if (!list) {
+			return;
+		}
+		list.scrollBy({ left: direction * list.clientWidth * 0.8, behavior: 'smooth' });
+	}
+
+	/** Brings the selected tab fully into view, clear of the arrows. */
+	private _revealActiveTab(): void {
+		setTimeout(() => {
+			const tab = this._tabsList?.querySelector<HTMLElement>('.tab.is-active');
+			tab?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+		});
 	}
 
 	public reset(): void {
@@ -386,6 +447,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			this.selectedTeamId = null;
 		}
 		this._buildMemberRows();
+		setTimeout(() => this.updateTabsScroll());
 	}
 
 	private _buildMemberRows(): void {
