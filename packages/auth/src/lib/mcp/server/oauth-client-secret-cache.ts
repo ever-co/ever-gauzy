@@ -19,6 +19,14 @@ interface VerifiedClientSecret {
 	expiresAt: number;
 }
 
+/** A bcrypt comparison under way, shared by the verifications of the same secret against the same hash */
+interface PendingComparison {
+	clientId: string;
+	result: Promise<boolean>;
+	/** Set by `forget`: a success is then not remembered, and no later verification joins the comparison */
+	invalidated: boolean;
+}
+
 /**
  * Remembers, per client, the secret last verified against the client's stored bcrypt hash.
  *
@@ -31,11 +39,12 @@ interface VerifiedClientSecret {
  *   entry does not send every request in flight to bcrypt at once.
  *
  * The caller checks that the client exists and is active before asking, and calls {@link forget} when a client is
- * removed, so a disabled or deleted client never authenticates from this cache.
+ * removed or disabled, so a disabled or deleted client never authenticates from this cache. `forget` also covers the
+ * comparisons under way for that client: their success is not remembered, and a later verification starts afresh.
  */
 export class VerifiedClientSecretCache {
 	private readonly entries = new Map<string, VerifiedClientSecret>();
-	private readonly pending = new Map<string, Promise<boolean>>();
+	private readonly pending = new Map<string, PendingComparison>();
 	// Made per process and never exported: a remembered digest is no use without it
 	private readonly key = crypto.randomBytes(32);
 
@@ -71,24 +80,40 @@ export class VerifiedClientSecretCache {
 		}
 
 		const key = `${clientId}\n${secretHash}\n${digest.toString('hex')}`;
-		let pending = this.pending.get(key);
-		if (!pending) {
-			pending = compare(secret, secretHash)
+		let comparison = this.pending.get(key);
+		if (!comparison) {
+			const started: PendingComparison = { clientId, result: null, invalidated: false };
+			started.result = compare(secret, secretHash)
 				.then((valid) => {
-					if (valid) {
+					if (valid && !started.invalidated) {
 						this.remember(clientId, digest, secretHash);
 					}
 					return valid;
 				})
-				.finally(() => this.pending.delete(key));
-			this.pending.set(key, pending);
+				.finally(() => {
+					// `forget` may have dropped it already, and a newer comparison may hold the key since
+					if (this.pending.get(key) === started) {
+						this.pending.delete(key);
+					}
+				});
+			this.pending.set(key, started);
+			comparison = started;
 		}
-		return pending;
+		return comparison.result;
 	}
 
-	/** Forgets the client's verified secret (the client was removed or disabled) */
+	/**
+	 * Forgets the client's verified secret (the client was removed or disabled), including what the comparisons under
+	 * way for it would remember: their success is not kept, and a later verification does not join them.
+	 */
 	forget(clientId: string): void {
 		this.entries.delete(clientId);
+		for (const [key, comparison] of this.pending.entries()) {
+			if (comparison.clientId === clientId) {
+				comparison.invalidated = true;
+				this.pending.delete(key);
+			}
+		}
 	}
 
 	/** How many clients' secrets are remembered */

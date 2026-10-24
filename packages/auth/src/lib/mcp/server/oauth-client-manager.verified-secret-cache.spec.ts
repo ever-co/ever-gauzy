@@ -1,12 +1,19 @@
 /**
  * A stand-in hash: this project's Jest setup compiles without `esModuleInterop`, so the client manager's default
- * import of `bcryptjs` would be undefined here. `mockCompare` counts the bcrypt comparisons.
+ * import of `bcryptjs` would be undefined here. Like a bcrypt hash, a stand-in hash holds nothing of the secret (a
+ * new one each time, as a new salt would give); `mockCompare` counts the bcrypt comparisons.
  */
-const mockCompare = jest.fn(async (secret: string, hash: string) => hash === `hashed:${secret}`);
+const mockHashedSecrets = new Map<string, string>();
+const mockHash = (secret: string) => {
+	const hash = `$2b$12$stand-in-hash-${mockHashedSecrets.size + 1}`;
+	mockHashedSecrets.set(hash, secret);
+	return hash;
+};
+const mockCompare = jest.fn(async (secret: string, hash: string) => mockHashedSecrets.get(hash) === secret);
 jest.mock('bcryptjs', () => ({
 	__esModule: true,
 	default: {
-		hash: async (secret: string) => `hashed:${secret}`,
+		hash: async (secret: string) => mockHash(secret),
 		compare: (secret: string, hash: string) => mockCompare(secret, hash)
 	}
 }));
@@ -74,7 +81,7 @@ describe('OAuth2ClientManager — verified client secrets', () => {
 
 	it('verifies again once the stored hash changed (a rotated secret)', async () => {
 		await manager.validateClient(RESOURCE_SERVER, SECRET);
-		manager.getClient(RESOURCE_SERVER)!.clientSecretHash = `hashed:${ROTATED}`;
+		manager.getClient(RESOURCE_SERVER)!.clientSecretHash = mockHash(ROTATED);
 
 		expect(await manager.validateClient(RESOURCE_SERVER, SECRET)).toBeNull();
 		expect(await manager.validateClient(RESOURCE_SERVER, ROTATED)).not.toBeNull();
@@ -108,12 +115,17 @@ describe('OAuth2ClientManager — verified client secrets', () => {
 		expect(mockCompare).toHaveBeenCalledTimes(2);
 	});
 
-	it('refuses a client disabled while its secret was being compared', async () => {
+	it('refuses a client disabled while its secret was being compared, and verifies it again once enabled', async () => {
 		const client = manager.getClient(RESOURCE_SERVER)!;
 		const validating = manager.validateClient(RESOURCE_SERVER, SECRET);
 		client.isActive = false;
 
 		expect(await validating).toBeNull();
+		expect(cache.size).toBe(0);
+
+		client.isActive = true;
+		expect(await manager.validateClient(RESOURCE_SERVER, SECRET)).not.toBeNull();
+		expect(mockCompare).toHaveBeenCalledTimes(2);
 	});
 
 	it('forgets the secret of a dynamically registered client that is forgotten', async () => {
@@ -168,6 +180,41 @@ describe('VerifiedClientSecretCache', () => {
 		expect(counted).toHaveBeenCalledTimes(3);
 		await cache.verify('b', 'secret-b', 'hashed:secret-b', counted);
 		expect(counted).toHaveBeenCalledTimes(4);
+	});
+
+	it('does not remember a comparison the client was forgotten during, nor share it afterwards', async () => {
+		const cache = new VerifiedClientSecretCache();
+		const resolvers: Array<(valid: boolean) => void> = [];
+		const deferred = () => new Promise<boolean>((resolve) => resolvers.push(resolve));
+
+		const before = cache.verify('a', 'secret-a', 'hashed:secret-a', deferred);
+		cache.forget('a');
+		const after = cache.verify('a', 'secret-a', 'hashed:secret-a', deferred);
+		// The verification after `forget` did not join the comparison started before it
+		expect(resolvers).toHaveLength(2);
+
+		resolvers[0](true);
+		expect(await before).toBe(true);
+		expect(cache.size).toBe(0);
+
+		resolvers[1](true);
+		expect(await after).toBe(true);
+		expect(cache.size).toBe(1);
+	});
+
+	it('verifies a forgotten client again with bcrypt', async () => {
+		const cache = new VerifiedClientSecretCache();
+		const resolvers: Array<(valid: boolean) => void> = [];
+		const deferred = () => new Promise<boolean>((resolve) => resolvers.push(resolve));
+		const counted = jest.fn(compare);
+
+		const verifying = cache.verify('a', 'secret-a', 'hashed:secret-a', deferred);
+		cache.forget('a');
+		resolvers[0](true);
+		await verifying;
+
+		expect(await cache.verify('a', 'secret-a', 'hashed:secret-a', counted)).toBe(true);
+		expect(counted).toHaveBeenCalledTimes(1);
 	});
 
 	it('does not remember a comparison that failed with an error', async () => {
