@@ -6,6 +6,7 @@ import '../core/entities/internal';
 import { UnauthorizedException } from '@nestjs/common';
 import { ProviderEnum } from '@gauzy/contracts';
 import { Column, DataSource, Entity, PrimaryColumn, Repository } from 'typeorm';
+import { MultiORMEnum } from '../core/utils';
 import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
 import {
@@ -92,15 +93,24 @@ afterEach(() => {
 	else process.env[SOCIAL_SIGNIN_VERIFIED_ACCOUNT_ENV] = previousSwitch;
 });
 
+/**
+ * Copies, not the fixtures themselves: on SQLite `insert` reads back the columns with a default and merges them, by
+ * position, into the objects it was handed, and the rows come back in key order, so the shared fixtures would trade
+ * ids (`SQUATTER.id` became `pat-a`) and every later test would seed and expect the wrong accounts.
+ */
 async function seed(...rows: Array<Partial<FixtureUser>>) {
 	await users.clear();
-	await users.insert(rows as FixtureUser[]);
+	await users.insert(rows.map((row) => ({ ...row })) as FixtureUser[]);
 }
 
-/** A UserService over the sqlite table. */
+/**
+ * A UserService over the sqlite table. `ormType` is a getter on `CrudService`, so it is defined on the instance
+ * rather than assigned (an assignment throws "Cannot set property ormType ... which has only a getter").
+ */
 function buildUserService() {
 	const service: UserService = Object.create(UserService.prototype);
-	Object.assign(service, { ormType: 'typeorm', typeOrmRepository: users, typeOrmUserRepository: users });
+	Object.defineProperty(service, 'ormType', { value: MultiORMEnum.TypeORM });
+	Object.assign(service, { typeOrmRepository: users, typeOrmUserRepository: users });
 	return service;
 }
 
