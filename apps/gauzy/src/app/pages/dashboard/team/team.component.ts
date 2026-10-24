@@ -53,7 +53,11 @@ const PRESENCE_RANK = { tracking: 0, online: 1, away: 2, offline: 3 };
 @Component({
 	selector: 'gauzy-teams',
 	templateUrl: './team.component.html',
-	styleUrls: ['../../employees/view-employee/view-employee.component.scss', './team.component.scss'],
+	styleUrls: [
+		'../../employees/view-employee/view-employee.component.scss',
+		'./team-dashboard.shared.scss',
+		'./team.component.scss'
+	],
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
