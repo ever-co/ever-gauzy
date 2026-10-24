@@ -191,13 +191,13 @@ input CreateTimeOffRequestInput {
 What a caller states when it edits a filed request.
 
 The delivered edit takes the identifier from its own argument and passes the body through to the write,
-and the body's own interface declares one member — where the decision stands. So this body declares one
-member beside the identifier, and stating it is the whole of what an edit can change: a request's dates
-and its employees are what the request *is*, and rewriting them would leave the approval record filed
-beside it describing a leave nobody asked for.
+and the body's own interface declares one member beside the identifier: `status`. A request's dates and
+its employees are what the request *is*, and rewriting them would leave the approval record filed beside
+it describing a leave nobody asked for, so this body does not declare them.
 
-The status is no longer written by an edit either: it stays as stored, and approveTimeOffRequest and
-denyTimeOffRequest, which carry the administrative roles, are where a decision is made.
+`status` is accepted for client compatibility and ignored: an edit through this field keeps the stored
+status, changes nothing, and answers the stored request. approveTimeOffRequest and denyTimeOffRequest,
+which carry the administrative roles, are where a decision is made.
 """
 input UpdateTimeOffRequestInput {
 	id: ID!

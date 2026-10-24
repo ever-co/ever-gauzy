@@ -242,5 +242,50 @@ describe('TimeOffRequestService write whitelist (F2)', () => {
 			expect(save.mock.calls[0][0]).not.toHaveProperty('organizationId');
 			expect(save.mock.calls[0][0]).not.toHaveProperty('tenantId');
 		});
+
+		/** A request filed under the policy that needs no approval, and approved as it was filed. */
+		const approvedWithout = (policyId = 'policy-no-approval') =>
+			({
+				id: 'time-off-1',
+				status: StatusTypesEnum.APPROVED,
+				organizationId: ORGANIZATION,
+				policy: { id: policyId }
+			}) as any;
+
+		it('refuses a non-approver moving an approved request onto a policy that requires approval', async () => {
+			asGrantedEmployee();
+			const { service, save, findOneByIdString } = surfaces();
+			findOneByIdString.mockResolvedValue(approvedWithout());
+
+			await expect(
+				service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-approval' } }))
+			).rejects.toBeInstanceOf(ForbiddenException);
+			expect(findOneByIdString).toHaveBeenCalledWith('time-off-1', { relations: { policy: true } });
+			expect(save).not.toHaveBeenCalled();
+		});
+
+		it('lets that caller keep the stored policy, or move onto one that needs no approval', async () => {
+			asGrantedEmployee();
+			const { service, save, findOneByIdString } = surfaces();
+
+			// The request dialog sends the stored policy with every edit.
+			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ description: 'Moved' }));
+
+			findOneByIdString.mockResolvedValue(approvedWithout('policy-approval'));
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-no-approval' } }));
+
+			expect(save).toHaveBeenCalledTimes(2);
+		});
+
+		it('lets a caller who may approve time off move an approved request onto any policy', async () => {
+			asAdmin();
+			const { service, save, findOneByIdString } = surfaces();
+			findOneByIdString.mockResolvedValue(approvedWithout());
+
+			await service.updateTimeOffByAdmin('time-off-1', dialogBody({ policy: { id: 'policy-approval' } }));
+
+			expect(save.mock.calls[0][0]).toMatchObject({ id: 'time-off-1', policy: { id: 'policy-approval' } });
+		});
 	});
 });

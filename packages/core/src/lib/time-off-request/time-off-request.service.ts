@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, ForbiddenException, HttpException } from '@nestjs/common';
 import { Brackets, LessThanOrEqual, Like, MoreThanOrEqual, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -9,7 +9,9 @@ import {
 	ApprovalPolicyTypesStringEnum,
 	IPagination,
 	ITimeOffFindInput,
-	ID
+	ID,
+	PermissionsEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { TimeOffRequest } from './time-off-request.entity';
@@ -198,16 +200,19 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			// `findOneByIdString` THROWS NotFoundException when nothing matches the tenant-scoped
 			// conditions, so this call is the check — an id belonging to another tenant, or to no row
 			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
-			await this.findOneByIdString(id);
+			const stored = await this.findOneByIdString(id, { relations: { policy: true } });
 
 			// Only the members an edit may change are written (see `time-off-request-input.helper.ts`): never the
 			// status — approving or denying is the approve / deny routes' decision — and the employees only for a
 			// caller who may act for other employees.
 			const body = timeOffRequest as unknown as ITimeOffWriteBody;
+			const members = writableTimeOffMembers(body, { create: false });
 			const employees = timeOffEmployees(body?.employees, this.timeOffCaller(), { create: false });
 
+			await this.assertPolicyChangeKeepsDecision(stored, members.policy?.id);
+
 			return await this.save({
-				...writableTimeOffMembers(body, { create: false }),
+				...members,
 				...(employees ? { employees } : {}),
 				id
 			} as unknown as TimeOffRequest);
@@ -240,6 +245,44 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			}
 			throw new BadRequestException(err);
 		}
+	}
+
+	/**
+	 * Refuses an edit that moves an approved request onto a policy that requires approval, unless the caller may
+	 * approve time off through the approve route (`SUPER_ADMIN` / `ADMIN` with `ALL_ORG_EDIT` or `TIME_OFF_EDIT`).
+	 *
+	 * An edit keeps the stored status, and a request filed under a policy that requires no approval is approved as
+	 * it is filed. Moving it onto a policy that requires approval would keep an approval nobody gave. An edit that
+	 * keeps the stored policy (the request dialog sends it every time) or names one that needs no approval passes.
+	 *
+	 * @param stored The stored request, read with its policy.
+	 * @param policyId The policy the edit names, if any.
+	 * @throws ForbiddenException when the edit would keep an approval the new policy requires someone to give.
+	 */
+	private async assertPolicyChangeKeepsDecision(stored: TimeOffRequest, policyId: ID | undefined): Promise<void> {
+		if (!policyId || stored?.status !== StatusTypesEnum.APPROVED) {
+			return;
+		}
+		if (policyId === (stored.policy?.id ?? stored.policyId)) {
+			return;
+		}
+		if (
+			RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]) &&
+			RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT])
+		) {
+			return;
+		}
+		const requiresApproval = await this.policyRequiresApproval(
+			policyId,
+			RequestContext.currentTenantId(),
+			stored.organizationId
+		);
+		if (requiresApproval === false) {
+			return;
+		}
+		throw new ForbiddenException(
+			'An approved time-off request cannot be moved onto a policy that requires approval. File a new request.'
+		);
 	}
 
 	/**
