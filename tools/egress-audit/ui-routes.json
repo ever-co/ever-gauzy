@@ -147,6 +147,11 @@
       "source": "router"
     },
     {
+      "path": "/legal/dpia",
+      "file": "packages/plugins/legal-ui/src/lib/legal.routes.ts:40",
+      "source": "router"
+    },
+    {
       "path": "/legal/privacy",
       "file": "packages/plugins/legal-ui/src/lib/legal.routes.ts:27",
       "source": "router"
@@ -1122,6 +1127,11 @@
     {
       "path": "/pages/legal/cookies",
       "file": "packages/plugins/legal-ui/src/lib/page-legal.routes.ts:48",
+      "source": "router"
+    },
+    {
+      "path": "/pages/legal/dpia",
+      "file": "packages/plugins/legal-ui/src/lib/page-legal.routes.ts:65",
       "source": "router"
     },
     {

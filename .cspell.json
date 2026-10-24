@@ -1691,7 +1691,14 @@
 		"csecret",
 		"fsecret",
 		"unhydrated",
-		"knownknownknownknownknu"
+		"knownknownknownknownknu",
+		"Ceph",
+		"Delivr",
+		"Langfuse",
+		"roadmaps",
+		"decompile",
+		"reputational",
+		"parenthesised"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
