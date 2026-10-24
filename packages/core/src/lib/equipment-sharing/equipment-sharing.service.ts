@@ -222,7 +222,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		if (!tenantId) {
 			return null;
 		}
-		return await this.typeOrmRepository.findOne({
+		// A `select` read is typed as the whole entity; only the selected columns are read, the ones the row type names
+		return (await this.typeOrmRepository.findOne({
 			where: { id, tenantId },
 			select: {
 				id: true,
@@ -232,7 +233,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				version: true
 			},
 			withDeleted: true
-		} as any);
+		} as any)) as unknown as IStoredSharingRow | null;
 	}
 
 	/**
