@@ -76,7 +76,6 @@
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.6.5",
 		"node-fetch": "^3.3.2",
-		"node-static": "^0.7.11",
 		"pg": "^8.23.1",
 		"pg-query-stream": "^4.17.1",
 		"rxjs": "^7.8.2",
