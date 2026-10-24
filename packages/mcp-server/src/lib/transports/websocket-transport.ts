@@ -32,6 +32,17 @@ const MAX_RATE_LIMIT_ENTRIES = 10000;
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT_MAX_ATTEMPTS = 20;
 
+/**
+ * Messages a connection may send while it is being authorized (token introspection, session validation): they wait
+ * until it is accepted. Past this, or past `maxPayload` bytes in all, the connection is refused.
+ */
+const MAX_MESSAGES_BEFORE_ACCEPT = 32;
+
+/** The size in bytes of a message as `ws` hands it over */
+function rawDataByteLength(data: WebSocket.RawData): number {
+	return Array.isArray(data) ? data.reduce((total, chunk) => total + chunk.byteLength, 0) : data.byteLength;
+}
+
 // JSON-RPC 2.0 interfaces
 interface JsonRpcRequest {
 	jsonrpc: '2.0';
@@ -320,6 +331,63 @@ export class WebSocketTransport {
 			}
 		};
 
+		// Listen from the start. The checks below wait (token introspection, session validation), and a client may
+		// send `initialize` as soon as the socket opens: with no listener yet, that message was lost and the client
+		// waited for an answer that never came. A message sent during the checks now waits, in order, until the
+		// connection is accepted, and is dropped if it is refused. Nothing is authorized yet, so the wait is bounded.
+		let state: 'checking' | 'accepted' | 'refused' = 'checking';
+		const early: WebSocket.RawData[] = [];
+		let earlyBytes = 0;
+		const maxEarlyBytes = this.transportConfig.maxPayload || 1024 * 1024;
+
+		const refuse = (code: number, reason: string) => {
+			state = 'refused';
+			early.length = 0;
+			ws.close(code, reason);
+		};
+		const release = () => {
+			// Remove connection from session manager
+			if (connection.sessionId) {
+				sessionManager.removeConnection(connectionId);
+			}
+			authManager.clearKey(connectionId);
+			this.connections.delete(connectionId);
+		};
+
+		ws.on('message', (data) => {
+			if (state === 'accepted') {
+				void this.handleMessage(connection, data);
+				return;
+			}
+			if (state === 'refused') {
+				return;
+			}
+			early.push(data);
+			earlyBytes += rawDataByteLength(data);
+			if (early.length > MAX_MESSAGES_BEFORE_ACCEPT || earlyBytes > maxEarlyBytes) {
+				logger.warn(`WebSocket connection ${connectionId} refused: too many messages before it was authorized`);
+				refuse(1008, 'Too many messages before the connection was authorized');
+			}
+		});
+
+		// Set up pong handling for heartbeat
+		ws.on('pong', () => {
+			connection.isAlive = true;
+			connection.lastSeen = new Date();
+		});
+
+		// Set up connection close handling
+		ws.on('close', (code, reason) => {
+			logger.debug(`WebSocket connection closed: ${connectionId} (code: ${code}, reason: ${reason})`);
+			release();
+		});
+
+		// Set up error handling, from the start too: an 'error' with no listener is thrown
+		ws.on('error', (error) => {
+			logger.error(`WebSocket connection error for ${connectionId}:`, error);
+			release();
+		});
+
 		// OAuth bearer token: required unless the caller is on this machine and sends none (loopback desktop mode)
 		if (this.tokenValidator) {
 			const bearerToken = this.extractBearerToken(request);
@@ -330,13 +398,13 @@ export class WebSocketTransport {
 				);
 				if (!validation.valid) {
 					logger.warn(`WebSocket connection rejected: ${validation.error}`);
-					ws.close(1008, 'Invalid token');
+					refuse(1008, 'Invalid token');
 					return;
 				}
 				connection.bearerToken = bearerToken;
 			} else if (!connection.isLocal) {
 				logger.warn(`WebSocket connection rejected: no bearer token from ${clientIP}`);
-				ws.close(1008, 'Authorization required');
+				refuse(1008, 'Authorization required');
 				return;
 			}
 		}
@@ -361,53 +429,26 @@ export class WebSocketTransport {
 						);
 					} else {
 						logger.warn(`WebSocket connection rejected: ${validation.reason}`);
-						ws.close(1008, `Session validation failed: ${validation.reason}`);
+						refuse(1008, `Session validation failed: ${validation.reason}`);
 						return;
 					}
 				} catch (error) {
 					logger.error(`Session validation error for connection ${connectionId}:`, error);
-					ws.close(1011, 'Session validation error');
+					refuse(1011, 'Session validation error');
 					return;
 				}
 			}
 		}
 
+		// The client left during the checks (or was refused for sending too much meanwhile): nothing to keep
+		if (state !== 'checking' || ws.readyState !== WebSocket.OPEN) {
+			release();
+			return;
+		}
+
 		this.connections.set(connectionId, connection);
 
 		logger.debug(`WebSocket connection established: ${connectionId} from ${clientIP}`);
-
-		// Set up message handling
-		ws.on('message', async (data) => {
-			await this.handleMessage(connection, data);
-		});
-
-		// Set up pong handling for heartbeat
-		ws.on('pong', () => {
-			connection.isAlive = true;
-			connection.lastSeen = new Date();
-		});
-
-		// Set up connection close handling
-		ws.on('close', (code, reason) => {
-			logger.debug(`WebSocket connection closed: ${connectionId} (code: ${code}, reason: ${reason})`);
-			// Remove connection from session manager
-			if (connection.sessionId) {
-				sessionManager.removeConnection(connectionId);
-			}
-			authManager.clearKey(connectionId);
-			this.connections.delete(connectionId);
-		});
-
-		// Set up error handling
-		ws.on('error', (error) => {
-			logger.error(`WebSocket connection error for ${connectionId}:`, error);
-			// Remove connection from session manager
-			if (connection.sessionId) {
-				sessionManager.removeConnection(connectionId);
-			}
-			authManager.clearKey(connectionId);
-			this.connections.delete(connectionId);
-		});
 
 		// Send welcome message
 		this.sendToConnection(connection, {
@@ -425,6 +466,12 @@ export class WebSocketTransport {
 				}
 			}
 		});
+
+		// Then what the client sent during the checks, in the order it was sent
+		state = 'accepted';
+		for (const data of early.splice(0)) {
+			void this.handleMessage(connection, data);
+		}
 	}
 
 	private async handleMessage(connection: WebSocketConnection, data: WebSocket.RawData): Promise<void> {
