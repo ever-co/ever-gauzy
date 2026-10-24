@@ -25,6 +25,7 @@ export function MikroOrmVersionProperty(): PropertyDecorator {
 		if (getORMType() === MultiORMEnum.MikroORM) {
 			MikroOrmProperty({
 				type: 'integer',
+				default: 1,
 				onCreate: (row: { version?: number }) => row.version ?? 1
 			})(target, propertyKey as string);
 		}

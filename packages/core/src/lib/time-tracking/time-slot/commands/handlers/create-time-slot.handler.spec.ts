@@ -56,7 +56,9 @@ describe('CreateTimeSlotHandler new slot', () => {
 				findOne: jest.fn(async () => saved[saved.length - 1])
 			},
 			typeOrmTimeLogRepository: { createQueryBuilder: missingQuery, update: jest.fn() },
-			_commandBus: { execute: jest.fn(async () => []) }
+			_commandBus: { execute: jest.fn(async () => []) },
+			// A field the skipped constructor sets; the handler logs each step at debug level.
+			logger: { debug: jest.fn() }
 		});
 	});
 

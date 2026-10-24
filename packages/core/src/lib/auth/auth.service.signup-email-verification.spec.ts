@@ -238,7 +238,9 @@ describe('a waiting self-registration: refused at sign-in, activated by its conf
 
 	function buildUserService() {
 		const service: UserService = Object.create(UserService.prototype);
-		Object.assign(service, { ormType: 'typeorm', typeOrmRepository: users });
+		// `ormType` is a getter on `CrudService`: define it on the instance, an assignment throws.
+		Object.defineProperty(service, 'ormType', { value: MultiORMEnum.TypeORM });
+		Object.assign(service, { typeOrmRepository: users });
 		return service;
 	}
 

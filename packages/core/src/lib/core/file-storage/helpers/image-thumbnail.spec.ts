@@ -52,6 +52,8 @@ describe('createImageThumbnail', () => {
 		expect(metadata.orientation ?? 1).toBe(1);
 	});
 
+	// Jimp encodes, decodes and resizes in JavaScript: about a second on a desktop (the libvips cases take tens of
+	// milliseconds), and past Jest's default 5 s on a CI runner busy with other suites.
 	it('still decodes a BMP (which libvips does not) through Jimp, in its own format', async () => {
 		const bmp = await new Jimp({ width: 300, height: 150, color: 0x4080c0ff }).getBuffer(JimpMime.bmp);
 		const thumbnail = await createImageThumbnail(bmp);
@@ -60,7 +62,7 @@ describe('createImageThumbnail', () => {
 		expect(decoded.mime).toBe(JimpMime.bmp);
 		expect(decoded.width).toBe(250);
 		expect(decoded.height).toBe(125);
-	});
+	}, 30_000);
 
 	it('refuses an image libvips recognises but will not decode, without handing it to Jimp', async () => {
 		// A PNG header declaring far more pixels than sharp's default input limit: recognised (so no Jimp

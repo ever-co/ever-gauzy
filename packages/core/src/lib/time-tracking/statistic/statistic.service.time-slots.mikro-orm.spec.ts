@@ -110,6 +110,8 @@ describe('StatisticService.getEmployeeTimeSlots on MikroORM', () => {
 			table.string('userId');
 			table.boolean('isOnline');
 			table.boolean('isAway');
+			// `AddEmployeeKind1791000000721`: the read answers it, so the agents can be told from the people.
+			table.string('kind', 16).notNullable().defaultTo('human');
 			table.string('deletedAt').nullable();
 		});
 		await knex.schema.createTable('time_log', (table) => {
