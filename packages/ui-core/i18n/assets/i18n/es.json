@@ -1824,6 +1824,8 @@
 			"COLLAPSE_ALL": "Hide members",
 			"TOTAL_TODAY": "Total today",
 			"WORKDAY": "Workday",
+			"SCROLL_TEAMS_BACK": "Show previous teams",
+			"SCROLL_TEAMS_FORWARD": "Show more teams",
 			"COLUMNS": {
 				"TEAM": "Team",
 				"WORKED": "Worked",
