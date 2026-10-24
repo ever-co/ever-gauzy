@@ -8,9 +8,10 @@ interface TimeLogParams extends ITimerStatusInput {
 }
 
 //
-interface TimeLogQueryParams extends ITimerStatusInput {
+export interface TimeLogQueryParams extends ITimerStatusInput {
     where: {
-        startedAt: FindOperator<Date>;
+        // Absent on the running-log query, which has no day window (see `buildRunningLogQueryParameters`).
+        startedAt?: FindOperator<Date>;
         stoppedAt: FindOperator<any>;
         employeeId: string;
         tenantId: string;
@@ -89,6 +90,24 @@ export function addJoinToQueryParams(queryParams: TimeLogQueryParams, includeJoi
 export function buildLogQueryParameters(params: TimeLogParams): TimeLogQueryParams {
     const queryParams = buildCommonQueryParameters(params, true);
     queryParams.where.isRunning = false;
+    return queryParams;
+}
+
+/**
+ * Builds the query for the employee's running time log, whatever day it started on.
+ *
+ * It keeps every filter of `buildCommonQueryParameters` (source, employee, tenant, organization, active,
+ * not archived, latest first) but drops the `startedAt` window: a timer started before the window (one
+ * still running past midnight) is the log running now. With the window it was never found, so the timer
+ * status read "stopped" until the timer was stopped.
+ *
+ * @param params - Parameters used to build query conditions; their `startedAt` window is not applied.
+ * @returns Query parameters for the latest running time log.
+ */
+export function buildRunningLogQueryParameters(params: TimeLogParams): TimeLogQueryParams {
+    const queryParams = buildCommonQueryParameters(params);
+    delete queryParams.where.startedAt;
+    queryParams.where.isRunning = true;
     return queryParams;
 }
 

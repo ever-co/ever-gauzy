@@ -44,7 +44,13 @@ import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-l
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
-import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
+import {
+	TimeLogQueryParams,
+	addRelationsToQuery,
+	buildCommonQueryParameters,
+	buildLogQueryParameters,
+	buildRunningLogQueryParameters
+} from './timer.helper';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -113,14 +119,12 @@ export class TimerService {
 
 		const { id: employeeId } = employee;
 
-		/** */
-		const { start, end } = getDateRangeFormat(
-			moment.utc(todayStart || moment().startOf('day')),
-			moment.utc(todayEnd || moment().endOf('day'))
-		);
+		/** The day "today" covers: the client's own day when it sends the bounds, else the server's. */
+		const todayWindowStart = moment.utc(todayStart || moment().startOf('day'));
+		const todayWindowEnd = moment.utc(todayEnd || moment().endOf('day'));
+		const { start, end } = getDateRangeFormat(todayWindowStart, todayWindowEnd);
 
 		let logs: TimeLog[] = [];
-		let lastLog: TimeLog;
 
 		// Define common parameters for querying
 		const queryParams = {
@@ -141,22 +145,6 @@ export class TimerService {
 				const items = await this.mikroOrmTimeLogRepository.findAll(parseQueryParams);
 				// Optionally wrapSerialize is a function that serializes the entity
 				logs = items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
-
-				/**
-				 * Get today's last log (running or completed)
-				 */
-				// Common query parameters for time log operations.
-				const lastLogQueryParamsMikroOrm = buildCommonQueryParameters(queryParams);
-				// Adds relations from the request to the query parameters.
-				addRelationsToQuery(lastLogQueryParamsMikroOrm, request);
-				// Converts TypeORM-style query parameters to a format compatible with MikroORM.
-				const parseMikroOrmOptions = parseTypeORMFindToMikroOrm<TimeLog>(lastLogQueryParamsMikroOrm);
-
-				// Get today's last log (running or completed)
-				lastLog = (await this.mikroOrmTimeLogRepository.findOne(
-					parseMikroOrmOptions.where,
-					parseMikroOrmOptions.mikroOptions
-				)) as TimeLog;
 				break;
 
 			case MultiORMEnum.TypeORM:
@@ -171,20 +159,18 @@ export class TimerService {
 					.setFindOptions({ where: completedLogQueryParams.where, order: completedLogQueryParams.order })
 					.innerJoin('time_log.timeSlots', 'time_slots')
 					.getMany();
-
-				const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
-				addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
-
-				// Get today's last log (running or completed)
-				lastLog = await this.typeOrmTimeLogRepository.findOne({
-					...lastLogQueryParamsTypeOrm,
-					relations: parseFindOptionsRelations(lastLogQueryParamsTypeOrm.relations)
-				});
 				break;
 
 			default:
 				throw new Error(`Not implemented for ${ormType}`);
 		}
+
+		// The running log first, whatever day it started on: a timer started before `todayStart` (one still
+		// running past midnight) is the log running now, and today's window alone never found it, so the status
+		// read "stopped" until the timer was stopped. Only when none runs does today's last (completed) log stand in.
+		const lastLog: TimeLog | null =
+			(await this.findLastTimeLog(buildRunningLogQueryParameters(queryParams), request)) ??
+			(await this.findLastTimeLog(buildCommonQueryParameters(queryParams), request));
 
 		const status: ITimerStatus = {
 			duration: 0,
@@ -201,11 +187,46 @@ export class TimerService {
 			status.running = lastLog.isRunning;
 
 			if (status.running) {
-				status.duration += Math.abs(moment().diff(moment(lastLog.startedAt), 'seconds'));
+				// Today's duration holds only the part of the running log inside today's window: a timer started
+				// before `todayStart` counts from `todayStart`, its earlier part belongs to the day it started on.
+				// `lastLog` stays the whole log, so a client still reads the full session from its `startedAt`.
+				const countedFrom = moment.max(moment(lastLog.startedAt), todayWindowStart);
+				const countedTo = moment.min(moment(), todayWindowEnd);
+				status.duration += Math.max(0, countedTo.diff(countedFrom, 'seconds'));
 			}
 		}
 
 		return status;
+	}
+
+	/**
+	 * Finds the latest time log matching the query, with the relations the request asks for.
+	 *
+	 * @param queryParams - The query, as `buildCommonQueryParameters` / `buildRunningLogQueryParameters` build it.
+	 * @param request - The timer status request, whose `relations` are loaded on the log.
+	 * @returns The latest matching time log, or null when none matches.
+	 */
+	private async findLastTimeLog(
+		queryParams: TimeLogQueryParams,
+		request: ITimerStatusInput
+	): Promise<TimeLog | null> {
+		// Adds relations from the request to the query parameters.
+		addRelationsToQuery(queryParams, request);
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// Converts TypeORM-style query parameters to a format compatible with MikroORM.
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TimeLog>(queryParams);
+				return (await this.mikroOrmTimeLogRepository.findOne(where, mikroOptions)) as TimeLog;
+			}
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmTimeLogRepository.findOne({
+					...queryParams,
+					relations: parseFindOptionsRelations(queryParams.relations)
+				});
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
