@@ -352,7 +352,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				})
 			: [];
 		// One lookup per id: the holiday dialog names every employee of the organization at once.
-		const byId = new Map(found.map((row) => [String(row.id).toLowerCase(), row]));
+		const byId = new Map(found.map((row) => [String(row.id).toLowerCase(), row] as const));
 		const outside = ids.filter((id) => {
 			const employee = byId.get(String(id).toLowerCase());
 			return (
