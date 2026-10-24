@@ -316,8 +316,13 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 * @returns `true` if the current user is a manager of the project, `false` otherwise.
 	 */
 	isManagerOfProject(project: IOrganizationProject): boolean {
+		// Only an active, unarchived membership, as the server's own manager check (ProjectManagerOrPermissionGuard)
 		const manager = project.members.find(
-			(member) => this.isProjectManagerMember(member) && member.employee.userId === this._store.user.id
+			(member) =>
+				member.isActive &&
+				!member.isArchived &&
+				this.isProjectManagerMember(member) &&
+				member.employee.userId === this._store.user.id
 		);
 		return !!manager;
 	}
