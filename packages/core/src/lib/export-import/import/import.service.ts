@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
@@ -56,6 +56,12 @@ const TENANT_SETTING_TABLE = 'tenant_setting';
 
 /** The table of the permissions each role holds, which an archive writes only as the role-permission API would. */
 const ROLE_PERMISSION_TABLE = 'role_permission';
+
+/**
+ * The tables whose clean-up removes the permissions of the SUPER_ADMIN and ADMIN roles: the permissions themselves,
+ * and the roles, whose delete cascades to their permissions.
+ */
+const ROLE_PERMISSION_CLEANUP_TABLES: readonly string[] = Object.freeze(['role', ROLE_PERMISSION_TABLE]);
 
 /**
  * Unique keys a table declares as a unique INDEX (`@ColumnIndex(..., { unique: true })`) rather than a `@Unique`
@@ -154,6 +160,10 @@ export class ImportService {
 		 * Can only run in a particular order
 		 */
 		const tenantId = RequestContext.currentTenantId();
+		// Before anything is removed: a refused clean import must leave the tenant as it was.
+		if (cleanup) {
+			this.assertMayCleanUpRolePermissions(extractPath);
+		}
 		const repositories = await this.getRepositories();
 		// Only an archive this server wrote carries the escape, so only such an archive is decoded: a
 		// legacy dump, a filled-in `/export/template` or an externally built CSV set would otherwise
@@ -570,6 +580,34 @@ export class ImportService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Refuses a clean import that would wipe the tenant's role permissions, unless the caller is a SUPER_ADMIN.
+	 *
+	 * A clean import deletes the tenant's rows of every table the archive carries before it writes the archive's rows.
+	 * For `role_permission`, and for `role`, whose delete cascades to it, that removes the permissions of the
+	 * SUPER_ADMIN and ADMIN roles as well. {@link mayImportRolePermission} lets only a SUPER_ADMIN write those back, so
+	 * an ADMIN restoring even an unchanged archive left both roles, their own included, without a permission; a
+	 * header-only `role_permission.csv` was enough to erase them. A merge import, or a clean import whose archive
+	 * carries neither table, is not refused.
+	 *
+	 * @param extractPath - This request's extraction directory.
+	 * @throws ForbiddenException when a caller other than a SUPER_ADMIN would clean up either table.
+	 */
+	private assertMayCleanUpRolePermissions(extractPath: string): void {
+		if (RequestContext.hasRole(RolesEnum.SUPER_ADMIN)) {
+			return;
+		}
+		const wiped = ROLE_PERMISSION_CLEANUP_TABLES.filter((table) =>
+			fs.existsSync(path.join(extractPath, `${table}.csv`))
+		);
+		if (wiped.length > 0) {
+			throw new ForbiddenException(
+				`Only a SUPER_ADMIN may clean-import ${wiped.join(' and ')}: the clean-up removes the permissions of ` +
+					'the SUPER_ADMIN and ADMIN roles, and only a SUPER_ADMIN imports them back. Use a merge import.'
+			);
+		}
 	}
 
 	/**
