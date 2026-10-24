@@ -164,7 +164,8 @@ function surfaces(row: Record<string, any>) {
 	const timeOffRequestService = {
 		updateStatusTimeOffByAdmin: jest.fn(async (id: string, status: string) => {
 			calls.push(`time-off:${id}:${status}`);
-		})
+		}),
+		findOneByIdString: jest.fn(async (id: string) => ({ id, status: 'REQUESTED' }))
 	};
 	const equipmentSharingService = {
 		updateStatusEquipmentSharingByAdmin: jest.fn(async (id: string, status: number) => {
@@ -335,6 +336,34 @@ describe('RequestApprovalStatusHandler (F1 — approve / refuse a request approv
 			timeOffRequestService.updateStatusTimeOffByAdmin.mockRejectedValueOnce(
 				new ConflictException('Request time off is Conflict')
 			);
+
+			await expect(answer(APPROVED)).rejects.toBeInstanceOf(ConflictException);
+			expect(calls).toEqual([]);
+		});
+
+		it('writes the answer when the leave already carries the decision, so a failed write is retried', async () => {
+			asUser(ADMIN);
+			const { answer, calls, timeOffRequestService } = surfaces(approvalRow());
+			// An earlier attempt moved the leave, then failed to write its answer: the leave is no longer REQUESTED.
+			timeOffRequestService.updateStatusTimeOffByAdmin.mockRejectedValueOnce(
+				new ConflictException('Request time off is Conflict')
+			);
+			timeOffRequestService.findOneByIdString.mockResolvedValueOnce({ id: 'time-off-1', status: 'APPROVED' });
+
+			const answered = await answer(APPROVED);
+
+			expect(answered.status).toBe(APPROVED);
+			expect(timeOffRequestService.findOneByIdString).toHaveBeenCalledWith('time-off-1');
+			expect(calls).toEqual([`request:${APPROVED}`]);
+		});
+
+		it('still refuses a leave decided the other way', async () => {
+			asUser(ADMIN);
+			const { answer, calls, timeOffRequestService } = surfaces(approvalRow());
+			timeOffRequestService.updateStatusTimeOffByAdmin.mockRejectedValueOnce(
+				new ConflictException('Request time off is Conflict')
+			);
+			timeOffRequestService.findOneByIdString.mockResolvedValueOnce({ id: 'time-off-1', status: 'DENIED' });
 
 			await expect(answer(APPROVED)).rejects.toBeInstanceOf(ConflictException);
 			expect(calls).toEqual([]);

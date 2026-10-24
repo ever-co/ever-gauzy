@@ -1,9 +1,10 @@
+import { ConflictException } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { RequestApprovalStatusCommand } from '../request-approval.status.command';
 import { RequestApproval } from '../../request-approval.entity';
 import { RequestApprovalService } from '../../request-approval.service';
 import { EquipmentSharingService } from '../../../equipment-sharing';
-import { ApprovalPolicyTypesStringEnum, StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
+import { ApprovalPolicyTypesStringEnum, ID, StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
 import { TimeOffRequestService } from '../../../time-off-request/time-off-request.service';
 import { RequestApprovalVerdict } from '../../request-approval-decision';
 import { assertMayDecideLinkedDocument } from '../../linked-document-decision.gate';
@@ -20,7 +21,8 @@ import { assertMayDecideLinkedDocument } from '../../linked-document-decision.ga
  * When the answer decides the request, the time-off request or equipment sharing it is about moves with it — and
  * only for a caller who could move that document through its own approve/refuse route, because this command is a
  * second door onto the same state change. The gate is checked and the document moved before the answer is
- * written, so a refusal (403, or the document's own 409) leaves the request exactly as it was.
+ * written, so a refusal (403, or the document's own 409) leaves the request exactly as it was. An answer whose
+ * writes failed after the document moved can be sent again: see {@link moveTimeOff}.
  */
 @CommandHandler(RequestApprovalStatusCommand)
 export class RequestApprovalStatusHandler implements ICommandHandler<RequestApprovalStatusCommand> {
@@ -44,7 +46,7 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 
 			if (requestApproval.requestType === ApprovalPolicyTypesStringEnum.TIME_OFF) {
 				const timeOffStatus = StatusTypesMapRequestApprovalEnum[outcome.status];
-				await this.timeOffRequestService.updateStatusTimeOffByAdmin(requestApproval.requestId, timeOffStatus);
+				await this.moveTimeOff(requestApproval.requestId, timeOffStatus);
 			} else if (requestApproval.requestType === ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING) {
 				await this.equipmentSharingService.updateStatusEquipmentSharingByAdmin(
 					requestApproval.requestId,
@@ -54,5 +56,32 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 		}
 
 		return await this.requestApprovalService.recordAnswer(answer);
+	}
+
+	/**
+	 * Moves the time-off request a decision is about.
+	 *
+	 * The time-off service refuses (409) a leave that is no longer `REQUESTED`. A leave can already carry the
+	 * status this decision gives it: an earlier attempt moved it and then failed to write its answer, or the leave
+	 * was decided through its own route. The answer is written then, instead of being refused on every retry; the
+	 * slot and status writes of `recordAnswer` set the same values again. Any other conflict stands, such as an
+	 * administrator deciding an approved leave the other way.
+	 *
+	 * @param id The time-off request.
+	 * @param status The status the decision gives it.
+	 * @throws ConflictException when the leave was decided otherwise.
+	 */
+	private async moveTimeOff(id: ID, status: string): Promise<void> {
+		try {
+			await this.timeOffRequestService.updateStatusTimeOffByAdmin(id, status);
+		} catch (error) {
+			if (error instanceof ConflictException) {
+				const timeOff = await this.timeOffRequestService.findOneByIdString(id);
+				if (timeOff?.status === status) {
+					return;
+				}
+			}
+			throw error;
+		}
 	}
 }
