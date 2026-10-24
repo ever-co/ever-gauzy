@@ -239,6 +239,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
+			// `isManager` lets a manager act for the team's members (their daily plans and time logs, through
+			// ManagedEmployeeService). Only a caller who may already act for every employee hands that on. An
+			// employee, who picks the members of a team they create and is made its manager above, keeps the
+			// MANAGER role without the flag, as before.
+			const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 			// Use destructuring to directly extract 'id' from 'employee'
 			const members = employees.map(
 				({ id: employeeId }) =>
@@ -246,7 +252,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						employee: { id: employeeId },
 						organization: { id: organizationId },
 						tenant: { id: tenantId },
-						isManager: managerIdsSet.has(employeeId),
+						isManager: flagsManagers && managerIdsSet.has(employeeId),
 						role: managerIdsSet.has(employeeId) ? managerRole : null
 					})
 			);

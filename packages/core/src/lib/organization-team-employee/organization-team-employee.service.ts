@@ -57,6 +57,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
+		// `isManager` lets a manager act for the team's members (ManagedEmployeeService). Only a caller who may
+		// already act for every employee sets it on a new manager or repairs a manager row that lacks it; a team
+		// manager without that permission changes the flag only together with the role, as before.
+		const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		// Fetch existing team members with their roles
 		// Bypass employee filter since authorization is handled at a higher level
 		const teamMembers = await this.withoutEmployeeFilter(() =>
@@ -116,8 +121,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? role : null;
 
-				// Only update if the role or the manager flag has changed
-				if (newRole?.id !== member.roleId || !!member.isManager !== isManager) {
+				// Only update if the role or (for a caller who sets the flag) the manager flag has changed
+				if (newRole?.id !== member.roleId || (flagsManagers && !!member.isManager !== isManager)) {
 					await this.withoutEmployeeFilter(() =>
 						super.update(member.id, {
 							role: newRole,
@@ -139,7 +144,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
-						isManager: managerIds.includes(employee.id),
+						isManager: flagsManagers && managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? role.id : null
 					})
 			);
