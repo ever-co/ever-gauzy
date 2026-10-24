@@ -108,8 +108,16 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		if (typeof id === 'string') {
 			await this.assertMembershipWithinBoundary(id, false, boundary);
 		} else if (id && typeof id === 'object') {
-			// Criteria, from code rather than a route: kept to the caller's organization, and to none without one
+			// Criteria, from code rather than a route: kept to the caller's organization, and to none without one.
+			// An organization the criteria name is narrowed by the boundary, never replaced by it: one other than the
+			// caller's (or one stated as an operator) matches no membership inside it, so nothing is written.
 			if (!isNotEmpty(boundary.organizationId)) {
+				throw new NotFoundException('The requested record was not found');
+			}
+			const stated = id as Record<string, unknown>;
+			const named =
+				'organizationId' in stated ? stated.organizationId : (stated.organization as { id?: unknown })?.id;
+			if (named !== undefined && !(typeof named === 'string' && named === String(boundary.organizationId))) {
 				throw new NotFoundException('The requested record was not found');
 			}
 			criteria = { ...id, organizationId: boundary.organizationId } as FindOptionsWhere<UserOrganization>;

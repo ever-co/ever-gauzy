@@ -316,6 +316,26 @@ describe('UserOrganizationService writes keep a confined caller inside their org
 			expect(updated).toHaveBeenCalledWith({ userId: OTHER_USER, organizationId: OWN }, { isDefault: false });
 		});
 
+		it('narrows criteria that name an organization: another organization writes nothing', async () => {
+			// Replacing it turned `{ userId, organizationId: SIBLING }` into the user's membership of OWN, and a bare
+			// `{ organizationId: SIBLING }` into every membership of OWN.
+			for (const criteria of [
+				{ userId: USER, organizationId: SIBLING },
+				{ organizationId: SIBLING },
+				{ userId: USER, organization: { id: SIBLING } }
+			]) {
+				await expect(service.update(criteria as any, { isActive: false })).rejects.toThrow(NotFoundException);
+			}
+
+			expect(updated).not.toHaveBeenCalled();
+		});
+
+		it('keeps criteria that name the caller’s own organization', async () => {
+			await service.update({ userId: OTHER_USER, organizationId: OWN } as any, { isDefault: false });
+
+			expect(updated).toHaveBeenCalledWith({ userId: OTHER_USER, organizationId: OWN }, { isDefault: false });
+		});
+
 		it('leaves a membership that does not exist to the update, which answers it as before', async () => {
 			await service.update('7a000000-0000-4000-8000-0000000000ff', { isActive: true });
 
