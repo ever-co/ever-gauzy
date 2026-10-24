@@ -15,6 +15,76 @@ export interface IReferenceScope {
 export type ScopedLookup = (table: string, where: Record<string, unknown>) => Promise<unknown>;
 
 /**
+ * The two rows a sharing points at, in every form a body can name them: the foreign-key column, or the related
+ * object (`equipment: { id }`, `equipmentSharingPolicy: { id }`) — which the ORM persists as the foreign key just
+ * the same, MikroORM even when it is a bare id string.
+ */
+export interface ISharingReferences {
+	equipmentId?: ID;
+	equipment?: unknown;
+	equipmentSharingPolicyId?: ID;
+	equipmentSharingPolicy?: unknown;
+}
+
+/**
+ * The id a related object names: its `id`, or the value itself when the body sent a bare id string.
+ *
+ * @param related - The related object as the body sent it.
+ * @returns The id, or `undefined` when the object names none.
+ */
+function relatedId(related: unknown): ID | undefined {
+	const id = related && typeof related === 'object' ? (related as { id?: unknown }).id : related;
+	return id === undefined || id === null || id === '' ? undefined : (id as ID);
+}
+
+/**
+ * Every `[table, id]` a sharing payload names, in both forms (see {@link ISharingReferences}), for
+ * {@link assertReferencesAreInScope}. The column and the related object are both listed, so a payload that states
+ * an in-scope column beside a foreign object is refused, whichever of the two the ORM would write.
+ *
+ * @param input - The create/update payload.
+ * @returns The references to validate: the ids the payload states, an id stated twice listed once.
+ */
+export function sharingReferences(input: ISharingReferences): Array<readonly [string, ID | undefined]> {
+	const references: Array<readonly [string, ID | undefined]> = [
+		['equipment', input?.equipmentId],
+		['equipment', relatedId(input?.equipment)],
+		['equipment_sharing_policy', input?.equipmentSharingPolicyId],
+		['equipment_sharing_policy', relatedId(input?.equipmentSharingPolicy)]
+	];
+	return references.filter(
+		([table, id], index) =>
+			id !== undefined &&
+			id !== null &&
+			references.findIndex(([other, otherId]) => other === table && otherId === id) === index
+	);
+}
+
+/**
+ * A sharing payload with each reference stated once, as its foreign-key column.
+ *
+ * The related object's id wins over the column when the body carries both (the form sends both, with the same id):
+ * it is the row the ORM would point at. The objects themselves are dropped, so the id that is checked is the id
+ * that is stored, and nothing else the object carries reaches the write.
+ *
+ * @param input - The create/update payload.
+ * @returns The payload without `equipment` / `equipmentSharingPolicy`, with their ids in the columns.
+ */
+export function withReferencesAsIds<T extends ISharingReferences>(
+	input: T
+): Omit<T, 'equipment' | 'equipmentSharingPolicy'> {
+	const { equipment, equipmentSharingPolicy, ...values } = (input ?? {}) as T;
+	const equipmentId = relatedId(equipment) ?? input?.equipmentId;
+	const equipmentSharingPolicyId = relatedId(equipmentSharingPolicy) ?? input?.equipmentSharingPolicyId;
+
+	return {
+		...values,
+		...(equipmentId !== undefined ? { equipmentId } : {}),
+		...(equipmentSharingPolicyId !== undefined ? { equipmentSharingPolicyId } : {})
+	};
+}
+
+/**
  * Refuses a referenced row that is not inside the given scope.
  *
  * The equipment-sharing update is a delete-then-recreate that spreads the request body, so a
@@ -39,6 +109,12 @@ export async function assertReferencesAreInScope(
 	for (const [table, referenceId] of references) {
 		if (!referenceId) {
 			continue;
+		}
+
+		// An id is a string. Anything else (an operator object, a number) would be handed to the lookup as a
+		// criterion rather than compared as a value, so it is refused rather than looked up.
+		if (typeof referenceId !== 'string') {
+			throw new ForbiddenException(`The referenced ${table.replace(/_/g, ' ')} is not available here`);
 		}
 
 		// Fail CLOSED without a tenant. An existence check that cannot be scoped proves nothing, and

@@ -3,8 +3,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IEquipmentSharing, IPagination, PermissionsEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
+import { RequestContext } from './../core/context';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
+import { withReferencesAsIds } from './reference-scope.helper';
 
 import {
 	EquipmentSharingStatusCommand,
@@ -241,6 +243,11 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	 * the request the UI makes). It now states `EQUIPMENT_APPROVE_REQUEST` or `ORG_EQUIPMENT_SHARING_EDIT`: the grants
 	 * that may decide a sharing (GHSA-v79w-54p2-wmh5).
 	 *
+	 * The equipment and the policy the body names are held to the rule the filing and the edit apply: they must be
+	 * rows of the record's organization (the body's, else the caller's), in either form the body names them — the
+	 * column or the related object. Nothing checked them here, so this route could point a sharing at another
+	 * organization's equipment or policy.
+	 *
 	 * @param entity The record to store.
 	 * @param options The inherited options, forwarded to the service.
 	 * @returns The created record.
@@ -252,7 +259,12 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Post()
 	async create(@Body() entity: EquipmentSharing, ...options: any[]): Promise<EquipmentSharing> {
-		return await super.create(entity, ...options);
+		const values = withReferencesAsIds(entity ?? ({} as EquipmentSharing));
+		await this.equipmentSharingService.assertReferencesAreInScope(values, {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: values.organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		});
+		return await super.create(values as EquipmentSharing, ...options);
 	}
 
 	/**

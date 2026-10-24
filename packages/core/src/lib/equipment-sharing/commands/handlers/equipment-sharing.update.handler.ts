@@ -4,6 +4,7 @@ import { RequestApprovalService } from '../../../request-approval/request-approv
 import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingUpdateCommand } from '../equipment-sharing.update.command';
 import { EquipmentSharingService } from '../../equipment-sharing.service';
+import { withReferencesAsIds } from '../../reference-scope.helper';
 
 @CommandHandler(EquipmentSharingUpdateCommand)
 export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentSharingUpdateCommand> {
@@ -19,7 +20,10 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 	 * @returns A promise that resolves to the updated EquipmentSharing record.
 	 */
 	public async execute(command: EquipmentSharingUpdateCommand): Promise<EquipmentSharing> {
-		const { id, input } = command;
+		const { id } = command;
+		// Each reference stated once, as its column: the related objects (`equipment: { id }`,
+		// `equipmentSharingPolicy: { id }`) are what the recreate below persisted, and the check did not read them.
+		const input = withReferencesAsIds(command.input);
 
 		// Read the row BEFORE destroying it: this is a delete-then-recreate, so the scope it is
 		// recreated in has to come from the record rather than from the request. `findOneByIdString`
