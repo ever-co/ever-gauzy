@@ -5591,7 +5591,9 @@
 			"SERVICE_UNAVAILABLE": "השירות אינו זמין כעת.",
 			"UNEXPECTED_ERROR": "אירעה שגיאה בלתי צפויה.",
 			"NETWORK_ERROR": "שגיאת רשת: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "נדרשת הרשאת גישה למסך כדי לאפשר לכידת מסך אוטומטית. אנא העניקו את ההרשאה בהגדרות המערכת."
+			"SCREEN_ACCESS_REQUIRED_MSG": "נדרשת הרשאת גישה למסך כדי לאפשר לכידת מסך אוטומטית. אנא העניקו את ההרשאה בהגדרות המערכת.",
+			"ORGANIZATION_SWITCH_REFUSED": "לא ניתן לעבור אל {{ name }}: {{ reason }}. אתה עדיין עובד בארגון הנוכחי שלך.",
+			"ORGANIZATION_NOT_EMPLOYEE": "אינך עובד פעיל ב-{{ name }}, ולכן הטיימר אינו יכול לעקוב אחר זמן שם. אתה עדיין עובד בארגון הנוכחי שלך."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",

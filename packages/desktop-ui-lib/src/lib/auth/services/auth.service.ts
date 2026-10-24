@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import {
 	IAuthResponse,
@@ -17,6 +17,7 @@ import { Observable, firstValueFrom, of } from 'rxjs';
 import { GAUZY_ENV } from '../../constants';
 import { API_PREFIX } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
+import { SKIP_ERROR_NOTIFICATION } from '../../interceptors/skip-error-notification.token';
 
 @Injectable()
 export class AuthService {
@@ -132,6 +133,24 @@ export class AuthService {
 		return this.http.post<{ token: string; refresh_token: string }>(`${API_PREFIX}/auth/refresh-token`, {
 			refresh_token
 		});
+	}
+
+	/**
+	 * Switch the signed-in user to another organization of the same tenant: the same call the Gauzy web UI
+	 * makes (`AuthService.switchOrganization` in `@gauzy/ui-core/core`). The API checks the membership and
+	 * answers with an access and a refresh token for that organization; the refresh token held before is
+	 * replaced by the new one.
+	 *
+	 * The caller reports a refusal itself, so the generic error toast of `ServerErrorInterceptor` is skipped.
+	 *
+	 * @param organizationId The organization to switch to.
+	 */
+	switchOrganization(organizationId: string): Observable<IAuthResponse | null> {
+		return this.http.post<IAuthResponse | null>(
+			`${API_PREFIX}/auth/switch-organization`,
+			{ organizationId },
+			{ context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true) }
+		);
 	}
 
 	public electronAuthentication({ user, token, refresh_token }: IAuthResponse): Observable<void> {

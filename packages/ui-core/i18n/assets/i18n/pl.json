@@ -5575,7 +5575,9 @@
 			"SERVICE_UNAVAILABLE": "Usługa chwilowo niedostępna.",
 			"UNEXPECTED_ERROR": "Wystąpił nieoczekiwany błąd.",
 			"NETWORK_ERROR": "Błąd sieci: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Uprawnienia do dostępu do ekranu są wymagane, aby włączyć automatyczne przechwytywanie ekranu. Proszę udzielić uprawnień w ustawieniach systemu.",
+			"ORGANIZATION_SWITCH_REFUSED": "Nie można przełączyć na {{ name }}: {{ reason }}. Nadal pracujesz w bieżącej organizacji.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",
