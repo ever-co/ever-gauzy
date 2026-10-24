@@ -128,6 +128,17 @@ describe('OAuth2ClientManager — verified client secrets', () => {
 		expect(mockCompare).toHaveBeenCalledTimes(2);
 	});
 
+	it('refuses the old secret when the stored hash changed while it was being compared', async () => {
+		const client = manager.getClient(RESOURCE_SERVER)!;
+		const validating = manager.validateClient(RESOURCE_SERVER, SECRET);
+		client.clientSecretHash = mockHash(ROTATED);
+
+		expect(await validating).toBeNull();
+		expect(cache.size).toBe(0);
+		expect(await manager.validateClient(RESOURCE_SERVER, SECRET)).toBeNull();
+		expect(await manager.validateClient(RESOURCE_SERVER, ROTATED)).not.toBeNull();
+	});
+
 	it('forgets the secret of a dynamically registered client that is forgotten', async () => {
 		const small = silence(new OAuth2ClientManager(1, cache));
 		const registration = (name: string) =>

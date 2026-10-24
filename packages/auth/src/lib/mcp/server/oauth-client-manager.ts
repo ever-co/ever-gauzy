@@ -337,18 +337,19 @@ export class OAuth2ClientManager {
 			return null;
 		}
 
+		const clientSecretHash = client.clientSecretHash;
 		const isValidSecret = await this.verifiedSecrets.verify(
 			clientId,
 			clientSecret,
-			client.clientSecretHash,
+			clientSecretHash,
 			(secret, secretHash) => bcrypt.compare(secret, secretHash)
 		);
 		if (!isValidSecret) {
 			return null;
 		}
-		// Removed or disabled while its secret was compared: the success just remembered is dropped too, so the client
-		// is verified with bcrypt again once it is back
-		if (this.clients.get(clientId) !== client || !client.isActive) {
+		// Removed, disabled or given another secret while its secret was compared: the success just remembered is
+		// dropped too, so the client is verified with bcrypt again (against its current hash)
+		if (this.clients.get(clientId) !== client || !client.isActive || client.clientSecretHash !== clientSecretHash) {
 			this.verifiedSecrets.forget(clientId);
 			return null;
 		}
