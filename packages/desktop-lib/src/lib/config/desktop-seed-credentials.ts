@@ -108,9 +108,10 @@ export function ensureDesktopSeedCredentials(
 	let changed = false;
 
 	// A pending account whose password went missing cannot be shown any more: forget it rather than
-	// show a new password the database never received.
+	// show a new password the database never received. Its email may be empty (an API that reported
+	// none, with no variable naming one): the password is still the account's, so it is kept.
 	const pending = Array.isArray(stored?.pending)
-		? stored.pending.filter((account) => isPresent(account?.email) && isPresent(stored[account.key]))
+		? stored.pending.filter((account) => typeof account?.email === 'string' && isPresent(stored[account.key]))
 		: undefined;
 	if (pending && pending.length !== stored.pending.length) {
 		changed = true;

@@ -147,6 +147,26 @@ describe('DesktopSignInNotices', () => {
 		expect(dialogOptions().detail).toContain(credentials.superAdmin);
 	});
 
+	it('an account recorded without an email (no report, no variable) still comes back at the next start', async () => {
+		const credentials = notices.provisionSeedCredentials();
+		// An API that printed no "Database Default Seed Accounts:" line, and no DEMO_*_EMAIL set.
+		notices.recordSeed(desktopSeedCredentialsToEnv(credentials));
+
+		restartApp();
+		mockShowMessageBox.mockResolvedValueOnce({ response: 1 });
+		expect(notices.provisionSeedCredentials()).toMatchObject({
+			superAdmin: credentials.superAdmin,
+			admin: credentials.admin,
+			employee: credentials.employee
+		});
+		await notices.show();
+
+		expect(mockShowMessageBox).toHaveBeenCalledTimes(1);
+		for (const password of [credentials.superAdmin, credentials.admin, credentials.employee]) {
+			expect(dialogOptions().detail).toContain(`Password: ${password}`);
+		}
+	});
+
 	it('leaves out an account whose password the operator set in the environment', async () => {
 		startAndSeed({ DEMO_ADMIN_PASSWORD: 'operator-chosen-password' });
 		mockShowMessageBox.mockResolvedValueOnce({ response: 1 });

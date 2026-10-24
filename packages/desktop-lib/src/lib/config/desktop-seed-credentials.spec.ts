@@ -108,6 +108,39 @@ describe('desktop seed credentials', () => {
 			expect(credentials.superAdmin).toBe('generated-password-0001');
 		});
 
+		it('keeps a pending account recorded with an empty email: its password is still the one the seed used', () => {
+			const stored = {
+				superAdmin: 'generated-password-9999',
+				admin: 'generated-password-8888',
+				employee: 'generated-password-7777',
+				pending: [
+					{ key: 'superAdmin' as const, email: '' },
+					{ key: 'admin' as const, email: 'local.admin@ever.co' }
+				]
+			};
+
+			const { credentials, changed } = ensureDesktopSeedCredentials(stored, generate);
+
+			expect(changed).toBe(false);
+			expect(credentials.pending).toEqual(stored.pending);
+			expect(credentials.superAdmin).toBe('generated-password-9999');
+		});
+
+		it('forgets a pending entry without an email field: it is not one this module recorded', () => {
+			const { credentials, changed } = ensureDesktopSeedCredentials(
+				{
+					superAdmin: 'generated-password-9999',
+					admin: 'generated-password-8888',
+					employee: 'generated-password-7777',
+					pending: [{ key: 'superAdmin' } as never, { key: 'admin', email: 'local.admin@ever.co' }]
+				},
+				generate
+			);
+
+			expect(changed).toBe(true);
+			expect(credentials.pending).toEqual([{ key: 'admin', email: 'local.admin@ever.co' }]);
+		});
+
 		it('does not modify what it was given', () => {
 			const stored = Object.freeze({ superAdmin: '' });
 
