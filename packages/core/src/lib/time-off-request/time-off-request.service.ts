@@ -8,11 +8,21 @@ import {
 	StatusTypesMapRequestApprovalEnum,
 	ApprovalPolicyTypesStringEnum,
 	IPagination,
-	ITimeOffFindInput
+	ITimeOffFindInput,
+	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { TimeOffPolicy } from '../core/entities/internal';
+import {
+	filedTimeOffStatus,
+	ITimeOffWriteBody,
+	requestedPolicyId,
+	TIME_OFF_FOR_OTHERS_PERMISSIONS,
+	timeOffEmployees,
+	writableTimeOffMembers
+} from './time-off-request-input.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import {
@@ -46,16 +56,31 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	/**
 	 * Creates a new time off request and its associated approval record.
 	 *
+	 * The row is written from the members a request may state (see `time-off-request-input.helper.ts`), never from
+	 * the body as a whole: the body's `status` is ignored — the request is `REQUESTED`, or `APPROVED` when its stored
+	 * policy requires no approval — and a caller who may not act for other employees files for themselves.
+	 *
 	 * @param entity - The input data for creating a time off request.
 	 * @returns A promise that resolves to the saved TimeOffRequest.
+	 * @throws {ForbiddenException} When a caller who may not act for others has no employee record.
 	 * @throws {BadRequestException} If any error occurs during the creation process.
 	 */
 	async create(entity: ITimeOffCreateInput): Promise<TimeOffRequest> {
-		const request = new TimeOffRequest();
-		Object.assign(request, entity);
+		const body = entity as unknown as ITimeOffWriteBody;
 
 		// Retrieve tenantId from RequestContext or options.
-		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? entity?.tenantId;
+
+		const members = writableTimeOffMembers(body, { create: true });
+		const employees = timeOffEmployees(body?.employees, this.timeOffCaller(), { create: true });
+		const requiresApproval = await this.policyRequiresApproval(
+			requestedPolicyId(body),
+			tenantId,
+			members.organizationId ?? RequestContext.currentOrganizationId()
+		);
+
+		const request = new TimeOffRequest();
+		Object.assign(request, members, { employees, status: filedTimeOffStatus(requiresApproval) });
 
 		// Save the time off request first.
 		const timeOffRequest = await this.save(request);
@@ -174,10 +199,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			// conditions, so this call is the check — an id belonging to another tenant, or to no row
 			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
 			await this.findOneByIdString(id);
+
+			// Only the members an edit may change are written (see `time-off-request-input.helper.ts`): never the
+			// status — approving or denying is the approve / deny routes' decision — and the employees only for a
+			// caller who may act for other employees.
+			const body = timeOffRequest as unknown as ITimeOffWriteBody;
+			const employees = timeOffEmployees(body?.employees, this.timeOffCaller(), { create: false });
+
 			return await this.save({
-				...timeOffRequest,
+				...writableTimeOffMembers(body, { create: false }),
+				...(employees ? { employees } : {}),
 				id
-			});
+			} as unknown as TimeOffRequest);
 		} catch (error) {
 			// Preserve intentional HTTP exceptions (the 404 above, and the ForbiddenException that
 			// `save()` raises for a cross-tenant row) instead of flattening them to 400.
@@ -207,6 +240,41 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			}
 			throw new BadRequestException(err);
 		}
+	}
+
+	/**
+	 * The caller, as far as choosing a time-off request's employees goes.
+	 */
+	private timeOffCaller(): { mayActForOthers: boolean; ownEmployeeId: ID | null } {
+		return {
+			mayActForOthers: RequestContext.hasAnyPermission([...TIME_OFF_FOR_OTHERS_PERMISSIONS]),
+			ownEmployeeId: RequestContext.currentUser()?.employeeId ?? null
+		};
+	}
+
+	/**
+	 * Whether the policy a new request names requires approval, read from the store inside the request's tenant
+	 * and organization — never from the body, which is what the browser's own status choice was read from.
+	 *
+	 * @param policyId The policy the body names.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationId The request's organization.
+	 * @returns The stored `requiresApproval`, or undefined when no such policy is in scope.
+	 */
+	private async policyRequiresApproval(
+		policyId: ID | undefined,
+		tenantId: ID | null | undefined,
+		organizationId: ID | null | undefined
+	): Promise<boolean | undefined> {
+		if (!policyId || !tenantId || !organizationId) {
+			return undefined;
+		}
+		const policy = await this.typeOrmRepository.manager.findOneBy(TimeOffPolicy, {
+			id: policyId,
+			tenantId,
+			organizationId
+		});
+		return policy?.requiresApproval;
 	}
 
 	/**
