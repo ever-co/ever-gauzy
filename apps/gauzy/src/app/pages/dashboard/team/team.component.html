@@ -31,13 +31,16 @@
 					role="tablist"
 					[attr.aria-label]="'ORGANIZATIONS_PAGE.TEAMS' | translate"
 					(scroll)="updateTabsScroll()"
+					(keydown)="onTabsKeydown($event)"
 				>
+					<!-- Roving tabindex: only the open tab is a Tab stop; arrows move between tabs. -->
 					<button
 						type="button"
 						role="tab"
 						class="tab"
 						id="teams-dashboard-tab-all"
 						aria-controls="teams-dashboard-panel"
+						[attr.tabindex]="!selectedTeamId ? 0 : -1"
 						[class.is-active]="!selectedTeamId"
 						[attr.aria-selected]="!selectedTeamId"
 						(click)="select(null)"
@@ -52,6 +55,7 @@
 						class="tab"
 						[attr.id]="'teams-dashboard-tab-' + row.id"
 						aria-controls="teams-dashboard-panel"
+						[attr.tabindex]="selectedTeamId === row.id ? 0 : -1"
 						[class.is-active]="selectedTeamId === row.id"
 						[attr.aria-selected]="selectedTeamId === row.id"
 						(click)="select(row.id)"

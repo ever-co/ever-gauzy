@@ -221,6 +221,45 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		list.scrollBy({ left: rtl ? -distance : distance, behavior: 'smooth' });
 	}
 
+	/**
+	 * Keyboard interaction of the team tablist: Left / Right move to the neighbouring tab
+	 * (swapped in a right-to-left layout, wrapping at the ends), Home / End to the first / last.
+	 * The focused tab is opened at once (automatic activation), so focus and the panel agree.
+	 */
+	public onTabsKeydown(event: KeyboardEvent): void {
+		const list = this._tabsList;
+		if (!list) {
+			return;
+		}
+		const tabs = Array.from(list.querySelectorAll<HTMLElement>('[role="tab"]'));
+		const index = tabs.indexOf(event.target as HTMLElement);
+		if (index < 0) {
+			return;
+		}
+		const step = getComputedStyle(list).direction === 'rtl' ? -1 : 1;
+		let next: number;
+		switch (event.key) {
+			case 'ArrowRight':
+				next = index + step;
+				break;
+			case 'ArrowLeft':
+				next = index - step;
+				break;
+			case 'Home':
+				next = 0;
+				break;
+			case 'End':
+				next = tabs.length - 1;
+				break;
+			default:
+				return;
+		}
+		event.preventDefault();
+		const target = tabs[(next + tabs.length) % tabs.length];
+		target.focus();
+		target.click();
+	}
+
 	/** Brings the selected tab fully into view, clear of the arrows. */
 	private _revealActiveTab(): void {
 		setTimeout(() => {
