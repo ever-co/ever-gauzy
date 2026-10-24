@@ -11,6 +11,7 @@ import { TypeOrmOrganizationRepository } from '../../organization/repository/typ
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
 import { isAccessTokenPayload, JWT_ALGORITHMS } from '../../auth/purpose-token';
+import { isOAuthAppTokenScopeEnforcementEnabled, readOAuthAppTokenGrant } from '../../auth/oauth-app-scope';
 // A dependency-free helper file (no entity imports), so this does not close the `user/` import cycle
 // described on `findCaller` below.
 import { extractRoleIds } from '../../user/role-assignment.helper';
@@ -166,6 +167,15 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// and is signed with the same secret (GHSA-28wv-vrxj-rp4q).
 		if (!isAccessTokenPayload(jwtPayload)) {
 			throw new ForbiddenException('Invalid or expired authentication token.');
+		}
+
+		// Creating accounts with roles is an administrator's role-gated action, which a third-party OAuth-app token
+		// never reaches (owner decision Q12): JwtStrategy, which holds such a token to its scopes, does not run on this
+		// @Public() route, so it is refused here.
+		if (readOAuthAppTokenGrant(jwtPayload) && isOAuthAppTokenScopeEnforcementEnabled()) {
+			throw new ForbiddenException(
+				'Privileged registration fields cannot be used with a third-party application token.'
+			);
 		}
 
 		const callerUserId = jwtPayload.id;

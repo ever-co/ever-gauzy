@@ -9,6 +9,11 @@ import { boolLiteral, dialectOf, placeholder, quote, runSql, SqlDialect, toBool,
 export interface EverOperatorCandidate {
 	id?: string | null;
 	email?: string | null;
+	/**
+	 * Set on the request user by `JwtStrategy` when the request is authenticated by a third-party OAuth-app token
+	 * (`@gauzy/core`'s `auth/oauth-app-scope.ts`): such a token is never the operator.
+	 */
+	oauthApp?: unknown;
 }
 
 /** A user as the operator check reads it from the database. */
@@ -80,6 +85,11 @@ export class EverOperatorService {
 	/** Whether `user`, holding the role `roleName` right now, is the operator of this installation. */
 	async isOperator(user: EverOperatorCandidate | null | undefined, roleName: string | null | undefined): Promise<boolean> {
 		if (!user?.id || roleName !== RolesEnum.SUPER_ADMIN) {
+			return false;
+		}
+		// A third-party app acting for the operator is not the operator: role-gated access is never reached through an
+		// OAuth-app token (owner decision Q12, 2026-10-24).
+		if (user.oauthApp) {
 			return false;
 		}
 		if (parseInstallSource(this.env) === 'cloud') {

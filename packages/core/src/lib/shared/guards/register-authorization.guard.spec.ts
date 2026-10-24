@@ -276,4 +276,41 @@ describe('RegisterAuthorizationGuard', () => {
 
 		await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
 	});
+
+	/**
+	 * Owner decision Q12: a third-party OAuth-app token never reaches a role-gated action. Creating users with roles
+	 * is one, and JwtStrategy (which holds such a token to its scopes) does not run on this @Public() route.
+	 */
+	describe('third-party OAuth-app tokens (owner decision Q12)', () => {
+		const oauthAppToken = sign(
+			{ id: 'caller-1', tenantId: 'tenant-1', oauthApp: { clientId: 'zapier', scopes: ['zap', 'zap:write'] } },
+			env.JWT_SECRET
+		);
+
+		afterEach(() => {
+			delete process.env.OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT;
+		});
+
+		it("refuses a super admin's OAuth-app token, before reading the caller", async () => {
+			const { guard, typeOrmUserRepository } = build(activeSuperAdmin, superAdminState);
+			const { executionContext } = context(
+				{ user: { email: 'new@ever.co', roleId: 'role-target' } },
+				oauthAppToken
+			);
+
+			await expect(guard.canActivate(executionContext)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(typeOrmUserRepository.findOne).not.toHaveBeenCalled();
+		});
+
+		it('admits it as before when OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT=false', async () => {
+			process.env.OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT = 'false';
+			const { guard } = build(activeSuperAdmin, superAdminState);
+			const { executionContext } = context(
+				{ user: { email: 'new@ever.co', roleId: 'role-target' } },
+				oauthAppToken
+			);
+
+			await expect(guard.canActivate(executionContext)).resolves.toBe(true);
+		});
+	});
 });

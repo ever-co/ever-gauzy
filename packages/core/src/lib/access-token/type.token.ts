@@ -1,4 +1,5 @@
 import { JwtPayload } from 'jsonwebtoken';
+import type { IOAuthAppTokenGrant } from '../auth/oauth-app-scope';
 import { createToken } from '../token/shared/create-token';
 
 export const ACCESS_TOKEN_TYPE = 'ACCESS_TOKEN_TYPE';
@@ -26,4 +27,9 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	role?: string;
 	/** Permissions */
 	permissions?: string[];
+	/**
+	 * Set only on a token the OAuth-app code exchange minted: the client the user approved and the scopes they
+	 * approved for it. `JwtStrategy` holds the request to those scopes (see `auth/oauth-app-scope.ts`).
+	 */
+	oauthApp?: IOAuthAppTokenGrant;
 }

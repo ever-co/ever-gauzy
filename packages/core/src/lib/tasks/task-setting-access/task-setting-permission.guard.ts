@@ -74,7 +74,9 @@ export class TaskSettingPermissionGuard extends PermissionGuard implements CanAc
 			return super.canActivate(context);
 		}
 
-		if (await this.writesOnlyInManagedTeams(context)) {
+		// A third-party OAuth-app token takes the team manager's way in only when its approved scopes reach the route's
+		// permission (owner decision Q12)
+		if (this.oauthAppScopesReachRoute(context) && (await this.writesOnlyInManagedTeams(context))) {
 			return true;
 		}
 
