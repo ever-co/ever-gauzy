@@ -3,6 +3,7 @@ import { BadRequestException, UnauthorizedException, UseGuards } from '@nestjs/c
 import { Args, ID, Resolver, Subscription } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
 import { ID as Id, PermissionsEnum } from '@gauzy/contracts';
+import { narrowPermissionsToOAuthAppScopes } from '../../auth/oauth-app-scope';
 import { RequestContext } from '../../core/context/request-context';
 import { ApiErrorCode } from '../../core/errors/api-error-codes';
 import { ApiException } from '../../core/errors/api-exception';
@@ -103,7 +104,12 @@ export class PlatformEventsResolver {
 			credentialKind: presentsApiKey() ? 'api-key' : 'jwt',
 			credentialId: userId ? String(userId) : undefined,
 			requiredPermission: PermissionsEnum.EVENT_OUTBOX_VIEW,
-			permissionEvaluator: rolePermissionEvaluator(this.rolePermissionService, scope.tenantId, roleId),
+			permissionEvaluator: rolePermissionEvaluator(
+				this.rolePermissionService,
+				scope.tenantId,
+				roleId,
+				RequestContext.currentOAuthAppScopes()
+			),
 			eventNames: names ?? [],
 			aggregateId: aggregateId ? String(aggregateId) : undefined,
 			// An addressed event (an inbox item) reaches this stream only when its subscriber is a recipient.
@@ -283,17 +289,28 @@ function withoutRecipients(payload: SubscriptionEnvelope): unknown {
  * @param service The role-permission service.
  * @param tenantId The subscriber's tenant.
  * @param roleId The subscriber's role, when it has one.
+ * @param oauthAppScopes The approved scopes when the subscriber authenticated with a third-party OAuth-app token
+ * (`RequestContext.currentOAuthAppScopes()`): a permission outside them is refused whatever the role holds (owner
+ * decision Q12). `null` (the default) for every other subscriber.
  * @returns The evaluator.
  */
 export function rolePermissionEvaluator(
 	service: Pick<RolePermissionService, 'checkRolePermission'>,
 	tenantId: string,
-	roleId: Id | null | undefined
+	roleId: Id | null | undefined,
+	oauthAppScopes: readonly string[] | null = null
 ): (permission: string) => Promise<boolean> {
 	const answers = new Map<string, { at: number; allowed: Promise<boolean> }>();
 
 	return (permission: string): Promise<boolean> => {
 		if (!roleId) {
+			return Promise.resolve(false);
+		}
+
+		if (
+			oauthAppScopes !== null &&
+			narrowPermissionsToOAuthAppScopes([permission as PermissionsEnum], oauthAppScopes).length === 0
+		) {
 			return Promise.resolve(false);
 		}
 

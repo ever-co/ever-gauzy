@@ -43,6 +43,12 @@ export class ProjectManagerOrPermissionGuard extends PermissionGuard implements 
 			return super.canActivate(context);
 		}
 
+		// A third-party OAuth-app token takes the manager's way in only when its approved scopes reach the route's
+		// permissions (owner decision Q12): a read-only app never edits a project through its user's management.
+		if (!this.oauthAppScopesReachRoute(context)) {
+			return super.canActivate(context);
+		}
+
 		// Check if the user is a project manager
 		const isManager = await this._projectService.isManagerOfProject(projectId, employeeId);
 		if (isManager) {

@@ -5,8 +5,9 @@ import { Cache } from 'cache-manager';
 import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { environment as env } from '@gauzy/config';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { isNotEmpty, deduplicate } from '@gauzy/utils';
+import { isEmpty, isNotEmpty, deduplicate } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+import { narrowPermissionsToOAuthAppScopes } from '../../auth/oauth-app-scope';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 
@@ -66,8 +67,24 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
-		const permissions =
+		let permissions =
 			deduplicate(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+
+		// A third-party OAuth-app token reaches only the permissions its approved scopes allow (owner decision Q12): the
+		// role query below is asked about those alone, so it cannot grant one outside the scopes.
+		const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+		if (oauthAppScopes !== null && isNotEmpty(permissions)) {
+			const reachable = narrowPermissionsToOAuthAppScopes(permissions, oauthAppScopes);
+			if (isEmpty(reachable)) {
+				console.log(
+					`Unauthorized access blocked: OAuth app token scopes do not allow any of the permissions. Tenant ID: ${tenantId}, Role ID: ${roleId}, Permissions Checked: ${permissions.join(
+						', '
+					)}`
+				);
+				return false;
+			}
+			permissions = reachable;
+		}
 
 		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {

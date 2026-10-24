@@ -6,6 +6,7 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+import { narrowPermissionsToOAuthAppScopes } from '../../auth/oauth-app-scope';
 import { debugInDevelopment } from '../../logger';
 import { BaseGuard } from './base.guard';
 import { attachedRolePermissionVerdict } from './attached-role-permissions';
@@ -30,9 +31,7 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		// Retrieve permissions from metadata
-		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions =
-			deduplicate(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		let permissions = this.routePermissions(context);
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {
@@ -43,6 +42,18 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 		// decoding the bearer token again: its `role` claim is whatever the user was when it was issued.
 		const id = RequestContext.currentUserId();
 		const role = RequestContext.currentRoleName();
+
+		// A third-party OAuth-app token reaches only the permissions its approved scopes allow (owner decision Q12).
+		// The role's permissions on the request are already narrowed by JwtStrategy; narrowing what the route asks
+		// for as well keeps the role query below (a request without that state) from granting outside the scopes.
+		const reachable = this.reachableByOAuthAppScopes(permissions);
+		if (isEmpty(reachable)) {
+			logger.warn(
+				`Unauthorized access blocked: OAuth app token scopes do not allow any of the permissions. User ID: ${id}, Role: ${role}, Permissions Checked: ${permissions.join(', ')}`
+			);
+			return false;
+		}
+		permissions = reachable;
 
 		// Retrieve current role ID and tenant ID from RequestContext
 		const tenantId = RequestContext.currentTenantId();
@@ -101,5 +112,41 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 		}
 
 		return isAuthorized;
+	}
+
+	/**
+	 * The permissions a route declares (`@Permissions(...)` on the handler, else on the class), deduplicated.
+	 *
+	 * @param context The execution context.
+	 * @returns The declared permissions; empty when the route declares none.
+	 */
+	protected routePermissions(context: ExecutionContext): PermissionsEnum[] {
+		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
+		return deduplicate(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+	}
+
+	/**
+	 * The permissions among `permissions` the request may be granted at all: every one of them for a first-party
+	 * caller, only the ones its approved scopes allow for a third-party OAuth-app token (see `auth/oauth-app-scope.ts`).
+	 *
+	 * @param permissions The permissions a route declares.
+	 * @returns The reachable ones.
+	 */
+	protected reachableByOAuthAppScopes(permissions: PermissionsEnum[]): PermissionsEnum[] {
+		const scopes = RequestContext.currentOAuthAppScopes();
+		return scopes === null ? permissions : narrowPermissionsToOAuthAppScopes(permissions, scopes);
+	}
+
+	/**
+	 * Whether a grant that does not come from the role (a project manager's, for instance) may apply to this request:
+	 * always for a first-party caller; for an OAuth-app token, only when its scopes reach one of the permissions the
+	 * route declares, so a read-only app is never handed a write route through a relationship.
+	 *
+	 * @param context The execution context.
+	 * @returns Whether such a grant may apply.
+	 */
+	protected oauthAppScopesReachRoute(context: ExecutionContext): boolean {
+		const permissions = this.routePermissions(context);
+		return isEmpty(permissions) || !isEmpty(this.reachableByOAuthAppScopes(permissions));
 	}
 }

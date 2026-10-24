@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import { CLS_ID, ClsService } from 'nestjs-cls';
 import { ExtractJwt } from 'passport-jwt';
 import { v4 as uuidv4 } from 'uuid';
+import { narrowRolesToOAuthAppScopes } from '../../auth/oauth-app-scope';
 import {
 	resolveThrottlerTracker,
 	throttlerTrackerOptions,
@@ -332,6 +333,26 @@ export class RequestContext {
 	}
 
 	/**
+	 * The scopes the user approved for the third-party OAuth app whose token authenticated this request.
+	 *
+	 * `JwtStrategy` records them on `request.user` for a token minted by the OAuth-app code exchange (unless
+	 * `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT=false`); the request is then held to them: its permissions are the role's
+	 * intersected with what the scopes allow, and role checks refuse (see `auth/oauth-app-scope.ts`).
+	 *
+	 * @returns The approved scopes (possibly none), or `null` for every other caller: a first-party session, a token
+	 * issued before scopes were recorded, an API key, no caller at all.
+	 */
+	static currentOAuthAppScopes(): string[] | null {
+		const grant = RequestContext.currentUser()?.oauthApp;
+
+		if (!grant) {
+			return null;
+		}
+
+		return Array.isArray(grant.scopes) ? grant.scopes : [];
+	}
+
+	/**
 	 * Retrieves the current employee ID from the request context.
 	 * @returns {string | null} - The current employee ID if available, otherwise null.
 	 */
@@ -520,7 +541,12 @@ export class RequestContext {
 		// OrganizationPermissionGuard grant on the strength of it — until that token expired.
 		const role: RolesEnum | null = RequestContext.currentRoleName();
 
-		if (role && roles.includes(role)) {
+		// A third-party OAuth-app token acts with the user's role only where an approved scope explicitly allows that
+		// role (none does today): it never reaches a `@Roles(...)` route, a SUPER_ADMIN or tenant-admin exemption.
+		const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+		const accepted = oauthAppScopes === null ? roles : narrowRolesToOAuthAppScopes(roles, oauthAppScopes);
+
+		if (role && accepted.includes(role)) {
 			return true;
 		}
 

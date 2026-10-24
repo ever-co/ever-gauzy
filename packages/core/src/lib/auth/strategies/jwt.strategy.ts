@@ -13,6 +13,11 @@ import { environment as env } from '@gauzy/config';
 import { IAuthenticatedUser } from '../../core/context/types';
 import { DATABASE_UNAVAILABLE_MESSAGE, isDatabaseUnavailableError } from '../../core/errors/database-unavailable';
 import { AuthService } from '../auth.service';
+import {
+	isOAuthAppTokenScopeEnforcementEnabled,
+	narrowPermissionsToOAuthAppScopes,
+	readOAuthAppTokenGrant
+} from '../oauth-app-scope';
 import { isAccessTokenPayload, JWT_ALGORITHMS } from '../purpose-token';
 import { EmployeeService } from '../../employee/employee.service';
 import { RoleAuthorizationService } from '../../role/role-authorization.service';
@@ -113,9 +118,52 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		// The rest reads the database. A context validated moments ago for the same claims is reused, and
 		// concurrent requests with the same claims share one lookup (JWT_AUTHENTICATED_USER_TTL_MS; 0 judges every
 		// request afresh). Only a context that authenticated is reused: a refusal is never remembered.
-		return this.authenticatedUsers.resolve({ id, thirdPartyId, employeeId, organizationId, tenantId }, () =>
-			this.loadAuthenticatedUser(payload)
+		const outcome = await this.authenticatedUsers.resolve(
+			{ id, thirdPartyId, employeeId, organizationId, tenantId },
+			() => this.loadAuthenticatedUser(payload)
 		);
+
+		// Applied to this request's own user, after the shared context is resolved: the cache is keyed by the claims
+		// above, which an OAuth-app token and a first-party token of the same user can share, so the context it keeps
+		// is never the narrowed one (each caller gets a copy).
+		return this.applyOAuthAppGrant(outcome, payload);
+	}
+
+	/**
+	 * Holds a request authenticated by a third-party OAuth-app token to the scopes the user approved (owner decision
+	 * Q12; see `auth/oauth-app-scope.ts`).
+	 *
+	 * The OAuth-app code exchange writes the approved scopes into the token. The permissions pinned onto the user
+	 * become the role's permissions INTERSECTED with what those scopes allow, and the grant is recorded on the user, so
+	 * `RequestContext.hasRoles` refuses and the permission guards narrow the permissions a route declares. A token
+	 * without the claim (a first-party session, or an OAuth-app token issued before the claim existed) is left
+	 * exactly as it was, and so is every token while `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT=false`.
+	 *
+	 * @param outcome The authenticated user (this request's own copy), or the refusal.
+	 * @param payload The verified access-token payload.
+	 * @returns The same outcome, narrowed for an OAuth-app token.
+	 */
+	private applyOAuthAppGrant(
+		outcome: IAuthenticatedUser | UnauthorizedException,
+		payload: JwtPayload
+	): IAuthenticatedUser | UnauthorizedException {
+		if (!outcome || outcome instanceof UnauthorizedException) {
+			return outcome;
+		}
+
+		const grant = readOAuthAppTokenGrant(payload);
+		if (!grant || !isOAuthAppTokenScopeEnforcementEnabled()) {
+			return outcome;
+		}
+
+		outcome.oauthApp = grant;
+		// A new array: the role's permission list may be shared with the cached context and the role state cache.
+		outcome.permissions = narrowPermissionsToOAuthAppScopes(outcome.permissions ?? [], grant.scopes);
+
+		if (this.loggingEnabled) {
+			this.logger.debug(`OAuth-app token of client ${grant.clientId} held to scopes: ${grant.scopes.join(' ')}`);
+		}
+		return outcome;
 	}
 
 	/**
