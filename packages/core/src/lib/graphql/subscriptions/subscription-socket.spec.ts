@@ -50,6 +50,9 @@ describe('the subscription socket, end to end', () => {
 	/** A signed access token for one user. */
 	const tokenFor = (userId: string, secret = SECRET) => `Bearer ${sign({ id: userId }, secret)}`;
 
+	/** The users deactivated since their token was issued: `JwtStrategy` refuses them from then on. */
+	const DEACTIVATED = new Set<string>();
+
 	/** The passport strategy the global `AuthGuard` authenticates with, named as the platform's is. */
 	@Injectable()
 	class SpecJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -60,7 +63,7 @@ describe('the subscription socket, end to end', () => {
 		validate(payload: { id: string }) {
 			const user = USERS[payload.id];
 
-			return user ? { ...user } : false;
+			return user && !DEACTIVATED.has(payload.id) ? { ...user } : false;
 		}
 	}
 
@@ -348,5 +351,70 @@ describe('the subscription socket, end to end', () => {
 		});
 
 		expect(closed.code).toBe(4403);
+	});
+
+	it('closes the socket with 4403 when the access token expires, so the client reconnects with a fresh one', async () => {
+		// Valid for one to two seconds: the subscription opens well inside it.
+		const token = `Bearer ${sign({ id: 'user-a', exp: Math.floor(Date.now() / 1000) + 2 }, SECRET)}`;
+		const received: unknown[] = [];
+
+		const closed = new Promise<{ code?: number }>((resolve) => {
+			connect({ Authorization: token }).subscribe(
+				{ query: 'subscription { widgetChanged { id tenantId } }' },
+				{
+					next: (value) => received.push(value),
+					error: (event) => resolve(event as { code?: number }),
+					complete: () => resolve({})
+				}
+			);
+		});
+
+		await until(() => pubSub.openStreams === 1);
+
+		// Before the session, the stream stayed open after the token expired and kept delivering.
+		expect((await closed).code).toBe(4403);
+		await until(() => pubSub.openStreams === 0);
+		expect(received).toEqual([]);
+	});
+
+	it('closes the socket with 4401 when the user is deactivated while subscribed, before the next event reaches them', async () => {
+		const previousInterval = process.env.GRAPHQL_SUBSCRIPTION_REAUTH_INTERVAL_MS;
+		// The shortest interval accepted, read when the connection is accepted.
+		process.env.GRAPHQL_SUBSCRIPTION_REAUTH_INTERVAL_MS = '1000';
+
+		try {
+			const received: unknown[] = [];
+			const closed = new Promise<{ code?: number }>((resolve) => {
+				connect({ Authorization: tokenFor('user-a') }).subscribe(
+					{ query: 'subscription { widgetChanged { id tenantId } }' },
+					{
+						next: (value) => received.push(value),
+						error: (event) => resolve(event as { code?: number }),
+						complete: () => resolve({})
+					}
+				);
+			});
+
+			await until(() => pubSub.openStreams === 1);
+			await pubSub.publish(EVENT_NAME, TENANT_A, { id: 'a-1', tenantId: TENANT_A });
+			await until(() => received.length === 1);
+
+			// Deactivated (or archived, or their employee or membership deactivated) with the token still unexpired.
+			DEACTIVATED.add('user-a');
+			await new Promise((resolve) => setTimeout(resolve, 1100));
+			await pubSub.publish(EVENT_NAME, TENANT_A, { id: 'a-2', tenantId: TENANT_A });
+
+			expect((await closed).code).toBe(4401);
+			expect(received).toEqual([{ data: { widgetChanged: { id: 'a-1', tenantId: TENANT_A } } }]);
+			await until(() => pubSub.openStreams === 0);
+		} finally {
+			DEACTIVATED.delete('user-a');
+
+			if (previousInterval === undefined) {
+				delete process.env.GRAPHQL_SUBSCRIPTION_REAUTH_INTERVAL_MS;
+			} else {
+				process.env.GRAPHQL_SUBSCRIPTION_REAUTH_INTERVAL_MS = previousInterval;
+			}
+		}
 	});
 });
