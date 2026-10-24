@@ -1234,9 +1234,9 @@ describe('OrganizationRecurringExpenseController and its resolver — a standing
 
 	it('overrides every inherited read route, so none of them runs with the CRUD base’s empty metadata', () => {
 		for (const handler of ['getCount', 'pagination', 'findById']) {
-			expect(Object.prototype.hasOwnProperty.call(OrganizationRecurringExpenseController.prototype, handler)).toBe(
-				true
-			);
+			expect(
+				Object.prototype.hasOwnProperty.call(OrganizationRecurringExpenseController.prototype, handler)
+			).toBe(true);
 		}
 	});
 

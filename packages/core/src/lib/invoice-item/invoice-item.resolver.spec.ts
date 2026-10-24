@@ -848,7 +848,7 @@ describe('InvoiceItemController and InvoiceItemResolver — a line is read only 
 		expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
 	});
 
-	it.each(READS)('%p.%s refuses a member who may write lines and see estimates but not read invoices', async (target, handler) => {
+	it.each(READS)('%p.%s refuses a member with INVOICES_EDIT and ESTIMATES_VIEW only', async (target, handler) => {
 		const { guard } = permissionGuard();
 		actAs([PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ESTIMATES_VIEW]);
 
