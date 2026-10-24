@@ -28,6 +28,7 @@ import {
 	TimeOffRequest
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
+import { isWithinOrganizationBoundary } from './../core/crud/organization-boundary';
 import { assertSensitiveRelationsAllowed } from './../core/util/sensitive-relations.helper';
 import { MultiORMEnum, flatten, parseFindOptionsRelations } from './../core/utils';
 import { RequestApproval } from './request-approval.entity';
@@ -74,7 +75,8 @@ export interface IRequestApprovalAnswerTransaction {
 	 * on PostgreSQL and MySQL. On SQLite there are no row locks and the transaction itself is serialized (see
 	 * {@link RequestApprovalService.answer}).
 	 *
-	 * @returns The request, or null when it is no longer there (or no tenant is known).
+	 * @returns The request, with its `organizationId` as stored, or null when it is no longer there (or no tenant is
+	 * known).
 	 */
 	lockRequest(id: ID, tenantId: ID): Promise<RequestApproval | null>;
 	/**
@@ -92,11 +94,20 @@ export interface IRequestApprovalAnswerTransaction {
 	writeSlots(kind: 'employee' | 'team', ids: ID[], tenantId: ID, status: number): Promise<void>;
 	/** Writes the request's own status, inside the tenant. */
 	writeRequestStatus(id: ID, tenantId: ID, status: number): Promise<void>;
-	/** Reads the document a request is about, inside the tenant (withdrawn rows left out), or null. */
+	/**
+	 * Reads the document a request is about, inside the tenant (withdrawn rows left out), or null.
+	 *
+	 * `locked` reads it under a row lock (`FOR UPDATE` on PostgreSQL and MySQL), which reads the version committed
+	 * now. A plain read on MySQL (REPEATABLE READ) answers from the transaction's snapshot, taken at its first plain
+	 * read: a change committed since, such as the time-off route deciding the leave, is not seen there.
+	 *
+	 * @param locked Read the row's current version under a row lock rather than the transaction's snapshot.
+	 */
 	readLinkedDocument(
 		kind: RequestApprovalLinkedDocumentKind,
 		id: ID,
-		tenantId: ID
+		tenantId: ID,
+		locked?: boolean
 	): Promise<IRequestApprovalLinkedDocument | null>;
 	/**
 	 * Moves a time-off request that is still `REQUESTED` to the status given — a compare-and-set, so a leave its own
@@ -611,7 +622,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		return await this.answerTransaction(async (transaction) => {
 			const locked = await transaction.lockRequest(requestApproval.id, tenantId);
-			if (!locked) {
+			// The organization boundary of the scoped read, again on the locked row (see `answer`).
+			if (!locked || !isWithinOrganizationBoundary(locked.organizationId)) {
 				throw new NotFoundException('Request Approval not found');
 			}
 
@@ -645,7 +657,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	 * the caller reaches it at all (404 otherwise). Then, in one transaction:
 	 *
 	 * 1. the request is read again under a row lock (`SELECT … FOR UPDATE` on PostgreSQL and MySQL), and its approver
-	 *    slots after it, so the decision is made on every answer committed before this one;
+	 *    slots after it, so the decision is made on every answer committed before this one; the locked row is held to
+	 *    the caller's organization boundary again, as the scoped read was, so a request moved to another organization
+	 *    in between is not found (the lock reads it by id and tenant only);
 	 * 2. the caller answers as a tenant administrator, or as a designated approver — their own employee slot, or an
 	 *    approver team they are an active member of — and anybody else is refused; `min_count` is counted on the
 	 *    locked slots (see `request-approval-decision.ts` for the rules);
@@ -687,7 +701,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		return await this.answerTransaction(async (transaction) => {
 			const requestApproval = await transaction.lockRequest(scoped.id, tenantId);
-			if (!requestApproval) {
+			// The scoped read kept the caller inside their organization boundary, and the lock reads by id and tenant
+			// only: a request an administrator moved to another organization since then is not found either.
+			if (!requestApproval || !isWithinOrganizationBoundary(requestApproval.organizationId)) {
 				throw new NotFoundException('Request Approval not found');
 			}
 
@@ -807,11 +823,18 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			writeRequestStatus: async (id, tenantId, status) => {
 				await manager.update(RequestApproval, { id, tenantId }, { status });
 			},
-			readLinkedDocument: async (kind, id, tenantId) => {
+			readLinkedDocument: async (kind, id, tenantId, locked = false) => {
+				// The status and organization alone, no eager relation (a leave's `document`): joined, it would put a
+				// nullable outer join under the lock, and PostgreSQL refuses FOR UPDATE on that side of one.
+				const options = {
+					where: { id, tenantId },
+					loadEagerRelations: false,
+					...(locked && rowLock ? { lock: { mode: 'pessimistic_write' as const } } : {})
+				};
 				const row =
 					kind === 'time-off'
-						? await manager.findOne(TimeOffRequest, { where: { id, tenantId } })
-						: await manager.findOne(EquipmentSharing, { where: { id, tenantId } });
+						? await manager.findOne(TimeOffRequest, options)
+						: await manager.findOne(EquipmentSharing, options);
 				return row ? { id: row.id, organizationId: row.organizationId, status: row.status } : null;
 			},
 			moveTimeOff: async (id, tenantId, status) => {
@@ -854,7 +877,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 						...(rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
 					} as any
 				);
-				return row ? (this.serialize(row as RequestApproval) as RequestApproval) : null;
+				if (!row) {
+					return null;
+				}
+				const locked = this.serialize(row as RequestApproval) as RequestApproval;
+				// As stored: the `persist: false` organization mirror may be left unhydrated; the relation has its key.
+				locked.organizationId =
+					(row as any).organizationId ?? (row as any).organization?.id ?? locked.organizationId;
+				return locked;
 			},
 			readSlots: async (requestApprovalId, tenantId) => ({
 				employeeApprovals: (
@@ -895,9 +925,10 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					this.mikroOrmRowOf(em, RequestApproval, { status }) as any
 				);
 			},
-			readLinkedDocument: async (kind, id, tenantId) => {
+			readLinkedDocument: async (kind, id, tenantId, locked = false) => {
 				const entity = kind === 'time-off' ? TimeOffRequest : EquipmentSharing;
-				const row = (await em.findOne(entity as any, { id, tenantId } as any, fromTable as any)) as any;
+				const options = locked && rowLock ? { ...fromTable, lockMode: LockMode.PESSIMISTIC_WRITE } : fromTable;
+				const row = (await em.findOne(entity as any, { id, tenantId } as any, options as any)) as any;
 				return row
 					? { id: row.id, organizationId: row.organization?.id ?? row.organizationId, status: row.status }
 					: null;
@@ -947,10 +978,10 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 		}
 
-		if (
-			row['updatedByUserId'] === undefined &&
-			meta.props.some((property) => property.name === 'updatedByUserId' && property.persist !== false)
-		) {
+		// The audit stamp, looked up whatever its `persist`: on the platform's entities it is the `updatedByUser`
+		// relation's `persist: false` mirror, which `nativeUpdate` writes when it is stated alone (see
+		// `mikro-orm-scope-column.helper.ts`).
+		if (row['updatedByUserId'] === undefined && meta.properties?.['updatedByUserId']) {
 			const userId = RequestContext.currentUserId();
 			if (userId) {
 				row['updatedByUserId'] = userId;

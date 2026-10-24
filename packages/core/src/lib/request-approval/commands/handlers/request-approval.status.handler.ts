@@ -92,6 +92,11 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 	/**
 	 * Reads the document a request is about, in the scope its own service reads it in.
 	 *
+	 * It is read under a row lock, held until the answer commits: the organization checked is the one the row holds
+	 * now, and stays so through the write that moves it. A plain read on MySQL (REPEATABLE READ) answers from the
+	 * transaction's snapshot, taken at the slots' read, so a document an administrator moved to another organization
+	 * since then still read as the former one, and the write (by id and tenant) then moved it in the new one.
+	 *
 	 * @throws NotFoundException when it is not there, or outside the caller's organization boundary.
 	 */
 	private async readLinkedDocument(
@@ -100,7 +105,7 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 		id: ID,
 		tenantId: ID
 	): Promise<IRequestApprovalLinkedDocument> {
-		const document = id && tenantId ? await transaction.readLinkedDocument(kind, id, tenantId) : null;
+		const document = id && tenantId ? await transaction.readLinkedDocument(kind, id, tenantId, true) : null;
 
 		if (!document || !isWithinOrganizationBoundary(document.organizationId)) {
 			throw new NotFoundException(`The ${kind} this request approval is about was not found.`);
@@ -117,6 +122,10 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 	 * answer is written then, instead of being refused. Any other status stands, such as an administrator deciding an
 	 * approved leave the other way.
 	 *
+	 * After a compare-and-set that moved nothing, the leave is read again under a row lock: on MySQL (REPEATABLE READ)
+	 * a plain read answers from the transaction's snapshot, which predates a decision the time-off route committed
+	 * while the answer ran, and would still show the leave `REQUESTED`.
+	 *
 	 * @param transaction The answer's transaction.
 	 * @param id The time-off request.
 	 * @param tenantId The caller's tenant.
@@ -132,7 +141,7 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 		if ((await transaction.moveTimeOff(id, tenantId, status)) > 0) {
 			return;
 		}
-		if ((await transaction.readLinkedDocument('time-off', id, tenantId))?.status === status) {
+		if ((await transaction.readLinkedDocument('time-off', id, tenantId, true))?.status === status) {
 			return;
 		}
 		throw new ConflictException('Request time off is Conflict');
