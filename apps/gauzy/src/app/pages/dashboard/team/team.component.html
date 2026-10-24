@@ -90,33 +90,33 @@
 		<div class="tab-pane" role="tabpanel">
 			<gauzy-team-card [team]="team"></gauzy-team-card>
 
-			<section class="summary">
-				<div class="summary-cell">
-					<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKED_TODAY' | translate }}</span>
-					<span class="summary-value">{{ formatDuration(team.duration) }}</span>
-					<span class="summary-meta">
+			<section class="kpi-row">
+				<div class="kpi">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKED_TODAY' | translate }}</span>
+					<span class="kpi-value">{{ formatDuration(team.duration) }}</span>
+					<span class="kpi-meta">
 						{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate: { value: formatPercent(team.activity) } }}
 					</span>
 				</div>
-				<div class="summary-cell">
-					<span class="summary-label">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS' | translate }}</span>
-					<span class="summary-value">{{ team.worked }}</span>
-					<span class="summary-meta">
+				<div class="kpi">
+					<span class="kpi-label">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS' | translate }}</span>
+					<span class="kpi-value">{{ team.worked }}</span>
+					<span class="kpi-meta">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS_META' | translate: { total: team.total } }}
 					</span>
 					@if (team.total > 0) {
 					<gauzy-counter-point class="summary-counter" [total]="team.total" [value]="team.worked"></gauzy-counter-point>
 					}
 				</div>
-				<div class="summary-cell">
-					<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TRACKING_NOW' | translate }}</span>
-					<span class="summary-value">{{ team.tracking }}</span>
-					<span class="summary-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.ONLINE_META' | translate: { count: team.online } }}</span>
+				<div class="kpi">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TRACKING_NOW' | translate }}</span>
+					<span class="kpi-value">{{ team.tracking }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.ONLINE_META' | translate: { count: team.online } }}</span>
 				</div>
-				<div class="summary-cell">
-					<span class="summary-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
-					<span class="summary-value">{{ team.projects }}</span>
-					<span class="summary-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.PROJECTS_META' | translate }}</span>
+				<div class="kpi">
+					<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+					<span class="kpi-value">{{ team.projects }}</span>
+					<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.PROJECTS_META' | translate }}</span>
 				</div>
 			</section>
 

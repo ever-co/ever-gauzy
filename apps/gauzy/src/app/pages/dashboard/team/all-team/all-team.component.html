@@ -1,27 +1,27 @@
-<section class="summary">
-	<div class="summary-cell">
-		<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKED_TODAY' | translate }}</span>
-		<span class="summary-value">{{ formatDuration(overview?.duration) }}</span>
-		<span class="summary-meta">
+<section class="kpi-row">
+	<div class="kpi">
+		<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKED_TODAY' | translate }}</span>
+		<span class="kpi-value">{{ formatDuration(overview?.duration) }}</span>
+		<span class="kpi-meta">
 			{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate: { value: formatPercent(overview?.activity) } }}
 		</span>
 	</div>
-	<div class="summary-cell">
-		<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TEAMS_ACTIVE' | translate }}</span>
-		<span class="summary-value">{{ overview?.teamsWorked || 0 }}</span>
-		<span class="summary-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_TEAMS' | translate: { total: teams.length } }}</span>
+	<div class="kpi">
+		<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TEAMS_ACTIVE' | translate }}</span>
+		<span class="kpi-value">{{ overview?.teamsWorked || 0 }}</span>
+		<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_TEAMS' | translate: { total: teams.length } }}</span>
 	</div>
-	<div class="summary-cell">
-		<span class="summary-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.MEMBERS_WORKED' | translate }}</span>
-		<span class="summary-value">{{ overview?.membersWorked || 0 }}</span>
-		<span class="summary-meta">
+	<div class="kpi">
+		<span class="kpi-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.MEMBERS_WORKED' | translate }}</span>
+		<span class="kpi-value">{{ overview?.membersWorked || 0 }}</span>
+		<span class="kpi-meta">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ACTIVE_MEMBERS_META' | translate: { total: overview?.membersTotal || 0 } }}
 		</span>
 	</div>
-	<div class="summary-cell">
-		<span class="summary-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
-		<span class="summary-value">{{ overview?.projectsWorked || 0 }}</span>
-		<span class="summary-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_PROJECTS' | translate: { total: projectCount } }}</span>
+	<div class="kpi">
+		<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+		<span class="kpi-value">{{ overview?.projectsWorked || 0 }}</span>
+		<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_PROJECTS' | translate: { total: projectCount } }}</span>
 	</div>
 </section>
 
