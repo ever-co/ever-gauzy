@@ -1,0 +1,152 @@
+/**
+ * Cases for tools/electron/patches: the app-builder-lib patch that `postinstall.electron` applies before any desktop
+ * app is packaged.
+ *
+ * Why the patch exists: electron-builder 26.15.3 builds the x64 snap from its template (`buildWithTemplate` in
+ * app-builder-lib/out/targets/snap/coreLegacy.js) and, before running mksquashfs, deletes `chrome-sandbox` from
+ * `linux-unpacked` - the directory every other Linux target packs from at the same time (snap, tar.gz, AppImage and
+ * flatpak build concurrently, deb and rpm after them). When the delete lands while the AppImage target is copying
+ * that directory, the copy fails and the job with it ("failed to build AppImage error=ENOENT ... copyfile
+ * '.../linux-unpacked/chrome-sandbox' -> '.../__appImage-x64/chrome-sandbox'", API Server stage-apps run 40090832195,
+ * both attempts). When the AppImage copy wins the race, the deb and rpm are still packed afterwards from a directory
+ * without chrome-sandbox. The mksquashfs argument list already filters chrome-sandbox out of the snap, so the delete
+ * buys nothing; electron-builder 26.18.0 removed it upstream for this reason. The patch removes it from 26.15.3.
+ *
+ * It lives in its own patch directory, not in patches/: `postinstall.manual` applies patches/ in the API and worker
+ * images' production-dependency stages too (.deploy/{api,worker}/Dockerfile), where electron-builder (a
+ * devDependency) and so app-builder-lib are not installed, and their `ENV CI=true` makes patch-package exit 1 on a
+ * patch for a package that is not there - the image build would fail.
+ *
+ * Nothing here needs node_modules: the static checks job runs without an install.
+ *
+ * Run: `node --test tools/electron/app-builder-lib-patch.test.js`
+ *
+ * cspell:words mksquashfs copyfile
+ */
+'use strict';
+
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { test } = require('node:test');
+
+const ROOT = path.join(__dirname, '..', '..');
+const PATCH_DIR = path.join('tools', 'electron', 'patches');
+const PATCHED_FILE = 'node_modules/app-builder-lib/out/targets/snap/coreLegacy.js';
+/** The first electron-builder release whose coreLegacy.js filters chrome-sandbox instead of deleting it. */
+const FIXED_UPSTREAM = '26.18.0';
+
+const read = (relative) => fs.readFileSync(path.join(ROOT, relative), 'utf8');
+
+/** The app-builder-lib patch files in the electron patch directory, with the version each is made for. */
+function appBuilderLibPatches() {
+	return fs
+		.readdirSync(path.join(ROOT, PATCH_DIR))
+		.map((name) => ({ name, match: /^app-builder-lib\+(\d+\.\d+\.\d+)\.patch$/.exec(name) }))
+		.filter((entry) => entry.match)
+		.map((entry) => ({ name: entry.name, version: entry.match[1] }));
+}
+
+/** The single app-builder-lib patch; fails when there is none or more than one. */
+function thePatch() {
+	const patches = appBuilderLibPatches();
+	assert.equal(patches.length, 1, `expected one app-builder-lib patch in ${PATCH_DIR}, found ${patches.length}`);
+	const [patch] = patches;
+	return { ...patch, text: read(path.join(PATCH_DIR, patch.name)) };
+}
+
+/** The files a git-format patch changes, and its removed and added lines (without the leading -/+). */
+function parse(text) {
+	const lines = text.split(/\r?\n/);
+	const files = lines
+		.map((line) => /^diff --git a\/(\S+) b\/(\S+)$/.exec(line))
+		.filter(Boolean)
+		.map((match) => {
+			assert.equal(match[1], match[2], 'the patch renames a file');
+			return match[1];
+		});
+	const changed = (sign, header) =>
+		lines.filter((line) => line.startsWith(sign) && !line.startsWith(header)).map((line) => line.slice(1));
+	return { files, removed: changed('-', '---'), added: changed('+', '+++') };
+}
+
+/** Every version yarn.lock resolves app-builder-lib to. */
+function lockedAppBuilderLibVersions() {
+	const lock = read('yarn.lock');
+	const versions = new Set();
+	const entry = /^"?app-builder-lib@[^\n]*:\r?\n\s+version "([^"]+)"/gm;
+	let match;
+	while ((match = entry.exec(lock)) !== null) versions.add(match[1]);
+	return [...versions];
+}
+
+/** Numeric x.y.z comparison: negative when a < b. */
+function compareVersions(a, b) {
+	const [left, right] = [a, b].map((version) => version.split('.').map(Number));
+	for (let i = 0; i < 3; i++) {
+		if (left[i] !== right[i]) return left[i] - right[i];
+	}
+	return 0;
+}
+
+test('the patch is made for the app-builder-lib the lockfile installs', () => {
+	const patch = thePatch();
+	const locked = lockedAppBuilderLibVersions();
+
+	assert.equal(locked.length, 1, `yarn.lock resolves app-builder-lib to ${locked.length} versions: ${locked}`);
+	const [version] = locked;
+	if (compareVersions(version, FIXED_UPSTREAM) >= 0) {
+		assert.fail(
+			`yarn.lock now installs app-builder-lib ${version}, which no longer deletes chrome-sandbox ` +
+				`(fixed upstream in ${FIXED_UPSTREAM}). Delete ${PATCH_DIR}/${patch.name}, this spec, ` +
+				'its static-checks step and the patch-package call in the postinstall.electron script.'
+		);
+	}
+	assert.equal(
+		patch.version,
+		version,
+		`${patch.name} is made for app-builder-lib ${patch.version} but yarn.lock installs ${version}: ` +
+			`patch-package fails every desktop build on CI until the patch is regenerated for ${version} ` +
+			`(or removed, from ${FIXED_UPSTREAM} on).`
+	);
+});
+
+test('the patch only stops the snap target deleting chrome-sandbox from the shared app directory', () => {
+	const { files, removed, added } = parse(thePatch().text);
+
+	assert.deepEqual(files, [PATCHED_FILE]);
+	assert.ok(
+		removed.some((line) => /\.rm\)\(path\.join\(appOutDir, "chrome-sandbox"\)/.test(line)),
+		'the patch does not remove the delete of appOutDir/chrome-sandbox'
+	);
+	assert.ok(
+		removed.every((line) => line.trim().startsWith('//') || line.includes('"chrome-sandbox"')),
+		`the patch removes more than the chrome-sandbox delete: ${removed.join(' | ')}`
+	);
+	assert.ok(
+		added.every((line) => line.trim() === '' || line.trim().startsWith('//')),
+		`the patch adds code, not only a comment: ${added.join(' | ')}`
+	);
+});
+
+test('postinstall.electron applies the electron patch directory before electron-builder runs', () => {
+	const script = JSON.parse(read('package.json')).scripts['postinstall.electron'];
+	const patchStep = `patch-package --patch-dir ${PATCH_DIR.split(path.sep).join('/')}`;
+
+	assert.ok(script.includes(patchStep), `postinstall.electron does not run "${patchStep}": ${script}`);
+	assert.ok(
+		script.indexOf(patchStep) < script.indexOf('electron-builder'),
+		`postinstall.electron runs electron-builder before applying the patch: ${script}`
+	);
+});
+
+test('no app-builder-lib patch sits in patches/, which the API and worker production-dependency stages apply', () => {
+	const stray = fs.readdirSync(path.join(ROOT, 'patches')).filter((name) => name.startsWith('app-builder-lib+'));
+
+	assert.deepEqual(
+		stray,
+		[],
+		`patches/ holds ${stray.join(', ')}: the API and worker images install production dependencies only ` +
+			`(no app-builder-lib) and run patch-package with CI=true, so their builds fail. Keep it in ${PATCH_DIR}.`
+	);
+});
