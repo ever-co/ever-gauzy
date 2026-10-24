@@ -192,7 +192,8 @@ export class KeyResultUpdateResolver {
 	 *
 	 * The same service method the create route calls, with the body that route validates — the
 	 * organization among its members, because the delivered DTO refuses a body that names no
-	 * organization and checks the one it is given against the caller's own memberships.
+	 * organization and checks the one it is given against the caller's own memberships. Filing it
+	 * moves the key result and its goal, on this surface as on REST, because the service does it.
 	 */
 	@Mutation('createKeyResultUpdate')
 	async createKeyResultUpdate(

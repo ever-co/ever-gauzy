@@ -42,8 +42,14 @@ describe('KeyResultUpdateService — only the author or a tenant administrator c
 
 	/** Signs a user in, the way a request does: tenant, employee, permissions, and the role they hold now. */
 	const signIn = (user: Partial<IUser>, role: RolesEnum, permissions: PermissionsEnum[] = []) => {
+		// `lastOrganizationId` is the organization of the token, which the CRUD base's organization boundary keeps a
+		// non-admin inside (ever-co/ever-gauzy#11316)
 		asTenantUser(
-			{ tenantId: TENANT, organizationId: ORGANIZATION, user: { ...user, tenantId: TENANT } as IUser },
+			{
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				user: { ...user, tenantId: TENANT, lastOrganizationId: ORGANIZATION } as IUser
+			},
 			{ permissions }
 		);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(user.id);
@@ -81,8 +87,10 @@ describe('KeyResultUpdateService — only the author or a tenant administrator c
 			createdByUserId: 'foreign-user'
 		} as KeyResultUpdate);
 
+		// The key result and goal services are reached only when a new update is filed, which this spec does not do
+		// (keyresult-update.service.apply-progress.spec.ts covers it)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		service = new KeyResultUpdateService(repository as any, {} as any);
+		service = new KeyResultUpdateService(repository as any, {} as any, {} as any, {} as any);
 
 		writes = {
 			update: jest

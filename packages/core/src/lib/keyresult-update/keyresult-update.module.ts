@@ -8,6 +8,8 @@ import { KeyResultUpdateResolver } from './keyresult-update.resolver';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { GoalModule } from '../goal/goal.module';
+import { KeyResultModule } from '../keyresult/keyresult.module';
 import { TypeOrmKeyResultUpdateRepository } from './repository/type-orm-keyresult-update.repository';
 import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
 
@@ -21,13 +23,18 @@ import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyres
  * whichever module hosts the resolver graph, so that module receives the command bus only if this one
  * hands it on. `KeyResultUpdateService` is exported beside it for the fields that call the service
  * directly.
+ *
+ * `KeyResultModule` and `GoalModule` are imported for the services a filed update is applied through: filing one
+ * moves the key result it reports on and that key result's goal (`KeyResultUpdateService.fileProgressUpdate`).
  */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([KeyResultUpdate]),
 		MikroOrmModule.forFeature([KeyResultUpdate]),
 		RolePermissionModule,
-		CqrsModule
+		CqrsModule,
+		KeyResultModule,
+		GoalModule
 	],
 	controllers: [KeyResultUpdateController],
 	providers: [
