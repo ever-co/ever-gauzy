@@ -1063,6 +1063,75 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * The organization of a user's first active, non-archived membership in a tenant (oldest first): the default a
+	 * sign-in scopes its token to when nothing else names an organization.
+	 *
+	 * Read by entity name through the repository's manager, as {@link hasActiveOrganizationMembership} is, so the
+	 * tenant is the one passed in and not the request's: a workspace switch runs while the request still names the
+	 * tenant being left, and a token refresh runs inside the organization boundary of the token being refreshed.
+	 *
+	 * @param userId - The user.
+	 * @param tenantId - The tenant the membership must belong to.
+	 * @returns The organization of the oldest active membership; null when there is none or an argument is missing.
+	 */
+	public async findFirstActiveOrganizationId(userId: ID, tenantId: ID): Promise<ID | null> {
+		if (!userId || !tenantId) {
+			return null;
+		}
+
+		type Membership = { organizationId?: ID; organization?: { id?: ID } } | null;
+		const where = { userId, tenantId, isActive: true, isArchived: false };
+		let membership: Membership;
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				membership = (await this.mikroOrmRepository
+					.getEntityManager()
+					.findOne('UserOrganization', where as any, { orderBy: { createdAt: 'ASC' } as any })) as Membership;
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				membership = (await this.typeOrmRepository.manager.findOne('UserOrganization', {
+					where: where as any,
+					order: { createdAt: 'ASC' } as any
+				})) as Membership;
+				break;
+		}
+
+		return membership?.organizationId ?? membership?.organization?.id ?? null;
+	}
+
+	/**
+	 * Replaces the organization stored on a user (`lastOrganizationId`) that is no longer one of their memberships.
+	 *
+	 * The write is conditional on the stored value still being `staleOrganizationId`, so an organization the user
+	 * switched to in the meantime is never overwritten.
+	 *
+	 * @param userId - The user.
+	 * @param staleOrganizationId - The stored organization the user is no longer an active member of.
+	 * @param organizationId - The organization to store instead, or null to clear it.
+	 */
+	public async replaceStaleLastOrganization(
+		userId: ID,
+		staleOrganizationId: ID,
+		organizationId: ID | null
+	): Promise<void> {
+		const criteria = { id: userId, lastOrganizationId: staleOrganizationId };
+		const partialEntity = { lastOrganizationId: organizationId ?? null };
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.nativeUpdate(criteria, partialEntity);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmRepository.update(criteria, partialEntity);
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
 	 * Persist the user's last organization and/or team preference.
 	 *
 	 * Only writes to the database when at least one value is truthy,

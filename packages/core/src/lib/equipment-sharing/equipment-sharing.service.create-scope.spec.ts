@@ -28,7 +28,12 @@ const REFERENCED = [
 	{ table: 'equipment', id: 'equipment-of-b', tenantId: tenantA.tenantId, organizationId: orgB },
 	{ table: 'equipment', id: 'equipment-of-b2', tenantId: tenantA.tenantId, organizationId: orgB },
 	{ table: 'equipment_sharing_policy', id: 'policy-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
-	{ table: 'equipment_sharing_policy', id: 'policy-of-b', tenantId: tenantA.tenantId, organizationId: orgB }
+	{ table: 'equipment_sharing_policy', id: 'policy-of-b', tenantId: tenantA.tenantId, organizationId: orgB },
+	// The employees and the teams a sharing can be handed to.
+	{ table: 'employee', id: 'employee-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
+	{ table: 'employee', id: 'employee-of-b', tenantId: tenantA.tenantId, organizationId: orgB },
+	{ table: 'organization_team', id: 'team-of-a', tenantId: tenantA.tenantId, organizationId: orgA },
+	{ table: 'organization_team', id: 'team-of-b', tenantId: tenantA.tenantId, organizationId: orgB }
 ];
 
 /** The stored sharings a body id can name. */
@@ -282,6 +287,50 @@ describe('EquipmentSharingService.assertCreateIsInScope — a create is checked 
 			expect(lookup).not.toHaveBeenCalled();
 		}
 	});
+
+	it('checks the employees and the teams a new row lists, in both forms, in the row’s organization', async () => {
+		const { lookup, storing } = setUp();
+
+		await storing({
+			equipmentId: 'equipment-of-a',
+			employees: [{ id: 'employee-of-a' }, 'employee-of-a'],
+			teams: ['team-of-a']
+		});
+
+		expect(lookup.mock.calls).toEqual([
+			checked('equipment', 'equipment-of-a', orgA),
+			checked('employee', 'employee-of-a', orgA),
+			checked('organization_team', 'team-of-a', orgA)
+		]);
+	});
+
+	it('refuses a row that lists an employee or a team of another organization of the tenant', async () => {
+		for (const body of [
+			{ employees: [{ id: 'employee-of-b' }] },
+			{ employees: ['employee-of-b'] },
+			{ employees: [{ id: 'employee-of-a' }, { id: 'employee-of-b' }] },
+			{ teams: [{ id: 'team-of-b' }] },
+			{ teams: ['team-of-b'] }
+		]) {
+			const { storing } = setUp();
+
+			await expect(storing({ equipmentId: 'equipment-of-a', ...body })).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+		}
+	});
+
+	it('checks the members an upsert lists in the stored row’s organization', async () => {
+		const { storing } = setUp();
+
+		// The stored sharing belongs to organization B: an employee of A is not one it can be handed to.
+		await expect(storing({ id: 'sharing-of-b', employees: [{ id: 'employee-of-a' }] })).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		await expect(
+			storing({ id: 'sharing-of-b', employees: [{ id: 'employee-of-b' }], teams: [{ id: 'team-of-b' }] })
+		).resolves.toMatchObject({ id: 'sharing-of-b', organizationId: orgB });
+	});
 });
 
 describe('EquipmentSharingController.create — POST /equipment-sharing stores only what was checked', () => {
@@ -315,6 +364,18 @@ describe('EquipmentSharingController.create — POST /equipment-sharing stores o
 			{ equipmentId: 'equipment-of-a', equipmentSharingPolicy: { id: 'policy-of-b' } },
 			{ id: 'sharing-of-b', organization: { id: orgA } },
 			{ id: 'retired-sharing-of-b', organizationId: orgA }
+		]) {
+			const { create, post } = controllerOver();
+
+			await expect(post(body)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(create).not.toHaveBeenCalled();
+		}
+	});
+
+	it('persists nothing when the body lists an employee or a team of another organization', async () => {
+		for (const body of [
+			{ equipmentId: 'equipment-of-a', employees: [{ id: 'employee-of-b' }] },
+			{ equipmentId: 'equipment-of-a', teams: ['team-of-b'] }
 		]) {
 			const { create, post } = controllerOver();
 

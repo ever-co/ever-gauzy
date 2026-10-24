@@ -2,6 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import {
 	assertReferencesAreInScope,
 	sharingAsStored,
+	sharingMemberReferences,
 	sharingReferences,
 	withReferencesAsIds
 } from './reference-scope.helper';
@@ -303,5 +304,84 @@ describe('sharingAsStored', () => {
 			equipmentId: 'equipment-a',
 			equipmentSharingPolicyId: null
 		});
+	});
+});
+
+/**
+ * The employees and the teams a sharing is handed to are many-to-many lists, which the CRUD base checked against the
+ * tenant only: a body could list another organization's employees or teams of the same tenant (follow-up of
+ * ever-co/ever-gauzy#11359). Each one is now held to the sharing's organization, like its equipment and its policy.
+ */
+describe('sharingMemberReferences', () => {
+	it('lists the employees and the teams in both forms, the related object and the bare id', () => {
+		expect(
+			sharingMemberReferences({
+				employees: [{ id: 'employee-1' }, 'employee-2'],
+				teams: ['team-1', { id: 'team-2' }]
+			})
+		).toEqual([
+			['employee', 'employee-1'],
+			['employee', 'employee-2'],
+			['organization_team', 'team-1'],
+			['organization_team', 'team-2']
+		]);
+	});
+
+	it('lists an id named twice only once', () => {
+		expect(sharingMemberReferences({ employees: [{ id: 'employee-1' }, 'employee-1'] })).toEqual([
+			['employee', 'employee-1']
+		]);
+	});
+
+	it('lists nothing for absent, empty or cleared lists, and skips entries that name no id', () => {
+		expect(sharingMemberReferences({})).toEqual([]);
+		expect(sharingMemberReferences({ employees: [], teams: null })).toEqual([]);
+		expect(sharingMemberReferences({ employees: [{}, { id: '' }, null, ''] })).toEqual([]);
+	});
+
+	it('reads a value that is not a list as a list of one, so it is checked too', () => {
+		expect(sharingMemberReferences({ employees: { id: 'employee-1' }, teams: 'team-1' })).toEqual([
+			['employee', 'employee-1'],
+			['organization_team', 'team-1']
+		]);
+	});
+
+	it('hands a non-string id on, so the scope check refuses it without a lookup', async () => {
+		const lookup = jest.fn(async () => ({ id: 'found' }));
+		const references = sharingMemberReferences({ employees: [{ id: { $ne: null } }] });
+
+		await expect(
+			assertReferencesAreInScope(references, { tenantId: 'tenant-A', organizationId: 'org-1' }, lookup)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(lookup).not.toHaveBeenCalled();
+	});
+
+	it("checks each member in the sharing's organization and refuses one of another organization", async () => {
+		const MEMBERS_OF_ORG_1 = new Set(['employee:employee-1', 'organization_team:team-1']);
+		const calls: Array<{ table: string; where: Record<string, unknown> }> = [];
+		const lookup = async (table: string, where: Record<string, unknown>) => {
+			calls.push({ table, where });
+			return where['organizationId'] === 'org-1' && MEMBERS_OF_ORG_1.has(`${table}:${where['id']}`) ? {} : null;
+		};
+		const scope = { tenantId: 'tenant-A', organizationId: 'org-1' };
+
+		await expect(
+			assertReferencesAreInScope(
+				sharingMemberReferences({ employees: ['employee-1'], teams: [{ id: 'team-1' }] }),
+				scope,
+				lookup
+			)
+		).resolves.toBeUndefined();
+		expect(calls).toEqual([
+			{ table: 'employee', where: { id: 'employee-1', tenantId: 'tenant-A', organizationId: 'org-1' } },
+			{ table: 'organization_team', where: { id: 'team-1', tenantId: 'tenant-A', organizationId: 'org-1' } }
+		]);
+
+		await expect(
+			assertReferencesAreInScope(sharingMemberReferences({ employees: ['employee-of-org-2'] }), scope, lookup)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		await expect(
+			assertReferencesAreInScope(sharingMemberReferences({ teams: [{ id: 'team-of-org-2' }] }), scope, lookup)
+		).rejects.toBeInstanceOf(ForbiddenException);
 	});
 });
