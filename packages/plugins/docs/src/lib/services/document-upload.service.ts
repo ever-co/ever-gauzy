@@ -385,22 +385,25 @@ export class DocumentUploadService {
 	 * Advisory in-org dedup lookup — it never blocks the upload, it only reports the twin.
 	 *
 	 * Soft-deleted rows are excluded by default: dedup is against active rows only, always
-	 * composite with tenant + organization (no cross-tenant lookup exists).
+	 * composite with tenant + organization (no cross-tenant lookup exists). Only a twin the
+	 * uploader may read is reported: the id of another member's PRIVATE file told the uploader
+	 * that someone in the organization keeps a file with these very bytes.
 	 *
 	 * @param sha256 The digest of the stored bytes.
 	 * @param context The per-batch context.
 	 * @returns The existing document id holder, or undefined/null when there is no twin.
 	 */
 	private async findDuplicate(sha256: string, context: IUploadBatchContext): Promise<Document> {
-		return this.typeOrmDocumentRepository.findOne({
-			where: {
-				tenantId: context.tenantId,
-				organizationId: context.organizationId,
-				kind: DocumentKindEnum.FILE,
-				sha256
-			},
-			select: { id: true }
+		const qb = this.typeOrmDocumentRepository.createQueryBuilder('document');
+		qb.select(['document.id']);
+		qb.where({
+			tenantId: context.tenantId,
+			organizationId: context.organizationId,
+			kind: DocumentKindEnum.FILE,
+			sha256
 		});
+		this.documentService.applyVisibilityScope(qb);
+		return qb.getOne();
 	}
 
 	/**

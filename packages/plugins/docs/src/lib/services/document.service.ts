@@ -787,13 +787,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	/**
 	 * Narrows a set of document ids to those the requester may read, in the caller's
 	 * tenant scope and the GIVEN organization (the same single-query predicate every
-	 * list path uses).
+	 * list path uses). The tree operations hand it to `DocumentTreeService` so a subtree
+	 * archive, unarchive, delete or reorder never reaches a document the caller cannot see.
 	 *
 	 * @param ids The candidate document ids.
 	 * @param organizationId The organization to filter in — the saved document's own scope.
 	 * @returns The subset that resolves inside the read scope.
 	 */
-	private async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
+	public async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
 		const tenantId = RequestContext.currentTenantId();
 
 		const qb = this.typeOrmRepository.createQueryBuilder('document');
