@@ -5,7 +5,8 @@ import {
 	OAuthAppTokenRequest,
 	OAuthAppTokenResponse,
 	OAuthAppConfig,
-	OAuthAppPendingRequest
+	OAuthAppPendingRequest,
+	SocialSignInAuthData
 } from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
@@ -92,6 +93,10 @@ import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 import { signupRequiresEmailVerification } from './signup-email-verification';
+import {
+	SOCIAL_SIGNIN_UNCONFIRMED_ACCOUNT_MESSAGE,
+	socialSigninRequiresVerifiedAccount
+} from './social-signin-verified-account';
 import { SocialAccountService } from './social-account/social-account.service';
 import {
 	IVerifiedSocialIdentity,
@@ -916,10 +921,22 @@ export class AuthService extends SocialAuthService {
 		const socialAccount = await this.socialAccountService.findAccountByProvider({ provider, providerAccountId });
 
 		/** Fetching users matching the query */
-		const users = await this.findActiveUsersBySocialEmail(identity);
+		const activeUsers = await this.findActiveUsersBySocialEmail(identity);
+
+		// Owner decision 5: only an account that has confirmed the address itself matches. An unconfirmed one may
+		// have been registered by anyone (`POST /auth/register` takes any address), and signing the address's owner in
+		// to it put them in a workspace whose password someone else holds. Every match is listed: the caller shows
+		// the workspace picker, as after a password sign-in.
+		const users = socialSigninRequiresVerifiedAccount()
+			? activeUsers.filter((user: IUser) => !!user.emailVerifiedAt)
+			: activeUsers;
 
 		if (users.length === 0) {
-			throw new UnauthorizedException();
+			// Holding a provider token for the address, the caller owns it: telling them their account still has to
+			// confirm it reveals nothing they could not learn by signing in with the e-mail code.
+			throw new UnauthorizedException(
+				activeUsers.length > 0 ? SOCIAL_SIGNIN_UNCONFIRMED_ACCOUNT_MESSAGE : undefined
+			);
 		}
 
 		// First social sign-in: link the provider account to the users that own the verified email.
@@ -1715,41 +1732,86 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Resolves a sign-in through an identity provider (Google, GitHub, Microsoft, Twitter, Keycloak...) to Gauzy.
 	 *
-	 * @param emails
-	 * @returns
+	 * Owner decision 5: an account matches only when the provider reports the email verified AND the account has
+	 * confirmed that address itself (`UserService.findOAuthLoginUsers`). One match is signed in. Several are never
+	 * chosen between: the answer carries a one-time sign-in code instead, and `routeRedirect` takes the person to the
+	 * workspace picker the password sign-in shows. No match goes to the register page, as before.
+	 *
+	 * @param emails The addresses the provider returned, each with whether the provider verified it.
+	 * @returns Whether an account matched, with its token, or the workspace picker's sign-in code.
 	 */
 	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
 		success: boolean;
-		authData: { jwt: string; userId: string };
+		authData: SocialSignInAuthData;
 	}> {
-		let response = {
+		const response = {
 			success: false,
 			authData: { jwt: null, userId: null }
 		};
 		try {
+			const requireVerifiedAccount = socialSigninRequiresVerifiedAccount();
+
 			for (const { value, verified } of emails) {
 				// Skip unverified emails to prevent account takeover via unverified OAuth addresses
 				if (!verified) continue;
 
-				// Never an unproven self-registration of the address (see `UserService.findOAuthLoginUser`).
-				const user = await this.userService.findOAuthLoginUser(value);
-				if (user) {
+				const users = await this.userService.findOAuthLoginUsers(value, { requireVerifiedAccount });
+				if (users.length === 0) continue;
+
+				if (users.length === 1) {
+					const [user] = users;
 					const token = await this.getJwtAccessToken(user);
-
-					response = {
-						success: true,
-						authData: { jwt: token, userId: user.id }
-					};
-
-					// Break the loop and return the response
-					return response;
+					return { success: true, authData: { jwt: token, userId: user.id } };
 				}
+
+				// Several workspaces: the person picks one, exactly as after a password sign-in.
+				const code = await this.issueWorkspaceSigninCode(users);
+				return { success: true, authData: { jwt: null, userId: null, workspaces: { email: value, code } } };
 			}
 			return response;
 		} catch (err) {
+			// A refused account (a deactivated employee, say) is a 401, not a server error.
+			if (err instanceof UnauthorizedException) {
+				throw err;
+			}
 			throw new InternalServerErrorException('validateOAuthLoginEmail', err.message);
 		}
+	}
+
+	/**
+	 * Stores a new one-time workspace sign-in code on exactly these accounts, the code `POST /auth/signin.email/confirm`
+	 * (`signinWorkspacesByMagicCode`) exchanges for their workspace picker. It expires like the e-mailed code
+	 * (`MAGIC_CODE_EXPIRATION_TIME`), is claimed on first use, and its guesses count against the address there.
+	 *
+	 * @param users The accounts the picker offers; any other account with the address is left as it is.
+	 * @returns The code.
+	 */
+	private async issueWorkspaceSigninCode(users: IUser[]): Promise<string> {
+		const code = generateAlphaNumericCode();
+		const codeExpireAt = moment()
+			.add(environment.MAGIC_CODE_EXPIRATION_TIME || 600, 'seconds')
+			.toDate();
+		const ids = users.map((user: IUser) => user.id);
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmUserRepository.nativeUpdate(
+					{ id: { $in: ids }, isActive: true, isArchived: false },
+					{ code, codeExpireAt }
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmUserRepository.update(
+					{ id: In(ids), isActive: true, isArchived: false },
+					{ code, codeExpireAt }
+				);
+				break;
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+		return code;
 	}
 
 	/**

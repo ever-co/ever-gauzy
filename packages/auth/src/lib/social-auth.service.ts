@@ -60,6 +60,21 @@ export interface OAuthAppTokenResponse {
 }
 
 /**
+ * What a provider sign-in (Google, GitHub, Microsoft, Keycloak...) resolved the provider's verified email to, as
+ * {@link SocialAuthService.routeRedirect} reads it.
+ */
+export interface SocialSignInAuthData {
+	/** The access token of the one matching account. */
+	jwt: string | null;
+	userId: string | null;
+	/**
+	 * Set instead of `jwt` when the address owns several workspaces: the person picks one in the same workspace
+	 * picker the password sign-in shows, reached with this one-time sign-in code.
+	 */
+	workspaces?: { email: string; code: string };
+}
+
+/**
  * Base class for social authentication.
  */
 export abstract class BaseSocialAuth {
@@ -161,15 +176,24 @@ export class SocialAuthService extends BaseSocialAuth {
 	/**
 	 * Redirect the user based on the success status.
 	 *
+	 * When the address owns several workspaces (`auth.workspaces`), the redirect goes to the workspace picker the
+	 * password and e-mail code sign-ins show (`#/auth/magic-sign-in`, which confirms the one-time code and lists the
+	 * workspaces): a provider sign-in never picks one of them silently.
+	 *
 	 * @param success - Indicates whether the operation was successful.
-	 * @param auth - Object containing JWT and userId.
+	 * @param auth - The JWT and userId of the one matching account, or the workspace picker's sign-in code.
 	 * @param res - Express response object.
 	 * @returns The redirect response.
 	 */
-	async routeRedirect(success: boolean, auth: { jwt: string; userId: string }, res: any) {
-		const { userId, jwt } = auth;
+	async routeRedirect(success: boolean, auth: SocialSignInAuthData, res: any) {
+		const { userId, jwt, workspaces } = auth;
 
-		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/register`;
+		let redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/register`;
+		if (success && workspaces) {
+			const email = encodeURIComponent(workspaces.email);
+			const code = encodeURIComponent(workspaces.code);
+			redirectPath = `#/auth/magic-sign-in?email=${email}&code=${code}`;
+		}
 		const redirectUrl = `${this.clientBaseUrl}/${redirectPath}`;
 
 		return res.redirect(redirectUrl);
