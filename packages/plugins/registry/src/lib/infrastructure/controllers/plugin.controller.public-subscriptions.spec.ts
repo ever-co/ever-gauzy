@@ -65,8 +65,9 @@ describe('the public plugin read leaves out every subscription', () => {
 			where: { subscriptions: { subscriberId: 'user-of-tenant-b' }, name: 'Timer' }
 		} as any);
 
+		// The read by id answers the plugin of the path and takes no `where` at all (see public-read-options.ts)
 		const [, options] = executed[0].args as [string, { where: Record<string, unknown> }];
-		expect(options.where).toEqual({ name: 'Timer' });
+		expect(options.where).toBeUndefined();
 	});
 
 	it('does not load subscriptions on the list, in the object form the query DTO gives its relations', async () => {
@@ -77,10 +78,12 @@ describe('the public plugin read leaves out every subscription', () => {
 			where: [{ subscriptions: { tenantId: 'tenant-b' } }, { name: 'Timer' }]
 		} as any);
 
-		const [params] = executed[0].args as [{ relations: object; where: object[] }];
+		// The public read hands the store the relations it may load as dotted paths, and filters on the plugin's own
+		// columns only: a list of alternatives is not such a filter (see public-read-options.ts)
+		const [params] = executed[0].args as [{ relations: string[]; where: object[] }];
 		expect(executed[0].constructor.name).toBe('ListPluginsQuery');
-		expect(params.relations).toEqual({ versions: { sources: true } });
-		expect(params.where).toEqual([{}, { name: 'Timer' }]);
+		expect(params.relations).toEqual(['versions', 'versions.sources']);
+		expect(params.where).toBeUndefined();
 	});
 
 	it('still loads the relations the marketplace shows', async () => {
