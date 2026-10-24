@@ -715,22 +715,6 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	}
 
 	/**
-	 * Updates the few fields of an order that may change outside a change.
-	 *
-	 * Everything else — a line, a price, a quantity, an address, a delivery choice — is a modification of
-	 * a placed order and belongs to an `order_change`, where it is versioned and reversible. A draft is
-	 * the exception: it has not been placed, so it is freely editable.
-	 *
-	 * The edit is committed through the totals writer even though it changes no figure: the version is
-	 * what the next caller states back, so a write that left it where it was would publish a version
-	 * that no longer describes the row.
-	 *
-	 * @param orderId The order.
-	 * @param changes The fields to change.
-	 * @param expectation The version the caller read the order at.
-	 * @returns The order after the change.
-	 */
-	/**
 	 * Refuses an order, or a change to one, that names a customer, channel, region, user, cart, parent order or payment
 	 * term of another tenant (`order.references.ts`). Checked on the TypeORM manager, which reads these tables under
 	 * either ORM.
@@ -747,6 +731,22 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		);
 	}
 
+	/**
+	 * Updates the few fields of an order that may change outside a change.
+	 *
+	 * Everything else — a line, a price, a quantity, an address, a delivery choice — is a modification of
+	 * a placed order and belongs to an `order_change`, where it is versioned and reversible. A draft is
+	 * the exception: it has not been placed, so it is freely editable.
+	 *
+	 * The edit is committed through the totals writer even though it changes no figure: the version is
+	 * what the next caller states back, so a write that left it where it was would publish a version
+	 * that no longer describes the row.
+	 *
+	 * @param orderId The order.
+	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The order after the change.
+	 */
 	public async updateMutable(
 		orderId: ID,
 		changes: DeepPartial<Order>,

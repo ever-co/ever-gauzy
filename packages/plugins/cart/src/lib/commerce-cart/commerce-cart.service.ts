@@ -219,20 +219,6 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Writes the fields a caller changed onto a cart, under the version that caller read.
-	 *
-	 * The write is predicated on the caller's version rather than on the one the row happens to hold,
-	 * which is what turns a second editor's change to the same cart into a refusal instead of a silent
-	 * overwrite. The cart is re-priced afterwards, so the totals cache never outlives the fields it was
-	 * computed from.
-	 *
-	 * @param id The cart.
-	 * @param changes The fields to change.
-	 * @param expectation The version the caller read the cart at.
-	 * @param reason The reason code the recomputation records, which names what the change was.
-	 * @returns The changed cart, with its recomputed totals.
-	 */
-	/**
 	 * Refuses a cart, or a change to one, that names a channel, region, customer or user of another tenant
 	 * (`CART_REFERENCES`). Checked on the TypeORM manager, which reads these tables under either ORM.
 	 *
@@ -248,6 +234,20 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		);
 	}
 
+	/**
+	 * Writes the fields a caller changed onto a cart, under the version that caller read.
+	 *
+	 * The write is predicated on the caller's version rather than on the one the row happens to hold,
+	 * which is what turns a second editor's change to the same cart into a refusal instead of a silent
+	 * overwrite. The cart is re-priced afterwards, so the totals cache never outlives the fields it was
+	 * computed from.
+	 *
+	 * @param id The cart.
+	 * @param changes The fields to change.
+	 * @param expectation The version the caller read the cart at.
+	 * @param reason The reason code the recomputation records, which names what the change was.
+	 * @returns The changed cart, with its recomputed totals.
+	 */
 	public async applyChanges(
 		id: ID,
 		changes: DeepPartial<CommerceCart>,
