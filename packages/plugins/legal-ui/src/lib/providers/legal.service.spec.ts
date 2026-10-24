@@ -16,7 +16,7 @@ const http = {
 
 describe('LegalService', () => {
 	const service = new LegalService(http);
-	const slugs: LegalDocumentSlug[] = ['tos', 'privacy', 'cookies'];
+	const slugs: LegalDocumentSlug[] = ['tos', 'privacy', 'cookies', 'dpia'];
 
 	describe.each(slugs)('%s', (slug) => {
 		it('is served from the bundled corpus, with no network access', () => {

@@ -10,6 +10,7 @@ import { ILegalDocument } from '../models/legal-document.model';
 import { LEGAL_TOS_EN } from './tos.en.generated';
 import { LEGAL_PRIVACY_EN } from './privacy.en.generated';
 import { LEGAL_COOKIES_EN } from './cookies.en.generated';
+import { LEGAL_DPIA_EN } from './dpia.en.generated';
 
 /** npm package the legal text was vendored from. */
 export const LEGAL_CORPUS_PACKAGE = '@ever-co/legal';
@@ -32,6 +33,11 @@ export const LEGAL_DEFAULT_LOCALE = 'en';
  * These are plain, build-time constants: rendering them performs no HTTP request and cannot
  * fail because a third-party service is unavailable.
  */
-export const LEGAL_CORPUS: readonly ILegalDocument[] = [LEGAL_TOS_EN, LEGAL_PRIVACY_EN, LEGAL_COOKIES_EN];
+export const LEGAL_CORPUS: readonly ILegalDocument[] = [
+	LEGAL_TOS_EN,
+	LEGAL_PRIVACY_EN,
+	LEGAL_COOKIES_EN,
+	LEGAL_DPIA_EN
+];
 
-export { LEGAL_TOS_EN, LEGAL_PRIVACY_EN, LEGAL_COOKIES_EN };
+export { LEGAL_TOS_EN, LEGAL_PRIVACY_EN, LEGAL_COOKIES_EN, LEGAL_DPIA_EN };

@@ -4905,7 +4905,8 @@
 		"RIGHTS_RESERVED": "כל הזכויות שמורות",
 		"PRESENT": "Present",
 		"TERMS_OF_SERVICE": "Terms Of Service",
-		"PRIVACY_POLICY": "Privacy Policy"
+		"PRIVACY_POLICY": "Privacy Policy",
+		"DPIA_SUPPORT_PACK": "ערכת תמיכה ב-DPIA"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6336,7 +6337,8 @@
 		"PRIVACY_POLICY": "Privacy Policy",
 		"TERMS_AND_CONDITIONS": "Terms & Conditions",
 		"DOCUMENT_VERSION": "Version {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}",
+		"DPIA_SUPPORT_PACK": "ערכת תמיכה ב-DPIA"
 	},
 	"LOADING": "Loading, please hold....",
 	"ACCOUNTING_TEMPLATES_PAGE": {

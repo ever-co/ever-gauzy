@@ -4883,7 +4883,8 @@
 		"RIGHTS_RESERVED": "جميع الحقوق محفوظة.",
 		"PRESENT": "حاضر",
 		"TERMS_OF_SERVICE": "شروط الخدمة",
-		"PRIVACY_POLICY": "سياسة الخصوصية"
+		"PRIVACY_POLICY": "سياسة الخصوصية",
+		"DPIA_SUPPORT_PACK": "حزمة دعم تقييم أثر حماية البيانات"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6323,7 +6324,8 @@
 		"PRIVACY_POLICY": "سياسة الخصوصية",
 		"TERMS_AND_CONDITIONS": "الشروط والأحكام",
 		"DOCUMENT_VERSION": "الإصدار {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "سارية اعتباراً من {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "سارية اعتباراً من {{ date }}",
+		"DPIA_SUPPORT_PACK": "حزمة دعم تقييم أثر حماية البيانات"
 	},
 	"LOADING": "تحميل، يرجى الانتظار...",
 	"ACCOUNTING_TEMPLATES_PAGE": {

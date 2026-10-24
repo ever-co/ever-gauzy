@@ -4885,7 +4885,8 @@
 		"RIGHTS_RESERVED": "Tutti i diritti riservati",
 		"PRESENT": "Presente",
 		"TERMS_OF_SERVICE": "Termini di servizio",
-		"PRIVACY_POLICY": "Informativa sulla privacy"
+		"PRIVACY_POLICY": "Informativa sulla privacy",
+		"DPIA_SUPPORT_PACK": "Pacchetto di supporto DPIA"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6325,7 +6326,8 @@
 		"PRIVACY_POLICY": "Politica sulla privacy",
 		"TERMS_AND_CONDITIONS": "Termini e condizioni",
 		"DOCUMENT_VERSION": "Versione {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "In vigore dal {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "In vigore dal {{ date }}",
+		"DPIA_SUPPORT_PACK": "Pacchetto di supporto DPIA"
 	},
 	"LOADING": "Caricamento in corso, attendere per favore...",
 	"ACCOUNTING_TEMPLATES_PAGE": {

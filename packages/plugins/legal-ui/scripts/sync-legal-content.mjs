@@ -62,7 +62,8 @@ const LOCALE = 'en';
 const DOCUMENTS = [
 	{ slug: 'tos', constant: 'LEGAL_TOS_EN', file: 'tos.en.generated.ts', title: 'Terms of Service' },
 	{ slug: 'privacy', constant: 'LEGAL_PRIVACY_EN', file: 'privacy.en.generated.ts', title: 'Privacy Policy' },
-	{ slug: 'cookies', constant: 'LEGAL_COOKIES_EN', file: 'cookies.en.generated.ts', title: 'Cookie Policy' }
+	{ slug: 'cookies', constant: 'LEGAL_COOKIES_EN', file: 'cookies.en.generated.ts', title: 'Cookie Policy' },
+	{ slug: 'dpia', constant: 'LEGAL_DPIA_EN', file: 'dpia.en.generated.ts', title: 'Data Protection Impact Assessment (DPIA) Support Pack' }
 ];
 
 /**
