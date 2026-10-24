@@ -3571,7 +3571,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Data musi być późniejsza niż dzień zgłoszenia",
 			"EXCEED_PERIOD_ERR": "Maksymalna dozwolona liczba dni dla tego przedmiotu to ",
 			"BEFORE_START_DATE_ERR": "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia",
-			"ITEM_RETURNED_BEFORE_ERR": "Przedmiot powinien zostać zwrócony przed"
+			"ITEM_RETURNED_BEFORE_ERR": "Przedmiot powinien zostać zwrócony przed",
+			"CHANGED_BY_SOMEONE_ELSE": "Ktoś inny zmienił w międzyczasie ten wniosek. Lista została odświeżona: sprawdź wniosek i spróbuj ponownie."
 		},
 		"ACTIONS": "Akcje",
 		"APPROVE": "Zatwierdź",

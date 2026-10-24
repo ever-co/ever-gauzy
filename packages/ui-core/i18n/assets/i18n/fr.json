@@ -3573,7 +3573,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "La date doit être postérieure à la journée de demande.",
 			"EXCEED_PERIOD_ERR": "Le nombre maximum de jours autorisés pour cet article est.",
 			"BEFORE_START_DATE_ERR": "La date de fin ne peut pas être antérieure à la date de début.",
-			"ITEM_RETURNED_BEFORE_ERR": "L'article doit être retourné avant"
+			"ITEM_RETURNED_BEFORE_ERR": "L'article doit être retourné avant",
+			"CHANGED_BY_SOMEONE_ELSE": "Quelqu'un d'autre a modifié cette demande entre-temps. La liste a été rechargée : vérifiez la demande et réessayez."
 		},
 		"ACTIONS": "Actions",
 		"APPROVE": "Approuver",
