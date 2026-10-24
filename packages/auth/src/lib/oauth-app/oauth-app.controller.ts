@@ -165,10 +165,14 @@ export class OAuthAppController {
 		}
 
 		try {
-			// Generate authorization code using existing method
+			// Generate authorization code using existing method. The app's access token is scoped to the
+			// organization the user approves it in: the one of their current session, as `JwtStrategy` validated
+			// it (the organization they last switched to). Without it the token was pinned to whichever employee
+			// record was found first.
 			const code = await this.service.createOAuthAppAuthorizationCode({
 				userId: user.id,
 				tenantId: user.tenantId,
+				organizationId: user.lastOrganizationId ?? null,
 				clientId: pending.clientId,
 				redirectUri: pending.redirectUri,
 				scope: pending.scope,
