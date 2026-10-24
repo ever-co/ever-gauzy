@@ -5,11 +5,12 @@
  * nothing. The superseded blob is now deleted only when no other document (trashed ones included) uses it.
  */
 const deleteFile = jest.fn(async () => undefined);
+const getProvider = jest.fn((): unknown => ({ deleteFile }));
 jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }));
 jest.mock('@gauzy/core', () => ({
 	FileStorage: class {
 		getProvider() {
-			return { deleteFile };
+			return getProvider();
 		}
 	},
 	RequestContext: {}
@@ -36,7 +37,10 @@ describe('DocumentUploadService — the blob a replace supersedes', () => {
 		return { repository, release };
 	};
 
-	beforeEach(() => deleteFile.mockClear());
+	beforeEach(() => {
+		deleteFile.mockClear();
+		getProvider.mockClear();
+	});
 
 	it('keeps it while another document — the original a copy was made from — still uses it', async () => {
 		const { repository, release } = build(1);
@@ -73,6 +77,16 @@ describe('DocumentUploadService — the blob a replace supersedes', () => {
 		await expect(
 			(service as any).releaseReplacedBlob(ORIGINAL_KEY, 'LOCAL', 'docs/tenant-1/bob/new.pdf')
 		).resolves.toBeUndefined();
+		expect(deleteFile).not.toHaveBeenCalled();
+	});
+
+	it('keeps it, without failing the committed replace, when its storage provider cannot be resolved', async () => {
+		const { release } = build(0);
+		getProvider.mockImplementationOnce(() => {
+			throw new Error('S3 is not configured');
+		});
+
+		await expect(release(ORIGINAL_KEY)).resolves.toBeUndefined();
 		expect(deleteFile).not.toHaveBeenCalled();
 	});
 });

@@ -194,7 +194,7 @@ export class ImportService {
 						results = results.filter(isNotEmpty);
 						try {
 							for await (const data of results) {
-								if (isNotEmpty(data) && this.mayImportRow(masterTable, data)) {
+								if (isNotEmpty(data) && (await this.mayImportRow(item, data))) {
 									await this.migrateImportEntityRecord(item, data);
 								}
 							}
@@ -394,20 +394,71 @@ export class ImportService {
 	 * (`operator-only-tenant-settings.ts`: an organization's Documents storage limit) is skipped for anyone else, as
 	 * `POST /tenant-setting/dynamic` refuses it: an archive must not set or lift the limit.
 	 *
-	 * @param masterTable - The table being imported.
-	 * @param row - The archive row, as read.
+	 * The row it would be written over counts too. An archive row whose id an earlier import mapped is saved over that
+	 * row ({@link ImportEntityFieldMapOrCreateCommand}), name included, so an ordinary name on the source id of an
+	 * imported limit row renamed the limit away, and Documents fell back to the deployment default, which may be no
+	 * limit at all.
+	 *
+	 * @param item - The table being imported.
+	 * @param row - The archive row, as read (its `id` is still the archive's).
 	 */
-	private mayImportRow(masterTable: string, row: Record<string, unknown>): boolean {
-		if (masterTable !== TENANT_SETTING_TABLE || !isOperatorOnlyTenantSetting(row?.['name'])) {
+	private async mayImportRow(item: IRepositoryModel, row: Record<string, unknown>): Promise<boolean> {
+		if (item.repository.metadata.tableName !== TENANT_SETTING_TABLE || isInstallationOperator()) {
 			return true;
 		}
-		if (isInstallationOperator()) {
-			return true;
+		if (isOperatorOnlyTenantSetting(row?.['name'])) {
+			this.logger.warn(
+				`Skipped the tenant setting ${String(row['name'])}: only the installation's operator sets it.`
+			);
+			return false;
 		}
-		this.logger.warn(
-			`Skipped the tenant setting ${String(row['name'])}: only the installation's operator sets it.`
-		);
-		return false;
+		const overwritten = await this.importedDestinationName(item.repository, row?.['id']);
+		if (isOperatorOnlyTenantSetting(overwritten)) {
+			this.logger.warn(
+				`Skipped the tenant setting ${String(row['name'])}: an earlier import mapped it to ${String(
+					overwritten
+				)}, which only the installation's operator sets.`
+			);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * The name of the `tenant_setting` row an earlier import of this tenant mapped an archive id to, which is the row
+	 * that archive row would be saved over, or `undefined` when the id was never imported.
+	 *
+	 * @param repository - The `tenant_setting` repository.
+	 * @param sourceId - The row's id in the archive.
+	 */
+	private async importedDestinationName(repository: Repository<any>, sourceId: unknown): Promise<unknown> {
+		if (!isNotEmpty(sourceId)) {
+			return undefined;
+		}
+		let destinationId: ID | undefined;
+		try {
+			const found = await this.commandBus.execute(
+				new ImportRecordFindOrFailCommand({
+					tenantId: RequestContext.currentTenantId(),
+					sourceId: sourceId as ID,
+					entityType: TENANT_SETTING_TABLE
+				})
+			);
+			destinationId = found?.success ? found.record?.destinationId : undefined;
+		} catch {
+			// No import record: the import creates a new row rather than saving over one.
+			return undefined;
+		}
+		if (!destinationId) {
+			return undefined;
+		}
+		// Trashed rows too: the save reaches the row by its id whether or not it is soft-deleted.
+		const destination = await repository.findOne({
+			where: { id: destinationId },
+			select: { id: true, name: true },
+			withDeleted: true
+		});
+		return destination?.name;
 	}
 
 	/**

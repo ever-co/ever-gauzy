@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { In, IsNull } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { DocumentKindEnum, DocumentKnowledgeStatusEnum, DocumentReviewStatusEnum, ID } from '@gauzy/contracts';
 import {
@@ -200,10 +200,15 @@ export class DocumentTreeService {
 	 *
 	 * @param parentId The parent whose children to load, or null for the root list.
 	 * @param scope A document carrying the tenant/organization scope.
+	 * @param repository The repository to read through: a transaction's, to see its own writes.
 	 * @returns The sibling ids in `index` order.
 	 */
-	private async loadSiblingIds(parentId: ID | null, scope: Document): Promise<ID[]> {
-		const siblings = await this.typeOrmDocumentRepository.find({
+	private async loadSiblingIds(
+		parentId: ID | null,
+		scope: Document,
+		repository: Repository<Document> = this.typeOrmDocumentRepository
+	): Promise<ID[]> {
+		const siblings = await repository.find({
 			select: { id: true, index: true },
 			where: {
 				parentId: parentId ?? IsNull(),
@@ -393,21 +398,28 @@ export class DocumentTreeService {
 				const metadata = (typeof row.metadata === 'object' && row.metadata) || {};
 				row.metadata = this.serializeMetadata({ ...metadata, deletion: { batchId } });
 			}
-			await this.typeOrmDocumentRepository.save(rows);
-			await this.typeOrmDocumentRepository.softDelete({ id: In(ids), tenantId: document.tenantId });
 
-			// The descendants the caller cannot see stay, and join the deleted node's parent: under a deleted
-			// row no tree read reaches them. Renumbered as promote-children renumbers.
-			if (hidden.length > 0) {
-				await this.typeOrmDocumentRepository.update(
-					{ id: In(hidden), tenantId: document.tenantId },
-					{ parentId: document.parentId ?? null }
-				);
-				const destinationIds = (await this.loadSiblingIds(document.parentId ?? null, document)).filter(
-					(id: ID) => id !== document.id
-				);
-				await this.rewriteSiblingIndexes(destinationIds, document.tenantId);
-			}
+			// The delete and the move of the hidden descendants commit together: a move that failed after the delete
+			// left them live under a deleted parent, where no tree read reaches them, and a retry could not finish the
+			// move because the root was already gone.
+			await this.typeOrmDocumentRepository.manager.transaction(async (manager) => {
+				const repository = manager.getRepository(Document);
+				await repository.save(rows);
+				await repository.softDelete({ id: In(ids), tenantId: document.tenantId });
+
+				// The descendants the caller cannot see stay, and join the deleted node's parent: under a deleted
+				// row no tree read reaches them. Renumbered as promote-children renumbers.
+				if (hidden.length > 0) {
+					await repository.update(
+						{ id: In(hidden), tenantId: document.tenantId },
+						{ parentId: document.parentId ?? null }
+					);
+					const destinationIds = (
+						await this.loadSiblingIds(document.parentId ?? null, document, repository)
+					).filter((id: ID) => id !== document.id);
+					await this.rewriteSiblingIndexes(destinationIds, document.tenantId, repository);
+				}
+			});
 		}
 
 		return this.typeOrmDocumentRepository.findOne({
@@ -556,10 +568,16 @@ export class DocumentTreeService {
 
 	/**
 	 * Rewrites the `index` column to match the given order.
+	 *
+	 * @param repository The repository to write through: a transaction's, to write inside it.
 	 */
-	private async rewriteSiblingIndexes(orderedIds: ID[], tenantId: ID): Promise<void> {
+	private async rewriteSiblingIndexes(
+		orderedIds: ID[],
+		tenantId: ID,
+		repository: Repository<Document> = this.typeOrmDocumentRepository
+	): Promise<void> {
 		for (let position = 0; position < orderedIds.length; position++) {
-			await this.typeOrmDocumentRepository.update({ id: orderedIds[position], tenantId }, { index: position });
+			await repository.update({ id: orderedIds[position], tenantId }, { index: position });
 		}
 	}
 
