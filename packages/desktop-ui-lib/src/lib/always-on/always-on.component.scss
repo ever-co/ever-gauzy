@@ -53,7 +53,9 @@ button {
 	}
 }
 
+// The collapsed widget's drag surface (the expanded one is `.timer-card`), see `.main` below.
 #drag-handle {
+	-webkit-app-region: drag;
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;
@@ -148,20 +150,17 @@ button {
 	}
 }
 
+// No drag region on `.main`: it is the <nb-layout>, and Nebular appends its overlay container (tooltips,
+// popovers) inside <nb-layout>. Since Electron 44 (Chromium 152) `-webkit-app-region` is inherited, so with the
+// drag here that fixed, full-window container became a drag region whenever a tooltip was open, laid over the
+// buttons' `no-drag`, and a click on play/pause moved the window instead. The drag lives on the widget's own
+// surfaces, `.timer-card` (expanded) and `#drag-handle` (collapsed), which the overlay container is not inside.
+// (Resetting the container instead does not work: an explicit `app-region: none` is applied as `no-drag`, so the
+// widget could not be dragged while a tooltip is open.)
 .main {
-	-webkit-app-region: drag;
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;
-}
-
-// Nebular appends its overlay container (tooltips, popovers) inside <nb-layout>, so inside `.main`. Since
-// Electron 44 (Chromium 152) `-webkit-app-region` is inherited: whenever a tooltip was open, that fixed,
-// full-window container was a drag region laid over the buttons' `no-drag`, and a click on play/pause moved the
-// window instead. `none`, not `no-drag`: the container must not be a region at all, or the widget could not be
-// dragged while a tooltip is showing.
-:host ::ng-deep .cdk-overlay-container {
-	-webkit-app-region: none;
 }
 
 .timer-card {

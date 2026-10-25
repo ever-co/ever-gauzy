@@ -129,15 +129,28 @@ describe('window drag regions', () => {
 		expect(offenders).toEqual([]);
 	});
 
-	it("takes Nebular's overlay container out of the always-on widget's drag region", () => {
-		// The widget's drag region is its <nb-layout class="main">, and Nebular appends its overlay container
-		// (tooltips, popovers: a fixed, full-window box) inside <nb-layout>. With the property inherited since
-		// Chromium 152, the drag covered the whole widget, buttons included, whenever a tooltip was open.
+	it("keeps the always-on widget's drag region off the <nb-layout> that hosts Nebular's overlay container", () => {
+		// Nebular appends its overlay container (tooltips, popovers: a fixed, full-window box) inside <nb-layout>. With
+		// the property inherited since Chromium 152, a drag region on the layout (it was on `.main`) covered the whole
+		// widget, buttons included, whenever a tooltip was open. Resetting the container is no way out: Chromium applies
+		// an explicit `app-region: none` as `no-drag`, which stops the widget dragging while a tooltip is open.
+		const template = readFileSync(join(LIB_ROOT, 'always-on/always-on.component.html'), 'utf8');
 		const source = readFileSync(join(LIB_ROOT, 'always-on/always-on.component.scss'), 'utf8');
+		const layoutClasses = [...template.matchAll(/<nb-layout\b[^>]*\bclass="([^"]*)"/g)].flatMap((match) =>
+			match[1].split(/\s+/)
+		);
+		const isOnLayout = (selector: string) =>
+			/nb-layout(?![\w-])/.test(selector) ||
+			layoutClasses.some((name) => new RegExp(`\\.${name}(?![\\w-])`).test(selector));
 		const isOverlayContainer = (selector: string) => /\.cdk-overlay-container(?![\w-])/.test(selector);
 
-		expect(dragRegionSelectors(source)).toContain('.main');
-		expect(regionSelectors(source, 'none').filter(isOverlayContainer)).toHaveLength(1);
-		expect(regionSelectors(source, 'drag').some(isOverlayContainer)).toBe(false);
+		expect(layoutClasses).toContain('main');
+		const drag = dragRegionSelectors(source);
+		// The widget's own surfaces: the expanded card and the collapsed handle.
+		expect(drag).toEqual(expect.arrayContaining(['.timer-card', '#drag-handle']));
+		expect(drag.filter(isOnLayout)).toEqual([]);
+		expect(
+			[...regionSelectors(source, 'none'), ...regionSelectors(source, 'no-drag')].some(isOverlayContainer)
+		).toBe(false);
 	});
 });
