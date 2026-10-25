@@ -1,3 +1,24 @@
+/**
+ * The failure counter under test is the kernel's own `LoginAttemptService`, taken from its module; the other names
+ * the service imports from `@gauzy/core` (two entity classes and the password hasher, which the fixtures replace)
+ * are stand-ins. Loading the real barrel booted the whole core module graph in this spec: it failed to load on a
+ * core source this app's test config does not compile (category.seed.ts imports a JSON file), and the controllers
+ * it had evaluated by then had already started loading `class-validator` for their `ValidationPipe`s, which then
+ * ran after the environment was torn down and exited the process.
+ */
+jest.mock('@gauzy/core', () => {
+	const { LoginAttemptScope, LoginAttemptService } = jest.requireActual(
+		'@gauzy/core/src/lib/auth/login-attempt.service'
+	);
+	return {
+		Employee: class Employee {},
+		User: class User {},
+		PasswordHashService: class PasswordHashService {},
+		LoginAttemptScope,
+		LoginAttemptService
+	};
+});
+
 import { environment } from '@gauzy/config';
 import { LoginAttemptService } from '@gauzy/core';
 import { OAuthUserService } from './oauth-user.service';

@@ -3,7 +3,7 @@
  *
  * These match the document ids used by the `@ever-co/legal` corpus.
  */
-export type LegalDocumentSlug = 'tos' | 'privacy' | 'cookies';
+export type LegalDocumentSlug = 'tos' | 'privacy' | 'cookies' | 'dpia';
 
 /**
  * A single legal document, vendored from `@ever-co/legal` at authoring time.

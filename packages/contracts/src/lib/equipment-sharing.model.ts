@@ -46,6 +46,21 @@ export interface IEquipmentSharingUpdateInput extends Partial<IEquipmentSharingC
 	version?: number;
 }
 
+/**
+ * The input of the in-place, version-checked edit of a sharing (`PUT /equipment-sharing/:id/in-place`, GraphQL
+ * `updateEquipmentSharingInPlace`). The row is updated where it is, rather than removed and filed again, and only at
+ * the version the edit is based on: refused with 409 `ENTITY_VERSION_CONFLICT` when the stored row has moved on. A
+ * member left out keeps its stored value; `employees` / `teams`, when stated, replace the sharing's members.
+ */
+export interface IEquipmentSharingUpdateInPlaceInput extends IEquipmentSharingUpdateInput {
+	/** The version of the sharing the edit is based on. Required: it is what the edit is a compare-and-set on. */
+	version: number;
+	/** The employees the asset is handed to: each an employee (or an object with its id), or a bare id. */
+	employees?: Array<Pick<IEmployee, 'id'> | ID>;
+	/** The teams the asset is handed to: each a team (or an object with its id), or a bare id. */
+	teams?: Array<Pick<IOrganizationTeam, 'id'> | ID>;
+}
+
 export enum EquipmentSharingStatusEnum {
 	REQUESTED = 'REQUESTED',
 	APPROVED = 'APPROVED',

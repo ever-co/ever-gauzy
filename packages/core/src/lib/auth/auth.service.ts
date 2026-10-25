@@ -37,7 +37,8 @@ import {
 	IWorkspaceResponse,
 	LanguagesEnum,
 	PermissionsEnum,
-	ProviderEnum
+	ProviderEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { buildQueryString, deepMerge, generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
 import { wrap } from '@mikro-orm/core';
@@ -118,6 +119,12 @@ import { OAuthClient } from './oauth-client/oauth-client.entity';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
+import { assertFirstPartyRequest } from './oauth-app-first-party';
+import {
+	buildOAuthAppTokenGrant,
+	narrowPermissionsToOAuthAppScopes,
+	narrowRolesToOAuthAppScopes
+} from './oauth-app-scope';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -317,6 +324,10 @@ export class AuthService extends SocialAuthService {
 	}
 
 	public async createOAuthAppAuthorizationCode(request: OAuthAppAuthorizationRequest): Promise<string> {
+		// The consent is the user's, given in their own session. A third-party app's token approving it would let an app
+		// grant itself (or another client) any scope that client may request (owner decision Q12).
+		assertFirstPartyRequest('Approving an application');
+
 		const config = await this.resolveOAuthClient(request.clientId);
 
 		// Verify the client is allowed for the requesting tenant
@@ -480,12 +491,16 @@ export class AuthService extends SocialAuthService {
 			throw new UnauthorizedException('Authorization code is no longer valid');
 		}
 
+		// The token carries the client and the scopes the user approved: `JwtStrategy` holds every request it
+		// authenticates to them (owner decision Q12, see oauth-app-scope.ts). A code issued before the scopes were
+		// enforced carries its approved `scope` too, so its token is scoped all the same.
 		const accessToken = await this.getJwtAccessToken(
 			{
 				id: payload.userId,
 				tenantId: payload.tenantId
 			},
-			organizationId
+			organizationId,
+			{ oauthApp: buildOAuthAppTokenGrant(request.clientId, payload.scope) }
 		);
 
 		// Per-client `accessTokenTtl` is configured on the registry row but
@@ -497,7 +512,8 @@ export class AuthService extends SocialAuthService {
 
 		this.logger.log(
 			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, ` +
-				`organizationId=${organizationId ?? 'none'}, expiresIn=${expiresIn}s`
+				`organizationId=${organizationId ?? 'none'}, clientId=${request.clientId}, ` +
+				`scope="${payload.scope ?? ''}", expiresIn=${expiresIn}s`
 		);
 
 		return {
@@ -1775,6 +1791,13 @@ export class AuthService extends SocialAuthService {
 	 */
 	async hasRole(roles: string[] = []): Promise<boolean> {
 		try {
+			// A third-party OAuth-app token holds a role only where an approved scope allows it (none does today), so
+			// the answer matches what `RequestContext.hasRoles` decides for it (owner decision Q12).
+			const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+			if (oauthAppScopes !== null) {
+				roles = narrowRolesToOAuthAppScopes(roles as RolesEnum[], oauthAppScopes);
+			}
+
 			// Get the current role ID from the request context
 			const currentRoleId = RequestContext.currentRoleId();
 
@@ -1798,6 +1821,15 @@ export class AuthService extends SocialAuthService {
 	 */
 	async hasPermissions(permissions: PermissionsEnum[] = []): Promise<boolean> {
 		try {
+			// A third-party OAuth-app token holds only the permissions its approved scopes allow (owner decision Q12)
+			const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+			if (oauthAppScopes !== null) {
+				permissions = narrowPermissionsToOAuthAppScopes(permissions, oauthAppScopes);
+				if (permissions.length === 0) {
+					return false;
+				}
+			}
+
 			// Get the current role ID from the request context
 			const roleId = RequestContext.currentRoleId();
 
@@ -2029,7 +2061,9 @@ export class AuthService extends SocialAuthService {
 					: {}),
 				ipAddress: RequestContext.currentIp(),
 				userAgent: RequestContext.currentUserAgent(),
-				...(metadata?.clientId && { clientId: metadata.clientId })
+				...(metadata?.clientId && { clientId: metadata.clientId }),
+				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
+				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp })
 			};
 
 			// Generate the JWT access token using the payload
@@ -2892,6 +2926,9 @@ export class AuthService extends SocialAuthService {
 	 * @returns A promise that resolves to the user signin workspace response.
 	 */
 	async getUserWorkspaces(includeTeams = false): Promise<IUserSigninWorkspaceResponse> {
+		// Each workspace carries a sign-in token that `/auth/signin.workspace` exchanges for a first-party session
+		assertFirstPartyRequest('Listing workspaces');
+
 		try {
 			// Get the current authenticated user
 			const currentUser = RequestContext.currentUser();
@@ -2961,6 +2998,9 @@ export class AuthService extends SocialAuthService {
 	 * @throws NotFoundException when the target workspace doesn't exist.
 	 */
 	async switchWorkspace(tenantId: ID): Promise<IAuthResponse | null> {
+		// The switch mints a first-party token pair
+		assertFirstPartyRequest('Switching workspace');
+
 		try {
 			// Get the current authenticated user
 			const currentUser = RequestContext.currentUser();
@@ -3100,6 +3140,9 @@ export class AuthService extends SocialAuthService {
 	 * @throws UnauthorizedException when user is not authenticated or doesn't have access to the organization.
 	 */
 	async switchOrganization(organizationId: ID): Promise<IAuthResponse | null> {
+		// The switch mints a first-party token pair, and an app stays in the organization it was approved in
+		assertFirstPartyRequest('Switching organization');
+
 		try {
 			// Get the current authenticated user
 			const currentUser = RequestContext.currentUser();

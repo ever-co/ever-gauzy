@@ -326,20 +326,16 @@ describe('check constraint helper — MySQL, whose table metadata never lists a 
 		}
 	});
 
-	it('answers "present" when the catalog cannot be read, like a table that cannot be described', async () => {
-		// The helper's contract: a constraint it cannot see the absence of is never added. The rule then rests on
-		// the write path and the nightly audit, as for every rule the helper does not create.
-		const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-		const { queryRunner, executed, probes } = catalogRunner(DatabaseTypeEnum.mysql, {
-			probeFailure: new Error('information_schema could not be read')
-		});
+	it('stops the migration when the catalog cannot be read, instead of skipping the rule silently', async () => {
+		// Answering "present" would let the migration finish without the rule and without saying so.
+		const failure = new Error('information_schema could not be read');
+		const { queryRunner, executed, probes } = catalogRunner(DatabaseTypeEnum.mysql, { probeFailure: failure });
 
-		expect(await hasCheckConstraint(queryRunner, 'example', DEFINITION.name)).toBe(true);
-		expect(await addCheckConstraint(queryRunner, DEFINITION, 'TestMigration')).toBe('present');
-		expect(probes).toHaveLength(2);
+		await expect(hasCheckConstraint(queryRunner, 'example', DEFINITION.name)).rejects.toBe(failure);
+		await expect(addCheckConstraint(queryRunner, DEFINITION, 'TestMigration')).rejects.toBe(failure);
+		await expect(dropCheckConstraint(queryRunner, DEFINITION)).rejects.toBe(failure);
+		expect(probes).toHaveLength(3);
 		expect(executed).toEqual([]);
-
-		log.mockRestore();
 	});
 
 	it('rethrows any other drop failure, and a parse error outside MySQL, without retrying', async () => {

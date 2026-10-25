@@ -112,7 +112,12 @@ export class ActivepiecesMcpController {
 	 * Get MCP servers for current tenant
 	 */
 	@ApiOperation({ summary: 'Get ActivePieces MCP servers for current tenant' })
-	@ApiQuery({ name: 'projectId', required: true, type: String, description: 'ActivePieces project ID' })
+	@ApiQuery({
+		name: 'projectId',
+		required: false,
+		type: String,
+		description: "ActivePieces project ID (the tenant's own project is used when the server pins one)"
+	})
 	@ApiResponse({
 		status: 200,
 		description: 'Returns tenant MCP servers',

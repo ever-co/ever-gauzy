@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EntityManager, FindManyOptions, FindOptionsWhere, LessThanOrEqual, UpdateResult } from 'typeorm';
+import { EntityManager, FindManyOptions, FindOptionsWhere, In, LessThanOrEqual, Not, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, WarehouseProductVariant } from '@gauzy/core';
@@ -23,6 +23,28 @@ const DEFAULT_TTL_MINUTES: Record<StockReservationReferenceType, number> = {
 	[StockReservationReferenceType.TRANSFER]: 10080,
 	[StockReservationReferenceType.SUBSCRIPTION]: 4320
 };
+
+/**
+ * How many holds one expiry sweep may set aside as "could not be closed" before it stops.
+ *
+ * The sweep leaves those holds out of every later read of the same walk, so one hold that cannot be
+ * released does not stand in front of the expired holds behind it. The set is bound into that read as
+ * `NOT IN (...)`, so it is capped well under every supported dialect's bound-parameter limit; a walk
+ * that reaches the cap is failing systematically rather than on one bad row, and stops.
+ */
+export const EXPIRY_SWEEP_SKIP_LIMIT = 500;
+
+/**
+ * Whether a close was refused because the hold is no longer `ACTIVE`: another writer closed it first.
+ *
+ * @param error What the close threw.
+ * @returns `true` for the `RESERVATION_ALREADY_CLOSED` refusal, `false` for anything else.
+ */
+function isAlreadyClosed(error: unknown): boolean {
+	const response = (error as { getResponse?: () => unknown } | null)?.getResponse?.();
+
+	return (response as { code?: unknown } | null)?.code === InventoryErrorCode.RESERVATION_ALREADY_CLOSED;
+}
 
 /**
  * The members of a hold that only its domain writers may move.
@@ -306,14 +328,20 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 	 * two workers reading the same batch, or one row that could not be released for a real reason, made
 	 * every batch come back full of rows the sweep had already tried and the walk spent its whole budget
 	 * re-reading them: two hundred batches of five hundred `findOne`-plus-transaction round trips, with
-	 * `released` reported as zero. The walk now also stops when a batch closed nothing, because a batch
-	 * that produced no progress will produce none on the next pass either, and the rows it could not
-	 * close are named in the log rather than silently retried.
+	 * `released` reported as zero.
+	 *
+	 * **A hold the walk could not close is set aside, not re-read and not waited behind.** Its id is left
+	 * out of every later read of the same walk, so the next batch is made of holds the walk has not tried
+	 * yet. Stopping on the first batch that closed nothing instead would let one hold that cannot be
+	 * released — ordered first, because it expired first — stand in front of every expired hold behind it,
+	 * on every sweep, for as long as it keeps failing. A set-aside hold is still `ACTIVE` and expired, so
+	 * the next sweep tries it again. The set is capped at {@link EXPIRY_SWEEP_SKIP_LIMIT}: a walk that
+	 * reaches the cap is failing systematically rather than on one bad row, and stops.
 	 *
 	 * **The batch is read in the scope the close runs in.** A close loads its hold inside the request's tenant and
 	 * organization, so a batch read by the tenant alone could be made entirely of another organization's holds: an
-	 * operator's sweep then closed none of them, stopped on "no progress", and left its own organization's expired
-	 * holds reserved while answering success. The worker's sweep has no request and still reads every tenant.
+	 * operator's sweep then closed none of them and left its own organization's expired holds reserved while
+	 * answering success. The worker's sweep has no request and still reads every tenant.
 	 *
 	 * @param batchSize how many holds one pass claims; the default is the documented 500.
 	 * @param maxBatches how many passes one sweep walks at most.
@@ -321,6 +349,9 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 	 */
 	public async releaseExpired(batchSize = 500, maxBatches = 200): Promise<{ released: number; batches: number }> {
 		const scope = requestScope();
+		// The holds this walk tried and could not close. They stay `ACTIVE` and expired, so every later
+		// read of the walk leaves them out: otherwise they would come back first in each batch.
+		const skipped: ID[] = [];
 		let released = 0;
 		let batches = 0;
 
@@ -329,6 +360,7 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 				where: {
 					status: StockReservationStatus.ACTIVE,
 					expiresAt: LessThanOrEqual(new Date()),
+					...(skipped.length ? { id: Not(In(skipped)) } : {}),
 					...scope
 				} as any,
 				order: { expiresAt: 'ASC' } as any,
@@ -340,18 +372,23 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 			}
 
 			batches += 1;
-			let closed = 0;
 
 			for (const reservation of expired) {
 				try {
 					await this.close(reservation.id, StockReservationStatus.EXPIRED, 'EXPIRED');
 					released += 1;
-					closed += 1;
 				} catch (error) {
 					// A hold another worker closed between the read and the write is not a failure: the
-					// state guard already refused the transition, which is exactly the intent. A hold that
-					// failed for any other reason is not a failure of the sweep either, but it is a row the
-					// next pass would read again, which is what the progress check below is about.
+					// state guard already refused the transition, which is exactly the intent. It is no
+					// longer `ACTIVE`, so no later read returns it, and counting it as set aside would let
+					// two overlapping sweeps push each other into the limit below while both make progress.
+					if (isAlreadyClosed(error)) {
+						continue;
+					}
+
+					// A hold that failed for any other reason is not a failure of the sweep either; it is
+					// set aside for the rest of this walk and tried again by the next sweep.
+					skipped.push(reservation.id);
 					this.logger.debug(
 						`Reservation ${reservation.id} was not expired by this sweep: ${
 							(error as Error)?.message ?? error
@@ -360,19 +397,24 @@ export class StockReservationService extends InventoryCrudService<StockReservati
 				}
 			}
 
-			// A pass that closed nothing has made no progress, and the rows it read are exactly the rows
-			// the next read would return. Stopping is the difference between reporting "nothing could be
-			// expired" once and spending the whole batch budget discovering it two hundred times.
-			if (!closed) {
-				this.logger.warn(
-					`The reservation expiry sweep read ${expired.length} expired hold(s) and could close none of them; the sweep stops rather than re-reading them.`
-				);
+			// A walk that has set this many holds aside is failing systematically, not on one bad row,
+			// and the set is bound into the next read: stopping keeps both the work and the statement
+			// bounded.
+			if (skipped.length >= EXPIRY_SWEEP_SKIP_LIMIT) {
 				break;
 			}
 
 			if (expired.length < batchSize) {
 				break;
 			}
+		}
+
+		if (skipped.length) {
+			this.logger.warn(
+				`The reservation expiry sweep could not close ${skipped.length} expired hold(s)${
+					skipped.length >= EXPIRY_SWEEP_SKIP_LIMIT ? ' and stopped at its limit' : ''
+				}; they are left for the next sweep.`
+			);
 		}
 
 		return { released, batches };

@@ -4,6 +4,7 @@ import { ID, IUser, IUserCreateInput } from '@gauzy/contracts';
 import { UserCreateCommand } from '../user.create.command';
 import { UserService } from '../../user.service';
 import { normalizeRolePayload } from '../../role-assignment.helper';
+import { assertFirstPartyRequest } from '../../../auth/oauth-app-first-party';
 
 @CommandHandler(UserCreateCommand)
 export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
@@ -18,6 +19,11 @@ export class UserCreateHandler implements ICommandHandler<UserCreateCommand> {
 	 * @returns A Promise resolving to the created IUser object.
 	 */
 	public async execute(command: UserCreateCommand): Promise<IUser> {
+		// Creating an account (POST /user, and the employee's or candidate's account POST /employee and POST /candidate
+		// create through this command) stays with the user's own session: an account a third-party app creates, with
+		// a password it chose, is a first-party session it holds (owner decision Q12).
+		assertFirstPartyRequest('Creating a user account');
+
 		const { id, ...input } = (command.input ?? {}) as IUserCreateInput & { id?: ID };
 
 		// A create never adopts an existing row. `CrudService.create()` upserts when the payload carries

@@ -1,4 +1,4 @@
-import { QueryRunner } from 'typeorm';
+import { QueryRunner, Table } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
@@ -79,33 +79,38 @@ export function supportsCheckConstraints(queryRunner: QueryRunner): boolean {
  * @param name The constraint name.
  * @returns Whether the constraint is already there. A table that cannot be described answers `true`, so
  * a migration never adds a constraint to a table it could not read.
+ * @throws When the MySQL catalog cannot be read: the migration stops instead of finishing without the rule
+ * and without saying so.
  */
 export async function hasCheckConstraint(
 	queryRunner: QueryRunner,
 	table: string,
 	name: string
 ): Promise<boolean> {
+	let described: Table | undefined;
+
 	try {
-		const described = await queryRunner.getTable(table);
-
-		if (described?.checks?.some((check) => check.name === name)) {
-			return true;
-		}
-
-		if ((queryRunner.connection.options.type as DatabaseTypeEnum) !== DatabaseTypeEnum.mysql) {
-			return false;
-		}
-
-		const rows: Array<{ name: string }> = await queryRunner.query(
-			`SELECT CONSTRAINT_NAME AS name FROM information_schema.TABLE_CONSTRAINTS ` +
-				`WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = 'CHECK'`,
-			[table, name]
-		);
-
-		return Array.isArray(rows) && rows.some((row) => row?.name === name);
+		described = await queryRunner.getTable(table);
 	} catch {
 		return true;
 	}
+
+	if (described?.checks?.some((check) => check.name === name)) {
+		return true;
+	}
+
+	if ((queryRunner.connection.options.type as DatabaseTypeEnum) !== DatabaseTypeEnum.mysql) {
+		return false;
+	}
+
+	// Outside the catch above on purpose: answering "present" here would skip the rule silently.
+	const rows: Array<{ name: string }> = await queryRunner.query(
+		`SELECT CONSTRAINT_NAME AS name FROM information_schema.TABLE_CONSTRAINTS ` +
+			`WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = 'CHECK'`,
+		[table, name]
+	);
+
+	return Array.isArray(rows) && rows.some((row) => row?.name === name);
 }
 
 /**
