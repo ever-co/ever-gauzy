@@ -311,7 +311,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	// The request context on the one route that lives outside the prefix.
 	//
-	// `RequestContextMiddleware` is registered with `forRoutes('*')`, and Nest scopes a middleware
+	// `RequestContextMiddleware` is registered with `forRoutes('{*splat}')`, and Nest scopes a middleware
 	// pattern to the global prefix — so it covers `/api/*` and nothing else. The GraphQL endpoint is
 	// mounted at `/graphql`, outside the prefix, so an operation arriving there ran with no request
 	// context at all: `RequestContext.currentTenantId()` answered null inside every resolver, and the
