@@ -26,6 +26,15 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 
 const config = getConfig();
 
+/**
+ * The tasks a list request filters on. Blank entries are dropped, the way `isNotEmpty` already skips them when it
+ * decides whether to filter: bound as they are, PostgreSQL rejects an empty string as a uuid and fails the read.
+ */
+function requestedTaskIds(request: IGetActivitiesInput): ID[] {
+	const taskIds = request.taskIds ?? [];
+	return taskIds.filter((taskId) => isNotEmpty(taskId));
+}
+
 @Injectable()
 export class ActivityService extends TenantAwareCrudService<Activity> {
 	constructor(
@@ -272,6 +281,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	async getActivities(request: IGetActivitiesInput): Promise<IActivity[]> {
+		const taskIds = requestedTaskIds(request);
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use find with relation population
@@ -297,8 +307,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				if (isNotEmpty(request.projectIds)) {
 					where.projectId = { $in: request.projectIds };
 				}
-				if (isNotEmpty(request.taskIds)) {
-					where.taskId = { $in: request.taskIds };
+				if (isNotEmpty(taskIds)) {
+					where.taskId = { $in: taskIds };
 				}
 				// The requested period, as the TypeORM branch reads it (`recordedAt` between the bounds): the
 				// range was ignored here, so a one-day request listed (and paged) the activities of every day
@@ -323,9 +333,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			default: {
 				const query = this.filterQuery(request);
 				// Kept out of filterQuery, which the daily and report reads build on too (on TypeORM only)
-				if (isNotEmpty(request.taskIds)) {
+				if (isNotEmpty(taskIds)) {
 					const taskPredicate = p(`"${query.alias}"."taskId" IN (:...taskIds)`);
-					query.andWhere(taskPredicate, { taskIds: request.taskIds });
+					query.andWhere(taskPredicate, { taskIds });
 				}
 				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');

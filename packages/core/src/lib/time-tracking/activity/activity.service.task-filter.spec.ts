@@ -117,6 +117,16 @@ describe('ActivityService.getActivities, the tasks a caller asks for', () => {
 		expect(where.employeeId).toEqual({ $in: [EMPLOYEE_ID] });
 	});
 
+	it('drops a blank entry next to a requested task, which PostgreSQL would reject as a uuid', async () => {
+		const request = { ...REQUEST, taskIds: [TASK_ID, ''] } as IGetActivitiesInput;
+
+		const filters = await typeOrmListFilters(request);
+		const where = await mikroOrmListWhere(request);
+
+		expect(filters.taskIds).toEqual([TASK_ID]);
+		expect(where.taskId).toEqual({ $in: [TASK_ID] });
+	});
+
 	it.each([
 		['no taskIds', undefined],
 		['an empty list', []],
