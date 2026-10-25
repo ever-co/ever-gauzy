@@ -38,7 +38,18 @@
   total's progress bar is the working day.
 -->
 <td class="col-name">
-	<a class="member" [routerLink]="['/pages/employees/view', member.employeeId]">
+	<a
+		class="member"
+		[routerLink]="['/pages/employees/view', member.employeeId]"
+		#cardPopover="nbPopover"
+		[nbPopover]="personCard"
+		[nbPopoverContext]="member"
+		nbPopoverTrigger="hover"
+		nbPopoverPlacement="top"
+		nbPopoverClass="person-popover"
+		(focus)="cardPopover.show()"
+		(blur)="cardPopover.hide()"
+	>
 		<span class="member-avatar" [class]="'member-avatar presence-' + member.presence">
 			<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
 			<span class="avatar-dot"></span>
@@ -166,3 +177,8 @@
 	</div>
 </td>
 }
+
+<!-- The member's hover card: the team page's assignee card. -->
+<ng-template #personCard let-person>
+	<gauzy-team-person-card [person]="person"></gauzy-team-person-card>
+</ng-template>
