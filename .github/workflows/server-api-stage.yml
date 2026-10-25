@@ -98,6 +98,86 @@ jobs:
           echo "::error::No release tag points at this commit, and its merge parent does not match the tagged 'stage' tip. Promote by merging the 'stage' -> 'stage-apps' PR (or fast-forwarding: git push origin origin/stage:stage-apps) after 'Release Stage' has created the tag; if 'stage' has moved since the promotion PR was opened, re-promote."
           exit 1
 
+      - name: Create the GitHub release once, before the build matrix
+        # Every release-* job publishes with electron-builder's GitHub publisher, which creates the
+        # release in the app's release repo when it is missing. That create is not race-safe: two
+        # publishers that both find no release both POST it, and the second fails its job with
+        # "422 Validation Failed: Published releases must have a valid tag" ("Cannot cleanup"), although
+        # every artifact was built and uploaded. It even happens inside ONE job: electron-builder 26
+        # caches a publisher only after an await, so two artifacts finishing together get two
+        # publishers (the mac jobs on 2026-10-24: two "creating GitHub release" lines < 1 s apart).
+        # Creating the release here, once, before the matrix starts, means every publisher finds it and
+        # only uploads (electron-builder uploads to an existing release; EP_GH_IGNORE_TIME lifts its
+        # 2-hour age limit in every build step).
+        # It is the release electron-builder would create: tag = the gate's vX.Y.Z (vPrefixedTagName
+        # default), name = the version without the "v", draft false, prerelease true (releaseType
+        # 'prerelease', which .scripts/bump-version-electron.js writes for stage: isProd=false), and no
+        # target_commitish or body (electron-builder sends neither: no releaseInfo / release-notes.md).
+        # RELEASE_OWNER / RELEASE_REPO must stay equal to the DESKTOP_API_SERVER_REPO_OWNER /
+        # DESKTOP_API_SERVER_REPO_NAME that the build jobs pass to their bump step.
+        # The release is visible before its assets arrive - as it already was between the first and the
+        # last job finishing: the apps' updater skips a release without its platform's update file
+        # (packages/desktop-lib/src/lib/strategies/concretes/cdn-update.ts).
+        # Best-effort: if it cannot find or create the release it only warns, and the build jobs create
+        # it themselves, as before. actions/github-script rather than the gh CLI, which the ARC runner
+        # image this job may run on does not ship.
+        # Skipped for ad-hoc 'temp' pushes, which resolve no tag above.
+        if: ${{ steps.resolve.outputs.tag != '' }}
+        continue-on-error: true
+        timeout-minutes: 5
+        uses: actions/github-script@v8
+        env:
+          RELEASE_TAG: ${{ steps.resolve.outputs.tag }}
+          RELEASE_OWNER: 'ever-co'
+          RELEASE_REPO: 'ever-gauzy-api-server'
+          RELEASE_TYPE: 'prerelease'
+        with:
+          # The PAT the build jobs publish with; this job's own GITHUB_TOKEN is read-only.
+          github-token: ${{ secrets.GH_TOKEN }}
+          script: |
+            const { RELEASE_OWNER: owner, RELEASE_REPO: repo, RELEASE_TAG: tag, RELEASE_TYPE: releaseType } = process.env;
+            const version = tag.replace(/^v/, '');
+            const where = `${owner}/${repo}`;
+            const describe = (release) => `${release.html_url} (draft: ${release.draft}, prerelease: ${release.prerelease})`;
+            // The lookup electron-builder makes before it creates: any release - drafts included, which
+            // the get-release-by-tag endpoint does not return - tagged with the vX.Y.Z tag or the bare version.
+            const findRelease = async () => {
+              const { data } = await github.rest.repos.listReleases({ owner, repo, per_page: 100 });
+              return data.find((release) => release.tag_name === tag || release.tag_name === version);
+            };
+            const attempts = 5;
+            for (let attempt = 1; attempt <= attempts; attempt++) {
+              try {
+                const existing = await findRelease();
+                if (existing) {
+                  core.info(`Release ${tag} already exists in ${where}: ${describe(existing)} - nothing to do.`);
+                  return;
+                }
+                const { data: created } = await github.rest.repos.createRelease({
+                  owner,
+                  repo,
+                  tag_name: tag,
+                  name: version,
+                  draft: false,
+                  prerelease: releaseType === 'prerelease'
+                });
+                core.info(`Created release ${tag} in ${where}: ${describe(created)}`);
+                return;
+              } catch (error) {
+                // 422 is the race itself (someone created it between the lookup and the POST): the next
+                // lookup finds it. 429, 5xx and network errors are transient. Any other status
+                // (401/403/404: a token or repo problem) will not improve with a retry.
+                core.info(`Attempt ${attempt}/${attempts} failed: ${error.status || 'no status'} ${error.message}`);
+                if (error.status && error.status !== 422 && error.status !== 429 && error.status < 500) {
+                  break;
+                }
+              }
+              if (attempt < attempts) {
+                await new Promise((resolve) => setTimeout(resolve, attempt * 5000));
+              }
+            }
+            core.warning(`Could not find or create release ${tag} in ${where}; the build jobs will create it themselves, as before.`);
+
   release-linux:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
