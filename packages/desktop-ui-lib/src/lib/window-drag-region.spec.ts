@@ -33,6 +33,12 @@ function stylesheets(dir: string): string[] {
  * A small brace scanner, enough for the SCSS of this library: comments and `#{}` interpolations are dropped first.
  */
 function dragRegionSelectors(source: string): string[] {
+	return regionSelectors(source, 'drag');
+}
+
+/** The selectors of the blocks of a stylesheet that declare `app-region: <value>` (see {@link dragRegionSelectors}). */
+function regionSelectors(source: string, value: 'drag' | 'no-drag' | 'none'): string[] {
+	const declares = new RegExp(`(^|[\\s;])(-webkit-)?app-region\\s*:\\s*${value}(?![\\w-])`);
 	const text = source
 		.replace(/\/\*[\s\S]*?\*\//g, '')
 		.replace(/(^|[^:])\/\/.*$/gm, '$1')
@@ -41,7 +47,7 @@ function dragRegionSelectors(source: string): string[] {
 	const found: string[] = [];
 	let buffer = '';
 	const declaration = () => {
-		if (/(^|[\s;])(-webkit-)?app-region\s*:\s*drag\b/.test(buffer)) {
+		if (declares.test(buffer)) {
 			found.push(selectors.join(' '));
 		}
 		buffer = '';
@@ -121,5 +127,17 @@ describe('window drag regions', () => {
 				.map((selector) => `${relative(LIB_ROOT, file).replace(/\\/g, '/')}: ${selector}`)
 		);
 		expect(offenders).toEqual([]);
+	});
+
+	it("takes Nebular's overlay container out of the always-on widget's drag region", () => {
+		// The widget's drag region is its <nb-layout class="main">, and Nebular appends its overlay container
+		// (tooltips, popovers: a fixed, full-window box) inside <nb-layout>. With the property inherited since
+		// Chromium 152, the drag covered the whole widget, buttons included, whenever a tooltip was open.
+		const source = readFileSync(join(LIB_ROOT, 'always-on/always-on.component.scss'), 'utf8');
+		const isOverlayContainer = (selector: string) => /\.cdk-overlay-container(?![\w-])/.test(selector);
+
+		expect(dragRegionSelectors(source)).toContain('.main');
+		expect(regionSelectors(source, 'none').filter(isOverlayContainer)).toHaveLength(1);
+		expect(regionSelectors(source, 'drag').some(isOverlayContainer)).toBe(false);
 	});
 });

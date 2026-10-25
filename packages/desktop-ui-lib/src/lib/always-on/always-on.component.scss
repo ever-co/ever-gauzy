@@ -155,6 +155,15 @@ button {
 	border-radius: 50px;
 }
 
+// Nebular appends its overlay container (tooltips, popovers) inside <nb-layout>, so inside `.main`. Since
+// Electron 44 (Chromium 152) `-webkit-app-region` is inherited: whenever a tooltip was open, that fixed,
+// full-window container was a drag region laid over the buttons' `no-drag`, and a click on play/pause moved the
+// window instead. `none`, not `no-drag`: the container must not be a region at all, or the widget could not be
+// dragged while a tooltip is showing.
+:host ::ng-deep .cdk-overlay-container {
+	-webkit-app-region: none;
+}
+
 .timer-card {
 	margin: 0 !important;
 	padding: 0 !important;
