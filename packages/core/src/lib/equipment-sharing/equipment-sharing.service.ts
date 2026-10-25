@@ -32,7 +32,12 @@ import { MultiORMEnum, parseSortOrder } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
-import { requestersOfDocument } from './../request-approval/request-approval.service';
+import {
+	mikroOrmActiveTeamMemberIds,
+	requestersOfDocument,
+	teamIdsOfDocument,
+	typeOrmActiveTeamMemberIds
+} from './../request-approval/request-approval.service';
 import {
 	IRequestApprovalRequestedFor,
 	isRequesterOfRequestApproval,
@@ -94,10 +99,11 @@ export interface IEquipmentSharingDecisionTransaction {
 	 */
 	lockRequestApproval(requestApprovalId: ID, tenantId: ID): Promise<IDecisionRequestApproval | null>;
 	/**
-	 * Who the sharing was filed by (its `createdByUserId`) and is for (its employees), inside the tenant: none of them
-	 * decides it, unless they are a tenant administrator. Read after {@link lockRequestApproval}, the lock an in-place
-	 * edit of the memberships takes too (`updateInPlace`), so the two take turns and the decision reads the memberships
-	 * as they stand when it is made. Empty when the sharing is not there.
+	 * Who the sharing was filed by (its `createdByUserId`) and is for (its employees, and the active members of the
+	 * teams it is for), inside the tenant: none of them decides it, unless they are a tenant administrator. Read after
+	 * {@link lockRequestApproval}, the lock an in-place edit of the memberships takes too (`updateInPlace`), so the two
+	 * take turns and the decision reads the memberships as they stand when it is made. Empty when the sharing is not
+	 * there.
 	 */
 	readRequesters(sharingId: ID, tenantId: ID): Promise<IRequestApprovalRequestedFor>;
 	/**
@@ -125,7 +131,7 @@ export interface IEquipmentSharingInPlaceTransaction {
 	 * approval, then the sharing (`decideWithRequestApproval`, and the request approval's own answer, which moves the
 	 * sharing it decides). Taking the sharing's row first would let an edit and a decision each hold one row while
 	 * waiting for the other. It also makes an answer and an edit of the memberships take turns, so the answer's
-	 * requester check reads the employees the sharing is for as they stand when it decides.
+	 * requester check reads the employees and the teams the sharing is for as they stand when it decides.
 	 */
 	lockApprovals(sharingId: ID, tenantId: ID, organizationId: ID | null): Promise<void>;
 	/**
@@ -935,7 +941,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * @throws NotFoundException when the sharing or its request approval is no longer there (or no longer in the
 	 * caller's reach); nothing is written then.
 	 * @throws ForbiddenException when the caller, not a tenant administrator, raised the sharing's approval, filed the
-	 * sharing, or is an employee it is for; nothing is written then.
+	 * sharing, or is an employee it is for (one it names, or an active member of a team it is for); nothing is written
+	 * then.
 	 * @throws BadRequestException when another error occurs.
 	 */
 	async decideWithRequestApproval(id: ID, status: number, requestApprovalId: ID): Promise<EquipmentSharing> {
@@ -958,8 +965,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				// The approval's lock first, the order the request approval's own answer route takes its locks in.
 				const approval = await transaction.lockRequestApproval(requestApprovalId, tenantId);
 				// Nobody decides a sharing they raised or that is for them (owner decision Q9): the user who raised its
-				// approval, the user who filed the sharing, and the employees it is for — the rule the request
-				// approval's answer applies to the same request. Read after the lock, before anything is written.
+				// approval, the user who filed the sharing, and the employees it is for, members of its teams included
+				// — the rule the request approval's answer applies to the same request. Read after the lock, before
+				// anything is written.
 				if (!isTenantAdmin) {
 					const requestedFor = await transaction.readRequesters(equipmentSharing.id, tenantId);
 					if (
@@ -1056,15 +1064,19 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					  }
 					: null;
 			},
-			readRequesters: async (sharingId, tenantId) =>
-				// The filer and the employees alone, no other eager relation.
-				requestersOfDocument(
-					await manager.findOne(EquipmentSharing, {
-						where: { id: sharingId, tenantId },
-						relations: { employees: true },
-						loadEagerRelations: false
-					})
-				),
+			readRequesters: async (sharingId, tenantId) => {
+				// The filer, the employees and the teams alone, no other eager relation.
+				const row = await manager.findOne(EquipmentSharing, {
+					where: { id: sharingId, tenantId },
+					relations: { employees: true, teams: true },
+					loadEagerRelations: false
+				});
+				// The sharing is also for the active members of its teams.
+				return requestersOfDocument(
+					row,
+					await typeOrmActiveTeamMemberIds(manager, teamIdsOfDocument(row), tenantId)
+				);
+			},
 			writeSharingStatus: async (criteria, status) =>
 				affectedRows(await manager.update(EquipmentSharing, criteria, { status })),
 			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
@@ -1107,14 +1119,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 						}
 					: null;
 			},
-			readRequesters: async (sharingId, tenantId) =>
-				requestersOfDocument(
-					await em.findOne(
-						EquipmentSharing,
-						{ id: sharingId, tenantId } as any,
-						{ disableIdentityMap: true, populate: ['employees'] } as any
-					)
-				),
+			readRequesters: async (sharingId, tenantId) => {
+				const row = await em.findOne(
+					EquipmentSharing,
+					{ id: sharingId, tenantId } as any,
+					{ disableIdentityMap: true, populate: ['employees', 'teams'] } as any
+				);
+				// The sharing is also for the active members of its teams.
+				return requestersOfDocument(
+					row,
+					await mikroOrmActiveTeamMemberIds(em, teamIdsOfDocument(row), tenantId)
+				);
+			},
 			writeSharingStatus: async (criteria, status) =>
 				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ status }) as any),
 			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {

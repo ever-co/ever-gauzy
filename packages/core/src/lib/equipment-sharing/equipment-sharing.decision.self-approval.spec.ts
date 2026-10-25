@@ -2,10 +2,11 @@
 import '../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
+import { In } from 'typeorm';
 import { RequestApprovalStatusTypesEnum, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
-import { RequestApproval } from '../core/entities/internal';
+import { OrganizationTeamEmployee, RequestApproval } from '../core/entities/internal';
 import { MultiORMEnum } from '../core/utils';
 import { IRequestApprovalRequestedFor, REQUESTER_DOES_NOT_ANSWER } from '../request-approval/request-approval-decision';
 import { EquipmentSharingStatusCommand } from './commands/equipment-sharing.status.command';
@@ -24,6 +25,9 @@ import { EquipmentSharingService, IEquipmentSharingDecisionTransaction } from '.
  * sharing and the employees it is for do not approve or refuse it — unless they are a tenant administrator, who
  * decides any request, as on the answer route. The check is made on the decision's transaction, after the approval's
  * row lock (the lock an in-place edit of the memberships takes too), and before anything is written.
+ *
+ * The people a sharing is for include the active members of the teams it is for (follow-up of #11413): a member of
+ * such a team could still approve it, since only the employees it names were read.
  */
 
 jest.mock('@gauzy/config', () => ({
@@ -198,7 +202,7 @@ describe('who a sharing is for, on each ORM', () => {
 	afterEach(() => jest.restoreAllMocks());
 
 	describe('TypeORM', () => {
-		function typeOrm(approval: Row, filed: Row) {
+		function typeOrm(approval: Row, filed: Row, memberships: Row[] = []) {
 			const query = {
 				where: jest.fn().mockReturnThis(),
 				setLock: jest.fn().mockReturnThis(),
@@ -207,6 +211,10 @@ describe('who a sharing is for, on each ORM', () => {
 			const manager = {
 				createQueryBuilder: jest.fn(() => query),
 				findOne: jest.fn(async (..._args: unknown[]) => filed),
+				// The active memberships of the teams the sharing is for.
+				find: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
+					entity === OrganizationTeamEmployee ? memberships : []
+				),
 				update: jest.fn(async (..._args: unknown[]) => ({ affected: 1 }))
 			};
 			const service = new EquipmentSharingService(
@@ -237,10 +245,68 @@ describe('who a sharing is for, on each ORM', () => {
 			expect(error).toBeInstanceOf(ForbiddenException);
 			expect(manager.findOne).toHaveBeenCalledWith(EquipmentSharing, {
 				where: { id: ID, tenantId: TENANT },
-				relations: { employees: true },
+				relations: { employees: true, teams: true },
 				loadEagerRelations: false
 			});
+			// A sharing for no team reads no membership.
+			expect(manager.find).not.toHaveBeenCalled();
 			expect(manager.update).not.toHaveBeenCalled();
+		});
+
+		it.each([APPROVED, REFUSED])(
+			'refuses (%p) an active member of a team the sharing is for: 403, after the lock, nothing written',
+			async (status) => {
+				asUser(MANAGER);
+				const { service, manager } = typeOrm(
+					approvalRow(),
+					{ id: ID, createdByUserId: 'user-filer', employees: [], teams: [{ id: 'team-design' }] },
+					[{ organizationTeamId: 'team-design', employeeId: MANAGER.employeeId, isActive: true }]
+				);
+
+				const error = await service
+					.decideWithRequestApproval(ID, status, APPROVAL_ID)
+					.catch((reason) => reason);
+
+				expect(error).toBeInstanceOf(ForbiddenException);
+				expect(error.message).toBe(REQUESTER_DOES_NOT_ANSWER);
+				// The members are read on the decision's transaction, inside the tenant, active memberships only.
+				expect(manager.find).toHaveBeenCalledWith(OrganizationTeamEmployee, {
+					where: { organizationTeamId: In(['team-design']), tenantId: TENANT, isActive: true }
+				});
+				// After the approval's lock (the query builder's), and nothing written.
+				expect(manager.createQueryBuilder.mock.invocationCallOrder[0]).toBeLessThan(
+					manager.find.mock.invocationCallOrder[0]
+				);
+				expect(manager.update).not.toHaveBeenCalled();
+			}
+		);
+
+		it('lets a decider who is not a member of the sharing’s teams decide it', async () => {
+			asUser(MANAGER);
+			const { service, manager } = typeOrm(
+				approvalRow(),
+				{ id: ID, createdByUserId: 'user-filer', employees: [], teams: [{ id: 'team-design' }] },
+				[{ organizationTeamId: 'team-design', employeeId: 'employee-other', isActive: true }]
+			);
+
+			await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID);
+
+			expect(manager.update.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing, RequestApproval]);
+		});
+
+		it('still lets a tenant administrator who is a member of the sharing’s team decide it, reading nothing more', async () => {
+			asUser(ADMIN);
+			const { service, manager } = typeOrm(
+				approvalRow(),
+				{ id: ID, createdByUserId: 'user-filer', employees: [], teams: [{ id: 'team-design' }] },
+				[{ organizationTeamId: 'team-design', employeeId: ADMIN.employeeId, isActive: true }]
+			);
+
+			await service.decideWithRequestApproval(ID, REFUSED, APPROVAL_ID);
+
+			expect(manager.findOne).not.toHaveBeenCalled();
+			expect(manager.find).not.toHaveBeenCalled();
+			expect(manager.update.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing, RequestApproval]);
 		});
 
 		it('refuses the user who raised the approval, as the locked read finds it', async () => {
@@ -258,10 +324,13 @@ describe('who a sharing is for, on each ORM', () => {
 	});
 
 	describe('MikroORM', () => {
-		function mikroOrm(approval: Row, filed: Row) {
+		function mikroOrm(approval: Row, filed: Row, memberships: Row[] = []) {
 			const em = {
 				findOne: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
 					entity === RequestApproval ? approval : filed
+				),
+				find: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
+					entity === OrganizationTeamEmployee ? memberships : []
 				),
 				nativeUpdate: jest.fn(async (..._args: unknown[]) => 1),
 				getMetadata: () => ({ find: () => undefined })
@@ -299,9 +368,29 @@ describe('who a sharing is for, on each ORM', () => {
 			expect(em.findOne).toHaveBeenCalledWith(
 				EquipmentSharing,
 				{ id: ID, tenantId: TENANT },
-				{ disableIdentityMap: true, populate: ['employees'] }
+				{ disableIdentityMap: true, populate: ['employees', 'teams'] }
 			);
+			expect(em.find).not.toHaveBeenCalled();
 			expect(em.nativeUpdate.mock.calls.map(([entity]) => entity)).toEqual([EquipmentSharing, RequestApproval]);
+		});
+
+		it('refuses an active member of a team the sharing is for, read from the table on the transaction', async () => {
+			asUser(MANAGER);
+			const teams = { isInitialized: () => true, getItems: () => [{ id: 'team-design' }] };
+			const employees = { isInitialized: () => true, getItems: () => [] };
+			const { service, em } = mikroOrm(approvalRow(), { id: ID, employees, teams }, [
+				{ organizationTeam: { id: 'team-design' }, employee: { id: MANAGER.employeeId } }
+			]);
+
+			const error = await service.decideWithRequestApproval(ID, APPROVED, APPROVAL_ID).catch((reason) => reason);
+
+			expect(error).toBeInstanceOf(ForbiddenException);
+			expect(em.find).toHaveBeenCalledWith(
+				OrganizationTeamEmployee,
+				{ organizationTeamId: { $in: ['team-design'] }, tenantId: TENANT, isActive: true },
+				{ disableIdentityMap: true }
+			);
+			expect(em.nativeUpdate).not.toHaveBeenCalled();
 		});
 	});
 });
