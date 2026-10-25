@@ -136,15 +136,22 @@ describe('get_equipment_sharing_requests — the answer', () => {
 			{
 				id: 't3',
 				employees: [],
-				teams: [team('qa', [{ employeeId: EMPLOYEE, deletedAt: '2026-10-01T00:00:00.000Z' }])]
+				teams: [team('qa', [{ employeeId: EMPLOYEE, isActive: true, deletedAt: '2026-10-01T00:00:00.000Z' }])]
 			},
-			{ id: 't4', employees: [], teams: [team('sales', [{ employee: { id: EMPLOYEE.toUpperCase() } }])] },
-			{ id: 't5', employees: [], teams: [team('hr', [{ employeeId: OTHER_EMPLOYEE }])] }
+			{
+				id: 't4',
+				employees: [],
+				teams: [team('sales', [{ employee: { id: EMPLOYEE.toUpperCase() }, isActive: true }])]
+			},
+			{ id: 't5', employees: [], teams: [team('hr', [{ employeeId: OTHER_EMPLOYEE, isActive: true }])] },
+			// A membership whose flag is null (or missing) is not an active one.
+			{ id: 't6', employees: [], teams: [team('legal', [{ employeeId: EMPLOYEE, isActive: null }])] },
+			{ id: 't7', employees: [], teams: [team('it', [{ employeeId: EMPLOYEE }])] }
 		];
 
 		const selected = selectEquipmentSharingRequests(teamOnly, { employeeId: EMPLOYEE });
 
-		// Active memberships only (an inactive or a removed one is not), in either form the member is read in.
+		// Explicitly active memberships only (not an inactive, a null-flagged or a removed one), in either member form.
 		expect(selected.items.map((s) => s.id)).toEqual(['t1', 't4']);
 		expect(selected.total).toBe(2);
 		expect(selected.items[0].teams).toEqual([{ id: 'design', name: 'design' }]);

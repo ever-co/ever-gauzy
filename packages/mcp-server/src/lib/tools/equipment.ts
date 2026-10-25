@@ -224,8 +224,8 @@ export const equipmentSharingRequestsQuery = (
 };
 
 /**
- * Whether a sharing is for an employee: one it names, or an active member of one of its teams. Identifiers are
- * compared in any case.
+ * Whether a sharing is for an employee: one it names, or an active member of one of its teams (`isActive: true`, as
+ * the core requester read asks; a null or false flag is not active). Identifiers are compared in any case.
  *
  * @param sharing A sharing, with its employees and its teams' members.
  * @param employeeId The employee.
@@ -239,7 +239,7 @@ export const isEquipmentSharingFor = (sharing: Record<string, any>, employeeId: 
 				Array.isArray(team?.members) &&
 				team.members.some(
 					(member) =>
-						member?.isActive !== false &&
+						member?.isActive === true &&
 						!member?.deletedAt &&
 						sameId(member?.employeeId ?? member?.employee?.id, employeeId)
 				)
