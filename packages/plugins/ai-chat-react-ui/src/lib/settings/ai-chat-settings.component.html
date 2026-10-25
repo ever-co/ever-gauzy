@@ -591,9 +591,15 @@
 									{{ 'AI_CHAT_UI.SETTINGS.FORM.SPEECH_MODEL' | translate }}
 								</span>
 							</label>
+							<!--
+								appendTo="body", as every other select in the app: ng-select 24 renders the panel in a
+								CDK overlay, and without appendTo that is Nebular's container inside <nb-layout>, where
+								NgSelectPanelSizingService never gives the pane its "as wide as the select" floor.
+							-->
 							<ng-select
 								class="model-select"
 								panelClass="ai-chat-model-panel"
+								appendTo="body"
 								[labelForId]="'ai-chat-speech-model-' + provider.id"
 								formControlName="speechModel"
 								bindValue="id"
@@ -651,9 +657,15 @@
 							<label class="label" [for]="'ai-chat-model-' + provider.id">
 								{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}
 							</label>
+							<!--
+								appendTo="body": with virtual scroll the option rows are absolutely positioned, so
+								without the sizing service's floor (see the speech model select) the panel opened a
+								sliver (~11px) wide.
+							-->
 							<ng-select
 								class="model-select"
 								panelClass="ai-chat-model-panel"
+								appendTo="body"
 								[labelForId]="'ai-chat-model-' + provider.id"
 								formControlName="defaultModel"
 								bindValue="id"

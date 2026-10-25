@@ -8,6 +8,7 @@
  * |---|---|
  * | `application/pdf` (text layer) | {@link createTextLayerPdf} / {@link TEXT_LAYER_PDF_PAGES} |
  * | `application/pdf` (no text layer) | {@link createScannedPdf} |
+ * | `application/pdf` (raster image + vector + text, for the rasterizer) | {@link createImagePdf} |
  * | `application/pdf` (unreadable) | {@link createEncryptedPdf}, {@link createCorruptPdf} |
  * | `…wordprocessingml.document` | {@link createDocxFixture} |
  * | legacy `.doc` / corrupt docx | {@link createLegacyDocFixture}, {@link createCorruptDocxFixture} |

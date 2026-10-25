@@ -5573,6 +5573,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "请立即保存这些密码。它们只显示一次。",
 			"SEED_CREDENTIALS_DETAIL": "此安装使用随机密码创建了账户，而不是公开的默认密码。\n\n{{ accounts }}\n\n之后您可以在 Gauzy 的个人资料页面中更改密码。",
 			"SEED_CREDENTIALS_COPIED": "已复制到剪贴板。",
+			"SEED_CREDENTIALS_COPY_FAILED": "无法复制到剪贴板。请点击“复制”重试，或在确认前记下密码。",
 			"SEED_CREDENTIALS_SAVED": "我已保存",
 			"SEED_ROLE_SUPER_ADMIN": "超级管理员",
 			"SEED_ROLE_ADMIN": "管理员",

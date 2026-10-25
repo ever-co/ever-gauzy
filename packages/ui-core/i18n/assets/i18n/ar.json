@@ -5571,6 +5571,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "احفظ كلمات المرور هذه الآن. لن تُعرض إلا مرة واحدة.",
 			"SEED_CREDENTIALS_DETAIL": "أنشأ هذا التثبيت حساباته بكلمات مرور عشوائية بدلاً من القيم الافتراضية المنشورة.\n\n{{ accounts }}\n\nيمكنك تغيير كلمة المرور لاحقاً من صفحة ملفك الشخصي في Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "تم النسخ إلى الحافظة.",
+			"SEED_CREDENTIALS_COPY_FAILED": "تعذّر النسخ إلى الحافظة. اضغط «نسخ» للمحاولة مرة أخرى، أو دوّن كلمات المرور قبل التأكيد.",
 			"SEED_CREDENTIALS_SAVED": "لقد حفظتها",
 			"SEED_ROLE_SUPER_ADMIN": "المسؤول الأعلى",
 			"SEED_ROLE_ADMIN": "المسؤول",
