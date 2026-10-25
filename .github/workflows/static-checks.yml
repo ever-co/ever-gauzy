@@ -485,3 +485,11 @@ jobs:
       - name: The electron-builder snap patch matches the locked app-builder-lib (none from 26.18.0)
         if: always()
         run: node --test tools/electron/app-builder-lib-patch.test.js
+
+      # Every release-mac job ends by adding minimumSystemVersion (Darwin 22.0.0 = macOS 13, Electron 44's minimum) to
+      # the latest-mac.yml it published; without it electron-updater on macOS 12 updates into an app that does not
+      # start. Only a release run reaches that action, so its manifest edit and its staged swap of the release asset
+      # (against an in-memory Octokit: no network) run here.
+      - name: The latest-mac.yml minimum-macOS edit keeps the manifest and swaps it safely
+        if: always()
+        run: node --test .github/actions/set-mac-minimum-system-version/set-mac-minimum-system-version.test.cjs
