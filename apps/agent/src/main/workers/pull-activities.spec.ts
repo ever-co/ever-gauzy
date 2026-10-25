@@ -1,6 +1,9 @@
 /**
- * A stop that arrives while a device sleep keeps tracking paused must close the timer the sleep left open and drop the
- * pause, so waking up cannot resume tracking the person stopped.
+ * Two agent defects, on the worker that runs tracking:
+ *  - a stop that arrives while a device sleep keeps tracking paused must close the timer the sleep left open and drop
+ *    the pause, so waking up cannot resume tracking the person stopped;
+ *  - the screenshot interval comes from the organisation's screenshot frequency (it used to be the local default
+ *    only), re-read whenever tracking starts and periodically while it runs, and applied to a running capture schedule.
  *
  * The worker runs for real against an in-memory settings store; the capture modules, the local database services, the
  * API and the queue are stand-ins.
@@ -27,6 +30,7 @@ const mockTimerService = {
 };
 const mockEnqueueTimer = jest.fn();
 const mockApi = {
+	getOrganizationTimerSetting: jest.fn(async (): Promise<unknown> => null),
 	timerStatus: jest.fn(),
 	stopTimer: jest.fn()
 };
@@ -79,8 +83,17 @@ jest.mock('../queue/worker-queue', () => ({
 
 import PullActivities from './pull-activities';
 
-/** Let pending work finish */
+const FIFTEEN_MINUTES = 15 * 60 * 1000;
+
+/** Let the settings refresh that starting tracking fires (and does not wait for) finish */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** The same under fake timers, where only promise continuations can run */
+const settleMicrotasks = async () => {
+	for (let i = 0; i < 50; i++) {
+		await Promise.resolve();
+	}
+};
 
 describe('PullActivities', () => {
 	let pull: PullActivities;
@@ -92,11 +105,14 @@ describe('PullActivities', () => {
 		}
 		mockStore['auth'] = { token: 'token', user: { id: 'user-1', employee: { id: 'employee-1' } } };
 		mockStore['appSetting'] = { timer: { updatePeriod: 10 }, kbMouseTracking: false };
+		mockApi.getOrganizationTimerSetting.mockResolvedValue(null);
 		pull = new PullActivities();
 	});
 
 	afterEach(async () => {
+		// Clear the settings refresh interval a running worker keeps
 		await pull.stopTracking();
+		jest.useRealTimers();
 	});
 
 	describe('stop while a device sleep keeps tracking paused', () => {
@@ -141,6 +157,104 @@ describe('PullActivities', () => {
 
 			expect(mockTimerService.update).not.toHaveBeenCalled();
 			expect(mockEnqueueTimer).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("organisation's screenshot frequency", () => {
+		it("applies the organisation's frequency to the running capture schedule and stores it", async () => {
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ screenshotFrequency: '3', enforced: false });
+
+			await pull.startTracking();
+			await settle();
+
+			// The session starts on the stored period, then takes the organisation's
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenNthCalledWith(1, 600);
+
+			expect(mockApi.getOrganizationTimerSetting).toHaveBeenCalledTimes(1);
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenLastCalledWith(180);
+			expect(mockStore['appSetting'].timer.updatePeriod).toBe(3);
+		});
+
+		it('starts the next session on the stored organisation frequency', async () => {
+			mockStore['appSetting'].timer.updatePeriod = 1;
+
+			await pull.startTracking();
+			await settle();
+
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenLastCalledWith(60);
+		});
+
+		it('keeps the current interval when the organisation has no frequency', async () => {
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ screenshotFrequency: null });
+
+			await pull.startTracking();
+			await settle();
+
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenCalledTimes(1);
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenLastCalledWith(600);
+			expect(mockStore['appSetting'].timer.updatePeriod).toBe(10);
+		});
+
+		it('falls back to five minutes when no period is stored at all', async () => {
+			mockStore['appSetting'] = { kbMouseTracking: false };
+
+			await pull.startTracking();
+			await settle();
+
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenLastCalledWith(300);
+		});
+
+		it('keeps the current interval when the settings cannot be read', async () => {
+			mockApi.getOrganizationTimerSetting.mockRejectedValue(new Error('offline'));
+
+			await pull.startTracking();
+			await settle();
+			await expect(pull.refreshOrganizationSetting()).resolves.toBeUndefined();
+
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenCalledTimes(1);
+			expect(mockLogger.warn).toHaveBeenCalled();
+		});
+
+		it('re-reads the settings while tracking runs, and stops re-reading once it stops', async () => {
+			jest.useFakeTimers();
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ screenshotFrequency: 10 });
+			await pull.startTracking();
+			await settleMicrotasks();
+			expect(mockApi.getOrganizationTimerSetting).toHaveBeenCalledTimes(1);
+
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ screenshotFrequency: 1 });
+			jest.advanceTimersByTime(FIFTEEN_MINUTES);
+			await settleMicrotasks();
+
+			expect(mockApi.getOrganizationTimerSetting).toHaveBeenCalledTimes(2);
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenLastCalledWith(60);
+
+			await pull.stopTracking();
+			jest.advanceTimersByTime(FIFTEEN_MINUTES * 4);
+			await settleMicrotasks();
+
+			expect(mockApi.getOrganizationTimerSetting).toHaveBeenCalledTimes(2);
+		});
+
+		it('re-reads the settings when tracking resumes after a sleep', async () => {
+			await pull.startTracking();
+			await settle();
+			await pull.stopTracking(true);
+
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ screenshotFrequency: 5 });
+			await pull.startTracking(true);
+			await settle();
+
+			expect(mockApi.getOrganizationTimerSetting).toHaveBeenCalledTimes(2);
+			expect(mockTimerModule.setScreenshotInterval).toHaveBeenLastCalledWith(300);
+		});
+
+		it('does not read the settings when signed out', async () => {
+			mockStore['auth'] = null;
+
+			await pull.refreshOrganizationSetting();
+
+			expect(mockApi.getOrganizationTimerSetting).not.toHaveBeenCalled();
 		});
 	});
 });

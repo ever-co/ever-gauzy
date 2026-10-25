@@ -26,8 +26,10 @@ import {
 	getScreenshotSoundPath,
 	getAuthConfig,
 	TAuthConfig,
-	updateTimerStatus
+	updateTimerStatus,
+	updateOrganizationTimerSetting
 } from '../util';
+import { resolveScreenshotIntervalSeconds } from '../screenshot-interval';
 import { getScreenshot, TScreenShot } from '../screenshot';
 import { Notification } from 'electron';
 import { AgentLogger } from '../agent-logger';
@@ -42,6 +44,12 @@ type UserLogin = {
 	organizationId: string;
 	remoteId: string;
 };
+
+/**
+ * How often a running agent re-reads the organisation's timer settings, so a screenshot frequency changed on the server
+ * reaches an agent that runs for days without restarting (it also re-reads them each time tracking starts or resumes).
+ */
+const ORGANIZATION_SETTING_REFRESH_MS = 15 * 60 * 1000;
 
 class PullActivities {
 	static instance: PullActivities;
@@ -67,6 +75,10 @@ class PullActivities {
 	private lastTodayDuration: number;
 	private _startedPausedDate: Date | null;
 	private _isPaused: boolean;
+	/** Screenshot interval (seconds) last handed to the timer module */
+	private screenshotIntervalSeconds: number | null = null;
+	private organizationSettingRefresh: Promise<void> | null = null;
+	private organizationSettingTimer: ReturnType<typeof setInterval> | null = null;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
@@ -187,6 +199,7 @@ class PullActivities {
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.start();
 				}
+				this.startOrganizationSettingRefresh();
 			}
 		} catch (error) {
 			console.error('error start tracking', error);
@@ -354,6 +367,7 @@ class PullActivities {
 				this.agentLogger.info('Listener keyboard and mouse stopping');
 				this.listenerModule.stopListener();
 				this.isStarted = false;
+				this.stopOrganizationSettingRefresh();
 				this.stopTimerProcess();
 				this.mainEvent.emit('MAIN_EVENT', {
 					type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS
@@ -427,11 +441,72 @@ class PullActivities {
 			this.timerModule.setActiveWindowCallback(this.collectActivityWindow.bind(this));
 		}
 		const appSetting = getAppSetting();
-		const screenshotInterval = (appSetting?.timer?.updatePeriod || 5) * 60; // value is in seconds and default to 5 minutes
+		// The organisation's screenshot frequency once read (stored as timer.updatePeriod), else 5 minutes
+		const screenshotInterval = resolveScreenshotIntervalSeconds(appSetting);
 		this.timerModule.setScreenshotInterval(screenshotInterval);
 		this.timerModule.setRandomScreenshotInterval(appSetting?.randomScreenshotTime || false);
+		this.screenshotIntervalSeconds = screenshotInterval;
 		this.agentLogger.info('Agent started with 60 second interval keyboard and mouse activities collected');
 		this.agentLogger.info(`screenshot will taken every ${screenshotInterval} seconds`);
+	}
+
+	/**
+	 * Read the organisation's timer settings again and, when its screenshot frequency changed, apply it to the running
+	 * capture schedule. A failure (offline, server error) keeps the current interval.
+	 */
+	refreshOrganizationSetting(): Promise<void> {
+		if (!this.organizationSettingRefresh) {
+			this.organizationSettingRefresh = this.readOrganizationSetting().finally(() => {
+				this.organizationSettingRefresh = null;
+			});
+		}
+		return this.organizationSettingRefresh;
+	}
+
+	private async readOrganizationSetting(): Promise<void> {
+		if (!getAuthConfig()?.token) {
+			return;
+		}
+		try {
+			const organization = await this.apiService.getOrganizationTimerSetting();
+			if (updateOrganizationTimerSetting(organization) !== null) {
+				this.applyScreenshotInterval();
+			}
+		} catch (error) {
+			this.agentLogger.warn(`Organisation timer settings not refreshed: ${error?.message}`);
+		}
+	}
+
+	/** Hand a changed screenshot interval to the running timer module */
+	private applyScreenshotInterval() {
+		if (!this.timerModule || !this.isStarted) {
+			return;
+		}
+		const appSetting = getAppSetting();
+		const screenshotInterval = resolveScreenshotIntervalSeconds(appSetting);
+		if (screenshotInterval === this.screenshotIntervalSeconds) {
+			return;
+		}
+		this.timerModule.setScreenshotInterval(screenshotInterval);
+		this.timerModule.setRandomScreenshotInterval(appSetting?.randomScreenshotTime || false);
+		this.screenshotIntervalSeconds = screenshotInterval;
+		this.agentLogger.info(`screenshot interval changed by the organisation: every ${screenshotInterval} seconds`);
+	}
+
+	private startOrganizationSettingRefresh() {
+		void this.refreshOrganizationSetting();
+		if (!this.organizationSettingTimer) {
+			this.organizationSettingTimer = setInterval(() => {
+				void this.refreshOrganizationSetting();
+			}, ORGANIZATION_SETTING_REFRESH_MS);
+		}
+	}
+
+	private stopOrganizationSettingRefresh() {
+		if (this.organizationSettingTimer) {
+			clearInterval(this.organizationSettingTimer);
+			this.organizationSettingTimer = null;
+		}
 	}
 
 	timerProcess() {

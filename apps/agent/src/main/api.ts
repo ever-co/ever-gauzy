@@ -9,6 +9,7 @@ import MainEvent from './events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 import { TaskStatusEnum, IBaseTaskProperties, ITaskStatus, IPagination } from '@gauzy/contracts';
 import { AgentLogger } from './agent-logger';
+import { TOrganizationScreenshotSetting } from './screenshot-interval';
 
 export interface ITimerResponse {
 	deletedAt: any
@@ -348,6 +349,18 @@ export class ApiService {
 			});
 		}
 		return employee;
+	}
+
+	/**
+	 * The organisation's timer settings (screenshot frequency among them), read where the desktop timer reads them:
+	 * the signed-in user's employee organisation. `null` when the response carries none.
+	 */
+	async getOrganizationTimerSetting(): Promise<TOrganizationScreenshotSetting | null> {
+		const user = (await this.get('/api/user/me', {
+			includeEmployee: true,
+			includeOrganization: true
+		})) as { employee?: { organization?: TOrganizationScreenshotSetting | null } | null };
+		return user?.employee?.organization ?? null;
 	}
 
 	refreshToken(): Promise<string | boolean> {
