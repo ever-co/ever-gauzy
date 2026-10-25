@@ -161,3 +161,21 @@ $hairline: 1px solid var(--gauzy-border-default-color);
   line-height: 1rem;
   color: var(--gauzy-text-color-2);
 }
+
+/* ── Profile link: a compact button, not the team page's full-width one ──── */
+
+.person-card-action {
+  align-self: flex-start;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: var(--gauzy-radius-sm);
+  font-size: 0.75rem;
+  line-height: 1rem;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
