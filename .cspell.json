@@ -1714,7 +1714,14 @@
 		"notmatch",
 		"endgroup",
 		"ghadelimiter",
-		"ENOSPC"
+		"ENOSPC",
+		"quickjs",
+		"JBIG",
+		"CCITT",
+		"poppler",
+		"pdfium",
+		"rasterizing",
+		"cmaps"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

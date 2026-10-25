@@ -33,6 +33,12 @@ function stylesheets(dir: string): string[] {
  * A small brace scanner, enough for the SCSS of this library: comments and `#{}` interpolations are dropped first.
  */
 function dragRegionSelectors(source: string): string[] {
+	return regionSelectors(source, 'drag');
+}
+
+/** The selectors of the blocks of a stylesheet that declare `app-region: <value>` (see {@link dragRegionSelectors}). */
+function regionSelectors(source: string, value: 'drag' | 'no-drag' | 'none'): string[] {
+	const declares = new RegExp(`(^|[\\s;])(-webkit-)?app-region\\s*:\\s*${value}(?![\\w-])`);
 	const text = source
 		.replace(/\/\*[\s\S]*?\*\//g, '')
 		.replace(/(^|[^:])\/\/.*$/gm, '$1')
@@ -41,7 +47,7 @@ function dragRegionSelectors(source: string): string[] {
 	const found: string[] = [];
 	let buffer = '';
 	const declaration = () => {
-		if (/(^|[\s;])(-webkit-)?app-region\s*:\s*drag\b/.test(buffer)) {
+		if (declares.test(buffer)) {
 			found.push(selectors.join(' '));
 		}
 		buffer = '';
@@ -121,5 +127,30 @@ describe('window drag regions', () => {
 				.map((selector) => `${relative(LIB_ROOT, file).replace(/\\/g, '/')}: ${selector}`)
 		);
 		expect(offenders).toEqual([]);
+	});
+
+	it("keeps the always-on widget's drag region off the <nb-layout> that hosts Nebular's overlay container", () => {
+		// Nebular appends its overlay container (tooltips, popovers: a fixed, full-window box) inside <nb-layout>. With
+		// the property inherited since Chromium 152, a drag region on the layout (it was on `.main`) covered the whole
+		// widget, buttons included, whenever a tooltip was open. Resetting the container is no way out: Chromium applies
+		// an explicit `app-region: none` as `no-drag`, which stops the widget dragging while a tooltip is open.
+		const template = readFileSync(join(LIB_ROOT, 'always-on/always-on.component.html'), 'utf8');
+		const source = readFileSync(join(LIB_ROOT, 'always-on/always-on.component.scss'), 'utf8');
+		const layoutClasses = [...template.matchAll(/<nb-layout\b[^>]*\bclass="([^"]*)"/g)].flatMap((match) =>
+			match[1].split(/\s+/)
+		);
+		const isOnLayout = (selector: string) =>
+			/nb-layout(?![\w-])/.test(selector) ||
+			layoutClasses.some((name) => new RegExp(`\\.${name}(?![\\w-])`).test(selector));
+		const isOverlayContainer = (selector: string) => /\.cdk-overlay-container(?![\w-])/.test(selector);
+
+		expect(layoutClasses).toContain('main');
+		const drag = dragRegionSelectors(source);
+		// The widget's own surfaces: the expanded card and the collapsed handle.
+		expect(drag).toEqual(expect.arrayContaining(['.timer-card', '#drag-handle']));
+		expect(drag.filter(isOnLayout)).toEqual([]);
+		expect(
+			[...regionSelectors(source, 'none'), ...regionSelectors(source, 'no-drag')].some(isOverlayContainer)
+		).toBe(false);
 	});
 });

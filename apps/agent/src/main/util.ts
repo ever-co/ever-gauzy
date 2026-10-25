@@ -3,6 +3,7 @@ import { environment } from '../environments/environment';
 import { LocalStore } from '@gauzy/desktop-lib';
 import { screen } from 'electron';
 import { CONSTANT } from '../constant';
+import { organizationScreenshotPeriod, TOrganizationScreenshotSetting } from './screenshot-interval';
 
 export type TAuthConfig = {
 	user: {
@@ -33,7 +34,8 @@ export type TAppSetting = {
 		captured: 'all' | 'active-only';
 	},
 	timer: {
-		updatePeriod: 1 | 5 | 10
+		/** Minutes between screenshots: the organisation's screenshot frequency (1, 3, 5 or 10) */
+		updatePeriod: number
 	},
 	screenshotNotification: boolean,
 	simpleScreenshotNotification: boolean,
@@ -165,6 +167,24 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 		randomScreenshotTime: employee.randomScreenshot ?? false
 	}
 	LocalStore.updateApplicationSetting(appSetting);
+}
+
+/**
+ * Store the organisation's screenshot frequency as the capture period. Returns the period now stored, or `null` when
+ * the organisation has none, in which case the current period stays (see `screenshot-interval.ts`).
+ */
+export function updateOrganizationTimerSetting(
+	organization: TOrganizationScreenshotSetting | null | undefined
+): number | null {
+	const updatePeriod = organizationScreenshotPeriod(organization);
+	if (updatePeriod === null) {
+		return null;
+	}
+	const appSetting = getAppSetting();
+	if (appSetting?.timer?.updatePeriod !== updatePeriod) {
+		LocalStore.updateApplicationSetting({ timer: { ...(appSetting?.timer ?? {}), updatePeriod } });
+	}
+	return updatePeriod;
 }
 
 export function updateTimerStatus(timerStarted: boolean): void {

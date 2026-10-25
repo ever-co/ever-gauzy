@@ -10,7 +10,8 @@
  * against `node_modules/simstudio-ts-sdk/dist/index.d.ts`. This file can be
  * removed once the project migrates to `moduleResolution: "node16"` or higher.
  *
- * Current SDK version: ^0.1.2
+ * Current SDK version: ^0.2.1 (the async result and run status shapes keep the
+ * 0.1 fields optional: executions logged before the 0.2 upgrade carry them).
  */
 declare module 'simstudio-ts-sdk' {
 	export interface SimStudioConfig {
@@ -20,12 +21,16 @@ declare module 'simstudio-ts-sdk' {
 
 	export interface WorkflowExecutionResult {
 		success: boolean;
+		executionId?: string;
 		output?: any;
 		error?: string;
 		logs?: any[];
 		metadata?: {
 			duration?: number;
 			executionId?: string;
+			runId?: string;
+			startTime?: string;
+			endTime?: string;
 			[key: string]: any;
 		};
 		traceSpans?: any[];
@@ -45,12 +50,43 @@ declare module 'simstudio-ts-sdk' {
 		async?: boolean;
 	}
 
+	/** 0.2 (v2 API): `async`, `runId`, `statusUrl`, `message`. 0.1 (legacy API): `taskId`, `status`, `createdAt`, `links`. */
 	export interface AsyncExecutionResult {
 		success: boolean;
-		taskId: string;
-		status: 'queued';
-		createdAt: string;
-		links: { status: string };
+		async?: true;
+		runId?: string;
+		statusUrl?: string;
+		message?: string;
+		taskId?: string;
+		status?: 'queued';
+		createdAt?: string;
+		links?: { status: string };
+	}
+
+	export interface WorkflowExecutionError {
+		code: string;
+		message: string;
+		details?: unknown;
+	}
+
+	export interface WorkflowRunStatus {
+		runId: string;
+		workflowId: string;
+		status: 'queued' | 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
+		trigger: string | null;
+		startedAt: string | null;
+		endedAt: string | null;
+		durationMs: number | null;
+		paused: Record<string, unknown> | null;
+		cost: { total: number } | null;
+		error: WorkflowExecutionError | null;
+		output: unknown | null;
+		blockOutputs: Record<string, unknown> | null;
+	}
+
+	export interface GetWorkflowRunOptions {
+		includeOutput?: boolean;
+		selectedOutputs?: string[];
 	}
 
 	export interface RateLimitInfo {
@@ -103,7 +139,10 @@ declare module 'simstudio-ts-sdk' {
 		validateWorkflow(workflowId: string): Promise<boolean>;
 		setApiKey(apiKey: string): void;
 		setBaseUrl(baseUrl: string): void;
+		/** Status of a job queued through the legacy async API. */
 		getJobStatus(taskId: string): Promise<any>;
+		/** Status (and optionally outputs) of a run queued through the v2 API. */
+		getWorkflowRun(workflowId: string, runId: string, options?: GetWorkflowRunOptions): Promise<WorkflowRunStatus>;
 		executeWithRetry(
 			workflowId: string,
 			input?: any,

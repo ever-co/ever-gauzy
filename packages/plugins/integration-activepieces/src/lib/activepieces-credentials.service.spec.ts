@@ -452,3 +452,38 @@ describe('ActivepiecesCredentialsService', () => {
 		});
 	});
 });
+
+describe('ActivepiecesCredentialsService.resolve — a caller refusing the mode before it connects', () => {
+	beforeAll(() => Logger.overrideLogger(false));
+	beforeEach(() => mockCurrentTenantId.mockReturnValue(TENANT));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('hands the decided mode to beforeConnect, and provisions no tenant project when it throws', async () => {
+		const { service, http, integrationTenantService, integrationSettingService } = setup({
+			config: { apiKey: 'platform-key' }
+		});
+		const beforeConnect = jest.fn(() => {
+			throw new BadRequestException('not for this caller');
+		});
+
+		await expect(service.resolve({ beforeConnect })).rejects.toThrow('not for this caller');
+
+		expect(beforeConnect).toHaveBeenCalledWith(ActivepiecesConnectionMode.PLATFORM_PROJECT, undefined);
+		// No lookup or creation of the tenant's project, and nothing recorded.
+		expect(http.request).not.toHaveBeenCalled();
+		expect(integrationTenantService.create).not.toHaveBeenCalled();
+		expect(integrationSettingService.saveMany).not.toHaveBeenCalled();
+	});
+
+	it('hands the tenant its own key with the tenant_api_key mode, and connects when beforeConnect returns', async () => {
+		const { service } = setup({
+			rows: [row('it-1', { [ActivepiecesSettingName.API_KEY]: 'tenant-key' })]
+		});
+		const beforeConnect = jest.fn();
+
+		const credential = await service.resolve({ beforeConnect });
+
+		expect(beforeConnect).toHaveBeenCalledWith(ActivepiecesConnectionMode.TENANT_API_KEY, 'tenant-key');
+		expect(credential).toEqual(expect.objectContaining({ mode: ActivepiecesConnectionMode.TENANT_API_KEY }));
+	});
+});

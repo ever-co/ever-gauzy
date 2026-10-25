@@ -16,6 +16,8 @@ export default registerAs(
 		tenantProjectsEnabled: !['false', '0', 'no', 'off'].includes(
 			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
 		),
-		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX ?? ''
+		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX ?? '',
+		// The MCP routes of the installation's Activepieces: `v2` (blank) or `legacy`; read where MCP is called
+		mcpApi: process.env.GAUZY_ACTIVEPIECES_MCP_API ?? ''
 	})
 );
