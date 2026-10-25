@@ -176,11 +176,11 @@ jobs:
           APP_ID=$(doctl apps list --no-header | awk -v appName="$APP_NAME" '$2 == appName {print $1}')
           if [ -z "$APP_ID" ]; then
             echo "App does not exist, setting CREATE_APP to true"
-            echo "::set-output name=create_app::true"
+            echo "create_app=true" >> "$GITHUB_OUTPUT"
           else
             echo "App exists with ID $APP_ID, setting APP_ID"
-            echo "::set-output name=app_id::$APP_ID"
-            echo "::set-output name=create_app::false"
+            echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
+            echo "create_app=false" >> "$GITHUB_OUTPUT"
           fi
         env:
           DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
