@@ -1823,6 +1823,10 @@
 			"WORKDAY": "يوم العمل",
 			"SCROLL_TEAMS_BACK": "إظهار الفرق السابقة",
 			"SCROLL_TEAMS_FORWARD": "إظهار مزيد من الفرق",
+			"PERSON_TASKS": "Tasks",
+			"WORKING_ON": "Working on",
+			"LAST_TASK": "Last task",
+			"PERSON_WORKDAY": "{{ percent }} of a {{ hours }} workday",
 			"COLUMNS": {
 				"TEAM": "الفريق",
 				"WORKED": "عملوا",

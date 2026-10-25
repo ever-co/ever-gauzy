@@ -1900,6 +1900,10 @@
 			"WORKDAY": "Работен ден",
 			"SCROLL_TEAMS_BACK": "Покажи предишните екипи",
 			"SCROLL_TEAMS_FORWARD": "Покажи още екипи",
+			"PERSON_TASKS": "Tasks",
+			"WORKING_ON": "Working on",
+			"LAST_TASK": "Last task",
+			"PERSON_WORKDAY": "{{ percent }} of a {{ hours }} workday",
 			"COLUMNS": {
 				"TEAM": "Екип",
 				"WORKED": "Работили",
