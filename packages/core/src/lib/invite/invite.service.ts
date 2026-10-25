@@ -126,6 +126,21 @@ function teamIdsWhere(teamIds?: ID[]): { id?: FindOperator<ID> } {
 	return { id: In(teamIds) };
 }
 
+/**
+ * The condition on an invitation's id that keeps the invitations in reach, or, when the request names an invitation,
+ * that invitation if it is in reach.
+ *
+ * @param requestedId - The `id` the request names, if any.
+ * @param inviteIdsInReach - The invitations in reach.
+ */
+function inviteIdsWhere(requestedId: unknown, inviteIdsInReach: ID[]): FindOperator<ID> {
+	if (requestedId === undefined) {
+		return In(inviteIdsInReach);
+	}
+	const requestedInReach = inviteIdsInReach.filter((inviteId) => inviteId === requestedId);
+	return In(requestedInReach);
+}
+
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	private readonly logger = new Logger(InviteService.name);
@@ -1142,8 +1157,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * The register's conditions kept, for a caller confined to the teams they manage, to the invitations of those teams
 	 * and, unless the request names a team, to the invitations of no team, which stay readable as before.
 	 *
-	 * Both alternatives name the team's id alone, so MikroORM reads them on one pivot-table join, as TypeORM reads them
-	 * on one left join.
+	 * The invitations of the managed teams are kept by their ids, read apart, because on TypeORM a condition on `teams`
+	 * shares the join that loads them: an invitation of several teams would be listed with the managed ones only. An
+	 * invitation of no team has no team to leave out, so it is still found by its empty join.
 	 *
 	 * @param conditions - The conditions of the register request.
 	 * @param requestedTeamIds - The teams the request names, if any.
@@ -1158,18 +1174,35 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 
 		const managedTeamIds = await this.findManagedTeamIds(requestedTeamIds);
-		const teamsInReach: FindOptionsWhere<Invite>[] = [{ teams: { id: In(managedTeamIds) } }];
-		if (!requestedTeamIds) {
-			teamsInReach.push({ teams: { id: IsNull() } });
-		}
+		const inviteIdsInReach = await this.findInviteIdsOfTeams(managedTeamIds);
 
 		const kept: FindOptionsWhere<Invite>[] = [];
 		for (const condition of conditions) {
-			for (const teamCondition of teamsInReach) {
-				kept.push({ ...condition, ...teamCondition });
+			const idInReach = inviteIdsWhere(condition.id, inviteIdsInReach);
+			kept.push({ ...condition, id: idInReach });
+			if (!requestedTeamIds) {
+				kept.push({ ...condition, teams: { id: IsNull() } });
 			}
 		}
 		return kept;
+	}
+
+	/**
+	 * The invitations of the given teams, read apart from the register, which keeps them by their ids.
+	 *
+	 * @param teamIds - The teams.
+	 * @returns The ids of their invitations, none when no team is given.
+	 */
+	private async findInviteIdsOfTeams(teamIds: ID[]): Promise<ID[]> {
+		if (isEmpty(teamIds)) {
+			return [];
+		}
+
+		const invites = await super.find({
+			select: { id: true },
+			where: { teams: { id: In(teamIds) } }
+		});
+		return invites.map((invite) => invite.id);
 	}
 
 	/**

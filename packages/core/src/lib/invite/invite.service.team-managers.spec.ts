@@ -124,6 +124,8 @@ describe('InviteService - the invitations of a team are handled by its managers'
 	const EMPLOYEE = 'caller-employee';
 	const MANAGED_TEAM = { id: 'team-managed', name: 'Managed' };
 	const OTHER_TEAM = { id: 'team-other', name: 'Other' };
+	/** The invitations of the managed team, as the read of a team's invitations answers them. */
+	const MANAGED_TEAM_INVITES = [{ id: 'invite-managed' }];
 	const INVITE_PERMISSIONS = [PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT];
 
 	/**
@@ -207,11 +209,16 @@ describe('InviteService - the invitations of a team are handled by its managers'
 
 	describe('findAllInvites', () => {
 		let findAll: jest.SpyInstance;
+		let findInvites: jest.SpyInstance;
 
 		beforeEach(() => {
 			findAll = jest
 				.spyOn(TenantAwareCrudService.prototype, 'findAll')
 				.mockResolvedValue({ items: [], total: 0 });
+			// The read of the managed teams' invitations, whose ids the register is kept to.
+			findInvites = jest
+				.spyOn(TenantAwareCrudService.prototype, 'find')
+				.mockResolvedValue(MANAGED_TEAM_INVITES as never);
 		});
 
 		it('keeps an employee to the invitations of the teams they manage, and of no team', async () => {
@@ -221,9 +228,13 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			await service.findAllInvites({} as never);
 
 			expect(findTeams).toHaveBeenCalledWith(managedTeamsRead());
+			expect(findInvites).toHaveBeenCalledWith({
+				select: { id: true },
+				where: { teams: { id: In([MANAGED_TEAM.id]) } }
+			});
 			expect(findAll).toHaveBeenCalledWith({
 				where: [
-					{ tenantId: TENANT, teams: { id: In([MANAGED_TEAM.id]) } },
+					{ tenantId: TENANT, id: In(['invite-managed']) },
 					{ tenantId: TENANT, teams: { id: IsNull() } }
 				]
 			});
@@ -236,7 +247,9 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			await service.findAllInvites({ where: { teams: { id: [OTHER_TEAM.id] } } } as never);
 
 			expect(findTeams).toHaveBeenCalledWith(managedTeamsRead([OTHER_TEAM.id]));
-			expect(findAll).toHaveBeenCalledWith({ where: [{ tenantId: TENANT, teams: { id: In([]) } }] });
+			expect(findAll).toHaveBeenCalledWith({
+				where: [{ tenantId: TENANT, teams: { id: In([OTHER_TEAM.id]) }, id: In([]) }]
+			});
 		});
 
 		it('reads a team the employee manages as it was read before, as Ever Teams lists it', async () => {
@@ -246,7 +259,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			await service.findAllInvites({ where: { teams: { id: [MANAGED_TEAM.id] } } } as never);
 
 			expect(findAll).toHaveBeenCalledWith({
-				where: [{ tenantId: TENANT, teams: { id: In([MANAGED_TEAM.id]) } }]
+				where: [{ tenantId: TENANT, teams: { id: In([MANAGED_TEAM.id]) }, id: In(['invite-managed']) }]
 			});
 		});
 
@@ -259,7 +272,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			expect(findTeams).not.toHaveBeenCalled();
 			expect(findAll).toHaveBeenCalledWith({
 				where: [
-					{ tenantId: TENANT, teams: { id: In([]) } },
+					{ tenantId: TENANT, id: In([]) },
 					{ tenantId: TENANT, teams: { id: IsNull() } }
 				]
 			});
@@ -514,6 +527,9 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockImplementation((options) =>
 				store.findAll(options as never)
 			);
+			jest.spyOn(TenantAwareCrudService.prototype, 'find').mockImplementation((options) =>
+				store.find(options as never)
+			);
 		});
 
 		/** The addresses of the invitations a manager of the managed team lists. */
@@ -542,6 +558,18 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			const emails = await listed({ where: { teams: { id: [MANAGED_TEAM.id] } } });
 
 			expect(emails).toEqual(['both@ever.co', 'managed@ever.co']);
+		});
+
+		it('keeps every team of an invitation it lists, the ones the caller does not manage included', async () => {
+			signIn(EMPLOYEE);
+			const { service } = build([MANAGED_TEAM]);
+
+			const { items } = await service.findAllInvites({ relations: { teams: true } } as never);
+
+			const ofBothTeams = items.find((item) => item.id === 'invite-both');
+			const teamIds = ofBothTeams.teams.map((team) => team.id);
+			teamIds.sort((left, right) => left.localeCompare(right));
+			expect(teamIds).toEqual([MANAGED_TEAM.id, OTHER_TEAM.id]);
 		});
 	});
 });
