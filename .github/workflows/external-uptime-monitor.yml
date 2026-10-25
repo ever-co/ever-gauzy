@@ -19,8 +19,10 @@ name: External Uptime Monitor
 #  the exact same uplink, so moving this job to them would silently destroy the entire
 #  point of it while still appearing to work.
 #
-#  If you are here because a CI policy linter flagged `runs-on: ubuntu-latest`, the answer
-#  is to exempt this file, not to change it.
+#  If you are here because a CI policy linter flagged `runs-on: ubuntu-24.04`, the answer
+#  is to exempt this file, not to change it. (It names the image explicitly rather than
+#  `ubuntu-latest` only so that GitHub's move of that label to Ubuntu 26 does not change the
+#  OS underneath the probe - it is still a GitHub-hosted runner.)
 #
 #  COST: ever-co/ever-gauzy is a PUBLIC repository, so GitHub-hosted minutes are free and
 #  unlimited. This costs $0. If the repo ever goes private, reduce the cron to hourly.
@@ -94,10 +96,11 @@ concurrency:
 jobs:
   probe:
     name: Probe public endpoints from outside the homelab
-    # 🛑 DO NOT CHANGE - see the header block. GitHub-hosted is the whole point.
+    # 🛑 DO NOT CHANGE - see the header block. GitHub-hosted is the whole point (ubuntu-24.04 is
+    # GitHub's hosted image, pinned instead of ubuntu-latest so its Ubuntu 26 migration is a choice).
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     permissions:

@@ -54,7 +54,7 @@ jobs:
     name: Install dependencies
     permissions:
       contents: read
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # `yarn bootstrap` is the whole budget here: measured at 88 min, 3 h 20 m and 3 h 46 m on these
     # runners. This job exists so that cost is paid ONCE per run — everything downstream unpacks the
     # archive it publishes. Nothing else runs here, so an evicted pod costs only the install.
@@ -72,7 +72,7 @@ jobs:
 
       # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
       # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -156,7 +156,7 @@ jobs:
     permissions:
       contents: read
     needs: deps
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # Observed: build:package:all 7-13 min, web build >47 min (it never finished before the pod
     # died). 120 min is a realistic ceiling once node_modules comes from the cache; if it is
     # exceeded the right answer is another split, not a bigger budget.
@@ -168,7 +168,7 @@ jobs:
 
       # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
       # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -358,7 +358,7 @@ jobs:
     permissions:
       contents: read
     needs: [deps, build]
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # Fixed cost per shard is ~25 min (cache restore + artifact download + browser install + the
     # API's fresh-DB seed); the shard's own tests are capped at 75 min by the step timeout below,
     # which leaves the job room to still upload its report before this ceiling.
@@ -381,7 +381,7 @@ jobs:
 
       # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
       # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -592,7 +592,7 @@ jobs:
     # `always()`: the tree is just as useless after a failed shard, and leaving ~3 GB behind on a red
     # run is how the quota filled in the first place.
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
