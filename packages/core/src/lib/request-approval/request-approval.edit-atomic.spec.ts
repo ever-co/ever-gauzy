@@ -212,6 +212,7 @@ class Store {
 					return slots;
 				},
 				readApproverTeams: async () => [],
+				readLinkedDocumentRequesters: async () => ({ userIds: [], employeeIds: [] }),
 				writeSlots: async (_kind, ids, _tenantId, status) =>
 					write(() => {
 						this.employeeSlots

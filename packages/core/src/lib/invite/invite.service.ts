@@ -42,6 +42,7 @@ import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 import { runOutsideOrganizationBoundary } from './../core/crud/organization-boundary';
 import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
@@ -168,6 +169,11 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param emailInvites Emails Ids to send invite
 	 */
 	async createBulk(input: ICreateEmailInvitesInput, languageCode: LanguagesEnum): Promise<ICreateEmailInvitesOutput> {
+		// Issuing invitations stays with the user's own session: POST /invite/emails and `sendInvites` also admit
+		// ORG_TEAM_ADD, which a third-party app's write scope reaches, and an invitation to an address the app controls
+		// is an account it holds (owner decision Q12).
+		assertFirstPartyRequest('Sending invitations');
+
 		const originUrl = this.configService.get('clientBaseUrl') as string;
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
@@ -616,6 +622,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @returns A promise that resolves with the created invite.
 	 */
 	async createOrganizationContactInvite(input: ICreateOrganizationContactInviteInput): Promise<Invite> {
+		// Issuing invitations stays with the user's own session (owner decision Q12, see `createBulk`)
+		assertFirstPartyRequest('Inviting a contact');
+
 		const { emailId, roleId, organizationContactId, organizationId, invitedByUserId, originalUrl, languageCode } =
 			input;
 
@@ -1294,6 +1303,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		organizationTeamId: ID,
 		languageCode: LanguagesEnum
 	): Promise<IUser> {
+		// Creating an account (an accepted invitation or team join request) stays with the user's own session: a
+		// third-party app must not provision accounts (owner decision Q12).
+		assertFirstPartyRequest('Creating a user account');
+
 		let tenant = input.user.tenant;
 
 		if (input.createdByUserId) {

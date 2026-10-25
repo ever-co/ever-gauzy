@@ -11551,6 +11551,78 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "the same sidebar or footer link as on every other page, on a route the walk opens since #11163 (the project view page of #11118) added it to the route list"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
 		}
 	]
 }

@@ -4886,7 +4886,8 @@
 		"RIGHTS_RESERVED": "Alle rechten voorbehouden.",
 		"PRESENT": "Aanwezig",
 		"TERMS_OF_SERVICE": "Algemene Voorwaarden",
-		"PRIVACY_POLICY": "Privacybeleid"
+		"PRIVACY_POLICY": "Privacybeleid",
+		"DPIA_SUPPORT_PACK": "DPIA-ondersteuningspakket"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6331,7 +6332,8 @@
 		"PRIVACY_POLICY": "Privacybeleid",
 		"TERMS_AND_CONDITIONS": "Algemene Voorwaarden",
 		"DOCUMENT_VERSION": "Versie {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "Van kracht vanaf {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "Van kracht vanaf {{ date }}",
+		"DPIA_SUPPORT_PACK": "DPIA-ondersteuningspakket"
 	},
 	"LOADING": "Laden, even geduld a.u.b....",
 	"ACCOUNTING_TEMPLATES_PAGE": {

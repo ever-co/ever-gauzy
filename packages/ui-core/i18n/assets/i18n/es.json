@@ -4888,7 +4888,8 @@
 		"RIGHTS_RESERVED": "Todos los derechos reservados.",
 		"PRESENT": "Presente",
 		"TERMS_OF_SERVICE": "Términos de servicio",
-		"PRIVACY_POLICY": "Política de privacidad"
+		"PRIVACY_POLICY": "Política de privacidad",
+		"DPIA_SUPPORT_PACK": "Paquete de soporte EIPD"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -6333,7 +6334,8 @@
 		"PRIVACY_POLICY": "Política de privacidad",
 		"TERMS_AND_CONDITIONS": "Términos y condiciones",
 		"DOCUMENT_VERSION": "Versión {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "En vigor desde el {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "En vigor desde el {{ date }}",
+		"DPIA_SUPPORT_PACK": "Paquete de soporte EIPD"
 	},
 	"LOADING": "Cargando, por favor espera...",
 	"ACCOUNTING_TEMPLATES_PAGE": {

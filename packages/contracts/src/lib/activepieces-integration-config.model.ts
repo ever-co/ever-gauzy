@@ -124,7 +124,68 @@ export enum ActivepiecesSettingName {
 	CLIENT_SECRET = 'client_secret',
 	CALLBACK_URL = 'callback_url',
 	POST_INSTALL_URL = 'post_install_url',
-	STATE_SECRET = 'state_secret'
+	STATE_SECRET = 'state_secret',
+	/**
+	 * How the tenant reaches Activepieces: one of {@link ActivepiecesConnectionMode}. Absent means `auto`.
+	 * Server-managed, like every Activepieces setting: set through `POST /integration/activepieces/connection-mode`.
+	 */
+	CONNECTION_MODE = 'connection_mode',
+	/**
+	 * The Activepieces project the server pinned the tenant to (project-token and platform-project modes). A record of
+	 * what the server resolved, never read from a client: the project is found again by its external id.
+	 */
+	MANAGED_PROJECT_ID = 'managed_project_id'
+}
+
+/**
+ * How a tenant's requests reach Activepieces.
+ *
+ * Activepieces API keys belong to a whole platform (every project on it): there is no project-scoped API key. A tenant
+ * request therefore never acts under the installation's key without a project pinned by the server.
+ */
+export enum ActivepiecesConnectionMode {
+	/** The first available of: the tenant's own key, a project token, the installation key with a pinned project. */
+	AUTO = 'auto',
+	/** The tenant's own Activepieces API key (its own platform), saved through `POST /integration/activepieces/setup`. */
+	TENANT_API_KEY = 'tenant_api_key',
+	/**
+	 * A project-scoped token (7 days) the server obtains for the tenant's own project with the installation's signing
+	 * key (Activepieces managed authentication). Activepieces itself confines the token to that project.
+	 */
+	PROJECT_TOKEN = 'project_token',
+	/**
+	 * The installation's platform key, with the tenant's own project pinned by the server on every call, and every
+	 * resource read, changed or removed by id checked to belong to that project first.
+	 */
+	PLATFORM_PROJECT = 'platform_project'
+}
+
+/**
+ * The tenant's Activepieces connection, as `GET /integration/activepieces/connection-mode` answers it. Never a secret.
+ */
+export interface IActivepiecesConnectionModeStatus {
+	/** The mode the tenant chose (`auto` when it chose none). */
+	requestedMode: ActivepiecesConnectionMode;
+	/** The mode its requests use now, or `null` when none is available. */
+	resolvedMode: Exclude<ActivepiecesConnectionMode, ActivepiecesConnectionMode.AUTO> | null;
+	/** The modes the tenant may choose on this installation. */
+	availableModes: ActivepiecesConnectionMode[];
+	/** Whether the tenant saved an Activepieces API key of its own. */
+	hasOwnApiKey: boolean;
+	/** The Activepieces project the server pinned the tenant to, when known. */
+	projectId: string | null;
+}
+
+/**
+ * What the installation operator configured for Activepieces (`GET /integration/activepieces/platform/status`).
+ * Booleans only: never a key.
+ */
+export interface IActivepiecesPlatformStatus {
+	platformKeyConfigured: boolean;
+	projectTokensConfigured: boolean;
+	tenantProjectsEnabled: boolean;
+	projectExternalIdPrefix: string;
+	baseUrl: string;
 }
 
 /**
@@ -140,7 +201,11 @@ export interface IActivepiecesOAuthCredentials {
  */
 export interface ICreateActivepiecesIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
 	accessToken: string;
-	projectId: string;
+	/**
+	 * The Activepieces project. Required with the tenant's own key; in the project-token and platform-project modes the
+	 * server pins the tenant's own project, and a different one named here is refused.
+	 */
+	projectId?: string;
 	connectionName?: string;
 }
 
@@ -153,6 +218,9 @@ export interface IActivepiecesProject {
 	ownerId: string;
 	created: string;
 	updated: string;
+	/** The id the platform's owner gave the project (`gauzy-tenant-<tenantId>` for a Gauzy tenant's project). */
+	externalId?: string | null;
+	platformId?: string;
 }
 
 /**

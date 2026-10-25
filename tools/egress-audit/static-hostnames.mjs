@@ -60,7 +60,12 @@ export const ALLOWED = [
 	'**/*.e2e-spec.ts',
 	'**/*.test.*',
 	'apps/gauzy-e2e/',
-	'.github/workflows/external-uptime-monitor.yml'
+	'.github/workflows/external-uptime-monitor.yml',
+	// The legal documents vendored from the `@ever-co/legal` Markdown corpus by
+	// `packages/plugins/legal-ui/scripts/sync-legal-content.mjs` (`*.generated.ts`): prose the legal
+	// pages render, with the publisher's addresses and links in it, never a call. Exempt for the same
+	// reason as Markdown; a re-sync of the corpus would otherwise trip a baseline that may only shrink.
+	'**/legal-ui/src/lib/content/*.generated.ts'
 ];
 
 /** The Ever Platform base URL variables: only the modules read them. */

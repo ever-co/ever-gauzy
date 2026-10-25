@@ -424,7 +424,7 @@
 			"ever.co": 2
 		},
 		"packages/core/src/lib/bootstrap/validate-secrets.ts": {
-			"ever.co": 5
+			"ever.co": 4
 		},
 		"packages/core/src/lib/database/migrations/1790000005000-RefreshChangelogContent.ts": {
 			"docs.gauzy.co": 5,
@@ -744,23 +744,8 @@
 			"ever.co": 1,
 			"gauzy.co": 4
 		},
-		"packages/plugins/legal-ui/src/lib/content/cookies.en.generated.ts": {
-			"ever.co": 7,
-			"gauzy.co": 14
-		},
 		"packages/plugins/legal-ui/src/lib/content/index.ts": {
 			"ever.co": 1
-		},
-		"packages/plugins/legal-ui/src/lib/content/privacy.en.generated.ts": {
-			"api.gauzy.co": 1,
-			"app.gauzy.co": 3,
-			"docs.gauzy.co": 1,
-			"ever.co": 21,
-			"gauzy.co": 35
-		},
-		"packages/plugins/legal-ui/src/lib/content/tos.en.generated.ts": {
-			"ever.co": 22,
-			"gauzy.co": 21
 		},
 		"packages/plugins/legal-ui/src/lib/models/legal-document.model.ts": {
 			"gauzy.co": 1

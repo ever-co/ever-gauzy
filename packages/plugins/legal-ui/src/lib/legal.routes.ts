@@ -36,6 +36,13 @@ export const createLegalRoutes = (_pageRouteRegistryService: PageRouteRegistrySe
 				path: 'cookies',
 				component: PrivacyPolicyComponent,
 				data: { documents: ['cookies'] }
+			},
+			{
+				// The DPIA Support Pack is its own public compliance document, rendered by
+				// `PrivacyPolicyComponent` selecting the 'dpia' document via `data.documents`.
+				path: 'dpia',
+				component: PrivacyPolicyComponent,
+				data: { documents: ['dpia'] }
 			}
 		]
 	}

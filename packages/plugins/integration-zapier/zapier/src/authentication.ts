@@ -75,7 +75,16 @@ export const authentication = {
 				Accept: 'application/json'
 			}
 		},
-		/** OAuth2 scopes required for the integration */
+		/**
+		 * OAuth2 scopes required for the integration. Gauzy holds the access token to them
+		 * (OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT, packages/core/src/lib/auth/oauth-app-scope.ts), always within
+		 * the approving user's own role:
+		 * - `zap`: the read permissions — the organization, team, project, task and timer-status triggers;
+		 * - `zap:write`: the other permissions — start/stop timer (TIME_TRACKER) and the timer webhook
+		 *   subscription (INTEGRATION_ADD / INTEGRATION_EDIT);
+		 * - `authentication`: identity only — the connection test and label.
+		 * Keep all three: a connection approved without one loses the triggers or actions it covers.
+		 */
 		scope: 'zap zap:write authentication',
 		/**
 		 * Disable auto-refresh — the multi-app OAuth system issues long-lived

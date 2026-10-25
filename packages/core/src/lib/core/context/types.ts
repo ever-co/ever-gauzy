@@ -1,4 +1,5 @@
 import { IUser, LanguagesEnum, PermissionsEnum } from "@gauzy/contracts";
+import type { IOAuthAppTokenGrant } from "../../auth/oauth-app-scope";
 
 /**
  * Represents a serialized version of a request context.
@@ -19,6 +20,16 @@ export type SerializedRequestContext = {
  * valid for the token's whole lifetime after a demotion.
  */
 export interface IAuthenticatedUser extends IUser {
-    /** Enabled permissions of the user's CURRENT role, resolved from the database per request. */
+    /**
+     * Enabled permissions of the user's CURRENT role, resolved from the database per request. For a request
+     * authenticated by a third-party OAuth-app token, only those its approved scopes allow (see `oauthApp`).
+     */
     permissions?: PermissionsEnum[];
+    /**
+     * Set by `JwtStrategy` only when the request is authenticated by a third-party OAuth-app token (and
+     * `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT` is not `false`): the client the user approved and the scopes they
+     * approved. Its presence is what makes role checks refuse and permission checks narrow
+     * (`RequestContext.currentOAuthAppScopes()`, `auth/oauth-app-scope.ts`).
+     */
+    oauthApp?: IOAuthAppTokenGrant;
 }

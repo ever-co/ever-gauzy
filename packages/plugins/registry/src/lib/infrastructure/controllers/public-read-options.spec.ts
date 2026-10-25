@@ -4,12 +4,19 @@
  * values, each tenant's plugin configuration and users, and the subscribers and billings of every subscription.
  */
 jest.mock('@gauzy/common', () => ({ Public: () => () => undefined }));
-jest.mock('@gauzy/core', () => ({
-	UseValidationPipe: () => () => undefined,
-	UUIDValidationPipe: class UUIDValidationPipe {},
-	PermissionGuard: class PermissionGuard {},
-	TenantPermissionGuard: class TenantPermissionGuard {}
-}));
+// Everything the two controllers take from `@gauzy/core`. The category controller states a grant per route with
+// `@Permissions` since the security sweep, so a stand-in without it failed the suite at load ("Permissions is not a
+// function"). What is read here is the options each read hands the query bus, so the decorators are no-ops.
+jest.mock('@gauzy/core', () => {
+	const decorator = () => () => undefined;
+	return {
+		Permissions: decorator,
+		UseValidationPipe: decorator,
+		UUIDValidationPipe: class UUIDValidationPipe {},
+		PermissionGuard: class PermissionGuard {},
+		TenantPermissionGuard: class TenantPermissionGuard {}
+	};
+});
 jest.mock('../../application', () => {
 	const query = (name: string) =>
 		class {

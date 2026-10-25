@@ -61,6 +61,20 @@ export const createPageLegalRoutes = (_pageRouteRegistryService: PageRouteRegist
 						team: false
 					}
 				}
+			},
+			{
+				path: 'dpia',
+				component: PrivacyPolicyComponent,
+				data: {
+					documents: ['dpia'],
+					selectors: {
+						organization: false,
+						date: false,
+						employee: false,
+						project: false,
+						team: false
+					}
+				}
 			}
 		]
 	}

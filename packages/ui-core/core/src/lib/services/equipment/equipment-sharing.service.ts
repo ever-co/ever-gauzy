@@ -5,6 +5,7 @@ import {
 	ID,
 	IEquipmentSharing,
 	IEquipmentSharingCreateInput,
+	IEquipmentSharingUpdateInPlaceInput,
 	IEquipmentSharingUpdateInput,
 	IPagination,
 	RequestApprovalStatusTypesEnum
@@ -85,6 +86,22 @@ export class EquipmentSharingService {
 	 */
 	update(id: ID, input: IEquipmentSharingUpdateInput): Promise<IEquipmentSharing> {
 		return firstValueFrom(this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/${id}`, input));
+	}
+
+	/**
+	 * Updates an existing equipment sharing record in place, at the version the edit is based on.
+	 *
+	 * Unlike {@link update}, which removes the record and files it again, the record is written where it is, and only
+	 * at the stated `version`: the API answers 409 `ENTITY_VERSION_CONFLICT` when the record has moved on since.
+	 *
+	 * @param id - The unique identifier of the equipment sharing record to update.
+	 * @param input - The updated data, with the version of the record the edit is based on.
+	 * @returns A promise that resolves to the updated equipment sharing record.
+	 */
+	updateInPlace(id: ID, input: IEquipmentSharingUpdateInPlaceInput): Promise<IEquipmentSharing> {
+		return firstValueFrom(
+			this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/${id}/in-place`, input)
+		);
 	}
 
 	/**

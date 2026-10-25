@@ -1412,11 +1412,13 @@
 // corpus index, plus the tables the previous content provider never produced.
 ::ng-deep {
   .privacy__policy,
-  .cookie__policy {
+  .cookie__policy,
+  .dpia__support-pack {
     @include legal-document.legal-document;
   }
 
-  .cookie__policy {
+  .cookie__policy,
+  .dpia__support-pack {
     margin-top: 2rem;
   }
 }

@@ -34,7 +34,10 @@ interface RequestShape {
 	headers?: Record<string, string>;
 	rawHeaders?: string[];
 	query?: Record<string, unknown>;
-	body?: Record<string, unknown>;
+	/** Route parameters, as the router has filled them in by the time a guard runs. */
+	params?: Record<string, unknown>;
+	/** Usually an object; a bulk route sends an array, and a body parser may leave a string or nothing at all. */
+	body?: unknown;
 }
 
 /**
@@ -66,6 +69,7 @@ function contextFor(
 		headers,
 		rawHeaders,
 		query: request.query ?? {},
+		params: request.params ?? {},
 		// A body stated as `undefined` stays undefined: Express 5 leaves `req.body` unset when nothing parsed one.
 		body: 'body' in request ? request.body : {}
 	};
@@ -294,48 +298,255 @@ describe('TenantBaseGuard', () => {
 	});
 
 	/**
-	 * What the guard does today where that looks wrong. Pinned as it is, not fixed: each is a follow-up on the
-	 * pull request that added these cases, and a fix flips the expectation deliberately. Each is a place where
-	 * the path without a header is weaker than the header path, or where a refusal is answered as a crash.
+	 * Regression cases for what #11395 pinned as wrong and #11414 fixed. Each used to be a place where the path
+	 * without a header was weaker than the header path, or where a refusal was answered as a crash. The fixes only
+	 * ever add refusals: every request these cases show refused before is still refused.
 	 */
-	describe('as it is today, where it looks wrong (follow-ups, not fixed here)', () => {
-		it('reads a header spelled other than `tenant-id` or `Tenant-Id` as no header at all', async () => {
-			// Node lowercases header names, so `headers['tenant-id']` holds the value whatever the spelling, but the
-			// guard only believes it when `rawHeaders` has one of those two spellings. `TENANT-ID: <another tenant>`
-			// on a write whose body names the caller's tenant is judged as a request without a header, and allowed.
-			actAs();
-			const request = { method: 'POST', body: { tenantId: TENANT_ID }, headerTenantId: OTHER_TENANT_ID };
-			await expect(guard.canActivate(contextFor({ ...request, rawHeaderName: 'TENANT-ID' }))).resolves.toBe(true);
-			// Control: the same request with the header spelled as the guard expects is refused.
-			await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
-		});
+	describe('fixed follow-ups from #11395 (regressions)', () => {
+		describe('header casing: the header is read whatever its spelling', () => {
+			// Node lowercases header names, so `headers['tenant-id']` holds the value whatever the spelling. The guard
+			// used to believe it only when `rawHeaders` had `tenant-id` or `Tenant-Id`, so `TENANT-ID: <another
+			// tenant>` on a write whose body named the caller's tenant was judged as a request without a header, and
+			// allowed.
+			const spellings = ['tenant-id', 'Tenant-Id', 'TENANT-ID', 'tenant-ID', 'TeNaNt-iD'];
 
-		it('without a header, compares one tenant field and ignores any other the request names', async () => {
-			// The header path refuses a request that names another tenant anywhere (SEC-A-03, SEC-D-12). The path
-			// without a header compares one field — the query's on a read, the body's `tenantId` (else `tenant.id`)
-			// on a write — so each of these is allowed without a header and refused with a matching one.
-			actAs();
-			const requests = [
-				{ method: 'POST', body: { tenantId: TENANT_ID, tenant: { id: OTHER_TENANT_ID } } },
-				{ method: 'PUT', query: { tenantId: OTHER_TENANT_ID }, body: { tenantId: TENANT_ID } },
-				{ method: 'DELETE', query: { tenantId: TENANT_ID }, body: { tenantId: OTHER_TENANT_ID } }
-			];
-			for (const request of requests) {
-				await expect(guard.canActivate(contextFor(request))).resolves.toBe(true);
-				await expect(guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))).resolves.toBe(
+			it.each(spellings)(
+				'refuses `%s: <another tenant>` on a write whose body names the caller’s tenant',
+				async (rawHeaderName) => {
+					actAs();
+					const request = { method: 'POST', body: { tenantId: TENANT_ID }, headerTenantId: OTHER_TENANT_ID };
+					await expect(guard.canActivate(contextFor({ ...request, rawHeaderName }))).resolves.toBe(false);
+				}
+			);
+
+			it.each(spellings)(
+				'refuses `%s: <another tenant>` on a read whose query names the caller’s tenant',
+				async (rawHeaderName) => {
+					actAs();
+					const request = { method: 'GET', query: { tenantId: TENANT_ID }, headerTenantId: OTHER_TENANT_ID };
+					await expect(guard.canActivate(contextFor({ ...request, rawHeaderName }))).resolves.toBe(false);
+				}
+			);
+
+			it('still allows `TENANT-ID: <own tenant>` with a body or query that names the caller’s tenant', async () => {
+				actAs();
+				for (const request of [
+					{ method: 'POST', body: { tenantId: TENANT_ID } },
+					{ method: 'GET', query: { tenantId: TENANT_ID } }
+				]) {
+					await expect(
+						guard.canActivate(
+							contextFor({ ...request, headerTenantId: TENANT_ID, rawHeaderName: 'TENANT-ID' })
+						)
+					).resolves.toBe(true);
+				}
+			});
+
+			it('does not let a spelling other than `tenant-id` / `Tenant-Id` open the header path: refused before, refused now', async () => {
+				// Opening it would allow `TENANT-ID: <own tenant>` on a read that names no tenant, which has always been
+				// refused (it is judged as a request without a header). The fix only ever adds refusals.
+				actAs();
+				const request = { method: 'GET', query: {}, headerTenantId: TENANT_ID };
+				await expect(guard.canActivate(contextFor({ ...request, rawHeaderName: 'TENANT-ID' }))).resolves.toBe(
 					false
 				);
-			}
+				// Control: a spelling the guard accepts opens it.
+				await expect(guard.canActivate(contextFor({ ...request, rawHeaderName: 'Tenant-Id' }))).resolves.toBe(
+					true
+				);
+			});
 		});
 
-		it('throws, instead of refusing, a headerless write with no parsed body or with `tenant: null`', async () => {
-			// `'tenantId' in body` throws when there is no body, and `body.tenant.id` throws when `tenant` is null.
-			// Nothing gets through either way, but the caller is answered 500 rather than 403.
-			actAs();
-			const withoutBody = contextFor({ method: 'POST', body: undefined });
-			const nullTenant = contextFor({ method: 'PATCH', body: { tenant: null } });
-			await expect(guard.canActivate(withoutBody)).rejects.toThrow(TypeError);
-			await expect(guard.canActivate(nullTenant)).rejects.toThrow(TypeError);
+		describe('every tenant field the request carries is compared, with or without the header', () => {
+			it('refuses a request that names the caller’s tenant in one field and another tenant in another', async () => {
+				// The path without a header used to compare one field — the query's on a read, the body's `tenantId`
+				// (else `tenant.id`) on a write — so each of these was allowed without a header and refused with one.
+				// Now both are refused.
+				actAs();
+				const requests: RequestShape[] = [
+					{ method: 'POST', body: { tenantId: TENANT_ID, tenant: { id: OTHER_TENANT_ID } } },
+					{ method: 'PUT', query: { tenantId: OTHER_TENANT_ID }, body: { tenantId: TENANT_ID } },
+					{ method: 'DELETE', query: { tenantId: TENANT_ID }, body: { tenantId: OTHER_TENANT_ID } }
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(false);
+				}
+			});
+
+			it('reads the route parameter, `where`, `tenant[id]` and `findInput.tenant.id` too', async () => {
+				actAs();
+				const requests: RequestShape[] = [
+					// `GET /plugin-tenants/by-tenant/:tenantId` names its tenant in the route.
+					{ method: 'GET', params: { tenantId: OTHER_TENANT_ID }, query: { tenantId: TENANT_ID } },
+					{ method: 'POST', params: { tenantId: OTHER_TENANT_ID }, body: { tenantId: TENANT_ID } },
+					// The pagination shape: `?where[tenantId]=…`.
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: { tenantId: OTHER_TENANT_ID } } },
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: { tenant: { id: OTHER_TENANT_ID } } } },
+					{ method: 'GET', query: { tenantId: TENANT_ID, tenant: { id: OTHER_TENANT_ID } } },
+					{
+						method: 'GET',
+						query: {
+							data: JSON.stringify({
+								findInput: { tenantId: TENANT_ID, tenant: { id: OTHER_TENANT_ID } }
+							})
+						}
+					}
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(false);
+				}
+			});
+
+			it('allows those fields when they name the caller’s tenant, or are empty', async () => {
+				actAs();
+				const requests: RequestShape[] = [
+					{ method: 'GET', params: { tenantId: TENANT_ID }, query: { tenantId: TENANT_ID } },
+					{ method: 'POST', params: { tenantId: '' }, body: { tenantId: TENANT_ID } },
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: { tenantId: TENANT_ID, name: 'x' } } },
+					{ method: 'PATCH', query: { where: { tenantId: '' } }, body: { tenant: { id: TENANT_ID } } }
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(true);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(true);
+				}
+			});
+
+			it('refuses a tenant field that is neither a string nor a number, without coercing it (403, not 500)', async () => {
+				// The ids were compared through `String()`, which runs whatever the caller put in their place:
+				// `{"tenantId":{"toString":null}}` threw `Cannot convert object to primitive value` (a 500), and an
+				// object converting to the caller's own id would have been read as that id.
+				actAs();
+				const toString = jest.fn(() => TENANT_ID);
+				const requests: RequestShape[] = [
+					{ method: 'POST', body: { tenantId: { toString: null } } },
+					{ method: 'PUT', body: { tenant: { id: { toString: null, valueOf: null } } } },
+					{ method: 'PATCH', body: { tenantId: { toString } } },
+					{ method: 'POST', body: [{ tenantId: TENANT_ID }, { tenantId: { toString } }] },
+					{ method: 'GET', query: { tenantId: [TENANT_ID] } },
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: { tenantId: { toString } } } },
+					{ method: 'POST', body: { tenantId: TENANT_ID, tenant: { id: true } } }
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(false);
+				}
+				expect(toString).not.toHaveBeenCalled();
+			});
+
+			it('reads every element of an array-valued filter or body: the OR-array `where`, an array `findInput`, nested bulk items', async () => {
+				// `TenantAwareCrudService.findConditionsWithTenant` accepts `where` as an OR-array
+				// (`?where[0][tenantId]=…`). The object form naming another tenant was refused while the array form
+				// passed with a matching header, and so did an array `findInput`.
+				actAs();
+				const toString = jest.fn(() => TENANT_ID);
+				const requests: RequestShape[] = [
+					{ method: 'GET', query: { where: [{ tenantId: OTHER_TENANT_ID }] } },
+					{
+						method: 'GET',
+						query: { tenantId: TENANT_ID, where: [{ name: 'x' }, { tenant: { id: OTHER_TENANT_ID } }] }
+					},
+					{
+						method: 'GET',
+						query: {
+							tenantId: TENANT_ID,
+							where: [{ tenantId: TENANT_ID }, [{ tenantId: OTHER_TENANT_ID }]]
+						}
+					},
+					{ method: 'GET', query: { data: JSON.stringify({ findInput: [{ tenantId: OTHER_TENANT_ID }] }) } },
+					{
+						method: 'GET',
+						query: {
+							data: JSON.stringify({
+								findInput: [{ tenantId: TENANT_ID }, { tenantId: OTHER_TENANT_ID }]
+							})
+						}
+					},
+					{ method: 'POST', body: [[{ tenantId: TENANT_ID }], [{ tenant: { id: OTHER_TENANT_ID } }]] },
+					// The string/number-only rule applies inside arrays too.
+					{ method: 'GET', query: { tenantId: TENANT_ID, where: [{ tenantId: { toString } }] } }
+				];
+				for (const request of requests) {
+					await expect(guard.canActivate(contextFor(request))).resolves.toBe(false);
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(false);
+				}
+				expect(toString).not.toHaveBeenCalled();
+			});
+
+			it('allows an array-valued filter whose every element names the caller’s tenant, or none', async () => {
+				actAs();
+				const withHeader: RequestShape[] = [
+					{ method: 'GET', query: { where: [{ tenantId: TENANT_ID }, { tenantId: TENANT_ID, name: 'x' }] } },
+					{ method: 'GET', query: { where: [{ name: 'x' }, { tenant: { id: TENANT_ID } }] } },
+					{
+						method: 'GET',
+						query: { data: JSON.stringify({ findInput: [{ tenantId: TENANT_ID }, { name: 'x' }] }) }
+					},
+					{ method: 'POST', body: [[{ tenantId: TENANT_ID }], [{ name: 'y' }]] }
+				];
+				for (const request of withHeader) {
+					await expect(
+						guard.canActivate(contextFor({ ...request, headerTenantId: TENANT_ID }))
+					).resolves.toBe(true);
+				}
+				// Without the header the read is judged by its `tenantId` query parameter, as before.
+				await expect(
+					guard.canActivate(
+						contextFor({ method: 'GET', query: { tenantId: TENANT_ID, where: [{ tenantId: TENANT_ID }] } })
+					)
+				).resolves.toBe(true);
+			});
+
+			it('refuses, without exhausting the stack, a deeply nested array that names another tenant', async () => {
+				actAs();
+				let body: unknown = [{ tenantId: OTHER_TENANT_ID }];
+				for (let depth = 0; depth < 100_000; depth++) {
+					body = [body];
+				}
+				await expect(
+					guard.canActivate(contextFor({ method: 'POST', body, headerTenantId: TENANT_ID }))
+				).resolves.toBe(false);
+			});
+		});
+
+		describe('a write that names no tenant is refused, not crashed on', () => {
+			it.each(['POST', 'PUT', 'PATCH'])(
+				'%s without a parsed body is refused (403), not thrown on (500)',
+				async (method) => {
+					// `'tenantId' in body` used to throw when there was no body: nothing got through, but the caller was
+					// answered 500 rather than 403.
+					actAs();
+					await expect(guard.canActivate(contextFor({ method, body: undefined }))).resolves.toBe(false);
+					await expect(guard.canActivate(contextFor({ method, body: null }))).resolves.toBe(false);
+				}
+			);
+
+			it('refuses a write whose body is `tenant: null`, or not an object at all', async () => {
+				// `body.tenant.id` used to throw when `tenant` was null, and `'tenantId' in body` when the body was a
+				// string. A bulk array without a header names no single tenant, and was refused before too.
+				actAs();
+				for (const body of [{ tenant: null }, `tenantId=${TENANT_ID}`, 42, [{ tenantId: TENANT_ID }]]) {
+					await expect(guard.canActivate(contextFor({ method: 'PATCH', body }))).resolves.toBe(false);
+				}
+			});
+
+			it('still allows a body-less write that states the caller’s tenant in the header, as it always did', async () => {
+				actAs();
+				await expect(
+					guard.canActivate(contextFor({ method: 'POST', body: undefined, headerTenantId: TENANT_ID }))
+				).resolves.toBe(true);
+			});
 		});
 	});
 });
@@ -402,6 +613,31 @@ describe('TenantPermissionGuard', () => {
 		const context = contextFor(
 			{ headerTenantId: OTHER_TENANT_ID },
 			withPermissions([PermissionsEnum.ORG_EMPLOYEES_VIEW])
+		);
+		await expect(guard.canActivate(context)).resolves.toBe(false);
+		expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+	});
+
+	it('refuses, before permissions are consulted, a header in another spelling that names another tenant', async () => {
+		actAs();
+		const context = contextFor(
+			{
+				method: 'POST',
+				body: { tenantId: TENANT_ID },
+				headerTenantId: OTHER_TENANT_ID,
+				rawHeaderName: 'TENANT-ID'
+			},
+			withPermissions([PermissionsEnum.ORG_EMPLOYEES_EDIT])
+		);
+		await expect(guard.canActivate(context)).resolves.toBe(false);
+		expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();
+	});
+
+	it('answers a body-less write without a header with a refusal (403), not a crash (500)', async () => {
+		actAs();
+		const context = contextFor(
+			{ method: 'POST', body: undefined },
+			withPermissions([PermissionsEnum.ORG_EMPLOYEES_EDIT])
 		);
 		await expect(guard.canActivate(context)).resolves.toBe(false);
 		expect(rolePermissionService.checkRolePermission).not.toHaveBeenCalled();

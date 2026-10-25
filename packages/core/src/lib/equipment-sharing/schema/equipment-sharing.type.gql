@@ -251,3 +251,31 @@ input UpdateEquipmentSharingInput {
 	employeeIds: [ID!]
 	teamIds: [ID!]
 }
+
+"""
+What a caller states when it changes a period in place (`updateEquipmentSharingInPlace`).
+
+The row is updated where it is, not removed and filed again, and only at the version the edit is based on:
+when the stored period has moved on, the edit is refused with an `ENTITY_VERSION_CONFLICT` error
+(`extensions.code`; `extensions.status` 409). So:
+
+- `version` is required: it is how the caller says which state of the period the edit is based on.
+- A member the caller leaves out keeps its stored value, `status` included.
+- `employeeIds` / `teamIds`, when stated, replace the period's memberships; an empty list clears them.
+- The approval row beside the period stays; its status and its name follow a change of the period's.
+"""
+input UpdateEquipmentSharingInPlaceInput {
+	id: ID!
+	"The version of the period the edit is based on."
+	version: Int!
+	name: String
+	shareRequestDay: DateTime
+	shareStartDay: DateTime
+	shareEndDay: DateTime
+	"Where the request stands: `1` requested, `2` approved, `3` refused. Left out, it stays as stored."
+	status: Int
+	equipmentId: ID
+	equipmentSharingPolicyId: ID
+	employeeIds: [ID!]
+	teamIds: [ID!]
+}

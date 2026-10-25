@@ -51,6 +51,12 @@ const granted = (RequestContext as unknown as { __granted: Set<string> }).__gran
 const context = { tenantId: 't1', organizationId: 'o1', integrationTenantId: 'm1', connection: { id: 'c1' }, everWorksOrganizationSlug: 'acme' };
 const ROLE = '7f1c2a8e-5b0d-4c3e-9a41-2d6f8b9e0c11';
 const ADMIN_ROLE = '0c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
+/**
+ * When an invitation the (mocked) invite flow issues expires: days from now, as the real flow sets it
+ * (`addDays(new Date(), inviteExpiryPeriod)`). Never a fixed date: once it passed, every invitation issued here would
+ * already read as expired, so the second of two overlapping requests would not see the first's as pending.
+ */
+const ISSUED_EXPIRE_DATE = new Date(Date.now() + 7 * 86_400_000);
 
 function member(overrides: Partial<EverWorksMember> = {}): EverWorksMember {
 	return {
@@ -121,7 +127,7 @@ function setup(
 			const created = {
 				id: invites.length ? `invite-${invites.length + 1}` : 'invite-new',
 				email: command.input.emailIds[0],
-				expireDate: new Date('2026-10-25T00:00:00.000Z'),
+				expireDate: ISSUED_EXPIRE_DATE,
 				status: InviteStatusEnum.INVITED,
 				roleId: command.input.roleId
 			};
@@ -157,7 +163,7 @@ describe('EverWorksPeopleService — invite to Gauzy', () => {
 			})
 		);
 		expect(command.languageCode).toBe('en');
-		expect(result).toEqual({ status: 'invited', inviteId: 'invite-new', email: 'Ada@Example.test', roleId: ROLE, expireDate: new Date('2026-10-25T00:00:00.000Z') });
+		expect(result).toEqual({ status: 'invited', inviteId: 'invite-new', email: 'Ada@Example.test', roleId: ROLE, expireDate: ISSUED_EXPIRE_DATE });
 	});
 
 	it("invites with the tenant's Employee role when the admin names none", async () => {

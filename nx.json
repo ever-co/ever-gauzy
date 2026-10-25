@@ -39,7 +39,7 @@
     },
     "packageManager": "yarn",
     "analytics": false,
-    "defaultCollection": "@nstudio/xplat"
+    "defaultCollection": "@nx/angular"
   },
   "generators": {
     "@nx/angular": {

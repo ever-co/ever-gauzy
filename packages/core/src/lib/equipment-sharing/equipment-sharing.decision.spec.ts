@@ -122,6 +122,8 @@ class Store {
 				const row = this.approvals[requestApprovalId];
 				return row ? copy({ id: row.id, requestId: row.requestId, organizationId: row.organizationId }) : null;
 			},
+			// The sharing's filer and the employees it is for: nobody in these rows.
+			readRequesters: async () => ({ userIds: [], employeeIds: [] }),
 			writeSharingStatus: async (criteria: Row, status) => {
 				// An UPDATE's compare-and-set reads what is committed.
 				const stale = 'version' in criteria && criteria.version !== this.sharing.version;

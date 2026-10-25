@@ -197,13 +197,17 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 				// The version of the row this dialog was opened on: the server writes the edit only at that version
 				// (ever-co/ever-gauzy#11384), so a decision or another edit saved while the dialog was open is not
 				// overwritten by this one's columns (its `status` included, read when the dialog opened) — the save
-				// is refused with 409 instead. A row read before the column existed carries none, and the server
-				// then uses the version it reads, as before.
+				// is refused with 409 instead. The edit is made in place (the row is updated where it is rather than
+				// removed and filed again). A row read before the column existed carries no version, and is saved
+				// through the edit that removes and files it again, which then uses the version the server reads.
 				const version = this.equipmentSharing.version;
-				equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, {
-					...shareRequest,
-					...(typeof version === 'number' ? { version } : {})
-				});
+				equipmentSharing =
+					typeof version === 'number'
+						? await this.equipmentSharingService.updateInPlace(this.equipmentSharing.id, {
+								...shareRequest,
+								version
+						  })
+						: await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
 			} else {
 				equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
 			}
