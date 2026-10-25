@@ -496,10 +496,16 @@ interface IPlanServer {
 	setUp(): void;
 }
 
-/** SQLite stores a plan date in UTC, whatever the process time zone. */
+/**
+ * SQLite stores a plan date in UTC, whatever the process time zone. The dialect helpers answer better-sqlite3, the
+ * store these cases use, whatever DB_TYPE the run was started with.
+ */
 const ON_SQLITE: IPlanServer = {
 	dayStart: (day) => new Date(`${day}T00:00:00.000Z`),
-	setUp: () => undefined
+	setUp: () => {
+		isSqliteMock.mockReturnValue(false);
+		isBetterSqlite3Mock.mockReturnValue(true);
+	}
 };
 
 /**
