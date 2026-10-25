@@ -193,15 +193,27 @@ export class ActivepiecesCredentialsService {
 	 * @param options.integrationTenantId - The tenant's integration row the request is about, when it names one. A row
 	 * of another tenant is never read: the rows are those of the tenant in context.
 	 * @param options.organizationId - The organization the request is about, when it names one.
+	 * @param options.beforeConnect - Called with the mode the request runs under (and, in the `tenant_api_key` mode,
+	 * the tenant's own key) once it is decided, before anything is obtained for it: no project token is exchanged and
+	 * no tenant project is looked up or created when it throws. A caller that cannot use a mode refuses it here (MCP,
+	 * which accepts only user tokens, refuses `platform_project` before the tenant's project is provisioned).
 	 * @throws BadRequestException when the tenant has no way to reach Activepieces, or chose one that is not available.
 	 */
-	async resolve(options: { integrationTenantId?: string; organizationId?: string } = {}): Promise<IActivepiecesCredential> {
+	async resolve(
+		options: {
+			integrationTenantId?: string;
+			organizationId?: string;
+			beforeConnect?: (mode: ActivepiecesConnectionMode | null, ownApiKey?: string) => void;
+		} = {}
+	): Promise<IActivepiecesCredential> {
 		const settings = this.operatorSettings();
 		const view = await this.tenantView(this.currentTenantId(), options);
 		const mode =
 			view.requestedMode === ActivepiecesConnectionMode.AUTO
 				? this.automaticMode(!!view.ownApiKey, settings)
 				: view.requestedMode;
+
+		options.beforeConnect?.(mode, mode === ActivepiecesConnectionMode.TENANT_API_KEY ? view.ownApiKey : undefined);
 
 		switch (mode) {
 			case ActivepiecesConnectionMode.TENANT_API_KEY:

@@ -460,12 +460,28 @@ export class ActivepiecesMcpService {
 	 *
 	 * A project token, and a tenant's own user token, pass.
 	 *
+	 * The refusal is made while the credential is resolved, as soon as the mode is decided (`beforeConnect`): in the
+	 * `platform_project` mode, resolving goes on to look up (or create) the tenant's Activepieces project and to record
+	 * it, which an MCP call that is refused anyway must not do. The resolved credential is checked again after.
+	 *
 	 * @throws BadRequestException naming what would work instead.
 	 */
 	private async getMcpCredential(): Promise<IActivepiecesCredential> {
-		const credential = await this.getCredential();
+		const credential = await this.getCredential((mode, ownApiKey) => this.assertMcpCapable(mode, ownApiKey));
+		this.assertMcpCapable(credential.mode, credential.token);
+		return credential;
+	}
 
-		if (credential.mode === ActivepiecesConnectionMode.PLATFORM_PROJECT) {
+	/**
+	 * Refuses (400) a connection mode, or a bearer token, that Activepieces does not accept on its MCP routes: the
+	 * `platform_project` mode (the installation's API key), and any API key (`sk-…`).
+	 *
+	 * @param mode - The mode the request runs under.
+	 * @param token - The bearer token, when it is known.
+	 * @throws BadRequestException naming what would work instead.
+	 */
+	private assertMcpCapable(mode: ActivepiecesConnectionMode | null, token?: string | null): void {
+		if (mode === ActivepiecesConnectionMode.PLATFORM_PROJECT) {
 			const instead = this.credentials.isProjectTokenAvailable()
 				? 'switch the tenant to the project_token connection mode (POST /integration/activepieces/connection-mode)'
 				: 'ask the operator of this installation to enable project tokens, or connect an Activepieces user token of your own';
@@ -473,12 +489,11 @@ export class ActivepiecesMcpService {
 				`${MCP_NEEDS_USER_TOKEN} This tenant reaches Activepieces with the installation's API key (connection mode platform_project): ${instead}.`
 			);
 		}
-		if (isActivepiecesApiKey(credential.token)) {
+		if (isActivepiecesApiKey(token)) {
 			throw new BadRequestException(
 				`${MCP_NEEDS_USER_TOKEN} This tenant's own Activepieces key is an API key: connect an Activepieces user token instead, or use the project_token connection mode.`
 			);
 		}
-		return credential;
 	}
 
 	/**
@@ -486,10 +501,15 @@ export class ActivepiecesMcpService {
 	 * calls used to add rows without a key), else its project token, else the installation's key pinned to the tenant's
 	 * own project. It used to fall back to the installation's key unconfined, with the project and the server ids taken
 	 * from the client: any tenant could list, read, change or rotate the MCP servers of any project of the platform.
+	 *
+	 * @param beforeConnect - Refuses a mode once it is decided, before anything is obtained for it (see
+	 * `ActivepiecesCredentialsService.resolve`).
 	 */
-	private async getCredential(): Promise<IActivepiecesCredential> {
+	private async getCredential(
+		beforeConnect?: (mode: ActivepiecesConnectionMode | null, ownApiKey?: string) => void
+	): Promise<IActivepiecesCredential> {
 		try {
-			return await this.credentials.resolve();
+			return await this.credentials.resolve(beforeConnect ? { beforeConnect } : {});
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;

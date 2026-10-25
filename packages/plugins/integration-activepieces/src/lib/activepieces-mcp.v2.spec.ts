@@ -383,3 +383,35 @@ describe('Activepieces MCP — the operator’s read of a project’s server', (
 		expect(credentials.requestActivepieces.mock.calls[0][1]).toBe(ACTIVEPIECES_MCP_SERVERS_URL);
 	});
 });
+
+describe('Activepieces MCP — refused before the tenant’s project is provisioned', () => {
+	beforeAll(() => Logger.overrideLogger(false));
+	beforeEach(() => mockCurrentTenantId.mockReturnValue('tenant-a'));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses the platform_project mode while resolving, before its project is looked up, created or recorded', async () => {
+		// The real resolution: no key of its own and no signing key, so the tenant runs under the installation's key.
+		const http = { request: jest.fn(() => of({ data: { data: [] } })) };
+		const integrationTenantService = { find: jest.fn().mockResolvedValue([]), create: jest.fn() };
+		const integrationSettingService = { saveMany: jest.fn() };
+		const credentials = new ActivepiecesCredentialsService(
+			http as any,
+			{ get: () => ({ apiKey: 'sk-platform-key', tenantProjectsEnabled: true }) } as any,
+			{ findOneByOptions: jest.fn(), create: jest.fn() } as any,
+			integrationTenantService as any,
+			integrationSettingService as any
+		);
+		const mcpHttp = { request: jest.fn() };
+		const service = new ActivepiecesMcpService(mcpHttp as any, {} as any, {} as any, credentials);
+
+		const error = await refusal(service.listMcpServers({}));
+
+		expect(error.getStatus()).toBe(400);
+		expect(error.message).toContain('platform_project');
+		// Neither the project lookup / creation (credentials' calls) nor any MCP call, and nothing recorded.
+		expect(http.request).not.toHaveBeenCalled();
+		expect(mcpHttp.request).not.toHaveBeenCalled();
+		expect(integrationTenantService.create).not.toHaveBeenCalled();
+		expect(integrationSettingService.saveMany).not.toHaveBeenCalled();
+	});
+});
