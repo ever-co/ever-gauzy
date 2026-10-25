@@ -158,6 +158,15 @@ const TEAM_MANAGER: ICaller = {
 	permissions: [PermissionsEnum.TIME_TRACKER]
 };
 
+/**
+ * The same team manager under a role that also lets them pick any employee, still without
+ * CAN_APPROVE_TIMESHEET. `RequestContext.currentEmployeeId()` answers null to such a caller.
+ */
+const SELECTING_TEAM_MANAGER: ICaller = {
+	...TEAM_MANAGER,
+	permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]
+};
+
 /** An admin who approves timesheets and is an employee of the organization too. */
 const APPROVER_ADMIN: ICaller = {
 	id: 'user-approver',
@@ -436,6 +445,36 @@ describe('Timesheet status change by a team manager, on a real database', () => 
 			expect(member).toEqual(WAITING);
 			expect(target.emails.setTimesheetAction).not.toHaveBeenCalled();
 		});
+
+		it('lets a team manager who also holds CHANGE_SELECTED_EMPLOYEE approve a member’s timesheet', async () => {
+			const target = await fresh();
+			const approveMember = () => changeStatus(target, [MEMBER_TIMESHEET], TimesheetStatus.APPROVED);
+
+			await as(SELECTING_TEAM_MANAGER, approveMember);
+
+			const member = await stored(target, MEMBER_TIMESHEET);
+			expect(member).toEqual({ status: TimesheetStatus.APPROVED, approvedById: TEAM_MANAGER.id, reason: null });
+		});
+
+		// CHANGE_SELECTED_EMPLOYEE grants no approval: the team check and the own-timesheet refusal still decide.
+		const selectingManagerRefusals: Array<[string, string]> = [
+			['their own timesheet', MANAGER_TIMESHEET],
+			['a timesheet of a colleague in a team they do not manage', OUTSIDER_TIMESHEET]
+		];
+
+		it.each(selectingManagerRefusals)(
+			'still refuses a team manager who holds CHANGE_SELECTED_EMPLOYEE %s, and writes nothing',
+			async (_label, id) => {
+				const target = await fresh();
+				const approve = () => changeStatus(target, [id], TimesheetStatus.APPROVED);
+
+				const refusal = as(SELECTING_TEAM_MANAGER, approve);
+
+				await expect(refusal).rejects.toBeInstanceOf(ForbiddenException);
+				const timesheet = await stored(target, id);
+				expect(timesheet).toEqual(WAITING);
+			}
+		);
 
 		it('lets a CAN_APPROVE_TIMESHEET holder move any timesheet to any status, their own included, without the team check', async () => {
 			const target = await fresh();
