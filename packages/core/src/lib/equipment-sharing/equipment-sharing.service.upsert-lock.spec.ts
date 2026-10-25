@@ -137,9 +137,9 @@ class Store {
 }
 
 /** The service over the store: its reads see what the store has committed. */
-function system(store: Store) {
+function system(store: Store, columns?: Row[]) {
 	const typeOrmRepository = {
-		metadata: { tableName: 'equipment_sharing' },
+		metadata: { tableName: 'equipment_sharing', ...(columns ? { columns } : {}) },
 		// The stored-row read of the upsert check, and the diagnostic read of a conflict.
 		findOne: jest.fn(async ({ where }: { where: Row }) => {
 			if (where.id !== store.sharing.id || where.tenantId !== store.sharing.tenantId) {
@@ -307,6 +307,86 @@ describe('POST /equipment-sharing — an upsert that changes a stored sharing’
 		expect(error.getStatus()).toBe(400);
 		expect(store.statements).toEqual([]);
 		expect(store.sharing.employees).toEqual([EMPLOYEE_1]);
+	});
+
+	it('writes every other column the upsert stated in the same statement: the archive and activity flags too', async () => {
+		const store = new Store();
+		const { post, create } = system(store);
+
+		const { error } = await post({
+			id: ID,
+			version: 1,
+			employees: [],
+			isArchived: true,
+			isActive: false,
+			archivedAt: '2026-10-25T08:00:00.000Z',
+			shareEndDay: '2026-11-30T00:00:00.000Z'
+		});
+
+		expect(error).toBeUndefined();
+		// Before: the locked path wrote the in-place edit's columns only, and `isArchived` was silently dropped.
+		expect(store.statements[1]).toEqual([
+			'writeAtVersion',
+			{ id: ID, version: 1, tenantId: TENANT },
+			{
+				shareEndDay: '2026-11-30T00:00:00.000Z',
+				equipmentId: EQUIPMENT,
+				equipmentSharingPolicyId: null,
+				isActive: false,
+				isArchived: true,
+				archivedAt: '2026-10-25T08:00:00.000Z'
+			}
+		]);
+		expect(store.sharing).toEqual(
+			expect.objectContaining({ isArchived: true, isActive: false, employees: [], version: 2 })
+		);
+		expect(create).not.toHaveBeenCalled();
+	});
+
+	it('writes the columns the sharing’s metadata names, but its identity, version, stamped dates and objects', async () => {
+		const store = new Store();
+		const column = (propertyName: string, flags: Row = {}) => ({ propertyName, isUpdate: true, ...flags });
+		const { post } = system(store, [
+			column('id', { isPrimary: true }),
+			column('tenantId'),
+			column('organizationId'),
+			column('name'),
+			column('status'),
+			column('equipmentId'),
+			column('equipmentSharingPolicyId'),
+			column('createdByUserId'),
+			column('isArchived'),
+			column('archivedAt'),
+			column('version', { isVersion: true }),
+			column('createdAt', { isCreateDate: true }),
+			column('updatedAt', { isUpdateDate: true }),
+			column('readOnly', { isUpdate: false })
+		]);
+
+		const { error } = await post({
+			id: ID,
+			version: 1,
+			teams: ['team-2'],
+			tenantId: 'tenant-b',
+			name: 'Studio projector',
+			createdByUserId: 'user-2',
+			isArchived: true,
+			createdAt: '2020-01-01T00:00:00.000Z',
+			updatedAt: '2020-01-01T00:00:00.000Z',
+			readOnly: 'x',
+			notAColumn: 'y',
+			// An object is no column value (a relation stated as one), and is left out.
+			archivedAt: { $gt: '2026-01-01' }
+		});
+
+		expect(error).toBeUndefined();
+		expect(store.statements[1][2]).toEqual({
+			name: 'Studio projector',
+			equipmentId: EQUIPMENT,
+			equipmentSharingPolicyId: null,
+			createdByUserId: 'user-2',
+			isArchived: true
+		});
 	});
 
 	it('moves the sharing to the organization the payload was checked in, locking the approval where it is', async () => {

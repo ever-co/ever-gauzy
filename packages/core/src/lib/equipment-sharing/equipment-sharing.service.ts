@@ -65,7 +65,7 @@ import {
 	requiredSharingVersion,
 	sharingVersionConflict
 } from './sharing-version.helper';
-import { IInPlaceSharingMembers, inPlaceSharingChange } from './in-place-update.helper';
+import { IInPlaceSharingMembers, IN_PLACE_SHARING_COLUMNS, inPlaceSharingChange } from './in-place-update.helper';
 
 /** The stored sharing a `POST /equipment-sharing` body id names, as the upsert's check reads it. */
 interface IStoredSharingRow extends IStoredSharing {
@@ -81,6 +81,29 @@ interface IStoredSharingRow extends IStoredSharing {
  */
 const statesSharingMembers = (payload: object): boolean =>
 	(payload as ISharingMembers).employees !== undefined || (payload as ISharingMembers).teams !== undefined;
+
+/** What a membership upsert reads of a column of the sharing's TypeORM metadata. */
+interface IUpsertColumnMetadata {
+	propertyName: string;
+	isPrimary?: boolean;
+	isVersion?: boolean;
+	isCreateDate?: boolean;
+	isUpdateDate?: boolean;
+	isVirtual?: boolean;
+	isUpdate?: boolean;
+}
+
+/**
+ * The columns a membership upsert writes when the sharing's TypeORM metadata names none (a store double): those of
+ * the in-place edit, the organization, and the base entity's activity and archive columns.
+ */
+const UPSERT_FALLBACK_COLUMNS: ReadonlyArray<string> = [
+	...IN_PLACE_SHARING_COLUMNS,
+	'organizationId',
+	'isActive',
+	'isArchived',
+	'archivedAt'
+];
 
 /** The sharing's request approval, as the decision's locking read finds it. */
 export interface IDecisionRequestApproval {
@@ -336,8 +359,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * - the refusals `create()` makes before it writes are made first, on the same payload: a row of another tenant,
 	 *   a nested row of another tenant, and an organization outside the caller's reach (the payload's, and the
 	 *   stored row's);
-	 * - it writes the columns the payload states — the organization, the equipment and the policy exactly as
-	 *   {@link checkCreate} checked them, the organization only when it moves the sharing — and nothing else; the
+	 * - it writes every column the payload states, as `create()` saved them ({@link upsertColumns}): `isActive`,
+	 *   `isArchived`, `archivedAt`, the name, the dates, the status, and the organization, the equipment and the
+	 *   policy exactly as {@link checkCreate} checked them (the organization only when it moves the sharing); the
 	 *   request approval keeps its status and name, as under `create()`;
 	 * - a membership list must be ids or `{ id }` objects (400 otherwise): the list replaces the membership, so an
 	 *   entry naming no id would write a shorter list than the caller meant.
@@ -360,13 +384,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		await this.assertNestedGraphNotForeign([row], tenantId);
 		await this.assertInsideOrganizationBoundary([row]);
 
-		const { columns, members } = inPlaceSharingChange(payload as any);
-		const organizationId = (payload.organizationId ?? null) as ID | null;
-		const written = {
-			...columns,
-			// The organization the payload was checked in, when the upsert moves the sharing there.
-			...(organizationId && !sameId(organizationId, stored.organizationId) ? { organizationId } : {})
-		} as Partial<EquipmentSharing>;
+		// The memberships to replace, and the refusal of a status that is not one (the in-place edit's reading).
+		const { members } = inPlaceSharingChange(payload as any);
+		const written = this.upsertColumns(payload as Record<string, unknown>, stored);
 		const criteria = { ...this.atVersion(stored.id, expected), tenantId } as FindOptionsWhere<EquipmentSharing>;
 
 		try {
@@ -392,7 +412,59 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			throw new BadRequestException(toClientSafeError(err));
 		}
 
-		return await this.findOneByIdString(stored.id, { relations: { employees: true, teams: true } });
+		// A sharing the upsert retired (a stated `deletedAt`) is answered as written too.
+		const retired = (written as { deletedAt?: unknown }).deletedAt != null;
+		return await this.findOneByIdString(stored.id, {
+			relations: { employees: true, teams: true },
+			...(retired ? { withDeleted: true } : {})
+		});
+	}
+
+	/**
+	 * The columns a membership upsert ({@link storeMembershipEdit}) writes in place: every column of the sharing the
+	 * payload states, as the CRUD base's upsert (`save()`) wrote them — `isActive`, `isArchived`, `archivedAt`, the
+	 * name, the dates, the status, the references — so the locked path drops nothing the unlocked one stored. Left
+	 * out: the identity (the primary key, and the tenant, always the caller's), the version (the upsert's
+	 * precondition, moved on by the write itself), the dates the store stamps (`createdAt`, `updatedAt`), any column
+	 * TypeORM never updates, and a value that is an object or a list (a relation stated as an object; the memberships
+	 * are replaced on their own). The organization is written only when the upsert moves the sharing.
+	 *
+	 * The columns are read from the sharing's TypeORM metadata, which is initialised whichever ORM serves the write
+	 * (the CRUD base's foreign-graph check reads it the same way).
+	 *
+	 * @param payload - The checked payload.
+	 * @param stored - The stored sharing, as the check read it.
+	 */
+	private upsertColumns(payload: Record<string, unknown>, stored: IStoredSharingRow): Partial<EquipmentSharing> {
+		const metadataColumns = ((this.typeOrmRepository as any)?.metadata?.columns ?? []) as IUpsertColumnMetadata[];
+		const names = metadataColumns.length
+			? metadataColumns
+					.filter(
+						(column) =>
+							!column.isPrimary &&
+							!column.isVersion &&
+							!column.isCreateDate &&
+							!column.isUpdateDate &&
+							!column.isVirtual &&
+							column.isUpdate !== false &&
+							column.propertyName !== 'tenantId'
+					)
+					.map((column) => column.propertyName)
+			: UPSERT_FALLBACK_COLUMNS;
+
+		const written: Record<string, unknown> = {};
+		for (const name of names) {
+			const value = payload[name];
+			if (value === undefined || (value !== null && typeof value === 'object' && !(value instanceof Date))) {
+				continue;
+			}
+			written[name] = value;
+		}
+		// The row keeps its own organization unless the upsert moves it to the one the payload was checked in.
+		if (!written['organizationId'] || sameId(written['organizationId'], stored.organizationId)) {
+			delete written['organizationId'];
+		}
+		return written as Partial<EquipmentSharing>;
 	}
 
 	/**
