@@ -39,9 +39,10 @@ export interface IActivepiecesConfig {
 	readonly projectExternalIdPrefix?: string;
 
 	/**
-	 * The MCP routes of the installation's Activepieces (`GAUZY_ACTIVEPIECES_MCP_API`): `v2` (default), MCP 2.0 — one
-	 * MCP server per project at `/v1/projects/:projectId/mcp-server`, Activepieces since November 2025 — or `legacy`,
-	 * the `/v1/mcp-servers` routes it replaced, for an older self-hosted Activepieces. Both accept only user tokens.
+	 * The MCP routes of the installation's Activepieces (`GAUZY_ACTIVEPIECES_MCP_API`, as set): `v2` (the default
+	 * when blank), MCP 2.0 — one MCP server per project at `/v1/projects/:projectId/mcp-server`, Activepieces since
+	 * November 2025 — or `legacy`, the `/v1/mcp-servers` routes it replaced, for an older self-hosted Activepieces.
+	 * Both accept only user tokens. Any other value is refused when an MCP route is called, rather than guessed.
 	 */
-	readonly mcpApi?: 'v2' | 'legacy';
+	readonly mcpApi?: string;
 }

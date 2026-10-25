@@ -25,7 +25,11 @@ import { HttpException, Logger } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { ActivepiecesConnectionMode } from '@gauzy/contracts';
 import { ACTIVEPIECES_MCP_SERVERS_URL, ACTIVEPIECES_PROJECTS_URL } from './activepieces.config';
-import { ActivepiecesCredentialsService, IActivepiecesCredential } from './activepieces-credentials.service';
+import {
+	ActivepiecesCredentialsService,
+	IActivepiecesCredential,
+	parseActivepiecesMcpApi
+} from './activepieces-credentials.service';
 import {
 	ActivepiecesMcpService,
 	isActivepiecesApiKey,
@@ -346,6 +350,7 @@ describe('Activepieces MCP — the operator’s read of a project’s server', (
 	function platform(platformApiKey: string, mcpApi: 'v2' | 'legacy' = 'v2') {
 		const credentials = {
 			operatorSettings: () => ({ platformApiKey, externalIdPrefix: 'gauzy-tenant-', mcpApi }),
+			mcpApi: () => mcpApi,
 			requestActivepieces: jest.fn(async (..._args: unknown[]) => server({ projectId: undefined }))
 		};
 		return { service: new ActivepiecesPlatformService(credentials as any), credentials };
@@ -413,5 +418,42 @@ describe('Activepieces MCP — refused before the tenant’s project is provisio
 		expect(mcpHttp.request).not.toHaveBeenCalled();
 		expect(integrationTenantService.create).not.toHaveBeenCalled();
 		expect(integrationSettingService.saveMany).not.toHaveBeenCalled();
+	});
+});
+
+describe('Activepieces MCP — GAUZY_ACTIVEPIECES_MCP_API', () => {
+	beforeAll(() => Logger.overrideLogger(false));
+	beforeEach(() => mockCurrentTenantId.mockReturnValue('tenant-a'));
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each([
+		[undefined, 'v2'],
+		['', 'v2'],
+		[' V2 ', 'v2'],
+		['legacy', 'legacy'],
+		['LEGACY', 'legacy'],
+		['legacy-v1', null],
+		['v1', null]
+	])('reads %p as %p', (value, api) => {
+		expect(parseActivepiecesMcpApi(value)).toBe(api);
+	});
+
+	it('refuses an MCP call under an unknown value (500), before anything is sent, rather than guess', async () => {
+		const { service, http } = system(PROJECT_TOKEN);
+		const credentials = (service as any).credentials as ActivepiecesCredentialsService;
+		jest.spyOn(credentials, 'operatorSettings').mockReturnValue({
+			platformApiKey: '',
+			signingKeyId: '',
+			signingPrivateKey: '',
+			tenantProjectsEnabled: true,
+			externalIdPrefix: 'gauzy-tenant-',
+			mcpApi: parseActivepiecesMcpApi('v1')
+		});
+
+		const error = await refusal(service.listMcpServers({}));
+
+		expect(error.getStatus()).toBe(500);
+		expect(error.message).toContain('MCP setting of this installation is not valid');
+		expect(http.request).not.toHaveBeenCalled();
 	});
 });

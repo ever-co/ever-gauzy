@@ -123,7 +123,7 @@ export class ActivepiecesMcpService {
 
 	/** The MCP routes to call (`GAUZY_ACTIVEPIECES_MCP_API`): MCP 2.0 unless the operator chose `legacy`. */
 	mcpApi(): ActivepiecesMcpApi {
-		return this.credentials.operatorSettings()?.mcpApi === 'legacy' ? 'legacy' : 'v2';
+		return this.credentials.mcpApi();
 	}
 
 	/**

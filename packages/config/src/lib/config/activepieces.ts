@@ -17,7 +17,7 @@ export default registerAs(
 			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
 		),
 		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX ?? '',
-		// The MCP routes of the installation's Activepieces: MCP 2.0 unless `legacy` (older than November 2025)
-		mcpApi: (process.env.GAUZY_ACTIVEPIECES_MCP_API ?? '').trim().toLowerCase() === 'legacy' ? 'legacy' : 'v2'
+		// The MCP routes of the installation's Activepieces: `v2` (blank) or `legacy`; read where MCP is called
+		mcpApi: process.env.GAUZY_ACTIVEPIECES_MCP_API ?? ''
 	})
 );

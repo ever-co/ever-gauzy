@@ -51,6 +51,25 @@ export interface IActivepiecesCredential {
 /** The MCP routes of the installation's Activepieces: MCP 2.0 (`v2`, the default) or the `legacy` routes before it. */
 export type ActivepiecesMcpApi = 'v2' | 'legacy';
 
+/**
+ * Reads `GAUZY_ACTIVEPIECES_MCP_API`: blank (or not set) and `v2` are MCP 2.0, `legacy` the routes before it, in any
+ * case. Anything else (a typo, `v1`) is `null`: refused where MCP is called
+ * ({@link ActivepiecesCredentialsService.mcpApi}), rather than read as MCP 2.0 and answered with Activepieces' 404s
+ * on an older installation.
+ *
+ * @param value - The setting, as configured.
+ */
+export function parseActivepiecesMcpApi(value: unknown): ActivepiecesMcpApi | null {
+	if (value === undefined || value === null) {
+		return 'v2';
+	}
+	const text = typeof value === 'string' ? value.trim().toLowerCase() : null;
+	if (text === '' || text === 'v2') {
+		return 'v2';
+	}
+	return text === 'legacy' ? 'legacy' : null;
+}
+
 /** What the operator of the installation configured. Never handed to a tenant. */
 export interface IActivepiecesOperatorSettings {
 	readonly platformApiKey: string;
@@ -58,8 +77,8 @@ export interface IActivepiecesOperatorSettings {
 	readonly signingPrivateKey: string;
 	readonly tenantProjectsEnabled: boolean;
 	readonly externalIdPrefix: string;
-	/** The MCP routes to call (`GAUZY_ACTIVEPIECES_MCP_API`); MCP 2.0 when not stated. */
-	readonly mcpApi?: ActivepiecesMcpApi;
+	/** The MCP routes to call (`GAUZY_ACTIVEPIECES_MCP_API`); MCP 2.0 when not stated, `null` for an unknown value. */
+	readonly mcpApi?: ActivepiecesMcpApi | null;
 }
 
 /** A project token is obtained again when it has less than this left (Activepieces issues them for 7 days). */
@@ -168,8 +187,25 @@ export class ActivepiecesCredentialsService {
 			signingPrivateKey: text(config.signingPrivateKey),
 			tenantProjectsEnabled: config.tenantProjectsEnabled !== false,
 			externalIdPrefix: text(config.projectExternalIdPrefix) || ACTIVEPIECES_DEFAULT_EXTERNAL_ID_PREFIX,
-			mcpApi: config.mcpApi === 'legacy' ? 'legacy' : 'v2'
+			mcpApi: parseActivepiecesMcpApi(config.mcpApi)
 		};
+	}
+
+	/**
+	 * The MCP routes to call. An unknown `GAUZY_ACTIVEPIECES_MCP_API` is refused (500, the setting named in the log
+	 * only) rather than guessed: read as MCP 2.0, an older self-hosted Activepieces would answer every call with 404.
+	 * Only the MCP routes read it, so the other Activepieces calls are not held up by it.
+	 *
+	 * @throws InternalServerErrorException for a value that is neither `v2` nor `legacy`.
+	 */
+	mcpApi(settings: IActivepiecesOperatorSettings = this.operatorSettings()): ActivepiecesMcpApi {
+		if (settings?.mcpApi === null) {
+			this.logger.error('GAUZY_ACTIVEPIECES_MCP_API must be "v2" (the default) or "legacy"');
+			throw new InternalServerErrorException(
+				'The Activepieces MCP setting of this installation is not valid: ask its operator to correct it.'
+			);
+		}
+		return settings?.mcpApi ?? 'v2';
 	}
 
 	/** Whether the operator configured the signing key that project tokens need. */

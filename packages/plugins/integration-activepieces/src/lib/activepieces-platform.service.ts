@@ -221,7 +221,7 @@ export class ActivepiecesPlatformService {
 				`${MCP_NEEDS_USER_TOKEN} The installation's key (GAUZY_ACTIVEPIECES_API_KEY) is an API key: read a project's MCP server as its tenant, in the project_token connection mode.`
 			);
 		}
-		if (settings.mcpApi === 'legacy') {
+		if (this.credentials.mcpApi(settings) === 'legacy') {
 			return this.credentials.requestActivepieces<IActivepiecesMcpServersListResponse>(
 				'get',
 				ACTIVEPIECES_MCP_SERVERS_URL,
