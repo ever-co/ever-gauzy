@@ -2,7 +2,9 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import {
+	DeleteResult,
 	FindManyOptions,
+	FindOperator,
 	FindOptionsWhere,
 	In,
 	IsNull,
@@ -52,6 +54,7 @@ import {
 	withAllowedEmailLinks
 } from '../auth/email-link-origin';
 import {
+	LegacyFindOneOptions,
 	MultiORMEnum,
 	freshTimestamp,
 	getArrayIntersection,
@@ -77,12 +80,51 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
+import { teamManagerMembershipWhere } from '../organization-team-employee/team-manager-membership';
 import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { mayIssueInviteRole, withholdTokensNotIssuable } from './invite-role-issuer';
 import { InviteAcceptCommand } from './commands';
 import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
+
+/**
+ * The grants that reach the invitations of every team of the organization. Without one of them, a caller handles the
+ * invitations of the teams they manage, and the invitations of no team.
+ */
+const ORGANIZATION_WIDE_INVITE_GRANTS: PermissionsEnum[] = [
+	PermissionsEnum.ALL_ORG_VIEW,
+	PermissionsEnum.ALL_ORG_EDIT,
+	PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+];
+
+/**
+ * The teams a register request names, read as its `teams` filter reads them: one id, or a list of ids.
+ *
+ * @param teamIds - The `teams` filter of the request, or its `id`.
+ * @returns The ids, or undefined when the request names no team.
+ */
+function requestedTeamIdsOf(teamIds: unknown): ID[] | undefined {
+	if (!isNotEmpty(teamIds)) {
+		return undefined;
+	}
+	if (Array.isArray(teamIds)) {
+		return teamIds;
+	}
+	return [teamIds as ID];
+}
+
+/**
+ * The condition on a team's id that keeps the teams named, or no condition when none is named.
+ *
+ * @param teamIds - The teams named, if any.
+ */
+function teamIdsWhere(teamIds?: ID[]): { id?: FindOperator<ID> } {
+	if (!teamIds) {
+		return {};
+	}
+	return { id: In(teamIds) };
+}
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -245,6 +287,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (!canInviteWithRole(inviterRole?.name, role?.name)) {
 			throw new ForbiddenException('You cannot invite a user with a role above your own.');
 		}
+
+		// Accepting adds the invitee to every team of the invitation, which only the managers of those teams decide.
+		await this.assertManagesEveryTeam(organizationTeams);
 
 		// Invited Organization
 		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
@@ -520,6 +565,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (!mayIssueInviteRole(invitedByUser?.role?.name, invite.role?.name)) {
 			throw new ForbiddenException('You cannot resend an invitation for this role.');
 		}
+
+		await this.assertReachesInvitation(invite);
 
 		// Invited organization
 		const organization: IOrganization = invite.organization;
@@ -925,6 +972,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			// so without a valid `take` the list stays unpaginated, as it already was when neither is sent
 			const page = resolveRequestedPage({ take: options?.take, skip: options?.skip });
 
+			const conditions = buildWhereConditions();
+			const requestedTeamIds = requestedTeamIdsOf(teamIds);
+			const where = await this.keepTeamsInReach(conditions, requestedTeamIds);
+
 			const invites = await super.findAll({
 				...(page ? { skip: page.offset, take: page.limit } : {}),
 				...(options && options.relations
@@ -932,7 +983,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							relations: options.relations
 					  }
 					: {}),
-				where: buildWhereConditions()
+				where
 			});
 			// The register is readable with the permissions every employee holds; the accept-invite token is not.
 			// The caller is ranked by the role stored for them, as `createBulk` ranks an inviter.
@@ -961,6 +1012,164 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 		const user: IUser = await this.userService.findOneByIdString(userId, { relations: { role: true } });
 		return user?.role?.name;
+	}
+
+	/**
+	 * Deletes an invitation (`DELETE /invite/:id`, GraphQL `deleteInvite`). A caller confined to the teams they manage
+	 * deletes the invitations of those teams and the invitations of no team.
+	 *
+	 * @param criteria - The invitation's id, or the conditions of the rows to delete.
+	 * @param options - Additional conditions.
+	 * @returns The result of the delete.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<Invite>,
+		options?: LegacyFindOneOptions<Invite>
+	): Promise<DeleteResult> {
+		const namesOneInvitation = typeof criteria === 'string';
+
+		if (namesOneInvitation && this.isConfinedToManagedTeams()) {
+			const read = await this.findOneOrFailByIdString(criteria, { relations: { teams: true } });
+			if (read.success) {
+				await this.assertReachesInvitation(read.record);
+			}
+		}
+
+		return await super.delete(criteria, options);
+	}
+
+	/**
+	 * Whether the caller handles only the invitations of the teams they manage, and the invitations of no team.
+	 *
+	 * Every employee holds the permissions the invitation routes ask for (ORG_INVITE_VIEW, ORG_INVITE_EDIT), and the
+	 * same permissions serve their own invitations (`GET /invite/me`, accepting or rejecting one), so the rule is
+	 * applied here rather than through the role. Without one of the {@link ORGANIZATION_WIDE_INVITE_GRANTS}, a caller
+	 * handles a team's invitations only when they manage the team, as only a team's managers decide on its join
+	 * requests. A call without a request user is an internal one and is left as it was.
+	 *
+	 * @returns True when the caller is confined to the teams they manage.
+	 */
+	private isConfinedToManagedTeams(): boolean {
+		const user = RequestContext.currentUser();
+		if (!user) {
+			return false;
+		}
+
+		const reachesEveryTeam = RequestContext.hasAnyPermission(ORGANIZATION_WIDE_INVITE_GRANTS);
+		return !reachesEveryTeam;
+	}
+
+	/**
+	 * The teams the caller manages among the ones named, or among every team they reach when none is named: the teams
+	 * they created, and the teams their employee manages as a member (`teamManagerMembershipWhere`), the managers who
+	 * decide on a team's join requests. A caller without an employee is a member of no team, and nothing is read for
+	 * them.
+	 *
+	 * @param teamIds - The teams to look at, or none for every team.
+	 * @returns The ids of the teams the caller manages.
+	 */
+	private async findManagedTeamIds(teamIds?: ID[]): Promise<ID[]> {
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return [];
+		}
+
+		const userId = RequestContext.currentUserId();
+		const teamFilter = teamIdsWhere(teamIds);
+		const managerMemberships = teamManagerMembershipWhere({ employeeId });
+		const managedAsMember = managerMemberships.map((members) => ({ ...teamFilter, members }));
+		const createdByCaller = { ...teamFilter, createdByUserId: userId };
+
+		const teams = await this.organizationTeamService.find({
+			select: { id: true },
+			where: [...managedAsMember, createdByCaller]
+		});
+		return teams.map((team) => team.id);
+	}
+
+	/**
+	 * The teams among `teams` that a caller confined to the teams they manage does not manage. None for any other
+	 * caller, and none for an invitation of no team.
+	 *
+	 * @param teams - The teams of an invitation.
+	 * @returns The teams out of the caller's reach.
+	 */
+	private async findTeamsOutOfReach(teams: IOrganizationTeam[]): Promise<IOrganizationTeam[]> {
+		if (isEmpty(teams)) {
+			return [];
+		}
+		if (!this.isConfinedToManagedTeams()) {
+			return [];
+		}
+
+		const teamIds = teams.map((team) => team.id);
+		const managedTeamIds = await this.findManagedTeamIds(teamIds);
+		return teams.filter((team) => !managedTeamIds.includes(team.id));
+	}
+
+	/**
+	 * Refuses to invite into a team the caller does not manage, when they are confined to the teams they manage. An
+	 * invitation into no team is left as it was.
+	 *
+	 * @param teams - The teams the invitation adds the invitee to.
+	 * @throws {ForbiddenException} When one of them is out of the caller's reach.
+	 */
+	private async assertManagesEveryTeam(teams: IOrganizationTeam[]): Promise<void> {
+		const teamsOutOfReach = await this.findTeamsOutOfReach(teams);
+		if (isNotEmpty(teamsOutOfReach)) {
+			throw new ForbiddenException('You can only invite people into the teams you manage.');
+		}
+	}
+
+	/**
+	 * Refuses an invitation of teams the caller manages none of, when they are confined to the teams they manage. An
+	 * invitation of no team is left as it was, and an invitation of several teams is reached through any one of
+	 * them, as the register lists it.
+	 *
+	 * @param invite - The invitation, read with its teams.
+	 * @throws {ForbiddenException} When the caller manages none of its teams.
+	 */
+	private async assertReachesInvitation(invite: IInvite): Promise<void> {
+		const teams = invite.teams ?? [];
+		const teamsOutOfReach = await this.findTeamsOutOfReach(teams);
+		const managesNoneOfItsTeams = isNotEmpty(teams) && teamsOutOfReach.length === teams.length;
+		if (managesNoneOfItsTeams) {
+			throw new ForbiddenException('You can only handle the invitations of the teams you manage.');
+		}
+	}
+
+	/**
+	 * The register's conditions kept, for a caller confined to the teams they manage, to the invitations of those teams
+	 * and, unless the request names a team, to the invitations of no team, which stay readable as before.
+	 *
+	 * Both alternatives name the team's id alone, so MikroORM reads them on one pivot-table join, as TypeORM reads them
+	 * on one left join.
+	 *
+	 * @param conditions - The conditions of the register request.
+	 * @param requestedTeamIds - The teams the request names, if any.
+	 * @returns The conditions the register is read with.
+	 */
+	private async keepTeamsInReach(
+		conditions: FindOptionsWhere<Invite>[],
+		requestedTeamIds?: ID[]
+	): Promise<FindOptionsWhere<Invite>[]> {
+		if (!this.isConfinedToManagedTeams()) {
+			return conditions;
+		}
+
+		const managedTeamIds = await this.findManagedTeamIds(requestedTeamIds);
+		const teamsInReach: FindOptionsWhere<Invite>[] = [{ teams: { id: In(managedTeamIds) } }];
+		if (!requestedTeamIds) {
+			teamsInReach.push({ teams: { id: IsNull() } });
+		}
+
+		const kept: FindOptionsWhere<Invite>[] = [];
+		for (const condition of conditions) {
+			for (const teamCondition of teamsInReach) {
+				kept.push({ ...condition, ...teamCondition });
+			}
+		}
+		return kept;
 	}
 
 	/**

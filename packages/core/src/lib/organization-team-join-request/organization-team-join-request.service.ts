@@ -6,7 +6,7 @@ import {
 	HttpStatus,
 	NotFoundException
 } from '@nestjs/common';
-import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions, In } from 'typeorm';
+import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -37,6 +37,7 @@ import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { teamManagerMembershipWhere } from '../organization-team-employee/team-manager-membership';
 import { LoginAttemptScope, LoginAttemptService } from '../auth/login-attempt.service';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 
@@ -515,10 +516,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		if (user.employeeId) {
 			const member = { tenantId, organizationTeamId, employeeId: user.employeeId };
-			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy([
-				{ ...member, isManager: true },
-				{ ...member, role: { name: In([RolesEnum.MANAGER, RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN]) } }
-			]);
+			const managerMemberships = teamManagerMembershipWhere(member);
+			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy(managerMemberships);
 			if (managesTeam) {
 				return;
 			}
