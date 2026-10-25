@@ -174,7 +174,18 @@
 					@for (row of topMembers; track row.id) {
 					<tr>
 						<td class="cell-main">
-							<a class="cell-title member-link" [routerLink]="['/pages/employees/view', row.employeeId]" [title]="row.name">
+							<a
+								class="cell-title member-link"
+								[routerLink]="['/pages/employees/view', row.employeeId]"
+								#cardPopover="nbPopover"
+								[nbPopover]="personCard"
+								[nbPopoverContext]="row.person"
+								nbPopoverTrigger="hover"
+								nbPopoverPlacement="top"
+								nbPopoverClass="person-popover"
+								(focus)="cardPopover.show()"
+								(blur)="cardPopover.hide()"
+							>
 								{{ row.name }}
 							</a>
 							<span class="cell-meta">{{ row.meta }}</span>
@@ -189,3 +200,8 @@
 		</div>
 	</section>
 </div>
+
+<!-- The member's hover card: the team page's assignee card. -->
+<ng-template #personCard let-person>
+	<gauzy-team-person-card [person]="person"></gauzy-team-person-card>
+</ng-template>
