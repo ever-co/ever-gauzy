@@ -115,7 +115,8 @@ const MIKRO_ORM_INVITE = new MikroOrmEntitySchema<MikroOrmInvite>({
  * Owner decision, 2026-10-25: without ALL_ORG_VIEW, ALL_ORG_EDIT or CHANGE_SELECTED_EMPLOYEE, a caller handles the
  * invitations of the teams they manage, as only a team's managers decide on its join requests: a member flagged
  * `isManager` or holding a MANAGER, ADMIN or SUPER_ADMIN team role, or the team's creator. Invitations of no team stay
- * as they were, and so does a call without a request user.
+ * as they were, and so does a call without a request user. The register lists an invitation to a manager of any of
+ * its teams; sending, resending and deleting one, which act for all its teams, take a manager of every one of them.
  */
 describe('InviteService - the invitations of a team are handled by its managers', () => {
 	const TENANT = 'tenant-1';
@@ -124,6 +125,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 	const EMPLOYEE = 'caller-employee';
 	const MANAGED_TEAM = { id: 'team-managed', name: 'Managed' };
 	const OTHER_TEAM = { id: 'team-other', name: 'Other' };
+	const DELETED_TEAM = { id: 'team-deleted', name: 'Deleted' };
 	/** The invitations of the managed team, as the read of a team's invitations answers them. */
 	const MANAGED_TEAM_INVITES = [{ id: 'invite-managed' }];
 	const INVITE_PERMISSIONS = [PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT];
@@ -204,6 +206,21 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			teams
 		};
 	}
+
+	/**
+	 * The service's read of an invitation's teams before a resend or a delete, soft-deleted teams included.
+	 *
+	 * @param service - The service.
+	 * @param teams - The teams the read answers.
+	 */
+	function readsTeamsOf(service: InviteService, teams: ISpecTeam[]) {
+		const read = jest.fn(async () => ({ success: true, record: invitationOf(teams) }));
+		Object.assign(service, { findOneOrFailByOptions: read });
+		return read;
+	}
+
+	/** The read of an invitation's teams the resend and the delete check it with. */
+	const TEAMS_OF_INVITATION_READ = { where: { id: 'invite-1' }, relations: { teams: true }, withDeleted: true };
 
 	afterEach(() => jest.restoreAllMocks());
 
@@ -315,7 +332,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			update = jest.spyOn(TenantAwareCrudService.prototype, 'update').mockResolvedValue({} as never);
 		});
 
-		/** Resends the team invitation of the given teams. */
+		/** Resends the team invitation of the given teams, read live for the email. */
 		function resend(service: InviteService, teams: ISpecTeam[]) {
 			const invitation = invitationOf(teams);
 			Object.assign(service, { findOneByIdString: jest.fn(async () => invitation) });
@@ -326,6 +343,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 		it('refuses an employee the invitation of a team they do not manage, and mails nothing', async () => {
 			signIn(EMPLOYEE);
 			const { service, findTeams, emailService } = build([]);
+			readsTeamsOf(service, [OTHER_TEAM]);
 
 			await expect(resend(service, [OTHER_TEAM])).rejects.toBeInstanceOf(ForbiddenException);
 
@@ -334,12 +352,25 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			expect(update).not.toHaveBeenCalled();
 		});
 
-		it('lets a manager of one of its teams resend it', async () => {
+		it('refuses a manager of only one of its teams, since the new token is for all of them', async () => {
 			signIn(EMPLOYEE);
 			const { service, emailService } = build([MANAGED_TEAM]);
+			readsTeamsOf(service, [MANAGED_TEAM, OTHER_TEAM]);
 
-			await resend(service, [MANAGED_TEAM, OTHER_TEAM]);
+			await expect(resend(service, [MANAGED_TEAM, OTHER_TEAM])).rejects.toBeInstanceOf(ForbiddenException);
 
+			expect(emailService.inviteTeamMember).not.toHaveBeenCalled();
+			expect(update).not.toHaveBeenCalled();
+		});
+
+		it('lets a manager of every one of its teams resend it', async () => {
+			signIn(EMPLOYEE);
+			const { service, emailService } = build([MANAGED_TEAM]);
+			const read = readsTeamsOf(service, [MANAGED_TEAM]);
+
+			await resend(service, [MANAGED_TEAM]);
+
+			expect(read).toHaveBeenCalledWith(TEAMS_OF_INVITATION_READ);
 			expect(emailService.inviteTeamMember).toHaveBeenCalledTimes(1);
 			expect(update).toHaveBeenCalledTimes(1);
 		});
@@ -347,10 +378,33 @@ describe('InviteService - the invitations of a team are handled by its managers'
 		it('lets an employee resend an invitation of no team, as before', async () => {
 			signIn(EMPLOYEE);
 			const { service, findTeams, emailService } = build([]);
+			readsTeamsOf(service, []);
 
 			await resend(service, []);
 
 			expect(findTeams).not.toHaveBeenCalled();
+			expect(emailService.inviteTeamMember).toHaveBeenCalledTimes(1);
+		});
+
+		it('refuses an invitation whose team is soft-deleted, which the live read shows with no team', async () => {
+			signIn(EMPLOYEE);
+			const { service, emailService } = build([]);
+			readsTeamsOf(service, [DELETED_TEAM]);
+
+			await expect(resend(service, [])).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(emailService.inviteTeamMember).not.toHaveBeenCalled();
+			expect(update).not.toHaveBeenCalled();
+		});
+
+		it('resends for an admin without reading the teams again', async () => {
+			signIn(EMPLOYEE, [...INVITE_PERMISSIONS, PermissionsEnum.ALL_ORG_EDIT]);
+			const { service, emailService } = build([]);
+			const read = readsTeamsOf(service, [OTHER_TEAM]);
+
+			await resend(service, [OTHER_TEAM]);
+
+			expect(read).not.toHaveBeenCalled();
 			expect(emailService.inviteTeamMember).toHaveBeenCalledTimes(1);
 		});
 	});
@@ -362,18 +416,20 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			remove = jest.spyOn(TenantAwareCrudService.prototype, 'delete').mockResolvedValue({ affected: 1, raw: [] });
 		});
 
-		/** The service, reading the invitation of the given teams. */
-		function withInvitation(teams: ISpecTeam[], managedTeams: { id: string }[]) {
-			const built = build(managedTeams);
-			const invitation = invitationOf(teams);
-			const read = jest.fn(async () => ({ success: true, record: invitation }));
-			Object.assign(built.service, { findOneOrFailByIdString: read });
-			return { ...built, read };
-		}
-
 		it('refuses an employee the invitation of a team they do not manage, and deletes nothing', async () => {
 			signIn(EMPLOYEE);
-			const { service } = withInvitation([OTHER_TEAM], []);
+			const { service } = build([]);
+			readsTeamsOf(service, [OTHER_TEAM]);
+
+			await expect(service.delete('invite-1')).rejects.toBeInstanceOf(ForbiddenException);
+
+			expect(remove).not.toHaveBeenCalled();
+		});
+
+		it('refuses a manager of only one of its teams, since the delete cancels it for all of them', async () => {
+			signIn(EMPLOYEE);
+			const { service } = build([MANAGED_TEAM]);
+			readsTeamsOf(service, [MANAGED_TEAM, OTHER_TEAM]);
 
 			await expect(service.delete('invite-1')).rejects.toBeInstanceOf(ForbiddenException);
 
@@ -382,17 +438,19 @@ describe('InviteService - the invitations of a team are handled by its managers'
 
 		it('lets a manager of its team delete it', async () => {
 			signIn(EMPLOYEE);
-			const { service, read } = withInvitation([MANAGED_TEAM], [MANAGED_TEAM]);
+			const { service } = build([MANAGED_TEAM]);
+			const read = readsTeamsOf(service, [MANAGED_TEAM]);
 
 			await service.delete('invite-1');
 
-			expect(read).toHaveBeenCalledWith('invite-1', { relations: { teams: true } });
+			expect(read).toHaveBeenCalledWith(TEAMS_OF_INVITATION_READ);
 			expect(remove).toHaveBeenCalledWith('invite-1', undefined);
 		});
 
 		it('lets an employee delete an invitation of no team, as before', async () => {
 			signIn(EMPLOYEE);
-			const { service, findTeams } = withInvitation([], []);
+			const { service, findTeams } = build([]);
+			readsTeamsOf(service, []);
 
 			await service.delete('invite-1');
 
@@ -400,9 +458,22 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			expect(remove).toHaveBeenCalledWith('invite-1', undefined);
 		});
 
+		it('deletes nothing unchecked when the invitation cannot be read', async () => {
+			signIn(EMPLOYEE);
+			const { service } = build([]);
+			const read = jest.fn(async () => ({ success: false, error: new Error('read failed') }));
+			Object.assign(service, { findOneOrFailByOptions: read });
+
+			const result = await service.delete('invite-1');
+
+			expect(result).toEqual({ raw: [], affected: 0 });
+			expect(remove).not.toHaveBeenCalled();
+		});
+
 		it('deletes for an admin without reading the invitation', async () => {
 			signIn(EMPLOYEE, [...INVITE_PERMISSIONS, PermissionsEnum.ALL_ORG_EDIT]);
-			const { service, read } = withInvitation([OTHER_TEAM], []);
+			const { service } = build([]);
+			const read = readsTeamsOf(service, [OTHER_TEAM]);
 
 			await service.delete('invite-1');
 

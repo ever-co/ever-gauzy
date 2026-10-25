@@ -154,6 +154,12 @@ function teamsCreatedBy(userId: ID | null, teamFilter: { id?: FindOperator<ID> }
 	return [{ ...teamFilter, createdByUserId: userId }];
 }
 
+/** The refusal of an invitation into a team the caller does not manage. */
+const INVITE_INTO_UNMANAGED_TEAM = 'You can only invite people into the teams you manage.';
+
+/** The refusal of a resend or a delete of an invitation that names a team the caller does not manage. */
+const HANDLE_INVITATION_OF_UNMANAGED_TEAM = 'You can only handle the invitations of the teams you manage.';
+
 /**
  * The condition on an invitation's id that keeps the invitations in reach, or, when the request names an invitation,
  * that invitation if it is in reach.
@@ -332,7 +338,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 
 		// Accepting adds the invitee to every team of the invitation, which only the managers of those teams decide.
-		await this.assertManagesEveryTeam(organizationTeams);
+		await this.assertManagesEveryTeam(organizationTeams, INVITE_INTO_UNMANAGED_TEAM);
 
 		// Invited Organization
 		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
@@ -609,7 +615,14 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			throw new ForbiddenException('You cannot resend an invitation for this role.');
 		}
 
-		await this.assertReachesInvitation(invite);
+		// A resend mints a new token for every team of the invitation, so it takes a manager of them all, as sending does.
+		if (this.isConfinedToManagedTeams()) {
+			const teamsOfInvitation = await this.findTeamsOfInvitation(inviteId);
+			if (!teamsOfInvitation) {
+				throw new ForbiddenException(HANDLE_INVITATION_OF_UNMANAGED_TEAM);
+			}
+			await this.assertManagesEveryTeam(teamsOfInvitation, HANDLE_INVITATION_OF_UNMANAGED_TEAM);
+		}
 
 		// Invited organization
 		const organization: IOrganization = invite.organization;
@@ -1059,7 +1072,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 	/**
 	 * Deletes an invitation (`DELETE /invite/:id`, GraphQL `deleteInvite`). A caller confined to the teams they manage
-	 * deletes the invitations of those teams and the invitations of no team.
+	 * deletes the invitations of no team, and the invitations whose teams they all manage: the delete cancels the
+	 * invitation for every one of its teams.
 	 *
 	 * @param criteria - The invitation's id, or the conditions of the rows to delete.
 	 * @param options - Additional conditions.
@@ -1072,10 +1086,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const namesOneInvitation = typeof criteria === 'string';
 
 		if (namesOneInvitation && this.isConfinedToManagedTeams()) {
-			const read = await this.findOneOrFailByIdString(criteria, { relations: { teams: true } });
-			if (read.success) {
-				await this.assertReachesInvitation(read.record);
+			const teamsOfInvitation = await this.findTeamsOfInvitation(criteria);
+			// Nothing is deleted without its teams checked: an invitation that cannot be read is answered as a missing one.
+			if (!teamsOfInvitation) {
+				return { raw: [], affected: 0 };
 			}
+			await this.assertManagesEveryTeam(teamsOfInvitation, HANDLE_INVITATION_OF_UNMANAGED_TEAM);
 		}
 
 		return await super.delete(criteria, options);
@@ -1152,34 +1168,44 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	/**
-	 * Refuses to invite into a team the caller does not manage, when they are confined to the teams they manage. An
-	 * invitation into no team is left as it was.
+	 * Refuses an invitation that names a team the caller does not manage, when they are confined to the teams they
+	 * manage. An invitation of no team is left as it was.
 	 *
-	 * @param teams - The teams the invitation adds the invitee to.
+	 * @param teams - The teams of the invitation.
+	 * @param refusal - The reason the caller is refused.
 	 * @throws {ForbiddenException} When one of them is out of the caller's reach.
 	 */
-	private async assertManagesEveryTeam(teams: IOrganizationTeam[]): Promise<void> {
+	private async assertManagesEveryTeam(teams: IOrganizationTeam[], refusal: string): Promise<void> {
 		const teamsOutOfReach = await this.findTeamsOutOfReach(teams);
 		if (isNotEmpty(teamsOutOfReach)) {
-			throw new ForbiddenException('You can only invite people into the teams you manage.');
+			throw new ForbiddenException(refusal);
 		}
 	}
 
 	/**
-	 * Refuses an invitation of teams the caller manages none of, when they are confined to the teams they manage. An
-	 * invitation of no team is left as it was, and an invitation of several teams is reached through any one of
-	 * them, as the register lists it.
+	 * The teams an invitation names, soft-deleted ones included: a deleted team can be recovered with its invitations,
+	 * so an invitation of a deleted team is not one of no team. A deleted team is never among the teams the caller
+	 * manages, which are read live.
 	 *
-	 * @param invite - The invitation, read with its teams.
-	 * @throws {ForbiddenException} When the caller manages none of its teams.
+	 * @param inviteId - The invitation.
+	 * @returns Its teams, or null when it cannot be read.
 	 */
-	private async assertReachesInvitation(invite: IInvite): Promise<void> {
-		const teams = invite.teams ?? [];
-		const teamsOutOfReach = await this.findTeamsOutOfReach(teams);
-		const managesNoneOfItsTeams = isNotEmpty(teams) && teamsOutOfReach.length === teams.length;
-		if (managesNoneOfItsTeams) {
-			throw new ForbiddenException('You can only handle the invitations of the teams you manage.');
+	private async findTeamsOfInvitation(inviteId: ID): Promise<IOrganizationTeam[] | null> {
+		// The connection drops an undefined id, and the read would then answer any invitation of the tenant.
+		if (!inviteId) {
+			return null;
 		}
+
+		// Read by options: the read by id does not hand `withDeleted` to TypeORM, whose join then leaves deleted teams out.
+		const read = await this.findOneOrFailByOptions({
+			where: { id: inviteId },
+			relations: { teams: true },
+			withDeleted: true
+		});
+		if (!read.success) {
+			return null;
+		}
+		return read.record.teams ?? [];
 	}
 
 	/**
