@@ -263,13 +263,13 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			});
 		});
 
-		it('leaves a caller without an employee the invitations of no team, without reading any team', async () => {
+		it('reads the teams a caller without an employee created, whatever permissions they hold now', async () => {
 			signIn(null);
-			const { service, findTeams } = build([MANAGED_TEAM]);
+			const { service, findTeams } = build([]);
 
 			await service.findAllInvites({} as never);
 
-			expect(findTeams).not.toHaveBeenCalled();
+			expect(findTeams).toHaveBeenCalledWith({ select: { id: true }, where: [{ createdByUserId: CALLER }] });
 			expect(findAll).toHaveBeenCalledWith({
 				where: [
 					{ tenantId: TENANT, id: In([]) },
@@ -278,8 +278,8 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			});
 		});
 
-		it('keeps a team creator without an employee to the invitations of the teams they created', async () => {
-			signIn(null, [...INVITE_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD]);
+		it('keeps a team creator without an employee, nor ORG_TEAM_ADD any more, to the teams they created', async () => {
+			signIn(null);
 			const { service, findTeams } = build([MANAGED_TEAM]);
 
 			await service.findAllInvites({} as never);
