@@ -100,7 +100,7 @@ jobs:
     # for the whole gate, and both halves of its work (yarn install, zstd -T0) scale with cores.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # 360, not 180. This job now carries the install for the ENTIRE gate, alone, and a cold install
     # here has no yarn tarball cache behind it: test_playwright.yml's equivalent deps job measured the
     # same work at 88 min, 3h20m and 3h46m. At 180 a cold miss would time out, and because the four
@@ -108,9 +108,9 @@ jobs:
     # costs nothing on the warm path, which is a lookup and an exit.
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -122,7 +122,7 @@ jobs:
 
       - name: Restore node_modules archive
         id: cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           # NOT lookup-only. It was, and that made every warm run fail: on a cache HIT the archive
           # is never written to disk, so `Archive node_modules` is skipped along with the other
@@ -166,7 +166,7 @@ jobs:
 
       - name: Save node_modules archive
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         continue-on-error: true
         # Explicit save so a FAILED install can never publish a half-built tree. BEST EFFORT, and only
         # a CROSS-run optimization - see the upload below for why it cannot be the handoff.
@@ -209,12 +209,12 @@ jobs:
     # fails loudly and this reports a real red instead of vanishing.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -233,7 +233,7 @@ jobs:
         # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
         # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
         if: steps.artifact.outcome != 'success'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
@@ -275,7 +275,7 @@ jobs:
     # fails loudly and this reports a real red instead of vanishing.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 180
     services:
       # Both service images come from the Amazon ECR Public mirror of the Docker official images
@@ -308,9 +308,9 @@ jobs:
           --health-cmd "mysqladmin ping -h 127.0.0.1 -umigration_test -pmigration_test"
           --health-interval 5s --health-timeout 5s --health-retries 24
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -329,7 +329,7 @@ jobs:
         # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
         # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
         if: steps.artifact.outcome != 'success'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
@@ -500,12 +500,12 @@ jobs:
     # fails loudly and this reports a real red instead of vanishing.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -524,7 +524,7 @@ jobs:
         # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
         # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
         if: steps.artifact.outcome != 'success'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
@@ -580,12 +580,12 @@ jobs:
     if: >-
       ${{ !cancelled() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' ||
       github.ref == 'refs/heads/master') }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -610,7 +610,7 @@ jobs:
         # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
         # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
         if: steps.artifact.outcome != 'success'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
@@ -660,7 +660,7 @@ jobs:
     # `skipped` (build-desktop on PR runs) still allows deletion - only failure/cancelled block it.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read

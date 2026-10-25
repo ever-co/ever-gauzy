@@ -92,7 +92,7 @@ jobs:
     # PR builds and the demo image build queue on. Consequence: the image installs from the public npm registry (the
     # internal Verdaccio VIP is unreachable from here, and its public token route truncates large
     # tarballs), so no Verdaccio argument or secret is passed — every package in yarn.lock is public.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 330
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5

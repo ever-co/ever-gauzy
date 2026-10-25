@@ -45,7 +45,7 @@ env:
 jobs:
   unit-tests:
     name: unit-tests
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # A cold dependency install on this fleet is measured in hours, not minutes (the build workflow
     # documents 88 min / 3h20m / 3h46m for the same work). The ceiling costs nothing on the warm
     # path, which is a cache lookup.
@@ -59,13 +59,13 @@ jobs:
       # Action versions deliberately match `build.yml` rather than the newer majors used elsewhere in
       # the repository: this job consumes the node_modules cache that workflow writes, so the
       # producer and the consumer are kept on the same actions.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # This job only reads the tree — it never pushes — so the checkout credential does not need
           # to outlive the step in `.git/config`.
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -73,7 +73,7 @@ jobs:
         # Best effort: the same key the build workflow writes, so a stage push that already built
         # this exact lockfile reuses that tree instead of installing again. `restore-node-modules.sh`
         # below installs from scratch when the archive is not there, so a miss is not fatal.
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}

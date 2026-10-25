@@ -139,7 +139,7 @@ jobs:
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs, the
     # schedule and manual runs still run. GitHub-hosted: nothing here needs the self-hosted fleet.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
       audit: ${{ steps.scope.outputs.audit }}
@@ -283,7 +283,7 @@ jobs:
     needs: inputs
     if: ${{ !cancelled() && needs.inputs.result == 'success' && needs.inputs.outputs.audit == 'true' }}
     # GitHub-hosted on purpose: the capture needs Docker with NET_RAW and NET_ADMIN.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 240
     strategy:
       fail-fast: false
@@ -469,7 +469,7 @@ jobs:
     name: egress-audit (static-bundle)
     needs: inputs
     if: ${{ !cancelled() && needs.inputs.result == 'success' && needs.inputs.outputs.audit == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout

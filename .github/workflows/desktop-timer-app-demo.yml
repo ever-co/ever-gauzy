@@ -28,7 +28,7 @@ jobs:
     # 'develop' -> 'local-apps' promotion PR (the tag then points at the merged
     # 'develop' tip, HEAD^2). Retries absorb the short delay until 'Release Demo' tags
     # the 'develop' commit.
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -161,7 +161,9 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Setup MSVC (VS 2022 dev env)
-        uses: ilammy/msvc-dev-cmd@v1
+        # Local replacement for ilammy/msvc-dev-cmd@v1, whose every release runs on the deprecated Node 20:
+        # same vcvarsall.bat environment export, same VS instance (see the action's header).
+        uses: ./.github/actions/setup-msvc-dev-env
         with:
           arch: x64
           # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
@@ -170,8 +172,9 @@ jobs:
           vsversion: 2022
 
       - name: Put setup-node's Node back ahead of the VS dev env on PATH
-        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
-        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        # The MSVC step above exports the whole PATH (ilammy/msvc-dev-cmd did, and its local replacement keeps
+        # that), which put an older Node (24.x) ahead of the one installed above, so yarn refused the engine
+        # (">=26"). The same setup-node again, from the tool cache, puts it first.
         uses: actions/setup-node@v6
         with:
           node-version: 26.12.1
