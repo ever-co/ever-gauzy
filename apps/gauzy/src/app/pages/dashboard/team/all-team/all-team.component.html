@@ -32,20 +32,20 @@
 	<div class="kpi">
 		<div class="kpi-head">
 			<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
-			<!-- Opens the projects behind the figure — always there, empty days included. In Nebular's
-			     naming `bottom-start` lines the popover's END edge up with the button's, so it opens into
-			     the page; `noop` keeps it there — Nebular's vertical fallback only knows centred top and
-			     bottom, which would push it off the screen's edge. The tiles sit at the top of the page,
-			     so there is always room below. -->
+			<!-- Opens the projects behind the figure — always there, empty days included. Each click fits
+			     the popover to the screen first (fitProjectsPopover): below the button, or above it when
+			     there is more room there, with the list capped to that room. -->
 			<button
 				type="button"
 				class="kpi-action"
 				[nbPopover]="projectsList"
-				[nbPopoverContext]="projects"
+				#projectsPopover="nbPopover"
+				[nbPopoverContext]="{ projects: projects, maxHeight: 352, maxWidth: 320 }"
 				nbPopoverTrigger="click"
 				nbPopoverPlacement="bottom-start"
 				nbPopoverAdjustment="noop"
-				nbPopoverClass="projects-popover"
+				(click)="fitProjectsPopover(projectsPopover, $event.currentTarget, projects)"
+				nbPopoverClass="gz-projects-popover"
 				[attr.aria-label]="('BUTTONS.VIEW' | translate) + ': ' + ('TIMESHEET.PROJECTS_WORKED' | translate)"
 			>
 				{{ 'BUTTONS.VIEW' | translate }}
@@ -212,6 +212,10 @@
 </div>
 
 <!-- The projects behind a "Projects worked" tile, opened from its View button. -->
-<ng-template #projectsList let-projects>
-	<gauzy-team-projects-list [projects]="projects"></gauzy-team-projects-list>
+<ng-template #projectsList let-list>
+	<gauzy-team-projects-list
+		[projects]="list.projects"
+		[maxHeight]="list.maxHeight"
+		[maxWidth]="list.maxWidth"
+	></gauzy-team-projects-list>
 </ng-template>

@@ -30,6 +30,7 @@ import {
 	activityOf,
 	activityTone,
 	avatarOf,
+	fitProjectsPopover,
 	formatDuration,
 	formatPercent,
 	initialsOf,
@@ -67,6 +68,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	public readonly formatDuration = formatDuration;
 	public readonly formatPercent = formatPercent;
 	public readonly activityTone = activityTone;
+	/** Fits the "Projects worked" popover to the screen as it opens. */
+	protected readonly fitProjectsPopover = fitProjectsPopover;
 
 	private _logs: ITimeLog[] = [];
 	private _countsStatistics: any;
@@ -485,7 +488,6 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				// From the team's own slots, weighted by time — not an average of members' whole-day figures.
 				activity: activityOf(working.flatMap((member) => member.slots ?? [])) ?? 0,
 				projects: projectList.filter((project) => project.duration > 0).length,
-				linkedProjects: projectList.filter((project) => project.isLinked).length,
 				projectList,
 				managers: members
 					.filter((member) => this._isManager(member))
@@ -568,7 +570,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	 * person on several teams still counts once per project.
 	 */
 	private _projectsOf(members: any[], linked: any[]): IProjectWorked[] {
-		const byProject = new Map<string, { project: any; duration: number; people: Set<string>; isLinked: boolean }>();
+		let byProject = new Map<string, { project: any; duration: number; people: Set<string>; isLinked: boolean }>();
 		for (const project of linked) {
 			if (project?.id && !byProject.has(project.id)) {
 				byProject.set(project.id, { project, duration: 0, people: new Set<string>(), isLinked: true });
@@ -576,7 +578,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		}
 		for (const member of members) {
 			for (const { project, duration } of member.projectTimes ?? []) {
-				const entry = byProject.get(project.id) ?? { project, duration: 0, people: new Set<string>(), isLinked: false };
+				let entry = byProject.get(project.id) ?? { project, duration: 0, people: new Set<string>(), isLinked: false };
 				entry.duration += duration;
 				entry.people.add(member.employeeId);
 				byProject.set(project.id, entry);

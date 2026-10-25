@@ -5,6 +5,7 @@ import {
 	IRankedMember,
 	ITeamRow,
 	activityTone,
+	fitProjectsPopover,
 	formatDuration,
 	formatPercent
 } from '../team-dashboard.utils';
@@ -39,6 +40,8 @@ export class AllTeamComponent {
 	public readonly formatDuration = formatDuration;
 	public readonly formatPercent = formatPercent;
 	public readonly activityTone = activityTone;
+	/** Fits the "Projects worked" popover to the screen as it opens. */
+	protected readonly fitProjectsPopover = fitProjectsPopover;
 
 	@Input() public teams: ITeamRow[] = [];
 	@Input() public membersByTeam: Record<string, IMemberRow[]> = {};
