@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, Logger } from '@nes
 import {
 	IActivepiecesConnectionsListResponse,
 	IActivepiecesListResponse,
+	IActivepiecesMcpServer,
 	IActivepiecesMcpServersListResponse,
 	IActivepiecesPlatformStatus,
 	IActivepiecesProject
@@ -13,6 +14,7 @@ import {
 	ACTIVEPIECES_PROJECTS_URL
 } from './activepieces.config';
 import { ActivepiecesCredentialsService, IActivepiecesOperatorSettings } from './activepieces-credentials.service';
+import { isActivepiecesApiKey, MCP_NEEDS_USER_TOKEN, projectMcpServerUrl } from './activepieces-mcp.service';
 import {
 	ActivepiecesPlatformProjectQueryDto,
 	LinkActivepiecesTenantProjectDto,
@@ -204,17 +206,41 @@ export class ActivepiecesPlatformService {
 	}
 
 	/**
-	 * The MCP servers of any project of the platform (the controller strips their tokens).
+	 * The MCP servers of any project of the platform (the controller strips their tokens): under Activepieces MCP 2.0
+	 * (the default) the project's one server, `GET /v1/projects/:projectId/mcp-server`; with
+	 * `GAUZY_ACTIVEPIECES_MCP_API=legacy`, the `GET /v1/mcp-servers` list it replaced.
+	 *
+	 * Both accept only user tokens: an installation key that is an Activepieces API key (`sk-…`) is refused here with
+	 * 400 and an explanation, before anything is sent, rather than sent for Activepieces to refuse.
 	 */
 	async listMcpServers(query: ActivepiecesPlatformProjectQueryDto): Promise<IActivepiecesMcpServersListResponse> {
 		const settings = this.credentials.operatorSettings();
-		return this.credentials.requestActivepieces<IActivepiecesMcpServersListResponse>(
+		const key = this.platformKey(settings);
+		if (isActivepiecesApiKey(key)) {
+			throw new BadRequestException(
+				`${MCP_NEEDS_USER_TOKEN} The installation's key (GAUZY_ACTIVEPIECES_API_KEY) is an API key: read a project's MCP server as its tenant, in the project_token connection mode.`
+			);
+		}
+		if (settings.mcpApi === 'legacy') {
+			return this.credentials.requestActivepieces<IActivepiecesMcpServersListResponse>(
+				'get',
+				ACTIVEPIECES_MCP_SERVERS_URL,
+				key,
+				'list the MCP servers of the project',
+				{ params: compact({ ...query }) }
+			);
+		}
+		const server = await this.credentials.requestActivepieces<IActivepiecesMcpServer>(
 			'get',
-			ACTIVEPIECES_MCP_SERVERS_URL,
-			this.platformKey(settings),
-			'list the MCP servers of the project',
-			{ params: compact({ ...query }) }
+			projectMcpServerUrl(query.projectId),
+			key,
+			'read the MCP server of the project'
 		);
+		return {
+			data: server ? [{ ...server, projectId: server.projectId ?? query.projectId }] : [],
+			next: null,
+			previous: null
+		};
 	}
 
 	private platformKey(settings: IActivepiecesOperatorSettings): string {

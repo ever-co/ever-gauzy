@@ -48,6 +48,9 @@ export interface IActivepiecesCredential {
 	readonly enforceProject: boolean;
 }
 
+/** The MCP routes of the installation's Activepieces: MCP 2.0 (`v2`, the default) or the `legacy` routes before it. */
+export type ActivepiecesMcpApi = 'v2' | 'legacy';
+
 /** What the operator of the installation configured. Never handed to a tenant. */
 export interface IActivepiecesOperatorSettings {
 	readonly platformApiKey: string;
@@ -55,6 +58,8 @@ export interface IActivepiecesOperatorSettings {
 	readonly signingPrivateKey: string;
 	readonly tenantProjectsEnabled: boolean;
 	readonly externalIdPrefix: string;
+	/** The MCP routes to call (`GAUZY_ACTIVEPIECES_MCP_API`); MCP 2.0 when not stated. */
+	readonly mcpApi?: ActivepiecesMcpApi;
 }
 
 /** A project token is obtained again when it has less than this left (Activepieces issues them for 7 days). */
@@ -162,7 +167,8 @@ export class ActivepiecesCredentialsService {
 			signingKeyId: text(config.signingKeyId),
 			signingPrivateKey: text(config.signingPrivateKey),
 			tenantProjectsEnabled: config.tenantProjectsEnabled !== false,
-			externalIdPrefix: text(config.projectExternalIdPrefix) || ACTIVEPIECES_DEFAULT_EXTERNAL_ID_PREFIX
+			externalIdPrefix: text(config.projectExternalIdPrefix) || ACTIVEPIECES_DEFAULT_EXTERNAL_ID_PREFIX,
+			mcpApi: config.mcpApi === 'legacy' ? 'legacy' : 'v2'
 		};
 	}
 

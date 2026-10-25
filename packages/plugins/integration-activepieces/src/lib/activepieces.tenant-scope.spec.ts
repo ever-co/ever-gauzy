@@ -29,9 +29,25 @@ const PINNED: IActivepiecesCredential = {
 	enforceProject: true
 };
 
-function credentialsFor(credential: IActivepiecesCredential) {
+/** A tenant pinned to its own project by a project token (a user token): the credential MCP accepts. */
+const TOKEN_PINNED: IActivepiecesCredential = {
+	mode: ActivepiecesConnectionMode.PROJECT_TOKEN,
+	token: 'eyJhbGciOiJSUzI1NiJ9.project-token.signature',
+	projectId: 'proj-a',
+	enforceProject: true
+};
+
+function credentialsFor(credential: IActivepiecesCredential, mcpApi: 'v2' | 'legacy' = 'v2') {
 	const credentials = new ActivepiecesCredentialsService({} as any, {} as any, {} as any, {} as any, {} as any);
 	jest.spyOn(credentials, 'resolve').mockResolvedValue(credential);
+	jest.spyOn(credentials, 'operatorSettings').mockReturnValue({
+		platformApiKey: '',
+		signingKeyId: '',
+		signingPrivateKey: '',
+		tenantProjectsEnabled: true,
+		externalIdPrefix: 'gauzy-tenant-',
+		mcpApi
+	});
 	return credentials;
 }
 
@@ -135,7 +151,9 @@ describe('Activepieces — a tenant pinned to its own project', () => {
 		});
 	});
 
-	describe('MCP servers', () => {
+	// The legacy MCP routes (`GAUZY_ACTIVEPIECES_MCP_API=legacy`), under a project token: MCP accepts only user
+	// tokens, so the installation's key (`platform_project`) never reaches them (see activepieces-mcp.v2.spec.ts).
+	describe('MCP servers (legacy routes)', () => {
 		function mcpService(server: { id: string; projectId: string }) {
 			const http = {
 				request: jest.fn((config: any) =>
@@ -154,7 +172,12 @@ describe('Activepieces — a tenant pinned to its own project', () => {
 					})
 				)
 			};
-			const service = new ActivepiecesMcpService(http as any, {} as any, {} as any, credentialsFor(PINNED));
+			const service = new ActivepiecesMcpService(
+				http as any,
+				{} as any,
+				{} as any,
+				credentialsFor(TOKEN_PINNED, 'legacy')
+			);
 			return { service, http };
 		}
 

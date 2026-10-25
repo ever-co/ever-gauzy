@@ -225,7 +225,9 @@ export const environment: IEnvironment = {
 		tenantProjectsEnabled: !['false', '0', 'no', 'off'].includes(
 			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
 		),
-		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX
+		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX,
+		// MCP 2.0 routes unless `legacy` (an Activepieces older than November 2025)
+		mcpApi: (process.env.GAUZY_ACTIVEPIECES_MCP_API ?? '').trim().toLowerCase() === 'legacy' ? 'legacy' : 'v2'
 	},
 
 	sim: {
