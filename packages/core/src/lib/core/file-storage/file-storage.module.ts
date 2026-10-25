@@ -13,11 +13,11 @@ export class FileStorageModule implements NestModule {
 	 * @param {MiddlewareConsumer} consumer - The NestJS `MiddlewareConsumer` instance used to apply middleware.
 	 *
 	 * @description
-	 * This method applies the `TenantSettingsMiddleware` to all routes (`'*'`).
+	 * This method applies the `TenantSettingsMiddleware` to all routes (`'{*splat}'`, the Nest 11 / Express 5 catch-all).
 	 * The middleware will be executed for every incoming request, allowing tenant-specific settings
 	 * to be processed before handling requests.
 	 */
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(TenantSettingsMiddleware).forRoutes('*');
+		consumer.apply(TenantSettingsMiddleware).forRoutes('{*splat}');
 	}
 }
