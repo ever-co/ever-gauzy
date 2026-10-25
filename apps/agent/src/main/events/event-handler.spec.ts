@@ -1,28 +1,15 @@
 /**
- * The agent restarted tracking whenever the device woke from sleep, even when the person had stopped it: the resume
- * handler started tracking unconditionally, and with nothing paused it started a brand-new timer. Waking up now resumes
- * only tracking that the sleep paused.
- *
- * The handler is built with stand-ins for the workers, windows and libraries it reaches; the pause/resume state lives
- * on a fake `PullActivities` that behaves like the real one (`stopTracking(true)` pauses, `stopTracking()` stops and
- * drops a pause, `startTracking()` starts).
+ * The agent restarted tracking whenever the device woke from sleep, even when the person had stopped it. The handler
+ * now hands sleep and wake-up events to the tracking worker, which resumes only tracking that the sleep paused (its
+ * behaviour is covered by `pull-activities.spec.ts`), and the person's stop stays a real stop rather than a pause.
  */
 const mockPullActivities = {
 	running: false,
-	isPaused: false,
-	startedPausedDate: null as Date | null,
 	updateAppUserAuth: jest.fn(),
-	recordIdleTime: jest.fn(async () => undefined),
-	startTracking: jest.fn(async (_isResume?: boolean) => {
-		mockPullActivities.running = true;
-	}),
-	stopTracking: jest.fn(async (isPaused = false) => {
-		mockPullActivities.running = false;
-		if (!isPaused) {
-			mockPullActivities.isPaused = false;
-			mockPullActivities.startedPausedDate = null;
-		}
-	})
+	pauseForSleep: jest.fn(async () => undefined),
+	resumeAfterSleep: jest.fn(async () => undefined),
+	startTracking: jest.fn(async () => undefined),
+	stopTracking: jest.fn(async () => undefined)
 };
 
 jest.mock('electron', () => ({ app: { quit: jest.fn() } }));
@@ -56,89 +43,32 @@ jest.mock('../util', () => ({
 import EventHandler from './event-handler';
 import { MAIN_EVENT_TYPE } from '../../constant';
 
-describe('EventHandler — wake from sleep', () => {
+describe('EventHandler — sleep and wake-up', () => {
 	let handler: EventHandler;
-
-	const sleep = () => handler.handleEvent({ type: MAIN_EVENT_TYPE.ACTIVITY_PAUSED });
-	const wake = () => handler.handleEvent({ type: MAIN_EVENT_TYPE.ACTIVITY_RESUME });
-	const stopByPerson = () => handler.handleEvent({ type: MAIN_EVENT_TYPE.STOP_TIMER });
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		Object.assign(mockPullActivities, { running: false, isPaused: false, startedPausedDate: null });
 		handler = new EventHandler();
 	});
 
-	it('leaves tracking stopped after a wake-up when the person had stopped it before the sleep', async () => {
-		mockPullActivities.running = true;
-		await stopByPerson();
-		expect(mockPullActivities.running).toBe(false);
+	it('pauses tracking for a device sleep through the worker', async () => {
+		await handler.handleEvent({ type: MAIN_EVENT_TYPE.ACTIVITY_PAUSED });
 
-		await sleep();
-		await wake();
+		expect(mockPullActivities.pauseForSleep).toHaveBeenCalledTimes(1);
+		expect(mockPullActivities.stopTracking).not.toHaveBeenCalled();
+	});
 
+	it('hands the wake-up to the worker instead of starting tracking itself', async () => {
+		await handler.handleEvent({ type: MAIN_EVENT_TYPE.ACTIVITY_RESUME });
+
+		expect(mockPullActivities.resumeAfterSleep).toHaveBeenCalledTimes(1);
 		expect(mockPullActivities.startTracking).not.toHaveBeenCalled();
-		expect(mockPullActivities.recordIdleTime).not.toHaveBeenCalled();
-		expect(mockPullActivities.running).toBe(false);
 	});
 
-	it('leaves tracking stopped after a wake-up when it never ran', async () => {
-		await sleep();
-		await wake();
+	it("treats the person's stop as a real stop, not a pause", async () => {
+		await handler.handleEvent({ type: MAIN_EVENT_TYPE.STOP_TIMER });
 
-		expect(mockPullActivities.startTracking).not.toHaveBeenCalled();
-		expect(mockPullActivities.running).toBe(false);
-	});
-
-	it('resumes tracking that was running when the device went to sleep, continuing the same timer', async () => {
-		mockPullActivities.running = true;
-
-		await sleep();
-		expect(mockPullActivities.stopTracking).toHaveBeenCalledWith(true);
-		expect(mockPullActivities.isPaused).toBe(true);
-		expect(mockPullActivities.startedPausedDate).toBeInstanceOf(Date);
-
-		await wake();
-
-		expect(mockPullActivities.recordIdleTime).toHaveBeenCalledTimes(1);
-		expect(mockPullActivities.startTracking).toHaveBeenCalledTimes(1);
-		expect(mockPullActivities.startTracking).toHaveBeenCalledWith(true);
-		expect(mockPullActivities.running).toBe(true);
-		expect(mockPullActivities.isPaused).toBe(false);
-		expect(mockPullActivities.startedPausedDate).toBeNull();
-	});
-
-	it('does not resume tracking the person stopped while the sleep kept it paused', async () => {
-		mockPullActivities.running = true;
-		await sleep();
-		await stopByPerson();
-
-		await wake();
-
-		expect(mockPullActivities.startTracking).not.toHaveBeenCalled();
-		expect(mockPullActivities.running).toBe(false);
-	});
-
-	it('does not resume when the person stops tracking while the sleep time is being recorded', async () => {
-		mockPullActivities.running = true;
-		await sleep();
-		mockPullActivities.recordIdleTime.mockImplementationOnce(async () => {
-			await stopByPerson();
-		});
-
-		await wake();
-
-		expect(mockPullActivities.startTracking).not.toHaveBeenCalled();
-		expect(mockPullActivities.running).toBe(false);
-	});
-
-	it('ignores a second wake-up for the same sleep', async () => {
-		mockPullActivities.running = true;
-		await sleep();
-		await wake();
-		await wake();
-
-		expect(mockPullActivities.startTracking).toHaveBeenCalledTimes(1);
-		expect(mockPullActivities.recordIdleTime).toHaveBeenCalledTimes(1);
+		expect(mockPullActivities.stopTracking).toHaveBeenCalledWith();
+		expect(mockPullActivities.pauseForSleep).not.toHaveBeenCalled();
 	});
 });

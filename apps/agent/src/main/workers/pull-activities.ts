@@ -51,6 +51,22 @@ type UserLogin = {
  */
 const ORGANIZATION_SETTING_REFRESH_MS = 15 * 60 * 1000;
 
+/** A settings request that has not completed by then is abandoned, so it cannot hold up later refreshes */
+const ORGANIZATION_SETTING_TIMEOUT_MS = 30 * 1000;
+
+/** A device sleep that paused running tracking, keeping its timer open so the wake-up can continue it */
+type TSleepPause = {
+	/** When the sleep paused tracking */
+	pausedAt: Date;
+	/**
+	 * End of the sleep time recorded as idle activity, or being recorded right now. A stop while paused closes the
+	 * timer here, so no recorded activity ends after the timer.
+	 */
+	idleUntil: Date;
+	/** Set by a stop while paused: the wake-up records no further sleep time for this pause */
+	cancelled: boolean;
+};
+
 class PullActivities {
 	static instance: PullActivities;
 	private listenerModule: KeyboardMouseEventCounter;
@@ -73,17 +89,19 @@ class PullActivities {
 	private powerManagerPreventDisplaySleep: PowerManagerPreventDisplaySleep;
 	private currentTimerId: number;
 	private lastTodayDuration: number;
-	private _startedPausedDate: Date | null;
-	private _isPaused: boolean;
+	/** The device sleep that paused tracking, until the wake-up resumes it or the person stops it */
+	private sleepPause: TSleepPause | null = null;
+	/** Sleeps and wake-ups are handled one after the other, in the order the system reported them */
+	private sleepTransitions: Promise<void> = Promise.resolve();
 	/** Screenshot interval (seconds) last handed to the timer module */
 	private screenshotIntervalSeconds: number | null = null;
-	private organizationSettingRefresh: Promise<void> | null = null;
+	/** Counts tracking sessions, so settings requested for an earlier session are dropped */
+	private trackingSession = 0;
+	private organizationSettingRequest: { key: string; promise: Promise<void> } | null = null;
 	private organizationSettingTimer: ReturnType<typeof setInterval> | null = null;
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
-		this._startedPausedDate = null;
-		this._isPaused = false;
 		this.agentLogger = AgentLogger.getInstance();
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
 		this.mainEvent = MainEvent.getInstance();
@@ -113,20 +131,58 @@ class PullActivities {
 		return this.startedDate;
 	}
 
+	/** Start of the sleep time not recorded yet, while a device sleep keeps tracking paused */
 	public get startedPausedDate(): Date | null {
-		return this._startedPausedDate;
+		return this.sleepPause?.idleUntil ?? null;
 	}
 
-	public set startedPausedDate(value: Date | null) {
-		this._startedPausedDate = value;
-	}
-
+	/** Tracking is paused by a device sleep, its timer kept open for the wake-up */
 	public get isPaused(): boolean {
-		return this._isPaused;
+		return this.sleepPause !== null;
 	}
 
-	public set isPaused(value: boolean) {
-		this._isPaused = value;
+	/**
+	 * A device sleep: stop capturing but keep the timer open, so the wake-up can continue it. Nothing is paused when
+	 * tracking is not running (the person stopped it, or it never started).
+	 */
+	public pauseForSleep(): Promise<void> {
+		return this.queueSleepTransition(async () => {
+			if (!this.isStarted) {
+				return;
+			}
+			await this.stopTracking(true);
+			const pausedAt = new Date();
+			this.sleepPause = { pausedAt, idleUntil: pausedAt, cancelled: false };
+		});
+	}
+
+	/**
+	 * A wake-up: record the sleep as idle time and resume tracking, but only tracking that a sleep paused. Tracking the
+	 * person stopped, before the sleep or while it kept tracking paused, stays stopped. A repeated wake-up event finds
+	 * nothing left to resume, so the sleep time is recorded once.
+	 */
+	public resumeAfterSleep(): Promise<void> {
+		return this.queueSleepTransition(async () => {
+			const pause = this.sleepPause;
+			if (!pause) {
+				this.agentLogger.info('Device resumed: no tracking was paused by the sleep, so nothing resumes');
+				return;
+			}
+			await this.recordIdleTime(pause);
+			if (this.sleepPause !== pause) {
+				// The person stopped tracking while the sleep time was being recorded
+				return;
+			}
+			this.sleepPause = null;
+			await this.startTracking(true);
+		});
+	}
+
+	private queueSleepTransition(transition: () => Promise<void>): Promise<void> {
+		this.sleepTransitions = this.sleepTransitions.then(transition).catch((error) => {
+			this.agentLogger.error(`Sleep or wake-up handling failed: ${error?.message}`);
+		});
+		return this.sleepTransitions;
 	}
 
 	public updateAppUserAuth(user: UserLogin) {
@@ -180,6 +236,7 @@ class PullActivities {
 		try {
 			const appSetting = getAppSetting();
 			if (!this.isStarted) {
+				this.trackingSession += 1;
 				this.startedDate = new Date();
 				if (!isResume) {
 					await this.startTimerApi();
@@ -379,14 +436,16 @@ class PullActivities {
 				}
 				return;
 			}
-			if (!isPaused && this.isPaused) {
-				// Stopped while a device sleep keeps tracking paused: close the timer the sleep left open, at the
-				// moment it paused, and drop the pause so waking up does not resume tracking the person stopped.
-				const pausedAt = this.startedPausedDate;
-				this.startedPausedDate = null;
-				this.isPaused = false;
+			if (!isPaused && this.sleepPause) {
+				// Stopped while a device sleep keeps tracking paused: drop the pause so waking up does not resume
+				// tracking the person stopped, stop recording its sleep time, and close the timer the sleep left open
+				// where the recorded sleep time ends (the moment it paused when none is recorded yet), so no recorded
+				// activity outlasts the timer.
+				const pause = this.sleepPause;
+				this.sleepPause = null;
+				pause.cancelled = true;
 				this.agentLogger.info('Tracking paused by sleep is stopped; it will not resume on wake-up');
-				await this.stopTimerApi(pausedAt ?? undefined);
+				await this.stopTimerApi(pause.idleUntil);
 				return;
 			}
 			this.agentLogger.warn('No timer started to stop');
@@ -455,20 +514,52 @@ class PullActivities {
 	 * capture schedule. A failure (offline, server error) keeps the current interval.
 	 */
 	refreshOrganizationSetting(): Promise<void> {
-		if (!this.organizationSettingRefresh) {
-			this.organizationSettingRefresh = this.readOrganizationSetting().finally(() => {
-				this.organizationSettingRefresh = null;
-			});
+		const scope = this.organizationSettingScope();
+		if (!scope) {
+			return Promise.resolve();
 		}
-		return this.organizationSettingRefresh;
+		// One request per account and tracking session: a new session or another account sends its own
+		if (this.organizationSettingRequest?.key === scope.key) {
+			return this.organizationSettingRequest.promise;
+		}
+		const request = { key: scope.key, promise: null as Promise<void> | null };
+		request.promise = this.readOrganizationSetting(scope).finally(() => {
+			// An older request settling late must not drop the current one
+			if (this.organizationSettingRequest === request) {
+				this.organizationSettingRequest = null;
+			}
+		});
+		this.organizationSettingRequest = request;
+		return request.promise;
 	}
 
-	private async readOrganizationSetting(): Promise<void> {
-		if (!getAuthConfig()?.token) {
-			return;
+	/** The signed-in account and tracking session settings are read for, or `null` when signed out */
+	private organizationSettingScope(): { key: string; organizationId: string } | null {
+		const auth = getAuthConfig();
+		if (!auth?.token) {
+			return null;
 		}
+		const employee = auth.user?.employee;
+		const organizationId = employee?.organizationId;
+		return {
+			key: [auth.user?.id, employee?.id, organizationId, employee?.tenantId, this.trackingSession].join('|'),
+			organizationId
+		};
+	}
+
+	private async readOrganizationSetting(scope: { key: string; organizationId: string }): Promise<void> {
 		try {
-			const organization = await this.apiService.getOrganizationTimerSetting();
+			const organization = await this.apiService.getOrganizationTimerSetting(ORGANIZATION_SETTING_TIMEOUT_MS);
+			// Drop a response that no longer belongs to the signed-in account (signed out, or another account signed
+			// in) or to the running tracking session, and one for another organisation than the agent's
+			if (this.organizationSettingScope()?.key !== scope.key) {
+				this.agentLogger.info('Organisation timer settings dropped: the account or tracking session changed');
+				return;
+			}
+			if (organization?.id && organization.id !== scope.organizationId) {
+				this.agentLogger.warn('Organisation timer settings dropped: they belong to another organisation');
+				return;
+			}
 			if (updateOrganizationTimerSetting(organization) !== null) {
 				this.applyScreenshotInterval();
 			}
@@ -673,18 +764,18 @@ class PullActivities {
 		});
 	}
 
-	public async recordIdleTime() {
-		if (!this.startedPausedDate) {
-			this.agentLogger.warn('idletime skipped: startedPausedDate is not set');
-			return
-		}
+	/**
+	 * Record a pause's sleep time as idle activity, in chunks of up to 10 minutes. A stop while paused cancels it: the
+	 * chunk being written completes (the stop closes the timer at its end) and no further chunk is written.
+	 */
+	private async recordIdleTime(pause: TSleepPause) {
 		const currentTime = new Date();
-		let idleDuration = Math.floor((currentTime.getTime() - this.startedPausedDate.getTime()) / 1000);
+		let idleDuration = Math.floor((currentTime.getTime() - pause.idleUntil.getTime()) / 1000);
 
-		let chunkStartDate = new Date(this.startedPausedDate.getTime());
+		let chunkStartDate = new Date(pause.idleUntil.getTime());
 
 		/* Split idle time duration to 10 minutes each minutes */
-		while (idleDuration > 0) {
+		while (idleDuration > 0 && !pause.cancelled) {
 			// The maximum duration for a chunk is 10 minutes (600 seconds).
 			const tenMinutesInSeconds = 10 * 60;
 			const chunkDuration = Math.min(idleDuration, tenMinutesInSeconds);
@@ -692,6 +783,8 @@ class PullActivities {
 			// Calculate the end date for the current chunk.
 			const chunkEndDate = new Date(chunkStartDate.getTime() + chunkDuration * 1000);
 
+			// Claim the chunk before writing it, so a stop arriving meanwhile closes the timer at its end
+			pause.idleUntil = chunkEndDate;
 			await this.activityProcess({
 				timeData: {
 					timeStart: chunkStartDate,
@@ -705,8 +798,6 @@ class PullActivities {
 			idleDuration -= chunkDuration;
 			chunkStartDate = chunkEndDate;
 		}
-		this.startedPausedDate = currentTime;
-		return;
 	}
 
 	/** check employee setting periodically to keep agent setting up to date */

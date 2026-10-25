@@ -15,6 +15,8 @@ export const DEFAULT_SCREENSHOT_INTERVAL_MINUTES = 5;
 
 /** The organisation timer settings the agent applies */
 export type TOrganizationScreenshotSetting = {
+	/** The organisation the settings belong to */
+	id?: string;
 	/** Minutes between screenshots. A `numeric` column, so Postgres hands it over as a string ("10") */
 	screenshotFrequency?: number | string | null;
 };

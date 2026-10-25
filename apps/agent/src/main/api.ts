@@ -210,8 +210,8 @@ export class ApiService {
 		return this.request(uriPath, { method: 'POST', body: payload, headers: {} }, true)
 	}
 
-	get(uriPath: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
-		return this.request(uriPath, { method: 'GET', headers: {}, params }, false);
+	get(uriPath: string, params: Record<string, unknown>, timeoutMs?: number): Promise<Record<string, unknown>> {
+		return this.request(uriPath, { method: 'GET', headers: {}, params, timeoutMs }, false);
 	}
 
 	put(uriPath: string, payload: Record<string, any>): Promise<Record<string, unknown>> {
@@ -353,13 +353,15 @@ export class ApiService {
 
 	/**
 	 * The organisation's timer settings (screenshot frequency among them), read where the desktop timer reads them:
-	 * the signed-in user's employee organisation. `null` when the response carries none.
+	 * the signed-in user's employee organisation. `null` when the response carries none. The request is abandoned (and
+	 * rejects) after `timeoutMs`, so a response that never completes cannot hold up later refreshes.
 	 */
-	async getOrganizationTimerSetting(): Promise<TOrganizationScreenshotSetting | null> {
-		const user = (await this.get('/api/user/me', {
-			includeEmployee: true,
-			includeOrganization: true
-		})) as { employee?: { organization?: TOrganizationScreenshotSetting | null } | null };
+	async getOrganizationTimerSetting(timeoutMs?: number): Promise<TOrganizationScreenshotSetting | null> {
+		const user = (await this.get(
+			'/api/user/me',
+			{ includeEmployee: true, includeOrganization: true },
+			timeoutMs
+		)) as { employee?: { organization?: TOrganizationScreenshotSetting | null } | null };
 		return user?.employee?.organization ?? null;
 	}
 
@@ -451,7 +453,9 @@ export class ApiService {
 			headers?: HeadersInit;
 			method: 'POST' | 'GET' | 'PUT';
 			body?: string;
-			params?: any
+			params?: any;
+			/** GET only: abort the request (and reject) when it has not completed after this many milliseconds */
+			timeoutMs?: number
 		} = { method: 'GET' },
 		isFile?: boolean,
 		isRetry = false
@@ -467,8 +471,10 @@ export class ApiService {
 			...options.headers
 		};
 
+		const controller = options.method === 'GET' && options.timeoutMs > 0 ? new AbortController() : null;
+		const deadline = controller ? setTimeout(() => controller.abort(), options.timeoutMs) : null;
 		const requestOptions = options.method === 'GET'
-			? { method: options.method, headers }
+			? { method: options.method, headers, ...(controller ? { signal: controller.signal } : {}) }
 			: { ...options, headers };
 
 		try {
@@ -505,6 +511,10 @@ export class ApiService {
 			enhancedError['url'] = url;
 			enhancedError['isNetworkError'] = true;
 			throw enhancedError;
+		} finally {
+			if (deadline) {
+				clearTimeout(deadline);
+			}
 		}
 	}
 }
