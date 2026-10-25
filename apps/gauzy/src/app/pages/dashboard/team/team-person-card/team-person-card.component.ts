@@ -20,9 +20,9 @@ import { ITeamPerson, activityTone, formatDuration, formatPercent } from '../tea
 	standalone: false
 })
 export class TeamPersonCardComponent {
-	public readonly formatDuration = formatDuration;
-	public readonly formatPercent = formatPercent;
-	public readonly activityTone = activityTone;
+	protected readonly formatDuration = formatDuration;
+	protected readonly formatPercent = formatPercent;
+	protected readonly activityTone = activityTone;
 
 	private _person: ITeamPerson;
 	public get person(): ITeamPerson {
@@ -34,7 +34,7 @@ export class TeamPersonCardComponent {
 	}
 
 	/** The person's local time, as the employee page shows it; `null` without a known zone. */
-	public localTime: string | null = null;
+	protected localTime: string | null = null;
 
 	private _localTimeOf(zone: string | null | undefined): string | null {
 		if (!zone || !moment.tz.zone(zone)) {

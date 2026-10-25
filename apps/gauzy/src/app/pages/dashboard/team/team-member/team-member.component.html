@@ -10,8 +10,10 @@
 	nbPopoverPlacement="top-start"
 	nbPopoverAdjustment="vertical"
 	nbPopoverClass="person-popover"
-	(focus)="cardPopover.show()"
-	(blur)="cardPopover.hide()"
+	(focus)="cardKeyboard.onTriggerFocus(cardPopover)"
+	(blur)="cardKeyboard.onTriggerBlur($event, cardPopover)"
+	(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover)"
+	aria-keyshortcuts="ArrowDown"
 >
 	<span class="member-avatar member-avatar--sm" [class]="'member-avatar member-avatar--sm presence-' + member.presence">
 		<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
@@ -60,8 +62,10 @@
 		nbPopoverPlacement="top-start"
 		nbPopoverAdjustment="vertical"
 		nbPopoverClass="person-popover"
-		(focus)="cardPopover.show()"
-		(blur)="cardPopover.hide()"
+		(focus)="cardKeyboard.onTriggerFocus(cardPopover)"
+		(blur)="cardKeyboard.onTriggerBlur($event, cardPopover)"
+		(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover)"
+		aria-keyshortcuts="ArrowDown"
 	>
 		<span class="member-avatar" [class]="'member-avatar presence-' + member.presence">
 			<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
@@ -193,5 +197,10 @@
 
 <!-- The member's hover card: the team page's assignee card. -->
 <ng-template #personCard let-person>
-	<gauzy-team-person-card [person]="person"></gauzy-team-person-card>
+	<!-- Arrow Down on the name moves focus in here; the card stays open while focus does. -->
+	<gauzy-team-person-card
+		[person]="person"
+		(focusout)="cardKeyboard.onCardFocusOut($event)"
+		(keydown.escape)="cardKeyboard.onCardEscape()"
+	></gauzy-team-person-card>
 </ng-template>

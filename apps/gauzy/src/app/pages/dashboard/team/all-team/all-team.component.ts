@@ -7,6 +7,7 @@ import {
 	formatDuration,
 	formatPercent
 } from '../team-dashboard.utils';
+import { PersonCardKeyboard } from '../person-card-keyboard';
 
 /** Organization-wide figures of the overview's summary strip. */
 export interface ITeamsOverview {
@@ -38,6 +39,9 @@ export class AllTeamComponent {
 	public readonly formatDuration = formatDuration;
 	public readonly formatPercent = formatPercent;
 	public readonly activityTone = activityTone;
+
+	/** Keyboard access to the Top members' hover cards. */
+	protected readonly cardKeyboard = new PersonCardKeyboard();
 
 	@Input() public teams: ITeamRow[] = [];
 	@Input() public membersByTeam: Record<string, IMemberRow[]> = {};
