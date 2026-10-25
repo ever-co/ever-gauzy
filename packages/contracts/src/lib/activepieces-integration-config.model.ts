@@ -297,16 +297,34 @@ export interface IActivepiecesMcpTool {
 
 /**
  * ActivePieces MCP Server
+ *
+ * Activepieces MCP 2.0 (November 2025) keeps one MCP server per project (`/v1/projects/:projectId/mcp-server`), with
+ * no name, agent or tool list of its own: it serves the project's flows (`flows`) except the tools disabled for it
+ * (`disabledTools`, and the platform's `platformDisabledTools`). `name`, `agentId` and `tools` are those of the
+ * servers the legacy `/v1/mcp-servers` routes answered (`GAUZY_ACTIVEPIECES_MCP_API=legacy`).
  */
 export interface IActivepiecesMcpServer {
 	id: string;
 	created: string;
 	updated: string;
-	name: string;
 	projectId: string;
 	token: string;
-	agentId: string;
-	tools: IActivepiecesMcpTool[];
+	/** Legacy servers only. */
+	name?: string;
+	/** Legacy servers only. */
+	agentId?: string;
+	/** Legacy servers only. */
+	tools?: IActivepiecesMcpTool[];
+	/** MCP 2.0: the platform of the server. */
+	platformId?: string | null;
+	/** MCP 2.0: `PROJECT` for a project's server. */
+	type?: string;
+	/** MCP 2.0: the tools disabled on the project's server. */
+	disabledTools?: string[] | null;
+	/** MCP 2.0: the flows the server exposes as tools. */
+	flows?: Record<string, unknown>[];
+	/** MCP 2.0: the tools the platform disables on every server. */
+	platformDisabledTools?: string[];
 }
 
 /**
@@ -326,6 +344,9 @@ export interface IActivepiecesMcpServersListResponsePublic extends IActivepieces
 
 /**
  * ActivePieces MCP Server list query params
+ *
+ * Under MCP 2.0 a project has one server: the list answers it alone, and `limit`, `cursor` and `name` (legacy
+ * filters) do not apply.
  */
 export interface IActivepiecesMcpServersListParams {
 	projectId: string;
@@ -338,8 +359,12 @@ export interface IActivepiecesMcpServersListParams {
  * ActivePieces MCP Server update request
  */
 export interface IActivepiecesMcpServerUpdateRequest {
+	/** Legacy servers only. */
 	name?: string;
+	/** Legacy servers only. */
 	tools?: IActivepiecesMcpTool[];
+	/** MCP 2.0: the tools to disable on the project's server (the list replaces the stored one). */
+	disabledTools?: string[];
 }
 
 /**

@@ -73,8 +73,8 @@ export interface IAnswerableRequestApproval {
 
 /**
  * Who a request is for besides the person who raised it: the user who filed the document it is about (a time-off
- * request, an equipment sharing) and the employees that document is for. None of them answers the request as an
- * approver.
+ * request, an equipment sharing) and the employees that document is for — for an equipment sharing, the employees it
+ * names and the active members of the teams it is for. None of them answers the request as an approver.
  */
 export interface IRequestApprovalRequestedFor {
 	userIds?: ReadonlyArray<ID | null | undefined> | null;
