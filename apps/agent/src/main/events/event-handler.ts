@@ -156,9 +156,19 @@ export default class EventHandler {
 	private async resumeActivity() {
 		const authConfig = getAuthConfig();
 		this.getPullActivities(authConfig);
+		// Resume only what the sleep paused. When tracking was not running as the device went to sleep (the person had
+		// stopped it, or it never started), waking up leaves it stopped: it used to start a new timer here.
+		if (!this.pullActivities.isPaused) {
+			log.info('Device resumed: tracking was not running before sleep, so it stays stopped');
+			return;
+		}
 		await this.pullActivities.recordIdleTime();
 		this.pullActivities.startedPausedDate = null;
-		await this.pullActivities.startTracking(this.pullActivities.isPaused);
+		if (!this.pullActivities.isPaused) {
+			// Stopped by the person while the sleep time was being recorded
+			return;
+		}
+		await this.pullActivities.startTracking(true);
 		this.pullActivities.isPaused = false;
 	}
 

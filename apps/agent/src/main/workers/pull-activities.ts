@@ -70,6 +70,8 @@ class PullActivities {
 	constructor() {
 		this.listenerModule = null;
 		this.isStarted = false;
+		this._startedPausedDate = null;
+		this._isPaused = false;
 		this.agentLogger = AgentLogger.getInstance();
 		this.appWindow = AppWindow.getInstance(path.join(__dirname, '../..'));
 		this.mainEvent = MainEvent.getInstance();
@@ -259,8 +261,8 @@ class PullActivities {
 		}
 	}
 
-	async stopTimerApi() {
-		this.stoppedDate = new Date();
+	async stopTimerApi(stoppedAt?: Date) {
+		this.stoppedDate = stoppedAt ?? new Date();
 		const authConfig = getAuthConfig();
 		try {
 			await this.timerService.update(new Timer({
@@ -361,6 +363,16 @@ class PullActivities {
 				if (appSetting?.preventDisplaySleep) {
 					this.powerManagerPreventDisplaySleep.stop();
 				}
+				return;
+			}
+			if (!isPaused && this.isPaused) {
+				// Stopped while a device sleep keeps tracking paused: close the timer the sleep left open, at the
+				// moment it paused, and drop the pause so waking up does not resume tracking the person stopped.
+				const pausedAt = this.startedPausedDate;
+				this.startedPausedDate = null;
+				this.isPaused = false;
+				this.agentLogger.info('Tracking paused by sleep is stopped; it will not resume on wake-up');
+				await this.stopTimerApi(pausedAt ?? undefined);
 				return;
 			}
 			this.agentLogger.warn('No timer started to stop');
