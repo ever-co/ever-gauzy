@@ -1,6 +1,17 @@
 @if (isClassic) {
 <!-- ── Compact line: under a team in the "All teams" overview ── -->
-<a class="member" [routerLink]="['/pages/employees/view', member.employeeId]">
+<a
+	class="member"
+	[routerLink]="['/pages/employees/view', member.employeeId]"
+	#cardPopover="nbPopover"
+	[nbPopover]="personCard"
+	[nbPopoverContext]="member"
+	nbPopoverTrigger="hover"
+	nbPopoverPlacement="top"
+	nbPopoverClass="person-popover"
+	(focus)="cardPopover.show()"
+	(blur)="cardPopover.hide()"
+>
 	<span class="member-avatar member-avatar--sm" [class]="'member-avatar member-avatar--sm presence-' + member.presence">
 		<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
 		<span class="avatar-dot"></span>
