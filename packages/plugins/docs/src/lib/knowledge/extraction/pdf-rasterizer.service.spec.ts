@@ -207,6 +207,21 @@ describe('PdfRasterizerService — one canvas copy', () => {
 		});
 	});
 
+	it('releases the loading task when pdf.js cannot open the document (corrupt / password-protected)', async () => {
+		const destroy = jest.fn(async () => undefined);
+		const service = new PdfRasterizerService();
+		(service as any).renderer = {
+			pdfjs: {
+				getDocument: jest.fn(() => ({ promise: Promise.reject(new Error('Invalid PDF structure')), destroy }))
+			},
+			createCanvas: jest.fn(),
+			assetOptions: {}
+		};
+
+		await expect(service.renderPages(Buffer.from('%PDF-1.4 truncated'), 1)).resolves.toBeNull();
+		expect(destroy).toHaveBeenCalledTimes(1);
+	});
+
 	// The real thing: pdf-parse loaded first (as `pdf.extractor.ts` does at boot), then a PDF
 	// with a raster image rendered. With mixed canvas copies this case kills the process.
 	(canResolve('pdf-parse') && canResolve('@napi-rs/canvas') ? it : it.skip)(

@@ -129,6 +129,13 @@ export class PdfRasterizerService {
 			// A file pdf.js cannot open is not a rasterizer problem — the text-layer pass
 			// already classified it. Report "nothing rendered" and let the caller decide.
 			this.logger.debug(`PDF rasterization could not open the document: ${(error as Error).message}`);
+			// A rejected load does not release the task's worker and transport by itself (corrupt or
+			// password-protected uploads land here): best-effort, as in the `finally` below.
+			try {
+				await loadingTask?.destroy?.();
+			} catch {
+				// Cleanup only.
+			}
 			return null;
 		}
 
