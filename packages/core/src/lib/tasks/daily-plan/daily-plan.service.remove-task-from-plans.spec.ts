@@ -4,11 +4,28 @@ import { BadRequestException } from '@nestjs/common';
 import { DataSource, EntitySchema as TypeOrmEntitySchema } from 'typeorm';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { EntityCaseNamingStrategy, EntitySchema as MikroOrmEntitySchema, MikroORM } from '@mikro-orm/core';
-import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
+import * as moment from 'moment-timezone';
+import { isBetterSqlite3, isSqlite, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from '../../core/crud/tenant-aware-crud.service';
 import { MultiORMEnum } from '../../core/utils';
 import { DailyPlanService } from './daily-plan.service';
+
+// The service reads how plan dates are stored from the dialect helpers, which answer what DB_TYPE says
+// (better-sqlite3 in a unit run). A case can make them answer PostgreSQL; every other case gets the real answer.
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+
+	return {
+		...actual,
+		isSqlite: jest.fn(actual.isSqlite),
+		isBetterSqlite3: jest.fn(actual.isBetterSqlite3)
+	};
+});
+
+const actualConfig = jest.requireActual('@gauzy/config');
+const isSqliteMock = isSqlite as unknown as jest.Mock;
+const isBetterSqlite3Mock = isBetterSqlite3 as unknown as jest.Mock;
 
 const TENANT_ID = '2a5d5f2e-0c4e-4f2b-9a0b-3d6a4b2f1c11';
 const ORGANIZATION_ID = '8b1f0e3a-7c2d-4a5e-b6f7-1d2e3f4a5b6c';
@@ -471,18 +488,47 @@ const PLAN_ID_BY_DAY: Record<string, string> = {
 };
 const PLAN_DAYS = Object.keys(PLAN_ID_BY_DAY);
 
-/** The instant a plan of `day` is stored at on SQLite: UTC midnight. */
-const storedAt = (day: string): Date => new Date(`${day}T00:00:00.000Z`);
+/** Where the API runs, as far as the stored plan dates go. */
+interface IPlanServer {
+	/** The instant this server stores the start of `day` at. */
+	dayStart(day: string): Date;
+	/** Makes the date helpers of the service answer as they do on this server. */
+	setUp(): void;
+}
 
-const DAY_PLANS: ISeedPlan[] = PLAN_DAYS.map((day) => ({
-	id: PLAN_ID_BY_DAY[day],
-	date: storedAt(day),
-	tenantId: TENANT_ID,
-	organizationId: ORGANIZATION_ID,
-	employeeId: MEMBER_ID,
-	organizationTeamId: MANAGED_TEAM_ID,
-	tasks: [TASK_ID]
-}));
+/** SQLite stores a plan date in UTC, whatever the process time zone. */
+const ON_SQLITE: IPlanServer = {
+	dayStart: (day) => new Date(`${day}T00:00:00.000Z`),
+	setUp: () => undefined
+};
+
+/**
+ * On PostgreSQL and MySQL the driver writes a plan date, and the bound of a read, in the process's local time, so a
+ * day starts at local midnight: in Tokyo, nine hours before UTC midnight. The dialect helpers answer PostgreSQL and
+ * moment's zone is Tokyo. The plans stay in SQLite, which compares the same instants the driver would write as local
+ * times. Only the MikroORM read runs this way: TypeORM compares the stored local time with the day itself, and SQLite
+ * holds that time in UTC.
+ */
+const IN_TOKYO_ON_POSTGRES: IPlanServer = {
+	dayStart: (day) => new Date(`${day}T00:00:00.000+09:00`),
+	setUp: () => {
+		isSqliteMock.mockReturnValue(false);
+		isBetterSqlite3Mock.mockReturnValue(false);
+		moment.tz.setDefault('Asia/Tokyo');
+	}
+};
+
+/** One plan per day, each holding the task and stored at the start of its day on `server`. */
+const plansOfEachDay = (server: IPlanServer): ISeedPlan[] =>
+	PLAN_DAYS.map((day) => ({
+		id: PLAN_ID_BY_DAY[day],
+		date: server.dayStart(day),
+		tenantId: TENANT_ID,
+		organizationId: ORGANIZATION_ID,
+		employeeId: MEMBER_ID,
+		organizationTeamId: MANAGED_TEAM_ID,
+		tasks: [TASK_ID]
+	}));
 
 /** Freezes the clock at `iso`. Only `Date` is faked, so the database drivers keep their real timers. */
 const freezeClockAt = (iso: string) => {
@@ -506,97 +552,108 @@ const freezeClockAt = (iso: string) => {
 };
 
 describe.each([
-	[MultiORMEnum.TypeORM, typeOrmStore],
-	[MultiORMEnum.MikroORM, mikroOrmStore]
-])("DailyPlanService.removeTaskFromManyPlans (%s), from the caller's current day", (ormType, createStore) => {
-	let store: IPlanStore;
-	let service: DailyPlanService;
-	let saved: jest.SpyInstance;
+	[MultiORMEnum.TypeORM, 'SQLite', typeOrmStore, ON_SQLITE],
+	[MultiORMEnum.MikroORM, 'SQLite', mikroOrmStore, ON_SQLITE],
+	[MultiORMEnum.MikroORM, 'PostgreSQL in Tokyo', mikroOrmStore, IN_TOKYO_ON_POSTGRES]
+])(
+	"DailyPlanService.removeTaskFromManyPlans (%s on %s), from the caller's current day",
+	(ormType, _database, createStore, server) => {
+		let store: IPlanStore;
+		let service: DailyPlanService;
+		let saved: jest.SpyInstance;
 
-	beforeAll(async () => {
-		store = await createStore(DAY_PLANS);
-	});
+		beforeAll(async () => {
+			const plans = plansOfEachDay(server);
 
-	afterAll(async () => {
-		await store?.close();
-	});
+			store = await createStore(plans);
+		});
 
-	beforeEach(() => {
-		const [typeOrmRepository, mikroOrmRepository] = store.repositories();
-		service = new DailyPlanService(
-			typeOrmRepository as any,
-			mikroOrmRepository as any,
-			{} as any,
-			{ findOneByIdString: jest.fn(async () => ({ id: TASK_ID })) } as any,
-			// Every plan is in MANAGED_TEAM_ID, where the manager manages the member
-			{ canManageEmployee: jest.fn(async () => true) } as any
-		);
-		Object.defineProperty(service, 'ormType', { value: ormType });
-		saved = jest
-			.spyOn(TenantAwareCrudService.prototype, 'saveMany')
-			.mockImplementation(async (entities) => entities as never);
+		afterAll(async () => {
+			await store?.close();
+		});
 
-		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
-		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
-		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(MANAGER_ID);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
-			id: 'c0ffee00-0000-4000-8000-000000000001',
-			tenantId: TENANT_ID,
-			employeeId: MANAGER_ID
-		} as any);
-	});
+		beforeEach(() => {
+			const [typeOrmRepository, mikroOrmRepository] = store.repositories();
+			service = new DailyPlanService(
+				typeOrmRepository as any,
+				mikroOrmRepository as any,
+				{} as any,
+				{ findOneByIdString: jest.fn(async () => ({ id: TASK_ID })) } as any,
+				// Every plan is in MANAGED_TEAM_ID, where the manager manages the member
+				{ canManageEmployee: jest.fn(async () => true) } as any
+			);
+			Object.defineProperty(service, 'ormType', { value: ormType });
+			saved = jest
+				.spyOn(TenantAwareCrudService.prototype, 'saveMany')
+				.mockImplementation(async (entities) => entities as never);
 
-	afterEach(() => {
-		jest.useRealTimers();
-		jest.restoreAllMocks();
-	});
+			jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
+			jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(MANAGER_ID);
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+				id: 'c0ffee00-0000-4000-8000-000000000001',
+				tenantId: TENANT_ID,
+				employeeId: MANAGER_ID
+			} as any);
 
-	/** Removes the task from every plan holding it, as the MCP tool and ever-teams "Remove from all plans" do. */
-	const remove = (today: unknown) =>
-		service.removeTaskFromManyPlans(TASK_ID, {
-			employeeId: MEMBER_ID,
-			organizationId: ORGANIZATION_ID,
-			today
-		} as any);
+			server.setUp();
+		});
 
-	/** The days of the plans that lost the task, in day order. The plans of the other days were not saved. */
-	const savedDays = () => {
-		const savedPlans = saved.mock.calls[0][0] as Array<{ id: string }>;
-		const savedIds = savedPlans.map(({ id }) => id);
-		const wasSaved = (day: string) => savedIds.includes(PLAN_ID_BY_DAY[day]);
+		afterEach(() => {
+			isSqliteMock.mockReturnValue(actualConfig.isSqlite());
+			isBetterSqlite3Mock.mockReturnValue(actualConfig.isBetterSqlite3());
+			moment.tz.setDefault();
+			jest.useRealTimers();
+			jest.restoreAllMocks();
+		});
 
-		return PLAN_DAYS.filter(wasSaved);
-	};
+		/** Removes the task from every plan holding it, as the MCP tool and ever-teams "Remove from all plans" do. */
+		const remove = (today: unknown) =>
+			service.removeTaskFromManyPlans(TASK_ID, {
+				employeeId: MEMBER_ID,
+				organizationId: ORGANIZATION_ID,
+				today
+			} as any);
 
-	it("west of UTC in the evening, the plan of the caller's day loses the task and the day before keeps it", async () => {
-		// 20:30 on March 10 in New York
-		freezeClockAt('2026-03-11T00:30:00.000Z');
+		/** The days of the plans that lost the task, in day order. The plans of the other days were not saved. */
+		const savedDays = () => {
+			const savedPlans = saved.mock.calls[0][0] as Array<{ id: string }>;
+			const savedIds = savedPlans.map(({ id }) => id);
+			const wasSaved = (day: string) => savedIds.includes(PLAN_ID_BY_DAY[day]);
 
-		await remove('2026-03-10');
+			return PLAN_DAYS.filter(wasSaved);
+		};
 
-		expect(savedDays()).toEqual(['2026-03-10', '2026-03-11', '2026-03-12', '2026-03-13']);
-	});
+		it("west of UTC in the evening, the plan of the caller's day loses the task and the day before keeps it", async () => {
+			// 20:30 on March 10 in New York
+			freezeClockAt('2026-03-11T00:30:00.000Z');
 
-	it("east of UTC just after midnight, the plan of the caller's previous day keeps the task", async () => {
-		// 07:30 on March 12 in Tokyo
-		freezeClockAt('2026-03-11T22:30:00.000Z');
+			await remove('2026-03-10');
 
-		await remove('2026-03-12');
+			expect(savedDays()).toEqual(['2026-03-10', '2026-03-11', '2026-03-12', '2026-03-13']);
+		});
 
-		expect(savedDays()).toEqual(['2026-03-12', '2026-03-13']);
-	});
+		it("east of UTC just after midnight, the plan of the caller's previous day keeps the task", async () => {
+			// 07:30 on March 12 in Tokyo
+			freezeClockAt('2026-03-11T22:30:00.000Z');
 
-	it.each([
-		['no day', undefined],
-		['a day that is not a date', '2026-02-30'],
-		['a value that is not a day', 'today'],
-		['a day two days before the UTC date', '2026-03-09'],
-		['a day two days after the UTC date', '2026-03-13']
-	])('with %s, keeps the UTC date as the cutoff', async (_case, today) => {
-		freezeClockAt('2026-03-11T12:00:00.000Z');
+			await remove('2026-03-12');
 
-		await remove(today);
+			expect(savedDays()).toEqual(['2026-03-12', '2026-03-13']);
+		});
 
-		expect(savedDays()).toEqual(['2026-03-11', '2026-03-12', '2026-03-13']);
-	});
-});
+		it.each([
+			['no day', undefined],
+			['a day that is not a date', '2026-02-30'],
+			['a value that is not a day', 'today'],
+			['a day two days before the UTC date', '2026-03-09'],
+			['a day two days after the UTC date', '2026-03-13']
+		])('with %s, keeps the UTC date as the cutoff', async (_case, today) => {
+			freezeClockAt('2026-03-11T12:00:00.000Z');
+
+			await remove(today);
+
+			expect(savedDays()).toEqual(['2026-03-11', '2026-03-12', '2026-03-13']);
+		});
+	}
+);
