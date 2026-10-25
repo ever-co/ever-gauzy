@@ -20,8 +20,28 @@ export interface ITeamRow {
 	online: number;
 	duration: number;
 	activity: number;
+	/** Projects with time on the selected day. */
 	projects: number;
+	/** Projects linked to the team. */
+	linkedProjects: number;
+	/** The team's projects with the day's time on each, plus any worked on but not linked. */
+	projectList: IProjectWorked[];
 	managers: string[];
+}
+
+/** One project of a team, with the time it got on the selected day — a "Projects worked" list line. */
+export interface IProjectWorked {
+	id: string;
+	name: string;
+	imageUrl: string | null;
+	initials: string;
+	duration: number;
+	/** People who logged time on it; a person counts once, whichever of their teams they logged under. */
+	members: number;
+	/** Bar length against the longest project of the list, 0..100. */
+	width: number;
+	/** Linked to the team; `false` for a project members tracked time on without it being linked. */
+	isLinked: boolean;
 }
 
 /** One task a member worked on during the selected day. */
