@@ -21,7 +21,11 @@ import { SimService } from './sim.service';
 describe('SimService.getJobStatus', () => {
 	function setUp(executionLookup: () => Promise<any>) {
 		const client = {
-			getWorkflowRun: jest.fn(async (workflowId: string, runId: string) => ({ runId, workflowId, status: 'running' })),
+			getWorkflowRun: jest.fn(async (workflowId: string, runId: string) => ({
+				runId,
+				workflowId,
+				status: 'running'
+			})),
 			getJobStatus: jest.fn(async (taskId: string) => ({ taskId, status: 'queued' }))
 		};
 		const integrationTenantService = { findOneByOptions: jest.fn(async () => ({ id: 'integration-tenant-1' })) };
@@ -38,7 +42,10 @@ describe('SimService.getJobStatus', () => {
 	}
 
 	it('reads a run this tenant logged from the v2 API, with its workflow', async () => {
-		const { service, client, simRepositoryService } = setUp(async () => ({ workflowId: 'wf-1', executionId: 'run-123' }));
+		const { service, client, simRepositoryService } = setUp(async () => ({
+			workflowId: 'wf-1',
+			executionId: 'run-123'
+		}));
 
 		const status = await service.getJobStatus('run-123');
 

@@ -222,7 +222,10 @@ describe('PdfRasterizerService — one canvas copy', () => {
 
 			expect(result?.pageCount).toBe(1);
 			expect(result?.pages).toHaveLength(1);
-			const { data, info } = await sharp(result!.pages[0]).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+			const { data, info } = await sharp(result!.pages[0])
+				.removeAlpha()
+				.raw()
+				.toBuffer({ resolveWithObject: true });
 			const scale = PDF_RASTER_DPI / 72;
 			const pixelAt = (xPt: number, yPt: number) => {
 				const x = Math.round(xPt * scale);

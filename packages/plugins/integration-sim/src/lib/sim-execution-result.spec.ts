@@ -7,7 +7,13 @@ import { isSimAsyncRun, mapSimExecutionResult, simAsyncRunId } from './sim-execu
  * asynchronously" from the UI) was logged `completed`, with no executionId to look its status up by.
  */
 describe('mapSimExecutionResult', () => {
-	const blank = () => ({ status: 'processing', output: undefined, executionId: undefined, duration: undefined, error: undefined });
+	const blank = () => ({
+		status: 'processing',
+		output: undefined,
+		executionId: undefined,
+		duration: undefined,
+		error: undefined
+	});
 
 	it('logs a v2 async run (simstudio-ts-sdk 0.2) as queued, with its runId as the executionId', () => {
 		const result = {
@@ -44,12 +50,20 @@ describe('mapSimExecutionResult', () => {
 
 	it('logs a finished run as completed or failed, with its metadata', () => {
 		const done = blank();
-		mapSimExecutionResult(done, { success: true, output: { ok: 1 }, metadata: { executionId: 'exec-1', duration: 42 } });
-		expect(done).toEqual(expect.objectContaining({ status: 'completed', output: { ok: 1 }, executionId: 'exec-1', duration: 42 }));
+		mapSimExecutionResult(done, {
+			success: true,
+			output: { ok: 1 },
+			metadata: { executionId: 'exec-1', duration: 42 }
+		});
+		expect(done).toEqual(
+			expect.objectContaining({ status: 'completed', output: { ok: 1 }, executionId: 'exec-1', duration: 42 })
+		);
 
 		const failed = blank();
 		mapSimExecutionResult(failed, { success: false, error: 'boom', executionId: 'exec-2' });
-		expect(failed).toEqual(expect.objectContaining({ status: 'failed', executionId: 'exec-2', error: { message: 'boom' } }));
+		expect(failed).toEqual(
+			expect.objectContaining({ status: 'failed', executionId: 'exec-2', error: { message: 'boom' } })
+		);
 	});
 
 	it('tells async runs from finished ones and reads either id', () => {
