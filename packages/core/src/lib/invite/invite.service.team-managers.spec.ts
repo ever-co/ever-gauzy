@@ -5,9 +5,10 @@
  */
 import '../core/entities/internal';
 import { ForbiddenException } from '@nestjs/common';
-import { DataSource, EntitySchema as TypeOrmEntitySchema, FindOperator, In, IsNull } from 'typeorm';
+import { DataSource, EntitySchema as TypeOrmEntitySchema, FindOperator, In } from 'typeorm';
 import { EntityCaseNamingStrategy, EntitySchema as MikroOrmEntitySchema, MikroORM } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { InvitationTypeEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { RequestContext } from '../core/context';
@@ -18,10 +19,24 @@ import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-
 import { MultiORMEnum } from '../core/utils';
 import { InviteService } from './invite.service';
 
-/** A team, as far as the register reads it. */
+/** A team, as far as the invitation flows read it. */
 interface ISpecTeam {
 	id: string;
 	name: string;
+	createdByUserId?: string;
+	deletedAt?: Date;
+	members?: ISpecMember[];
+}
+
+/** A membership of a team, with the team role it holds. */
+interface ISpecMember {
+	id: string;
+	organizationTeamId: string;
+	employeeId: string;
+	isManager?: boolean;
+	roleId?: string;
+	organizationTeam?: ISpecTeam;
+	role?: { id: string; name: string };
 }
 
 /** An invitation, as far as the register reads it. */
@@ -32,18 +47,49 @@ interface ISpecInvite {
 	teams?: ISpecTeam[];
 }
 
-/** A store of invitations, read through the CRUD base as `InviteService` reads them. */
-class InviteStore extends CrudService<BaseEntity> {}
+/** A store of invitations or teams, read through the CRUD base as `InviteService` and its team service read them. */
+class SpecStore extends CrudService<BaseEntity> {}
 
 /** The team table; soft-deletable, as `organization_team` is, so TypeORM joins only the teams not deleted. */
-const TYPEORM_TEAM = new TypeOrmEntitySchema<ISpecTeam & { deletedAt?: Date }>({
+const TYPEORM_TEAM = new TypeOrmEntitySchema<ISpecTeam>({
 	name: 'InviteRegisterTeam',
 	tableName: 'organization_team',
 	columns: {
 		id: { primary: true, type: 'varchar' },
 		name: { type: 'varchar' },
+		createdByUserId: { type: 'varchar', nullable: true },
 		deletedAt: { type: 'datetime', nullable: true, deleteDate: true }
+	},
+	relations: {
+		members: { type: 'one-to-many', target: 'InviteRegisterMember', inverseSide: 'organizationTeam' }
 	}
+});
+
+/** The memberships of the teams, as `organization_team_employee` maps them, with their team role. */
+const TYPEORM_MEMBER = new TypeOrmEntitySchema<ISpecMember>({
+	name: 'InviteRegisterMember',
+	tableName: 'organization_team_employee',
+	columns: {
+		id: { primary: true, type: 'varchar' },
+		organizationTeamId: { type: 'varchar' },
+		employeeId: { type: 'varchar' },
+		isManager: { type: 'boolean', nullable: true },
+		roleId: { type: 'varchar', nullable: true }
+	},
+	relations: {
+		organizationTeam: {
+			type: 'many-to-one',
+			target: 'InviteRegisterTeam',
+			joinColumn: { name: 'organizationTeamId' }
+		},
+		role: { type: 'many-to-one', target: 'InviteRegisterRole', joinColumn: { name: 'roleId' } }
+	}
+});
+
+const TYPEORM_ROLE = new TypeOrmEntitySchema<{ id: string; name: string }>({
+	name: 'InviteRegisterRole',
+	tableName: 'role',
+	columns: { id: { primary: true, type: 'varchar' }, name: { type: 'varchar' } }
 });
 
 /** The invitation table and its teams, mapped as `Invite.teams` maps them. */
@@ -71,6 +117,22 @@ const TYPEORM_INVITE = new TypeOrmEntitySchema<ISpecInvite>({
 class MikroOrmInviteTeam {
 	id!: string;
 	name!: string;
+	createdByUserId?: string;
+	deletedAt?: Date;
+	members?: unknown;
+}
+
+class MikroOrmTeamMember {
+	id!: string;
+	employeeId!: string;
+	isManager?: boolean;
+	organizationTeam?: unknown;
+	role?: unknown;
+}
+
+class MikroOrmTeamRole {
+	id!: string;
+	name!: string;
 }
 
 class MikroOrmInvite {
@@ -80,13 +142,36 @@ class MikroOrmInvite {
 	teams?: unknown;
 }
 
+/** The team table, with the filter `@SoftDeletable` puts on the platform's entities, so a deleted team is read out. */
 const MIKRO_ORM_TEAM = new MikroOrmEntitySchema<MikroOrmInviteTeam>({
 	class: MikroOrmInviteTeam,
 	tableName: 'organization_team',
+	filters: { [SOFT_DELETABLE_FILTER]: { name: SOFT_DELETABLE_FILTER, cond: { deletedAt: null }, default: true } },
 	properties: {
 		id: { type: 'string', primary: true },
-		name: { type: 'string' }
+		name: { type: 'string' },
+		createdByUserId: { type: 'string', nullable: true },
+		deletedAt: { type: 'Date', nullable: true },
+		members: { kind: '1:m', entity: () => MikroOrmTeamMember, mappedBy: 'organizationTeam' } as never
 	}
+});
+
+const MIKRO_ORM_MEMBER = new MikroOrmEntitySchema<MikroOrmTeamMember>({
+	class: MikroOrmTeamMember,
+	tableName: 'organization_team_employee',
+	properties: {
+		id: { type: 'string', primary: true },
+		employeeId: { type: 'string' },
+		isManager: { type: 'boolean', nullable: true },
+		organizationTeam: { kind: 'm:1', entity: () => MikroOrmInviteTeam, fieldName: 'organizationTeamId' } as never,
+		role: { kind: 'm:1', entity: () => MikroOrmTeamRole, fieldName: 'roleId', nullable: true } as never
+	}
+});
+
+const MIKRO_ORM_ROLE = new MikroOrmEntitySchema<MikroOrmTeamRole>({
+	class: MikroOrmTeamRole,
+	tableName: 'role',
+	properties: { id: { type: 'string', primary: true }, name: { type: 'string' } }
 });
 
 const MIKRO_ORM_INVITE = new MikroOrmEntitySchema<MikroOrmInvite>({
@@ -126,9 +211,29 @@ describe('InviteService - the invitations of a team are handled by its managers'
 	const MANAGED_TEAM = { id: 'team-managed', name: 'Managed' };
 	const OTHER_TEAM = { id: 'team-other', name: 'Other' };
 	const DELETED_TEAM = { id: 'team-deleted', name: 'Deleted' };
-	/** The invitations of the managed team, as the read of a team's invitations answers them. */
-	const MANAGED_TEAM_INVITES = [{ id: 'invite-managed' }];
 	const INVITE_PERMISSIONS = [PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT];
+
+	/** The metadata of `Invite.teams` the register reads its pivot from, quoted as PostgreSQL and SQLite quote. */
+	const INVITE_METADATA = {
+		dataSource: { driver: { escape: (identifier: string) => `"${identifier}"` } },
+		findRelationWithPropertyPath: () => ({
+			junctionEntityMetadata: {
+				tablePath: 'invite_organization_team',
+				ownerColumns: [{ databaseName: 'inviteId' }],
+				inverseColumns: [{ databaseName: 'organizationTeamId' }]
+			}
+		})
+	};
+
+	/** The invitations of one of the managed teams, as the register states them for the column `"invite"."id"`. */
+	const LINKED_TO_ONE_OF =
+		'"invite"."id" IN (SELECT "invite_teams_reach"."inviteId" FROM "invite_organization_team" "invite_teams_reach" ' +
+		'WHERE "invite_teams_reach"."organizationTeamId" IN (:...inviteTeamsInReach))';
+
+	/** The invitations no row of the pivot links to a team, as the register states them for the same column. */
+	const LINKED_TO_NO_TEAM =
+		'NOT EXISTS (SELECT 1 FROM "invite_organization_team" "invite_teams_reach" ' +
+		'WHERE "invite_teams_reach"."inviteId" = "invite"."id")';
 
 	/**
 	 * Signs the caller in as `JwtStrategy` attaches them to the request, with their employee and their permissions.
@@ -171,6 +276,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			organizationService: { findOneByIdString: jest.fn(async () => organization) },
 			findAll: jest.fn(async () => ({ items: [], total: 0 })),
 			typeOrmOrganizationTeamEmployeeRepository: { findBy: jest.fn(async () => []) },
+			typeOrmRepository: { metadata: INVITE_METADATA },
 			saveMany
 		});
 		return { service, findTeams, emailService, saveMany };
@@ -222,6 +328,18 @@ describe('InviteService - the invitations of a team are handled by its managers'
 	/** The read of an invitation's teams the resend and the delete check it with. */
 	const TEAMS_OF_INVITATION_READ = { where: { id: 'invite-1' }, relations: { teams: true }, withDeleted: true };
 
+	/** The SQL a raw condition of the register states on the invitation's id, as TypeORM renders it. */
+	function sqlOf(condition: unknown): string {
+		const operator = condition as FindOperator<string>;
+		return operator.getSql('"invite"."id"');
+	}
+
+	/** The parameters a raw condition of the register binds: the teams it keeps the invitations of. */
+	function parametersOf(condition: unknown) {
+		const operator = condition as FindOperator<string>;
+		return operator.objectLiteralParameters;
+	}
+
 	afterEach(() => jest.restoreAllMocks());
 
 	describe('findAllInvites', () => {
@@ -232,29 +350,31 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			findAll = jest
 				.spyOn(TenantAwareCrudService.prototype, 'findAll')
 				.mockResolvedValue({ items: [], total: 0 });
-			// The read of the managed teams' invitations, whose ids the register is kept to.
-			findInvites = jest
-				.spyOn(TenantAwareCrudService.prototype, 'find')
-				.mockResolvedValue(MANAGED_TEAM_INVITES as never);
+			findInvites = jest.spyOn(TenantAwareCrudService.prototype, 'find').mockResolvedValue([]);
 		});
 
-		it('keeps an employee to the invitations of the teams they manage, and of no team', async () => {
+		/** The conditions the register was read with. */
+		function registerWhere(): Record<string, unknown>[] {
+			const [[options]] = findAll.mock.calls as [[{ where: Record<string, unknown>[] }]];
+			return options.where;
+		}
+
+		it('keeps an employee to the invitations of the teams they manage, and of no team, in the database', async () => {
 			signIn(EMPLOYEE);
 			const { service, findTeams } = build([MANAGED_TEAM]);
 
 			await service.findAllInvites({} as never);
 
 			expect(findTeams).toHaveBeenCalledWith(managedTeamsRead());
-			expect(findInvites).toHaveBeenCalledWith({
-				select: { id: true },
-				where: { teams: { id: In([MANAGED_TEAM.id]) } }
-			});
-			expect(findAll).toHaveBeenCalledWith({
-				where: [
-					{ tenantId: TENANT, id: In(['invite-managed']) },
-					{ tenantId: TENANT, teams: { id: IsNull() } }
-				]
-			});
+			// No invitation is read ahead of the register: a page reads its rows, whatever the teams' history.
+			expect(findInvites).not.toHaveBeenCalled();
+			const [ofManagedTeam, ofNoTeam] = registerWhere();
+			expect(ofManagedTeam.tenantId).toBe(TENANT);
+			expect(sqlOf(ofManagedTeam.id)).toBe(LINKED_TO_ONE_OF);
+			expect(parametersOf(ofManagedTeam.id)).toEqual({ inviteTeamsInReach: [MANAGED_TEAM.id] });
+			expect(ofNoTeam.tenantId).toBe(TENANT);
+			expect(ofNoTeam.teams).toBeUndefined();
+			expect(sqlOf(ofNoTeam.id)).toBe(LINKED_TO_NO_TEAM);
 		});
 
 		it('answers no invitation for a team the employee does not manage', async () => {
@@ -275,9 +395,23 @@ describe('InviteService - the invitations of a team are handled by its managers'
 
 			await service.findAllInvites({ where: { teams: { id: [MANAGED_TEAM.id] } } } as never);
 
-			expect(findAll).toHaveBeenCalledWith({
-				where: [{ tenantId: TENANT, teams: { id: In([MANAGED_TEAM.id]) }, id: In(['invite-managed']) }]
-			});
+			const where = registerWhere();
+			expect(where).toHaveLength(1);
+			expect(where[0].teams).toEqual({ id: In([MANAGED_TEAM.id]) });
+			expect(sqlOf(where[0].id)).toBe(LINKED_TO_ONE_OF);
+		});
+
+		it('keeps an invitation the request names to the one it names, in reach', async () => {
+			signIn(EMPLOYEE);
+			const { service } = build([MANAGED_TEAM]);
+
+			await service.findAllInvites({ where: { id: 'invite-managed' } } as never);
+
+			const [ofManagedTeam] = registerWhere();
+			const namedAndInReach = ofManagedTeam.id as FindOperator<FindOperator<string>[]>;
+			const [named, inReach] = namedAndInReach.value;
+			expect(named.value).toBe('invite-managed');
+			expect(sqlOf(inReach)).toBe(LINKED_TO_ONE_OF);
 		});
 
 		it('reads the teams a caller without an employee created, whatever permissions they hold now', async () => {
@@ -287,12 +421,9 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			await service.findAllInvites({} as never);
 
 			expect(findTeams).toHaveBeenCalledWith({ select: { id: true }, where: [{ createdByUserId: CALLER }] });
-			expect(findAll).toHaveBeenCalledWith({
-				where: [
-					{ tenantId: TENANT, id: In([]) },
-					{ tenantId: TENANT, teams: { id: IsNull() } }
-				]
-			});
+			const [ofManagedTeam, ofNoTeam] = registerWhere();
+			expect(ofManagedTeam.id).toEqual(In([]));
+			expect(sqlOf(ofNoTeam.id)).toBe(LINKED_TO_NO_TEAM);
 		});
 
 		it('keeps a team creator without an employee, nor ORG_TEAM_ADD any more, to the teams they created', async () => {
@@ -302,12 +433,8 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			await service.findAllInvites({} as never);
 
 			expect(findTeams).toHaveBeenCalledWith({ select: { id: true }, where: [{ createdByUserId: CALLER }] });
-			expect(findAll).toHaveBeenCalledWith({
-				where: [
-					{ tenantId: TENANT, id: In(['invite-managed']) },
-					{ tenantId: TENANT, teams: { id: IsNull() } }
-				]
-			});
+			const [ofManagedTeam] = registerWhere();
+			expect(parametersOf(ofManagedTeam.id)).toEqual({ inviteTeamsInReach: [MANAGED_TEAM.id] });
 		});
 
 		it.each([PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE])(
@@ -532,26 +659,70 @@ describe('InviteService - the invitations of a team are handled by its managers'
 	});
 
 	/**
-	 * The register as each ORM reads it, on an in-memory better-sqlite3 store of its own: the invitation, its teams and
-	 * the pivot table between them. Both alternatives the register is narrowed to name the team's id alone, and an
-	 * invitation of no team is the one its join leaves without a team.
+	 * The invitations, the teams and the caller's memberships as each ORM reads them, on an in-memory better-sqlite3
+	 * store of its own, through the CRUD base, so the reads of the teams the caller manages run as written: a member
+	 * flagged `isManager`, a member holding a manager's team role, the team's creator, and nothing for a plain member.
 	 */
-	describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('the register as %s reads it', (orm) => {
+	describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('the invitation flows as %s reads them', (orm) => {
+		const ROLE_MANAGED_TEAM = { id: 'team-role-managed', name: 'Managed by role' };
+		const CREATED_TEAM = { id: 'team-created', name: 'Created' };
+		const MEMBER_TEAM = { id: 'team-member', name: 'Member' };
+
+		/** The teams stored, with their creator and whether they are soft-deleted. */
+		const TEAMS = [
+			{ team: MANAGED_TEAM },
+			{ team: ROLE_MANAGED_TEAM },
+			{ team: CREATED_TEAM, createdByUserId: CALLER },
+			{ team: MEMBER_TEAM },
+			{ team: OTHER_TEAM },
+			{ team: DELETED_TEAM, deletedAt: '2026-10-01 00:00:00' }
+		];
+
+		/** The team roles the memberships hold. */
+		const ROLES = [
+			{ id: 'role-manager', name: RolesEnum.MANAGER },
+			{ id: 'role-employee', name: RolesEnum.EMPLOYEE }
+		];
+
+		/** The caller's memberships: a manager by the flag, a manager by the team role, and a plain member. */
+		const MEMBERSHIPS = [
+			{ id: 'member-flagged', teamId: MANAGED_TEAM.id, isManager: 1, roleId: null },
+			{ id: 'member-by-role', teamId: ROLE_MANAGED_TEAM.id, isManager: 0, roleId: 'role-manager' },
+			{ id: 'member-plain', teamId: MEMBER_TEAM.id, isManager: 0, roleId: 'role-employee' }
+		];
+
 		/** The invitations stored, by the teams each one names. */
 		const INVITES = [
 			{ id: 'invite-no-team', email: 'no-team@ever.co', teamIds: [] as string[] },
 			{ id: 'invite-managed', email: 'managed@ever.co', teamIds: [MANAGED_TEAM.id] },
+			{ id: 'invite-role-managed', email: 'role-managed@ever.co', teamIds: [ROLE_MANAGED_TEAM.id] },
+			{ id: 'invite-created', email: 'created@ever.co', teamIds: [CREATED_TEAM.id] },
+			{ id: 'invite-member', email: 'member@ever.co', teamIds: [MEMBER_TEAM.id] },
 			{ id: 'invite-other', email: 'other@ever.co', teamIds: [OTHER_TEAM.id] },
-			{ id: 'invite-both', email: 'both@ever.co', teamIds: [MANAGED_TEAM.id, OTHER_TEAM.id] }
+			{ id: 'invite-both', email: 'both@ever.co', teamIds: [MANAGED_TEAM.id, OTHER_TEAM.id] },
+			{ id: 'invite-other-deleted', email: 'other-deleted@ever.co', teamIds: [OTHER_TEAM.id, DELETED_TEAM.id] },
+			{ id: 'invite-deleted', email: 'deleted@ever.co', teamIds: [DELETED_TEAM.id] }
 		];
 
-		let store: InviteStore;
+		let invites: SpecStore;
+		let teams: SpecStore;
+		let inviteRepository: unknown;
 		let close: () => Promise<void>;
 
-		/** Writes the teams, the invitations and the pivot rows through the store's own connection. */
+		/** Writes the roles, the teams, the memberships, the invitations and the pivot rows through the store's connection. */
 		async function seed(execute: (sql: string, params: unknown[]) => Promise<unknown>) {
-			for (const team of [MANAGED_TEAM, OTHER_TEAM]) {
-				await execute('INSERT INTO organization_team (id, name) VALUES (?, ?)', [team.id, team.name]);
+			for (const role of ROLES) {
+				await execute('INSERT INTO role (id, name) VALUES (?, ?)', [role.id, role.name]);
+			}
+			for (const { team, createdByUserId = null, deletedAt = null } of TEAMS) {
+				const insertTeam =
+					'INSERT INTO organization_team (id, name, createdByUserId, deletedAt) VALUES (?, ?, ?, ?)';
+				await execute(insertTeam, [team.id, team.name, createdByUserId, deletedAt]);
+			}
+			for (const member of MEMBERSHIPS) {
+				const columns = 'id, organizationTeamId, employeeId, isManager, roleId';
+				const insertMember = `INSERT INTO organization_team_employee (${columns}) VALUES (?, ?, ?, ?, ?)`;
+				await execute(insertMember, [member.id, member.teamId, EMPLOYEE, member.isManager, member.roleId]);
 			}
 			for (const row of INVITES) {
 				await execute('INSERT INTO invite (id, email, tenantId) VALUES (?, ?, ?)', [row.id, row.email, TENANT]);
@@ -567,14 +738,16 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			const dataSource = new DataSource({
 				type: 'better-sqlite3',
 				database: ':memory:',
-				entities: [TYPEORM_TEAM, TYPEORM_INVITE],
+				entities: [TYPEORM_ROLE, TYPEORM_TEAM, TYPEORM_MEMBER, TYPEORM_INVITE],
 				synchronize: true,
 				logging: false,
 				invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
 			});
 			await dataSource.initialize();
 			await seed((sql, params) => dataSource.query(sql, params));
-			store = new InviteStore(dataSource.getRepository(TYPEORM_INVITE), {} as never);
+			inviteRepository = dataSource.getRepository(TYPEORM_INVITE);
+			invites = new SpecStore(inviteRepository as never, {} as never);
+			teams = new SpecStore(dataSource.getRepository(TYPEORM_TEAM), {} as never);
 			close = () => dataSource.destroy();
 		}
 
@@ -583,7 +756,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			const mikroOrm = await MikroORM.init<BetterSqliteDriver>({
 				driver: BetterSqliteDriver,
 				dbName: ':memory:',
-				entities: [MIKRO_ORM_TEAM, MIKRO_ORM_INVITE],
+				entities: [MIKRO_ORM_ROLE, MIKRO_ORM_TEAM, MIKRO_ORM_MEMBER, MIKRO_ORM_INVITE],
 				autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 				namingStrategy: EntityCaseNamingStrategy,
 				allowGlobalContext: true
@@ -591,8 +764,16 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			await mikroOrm.schema.createSchema();
 			const connection = mikroOrm.em.getConnection();
 			await seed((sql, params) => connection.execute(sql, params as never[]));
-			const repository = new MikroOrmBaseEntityRepository(mikroOrm.em.fork() as never, MikroOrmInvite);
-			store = new InviteStore({} as never, repository as never);
+			const inviteMikroOrmRepository = new MikroOrmBaseEntityRepository(
+				mikroOrm.em.fork() as never,
+				MikroOrmInvite
+			);
+			const teamMikroOrmRepository = new MikroOrmBaseEntityRepository(
+				mikroOrm.em.fork() as never,
+				MikroOrmInviteTeam
+			);
+			invites = new SpecStore({} as never, inviteMikroOrmRepository as never);
+			teams = new SpecStore({} as never, teamMikroOrmRepository as never);
 			close = () => mikroOrm.close(true);
 		}
 
@@ -611,44 +792,91 @@ describe('InviteService - the invitations of a team are handled by its managers'
 		beforeEach(() => {
 			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(orm);
 			jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockImplementation((options) =>
-				store.findAll(options as never)
+				invites.findAll(options as never)
 			);
-			jest.spyOn(TenantAwareCrudService.prototype, 'find').mockImplementation((options) =>
-				store.find(options as never)
+			jest.spyOn(TenantAwareCrudService.prototype, 'findOneOrFailByOptions').mockImplementation((options) =>
+				invites.findOneOrFailByOptions(options as never)
 			);
 		});
 
-		/** The addresses of the invitations a manager of the managed team lists. */
+		/** The service, reading the caller's teams and the invitations' pivot from the stores. */
+		function buildOnStores(): InviteService {
+			const { service } = build();
+			Object.assign(service, { organizationTeamService: teams, typeOrmRepository: inviteRepository });
+			return service;
+		}
+
+		/** The addresses of the invitations the caller lists, sorted. */
 		async function listed(options: object): Promise<string[]> {
-			signIn(EMPLOYEE);
-			const { service } = build([MANAGED_TEAM]);
+			const service = buildOnStores();
 			const { items } = await service.findAllInvites(options as never);
 			const emails = items.map((item) => item.email);
 			emails.sort((left, right) => left.localeCompare(right));
 			return emails;
 		}
 
-		it('lists the invitations of the managed team and of no team, and no other', async () => {
+		it('lists the invitations of the teams the caller manages by flag, by team role and as creator, and of no team', async () => {
+			signIn(EMPLOYEE);
+
 			const emails = await listed({});
 
-			expect(emails).toEqual(['both@ever.co', 'managed@ever.co', 'no-team@ever.co']);
+			// Not the plain membership's, nor the other team's, nor the deleted team's.
+			const expected = [
+				'both@ever.co',
+				'created@ever.co',
+				'managed@ever.co',
+				'no-team@ever.co',
+				'role-managed@ever.co'
+			];
+			expect(emails).toEqual(expected);
+		});
+
+		it('does not list an invitation of an unmanaged team as one of no team because its other team is deleted', async () => {
+			signIn(EMPLOYEE);
+
+			const emails = await listed({});
+
+			expect(emails).not.toContain('other-deleted@ever.co');
+			expect(emails).not.toContain('deleted@ever.co');
+		});
+
+		it('lists a creator without an employee the invitations of the teams they created, and of no team', async () => {
+			signIn(null);
+
+			const emails = await listed({});
+
+			expect(emails).toEqual(['created@ever.co', 'no-team@ever.co']);
 		});
 
 		it('lists nothing for a team the caller does not manage', async () => {
+			signIn(EMPLOYEE);
+
 			const emails = await listed({ where: { teams: { id: [OTHER_TEAM.id] } } });
 
 			expect(emails).toEqual([]);
 		});
 
 		it('lists the managed team as before', async () => {
+			signIn(EMPLOYEE);
+
 			const emails = await listed({ where: { teams: { id: [MANAGED_TEAM.id] } } });
 
 			expect(emails).toEqual(['both@ever.co', 'managed@ever.co']);
 		});
 
+		it('lists the invitation a request names when it is in reach, and nothing when it is not', async () => {
+			signIn(EMPLOYEE);
+
+			const inReach = await listed({ where: { id: 'invite-managed' } });
+			const outOfReach = await listed({ where: { id: 'invite-other' } });
+
+			expect(inReach).toEqual(['managed@ever.co']);
+			expect(outOfReach).toEqual([]);
+		});
+
 		it('keeps every team of an invitation it lists, the ones the caller does not manage included', async () => {
 			signIn(EMPLOYEE);
-			const { service } = build([MANAGED_TEAM]);
+			const service = buildOnStores();
 
 			const { items } = await service.findAllInvites({ relations: { teams: true } } as never);
 
@@ -656,6 +884,56 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			const teamIds = ofBothTeams.teams.map((team) => team.id);
 			teamIds.sort((left, right) => left.localeCompare(right));
 			expect(teamIds).toEqual([MANAGED_TEAM.id, OTHER_TEAM.id]);
+		});
+
+		it('reads a page of the invitations in reach with their teams, and counts them all', async () => {
+			signIn(EMPLOYEE);
+			const service = buildOnStores();
+
+			const { items, total } = await service.findAllInvites({
+				take: 2,
+				skip: 1,
+				relations: { teams: true }
+			} as never);
+
+			const inReach = [
+				'invite-both',
+				'invite-created',
+				'invite-managed',
+				'invite-no-team',
+				'invite-role-managed'
+			];
+			expect(total).toBe(inReach.length);
+			expect(items).toHaveLength(2);
+			for (const item of items) {
+				expect(inReach).toContain(item.id);
+			}
+		});
+
+		describe('delete', () => {
+			let remove: jest.SpyInstance;
+
+			beforeEach(() => {
+				remove = jest
+					.spyOn(TenantAwareCrudService.prototype, 'delete')
+					.mockResolvedValue({ affected: 1, raw: [] });
+			});
+
+			it('lets a manager of every team of the invitation delete it', async () => {
+				signIn(EMPLOYEE);
+
+				await buildOnStores().delete('invite-managed');
+
+				expect(remove).toHaveBeenCalledWith('invite-managed', undefined);
+			});
+
+			it('refuses the invitation of a soft-deleted team, read with that team rather than as one of no team', async () => {
+				signIn(EMPLOYEE);
+
+				await expect(buildOnStores().delete('invite-deleted')).rejects.toBeInstanceOf(ForbiddenException);
+
+				expect(remove).not.toHaveBeenCalled();
+			});
 		});
 	});
 });

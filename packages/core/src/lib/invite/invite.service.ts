@@ -2,7 +2,9 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import {
+	And,
 	DeleteResult,
+	Equal,
 	FindManyOptions,
 	FindOperator,
 	FindOptionsWhere,
@@ -160,19 +162,73 @@ const INVITE_INTO_UNMANAGED_TEAM = 'You can only invite people into the teams yo
 /** The refusal of a resend or a delete of an invitation that names a team the caller does not manage. */
 const HANDLE_INVITATION_OF_UNMANAGED_TEAM = 'You can only handle the invitations of the teams you manage.';
 
+/** The pivot of `Invite.teams` as TypeORM maps it: its table, the name it is read under, and its two columns, quoted. */
+interface IInviteTeamsPivot {
+	table: string;
+	alias: string;
+	inviteColumn: string;
+	teamColumn: string;
+}
+
+/** The name the register reads the pivot under, apart from the aliases TypeORM gives the joins that load the teams. */
+const INVITE_TEAMS_PIVOT_ALIAS = 'invite_teams_reach';
+
 /**
- * The condition on an invitation's id that keeps the invitations in reach, or, when the request names an invitation,
- * that invitation if it is in reach.
+ * On TypeORM, the invitations a row of the pivot links to one of the given teams. The pivot is read in a subquery, so
+ * the join that loads an invitation's teams is left alone and an invitation of several teams keeps all of them.
+ *
+ * @param pivot - The pivot of `Invite.teams`.
+ * @param teamIds - The teams, at least one.
+ */
+function linkedToOneOf(pivot: IInviteTeamsPivot, teamIds: ID[]): FindOperator<ID> {
+	const { table, alias, inviteColumn, teamColumn } = pivot;
+	const subquery = `SELECT ${alias}.${inviteColumn} FROM ${table} ${alias} WHERE ${alias}.${teamColumn} IN (:...inviteTeamsInReach)`;
+	return Raw((inviteId: string) => `${inviteId} IN (${subquery})`, { inviteTeamsInReach: teamIds });
+}
+
+/**
+ * On TypeORM, the invitations no row of the pivot links to a team. A soft-deleted team keeps its row: it can be
+ * recovered with its invitations, which are not invitations of no team.
+ *
+ * @param pivot - The pivot of `Invite.teams`.
+ */
+function linkedToNoTeam(pivot: IInviteTeamsPivot): FindOperator<ID> {
+	const { table, alias, inviteColumn } = pivot;
+	return Raw(
+		(inviteId: string) =>
+			`NOT EXISTS (SELECT 1 FROM ${table} ${alias} WHERE ${alias}.${inviteColumn} = ${inviteId})`
+	);
+}
+
+/**
+ * The condition on an invitation's id that keeps it in reach and, when the request names an invitation, that one:
+ * the request's own `id` stays beside the reach. A requested `id` that is neither an id nor a condition matches nothing.
  *
  * @param requestedId - The `id` the request names, if any.
- * @param inviteIdsInReach - The invitations in reach.
+ * @param reach - The condition that keeps an invitation in reach.
  */
-function inviteIdsWhere(requestedId: unknown, inviteIdsInReach: ID[]): FindOperator<ID> {
+function idInReach(requestedId: unknown, reach: FindOperator<ID>): FindOperator<ID> {
 	if (requestedId === undefined) {
-		return In(inviteIdsInReach);
+		return reach;
 	}
-	const requestedInReach = inviteIdsInReach.filter((inviteId) => inviteId === requestedId);
-	return In(requestedInReach);
+	if (requestedId instanceof FindOperator) {
+		return And(requestedId, reach);
+	}
+	if (typeof requestedId === 'string') {
+		return And(Equal(requestedId), reach);
+	}
+	return In([]);
+}
+
+/**
+ * On MikroORM, a condition on an invitation's teams stated with a collection operator (`$some`, `$none`), which
+ * MikroORM reads in a subquery of its own. TypeORM's types do not name these operators; the CRUD base hands them to
+ * MikroORM as they are.
+ *
+ * @param teams - The condition on the teams.
+ */
+function mikroOrmTeamsWhere(teams: Record<string, unknown>): FindOptionsWhere<Invite> {
+	return { teams } as unknown as FindOptionsWhere<Invite>;
 }
 
 @Injectable()
@@ -1212,10 +1268,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * The register's conditions kept, for a caller confined to the teams they manage, to the invitations of those teams
 	 * and, unless the request names a team, to the invitations of no team, which stay readable as before.
 	 *
-	 * The invitations of the managed teams are kept by their ids, read apart, because on TypeORM a condition on `teams`
-	 * shares the join that loads them: an invitation of several teams would be listed with the managed ones only. An
-	 * invitation of no team has no team to leave out, so it is still found by its empty join.
-	 *
 	 * @param conditions - The conditions of the register request.
 	 * @param requestedTeamIds - The teams the request names, if any.
 	 * @returns The conditions the register is read with.
@@ -1229,35 +1281,99 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 
 		const managedTeamIds = await this.findManagedTeamIds(requestedTeamIds);
-		const inviteIdsInReach = await this.findInviteIdsOfTeams(managedTeamIds);
 
 		const kept: FindOptionsWhere<Invite>[] = [];
 		for (const condition of conditions) {
-			const idInReach = inviteIdsWhere(condition.id, inviteIdsInReach);
-			kept.push({ ...condition, id: idInReach });
+			kept.push(this.keptToManagedTeams(condition, managedTeamIds));
 			if (!requestedTeamIds) {
-				kept.push({ ...condition, teams: { id: IsNull() } });
+				kept.push(this.keptToNoTeam(condition));
 			}
 		}
 		return kept;
 	}
 
 	/**
-	 * The invitations of the given teams, read apart from the register, which keeps them by their ids.
+	 * A register condition kept to the invitations of one of the managed teams. The teams are matched in the database,
+	 * in a subquery apart from the join that loads them: sharing that join, TypeORM listed an invitation of several
+	 * teams with the managed ones only.
 	 *
-	 * @param teamIds - The teams.
-	 * @returns The ids of their invitations, none when no team is given.
+	 * @param condition - A condition of the register request.
+	 * @param managedTeamIds - The teams the caller manages among the ones the request names.
+	 * @returns The condition the register is read with.
 	 */
-	private async findInviteIdsOfTeams(teamIds: ID[]): Promise<ID[]> {
-		if (isEmpty(teamIds)) {
-			return [];
+	private keptToManagedTeams(condition: FindOptionsWhere<Invite>, managedTeamIds: ID[]): FindOptionsWhere<Invite> {
+		if (isEmpty(managedTeamIds)) {
+			return { ...condition, id: In([]) };
 		}
 
-		const invites = await super.find({
-			select: { id: true },
-			where: { teams: { id: In(teamIds) } }
-		});
-		return invites.map((invite) => invite.id);
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			// The managed teams are among the teams the request names, so their condition takes the place of the request's.
+			const ofSomeManagedTeam = mikroOrmTeamsWhere({ $some: { id: { $in: managedTeamIds } } });
+			return { ...condition, ...ofSomeManagedTeam };
+		}
+
+		const pivot = this.findInviteTeamsPivot();
+		if (!pivot) {
+			return { ...condition, id: In([]) };
+		}
+		const reach = linkedToOneOf(pivot, managedTeamIds);
+		return { ...condition, id: idInReach(condition.id, reach) };
+	}
+
+	/**
+	 * A register condition kept to the invitations of no team, which no row of the pivot links to a team, a soft-deleted
+	 * one included. Matched through the join that loads the teams, TypeORM took an invitation of a live team and a
+	 * deleted one for one of no team: its join leaves the deleted team out, as a row without a team.
+	 *
+	 * @param condition - A condition of the register request, which names no team.
+	 * @returns The condition the register is read with.
+	 */
+	private keptToNoTeam(condition: FindOptionsWhere<Invite>): FindOptionsWhere<Invite> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			const ofNoTeam = mikroOrmTeamsWhere({ $none: {} });
+			return { ...condition, ...ofNoTeam };
+		}
+
+		const pivot = this.findInviteTeamsPivot();
+		if (!pivot) {
+			return { ...condition, id: In([]) };
+		}
+		const reach = linkedToNoTeam(pivot);
+		return { ...condition, id: idInReach(condition.id, reach) };
+	}
+
+	/**
+	 * The pivot of `Invite.teams` as TypeORM's metadata maps it, quoted by the driver as `readScopedBy` quotes the tables
+	 * it reads in a subquery, so the predicates are the same SQL on PostgreSQL, MySQL and SQLite. Null where the metadata
+	 * cannot state it, a stand-in repository included, and the register then keeps nothing.
+	 *
+	 * @returns The pivot, or null.
+	 */
+	private findInviteTeamsPivot(): IInviteTeamsPivot | null {
+		const metadata = this.typeOrmRepository?.metadata;
+		const driver = metadata?.dataSource?.driver;
+		const describesRelations = typeof metadata?.findRelationWithPropertyPath === 'function';
+		const quotesIdentifiers = typeof driver?.escape === 'function';
+		if (!describesRelations || !quotesIdentifiers) {
+			return null;
+		}
+
+		const junction = metadata.findRelationWithPropertyPath('teams')?.junctionEntityMetadata;
+		const inviteColumn = junction?.ownerColumns[0];
+		const teamColumn = junction?.inverseColumns[0];
+		if (!inviteColumn || !teamColumn) {
+			return null;
+		}
+
+		const quote = (identifier: string) => driver.escape(identifier);
+		const tableParts = junction.tablePath.split('.');
+		const quotedParts = tableParts.map((part) => quote(part));
+		return {
+			table: quotedParts.join('.'),
+			alias: quote(INVITE_TEAMS_PIVOT_ALIAS),
+			inviteColumn: quote(inviteColumn.databaseName),
+			teamColumn: quote(teamColumn.databaseName)
+		};
 	}
 
 	/**
